@@ -10,6 +10,7 @@ import (
 	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/sanitizer"
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/tracing"
 	"github.com/cnabio/cnab-go/action"
@@ -48,10 +49,10 @@ type ActionArguments struct {
 	PersistLogs bool
 }
 
-func (r *Runtime) ApplyConfig(args ActionArguments) action.OperationConfigs {
+func (r *Runtime) ApplyConfig(ctx context.Context, args ActionArguments) cnabaction.OperationConfigs {
 	return action.OperationConfigs{
 		r.SetOutput(),
-		r.AddFiles(args),
+		r.AddFiles(ctx, args),
 		r.AddEnvironment(args),
 		r.AddRelocation(args),
 	}
@@ -65,14 +66,14 @@ func (r *Runtime) SetOutput() action.OperationConfigFunc {
 	}
 }
 
-func (r *Runtime) AddFiles(args ActionArguments) action.OperationConfigFunc {
+func (r *Runtime) AddFiles(ctx context.Context, args ActionArguments) cnabaction.OperationConfigFunc {
 	return func(op *driver.Operation) error {
 		for k, v := range args.Files {
 			op.Files[k] = v
 		}
 
 		// Add claim.json to file list as well, if exists
-		claim, err := r.claims.GetLastRun(args.Installation.Namespace, args.Installation.Name)
+		claim, err := r.claims.GetLastRun(ctx, args.Installation.Namespace, args.Installation.Name)
 		if err == nil {
 			claimBytes, err := json.Marshal(claim)
 			if err != nil {
@@ -135,23 +136,17 @@ func (r *Runtime) Execute(ctx context.Context, args ActionArguments) error {
 		return log.Error(err)
 	}
 
-	// Create a record for the run we are about to execute
-	var currentRun = args.Installation.NewRun(args.Action)
-	currentRun.Bundle = b.Bundle
-	currentRun.BundleReference = args.BundleReference.Reference.String()
-	currentRun.BundleDigest = args.BundleReference.Digest.String()
-	currentRun.Parameters = args.Params
-	currentRun.CredentialSets = args.Installation.CredentialSets
-	sort.Strings(currentRun.CredentialSets)
-	currentRun.ParameterSets = args.Installation.ParameterSets
-	sort.Strings(currentRun.ParameterSets)
+	currentRun, err := r.CreateRun(ctx, args, b)
+	if err != nil {
+		return log.Error(err)
+	}
 
 	// Validate the action
 	if _, err := b.GetAction(currentRun.Action); err != nil {
 		return log.Error(errors.Wrapf(err, "invalid action '%s' specified for bundle %s", currentRun.Action, b.Name))
 	}
 
-	creds, err := r.loadCredentials(b, args)
+	creds, err := r.loadCredentials(ctx, b, args)
 	if err != nil {
 		return log.Error(errors.Wrap(err, "could not load credentials"))
 	}
@@ -166,7 +161,7 @@ func (r *Runtime) Execute(ctx context.Context, args ActionArguments) error {
 	a.SaveLogs = args.PersistLogs
 
 	if currentRun.ShouldRecord() {
-		err = r.SaveRun(args.Installation, currentRun, cnab.StatusRunning)
+		err = r.SaveRun(ctx, args.Installation, currentRun, cnab.StatusRunning)
 		if err != nil {
 			return log.Error(errors.Wrap(err, "could not save the pending action's status, the bundle was not executed"))
 		}
@@ -174,43 +169,82 @@ func (r *Runtime) Execute(ctx context.Context, args ActionArguments) error {
 
 	r.printDebugInfo(b, creds, args.Params)
 
-	opResult, result, err := a.Run(currentRun.ToCNAB(), creds.ToCNAB(), r.ApplyConfig(args)...)
+	opResult, result, err := a.Run(currentRun.ToCNAB(), creds.ToCNAB(), r.ApplyConfig(ctx, args)...)
 
 	if currentRun.ShouldRecord() {
 		if err != nil {
-			err = r.appendFailedResult(err, currentRun)
+			err = r.appendFailedResult(ctx, err, currentRun)
 			return log.Error(errors.Wrapf(err, "failed to record that %s for installation %s failed", args.Action, args.Installation.Name))
 		}
-		return r.SaveOperationResult(opResult, args.Installation, currentRun, currentRun.NewResultFrom(result))
+		return r.SaveOperationResult(ctx, opResult, args.Installation, currentRun, currentRun.NewResultFrom(result))
 	} else {
 		return log.Error(errors.Wrapf(err, "execution of %s for installation %s failed", args.Action, args.Installation.Name))
 	}
 }
 
-// SaveRun with the specified status.
-func (r *Runtime) SaveRun(installation claims.Installation, run claims.Run, status string) error {
-	if r.Debug {
-		fmt.Fprintf(r.Err, "saving action %s for %s installation with status %s\n", run.Action, installation, status)
-	}
-	err := r.claims.UpsertInstallation(installation)
+func (r *Runtime) CreateRun(ctx context.Context, args ActionArguments, b cnab.ExtendedBundle) (claims.Run, error) {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
+	// Create a record for the run we are about to execute
+	var currentRun = args.Installation.NewRun(args.Action)
+	currentRun.Bundle = b.Bundle
+	currentRun.BundleReference = args.BundleReference.Reference.String()
+	currentRun.BundleDigest = args.BundleReference.Digest.String()
+
+	var err error
+	extb := cnab.ExtendedBundle{b.Bundle}
+	currentRun.Parameters.Parameters, err = r.sanitizer.CleanRawParameters(ctx, args.Params, extb, currentRun.ID)
 	if err != nil {
-		return errors.Wrap(err, "error saving the installation record before executing the bundle")
+		return claims.Run{}, span.Error(err)
+	}
+
+	// TODO: Do not save secrets when the run isn't recorded
+	currentRun.ParameterOverrides = sanitizer.LinkSensitiveParametersToSecrets(currentRun.ParameterOverrides, extb, currentRun.ID)
+	currentRun.CredentialSets = args.Installation.CredentialSets
+	sort.Strings(currentRun.CredentialSets)
+
+	currentRun.ParameterSets = args.Installation.ParameterSets
+	sort.Strings(currentRun.ParameterSets)
+	return currentRun, nil
+}
+
+// SaveRun with the specified status.
+func (r *Runtime) SaveRun(ctx context.Context, installation claims.Installation, run claims.Run, status string) error {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
+	span.Debugf("saving action %s for %s installation with status %s", run.Action, installation, status)
+
+	// update installation record to use run id ecoded parameters instead of
+	// installation id
+	installation.Parameters.Parameters = run.ParameterOverrides.Parameters
+	err := r.claims.UpsertInstallation(ctx, installation)
+	if err != nil {
+		return span.Error(fmt.Errorf("error saving the installation record before executing the bundle: %w", err))
 	}
 
 	result := run.NewResult(status)
-	err = r.claims.InsertRun(run)
+	err = r.claims.InsertRun(ctx, run)
 	if err != nil {
-		return errors.Wrap(err, "error saving the installation run record before executing the bundle")
+		return span.Error(fmt.Errorf("error saving the installation run record before executing the bundle: %w", err))
 	}
 
-	err = r.claims.InsertResult(result)
-	return errors.Wrap(err, "error saving the installation status record before executing the bundle")
+	err = r.claims.InsertResult(ctx, result)
+	if err != nil {
+		return span.Error(fmt.Errorf("error saving the installation status record before executing the bundle: %w", err))
+	}
+
+	return nil
 }
 
 // SaveOperationResult saves the ClaimResult and Outputs. The caller is
 // responsible for having already persisted the claim itself, for example using
 // SaveRun.
-func (r *Runtime) SaveOperationResult(opResult driver.OperationResult, installation claims.Installation, run claims.Run, result claims.Result) error {
+func (r *Runtime) SaveOperationResult(ctx context.Context, opResult driver.OperationResult, installation claims.Installation, run claims.Run, result claims.Result) error {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
 	// TODO(carolynvs): optimistic locking on updates
 
 	// Keep accumulating errors from any error returned from the operation
@@ -219,20 +253,24 @@ func (r *Runtime) SaveOperationResult(opResult driver.OperationResult, installat
 	var bigerr *multierror.Error
 	bigerr = multierror.Append(bigerr, opResult.Error)
 
-	err := r.claims.InsertResult(result)
+	err := r.claims.InsertResult(ctx, result)
 	if err != nil {
 		bigerr = multierror.Append(bigerr, errors.Wrapf(err, "error adding %s result for %s run of installation %s\n%#v", result.Status, run.Action, installation, result))
 	}
 
 	installation.ApplyResult(run, result)
-	err = r.claims.UpdateInstallation(installation)
+	err = r.claims.UpdateInstallation(ctx, installation)
 	if err != nil {
 		bigerr = multierror.Append(bigerr, errors.Wrapf(err, "error updating installation record for %s\n%#v", installation, installation))
 	}
 
 	for outputName, outputValue := range opResult.Outputs {
 		output := result.NewOutput(outputName, []byte(outputValue))
-		err = r.claims.InsertOutput(output)
+		output, err = r.sanitizer.CleanOutput(ctx, output, cnab.ExtendedBundle{run.Bundle})
+		if err != nil {
+			bigerr = multierror.Append(bigerr, errors.Wrapf(err, "error sanitizing sensitive %s output for %s run of installation %s\n%#v", output.Name, run.Action, installation, output))
+		}
+		err = r.claims.InsertOutput(ctx, output)
 		if err != nil {
 			bigerr = multierror.Append(bigerr, errors.Wrapf(err, "error adding %s output for %s run of installation %s\n%#v", output.Name, run.Action, installation, output))
 		}
@@ -243,10 +281,10 @@ func (r *Runtime) SaveOperationResult(opResult driver.OperationResult, installat
 
 // appendFailedResult creates a failed result from the operation error and accumulates
 // the error(s).
-func (r *Runtime) appendFailedResult(opErr error, run claims.Run) error {
+func (r *Runtime) appendFailedResult(ctx context.Context, opErr error, run claims.Run) error {
 	saveResult := func() error {
 		result := run.NewResult(cnab.StatusFailed)
-		return r.claims.InsertResult(result)
+		return r.claims.InsertResult(ctx, result)
 	}
 
 	resultErr := saveResult()

@@ -22,7 +22,7 @@ var (
 
 func TestInstallFromTagIgnoresCurrentBundle(t *testing.T) {
 	p := NewTestPorter(t)
-	defer p.Teardown()
+	defer p.Close()
 
 	err := p.Create()
 	require.NoError(t, err)
@@ -39,7 +39,7 @@ func TestInstallFromTagIgnoresCurrentBundle(t *testing.T) {
 func TestPorter_BuildActionArgs(t *testing.T) {
 	t.Run("no bundle set", func(t *testing.T) {
 		p := NewTestPorter(t)
-		defer p.Teardown()
+		defer p.Close()
 		opts := NewInstallOptions()
 		opts.Name = "mybuns"
 
@@ -50,7 +50,7 @@ func TestPorter_BuildActionArgs(t *testing.T) {
 
 	t.Run("porter.yaml set", func(t *testing.T) {
 		p := NewTestPorter(t)
-		defer p.Teardown()
+		defer p.Close()
 
 		opts := NewInstallOptions()
 		opts.File = "porter.yaml"
@@ -106,7 +106,7 @@ func TestPorter_BuildActionArgs(t *testing.T) {
 				AllowDockerHostAccess: true,
 			},
 		}
-		p.TestParameters.TestSecrets.AddSecret("PARAM2_SECRET", "VALUE2")
+		p.TestParameters.AddSecret("PARAM2_SECRET", "VALUE2")
 		p.TestParameters.AddTestParameters("testdata/paramset2.json")
 
 		err := opts.Validate(context.Background(), nil, p.Porter)
@@ -133,7 +133,7 @@ func TestPorter_BuildActionArgs(t *testing.T) {
 
 func TestManifestIgnoredWithTag(t *testing.T) {
 	p := NewTestPorter(t)
-	defer p.Teardown()
+	defer p.Close()
 
 	t.Run("ignore manifest in cwd if tag present", func(t *testing.T) {
 		opts := BundleActionOptions{}

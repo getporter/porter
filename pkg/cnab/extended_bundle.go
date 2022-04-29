@@ -129,11 +129,15 @@ func (b ExtendedBundle) ConvertParameterValue(key string, value interface{}) (in
 	}
 }
 
+func (b ExtendedBundle) WriteParameterToString(paramName string, value interface{}) (string, error) {
+	return WriteParameterToString(paramName, value)
+}
+
 // WriteParameterToString changes a parameter's value from its type as
 // defined by the bundle to its runtime string representation.
 // The value should have already been converted to its bundle representation
 // by calling ConvertParameterValue.
-func (b ExtendedBundle) WriteParameterToString(paramName string, value interface{}) (string, error) {
+func WriteParameterToString(paramName string, value interface{}) (string, error) {
 	if value == nil {
 		return "", nil
 	}

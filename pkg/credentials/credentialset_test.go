@@ -6,10 +6,9 @@ import (
 
 	"get.porter.sh/porter/pkg/encoding"
 	"get.porter.sh/porter/pkg/secrets"
+	"github.com/cnabio/cnab-go/bundle"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/cnabio/cnab-go/bundle"
 )
 
 func TestNewCredentialSet(t *testing.T) {

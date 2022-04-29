@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"get.porter.sh/porter/pkg/cnab"
+	"get.porter.sh/porter/pkg/parameters"
+	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
 	"github.com/Masterminds/semver/v3"
 	"github.com/cnabio/cnab-go/schema"
@@ -19,53 +21,56 @@ import (
 const (
 	// SchemaVersion represents the version associated with the schema
 	// for all installation documents: installations, runs, results and outputs.
-	SchemaVersion = schema.Version("1.0.0")
+	SchemaVersion = schema.Version("1.0.1")
 )
 
 var _ storage.Document = Installation{}
 
 type Installation struct {
 	// SchemaVersion is the version of the installation state schema.
-	SchemaVersion schema.Version `json:"schemaVersion" yaml:"schemaVersion" toml:"schemaVersion"`
+	SchemaVersion schema.Version `json:"schemaVersion"`
+
+	// ID is the unique identifire for an installation record.
+	ID string `json:"id"`
 
 	// Name of the installation. Immutable.
-	Name string `json:"name" yaml:"name" toml:"name"`
+	Name string `json:"name"`
 
 	// Namespace in which the installation is defined.
-	Namespace string `json:"namespace" yaml:"namespace" toml:"namespace"`
+	Namespace string `json:"namespace"`
 
 	// Uninstalled specifies if the installation isn't used anymore and should be uninstalled.
-	Uninstalled bool `json:"uninstalled,omitempty" yaml:"uninstalled,omitempty" toml:"uninstalled,omitempty"`
+	Uninstalled bool `json:"uninstalled,omitempty"`
 
 	// Bundle specifies the bundle reference to use with the installation.
-	Bundle OCIReferenceParts `json:"bundle" yaml:"bundle" toml:"bundle"`
+	Bundle OCIReferenceParts `json:"bundle"`
 
 	// Custom extension data applicable to a given runtime.
 	// TODO(carolynvs): remove and populate in ToCNAB when we firm up the spec
-	Custom interface{} `json:"custom,omitempty" yaml:"custom,omitempty" toml:"custom,omitempty"`
+	Custom interface{} `json:"custom,omitempty"`
 
 	// Labels applied to the installation.
-	Labels map[string]string `json:"labels,omitempty" yaml:"labels,omitempty" toml:"labels,omitempty"`
+	Labels map[string]string `json:"labels,omitempty"`
+
+	// CredentialSets that should be included when the bundle is reconciled.
+	CredentialSets []string `json:"credentialSets,omitempty"`
+
+	// ParameterSets that should be included when the bundle is reconciled.
+	ParameterSets []string `json:"parameterSets,omitempty"`
 
 	// Parameters specified by the user through overrides.
 	// Does not include defaults, or values resolved from parameter sources.
-	Parameters map[string]interface{} `json:"parameters,omitempty" yaml:"parameters,omitempty" toml:"parameters,omitempty"`
-
-	// CredentialSets that should be included when the bundle is reconciled.
-	CredentialSets []string `json:"credentialSets,omitempty" yaml:"credentialSets,omitempty" toml:"credentialSets,omitempty"`
-
-	// ParameterSets that should be included when the bundle is reconciled.
-	ParameterSets []string `json:"parameterSets,omitempty" yaml:"parameterSets,omitempty" toml:"parameterSets,omitempty"`
+	Parameters parameters.ParameterSet `json:"parameters,omitempty"`
 
 	// Status of the installation.
-	Status InstallationStatus `json:"status,omitempty" yaml:"status,omitempty" toml:"status,omitempty"`
+	Status InstallationStatus `json:"status,omitempty"`
 }
 
 func (i Installation) String() string {
 	return fmt.Sprintf("%s/%s", i.Namespace, i.Name)
 }
 
-func (i Installation) DefaultDocumentFilter() interface{} {
+func (i Installation) DefaultDocumentFilter() map[string]interface{} {
 	return map[string]interface{}{"namespace": i.Namespace, "name": i.Name}
 }
 
@@ -73,8 +78,10 @@ func NewInstallation(namespace string, name string) Installation {
 	now := time.Now()
 	return Installation{
 		SchemaVersion: SchemaVersion,
+		ID:            cnab.NewULID(),
 		Namespace:     namespace,
 		Name:          name,
+		Parameters:    parameters.NewInternalParameterSet(namespace, name),
 		Status: InstallationStatus{
 			Created:  now,
 			Modified: now,
@@ -86,6 +93,7 @@ func NewInstallation(namespace string, name string) Installation {
 func (i Installation) NewRun(action string) Run {
 	run := NewRun(i.Namespace, i.Name)
 	run.Action = action
+	run.ParameterOverrides = i.Parameters
 	return run
 }
 
@@ -158,18 +166,10 @@ func (i *Installation) SetLabel(key string, value string) {
 	i.Labels[key] = value
 }
 
-// ConvertParameterValues converts each parameter from an unknown type to
-// the type specified for that parameter on the bundle.
-func (i *Installation) ConvertParameterValues(b cnab.ExtendedBundle) error {
-	for paramName, rawParamValue := range i.Parameters {
-		typedValue, err := b.ConvertParameterValue(paramName, rawParamValue)
-		if err != nil {
-			return err
-		}
-		i.Parameters[paramName] = typedValue
-	}
-
-	return nil
+// NewInternalParameterSet creates a new ParameterSet that's used to store
+// parameter overrides with the required fields initialized.
+func (i Installation) NewInternalParameterSet(params ...secrets.Strategy) parameters.ParameterSet {
+	return parameters.NewInternalParameterSet(i.Namespace, i.ID, params...)
 }
 
 func (i Installation) AddToTrace(ctx context.Context) {

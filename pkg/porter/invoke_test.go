@@ -10,7 +10,7 @@ import (
 
 func TestInvokeOptions_Validate_ActionRequired(t *testing.T) {
 	p := NewTestPorter(t)
-	defer p.Teardown()
+	defer p.Close()
 
 	opts := NewInvokeOptions()
 

@@ -7,14 +7,13 @@ import (
 
 	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/cnab"
-	"github.com/hashicorp/go-multierror"
-
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/pkgmgmt"
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/yaml"
 	"github.com/cnabio/cnab-to-oci/relocation"
+	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 )
 

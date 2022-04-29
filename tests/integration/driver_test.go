@@ -19,7 +19,7 @@ import (
 // porter commands and have that set the --driver flag.
 func TestBindRuntimeDriverConfiguration(t *testing.T) {
 	test, err := tester.NewTest(t)
-	defer test.Teardown()
+	defer test.Close()
 	require.NoError(t, err, "test setup failed")
 
 	require.NoError(t, shx.Copy(filepath.Join(test.RepoRoot, "tests/testdata/installations/mybuns.yaml"), test.TestDir))
@@ -43,15 +43,15 @@ func TestBindRuntimeDriverConfiguration(t *testing.T) {
 	tests.RequireErrorContains(t, err, "unsupported driver", "uninstall does not have --driver wired properly")
 
 	test.PrepareTestBundle() // apply tries to pull the bundle before the driver flag is validated
-	_, _, err = test.RunPorter("installation", "apply", "mybuns.yaml")
-	tests.RequireErrorContains(t, err, "unsupported driver", "apply does not have --driver wired properly")
+	_, output, _ := test.RunPorter("installation", "apply", "mybuns.yaml")
+	tests.RequireOutputContains(t, output, "unsupported driver", "apply does not have --driver wired properly")
 }
 
 // Validate that we can use PORTER_BUILD_DRIVER with
 // porter build and have that set the --driver flag.
 func TestBindBuildDriverConfiguration(t *testing.T) {
 	test, err := tester.NewTest(t)
-	defer test.Teardown()
+	defer test.Close()
 	require.NoError(t, err, "test setup failed")
 
 	// Set the driver to something that will fail validation so we know it was picked up

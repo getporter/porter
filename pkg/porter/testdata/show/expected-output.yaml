@@ -1,5 +1,6 @@
 schemaType: Installation
-schemaVersion: 1.0.0
+schemaVersion: 1.0.1
+id: 01FZVC5AVP8Z7A78CSCP1EJ604
 name: mywordpress
 namespace: dev
 bundle:
@@ -10,6 +11,7 @@ labels:
   io.cnab/appVersion: v1.2.3
 parameters:
   logLevel: 3
+  secretString: foo
 parameterSets:
   - dev-env
 status:
@@ -30,6 +32,10 @@ _calculated:
       type: integer
       sensitive: false
       value: 3
+    - name: secretString
+      type: string
+      sensitive: true
+      value: foo
     - name: token
       type: unknown
       sensitive: false

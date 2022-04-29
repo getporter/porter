@@ -1,4 +1,4 @@
-schemaVersion: 1.0.0
+schemaVersion: 1.0.1
 name: mybuns
 labels:
   generator: porter-operator
@@ -7,6 +7,8 @@ labels:
 bundle:
   repository: localhost:5000/mybuns
   version: v0.1.2
+parameters:
+  password: "supersecret"
 credentialSets:
   - mybuns
 parameterSets:

@@ -64,7 +64,7 @@ func (p *Porter) InstallBundle(ctx context.Context, opts InstallOptions) error {
 		return log.Error(err)
 	}
 
-	i, err := p.Claims.GetInstallation(opts.Namespace, opts.Name)
+	i, err := p.Claims.GetInstallation(ctx, opts.Namespace, opts.Name)
 	if err == nil {
 		// Validate that we are not overwriting an existing installation
 		if i.IsInstalled() && !opts.Force {
@@ -79,13 +79,13 @@ func (p *Porter) InstallBundle(ctx context.Context, opts InstallOptions) error {
 		return log.Error(err)
 	}
 
-	err = p.applyActionOptionsToInstallation(&i, opts.BundleActionOptions)
+	err = p.applyActionOptionsToInstallation(ctx, &i, opts.BundleActionOptions)
 	if err != nil {
 		return err
 	}
 	i.TrackBundle(bundleRef.Reference)
 	i.Labels = opts.ParseLabels()
-	err = p.Claims.UpsertInstallation(i)
+	err = p.Claims.UpsertInstallation(ctx, i)
 	if err != nil {
 		return errors.Wrap(err, "error saving installation record")
 	}
@@ -97,38 +97,41 @@ func (p *Porter) InstallBundle(ctx context.Context, opts InstallOptions) error {
 // Remember the parameters and credentials used with the bundle last.
 // Appends any newly specified parameters, parameter/credential sets to the installation record.
 // Users are expected to edit the installation record if they don't want that behavior.
-func (p *Porter) applyActionOptionsToInstallation(i *claims.Installation, opts *BundleActionOptions) error {
+func (p *Porter) applyActionOptionsToInstallation(ctx context.Context, i *claims.Installation, opts *BundleActionOptions) error {
 	// Record the parameters specified by the user, with flags taking precedence over parameter set values
-	err := opts.LoadParameters(p, opts.bundleRef.Definition)
+	err := opts.LoadParameters(ctx, p, opts.bundleRef.Definition)
 	if err != nil {
 		return err
 	}
-	if i.Parameters == nil {
-		i.Parameters = make(map[string]interface{}, len(opts.parsedParams))
-	}
 	// Record the user-specified parameter values
-	for k, v := range opts.parsedParams {
-		i.Parameters[k] = v
+	err = opts.populateInternalParameterSet(ctx, p, opts.bundleRef.Definition, i)
+	if err != nil {
+		return err
 	}
+
 	// Record the names of the parameter sets used
-	for _, ps := range opts.ParameterSets {
-		for _, existing := range i.ParameterSets {
-			if existing == ps {
-				continue
-			}
-		}
-		i.ParameterSets = append(i.ParameterSets, ps)
-	}
+	i.ParameterSets = append(i.ParameterSets, Unique(i.ParameterSets, opts.ParameterSets...)...)
 
 	// Record the names of the credential sets used
-	for _, cs := range opts.CredentialIdentifiers {
-		for _, existing := range i.ParameterSets {
-			if existing == cs {
-				continue
-			}
-		}
-		i.CredentialSets = append(i.CredentialSets, cs)
-	}
+	i.CredentialSets = append(i.CredentialSets, Unique(i.CredentialSets, opts.CredentialIdentifiers...)...)
 
 	return nil
+}
+
+func Unique(existings []string, n ...string) []string {
+	var u []string
+	old := make(map[string]struct{})
+
+	for _, e := range existings {
+		old[e] = struct{}{}
+	}
+
+	for _, cs := range n {
+		if _, ok := old[cs]; ok {
+			continue
+		}
+		u = append(u, cs)
+	}
+
+	return u
 }

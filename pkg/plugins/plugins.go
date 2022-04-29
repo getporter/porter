@@ -8,17 +8,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Plugin is a general interface for interacting with Porter plugins.
-type Plugin interface {
-	// Connect establishes a connection to the plugin.
-	// Safe to call multiple times, the existing connection is reused.
-	Connect() error
-
-	// Close the connection to the plugin.
-	// Safe to call multiple times.
-	Close() error
-}
-
 // HandshakeConfig is common handshake config between Porter and its plugins.
 var HandshakeConfig = plugin.HandshakeConfig{
 	MagicCookieKey:   "PORTER",

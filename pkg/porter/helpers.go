@@ -23,6 +23,8 @@ import (
 	"get.porter.sh/porter/pkg/mixin"
 	"get.porter.sh/porter/pkg/parameters"
 	"get.porter.sh/porter/pkg/plugins"
+	"get.porter.sh/porter/pkg/sanitizer"
+	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/tracing"
 	"get.porter.sh/porter/pkg/yaml"
@@ -39,6 +41,8 @@ type TestPorter struct {
 	TestParameters  *parameters.TestParameterProvider
 	TestCache       *cache.TestCache
 	TestRegistry    *cnabtooci.TestRegistry
+	TestSecrets     secrets.Store
+	TestSanitizer   *sanitizer.Service
 
 	// original directory where the test was being executed
 	TestDir string
@@ -60,14 +64,15 @@ type TestPorter struct {
 // NewTestPorter initializes a porter test client, with the output buffered, and an in-memory file system.
 func NewTestPorter(t *testing.T) *TestPorter {
 	tc := config.NewTestConfig(t)
-	testStore := storage.NewTestStore(tc.TestContext)
-	testCredentials := credentials.NewTestCredentialProviderFor(t, testStore)
-	testParameters := parameters.NewTestParameterProviderFor(t, testStore)
+	testStore := storage.NewTestStore(tc)
+	testSecrets := secrets.NewTestSecretsProvider()
+	testCredentials := credentials.NewTestCredentialProviderFor(t, testStore, testSecrets)
+	testParameters := parameters.NewTestParameterProviderFor(t, testStore, testSecrets)
 	testCache := cache.NewTestCache(cache.New(tc.Config))
 	testClaims := claims.NewTestClaimProviderFor(t, testStore)
 	testRegistry := cnabtooci.NewTestRegistry()
 
-	p := NewFor(tc.Config, testStore)
+	p := NewFor(tc.Config, testStore, testSecrets)
 	p.Config = tc.Config
 	p.Mixins = mixin.NewTestMixinProvider()
 	p.Plugins = plugins.NewTestPluginProvider()
@@ -76,18 +81,21 @@ func NewTestPorter(t *testing.T) *TestPorter {
 	p.Claims = testClaims
 	p.Credentials = testCredentials
 	p.Parameters = testParameters
-	p.CNAB = cnabprovider.NewTestRuntimeFor(tc, testClaims, testCredentials, testParameters)
+	p.Secrets = testSecrets
+	p.CNAB = cnabprovider.NewTestRuntimeFor(tc, testClaims, testCredentials, testParameters, testSecrets)
 	p.Registry = testRegistry
 
 	tp := TestPorter{
 		Porter:          p,
 		TestConfig:      tc,
 		TestStore:       testStore,
+		TestSecrets:     testSecrets,
 		TestClaims:      testClaims,
 		TestCredentials: testCredentials,
 		TestParameters:  testParameters,
 		TestCache:       testCache,
 		TestRegistry:    testRegistry,
+		TestSanitizer:   sanitizer.NewService(testParameters, testSecrets),
 		RepoRoot:        tc.TestContext.FindRepoRoot(),
 	}
 
@@ -97,9 +105,9 @@ func NewTestPorter(t *testing.T) *TestPorter {
 	return &tp
 }
 
-func (p *TestPorter) Teardown() error {
-	err := p.TestStore.Teardown()
-	p.TestConfig.TestContext.Teardown()
+func (p *TestPorter) Close() error {
+	err := p.TestStore.Close()
+	p.TestConfig.Close()
 	p.RootSpan.EndSpan()
 	return err
 }
@@ -108,7 +116,7 @@ func (p *TestPorter) SetupIntegrationTest() {
 	t := p.TestConfig.TestContext.T
 
 	// Undo changes above to make a unit test friendly Porter, so we hit the host
-	p.Porter = NewFor(p.Config, p.TestStore)
+	p.Porter = NewFor(p.Config, p.TestStore, p.TestSecrets)
 
 	// Run the test in a temp directory
 	testDir, _ := p.TestConfig.SetupIntegrationTest()
@@ -116,7 +124,7 @@ func (p *TestPorter) SetupIntegrationTest() {
 	p.CreateBundleDir()
 
 	// Write out a storage schema so that we don't trigger a migration check
-	err := p.Storage.WriteSchema()
+	err := p.Storage.WriteSchema(context.Background())
 	require.NoError(t, err, "failed to set the storage schema")
 
 	// Load test credentials, with KUBECONFIG replaced properly
@@ -129,7 +137,7 @@ func (p *TestPorter) SetupIntegrationTest() {
 	var testCreds credentials.CredentialSet
 	err = encoding.UnmarshalYaml(ciCredsB, &testCreds)
 	require.NoError(t, err, "could not unmarshal test credentials %s", ciCredsPath)
-	err = p.Credentials.UpsertCredentialSet(testCreds)
+	err = p.Credentials.UpsertCredentialSet(context.Background(), testCreds)
 	require.NoError(t, err, "could not save test credentials")
 }
 
@@ -224,6 +232,24 @@ func (p *TestPorter) AddTestBundleDir(bundleDir string, generateUniqueName bool)
 // the new test output.
 func (p *TestPorter) CompareGoldenFile(goldenFile string, got string) {
 	p.TestConfig.TestContext.CompareGoldenFile(goldenFile, got)
+}
+
+// CreateInstallation saves an installation record into claim store and store
+// sensitive parameters into secret store.
+func (p *TestPorter) SanitizeParameters(raw []secrets.Strategy, recordID string, bun cnab.ExtendedBundle) []secrets.Strategy {
+	strategies := make([]secrets.Strategy, 0, len(raw))
+	strategies, err := p.Sanitizer.CleanParameters(context.Background(), raw, bun, recordID)
+	require.NoError(p.T(), err)
+
+	return strategies
+}
+
+func (p *TestPorter) CreateOutput(o claims.Output, bun cnab.ExtendedBundle) claims.Output {
+	return p.TestClaims.CreateOutput(o, func(o *claims.Output) {
+		output, err := p.TestSanitizer.CleanOutput(context.Background(), *o, bun)
+		require.NoError(p.T(), err)
+		*o = output
+	})
 }
 
 type TestBuildProvider struct {

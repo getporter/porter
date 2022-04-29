@@ -7,16 +7,15 @@ import (
 	"context"
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
 	"get.porter.sh/porter/pkg/porter"
+	"github.com/stretchr/testify/require"
 )
 
 func TestPublish_BuildWithVersionOverride(t *testing.T) {
 	t.Parallel()
 
 	p := porter.NewTestPorter(t)
-	defer p.Teardown()
+	defer p.Close()
 	p.SetupIntegrationTest()
 	p.Debug = false
 

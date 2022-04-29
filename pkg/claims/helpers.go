@@ -1,11 +1,12 @@
 package claims
 
 import (
+	"context"
 	"fmt"
 	"testing"
 	"time"
 
-	"get.porter.sh/porter/pkg/portercontext"
+	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/storage"
 	"github.com/stretchr/testify/require"
 )
@@ -15,6 +16,8 @@ var (
 
 	// A fixed now timestamp that we can use for comparisons in tests
 	now = time.Date(2020, time.April, 18, 1, 2, 3, 4, time.UTC)
+
+	installationID = "01FZVC5AVP8Z7A78CSCP1EJ604"
 )
 
 type TestClaimProvider struct {
@@ -25,7 +28,7 @@ type TestClaimProvider struct {
 }
 
 func NewTestClaimProvider(t *testing.T) *TestClaimProvider {
-	tc := portercontext.NewTestContext(t)
+	tc := config.NewTestConfig(t)
 	testStore := storage.NewTestStore(tc)
 	return NewTestClaimProviderFor(t, testStore)
 }
@@ -38,8 +41,8 @@ func NewTestClaimProviderFor(t *testing.T, testStore storage.TestStore) *TestCla
 	}
 }
 
-func (p *TestClaimProvider) Teardown() error {
-	return p.TestStore.Teardown()
+func (p *TestClaimProvider) Close() error {
+	return p.TestStore.Close()
 }
 
 // CreateInstallation creates a new test installation and saves it.
@@ -48,12 +51,13 @@ func (p *TestClaimProvider) CreateInstallation(i Installation, transformations .
 		transform(&i)
 	}
 
-	err := p.InsertInstallation(i)
+	err := p.InsertInstallation(context.Background(), i)
 	require.NoError(p.t, err, "InsertInstallation failed")
 	return i
 }
 
 func (p *TestClaimProvider) SetMutableInstallationValues(i *Installation) {
+	i.ID = installationID
 	i.Status.Created = now
 	i.Status.Modified = now
 }
@@ -64,7 +68,7 @@ func (p *TestClaimProvider) CreateRun(r Run, transformations ...func(r *Run)) Ru
 		transform(&r)
 	}
 
-	err := p.InsertRun(r)
+	err := p.InsertRun(context.Background(), r)
 	require.NoError(p.t, err, "InsertRun failed")
 	return r
 }
@@ -81,7 +85,7 @@ func (p *TestClaimProvider) CreateResult(r Result, transformations ...func(r *Re
 		transform(&r)
 	}
 
-	err := p.InsertResult(r)
+	err := p.InsertResult(context.Background(), r)
 	require.NoError(p.t, err, "InsertResult failed")
 	return r
 }
@@ -98,7 +102,7 @@ func (p *TestClaimProvider) CreateOutput(o Output, transformations ...func(o *Ou
 		transform(&o)
 	}
 
-	err := p.InsertOutput(o)
+	err := p.InsertOutput(context.Background(), o)
 	require.NoError(p.t, err, "InsertOutput failed")
 	return o
 }

@@ -56,15 +56,11 @@ type TraceLogger interface {
 	// it up the call stack.
 	Error(err error, attrs ...attribute.KeyValue) error
 
-	// Errorf formats an error message and logs it at the error level,
-	// and marks the current span as failed.
-	// Example: return log.Errorf("oops something happened")
-	// Only log it in the function that generated the error, not when bubbling
-	// it up the call stack.
-	Errorf(msg string, args ...interface{}) error
-
 	// ShouldLog returns if the current log level includes the specified level.
 	ShouldLog(level zapcore.Level) bool
+
+	// Close releases any resources used.
+	Close()
 }
 
 var _ TraceLogger = traceLogger{}
@@ -77,7 +73,14 @@ type traceLogger struct {
 	ctx    context.Context
 	span   trace.Span
 	logger *zap.Logger
-	tracer trace.Tracer
+	tracer Tracer
+}
+
+// Close releases the resources held by the tracer.
+func (l traceLogger) Close() {
+	if err := l.tracer.Close(context.Background()); err != nil {
+		l.Error(fmt.Errorf("error closing the Tracer: %w", err))
+	}
 }
 
 // ShouldLog returns if the current log level includes the specified level.
@@ -86,12 +89,12 @@ func (l traceLogger) ShouldLog(level zapcore.Level) bool {
 }
 
 // NewRootLogger creates a new TraceLogger and stores in on the context
-func NewRootLogger(ctx context.Context, span trace.Span, logger *zap.Logger, tracer trace.Tracer) (context.Context, TraceLogger) {
+func NewRootLogger(ctx context.Context, span trace.Span, logger *zap.Logger, tracer Tracer) (context.Context, TraceLogger) {
 	childCtx := context.WithValue(ctx, contextKeyTraceLogger, traceLoggerContext{logger, tracer})
 	return childCtx, newTraceLogger(childCtx, span, logger, tracer)
 }
 
-func newTraceLogger(ctx context.Context, span trace.Span, logger *zap.Logger, tracer trace.Tracer) TraceLogger {
+func newTraceLogger(ctx context.Context, span trace.Span, logger *zap.Logger, tracer Tracer) traceLogger {
 	l := traceLogger{
 		ctx:    ctx,
 		span:   span,
@@ -103,7 +106,13 @@ func newTraceLogger(ctx context.Context, span trace.Span, logger *zap.Logger, tr
 
 // EndSpan finishes the span and submits it to the otel endpoint.
 func (l traceLogger) EndSpan(opts ...trace.SpanEndOption) {
-	l.span.End(opts...)
+	defer l.span.End(opts...)
+
+	// If there was a panic, mark the span
+	if p := recover(); p != nil {
+		l.Error(fmt.Errorf("panic: %s", p))
+		panic(p) // retrow
+	}
 }
 
 // StartSpan retrieves a logger from the current context and starts a new span
@@ -191,11 +200,6 @@ func (l traceLogger) Error(err error, attrs ...attribute.KeyValue) error {
 	return err
 }
 
-// Errorf formats an error message and logs it at the error level.
-func (l traceLogger) Errorf(msg string, args ...interface{}) error {
-	return l.Error(errors.Errorf(msg, args...))
-}
-
 // appends logs to a otel span as events
 func addLogToSpan(span trace.Span, msg string, level string, attrs ...attribute.KeyValue) {
 	attrs = append(attrs,
@@ -257,32 +261,8 @@ func callerFunc() string {
 			continue
 		}
 
-		fnName, ok := extractFuncName(frame.Function)
-		if !ok {
-			return callerUnknown
-		}
-
-		return fnName
+		return strings.TrimPrefix(frame.Function, "get.porter.sh/porter/")
 	}
 
 	return callerUnknown
-}
-
-// extractFuncName returns function names from a qualified full import path.
-// for example: "github.com/getporter/porter.ListInstallations", "main.Install"
-func extractFuncName(fn string) (string, bool) {
-	lastSlashIdx := strings.LastIndex(fn, "/")
-	if lastSlashIdx+1 >= len(fn) {
-		// a function name ended with a "/"
-		return "", false
-	}
-
-	qualifiedName := fn[lastSlashIdx+1:]
-	packageDotPos := strings.Index(qualifiedName, ".")
-	if packageDotPos < 0 || packageDotPos+1 >= len(qualifiedName) {
-		// qualifiedName ended with a "."
-		return "", false
-	}
-
-	return qualifiedName[packageDotPos+1:], true
 }

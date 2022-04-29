@@ -22,7 +22,7 @@ func TestValidateDocsCommand(t *testing.T) {
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
 			p := porter.NewTestPorter(t)
-			defer p.Teardown()
+			defer p.Close()
 
 			opts := DocsOptions{
 				Destination: tc.destination,

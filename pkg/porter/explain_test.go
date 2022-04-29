@@ -14,7 +14,7 @@ import (
 
 func TestExplain_validateBadFormat(t *testing.T) {
 	p := NewTestPorter(t)
-	defer p.Teardown()
+	defer p.Close()
 
 	opts := ExplainOpts{}
 	opts.RawFormat = "vpml"
@@ -25,7 +25,7 @@ func TestExplain_validateBadFormat(t *testing.T) {
 
 func TestExplain_generateTable(t *testing.T) {
 	p := NewTestPorter(t)
-	defer p.Teardown()
+	defer p.Close()
 
 	p.TestConfig.TestContext.AddTestFile("testdata/explain/params-bundle.json", "params-bundle.json")
 	b, err := p.CNAB.LoadBundle("params-bundle.json")
@@ -47,7 +47,7 @@ func TestExplain_generateTable(t *testing.T) {
 
 func TestExplain_generateTableRequireDockerHostAccess(t *testing.T) {
 	p := NewTestPorter(t)
-	defer p.Teardown()
+	defer p.Close()
 
 	p.TestConfig.TestContext.AddTestFile("testdata/explain/bundle-docker.json", "bundle-docker.json")
 	b, err := p.CNAB.LoadBundle("bundle-docker.json")
@@ -68,7 +68,7 @@ func TestExplain_generateTableRequireDockerHostAccess(t *testing.T) {
 
 func TestExplain_generateJSON(t *testing.T) {
 	p := NewTestPorter(t)
-	defer p.Teardown()
+	defer p.Close()
 
 	p.TestConfig.TestContext.AddTestFile("testdata/explain/params-bundle.json", "params-bundle.json")
 	b, err := p.CNAB.LoadBundle("params-bundle.json")
@@ -89,7 +89,7 @@ func TestExplain_generateJSON(t *testing.T) {
 
 func TestExplain_generateYAML(t *testing.T) {
 	p := NewTestPorter(t)
-	defer p.Teardown()
+	defer p.Close()
 
 	p.TestConfig.TestContext.AddTestFile("testdata/explain/params-bundle.json", "params-bundle.json")
 	b, err := p.CNAB.LoadBundle("params-bundle.json")
@@ -428,7 +428,7 @@ func TestExplain_generatePrintableBundleDependencies(t *testing.T) {
 
 func TestExplain_generateJSONForDependencies(t *testing.T) {
 	p := NewTestPorter(t)
-	defer p.Teardown()
+	defer p.Close()
 
 	p.TestConfig.TestContext.AddTestFile("testdata/explain/dependencies-bundle.json", "dependencies-bundle.json")
 	b, err := p.CNAB.LoadBundle("dependencies-bundle.json")

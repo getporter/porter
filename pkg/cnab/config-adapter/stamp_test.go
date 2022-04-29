@@ -8,10 +8,14 @@ import (
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/manifest"
+	"get.porter.sh/porter/pkg/mixin"
+	"get.porter.sh/porter/pkg/pkgmgmt"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+var simpleManifestDigest = "7b2a4adbd1df55d080c316c97d9080aec2476c50b6fcd3a06f1e2506a439b583"
 
 func TestConfig_GenerateStamp(t *testing.T) {
 	// Do not run this test in parallel
@@ -23,11 +27,15 @@ func TestConfig_GenerateStamp(t *testing.T) {
 	m, err := manifest.LoadManifestFrom(context.Background(), c.Config, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
-	a := NewManifestConverter(c.Context, m, nil, nil)
+	installedMixins := []mixin.Metadata{
+		{Name: "exec", VersionInfo: pkgmgmt.VersionInfo{Version: "v1.2.3"}},
+	}
+
+	a := NewManifestConverter(c.Context, m, nil, installedMixins)
 	stamp, err := a.GenerateStamp()
 	require.NoError(t, err, "DigestManifest failed")
-	assert.NotEmpty(t, stamp.ManifestDigest)
-	assert.Equal(t, map[string]MixinRecord{"exec": {}}, stamp.Mixins, "Stamp.Mixins was not populated properly")
+	assert.Equal(t, simpleManifestDigest, stamp.ManifestDigest)
+	assert.Equal(t, map[string]MixinRecord{"exec": {Version: "v1.2.3"}}, stamp.Mixins, "Stamp.Mixins was not populated properly")
 	assert.Equal(t, pkg.Version, stamp.Version)
 	assert.Equal(t, pkg.Commit, stamp.Commit)
 

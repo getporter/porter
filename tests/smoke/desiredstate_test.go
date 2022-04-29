@@ -20,7 +20,7 @@ func TestDesiredState(t *testing.T) {
 	// I am always using require, so that we stop immediately upon an error
 	// A long test is hard to debug when it fails in the middle and keeps going
 	test, err := tester.NewTest(t)
-	defer test.Teardown()
+	defer test.Close()
 	require.NoError(t, err, "test setup failed")
 
 	test.PrepareTestBundle()
@@ -66,7 +66,8 @@ func TestDesiredState(t *testing.T) {
 	require.NoError(t, err)
 	require.Contains(t, stderr, "The installation is out-of-sync, running the install action")
 	require.Contains(t, stderr, "Triggering because the installation has not completed successfully yet")
-	test.RequireInstallationExists("operator", "mybuns")
+	installation := test.RequireInstallationExists("operator", "mybuns")
+	require.Equal(t, "succeeded", installation.Status.ResultStatus)
 
 	// Repeat the apply command, there should be no changes detected. Using dry run because we just want to know if it _would_ be re-executed.
 	_, output, err = test.RunPorter("installation", "apply", "mybuns.yaml", "--namespace", "operator", "--dry-run")
@@ -94,9 +95,9 @@ func TestDesiredState(t *testing.T) {
 	require.NoError(t, err)
 	tests.RequireOutputContains(t, output, "The installation is out-of-sync, running the upgrade action")
 
-	installation, err := test.ShowInstallation("operator", "mybuns")
+	displayInstallation, err := test.ShowInstallation("operator", "mybuns")
 	require.NoError(t, err)
-	require.Equal(t, float64(3), installation.Parameters["log_level"])
+	require.Equal(t, float64(3), displayInstallation.Parameters["log_level"])
 
 	// Switch credentials and trigger an upgrade
 	test.EditYaml("mybuns.yaml", func(yq *yaml.Editor) error {

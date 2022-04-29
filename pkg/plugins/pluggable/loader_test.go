@@ -1,6 +1,7 @@
 package pluggable
 
 import (
+	"context"
 	"testing"
 
 	"get.porter.sh/porter/pkg/config"
@@ -11,9 +12,7 @@ import (
 
 func TestPluginLoader_SelectPlugin(t *testing.T) {
 	c := config.NewTestConfig(t)
-	l := NewPluginLoader(c.Config, func(string, interface{}) (plugins.Plugin, error) {
-		return nil, nil
-	})
+	l := NewPluginLoader(c.Config)
 
 	pluginCfg := PluginTypeConfig{
 		GetDefaultPluggable: func(c *config.Config) string {
@@ -30,7 +29,7 @@ func TestPluginLoader_SelectPlugin(t *testing.T) {
 	t.Run("internal plugin", func(t *testing.T) {
 		c.Data.DefaultStoragePlugin = "mongodb-docker"
 
-		err := l.selectPlugin(pluginCfg)
+		err := l.selectPlugin(context.Background(), pluginCfg)
 		require.NoError(t, err, "error selecting plugin")
 
 		assert.Equal(t, &plugins.PluginKey{Binary: "porter", Implementation: "mongodb-docker", IsInternal: true}, l.SelectedPluginKey)
@@ -40,7 +39,7 @@ func TestPluginLoader_SelectPlugin(t *testing.T) {
 	t.Run("external plugin", func(t *testing.T) {
 		c.Data.DefaultStoragePlugin = "azure.blob"
 
-		err := l.selectPlugin(pluginCfg)
+		err := l.selectPlugin(context.Background(), pluginCfg)
 		require.NoError(t, err, "error selecting plugin")
 
 		assert.Equal(t, &plugins.PluginKey{Binary: "azure", Implementation: "blob", IsInternal: false}, l.SelectedPluginKey)
@@ -61,7 +60,7 @@ func TestPluginLoader_SelectPlugin(t *testing.T) {
 			},
 		}
 
-		err := l.selectPlugin(pluginCfg)
+		err := l.selectPlugin(context.Background(), pluginCfg)
 		require.NoError(t, err, "error selecting plugin")
 
 		assert.Equal(t, &plugins.PluginKey{Binary: "azure", Implementation: "blob", IsInternal: false}, l.SelectedPluginKey)

@@ -43,7 +43,7 @@ type Result struct {
 	Custom interface{} `json:"custom,omitempty" yaml:"custom,omitempty" toml:"custom,omitempty"`
 }
 
-func (r Result) DefaultDocumentFilter() interface{} {
+func (r Result) DefaultDocumentFilter() map[string]interface{} {
 	return map[string]interface{}{"_id": r.ID}
 }
 

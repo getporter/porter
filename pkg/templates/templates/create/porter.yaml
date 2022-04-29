@@ -13,7 +13,7 @@ description: "An example Porter configuration"
 registry: "localhost:5000"
 
 # If you want to customize the Dockerfile in use, uncomment the line below and update the referenced file. 
-# See https://porter.sh/custom-dockerfile/
+# See https://porter.sh/bundle/custom-dockerfile/
 #dockerfile: template.Dockerfile
 
 mixins:

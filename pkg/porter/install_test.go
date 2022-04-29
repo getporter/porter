@@ -68,3 +68,25 @@ func TestInstallOptions_validateDriver(t *testing.T) {
 		})
 	}
 }
+
+func TestUnique(t *testing.T) {
+	testcases := []struct {
+		name     string
+		existing []string
+		newData  []string
+		expected []string
+	}{
+		{"empty existing data", []string{}, []string{"foo", "bar"}, []string{"foo", "bar"}},
+		{"empty new data", []string{"foo", "bar"}, []string{}, nil},
+		{"has new data", []string{"foo", "bar"}, []string{"alice"}, []string{"alice"}},
+		{"has duplicate new data", []string{"foo", "bar"}, []string{"alice", "foo"}, []string{"alice"}},
+	}
+
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			result := Unique(tc.existing, tc.newData...)
+			require.Equal(t, tc.expected, result)
+		})
+	}
+}

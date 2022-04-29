@@ -52,6 +52,12 @@ parameter override is `--param`.
 For example, you may decide to override the `db_name` parameter for a given
 installation via `porter install --param db_name=mydb -p myparamset`.
 
+When a parameter's bundle definition is set to `sensitive=true`, the user-specified
+value will be stored into a secret store to prevent security leakage. See the [secrets
+plugin docs](/plugins/types/#secrets) to learn how porter uses an external secret store 
+to handle sensitive data.
+
+
 ## Bundle defaults
 
 The bundle author may have decided to supply a default value for a given

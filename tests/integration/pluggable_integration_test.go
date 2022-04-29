@@ -1,16 +1,18 @@
 //go:build integration
 // +build integration
 
-package pluggable
+package integration
 
 import (
+	"context"
 	"os/exec"
 	"path"
 	"testing"
 
 	"get.porter.sh/porter/pkg/config"
-	"get.porter.sh/porter/pkg/plugins"
-	"get.porter.sh/porter/pkg/secrets"
+	"get.porter.sh/porter/pkg/plugins/pluggable"
+	"get.porter.sh/porter/pkg/secrets/plugins"
+	"get.porter.sh/porter/pkg/secrets/pluginstore"
 	"github.com/stretchr/testify/require"
 )
 
@@ -30,13 +32,13 @@ func TestPlugins_CatchStderr(t *testing.T) {
 		err = exec.Command("cp", path.Join(binDir, pluginName), path.Join(pluginsPath, pluginName)).Run()
 		require.NoError(t, err, "could not copy test binary")
 
-		cfg := PluginTypeConfig{
-			Interface: secrets.PluginInterface,
-			Plugin:    &secrets.Plugin{},
+		cfg := pluggable.PluginTypeConfig{
+			Interface: plugins.PluginInterface,
+			Plugin:    &pluginstore.Plugin{},
 			GetDefaultPluggable: func(c *config.Config) string {
 				return c.Data.DefaultSecrets
 			},
-			GetPluggable: func(c *config.Config, name string) (Entry, error) {
+			GetPluggable: func(c *config.Config, name string) (pluggable.Entry, error) {
 				return c.GetSecretsPlugin(name)
 			},
 			GetDefaultPlugin: func(c *config.Config) string {
@@ -51,11 +53,9 @@ func TestPlugins_CatchStderr(t *testing.T) {
 			},
 		}}
 
-		createInternalPlugin := func(string, interface{}) (plugins.Plugin, error) {
-			return nil, nil
-		}
-		ll := NewPluginLoader(c.Config, createInternalPlugin)
-		_, _, err = ll.Load(cfg)
+		ll := pluggable.NewPluginLoader(c.Config)
+		conn, err := ll.Load(context.Background(), cfg)
+		conn.Close()
 		require.EqualError(t, err, `could not connect to the secrets.testplugin.vault plugin: Unrecognized remote plugin message: 
 
 This usually means that the plugin is either invalid or simply

@@ -8,11 +8,12 @@ Labels:
   io.cnab/appVersion: v1.2.3
 
 Parameters:
----------------------------------
-  Name      Type     Value       
----------------------------------
-  logLevel  integer  3           
-  token     unknown  top-secret  
+-------------------------------------
+  Name          Type     Value       
+-------------------------------------
+  logLevel      integer  3           
+  secretString  string   ******      
+  token         unknown  top-secret  
 
 Parameter Sets:
   - dev-env

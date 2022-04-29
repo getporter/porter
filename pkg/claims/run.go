@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"get.porter.sh/porter/pkg/cnab"
+	"get.porter.sh/porter/pkg/parameters"
 	"get.porter.sh/porter/pkg/storage"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/schema"
@@ -46,7 +47,7 @@ type Run struct {
 
 	// ParameterOverrides are the key/value parameter overrides (taking precedence over
 	// parameters specified in a parameter set) specified during the run.
-	ParameterOverrides map[string]interface{} `json:"parameterOverrides" yaml:"parameterOverrides", toml:"parameterOverrides"`
+	ParameterOverrides parameters.ParameterSet `json:"parameterOverrides, omitempty" yaml:"parameterOverrides, omitempty", toml:"parameterOverrides, omitempty"`
 
 	// CredentialSets is a list of the credential set names used during the run.
 	CredentialSets []string `json:"credentialSets,omitempty" yaml:"credentialSets,omitempty" toml:"credentialSets,omitempty"`
@@ -54,16 +55,18 @@ type Run struct {
 	// ParameterSets is the list of parameter set names used during the run.
 	ParameterSets []string `json:"parameterSets,omitempty" yaml:"parameterSets,omitempty" toml:"parameterSets,omitempty"`
 
-	// Parameters is the full set of resolved parameters stored on the claim.
-	// This includes internal parameters, resolved parameter sources, values resolved from parameter sets, etc.
-	Parameters map[string]interface{} `json:"parameters" yaml:"parameters" toml:"parameters"`
+	// Parameters is the full set of parameters that's being used during the
+	// current run.
+	// This includes internal parameters, parameter sources, values from parameter sets, etc.
+	// Any sensitive data will be sannitized before saving to the database.
+	Parameters parameters.ParameterSet `json:"parameters,omitempty" yaml:"parameters,omitempty" toml:"parameters,omitempty"`
 
 	// Custom extension data applicable to a given runtime.
 	// TODO(carolynvs): remove custom and populate it in ToCNAB
 	Custom interface{} `json:"custom" yaml:"custom", toml:"custom"`
 }
 
-func (r Run) DefaultDocumentFilter() interface{} {
+func (r Run) DefaultDocumentFilter() map[string]interface{} {
 	return map[string]interface{}{"_id": r.ID}
 }
 
@@ -76,6 +79,7 @@ func NewRun(namespace string, installation string) Run {
 		Created:       time.Now(),
 		Namespace:     namespace,
 		Installation:  installation,
+		Parameters:    parameters.NewInternalParameterSet(namespace, installation),
 	}
 }
 
@@ -99,18 +103,46 @@ func (r Run) ShouldRecord() bool {
 // ToCNAB associated with the Run.
 func (r Run) ToCNAB() cnab.Claim {
 	return cnab.Claim{
-		SchemaVersion: CNABSchemaVersion(),
-		ID:            r.ID,
 		// CNAB doesn't have the concept of namespace, so we smoosh them together to make a unique name
+		SchemaVersion:   CNABSchemaVersion(),
+		ID:              r.ID,
 		Installation:    r.Namespace + "/" + r.Installation,
 		Revision:        r.Revision,
 		Created:         r.Created,
 		Action:          r.Action,
 		Bundle:          r.Bundle,
 		BundleReference: r.BundleReference,
-		Parameters:      r.Parameters,
+		Parameters:      r.TypedParameterValues(),
 		Custom:          r.Custom,
 	}
+}
+
+// TypedParameterValues returns parameters values that have been converted to
+// its typed value based on its bundle definition.
+func (r Run) TypedParameterValues() map[string]interface{} {
+	bun := cnab.ExtendedBundle{r.Bundle}
+	value := make(map[string]interface{})
+
+	for _, param := range r.Parameters.Parameters {
+		v, err := bun.ConvertParameterValue(param.Name, param.Value)
+		if err != nil {
+			value[param.Name] = param.Value
+			continue
+		}
+		def, ok := bun.Definitions[param.Name]
+		if !ok {
+			value[param.Name] = v
+			continue
+		}
+		if bun.IsFileType(def) && v == "" {
+			v = nil
+		}
+
+		value[param.Name] = v
+	}
+
+	return value
+
 }
 
 // NewRun creates a result for the current Run.

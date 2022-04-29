@@ -42,7 +42,7 @@ You can use the generate and show commands to create the initial file:
 			return opts.Validate(p.Context, args)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.ParametersApply(opts)
+			return p.ParametersApply(cmd.Context(), opts)
 		},
 	}
 
@@ -65,7 +65,7 @@ func buildParametersEditCommand(p *porter.Porter) *cobra.Command {
 			return opts.Validate(args)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.EditParameter(opts)
+			return p.EditParameter(cmd.Context(), opts)
 		},
 	}
 
@@ -147,7 +147,7 @@ The results may also be filtered by associated labels and the namespace in which
 			return opts.Validate()
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.PrintParameters(opts)
+			return p.PrintParameters(cmd.Context(), opts)
 		},
 	}
 
@@ -176,8 +176,8 @@ func buildParametersDeleteCommand(p *porter.Porter) *cobra.Command {
 		PreRunE: func(_ *cobra.Command, args []string) error {
 			return opts.Validate(args)
 		},
-		RunE: func(_ *cobra.Command, _ []string) error {
-			return p.DeleteParameter(opts)
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			return p.DeleteParameter(cmd.Context(), opts)
 		},
 	}
 
@@ -200,7 +200,7 @@ func buildParametersShowCommand(p *porter.Porter) *cobra.Command {
 			return opts.Validate(args)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.ShowParameter(opts)
+			return p.ShowParameter(cmd.Context(), opts)
 		},
 	}
 

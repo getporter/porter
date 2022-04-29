@@ -9,7 +9,7 @@ import (
 
 func TestArchive_ParentDirDoesNotExist(t *testing.T) {
 	p := NewTestPorter(t)
-	defer p.Teardown()
+	defer p.Close()
 
 	opts := ArchiveOptions{}
 	opts.Reference = "myreg/mybuns:v0.1.0"
@@ -23,7 +23,7 @@ func TestArchive_ParentDirDoesNotExist(t *testing.T) {
 
 func TestArchive_Validate(t *testing.T) {
 	p := NewTestPorter(t)
-	defer p.Teardown()
+	defer p.Close()
 
 	testcases := []struct {
 		name      string

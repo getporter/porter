@@ -10,6 +10,8 @@ import (
 	"github.com/pkg/errors"
 )
 
+const INTERNAL_PARAMETERER_SET = "internal-parameter-set"
+
 var _ storage.Document = ParameterSet{}
 
 // ParameterSet represents a collection of parameters and their
@@ -65,7 +67,12 @@ func NewParameterSet(namespace string, name string, params ...secrets.Strategy) 
 	return ps
 }
 
-func (s ParameterSet) DefaultDocumentFilter() interface{} {
+// NewInternalParameterSet creates a new internal ParameterSet with the required fields initialized.
+func NewInternalParameterSet(namespace string, name string, params ...secrets.Strategy) ParameterSet {
+	return NewParameterSet(namespace, INTERNAL_PARAMETERER_SET+"-"+name, params...)
+}
+
+func (s ParameterSet) DefaultDocumentFilter() map[string]interface{} {
 	return map[string]interface{}{"namespace": s.Namespace, "name": s.Name}
 }
 

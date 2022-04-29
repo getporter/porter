@@ -26,7 +26,7 @@ import (
 
 func TestPorter_Build(t *testing.T) {
 	p := NewTestPorter(t)
-	defer p.Teardown()
+	defer p.Close()
 
 	configTpl, err := p.Templates.GetManifest()
 	require.Nil(t, err)
@@ -106,7 +106,7 @@ func TestPorter_Build_ChecksManifestSchemaVersion(t *testing.T) {
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
 			p := NewTestPorter(t)
-			defer p.Teardown()
+			defer p.Close()
 
 			// Make a bundle with the specified schemaVersion
 			p.TestConfig.TestContext.AddTestDirectoryFromRoot("tests/testdata/mybuns", "/")
@@ -138,7 +138,7 @@ func TestPorter_LintDuringBuild(t *testing.T) {
 
 	t.Run("failing lint should stop build", func(t *testing.T) {
 		p := NewTestPorter(t)
-		defer p.Teardown()
+		defer p.Close()
 
 		testMixins := p.Mixins.(*mixin.TestMixinProvider)
 		testMixins.LintResults = lintResults
@@ -157,7 +157,7 @@ func TestPorter_LintDuringBuild(t *testing.T) {
 
 	t.Run("ignores lint error with --no-lint", func(t *testing.T) {
 		p := NewTestPorter(t)
-		defer p.Teardown()
+		defer p.Close()
 
 		testMixins := p.Mixins.(*mixin.TestMixinProvider)
 		testMixins.LintResults = lintResults
@@ -177,7 +177,7 @@ func TestPorter_LintDuringBuild(t *testing.T) {
 
 func TestPorter_paramRequired(t *testing.T) {
 	p := NewTestPorter(t)
-	defer p.Teardown()
+	defer p.Close()
 
 	p.TestConfig.TestContext.AddTestFile("./testdata/paramafest.yaml", config.Name)
 
@@ -200,7 +200,7 @@ func TestPorter_paramRequired(t *testing.T) {
 
 func TestBuildOptions_Validate(t *testing.T) {
 	p := NewTestPorter(t)
-	defer p.Teardown()
+	defer p.Close()
 
 	testcases := []struct {
 		name       string
@@ -256,7 +256,7 @@ func TestBuildOptions_Validate(t *testing.T) {
 
 func TestBuildOptions_Defaults(t *testing.T) {
 	p := NewTestPorter(t)
-	defer p.Teardown()
+	defer p.Close()
 
 	t.Run("default driver", func(t *testing.T) {
 		opts := BuildOptions{}
@@ -264,4 +264,28 @@ func TestBuildOptions_Defaults(t *testing.T) {
 		require.NoError(t, err, "Validate failed")
 		assert.Equal(t, config.BuildDriverBuildkit, opts.Driver)
 	})
+}
+
+func TestPorter_BuildWithCustomValues(t *testing.T) {
+	p := NewTestPorter(t)
+	defer p.Close()
+
+	p.TestConfig.TestContext.AddTestFile("./testdata/porter.yaml", config.Name)
+
+	m, err := manifest.LoadManifestFrom(context.Background(), p.Config, config.Name)
+	require.NoError(t, err)
+
+	err = p.buildBundle(m, "digest")
+	require.NoError(t, err)
+
+	opts := BuildOptions{Customs: []string{"customKey1=editedCustomValue1"}}
+	require.NoError(t, opts.Validate(p.Porter), "Validate failed")
+
+	err = p.Build(context.Background(), opts)
+	require.NoError(t, err)
+
+	bun, err := p.CNAB.LoadBundle(build.LOCAL_BUNDLE)
+	require.NoError(t, err)
+
+	assert.Equal(t, bun.Custom["customKey1"], "editedCustomValue1")
 }

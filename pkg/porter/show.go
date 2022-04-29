@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"get.porter.sh/porter/pkg/claims"
+	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/printer"
 	dtprinter "github.com/carolynvs/datetime-printer"
@@ -40,37 +41,33 @@ func (so *ShowOptions) Validate(args []string, cxt *portercontext.Context) error
 }
 
 // GetInstallation retrieves information about an installation, including its most recent run.
-func (p *Porter) GetInstallation(ctx context.Context, opts ShowOptions) (claims.Installation, *claims.Run, error) {
+func (p *Porter) GetInstallation(ctx context.Context, opts ShowOptions) (claims.Installation, error) {
 	err := p.applyDefaultOptions(ctx, &opts.sharedOptions)
 	if err != nil {
-		return claims.Installation{}, nil, err
+		return claims.Installation{}, err
 	}
 
-	installation, err := p.Claims.GetInstallation(opts.Namespace, opts.Name)
+	installation, err := p.Claims.GetInstallation(ctx, opts.Namespace, opts.Name)
 	if err != nil {
-		return claims.Installation{}, nil, err
+		return claims.Installation{}, err
 	}
 
-	if installation.Status.RunID != "" {
-		run, err := p.Claims.GetRun(installation.Status.RunID)
-		if err != nil {
-			return claims.Installation{}, nil, err
-		}
-		return installation, &run, nil
-	}
+	return installation, nil
 
-	return installation, nil, nil
 }
 
 // ShowInstallation shows a bundle installation, along with any
 // associated outputs
 func (p *Porter) ShowInstallation(ctx context.Context, opts ShowOptions) error {
-	installation, run, err := p.GetInstallation(ctx, opts)
+	installation, err := p.GetInstallation(ctx, opts)
 	if err != nil {
 		return err
 	}
 
-	displayInstallation := NewDisplayInstallation(installation, run)
+	displayInstallation, err := p.generateDisplayInstallation(ctx, installation)
+	if err != nil {
+		return err
+	}
 
 	switch opts.Format {
 	case printer.FormatJson:
@@ -128,6 +125,7 @@ func (p *Porter) ShowInstallation(ctx context.Context, opts ShowOptions) error {
 			if err != nil {
 				return err
 			}
+
 		}
 
 		// Print parameter sets, if any
@@ -163,4 +161,29 @@ func (p *Porter) ShowInstallation(ctx context.Context, opts ShowOptions) error {
 	default:
 		return fmt.Errorf("invalid format: %s", opts.Format)
 	}
+}
+
+func (p *Porter) generateDisplayInstallation(ctx context.Context, installation claims.Installation) (DisplayInstallation, error) {
+	run, err := p.Claims.GetRun(ctx, installation.Status.RunID)
+	if err != nil {
+		return DisplayInstallation{}, err
+	}
+
+	bun := cnab.ExtendedBundle{run.Bundle}
+	installParams, err := p.Sanitizer.RestoreParameterSet(ctx, installation.Parameters, bun)
+	if err != nil {
+		return DisplayInstallation{}, err
+	}
+	runParams, err := p.Sanitizer.RestoreParameterSet(ctx, run.Parameters, bun)
+	if err != nil {
+		return DisplayInstallation{}, err
+	}
+
+	displayInstallation := NewDisplayInstallation(installation)
+	displayInstallation.Parameters = installParams
+
+	displayInstallation.ResolvedParameters = NewDisplayValuesFromParameters(bun, runParams)
+
+	return displayInstallation, nil
+
 }

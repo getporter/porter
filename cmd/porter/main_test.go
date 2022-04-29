@@ -87,7 +87,7 @@ func TestExperimentalFlags(t *testing.T) {
 
 	t.Run("flag unset, env unset", func(t *testing.T) {
 		p := porter.NewTestPorter(t)
-		defer p.Teardown()
+		defer p.Close()
 
 		cmd := buildRootCommandFrom(p.Porter)
 		cmd.SetArgs([]string{"install"})
@@ -97,7 +97,7 @@ func TestExperimentalFlags(t *testing.T) {
 
 	t.Run("flag set", func(t *testing.T) {
 		p := porter.NewTestPorter(t)
-		defer p.Teardown()
+		defer p.Close()
 
 		cmd := buildRootCommandFrom(p.Porter)
 		cmd.SetArgs([]string{"install", "--experimental", experimental.StructuredLogs})
@@ -111,7 +111,7 @@ func TestExperimentalFlags(t *testing.T) {
 		defer os.Unsetenv(expEnvVar)
 
 		p := porter.NewTestPorter(t)
-		defer p.Teardown()
+		defer p.Close()
 
 		cmd := buildRootCommandFrom(p.Porter)
 		cmd.SetArgs([]string{"install"})

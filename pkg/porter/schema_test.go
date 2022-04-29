@@ -12,7 +12,7 @@ import (
 
 func TestPorter_PrintManifestSchema(t *testing.T) {
 	p := NewTestPorter(t)
-	defer p.Teardown()
+	defer p.Close()
 
 	err := p.PrintManifestSchema()
 	require.NoError(t, err)
@@ -22,7 +22,7 @@ func TestPorter_PrintManifestSchema(t *testing.T) {
 
 func TestPorter_ValidateManifestSchema(t *testing.T) {
 	p := NewTestPorter(t)
-	defer p.Teardown()
+	defer p.Close()
 
 	// Load the default Porter manifest
 	b, err := ioutil.ReadFile("testdata/porter.yaml")

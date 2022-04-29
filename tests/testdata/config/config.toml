@@ -4,6 +4,7 @@ debug-plugins = true
 default-storage = "testdb"
 experimental = ["build-drivers", "structured-logs"]
 build-driver = "buildkit"
+default-secrets-plugin = "filesystem"
 
 [logs]
   enabled = true

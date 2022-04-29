@@ -7,9 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"get.porter.sh/porter/pkg/tracing"
-
 	"get.porter.sh/porter/pkg/portercontext"
+	"get.porter.sh/porter/pkg/tracing"
 	"github.com/Masterminds/semver/v3"
 )
 

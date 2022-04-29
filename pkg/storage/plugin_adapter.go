@@ -1,14 +1,15 @@
 package storage
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"strings"
 
 	"get.porter.sh/porter/pkg/storage/plugins"
 	"github.com/pkg/errors"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 var _ Store = PluginAdapter{}
@@ -21,29 +22,25 @@ var _ Store = PluginAdapter{}
 // ResultType on plugin.ResultOptions so that you can just cast the result to
 // the specified type safely.
 type PluginAdapter struct {
-	plugin plugins.StoragePlugin
+	plugin plugins.StorageProtocol
 }
 
 // NewPluginAdapter wraps the specified storage plugin.
-func NewPluginAdapter(plugin plugins.StoragePlugin) PluginAdapter {
-	return PluginAdapter{plugin: plugin}
-}
-
-func (a PluginAdapter) Connect() error {
-	return a.plugin.Connect()
+func NewPluginAdapter(plugin plugins.StorageProtocol) PluginAdapter {
+	return PluginAdapter{
+		plugin: plugin,
+	}
 }
 
 func (a PluginAdapter) Close() error {
-	return a.plugin.Close()
+	if closer, ok := a.plugin.(io.Closer); ok {
+		return closer.Close()
+	}
+	return nil
 }
 
-func (a PluginAdapter) Aggregate(collection string, opts AggregateOptions, out interface{}) error {
-	err := a.Connect()
-	if err != nil {
-		return err
-	}
-
-	rawResults, err := a.plugin.Aggregate(opts.ToPluginOptions(collection))
+func (a PluginAdapter) Aggregate(ctx context.Context, collection string, opts AggregateOptions, out interface{}) error {
+	rawResults, err := a.plugin.Aggregate(ctx, opts.ToPluginOptions(collection))
 	if err != nil {
 		return err
 	}
@@ -51,33 +48,19 @@ func (a PluginAdapter) Aggregate(collection string, opts AggregateOptions, out i
 	return a.unmarshalSlice(rawResults, out)
 }
 
-func (a PluginAdapter) EnsureIndex(opts EnsureIndexOptions) error {
-	err := a.Connect()
-	if err != nil {
-		return err
-	}
-
-	return a.plugin.EnsureIndex(opts.ToPluginOptions())
+func (a PluginAdapter) EnsureIndex(ctx context.Context, opts EnsureIndexOptions) error {
+	return a.plugin.EnsureIndex(ctx, opts.ToPluginOptions())
 }
 
-func (a PluginAdapter) Count(collection string, opts CountOptions) (int64, error) {
-	err := a.Connect()
-	if err != nil {
-		return 0, err
-	}
-
-	return a.plugin.Count(opts.ToPluginOptions(collection))
+func (a PluginAdapter) Count(ctx context.Context, collection string, opts CountOptions) (int64, error) {
+	return a.plugin.Count(ctx, opts.ToPluginOptions(collection))
 }
 
-func (a PluginAdapter) Find(collection string, opts FindOptions, out interface{}) error {
-	err := a.Connect()
+func (a PluginAdapter) Find(ctx context.Context, collection string, opts FindOptions, out interface{}) error {
+	rawResults, err := a.plugin.Find(ctx, opts.ToPluginOptions(collection))
 	if err != nil {
-		return err
-	}
+		return a.handleError(err, collection)
 
-	rawResults, err := a.plugin.Find(opts.ToPluginOptions(collection))
-	if err != nil {
-		return err
 	}
 
 	return a.unmarshalSlice(rawResults, out)
@@ -85,24 +68,15 @@ func (a PluginAdapter) Find(collection string, opts FindOptions, out interface{}
 
 // FindOne queries a collection and returns the first result, returning
 // ErrNotFound when no results are returned.
-func (a PluginAdapter) FindOne(collection string, opts FindOptions, out interface{}) error {
-	err := a.Connect()
+func (a PluginAdapter) FindOne(ctx context.Context, collection string, opts FindOptions, out interface{}) error {
+	rawResults, err := a.plugin.Find(ctx, opts.ToPluginOptions(collection))
 	if err != nil {
-		return err
-	}
-
-	rawResults, err := a.plugin.Find(opts.ToPluginOptions(collection))
-	if err != nil {
-		return err
+		return a.handleError(err, collection)
 	}
 
 	if len(rawResults) == 0 {
 		notFoundErr := ErrNotFound{Collection: collection}
-		filter, ok := opts.Filter.(primitive.M)
-		if !ok {
-			return notFoundErr
-		}
-		if name, ok := filter["name"]; ok {
+		if name, ok := opts.Filter["name"]; ok {
 			notFoundErr.Item = fmt.Sprint(name)
 		}
 		return notFoundErr
@@ -166,57 +140,35 @@ func (a PluginAdapter) unmarshal(bsonResult bson.Raw, out interface{}) error {
 	return errors.Wrapf(err, "could not unmarshal slice onto type %T", out)
 }
 
-func (a PluginAdapter) Get(collection string, opts GetOptions, out interface{}) error {
-	findOpts := opts.ToPluginOptions()
-	return a.FindOne(collection, findOpts, out)
+func (a PluginAdapter) Get(ctx context.Context, collection string, opts GetOptions, out interface{}) error {
+	findOpts := opts.ToFindOptions()
+	err := a.FindOne(ctx, collection, findOpts, out)
+	return a.handleError(err, collection)
 }
 
-func (a PluginAdapter) Insert(collection string, opts InsertOptions) error {
-	err := a.Connect()
-	if err != nil {
-		return err
-	}
-
+func (a PluginAdapter) Insert(ctx context.Context, collection string, opts InsertOptions) error {
 	pluginOpts, err := opts.ToPluginOptions(collection)
 	if err != nil {
 		return err
 	}
 
-	return a.plugin.Insert(pluginOpts)
-}
-
-func (a PluginAdapter) Patch(collection string, opts PatchOptions) error {
-	err := a.Connect()
-	if err != nil {
-		return err
-	}
-
-	err = a.plugin.Patch(opts.ToPluginOptions(collection))
+	err = a.plugin.Insert(ctx, pluginOpts)
 	return a.handleError(err, collection)
 }
 
-func (a PluginAdapter) Remove(collection string, opts RemoveOptions) error {
-	err := a.Connect()
-	if err != nil {
-		return err
-	}
-
-	err = a.plugin.Remove(opts.ToPluginOptions(collection))
+func (a PluginAdapter) Patch(ctx context.Context, collection string, opts PatchOptions) error {
+	err := a.plugin.Patch(ctx, opts.ToPluginOptions(collection))
 	return a.handleError(err, collection)
 }
 
-func (a PluginAdapter) Update(collection string, opts UpdateOptions) error {
-	err := a.Connect()
-	if err != nil {
-		return err
-	}
+func (a PluginAdapter) Remove(ctx context.Context, collection string, opts RemoveOptions) error {
+	err := a.plugin.Remove(ctx, opts.ToPluginOptions(collection))
+	return a.handleError(err, collection)
+}
 
+func (a PluginAdapter) Update(ctx context.Context, collection string, opts UpdateOptions) error {
 	pluginOpts, err := opts.ToPluginOptions(collection)
-	if err != nil {
-		return err
-	}
-
-	err = a.plugin.Update(pluginOpts)
+	err = a.plugin.Update(ctx, pluginOpts)
 	return a.handleError(err, collection)
 }
 

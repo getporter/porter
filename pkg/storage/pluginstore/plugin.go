@@ -1,23 +1,38 @@
 package pluginstore
 
 import (
-	"net/rpc"
+	"context"
 
+	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/storage/plugins"
+	"get.porter.sh/porter/pkg/storage/plugins/proto"
 	"github.com/hashicorp/go-plugin"
+	"google.golang.org/grpc"
 )
 
-var _ plugin.Plugin = &Plugin{}
+var _ plugin.GRPCPlugin = Plugin{}
 
-// Plugin is a generic type of plugin for working with any implementation of a crud store.
+// Plugin is the shared implementation of a storage plugin wrapper.
 type Plugin struct {
-	Impl plugins.StorageProtocol
+	plugin.Plugin
+	impl    plugins.StorageProtocol
+	context *portercontext.Context
 }
 
-func (p *Plugin) Server(*plugin.MuxBroker) (interface{}, error) {
-	return &Server{Impl: p.Impl}, nil
+// NewPlugin creates an instance of a storage plugin.
+func NewPlugin(c *portercontext.Context, impl plugins.StorageProtocol) Plugin {
+	return Plugin{
+		context: c,
+		impl:    impl,
+	}
 }
 
-func (Plugin) Client(b *plugin.MuxBroker, c *rpc.Client) (interface{}, error) {
-	return &Client{client: c}, nil
+func (p Plugin) GRPCServer(broker *plugin.GRPCBroker, s *grpc.Server) error {
+	impl := &GServer{c: p.context, impl: p.impl}
+	proto.RegisterStorageProtocolServer(s, impl)
+	return nil
+}
+
+func (p Plugin) GRPCClient(ctx context.Context, broker *plugin.GRPCBroker, conn *grpc.ClientConn) (interface{}, error) {
+	return &GClient{client: proto.NewStorageProtocolClient(conn)}, nil
 }

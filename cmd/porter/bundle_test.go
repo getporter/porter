@@ -157,7 +157,7 @@ func TestBuildValidate_Driver(t *testing.T) {
 			}
 
 			p := porter.NewTestPorter(t)
-			defer p.Teardown()
+			defer p.Close()
 
 			rootCmd := buildRootCommandFrom(p.Porter)
 

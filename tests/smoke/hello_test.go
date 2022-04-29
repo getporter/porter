@@ -18,7 +18,7 @@ func TestHelloBundle(t *testing.T) {
 	// I am always using require, so that we stop immediately upon an error
 	// A long test is hard to debug when it fails in the middle and keeps going
 	test, err := tester.NewTest(t)
-	defer test.Teardown()
+	defer test.Close()
 	require.NoError(t, err, "test setup failed")
 
 	test.PrepareTestBundle()
@@ -31,7 +31,7 @@ func TestHelloBundle(t *testing.T) {
 	test.RequireInstallationNotFound(test.CurrentNamespace(), testdata.MyBuns)
 
 	// Install the bundle and verify the correct output is printed
-	_, output = test.RequirePorter("install", testdata.MyBuns, "--reference", testdata.MyBunsRef, "--label", "test=true", "-p=mybuns", "-c=mybuns")
+	_, output = test.RequirePorter("install", testdata.MyBuns, "--reference", testdata.MyBunsRef, "--label", "test=true", "-p=mybuns", "-c=mybuns", "--param", "password=supersecret")
 	require.Contains(t, output, "Hello, *******")
 
 	// Should not see the mybuns installation in the global namespace
@@ -56,10 +56,13 @@ func TestHelloBundle(t *testing.T) {
 	// TODO(carolynvs): check that status shows up as a run
 
 	// Install in the test namespace, and do not persist the logs
-	test.RequirePorter("install", testdata.MyBuns, "--reference", testdata.MyBunsRef, "--namespace=test", "-c=mybuns", "--no-logs")
+	test.RequirePorter("install", testdata.MyBuns, "--reference", testdata.MyBunsRef, "--namespace=test", "-c=mybuns", "-p=mybuns", "--no-logs", "--param", "password=supersecret")
 	_, _, err = test.RunPorter("installation", "logs", "show", "--namespace=test", "-i=mybuns")
 	require.Error(t, err, "expected log retrieval to fail")
 	require.Contains(t, err.Error(), "no logs found")
+	displayInstallation, err := test.ShowInstallation("test", testdata.MyBuns)
+	require.NoError(t, err)
+	require.Len(t, displayInstallation.ParameterSets, 1)
 
 	// Let's try out list filtering!
 	// Search by namespace
@@ -78,14 +81,21 @@ func TestHelloBundle(t *testing.T) {
 	require.Len(t, installations, 1, "expected one installations labeled with test=true")
 
 	// Validate that we can't accidentally overwrite an installation
-	_, _, err = test.RunPorter("install", testdata.MyBuns, "--reference", testdata.MyBunsRef, "--namespace=test", "-c=mybuns")
+	_, _, err = test.RunPorter("install", testdata.MyBuns, "--reference", testdata.MyBunsRef, "--namespace=test", "-c=mybuns", "--param", "password=supersecret")
 	tests.RequireErrorContains(t, err, "The installation has already been successfully installed")
 
 	// We should be able to repeat install with --force
-	test.RequirePorter("install", testdata.MyBuns, "--reference", testdata.MyBunsRef, "--namespace=test", "-c=mybuns", "--force")
+	test.RequirePorter("install", testdata.MyBuns, "--reference", testdata.MyBunsRef, "--namespace=test", "-c=mybuns", "--force", "--param", "password=supersecret")
 
 	// Upgrade our installation
-	test.RequirePorter("upgrade", testdata.MyBuns, "--namespace", test.CurrentNamespace(), "-c=mybuns")
+	test.RequirePorter("upgrade", testdata.MyBuns, "--namespace", test.CurrentNamespace(), "-p=mybuns", "-c=mybuns")
+	test.RequirePorter("upgrade", testdata.MyBuns, "--namespace", test.CurrentNamespace(), "-p=mybuns", "-c=mybuns")
+	// no duplicate in credential set or parameter set on the installation
+	// record
+	displayInstallation, err = test.ShowInstallation(test.CurrentNamespace(), testdata.MyBuns)
+	require.NoError(t, err)
+	require.Len(t, displayInstallation.ParameterSets, 1)
+	require.Len(t, displayInstallation.CredentialSets, 1)
 
 	// Uninstall and remove the installation
 	test.RequirePorter("uninstall", testdata.MyBuns, "--namespace", test.CurrentNamespace(), "-c=mybuns")

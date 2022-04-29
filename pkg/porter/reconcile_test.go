@@ -6,6 +6,7 @@ import (
 
 	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab"
+	"get.porter.sh/porter/pkg/parameters"
 	"get.porter.sh/porter/pkg/portercontext"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -18,7 +19,7 @@ func TestPorter_IsInstallationInSync(t *testing.T) {
 
 	t.Run("new installation with uninstalled true", func(t *testing.T) {
 		p := NewTestPorter(t)
-		defer p.Teardown()
+		defer p.Close()
 
 		i := claims.Installation{
 			Uninstalled: true,
@@ -31,7 +32,7 @@ func TestPorter_IsInstallationInSync(t *testing.T) {
 
 	t.Run("new installation with uninstalled false", func(t *testing.T) {
 		p := NewTestPorter(t)
-		defer p.Teardown()
+		defer p.Close()
 
 		i := claims.Installation{}
 		insync, err := p.IsInstallationInSync(p.RootContext, i, nil, NewInstallOptions())
@@ -42,7 +43,7 @@ func TestPorter_IsInstallationInSync(t *testing.T) {
 
 	t.Run("installed - no changes", func(t *testing.T) {
 		p := NewTestPorter(t)
-		defer p.Teardown()
+		defer p.Close()
 
 		i := claims.Installation{
 			Status: claims.InstallationStatus{
@@ -51,9 +52,7 @@ func TestPorter_IsInstallationInSync(t *testing.T) {
 		}
 		run := claims.Run{
 			// Use the default values from the bundle.json so that we don't trigger reconciliation
-			Parameters: map[string]interface{}{
-				"my-second-param": "spring-music-demo",
-			},
+			Parameters: parameters.NewInternalParameterSet(i.Namespace, i.Name, parameters.ValueStrategy("my-second-param", "spring-music-demo")),
 		}
 		upgradeOpts := NewUpgradeOptions()
 		upgradeOpts.bundleRef = &cnab.BundleReference{Definition: bun}
@@ -65,7 +64,7 @@ func TestPorter_IsInstallationInSync(t *testing.T) {
 
 	t.Run("installed - bundle digest changed", func(t *testing.T) {
 		p := NewTestPorter(t)
-		defer p.Teardown()
+		defer p.Close()
 
 		i := claims.Installation{
 			Status: claims.InstallationStatus{
@@ -86,7 +85,7 @@ func TestPorter_IsInstallationInSync(t *testing.T) {
 
 	t.Run("installed - param changed", func(t *testing.T) {
 		p := NewTestPorter(t)
-		defer p.Teardown()
+		defer p.Close()
 
 		i := claims.Installation{
 			Status: claims.InstallationStatus{
@@ -94,9 +93,7 @@ func TestPorter_IsInstallationInSync(t *testing.T) {
 			},
 		}
 		run := claims.Run{
-			Parameters: map[string]interface{}{
-				"my-second-param": "newvalue",
-			},
+			Parameters: parameters.NewInternalParameterSet(i.Namespace, i.Name, parameters.ValueStrategy("my-second-param", "newvalue")),
 		}
 		upgradeOpts := NewUpgradeOptions()
 		upgradeOpts.bundleRef = &cnab.BundleReference{Definition: bun}
@@ -109,7 +106,7 @@ func TestPorter_IsInstallationInSync(t *testing.T) {
 
 	t.Run("installed - credential set changed", func(t *testing.T) {
 		p := NewTestPorter(t)
-		defer p.Teardown()
+		defer p.Close()
 
 		i := claims.Installation{
 			CredentialSets: []string{"newcreds"},
@@ -120,9 +117,7 @@ func TestPorter_IsInstallationInSync(t *testing.T) {
 		run := claims.Run{
 			CredentialSets: []string{"oldcreds"},
 			// Use the default values from the bundle.json so they don't trigger the reconciliation
-			Parameters: map[string]interface{}{
-				"my-second-param": "spring-music-demo",
-			},
+			Parameters: parameters.NewInternalParameterSet(i.Namespace, i.Name, parameters.ValueStrategy("my-second-param", "spring-music-demo")),
 		}
 		upgradeOpts := NewUpgradeOptions()
 		upgradeOpts.bundleRef = &cnab.BundleReference{Definition: bun}
@@ -135,7 +130,7 @@ func TestPorter_IsInstallationInSync(t *testing.T) {
 
 	t.Run("installed - uninstalled change to true", func(t *testing.T) {
 		p := NewTestPorter(t)
-		defer p.Teardown()
+		defer p.Close()
 
 		i := claims.Installation{
 			Uninstalled: true, // trigger uninstall
@@ -151,7 +146,7 @@ func TestPorter_IsInstallationInSync(t *testing.T) {
 
 	t.Run("uninstalled: uninstalled set to back to false", func(t *testing.T) {
 		p := NewTestPorter(t)
-		defer p.Teardown()
+		defer p.Close()
 
 		i := claims.Installation{
 			Uninstalled: false,

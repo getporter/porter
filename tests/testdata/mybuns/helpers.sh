@@ -36,6 +36,8 @@ chaos_monkey() {
     exit 1
   fi
 
+    echo "no chaos monkey appeared. you have lived"
+
 }
 
 # Call the requested function and pass the arguments as-is

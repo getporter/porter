@@ -12,6 +12,8 @@ import (
 )
 
 func TestDeleteInstallation(t *testing.T) {
+	ctx := context.Background()
+
 	testcases := []struct {
 		name                string
 		lastAction          string
@@ -51,7 +53,7 @@ func TestDeleteInstallation(t *testing.T) {
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
 			p := NewTestPorter(t)
-			defer p.Teardown()
+			defer p.Close()
 
 			var err error
 
@@ -66,7 +68,7 @@ func TestDeleteInstallation(t *testing.T) {
 			opts.Name = "test"
 			opts.Force = tc.force
 
-			err = p.DeleteInstallation(context.Background(), opts)
+			err = p.DeleteInstallation(ctx, opts)
 			if tc.wantError != "" {
 				require.Error(t, err)
 				assert.Contains(t, err.Error(), tc.wantError)
@@ -74,7 +76,7 @@ func TestDeleteInstallation(t *testing.T) {
 				require.NoError(t, err, "expected DeleteInstallation to succeed")
 			}
 
-			_, err = p.Claims.GetInstallation("", "test")
+			_, err = p.Claims.GetInstallation(ctx, "", "test")
 			if tc.installationRemains {
 				require.NoError(t, err, "expected installation to exist")
 			} else {

@@ -21,7 +21,7 @@ import (
 // Copy the bundle to another location, this will fail unless we are properly using the relocation map
 func TestCopy(t *testing.T) {
 	test, err := tester.NewTest(t)
-	defer test.Teardown()
+	defer test.Close()
 	require.NoError(t, err, "test setup failed")
 
 	// Start a temp registry

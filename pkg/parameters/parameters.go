@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"strings"
 
+	"get.porter.sh/porter/pkg/secrets"
 	"github.com/cnabio/cnab-go/schema"
+	"github.com/cnabio/cnab-go/secrets/host"
 )
 
 const (
@@ -36,4 +38,13 @@ func ParseVariableAssignments(params []string) (map[string]string, error) {
 	}
 
 	return variables, nil
+}
+
+// ValueStrategy is the strategy used to store non-sensitive parameters
+func ValueStrategy(name string, value string) secrets.Strategy {
+	return secrets.Strategy{
+		Name:   name,
+		Source: secrets.Source{Key: host.SourceValue, Value: value},
+		Value:  value,
+	}
 }

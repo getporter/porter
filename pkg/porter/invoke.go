@@ -48,7 +48,7 @@ func (p *Porter) InvokeBundle(ctx context.Context, opts InvokeOptions) error {
 		return err
 	}
 
-	installation, err := p.Claims.GetInstallation(opts.Namespace, opts.Name)
+	installation, err := p.Claims.GetInstallation(ctx, opts.Namespace, opts.Name)
 	if errors.Is(err, storage.ErrNotFound{}) {
 		action, actionErr := bundleRef.Definition.GetAction(opts.Action)
 		if actionErr != nil {
@@ -63,7 +63,7 @@ func (p *Porter) InvokeBundle(ctx context.Context, opts InvokeOptions) error {
 		// Create an ephemeral installation just for this run
 		installation = claims.Installation{Namespace: opts.Namespace, Name: opts.Name}
 	}
-	err = p.applyActionOptionsToInstallation(&installation, opts.BundleActionOptions)
+	err = p.applyActionOptionsToInstallation(ctx, &installation, opts.BundleActionOptions)
 	if err != nil {
 		return err
 	}

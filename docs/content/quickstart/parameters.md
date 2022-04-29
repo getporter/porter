@@ -59,6 +59,9 @@ Some parameters may be sensitive, for example a database connection string or oa
 For improved security, and to limit exposure of sensitive values, it is recommended that you source sensitive parameter values from a secret store such as HashiCorp Vault or Azure Key Vault.
 See the list of available [plugins](/plugins/) for which secret providers are supported.
 
+Porter stores all sensitive parameter values in a secret store, never in Porter's database.
+Sensitive parameter values are resolved from the secret store just-in-time before the bundle run.
+
 ## Use the default parameter values
 
 Install the bundle without specifying any parameters so that you can see the default behavior of the bundle.

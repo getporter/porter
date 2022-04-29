@@ -50,7 +50,7 @@ func TestParseVariableAssignments_MissingVariableName(t *testing.T) {
 
 func TestTestParameterProvider_Load(t *testing.T) {
 	p := NewTestParameterProvider(t)
-	defer p.Teardown()
+	defer p.Close()
 
 	t.Run("unsuccessful load", func(t *testing.T) {
 		_, err := p.Load("paramset.json")

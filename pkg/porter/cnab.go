@@ -5,12 +5,14 @@ import (
 	"path/filepath"
 
 	"get.porter.sh/porter/pkg/build"
+	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/cnab/drivers"
 	cnabprovider "get.porter.sh/porter/pkg/cnab/provider"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/parameters"
 	"get.porter.sh/porter/pkg/portercontext"
+	"get.porter.sh/porter/pkg/secrets"
 	"github.com/pkg/errors"
 )
 
@@ -240,7 +242,7 @@ func (o *bundleFileOptions) validateCNABFile(cxt *portercontext.Context) error {
 
 // LoadParameters validates and resolves the parameters and sets. It must be
 // called after porter has loaded the bundle definition.
-func (o *sharedOptions) LoadParameters(p *Porter, bun cnab.ExtendedBundle) error {
+func (o *sharedOptions) LoadParameters(ctx context.Context, p *Porter, bun cnab.ExtendedBundle) error {
 	// This is called in multiple code paths, so exit early if
 	// we have already loaded the parameters into combinedParameters
 	if o.combinedParameters != nil {
@@ -252,7 +254,7 @@ func (o *sharedOptions) LoadParameters(p *Porter, bun cnab.ExtendedBundle) error
 		return err
 	}
 
-	err = o.parseParamSets(p, bun)
+	err = o.parseParamSets(ctx, p, bun)
 	if err != nil {
 		return err
 	}
@@ -268,14 +270,38 @@ func (o *sharedOptions) parseParams() error {
 	if err != nil {
 		return err
 	}
+
 	o.parsedParams = p
 	return nil
 }
 
+func (o *sharedOptions) populateInternalParameterSet(ctx context.Context, p *Porter, bun cnab.ExtendedBundle, i *claims.Installation) error {
+	strategies := make([]secrets.Strategy, 0, len(o.parsedParams))
+	for name, value := range o.parsedParams {
+		strategies = append(strategies, parameters.ValueStrategy(name, value))
+	}
+
+	strategies, err := p.Sanitizer.CleanParameters(ctx, strategies, bun, i.ID)
+	if err != nil {
+		return err
+	}
+
+	if len(strategies) == 0 {
+		// if no override is specified, clear out the old parameters on the
+		// installation record
+		i.Parameters.Parameters = nil
+		return nil
+	}
+
+	i.Parameters = i.NewInternalParameterSet(strategies...)
+
+	return nil
+}
+
 // parseParamSets parses the variable assignments in ParameterSets.
-func (o *sharedOptions) parseParamSets(p *Porter, bun cnab.ExtendedBundle) error {
+func (o *sharedOptions) parseParamSets(ctx context.Context, p *Porter, bun cnab.ExtendedBundle) error {
 	if len(o.ParameterSets) > 0 {
-		parsed, err := p.loadParameterSets(bun, o.Namespace, o.ParameterSets)
+		parsed, err := p.loadParameterSets(ctx, bun, o.Namespace, o.ParameterSets)
 		if err != nil {
 			return errors.Wrap(err, "unable to process provided parameter sets")
 		}

@@ -67,45 +67,35 @@ func (p *Porter) InstallationApply(ctx context.Context, opts ApplyOptions) error
 		log.Debug("read input file", attribute.String("contents", string(contents)))
 	}
 
-	var input claims.Installation
+	var input DisplayInstallation
 	if err := encoding.UnmarshalFile(p.FileSystem, opts.File, &input); err != nil {
 		return errors.Wrapf(err, "unable to parse %s as an installation document", opts.File)
 	}
 	input.Namespace = namespace
-
-	if err = input.Validate(); err != nil {
-		return errors.Wrap(err, "invalid installation")
+	inputInstallation, err := input.ConvertToInstallation()
+	if err != nil {
+		return err
 	}
 
-	installation, err := p.Claims.GetInstallation(input.Namespace, input.Name)
+	installation, err := p.Claims.GetInstallation(ctx, inputInstallation.Namespace, inputInstallation.Name)
 	if err != nil {
 		if !errors.Is(err, storage.ErrNotFound{}) {
-			return errors.Wrapf(err, "could not query for an existing installation document for %s", input)
+			return errors.Wrapf(err, "could not query for an existing installation document for %s", inputInstallation)
 		}
 
 		// Create a new installation
 		installation = claims.NewInstallation(input.Namespace, input.Name)
-		installation.Apply(input)
+		installation.Apply(inputInstallation)
 
-		if !opts.DryRun {
-			if err = p.Claims.InsertInstallation(installation); err != nil {
-				return err
-			}
-		}
-		log.Info("Created installation", attribute.String("installation", installation.String()))
+		log.Info("Creating a new installation", attribute.String("installation", installation.String()))
 	} else {
 		// Apply the specified changes to the installation
-		installation.Apply(input)
+		installation.Apply(inputInstallation)
 		if err := installation.Validate(); err != nil {
 			return err
 		}
 
-		if !opts.DryRun {
-			if err := p.Claims.UpdateInstallation(installation); err != nil {
-				return err
-			}
-		}
-		fmt.Fprintf(p.Err, "Updated %s installation\n", installation)
+		fmt.Fprintf(p.Err, "Updating %s installation\n", installation)
 	}
 
 	reconcileOpts := ReconcileOptions{

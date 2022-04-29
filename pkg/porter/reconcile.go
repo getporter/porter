@@ -6,6 +6,7 @@ import (
 	"sort"
 
 	"get.porter.sh/porter/pkg/claims"
+	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/tracing"
 	"get.porter.sh/porter/pkg/yaml"
@@ -41,7 +42,7 @@ func (p *Porter) ReconcileInstallation(ctx context.Context, opts ReconcileOption
 
 	// Get the last run of the installation, if available
 	var lastRun *claims.Run
-	r, err := p.Claims.GetLastRun(opts.Namespace, opts.Name)
+	r, err := p.Claims.GetLastRun(ctx, opts.Namespace, opts.Name)
 	neverRun := errors.Is(err, storage.ErrNotFound{})
 	if err != nil && !neverRun {
 		return err
@@ -76,24 +77,28 @@ func (p *Porter) ReconcileInstallation(ctx context.Context, opts ReconcileOption
 	lifecycleOpts.Name = opts.Name
 	lifecycleOpts.Namespace = opts.Namespace
 	lifecycleOpts.CredentialIdentifiers = opts.Installation.CredentialSets
+
 	lifecycleOpts.ParameterSets = opts.Installation.ParameterSets
-	lifecycleOpts.Params = make([]string, 0, len(opts.Installation.Parameters))
+	lifecycleOpts.Params = make([]string, 0, len(opts.Installation.Parameters.Parameters))
 
 	// Write out the parameters as string values. Not efficient but reusing ExecuteAction would need more refactoring otherwise
-	bundleRef, err := p.resolveBundleReference(ctx, actionOpts.GetOptions())
+	_, err = p.resolveBundleReference(ctx, lifecycleOpts)
 	if err != nil {
 		return err
 	}
-	err = opts.Installation.ConvertParameterValues(bundleRef.Definition)
-	if err != nil {
+
+	for _, param := range opts.Installation.Parameters.Parameters {
+		lifecycleOpts.Params = append(lifecycleOpts.Params, fmt.Sprintf("%s=%s", param.Name, param.Value))
+	}
+
+	if err := p.applyActionOptionsToInstallation(ctx, &opts.Installation, lifecycleOpts); err != nil {
 		return err
 	}
-	for param, value := range opts.Installation.Parameters {
-		stringValue, err := bundleRef.Definition.WriteParameterToString(param, value)
-		if err != nil {
+
+	if !opts.DryRun {
+		if err = p.Claims.UpsertInstallation(ctx, opts.Installation); err != nil {
 			return err
 		}
-		lifecycleOpts.Params = append(lifecycleOpts.Params, fmt.Sprintf("%s=%s", param, stringValue))
 	}
 
 	// Determine if the installation's desired state is out of sync with reality 🤯
@@ -182,17 +187,12 @@ func (p *Porter) IsInstallationInSync(ctx context.Context, i claims.Installation
 		return false, nil
 	}
 
-	// Have the bundle parameters changed?
-	if err := opts.LoadParameters(p, newRef.Definition); err != nil {
-		return false, err
-	}
-
 	// Get a set of parameters ready for comparison to another set of parameters
 	// to tell if the installation should be executed again. For now I'm just
 	// removing internal parameters (e.g. porter-debug, porter-state) and making
 	// sure that the types are correct, etc.
 	b := newRef.Definition
-	resolvedParams, err := p.resolveParameters(i, b, action.GetAction(), opts.combinedParameters)
+	resolvedParams, err := p.resolveParameters(ctx, i, b, action.GetAction(), opts.combinedParameters)
 	if err != nil {
 		return false, err
 	}
@@ -222,9 +222,14 @@ func (p *Porter) IsInstallationInSync(ctx context.Context, i claims.Installation
 		return compParams, nil
 	}
 
-	oldParams, err := prepParametersForComparison(lastRun.Parameters)
+	lastRunParams, err := p.Sanitizer.RestoreParameterSet(ctx, lastRun.Parameters, cnab.ExtendedBundle{lastRun.Bundle})
 	if err != nil {
-		return false, errors.Wrapf(err, "error prepping previous parameters for comparision")
+		return false, err
+	}
+
+	oldParams, err := prepParametersForComparison(lastRunParams)
+	if err != nil {
+		return false, errors.Wrapf(err, "error prepping old parameters for comparision")
 	}
 
 	newParams, err := prepParametersForComparison(resolvedParams)
