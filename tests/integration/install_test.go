@@ -1,3 +1,4 @@
+//go:build integration
 // +build integration
 
 package integration
@@ -134,7 +135,6 @@ func TestInstall_stringParam(t *testing.T) {
 	t.Skip("This is a failing test for https://github.com/getporter/porter/issues/1862")
 
 	p := porter.NewTestPorter(t)
-	defer p.Close()
 	p.SetupIntegrationTest()
 	p.Debug = false
 
@@ -143,10 +143,10 @@ func TestInstall_stringParam(t *testing.T) {
 	installOpts := porter.NewInstallOptions()
 	installOpts.Params = []string{"name=Demo Time"}
 
-	err := installOpts.Validate(context.Background(), []string{}, p.Porter)
+	err := installOpts.Validate([]string{}, p.Porter)
 	require.NoError(t, err)
 
-	err = p.InstallBundle(context.Background(), installOpts)
+	err = p.InstallBundle(installOpts)
 	require.NoError(t, err)
 
 	output := p.TestConfig.TestContext.GetOutput()
