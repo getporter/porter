@@ -268,7 +268,7 @@ func TestBuildOptions_Defaults(t *testing.T) {
 
 func TestPorter_BuildWithCustomValues(t *testing.T) {
 	p := NewTestPorter(t)
-	defer p.Teardown()
+	defer p.Close()
 
 	p.TestConfig.TestContext.AddTestFile("./testdata/porter.yaml", config.Name)
 
