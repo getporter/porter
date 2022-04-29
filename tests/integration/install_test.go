@@ -118,7 +118,7 @@ func TestInstall_stringParam(t *testing.T) {
 	t.Skip("This is a failing test for https://github.com/getporter/porter/issues/1862")
 
 	p := porter.NewTestPorter(t)
-	defer p.Teardown()
+	defer p.Close()
 	p.SetupIntegrationTest()
 	p.Debug = false
 
