@@ -39,20 +39,20 @@ porter bundles install [INSTALLATION] [flags]
 ### Options
 
 ```
-      --allow-docker-host-access   Controls if the bundle should have access to the host's Docker daemon with elevated privileges. See https://porter.sh/configuration/#allow-docker-host-access for the full implications of this flag.
-      --cnab-file string           Path to the CNAB bundle.json file.
-  -c, --cred strings               Credential to use when installing the bundle. It should be a named set of credentials and may be specified multiple times.
-  -d, --driver string              Specify a driver to use. Allowed values: docker, debug (default "docker")
-  -f, --file string                Path to the porter manifest file. Defaults to the bundle in the current directory.
-      --force                      Force a fresh pull of the bundle
-  -h, --help                       help for install
-      --insecure-registry          Don't require TLS for the registry
-  -l, --label strings              Associate the specified labels with the installation. May be specified multiple times.
-  -n, --namespace string           Create the installation in the specified namespace. Defaults to the global namespace.
-      --no-logs                    Do not persist the bundle execution logs
-      --param strings              Define an individual parameter in the form NAME=VALUE. Overrides parameters otherwise set via --parameter-set. May be specified multiple times.
-  -p, --parameter-set strings      Name of a parameter set for the bundle. It should be a named set of parameters and may be specified multiple times.
-  -r, --reference string           Use a bundle in an OCI registry specified by the given reference.
+      --allow-docker-host-access    Controls if the bundle should have access to the host's Docker daemon with elevated privileges. See https://porter.sh/configuration/#allow-docker-host-access for the full implications of this flag.
+      --cnab-file string            Path to the CNAB bundle.json file.
+  -c, --cred strings                Credential to use when installing the bundle. It should be a named set of credentials and may be specified multiple times.
+  -d, --driver string               Specify a driver to use. Allowed values: docker, debug (default "docker")
+  -f, --file string                 Path to the porter manifest file. Defaults to the bundle in the current directory.
+      --force                       Force a fresh pull of the bundle
+  -h, --help                        help for install
+      --insecure-registry           Don't require TLS for the registry
+  -l, --label strings               Associate the specified labels with the installation. May be specified multiple times.
+  -n, --namespace string            Create the installation in the specified namespace. Defaults to the global namespace.
+      --no-logs                     Do not persist the bundle execution logs
+      --param stringArray           Define an individual parameter in the form NAME=VALUE. Overrides parameters otherwise set via --parameter-set. May be specified multiple times.
+  -p, --parameter-set stringArray   Name of a parameter set for the bundle. It should be a named set of parameters and may be specified multiple times.
+  -r, --reference string            Use a bundle in an OCI registry specified by the given reference.
 ```
 
 ### Options inherited from parent commands
