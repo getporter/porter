@@ -11,6 +11,8 @@ import (
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/manifest"
+	"get.porter.sh/porter/pkg/mixin"
+	"get.porter.sh/porter/pkg/pkgmgmt"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/pkg/errors"
@@ -27,7 +29,11 @@ func TestManifestConverter(t *testing.T) {
 	m, err := manifest.LoadManifestFrom(context.Background(), c.Config, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
-	a := NewManifestConverter(c.Context, m, nil, nil)
+	installedMixins := []mixin.Metadata{
+		{Name: "exec", VersionInfo: pkgmgmt.VersionInfo{Version: "v1.2.3"}},
+	}
+
+	a := NewManifestConverter(c.Context, m, nil, installedMixins)
 
 	bun, err := a.ToBundle()
 	require.NoError(t, err, "ToBundle failed")
