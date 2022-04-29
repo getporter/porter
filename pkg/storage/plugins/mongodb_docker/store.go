@@ -223,7 +223,7 @@ func EnsureMongoIsRunning(ctx context.Context, c *portercontext.Context, contain
 	}
 	timeout, cancel := context.WithTimeout(ctx, 10*time.Second)
 	tick := time.NewTicker(50 * time.Millisecond)
-
+defer tick.Stop()
 	defer cancel()
 	for {
 		select {
