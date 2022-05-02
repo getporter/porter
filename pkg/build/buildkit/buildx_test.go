@@ -90,11 +90,45 @@ func Test_flattenMap(t *testing.T) {
 			err: false,
 		},
 		{
-			desc: "empty interface value other than map[string]interface{}, map[string]string or string",
+			// CNAB represents null parameters as empty strings, so we will do the same, e.g. ARG CUSTOM_FOO=
+			desc: "nil is converted empty string",
+			inp: map[string]interface{}{
+				"a": nil,
+			},
+			out: map[string]string{
+				"a": "",
+			},
+			err: false,
+		},
+		{
+			desc: "int is converted to string representation",
 			inp: map[string]interface{}{
 				"a": 1,
 			},
-			err: true,
+			out: map[string]string{
+				"a": "1",
+			},
+			err: false,
+		},
+		{
+			desc: "bool is converted to string representation",
+			inp: map[string]interface{}{
+				"a": true,
+			},
+			out: map[string]string{
+				"a": "true",
+			},
+			err: false,
+		},
+		{
+			desc: "array is converted to string representation",
+			inp: map[string]interface{}{
+				"a": []string{"beep", "boop"},
+			},
+			out: map[string]string{
+				"a": `["beep","boop"]`,
+			},
+			err: false,
 		},
 	}
 
@@ -106,7 +140,7 @@ func Test_flattenMap(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
-			assert.Equal(t, out, tc.out)
+			assert.Equal(t, tc.out, out)
 		})
 	}
 }

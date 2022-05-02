@@ -3,11 +3,14 @@ package buildkit
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"get.porter.sh/porter/pkg/cnab"
 
 	"get.porter.sh/porter/pkg/build"
 	"get.porter.sh/porter/pkg/config"
@@ -209,15 +212,13 @@ func (b *Builder) TagInvocationImage(ctx context.Context, origTag, newTag string
 	return nil
 }
 
-// flattenMap recursively walks through nested map and flattent it
+// flattenMap recursively walks through nested map and flattens it
 // to one-level map of key-value with string type.
 func flattenMap(mapInput map[string]interface{}) (map[string]string, error) {
 	out := make(map[string]string)
 
 	for key, value := range mapInput {
 		switch v := value.(type) {
-		case string:
-			out[key] = v
 		case map[string]interface{}:
 			tmp, err := flattenMap(v)
 			if err != nil {
@@ -231,7 +232,11 @@ func flattenMap(mapInput map[string]interface{}) (map[string]string, error) {
 				out[key+"."+innerKey] = innerValue
 			}
 		default:
-			return nil, errors.Errorf("Unknown type %#v: %t", v, v)
+			innerValue, err := cnab.WriteParameterToString(key, value)
+			if err != nil {
+				return nil, fmt.Errorf("error representing %s as a build argument: %w", key, err)
+			}
+			out[key] = innerValue
 		}
 	}
 	return out, nil
