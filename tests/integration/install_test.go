@@ -1,3 +1,4 @@
+//go:build integration
 // +build integration
 
 package integration
@@ -127,4 +128,27 @@ func TestInstall_withDockerignore(t *testing.T) {
 	// Error: couldn't run command ./helpers.sh dump-config: fork/exec ./helpers.sh: no such file or directory
 	// We should check this once https://github.com/cnabio/cnab-go/issues/78 is closed
 	require.EqualError(t, err, "1 error occurred:\n\t* container exit code: 1, message: <nil>\n\n")
+}
+
+func TestInstall_stringParam(t *testing.T) {
+	// Remove this skip when #1862 is fixed
+	t.Skip("This is a failing test for https://github.com/getporter/porter/issues/1862")
+
+	p := porter.NewTestPorter(t)
+	p.SetupIntegrationTest()
+	p.Debug = false
+
+	p.AddTestBundleDir("testdata/bundles/bundle-with-string-params", false)
+
+	installOpts := porter.NewInstallOptions()
+	installOpts.Params = []string{"name=Demo Time"}
+
+	err := installOpts.Validate([]string{}, p.Porter)
+	require.NoError(t, err)
+
+	err = p.InstallBundle(installOpts)
+	require.NoError(t, err)
+
+	output := p.TestConfig.TestContext.GetOutput()
+	require.Contains(t, output, "Hello, Demo Time", "expected action output to contain provided file contents")
 }

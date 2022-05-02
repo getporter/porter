@@ -9,7 +9,8 @@ Generate completion script
 
 ### Synopsis
 
-Capture the output of the completion command to a file for your shell environment.
+Save the output of this command to a file and load the file into your shell.
+For additional details see: https://porter.sh/install#command-completion
 
 ```
 porter completion [bash|zsh|fish|powershell]
