@@ -15,26 +15,26 @@ const (
 	CollectionOutputs       = "outputs"
 )
 
-var _ ClaimProvider = ClaimStore{}
+var _ InstallationProvider = InstallationStore{}
 
-// ClaimStore is a persistent store for claims.
-type ClaimStore struct {
+// InstallationStore is a persistent store for installation documents.
+type InstallationStore struct {
 	store   Store
 	encrypt EncryptionHandler
 	decrypt EncryptionHandler
 }
 
-// NewClaimStore creates a persistent store for claims using the specified
+// NewInstallationStore creates a persistent store for installations using the specified
 // backing datastore.
-func NewClaimStore(datastore Store) ClaimStore {
-	return ClaimStore{
+func NewInstallationStore(datastore Store) InstallationStore {
+	return InstallationStore{
 		store:   datastore,
 		encrypt: noOpEncryptionHandler,
 		decrypt: noOpEncryptionHandler,
 	}
 }
 
-func (s ClaimStore) Initialize(ctx context.Context) error {
+func (s InstallationStore) Initialize(ctx context.Context) error {
 	ctx, span := tracing.StartSpan(ctx)
 	defer span.EndSpan()
 
@@ -63,7 +63,7 @@ func (s ClaimStore) Initialize(ctx context.Context) error {
 	return span.Error(err)
 }
 
-func (s ClaimStore) ListInstallations(ctx context.Context, namespace string, name string, labels map[string]string) ([]Installation, error) {
+func (s InstallationStore) ListInstallations(ctx context.Context, namespace string, name string, labels map[string]string) ([]Installation, error) {
 	_, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
 
@@ -77,7 +77,7 @@ func (s ClaimStore) ListInstallations(ctx context.Context, namespace string, nam
 	return out, err
 }
 
-func (s ClaimStore) ListRuns(ctx context.Context, namespace string, installation string) ([]Run, map[string][]Result, error) {
+func (s InstallationStore) ListRuns(ctx context.Context, namespace string, installation string) ([]Run, map[string][]Result, error) {
 	var runs []Run
 	var err error
 	var results []Result
@@ -114,7 +114,7 @@ func (s ClaimStore) ListRuns(ctx context.Context, namespace string, installation
 	return runs, resultsMap, err
 }
 
-func (s ClaimStore) ListResults(ctx context.Context, runID string) ([]Result, error) {
+func (s InstallationStore) ListResults(ctx context.Context, runID string) ([]Result, error) {
 	var out []Result
 	opts := FindOptions{
 		Sort: []string{"_id"},
@@ -126,7 +126,7 @@ func (s ClaimStore) ListResults(ctx context.Context, runID string) ([]Result, er
 	return out, err
 }
 
-func (s ClaimStore) ListOutputs(ctx context.Context, resultID string) ([]Output, error) {
+func (s InstallationStore) ListOutputs(ctx context.Context, resultID string) ([]Output, error) {
 	var out []Output
 	opts := FindOptions{
 		Sort: []string{"resultId", "name"},
@@ -138,7 +138,7 @@ func (s ClaimStore) ListOutputs(ctx context.Context, resultID string) ([]Output,
 	return out, err
 }
 
-func (s ClaimStore) GetInstallation(ctx context.Context, namespace string, name string) (Installation, error) {
+func (s InstallationStore) GetInstallation(ctx context.Context, namespace string, name string) (Installation, error) {
 	var out Installation
 
 	opts := FindOptions{
@@ -151,21 +151,21 @@ func (s ClaimStore) GetInstallation(ctx context.Context, namespace string, name 
 	return out, err
 }
 
-func (s ClaimStore) GetRun(ctx context.Context, id string) (Run, error) {
+func (s InstallationStore) GetRun(ctx context.Context, id string) (Run, error) {
 	var out Run
 	opts := GetOptions{ID: id}
 	err := s.store.Get(ctx, CollectionRuns, opts, &out)
 	return out, err
 }
 
-func (s ClaimStore) GetResult(ctx context.Context, id string) (Result, error) {
+func (s InstallationStore) GetResult(ctx context.Context, id string) (Result, error) {
 	var out Result
 	opts := GetOptions{ID: id}
 	err := s.store.Get(ctx, CollectionResults, opts, &out)
 	return out, err
 }
 
-func (s ClaimStore) GetLastRun(ctx context.Context, namespace string, installation string) (Run, error) {
+func (s InstallationStore) GetLastRun(ctx context.Context, namespace string, installation string) (Run, error) {
 	var out []Run
 	opts := FindOptions{
 		Sort:  []string{"-_id"},
@@ -185,7 +185,7 @@ func (s ClaimStore) GetLastRun(ctx context.Context, namespace string, installati
 	return out[0], err
 }
 
-func (s ClaimStore) GetLastOutput(ctx context.Context, namespace string, installation string, name string) (Output, error) {
+func (s InstallationStore) GetLastOutput(ctx context.Context, namespace string, installation string, name string) (Output, error) {
 	var out Output
 	opts := FindOptions{
 		Sort:  []string{"-_id"},
@@ -200,7 +200,7 @@ func (s ClaimStore) GetLastOutput(ctx context.Context, namespace string, install
 	return out, err
 }
 
-func (s ClaimStore) GetLastOutputs(ctx context.Context, namespace string, installation string) (Outputs, error) {
+func (s InstallationStore) GetLastOutputs(ctx context.Context, namespace string, installation string) (Outputs, error) {
 	var groupedOutputs []struct {
 		ID         string `json:"_id"`
 		LastOutput Output `json:"lastOutput"`
@@ -236,7 +236,7 @@ func (s ClaimStore) GetLastOutputs(ctx context.Context, namespace string, instal
 	return NewOutputs(lastOutputs), err
 }
 
-func (s ClaimStore) GetLogs(ctx context.Context, runID string) (string, bool, error) {
+func (s InstallationStore) GetLogs(ctx context.Context, runID string) (string, bool, error) {
 	var out Output
 	opts := FindOptions{
 		Sort: []string{"resultId"}, // get logs from the last result for a run
@@ -253,7 +253,7 @@ func (s ClaimStore) GetLogs(ctx context.Context, runID string) (string, bool, er
 	return string(out.Value), err == nil, err
 }
 
-func (s ClaimStore) GetLastLogs(ctx context.Context, namespace string, installation string) (string, bool, error) {
+func (s InstallationStore) GetLastLogs(ctx context.Context, namespace string, installation string) (string, bool, error) {
 	var out Output
 	opts := FindOptions{
 		Sort: []string{"-resultId"}, // get logs from the last result for a run
@@ -271,7 +271,7 @@ func (s ClaimStore) GetLastLogs(ctx context.Context, namespace string, installat
 	return string(out.Value), err == nil, err
 }
 
-func (s ClaimStore) InsertInstallation(ctx context.Context, installation Installation) error {
+func (s InstallationStore) InsertInstallation(ctx context.Context, installation Installation) error {
 	installation.SchemaVersion = InstallationSchemaVersion
 	opts := InsertOptions{
 		Documents: []interface{}{installation},
@@ -279,28 +279,28 @@ func (s ClaimStore) InsertInstallation(ctx context.Context, installation Install
 	return s.store.Insert(ctx, CollectionInstallations, opts)
 }
 
-func (s ClaimStore) InsertRun(ctx context.Context, run Run) error {
+func (s InstallationStore) InsertRun(ctx context.Context, run Run) error {
 	opts := InsertOptions{
 		Documents: []interface{}{run},
 	}
 	return s.store.Insert(ctx, CollectionRuns, opts)
 }
 
-func (s ClaimStore) InsertResult(ctx context.Context, result Result) error {
+func (s InstallationStore) InsertResult(ctx context.Context, result Result) error {
 	opts := InsertOptions{
 		Documents: []interface{}{result},
 	}
 	return s.store.Insert(ctx, CollectionResults, opts)
 }
 
-func (s ClaimStore) InsertOutput(ctx context.Context, output Output) error {
+func (s InstallationStore) InsertOutput(ctx context.Context, output Output) error {
 	opts := InsertOptions{
 		Documents: []interface{}{output},
 	}
 	return s.store.Insert(ctx, CollectionOutputs, opts)
 }
 
-func (s ClaimStore) UpdateInstallation(ctx context.Context, installation Installation) error {
+func (s InstallationStore) UpdateInstallation(ctx context.Context, installation Installation) error {
 	installation.SchemaVersion = InstallationSchemaVersion
 	opts := UpdateOptions{
 		Document: installation,
@@ -308,7 +308,7 @@ func (s ClaimStore) UpdateInstallation(ctx context.Context, installation Install
 	return s.store.Update(ctx, CollectionInstallations, opts)
 }
 
-func (s ClaimStore) UpsertRun(ctx context.Context, run Run) error {
+func (s InstallationStore) UpsertRun(ctx context.Context, run Run) error {
 	opts := UpdateOptions{
 		Upsert:   true,
 		Document: run,
@@ -316,7 +316,7 @@ func (s ClaimStore) UpsertRun(ctx context.Context, run Run) error {
 	return s.store.Update(ctx, CollectionRuns, opts)
 }
 
-func (s ClaimStore) UpsertInstallation(ctx context.Context, installation Installation) error {
+func (s InstallationStore) UpsertInstallation(ctx context.Context, installation Installation) error {
 	installation.SchemaVersion = InstallationSchemaVersion
 	opts := UpdateOptions{
 		Upsert:   true,
@@ -326,7 +326,7 @@ func (s ClaimStore) UpsertInstallation(ctx context.Context, installation Install
 }
 
 // RemoveInstallation and all associated data.
-func (s ClaimStore) RemoveInstallation(ctx context.Context, namespace string, name string) error {
+func (s InstallationStore) RemoveInstallation(ctx context.Context, namespace string, name string) error {
 	removeInstallation := RemoveOptions{
 		Filter: bson.M{
 			"namespace": namespace,

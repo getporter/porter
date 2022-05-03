@@ -4,8 +4,8 @@ import (
 	"context"
 )
 
-// ClaimProvider is an interface for interacting with Porter's claim data.
-type ClaimProvider interface {
+// InstallationProvider is an interface for interacting with Porter's claim data.
+type InstallationProvider interface {
 	// InsertInstallation saves a new Installation document.
 	InsertInstallation(ctx context.Context, installation Installation) error
 

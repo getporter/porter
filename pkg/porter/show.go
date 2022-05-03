@@ -47,7 +47,7 @@ func (p *Porter) GetInstallation(ctx context.Context, opts ShowOptions) (storage
 		return storage.Installation{}, err
 	}
 
-	installation, err := p.Claims.GetInstallation(ctx, opts.Namespace, opts.Name)
+	installation, err := p.Installations.GetInstallation(ctx, opts.Namespace, opts.Name)
 	if err != nil {
 		return storage.Installation{}, err
 	}
@@ -164,7 +164,7 @@ func (p *Porter) ShowInstallation(ctx context.Context, opts ShowOptions) error {
 }
 
 func (p *Porter) generateDisplayInstallation(ctx context.Context, installation storage.Installation) (DisplayInstallation, error) {
-	run, err := p.Claims.GetRun(ctx, installation.Status.RunID)
+	run, err := p.Installations.GetRun(ctx, installation.Status.RunID)
 	if err != nil {
 		return DisplayInstallation{}, err
 	}

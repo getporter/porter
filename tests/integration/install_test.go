@@ -77,7 +77,7 @@ func TestInstall_fileParam(t *testing.T) {
 	output := p.TestConfig.TestContext.GetOutput()
 	require.Contains(t, output, "Hello World!", "expected action output to contain provided file contents")
 
-	outputs, err := p.Claims.GetLastOutputs(ctx, "", bundleName)
+	outputs, err := p.Installations.GetLastOutputs(ctx, "", bundleName)
 	require.NoError(t, err, "GetLastOutput failed")
 	myfile, ok := outputs.GetByName("myfile")
 	require.True(t, ok, "expected myfile output to be persisted")

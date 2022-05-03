@@ -72,7 +72,7 @@ func (r *Runtime) AddFiles(ctx context.Context, args ActionArguments) cnabaction
 		}
 
 		// Add claim.json to file list as well, if exists
-		claim, err := r.claims.GetLastRun(ctx, args.Installation.Namespace, args.Installation.Name)
+		claim, err := r.installations.GetLastRun(ctx, args.Installation.Namespace, args.Installation.Name)
 		if err == nil {
 			claimBytes, err := json.Marshal(claim)
 			if err != nil {
@@ -218,18 +218,18 @@ func (r *Runtime) SaveRun(ctx context.Context, installation storage.Installation
 	// update installation record to use run id ecoded parameters instead of
 	// installation id
 	installation.Parameters.Parameters = run.ParameterOverrides.Parameters
-	err := r.claims.UpsertInstallation(ctx, installation)
+	err := r.installations.UpsertInstallation(ctx, installation)
 	if err != nil {
 		return span.Error(fmt.Errorf("error saving the installation record before executing the bundle: %w", err))
 	}
 
 	result := run.NewResult(status)
-	err = r.claims.InsertRun(ctx, run)
+	err = r.installations.InsertRun(ctx, run)
 	if err != nil {
 		return span.Error(fmt.Errorf("error saving the installation run record before executing the bundle: %w", err))
 	}
 
-	err = r.claims.InsertResult(ctx, result)
+	err = r.installations.InsertResult(ctx, result)
 	if err != nil {
 		return span.Error(fmt.Errorf("error saving the installation status record before executing the bundle: %w", err))
 	}
@@ -252,13 +252,13 @@ func (r *Runtime) SaveOperationResult(ctx context.Context, opResult driver.Opera
 	var bigerr *multierror.Error
 	bigerr = multierror.Append(bigerr, opResult.Error)
 
-	err := r.claims.InsertResult(ctx, result)
+	err := r.installations.InsertResult(ctx, result)
 	if err != nil {
 		bigerr = multierror.Append(bigerr, errors.Wrapf(err, "error adding %s result for %s run of installation %s\n%#v", result.Status, run.Action, installation, result))
 	}
 
 	installation.ApplyResult(run, result)
-	err = r.claims.UpdateInstallation(ctx, installation)
+	err = r.installations.UpdateInstallation(ctx, installation)
 	if err != nil {
 		bigerr = multierror.Append(bigerr, errors.Wrapf(err, "error updating installation record for %s\n%#v", installation, installation))
 	}
@@ -269,7 +269,7 @@ func (r *Runtime) SaveOperationResult(ctx context.Context, opResult driver.Opera
 		if err != nil {
 			bigerr = multierror.Append(bigerr, errors.Wrapf(err, "error sanitizing sensitive %s output for %s run of installation %s\n%#v", output.Name, run.Action, installation, output))
 		}
-		err = r.claims.InsertOutput(ctx, output)
+		err = r.installations.InsertOutput(ctx, output)
 		if err != nil {
 			bigerr = multierror.Append(bigerr, errors.Wrapf(err, "error adding %s output for %s run of installation %s\n%#v", output.Name, run.Action, installation, output))
 		}
@@ -283,7 +283,7 @@ func (r *Runtime) SaveOperationResult(ctx context.Context, opResult driver.Opera
 func (r *Runtime) appendFailedResult(ctx context.Context, opErr error, run storage.Run) error {
 	saveResult := func() error {
 		result := run.NewResult(cnab.StatusFailed)
-		return r.claims.InsertResult(ctx, result)
+		return r.installations.InsertResult(ctx, result)
 	}
 
 	resultErr := saveResult()

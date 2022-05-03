@@ -33,18 +33,18 @@ type Porter struct {
 	// or to switch it out for tests.
 	builder build.Builder
 
-	Cache       cache.BundleCache
-	Credentials storage.CredentialSetProvider
-	Parameters  storage.ParameterSetProvider
-	Sanitizer   *storage.Sanitizer
-	Claims      storage.ClaimProvider
-	Registry    cnabtooci.RegistryProvider
-	Templates   *templates.Templates
-	Mixins      mixin.MixinProvider
-	Plugins     plugins.PluginProvider
-	CNAB        cnabprovider.CNABProvider
-	Secrets     secrets.Store
-	Storage     storage.Provider
+	Cache         cache.BundleCache
+	Credentials   storage.CredentialSetProvider
+	Parameters    storage.ParameterSetProvider
+	Sanitizer     *storage.Sanitizer
+	Installations storage.InstallationProvider
+	Registry      cnabtooci.RegistryProvider
+	Templates     *templates.Templates
+	Mixins        mixin.MixinProvider
+	Plugins       plugins.PluginProvider
+	CNAB          cnabprovider.CNABProvider
+	Secrets       secrets.Store
+	Storage       storage.Provider
 }
 
 // New porter client, initialized with useful defaults.
@@ -59,24 +59,24 @@ func NewFor(c *config.Config, store storage.Store, secretStorage secrets.Store) 
 	cache := cache.New(c)
 
 	storageManager := migrations.NewManager(c, store)
-	claimStorage := storage.NewClaimStore(storageManager)
+	installationStorage := storage.NewInstallationStore(storageManager)
 	credStorage := storage.NewCredentialStore(storageManager, secretStorage)
 	paramStorage := storage.NewParameterStore(storageManager, secretStorage)
 	sanitizerService := storage.NewSanitizer(paramStorage, secretStorage)
 	return &Porter{
-		Config:      c,
-		Cache:       cache,
-		Storage:     storageManager,
-		Claims:      claimStorage,
-		Credentials: credStorage,
-		Parameters:  paramStorage,
-		Secrets:     secretStorage,
-		Registry:    cnabtooci.NewRegistry(c.Context),
-		Templates:   templates.NewTemplates(c),
-		Mixins:      mixin.NewPackageManager(c),
-		Plugins:     plugins.NewPackageManager(c),
-		CNAB:        cnabprovider.NewRuntime(c, claimStorage, credStorage, secretStorage, sanitizerService),
-		Sanitizer:   sanitizerService,
+		Config:        c,
+		Cache:         cache,
+		Storage:       storageManager,
+		Installations: installationStorage,
+		Credentials:   credStorage,
+		Parameters:    paramStorage,
+		Secrets:       secretStorage,
+		Registry:      cnabtooci.NewRegistry(c.Context),
+		Templates:     templates.NewTemplates(c),
+		Mixins:        mixin.NewPackageManager(c),
+		Plugins:       plugins.NewPackageManager(c),
+		CNAB:          cnabprovider.NewRuntime(c, installationStorage, credStorage, secretStorage, sanitizerService),
+		Sanitizer:     sanitizerService,
 	}
 }
 

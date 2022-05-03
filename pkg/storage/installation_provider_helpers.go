@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	_ ClaimProvider = TestClaimProvider{}
+	_ InstallationProvider = TestInstallationProvider{}
 
 	// A fixed now timestamp that we can use for comparisons in tests
 	now = time.Date(2020, time.April, 18, 1, 2, 3, 4, time.UTC)
@@ -19,33 +19,33 @@ var (
 	installationID = "01FZVC5AVP8Z7A78CSCP1EJ604"
 )
 
-type TestClaimProvider struct {
-	ClaimStore
+type TestInstallationProvider struct {
+	InstallationStore
 	TestStore
 	t         *testing.T
 	idCounter uint
 }
 
-func NewTestClaimProvider(t *testing.T) *TestClaimProvider {
+func NewTestInstallationProvider(t *testing.T) *TestInstallationProvider {
 	tc := config.NewTestConfig(t)
 	testStore := NewTestStore(tc)
-	return NewTestClaimProviderFor(t, testStore)
+	return NewTestInstallationProviderFor(t, testStore)
 }
 
-func NewTestClaimProviderFor(t *testing.T, testStore TestStore) *TestClaimProvider {
-	return &TestClaimProvider{
-		t:          t,
-		TestStore:  testStore,
-		ClaimStore: NewClaimStore(testStore),
+func NewTestInstallationProviderFor(t *testing.T, testStore TestStore) *TestInstallationProvider {
+	return &TestInstallationProvider{
+		t:                 t,
+		TestStore:         testStore,
+		InstallationStore: NewInstallationStore(testStore),
 	}
 }
 
-func (p *TestClaimProvider) Close() error {
+func (p *TestInstallationProvider) Close() error {
 	return p.TestStore.Close()
 }
 
 // CreateInstallation creates a new test installation and saves it.
-func (p *TestClaimProvider) CreateInstallation(i Installation, transformations ...func(i *Installation)) Installation {
+func (p *TestInstallationProvider) CreateInstallation(i Installation, transformations ...func(i *Installation)) Installation {
 	for _, transform := range transformations {
 		transform(&i)
 	}
@@ -55,14 +55,14 @@ func (p *TestClaimProvider) CreateInstallation(i Installation, transformations .
 	return i
 }
 
-func (p *TestClaimProvider) SetMutableInstallationValues(i *Installation) {
+func (p *TestInstallationProvider) SetMutableInstallationValues(i *Installation) {
 	i.ID = installationID
 	i.Status.Created = now
 	i.Status.Modified = now
 }
 
 // CreateRun creates a new claim and saves it.
-func (p *TestClaimProvider) CreateRun(r Run, transformations ...func(r *Run)) Run {
+func (p *TestInstallationProvider) CreateRun(r Run, transformations ...func(r *Run)) Run {
 	for _, transform := range transformations {
 		transform(&r)
 	}
@@ -72,14 +72,14 @@ func (p *TestClaimProvider) CreateRun(r Run, transformations ...func(r *Run)) Ru
 	return r
 }
 
-func (p *TestClaimProvider) SetMutableRunValues(r *Run) {
+func (p *TestInstallationProvider) SetMutableRunValues(r *Run) {
 	p.idCounter += 1
 	r.ID = fmt.Sprintf("%d", p.idCounter)
 	r.Created = now
 }
 
 // CreateResult creates a new result from the specified claim and saves it.
-func (p *TestClaimProvider) CreateResult(r Result, transformations ...func(r *Result)) Result {
+func (p *TestInstallationProvider) CreateResult(r Result, transformations ...func(r *Result)) Result {
 	for _, transform := range transformations {
 		transform(&r)
 	}
@@ -89,14 +89,14 @@ func (p *TestClaimProvider) CreateResult(r Result, transformations ...func(r *Re
 	return r
 }
 
-func (p *TestClaimProvider) SetMutableResultValues(r *Result) {
+func (p *TestInstallationProvider) SetMutableResultValues(r *Result) {
 	p.idCounter += 1
 	r.ID = fmt.Sprintf("%d", p.idCounter)
 	r.Created = now
 }
 
 // CreateOutput creates a new output from the specified claim and result and saves it.
-func (p *TestClaimProvider) CreateOutput(o Output, transformations ...func(o *Output)) Output {
+func (p *TestInstallationProvider) CreateOutput(o Output, transformations ...func(o *Output)) Output {
 	for _, transform := range transformations {
 		transform(&o)
 	}

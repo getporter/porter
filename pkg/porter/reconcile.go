@@ -41,7 +41,7 @@ func (p *Porter) ReconcileInstallation(ctx context.Context, opts ReconcileOption
 
 	// Get the last run of the installation, if available
 	var lastRun *storage.Run
-	r, err := p.Claims.GetLastRun(ctx, opts.Namespace, opts.Name)
+	r, err := p.Installations.GetLastRun(ctx, opts.Namespace, opts.Name)
 	neverRun := errors.Is(err, storage.ErrNotFound{})
 	if err != nil && !neverRun {
 		return err
@@ -95,7 +95,7 @@ func (p *Porter) ReconcileInstallation(ctx context.Context, opts ReconcileOption
 	}
 
 	if !opts.DryRun {
-		if err = p.Claims.UpsertInstallation(ctx, opts.Installation); err != nil {
+		if err = p.Installations.UpsertInstallation(ctx, opts.Installation); err != nil {
 			return err
 		}
 	}

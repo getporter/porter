@@ -642,7 +642,7 @@ func (p *Porter) resolveParameterSources(ctx context.Context, bun cnab.ExtendedB
 				outputName = source.OutputName
 			}
 
-			output, err := p.Claims.GetLastOutput(ctx, installation.Namespace, installationName, outputName)
+			output, err := p.Installations.GetLastOutput(ctx, installation.Namespace, installationName, outputName)
 			if err != nil {
 				// When we can't find the output, skip it and let the parameter be set another way
 				if errors.Is(err, storage.ErrNotFound{}) {

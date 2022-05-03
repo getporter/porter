@@ -352,10 +352,10 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 		b, err := cnab.LoadBundle(r.Context, "bundle.json")
 		require.NoError(t, err, "ProcessBundle failed")
 
-		i := r.TestClaims.CreateInstallation(storage.NewInstallation("", "mybun"))
-		c := r.TestClaims.CreateRun(i.NewRun(cnab.ActionInstall), func(r *storage.Run) { r.Bundle = b.Bundle })
-		cr := r.TestClaims.CreateResult(c.NewResult(cnab.StatusSucceeded))
-		r.TestClaims.CreateOutput(cr.NewOutput("foo", []byte("foo_source")))
+		i := r.TestInstallations.CreateInstallation(storage.NewInstallation("", "mybun"))
+		c := r.TestInstallations.CreateRun(i.NewRun(cnab.ActionInstall), func(r *storage.Run) { r.Bundle = b.Bundle })
+		cr := r.TestInstallations.CreateResult(c.NewResult(cnab.StatusSucceeded))
+		r.TestInstallations.CreateOutput(cr.NewOutput("foo", []byte("foo_source")))
 
 		params, err := r.resolveParameters(context.Background(), i, b, cnab.ActionUpgrade, nil)
 		require.NoError(t, err)
@@ -380,10 +380,10 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 			"foo": "foo_override",
 		}
 
-		i := r.TestClaims.CreateInstallation(storage.NewInstallation("", "mybun"))
-		c := r.TestClaims.CreateRun(i.NewRun(cnab.ActionInstall))
-		cr := r.TestClaims.CreateResult(c.NewResult(cnab.StatusSucceeded))
-		r.TestClaims.CreateOutput(cr.NewOutput("foo", []byte("foo_source")))
+		i := r.TestInstallations.CreateInstallation(storage.NewInstallation("", "mybun"))
+		c := r.TestInstallations.CreateRun(i.NewRun(cnab.ActionInstall))
+		cr := r.TestInstallations.CreateResult(c.NewResult(cnab.StatusSucceeded))
+		r.TestInstallations.CreateOutput(cr.NewOutput("foo", []byte("foo_source")))
 
 		params, err := r.resolveParameters(context.Background(), i, b, cnab.ActionUpgrade, overrides)
 		require.NoError(t, err)
@@ -404,10 +404,10 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 		b, err := cnab.LoadBundle(r.Context, "bundle.json")
 		require.NoError(t, err, "ProcessBundle failed")
 
-		i := r.TestClaims.CreateInstallation(storage.NewInstallation("", "mybun-mysql"))
-		c := r.TestClaims.CreateRun(i.NewRun(cnab.ActionInstall), func(r *storage.Run) { r.Bundle = b.Bundle })
-		cr := r.TestClaims.CreateResult(c.NewResult(cnab.StatusSucceeded))
-		r.TestClaims.CreateOutput(cr.NewOutput("connstr", []byte("connstr value")))
+		i := r.TestInstallations.CreateInstallation(storage.NewInstallation("", "mybun-mysql"))
+		c := r.TestInstallations.CreateRun(i.NewRun(cnab.ActionInstall), func(r *storage.Run) { r.Bundle = b.Bundle })
+		cr := r.TestInstallations.CreateResult(c.NewResult(cnab.StatusSucceeded))
+		r.TestInstallations.CreateOutput(cr.NewOutput("connstr", []byte("connstr value")))
 
 		params, err := r.resolveParameters(context.Background(), i, b, cnab.ActionUpgrade, nil)
 		require.NoError(t, err)
@@ -431,12 +431,12 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 		// foo is set by a user
 		// bar is set by a parameter source
 		// baz is set by the bundle default
-		i := r.TestClaims.CreateInstallation(storage.NewInstallation("", "mybun"))
-		c := r.TestClaims.CreateRun(i.NewRun(cnab.ActionInstall))
-		cr := r.TestClaims.CreateResult(c.NewResult(cnab.StatusSucceeded))
-		r.TestClaims.CreateOutput(cr.NewOutput("foo", []byte("foo_source")))
-		r.TestClaims.CreateOutput(cr.NewOutput("bar", []byte("bar_source")))
-		r.TestClaims.CreateOutput(cr.NewOutput("baz", []byte("baz_source")))
+		i := r.TestInstallations.CreateInstallation(storage.NewInstallation("", "mybun"))
+		c := r.TestInstallations.CreateRun(i.NewRun(cnab.ActionInstall))
+		cr := r.TestInstallations.CreateResult(c.NewResult(cnab.StatusSucceeded))
+		r.TestInstallations.CreateOutput(cr.NewOutput("foo", []byte("foo_source")))
+		r.TestInstallations.CreateOutput(cr.NewOutput("bar", []byte("bar_source")))
+		r.TestInstallations.CreateOutput(cr.NewOutput("baz", []byte("baz_source")))
 
 		overrides := map[string]string{"foo": "foo_override"}
 		params, err := r.resolveParameters(context.Background(), i, b, cnab.ActionUpgrade, overrides)
@@ -601,15 +601,15 @@ func TestRuntime_ResolveParameterSources(t *testing.T) {
 	bun, err := cnab.LoadBundle(r.Context, "bundle.json")
 	require.NoError(t, err, "ProcessBundle failed")
 
-	i := r.TestClaims.CreateInstallation(storage.NewInstallation("", "mybun-mysql"))
-	c := r.TestClaims.CreateRun(i.NewRun(cnab.ActionInstall), func(r *storage.Run) { r.Bundle = bun.Bundle })
-	cr := r.TestClaims.CreateResult(c.NewResult(cnab.StatusSucceeded))
-	r.TestClaims.CreateOutput(cr.NewOutput("connstr", []byte("connstr value")))
+	i := r.TestInstallations.CreateInstallation(storage.NewInstallation("", "mybun-mysql"))
+	c := r.TestInstallations.CreateRun(i.NewRun(cnab.ActionInstall), func(r *storage.Run) { r.Bundle = bun.Bundle })
+	cr := r.TestInstallations.CreateResult(c.NewResult(cnab.StatusSucceeded))
+	r.TestInstallations.CreateOutput(cr.NewOutput("connstr", []byte("connstr value")))
 
-	i = r.TestClaims.CreateInstallation(storage.NewInstallation("", "mybun"))
-	c = r.TestClaims.CreateRun(i.NewRun(cnab.ActionInstall), func(r *storage.Run) { r.Bundle = bun.Bundle })
-	cr = r.TestClaims.CreateResult(c.NewResult(cnab.StatusSucceeded))
-	r.TestClaims.CreateOutput(cr.NewOutput("bar", []byte("bar value")))
+	i = r.TestInstallations.CreateInstallation(storage.NewInstallation("", "mybun"))
+	c = r.TestInstallations.CreateRun(i.NewRun(cnab.ActionInstall), func(r *storage.Run) { r.Bundle = bun.Bundle })
+	cr = r.TestInstallations.CreateResult(c.NewResult(cnab.StatusSucceeded))
+	r.TestInstallations.CreateOutput(cr.NewOutput("bar", []byte("bar value")))
 
 	got, err := r.resolveParameterSources(context.Background(), bun, i)
 	require.NoError(t, err, "resolveParameterSources failed")

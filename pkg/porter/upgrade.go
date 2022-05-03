@@ -58,7 +58,7 @@ func (p *Porter) UpgradeBundle(ctx context.Context, opts UpgradeOptions) error {
 	}
 
 	// Sync any changes specified by the user to the installation before running upgrade
-	i, err := p.Claims.GetInstallation(ctx, opts.Namespace, opts.Name)
+	i, err := p.Installations.GetInstallation(ctx, opts.Namespace, opts.Name)
 	if err != nil {
 		return errors.Wrapf(err, "could not find installation %s/%s", opts.Namespace, opts.Name)
 	}
@@ -77,7 +77,7 @@ func (p *Porter) UpgradeBundle(ctx context.Context, opts UpgradeOptions) error {
 	if err != nil {
 		return err
 	}
-	err = p.Claims.UpdateInstallation(ctx, i)
+	err = p.Installations.UpdateInstallation(ctx, i)
 	if err != nil {
 		return err
 	}

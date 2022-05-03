@@ -8,12 +8,11 @@ import (
 	"get.porter.sh/porter/pkg/cnab"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
-	cnabclaims "github.com/cnabio/cnab-go/claim"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-var _ ClaimProvider = ClaimStore{}
+var _ InstallationProvider = InstallationStore{}
 
 var b64encode = func(src []byte) ([]byte, error) {
 	dst := make([]byte, base64.StdEncoding.EncodedLen(len(src)))
@@ -39,10 +38,10 @@ var exampleBundle = bundle.Bundle{
 	},
 }
 
-// generateClaimData creates test claims, results and outputs
-// it returns a claim Provider, and a test cleanup function.
+// generateInstallationData creates test installations, runs, results and outputs
+// it returns a InstallationStorageProvider, and a test cleanup function.
 //
-// claims/
+// installations/
 //   foo/
 //     CLAIM_ID_1 (install)
 //     CLAIM_ID_2 (upgrade)
@@ -75,8 +74,8 @@ var exampleBundle = bundle.Bundle{
 //   RESULT_ID_2/
 //     RESULT_ID_2_OUTPUT_1
 //     RESULT_ID_2_OUTPUT_2
-func generateClaimData(t *testing.T) *TestClaimProvider {
-	cp := NewTestClaimProvider(t)
+func generateInstallationData(t *testing.T) *TestInstallationProvider {
+	cp := NewTestInstallationProvider(t)
 
 	bun := bundle.Bundle{
 		Definitions: map[string]*definition.Schema{
@@ -104,12 +103,12 @@ func generateClaimData(t *testing.T) *TestClaimProvider {
 	foo := cp.CreateInstallation(NewInstallation("dev", "foo"))
 	run := cp.CreateRun(foo.NewRun(cnab.ActionInstall), setBun)
 	result := cp.CreateResult(run.NewResult(cnab.StatusSucceeded))
-	cp.CreateOutput(result.NewOutput(cnabclaims.OutputInvocationImageLogs, []byte("install logs")))
+	cp.CreateOutput(result.NewOutput(cnab.OutputInvocationImageLogs, []byte("install logs")))
 	cp.CreateOutput(result.NewOutput("output1", []byte("install output1")))
 
 	run = cp.CreateRun(foo.NewRun(cnab.ActionUpgrade), setBun)
 	result = cp.CreateResult(run.NewResult(cnab.StatusSucceeded))
-	cp.CreateOutput(result.NewOutput(cnabclaims.OutputInvocationImageLogs, []byte("upgrade logs")))
+	cp.CreateOutput(result.NewOutput(cnab.OutputInvocationImageLogs, []byte("upgrade logs")))
 	cp.CreateOutput(result.NewOutput("output1", []byte("upgrade output1")))
 	cp.CreateOutput(result.NewOutput("output2", []byte("upgrade output2")))
 	// Test bug in how we read output names by having the name include characters from the result id
@@ -149,8 +148,8 @@ func generateClaimData(t *testing.T) *TestClaimProvider {
 	return cp
 }
 
-func TestClaimStore_Installations(t *testing.T) {
-	cp := generateClaimData(t)
+func TestInstallationStorageProvider_Installations(t *testing.T) {
+	cp := generateInstallationData(t)
 	defer cp.Close()
 
 	t.Run("ListInstallations", func(t *testing.T) {
@@ -187,8 +186,8 @@ func TestClaimStore_Installations(t *testing.T) {
 
 }
 
-func TestClaimStore_DeleteInstallation(t *testing.T) {
-	cp := generateClaimData(t)
+func TestInstallationStorageProvider_DeleteInstallation(t *testing.T) {
+	cp := generateInstallationData(t)
 	defer cp.Close()
 
 	installations, err := cp.ListInstallations(context.Background(), "dev", "", nil)
@@ -206,12 +205,12 @@ func TestClaimStore_DeleteInstallation(t *testing.T) {
 	require.ErrorIs(t, err, ErrNotFound{})
 }
 
-func TestClaimStore_Run(t *testing.T) {
-	cp := generateClaimData(t)
+func TestInstallationStorageProvider_Run(t *testing.T) {
+	cp := generateInstallationData(t)
 
 	t.Run("ListRuns", func(t *testing.T) {
 		runs, resultsMap, err := cp.ListRuns(context.Background(), "dev", "foo")
-		require.NoError(t, err, "Failed to read claims: %s", err)
+		require.NoError(t, err, "Failed to read bundle runs: %s", err)
 
 		require.Len(t, runs, 4, "Expected 4 runs")
 		require.Len(t, resultsMap, 4, "Results expected to have 4 runs")
@@ -233,7 +232,7 @@ func TestClaimStore_Run(t *testing.T) {
 		runs, _, err := cp.ListRuns(context.Background(), "dev", "foo")
 		require.NoError(t, err, "ListRuns failed")
 
-		assert.NotEmpty(t, runs, "no claims were found")
+		assert.NotEmpty(t, runs, "no runs were found")
 		runID := runs[0].ID
 
 		c, err := cp.GetRun(context.Background(), runID)
@@ -262,8 +261,8 @@ func TestClaimStore_Run(t *testing.T) {
 	})
 }
 
-func TestClaimStore_Results(t *testing.T) {
-	cp := generateClaimData(t)
+func TestInstallationStorageProvider_Results(t *testing.T) {
+	cp := generateInstallationData(t)
 	defer cp.Close()
 
 	barRuns, resultsMap, err := cp.ListRuns(context.Background(), "dev", "bar")
@@ -297,8 +296,8 @@ func TestClaimStore_Results(t *testing.T) {
 	})
 }
 
-func TestClaimStore_Outputs(t *testing.T) {
-	cp := generateClaimData(t)
+func TestInstallationStorageProvider_Outputs(t *testing.T) {
+	cp := generateInstallationData(t)
 	defer cp.Close()
 
 	fooRuns, _, err := cp.ListRuns(context.Background(), "dev", "foo")
@@ -312,7 +311,7 @@ func TestClaimStore_Outputs(t *testing.T) {
 	resultID := fooResult.ID // this result has an output
 
 	barRuns, _, err := cp.ListRuns(context.Background(), "dev", "bar")
-	require.NoError(t, err, "ReadAllClaims failed")
+	require.NoError(t, err, "ListRuns failed")
 	require.Len(t, barRuns, 1, "expected bar to have a run")
 	barRun := barRuns[0]
 	barResults, err := cp.ListResults(context.Background(), barRun.ID)
@@ -327,7 +326,7 @@ func TestClaimStore_Outputs(t *testing.T) {
 		assert.Len(t, outputs, 4, "expected 2 outputs")
 
 		assert.Equal(t, outputs[0].Name, resultID+"-output3")
-		assert.Equal(t, outputs[1].Name, cnabclaims.OutputInvocationImageLogs)
+		assert.Equal(t, outputs[1].Name, cnab.OutputInvocationImageLogs)
 		assert.Equal(t, outputs[2].Name, "output1")
 		assert.Equal(t, outputs[3].Name, "output2")
 	})

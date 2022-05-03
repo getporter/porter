@@ -73,9 +73,6 @@ func TestRebuild_UpgradeModifiedBundle(t *testing.T) {
 	gotOutput := p.TestConfig.TestContext.GetOutput()
 	buildCount := strings.Count(gotOutput, "Building bundle ===>")
 	assert.Equal(t, 2, buildCount, "expected a rebuild before upgrade")
-
-	// Verify that the bundle's version matches the updated version in the porter.yaml
-	// TODO: separate ListBundle's printing from fetching claims
 }
 
 func TestRebuild_GenerateCredentialsNewBundle(t *testing.T) {

@@ -13,7 +13,7 @@ import (
 
 func TestNewDisplayInstallation(t *testing.T) {
 	t.Run("installation has been installed", func(t *testing.T) {
-		cp := storage.NewTestClaimProvider(t)
+		cp := storage.NewTestInstallationProvider(t)
 		defer cp.Close()
 
 		i := cp.CreateInstallation(storage.NewInstallation("", "wordpress"), func(i *storage.Installation) {
@@ -34,7 +34,7 @@ func TestNewDisplayInstallation(t *testing.T) {
 	})
 
 	t.Run("installation has not been installed", func(t *testing.T) {
-		cp := storage.NewTestClaimProvider(t)
+		cp := storage.NewTestInstallationProvider(t)
 		defer cp.Close()
 
 		i := cp.CreateInstallation(storage.NewInstallation("", "wordpress"))
@@ -56,12 +56,12 @@ func TestPorter_ListInstallations(t *testing.T) {
 	p := NewTestPorter(t)
 	defer p.Close()
 
-	p.TestClaims.CreateInstallation(storage.NewInstallation("", "shared-mysql"))
-	p.TestClaims.CreateInstallation(storage.NewInstallation("dev", "carolyn-wordpress"))
-	p.TestClaims.CreateInstallation(storage.NewInstallation("dev", "vaughn-wordpress"))
-	p.TestClaims.CreateInstallation(storage.NewInstallation("test", "staging-wordpress"))
-	p.TestClaims.CreateInstallation(storage.NewInstallation("test", "iat-wordpress"))
-	p.TestClaims.CreateInstallation(storage.NewInstallation("test", "shared-mysql"))
+	p.TestInstallations.CreateInstallation(storage.NewInstallation("", "shared-mysql"))
+	p.TestInstallations.CreateInstallation(storage.NewInstallation("dev", "carolyn-wordpress"))
+	p.TestInstallations.CreateInstallation(storage.NewInstallation("dev", "vaughn-wordpress"))
+	p.TestInstallations.CreateInstallation(storage.NewInstallation("test", "staging-wordpress"))
+	p.TestInstallations.CreateInstallation(storage.NewInstallation("test", "iat-wordpress"))
+	p.TestInstallations.CreateInstallation(storage.NewInstallation("test", "shared-mysql"))
 
 	t.Run("all-namespaces", func(t *testing.T) {
 		opts := ListOptions{AllNamespaces: true}
@@ -91,7 +91,7 @@ func TestPorter_ListInstallations(t *testing.T) {
 }
 
 func TestDisplayInstallation_ConvertToInstallation(t *testing.T) {
-	cp := storage.NewTestClaimProvider(t)
+	cp := storage.NewTestInstallationProvider(t)
 	defer cp.Close()
 
 	i := cp.CreateInstallation(storage.NewInstallation("", "wordpress"), func(i *storage.Installation) {

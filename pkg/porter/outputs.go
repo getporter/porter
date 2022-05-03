@@ -8,7 +8,7 @@ import (
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/printer"
-	claims "get.porter.sh/porter/pkg/storage"
+	"get.porter.sh/porter/pkg/storage"
 	"github.com/pkg/errors"
 )
 
@@ -81,7 +81,7 @@ func (p *Porter) ShowBundleOutput(ctx context.Context, opts *OutputShowOptions) 
 	return nil
 }
 
-func NewDisplayValuesFromOutputs(bun cnab.ExtendedBundle, outputs claims.Outputs) DisplayValues {
+func NewDisplayValuesFromOutputs(bun cnab.ExtendedBundle, outputs storage.Outputs) DisplayValues {
 	// Iterate through all Bundle Outputs, fetch their metadata
 	// via their corresponding Definitions and add to rows
 	displayOutputs := make(DisplayValues, 0, outputs.Len())
@@ -120,7 +120,7 @@ func (p *Porter) ListBundleOutputs(ctx context.Context, opts *OutputListOptions)
 		return nil, err
 	}
 
-	outputs, err := p.Claims.GetLastOutputs(ctx, opts.Namespace, opts.Name)
+	outputs, err := p.Installations.GetLastOutputs(ctx, opts.Namespace, opts.Name)
 	if err != nil {
 		return nil, err
 	}
@@ -130,7 +130,7 @@ func (p *Porter) ListBundleOutputs(ctx context.Context, opts *OutputListOptions)
 		return nil, err
 	}
 
-	c, err := p.Claims.GetLastRun(ctx, opts.Namespace, opts.Name)
+	c, err := p.Installations.GetLastRun(ctx, opts.Namespace, opts.Name)
 	if err != nil {
 		return nil, err
 	}
@@ -165,7 +165,7 @@ func (p *Porter) PrintBundleOutputs(ctx context.Context, opts OutputListOptions)
 
 // ReadBundleOutput reads a bundle output from an installation
 func (p *Porter) ReadBundleOutput(ctx context.Context, outputName, installation, namespace string) (string, error) {
-	o, err := p.Claims.GetLastOutput(ctx, namespace, installation, outputName)
+	o, err := p.Installations.GetLastOutput(ctx, namespace, installation, outputName)
 	if err != nil {
 		return "", err
 	}

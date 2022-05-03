@@ -26,9 +26,6 @@ type Schema struct {
 	// Installations is the schema for the installation documents.
 	Installations schema.Version `json:"installations"`
 
-	// Claims is the schema for the old CNAB claim spec. DEPRECATED.
-	Claims schema.Version `json:"claims,omitempty"`
-
 	// Credentials is the schema for the credential spec documents.
 	Credentials schema.Version `json:"credentials"`
 

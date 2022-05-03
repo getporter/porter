@@ -121,7 +121,7 @@ func (p *Porter) resolveBundleReference(ctx context.Context, opts *BundleActionO
 		}
 		bundleRef = cnab.BundleReference{Definition: bun}
 	} else if opts.Name != "" { // Return the bundle associated with the installation
-		i, err := p.Claims.GetInstallation(ctx, opts.Namespace, opts.Name)
+		i, err := p.Installations.GetInstallation(ctx, opts.Namespace, opts.Name)
 		if err != nil {
 			return cnab.BundleReference{}, errors.Wrapf(err, "installation %s/%s not found", opts.Namespace, opts.Name)
 		}
@@ -134,7 +134,7 @@ func (p *Porter) resolveBundleReference(ctx context.Context, opts *BundleActionO
 				return cnab.BundleReference{}, err
 			}
 		} else { // The bundle was installed from source
-			lastRun, err := p.Claims.GetLastRun(ctx, opts.Namespace, opts.Name)
+			lastRun, err := p.Installations.GetLastRun(ctx, opts.Namespace, opts.Name)
 			if err != nil {
 				return cnab.BundleReference{}, errors.Wrap(err, "could not load the bundle definition from the installation's last run")
 			}

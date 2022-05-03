@@ -59,7 +59,7 @@ func TestManager_NoMigrationEmptyHome(t *testing.T) {
 
 	mgr := NewTestManager(config)
 	defer mgr.Close()
-	claimStore := storage.NewClaimStore(mgr)
+	claimStore := storage.NewInstallationStore(mgr)
 
 	_, err := claimStore.ListInstallations(context.Background(), "", "", nil)
 	require.NoError(t, err, "ListInstallations failed")
@@ -79,7 +79,7 @@ func TestClaimStorage_HaltOnMigrationRequired(t *testing.T) {
 	tc := config.NewTestConfig(t)
 	mgr := NewTestManager(tc)
 	defer mgr.Close()
-	claimStore := storage.NewClaimStore(mgr)
+	claimStore := storage.NewInstallationStore(mgr)
 
 	schema := storage.NewSchema()
 	schema.Installations = "needs-migration"
@@ -110,7 +110,7 @@ func TestClaimStorage_NoMigrationRequiredForEmptyHome(t *testing.T) {
 
 	mgr := NewTestManager(config)
 	defer mgr.Close()
-	claimStore := storage.NewClaimStore(mgr)
+	claimStore := storage.NewInstallationStore(mgr)
 
 	names, err := claimStore.ListInstallations(context.Background(), "", "", nil)
 	require.NoError(t, err, "ListInstallations failed")
