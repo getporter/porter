@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"get.porter.sh/porter/pkg/credentials"
 	"get.porter.sh/porter/pkg/editor"
 	"get.porter.sh/porter/pkg/encoding"
 	"get.porter.sh/porter/pkg/generator"
@@ -31,7 +30,7 @@ type CredentialEditOptions struct {
 }
 
 // ListCredentials lists saved credential sets.
-func (p *Porter) ListCredentials(ctx context.Context, opts ListOptions) ([]credentials.CredentialSet, error) {
+func (p *Porter) ListCredentials(ctx context.Context, opts ListOptions) ([]storage.CredentialSet, error) {
 	return p.Credentials.ListCredentialSets(ctx, opts.GetNamespace(), opts.Name, opts.ParseLabels())
 }
 
@@ -56,7 +55,7 @@ func (p *Porter) PrintCredentials(ctx context.Context, opts ListOptions) error {
 
 		printCredRow :=
 			func(v interface{}) []string {
-				cr, ok := v.(credentials.CredentialSet)
+				cr, ok := v.(storage.CredentialSet)
 				if !ok {
 					return nil
 				}
@@ -196,8 +195,8 @@ func (p *Porter) EditCredential(ctx context.Context, opts CredentialEditOptions)
 
 type DisplayCredentialSet struct {
 	// SchemaType helps when we export the definition so editors can detect the type of document, it's not used by porter.
-	SchemaType                string `json:"schemaType" yaml:"schemaType"`
-	credentials.CredentialSet `yaml:",inline"`
+	SchemaType            string `json:"schemaType" yaml:"schemaType"`
+	storage.CredentialSet `yaml:",inline"`
 }
 
 // ShowCredential shows the credential set corresponding to the provided name, using
@@ -330,7 +329,7 @@ func (p *Porter) CredentialsApply(ctx context.Context, o ApplyOptions) error {
 		fmt.Fprintf(p.Err, "Input file contents:\n%s\n", contents)
 	}
 
-	var creds credentials.CredentialSet
+	var creds storage.CredentialSet
 	err = encoding.UnmarshalFile(p.FileSystem, o.File, &creds)
 	if err != nil {
 		return errors.Wrapf(err, "could not load %s as a credential set", o.File)

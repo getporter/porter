@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"get.porter.sh/porter/pkg/cnab"
-	"get.porter.sh/porter/pkg/parameters"
+	"get.porter.sh/porter/pkg/storage"
 )
 
 // GenerateParametersOptions are the options to generate a Parameter Set
@@ -19,9 +19,9 @@ type GenerateParametersOptions struct {
 }
 
 // GenerateParameters will generate a parameter set based on the given options
-func (opts *GenerateParametersOptions) GenerateParameters() (parameters.ParameterSet, error) {
+func (opts *GenerateParametersOptions) GenerateParameters() (storage.ParameterSet, error) {
 	if opts.Name == "" {
-		return parameters.ParameterSet{}, errors.New("parameter set name is required")
+		return storage.ParameterSet{}, errors.New("parameter set name is required")
 	}
 	generator := genSurvey
 	if opts.Silent {
@@ -29,15 +29,15 @@ func (opts *GenerateParametersOptions) GenerateParameters() (parameters.Paramete
 	}
 	pset, err := opts.genParameterSet(generator)
 	if err != nil {
-		return parameters.ParameterSet{}, err
+		return storage.ParameterSet{}, err
 	}
 
 	pset.Labels = opts.Labels
 	return pset, nil
 }
 
-func (opts *GenerateParametersOptions) genParameterSet(fn generator) (parameters.ParameterSet, error) {
-	pset := parameters.NewParameterSet(opts.Namespace, opts.Name)
+func (opts *GenerateParametersOptions) genParameterSet(fn generator) (storage.ParameterSet, error) {
+	pset := storage.NewParameterSet(opts.Namespace, opts.Name)
 
 	if strings.ContainsAny(opts.Name, "./\\") {
 		return pset, fmt.Errorf("parameter set name '%s' cannot contain the following characters: './\\'", opts.Name)

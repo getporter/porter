@@ -8,15 +8,11 @@ import (
 	"get.porter.sh/porter/pkg/build"
 	"get.porter.sh/porter/pkg/build/buildkit"
 	"get.porter.sh/porter/pkg/cache"
-	"get.porter.sh/porter/pkg/claims"
 	cnabtooci "get.porter.sh/porter/pkg/cnab/cnab-to-oci"
 	cnabprovider "get.porter.sh/porter/pkg/cnab/provider"
 	"get.porter.sh/porter/pkg/config"
-	"get.porter.sh/porter/pkg/credentials"
 	"get.porter.sh/porter/pkg/mixin"
-	"get.porter.sh/porter/pkg/parameters"
 	"get.porter.sh/porter/pkg/plugins"
-	"get.porter.sh/porter/pkg/sanitizer"
 	"get.porter.sh/porter/pkg/secrets"
 	secretsplugin "get.porter.sh/porter/pkg/secrets/pluginstore"
 	"get.porter.sh/porter/pkg/storage"
@@ -38,10 +34,10 @@ type Porter struct {
 	builder build.Builder
 
 	Cache       cache.BundleCache
-	Credentials credentials.Provider
-	Parameters  parameters.Provider
-	Sanitizer   *sanitizer.Service
-	Claims      claims.Provider
+	Credentials storage.CredentialSetProvider
+	Parameters  storage.ParameterSetProvider
+	Sanitizer   *storage.Sanitizer
+	Claims      storage.ClaimProvider
 	Registry    cnabtooci.RegistryProvider
 	Templates   *templates.Templates
 	Mixins      mixin.MixinProvider
@@ -63,10 +59,10 @@ func NewFor(c *config.Config, store storage.Store, secretStorage secrets.Store) 
 	cache := cache.New(c)
 
 	storageManager := migrations.NewManager(c, store)
-	claimStorage := claims.NewClaimStore(storageManager)
-	credStorage := credentials.NewCredentialStore(storageManager, secretStorage)
-	paramStorage := parameters.NewParameterStore(storageManager, secretStorage)
-	sanitizerService := sanitizer.NewService(paramStorage, secretStorage)
+	claimStorage := storage.NewClaimStore(storageManager)
+	credStorage := storage.NewCredentialStore(storageManager, secretStorage)
+	paramStorage := storage.NewParameterStore(storageManager, secretStorage)
+	sanitizerService := storage.NewSanitizer(paramStorage, secretStorage)
 	return &Porter{
 		Config:      c,
 		Cache:       cache,

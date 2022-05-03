@@ -4,20 +4,16 @@ import (
 	"context"
 	"testing"
 
-	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/config"
-	"get.porter.sh/porter/pkg/credentials"
-	"get.porter.sh/porter/pkg/parameters"
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
-	"github.com/cnabio/cnab-go/schema"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestManager_LoadSchema(t *testing.T) {
 	t.Run("valid schema", func(t *testing.T) {
-		schema := storage.NewSchema(claims.SchemaVersion, credentials.SchemaVersion, parameters.SchemaVersion)
+		schema := storage.NewSchema()
 
 		c := config.NewTestConfig(t)
 		m := NewTestManager(c)
@@ -46,62 +42,13 @@ func TestManager_LoadSchema(t *testing.T) {
 		m := NewTestManager(c)
 		defer m.Close()
 
-		err := m.store.Insert(context.Background(), claims.CollectionInstallations, storage.InsertOptions{Documents: []interface{}{claims.Installation{Name: "abc123"}}})
+		err := m.store.Insert(context.Background(), storage.CollectionInstallations, storage.InsertOptions{Documents: []interface{}{storage.Installation{Name: "abc123"}}})
 		require.NoError(t, err)
 
 		err = m.loadSchema(context.Background())
 		require.NoError(t, err, "LoadSchema failed")
 		assert.Empty(t, m.schema, "Schema should be empty because none was loaded")
 	})
-}
-
-func TestManager_ShouldMigrateCredentials(t *testing.T) {
-	testcases := []struct {
-		name               string
-		credentialsVersion string
-		wantMigrate        bool
-	}{
-		{"old schema", "cnab-credentialsets-1.0.0-DRAFT", true},
-		{"missing schema", "", true},
-		{"current schema", string(credentials.SchemaVersion), false},
-	}
-
-	for _, tc := range testcases {
-		t.Run(tc.name, func(t *testing.T) {
-			c := config.NewTestConfig(t)
-			m := NewTestManager(c)
-			defer m.Close()
-
-			m.schema = storage.Schema{
-				Credentials: schema.Version(tc.credentialsVersion),
-			}
-
-			assert.Equal(t, tc.wantMigrate, m.ShouldMigrateCredentials())
-		})
-	}
-}
-
-func TestManager_ShouldMigrateClaims(t *testing.T) {
-	testcases := []struct {
-		name         string
-		claimVersion string
-		wantMigrate  bool
-	}{
-		{"old schema", "cnab-claim-1.0.0-DRAFT", true},
-		{"missing schema", "", true},
-		{"current schema", string(claims.SchemaVersion), false},
-	}
-
-	for _, tc := range testcases {
-		t.Run(tc.name, func(t *testing.T) {
-			c := config.NewTestConfig(t)
-			m := NewTestManager(c)
-			defer m.Close()
-
-			m.schema = storage.NewSchema(schema.Version(tc.claimVersion), "", "")
-			assert.Equal(t, tc.wantMigrate, m.ShouldMigrateClaims())
-		})
-	}
 }
 
 func TestManager_NoMigrationEmptyHome(t *testing.T) {
@@ -112,16 +59,16 @@ func TestManager_NoMigrationEmptyHome(t *testing.T) {
 
 	mgr := NewTestManager(config)
 	defer mgr.Close()
-	claimStore := claims.NewClaimStore(mgr)
+	claimStore := storage.NewClaimStore(mgr)
 
 	_, err := claimStore.ListInstallations(context.Background(), "", "", nil)
 	require.NoError(t, err, "ListInstallations failed")
 
-	credStore := credentials.NewCredentialStore(mgr, nil)
+	credStore := storage.NewCredentialStore(mgr, nil)
 	_, err = credStore.ListCredentialSets(context.Background(), "", "", nil)
 	require.NoError(t, err, "List credentials failed")
 
-	paramStore := parameters.NewParameterStore(mgr, nil)
+	paramStore := storage.NewParameterStore(mgr, nil)
 	_, err = paramStore.ListParameterSets(context.Background(), "", "", nil)
 	require.NoError(t, err, "List credentials failed")
 }
@@ -132,9 +79,10 @@ func TestClaimStorage_HaltOnMigrationRequired(t *testing.T) {
 	tc := config.NewTestConfig(t)
 	mgr := NewTestManager(tc)
 	defer mgr.Close()
-	claimStore := claims.NewClaimStore(mgr)
+	claimStore := storage.NewClaimStore(mgr)
 
-	schema := storage.NewSchema("needs-migration", "", "")
+	schema := storage.NewSchema()
+	schema.Installations = "needs-migration"
 	err := mgr.store.Update(context.Background(), CollectionConfig, storage.UpdateOptions{Document: schema, Upsert: true})
 	require.NoError(t, err, "Save schema failed")
 
@@ -162,7 +110,7 @@ func TestClaimStorage_NoMigrationRequiredForEmptyHome(t *testing.T) {
 
 	mgr := NewTestManager(config)
 	defer mgr.Close()
-	claimStore := claims.NewClaimStore(mgr)
+	claimStore := storage.NewClaimStore(mgr)
 
 	names, err := claimStore.ListInstallations(context.Background(), "", "", nil)
 	require.NoError(t, err, "ListInstallations failed")
@@ -174,9 +122,10 @@ func TestCredentialStorage_HaltOnMigrationRequired(t *testing.T) {
 	mgr := NewTestManager(tc)
 	testSecrets := secrets.NewTestSecretsProvider()
 	defer mgr.Close()
-	credStore := credentials.NewTestCredentialProviderFor(t, mgr, testSecrets)
+	credStore := storage.NewTestCredentialProviderFor(t, mgr, testSecrets)
 
-	schema := storage.NewSchema("", "needs-migration", "")
+	schema := storage.NewSchema()
+	schema.Credentials = "needs-migration"
 	err := mgr.store.Update(context.Background(), CollectionConfig, storage.UpdateOptions{Document: schema, Upsert: true})
 	require.NoError(t, err, "Save schema failed")
 
@@ -202,7 +151,7 @@ func TestCredentialStorage_NoMigrationRequiredForEmptyHome(t *testing.T) {
 	mgr := NewTestManager(config)
 	defer mgr.Close()
 	testSecrets := secrets.NewTestSecretsProvider()
-	credStore := credentials.NewTestCredentialProviderFor(t, mgr, testSecrets)
+	credStore := storage.NewTestCredentialProviderFor(t, mgr, testSecrets)
 
 	names, err := credStore.ListCredentialSets(context.Background(), "", "", nil)
 	require.NoError(t, err, "List failed")
@@ -214,9 +163,10 @@ func TestParameterStorage_HaltOnMigrationRequired(t *testing.T) {
 	mgr := NewTestManager(tc)
 	defer mgr.Close()
 	testSecrets := secrets.NewTestSecretsProvider()
-	paramStore := parameters.NewTestParameterProviderFor(t, mgr, testSecrets)
+	paramStore := storage.NewTestParameterProviderFor(t, mgr, testSecrets)
 
-	schema := storage.NewSchema("", "", "needs-migration")
+	schema := storage.NewSchema()
+	schema.Parameters = "needs-migration"
 	err := mgr.store.Update(context.Background(), CollectionConfig, storage.UpdateOptions{Document: schema, Upsert: true})
 	require.NoError(t, err, "Save schema failed")
 
@@ -242,31 +192,9 @@ func TestParameterStorage_NoMigrationRequiredForEmptyHome(t *testing.T) {
 	mgr := NewTestManager(config)
 	defer mgr.Close()
 	testSecrets := secrets.NewTestSecretsProvider()
-	paramStore := parameters.NewTestParameterProviderFor(t, mgr, testSecrets)
+	paramStore := storage.NewTestParameterProviderFor(t, mgr, testSecrets)
 
 	names, err := paramStore.ListParameterSets(context.Background(), "", "", nil)
 	require.NoError(t, err, "List failed")
 	assert.Empty(t, names, "Expected an empty list of parameters since porter home is new")
-}
-
-func TestManager_ShouldMigrateParameters(t *testing.T) {
-	testcases := []struct {
-		name              string
-		parametersVersion string
-		wantMigrate       bool
-	}{
-		{"old schema", "cnab-parametersets-1.0.0-DRAFT", true},
-		{"missing schema", "", true},
-		{"current schema", string(parameters.SchemaVersion), false},
-	}
-
-	for _, tc := range testcases {
-		t.Run(tc.name, func(t *testing.T) {
-			c := config.NewTestConfig(t)
-			m := NewTestManager(c)
-
-			m.SetSchema(storage.NewSchema("", "", schema.Version(tc.parametersVersion)))
-			assert.Equal(t, tc.wantMigrate, m.ShouldMigrateParameters())
-		})
-	}
 }

@@ -8,10 +8,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/config"
-	"get.porter.sh/porter/pkg/credentials"
-	"get.porter.sh/porter/pkg/parameters"
 	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/tracing"
 	"github.com/cnabio/cnab-go/schema"
@@ -35,7 +32,7 @@ type Manager struct {
 
 	// The underlying storage managed by this instance. It
 	// shouldn't be used for typed read/access the data, for that use the ClaimsProvider
-	// or CredentialsProvider which works with the Storage.Manager.
+	// or CredentialSetProvider which works with the Storage.Manager.
 	store storage.Store
 
 	// initialized specifies if we have loaded the schema document.
@@ -86,19 +83,19 @@ Once your data has been backed up, run the following command to perform the migr
 
 		m.initialized = true
 
-		cs := claims.NewClaimStore(m.store)
+		cs := storage.NewClaimStore(m.store)
 		err := cs.Initialize(ctx)
 		if err != nil {
 			return err
 		}
 
-		paramStore := parameters.NewParameterStore(m.store, nil)
+		paramStore := storage.NewParameterStore(m.store, nil)
 		err = paramStore.Initialize(ctx)
 		if err != nil {
 			return err
 		}
 
-		credStore := credentials.NewCredentialStore(m.store, nil)
+		credStore := storage.NewCredentialStore(m.store, nil)
 		err = credStore.Initialize(ctx)
 		if err != nil {
 			return err
@@ -250,7 +247,7 @@ func (m *Manager) Migrate(ctx context.Context) (string, error) {
 
 	var migrationErr *multierror.Error
 	if m.ShouldMigrateClaims() {
-		fmt.Fprintf(w, "Installations schema is out-of-date (want: %s got: %s)\n", claims.SchemaVersion, m.schema.Installations)
+		fmt.Fprintf(w, "Installations schema is out-of-date (want: %s got: %s)\n", storage.InstallationSchemaVersion, m.schema.Installations)
 		err = m.migrateClaims()
 		migrationErr = multierror.Append(migrationErr, err)
 	} else {
@@ -258,7 +255,7 @@ func (m *Manager) Migrate(ctx context.Context) (string, error) {
 	}
 
 	if m.ShouldMigrateCredentials() {
-		fmt.Fprintf(w, "Credentials schema is out-of-date (want: %s got: %s)\n", credentials.SchemaVersion, m.schema.Credentials)
+		fmt.Fprintf(w, "Credentials schema is out-of-date (want: %s got: %s)\n", storage.CredentialSetSchemaVersion, m.schema.Credentials)
 		err = m.migrateCredentials(w)
 		migrationErr = multierror.Append(migrationErr, err)
 	} else {
@@ -266,7 +263,7 @@ func (m *Manager) Migrate(ctx context.Context) (string, error) {
 	}
 
 	if m.ShouldMigrateParameters() {
-		fmt.Fprintf(w, "Parameters schema is out-of-date (want: %s got: %s)\n", parameters.SchemaVersion, m.schema.Parameters)
+		fmt.Fprintf(w, "Parameters schema is out-of-date (want: %s got: %s)\n", storage.ParameterSetSchemaVersion, m.schema.Parameters)
 		err = m.migrateParameters(w)
 		migrationErr = multierror.Append(migrationErr, err)
 	} else {
@@ -298,17 +295,17 @@ func (m *Manager) initEmptyPorterHome(ctx context.Context) (bool, error) {
 		return itemCount > 0, nil
 	}
 
-	hasInstallations, err := itemCheck(claims.CollectionInstallations)
+	hasInstallations, err := itemCheck(storage.CollectionInstallations)
 	if hasInstallations || err != nil {
 		return false, err
 	}
 
-	hasCredentials, err := itemCheck(credentials.CollectionCredentials)
+	hasCredentials, err := itemCheck(storage.CollectionCredentials)
 	if hasCredentials || err != nil {
 		return false, err
 	}
 
-	hasParameters, err := itemCheck(parameters.CollectionParameters)
+	hasParameters, err := itemCheck(storage.CollectionParameters)
 	if hasParameters || err != nil {
 		return false, err
 	}
@@ -318,7 +315,7 @@ func (m *Manager) initEmptyPorterHome(ctx context.Context) (bool, error) {
 
 // ShouldMigrateClaims determines if the claims storage system requires a migration.
 func (m *Manager) ShouldMigrateClaims() bool {
-	return m.schema.Installations != claims.SchemaVersion
+	return m.schema.Installations != storage.InstallationSchemaVersion
 }
 
 func (m *Manager) migrateClaims() error {
@@ -333,7 +330,7 @@ func (m *Manager) reset() {
 
 // WriteSchema updates the schema with the most recent version then writes it to disk.
 func (m *Manager) WriteSchema(ctx context.Context) error {
-	m.schema = NewSchema()
+	m.schema = storage.NewSchema()
 
 	err := m.store.Update(ctx, CollectionConfig, storage.UpdateOptions{Document: m.schema, Upsert: true})
 	if err != nil {
@@ -343,17 +340,9 @@ func (m *Manager) WriteSchema(ctx context.Context) error {
 	return nil
 }
 
-// NewSchema creates a new schema document for the current version of the CNAB spec used by Porter.
-func NewSchema() storage.Schema {
-	return storage.NewSchema(
-		claims.SchemaVersion,
-		credentials.SchemaVersion,
-		parameters.SchemaVersion)
-}
-
 // ShouldMigrateCredentials determines if the credentials storage system requires a migration.
 func (m *Manager) ShouldMigrateCredentials() bool {
-	return m.schema.Credentials != credentials.SchemaVersion
+	return m.schema.Credentials != storage.CredentialSetSchemaVersion
 }
 
 func (m *Manager) migrateCredentials(w io.Writer) error {
@@ -362,7 +351,7 @@ func (m *Manager) migrateCredentials(w io.Writer) error {
 
 // ShouldMigrateParameters determines if the parameter set documents requires a migration.
 func (m *Manager) ShouldMigrateParameters() bool {
-	return m.schema.Parameters != parameters.SchemaVersion
+	return m.schema.Parameters != storage.ParameterSetSchemaVersion
 }
 
 func (m *Manager) migrateParameters(w io.Writer) error {

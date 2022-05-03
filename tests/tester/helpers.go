@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/porter"
+	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/yaml"
 	"get.porter.sh/porter/tests"
 	"get.porter.sh/porter/tests/testdata"
@@ -104,7 +104,7 @@ func (t Tester) ListInstallations(allNamespaces bool, namespace string, name str
 	return installations, nil
 }
 
-func (t Tester) RequireInstallationInList(namespace, name string, list []claims.Installation) claims.Installation {
+func (t Tester) RequireInstallationInList(namespace, name string, list []storage.Installation) storage.Installation {
 	for _, i := range list {
 		if i.Namespace == namespace && i.Name == name {
 			return i
@@ -112,7 +112,7 @@ func (t Tester) RequireInstallationInList(namespace, name string, list []claims.
 	}
 
 	t.T.Fatalf("expected %s/%s to be in the list of installations", namespace, name)
-	return claims.Installation{}
+	return storage.Installation{}
 }
 
 // EditYaml applies a set of yq transformations to a file.

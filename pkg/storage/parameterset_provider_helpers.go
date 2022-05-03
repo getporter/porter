@@ -1,4 +1,4 @@
-package parameters
+package storage
 
 import (
 	"context"
@@ -9,32 +9,31 @@ import (
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/encoding"
 	"get.porter.sh/porter/pkg/secrets"
-	"get.porter.sh/porter/pkg/storage"
 	"github.com/carolynvs/aferox"
 	"github.com/pkg/errors"
 	"github.com/spf13/afero"
 )
 
-var _ Provider = &TestParameterProvider{}
+var _ ParameterSetProvider = &TestParameterSetProvider{}
 
-type TestParameterProvider struct {
+type TestParameterSetProvider struct {
 	*ParameterStore
 
 	T *testing.T
 	// TestSecrets allows you to set up secrets for unit testing
 	TestSecrets   secrets.TestSecretsProvider
-	TestDocuments storage.Store
+	TestDocuments Store
 }
 
-func NewTestParameterProvider(t *testing.T) *TestParameterProvider {
+func NewTestParameterProvider(t *testing.T) *TestParameterSetProvider {
 	tc := config.NewTestConfig(t)
-	testStore := storage.NewTestStore(tc)
+	testStore := NewTestStore(tc)
 	testSecrets := secrets.NewTestSecretsProvider()
 	return NewTestParameterProviderFor(t, testStore, testSecrets)
 }
 
-func NewTestParameterProviderFor(t *testing.T, testStore storage.Store, testSecrets secrets.TestSecretsProvider) *TestParameterProvider {
-	return &TestParameterProvider{
+func NewTestParameterProviderFor(t *testing.T, testStore Store, testSecrets secrets.TestSecretsProvider) *TestParameterSetProvider {
+	return &TestParameterSetProvider{
 		T:             t,
 		TestDocuments: testStore,
 		TestSecrets:   testSecrets,
@@ -45,7 +44,7 @@ func NewTestParameterProviderFor(t *testing.T, testStore storage.Store, testSecr
 	}
 }
 
-func (p TestParameterProvider) Close() error {
+func (p TestParameterSetProvider) Close() error {
 	p.TestSecrets.Close()
 	return p.TestDocuments.Close()
 }
@@ -53,7 +52,7 @@ func (p TestParameterProvider) Close() error {
 // Load a ParameterSet from a test file at a given path.
 //
 // It does not load the individual parameters.
-func (p TestParameterProvider) Load(path string) (ParameterSet, error) {
+func (p TestParameterSetProvider) Load(path string) (ParameterSet, error) {
 	fs := aferox.NewAferox(".", afero.NewOsFs())
 	var pset ParameterSet
 	err := encoding.UnmarshalFile(fs, path, &pset)
@@ -61,7 +60,7 @@ func (p TestParameterProvider) Load(path string) (ParameterSet, error) {
 	return pset, errors.Wrapf(err, "error reading %s as a parameter set", path)
 }
 
-func (p TestParameterProvider) AddTestParameters(path string) {
+func (p TestParameterSetProvider) AddTestParameters(path string) {
 	ps, err := p.Load(path)
 	if err != nil {
 		p.T.Fatal(errors.Wrapf(err, "could not read test parameters from %s", path))
@@ -73,7 +72,7 @@ func (p TestParameterProvider) AddTestParameters(path string) {
 	}
 }
 
-func (p TestParameterProvider) AddTestParametersDirectory(dir string) {
+func (p TestParameterSetProvider) AddTestParametersDirectory(dir string) {
 	files, err := ioutil.ReadDir(dir)
 	if err != nil {
 		p.T.Fatal(errors.Wrapf(err, "could not list test directory %s", dir))
@@ -85,6 +84,6 @@ func (p TestParameterProvider) AddTestParametersDirectory(dir string) {
 	}
 }
 
-func (p TestParameterProvider) AddSecret(key string, value string) {
+func (p TestParameterSetProvider) AddSecret(key string, value string) {
 	p.TestSecrets.Create(context.Background(), secrets.SourceSecret, key, value)
 }

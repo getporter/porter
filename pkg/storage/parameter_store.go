@@ -1,4 +1,4 @@
-package parameters
+package storage
 
 import (
 	"context"
@@ -6,14 +6,13 @@ import (
 	"strings"
 
 	"get.porter.sh/porter/pkg/secrets"
-	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/tracing"
 	"github.com/cnabio/cnab-go/secrets/host"
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 )
 
-var _ Provider = &ParameterStore{}
+var _ ParameterSetProvider = &ParameterStore{}
 
 const (
 	CollectionParameters = "parameters"
@@ -22,11 +21,11 @@ const (
 // ParameterStore provides access to parameter sets by instantiating plugins that
 // implement CRUD storage.
 type ParameterStore struct {
-	Documents storage.Store
+	Documents Store
 	Secrets   secrets.Store
 }
 
-func NewParameterStore(storage storage.Store, secrets secrets.Store) *ParameterStore {
+func NewParameterStore(storage Store, secrets secrets.Store) *ParameterStore {
 	return &ParameterStore{
 		Documents: storage,
 		Secrets:   secrets,
@@ -39,8 +38,8 @@ func (s ParameterStore) Initialize(ctx context.Context) error {
 	defer span.EndSpan()
 
 	span.Debug("Initializing parameter collection indices")
-	indices := storage.EnsureIndexOptions{
-		Indices: []storage.Index{
+	indices := EnsureIndexOptions{
+		Indices: []Index{
 			// query parameters by namespace + name
 			{Collection: CollectionParameters, Keys: []string{"namespace", "name"}, Unique: true},
 		},
@@ -49,7 +48,7 @@ func (s ParameterStore) Initialize(ctx context.Context) error {
 	return span.Error(err)
 }
 
-func (s ParameterStore) GetDataStore() storage.Store {
+func (s ParameterStore) GetDataStore() Store {
 	return s.Documents
 }
 
@@ -94,8 +93,8 @@ func (s ParameterStore) Validate(ctx context.Context, params ParameterSet) error
 }
 
 func (s ParameterStore) InsertParameterSet(ctx context.Context, params ParameterSet) error {
-	params.SchemaVersion = SchemaVersion
-	opts := storage.InsertOptions{
+	params.SchemaVersion = ParameterSetSchemaVersion
+	opts := InsertOptions{
 		Documents: []interface{}{params},
 	}
 	return s.Documents.Insert(ctx, CollectionParameters, opts)
@@ -103,8 +102,8 @@ func (s ParameterStore) InsertParameterSet(ctx context.Context, params Parameter
 
 func (s ParameterStore) ListParameterSets(ctx context.Context, namespace string, name string, labels map[string]string) ([]ParameterSet, error) {
 	var out []ParameterSet
-	opts := storage.FindOptions{
-		Filter: storage.CreateListFiler(namespace, name, labels),
+	opts := FindOptions{
+		Filter: CreateListFiler(namespace, name, labels),
 	}
 	err := s.Documents.Find(ctx, CollectionParameters, opts, &out)
 	return out, err
@@ -112,7 +111,7 @@ func (s ParameterStore) ListParameterSets(ctx context.Context, namespace string,
 
 func (s ParameterStore) GetParameterSet(ctx context.Context, namespace string, name string) (ParameterSet, error) {
 	var out ParameterSet
-	opts := storage.FindOptions{
+	opts := FindOptions{
 		Filter: map[string]interface{}{
 			"namespace": namespace,
 			"name":      name,
@@ -123,16 +122,16 @@ func (s ParameterStore) GetParameterSet(ctx context.Context, namespace string, n
 }
 
 func (s ParameterStore) UpdateParameterSet(ctx context.Context, params ParameterSet) error {
-	params.SchemaVersion = SchemaVersion
-	opts := storage.UpdateOptions{
+	params.SchemaVersion = ParameterSetSchemaVersion
+	opts := UpdateOptions{
 		Document: params,
 	}
 	return s.Documents.Update(ctx, CollectionParameters, opts)
 }
 
 func (s ParameterStore) UpsertParameterSet(ctx context.Context, params ParameterSet) error {
-	params.SchemaVersion = SchemaVersion
-	opts := storage.UpdateOptions{
+	params.SchemaVersion = ParameterSetSchemaVersion
+	opts := UpdateOptions{
 		Document: params,
 		Upsert:   true,
 	}
@@ -140,7 +139,7 @@ func (s ParameterStore) UpsertParameterSet(ctx context.Context, params Parameter
 }
 
 func (s ParameterStore) RemoveParameterSet(ctx context.Context, namespace string, name string) error {
-	opts := storage.RemoveOptions{
+	opts := RemoveOptions{
 		Namespace: namespace,
 		Name:      name,
 	}

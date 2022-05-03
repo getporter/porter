@@ -1,4 +1,4 @@
-package credentials
+package storage
 
 import (
 	"testing"
@@ -25,7 +25,7 @@ func TestNewCredentialSet(t *testing.T) {
 	assert.NotEmpty(t, cs.Status.Created, "Created was not set")
 	assert.NotEmpty(t, cs.Status.Modified, "Modified was not set")
 	assert.Equal(t, cs.Status.Created, cs.Status.Modified, "Created and Modified should have the same timestamp")
-	assert.Equal(t, SchemaVersion, cs.SchemaVersion, "SchemaVersion was not set")
+	assert.Equal(t, CredentialSetSchemaVersion, cs.SchemaVersion, "CredentialSetSchemaVersion was not set")
 	assert.Len(t, cs.Credentials, 1, "Credentials should be initialized with 1 value")
 }
 

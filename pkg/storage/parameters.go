@@ -1,18 +1,11 @@
-package parameters
+package storage
 
 import (
 	"fmt"
 	"strings"
 
 	"get.porter.sh/porter/pkg/secrets"
-	"github.com/cnabio/cnab-go/schema"
 	"github.com/cnabio/cnab-go/secrets/host"
-)
-
-const (
-	// SchemaVersion represents the version associated with the schema
-	// for parameter set documents.
-	SchemaVersion = schema.Version("1.0.1")
 )
 
 // ParseVariableAssignments converts a string array of variable assignments

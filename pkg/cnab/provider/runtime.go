@@ -1,13 +1,10 @@
 package cnabprovider
 
 import (
-	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
-	"get.porter.sh/porter/pkg/credentials"
-	"get.porter.sh/porter/pkg/parameters"
-	"get.porter.sh/porter/pkg/sanitizer"
 	"get.porter.sh/porter/pkg/secrets"
+	"get.porter.sh/porter/pkg/storage"
 	"github.com/pkg/errors"
 )
 
@@ -15,15 +12,15 @@ var _ CNABProvider = &Runtime{}
 
 type Runtime struct {
 	*config.Config
-	credentials credentials.Provider
-	parameters  parameters.Provider
+	credentials storage.CredentialSetProvider
+	parameters  storage.ParameterSetProvider
 	secrets     secrets.Store
-	claims      claims.Provider
-	sanitizer   *sanitizer.Service
+	claims      storage.ClaimProvider
+	sanitizer   *storage.Sanitizer
 	Extensions  cnab.ProcessedExtensions
 }
 
-func NewRuntime(c *config.Config, claims claims.Provider, credentials credentials.Provider, secrets secrets.Store, sanitizer *sanitizer.Service) *Runtime {
+func NewRuntime(c *config.Config, claims storage.ClaimProvider, credentials storage.CredentialSetProvider, secrets secrets.Store, sanitizer *storage.Sanitizer) *Runtime {
 	return &Runtime{
 		Config:      c,
 		claims:      claims,

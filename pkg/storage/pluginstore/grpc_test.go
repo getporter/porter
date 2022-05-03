@@ -3,10 +3,9 @@ package pluginstore
 import (
 	"testing"
 
-	"go.mongodb.org/mongo-driver/bson"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 func TestConvertFloatToInt(t *testing.T) {

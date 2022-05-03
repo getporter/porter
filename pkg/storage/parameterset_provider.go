@@ -1,15 +1,14 @@
-package parameters
+package storage
 
 import (
 	"context"
 
 	"get.porter.sh/porter/pkg/secrets"
-	"get.porter.sh/porter/pkg/storage"
 )
 
-// Provider interface for managing sets of parameters.
-type Provider interface {
-	GetDataStore() storage.Store
+// ParameterSetProvider interface for managing sets of parameters.
+type ParameterSetProvider interface {
+	GetDataStore() Store
 
 	// ResolveAll parameter values in the parameter set.
 	ResolveAll(ctx context.Context, params ParameterSet) (secrets.Set, error)

@@ -6,10 +6,10 @@ import (
 	"strings"
 
 	"get.porter.sh/porter/pkg/cache"
-	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab"
 	cnabprovider "get.porter.sh/porter/pkg/cnab/provider"
 	"get.porter.sh/porter/pkg/encoding"
+	"get.porter.sh/porter/pkg/storage"
 	"github.com/opencontainers/go-digest"
 	"github.com/pkg/errors"
 )
@@ -164,7 +164,7 @@ func (p *Porter) resolveBundleReference(ctx context.Context, opts *BundleActionO
 
 // BuildActionArgs converts an instance of user-provided action options into prepared arguments
 // that can be used to execute the action.
-func (p *Porter) BuildActionArgs(ctx context.Context, installation claims.Installation, action BundleAction) (cnabprovider.ActionArguments, error) {
+func (p *Porter) BuildActionArgs(ctx context.Context, installation storage.Installation, action BundleAction) (cnabprovider.ActionArguments, error) {
 	opts := action.GetOptions()
 	bundleRef, err := p.resolveBundleReference(ctx, opts)
 	if err != nil {

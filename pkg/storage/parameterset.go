@@ -1,18 +1,17 @@
-package parameters
+package storage
 
 import (
 	"fmt"
 	"time"
 
 	"get.porter.sh/porter/pkg/secrets"
-	"get.porter.sh/porter/pkg/storage"
 	"github.com/cnabio/cnab-go/schema"
 	"github.com/pkg/errors"
 )
 
 const INTERNAL_PARAMETERER_SET = "internal-parameter-set"
 
-var _ storage.Document = ParameterSet{}
+var _ Document = ParameterSet{}
 
 // ParameterSet represents a collection of parameters and their
 // sources/strategies for value resolution
@@ -53,7 +52,7 @@ func NewParameterSet(namespace string, name string, params ...secrets.Strategy) 
 	now := time.Now()
 	ps := ParameterSet{
 		ParameterSetSpec: ParameterSetSpec{
-			SchemaVersion: SchemaVersion,
+			SchemaVersion: ParameterSetSchemaVersion,
 			Namespace:     namespace,
 			Name:          name,
 			Parameters:    params,
@@ -77,11 +76,11 @@ func (s ParameterSet) DefaultDocumentFilter() map[string]interface{} {
 }
 
 func (s ParameterSet) Validate() error {
-	if SchemaVersion != s.SchemaVersion {
+	if ParameterSetSchemaVersion != s.SchemaVersion {
 		if s.SchemaVersion == "" {
 			s.SchemaVersion = "(none)"
 		}
-		return errors.Errorf("invalid schemaVersion provided: %s. This version of Porter is compatible with %s.", s.SchemaVersion, SchemaVersion)
+		return errors.Errorf("invalid schemaVersion provided: %s. This version of Porter is compatible with %s.", s.SchemaVersion, ParameterSetSchemaVersion)
 	}
 	return nil
 }

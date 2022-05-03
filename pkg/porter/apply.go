@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/encoding"
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/printer"
@@ -84,7 +83,7 @@ func (p *Porter) InstallationApply(ctx context.Context, opts ApplyOptions) error
 		}
 
 		// Create a new installation
-		installation = claims.NewInstallation(input.Namespace, input.Name)
+		installation = storage.NewInstallation(input.Namespace, input.Name)
 		installation.Apply(inputInstallation)
 
 		log.Info("Creating a new installation", attribute.String("installation", installation.String()))

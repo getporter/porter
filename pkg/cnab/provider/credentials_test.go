@@ -4,10 +4,9 @@ import (
 	"context"
 	"testing"
 
-	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab"
-	"get.porter.sh/porter/pkg/credentials"
 	"get.porter.sh/porter/pkg/secrets"
+	"get.porter.sh/porter/pkg/storage"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -24,7 +23,7 @@ func TestRuntime_loadCredentials(t *testing.T) {
 
 	r.TestConfig.TestContext.AddTestFile("testdata/db-creds.json", "/db-creds.json")
 
-	cs1 := credentials.NewCredentialSet("", "mycreds", secrets.Strategy{
+	cs1 := storage.NewCredentialSet("", "mycreds", secrets.Strategy{
 		Name: "password",
 		Source: secrets.Source{
 			Key:   secrets.SourceSecret,
@@ -50,7 +49,7 @@ func TestRuntime_loadCredentials(t *testing.T) {
 		},
 	}}
 
-	args := ActionArguments{Installation: claims.Installation{CredentialSets: []string{"mycreds"}}, Action: "install"}
+	args := ActionArguments{Installation: storage.Installation{CredentialSets: []string{"mycreds"}}, Action: "install"}
 	gotValues, err := r.loadCredentials(context.Background(), b, args)
 	require.NoError(t, err, "loadCredentials failed")
 
@@ -59,7 +58,7 @@ func TestRuntime_loadCredentials(t *testing.T) {
 	}
 	assert.Equal(t, wantValues, gotValues, "resolved unexpected credential values")
 
-	args = ActionArguments{Installation: claims.Installation{CredentialSets: []string{"/db-creds.json"}}, Action: "install"}
+	args = ActionArguments{Installation: storage.Installation{CredentialSets: []string{"/db-creds.json"}}, Action: "install"}
 	_, err = r.loadCredentials(context.Background(), b, args)
 	require.Error(t, err, "loadCredentials should not load from a file")
 }
@@ -126,7 +125,7 @@ func TestRuntime_loadCredentials_WithApplyTo(t *testing.T) {
 
 		r.TestCredentials.AddSecret("password", "mypassword")
 
-		cs1 := credentials.NewCredentialSet("", "mycreds", secrets.Strategy{
+		cs1 := storage.NewCredentialSet("", "mycreds", secrets.Strategy{
 			Name: "password",
 			Source: secrets.Source{
 				Key:   secrets.SourceSecret,
@@ -138,7 +137,7 @@ func TestRuntime_loadCredentials_WithApplyTo(t *testing.T) {
 		require.NoError(t, err, "Save credential set failed")
 
 		b := getBundle(true)
-		args := ActionArguments{Installation: claims.Installation{CredentialSets: []string{"mycreds"}}, Action: "install"}
+		args := ActionArguments{Installation: storage.Installation{CredentialSets: []string{"mycreds"}}, Action: "install"}
 		gotValues, err := r.loadCredentials(context.Background(), b, args)
 		require.NoError(t, err, "loadCredentials failed")
 		assert.Equal(t, secrets.Set{"password": "mypassword"}, gotValues)

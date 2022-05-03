@@ -4,7 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/storage"
 	"github.com/stretchr/testify/assert"
@@ -59,7 +58,7 @@ func TestDeleteInstallation(t *testing.T) {
 
 			// Create test claim
 			if tc.lastAction != "" {
-				i := p.TestClaims.CreateInstallation(claims.NewInstallation("", "test"))
+				i := p.TestClaims.CreateInstallation(storage.NewInstallation("", "test"))
 				c := p.TestClaims.CreateRun(i.NewRun(tc.lastAction))
 				_ = p.TestClaims.CreateResult(c.NewResult(tc.lastActionStatus))
 			}

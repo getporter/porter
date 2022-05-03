@@ -6,6 +6,20 @@ import (
 
 var _ Document = Schema{}
 
+const (
+	// InstallationSchemaVersion represents the version associated with the schema
+	// for all installation documents: installations, runs, results and outputs.
+	InstallationSchemaVersion = schema.Version("1.0.1")
+
+	// CredentialSetSchemaVersion represents the version associated with the schema
+	// credential set documents.
+	CredentialSetSchemaVersion = schema.Version("1.0.1")
+
+	// ParameterSetSchemaVersion represents the version associated with the schema
+	// for parameter set documents.
+	ParameterSetSchemaVersion = schema.Version("1.0.1")
+)
+
 type Schema struct {
 	ID string `json:"_id"`
 
@@ -22,12 +36,12 @@ type Schema struct {
 	Parameters schema.Version `json:"parameters"`
 }
 
-func NewSchema(installations schema.Version, creds schema.Version, params schema.Version) Schema {
+func NewSchema() Schema {
 	return Schema{
 		ID:            "schema",
-		Installations: installations,
-		Credentials:   creds,
-		Parameters:    params,
+		Installations: InstallationSchemaVersion,
+		Credentials:   CredentialSetSchemaVersion,
+		Parameters:    ParameterSetSchemaVersion,
 	}
 }
 

@@ -8,7 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"get.porter.sh/porter/pkg/credentials"
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/printer"
 	"get.porter.sh/porter/pkg/storage"
@@ -187,12 +186,12 @@ func TestPorter_ListCredentials(t *testing.T) {
 	defer p.Close()
 
 	ctx := context.Background()
-	p.TestCredentials.InsertCredentialSet(ctx, credentials.NewCredentialSet("", "shared-mysql"))
-	p.TestCredentials.InsertCredentialSet(ctx, credentials.NewCredentialSet("dev", "carolyn-wordpress"))
-	p.TestCredentials.InsertCredentialSet(ctx, credentials.NewCredentialSet("dev", "vaughn-wordpress"))
-	p.TestCredentials.InsertCredentialSet(ctx, credentials.NewCredentialSet("test", "staging-wordpress"))
-	p.TestCredentials.InsertCredentialSet(ctx, credentials.NewCredentialSet("test", "iat-wordpress"))
-	p.TestCredentials.InsertCredentialSet(ctx, credentials.NewCredentialSet("test", "shared-mysql"))
+	p.TestCredentials.InsertCredentialSet(ctx, storage.NewCredentialSet("", "shared-mysql"))
+	p.TestCredentials.InsertCredentialSet(ctx, storage.NewCredentialSet("dev", "carolyn-wordpress"))
+	p.TestCredentials.InsertCredentialSet(ctx, storage.NewCredentialSet("dev", "vaughn-wordpress"))
+	p.TestCredentials.InsertCredentialSet(ctx, storage.NewCredentialSet("test", "staging-wordpress"))
+	p.TestCredentials.InsertCredentialSet(ctx, storage.NewCredentialSet("test", "iat-wordpress"))
+	p.TestCredentials.InsertCredentialSet(ctx, storage.NewCredentialSet("test", "shared-mysql"))
 
 	t.Run("all-namespaces", func(t *testing.T) {
 		opts := ListOptions{AllNamespaces: true}

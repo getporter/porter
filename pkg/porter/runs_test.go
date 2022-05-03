@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
-	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/printer"
+	"get.porter.sh/porter/pkg/storage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -19,22 +19,22 @@ func TestPorter_ListInstallationRuns(t *testing.T) {
 	defer p.Close()
 
 	installationName1 := "shared-mysql"
-	run1 := claims.NewRun("", installationName1)
+	run1 := storage.NewRun("", installationName1)
 	run1.NewResult("running")
 	run1.NewResult("succeeded")
 
-	p.TestClaims.CreateInstallation(claims.NewInstallation("", installationName1), p.TestClaims.SetMutableInstallationValues)
+	p.TestClaims.CreateInstallation(storage.NewInstallation("", installationName1), p.TestClaims.SetMutableInstallationValues)
 	p.TestClaims.CreateRun(run1)
 
 	installationName2 := "shared-k8s"
 
-	run2 := claims.NewRun("dev", installationName2)
+	run2 := storage.NewRun("dev", installationName2)
 	run2.NewResult("running")
 
-	run3 := claims.NewRun("dev", installationName2)
+	run3 := storage.NewRun("dev", installationName2)
 	run3.NewResult("running")
 
-	p.TestClaims.CreateInstallation(claims.NewInstallation("dev", installationName2), p.TestClaims.SetMutableInstallationValues)
+	p.TestClaims.CreateInstallation(storage.NewInstallation("dev", installationName2), p.TestClaims.SetMutableInstallationValues)
 	p.TestClaims.CreateRun(run2)
 	p.TestClaims.CreateRun(run3)
 
@@ -75,7 +75,7 @@ func TestPorter_PrintInstallationRunsOutput(t *testing.T) {
 		defer p.Close()
 		ctx := context.Background()
 
-		installation := p.TestClaims.CreateInstallation(claims.NewInstallation("staging", "shared-k8s"), p.TestClaims.SetMutableInstallationValues)
+		installation := p.TestClaims.CreateInstallation(storage.NewInstallation("staging", "shared-k8s"), p.TestClaims.SetMutableInstallationValues)
 
 		installRun := p.TestClaims.CreateRun(installation.NewRun(cnab.ActionInstall), p.TestClaims.SetMutableRunValues)
 		uninstallRun := p.TestClaims.CreateRun(installation.NewRun(cnab.ActionUninstall), p.TestClaims.SetMutableRunValues)

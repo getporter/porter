@@ -12,18 +12,14 @@ import (
 
 	"get.porter.sh/porter/pkg/build"
 	"get.porter.sh/porter/pkg/cache"
-	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab"
 	cnabtooci "get.porter.sh/porter/pkg/cnab/cnab-to-oci"
 	cnabprovider "get.porter.sh/porter/pkg/cnab/provider"
 	"get.porter.sh/porter/pkg/config"
-	"get.porter.sh/porter/pkg/credentials"
 	"get.porter.sh/porter/pkg/encoding"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/mixin"
-	"get.porter.sh/porter/pkg/parameters"
 	"get.porter.sh/porter/pkg/plugins"
-	"get.porter.sh/porter/pkg/sanitizer"
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/tracing"
@@ -36,13 +32,13 @@ type TestPorter struct {
 	*Porter
 	TestConfig      *config.TestConfig
 	TestStore       storage.TestStore
-	TestClaims      *claims.TestClaimProvider
-	TestCredentials *credentials.TestCredentialProvider
-	TestParameters  *parameters.TestParameterProvider
+	TestClaims      *storage.TestClaimProvider
+	TestCredentials *storage.TestCredentialSetProvider
+	TestParameters  *storage.TestParameterSetProvider
 	TestCache       *cache.TestCache
 	TestRegistry    *cnabtooci.TestRegistry
 	TestSecrets     secrets.Store
-	TestSanitizer   *sanitizer.Service
+	TestSanitizer   *storage.Sanitizer
 
 	// original directory where the test was being executed
 	TestDir string
@@ -66,10 +62,10 @@ func NewTestPorter(t *testing.T) *TestPorter {
 	tc := config.NewTestConfig(t)
 	testStore := storage.NewTestStore(tc)
 	testSecrets := secrets.NewTestSecretsProvider()
-	testCredentials := credentials.NewTestCredentialProviderFor(t, testStore, testSecrets)
-	testParameters := parameters.NewTestParameterProviderFor(t, testStore, testSecrets)
+	testCredentials := storage.NewTestCredentialProviderFor(t, testStore, testSecrets)
+	testParameters := storage.NewTestParameterProviderFor(t, testStore, testSecrets)
 	testCache := cache.NewTestCache(cache.New(tc.Config))
-	testClaims := claims.NewTestClaimProviderFor(t, testStore)
+	testClaims := storage.NewTestClaimProviderFor(t, testStore)
 	testRegistry := cnabtooci.NewTestRegistry()
 
 	p := NewFor(tc.Config, testStore, testSecrets)
@@ -95,7 +91,7 @@ func NewTestPorter(t *testing.T) *TestPorter {
 		TestParameters:  testParameters,
 		TestCache:       testCache,
 		TestRegistry:    testRegistry,
-		TestSanitizer:   sanitizer.NewService(testParameters, testSecrets),
+		TestSanitizer:   storage.NewSanitizer(testParameters, testSecrets),
 		RepoRoot:        tc.TestContext.FindRepoRoot(),
 	}
 
@@ -134,7 +130,7 @@ func (p *TestPorter) SetupIntegrationTest() {
 	require.NoError(t, err, "could not read test credentials %s", ciCredsPath)
 	// update the kubeconfig reference in the credentials to match what's on people's dev machine
 	ciCredsB = []byte(strings.Replace(string(ciCredsB), "KUBECONFIGPATH", kubeconfig, -1))
-	var testCreds credentials.CredentialSet
+	var testCreds storage.CredentialSet
 	err = encoding.UnmarshalYaml(ciCredsB, &testCreds)
 	require.NoError(t, err, "could not unmarshal test credentials %s", ciCredsPath)
 	err = p.Credentials.UpsertCredentialSet(context.Background(), testCreds)
@@ -244,8 +240,8 @@ func (p *TestPorter) SanitizeParameters(raw []secrets.Strategy, recordID string,
 	return strategies
 }
 
-func (p *TestPorter) CreateOutput(o claims.Output, bun cnab.ExtendedBundle) claims.Output {
-	return p.TestClaims.CreateOutput(o, func(o *claims.Output) {
+func (p *TestPorter) CreateOutput(o storage.Output, bun cnab.ExtendedBundle) storage.Output {
+	return p.TestClaims.CreateOutput(o, func(o *storage.Output) {
 		output, err := p.TestSanitizer.CleanOutput(context.Background(), *o, bun)
 		require.NoError(p.T(), err)
 		*o = output

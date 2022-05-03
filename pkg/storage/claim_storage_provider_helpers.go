@@ -1,4 +1,4 @@
-package claims
+package storage
 
 import (
 	"context"
@@ -7,12 +7,11 @@ import (
 	"time"
 
 	"get.porter.sh/porter/pkg/config"
-	"get.porter.sh/porter/pkg/storage"
 	"github.com/stretchr/testify/require"
 )
 
 var (
-	_ Provider = TestClaimProvider{}
+	_ ClaimProvider = TestClaimProvider{}
 
 	// A fixed now timestamp that we can use for comparisons in tests
 	now = time.Date(2020, time.April, 18, 1, 2, 3, 4, time.UTC)
@@ -22,18 +21,18 @@ var (
 
 type TestClaimProvider struct {
 	ClaimStore
-	storage.TestStore
+	TestStore
 	t         *testing.T
 	idCounter uint
 }
 
 func NewTestClaimProvider(t *testing.T) *TestClaimProvider {
 	tc := config.NewTestConfig(t)
-	testStore := storage.NewTestStore(tc)
+	testStore := NewTestStore(tc)
 	return NewTestClaimProviderFor(t, testStore)
 }
 
-func NewTestClaimProviderFor(t *testing.T, testStore storage.TestStore) *TestClaimProvider {
+func NewTestClaimProviderFor(t *testing.T, testStore TestStore) *TestClaimProvider {
 	return &TestClaimProvider{
 		t:          t,
 		TestStore:  testStore,

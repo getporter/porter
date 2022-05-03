@@ -9,9 +9,9 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg"
-	"get.porter.sh/porter/pkg/parameters"
 	"get.porter.sh/porter/pkg/porter"
 	"get.porter.sh/porter/pkg/secrets"
+	"get.porter.sh/porter/pkg/storage"
 	"github.com/cnabio/cnab-go/secrets/host"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -58,7 +58,7 @@ func TestInstall_fileParam(t *testing.T) {
 	installOpts := porter.NewInstallOptions()
 	installOpts.Params = []string{"myfile=./myfile"}
 	installOpts.ParameterSets = []string{"myparam"}
-	testParamSets := parameters.NewParameterSet("", "myparam", secrets.Strategy{
+	testParamSets := storage.NewParameterSet("", "myparam", secrets.Strategy{
 		Name: "myotherfile",
 		Source: secrets.Source{
 			Key:   host.SourcePath,

@@ -1,15 +1,14 @@
-package credentials
+package storage
 
 import (
 	"context"
 
 	"get.porter.sh/porter/pkg/secrets"
-	"get.porter.sh/porter/pkg/storage"
 )
 
-// Provider is Porter's interface for managing and resolving credentials.
-type Provider interface {
-	GetDataStore() storage.Store
+// CredentialSetProvider is Porter's interface for managing and resolving credentials.
+type CredentialSetProvider interface {
+	GetDataStore() Store
 	ResolveAll(ctx context.Context, creds CredentialSet) (secrets.Set, error)
 	Validate(ctx context.Context, creds CredentialSet) error
 	InsertCredentialSet(ctx context.Context, creds CredentialSet) error

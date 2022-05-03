@@ -1,23 +1,16 @@
-package credentials
+package storage
 
 import (
 	"fmt"
 	"time"
 
 	"get.porter.sh/porter/pkg/secrets"
-	"get.porter.sh/porter/pkg/storage"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/schema"
 	"github.com/pkg/errors"
 )
 
-const (
-	// SchemaVersion represents the version associated with the schema
-	// credential set documents.
-	SchemaVersion = schema.Version("1.0.1")
-)
-
-var _ storage.Document = &CredentialSet{}
+var _ Document = &CredentialSet{}
 
 // CredentialSet represents a collection of credentials
 type CredentialSet struct {
@@ -57,7 +50,7 @@ func NewCredentialSet(namespace string, name string, creds ...secrets.Strategy) 
 	now := time.Now()
 	cs := CredentialSet{
 		CredentialSetSpec: CredentialSetSpec{
-			SchemaVersion: SchemaVersion,
+			SchemaVersion: CredentialSetSchemaVersion,
 			Name:          name,
 			Namespace:     namespace,
 			Credentials:   creds,
@@ -76,11 +69,11 @@ func (s CredentialSet) DefaultDocumentFilter() map[string]interface{} {
 }
 
 func (s CredentialSet) Validate() error {
-	if SchemaVersion != s.SchemaVersion {
+	if CredentialSetSchemaVersion != s.SchemaVersion {
 		if s.SchemaVersion == "" {
 			s.SchemaVersion = "(none)"
 		}
-		return errors.Errorf("invalid schemaVersion provided: %s. This version of Porter is compatible with %s.", s.SchemaVersion, SchemaVersion)
+		return errors.Errorf("invalid schemaVersion provided: %s. This version of Porter is compatible with %s.", s.SchemaVersion, CredentialSetSchemaVersion)
 	}
 	return nil
 }

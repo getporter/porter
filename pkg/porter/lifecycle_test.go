@@ -5,9 +5,9 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg"
-	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/storage"
 	"github.com/cnabio/cnab-to-oci/relocation"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -59,7 +59,7 @@ func TestPorter_BuildActionArgs(t *testing.T) {
 
 		err := opts.Validate(context.Background(), nil, p.Porter)
 		require.NoError(t, err, "Validate failed")
-		args, err := p.BuildActionArgs(context.TODO(), claims.Installation{}, opts)
+		args, err := p.BuildActionArgs(context.TODO(), storage.Installation{}, opts)
 		require.NoError(t, err, "BuildActionArgs failed")
 
 		assert.NotEmpty(t, args.BundleReference.Definition)
@@ -74,7 +74,7 @@ func TestPorter_BuildActionArgs(t *testing.T) {
 
 		err := opts.Validate(context.Background(), nil, p.Porter)
 		require.NoError(t, err, "Validate failed")
-		args, err := p.BuildActionArgs(context.TODO(), claims.Installation{}, opts)
+		args, err := p.BuildActionArgs(context.TODO(), storage.Installation{}, opts)
 		require.NoError(t, err, "BuildActionArgs failed")
 
 		assert.NotEmpty(t, args.BundleReference.Definition, "BundlePath was not populated correctly")
@@ -111,7 +111,7 @@ func TestPorter_BuildActionArgs(t *testing.T) {
 
 		err := opts.Validate(context.Background(), nil, p.Porter)
 		require.NoError(t, err, "Validate failed")
-		existingInstall := claims.Installation{Name: opts.Name}
+		existingInstall := storage.Installation{Name: opts.Name}
 		args, err := p.BuildActionArgs(context.TODO(), existingInstall, opts)
 		require.NoError(t, err, "BuildActionArgs failed")
 

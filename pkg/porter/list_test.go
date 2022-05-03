@@ -4,19 +4,19 @@ import (
 	"context"
 	"testing"
 
-	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/secrets"
+	"get.porter.sh/porter/pkg/storage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestNewDisplayInstallation(t *testing.T) {
 	t.Run("installation has been installed", func(t *testing.T) {
-		cp := claims.NewTestClaimProvider(t)
+		cp := storage.NewTestClaimProvider(t)
 		defer cp.Close()
 
-		i := cp.CreateInstallation(claims.NewInstallation("", "wordpress"), func(i *claims.Installation) {
+		i := cp.CreateInstallation(storage.NewInstallation("", "wordpress"), func(i *storage.Installation) {
 			i.Status.Action = cnab.ActionUpgrade
 			i.Status.ResultStatus = cnab.StatusRunning
 		})
@@ -34,10 +34,10 @@ func TestNewDisplayInstallation(t *testing.T) {
 	})
 
 	t.Run("installation has not been installed", func(t *testing.T) {
-		cp := claims.NewTestClaimProvider(t)
+		cp := storage.NewTestClaimProvider(t)
 		defer cp.Close()
 
-		i := cp.CreateInstallation(claims.NewInstallation("", "wordpress"))
+		i := cp.CreateInstallation(storage.NewInstallation("", "wordpress"))
 
 		i, err := cp.GetInstallation(context.Background(), "", "wordpress")
 		require.NoError(t, err, "GetInst failed")
@@ -56,12 +56,12 @@ func TestPorter_ListInstallations(t *testing.T) {
 	p := NewTestPorter(t)
 	defer p.Close()
 
-	p.TestClaims.CreateInstallation(claims.NewInstallation("", "shared-mysql"))
-	p.TestClaims.CreateInstallation(claims.NewInstallation("dev", "carolyn-wordpress"))
-	p.TestClaims.CreateInstallation(claims.NewInstallation("dev", "vaughn-wordpress"))
-	p.TestClaims.CreateInstallation(claims.NewInstallation("test", "staging-wordpress"))
-	p.TestClaims.CreateInstallation(claims.NewInstallation("test", "iat-wordpress"))
-	p.TestClaims.CreateInstallation(claims.NewInstallation("test", "shared-mysql"))
+	p.TestClaims.CreateInstallation(storage.NewInstallation("", "shared-mysql"))
+	p.TestClaims.CreateInstallation(storage.NewInstallation("dev", "carolyn-wordpress"))
+	p.TestClaims.CreateInstallation(storage.NewInstallation("dev", "vaughn-wordpress"))
+	p.TestClaims.CreateInstallation(storage.NewInstallation("test", "staging-wordpress"))
+	p.TestClaims.CreateInstallation(storage.NewInstallation("test", "iat-wordpress"))
+	p.TestClaims.CreateInstallation(storage.NewInstallation("test", "shared-mysql"))
 
 	t.Run("all-namespaces", func(t *testing.T) {
 		opts := ListOptions{AllNamespaces: true}
@@ -91,10 +91,10 @@ func TestPorter_ListInstallations(t *testing.T) {
 }
 
 func TestDisplayInstallation_ConvertToInstallation(t *testing.T) {
-	cp := claims.NewTestClaimProvider(t)
+	cp := storage.NewTestClaimProvider(t)
 	defer cp.Close()
 
-	i := cp.CreateInstallation(claims.NewInstallation("", "wordpress"), func(i *claims.Installation) {
+	i := cp.CreateInstallation(storage.NewInstallation("", "wordpress"), func(i *storage.Installation) {
 		i.Status.Action = cnab.ActionUpgrade
 		i.Status.ResultStatus = cnab.StatusRunning
 	})

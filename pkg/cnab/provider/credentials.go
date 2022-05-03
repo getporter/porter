@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"get.porter.sh/porter/pkg/cnab"
-	"get.porter.sh/porter/pkg/credentials"
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/tracing"
@@ -16,7 +15,7 @@ func (r *Runtime) loadCredentials(ctx context.Context, b cnab.ExtendedBundle, ar
 	defer span.EndSpan()
 
 	if len(args.Installation.CredentialSets) == 0 {
-		return nil, credentials.Validate(nil, b.Credentials, args.Action)
+		return nil, storage.Validate(nil, b.Credentials, args.Action)
 	}
 
 	// The strategy here is "last one wins". We loop through each credential file and
@@ -24,7 +23,7 @@ func (r *Runtime) loadCredentials(ctx context.Context, b cnab.ExtendedBundle, ar
 	// in which they were supplied on the CLI.
 	resolvedCredentials := secrets.Set{}
 	for _, name := range args.Installation.CredentialSets {
-		var cset credentials.CredentialSet
+		var cset storage.CredentialSet
 		// Try to get the creds in the local namespace first, fallback to the global creds
 		query := storage.FindOptions{
 			Sort: []string{"-namespace"},
@@ -37,7 +36,7 @@ func (r *Runtime) loadCredentials(ctx context.Context, b cnab.ExtendedBundle, ar
 			},
 		}
 		store := r.credentials.GetDataStore()
-		err := store.FindOne(ctx, credentials.CollectionCredentials, query, &cset)
+		err := store.FindOne(ctx, storage.CollectionCredentials, query, &cset)
 		if err != nil {
 			return nil, err
 		}
@@ -52,5 +51,5 @@ func (r *Runtime) loadCredentials(ctx context.Context, b cnab.ExtendedBundle, ar
 		}
 	}
 
-	return resolvedCredentials, credentials.Validate(resolvedCredentials, b.Credentials, args.Action)
+	return resolvedCredentials, storage.Validate(resolvedCredentials, b.Credentials, args.Action)
 }

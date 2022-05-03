@@ -1,4 +1,4 @@
-package credentials
+package storage
 
 import (
 	"context"
@@ -11,33 +11,32 @@ import (
 	"get.porter.sh/porter/pkg/encoding"
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/secrets"
-	"get.porter.sh/porter/pkg/storage"
 	"github.com/carolynvs/aferox"
 	"github.com/pkg/errors"
 	"github.com/spf13/afero"
 )
 
-var _ Provider = &TestCredentialProvider{}
+var _ CredentialSetProvider = &TestCredentialSetProvider{}
 
-type TestCredentialProvider struct {
+type TestCredentialSetProvider struct {
 	*CredentialStore
 
 	T           *testing.T
 	TestContext *portercontext.TestContext
 	// TestSecrets allows you to set up secrets for unit testing
 	TestSecrets secrets.TestSecretsProvider
-	TestStorage storage.Store
+	TestStorage Store
 }
 
-func NewTestCredentialProvider(t *testing.T) *TestCredentialProvider {
+func NewTestCredentialProvider(t *testing.T) *TestCredentialSetProvider {
 	tc := config.NewTestConfig(t)
-	testStore := storage.NewTestStore(tc)
+	testStore := NewTestStore(tc)
 	testSecrets := secrets.NewTestSecretsProvider()
 	return NewTestCredentialProviderFor(t, testStore, testSecrets)
 }
 
-func NewTestCredentialProviderFor(t *testing.T, testStore storage.Store, testSecrets secrets.TestSecretsProvider) *TestCredentialProvider {
-	return &TestCredentialProvider{
+func NewTestCredentialProviderFor(t *testing.T, testStore Store, testSecrets secrets.TestSecretsProvider) *TestCredentialSetProvider {
+	return &TestCredentialSetProvider{
 		T:           t,
 		TestContext: portercontext.NewTestContext(t),
 		TestSecrets: testSecrets,
@@ -49,7 +48,7 @@ func NewTestCredentialProviderFor(t *testing.T, testStore storage.Store, testSec
 	}
 }
 
-func (p TestCredentialProvider) Close() error {
+func (p TestCredentialSetProvider) Close() error {
 	// sometimes we are testing with a mock that needs to be released at the end of the test
 	if closer, ok := p.TestStorage.(io.Closer); ok {
 		return closer.Close()
@@ -60,7 +59,7 @@ func (p TestCredentialProvider) Close() error {
 // Load a CredentialSet from a test file at a given path.
 //
 // It does not load the individual credentials.
-func (p TestCredentialProvider) Load(path string) (CredentialSet, error) {
+func (p TestCredentialSetProvider) Load(path string) (CredentialSet, error) {
 	fs := aferox.NewAferox(".", afero.NewOsFs())
 	var cset CredentialSet
 	err := encoding.UnmarshalFile(fs, path, &cset)
@@ -68,7 +67,7 @@ func (p TestCredentialProvider) Load(path string) (CredentialSet, error) {
 	return cset, errors.Wrapf(err, "error reading %s as a credential set", path)
 }
 
-func (p TestCredentialProvider) AddTestCredentials(path string) {
+func (p TestCredentialSetProvider) AddTestCredentials(path string) {
 	cs, err := p.Load(path)
 	if err != nil {
 		p.T.Fatal(errors.Wrapf(err, "could not read test credentials from %s", path))
@@ -80,7 +79,7 @@ func (p TestCredentialProvider) AddTestCredentials(path string) {
 	}
 }
 
-func (p TestCredentialProvider) AddTestCredentialsDirectory(dir string) {
+func (p TestCredentialSetProvider) AddTestCredentialsDirectory(dir string) {
 	files, err := ioutil.ReadDir(dir)
 	if err != nil {
 		p.T.Fatal(errors.Wrapf(err, "could not list test directory %s", dir))
@@ -92,6 +91,6 @@ func (p TestCredentialProvider) AddTestCredentialsDirectory(dir string) {
 	}
 }
 
-func (p TestCredentialProvider) AddSecret(key string, value string) {
+func (p TestCredentialSetProvider) AddSecret(key string, value string) {
 	p.TestSecrets.Create(context.Background(), secrets.SourceSecret, key, value)
 }

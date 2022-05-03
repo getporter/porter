@@ -3,13 +3,11 @@ package porter
 import (
 	"context"
 	"testing"
-	"time"
 
-	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab"
-	"get.porter.sh/porter/pkg/parameters"
 	"get.porter.sh/porter/pkg/printer"
 	"get.porter.sh/porter/pkg/secrets"
+	"get.porter.sh/porter/pkg/storage"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/stretchr/testify/require"
@@ -86,7 +84,7 @@ func TestPorter_ShowBundle(t *testing.T) {
 			}
 
 			bun := cnab.ExtendedBundle{b}
-			i := p.TestClaims.CreateInstallation(claims.NewInstallation("dev", "mywordpress"), p.TestClaims.SetMutableInstallationValues, func(i *claims.Installation) {
+			i := p.TestClaims.CreateInstallation(storage.NewInstallation("dev", "mywordpress"), p.TestClaims.SetMutableInstallationValues, func(i *storage.Installation) {
 				if tc.ref != "" {
 					i.TrackBundle(cnab.MustParseOCIReference(tc.ref))
 				}
@@ -105,21 +103,21 @@ func TestPorter_ShowBundle(t *testing.T) {
 				i.Parameters.Parameters = p.SanitizeParameters(i.Parameters.Parameters, i.ID, bun)
 			})
 
-			run := p.TestClaims.CreateRun(i.NewRun(cnab.ActionUpgrade), p.TestClaims.SetMutableRunValues, func(r *claims.Run) {
+			run := p.TestClaims.CreateRun(i.NewRun(cnab.ActionUpgrade), p.TestClaims.SetMutableRunValues, func(r *storage.Run) {
 				r.Bundle = b
 				r.BundleReference = tc.ref
 				r.BundleDigest = "sha256:88d68ef0bdb9cedc6da3a8e341a33e5d2f8bb19d0cf7ec3f1060d3f9eb73cae9"
 
 				r.ParameterOverrides = i.NewInternalParameterSet(
-					parameters.ValueStrategy("logLevel", "3"),
-					parameters.ValueStrategy("secretString", "foo"),
+					storage.ValueStrategy("logLevel", "3"),
+					storage.ValueStrategy("secretString", "foo"),
 				)
 
 				r.Parameters = i.NewInternalParameterSet(
 					[]secrets.Strategy{
-						parameters.ValueStrategy("logLevel", "3"),
-						parameters.ValueStrategy("token", "top-secret"),
-						parameters.ValueStrategy("secretString", "foo"),
+						storage.ValueStrategy("logLevel", "3"),
+						storage.ValueStrategy("token", "top-secret"),
+						storage.ValueStrategy("secretString", "foo"),
 					}...)
 
 				r.ParameterSets = []string{"dev-env"}
@@ -141,18 +139,5 @@ func TestPorter_ShowBundle(t *testing.T) {
 			require.NoError(t, err, "ShowInstallation failed")
 			p.CompareGoldenFile(tc.outputFile, p.TestConfig.TestContext.GetOutput())
 		})
-	}
-}
-
-func newInstallation(id string, namespace string, name string, created, modified time.Time) claims.Installation {
-	return claims.Installation{
-		SchemaVersion: claims.SchemaVersion,
-		ID:            id,
-		Namespace:     namespace,
-		Name:          name,
-		Status: claims.InstallationStatus{
-			Created:  created,
-			Modified: modified,
-		},
 	}
 }

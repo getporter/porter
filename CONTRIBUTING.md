@@ -541,7 +541,9 @@ dependency injection and testing strategies.
     * **provider**: handles communicating with mixins
   * **porter**: the implementation of the porter commands. Every command in Porter
     has a corresponding function in here.
-    * **version**: reusable library used by all the mixins for implementing their
+    * **version**: reusable library used by all the mixins for implementing a mixin
+  * **secrets**: used to access porter's secret store through plugins.
+  * **storage**: used to access porter's data store through plugins.
   * **templates**: files that need to be compiled into the porter binary with
       version command.
 * **scripts**:

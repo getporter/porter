@@ -26,7 +26,8 @@ func TestClaimMigration_List(t *testing.T) {
 	p.SetupIntegrationTest()
 	ctx := context.Background()
 
-	schema := storage.NewSchema("abc123", "", "")
+	schema := storage.NewSchema()
+	schema.Installations = "v0.38.10"
 	p.TestStore.Insert(ctx, migrations.CollectionConfig, storage.InsertOptions{Documents: []interface{}{schema}})
 
 	err := p.MigrateStorage(ctx)
