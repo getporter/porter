@@ -4,21 +4,21 @@ import "go.uber.org/zap/zapcore"
 
 // LogConfig are settings related to Porter's log files.
 type LogConfig struct {
-	Enabled bool     `mapstructure:"enabled,omitempty"`
-	Level   LogLevel `mapstructure:"level,omitempty"`
+	Enabled bool     `mapstructure:"enabled"`
+	Level   LogLevel `mapstructure:"level"`
 }
 
 // TelemetryConfig specifies how to connect to an open telemetry collector.
 // See https://github.com/open-telemetry/opentelemetry-go/tree/main/exporters/otlp/otlptrace
 type TelemetryConfig struct {
-	Enabled     bool              `mapstructure:"enabled,omitempty"`
-	Endpoint    string            `mapstructure:"endpoint,omitempty"`
-	Protocol    string            `mapstructure:"protocol,omitempty"`
-	Insecure    bool              `mapstructure:"insecure,omitempty"`
-	Certificate string            `mapstructure:"certificate,omitempty"`
-	Headers     map[string]string `mapstructure:"headers,omitempty"`
-	Timeout     string            `mapstructure:"timeout,omitempty"`
-	Compression string            `mapstructure:"compression,omitempty"`
+	Enabled     bool              `mapstructure:"enabled"`
+	Endpoint    string            `mapstructure:"endpoint"`
+	Protocol    string            `mapstructure:"protocol"`
+	Insecure    bool              `mapstructure:"insecure"`
+	Certificate string            `mapstructure:"certificate"`
+	Headers     map[string]string `mapstructure:"headers"`
+	Timeout     string            `mapstructure:"timeout"`
+	Compression string            `mapstructure:"compression"`
 }
 
 type LogLevel string
