@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/storage"
 	"github.com/pkg/errors"
 )
@@ -61,7 +60,7 @@ func (p *Porter) InvokeBundle(ctx context.Context, opts InvokeOptions) error {
 		}
 
 		// Create an ephemeral installation just for this run
-		installation = claims.Installation{Namespace: opts.Namespace, Name: opts.Name}
+		installation = storage.Installation{Namespace: opts.Namespace, Name: opts.Name}
 	}
 	err = p.applyActionOptionsToInstallation(ctx, &installation, opts.BundleActionOptions)
 	if err != nil {

@@ -5,14 +5,13 @@ import (
 	"path/filepath"
 
 	"get.porter.sh/porter/pkg/build"
-	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/cnab/drivers"
 	cnabprovider "get.porter.sh/porter/pkg/cnab/provider"
 	"get.porter.sh/porter/pkg/config"
-	"get.porter.sh/porter/pkg/parameters"
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/secrets"
+	"get.porter.sh/porter/pkg/storage"
 	"github.com/pkg/errors"
 )
 
@@ -266,7 +265,7 @@ func (o *sharedOptions) LoadParameters(ctx context.Context, p *Porter, bun cnab.
 
 // parsedParams parses the variable assignments in Params.
 func (o *sharedOptions) parseParams() error {
-	p, err := parameters.ParseVariableAssignments(o.Params)
+	p, err := storage.ParseVariableAssignments(o.Params)
 	if err != nil {
 		return err
 	}
@@ -275,10 +274,10 @@ func (o *sharedOptions) parseParams() error {
 	return nil
 }
 
-func (o *sharedOptions) populateInternalParameterSet(ctx context.Context, p *Porter, bun cnab.ExtendedBundle, i *claims.Installation) error {
+func (o *sharedOptions) populateInternalParameterSet(ctx context.Context, p *Porter, bun cnab.ExtendedBundle, i *storage.Installation) error {
 	strategies := make([]secrets.Strategy, 0, len(o.parsedParams))
 	for name, value := range o.parsedParams {
-		strategies = append(strategies, parameters.ValueStrategy(name, value))
+		strategies = append(strategies, storage.ValueStrategy(name, value))
 	}
 
 	strategies, err := p.Sanitizer.CleanParameters(ctx, strategies, bun, i.ID)

@@ -1,4 +1,4 @@
-package sanitizer_test
+package storage_test
 
 import (
 	"context"
@@ -7,12 +7,11 @@ import (
 	"sort"
 	"testing"
 
-	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab"
-	"get.porter.sh/porter/pkg/parameters"
 	"get.porter.sh/porter/pkg/porter"
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/secrets"
+	"get.porter.sh/porter/pkg/storage"
 	"github.com/cnabio/cnab-go/secrets/host"
 	"github.com/stretchr/testify/require"
 )
@@ -50,7 +49,7 @@ func TestSanitizer_Parameters(t *testing.T) {
 
 	require.Truef(t, reflect.DeepEqual(result, expected), "expected: %v, got: %v", expected, result)
 
-	pset := parameters.NewParameterSet("", "dev", result...)
+	pset := storage.NewParameterSet("", "dev", result...)
 	resolved, err := r.TestSanitizer.RestoreParameterSet(ctx, pset, bun)
 	require.NoError(t, err)
 
@@ -71,21 +70,21 @@ func TestSanitizer_Output(t *testing.T) {
 
 	recordID := "01FZVC5AVP8Z7A78CSCP1EJ604"
 	sensitiveOutputName := "my-first-output"
-	sensitiveOutput := claims.Output{
+	sensitiveOutput := storage.Output{
 		Name:  sensitiveOutputName,
 		Key:   "",
 		Value: []byte("this is secret output"),
 		RunID: recordID,
 	}
 
-	expectedSensitiveOutput := claims.Output{
+	expectedSensitiveOutput := storage.Output{
 		Name:  sensitiveOutputName,
 		Key:   recordID + sensitiveOutputName,
 		Value: nil,
 		RunID: recordID,
 	}
 
-	plainOutput := claims.Output{
+	plainOutput := storage.Output{
 		Name:  "my-second-output",
 		Key:   "",
 		Value: []byte("true"),
@@ -100,11 +99,11 @@ func TestSanitizer_Output(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, expectedSensitiveOutput, sensitiveResult)
 
-	expectedOutputs := claims.NewOutputs([]claims.Output{
+	expectedOutputs := storage.NewOutputs([]storage.Output{
 		plainOutput,
 		{Name: sensitiveOutputName, Key: expectedSensitiveOutput.Key, Value: sensitiveOutput.Value, RunID: recordID},
 	})
-	resolved, err := r.TestSanitizer.RestoreOutputs(ctx, claims.NewOutputs([]claims.Output{sensitiveResult, plainOutput}))
+	resolved, err := r.TestSanitizer.RestoreOutputs(ctx, storage.NewOutputs([]storage.Output{sensitiveResult, plainOutput}))
 	require.NoError(t, err)
 	sort.Sort(resolved)
 	sort.Sort(expectedOutputs)

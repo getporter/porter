@@ -1,15 +1,14 @@
-package claims
+package storage
 
 import (
 	"sort"
 
 	"get.porter.sh/porter/pkg/cnab"
-	"get.porter.sh/porter/pkg/storage"
 	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/cnabio/cnab-go/schema"
 )
 
-var _ storage.Document = Output{}
+var _ Document = Output{}
 
 type Output struct {
 	SchemaVersion schema.Version `json:"schemaVersion" yaml:"schemaVersion" toml:"schemaVersion"`

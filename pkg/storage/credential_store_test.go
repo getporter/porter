@@ -1,11 +1,10 @@
-package credentials
+package storage
 
 import (
 	"context"
 	"testing"
 
 	"get.porter.sh/porter/pkg/secrets"
-	"get.porter.sh/porter/pkg/storage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -48,7 +47,7 @@ func TestCredentialStorage_CRUD(t *testing.T) {
 
 	require.NoError(t, cp.RemoveCredentialSet(context.Background(), cs.Namespace, cs.Name))
 	_, err = cp.GetCredentialSet(context.Background(), cs.Namespace, cs.Name)
-	require.ErrorIs(t, err, storage.ErrNotFound{})
+	require.ErrorIs(t, err, ErrNotFound{})
 }
 
 func TestCredentialStorage_Validate_GoodSources(t *testing.T) {

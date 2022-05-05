@@ -1,9 +1,8 @@
-package claims
+package storage
 
 import (
 	"context"
 
-	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/tracing"
 	"github.com/pkg/errors"
 	"go.mongodb.org/mongo-driver/bson"
@@ -16,18 +15,18 @@ const (
 	CollectionOutputs       = "outputs"
 )
 
-var _ Provider = ClaimStore{}
+var _ ClaimProvider = ClaimStore{}
 
 // ClaimStore is a persistent store for claims.
 type ClaimStore struct {
-	store   storage.Store
+	store   Store
 	encrypt EncryptionHandler
 	decrypt EncryptionHandler
 }
 
 // NewClaimStore creates a persistent store for claims using the specified
 // backing datastore.
-func NewClaimStore(datastore storage.Store) ClaimStore {
+func NewClaimStore(datastore Store) ClaimStore {
 	return ClaimStore{
 		store:   datastore,
 		encrypt: noOpEncryptionHandler,
@@ -41,8 +40,8 @@ func (s ClaimStore) Initialize(ctx context.Context) error {
 
 	span.Debug("Initializing installation collection indices")
 
-	opts := storage.EnsureIndexOptions{
-		Indices: []storage.Index{
+	opts := EnsureIndexOptions{
+		Indices: []Index{
 			// query installations by a namespace (list) or namespace + name (get)
 			{Collection: CollectionInstallations, Keys: []string{"namespace", "name"}, Unique: true},
 			// query runs by installation (list)
@@ -69,9 +68,9 @@ func (s ClaimStore) ListInstallations(ctx context.Context, namespace string, nam
 	defer log.EndSpan()
 
 	var out []Installation
-	findOpts := storage.FindOptions{
+	findOpts := FindOptions{
 		Sort:   []string{"namespace", "name"},
-		Filter: storage.CreateListFiler(namespace, name, labels),
+		Filter: CreateListFiler(namespace, name, labels),
 	}
 
 	err := s.store.Find(ctx, CollectionInstallations, findOpts, &out)
@@ -83,7 +82,7 @@ func (s ClaimStore) ListRuns(ctx context.Context, namespace string, installation
 	var err error
 	var results []Result
 
-	opts := storage.FindOptions{
+	opts := FindOptions{
 		Sort: []string{"_id"},
 		Filter: bson.M{
 			"namespace":    namespace,
@@ -117,7 +116,7 @@ func (s ClaimStore) ListRuns(ctx context.Context, namespace string, installation
 
 func (s ClaimStore) ListResults(ctx context.Context, runID string) ([]Result, error) {
 	var out []Result
-	opts := storage.FindOptions{
+	opts := FindOptions{
 		Sort: []string{"_id"},
 		Filter: bson.M{
 			"runId": runID,
@@ -129,7 +128,7 @@ func (s ClaimStore) ListResults(ctx context.Context, runID string) ([]Result, er
 
 func (s ClaimStore) ListOutputs(ctx context.Context, resultID string) ([]Output, error) {
 	var out []Output
-	opts := storage.FindOptions{
+	opts := FindOptions{
 		Sort: []string{"resultId", "name"},
 		Filter: bson.M{
 			"resultId": resultID,
@@ -142,7 +141,7 @@ func (s ClaimStore) ListOutputs(ctx context.Context, resultID string) ([]Output,
 func (s ClaimStore) GetInstallation(ctx context.Context, namespace string, name string) (Installation, error) {
 	var out Installation
 
-	opts := storage.FindOptions{
+	opts := FindOptions{
 		Filter: bson.M{
 			"namespace": namespace,
 			"name":      name,
@@ -154,21 +153,21 @@ func (s ClaimStore) GetInstallation(ctx context.Context, namespace string, name 
 
 func (s ClaimStore) GetRun(ctx context.Context, id string) (Run, error) {
 	var out Run
-	opts := storage.GetOptions{ID: id}
+	opts := GetOptions{ID: id}
 	err := s.store.Get(ctx, CollectionRuns, opts, &out)
 	return out, err
 }
 
 func (s ClaimStore) GetResult(ctx context.Context, id string) (Result, error) {
 	var out Result
-	opts := storage.GetOptions{ID: id}
+	opts := GetOptions{ID: id}
 	err := s.store.Get(ctx, CollectionResults, opts, &out)
 	return out, err
 }
 
 func (s ClaimStore) GetLastRun(ctx context.Context, namespace string, installation string) (Run, error) {
 	var out []Run
-	opts := storage.FindOptions{
+	opts := FindOptions{
 		Sort:  []string{"-_id"},
 		Limit: 1,
 		Filter: bson.M{
@@ -181,14 +180,14 @@ func (s ClaimStore) GetLastRun(ctx context.Context, namespace string, installati
 		return Run{}, err
 	}
 	if len(out) == 0 {
-		return Run{}, storage.ErrNotFound{Collection: CollectionRuns}
+		return Run{}, ErrNotFound{Collection: CollectionRuns}
 	}
 	return out[0], err
 }
 
 func (s ClaimStore) GetLastOutput(ctx context.Context, namespace string, installation string, name string) (Output, error) {
 	var out Output
-	opts := storage.FindOptions{
+	opts := FindOptions{
 		Sort:  []string{"-_id"},
 		Limit: 1,
 		Filter: bson.M{
@@ -206,7 +205,7 @@ func (s ClaimStore) GetLastOutputs(ctx context.Context, namespace string, instal
 		ID         string `json:"_id"`
 		LastOutput Output `json:"lastOutput"`
 	}
-	opts := storage.AggregateOptions{
+	opts := AggregateOptions{
 		Pipeline: []bson.D{
 			// List outputs by installation
 			{{"$match", bson.M{
@@ -239,7 +238,7 @@ func (s ClaimStore) GetLastOutputs(ctx context.Context, namespace string, instal
 
 func (s ClaimStore) GetLogs(ctx context.Context, runID string) (string, bool, error) {
 	var out Output
-	opts := storage.FindOptions{
+	opts := FindOptions{
 		Sort: []string{"resultId"}, // get logs from the last result for a run
 		Filter: bson.M{
 			"runId": runID,
@@ -248,7 +247,7 @@ func (s ClaimStore) GetLogs(ctx context.Context, runID string) (string, bool, er
 		Limit: 1,
 	}
 	err := s.store.FindOne(ctx, CollectionOutputs, opts, &out)
-	if errors.Is(err, storage.ErrNotFound{}) {
+	if errors.Is(err, ErrNotFound{}) {
 		return "", false, nil
 	}
 	return string(out.Value), err == nil, err
@@ -256,7 +255,7 @@ func (s ClaimStore) GetLogs(ctx context.Context, runID string) (string, bool, er
 
 func (s ClaimStore) GetLastLogs(ctx context.Context, namespace string, installation string) (string, bool, error) {
 	var out Output
-	opts := storage.FindOptions{
+	opts := FindOptions{
 		Sort: []string{"-resultId"}, // get logs from the last result for a run
 		Filter: bson.M{
 			"namespace":    namespace,
@@ -266,51 +265,51 @@ func (s ClaimStore) GetLastLogs(ctx context.Context, namespace string, installat
 		Limit: 1,
 	}
 	err := s.store.FindOne(ctx, CollectionOutputs, opts, &out)
-	if errors.Is(err, storage.ErrNotFound{}) {
+	if errors.Is(err, ErrNotFound{}) {
 		return "", false, nil
 	}
 	return string(out.Value), err == nil, err
 }
 
 func (s ClaimStore) InsertInstallation(ctx context.Context, installation Installation) error {
-	installation.SchemaVersion = SchemaVersion
-	opts := storage.InsertOptions{
+	installation.SchemaVersion = InstallationSchemaVersion
+	opts := InsertOptions{
 		Documents: []interface{}{installation},
 	}
 	return s.store.Insert(ctx, CollectionInstallations, opts)
 }
 
 func (s ClaimStore) InsertRun(ctx context.Context, run Run) error {
-	opts := storage.InsertOptions{
+	opts := InsertOptions{
 		Documents: []interface{}{run},
 	}
 	return s.store.Insert(ctx, CollectionRuns, opts)
 }
 
 func (s ClaimStore) InsertResult(ctx context.Context, result Result) error {
-	opts := storage.InsertOptions{
+	opts := InsertOptions{
 		Documents: []interface{}{result},
 	}
 	return s.store.Insert(ctx, CollectionResults, opts)
 }
 
 func (s ClaimStore) InsertOutput(ctx context.Context, output Output) error {
-	opts := storage.InsertOptions{
+	opts := InsertOptions{
 		Documents: []interface{}{output},
 	}
 	return s.store.Insert(ctx, CollectionOutputs, opts)
 }
 
 func (s ClaimStore) UpdateInstallation(ctx context.Context, installation Installation) error {
-	installation.SchemaVersion = SchemaVersion
-	opts := storage.UpdateOptions{
+	installation.SchemaVersion = InstallationSchemaVersion
+	opts := UpdateOptions{
 		Document: installation,
 	}
 	return s.store.Update(ctx, CollectionInstallations, opts)
 }
 
 func (s ClaimStore) UpsertRun(ctx context.Context, run Run) error {
-	opts := storage.UpdateOptions{
+	opts := UpdateOptions{
 		Upsert:   true,
 		Document: run,
 	}
@@ -318,8 +317,8 @@ func (s ClaimStore) UpsertRun(ctx context.Context, run Run) error {
 }
 
 func (s ClaimStore) UpsertInstallation(ctx context.Context, installation Installation) error {
-	installation.SchemaVersion = SchemaVersion
-	opts := storage.UpdateOptions{
+	installation.SchemaVersion = InstallationSchemaVersion
+	opts := UpdateOptions{
 		Upsert:   true,
 		Document: installation,
 	}
@@ -328,7 +327,7 @@ func (s ClaimStore) UpsertInstallation(ctx context.Context, installation Install
 
 // RemoveInstallation and all associated data.
 func (s ClaimStore) RemoveInstallation(ctx context.Context, namespace string, name string) error {
-	removeInstallation := storage.RemoveOptions{
+	removeInstallation := RemoveOptions{
 		Filter: bson.M{
 			"namespace": namespace,
 			"name":      name,
@@ -340,7 +339,7 @@ func (s ClaimStore) RemoveInstallation(ctx context.Context, namespace string, na
 	}
 
 	// Find associated documents
-	removeChildDocs := storage.RemoveOptions{
+	removeChildDocs := RemoveOptions{
 		Filter: bson.M{
 			"namespace":    namespace,
 			"installation": name,

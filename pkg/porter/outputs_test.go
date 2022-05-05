@@ -6,9 +6,9 @@ import (
 	"io/ioutil"
 	"testing"
 
-	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/printer"
+	"get.porter.sh/porter/pkg/storage"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/stretchr/testify/require"
@@ -104,10 +104,10 @@ func TestPorter_PrintBundleOutputs(t *testing.T) {
 			}
 
 			extB := cnab.ExtendedBundle{b}
-			i := p.TestClaims.CreateInstallation(claims.NewInstallation("", "test"), func(i *claims.Installation) {
+			i := p.TestClaims.CreateInstallation(storage.NewInstallation("", "test"), func(i *storage.Installation) {
 				i.Parameters.Parameters = p.SanitizeParameters(i.Parameters.Parameters, i.ID, extB)
 			})
-			c := p.TestClaims.CreateRun(i.NewRun(cnab.ActionInstall), func(r *claims.Run) {
+			c := p.TestClaims.CreateRun(i.NewRun(cnab.ActionInstall), func(r *storage.Run) {
 				r.Bundle = b
 				r.ParameterOverrides.Parameters = p.SanitizeParameters(r.ParameterOverrides.Parameters, r.ID, extB)
 			})

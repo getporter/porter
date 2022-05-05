@@ -5,9 +5,7 @@ import (
 	"sort"
 	"testing"
 
-	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab"
-	"get.porter.sh/porter/pkg/parameters"
 	"get.porter.sh/porter/pkg/printer"
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
@@ -61,12 +59,12 @@ func TestPorter_ListParameters(t *testing.T) {
 	p := NewTestPorter(t)
 	defer p.Close()
 	ctx := context.Background()
-	p.TestParameters.InsertParameterSet(ctx, parameters.NewParameterSet("", "shared-mysql"))
-	p.TestParameters.InsertParameterSet(ctx, parameters.NewParameterSet("dev", "carolyn-wordpress"))
-	p.TestParameters.InsertParameterSet(ctx, parameters.NewParameterSet("dev", "vaughn-wordpress"))
-	p.TestParameters.InsertParameterSet(ctx, parameters.NewParameterSet("test", "staging-wordpress"))
-	p.TestParameters.InsertParameterSet(ctx, parameters.NewParameterSet("test", "iat-wordpress"))
-	p.TestParameters.InsertParameterSet(ctx, parameters.NewParameterSet("test", "shared-mysql"))
+	p.TestParameters.InsertParameterSet(ctx, storage.NewParameterSet("", "shared-mysql"))
+	p.TestParameters.InsertParameterSet(ctx, storage.NewParameterSet("dev", "carolyn-wordpress"))
+	p.TestParameters.InsertParameterSet(ctx, storage.NewParameterSet("dev", "vaughn-wordpress"))
+	p.TestParameters.InsertParameterSet(ctx, storage.NewParameterSet("test", "staging-wordpress"))
+	p.TestParameters.InsertParameterSet(ctx, storage.NewParameterSet("test", "iat-wordpress"))
+	p.TestParameters.InsertParameterSet(ctx, storage.NewParameterSet("test", "shared-mysql"))
 
 	t.Run("all-namespaces", func(t *testing.T) {
 		opts := ListOptions{AllNamespaces: true}
@@ -109,7 +107,7 @@ func Test_loadParameters_paramNotDefined(t *testing.T) {
 		"foo": "bar",
 	}
 
-	i := claims.Installation{}
+	i := storage.Installation{}
 	_, err := r.resolveParameters(context.Background(), i, b, "action", overrides)
 	require.EqualError(t, err, "parameter foo not defined in bundle")
 }
@@ -132,7 +130,7 @@ func Test_loadParameters_definitionNotDefined(t *testing.T) {
 		"foo": "bar",
 	}
 
-	i := claims.Installation{}
+	i := storage.Installation{}
 	_, err := r.resolveParameters(context.Background(), i, b, "action", overrides)
 	require.EqualError(t, err, "definition foo not defined in bundle")
 }
@@ -185,7 +183,7 @@ func Test_loadParameters_applyTo(t *testing.T) {
 		"true": "false",
 	}
 
-	i := claims.Installation{}
+	i := storage.Installation{}
 	params, err := r.resolveParameters(context.Background(), i, b, "action", overrides)
 	require.NoError(t, err)
 
@@ -217,7 +215,7 @@ func Test_loadParameters_applyToBundleDefaults(t *testing.T) {
 		},
 	}}
 
-	i := claims.Installation{}
+	i := storage.Installation{}
 	params, err := r.resolveParameters(context.Background(), i, b, "action", nil)
 	require.NoError(t, err)
 
@@ -247,7 +245,7 @@ func Test_loadParameters_requiredButDoesNotApply(t *testing.T) {
 		},
 	}}
 
-	i := claims.Installation{}
+	i := storage.Installation{}
 	params, err := r.resolveParameters(context.Background(), i, b, "action", nil)
 	require.NoError(t, err)
 
@@ -287,7 +285,7 @@ func Test_loadParameters_fileParameter(t *testing.T) {
 		"foo": "/path/to/file",
 	}
 
-	i := claims.Installation{}
+	i := storage.Installation{}
 	params, err := r.resolveParameters(context.Background(), i, b, "action", overrides)
 	require.NoError(t, err)
 
@@ -310,7 +308,7 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 		b, err := cnab.LoadBundle(r.Context, "bundle.json")
 		require.NoError(t, err, "ProcessBundle failed")
 
-		i := claims.Installation{Name: "mybun"}
+		i := storage.Installation{Name: "mybun"}
 		params, err := r.resolveParameters(context.Background(), i, b, cnab.ActionUpgrade, nil)
 		require.NoError(t, err)
 		assert.Equal(t, "foo_default", params["foo"],
@@ -334,7 +332,7 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 			"foo": "foo_override",
 		}
 
-		i := claims.Installation{Name: "mybun"}
+		i := storage.Installation{Name: "mybun"}
 		params, err := r.resolveParameters(context.Background(), i, b, cnab.ActionUpgrade, overrides)
 		require.NoError(t, err)
 		assert.Equal(t, "foo_override", params["foo"],
@@ -354,8 +352,8 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 		b, err := cnab.LoadBundle(r.Context, "bundle.json")
 		require.NoError(t, err, "ProcessBundle failed")
 
-		i := r.TestClaims.CreateInstallation(claims.NewInstallation("", "mybun"))
-		c := r.TestClaims.CreateRun(i.NewRun(cnab.ActionInstall), func(r *claims.Run) { r.Bundle = b.Bundle })
+		i := r.TestClaims.CreateInstallation(storage.NewInstallation("", "mybun"))
+		c := r.TestClaims.CreateRun(i.NewRun(cnab.ActionInstall), func(r *storage.Run) { r.Bundle = b.Bundle })
 		cr := r.TestClaims.CreateResult(c.NewResult(cnab.StatusSucceeded))
 		r.TestClaims.CreateOutput(cr.NewOutput("foo", []byte("foo_source")))
 
@@ -382,7 +380,7 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 			"foo": "foo_override",
 		}
 
-		i := r.TestClaims.CreateInstallation(claims.NewInstallation("", "mybun"))
+		i := r.TestClaims.CreateInstallation(storage.NewInstallation("", "mybun"))
 		c := r.TestClaims.CreateRun(i.NewRun(cnab.ActionInstall))
 		cr := r.TestClaims.CreateResult(c.NewResult(cnab.StatusSucceeded))
 		r.TestClaims.CreateOutput(cr.NewOutput("foo", []byte("foo_source")))
@@ -406,8 +404,8 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 		b, err := cnab.LoadBundle(r.Context, "bundle.json")
 		require.NoError(t, err, "ProcessBundle failed")
 
-		i := r.TestClaims.CreateInstallation(claims.NewInstallation("", "mybun-mysql"))
-		c := r.TestClaims.CreateRun(i.NewRun(cnab.ActionInstall), func(r *claims.Run) { r.Bundle = b.Bundle })
+		i := r.TestClaims.CreateInstallation(storage.NewInstallation("", "mybun-mysql"))
+		c := r.TestClaims.CreateRun(i.NewRun(cnab.ActionInstall), func(r *storage.Run) { r.Bundle = b.Bundle })
 		cr := r.TestClaims.CreateResult(c.NewResult(cnab.StatusSucceeded))
 		r.TestClaims.CreateOutput(cr.NewOutput("connstr", []byte("connstr value")))
 
@@ -433,7 +431,7 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 		// foo is set by a user
 		// bar is set by a parameter source
 		// baz is set by the bundle default
-		i := r.TestClaims.CreateInstallation(claims.NewInstallation("", "mybun"))
+		i := r.TestClaims.CreateInstallation(storage.NewInstallation("", "mybun"))
 		c := r.TestClaims.CreateRun(i.NewRun(cnab.ActionInstall))
 		cr := r.TestClaims.CreateResult(c.NewResult(cnab.StatusSucceeded))
 		r.TestClaims.CreateOutput(cr.NewOutput("foo", []byte("foo_source")))
@@ -572,7 +570,7 @@ func Test_Paramapalooza(t *testing.T) {
 						bun.Parameters["my-param"] = param
 					}
 
-					i := claims.Installation{Name: "test"}
+					i := storage.Installation{Name: "test"}
 					overrides := map[string]string{}
 					// If param is provided (via --param/--param-file)
 					// it will be attached to args
@@ -603,13 +601,13 @@ func TestRuntime_ResolveParameterSources(t *testing.T) {
 	bun, err := cnab.LoadBundle(r.Context, "bundle.json")
 	require.NoError(t, err, "ProcessBundle failed")
 
-	i := r.TestClaims.CreateInstallation(claims.NewInstallation("", "mybun-mysql"))
-	c := r.TestClaims.CreateRun(i.NewRun(cnab.ActionInstall), func(r *claims.Run) { r.Bundle = bun.Bundle })
+	i := r.TestClaims.CreateInstallation(storage.NewInstallation("", "mybun-mysql"))
+	c := r.TestClaims.CreateRun(i.NewRun(cnab.ActionInstall), func(r *storage.Run) { r.Bundle = bun.Bundle })
 	cr := r.TestClaims.CreateResult(c.NewResult(cnab.StatusSucceeded))
 	r.TestClaims.CreateOutput(cr.NewOutput("connstr", []byte("connstr value")))
 
-	i = r.TestClaims.CreateInstallation(claims.NewInstallation("", "mybun"))
-	c = r.TestClaims.CreateRun(i.NewRun(cnab.ActionInstall), func(r *claims.Run) { r.Bundle = bun.Bundle })
+	i = r.TestClaims.CreateInstallation(storage.NewInstallation("", "mybun"))
+	c = r.TestClaims.CreateRun(i.NewRun(cnab.ActionInstall), func(r *storage.Run) { r.Bundle = bun.Bundle })
 	cr = r.TestClaims.CreateResult(c.NewResult(cnab.StatusSucceeded))
 	r.TestClaims.CreateOutput(cr.NewOutput("bar", []byte("bar value")))
 

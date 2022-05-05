@@ -7,11 +7,10 @@ import (
 	"strings"
 	"time"
 
-	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab"
-	"get.porter.sh/porter/pkg/parameters"
 	"get.porter.sh/porter/pkg/printer"
 	"get.porter.sh/porter/pkg/secrets"
+	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/tracing"
 	dtprinter "github.com/carolynvs/datetime-printer"
 	"github.com/cnabio/cnab-go/schema"
@@ -79,7 +78,7 @@ type DisplayInstallation struct {
 	Uninstalled bool `json:"uninstalled,omitempty" yaml:"uninstalled,omitempty" toml:"uninstalled,omitempty"`
 
 	// Bundle specifies the bundle reference to use with the installation.
-	Bundle claims.OCIReferenceParts `json:"bundle" yaml:"bundle" toml:"bundle"`
+	Bundle storage.OCIReferenceParts `json:"bundle" yaml:"bundle" toml:"bundle"`
 
 	// Custom extension data applicable to a given runtime.
 	// TODO(carolynvs): remove and populate in ToCNAB when we firm up the spec
@@ -99,7 +98,7 @@ type DisplayInstallation struct {
 	ParameterSets []string `json:"parameterSets,omitempty" yaml:"parameterSets,omitempty" toml:"parameterSets,omitempty"`
 
 	// Status of the installation.
-	Status                      claims.InstallationStatus `json:"status,omitempty" yaml:"status,omitempty" toml:"status,omitempty"`
+	Status                      storage.InstallationStatus `json:"status,omitempty" yaml:"status,omitempty" toml:"status,omitempty"`
 	DisplayInstallationMetadata `json:"_calculated" yaml:"_calculated"`
 }
 
@@ -107,7 +106,7 @@ type DisplayInstallationMetadata struct {
 	ResolvedParameters DisplayValues `json:"resolvedParameters", yaml:"resolvedParameters"`
 }
 
-func NewDisplayInstallation(installation claims.Installation) DisplayInstallation {
+func NewDisplayInstallation(installation storage.Installation) DisplayInstallation {
 
 	di := DisplayInstallation{
 		SchemaType:     "Installation",
@@ -129,8 +128,8 @@ func NewDisplayInstallation(installation claims.Installation) DisplayInstallatio
 
 // ConvertToInstallationClaim transforms the data from DisplayInstallation into
 // a Installation record.
-func (d DisplayInstallation) ConvertToInstallation() (claims.Installation, error) {
-	i := claims.Installation{
+func (d DisplayInstallation) ConvertToInstallation() (storage.Installation, error) {
+	i := storage.Installation{
 		SchemaVersion:  d.SchemaVersion,
 		ID:             d.ID,
 		Name:           d.Name,
@@ -147,11 +146,11 @@ func (d DisplayInstallation) ConvertToInstallation() (claims.Installation, error
 	var err error
 	i.Parameters, err = d.ConvertParamToSet(i)
 	if err != nil {
-		return claims.Installation{}, err
+		return storage.Installation{}, err
 	}
 
 	if err := i.Validate(); err != nil {
-		return claims.Installation{}, errors.Wrap(err, "invalid installation")
+		return storage.Installation{}, errors.Wrap(err, "invalid installation")
 	}
 
 	return i, nil
@@ -159,12 +158,12 @@ func (d DisplayInstallation) ConvertToInstallation() (claims.Installation, error
 }
 
 // ConvertParamToSet converts a Parameters into a internal ParameterSet.
-func (d DisplayInstallation) ConvertParamToSet(i claims.Installation) (parameters.ParameterSet, error) {
+func (d DisplayInstallation) ConvertParamToSet(i storage.Installation) (storage.ParameterSet, error) {
 	strategies := make([]secrets.Strategy, 0, len(d.Parameters))
 	for name, value := range d.Parameters {
 		stringVal, err := cnab.WriteParameterToString(name, value)
 		if err != nil {
-			return parameters.ParameterSet{}, err
+			return storage.ParameterSet{}, err
 		}
 		strategy := secrets.Strategy{
 			Name:  name,
@@ -173,7 +172,7 @@ func (d DisplayInstallation) ConvertParamToSet(i claims.Installation) (parameter
 		strategies = append(strategies, strategy)
 	}
 
-	return parameters.NewInternalParameterSet(d.Namespace, d.Name, strategies...), nil
+	return storage.NewInternalParameterSet(d.Namespace, d.Name, strategies...), nil
 }
 
 // TODO(carolynvs): be consistent with sorting results from list, either keep the default sort by name
@@ -203,7 +202,7 @@ type DisplayRun struct {
 	Status     string                 `json:"status" yaml:"status"`
 }
 
-func NewDisplayRun(run claims.Run) DisplayRun {
+func NewDisplayRun(run storage.Run) DisplayRun {
 	return DisplayRun{
 		ClaimID:    run.ID,
 		Action:     run.Action,
@@ -215,7 +214,7 @@ func NewDisplayRun(run claims.Run) DisplayRun {
 }
 
 // ListInstallations lists installed bundles.
-func (p *Porter) ListInstallations(ctx context.Context, opts ListOptions) ([]claims.Installation, error) {
+func (p *Porter) ListInstallations(ctx context.Context, opts ListOptions) ([]storage.Installation, error) {
 	ctx, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
 

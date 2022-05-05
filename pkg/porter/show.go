@@ -6,10 +6,10 @@ import (
 	"sort"
 	"time"
 
-	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/printer"
+	"get.porter.sh/porter/pkg/storage"
 	dtprinter "github.com/carolynvs/datetime-printer"
 )
 
@@ -41,15 +41,15 @@ func (so *ShowOptions) Validate(args []string, cxt *portercontext.Context) error
 }
 
 // GetInstallation retrieves information about an installation, including its most recent run.
-func (p *Porter) GetInstallation(ctx context.Context, opts ShowOptions) (claims.Installation, error) {
+func (p *Porter) GetInstallation(ctx context.Context, opts ShowOptions) (storage.Installation, error) {
 	err := p.applyDefaultOptions(ctx, &opts.sharedOptions)
 	if err != nil {
-		return claims.Installation{}, err
+		return storage.Installation{}, err
 	}
 
 	installation, err := p.Claims.GetInstallation(ctx, opts.Namespace, opts.Name)
 	if err != nil {
-		return claims.Installation{}, err
+		return storage.Installation{}, err
 	}
 
 	return installation, nil
@@ -147,7 +147,7 @@ func (p *Porter) ShowInstallation(ctx context.Context, opts ShowOptions) error {
 		}
 
 		// Print the status (it may not be present if it's newly created using apply)
-		if installation.Status != (claims.InstallationStatus{}) {
+		if installation.Status != (storage.InstallationStatus{}) {
 			fmt.Fprintln(p.Out)
 			fmt.Fprintln(p.Out, "Status:")
 			fmt.Fprintf(p.Out, "  Reference: %s\n", displayInstallation.Status.BundleReference)
@@ -163,7 +163,7 @@ func (p *Porter) ShowInstallation(ctx context.Context, opts ShowOptions) error {
 	}
 }
 
-func (p *Porter) generateDisplayInstallation(ctx context.Context, installation claims.Installation) (DisplayInstallation, error) {
+func (p *Porter) generateDisplayInstallation(ctx context.Context, installation storage.Installation) (DisplayInstallation, error) {
 	run, err := p.Claims.GetRun(ctx, installation.Status.RunID)
 	if err != nil {
 		return DisplayInstallation{}, err

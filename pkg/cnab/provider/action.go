@@ -7,11 +7,10 @@ import (
 	"fmt"
 	"sort"
 
-	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
-	"get.porter.sh/porter/pkg/sanitizer"
 	"get.porter.sh/porter/pkg/secrets"
+	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/tracing"
 	"github.com/cnabio/cnab-go/action"
 	cnabaction "github.com/cnabio/cnab-go/action"
@@ -27,7 +26,7 @@ type ActionArguments struct {
 	Action string
 
 	// Name of the installation.
-	Installation claims.Installation
+	Installation storage.Installation
 
 	// BundleReference is the set of information necessary to execute a bundle.
 	BundleReference cnab.BundleReference
@@ -182,7 +181,7 @@ func (r *Runtime) Execute(ctx context.Context, args ActionArguments) error {
 	}
 }
 
-func (r *Runtime) CreateRun(ctx context.Context, args ActionArguments, b cnab.ExtendedBundle) (claims.Run, error) {
+func (r *Runtime) CreateRun(ctx context.Context, args ActionArguments, b cnab.ExtendedBundle) (storage.Run, error) {
 	ctx, span := tracing.StartSpan(ctx)
 	defer span.EndSpan()
 
@@ -196,11 +195,11 @@ func (r *Runtime) CreateRun(ctx context.Context, args ActionArguments, b cnab.Ex
 	extb := cnab.ExtendedBundle{b.Bundle}
 	currentRun.Parameters.Parameters, err = r.sanitizer.CleanRawParameters(ctx, args.Params, extb, currentRun.ID)
 	if err != nil {
-		return claims.Run{}, span.Error(err)
+		return storage.Run{}, span.Error(err)
 	}
 
 	// TODO: Do not save secrets when the run isn't recorded
-	currentRun.ParameterOverrides = sanitizer.LinkSensitiveParametersToSecrets(currentRun.ParameterOverrides, extb, currentRun.ID)
+	currentRun.ParameterOverrides = storage.LinkSensitiveParametersToSecrets(currentRun.ParameterOverrides, extb, currentRun.ID)
 	currentRun.CredentialSets = args.Installation.CredentialSets
 	sort.Strings(currentRun.CredentialSets)
 
@@ -210,7 +209,7 @@ func (r *Runtime) CreateRun(ctx context.Context, args ActionArguments, b cnab.Ex
 }
 
 // SaveRun with the specified status.
-func (r *Runtime) SaveRun(ctx context.Context, installation claims.Installation, run claims.Run, status string) error {
+func (r *Runtime) SaveRun(ctx context.Context, installation storage.Installation, run storage.Run, status string) error {
 	ctx, span := tracing.StartSpan(ctx)
 	defer span.EndSpan()
 
@@ -241,7 +240,7 @@ func (r *Runtime) SaveRun(ctx context.Context, installation claims.Installation,
 // SaveOperationResult saves the ClaimResult and Outputs. The caller is
 // responsible for having already persisted the claim itself, for example using
 // SaveRun.
-func (r *Runtime) SaveOperationResult(ctx context.Context, opResult driver.OperationResult, installation claims.Installation, run claims.Run, result claims.Result) error {
+func (r *Runtime) SaveOperationResult(ctx context.Context, opResult driver.OperationResult, installation storage.Installation, run storage.Run, result storage.Result) error {
 	ctx, span := tracing.StartSpan(ctx)
 	defer span.EndSpan()
 
@@ -281,7 +280,7 @@ func (r *Runtime) SaveOperationResult(ctx context.Context, opResult driver.Opera
 
 // appendFailedResult creates a failed result from the operation error and accumulates
 // the error(s).
-func (r *Runtime) appendFailedResult(ctx context.Context, opErr error, run claims.Run) error {
+func (r *Runtime) appendFailedResult(ctx context.Context, opErr error, run storage.Run) error {
 	saveResult := func() error {
 		result := run.NewResult(cnab.StatusFailed)
 		return r.claims.InsertResult(ctx, result)

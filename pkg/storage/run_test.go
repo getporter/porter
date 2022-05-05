@@ -1,11 +1,10 @@
-package claims
+package storage
 
 import (
 	"testing"
 	"time"
 
 	"get.porter.sh/porter/pkg/cnab"
-	"get.porter.sh/porter/pkg/parameters"
 	"get.porter.sh/porter/pkg/secrets"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
@@ -21,7 +20,7 @@ func TestRun_NewResultFrom(t *testing.T) {
 		Created:        time.Now(),
 		Message:        "message",
 		Status:         "status",
-		OutputMetadata: OutputMetadata{"myoutput": map[string]string{}},
+		OutputMetadata: cnab.OutputMetadata{"myoutput": map[string]string{}},
 		Custom:         map[string]interface{}{"custom": true},
 	}
 
@@ -127,11 +126,11 @@ func TestRun_TypedParameterValues(t *testing.T) {
 
 	run := NewRun("dev", "mybuns")
 	run.Bundle = bun
-	run.Parameters = parameters.NewParameterSet(run.Namespace, run.Bundle.Name)
+	run.Parameters = NewParameterSet(run.Namespace, run.Bundle.Name)
 	params := []secrets.Strategy{
-		parameters.ValueStrategy("baz", "baz-test"),
-		parameters.ValueStrategy("name", "porter-test"),
-		parameters.ValueStrategy("porter-state", ""),
+		ValueStrategy("baz", "baz-test"),
+		ValueStrategy("name", "porter-test"),
+		ValueStrategy("porter-state", ""),
 		{Name: "foo", Source: secrets.Source{Key: secrets.SourceSecret, Value: "runID"}, Value: "5"},
 	}
 

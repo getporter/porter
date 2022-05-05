@@ -6,13 +6,13 @@ import (
 
 	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/build"
-	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab"
 	configadapter "get.porter.sh/porter/pkg/cnab/config-adapter"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/secrets"
+	"get.porter.sh/porter/pkg/storage"
 	"github.com/cnabio/cnab-go/secrets/host"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -381,7 +381,7 @@ func TestSharedOptions_populateInternalParameterSet(t *testing.T) {
 	err = opts.LoadParameters(ctx, p.Porter, bun)
 	require.NoError(t, err)
 
-	i := claims.NewInstallation("", bun.Name)
+	i := storage.NewInstallation("", bun.Name)
 
 	err = opts.populateInternalParameterSet(ctx, p.Porter, bun, &i)
 	require.NoError(t, err)

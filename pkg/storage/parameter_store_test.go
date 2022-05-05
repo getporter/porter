@@ -1,4 +1,4 @@
-package parameters
+package storage
 
 import (
 	"context"
@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"get.porter.sh/porter/pkg/secrets"
-	"get.porter.sh/porter/pkg/storage"
 	"github.com/stretchr/testify/require"
 )
 
@@ -58,7 +57,7 @@ func TestParameterStore_CRUD(t *testing.T) {
 	require.Empty(t, params, "List should return no entries")
 
 	pset, err = paramStore.GetParameterSet(ctx, "", myParamSet.Name)
-	require.ErrorIs(t, err, storage.ErrNotFound{})
+	require.ErrorIs(t, err, ErrNotFound{})
 
 }
 

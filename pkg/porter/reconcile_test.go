@@ -4,10 +4,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab"
-	"get.porter.sh/porter/pkg/parameters"
 	"get.porter.sh/porter/pkg/portercontext"
+	"get.porter.sh/porter/pkg/storage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -21,7 +20,7 @@ func TestPorter_IsInstallationInSync(t *testing.T) {
 		p := NewTestPorter(t)
 		defer p.Close()
 
-		i := claims.Installation{
+		i := storage.Installation{
 			Uninstalled: true,
 		}
 		insync, err := p.IsInstallationInSync(p.RootContext, i, nil, NewInstallOptions())
@@ -34,7 +33,7 @@ func TestPorter_IsInstallationInSync(t *testing.T) {
 		p := NewTestPorter(t)
 		defer p.Close()
 
-		i := claims.Installation{}
+		i := storage.Installation{}
 		insync, err := p.IsInstallationInSync(p.RootContext, i, nil, NewInstallOptions())
 		require.NoError(t, err)
 		assert.False(t, insync)
@@ -45,14 +44,14 @@ func TestPorter_IsInstallationInSync(t *testing.T) {
 		p := NewTestPorter(t)
 		defer p.Close()
 
-		i := claims.Installation{
-			Status: claims.InstallationStatus{
+		i := storage.Installation{
+			Status: storage.InstallationStatus{
 				Installed: &now,
 			},
 		}
-		run := claims.Run{
+		run := storage.Run{
 			// Use the default values from the bundle.json so that we don't trigger reconciliation
-			Parameters: parameters.NewInternalParameterSet(i.Namespace, i.Name, parameters.ValueStrategy("my-second-param", "spring-music-demo")),
+			Parameters: storage.NewInternalParameterSet(i.Namespace, i.Name, storage.ValueStrategy("my-second-param", "spring-music-demo")),
 		}
 		upgradeOpts := NewUpgradeOptions()
 		upgradeOpts.bundleRef = &cnab.BundleReference{Definition: bun}
@@ -66,13 +65,13 @@ func TestPorter_IsInstallationInSync(t *testing.T) {
 		p := NewTestPorter(t)
 		defer p.Close()
 
-		i := claims.Installation{
-			Status: claims.InstallationStatus{
+		i := storage.Installation{
+			Status: storage.InstallationStatus{
 				Installed:    &now,
 				BundleDigest: "olddigest",
 			},
 		}
-		run := claims.Run{
+		run := storage.Run{
 			BundleDigest: "olddigest",
 		}
 		upgradeOpts := NewUpgradeOptions()
@@ -87,13 +86,13 @@ func TestPorter_IsInstallationInSync(t *testing.T) {
 		p := NewTestPorter(t)
 		defer p.Close()
 
-		i := claims.Installation{
-			Status: claims.InstallationStatus{
+		i := storage.Installation{
+			Status: storage.InstallationStatus{
 				Installed: &now,
 			},
 		}
-		run := claims.Run{
-			Parameters: parameters.NewInternalParameterSet(i.Namespace, i.Name, parameters.ValueStrategy("my-second-param", "newvalue")),
+		run := storage.Run{
+			Parameters: storage.NewInternalParameterSet(i.Namespace, i.Name, storage.ValueStrategy("my-second-param", "newvalue")),
 		}
 		upgradeOpts := NewUpgradeOptions()
 		upgradeOpts.bundleRef = &cnab.BundleReference{Definition: bun}
@@ -108,16 +107,16 @@ func TestPorter_IsInstallationInSync(t *testing.T) {
 		p := NewTestPorter(t)
 		defer p.Close()
 
-		i := claims.Installation{
+		i := storage.Installation{
 			CredentialSets: []string{"newcreds"},
-			Status: claims.InstallationStatus{
+			Status: storage.InstallationStatus{
 				Installed: &now,
 			},
 		}
-		run := claims.Run{
+		run := storage.Run{
 			CredentialSets: []string{"oldcreds"},
 			// Use the default values from the bundle.json so they don't trigger the reconciliation
-			Parameters: parameters.NewInternalParameterSet(i.Namespace, i.Name, parameters.ValueStrategy("my-second-param", "spring-music-demo")),
+			Parameters: storage.NewInternalParameterSet(i.Namespace, i.Name, storage.ValueStrategy("my-second-param", "spring-music-demo")),
 		}
 		upgradeOpts := NewUpgradeOptions()
 		upgradeOpts.bundleRef = &cnab.BundleReference{Definition: bun}
@@ -132,9 +131,9 @@ func TestPorter_IsInstallationInSync(t *testing.T) {
 		p := NewTestPorter(t)
 		defer p.Close()
 
-		i := claims.Installation{
+		i := storage.Installation{
 			Uninstalled: true, // trigger uninstall
-			Status: claims.InstallationStatus{
+			Status: storage.InstallationStatus{
 				Installed: &now,
 			},
 		}
@@ -148,9 +147,9 @@ func TestPorter_IsInstallationInSync(t *testing.T) {
 		p := NewTestPorter(t)
 		defer p.Close()
 
-		i := claims.Installation{
+		i := storage.Installation{
 			Uninstalled: false,
-			Status: claims.InstallationStatus{
+			Status: storage.InstallationStatus{
 				Installed:   &now,
 				Uninstalled: &now,
 			},

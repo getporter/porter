@@ -12,8 +12,8 @@ import (
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/mixin"
-	"get.porter.sh/porter/pkg/parameters"
 	"get.porter.sh/porter/pkg/printer"
+	"get.porter.sh/porter/pkg/storage"
 	"github.com/Masterminds/semver/v3"
 	"github.com/opencontainers/go-digest"
 	"github.com/pkg/errors"
@@ -81,7 +81,7 @@ func stringSliceContains(allowedValues []string, value string) bool {
 }
 
 func (o *BuildOptions) parseCustomInputs() error {
-	p, err := parameters.ParseVariableAssignments(o.Customs)
+	p, err := storage.ParseVariableAssignments(o.Customs)
 	if err != nil {
 		return err
 	}

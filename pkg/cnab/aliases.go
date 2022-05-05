@@ -2,6 +2,7 @@ package cnab
 
 import (
 	cnabclaims "github.com/cnabio/cnab-go/claim"
+	"github.com/cnabio/cnab-go/schema"
 )
 
 // Alias common cnab values in this package so that we don't have imports from
@@ -29,5 +30,11 @@ type Claim = cnabclaims.Claim
 type Result = cnabclaims.Result
 type Output = cnabclaims.Output
 type Outputs = cnabclaims.Outputs
+type OutputMetadata = cnabclaims.OutputMetadata
 
 var NewULID = cnabclaims.MustNewULID
+
+// CNABSchemaVersion is the schemaVersion value for CNAB documents such as claims.
+func CNABSchemaVersion() schema.Version {
+	return cnabclaims.GetDefaultSchemaVersion()
+}

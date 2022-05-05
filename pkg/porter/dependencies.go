@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strings"
 
-	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab"
 	cnabprovider "get.porter.sh/porter/pkg/cnab/provider"
 	"get.porter.sh/porter/pkg/config"
@@ -22,9 +21,9 @@ type dependencyExecutioner struct {
 
 	Resolver BundleResolver
 	CNAB     cnabprovider.CNABProvider
-	Claims   claims.Provider
+	Claims   storage.ClaimProvider
 
-	parentInstallation claims.Installation
+	parentInstallation storage.Installation
 	parentAction       BundleAction
 	parentOpts         *BundleActionOptions
 
@@ -33,7 +32,7 @@ type dependencyExecutioner struct {
 	deps       []*queuedDependency
 }
 
-func newDependencyExecutioner(p *Porter, installation claims.Installation, action BundleAction) *dependencyExecutioner {
+func newDependencyExecutioner(p *Porter, installation storage.Installation, action BundleAction) *dependencyExecutioner {
 	resolver := BundleResolver{
 		Cache:    p.Cache,
 		Registry: p.Registry,
@@ -266,7 +265,7 @@ func (e *dependencyExecutioner) executeDependency(ctx context.Context, dep *queu
 	depInstallation, err := e.Claims.GetInstallation(ctx, e.parentOpts.Namespace, depName)
 	if err != nil {
 		if errors.Is(err, storage.ErrNotFound{}) {
-			depInstallation = claims.NewInstallation(e.parentOpts.Namespace, depName)
+			depInstallation = storage.NewInstallation(e.parentOpts.Namespace, depName)
 			depInstallation.SetLabel("sh.porter.parentInstallation", e.parentArgs.Installation.String())
 			// For now, assume it's okay to give the dependency the same credentials as the parent
 			depInstallation.CredentialSets = e.parentInstallation.CredentialSets

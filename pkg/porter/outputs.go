@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"sort"
 
-	claims "get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/printer"
+	claims "get.porter.sh/porter/pkg/storage"
 	"github.com/pkg/errors"
 )
 

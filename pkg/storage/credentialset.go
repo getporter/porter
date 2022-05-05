@@ -1,25 +1,28 @@
-package credentials
+package storage
 
 import (
 	"fmt"
 	"time"
 
 	"get.porter.sh/porter/pkg/secrets"
-	"get.porter.sh/porter/pkg/storage"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/schema"
 	"github.com/pkg/errors"
 )
 
-const (
-	// SchemaVersion represents the version associated with the schema
-	// credential set documents.
-	SchemaVersion = schema.Version("1.0.1")
-)
+var _ Document = &CredentialSet{}
 
-var _ storage.Document = &CredentialSet{}
-
-// CredentialSet represents a collection of credentials
+// CredentialSet defines mappings from a credential needed by a bundle to where
+// to look for it when the bundle is run. For example: Bundle needs Azure
+// storage connection string and it should look for it in an environment
+// variable named `AZURE_STORATE_CONNECTION_STRING` or a key named `dev-conn`.
+//
+// Porter discourages storing the value of the credential directly, though
+// it is possible. Instead Porter encourages the best practice of defining
+// mappings in the credential sets, and then storing the values in secret stores
+// such as a key/value store like Hashicorp Vault, or Azure Key Vault.
+// See the get.porter.sh/porter/pkg/secrets package for more on how Porter
+// handles accessing secrets.
 type CredentialSet struct {
 	CredentialSetSpec `yaml:",inline"`
 	Status            CredentialSetStatus `json:"status" yaml:"status" toml:"status"`
@@ -57,7 +60,7 @@ func NewCredentialSet(namespace string, name string, creds ...secrets.Strategy) 
 	now := time.Now()
 	cs := CredentialSet{
 		CredentialSetSpec: CredentialSetSpec{
-			SchemaVersion: SchemaVersion,
+			SchemaVersion: CredentialSetSchemaVersion,
 			Name:          name,
 			Namespace:     namespace,
 			Credentials:   creds,
@@ -76,11 +79,11 @@ func (s CredentialSet) DefaultDocumentFilter() map[string]interface{} {
 }
 
 func (s CredentialSet) Validate() error {
-	if SchemaVersion != s.SchemaVersion {
+	if CredentialSetSchemaVersion != s.SchemaVersion {
 		if s.SchemaVersion == "" {
 			s.SchemaVersion = "(none)"
 		}
-		return errors.Errorf("invalid schemaVersion provided: %s. This version of Porter is compatible with %s.", s.SchemaVersion, SchemaVersion)
+		return errors.Errorf("invalid schemaVersion provided: %s. This version of Porter is compatible with %s.", s.SchemaVersion, CredentialSetSchemaVersion)
 	}
 	return nil
 }

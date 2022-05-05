@@ -8,12 +8,10 @@ import (
 	"sort"
 	"time"
 
-	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/editor"
 	"get.porter.sh/porter/pkg/encoding"
 	"get.porter.sh/porter/pkg/generator"
-	"get.porter.sh/porter/pkg/parameters"
 	"get.porter.sh/porter/pkg/printer"
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
@@ -39,7 +37,7 @@ type ParameterEditOptions struct {
 }
 
 // ListParameters lists saved parameter sets.
-func (p *Porter) ListParameters(ctx context.Context, opts ListOptions) ([]parameters.ParameterSet, error) {
+func (p *Porter) ListParameters(ctx context.Context, opts ListOptions) ([]storage.ParameterSet, error) {
 	return p.Parameters.ListParameterSets(ctx, opts.GetNamespace(), opts.Name, opts.ParseLabels())
 }
 
@@ -64,7 +62,7 @@ func (p *Porter) PrintParameters(ctx context.Context, opts ListOptions) error {
 
 		printParamRow :=
 			func(v interface{}) []string {
-				cr, ok := v.(parameters.ParameterSet)
+				cr, ok := v.(storage.ParameterSet)
 				if !ok {
 					return nil
 				}
@@ -211,8 +209,8 @@ func (p *Porter) EditParameter(ctx context.Context, opts ParameterEditOptions) e
 
 type DisplayParameterSet struct {
 	// SchemaType helps when we export the definition so editors can detect the type of document, it's not used by porter.
-	SchemaType              string `json:"schemaType" yaml:"schemaType"`
-	parameters.ParameterSet `yaml:",inline"`
+	SchemaType           string `json:"schemaType" yaml:"schemaType"`
+	storage.ParameterSet `yaml:",inline"`
 }
 
 // ShowParameter shows the parameter set corresponding to the provided name, using
@@ -342,8 +340,8 @@ func (p *Porter) loadParameterSets(ctx context.Context, bun cnab.ExtendedBundle,
 		}
 		store := p.Parameters.GetDataStore()
 
-		var pset parameters.ParameterSet
-		err := store.FindOne(ctx, parameters.CollectionParameters, query, &pset)
+		var pset storage.ParameterSet
+		err := store.FindOne(ctx, storage.CollectionParameters, query, &pset)
 		if err != nil {
 			return nil, err
 		}
@@ -383,8 +381,8 @@ func (p *Porter) loadParameterSets(ctx context.Context, bun cnab.ExtendedBundle,
 	return resolvedParameters, nil
 }
 
-func (p *Porter) loadParameterFromFile(path string) (parameters.ParameterSet, error) {
-	var cs parameters.ParameterSet
+func (p *Porter) loadParameterFromFile(path string) (storage.ParameterSet, error) {
+	var cs storage.ParameterSet
 	err := encoding.UnmarshalFile(p.FileSystem, path, &cs)
 	return cs, errors.Wrapf(err, "error loading parameter set in %s", path)
 }
@@ -503,7 +501,7 @@ func (p *Porter) ParametersApply(ctx context.Context, o ApplyOptions) error {
 		fmt.Fprintf(p.Err, "Input file contents:\n%s\n", contents)
 	}
 
-	var params parameters.ParameterSet
+	var params storage.ParameterSet
 	err = encoding.UnmarshalFile(p.FileSystem, o.File, &params)
 	if err != nil {
 		return errors.Wrapf(err, "could not load %s as a parameter set", o.File)
@@ -533,7 +531,7 @@ func (p *Porter) ParametersApply(ctx context.Context, o ApplyOptions) error {
 // resolveParameters accepts a set of parameter assignments and combines them
 // with parameter sources and default parameter values to create a full set
 // of parameters.
-func (p *Porter) resolveParameters(ctx context.Context, installation claims.Installation, bun cnab.ExtendedBundle, action string, params map[string]string) (map[string]interface{}, error) {
+func (p *Porter) resolveParameters(ctx context.Context, installation storage.Installation, bun cnab.ExtendedBundle, action string, params map[string]string) (map[string]interface{}, error) {
 	mergedParams := make(secrets.Set, len(params))
 	paramSources, err := p.resolveParameterSources(ctx, bun, installation)
 	if err != nil {
@@ -609,7 +607,7 @@ func (p *Porter) getUnconvertedValueFromRaw(b cnab.ExtendedBundle, def *definiti
 	return rawValue, nil
 }
 
-func (p *Porter) resolveParameterSources(ctx context.Context, bun cnab.ExtendedBundle, installation claims.Installation) (secrets.Set, error) {
+func (p *Porter) resolveParameterSources(ctx context.Context, bun cnab.ExtendedBundle, installation storage.Installation) (secrets.Set, error) {
 	if !bun.HasParameterSources() {
 		if p.Debug {
 			fmt.Fprintln(p.Err, "No parameter sources defined, skipping")

@@ -1,16 +1,14 @@
-package claims
+package storage
 
 import (
 	"time"
 
 	"get.porter.sh/porter/pkg/cnab"
-	"get.porter.sh/porter/pkg/parameters"
-	"get.porter.sh/porter/pkg/storage"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/schema"
 )
 
-var _ storage.Document = Run{}
+var _ Document = Run{}
 
 // Run represents the execution of an installation's bundle.
 type Run struct {
@@ -47,7 +45,7 @@ type Run struct {
 
 	// ParameterOverrides are the key/value parameter overrides (taking precedence over
 	// parameters specified in a parameter set) specified during the run.
-	ParameterOverrides parameters.ParameterSet `json:"parameterOverrides, omitempty" yaml:"parameterOverrides, omitempty", toml:"parameterOverrides, omitempty"`
+	ParameterOverrides ParameterSet `json:"parameterOverrides, omitempty" yaml:"parameterOverrides, omitempty", toml:"parameterOverrides, omitempty"`
 
 	// CredentialSets is a list of the credential set names used during the run.
 	CredentialSets []string `json:"credentialSets,omitempty" yaml:"credentialSets,omitempty" toml:"credentialSets,omitempty"`
@@ -59,7 +57,7 @@ type Run struct {
 	// current run.
 	// This includes internal parameters, parameter sources, values from parameter sets, etc.
 	// Any sensitive data will be sannitized before saving to the database.
-	Parameters parameters.ParameterSet `json:"parameters,omitempty" yaml:"parameters,omitempty" toml:"parameters,omitempty"`
+	Parameters ParameterSet `json:"parameters,omitempty" yaml:"parameters,omitempty" toml:"parameters,omitempty"`
 
 	// Custom extension data applicable to a given runtime.
 	// TODO(carolynvs): remove custom and populate it in ToCNAB
@@ -73,13 +71,13 @@ func (r Run) DefaultDocumentFilter() map[string]interface{} {
 // NewRun creates a run with default values initialized.
 func NewRun(namespace string, installation string) Run {
 	return Run{
-		SchemaVersion: SchemaVersion,
+		SchemaVersion: InstallationSchemaVersion,
 		ID:            cnab.NewULID(),
 		Revision:      cnab.NewULID(),
 		Created:       time.Now(),
 		Namespace:     namespace,
 		Installation:  installation,
-		Parameters:    parameters.NewInternalParameterSet(namespace, installation),
+		Parameters:    NewInternalParameterSet(namespace, installation),
 	}
 }
 
@@ -104,7 +102,7 @@ func (r Run) ShouldRecord() bool {
 func (r Run) ToCNAB() cnab.Claim {
 	return cnab.Claim{
 		// CNAB doesn't have the concept of namespace, so we smoosh them together to make a unique name
-		SchemaVersion:   CNABSchemaVersion(),
+		SchemaVersion:   cnab.CNABSchemaVersion(),
 		ID:              r.ID,
 		Installation:    r.Namespace + "/" + r.Installation,
 		Revision:        r.Revision,
@@ -158,7 +156,7 @@ func (r Run) NewResult(status string) Result {
 // NewResultFrom creates a result from the output of a CNAB run.
 func (r Run) NewResultFrom(cnabResult cnab.Result) Result {
 	return Result{
-		SchemaVersion:  SchemaVersion,
+		SchemaVersion:  InstallationSchemaVersion,
 		ID:             cnabResult.ID,
 		Namespace:      r.Namespace,
 		Installation:   r.Installation,

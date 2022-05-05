@@ -1,4 +1,4 @@
-package credentials
+package storage
 
 import (
 	"context"
@@ -6,27 +6,27 @@ import (
 	"strings"
 
 	"get.porter.sh/porter/pkg/secrets"
-	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/tracing"
 	"github.com/cnabio/cnab-go/secrets/host"
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 )
 
-var _ Provider = &CredentialStore{}
+var _ CredentialSetProvider = &CredentialStore{}
 
 const (
 	CollectionCredentials = "credentials"
 )
 
-// CredentialStore provides access to credential sets by instantiating plugins that
-// implement CRUD storage.
+// CredentialStore is a wrapper around Porter's datastore
+// providing typed access and additional business logic around
+// credential sets, usually referred to as "credentials" as a shorthand.
 type CredentialStore struct {
-	Documents storage.Store
+	Documents Store
 	Secrets   secrets.Store
 }
 
-func NewCredentialStore(storage storage.Store, secrets secrets.Store) *CredentialStore {
+func NewCredentialStore(storage Store, secrets secrets.Store) *CredentialStore {
 	return &CredentialStore{
 		Documents: storage,
 		Secrets:   secrets,
@@ -40,8 +40,8 @@ func (s CredentialStore) Initialize(ctx context.Context) error {
 
 	span.Debug("Initializing credentials collection indices")
 
-	indices := storage.EnsureIndexOptions{
-		Indices: []storage.Index{
+	indices := EnsureIndexOptions{
+		Indices: []Index{
 			// query credentials by namespace + name
 			{Collection: CollectionCredentials, Keys: []string{"namespace", "name"}, Unique: true},
 		},
@@ -50,7 +50,7 @@ func (s CredentialStore) Initialize(ctx context.Context) error {
 	return span.Error(err)
 }
 
-func (s CredentialStore) GetDataStore() storage.Store {
+func (s CredentialStore) GetDataStore() Store {
 	return s.Documents
 }
 
@@ -103,8 +103,8 @@ func (s CredentialStore) Validate(ctx context.Context, creds CredentialSet) erro
 */
 
 func (s CredentialStore) InsertCredentialSet(ctx context.Context, creds CredentialSet) error {
-	creds.SchemaVersion = SchemaVersion
-	opts := storage.InsertOptions{
+	creds.SchemaVersion = CredentialSetSchemaVersion
+	opts := InsertOptions{
 		Documents: []interface{}{creds},
 	}
 	return s.Documents.Insert(ctx, CollectionCredentials, opts)
@@ -112,8 +112,8 @@ func (s CredentialStore) InsertCredentialSet(ctx context.Context, creds Credenti
 
 func (s CredentialStore) ListCredentialSets(ctx context.Context, namespace string, name string, labels map[string]string) ([]CredentialSet, error) {
 	var out []CredentialSet
-	opts := storage.FindOptions{
-		Filter: storage.CreateListFiler(namespace, name, labels),
+	opts := FindOptions{
+		Filter: CreateListFiler(namespace, name, labels),
 	}
 	err := s.Documents.Find(ctx, CollectionCredentials, opts, &out)
 	return out, err
@@ -121,7 +121,7 @@ func (s CredentialStore) ListCredentialSets(ctx context.Context, namespace strin
 
 func (s CredentialStore) GetCredentialSet(ctx context.Context, namespace string, name string) (CredentialSet, error) {
 	var out CredentialSet
-	opts := storage.FindOptions{
+	opts := FindOptions{
 		Filter: map[string]interface{}{
 			"namespace": namespace,
 			"name":      name,
@@ -132,16 +132,16 @@ func (s CredentialStore) GetCredentialSet(ctx context.Context, namespace string,
 }
 
 func (s CredentialStore) UpdateCredentialSet(ctx context.Context, creds CredentialSet) error {
-	creds.SchemaVersion = SchemaVersion
-	opts := storage.UpdateOptions{
+	creds.SchemaVersion = CredentialSetSchemaVersion
+	opts := UpdateOptions{
 		Document: creds,
 	}
 	return s.Documents.Update(ctx, CollectionCredentials, opts)
 }
 
 func (s CredentialStore) UpsertCredentialSet(ctx context.Context, creds CredentialSet) error {
-	creds.SchemaVersion = SchemaVersion
-	opts := storage.UpdateOptions{
+	creds.SchemaVersion = CredentialSetSchemaVersion
+	opts := UpdateOptions{
 		Document: creds,
 		Upsert:   true,
 	}
@@ -149,7 +149,7 @@ func (s CredentialStore) UpsertCredentialSet(ctx context.Context, creds Credenti
 }
 
 func (s CredentialStore) RemoveCredentialSet(ctx context.Context, namespace string, name string) error {
-	opts := storage.RemoveOptions{
+	opts := RemoveOptions{
 		Namespace: namespace,
 		Name:      name,
 	}

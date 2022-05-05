@@ -3,7 +3,6 @@ package porter
 import (
 	"context"
 
-	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/tracing"
@@ -73,7 +72,7 @@ func (p *Porter) InstallBundle(ctx context.Context, opts InstallOptions) error {
 		}
 	} else if errors.Is(err, storage.ErrNotFound{}) {
 		// Create the installation record
-		i = claims.NewInstallation(opts.Namespace, opts.Name)
+		i = storage.NewInstallation(opts.Namespace, opts.Name)
 	} else {
 		err = errors.Wrapf(err, "could not retrieve the installation record")
 		return log.Error(err)
@@ -97,7 +96,7 @@ func (p *Porter) InstallBundle(ctx context.Context, opts InstallOptions) error {
 // Remember the parameters and credentials used with the bundle last.
 // Appends any newly specified parameters, parameter/credential sets to the installation record.
 // Users are expected to edit the installation record if they don't want that behavior.
-func (p *Porter) applyActionOptionsToInstallation(ctx context.Context, i *claims.Installation, opts *BundleActionOptions) error {
+func (p *Porter) applyActionOptionsToInstallation(ctx context.Context, i *storage.Installation, opts *BundleActionOptions) error {
 	// Record the parameters specified by the user, with flags taking precedence over parameter set values
 	err := opts.LoadParameters(ctx, p, opts.bundleRef.Definition)
 	if err != nil {

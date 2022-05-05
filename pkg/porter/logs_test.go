@@ -4,9 +4,9 @@ import (
 	"context"
 	"testing"
 
-	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/portercontext"
+	"get.porter.sh/porter/pkg/storage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -68,7 +68,7 @@ func TestPorter_ShowInstallationLogs(t *testing.T) {
 		p := NewTestPorter(t)
 		defer p.Close()
 
-		i := p.TestClaims.CreateInstallation(claims.NewInstallation("", "test"))
+		i := p.TestClaims.CreateInstallation(storage.NewInstallation("", "test"))
 		c := p.TestClaims.CreateRun(i.NewRun(cnab.ActionInstall))
 		p.TestClaims.CreateResult(c.NewResult(cnab.StatusSucceeded))
 
@@ -85,9 +85,9 @@ func TestPorter_ShowInstallationLogs(t *testing.T) {
 		p := NewTestPorter(t)
 		defer p.Close()
 
-		i := p.TestClaims.CreateInstallation(claims.NewInstallation("", "test"))
+		i := p.TestClaims.CreateInstallation(storage.NewInstallation("", "test"))
 		c := p.TestClaims.CreateRun(i.NewRun(cnab.ActionInstall))
-		r := p.TestClaims.CreateResult(c.NewResult(cnab.StatusSucceeded), func(r *claims.Result) {
+		r := p.TestClaims.CreateResult(c.NewResult(cnab.StatusSucceeded), func(r *storage.Result) {
 			r.OutputMetadata.SetGeneratedByBundle(cnab.OutputInvocationImageLogs, false)
 		})
 

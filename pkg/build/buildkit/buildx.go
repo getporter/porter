@@ -10,9 +10,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"get.porter.sh/porter/pkg/cnab"
-
 	"get.porter.sh/porter/pkg/build"
+	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/experimental"
 	"get.porter.sh/porter/pkg/manifest"

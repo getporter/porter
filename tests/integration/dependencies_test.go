@@ -10,9 +10,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab"
-	"get.porter.sh/porter/pkg/parameters"
 	"get.porter.sh/porter/pkg/porter"
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
@@ -79,7 +77,7 @@ func installWordpressBundle(p *porter.TestPorter) (namespace string) {
 
 	// Add a supplemental parameter set to vet dep param resolution
 	installOpts.ParameterSets = []string{"myparam"}
-	testParamSets := parameters.NewParameterSet(namespace, "myparam", secrets.Strategy{
+	testParamSets := storage.NewParameterSet(namespace, "myparam", secrets.Strategy{
 		Name: "mysql#probe-timeout",
 		Source: secrets.Source{
 			Key:   host.SourceValue,
@@ -132,12 +130,12 @@ func cleanupWordpressBundle(p *porter.TestPorter, namespace string) {
 	// Verify that the dependency installation is deleted
 	i, err := p.Claims.GetInstallation(ctx, namespace, "wordpress-mysql")
 	require.ErrorIs(p.T(), err, storage.ErrNotFound{})
-	require.Equal(p.T(), claims.Installation{}, i)
+	require.Equal(p.T(), storage.Installation{}, i)
 
 	// Verify that the root installation is deleted
 	i, err = p.Claims.GetInstallation(ctx, namespace, "wordpress")
 	require.ErrorIs(p.T(), err, storage.ErrNotFound{})
-	require.Equal(p.T(), claims.Installation{}, i)
+	require.Equal(p.T(), storage.Installation{}, i)
 }
 
 func upgradeWordpressBundle(p *porter.TestPorter, namespace string) {

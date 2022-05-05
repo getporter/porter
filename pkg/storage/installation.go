@@ -1,4 +1,4 @@
-package claims
+package storage
 
 import (
 	"context"
@@ -7,9 +7,7 @@ import (
 	"time"
 
 	"get.porter.sh/porter/pkg/cnab"
-	"get.porter.sh/porter/pkg/parameters"
 	"get.porter.sh/porter/pkg/secrets"
-	"get.porter.sh/porter/pkg/storage"
 	"github.com/Masterminds/semver/v3"
 	"github.com/cnabio/cnab-go/schema"
 	"github.com/opencontainers/go-digest"
@@ -18,13 +16,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-const (
-	// SchemaVersion represents the version associated with the schema
-	// for all installation documents: installations, runs, results and outputs.
-	SchemaVersion = schema.Version("1.0.1")
-)
-
-var _ storage.Document = Installation{}
+var _ Document = Installation{}
 
 type Installation struct {
 	// SchemaVersion is the version of the installation state schema.
@@ -60,7 +52,7 @@ type Installation struct {
 
 	// Parameters specified by the user through overrides.
 	// Does not include defaults, or values resolved from parameter sources.
-	Parameters parameters.ParameterSet `json:"parameters,omitempty"`
+	Parameters ParameterSet `json:"parameters,omitempty"`
 
 	// Status of the installation.
 	Status InstallationStatus `json:"status,omitempty"`
@@ -77,11 +69,11 @@ func (i Installation) DefaultDocumentFilter() map[string]interface{} {
 func NewInstallation(namespace string, name string) Installation {
 	now := time.Now()
 	return Installation{
-		SchemaVersion: SchemaVersion,
+		SchemaVersion: InstallationSchemaVersion,
 		ID:            cnab.NewULID(),
 		Namespace:     namespace,
 		Name:          name,
-		Parameters:    parameters.NewInternalParameterSet(namespace, name),
+		Parameters:    NewInternalParameterSet(namespace, name),
 		Status: InstallationStatus{
 			Created:  now,
 			Modified: now,
@@ -131,11 +123,11 @@ func (i *Installation) Apply(input Installation) {
 
 // Validate the installation document and report the first error.
 func (i *Installation) Validate() error {
-	if SchemaVersion != i.SchemaVersion {
+	if InstallationSchemaVersion != i.SchemaVersion {
 		if i.SchemaVersion == "" {
 			i.SchemaVersion = "(none)"
 		}
-		return errors.Errorf("invalid schemaVersion provided: %s. This version of Porter is compatible with %s.", i.SchemaVersion, SchemaVersion)
+		return errors.Errorf("invalid schemaVersion provided: %s. This version of Porter is compatible with %s.", i.SchemaVersion, InstallationSchemaVersion)
 	}
 
 	// We can change these to better checks if we consolidate our logic around the various ways we let you
@@ -168,8 +160,8 @@ func (i *Installation) SetLabel(key string, value string) {
 
 // NewInternalParameterSet creates a new ParameterSet that's used to store
 // parameter overrides with the required fields initialized.
-func (i Installation) NewInternalParameterSet(params ...secrets.Strategy) parameters.ParameterSet {
-	return parameters.NewInternalParameterSet(i.Namespace, i.ID, params...)
+func (i Installation) NewInternalParameterSet(params ...secrets.Strategy) ParameterSet {
+	return NewInternalParameterSet(i.Namespace, i.ID, params...)
 }
 
 func (i Installation) AddToTrace(ctx context.Context) {

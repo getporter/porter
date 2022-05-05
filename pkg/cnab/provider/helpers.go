@@ -4,18 +4,13 @@ import (
 	"context"
 	"testing"
 
-	"github.com/hashicorp/go-multierror"
-
-	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
-	"get.porter.sh/porter/pkg/credentials"
-	"get.porter.sh/porter/pkg/parameters"
 	"get.porter.sh/porter/pkg/portercontext"
-	"get.porter.sh/porter/pkg/sanitizer"
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/test"
+	"github.com/hashicorp/go-multierror"
 	"github.com/stretchr/testify/require"
 )
 
@@ -26,9 +21,9 @@ var _ CNABProvider = &TestRuntime{}
 type TestRuntime struct {
 	*Runtime
 	TestStorage     storage.TestStore
-	TestClaims      *claims.TestClaimProvider
-	TestCredentials *credentials.TestCredentialProvider
-	TestParameters  *parameters.TestParameterProvider
+	TestClaims      *storage.TestClaimProvider
+	TestCredentials *storage.TestCredentialSetProvider
+	TestParameters  *storage.TestParameterSetProvider
 	TestConfig      *config.TestConfig
 }
 
@@ -36,16 +31,16 @@ func NewTestRuntime(t *testing.T) *TestRuntime {
 	tc := config.NewTestConfig(t)
 	testStorage := storage.NewTestStore(tc)
 	testSecrets := secrets.NewTestSecretsProvider()
-	testClaims := claims.NewTestClaimProviderFor(tc.TestContext.T, testStorage)
-	testCredentials := credentials.NewTestCredentialProviderFor(tc.TestContext.T, testStorage, testSecrets)
-	testParameters := parameters.NewTestParameterProviderFor(tc.TestContext.T, testStorage, testSecrets)
+	testClaims := storage.NewTestClaimProviderFor(tc.TestContext.T, testStorage)
+	testCredentials := storage.NewTestCredentialProviderFor(tc.TestContext.T, testStorage, testSecrets)
+	testParameters := storage.NewTestParameterProviderFor(tc.TestContext.T, testStorage, testSecrets)
 
 	return NewTestRuntimeFor(tc, testClaims, testCredentials, testParameters, testSecrets)
 }
 
-func NewTestRuntimeFor(tc *config.TestConfig, testClaims *claims.TestClaimProvider, testCredentials *credentials.TestCredentialProvider, testParameters *parameters.TestParameterProvider, testSecrets secrets.Store) *TestRuntime {
+func NewTestRuntimeFor(tc *config.TestConfig, testClaims *storage.TestClaimProvider, testCredentials *storage.TestCredentialSetProvider, testParameters *storage.TestParameterSetProvider, testSecrets secrets.Store) *TestRuntime {
 	return &TestRuntime{
-		Runtime:         NewRuntime(tc.Config, testClaims, testCredentials, testSecrets, sanitizer.NewService(testParameters, testSecrets)),
+		Runtime:         NewRuntime(tc.Config, testClaims, testCredentials, testSecrets, storage.NewSanitizer(testParameters, testSecrets)),
 		TestStorage:     storage.TestStore{},
 		TestClaims:      testClaims,
 		TestCredentials: testCredentials,

@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab"
+	"get.porter.sh/porter/pkg/storage"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/stretchr/testify/require"
@@ -74,8 +74,8 @@ func TestResolveBundleReference(t *testing.T) {
 		p := NewTestPorter(t)
 		defer p.Close()
 
-		i := p.TestClaims.CreateInstallation(claims.NewInstallation("dev", "example"))
-		p.TestClaims.CreateRun(i.NewRun(cnab.ActionInstall), func(r *claims.Run) {
+		i := p.TestClaims.CreateInstallation(storage.NewInstallation("dev", "example"))
+		p.TestClaims.CreateRun(i.NewRun(cnab.ActionInstall), func(r *storage.Run) {
 			r.BundleReference = kahnlatest.String()
 			r.Bundle = buildExampleBundle()
 			r.BundleDigest = kahnlatestHash

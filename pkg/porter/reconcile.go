@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"sort"
 
-	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/tracing"
@@ -19,7 +18,7 @@ import (
 type ReconcileOptions struct {
 	Name         string
 	Namespace    string
-	Installation claims.Installation
+	Installation storage.Installation
 
 	// Just reapply the installation regardless of what has changed (or not)
 	Force bool
@@ -41,7 +40,7 @@ func (p *Porter) ReconcileInstallation(ctx context.Context, opts ReconcileOption
 	}
 
 	// Get the last run of the installation, if available
-	var lastRun *claims.Run
+	var lastRun *storage.Run
 	r, err := p.Claims.GetLastRun(ctx, opts.Namespace, opts.Name)
 	neverRun := errors.Is(err, storage.ErrNotFound{})
 	if err != nil && !neverRun {
@@ -131,7 +130,7 @@ func (p *Porter) ReconcileInstallation(ctx context.Context, opts ReconcileOption
 
 // IsInstallationInSync determines if the desired state of the installation matches
 // the state of the installation the last time it was modified.
-func (p *Porter) IsInstallationInSync(ctx context.Context, i claims.Installation, lastRun *claims.Run, action BundleAction) (bool, error) {
+func (p *Porter) IsInstallationInSync(ctx context.Context, i storage.Installation, lastRun *storage.Run, action BundleAction) (bool, error) {
 	ctx, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
 

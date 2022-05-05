@@ -1,4 +1,4 @@
-package claims
+package storage
 
 import (
 	"context"
@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg/cnab"
-	"get.porter.sh/porter/pkg/storage"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
 	cnabclaims "github.com/cnabio/cnab-go/claim"
@@ -14,7 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var _ Provider = ClaimStore{}
+var _ ClaimProvider = ClaimStore{}
 
 var b64encode = func(src []byte) ([]byte, error) {
 	dst := make([]byte, base64.StdEncoding.EncodedLen(len(src)))
@@ -183,7 +182,7 @@ func TestClaimStore_Installations(t *testing.T) {
 
 	t.Run("GetInstallation - not found", func(t *testing.T) {
 		_, err := cp.GetInstallation(context.Background(), "", "missing")
-		require.ErrorIs(t, err, storage.ErrNotFound{})
+		require.ErrorIs(t, err, ErrNotFound{})
 	})
 
 }
@@ -204,7 +203,7 @@ func TestClaimStore_DeleteInstallation(t *testing.T) {
 	assert.Len(t, installations, 2, "expected foo to be deleted")
 
 	_, err = cp.GetLastRun(context.Background(), "dev", "foo")
-	require.ErrorIs(t, err, storage.ErrNotFound{})
+	require.ErrorIs(t, err, ErrNotFound{})
 }
 
 func TestClaimStore_Run(t *testing.T) {
@@ -246,7 +245,7 @@ func TestClaimStore_Run(t *testing.T) {
 
 	t.Run("GetRun - invalid claim", func(t *testing.T) {
 		_, err := cp.GetRun(context.Background(), "missing")
-		require.ErrorIs(t, err, storage.ErrNotFound{})
+		require.ErrorIs(t, err, ErrNotFound{})
 	})
 
 	t.Run("GetLastRun", func(t *testing.T) {
@@ -259,7 +258,7 @@ func TestClaimStore_Run(t *testing.T) {
 
 	t.Run("GetLastRun - invalid installation", func(t *testing.T) {
 		_, err := cp.GetLastRun(context.Background(), "dev", "missing")
-		require.ErrorIs(t, err, storage.ErrNotFound{})
+		require.ErrorIs(t, err, ErrNotFound{})
 	})
 }
 
@@ -294,7 +293,7 @@ func TestClaimStore_Results(t *testing.T) {
 
 	t.Run("ReadResult - invalid result", func(t *testing.T) {
 		_, err := cp.GetResult(context.Background(), "missing")
-		require.ErrorIs(t, err, storage.ErrNotFound{})
+		require.ErrorIs(t, err, ErrNotFound{})
 	})
 }
 
@@ -370,7 +369,7 @@ func TestClaimStore_Outputs(t *testing.T) {
 
 	t.Run("GetLastOutput - invalid installation", func(t *testing.T) {
 		o, err := cp.GetLastOutput(context.Background(), "dev", "missing", "output1")
-		require.ErrorIs(t, err, storage.ErrNotFound{})
+		require.ErrorIs(t, err, ErrNotFound{})
 		assert.Empty(t, o)
 	})
 
