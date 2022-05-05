@@ -20,7 +20,7 @@ func TestRun_NewResultFrom(t *testing.T) {
 		Created:        time.Now(),
 		Message:        "message",
 		Status:         "status",
-		OutputMetadata: cnab.OutputMetadata{"myoutput": struct{}{}},
+		OutputMetadata: cnab.OutputMetadata{"myoutput": map[string]string{}},
 		Custom:         map[string]interface{}{"custom": true},
 	}
 
