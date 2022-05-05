@@ -18,20 +18,9 @@ const (
 	CollectionCredentials = "credentials"
 )
 
-// CredentialStore provides access to work with Porter
+// CredentialStore is a wrapper around Porter's datastore
+// providing typed access and additional business logic around
 // credential sets, usually referred to as "credentials" as a shorthand.
-//
-// Credential Sets define mappings from a credential needed by a bundle to where
-// to look for it when the bundle is run. For example: Bundle needs Azure
-// storage connection string and it should look for it in an environment
-// variable named `AZURE_STORATE_CONNECTION_STRING` or a key named `dev-conn`.
-//
-// Porter discourages storing the value of the credential directly, though it
-// it is possible. Instead Porter encourages the best practice of defining
-// mappings in the credential sets, and then storing the values in secret stores
-// such as a key/value store like Hashicorp Vault, or Azure Key Vault.
-// See the get.porter.sh/porter/pkg/secrets package for more on how Porter
-// handles accessing secrets.
 type CredentialStore struct {
 	Documents Store
 	Secrets   secrets.Store

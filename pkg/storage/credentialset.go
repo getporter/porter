@@ -12,7 +12,17 @@ import (
 
 var _ Document = &CredentialSet{}
 
-// CredentialSet represents a collection of credentials
+// CredentialSet defines mappings from a credential needed by a bundle to where
+// to look for it when the bundle is run. For example: Bundle needs Azure
+// storage connection string and it should look for it in an environment
+// variable named `AZURE_STORATE_CONNECTION_STRING` or a key named `dev-conn`.
+//
+// Porter discourages storing the value of the credential directly, though
+// it is possible. Instead Porter encourages the best practice of defining
+// mappings in the credential sets, and then storing the values in secret stores
+// such as a key/value store like Hashicorp Vault, or Azure Key Vault.
+// See the get.porter.sh/porter/pkg/secrets package for more on how Porter
+// handles accessing secrets.
 type CredentialSet struct {
 	CredentialSetSpec `yaml:",inline"`
 	Status            CredentialSetStatus `json:"status" yaml:"status" toml:"status"`
