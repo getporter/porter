@@ -21,7 +21,7 @@ func TestRun_NewResultFrom(t *testing.T) {
 		Created:        time.Now(),
 		Message:        "message",
 		Status:         "status",
-		OutputMetadata: OutputMetadata{"myoutput": struct{}{}},
+		OutputMetadata: OutputMetadata{"myoutput": map[string]string{}},
 		Custom:         map[string]interface{}{"custom": true},
 	}
 
