@@ -16,8 +16,8 @@ import (
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/plugins"
 	"get.porter.sh/porter/pkg/tracing"
-	hclog "github.com/hashicorp/go-hclog"
-	plugin "github.com/hashicorp/go-plugin"
+	"github.com/hashicorp/go-hclog"
+	"github.com/hashicorp/go-plugin"
 	"github.com/pkg/errors"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.opentelemetry.io/otel/attribute"
@@ -237,7 +237,7 @@ func (l *PluginLoader) setUpDebugger(ctx context.Context, client *plugin.Client,
 // collect logs from an uninstrumented plugin.
 func (l *PluginLoader) logPluginMessages(ctx context.Context, pluginKey string, pluginOutput io.Reader) {
 	ctx, span := tracing.StartSpanWithName(ctx, "CollectPluginLogs", attribute.String(pluginKey, pluginKey))
-	defer span.Close()
+	defer span.EndSpan()
 
 	r := bufio.NewReader(pluginOutput)
 	for {

@@ -59,7 +59,8 @@ type TraceLogger interface {
 	// ShouldLog returns if the current log level includes the specified level.
 	ShouldLog(level zapcore.Level) bool
 
-	// Close releases any resources used.
+	// IsTracingEnabled returns if the current logger is configed to send trace data.
+	IsTracingEnabled() bool
 	Close()
 }
 
@@ -86,6 +87,10 @@ func (l traceLogger) Close() {
 // ShouldLog returns if the current log level includes the specified level.
 func (l traceLogger) ShouldLog(level zapcore.Level) bool {
 	return l.logger.Core().Enabled(level)
+}
+
+func (l traceLogger) IsTracingEnabled() bool {
+	return l.tracer.IsNoOp == false
 }
 
 // NewRootLogger creates a new TraceLogger and stores in on the context
