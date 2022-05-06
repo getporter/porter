@@ -16,7 +16,7 @@ import (
 type TestConfig struct {
 	*Config
 	TestContext *portercontext.TestContext
-	TestSpan    tracing.TraceLogger
+	TestSpan    tracing.RootTraceLogger
 }
 
 // NewTestConfig initializes a configuration suitable for testing:
@@ -84,7 +84,6 @@ func (c *TestConfig) SetupIntegrationTest() (ctx context.Context, testDir string
 
 func (c *TestConfig) Close() {
 	if c.TestSpan != nil {
-		c.TestSpan.EndSpan()
 		c.TestSpan.Close()
 		c.TestSpan = nil
 	}
