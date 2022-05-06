@@ -22,8 +22,8 @@ type Installation struct {
 	// SchemaVersion is the version of the installation state schema.
 	SchemaVersion schema.Version `json:"schemaVersion"`
 
-	// ID is the unique identifire for an installation record.
-	ID string `json:"id"`
+	// ID is the unique identifier for an installation record.
+	ID string `json:"_id"`
 
 	// Name of the installation. Immutable.
 	Name string `json:"name"`
@@ -111,7 +111,7 @@ func (i *Installation) ApplyResult(run Run, result Result) {
 
 // Apply user-provided changes to an existing installation.
 // Only updates fields that users are allowed to modify.
-// For example, Name, Namespace and Status cannot be modified.
+// For example, ID, Name, Namespace and Status cannot be modified.
 func (i *Installation) Apply(input Installation) {
 	i.Uninstalled = input.Uninstalled
 	i.Bundle = input.Bundle

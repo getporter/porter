@@ -56,6 +56,7 @@ func NewResult() Result {
 
 func (r Result) NewOutput(name string, data []byte) Output {
 	return Output{
+		ID:            cnab.NewULID(),
 		SchemaVersion: InstallationSchemaVersion,
 		Name:          name,
 		Namespace:     r.Namespace,

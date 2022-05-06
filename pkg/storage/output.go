@@ -12,6 +12,7 @@ var _ Document = Output{}
 
 type Output struct {
 	SchemaVersion schema.Version `json:"schemaVersion" yaml:"schemaVersion" toml:"schemaVersion"`
+	ID            string         `json:"_id" yaml:"_id" toml:"_id"`
 	Name          string         `json:"name" yaml:"name" toml:"name"`
 	Namespace     string         `json:"namespace" yaml:"namespace" toml:"namespace"`
 	Installation  string         `json:"installation" yaml:"installation" toml:"installation"`

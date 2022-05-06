@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/secrets"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/schema"
@@ -30,6 +31,9 @@ type CredentialSet struct {
 
 // CredentialSetSpec represents the set of user-modifiable fields on a CredentialSet.
 type CredentialSetSpec struct {
+	// ID is the unique ULID assigned to the CredentialSet.
+	ID string `json:"_id" yaml:"_id" toml:"_id"`
+
 	// SchemaVersion is the version of the credential-set schema.
 	SchemaVersion schema.Version `json:"schemaVersion" yaml:"schemaVersion" toml:"schemaVersion"`
 
@@ -60,6 +64,7 @@ func NewCredentialSet(namespace string, name string, creds ...secrets.Strategy) 
 	now := time.Now()
 	cs := CredentialSet{
 		CredentialSetSpec: CredentialSetSpec{
+			ID:            cnab.NewULID(),
 			SchemaVersion: CredentialSetSchemaVersion,
 			Name:          name,
 			Namespace:     namespace,

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/secrets"
 	"github.com/cnabio/cnab-go/schema"
 	"github.com/pkg/errors"
@@ -22,6 +23,9 @@ type ParameterSet struct {
 
 // ParameterSetSpec represents the set of user-modifiable fields on a ParameterSet.
 type ParameterSetSpec struct {
+	// ID is the unique ULID assigned to the ParameterSet.
+	ID string `json:"_id" yaml:"_id" toml:"_id"`
+
 	// SchemaVersion is the version of the parameter-set schema.
 	SchemaVersion schema.Version `json:"schemaVersion" yaml:"schemaVersion" toml:"schemaVersion"`
 
@@ -52,6 +56,7 @@ func NewParameterSet(namespace string, name string, params ...secrets.Strategy) 
 	now := time.Now()
 	ps := ParameterSet{
 		ParameterSetSpec: ParameterSetSpec{
+			ID:            cnab.NewULID(),
 			SchemaVersion: ParameterSetSchemaVersion,
 			Namespace:     namespace,
 			Name:          name,

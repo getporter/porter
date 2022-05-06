@@ -1,5 +1,6 @@
 {
   "schemaType": "ParameterSet",
+  "_id": "abc123",
   "schemaVersion": "1.0.1",
   "namespace": "",
   "name": "mypset",

@@ -1,5 +1,6 @@
 {
   "schemaVersion": "1.0.1",
+  "_id": "abc123",
   "name": "kool-kreds",
   "namespace": "dev",
   "credentials": [

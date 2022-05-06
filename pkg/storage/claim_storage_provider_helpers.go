@@ -56,7 +56,8 @@ func (p *TestClaimProvider) CreateInstallation(i Installation, transformations .
 }
 
 func (p *TestClaimProvider) SetMutableInstallationValues(i *Installation) {
-	i.ID = installationID
+	p.idCounter += 1
+	i.ID = fmt.Sprintf("%d", p.idCounter)
 	i.Status.Created = now
 	i.Status.Modified = now
 }

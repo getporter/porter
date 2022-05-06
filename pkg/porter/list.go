@@ -67,7 +67,9 @@ type DisplayInstallation struct {
 
 	SchemaVersion schema.Version `json:"schemaVersion" yaml:"schemaVersion" toml:"schemaVersion"`
 
-	ID string `json:"id" yaml:"id" toml:"id"`
+	// ID of the Installation
+	ID string `json:"_id" yaml:"_id" toml:"_id"`
+
 	// Name of the installation. Immutable.
 	Name string `json:"name" yaml:"name" toml:"name"`
 
@@ -192,7 +194,7 @@ func (l DisplayInstallations) Less(i, j int) bool {
 }
 
 type DisplayRun struct {
-	ClaimID    string                 `json:"claimID" yaml:"claimID"`
+	ID         string                 `json:"_id" yaml:"_id"`
 	Bundle     string                 `json:"bundle,omitempty" yaml:"bundle,omitempty"`
 	Version    string                 `json:"version" yaml:"version"`
 	Action     string                 `json:"action" yaml:"action"`
@@ -204,7 +206,7 @@ type DisplayRun struct {
 
 func NewDisplayRun(run storage.Run) DisplayRun {
 	return DisplayRun{
-		ClaimID:    run.ID,
+		ID:         run.ID,
 		Action:     run.Action,
 		Parameters: run.TypedParameterValues(),
 		Started:    run.Created,

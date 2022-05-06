@@ -1,6 +1,6 @@
 [
   {
-    "claimID": "1",
+    "_id": "2",
     "version": "",
     "action": "install",
     "started": "2020-04-18T01:02:03.000000004Z",
@@ -8,7 +8,7 @@
     "status": "succeeded"
   },
   {
-    "claimID": "2",
+    "_id": "3",
     "version": "",
     "action": "uninstall",
     "started": "2020-04-18T01:02:03.000000004Z",
