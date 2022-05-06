@@ -4,7 +4,6 @@
 package integration
 
 import (
-	"context"
 	"testing"
 
 	"get.porter.sh/porter/pkg/porter"
@@ -23,8 +22,7 @@ func TestClaimMigration_List(t *testing.T) {
 
 	p := porter.NewTestPorter(t)
 	defer p.Close()
-	p.SetupIntegrationTest()
-	ctx := context.Background()
+	ctx := p.SetupIntegrationTest()
 
 	schema := storage.NewSchema()
 	schema.Installations = "v0.38.10"

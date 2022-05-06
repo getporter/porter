@@ -9,6 +9,11 @@ logs:
   enabled: true
   level: debug
 
+telemetry:
+  enabled: ${env.PORTER_TEST_TELEMETRY_ENABLED}
+  protocol: gprc
+  insecure: true
+
 storage:
   - name: testdb
     plugin: mongodb

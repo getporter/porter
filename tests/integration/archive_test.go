@@ -4,7 +4,6 @@
 package integration
 
 import (
-	"context"
 	"crypto/sha256"
 	"fmt"
 	"io"
@@ -22,7 +21,7 @@ func TestArchive(t *testing.T) {
 
 	p := porter.NewTestPorter(t)
 	defer p.Close()
-	p.SetupIntegrationTest()
+	ctx := p.SetupIntegrationTest()
 	p.Debug = false
 
 	// Use a fixed bundle to work with so that we can rely on the registry and layer digests
@@ -32,10 +31,10 @@ func TestArchive(t *testing.T) {
 	archive1Opts := porter.ArchiveOptions{}
 	archive1Opts.Reference = reference
 	archiveFile1 := "mybuns1.tgz"
-	err := archive1Opts.Validate(context.Background(), []string{archiveFile1}, p.Porter)
+	err := archive1Opts.Validate(ctx, []string{archiveFile1}, p.Porter)
 	require.NoError(p.T(), err, "validation of archive opts for bundle failed")
 
-	err = p.Archive(context.Background(), archive1Opts)
+	err = p.Archive(ctx, archive1Opts)
 	require.NoError(p.T(), err, "archival of bundle failed")
 
 	info, err := p.FileSystem.Stat(archiveFile1)
@@ -48,13 +47,13 @@ func TestArchive(t *testing.T) {
 	archive2Opts := porter.ArchiveOptions{}
 	archive2Opts.Reference = reference
 	archiveFile2 := "mybuns2.tgz"
-	err = archive2Opts.Validate(context.Background(), []string{archiveFile2}, p.Porter)
+	err = archive2Opts.Validate(ctx, []string{archiveFile2}, p.Porter)
 	require.NoError(p.T(), err, "validation of archive opts for bundle failed")
 
-	err = archive1Opts.Validate(context.Background(), []string{archiveFile2}, p.Porter)
+	err = archive1Opts.Validate(ctx, []string{archiveFile2}, p.Porter)
 	require.NoError(t, err, "Second validate failed")
 
-	err = p.Archive(context.Background(), archive2Opts)
+	err = p.Archive(ctx, archive2Opts)
 	require.NoError(t, err, "Second archive failed")
 
 	assert.Equal(p.T(), hash1, getHash(p, archiveFile2), "shasum of archive did not stay the same on the second call to archive")
@@ -69,7 +68,7 @@ func TestArchive(t *testing.T) {
 	err = publishFromArchiveOpts.Validate(p.Context)
 	require.NoError(p.T(), err, "validation of publish opts for bundle failed")
 
-	err = p.Publish(context.Background(), publishFromArchiveOpts)
+	err = p.Publish(ctx, publishFromArchiveOpts)
 	require.NoError(p.T(), err, "publish of bundle from archive failed")
 }
 

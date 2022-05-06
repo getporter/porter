@@ -4,7 +4,6 @@
 package integration
 
 import (
-	"context"
 	"testing"
 
 	"get.porter.sh/porter/pkg/porter"
@@ -16,7 +15,7 @@ func TestPublish_BuildWithVersionOverride(t *testing.T) {
 
 	p := porter.NewTestPorter(t)
 	defer p.Close()
-	p.SetupIntegrationTest()
+	ctx := p.SetupIntegrationTest()
 	p.Debug = false
 
 	// Create a bundle
@@ -30,7 +29,7 @@ func TestPublish_BuildWithVersionOverride(t *testing.T) {
 	err = buildOpts.Validate(p.Porter)
 	require.NoError(t, err)
 
-	err = p.Build(context.Background(), buildOpts)
+	err = p.Build(ctx, buildOpts)
 	require.NoError(t, err)
 
 	publishOpts := porter.PublishOptions{}
@@ -40,6 +39,6 @@ func TestPublish_BuildWithVersionOverride(t *testing.T) {
 
 	// Confirm that publish picks up the version override
 	// (Otherwise, image tagging and publish will fail)
-	err = p.Publish(context.Background(), publishOpts)
+	err = p.Publish(ctx, publishOpts)
 	require.NoError(p.T(), err, "publish of bundle failed")
 }

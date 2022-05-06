@@ -24,20 +24,20 @@ func TestDependenciesLifecycle(t *testing.T) {
 
 	p := porter.NewTestPorter(t)
 	defer p.Close()
-	p.SetupIntegrationTest()
+	ctx := p.SetupIntegrationTest()
 	p.Debug = true
 
-	namespace := installWordpressBundle(p)
-	defer cleanupWordpressBundle(p, namespace)
+	namespace := installWordpressBundle(ctx, p)
+	defer cleanupWordpressBundle(ctx, p, namespace)
 
-	upgradeWordpressBundle(p, namespace)
+	upgradeWordpressBundle(ctx, p, namespace)
 
-	invokeWordpressBundle(p, namespace)
+	invokeWordpressBundle(ctx, p, namespace)
 
-	uninstallWordpressBundle(p, namespace)
+	uninstallWordpressBundle(ctx, p, namespace)
 }
 
-func publishMySQLBundle(p *porter.TestPorter) {
+func publishMySQLBundle(ctx context.Context, p *porter.TestPorter) {
 	bunDir, err := ioutil.TempDir("", "porter-mysql")
 	require.NoError(p.T(), err, "could not create temp directory to publish the mysql bundle")
 	defer os.RemoveAll(bunDir)
@@ -53,14 +53,13 @@ func publishMySQLBundle(p *porter.TestPorter) {
 	err = publishOpts.Validate(p.Context)
 	require.NoError(p.T(), err, "validation of publish opts for dependent bundle failed")
 
-	err = p.Publish(context.Background(), publishOpts)
+	err = p.Publish(ctx, publishOpts)
 	require.NoError(p.T(), err, "publish of dependent bundle failed")
 }
 
-func installWordpressBundle(p *porter.TestPorter) (namespace string) {
-	ctx := context.Background()
+func installWordpressBundle(ctx context.Context, p *porter.TestPorter) (namespace string) {
 	// Publish the mysql bundle that we depend upon
-	publishMySQLBundle(p)
+	publishMySQLBundle(ctx, p)
 
 	// Install the bundle that has dependencies
 	p.CopyDirectory(filepath.Join(p.RepoRoot, "build/testdata/bundles/wordpress"), ".", false)
@@ -114,9 +113,7 @@ func installWordpressBundle(p *porter.TestPorter) (namespace string) {
 	return namespace
 }
 
-func cleanupWordpressBundle(p *porter.TestPorter, namespace string) {
-	ctx := context.Background()
-
+func cleanupWordpressBundle(ctx context.Context, p *porter.TestPorter, namespace string) {
 	uninstallOptions := porter.NewUninstallOptions()
 	uninstallOptions.Namespace = namespace
 	uninstallOptions.CredentialIdentifiers = []string{"ci"}
@@ -138,9 +135,7 @@ func cleanupWordpressBundle(p *porter.TestPorter, namespace string) {
 	require.Equal(p.T(), storage.Installation{}, i)
 }
 
-func upgradeWordpressBundle(p *porter.TestPorter, namespace string) {
-	ctx := context.Background()
-
+func upgradeWordpressBundle(ctx context.Context, p *porter.TestPorter, namespace string) {
 	upgradeOpts := porter.NewUpgradeOptions()
 	upgradeOpts.Namespace = namespace
 	upgradeOpts.CredentialIdentifiers = []string{"ci"}
@@ -172,8 +167,7 @@ func upgradeWordpressBundle(p *porter.TestPorter, namespace string) {
 	assert.Equal(p.T(), cnab.StatusSucceeded, i.Status.ResultStatus, "the root bundle wasn't recorded as being upgraded successfully")
 }
 
-func invokeWordpressBundle(p *porter.TestPorter, namespace string) {
-	ctx := context.Background()
+func invokeWordpressBundle(ctx context.Context, p *porter.TestPorter, namespace string) {
 	invokeOpts := porter.NewInvokeOptions()
 	invokeOpts.Namespace = namespace
 	invokeOpts.Action = "ping"
@@ -205,8 +199,7 @@ func invokeWordpressBundle(p *porter.TestPorter, namespace string) {
 	assert.Equal(p.T(), cnab.StatusSucceeded, i.Status.ResultStatus, "the root bundle wasn't recorded as being invoked successfully")
 }
 
-func uninstallWordpressBundle(p *porter.TestPorter, namespace string) {
-	ctx := context.Background()
+func uninstallWordpressBundle(ctx context.Context, p *porter.TestPorter, namespace string) {
 	uninstallOptions := porter.NewUninstallOptions()
 	uninstallOptions.Namespace = namespace
 	uninstallOptions.CredentialIdentifiers = []string{"ci"}
