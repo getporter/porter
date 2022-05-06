@@ -27,7 +27,7 @@ func TestSanitizer_Parameters(t *testing.T) {
 
 	recordID := "01FZVC5AVP8Z7A78CSCP1EJ604"
 	sensitiveParamName := "my-second-param"
-	sensitiveParamKey := recordID + sensitiveParamName
+	sensitiveParamKey := recordID + "-" + sensitiveParamName
 	expected := []secrets.Strategy{
 		{Name: "my-first-param", Source: secrets.Source{Key: host.SourceValue, Value: "1"}, Value: "1"},
 		{Name: sensitiveParamName, Source: secrets.Source{Key: secrets.SourceSecret, Value: sensitiveParamKey}, Value: "2"},
@@ -79,7 +79,7 @@ func TestSanitizer_Output(t *testing.T) {
 
 	expectedSensitiveOutput := storage.Output{
 		Name:  sensitiveOutputName,
-		Key:   recordID + sensitiveOutputName,
+		Key:   recordID + "-" + sensitiveOutputName,
 		Value: nil,
 		RunID: recordID,
 	}
