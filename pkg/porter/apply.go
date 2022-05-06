@@ -70,12 +70,13 @@ func (p *Porter) InstallationApply(ctx context.Context, opts ApplyOptions) error
 	if err := encoding.UnmarshalFile(p.FileSystem, opts.File, &input); err != nil {
 		return errors.Wrapf(err, "unable to parse %s as an installation document", opts.File)
 	}
-	input.Namespace = namespace
-	inputInstallation, err := input.ConvertToInstallation()
+
+	inputInstallation, err := input.ConvertToInstallation(namespace)
 	if err != nil {
 		return err
 	}
 
+	log.Info("Checking for an existing installation", attribute.String("name", inputInstallation.Name), attribute.String("namespace", inputInstallation.Namespace))
 	installation, err := p.Claims.GetInstallation(ctx, inputInstallation.Namespace, inputInstallation.Name)
 	if err != nil {
 		if !errors.Is(err, storage.ErrNotFound{}) {
@@ -88,6 +89,10 @@ func (p *Porter) InstallationApply(ctx context.Context, opts ApplyOptions) error
 
 		log.Info("Creating a new installation", attribute.String("installation", installation.String()))
 	} else {
+		if inputInstallation.ID != installation.ID {
+			panic(fmt.Sprintf("carolyn was here: %s, %s", inputInstallation.ID, installation.ID))
+		}
+
 		// Apply the specified changes to the installation
 		installation.Apply(inputInstallation)
 		if err := installation.Validate(); err != nil {

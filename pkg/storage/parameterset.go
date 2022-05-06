@@ -93,3 +93,12 @@ func (s ParameterSet) Validate() error {
 func (s ParameterSet) String() string {
 	return fmt.Sprintf("%s/%s", s.Namespace, s.Name)
 }
+
+// Apply user-provided changes to an existing installation.
+// Only updates fields that users are allowed to modify.
+// For example, ID, Name, Namespace and Status cannot be modified.
+func (s *ParameterSet) Apply(input ParameterSet) {
+	s.SchemaVersion = input.SchemaVersion
+	s.Parameters = input.Parameters
+	s.Labels = input.Labels
+}

@@ -130,7 +130,7 @@ func NewDisplayInstallation(installation storage.Installation) DisplayInstallati
 
 // ConvertToInstallationClaim transforms the data from DisplayInstallation into
 // a Installation record.
-func (d DisplayInstallation) ConvertToInstallation() (storage.Installation, error) {
+func (d DisplayInstallation) ConvertToInstallation(currentNamespace string) (storage.Installation, error) {
 	i := storage.Installation{
 		SchemaVersion:  d.SchemaVersion,
 		ID:             d.ID,
@@ -143,6 +143,10 @@ func (d DisplayInstallation) ConvertToInstallation() (storage.Installation, erro
 		CredentialSets: d.CredentialSets,
 		ParameterSets:  d.ParameterSets,
 		Status:         d.Status,
+	}
+
+	if i.Namespace == "" {
+		i.Namespace = currentNamespace
 	}
 
 	var err error

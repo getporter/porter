@@ -104,12 +104,12 @@ func TestDisplayInstallation_ConvertToInstallation(t *testing.T) {
 
 	di := NewDisplayInstallation(i)
 
-	convertedInstallation, err := di.ConvertToInstallation()
+	convertedInstallation, err := di.ConvertToInstallation("myns")
 	require.NoError(t, err, "failed to convert display installation to installation record")
 
 	require.Equal(t, i.SchemaVersion, convertedInstallation.SchemaVersion, "invalid schema version")
 	require.Equal(t, i.Name, convertedInstallation.Name, "invalid installation name")
-	require.Equal(t, i.Namespace, convertedInstallation.Namespace, "invalid installation namespace")
+	require.Equal(t, "myns", convertedInstallation.Namespace, "invalid installation namespace, should have used the current namespace")
 	require.Equal(t, i.Uninstalled, convertedInstallation.Uninstalled, "invalid installation unstalled status")
 	require.Equal(t, i.Bundle.Digest, convertedInstallation.Bundle.Digest, "invalid installation bundle")
 

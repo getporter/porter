@@ -2,6 +2,7 @@ package mongodb
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -17,6 +18,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 	"go.mongodb.org/mongo-driver/x/mongo/driver/connstring"
 	"go.opentelemetry.io/otel/attribute"
+	"go.uber.org/zap"
 )
 
 var (
@@ -248,6 +250,13 @@ func (s *Store) Insert(ctx context.Context, opts plugins.InsertOptions) error {
 	for i, doc := range opts.Documents {
 		docs[i] = doc
 	}
+
+	if span.ShouldLog(zap.DebugLevel) {
+		if docsDump, err := json.Marshal(docs); err != nil {
+			span.SetAttributes(attribute.String("documents", string(docsDump)))
+		}
+	}
+
 	_, err := c.InsertMany(cxt, docs)
 	return span.Error(err)
 }

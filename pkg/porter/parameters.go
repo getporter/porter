@@ -15,12 +15,14 @@ import (
 	"get.porter.sh/porter/pkg/printer"
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
+	"get.porter.sh/porter/pkg/tracing"
 	dtprinter "github.com/carolynvs/datetime-printer"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
-	tablewriter "github.com/olekukonko/tablewriter"
+	"github.com/olekukonko/tablewriter"
 	"github.com/pkg/errors"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 // ParameterShowOptions represent options for Porter's parameter show command
@@ -211,6 +213,31 @@ type DisplayParameterSet struct {
 	// SchemaType helps when we export the definition so editors can detect the type of document, it's not used by porter.
 	SchemaType           string `json:"schemaType" yaml:"schemaType"`
 	storage.ParameterSet `yaml:",inline"`
+}
+
+func (ps DisplayParameterSet) ConvertToParameterSet(currentNamespace string) (storage.ParameterSet, error) {
+	result := storage.ParameterSet{
+		ParameterSetSpec: storage.ParameterSetSpec{
+			ID:            ps.ID,
+			SchemaVersion: ps.SchemaVersion,
+			Namespace:     ps.Namespace,
+			Name:          ps.Name,
+			Labels:        ps.Labels,
+			Parameters:    ps.Parameters,
+		},
+		Status: storage.ParameterSetStatus{},
+	}
+
+	if result.Namespace == "" {
+		result.Namespace = currentNamespace
+	}
+
+	err := result.Validate()
+	if err != nil {
+		return storage.ParameterSet{}, fmt.Errorf("invalid parameter set: %w", err)
+	}
+
+	return result, nil
 }
 
 // ShowParameter shows the parameter set corresponding to the provided name, using
@@ -486,45 +513,49 @@ func (p *Porter) printDisplayValuesTable(values []DisplayValue) error {
 }
 
 func (p *Porter) ParametersApply(ctx context.Context, o ApplyOptions) error {
-	if p.Debug {
-		fmt.Fprintf(p.Err, "Reading input file %s...\n", o.File)
-	}
+	ctx, span := tracing.StartSpan(ctx, attribute.String("file", o.File))
+	defer span.EndSpan()
 
+	span.Debugf("Reading input file %s...", o.File)
 	namespace, err := p.getNamespaceFromFile(o)
 	if err != nil {
-		return err
+		return span.Error(err)
 	}
 
-	if p.Debug {
-		// ignoring any error here, printing debug info isn't critical
-		contents, _ := p.FileSystem.ReadFile(o.File)
-		fmt.Fprintf(p.Err, "Input file contents:\n%s\n", contents)
-	}
-
-	var params storage.ParameterSet
-	err = encoding.UnmarshalFile(p.FileSystem, o.File, &params)
+	var input DisplayParameterSet
+	err = encoding.UnmarshalFile(p.FileSystem, o.File, &input)
 	if err != nil {
-		return errors.Wrapf(err, "could not load %s as a parameter set", o.File)
+		return span.Error(fmt.Errorf("could not load %s as a parameter set: %w", o.File, err))
 	}
 
-	if err = params.Validate(); err != nil {
-		return errors.Wrap(err, "invalid parameter set")
-	}
-
-	params.Namespace = namespace
-	params.Status.Modified = time.Now()
-
-	err = p.Parameters.Validate(ctx, params)
+	inputParams, err := input.ConvertToParameterSet(namespace)
 	if err != nil {
-		return errors.Wrap(err, "parameter set is invalid")
+		return span.Error(err)
+	}
+
+	params, err := p.Parameters.GetParameterSet(ctx, inputParams.Namespace, inputParams.Name)
+	if err != nil {
+		if !errors.Is(err, storage.ErrNotFound{}) {
+			return span.Error(fmt.Errorf("could not query for an existing parameter set document for %s: %w", params, err))
+		}
+
+		// Create a new credential set
+		params = storage.NewParameterSet(input.Namespace, input.Name, input.Parameters...)
+		params.Apply(params)
+		span.Info("Creating a new parameter set", attribute.String("parameterSet", params.String()))
+	} else {
+		// Apply the specified changes to the credential set
+		params.Apply(inputParams)
+		params.Status.Modified = time.Now()
+		span.Infof("Updating %s parameter set", params)
 	}
 
 	err = p.Parameters.UpsertParameterSet(ctx, params)
 	if err != nil {
-		return err
+		return span.Error(err)
 	}
 
-	fmt.Fprintf(p.Err, "Applied %s parameter set\n", params)
+	span.Infof("Applied %s parameter set", inputParams)
 	return nil
 }
 

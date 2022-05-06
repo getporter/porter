@@ -12,9 +12,11 @@ import (
 	"get.porter.sh/porter/pkg/generator"
 	"get.porter.sh/porter/pkg/printer"
 	"get.porter.sh/porter/pkg/storage"
+	"get.porter.sh/porter/pkg/tracing"
 	dtprinter "github.com/carolynvs/datetime-printer"
 	"github.com/olekukonko/tablewriter"
 	"github.com/pkg/errors"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 // CredentialShowOptions represent options for Porter's credential show command
@@ -199,6 +201,31 @@ type DisplayCredentialSet struct {
 	storage.CredentialSet `yaml:",inline"`
 }
 
+func (cs DisplayCredentialSet) ConvertToCredentialSet(currentNamespace string) (storage.CredentialSet, error) {
+	result := storage.CredentialSet{
+		CredentialSetSpec: storage.CredentialSetSpec{
+			ID:            cs.ID,
+			SchemaVersion: cs.SchemaVersion,
+			Namespace:     cs.Namespace,
+			Name:          cs.Name,
+			Labels:        cs.Labels,
+			Credentials:   cs.Credentials,
+		},
+		Status: storage.CredentialSetStatus{},
+	}
+
+	if result.Namespace == "" {
+		result.Namespace = currentNamespace
+	}
+
+	err := result.Validate()
+	if err != nil {
+		return storage.CredentialSet{}, fmt.Errorf("invalid credential set: %w", err)
+	}
+
+	return result, nil
+}
+
 // ShowCredential shows the credential set corresponding to the provided name, using
 // the provided printer.PrintOptions for display.
 func (p *Porter) ShowCredential(ctx context.Context, opts CredentialShowOptions) error {
@@ -314,45 +341,49 @@ func validateCredentialName(args []string) error {
 }
 
 func (p *Porter) CredentialsApply(ctx context.Context, o ApplyOptions) error {
-	if p.Debug {
-		fmt.Fprintf(p.Err, "Reading input file %s...\n", o.File)
-	}
+	ctx, span := tracing.StartSpan(ctx, attribute.String("file", o.File))
+	defer span.EndSpan()
 
+	span.Debugf("Reading input file %s...", o.File)
 	namespace, err := p.getNamespaceFromFile(o)
 	if err != nil {
-		return err
+		return span.Error(err)
 	}
 
-	if p.Debug {
-		// ignoring any error here, printing debug info isn't critical
-		contents, _ := p.FileSystem.ReadFile(o.File)
-		fmt.Fprintf(p.Err, "Input file contents:\n%s\n", contents)
-	}
-
-	var creds storage.CredentialSet
-	err = encoding.UnmarshalFile(p.FileSystem, o.File, &creds)
+	var input DisplayCredentialSet
+	err = encoding.UnmarshalFile(p.FileSystem, o.File, &input)
 	if err != nil {
-		return errors.Wrapf(err, "could not load %s as a credential set", o.File)
+		return span.Error(fmt.Errorf("could not load %s as a credential set: %w", o.File, err))
 	}
 
-	if err = creds.Validate(); err != nil {
-		return errors.Wrap(err, "invalid credential set")
-	}
-
-	creds.Namespace = namespace
-	creds.Status.Modified = time.Now()
-
-	err = p.Credentials.Validate(ctx, creds)
+	inputCreds, err := input.ConvertToCredentialSet(namespace)
 	if err != nil {
-		return errors.Wrap(err, "credential set is invalid")
+		return span.Error(err)
+	}
+
+	creds, err := p.Credentials.GetCredentialSet(ctx, inputCreds.Namespace, inputCreds.Name)
+	if err != nil {
+		if !errors.Is(err, storage.ErrNotFound{}) {
+			return span.Error(fmt.Errorf("could not query for an existing credential set document for %s: %w", creds, err))
+		}
+
+		// Create a new credential set
+		creds = storage.NewCredentialSet(input.Namespace, input.Name, input.Credentials...)
+		creds.Apply(creds)
+		span.Info("Creating a new credential set", attribute.String("credentialSet", creds.String()))
+	} else {
+		// Apply the specified changes to the credential set
+		creds.Apply(inputCreds)
+		creds.Status.Modified = time.Now()
+		span.Infof("Updating %s credential set", creds)
 	}
 
 	err = p.Credentials.UpsertCredentialSet(ctx, creds)
 	if err != nil {
-		return err
+		return span.Error(err)
 	}
 
-	fmt.Fprintf(p.Err, "Applied %s credential set\n", creds)
+	span.Infof("Applied %s credential set", inputCreds)
 	return nil
 }
 

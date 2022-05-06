@@ -97,6 +97,15 @@ func (s CredentialSet) String() string {
 	return fmt.Sprintf("%s/%s", s.Namespace, s.Name)
 }
 
+// Apply user-provided changes to an existing installation.
+// Only updates fields that users are allowed to modify.
+// For example, ID, Name, Namespace and Status cannot be modified.
+func (s *CredentialSet) Apply(input CredentialSet) {
+	s.SchemaVersion = input.SchemaVersion
+	s.Credentials = input.Credentials
+	s.Labels = input.Labels
+}
+
 // Validate compares the given credentials with the spec.
 //
 // This will result in an error only when the following conditions are true:
