@@ -36,7 +36,7 @@ func (c *Context) configureTelemetry(ctx context.Context, serviceName string, lo
 	}
 
 	// Only assign the tracer if one was configured (i.e. not noop)
-	if tracer.IsNoOp {
+	if !tracer.IsNoOp {
 		c.tracer = tracer
 		c.tracerInitalized = true
 	}

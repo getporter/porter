@@ -28,18 +28,18 @@ func NoopDataLoader(_ context.Context, _ *Config, _ map[string]interface{}) erro
 func LoadFromEnvironment() DataStoreLoaderFunc {
 	return LoadFromViper(func(v *viper.Viper) {
 		v.SetEnvPrefix("PORTER")
-		v.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
+		v.SetEnvKeyReplacer(strings.NewReplacer("-", "_", ".", "_"))
 		v.AutomaticEnv()
 
 		// Bind open telemetry environment variables
 		// See https://github.com/open-telemetry/opentelemetry-go/tree/main/exporters/otlp/otlptrace
-		v.BindEnv("trace.endpoint", "OTEL_EXPORTER_OTLP_ENDPOINT", "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT")
-		v.BindEnv("trace.protocol", "OTEL_EXPORTER_OTLP_PROTOCOL", "OTEL_EXPORTER_OTLP_TRACES_PROTOCOL")
-		v.BindEnv("trace.insecure", "OTEL_EXPORTER_OTLP_INSECURE", "OTEL_EXPORTER_OTLP_TRACES_INSECURE")
-		v.BindEnv("trace.certificate", "OTEL_EXPORTER_OTLP_CERTIFICATE", "OTEL_EXPORTER_OTLP_TRACES_CERTIFICATE")
-		v.BindEnv("trace.headers", "OTEL_EXPORTER_OTLP_HEADERS", "OTEL_EXPORTER_OTLP_TRACES_HEADERS")
-		v.BindEnv("trace.compression", "OTEL_EXPORTER_OTLP_COMPRESSION", "OTEL_EXPORTER_OTLP_TRACES_COMPRESSION")
-		v.BindEnv("trace.timeout", "OTEL_EXPORTER_OTLP_TIMEOUT", "OTEL_EXPORTER_OTLP_TRACES_TIMEOUT")
+		v.BindEnv("telemetry.endpoint", "OTEL_EXPORTER_OTLP_ENDPOINT", "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT")
+		v.BindEnv("telemetry.protocol", "OTEL_EXPORTER_OTLP_PROTOCOL", "OTEL_EXPORTER_OTLP_TRACES_PROTOCOL")
+		v.BindEnv("telemetry.insecure", "OTEL_EXPORTER_OTLP_INSECURE", "OTEL_EXPORTER_OTLP_TRACES_INSECURE")
+		v.BindEnv("telemetry.certificate", "OTEL_EXPORTER_OTLP_CERTIFICATE", "OTEL_EXPORTER_OTLP_TRACES_CERTIFICATE")
+		v.BindEnv("telemetry.headers", "OTEL_EXPORTER_OTLP_HEADERS", "OTEL_EXPORTER_OTLP_TRACES_HEADERS")
+		v.BindEnv("telemetry.compression", "OTEL_EXPORTER_OTLP_COMPRESSION", "OTEL_EXPORTER_OTLP_TRACES_COMPRESSION")
+		v.BindEnv("telemetry.timeout", "OTEL_EXPORTER_OTLP_TIMEOUT", "OTEL_EXPORTER_OTLP_TRACES_TIMEOUT")
 	})
 }
 

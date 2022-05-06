@@ -97,7 +97,7 @@ func LinkSensitiveParametersToSecrets(pset ParameterSet, bun cnab.ExtendedBundle
 
 func sanitizedParam(param secrets.Strategy, id string) secrets.Strategy {
 	param.Source.Key = secrets.SourceSecret
-	param.Source.Value = id + param.Name
+	param.Source.Value = id + "-" + param.Name
 	return param
 }
 
@@ -154,7 +154,7 @@ func (s *Sanitizer) CleanOutput(ctx context.Context, output Output, bun cnab.Ext
 }
 
 func sanitizedOutput(output Output) Output {
-	output.Key = output.RunID + output.Name
+	output.Key = output.RunID + "-" + output.Name
 	output.Value = nil
 	return output
 

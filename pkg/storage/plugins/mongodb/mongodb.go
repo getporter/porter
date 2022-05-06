@@ -201,6 +201,7 @@ func (s *Store) Find(ctx context.Context, opts plugins.FindOptions) ([]bson.Raw,
 	if err != nil {
 		return nil, span.Error(err)
 	}
+	defer cur.Close(ctx)
 
 	var results []bson.Raw
 	for cur.Next(cxt) {

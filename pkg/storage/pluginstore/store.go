@@ -3,6 +3,7 @@ package pluginstore
 import (
 	"context"
 	"fmt"
+	"io"
 
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/plugins/pluggable"
@@ -11,6 +12,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
+var _ io.Closer = &Store{}
 var _ plugins.StorageProtocol = &Store{}
 
 // Store is a plugin-backed source of storage. It resolves the appropriate
@@ -79,7 +81,7 @@ func (s *Store) Connect(ctx context.Context) error {
 	return nil
 }
 
-func (s *Store) Close(ctx context.Context) error {
+func (s *Store) Close() error {
 	s.conn.Close()
 	s.plugin = nil
 	return nil
