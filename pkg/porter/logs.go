@@ -11,7 +11,7 @@ import (
 // LogsShowOptions represent options for an installation logs show command
 type LogsShowOptions struct {
 	sharedOptions
-	ClaimID string
+	RunID string
 }
 
 // Installation name passed to the command.
@@ -22,7 +22,7 @@ func (o *LogsShowOptions) Installation() string {
 // Validate validates the provided args, using the provided context,
 // setting attributes of LogsShowOptions as applicable
 func (o *LogsShowOptions) Validate(cxt *portercontext.Context) error {
-	if o.Name != "" && o.ClaimID != "" {
+	if o.Name != "" && o.RunID != "" {
 		return errors.New("either --installation or --run should be specified, not both")
 	}
 
@@ -32,7 +32,7 @@ func (o *LogsShowOptions) Validate(cxt *portercontext.Context) error {
 		return err
 	}
 
-	if o.File == "" && o.Name == "" && o.ClaimID == "" {
+	if o.File == "" && o.Name == "" && o.RunID == "" {
 		return errors.New("either --installation or --run is required")
 	}
 
@@ -62,9 +62,9 @@ func (p *Porter) GetInstallationLogs(ctx context.Context, opts *LogsShowOptions)
 	}
 	installation := opts.sharedOptions.Name
 
-	if opts.ClaimID != "" {
-		return p.Claims.GetLogs(ctx, opts.ClaimID)
+	if opts.RunID != "" {
+		return p.Installations.GetLogs(ctx, opts.RunID)
 	}
 
-	return p.Claims.GetLastLogs(ctx, opts.Namespace, installation)
+	return p.Installations.GetLastLogs(ctx, opts.Namespace, installation)
 }

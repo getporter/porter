@@ -44,7 +44,7 @@ func TestPorter_ShowBundle(t *testing.T) {
 				},
 			}
 
-			// Create test claims
+			// Create test runs
 			writeOnly := true
 			b := bundle.Bundle{
 				Name:    "wordpress",
@@ -84,7 +84,7 @@ func TestPorter_ShowBundle(t *testing.T) {
 			}
 
 			bun := cnab.ExtendedBundle{b}
-			i := p.TestClaims.CreateInstallation(storage.NewInstallation("dev", "mywordpress"), p.TestClaims.SetMutableInstallationValues, func(i *storage.Installation) {
+			i := p.TestInstallations.CreateInstallation(storage.NewInstallation("dev", "mywordpress"), p.TestInstallations.SetMutableInstallationValues, func(i *storage.Installation) {
 				if tc.ref != "" {
 					i.TrackBundle(cnab.MustParseOCIReference(tc.ref))
 				}
@@ -103,7 +103,7 @@ func TestPorter_ShowBundle(t *testing.T) {
 				i.Parameters.Parameters = p.SanitizeParameters(i.Parameters.Parameters, i.ID, bun)
 			})
 
-			run := p.TestClaims.CreateRun(i.NewRun(cnab.ActionUpgrade), p.TestClaims.SetMutableRunValues, func(r *storage.Run) {
+			run := p.TestInstallations.CreateRun(i.NewRun(cnab.ActionUpgrade), p.TestInstallations.SetMutableRunValues, func(r *storage.Run) {
 				r.Bundle = b
 				r.BundleReference = tc.ref
 				r.BundleDigest = "sha256:88d68ef0bdb9cedc6da3a8e341a33e5d2f8bb19d0cf7ec3f1060d3f9eb73cae9"
@@ -126,14 +126,14 @@ func TestPorter_ShowBundle(t *testing.T) {
 			})
 
 			i.Parameters.Parameters = run.ParameterOverrides.Parameters
-			err := p.TestClaims.UpsertInstallation(context.Background(), i)
+			err := p.TestInstallations.UpsertInstallation(context.Background(), i)
 			require.NoError(t, err)
 
-			result := p.TestClaims.CreateResult(run.NewResult(cnab.StatusSucceeded), p.TestClaims.SetMutableResultValues)
+			result := p.TestInstallations.CreateResult(run.NewResult(cnab.StatusSucceeded), p.TestInstallations.SetMutableResultValues)
 			i.ApplyResult(run, result)
 			i.Status.Installed = &now
 			ctx := context.Background()
-			require.NoError(t, p.TestClaims.UpdateInstallation(ctx, i))
+			require.NoError(t, p.TestInstallations.UpdateInstallation(ctx, i))
 
 			err = p.ShowInstallation(ctx, opts)
 			require.NoError(t, err, "ShowInstallation failed")

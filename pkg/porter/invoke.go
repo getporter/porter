@@ -47,7 +47,7 @@ func (p *Porter) InvokeBundle(ctx context.Context, opts InvokeOptions) error {
 		return err
 	}
 
-	installation, err := p.Claims.GetInstallation(ctx, opts.Namespace, opts.Name)
+	installation, err := p.Installations.GetInstallation(ctx, opts.Namespace, opts.Name)
 	if errors.Is(err, storage.ErrNotFound{}) {
 		action, actionErr := bundleRef.Definition.GetAction(opts.Action)
 		if actionErr != nil {

@@ -58,9 +58,9 @@ func TestDeleteInstallation(t *testing.T) {
 
 			// Create test claim
 			if tc.lastAction != "" {
-				i := p.TestClaims.CreateInstallation(storage.NewInstallation("", "test"))
-				c := p.TestClaims.CreateRun(i.NewRun(tc.lastAction))
-				_ = p.TestClaims.CreateResult(c.NewResult(tc.lastActionStatus))
+				i := p.TestInstallations.CreateInstallation(storage.NewInstallation("", "test"))
+				c := p.TestInstallations.CreateRun(i.NewRun(tc.lastAction))
+				_ = p.TestInstallations.CreateResult(c.NewResult(tc.lastActionStatus))
 			}
 
 			opts := DeleteOptions{}
@@ -75,7 +75,7 @@ func TestDeleteInstallation(t *testing.T) {
 				require.NoError(t, err, "expected DeleteInstallation to succeed")
 			}
 
-			_, err = p.Claims.GetInstallation(ctx, "", "test")
+			_, err = p.Installations.GetInstallation(ctx, "", "test")
 			if tc.installationRemains {
 				require.NoError(t, err, "expected installation to exist")
 			} else {

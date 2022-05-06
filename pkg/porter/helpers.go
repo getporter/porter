@@ -30,15 +30,15 @@ import (
 
 type TestPorter struct {
 	*Porter
-	TestConfig      *config.TestConfig
-	TestStore       storage.TestStore
-	TestClaims      *storage.TestClaimProvider
-	TestCredentials *storage.TestCredentialSetProvider
-	TestParameters  *storage.TestParameterSetProvider
-	TestCache       *cache.TestCache
-	TestRegistry    *cnabtooci.TestRegistry
-	TestSecrets     secrets.Store
-	TestSanitizer   *storage.Sanitizer
+	TestConfig        *config.TestConfig
+	TestStore         storage.TestStore
+	TestInstallations *storage.TestInstallationProvider
+	TestCredentials   *storage.TestCredentialSetProvider
+	TestParameters    *storage.TestParameterSetProvider
+	TestCache         *cache.TestCache
+	TestRegistry      *cnabtooci.TestRegistry
+	TestSecrets       secrets.Store
+	TestSanitizer     *storage.Sanitizer
 
 	// original directory where the test was being executed
 	TestDir string
@@ -65,7 +65,7 @@ func NewTestPorter(t *testing.T) *TestPorter {
 	testCredentials := storage.NewTestCredentialProviderFor(t, testStore, testSecrets)
 	testParameters := storage.NewTestParameterProviderFor(t, testStore, testSecrets)
 	testCache := cache.NewTestCache(cache.New(tc.Config))
-	testClaims := storage.NewTestClaimProviderFor(t, testStore)
+	testInstallations := storage.NewTestInstallationProviderFor(t, testStore)
 	testRegistry := cnabtooci.NewTestRegistry()
 
 	p := NewFor(tc.Config, testStore, testSecrets)
@@ -74,25 +74,25 @@ func NewTestPorter(t *testing.T) *TestPorter {
 	p.Plugins = plugins.NewTestPluginProvider()
 	p.Cache = testCache
 	p.builder = NewTestBuildProvider()
-	p.Claims = testClaims
+	p.Installations = testInstallations
 	p.Credentials = testCredentials
 	p.Parameters = testParameters
 	p.Secrets = testSecrets
-	p.CNAB = cnabprovider.NewTestRuntimeFor(tc, testClaims, testCredentials, testParameters, testSecrets)
+	p.CNAB = cnabprovider.NewTestRuntimeFor(tc, testInstallations, testCredentials, testParameters, testSecrets)
 	p.Registry = testRegistry
 
 	tp := TestPorter{
-		Porter:          p,
-		TestConfig:      tc,
-		TestStore:       testStore,
-		TestSecrets:     testSecrets,
-		TestClaims:      testClaims,
-		TestCredentials: testCredentials,
-		TestParameters:  testParameters,
-		TestCache:       testCache,
-		TestRegistry:    testRegistry,
-		TestSanitizer:   storage.NewSanitizer(testParameters, testSecrets),
-		RepoRoot:        tc.TestContext.FindRepoRoot(),
+		Porter:            p,
+		TestConfig:        tc,
+		TestStore:         testStore,
+		TestSecrets:       testSecrets,
+		TestInstallations: testInstallations,
+		TestCredentials:   testCredentials,
+		TestParameters:    testParameters,
+		TestCache:         testCache,
+		TestRegistry:      testRegistry,
+		TestSanitizer:     storage.NewSanitizer(testParameters, testSecrets),
+		RepoRoot:          tc.TestContext.FindRepoRoot(),
 	}
 
 	// Start a tracing span for the test, so that we can capture logs
@@ -241,7 +241,7 @@ func (p *TestPorter) SanitizeParameters(raw []secrets.Strategy, recordID string,
 }
 
 func (p *TestPorter) CreateOutput(o storage.Output, bun cnab.ExtendedBundle) storage.Output {
-	return p.TestClaims.CreateOutput(o, func(o *storage.Output) {
+	return p.TestInstallations.CreateOutput(o, func(o *storage.Output) {
 		output, err := p.TestSanitizer.CleanOutput(context.Background(), *o, bun)
 		require.NoError(p.T(), err)
 		*o = output

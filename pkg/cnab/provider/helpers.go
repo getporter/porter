@@ -20,39 +20,39 @@ var _ CNABProvider = &TestRuntime{}
 
 type TestRuntime struct {
 	*Runtime
-	TestStorage     storage.TestStore
-	TestClaims      *storage.TestClaimProvider
-	TestCredentials *storage.TestCredentialSetProvider
-	TestParameters  *storage.TestParameterSetProvider
-	TestConfig      *config.TestConfig
+	TestStorage       storage.TestStore
+	TestInstallations *storage.TestInstallationProvider
+	TestCredentials   *storage.TestCredentialSetProvider
+	TestParameters    *storage.TestParameterSetProvider
+	TestConfig        *config.TestConfig
 }
 
 func NewTestRuntime(t *testing.T) *TestRuntime {
 	tc := config.NewTestConfig(t)
 	testStorage := storage.NewTestStore(tc)
 	testSecrets := secrets.NewTestSecretsProvider()
-	testClaims := storage.NewTestClaimProviderFor(tc.TestContext.T, testStorage)
+	testInstallations := storage.NewTestInstallationProviderFor(tc.TestContext.T, testStorage)
 	testCredentials := storage.NewTestCredentialProviderFor(tc.TestContext.T, testStorage, testSecrets)
 	testParameters := storage.NewTestParameterProviderFor(tc.TestContext.T, testStorage, testSecrets)
 
-	return NewTestRuntimeFor(tc, testClaims, testCredentials, testParameters, testSecrets)
+	return NewTestRuntimeFor(tc, testInstallations, testCredentials, testParameters, testSecrets)
 }
 
-func NewTestRuntimeFor(tc *config.TestConfig, testClaims *storage.TestClaimProvider, testCredentials *storage.TestCredentialSetProvider, testParameters *storage.TestParameterSetProvider, testSecrets secrets.Store) *TestRuntime {
+func NewTestRuntimeFor(tc *config.TestConfig, testInstallations *storage.TestInstallationProvider, testCredentials *storage.TestCredentialSetProvider, testParameters *storage.TestParameterSetProvider, testSecrets secrets.Store) *TestRuntime {
 	return &TestRuntime{
-		Runtime:         NewRuntime(tc.Config, testClaims, testCredentials, testSecrets, storage.NewSanitizer(testParameters, testSecrets)),
-		TestStorage:     storage.TestStore{},
-		TestClaims:      testClaims,
-		TestCredentials: testCredentials,
-		TestParameters:  testParameters,
-		TestConfig:      tc,
+		Runtime:           NewRuntime(tc.Config, testInstallations, testCredentials, testSecrets, storage.NewSanitizer(testParameters, testSecrets)),
+		TestStorage:       storage.TestStore{},
+		TestInstallations: testInstallations,
+		TestCredentials:   testCredentials,
+		TestParameters:    testParameters,
+		TestConfig:        tc,
 	}
 }
 
 func (t *TestRuntime) Close() error {
 	var bigErr *multierror.Error
 
-	bigErr = multierror.Append(bigErr, t.TestClaims.Close())
+	bigErr = multierror.Append(bigErr, t.TestInstallations.Close())
 	bigErr = multierror.Append(bigErr, t.TestCredentials.Close())
 	bigErr = multierror.Append(bigErr, t.TestParameters.Close())
 

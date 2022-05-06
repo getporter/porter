@@ -19,9 +19,9 @@ type dependencyExecutioner struct {
 	*config.Config
 	porter *Porter
 
-	Resolver BundleResolver
-	CNAB     cnabprovider.CNABProvider
-	Claims   storage.ClaimProvider
+	Resolver      BundleResolver
+	CNAB          cnabprovider.CNABProvider
+	Installations storage.InstallationProvider
 
 	parentInstallation storage.Installation
 	parentAction       BundleAction
@@ -45,7 +45,7 @@ func newDependencyExecutioner(p *Porter, installation storage.Installation, acti
 		Config:             p.Config,
 		Resolver:           resolver,
 		CNAB:               p.CNAB,
-		Claims:             p.Claims,
+		Installations:      p.Installations,
 	}
 }
 
@@ -136,7 +136,7 @@ func (e *dependencyExecutioner) identifyDependencies(ctx context.Context) error 
 
 		bun = cachedBundle.Definition
 	} else if e.parentOpts.Name != "" {
-		c, err := e.Claims.GetLastRun(ctx, e.parentOpts.Namespace, e.parentOpts.Name)
+		c, err := e.Installations.GetLastRun(ctx, e.parentOpts.Namespace, e.parentOpts.Name)
 		if err != nil {
 			return err
 		}
@@ -262,14 +262,14 @@ func (e *dependencyExecutioner) executeDependency(ctx context.Context, dep *queu
 	// we want dependencies and mixins as bundles to work in the future.
 
 	depName := cnab.BuildPrerequisiteInstallationName(e.parentOpts.Name, dep.Alias)
-	depInstallation, err := e.Claims.GetInstallation(ctx, e.parentOpts.Namespace, depName)
+	depInstallation, err := e.Installations.GetInstallation(ctx, e.parentOpts.Namespace, depName)
 	if err != nil {
 		if errors.Is(err, storage.ErrNotFound{}) {
 			depInstallation = storage.NewInstallation(e.parentOpts.Namespace, depName)
 			depInstallation.SetLabel("sh.porter.parentInstallation", e.parentArgs.Installation.String())
 			// For now, assume it's okay to give the dependency the same credentials as the parent
 			depInstallation.CredentialSets = e.parentInstallation.CredentialSets
-			if err = e.Claims.InsertInstallation(ctx, depInstallation); err != nil {
+			if err = e.Installations.InsertInstallation(ctx, depInstallation); err != nil {
 				return err
 			}
 		} else {
@@ -317,7 +317,7 @@ func (e *dependencyExecutioner) executeDependency(ctx context.Context, dep *queu
 	// will resolve to false and thus be a no-op
 	if uninstallOpts.shouldDelete() {
 		fmt.Fprintf(e.Out, installationDeleteTmpl, depArgs.Installation)
-		return e.Claims.RemoveInstallation(ctx, depArgs.Installation.Namespace, depArgs.Installation.Name)
+		return e.Installations.RemoveInstallation(ctx, depArgs.Installation.Namespace, depArgs.Installation.Name)
 	}
 	return nil
 }

@@ -74,8 +74,8 @@ func TestResolveBundleReference(t *testing.T) {
 		p := NewTestPorter(t)
 		defer p.Close()
 
-		i := p.TestClaims.CreateInstallation(storage.NewInstallation("dev", "example"))
-		p.TestClaims.CreateRun(i.NewRun(cnab.ActionInstall), func(r *storage.Run) {
+		i := p.TestInstallations.CreateInstallation(storage.NewInstallation("dev", "example"))
+		p.TestInstallations.CreateRun(i.NewRun(cnab.ActionInstall), func(r *storage.Run) {
 			r.BundleReference = kahnlatest.String()
 			r.Bundle = buildExampleBundle()
 			r.BundleDigest = kahnlatestHash

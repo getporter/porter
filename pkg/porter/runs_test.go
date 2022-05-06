@@ -23,8 +23,8 @@ func TestPorter_ListInstallationRuns(t *testing.T) {
 	run1.NewResult("running")
 	run1.NewResult("succeeded")
 
-	p.TestClaims.CreateInstallation(storage.NewInstallation("", installationName1), p.TestClaims.SetMutableInstallationValues)
-	p.TestClaims.CreateRun(run1)
+	p.TestInstallations.CreateInstallation(storage.NewInstallation("", installationName1), p.TestInstallations.SetMutableInstallationValues)
+	p.TestInstallations.CreateRun(run1)
 
 	installationName2 := "shared-k8s"
 
@@ -34,9 +34,9 @@ func TestPorter_ListInstallationRuns(t *testing.T) {
 	run3 := storage.NewRun("dev", installationName2)
 	run3.NewResult("running")
 
-	p.TestClaims.CreateInstallation(storage.NewInstallation("dev", installationName2), p.TestClaims.SetMutableInstallationValues)
-	p.TestClaims.CreateRun(run2)
-	p.TestClaims.CreateRun(run3)
+	p.TestInstallations.CreateInstallation(storage.NewInstallation("dev", installationName2), p.TestInstallations.SetMutableInstallationValues)
+	p.TestInstallations.CreateRun(run2)
+	p.TestInstallations.CreateRun(run3)
 
 	t.Run("global namespace", func(t *testing.T) {
 		opts := RunListOptions{sharedOptions: sharedOptions{
@@ -75,18 +75,18 @@ func TestPorter_PrintInstallationRunsOutput(t *testing.T) {
 		defer p.Close()
 		ctx := context.Background()
 
-		installation := p.TestClaims.CreateInstallation(storage.NewInstallation("staging", "shared-k8s"), p.TestClaims.SetMutableInstallationValues)
+		installation := p.TestInstallations.CreateInstallation(storage.NewInstallation("staging", "shared-k8s"), p.TestInstallations.SetMutableInstallationValues)
 
-		installRun := p.TestClaims.CreateRun(installation.NewRun(cnab.ActionInstall), p.TestClaims.SetMutableRunValues)
-		uninstallRun := p.TestClaims.CreateRun(installation.NewRun(cnab.ActionUninstall), p.TestClaims.SetMutableRunValues)
-		result := p.TestClaims.CreateResult(installRun.NewResult(cnab.StatusSucceeded), p.TestClaims.SetMutableResultValues)
-		result2 := p.TestClaims.CreateResult(uninstallRun.NewResult(cnab.StatusSucceeded), p.TestClaims.SetMutableResultValues)
+		installRun := p.TestInstallations.CreateRun(installation.NewRun(cnab.ActionInstall), p.TestInstallations.SetMutableRunValues)
+		uninstallRun := p.TestInstallations.CreateRun(installation.NewRun(cnab.ActionUninstall), p.TestInstallations.SetMutableRunValues)
+		result := p.TestInstallations.CreateResult(installRun.NewResult(cnab.StatusSucceeded), p.TestInstallations.SetMutableResultValues)
+		result2 := p.TestInstallations.CreateResult(uninstallRun.NewResult(cnab.StatusSucceeded), p.TestInstallations.SetMutableResultValues)
 
 		installation.ApplyResult(installRun, result)
 		installation.ApplyResult(uninstallRun, result2)
 		installation.Status.Installed = &now
 
-		require.NoError(t, p.TestClaims.UpdateInstallation(ctx, installation))
+		require.NoError(t, p.TestInstallations.UpdateInstallation(ctx, installation))
 
 		opts := RunListOptions{sharedOptions: sharedOptions{
 			Namespace: "staging",

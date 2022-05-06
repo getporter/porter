@@ -36,7 +36,7 @@ func TestLogsShowOptions_Validate(t *testing.T) {
 	t.Run("run specified", func(t *testing.T) {
 		c := portercontext.NewTestContext(t)
 		opts := LogsShowOptions{}
-		opts.ClaimID = "abc123"
+		opts.RunID = "abc123"
 
 		err := opts.Validate(c.Context)
 		require.NoError(t, err)
@@ -46,7 +46,7 @@ func TestLogsShowOptions_Validate(t *testing.T) {
 		c := portercontext.NewTestContext(t)
 		opts := LogsShowOptions{}
 		opts.Name = "mybun"
-		opts.ClaimID = "abc123"
+		opts.RunID = "abc123"
 
 		err := opts.Validate(c.Context)
 		require.Error(t, err)
@@ -68,9 +68,9 @@ func TestPorter_ShowInstallationLogs(t *testing.T) {
 		p := NewTestPorter(t)
 		defer p.Close()
 
-		i := p.TestClaims.CreateInstallation(storage.NewInstallation("", "test"))
-		c := p.TestClaims.CreateRun(i.NewRun(cnab.ActionInstall))
-		p.TestClaims.CreateResult(c.NewResult(cnab.StatusSucceeded))
+		i := p.TestInstallations.CreateInstallation(storage.NewInstallation("", "test"))
+		c := p.TestInstallations.CreateRun(i.NewRun(cnab.ActionInstall))
+		p.TestInstallations.CreateResult(c.NewResult(cnab.StatusSucceeded))
 
 		var opts LogsShowOptions
 		opts.Name = "test"
@@ -85,13 +85,13 @@ func TestPorter_ShowInstallationLogs(t *testing.T) {
 		p := NewTestPorter(t)
 		defer p.Close()
 
-		i := p.TestClaims.CreateInstallation(storage.NewInstallation("", "test"))
-		c := p.TestClaims.CreateRun(i.NewRun(cnab.ActionInstall))
-		r := p.TestClaims.CreateResult(c.NewResult(cnab.StatusSucceeded), func(r *storage.Result) {
+		i := p.TestInstallations.CreateInstallation(storage.NewInstallation("", "test"))
+		c := p.TestInstallations.CreateRun(i.NewRun(cnab.ActionInstall))
+		r := p.TestInstallations.CreateResult(c.NewResult(cnab.StatusSucceeded), func(r *storage.Result) {
 			r.OutputMetadata.SetGeneratedByBundle(cnab.OutputInvocationImageLogs, false)
 		})
 
-		p.TestClaims.CreateOutput(r.NewOutput(cnab.OutputInvocationImageLogs, []byte(testLogs)))
+		p.TestInstallations.CreateOutput(r.NewOutput(cnab.OutputInvocationImageLogs, []byte(testLogs)))
 
 		var opts LogsShowOptions
 		opts.Name = "test"

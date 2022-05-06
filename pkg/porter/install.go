@@ -63,7 +63,7 @@ func (p *Porter) InstallBundle(ctx context.Context, opts InstallOptions) error {
 		return log.Error(err)
 	}
 
-	i, err := p.Claims.GetInstallation(ctx, opts.Namespace, opts.Name)
+	i, err := p.Installations.GetInstallation(ctx, opts.Namespace, opts.Name)
 	if err == nil {
 		// Validate that we are not overwriting an existing installation
 		if i.IsInstalled() && !opts.Force {
@@ -84,7 +84,7 @@ func (p *Porter) InstallBundle(ctx context.Context, opts InstallOptions) error {
 	}
 	i.TrackBundle(bundleRef.Reference)
 	i.Labels = opts.ParseLabels()
-	err = p.Claims.UpsertInstallation(ctx, i)
+	err = p.Installations.UpsertInstallation(ctx, i)
 	if err != nil {
 		return errors.Wrap(err, "error saving installation record")
 	}

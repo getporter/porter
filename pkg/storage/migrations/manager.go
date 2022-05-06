@@ -31,8 +31,8 @@ type Manager struct {
 	*config.Config
 
 	// The underlying storage managed by this instance. It
-	// shouldn't be used for typed read/access the data, for that use the ClaimsProvider
-	// or CredentialSetProvider which works with the Storage.Manager.
+	// shouldn't be used for typed read/access the data, for that storage.InstallationStorageProvider
+	// or storage.CredentialSetProvider which works with the Manager.
 	store storage.Store
 
 	// initialized specifies if we have loaded the schema document.
@@ -83,7 +83,7 @@ Once your data has been backed up, run the following command to perform the migr
 
 		m.initialized = true
 
-		cs := storage.NewClaimStore(m.store)
+		cs := storage.NewInstallationStore(m.store)
 		err := cs.Initialize(ctx)
 		if err != nil {
 			return err

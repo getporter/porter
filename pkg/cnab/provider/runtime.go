@@ -12,22 +12,22 @@ var _ CNABProvider = &Runtime{}
 
 type Runtime struct {
 	*config.Config
-	credentials storage.CredentialSetProvider
-	parameters  storage.ParameterSetProvider
-	secrets     secrets.Store
-	claims      storage.ClaimProvider
-	sanitizer   *storage.Sanitizer
-	Extensions  cnab.ProcessedExtensions
+	credentials   storage.CredentialSetProvider
+	parameters    storage.ParameterSetProvider
+	secrets       secrets.Store
+	installations storage.InstallationProvider
+	sanitizer     *storage.Sanitizer
+	Extensions    cnab.ProcessedExtensions
 }
 
-func NewRuntime(c *config.Config, claims storage.ClaimProvider, credentials storage.CredentialSetProvider, secrets secrets.Store, sanitizer *storage.Sanitizer) *Runtime {
+func NewRuntime(c *config.Config, installations storage.InstallationProvider, credentials storage.CredentialSetProvider, secrets secrets.Store, sanitizer *storage.Sanitizer) *Runtime {
 	return &Runtime{
-		Config:      c,
-		claims:      claims,
-		credentials: credentials,
-		secrets:     secrets,
-		sanitizer:   sanitizer,
-		Extensions:  cnab.ProcessedExtensions{},
+		Config:        c,
+		installations: installations,
+		credentials:   credentials,
+		secrets:       secrets,
+		sanitizer:     sanitizer,
+		Extensions:    cnab.ProcessedExtensions{},
 	}
 }
 

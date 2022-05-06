@@ -45,7 +45,7 @@ Either display the logs from a specific run of a bundle with --run, or use --ins
 		"Namespace in which the installation is defined. Defaults to the global namespace.")
 	f.StringVarP(&opts.Name, "installation", "i", "",
 		"The installation that generated the logs.")
-	f.StringVarP(&opts.ClaimID, "run", "r", "",
+	f.StringVarP(&opts.RunID, "run", "r", "",
 		"The bundle run that generated the logs.")
 
 	return cmd
