@@ -539,12 +539,12 @@ func (p *Porter) ParametersApply(ctx context.Context, o ApplyOptions) error {
 			return span.Error(fmt.Errorf("could not query for an existing parameter set document for %s: %w", params, err))
 		}
 
-		// Create a new credential set
+		// Create a new parameter set
 		params = storage.NewParameterSet(input.Namespace, input.Name, input.Parameters...)
-		params.Apply(params)
+		params.Apply(inputParams)
 		span.Info("Creating a new parameter set", attribute.String("parameterSet", params.String()))
 	} else {
-		// Apply the specified changes to the credential set
+		// Apply the specified changes to the parameter set
 		params.Apply(inputParams)
 		params.Status.Modified = time.Now()
 		span.Infof("Updating %s parameter set", params)

@@ -369,7 +369,7 @@ func (p *Porter) CredentialsApply(ctx context.Context, o ApplyOptions) error {
 
 		// Create a new credential set
 		creds = storage.NewCredentialSet(input.Namespace, input.Name, input.Credentials...)
-		creds.Apply(creds)
+		creds.Apply(inputCreds)
 		span.Info("Creating a new credential set", attribute.String("credentialSet", creds.String()))
 	} else {
 		// Apply the specified changes to the credential set

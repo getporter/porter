@@ -2,13 +2,17 @@ namespace = "dev"
 debug = true
 debug-plugins = true
 default-storage = "testdb"
-experimental = ["build-drivers", "structured-logs"]
-build-driver = "buildkit"
+experimental = ["structured-logs"]
 default-secrets-plugin = "filesystem"
 
 [logs]
   enabled = true
   level = "debug"
+
+[telemetry]
+  enabled = true
+  protocol = "gprc"
+  insecure = true
 
 [[storage]]
   name = "testdb"
