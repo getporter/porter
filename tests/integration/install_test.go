@@ -114,9 +114,6 @@ func TestInstall_withDockerignore(t *testing.T) {
 }
 
 func TestInstall_stringParam(t *testing.T) {
-	// Remove this skip when #1862 is fixed
-	t.Skip("This is a failing test for https://github.com/getporter/porter/issues/1862")
-
 	p := porter.NewTestPorter(t)
 	defer p.Close()
 	p.SetupIntegrationTest()

@@ -119,12 +119,14 @@ func ExecuteStep(cxt *portercontext.Context, step ExecutableStep) (string, error
 	if dashing, ok := step.(HasCustomDashes); ok {
 		dashes = dashing.GetDashes()
 	}
-	args = append(args, flags.ToSlice(dashes)...)
 
-	// Split up any arguments or flags that have spaces so that we pass them as separate array elements
+	// Split up flags that have spaces so that we pass them as separate array elements
 	// It doesn't show up any differently in the printed command, but it matters to how the command
 	// it executed against the system.
-	args = splitCommand(args)
+	flagsSlice := splitCommand(flags.ToSlice(dashes))
+
+	args = append(args, flagsSlice...)
+
 
 	// Append any final suffix arguments
 	args = append(args, suffixArgs...)
