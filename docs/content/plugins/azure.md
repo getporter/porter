@@ -17,33 +17,16 @@ porter plugin install azure
 
 ## Plugin Configuration
 
-### Storage
-
-Storage plugins allow Porter to store data, such as installation data and
-credentials or parameters, in Azure cloud.
-
-#### Blob
-
-The `azure.blob` plugin stores data in Azure Blob Storage. 
-
-1. Open, or create, `~/.porter/config.toml`.
-1. Add the following line to activate the Azure blob storage plugin:
-
-    ```toml
-    default-storage-plugin = "azure.blob"
-    ```
-
-1. [Create a storage account][account]
-1. [Create a container][container] named `porter`.
-1. [Copy the connection string][connstring] for the storage account. Then set it as an environment variable named 
-    `AZURE_STORAGE_CONNECTION_STRING`.
-
 ### Secrets
 
-Secrets plugins allow Porter to inject secrets into credential sets.
+Secrets plugins allow Porter to store and resolve sensitive bundle data.
 
-For example, if your team has a shared key vault with a database password, you
+For example, to resolve a database password, if your team has a shared key vault that has the password stored in it, you
 can use the keyvault plugin to inject it as a credential when you install a bundle.
+Another usecase is to store any sensitive bundle parameters and outputs. For
+example, if a bundle depends on a redis bundle to generate a database connection
+string as an output, the connection string will be securely stored in the key
+vault.
 
 #### Key Vault
 
