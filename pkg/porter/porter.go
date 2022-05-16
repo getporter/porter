@@ -84,8 +84,8 @@ func NewFor(c *config.Config, store storage.Store, secretStorage secrets.Store) 
 // It is the responsibility of the caller to also call Close when done with Porter.
 func (p *Porter) Connect(ctx context.Context) error {
 	// Load the config file and replace any referenced secrets
-	return p.Config.Load(ctx, func(secret string) (string, error) {
-		value, err := p.Secrets.Resolve(ctx, "secret", secret)
+	return p.Config.Load(ctx, func(innerCtx context.Context, secret string) (string, error) {
+		value, err := p.Secrets.Resolve(innerCtx, "secret", secret)
 		if err != nil {
 			if strings.Contains(err.Error(), "invalid value source: secret") {
 				return "", errors.New("No secret store account is configured")

@@ -303,7 +303,7 @@ func (c *Config) GetBuildDriver() string {
 // Load loads the configuration file, rendering any templating used in the config file
 // such as ${secret.NAME} or ${env.NAME}.
 // Pass nil for resolveSecret to skip resolving secrets.
-func (c *Config) Load(ctx context.Context, resolveSecret func(secretKey string) (string, error)) error {
+func (c *Config) Load(ctx context.Context, resolveSecret func(ctx context.Context, secretKey string) (string, error)) error {
 	ctx, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
 
@@ -338,7 +338,7 @@ func (c *Config) loadFirstPass(ctx context.Context) error {
 	return c.loadData(ctx, templateData)
 }
 
-func (c *Config) loadFinalPass(ctx context.Context, resolveSecret func(secretKey string) (string, error)) error {
+func (c *Config) loadFinalPass(ctx context.Context, resolveSecret func(ctx context.Context, secretKey string) (string, error)) error {
 	ctx, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
 
@@ -359,9 +359,9 @@ func (c *Config) loadFinalPass(ctx context.Context, resolveSecret func(secretKey
 
 			secretKey := variable[len(secretPrefix):]
 
-			_, childLog := log.StartSpanWithName("resolveSecret", attribute.String("porter.config.secret.key", secretKey))
+			ctx, childLog := log.StartSpanWithName("resolveSecret", attribute.String("porter.config.secret.key", secretKey))
 			defer childLog.EndSpan()
-			secretValue, err := resolveSecret(secretKey)
+			secretValue, err := resolveSecret(ctx, secretKey)
 			if err != nil {
 				return childLog.Error(errors.Wrapf(err, "could not render config file because ${secret.%s} could not be resolved", secretKey))
 			}

@@ -39,7 +39,7 @@ func TestData_Marshal(t *testing.T) {
 	c.TestContext.AddTestFile("testdata/config.toml", "/home/myuser/.porter/config.toml")
 
 	c.DataLoader = LoadFromEnvironment()
-	resolveTestSecrets := func(secretKey string) (string, error) {
+	resolveTestSecrets := func(ctx context.Context, secretKey string) (string, error) {
 		return "topsecret-connectionstring", nil
 	}
 	err := c.Load(context.Background(), resolveTestSecrets)
