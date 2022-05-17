@@ -30,7 +30,8 @@ For additional details see: https://porter.sh/install#command-completion`,
 		},
 	}
 	cmd.Annotations = map[string]string{
-		"group": "meta",
+		"group":    "meta",
+		skipConfig: "",
 	}
 	return cmd
 }
