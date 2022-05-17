@@ -131,7 +131,7 @@ func (p *Porter) Build(ctx context.Context, opts BuildOptions) error {
 	// bundle.json will *not* be correct until the image is actually pushed
 	// to a registry.  The bundle.json will need to be updated after publishing
 	// and provided just-in-time during bundle execution.
-	if err := p.buildBundle(m, ""); err != nil {
+	if err := p.buildBundle(ctx, m, ""); err != nil {
 		return errors.Wrap(err, "unable to build bundle")
 	}
 
@@ -176,8 +176,8 @@ func (p *Porter) preLint(ctx context.Context) error {
 	return nil
 }
 
-func (p *Porter) getUsedMixins(m *manifest.Manifest) ([]mixin.Metadata, error) {
-	installedMixins, err := p.ListMixins()
+func (p *Porter) getUsedMixins(ctx context.Context, m *manifest.Manifest) ([]mixin.Metadata, error) {
+	installedMixins, err := p.ListMixins(ctx)
 
 	if err != nil {
 		return nil, errors.Wrapf(err, "error while listing mixins")
@@ -195,10 +195,10 @@ func (p *Porter) getUsedMixins(m *manifest.Manifest) ([]mixin.Metadata, error) {
 	return usedMixins, nil
 }
 
-func (p *Porter) buildBundle(m *manifest.Manifest, digest digest.Digest) error {
+func (p *Porter) buildBundle(ctx context.Context, m *manifest.Manifest, digest digest.Digest) error {
 	imageDigests := map[string]string{m.Image: digest.String()}
 
-	mixins, err := p.getUsedMixins(m)
+	mixins, err := p.getUsedMixins(ctx, m)
 
 	if err != nil {
 		return err

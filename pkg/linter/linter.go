@@ -1,6 +1,7 @@
 package linter
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -151,7 +152,7 @@ func New(cxt *portercontext.Context, mixins pkgmgmt.PackageManager) *Linter {
 	}
 }
 
-func (l *Linter) Lint(m *manifest.Manifest) (Results, error) {
+func (l *Linter) Lint(ctx context.Context, m *manifest.Manifest) (Results, error) {
 	// TODO: perform any porter level linting
 	// e.g. metadata, credentials, properties, outputs, dependencies, etc
 
@@ -160,7 +161,7 @@ func (l *Linter) Lint(m *manifest.Manifest) (Results, error) {
 	}
 
 	q := query.New(l.Context, l.Mixins)
-	responses, err := q.Execute("lint", query.NewManifestGenerator(m))
+	responses, err := q.Execute(ctx, "lint", query.NewManifestGenerator(m))
 	if err != nil {
 		return nil, err
 	}

@@ -124,7 +124,7 @@ func (g *DockerfileGenerator) getBaseDockerfile(ctx context.Context) ([]string, 
 		lines = append([]string{fmt.Sprintf("# syntax=%s", DefaultDockerfileSyntax)}, lines...)
 	}
 
-	return g.replaceTokens(lines)
+	return g.replaceTokens(ctx, lines)
 }
 
 func (g *DockerfileGenerator) buildPorterSection() []string {
@@ -172,11 +172,11 @@ func (g *DockerfileGenerator) buildCMDSection() string {
 	return `CMD ["/cnab/app/run"]`
 }
 
-func (g *DockerfileGenerator) buildMixinsSection() ([]string, error) {
+func (g *DockerfileGenerator) buildMixinsSection(ctx context.Context) ([]string, error) {
 	q := query.New(g.Context, g.Mixins)
 	q.RequireAllMixinResponses = true
 	q.LogMixinErrors = true
-	results, err := q.Execute("build", query.NewManifestGenerator(g.Manifest))
+	results, err := q.Execute(ctx, "build", query.NewManifestGenerator(g.Manifest))
 	if err != nil {
 		return nil, err
 	}
@@ -260,8 +260,8 @@ func (g *DockerfileGenerator) getIndexOfToken(lines []string, token string) int 
 
 // replaceTokens looks for lines like # PORTER_MIXINS and replaces them in the
 // template with the appropriate set of Dockerfile lines.
-func (g *DockerfileGenerator) replaceTokens(lines []string) ([]string, error) {
-	mixinLines, err := g.buildMixinsSection()
+func (g *DockerfileGenerator) replaceTokens(ctx context.Context, lines []string) ([]string, error) {
+	mixinLines, err := g.buildMixinsSection(ctx)
 	if err != nil {
 		return nil, errors.Wrap(err, "error generating Dockerfile content for mixins")
 	}

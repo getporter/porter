@@ -88,7 +88,7 @@ func (l *PluginLoader) Load(ctx context.Context, pluginType PluginTypeConfig) (P
 			return PluginConnection{}, errors.Wrap(err, "could not determine the path to the porter client")
 		}
 
-		pluginCommand = l.NewCommand(porterPath, "plugin", "run", l.SelectedPluginKey.String())
+		pluginCommand = l.NewCommand(ctx, porterPath, "plugin", "run", l.SelectedPluginKey.String())
 	} else {
 		pluginPath, err := l.GetPluginPath(l.SelectedPluginKey.Binary)
 		if err != nil {
@@ -96,7 +96,7 @@ func (l *PluginLoader) Load(ctx context.Context, pluginType PluginTypeConfig) (P
 		}
 		span.SetAttributes(attribute.String("plugin-path", pluginPath))
 
-		pluginCommand = l.NewCommand(pluginPath, "run", l.SelectedPluginKey.String())
+		pluginCommand = l.NewCommand(ctx, pluginPath, "run", l.SelectedPluginKey.String())
 	}
 	span.SetAttributes(attribute.String("plugin-path", pluginCommand.Path))
 
@@ -197,7 +197,7 @@ func (l *PluginLoader) setUpDebugger(ctx context.Context, client *plugin.Client,
 		}
 		wd := fmt.Sprintf("--wd=%s", debugContext.PlugInWorkingDirectory)
 		pid := client.ReattachConfig().Pid
-		dlvCmd := exec.Command("dlv", "attach", strconv.Itoa(pid), "--headless=true", "--api-version=2", "--log", listen, "--accept-multiclient", wd)
+		dlvCmd := exec.CommandContext(ctx, "dlv", "attach", strconv.Itoa(pid), "--headless=true", "--api-version=2", "--log", listen, "--accept-multiclient", wd)
 		dlvCmd.Stderr = os.Stderr
 		dlvCmd.Stdout = os.Stdout
 

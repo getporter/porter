@@ -1,6 +1,7 @@
 package mixin
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -64,7 +65,7 @@ func (p *TestMixinProvider) PrintExecOutput(pkgContext *portercontext.Context, n
 	return nil
 }
 
-func (p *TestMixinProvider) GetSchema(name string) (string, error) {
+func (p *TestMixinProvider) GetSchema(ctx context.Context, name string) (string, error) {
 	b, err := ioutil.ReadFile("../exec/schema/exec.json")
 	return string(b), err
 }

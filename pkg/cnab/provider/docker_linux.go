@@ -1,6 +1,7 @@
 package cnabprovider
 
 import (
+	"context"
 	"os/exec"
 	"strings"
 
@@ -10,7 +11,7 @@ import (
 )
 
 func (r *Runtime) getDockerGroupId() (string, error) {
-	resp, err := r.NewCommand("getent", "group", "docker").Output()
+	resp, err := r.NewCommand(context.Background(), "getent", "group", "docker").Output()
 	if err != nil {
 		if exitErr, ok := err.(*exec.ExitError); ok {
 			return "", errors.Errorf("error querying for the docker group id: %s", string(exitErr.Stderr))

@@ -1,6 +1,7 @@
 package porter
 
 import (
+	"context"
 	"io/ioutil"
 	"testing"
 
@@ -11,16 +12,18 @@ import (
 )
 
 func TestPorter_PrintManifestSchema(t *testing.T) {
+	ctx := context.Background()
 	p := NewTestPorter(t)
 	defer p.Close()
 
-	err := p.PrintManifestSchema()
+	err := p.PrintManifestSchema(ctx)
 	require.NoError(t, err)
 
 	p.CompareGoldenFile("testdata/schema.json", p.TestConfig.TestContext.GetOutput())
 }
 
 func TestPorter_ValidateManifestSchema(t *testing.T) {
+	ctx := context.Background()
 	p := NewTestPorter(t)
 	defer p.Close()
 
@@ -35,7 +38,7 @@ func TestPorter_ValidateManifestSchema(t *testing.T) {
 	manifestLoader := gojsonschema.NewGoLoader(m)
 
 	// Load the manifest schema
-	err = p.PrintManifestSchema()
+	err = p.PrintManifestSchema(ctx)
 	require.NoError(t, err, "could not generate schema")
 	schema := p.TestConfig.TestContext.GetOutput()
 	schemaLoader := gojsonschema.NewStringLoader(schema)

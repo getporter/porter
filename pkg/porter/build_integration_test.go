@@ -181,10 +181,11 @@ func TestPorter_paramRequired(t *testing.T) {
 
 	p.TestConfig.TestContext.AddTestFile("./testdata/paramafest.yaml", config.Name)
 
-	m, err := manifest.LoadManifestFrom(context.Background(), p.Config, config.Name)
+	ctx := context.Background()
+	m, err := manifest.LoadManifestFrom(ctx, p.Config, config.Name)
 	require.NoError(t, err)
 
-	err = p.buildBundle(m, "digest")
+	err = p.buildBundle(ctx, m, "digest")
 	require.NoError(t, err)
 
 	bundleBytes, err := p.FileSystem.ReadFile(build.LOCAL_BUNDLE)
@@ -272,16 +273,17 @@ func TestPorter_BuildWithCustomValues(t *testing.T) {
 
 	p.TestConfig.TestContext.AddTestFile("./testdata/porter.yaml", config.Name)
 
-	m, err := manifest.LoadManifestFrom(context.Background(), p.Config, config.Name)
+	ctx := context.Background()
+	m, err := manifest.LoadManifestFrom(ctx, p.Config, config.Name)
 	require.NoError(t, err)
 
-	err = p.buildBundle(m, "digest")
+	err = p.buildBundle(ctx, m, "digest")
 	require.NoError(t, err)
 
 	opts := BuildOptions{Customs: []string{"customKey1=editedCustomValue1"}}
 	require.NoError(t, opts.Validate(p.Porter), "Validate failed")
 
-	err = p.Build(context.Background(), opts)
+	err = p.Build(ctx, opts)
 	require.NoError(t, err)
 
 	bun, err := p.CNAB.LoadBundle(build.LOCAL_BUNDLE)

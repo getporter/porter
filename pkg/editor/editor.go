@@ -1,6 +1,7 @@
 package editor
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -55,7 +56,7 @@ func (e *Editor) editorArgs(filename string) []string {
 
 // Run opens the editor, displaying the contents through a temporary file.
 // The content is returned once the editor closes.
-func (e *Editor) Run() ([]byte, error) {
+func (e *Editor) Run(ctx context.Context) ([]byte, error) {
 	tempFile, err := e.FileSystem.OpenFile(filepath.Join(os.TempDir(), e.tempFilename), os.O_RDWR|os.O_CREATE|os.O_EXCL, pkg.FileModeWritable)
 	if err != nil {
 		return nil, err
@@ -71,7 +72,7 @@ func (e *Editor) Run() ([]byte, error) {
 	tempFile.Close()
 
 	args := e.editorArgs(tempFile.Name())
-	cmd := e.NewCommand(args[0], args[1:]...)
+	cmd := e.NewCommand(ctx, args[0], args[1:]...)
 	cmd.Stdout = e.Out
 	cmd.Stderr = e.Err
 	cmd.Stdin = e.In

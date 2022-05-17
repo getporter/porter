@@ -1,6 +1,7 @@
 package plugins
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -46,7 +47,7 @@ func (r *PluginRunner) Validate() error {
 	return nil
 }
 
-func (r *PluginRunner) Run(commandOpts CommandOptions) error {
+func (r *PluginRunner) Run(ctx context.Context, commandOpts CommandOptions) error {
 	if r.Debug {
 		fmt.Fprintln(r.Err, "DEBUG Plugin Name: ", r.pluginName)
 		fmt.Fprintln(r.Err, "DEBUG Plugin Command: ", commandOpts.Command)
@@ -61,7 +62,7 @@ func (r *PluginRunner) Run(commandOpts CommandOptions) error {
 	}
 
 	cmdArgs := strings.Split(commandOpts.Command, " ")
-	cmd := r.NewCommand(pluginPath, cmdArgs...)
+	cmd := r.NewCommand(ctx, pluginPath, cmdArgs...)
 
 	// Pipe the output from the plugin to porter
 	cmd.Stdout = r.Out

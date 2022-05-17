@@ -26,8 +26,8 @@ type PrintMixinsOptions struct {
 	printer.PrintOptions
 }
 
-func (p *Porter) PrintMixins(opts PrintMixinsOptions) error {
-	mixins, err := p.ListMixins()
+func (p *Porter) PrintMixins(ctx context.Context, opts PrintMixinsOptions) error {
+	mixins, err := p.ListMixins(ctx)
 	if err != nil {
 		return err
 	}
@@ -52,7 +52,7 @@ func (p *Porter) PrintMixins(opts PrintMixinsOptions) error {
 	}
 }
 
-func (p *Porter) ListMixins() ([]mixin.Metadata, error) {
+func (p *Porter) ListMixins(ctx context.Context) ([]mixin.Metadata, error) {
 	// List out what is installed on the file system
 	names, err := p.Mixins.List()
 	if err != nil {
@@ -62,7 +62,7 @@ func (p *Porter) ListMixins() ([]mixin.Metadata, error) {
 	// Query each mixin and fill out their metadata
 	mixins := make([]mixin.Metadata, len(names))
 	for i, name := range names {
-		m, err := p.Mixins.GetMetadata(name)
+		m, err := p.Mixins.GetMetadata(ctx, name)
 		if err != nil {
 			fmt.Fprintf(p.Err, "could not get version from mixin %s: %s\n ", name, err.Error())
 			continue
@@ -81,7 +81,7 @@ func (p *Porter) InstallMixin(ctx context.Context, opts mixin.InstallOptions) er
 		return err
 	}
 
-	mixin, err := p.Mixins.GetMetadata(opts.Name)
+	mixin, err := p.Mixins.GetMetadata(ctx, opts.Name)
 	if err != nil {
 		return err
 	}

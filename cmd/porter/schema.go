@@ -10,7 +10,7 @@ func buildSchemaCommand(p *porter.Porter) *cobra.Command {
 		Use:   "schema",
 		Short: "Print the JSON schema for the Porter manifest",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.PrintManifestSchema()
+			return p.PrintManifestSchema(cmd.Context())
 		},
 	}
 	cmd.Annotations = map[string]string{

@@ -2,6 +2,7 @@ package porter
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"runtime"
 	"text/template"
@@ -10,7 +11,6 @@ import (
 	"get.porter.sh/porter/pkg/mixin"
 	"get.porter.sh/porter/pkg/pkgmgmt"
 	"get.porter.sh/porter/pkg/porter/version"
-	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/printer"
 	"github.com/pkg/errors"
 )
@@ -50,7 +50,7 @@ func (mixins Mixins) PrintMixinsTable() string {
 	return buffer.String()
 }
 
-func (p *Porter) PrintVersion(opts VersionOpts) error {
+func (p *Porter) PrintVersion(ctx context.Context, opts VersionOpts) error {
 	metadata := pkgmgmt.Metadata{
 		Name: "porter",
 		VersionInfo: pkgmgmt.VersionInfo{
@@ -60,7 +60,7 @@ func (p *Porter) PrintVersion(opts VersionOpts) error {
 	}
 
 	if opts.System {
-		return p.PrintDebugInfo(p.Context, opts, metadata)
+		return p.PrintDebugInfo(ctx, opts, metadata)
 	}
 
 	return version.PrintVersion(p.Context, opts.Options, metadata)
@@ -73,10 +73,10 @@ func getSystemInfo() *SystemInfo {
 	}
 }
 
-func (p *Porter) PrintDebugInfo(ctx *portercontext.Context, opts VersionOpts, metadata pkgmgmt.Metadata) error {
+func (p *Porter) PrintDebugInfo(ctx context.Context, opts VersionOpts, metadata pkgmgmt.Metadata) error {
 	opts.RawFormat = string(printer.FormatPlaintext)
 	sysInfo := getSystemInfo()
-	mixins, err := p.ListMixins()
+	mixins, err := p.ListMixins(ctx)
 	if err != nil {
 		if p.Debug {
 			fmt.Fprint(p.Err, err.Error())
@@ -92,7 +92,7 @@ func (p *Porter) PrintDebugInfo(ctx *portercontext.Context, opts VersionOpts, me
 
 	switch opts.Format {
 	case printer.FormatJson:
-		return printer.PrintJson(ctx.Out, sysDebugInfo)
+		return printer.PrintJson(p.Out, sysDebugInfo)
 	case printer.FormatPlaintext:
 		plaintextTmpl := `{{.Version.Name}} {{.Version.VersionInfo.Version}} ({{.Version.VersionInfo.Commit}})
 
@@ -108,7 +108,7 @@ Mixins
 		if err != nil {
 			return errors.Wrap(err, "Failed to parse plaintext template")
 		}
-		err = tmpl.Execute(ctx.Out, sysDebugInfo)
+		err = tmpl.Execute(p.Out, sysDebugInfo)
 		return err
 	default:
 		return fmt.Errorf("unsupported format: %s", opts.Format)

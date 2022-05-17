@@ -38,7 +38,7 @@ func buildMixinsListCommand(p *porter.Porter) *cobra.Command {
 			return opts.ParseFormat()
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.PrintMixins(opts)
+			return p.PrintMixins(cmd.Context(), opts)
 		},
 	}
 

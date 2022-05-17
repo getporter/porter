@@ -1,6 +1,7 @@
 package client
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"path/filepath"
@@ -46,7 +47,7 @@ func (r *Runner) Validate() error {
 	return nil
 }
 
-func (r *Runner) Run(commandOpts pkgmgmt.CommandOptions) error {
+func (r *Runner) Run(ctx context.Context, commandOpts pkgmgmt.CommandOptions) error {
 	if r.Debug {
 		fmt.Fprintf(r.Err, "DEBUG name:    %s\n", r.pkgName)
 		fmt.Fprintf(r.Err, "DEBUG pkgDir: %s\n", r.pkgDir)
@@ -57,7 +58,7 @@ func (r *Runner) Run(commandOpts pkgmgmt.CommandOptions) error {
 	pkgPath := r.getExecutablePath()
 	cmdArgs := strings.Split(commandOpts.Command, " ")
 	command := cmdArgs[0]
-	cmd := r.NewCommand(pkgPath, cmdArgs...)
+	cmd := r.NewCommand(ctx, pkgPath, cmdArgs...)
 
 	// Pipe the output to porter
 	cmd.Stdout = r.Context.Out

@@ -2,6 +2,7 @@ package client
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -62,7 +63,7 @@ func (fs *FileSystem) List() ([]string, error) {
 	return names, nil
 }
 
-func (fs *FileSystem) GetMetadata(name string) (pkgmgmt.PackageMetadata, error) {
+func (fs *FileSystem) GetMetadata(ctx context.Context, name string) (pkgmgmt.PackageMetadata, error) {
 	pkgDir, err := fs.GetPackageDir(name)
 	if err != nil {
 		return nil, err
@@ -80,7 +81,7 @@ func (fs *FileSystem) GetMetadata(name string) (pkgmgmt.PackageMetadata, error) 
 	r.Context = &pkgContext
 
 	cmd := pkgmgmt.CommandOptions{Command: "version --output json", PreRun: fs.PreRun}
-	err = r.Run(cmd)
+	err = r.Run(ctx, cmd)
 	if err != nil {
 		return nil, err
 	}
@@ -94,7 +95,7 @@ func (fs *FileSystem) GetMetadata(name string) (pkgmgmt.PackageMetadata, error) 
 	return result, nil
 }
 
-func (fs *FileSystem) Run(pkgContext *portercontext.Context, name string, commandOpts pkgmgmt.CommandOptions) error {
+func (fs *FileSystem) Run(ctx context.Context, pkgContext *portercontext.Context, name string, commandOpts pkgmgmt.CommandOptions) error {
 	pkgDir, err := fs.GetPackageDir(name)
 	if err != nil {
 		return err
@@ -109,7 +110,7 @@ func (fs *FileSystem) Run(pkgContext *portercontext.Context, name string, comman
 	}
 
 	commandOpts.PreRun = fs.PreRun
-	return r.Run(commandOpts)
+	return r.Run(ctx, commandOpts)
 }
 
 func (fs *FileSystem) GetPackagesDir() (string, error) {

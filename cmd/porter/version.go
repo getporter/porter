@@ -15,7 +15,7 @@ func buildVersionCommand(p *porter.Porter) *cobra.Command {
 			return opts.Validate()
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.PrintVersion(opts)
+			return p.PrintVersion(cmd.Context(), opts)
 		},
 	}
 	cmd.Annotations = map[string]string{

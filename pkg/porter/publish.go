@@ -173,7 +173,7 @@ func (p *Porter) publishFromFile(ctx context.Context, opts PublishOptions) error
 		return errors.Wrapf(err, "unable to push CNAB invocation image %q", m.Image)
 	}
 
-	bundleRef.Definition, err = p.rewriteBundleWithInvocationImageDigest(m, bundleRef.Digest)
+	bundleRef.Definition, err = p.rewriteBundleWithInvocationImageDigest(ctx, m, bundleRef.Digest)
 	if err != nil {
 		return err
 	}
@@ -378,7 +378,7 @@ func getNewImageNameFromBundleReference(origImg, bundleTag string) (image.Name, 
 	return newImgName.WithTag(imgTag)
 }
 
-func (p *Porter) rewriteBundleWithInvocationImageDigest(m *manifest.Manifest, digest digest.Digest) (cnab.ExtendedBundle, error) {
+func (p *Porter) rewriteBundleWithInvocationImageDigest(ctx context.Context, m *manifest.Manifest, digest digest.Digest) (cnab.ExtendedBundle, error) {
 	taggedImage, err := p.rewriteImageWithDigest(m.Image, digest.String())
 	if err != nil {
 		return cnab.ExtendedBundle{}, errors.Wrap(err, "unable to update invocation image reference")
@@ -386,7 +386,7 @@ func (p *Porter) rewriteBundleWithInvocationImageDigest(m *manifest.Manifest, di
 	m.Image = taggedImage
 
 	fmt.Fprintln(p.Out, "\nRewriting CNAB bundle.json...")
-	err = p.buildBundle(m, digest)
+	err = p.buildBundle(ctx, m, digest)
 	if err != nil {
 		return cnab.ExtendedBundle{}, errors.Wrap(err, "unable to rewrite CNAB bundle.json with updated invocation image digest")
 	}
