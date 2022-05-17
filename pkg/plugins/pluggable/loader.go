@@ -24,6 +24,24 @@ import (
 	"google.golang.org/grpc"
 )
 
+const (
+	// PluginStartTimeoutDefault is the default amount of time to wait for a plugin
+	// to start. Override with PluginStartTimeoutEnvVar.
+	PluginStartTimeoutDefault = 1 * time.Second
+
+	// PluginStopTimeoutDefault is the default amount of time to wait for a plugin
+	// to stop (kill). Override with PluginStopTimeoutEnvVar.
+	PluginStopTimeoutDefault = 100 * time.Millisecond
+
+	// PluginStartTimeoutEnvVar is the environment variable used to override
+	// PluginStartTimeoutDefault.
+	PluginStartTimeoutEnvVar = "PORTER_PLUGIN_START_TIMEOUT"
+
+	// PluginStopTimeoutEnvVar is the environment variable used to override
+	// PluginStopTimeoutDefault.
+	PluginStopTimeoutEnvVar = "PORTER_PLUGIN_STOP_TIMEOUT"
+)
+
 // PluginLoader handles finding, configuring and loading porter plugins.
 type PluginLoader struct {
 	*config.Config
@@ -47,11 +65,13 @@ type PluginConnection struct {
 	// Client should be cast to the plugin protocol interface.
 	Client interface{}
 
+	// cleanup is called when the plugin connection is closed
 	cleanup func()
 }
 
 // Close releases the resources held by the plugin connection.
 func (c PluginConnection) Close() {
+	// TODO: Move plugin connection into its own and move lots of load into it
 	if c.cleanup != nil {
 		c.cleanup()
 		c.cleanup = nil
@@ -130,70 +150,101 @@ func (l *PluginLoader) Load(ctx context.Context, pluginType PluginTypeConfig) (P
 		Plugins: map[string]plugin.Plugin{
 			pluginType.Interface: pluginType.Plugin,
 		},
-		Cmd:    pluginCommand,
-		Logger: logger,
-		Stderr: &errbuf,
+		Cmd:          pluginCommand,
+		Logger:       logger,
+		Stderr:       &errbuf,
+		StartTimeout: getPluginStartTimeout(),
 		// Configure gRPC to propagate the span context so the plugin's traces
 		// show up under the current span
 		GRPCDialOptions: []grpc.DialOption{
 			grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()),
 		},
 	})
-	cleanup := func() {
-		// Stop the plugin
-		client.Kill()
 
-		// Stop processing logs from the plugin
-		cancelLogCtx()
+	conn := PluginConnection{
+		Key: l.SelectedPluginKey.String(),
+		cleanup: func() {
+			// Stop the plugin process
+			done := make(chan bool)
+			go func() {
+				// beware, this can block or deadlock
+				client.Kill(ctx)
+				done <- true
+			}()
+			select {
+			case <-done:
+				// plugin stopped as requested
+				break
+			case <-time.After(getPluginStopTimeout()):
+				// Stop being nice, cleanup the plugin process without any waiting or blocking
+				span.Debug("plugin stop timeout was exceeded, killing the plugin process")
+				client.HardKill()
+			}
 
-		// Close the pipe between the plugin and porter
-		logsWriter.Close()
-		logsReader.Close()
+			// Stop processing logs from the plugin
+			cancelLogCtx()
+
+			// Close the pipe between the plugin and porter
+			logsWriter.Close()
+			logsReader.Close()
+		},
 	}
 
 	// Start the plugin
 	span.Debug("Connecting to plugin", attribute.String("plugin-command", strings.Join(pluginCommand.Args, " ")))
-	rpcClient, err := client.Client()
+	rpcClient, err := client.Client(ctx)
 	if err != nil {
-		cleanup()
+		conn.Close()
 		if stderr := errbuf.String(); stderr != "" {
 			err = errors.Wrap(errors.New(stderr), err.Error())
 		}
 		return PluginConnection{}, span.Error(errors.Wrapf(err, "could not connect to the %s plugin", l.SelectedPluginKey))
 	}
 
-	cleanup, err = l.setUpDebugger(ctx, client, cleanup)
+	err = l.setUpDebugger(ctx, client, &conn)
 	if err != nil {
-		cleanup()
+		conn.Close()
 		return PluginConnection{}, span.Error(errors.Wrap(err, "could not set up debugger for plugin"))
 	}
 
 	// Get a connection to the plugin
-	raw, err := rpcClient.Dispense(pluginType.Interface)
+	conn.Client, err = rpcClient.Dispense(pluginType.Interface)
 	if err != nil {
-		cleanup()
+		conn.Close()
 		return PluginConnection{}, span.Error(errors.Wrapf(err, "could not connect to the %s plugin", l.SelectedPluginKey))
 	}
 	span.SetAttributes(attribute.Int("negotiated-protocol-version", client.NegotiatedVersion()))
 
-	return PluginConnection{
-		Key:     l.SelectedPluginKey.String(),
-		Client:  raw,
-		cleanup: cleanup,
-	}, nil
+	return conn, nil
 }
 
-func (l *PluginLoader) setUpDebugger(ctx context.Context, client *plugin.Client, cleanup func()) (func(), error) {
+func getPluginStartTimeout() time.Duration {
+	timeoutS := os.Getenv(PluginStartTimeoutEnvVar)
+	if timeoutD, err := time.ParseDuration(timeoutS); err == nil {
+		return timeoutD
+	}
+	return PluginStartTimeoutDefault
+}
+
+func getPluginStopTimeout() time.Duration {
+	timeoutS := os.Getenv(PluginStopTimeoutEnvVar)
+	if timeoutD, err := time.ParseDuration(timeoutS); err == nil {
+		return timeoutD
+	}
+	return PluginStopTimeoutDefault
+}
+
+func (l *PluginLoader) setUpDebugger(ctx context.Context, client *plugin.Client, conn *PluginConnection) error {
 	log := tracing.LoggerFromContext(ctx)
 
 	debugContext := l.Context.PlugInDebugContext
 	if len(debugContext.RunPlugInInDebugger) > 0 && strings.ToLower(l.SelectedPluginKey.String()) == strings.TrimSpace(strings.ToLower(debugContext.RunPlugInInDebugger)) {
 		if !isDelveInstalled() {
-			return cleanup, log.Error(errors.New("Delve needs to be installed to debug plugins"))
+			return log.Error(errors.New("Delve needs to be installed to debug plugins"))
 		}
 		listen := fmt.Sprintf("--listen=127.0.0.1:%s", debugContext.DebuggerPort)
 		if len(debugContext.PlugInWorkingDirectory) == 0 {
-			return cleanup, log.Error(errors.New("Plugin Working Directory is required for debugging"))
+			return log.Error(errors.New("Plugin Working Directory is required for debugging"))
 		}
 		wd := fmt.Sprintf("--wd=%s", debugContext.PlugInWorkingDirectory)
 		pid := client.ReattachConfig().Pid
@@ -203,7 +254,7 @@ func (l *PluginLoader) setUpDebugger(ctx context.Context, client *plugin.Client,
 
 		err := dlvCmd.Start()
 		if err != nil {
-			return cleanup, log.Error(fmt.Errorf("Error starting dlv: %w", err))
+			return log.Error(fmt.Errorf("Error starting dlv: %w", err))
 		}
 		dlvCmdTerminated := make(chan error)
 		go func() {
@@ -217,24 +268,26 @@ func (l *PluginLoader) setUpDebugger(ctx context.Context, client *plugin.Client,
 
 		select {
 		case err = <-dlvCmdTerminated:
-			return cleanup, log.Error(fmt.Errorf("dlv exited unexpectedly: %w", err))
+			return log.Error(fmt.Errorf("dlv exited unexpectedly: %w", err))
 		default:
 		}
 
-		newcleanup := func() {
+		parentCleanup := conn.cleanup
+		conn.cleanup = func() {
 			if dlvCmd.Process != nil {
 				select {
+				case <-ctx.Done():
 				case err = <-dlvCmdTerminated:
 				default:
 					_ = dlvCmd.Process.Kill()
 				}
 			}
-			cleanup()
+			parentCleanup()
 		}
-		return newcleanup, nil
+		return nil
 
 	}
-	return cleanup, nil
+	return nil
 }
 
 // Watch the pipe between porter and the plugin for messages, and log them in a span.

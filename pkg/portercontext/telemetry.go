@@ -61,9 +61,9 @@ func (c *Context) createTracer(ctx context.Context, serviceName string, logger *
 		return createNoopTracer(), nil
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, time.Second)
+	createTraceCtx, cancel := context.WithTimeout(ctx, time.Second)
 	defer cancel()
-	exporter, err := otlptrace.New(ctx, client)
+	exporter, err := otlptrace.New(createTraceCtx, client)
 	if err != nil {
 		return tracing.Tracer{}, err
 	}

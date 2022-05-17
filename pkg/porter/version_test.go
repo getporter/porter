@@ -17,6 +17,10 @@ import (
 func TestPrintVersion(t *testing.T) {
 	pkg.Commit = "abc123"
 	pkg.Version = "v1.2.3"
+	defer func() {
+		pkg.Commit = ""
+		pkg.Version = ""
+	}()
 
 	ctx := context.Background()
 	p := NewTestPorter(t)
@@ -37,6 +41,10 @@ func TestPrintVersion(t *testing.T) {
 func TestPrintJsonVersion(t *testing.T) {
 	pkg.Commit = "abc123"
 	pkg.Version = "v1.2.3"
+	defer func() {
+		pkg.Commit = ""
+		pkg.Version = ""
+	}()
 
 	ctx := context.Background()
 	p := NewTestPorter(t)
@@ -63,6 +71,10 @@ func TestPrintJsonVersion(t *testing.T) {
 func TestPrintDebugInfoJsonVersion(t *testing.T) {
 	pkg.Commit = "abc123"
 	pkg.Version = "v1.2.3"
+	defer func() {
+		pkg.Commit = ""
+		pkg.Version = ""
+	}()
 
 	ctx := context.Background()
 	p := NewTestPorter(t)
@@ -106,6 +118,10 @@ func TestPrintDebugInfoPlainTextVersion(t *testing.T) {
 
 	pkg.Commit = "abc123"
 	pkg.Version = "v1.2.3"
+	defer func() {
+		pkg.Commit = ""
+		pkg.Version = ""
+	}()
 
 	ctx := context.Background()
 	p := NewTestPorter(t)
