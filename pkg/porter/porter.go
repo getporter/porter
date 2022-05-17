@@ -90,6 +90,7 @@ func (p *Porter) Connect(ctx context.Context) error {
 			if strings.Contains(err.Error(), "invalid value source: secret") {
 				return "", errors.New("No secret store account is configured")
 			}
+			return "", err
 		}
 		return value, nil
 	})
