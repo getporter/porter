@@ -5,6 +5,7 @@ import (
 	"os"
 	"testing"
 
+	"get.porter.sh/porter/pkg/porter"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -23,4 +24,11 @@ func TestCompletion(t *testing.T) {
 	require.NoError(t, err)
 	// Test the output of the command contains a specific string for bash.
 	assert.Contains(t, out.String(), "bash completion for porter")
+}
+
+func TestCompletion_SkipConfig(t *testing.T) {
+	p := porter.NewTestPorter(t)
+	cmd := buildCompletionCommand(p.Porter)
+	shouldSkip := shouldSkipConfig(cmd)
+	require.True(t, shouldSkip, "expected that we skip loading configuration for the completion command")
 }
