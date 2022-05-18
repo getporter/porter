@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 	"testing"
 
-	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/storage/plugins/mongodb_docker"
 	"get.porter.sh/porter/tests"
@@ -45,6 +44,15 @@ type Tester struct {
 //
 // Always defer Tester.Close(), even when an error is returned.
 func NewTest(t *testing.T) (Tester, error) {
+	return NewTestWithConfig(t, "")
+}
+
+// NewTestWithConfig sets up for a smoke test using the specified
+// Porter config file. The path should be either be absolute, or
+// relative to the repository root.
+//
+// Always defer Tester.Close(), even when an error is returned.
+func NewTestWithConfig(t *testing.T, configFilePath string) (Tester, error) {
 	var err error
 	pwd, _ := os.Getwd()
 	test := &Tester{T: t, originalPwd: pwd}
@@ -60,7 +68,7 @@ func NewTest(t *testing.T) (Tester, error) {
 
 	test.dbName = tests.GenerateDatabaseName(t.Name())
 
-	err = test.createPorterHome()
+	err = test.createPorterHome(configFilePath)
 	if err != nil {
 		return *test, err
 	}
@@ -71,7 +79,7 @@ func NewTest(t *testing.T) (Tester, error) {
 	return *test, test.startMongo(context.Background())
 }
 
-// CurrentNamespace configured in config.toml
+// CurrentNamespace configured in Porter's config file
 func (t Tester) CurrentNamespace() string {
 	return "dev"
 }
@@ -126,7 +134,7 @@ func (t Tester) RunPorter(args ...string) (stdout string, combinedoutput string,
 func (t Tester) buildPorterCommand(args ...string) shx.PreparedCommand {
 	args = append(args, "--debug")
 	return shx.Command("porter", args...).
-		Env("PORTER_HOME=" + t.PorterHomeDir)
+		Env("PORTER_HOME="+t.PorterHomeDir, "PORTER_TEST_DB_NAME="+t.dbName)
 }
 
 func (t Tester) Close() {
@@ -140,8 +148,16 @@ func (t Tester) Close() {
 	t.Chdir(t.originalPwd)
 }
 
-// Create a test PORTER_HOME directory.
-func (t *Tester) createPorterHome() error {
+// Create a test PORTER_HOME directory with the optional config file.
+// The config file path should be specified relative to the repository root
+func (t *Tester) createPorterHome(configFilePath string) error {
+	if configFilePath == "" {
+		configFilePath = "tests/testdata/config/config.yaml"
+	}
+	if !filepath.IsAbs(configFilePath) {
+		configFilePath = filepath.Join(t.RepoRoot, configFilePath)
+	}
+
 	var err error
 	binDir := filepath.Join(t.RepoRoot, "bin")
 	t.PorterHomeDir, err = ioutil.TempDir("", "porter")
@@ -155,13 +171,8 @@ func (t *Tester) createPorterHome() error {
 		"could not copy runtimes/ into test PORTER_HOME")
 	require.NoError(t.T, shx.Copy(filepath.Join(binDir, "mixins"), t.PorterHomeDir, shx.CopyRecursive),
 		"could not copy mixins/ into test PORTER_HOME")
-
-	// Write out a config file with a unique database name set
-	cfgD, err := ioutil.ReadFile(filepath.Join(t.RepoRoot, "tests/testdata/config/config.toml"))
-	require.NoError(t.T, err)
-	cfgD = bytes.Replace(cfgD, []byte("porter-test"), []byte(t.dbName), 1)
-	err = ioutil.WriteFile(filepath.Join(t.PorterHomeDir, "config.toml"), cfgD, pkg.FileModeWritable)
-	require.NoError(t.T, err, "could not copy config.toml into test PORTER_HOME")
+	require.NoError(t.T, shx.Copy(configFilePath, filepath.Join(t.PorterHomeDir, "config"+filepath.Ext(configFilePath))),
+		"error copying config file to PORTER_HOME")
 
 	return nil
 }

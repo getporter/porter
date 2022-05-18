@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"sort"
 	"testing"
 
 	"get.porter.sh/porter/pkg/experimental"
@@ -87,4 +88,27 @@ func TestConfig_GetBuildDriver(t *testing.T) {
 
 	c.SetExperimentalFlags(experimental.FlagStructuredLogs)
 	require.Equal(t, BuildDriverBuildkit, c.GetBuildDriver(), "Use the specified driver when the build driver feature is enabled")
+}
+
+func TestConfig_ExportRemoteConfigAsEnvironmentVariables(t *testing.T) {
+	ctx := context.Background()
+
+	c := NewTestConfig(t)
+	c.DataLoader = LoadFromEnvironment()
+	c.TestContext.AddTestFile("testdata/config.toml", "/home/myuser/.porter/config.toml")
+
+	err := c.Load(ctx, nil)
+	require.NoError(t, err, "Config.Load failed")
+
+	gotEnvVars := c.ExportRemoteConfigAsEnvironmentVariables()
+	sort.Strings(gotEnvVars)
+	wantEnvVars := []string{
+		"PORTER_DEBUG=true",
+		"PORTER_DEBUG_PLUGINS=true",
+		"PORTER_LOGS_ENABLED=true",
+		"PORTER_LOGS_LEVEL=info",
+		"PORTER_TELEMETRY_ENABLED=true",
+		"PORTER_TELEMETRY_REDIRECT_TO_FILE=true",
+	}
+	assert.Equal(t, wantEnvVars, gotEnvVars)
 }

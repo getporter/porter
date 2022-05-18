@@ -70,10 +70,16 @@ func LoadFromViper(viperCfg func(v *viper.Viper)) DataStoreLoaderFunc {
 
 		// Find the config file
 		v.AddConfigPath(home)
-		err = v.ReadInConfig()
-		if err != nil {
-			if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
-				return log.Error(errors.Wrap(err, "error reading config file"))
+
+		// Only read the config file if we are running as porter
+		// Skip it for internal plugins since we pass the resolved
+		// config directly to the plugins
+		if !cfg.IsInternalPlugin {
+			err = v.ReadInConfig()
+			if err != nil {
+				if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
+					return log.Error(errors.Wrap(err, "error reading config file"))
+				}
 			}
 		}
 
@@ -110,8 +116,12 @@ func LoadFromViper(viperCfg func(v *viper.Viper)) DataStoreLoaderFunc {
 			}
 		}
 
-		err = v.Unmarshal(&cfg.Data)
-		return log.Error(errors.Wrap(err, "error unmarshaling viper config as porter config"))
+		if err = v.Unmarshal(&cfg.Data); err != nil {
+			log.Error(errors.Wrap(err, "error unmarshaling viper config as porter config"))
+		}
+
+		cfg.viper = v
+		return nil
 	}
 }
 

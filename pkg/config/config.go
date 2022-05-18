@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 
 	"get.porter.sh/porter/pkg/experimental"
@@ -12,6 +13,7 @@ import (
 	"get.porter.sh/porter/pkg/schema"
 	"get.porter.sh/porter/pkg/tracing"
 	"github.com/pkg/errors"
+	"github.com/spf13/viper"
 	"go.opentelemetry.io/otel/attribute"
 )
 
@@ -83,6 +85,9 @@ type Config struct {
 	// list of variables used in the config file
 	// for example: secret.NAME, or env.NAME
 	templateVariables []string
+
+	// the populated viper instance that loaded the current configuration
+	viper *viper.Viper
 }
 
 // New Config initializes a default porter configuration.
@@ -96,19 +101,21 @@ func New() *Config {
 
 func (c *Config) NewLogConfiguration() portercontext.LogConfiguration {
 	return portercontext.LogConfiguration{
-		StructuredLogs:       c.IsFeatureEnabled(experimental.FlagStructuredLogs),
-		LogToFile:            c.Data.Logs.Enabled,
-		LogDirectory:         filepath.Join(c.porterHome, "logs"),
-		LogLevel:             c.Data.Logs.Level.Level(),
-		TelemetryEnabled:     c.Data.Telemetry.Enabled,
-		TelemetryEndpoint:    c.Data.Telemetry.Endpoint,
-		TelemetryProtocol:    c.Data.Telemetry.Protocol,
-		TelemetryInsecure:    c.Data.Telemetry.Insecure,
-		TelemetryCertificate: c.Data.Telemetry.Certificate,
-		TelemetryCompression: c.Data.Telemetry.Compression,
-		TelemetryTimeout:     c.Data.Telemetry.Timeout,
-		TelemetryHeaders:     c.Data.Telemetry.Headers,
-		TelemtryServiceName:  "porter",
+		StructuredLogs:          c.IsFeatureEnabled(experimental.FlagStructuredLogs),
+		LogToFile:               c.Data.Logs.Enabled,
+		LogDirectory:            filepath.Join(c.porterHome, "logs"),
+		LogLevel:                c.Data.Logs.Level.Level(),
+		TelemetryEnabled:        c.Data.Telemetry.Enabled,
+		TelemetryEndpoint:       c.Data.Telemetry.Endpoint,
+		TelemetryProtocol:       c.Data.Telemetry.Protocol,
+		TelemetryInsecure:       c.Data.Telemetry.Insecure,
+		TelemetryCertificate:    c.Data.Telemetry.Certificate,
+		TelemetryCompression:    c.Data.Telemetry.Compression,
+		TelemetryTimeout:        c.Data.Telemetry.Timeout,
+		TelemetryHeaders:        c.Data.Telemetry.Headers,
+		TelemetryServiceName:    "porter",
+		TelemetryDirectory:      filepath.Join(c.porterHome, "traces"),
+		TelemetryRedirectToFile: c.Data.Telemetry.RedirectToFile,
 	}
 }
 
@@ -381,4 +388,39 @@ func (c *Config) loadFinalPass(ctx context.Context, resolveSecret func(secretKey
 
 	// reload configuration with secrets loaded
 	return c.loadData(ctx, templateData)
+}
+
+// ExportRemoteConfigAsEnvironmentVariables represents the current configuration
+// as environment variables suitable for a remote Porter actor, such as a mixin
+// or plugin. Only a subset of values are exported, such as tracing and logging,
+// and not plugin configuration (since it's not relevant when running a plugin
+// and may contain sensitive data). For example, if Config.Debug is true, it
+// would return PORTER_DEBUG=true in the resulting set of environment variables.
+// This is used to pass config from porter to a mixin or plugin.
+func (c *Config) ExportRemoteConfigAsEnvironmentVariables() []string {
+	if c.viper == nil {
+		return nil
+	}
+
+	// the set of config that is relevant to remote actors
+	keepPrefixes := []string{"debug", "logs", "telemetry"}
+
+	var env []string
+	for _, key := range c.viper.AllKeys() {
+		for _, prefix := range keepPrefixes {
+			if strings.HasPrefix(key, prefix) {
+				val := c.viper.Get(key)
+				if reflect.ValueOf(val).IsZero() {
+					continue
+				}
+				envVarSuffix := strings.ToUpper(key)
+				envVarSuffix = strings.NewReplacer(".", "_", "-", "_").
+					Replace(envVarSuffix)
+				envVar := fmt.Sprintf("PORTER_%s", envVarSuffix)
+				env = append(env, fmt.Sprintf("%s=%v", envVar, val))
+			}
+		}
+	}
+
+	return env
 }
