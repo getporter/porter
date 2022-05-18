@@ -23,16 +23,16 @@ chmod +x $PORTER_HOME/porter
 chmod +x $PORTER_HOME/runtimes/porter-runtime
 echo Installed `$PORTER_HOME/porter version`
 
-$PORTER_HOME/porter mixin install exec --version $PKG_PERMALINK
-$PORTER_HOME/porter mixin install kubernetes --version $PKG_PERMALINK
-$PORTER_HOME/porter mixin install helm --version $PKG_PERMALINK
-$PORTER_HOME/porter mixin install arm --version $PKG_PERMALINK
-$PORTER_HOME/porter mixin install terraform --version $PKG_PERMALINK
-$PORTER_HOME/porter mixin install az --version $PKG_PERMALINK
-$PORTER_HOME/porter mixin install aws --version $PKG_PERMALINK
-$PORTER_HOME/porter mixin install gcloud --version $PKG_PERMALINK
+$PORTER_HOME/porter mixin install exec --version $PORTER_PERMALINK
+$PORTER_HOME/porter mixin install kubernetes --version v0.28.5
+$PORTER_HOME/porter mixin install helm --version v0.13.4
+$PORTER_HOME/porter mixin install arm --version v0.8.2
+$PORTER_HOME/porter mixin install terraform --version v0.9.1
+$PORTER_HOME/porter mixin install az --version v0.7.2
+$PORTER_HOME/porter mixin install aws --version v0.4.1
+$PORTER_HOME/porter mixin install gcloud --version v0.4.2
 
-$PORTER_HOME/porter plugin install azure --version $PKG_PERMALINK
+$PORTER_HOME/porter plugin install azure --version v0.11.2
 
 echo "Installation complete."
 echo "Add porter to your path by adding the following line to your ~/.bash_profile or ~/.zprofile and open a new terminal:"
