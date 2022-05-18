@@ -9,7 +9,7 @@ const (
 	PluginInterface = "secrets"
 
 	// PluginProtocolVersion is the currently supported plugin protocol version for secrets.
-	PluginProtocolVersion = 1
+	PluginProtocolVersion = 2
 )
 
 var (
