@@ -155,6 +155,12 @@ pygmentsStyle = "friendly"
       identifier = "end-users-logs"
       weight = 20
       parent = "tasks-end-users"
+    [[menu.main]]
+      name = "Configure Porter"
+      url = "/end-users/configuration/"
+      identifier = "end-users-configuration"
+      weight = 30
+      parent = "tasks-end-users"
 
   # Bundle Authors
   [[menu.main]]
