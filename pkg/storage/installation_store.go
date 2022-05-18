@@ -213,11 +213,11 @@ func (s InstallationStore) GetLastOutputs(ctx context.Context, namespace string,
 				"installation": installation,
 			}}},
 			// Reverse sort them (newest on top)
-			{{"$sort", bson.D{
-				{"namespace", 1},
-				{"installation", 1},
-				{"name", 1},
-				{"resultId", -1},
+			{{"$sort", bson.M{
+				"namespace":    1,
+				"installation": 1,
+				"name":         1,
+				"resultId":     -1,
 			}}},
 			// Group them by output name and select the last value for each output
 			{{"$group", bson.D{

@@ -75,7 +75,7 @@ func TestConvertBsonD(t *testing.T) {
 
 	wantDest := bson.D{
 		{"a", "1"},
-		{"b", []interface{}{map[string]interface{}{"c": int64(1)}}},
+		{"b", bson.D{{"c", int64(1)}}},
 	}
 	require.Equal(t, wantDest, dest)
 }

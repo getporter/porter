@@ -66,4 +66,43 @@ func TestRoundTripDataOverGRPC(t *testing.T) {
 	var gotThing1 bson.M
 	require.NoError(t, bson.Unmarshal(results[0], &gotThing1))
 	assert.Equal(t, thing1, gotThing1)
+
+	opts := plugins.EnsureIndexOptions{
+		Indices: []plugins.Index{
+			// query most recent outputs by run (porter installation run show, when we list outputs)
+			{Collection: CollectionOutputs, Keys: bson.D{{"namespace", 1}, {"installation", 1}, {"-resultId", 1}}},
+			// query outputs by result (list)
+			{Collection: CollectionOutputs, Keys: bson.D{{"resultId", 1}, {"name", 1}}, Unique: true},
+			// query most recent outputs by name for an installation
+			{Collection: CollectionOutputs, Keys: bson.D{{"namespace", 1}, {"installation", 1}, {"name", 1}, {"-resultId", 1}}},
+		},
+	}
+
+	err = client.EnsureIndex(ctx, opts)
+	require.NoError(t, err)
+
+	results1, err := client.Aggregate(ctx, plugins.AggregateOptions{
+		Collection: collection,
+		Pipeline: []bson.D{
+			// List outputs by installation
+			{{"$match", bson.M{
+				"namespace":    "dev",
+				"installation": "test",
+			}}},
+			// Reverse sort them (newest on top)
+			{{"$sort", bson.M{
+				"namespace":    1,
+				"installation": 1,
+				"name":         1,
+				"resultId":     -1,
+			}}},
+			// Group them by output name and select the last value for each output
+			{{"$group", bson.D{
+				{"_id", "$name"},
+				{"lastOutput", bson.M{"$first": "$$ROOT"}},
+			}}},
+		},
+	})
+	require.NoError(t, err)
+	require.Len(t, results1, 0)
 }
