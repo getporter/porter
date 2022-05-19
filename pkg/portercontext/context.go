@@ -154,6 +154,7 @@ type LogConfiguration struct {
 	TelemetryServiceName    string
 	TelemetryDirectory      string
 	TelemetryRedirectToFile bool
+	TelemetryStartTimeout   time.Duration
 }
 
 // ConfigureLogging applies different configuration to our logging and tracing.

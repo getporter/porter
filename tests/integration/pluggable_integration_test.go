@@ -1,5 +1,4 @@
 //go:build integration
-// +build integration
 
 package integration
 
@@ -20,8 +19,6 @@ func TestPlugins_CatchStderr(t *testing.T) {
 	ctx, _, _ := c.SetupIntegrationTest()
 
 	t.Run("plugin throws an error", func(t *testing.T) {
-		ctx := context.Background()
-
 		pluginsPath, _ := c.GetPluginsDir()
 		pluginName := "testplugin"
 

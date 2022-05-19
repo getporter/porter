@@ -164,6 +164,12 @@ default-secrets-plugin = "kubernetes.secret"
   # The timeout enforced when communicating with the collector endpoint
   timeout = "3s"
 
+  # The timeout timeout enforced when establishing a connection with the collector endpoint
+  start-timeout = "100ms"
+
+  # Used for testing that porter is emitting spans without setting up an open telemetry collector
+  redirect-to-file = false
+
   # Additional headers to send to the open telemetry collector
   [telemetry.headers]
     environment = "dev"
@@ -238,9 +244,7 @@ experimental = ["structured-logs"]
   certificate = "/home/me/some-cert.pem"
   compression = "gzip"
   timeout = "3s"
-
-  # Used for testing that porter is emitting spans without setting up an open telemetry collector
-  redirect-to-file = false
+  start-timeout = "100ms"
 
   [telemetry.headers]
     environment = "dev"

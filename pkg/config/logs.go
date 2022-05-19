@@ -1,6 +1,10 @@
 package config
 
-import "go.uber.org/zap/zapcore"
+import (
+	"time"
+
+	"go.uber.org/zap/zapcore"
+)
 
 // LogConfig are settings related to Porter's log files.
 type LogConfig struct {
@@ -23,6 +27,19 @@ type TelemetryConfig struct {
 	// RedirectToFile instructs Porter to write telemetry data to a file in
 	// PORTER_HOME/traces instead of exporting it to a collector
 	RedirectToFile bool `mapstructure:"redirect-to-file"`
+
+	// StartTimeout sets the amount of time to wait while establishing a connection
+	// to the OpenTelemetry collector.
+	StartTimeout string `mapstructure:"start-timeout"`
+}
+
+// GetStartTimeout returns the amount of time to wait for the collector to start
+// if a value was not configured, return the default timeout.
+func (c TelemetryConfig) GetStartTimeout() time.Duration {
+	if timeout, err := time.ParseDuration(c.StartTimeout); err == nil {
+		return timeout
+	}
+	return 100 * time.Millisecond
 }
 
 type LogLevel string

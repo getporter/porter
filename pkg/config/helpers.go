@@ -56,6 +56,7 @@ func (c *TestConfig) SetupUnitTest() {
 // SetupIntegrationTest initializes the filesystem with the supporting files in
 // a temp PORTER_HOME directory.
 func (c *TestConfig) SetupIntegrationTest() (ctx context.Context, testDir string, homeDir string) {
+	ctx = context.Background()
 	testDir, homeDir = c.TestContext.UseFilesystem()
 	c.SetHomeDir(homeDir)
 

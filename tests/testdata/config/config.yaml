@@ -11,7 +11,7 @@ logs:
 
 telemetry:
   enabled: ${env.PORTER_TEST_TELEMETRY_ENABLED}
-  protocol: gprc
+  protocol: grpc
   insecure: true
 
 storage:
