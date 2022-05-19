@@ -22,7 +22,7 @@ func TestConvertFloatToInt(t *testing.T) {
 		},
 	}
 
-	dest := ConvertFloatToInt(src)
+	dest := ConvertPrimitivesToBson(src)
 
 	wantDest := map[string]interface{}{
 		"a": map[string]interface{}{

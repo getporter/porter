@@ -6,7 +6,6 @@ import (
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/storage/plugins"
 	"get.porter.sh/porter/pkg/storage/plugins/proto"
-	"github.com/davecgh/go-spew/spew"
 	"go.mongodb.org/mongo-driver/bson"
 	"google.golang.org/protobuf/types/known/structpb"
 )
@@ -44,7 +43,6 @@ func (m *GClient) Aggregate(ctx context.Context, opts plugins.AggregateOptions) 
 		Collection: opts.Collection,
 		Pipeline:   NewPipeline(opts.Pipeline),
 	}
-	spew.Dump("=========client", req.Pipeline)
 	resp, err := m.client.Aggregate(ctx, req)
 	if err != nil {
 		return nil, err
@@ -157,14 +155,7 @@ func (m *GServer) Aggregate(ctx context.Context, request *proto.AggregateRequest
 		Collection: request.Collection,
 		Pipeline:   AsOrderedMapList(request.Pipeline),
 	}
-	spew.Dump("=========server", opts.Pipeline)
 
-	opts.Pipeline[2] = bson.D{
-		{"$group", bson.D{
-			{"_id", "$name"},
-			{"lastOutput", bson.M{"$first": "$$ROOT"}},
-		}},
-	}
 	results, err := m.impl.Aggregate(ctx, opts)
 	resp := &proto.AggregateResponse{Results: make([][]byte, len(results))}
 	for i := range results {
@@ -293,11 +284,12 @@ func ConvertBsonToPrimitives(src interface{}) interface{} {
 	}
 }
 
-// ConvertFloatToInt works around a weirdness in how numbers are represented
+// ConvertPrimitivesToBson converts go primitive to bson primitive.
+// it also works around a weirdness in how numbers are represented
 // by structpb.Value, where integer values are stored in float64. When we
 // deserialize from protobuf, this walks the specified value, finds ints
 // that were encoded as floats, and converts them back to ints.
-func ConvertFloatToInt(src interface{}) interface{} {
+func ConvertPrimitivesToBson(src interface{}) interface{} {
 	switch tv := src.(type) {
 	case float64:
 		intVal := int64(tv)
@@ -308,7 +300,7 @@ func ConvertFloatToInt(src interface{}) interface{} {
 	case []interface{}:
 		toBson := make(bson.D, 0)
 		for i, item := range tv {
-			converted := ConvertFloatToInt(item)
+			converted := ConvertPrimitivesToBson(item)
 			if m, ok := converted.(map[string]interface{}); ok {
 				for k, v := range m {
 					toBson = append(toBson, bson.E{Key: k, Value: v})
@@ -319,7 +311,7 @@ func ConvertFloatToInt(src interface{}) interface{} {
 		return toBson
 	case map[string]interface{}:
 		for k, v := range tv {
-			tv[k] = ConvertFloatToInt(v)
+			tv[k] = ConvertPrimitivesToBson(v)
 		}
 		return tv
 	default:
@@ -377,7 +369,7 @@ func NewStruct(src map[string]interface{}) *structpb.Struct {
 func AsMap(src *structpb.Struct) bson.M {
 	dest := src.AsMap()
 	for k, v := range dest {
-		dest[k] = ConvertFloatToInt(v)
+		dest[k] = ConvertPrimitivesToBson(v)
 	}
 	return dest
 }

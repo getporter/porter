@@ -90,11 +90,11 @@ func TestRoundTripDataOverGRPC(t *testing.T) {
 				"installation": "test",
 			}}},
 			// Reverse sort them (newest on top)
-			{{"$sort", bson.M{
-				"namespace":    1,
-				"installation": 1,
-				"name":         1,
-				"resultId":     -1,
+			{{"$sort", bson.D{
+				{"namespace", 1},
+				{"installation", 1},
+				{"name", 1},
+				{"resultId", -1},
 			}}},
 			// Group them by output name and select the last value for each output
 			{{"$group", bson.D{
