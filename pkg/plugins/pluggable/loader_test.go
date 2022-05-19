@@ -33,8 +33,8 @@ func TestPluginLoader_SelectPlugin(t *testing.T) {
 		err := l.selectPlugin(context.Background(), pluginCfg)
 		require.NoError(t, err, "error selecting plugin")
 
-		assert.Equal(t, &plugins.PluginKey{Binary: "porter", Implementation: "mongodb-docker", IsInternal: true}, l.SelectedPluginKey)
-		assert.Nil(t, l.SelectedPluginConfig)
+		assert.Equal(t, &plugins.PluginKey{Binary: "porter", Implementation: "mongodb-docker", IsInternal: true}, l.selectedPluginKey)
+		assert.Nil(t, l.selectedPluginConfig)
 	})
 
 	t.Run("external plugin", func(t *testing.T) {
@@ -43,8 +43,8 @@ func TestPluginLoader_SelectPlugin(t *testing.T) {
 		err := l.selectPlugin(context.Background(), pluginCfg)
 		require.NoError(t, err, "error selecting plugin")
 
-		assert.Equal(t, &plugins.PluginKey{Binary: "azure", Implementation: "blob", IsInternal: false}, l.SelectedPluginKey)
-		assert.Nil(t, l.SelectedPluginConfig)
+		assert.Equal(t, &plugins.PluginKey{Binary: "azure", Implementation: "blob", IsInternal: false}, l.selectedPluginKey)
+		assert.Nil(t, l.selectedPluginConfig)
 	})
 
 	t.Run("configured plugin", func(t *testing.T) {
@@ -64,8 +64,8 @@ func TestPluginLoader_SelectPlugin(t *testing.T) {
 		err := l.selectPlugin(context.Background(), pluginCfg)
 		require.NoError(t, err, "error selecting plugin")
 
-		assert.Equal(t, &plugins.PluginKey{Binary: "azure", Implementation: "blob", IsInternal: false}, l.SelectedPluginKey)
-		assert.Equal(t, c.Data.StoragePlugins[0].Config, l.SelectedPluginConfig)
+		assert.Equal(t, &plugins.PluginKey{Binary: "azure", Implementation: "blob", IsInternal: false}, l.selectedPluginKey)
+		assert.Equal(t, c.Data.StoragePlugins[0].Config, l.selectedPluginConfig)
 	})
 }
 
@@ -95,6 +95,8 @@ func TestPluginLoader_IdentifyRecursiveLoad(t *testing.T) {
 	}
 
 	conn, err := l.Load(ctx, pluginCfg)
-	defer conn.Close()
+	if conn != nil {
+		conn.Close(ctx)
+	}
 	tests.RequireErrorContains(t, err, "the internal plugin filesystem tried to load the .porter.host plugin")
 }
