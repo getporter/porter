@@ -159,10 +159,6 @@ func buildPluginRunCommand(p *porter.Porter) *cobra.Command {
 			return p.RunInternalPlugins(cmd.Context(), opts)
 		},
 		Hidden: true, // This should ALWAYS be hidden, it is not a user-facing command
-		Annotations: map[string]string{
-			// Do not attempt to load Porter's config from a plugin. Plugins get their config passed to them on STDIN. This prevents infinite recursion 🔥
-			skipConfig: "",
-		},
 	}
 
 	return cmd

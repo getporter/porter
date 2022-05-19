@@ -4,6 +4,9 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"fmt"
+	"os"
+	"path/filepath"
 	"time"
 
 	"get.porter.sh/porter/pkg"
@@ -13,6 +16,7 @@ import (
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
+	"go.opentelemetry.io/otel/exporters/stdout/stdouttrace"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
@@ -23,14 +27,14 @@ import (
 	"google.golang.org/grpc/credentials"
 )
 
-func (c *Context) configureTelemetry(ctx context.Context, serviceName string, logger *zap.Logger) error {
-	if serviceName == "" {
-		serviceName = "porter"
+func (c *Context) configureTelemetry(ctx context.Context, cfg LogConfiguration, logger *zap.Logger) error {
+	if cfg.TelemetryServiceName == "" {
+		cfg.TelemetryServiceName = "porter"
 	}
 
 	c.tracer = createNoopTracer()
 
-	tracer, err := c.createTracer(ctx, serviceName, logger)
+	tracer, err := c.createTracer(ctx, cfg, logger)
 	if err != nil {
 		return err
 	}
@@ -51,7 +55,7 @@ func createNoopTracer() tracing.Tracer {
 	return t
 }
 
-func (c *Context) createTracer(ctx context.Context, serviceName string, logger *zap.Logger) (tracing.Tracer, error) {
+func (c *Context) createTracer(ctx context.Context, cfg LogConfiguration, logger *zap.Logger) (tracing.Tracer, error) {
 	client, err := c.createTraceClient(c.logCfg)
 	if err != nil {
 		return tracing.Tracer{}, err
@@ -61,11 +65,34 @@ func (c *Context) createTracer(ctx context.Context, serviceName string, logger *
 		return createNoopTracer(), nil
 	}
 
-	createTraceCtx, cancel := context.WithTimeout(ctx, time.Second)
-	defer cancel()
-	exporter, err := otlptrace.New(createTraceCtx, client)
-	if err != nil {
-		return tracing.Tracer{}, err
+	var exporter sdktrace.SpanExporter
+	if cfg.TelemetryRedirectToFile {
+		// Instead of sending trace data to a collector
+		// save them to a file so that we can test our traces
+		testTracePath := filepath.Join(cfg.TelemetryDirectory, c.buildLogFileName())
+		logger.Debug(fmt.Sprintf("redirecting open telemetry trace data to a file: %s", testTracePath))
+
+		tracesDir := filepath.Dir(testTracePath)
+		if err = c.FileSystem.MkdirAll(tracesDir, pkg.FileModeDirectory); err != nil {
+			return tracing.Tracer{}, fmt.Errorf("could not create traces directory at  %s: %w", tracesDir, err)
+		}
+
+		f, err := c.FileSystem.OpenFile(testTracePath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, pkg.FileModeWritable)
+		if err != nil {
+			return tracing.Tracer{}, fmt.Errorf("could not create test traces file at  %s: %w", testTracePath, err)
+		}
+		c.traceFile = f
+		exporter, err = stdouttrace.New(stdouttrace.WithWriter(f))
+		if err != nil {
+			return tracing.Tracer{}, fmt.Errorf("error creating a file trace exporter: %w", err)
+		}
+	} else {
+		createTraceCtx, cancel := context.WithTimeout(ctx, time.Second)
+		defer cancel()
+		exporter, err = otlptrace.New(createTraceCtx, client)
+		if err != nil {
+			return tracing.Tracer{}, fmt.Errorf("error creating an open telemetry trace exporter: %w", err)
+		}
 	}
 
 	serviceVersion := pkg.Version
@@ -74,7 +101,7 @@ func (c *Context) createTracer(ctx context.Context, serviceName string, logger *
 	}
 	r := resource.NewWithAttributes(
 		semconv.SchemaURL,
-		semconv.ServiceNameKey.String(serviceName),
+		semconv.ServiceNameKey.String(cfg.TelemetryServiceName),
 		semconv.ServiceVersionKey.String(serviceVersion),
 	)
 

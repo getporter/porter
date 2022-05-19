@@ -97,8 +97,16 @@ func (c *PluginConnection) Start(ctx context.Context, pluginCfg io.Reader) error
 
 		pluginCommand = c.config.NewCommand(ctx, pluginPath, "run", c.key.String())
 	}
-	pluginCommand.Stdin = pluginCfg
 	span.SetAttributes(attribute.String("plugin-path", pluginCommand.Path))
+
+	// Configure the command
+	pluginCommand.Stdin = pluginCfg
+	// The plugin doesn't read the config file, we pass in relevant plugin config to them directly
+	// The remaining relevant config (e.g. logging, tracing) is set via env vars
+	// Config files require using the plugins to resolve templated values, so we resolve once in Porter
+	// and pass relevant resolved values to the plugins explicitly
+	pluginConfigVars := c.config.ExportRemoteConfigAsEnvironmentVariables()
+	pluginCommand.Env = append(pluginCommand.Env, pluginConfigVars...)
 
 	// Pipe logs from the plugin and capture them
 	c.setupLogCollector(ctx)
