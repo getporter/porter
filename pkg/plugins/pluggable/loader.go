@@ -105,7 +105,13 @@ func (l *PluginLoader) Load(ctx context.Context, pluginType PluginTypeConfig) (P
 		return PluginConnection{}, span.Error(err)
 	}
 
+	// The plugin doesn't read the config file, we pass in relevant plugin config to them directly
+	// The remaining relevant config (e.g. logging, tracing) is set via env vars
+	// Config files require using the plugins to resolve templated values, so we resolve once in Porter
+	// and pass relevant resolved values to the plugins explicitly
 	pluginCommand.Stdin = configReader
+	pluginConfigVars := l.Config.ExportRemoteConfigAsEnvironmentVariables()
+	pluginCommand.Env = append(pluginCommand.Env, pluginConfigVars...)
 
 	// Pipe logs from the plugin and capture them
 	logsReader, logsWriter := io.Pipe()

@@ -19,6 +19,10 @@ type TelemetryConfig struct {
 	Headers     map[string]string `mapstructure:"headers"`
 	Timeout     string            `mapstructure:"timeout"`
 	Compression string            `mapstructure:"compression"`
+
+	// RedirectToFile instructs Porter to write telemetry data to a file in
+	// PORTER_HOME/traces instead of exporting it to a collector
+	RedirectToFile bool `mapstructure:"redirect-to-file"`
 }
 
 type LogLevel string

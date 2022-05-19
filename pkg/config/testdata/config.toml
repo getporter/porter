@@ -6,11 +6,15 @@ default-storage = "dev"
 default-secrets-plugin = "azure.keyvault"
 default-secrets = "red-team"
 
-experimental = ["build-drivers"]
-build-driver = "buildkit"
+experimental = ["structured-logs"]
+
+[logs]
+  enabled = true
+  level = "info"
 
 [telemetry]
   enabled = true
+  redirect-to-file = true
 
 [[storage]]
   name = "dev"
