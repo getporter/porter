@@ -255,12 +255,9 @@ func (c *Context) buildLogFileName() string {
 func (c *Context) Close() error {
 	var bigErr *multierror.Error
 
-	if c.logFile != nil {
-		if err := c.logFile.Close(); err != nil {
-			err = fmt.Errorf("error closing log file %s: %w", c.logFile.Name(), err)
-			bigErr = multierror.Append(bigErr, err)
-		}
-		c.logFile = nil
+	if err := c.tracer.Close(context.Background()); err != nil {
+		err = fmt.Errorf("error closing tracer: %w", err)
+		bigErr = multierror.Append(bigErr, err)
 	}
 
 	if c.traceFile != nil {
@@ -271,9 +268,12 @@ func (c *Context) Close() error {
 		c.traceFile = nil
 	}
 
-	if err := c.tracer.Close(context.Background()); err != nil {
-		err = fmt.Errorf("error closing tracer: %w", err)
-		bigErr = multierror.Append(bigErr, err)
+	if c.logFile != nil {
+		if err := c.logFile.Close(); err != nil {
+			err = fmt.Errorf("error closing log file %s: %w", c.logFile.Name(), err)
+			bigErr = multierror.Append(bigErr, err)
+		}
+		c.logFile = nil
 	}
 
 	return bigErr.ErrorOrNil()
