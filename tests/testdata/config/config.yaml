@@ -1,0 +1,16 @@
+namespace: dev
+debug: true
+debug-plugins: true
+default-storage: testdb
+experimental: [structured-logs]
+default-secrets-plugin: filesystem
+
+logs:
+  enabled: true
+  level: debug
+
+storage:
+  - name: testdb
+    plugin: mongodb
+    config:
+      url: mongodb://localhost:27017/${env.PORTER_TEST_DB_NAME}?connect=direct

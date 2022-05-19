@@ -238,6 +238,10 @@ experimental = ["structured-logs"]
   certificate = "/home/me/some-cert.pem"
   compression = "gzip"
   timeout = "3s"
+
+  # Used for testing that porter is emitting spans without setting up an open telemetry collector
+  redirect-to-file = false
+
   [telemetry.headers]
     environment = "dev"
     owner = "me"

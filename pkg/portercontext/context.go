@@ -15,6 +15,7 @@ import (
 	"get.porter.sh/porter/pkg/tracing"
 	"github.com/carolynvs/aferox"
 	cnabclaims "github.com/cnabio/cnab-go/claim"
+	"github.com/hashicorp/go-multierror"
 	"github.com/mattn/go-colorable"
 	"github.com/mattn/go-isatty"
 	"github.com/pkg/errors"
@@ -60,6 +61,9 @@ type Context struct {
 
 	// logFile is the open file where we are sending logs.
 	logFile afero.File
+
+	// traceFile is the open file where we are sending traces.
+	traceFile afero.File
 
 	// indicates if log timestamps should be printed to the console
 	timestampLogs bool
@@ -135,19 +139,21 @@ func (c *Context) makeLogEncoding() zapcore.EncoderConfig {
 }
 
 type LogConfiguration struct {
-	LogToFile            bool
-	LogDirectory         string
-	LogLevel             zapcore.Level
-	StructuredLogs       bool
-	TelemetryEnabled     bool
-	TelemetryEndpoint    string
-	TelemetryProtocol    string
-	TelemetryInsecure    bool
-	TelemetryCertificate string
-	TelemetryCompression string
-	TelemetryTimeout     string
-	TelemetryHeaders     map[string]string
-	TelemtryServiceName  string
+	LogToFile               bool
+	LogDirectory            string
+	LogLevel                zapcore.Level
+	StructuredLogs          bool
+	TelemetryEnabled        bool
+	TelemetryEndpoint       string
+	TelemetryProtocol       string
+	TelemetryInsecure       bool
+	TelemetryCertificate    string
+	TelemetryCompression    string
+	TelemetryTimeout        string
+	TelemetryHeaders        map[string]string
+	TelemetryServiceName    string
+	TelemetryDirectory      string
+	TelemetryRedirectToFile bool
 }
 
 // ConfigureLogging applies different configuration to our logging and tracing.
@@ -156,7 +162,7 @@ func (c *Context) ConfigureLogging(ctx context.Context, cfg LogConfiguration) {
 
 	var baseLogger zapcore.Core
 	if c.IsInternalPlugin == true {
-		c.logCfg.TelemtryServiceName = c.InternalPluginKey
+		c.logCfg.TelemetryServiceName = c.InternalPluginKey
 		baseLogger = c.makePluginLogger(c.InternalPluginKey, cfg)
 	} else {
 		baseLogger = c.makeConsoleLogger()
@@ -185,7 +191,7 @@ func (c *Context) configureLoggingWith(ctx context.Context, baseLogger zapcore.C
 	if c.logCfg.TelemetryEnabled {
 		// Only initialize the tracer once per command
 		if !c.tracerInitalized {
-			err = c.configureTelemetry(ctx, c.logCfg.TelemtryServiceName, tmpLog)
+			err = c.configureTelemetry(ctx, c.logCfg, tmpLog)
 			if err != nil {
 				tmpLog.Error(errors.Wrap(err, "could not configure a tracer").Error())
 			}
@@ -224,7 +230,7 @@ func (c *Context) configureFileLog(dir string) (zapcore.Core, error) {
 	}
 
 	// Write the logs to a file
-	logfile := filepath.Join(dir, c.correlationId+".json")
+	logfile := filepath.Join(dir, c.buildLogFileName())
 	if c.logFile == nil { // We may have already opened this logfile, and we are just changing the log level
 		f, err := c.FileSystem.OpenFile(logfile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, pkg.FileModeWritable)
 		if err != nil {
@@ -238,17 +244,39 @@ func (c *Context) configureFileLog(dir string) (zapcore.Core, error) {
 	return zapcore.NewCore(fileEncoder, zapcore.AddSync(c.logFile), c.logCfg.LogLevel), nil
 }
 
+func (c *Context) buildLogFileName() string {
+	// Send plugin logs and traces to a separate file so that there aren't conflicts while writing
+	if c.IsInternalPlugin {
+		return fmt.Sprintf("%s-%s.json", c.correlationId, c.InternalPluginKey)
+	}
+	return fmt.Sprintf("%s.json", c.correlationId)
+}
+
 func (c *Context) Close() error {
+	var bigErr *multierror.Error
+
 	if c.logFile != nil {
-		c.logFile.Close()
+		if err := c.logFile.Close(); err != nil {
+			err = fmt.Errorf("error closing log file %s: %w", c.logFile.Name(), err)
+			bigErr = multierror.Append(bigErr, err)
+		}
 		c.logFile = nil
 	}
 
-	if err := c.tracer.Close(context.Background()); err != nil {
-		return err
+	if c.traceFile != nil {
+		if err := c.traceFile.Close(); err != nil {
+			err = fmt.Errorf("error closing trace file %s: %w", c.traceFile.Name(), err)
+			bigErr = multierror.Append(bigErr, err)
+		}
+		c.traceFile = nil
 	}
 
-	return nil
+	if err := c.tracer.Close(context.Background()); err != nil {
+		err = fmt.Errorf("error closing tracer: %w", err)
+		bigErr = multierror.Append(bigErr, err)
+	}
+
+	return bigErr.ErrorOrNil()
 }
 
 func (c *Context) defaultNewCommand() {
