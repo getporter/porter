@@ -22,7 +22,7 @@ func TestConvertFloatToInt(t *testing.T) {
 		},
 	}
 
-	dest := ConvertPrimitivesToBson(src)
+	dest := ConvertFloatToInt(src)
 
 	wantDest := map[string]interface{}{
 		"a": map[string]interface{}{
@@ -71,7 +71,7 @@ func TestConvertBsonD(t *testing.T) {
 	}
 
 	tmp := FromOrderedMap(src)
-	dest := AsOrderedMap(tmp)
+	dest := AsOrderedMap(tmp, ConvertSliceToBsonD)
 
 	wantDest := bson.D{
 		{"a", "1"},

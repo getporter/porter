@@ -284,12 +284,45 @@ func ConvertBsonToPrimitives(src interface{}) interface{} {
 	}
 }
 
-// ConvertPrimitivesToBson converts go primitive to bson primitive.
+// ConvertSliceToBsonD converts go slices to bson primitive.
 // it also works around a weirdness in how numbers are represented
 // by structpb.Value, where integer values are stored in float64. When we
 // deserialize from protobuf, this walks the specified value, finds ints
 // that were encoded as floats, and converts them back to ints.
-func ConvertPrimitivesToBson(src interface{}) interface{} {
+func ConvertSliceToBsonD(src interface{}) interface{} {
+	dest := ConvertFloatToInt(src)
+	switch tv := dest.(type) {
+	case []interface{}:
+		toBson := make(bson.D, 0, len(tv))
+		for i, item := range tv {
+			converted := ConvertSliceToBsonD(item)
+			if m, ok := converted.(map[string]interface{}); ok {
+				for k, v := range m {
+					toBson = append(toBson, bson.E{Key: k, Value: v})
+				}
+				continue
+			}
+			tv[i] = converted
+		}
+		if len(toBson) > 0 {
+			return toBson
+		}
+		return tv
+	case map[string]interface{}:
+		for k, v := range tv {
+			tv[k] = ConvertSliceToBsonD(v)
+		}
+		return tv
+	default:
+		return tv
+	}
+}
+
+// ConvertFloatToInt works around a weirdness in how numbers are represented
+// by structpb.Value, where integer values are stored in float64. When we
+// deserialize from protobuf, this walks the specified value, finds ints
+// that were encoded as floats, and converts them back to ints.
+func ConvertFloatToInt(src interface{}) interface{} {
 	switch tv := src.(type) {
 	case float64:
 		intVal := int64(tv)
@@ -298,20 +331,13 @@ func ConvertPrimitivesToBson(src interface{}) interface{} {
 		}
 		return tv
 	case []interface{}:
-		toBson := make(bson.D, 0)
 		for i, item := range tv {
-			converted := ConvertPrimitivesToBson(item)
-			if m, ok := converted.(map[string]interface{}); ok {
-				for k, v := range m {
-					toBson = append(toBson, bson.E{Key: k, Value: v})
-				}
-			}
-			tv[i] = toBson
+			tv[i] = ConvertFloatToInt(item)
 		}
-		return toBson
+		return tv
 	case map[string]interface{}:
 		for k, v := range tv {
-			tv[k] = ConvertPrimitivesToBson(v)
+			tv[k] = ConvertFloatToInt(v)
 		}
 		return tv
 	default:
@@ -366,10 +392,17 @@ func NewStruct(src map[string]interface{}) *structpb.Struct {
 }
 
 // AsMap converts a protobuf struct into its original representation, bson.M.
-func AsMap(src *structpb.Struct) bson.M {
+func AsMap(src *structpb.Struct, c ...converter) bson.M {
 	dest := src.AsMap()
+	converts := []converter{ConvertFloatToInt}
+	if c != nil {
+		converts = append(converts, c...)
+	}
 	for k, v := range dest {
-		dest[k] = ConvertPrimitivesToBson(v)
+		for _, convert := range converts {
+			v = convert(v)
+		}
+		dest[k] = v
 	}
 	return dest
 }
@@ -382,12 +415,17 @@ func AsMapList(src []*structpb.Struct) []bson.M {
 	return dest
 }
 
+type converter func(src interface{}) interface{}
+
 // AsOrderedMap converts an array of protobuf structs into its original
 // representation, bson.D.
-func AsOrderedMap(src []*structpb.Struct) bson.D {
+func AsOrderedMap(src []*structpb.Struct, c ...converter) bson.D {
 	dest := make(bson.D, 0, len(src))
+	if c == nil {
+		c = []converter{ConvertFloatToInt}
+	}
 	for _, item := range src {
-		for k, v := range AsMap(item) {
+		for k, v := range AsMap(item, c...) {
 			dest = append(dest, bson.E{Key: k, Value: v})
 		}
 	}
@@ -399,7 +437,7 @@ func AsOrderedMap(src []*structpb.Struct) bson.D {
 func AsOrderedMapList(src []*proto.Stage) []bson.D {
 	dest := make([]bson.D, len(src))
 	for i, item := range src {
-		dest[i] = AsOrderedMap(item.Steps)
+		dest[i] = AsOrderedMap(item.Steps, ConvertSliceToBsonD)
 	}
 	return dest
 }

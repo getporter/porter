@@ -81,8 +81,15 @@ func TestRoundTripDataOverGRPC(t *testing.T) {
 	err = client.EnsureIndex(ctx, opts)
 	require.NoError(t, err)
 
-	results1, err := client.Aggregate(ctx, plugins.AggregateOptions{
-		Collection: collection,
+	err = client.Insert(ctx, plugins.InsertOptions{
+		Collection: CollectionOutputs,
+		Documents: []bson.M{{"namespace": "dev", "installation": "test", "name": "thing1", "resultId": "111"},
+			{"namespace": "dev", "installation": "test", "name": "thing2", "resultId": "222"}},
+	})
+	require.NoError(t, err)
+
+	aggregateResults, err := client.Aggregate(ctx, plugins.AggregateOptions{
+		Collection: CollectionOutputs,
 		Pipeline: []bson.D{
 			// List outputs by installation
 			{{"$match", bson.M{
@@ -99,10 +106,10 @@ func TestRoundTripDataOverGRPC(t *testing.T) {
 			// Group them by output name and select the last value for each output
 			{{"$group", bson.D{
 				{"_id", "$name"},
-				{"lastOutput", bson.M{"$first": "$$ROOT"}},
+				{"lastOutput", bson.M{"$first": "$ROOT"}},
 			}}},
 		},
 	})
 	require.NoError(t, err)
-	require.Len(t, results1, 0)
+	require.Len(t, aggregateResults, 2)
 }
