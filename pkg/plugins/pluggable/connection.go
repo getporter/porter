@@ -42,6 +42,9 @@ type PluginConnection struct {
 	// plugin.
 	client *plugin.Client
 
+	// pluginCmd is command that manages the plugin process
+	pluginCmd *exec.Cmd
+
 	// pluginProtocol is a connection that supports the plugin protocol, such as
 	// plugins.SecretsProtocol or plugins.StorageProtocol
 	pluginProtocol interface{}
@@ -80,14 +83,13 @@ func (c *PluginConnection) Start(ctx context.Context, pluginCfg io.Reader) error
 	defer span.EndSpan()
 
 	// Create a command to run the plugin
-	var pluginCommand *exec.Cmd
 	if c.key.IsInternal {
 		porterPath, err := c.config.GetPorterPath()
 		if err != nil {
 			return errors.Wrap(err, "could not determine the path to the porter pluginProtocol")
 		}
 
-		pluginCommand = c.config.NewCommand(ctx, porterPath, "plugin", "run", c.key.String())
+		c.pluginCmd = c.config.NewCommand(ctx, porterPath, "plugin", "run", c.key.String())
 	} else {
 		pluginPath, err := c.config.GetPluginPath(c.key.Binary)
 		if err != nil {
@@ -95,18 +97,18 @@ func (c *PluginConnection) Start(ctx context.Context, pluginCfg io.Reader) error
 		}
 		span.SetAttributes(attribute.String("plugin-path", pluginPath))
 
-		pluginCommand = c.config.NewCommand(ctx, pluginPath, "run", c.key.String())
+		c.pluginCmd = c.config.NewCommand(ctx, pluginPath, "run", c.key.String())
 	}
-	span.SetAttributes(attribute.String("plugin-path", pluginCommand.Path))
+	span.SetAttributes(attribute.String("plugin-path", c.pluginCmd.Path))
 
 	// Configure the command
-	pluginCommand.Stdin = pluginCfg
+	c.pluginCmd.Stdin = pluginCfg
 	// The plugin doesn't read the config file, we pass in relevant plugin config to them directly
 	// The remaining relevant config (e.g. logging, tracing) is set via env vars
 	// Config files require using the plugins to resolve templated values, so we resolve once in Porter
 	// and pass relevant resolved values to the plugins explicitly
 	pluginConfigVars := c.config.ExportRemoteConfigAsEnvironmentVariables()
-	pluginCommand.Env = append(pluginCommand.Env, pluginConfigVars...)
+	c.pluginCmd.Env = append(c.pluginCmd.Env, pluginConfigVars...)
 
 	// Pipe logs from the plugin and capture them
 	c.setupLogCollector(ctx)
@@ -118,7 +120,7 @@ func (c *PluginConnection) Start(ctx context.Context, pluginCfg io.Reader) error
 		Level:      hclog.Debug,
 		JSONFormat: true,
 	})
-	client := plugin.NewClient(&plugin.ClientConfig{
+	c.client = plugin.NewClient(&plugin.ClientConfig{
 		HandshakeConfig: plugin.HandshakeConfig{
 			ProtocolVersion:  c.pluginType.ProtocolVersion,
 			MagicCookieKey:   plugins.HandshakeConfig.MagicCookieKey,
@@ -129,7 +131,7 @@ func (c *PluginConnection) Start(ctx context.Context, pluginCfg io.Reader) error
 		Plugins: map[string]plugin.Plugin{
 			c.pluginType.Interface: c.pluginType.Plugin,
 		},
-		Cmd:          pluginCommand,
+		Cmd:          c.pluginCmd,
 		Logger:       logger,
 		Stderr:       &errbuf,
 		StartTimeout: getPluginStartTimeout(),
@@ -141,8 +143,8 @@ func (c *PluginConnection) Start(ctx context.Context, pluginCfg io.Reader) error
 	})
 
 	// Start the plugin
-	span.Debug("Connecting to plugin", attribute.String("plugin-command", strings.Join(pluginCommand.Args, " ")))
-	rpcClient, err := client.Client(ctx)
+	span.Debug("Connecting to plugin", attribute.String("plugin-command", strings.Join(c.pluginCmd.Args, " ")))
+	rpcClient, err := c.client.Client(ctx)
 	if err != nil {
 		c.Close(ctx)
 		if stderr := errbuf.String(); stderr != "" {
@@ -151,7 +153,7 @@ func (c *PluginConnection) Start(ctx context.Context, pluginCfg io.Reader) error
 		return span.Error(errors.Wrapf(err, "could not connect to the %s plugin", c.key))
 	}
 
-	err = c.setUpDebugger(ctx, client)
+	err = c.setUpDebugger(ctx, c.client)
 	if err != nil {
 		c.Close(ctx)
 		return span.Error(errors.Wrap(err, "could not set up debugger for plugin"))
@@ -164,7 +166,7 @@ func (c *PluginConnection) Start(ctx context.Context, pluginCfg io.Reader) error
 		return span.Error(errors.Wrapf(err, "could not connect to the %s plugin", c.key))
 	}
 
-	span.SetAttributes(attribute.Int("negotiated-protocol-version", client.NegotiatedVersion()))
+	span.SetAttributes(attribute.Int("negotiated-protocol-version", c.client.NegotiatedVersion()))
 
 	return nil
 }
