@@ -41,12 +41,14 @@ code, build and test it, and then submit your first pull request.
 We have a [tutorial] to get your environment setup, make your first change
 to Porter, and try it out.
 
-The contributing guide explains how to [find an issue]. We do use
-two labels:
+You can quickly find suitable issues to work on with the [getporter.org/find-issue] link.
+The contributing guide explains how to [find an issue].
+We use two labels:
 
 * [good first issue] has extra information to help you make your first contribution.
 * [help wanted] are issues suitable for someone who isn't a core maintainer.
 
+[getporter.org/find-issue]: /find-issue/
 [conduct]: /src/CODE_OF_CONDUCT.md
 [contributing]: /contribute/guide/
 [find an issue]: /contribute/guide/#find-an-issue
