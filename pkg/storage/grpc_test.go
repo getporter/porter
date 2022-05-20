@@ -84,7 +84,9 @@ func TestRoundTripDataOverGRPC(t *testing.T) {
 	err = client.Insert(ctx, plugins.InsertOptions{
 		Collection: CollectionOutputs,
 		Documents: []bson.M{{"namespace": "dev", "installation": "test", "name": "thing1", "resultId": "111"},
-			{"namespace": "dev", "installation": "test", "name": "thing2", "resultId": "222"}},
+			{"namespace": "dev", "installation": "test", "name": "thing2", "resultId": "111"},
+			{"namespace": "dev", "installation": "test", "name": "thing2", "resultId": "222"},
+		},
 	})
 	require.NoError(t, err)
 
@@ -106,10 +108,12 @@ func TestRoundTripDataOverGRPC(t *testing.T) {
 			// Group them by output name and select the last value for each output
 			{{"$group", bson.D{
 				{"_id", "$name"},
-				{"lastOutput", bson.M{"$first": "$ROOT"}},
+				{"lastOutput", bson.M{"$first": "$$ROOT"}},
 			}}},
 		},
 	})
 	require.NoError(t, err)
 	require.Len(t, aggregateResults, 2)
+	// make sure the group function is picking the most recent output value with the same name
+	require.Contains(t, aggregateResults[0].Lookup("lastOutput").String(), "222")
 }

@@ -290,24 +290,18 @@ func ConvertBsonToPrimitives(src interface{}) interface{} {
 // deserialize from protobuf, this walks the specified value, finds ints
 // that were encoded as floats, and converts them back to ints.
 func ConvertSliceToBsonD(src interface{}) interface{} {
-	dest := ConvertFloatToInt(src)
-	switch tv := dest.(type) {
+	switch tv := src.(type) {
 	case []interface{}:
 		toBson := make(bson.D, 0, len(tv))
-		for i, item := range tv {
+		for _, item := range tv {
 			converted := ConvertSliceToBsonD(item)
 			if m, ok := converted.(map[string]interface{}); ok {
 				for k, v := range m {
 					toBson = append(toBson, bson.E{Key: k, Value: v})
 				}
-				continue
 			}
-			tv[i] = converted
 		}
-		if len(toBson) > 0 {
-			return toBson
-		}
-		return tv
+		return toBson
 	case map[string]interface{}:
 		for k, v := range tv {
 			tv[k] = ConvertSliceToBsonD(v)
@@ -394,15 +388,12 @@ func NewStruct(src map[string]interface{}) *structpb.Struct {
 // AsMap converts a protobuf struct into its original representation, bson.M.
 func AsMap(src *structpb.Struct, c ...converter) bson.M {
 	dest := src.AsMap()
-	converts := []converter{ConvertFloatToInt}
-	if c != nil {
-		converts = append(converts, c...)
-	}
 	for k, v := range dest {
-		for _, convert := range converts {
-			v = convert(v)
+		converted := ConvertFloatToInt(v)
+		for _, convert := range c {
+			converted = convert(v)
 		}
-		dest[k] = v
+		dest[k] = converted
 	}
 	return dest
 }
@@ -421,9 +412,6 @@ type converter func(src interface{}) interface{}
 // representation, bson.D.
 func AsOrderedMap(src []*structpb.Struct, c ...converter) bson.D {
 	dest := make(bson.D, 0, len(src))
-	if c == nil {
-		c = []converter{ConvertFloatToInt}
-	}
 	for _, item := range src {
 		for k, v := range AsMap(item, c...) {
 			dest = append(dest, bson.E{Key: k, Value: v})
