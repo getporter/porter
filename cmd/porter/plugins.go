@@ -37,7 +37,7 @@ func buildPluginsListCommand(p *porter.Porter) *cobra.Command {
 			return opts.ParseFormat()
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.PrintPlugins(opts)
+			return p.PrintPlugins(cmd.Context(), opts)
 		},
 	}
 
@@ -88,7 +88,7 @@ func buildPluginShowCommand(p *porter.Porter) *cobra.Command {
 			return opts.Validate(args)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.ShowPlugin(opts)
+			return p.ShowPlugin(cmd.Context(), opts)
 		},
 	}
 

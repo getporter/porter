@@ -2,6 +2,7 @@ package mixin
 
 import (
 	"bytes"
+	"context"
 	"io/ioutil"
 	"os/exec"
 
@@ -46,7 +47,7 @@ func (c *PackageManager) PreRunMixinCommandHandler(command string, cmd *exec.Cmd
 	}
 }
 
-func (c *PackageManager) GetSchema(name string) (string, error) {
+func (c *PackageManager) GetSchema(ctx context.Context, name string) (string, error) {
 	mixinDir, err := c.GetPackageDir(name)
 	if err != nil {
 		return "", err
@@ -65,7 +66,7 @@ func (c *PackageManager) GetSchema(name string) (string, error) {
 	r.Context = &mixinContext
 
 	cmd := pkgmgmt.CommandOptions{Command: "schema", PreRun: c.PreRun}
-	err = r.Run(cmd)
+	err = r.Run(ctx, cmd)
 	if err != nil {
 		return "", err
 	}

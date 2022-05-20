@@ -1,6 +1,7 @@
 package porter
 
 import (
+	"context"
 	"fmt"
 	"runtime"
 	"strings"
@@ -16,14 +17,19 @@ import (
 func TestPrintVersion(t *testing.T) {
 	pkg.Commit = "abc123"
 	pkg.Version = "v1.2.3"
+	defer func() {
+		pkg.Commit = ""
+		pkg.Version = ""
+	}()
 
+	ctx := context.Background()
 	p := NewTestPorter(t)
 	defer p.Close()
 
 	opts := VersionOpts{}
 	err := opts.Validate()
 	require.NoError(t, err)
-	p.PrintVersion(opts)
+	p.PrintVersion(ctx, opts)
 
 	gotOutput := p.TestConfig.TestContext.GetOutput()
 	wantOutput := "porter v1.2.3 (abc123)"
@@ -35,7 +41,12 @@ func TestPrintVersion(t *testing.T) {
 func TestPrintJsonVersion(t *testing.T) {
 	pkg.Commit = "abc123"
 	pkg.Version = "v1.2.3"
+	defer func() {
+		pkg.Commit = ""
+		pkg.Version = ""
+	}()
 
+	ctx := context.Background()
 	p := NewTestPorter(t)
 	defer p.Close()
 
@@ -43,7 +54,7 @@ func TestPrintJsonVersion(t *testing.T) {
 	opts.RawFormat = string(printer.FormatJson)
 	err := opts.Validate()
 	require.NoError(t, err)
-	p.PrintVersion(opts)
+	p.PrintVersion(ctx, opts)
 
 	gotOutput := p.TestConfig.TestContext.GetOutput()
 	wantOutput := `{
@@ -60,7 +71,12 @@ func TestPrintJsonVersion(t *testing.T) {
 func TestPrintDebugInfoJsonVersion(t *testing.T) {
 	pkg.Commit = "abc123"
 	pkg.Version = "v1.2.3"
+	defer func() {
+		pkg.Commit = ""
+		pkg.Version = ""
+	}()
 
+	ctx := context.Background()
 	p := NewTestPorter(t)
 	defer p.Close()
 
@@ -68,7 +84,7 @@ func TestPrintDebugInfoJsonVersion(t *testing.T) {
 	opts.RawFormat = string(printer.FormatJson)
 	err := opts.Validate()
 	require.Nil(t, err)
-	p.PrintVersion(opts)
+	p.PrintVersion(ctx, opts)
 
 	gotOutput := p.TestConfig.TestContext.GetOutput()
 	wantOutput := fmt.Sprintf(`{
@@ -102,14 +118,19 @@ func TestPrintDebugInfoPlainTextVersion(t *testing.T) {
 
 	pkg.Commit = "abc123"
 	pkg.Version = "v1.2.3"
+	defer func() {
+		pkg.Commit = ""
+		pkg.Version = ""
+	}()
 
+	ctx := context.Background()
 	p := NewTestPorter(t)
 	defer p.Close()
 
 	opts := VersionOpts{System: true}
 	err := opts.Validate()
 	require.Nil(t, err)
-	p.PrintVersion(opts)
+	p.PrintVersion(ctx, opts)
 
 	gotOutput := p.TestConfig.TestContext.GetOutput()
 	test.CompareGoldenFile(t, "testdata/version/version-output.txt", gotOutput)

@@ -14,6 +14,7 @@ import (
 )
 
 func TestPorter_PrintMixins(t *testing.T) {
+	ctx := context.Background()
 	p := NewTestPorter(t)
 	defer p.Close()
 
@@ -22,7 +23,7 @@ func TestPorter_PrintMixins(t *testing.T) {
 			Format: printer.FormatPlaintext,
 		},
 	}
-	err := p.PrintMixins(opts)
+	err := p.PrintMixins(ctx, opts)
 
 	require.Nil(t, err)
 	gotOutput := p.TestConfig.TestContext.GetOutput()

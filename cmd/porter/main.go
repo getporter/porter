@@ -5,6 +5,7 @@ import (
 	_ "embed"
 	"fmt"
 	"os"
+	"os/signal"
 	"runtime/debug"
 	"strings"
 
@@ -21,15 +22,27 @@ var includeDocsCommand = false
 //go:embed helptext/usage.txt
 var usageText string
 
-// Indicates that config should not be loaded for this command.
-// This is used for commands like help and version which should never
-// fail, even with porter is misconfigured.
-const skipConfig string = "skipConfig"
+const (
+	// Indicates that config should not be loaded for this command.
+	// This is used for commands like help and version which should never
+	// fail, even with porter is misconfigured.
+	skipConfig string = "skipConfig"
+
+	// exitCodeSuccess indicates the program ran successfully
+	exitCodeSuccess = 0
+
+	// exitCodeErr indicates the program encountered an error
+	exitCodeErr = 1
+
+	// exitCodeInterrupt indicates the program was cancelled
+	exitCodeInterrupt = 2
+)
 
 func main() {
 	run := func() int {
-		ctx := context.Background()
 		p := porter.New()
+		ctx, cancel := handleInterrupt(context.Background(), p)
+		defer cancel()
 
 		rootCmd := buildRootCommandFrom(p)
 
@@ -51,7 +64,7 @@ func main() {
 		if !shouldSkipConfig(cmd) {
 			if err := p.Connect(ctx); err != nil {
 				fmt.Fprintln(os.Stderr, err.Error())
-				os.Exit(1)
+				os.Exit(exitCodeErr)
 			}
 		}
 
@@ -64,7 +77,7 @@ func main() {
 					attribute.String("stackTrace", string(debug.Stack())))
 				log.EndSpan()
 				p.Close()
-				os.Exit(1)
+				os.Exit(exitCodeErr)
 			} else {
 				log.EndSpan()
 				log.Close()
@@ -84,6 +97,31 @@ func main() {
 	// Wrapping the main run logic in a function because os.Exit will not
 	// execute defer statements
 	os.Exit(run())
+}
+
+// Try to exit gracefully when the interrupt signal is sent (CTRL+C)
+// Thanks to Mat Ryer, https://pace.dev/blog/2020/02/17/repond-to-ctrl-c-interrupt-signals-gracefully-with-context-in-golang-by-mat-ryer.html
+func handleInterrupt(ctx context.Context, p *porter.Porter) (context.Context, func()) {
+	ctx, cancel := context.WithCancel(ctx)
+	signalChan := make(chan os.Signal, 1)
+	signal.Notify(signalChan, os.Interrupt)
+
+	go func() {
+		select {
+		case <-signalChan: // first signal, cancel context
+			fmt.Println("cancel requested", p.InternalPluginKey)
+			cancel()
+		case <-ctx.Done():
+		}
+		<-signalChan // second signal, hard exit
+		fmt.Println("hard interrupt received, bye!")
+		os.Exit(exitCodeInterrupt)
+	}()
+
+	return ctx, func() {
+		signal.Stop(signalChan)
+		cancel()
+	}
 }
 
 func shouldSkipConfig(cmd *cobra.Command) bool {

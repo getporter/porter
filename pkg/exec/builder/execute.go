@@ -2,6 +2,7 @@ package builder
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"os/exec"
@@ -98,7 +99,9 @@ func ExecuteSingleStepAction(cxt *portercontext.Context, action ExecutableAction
 
 // ExecuteStep runs the command represented by an ExecutableStep, piping stdout/stderr
 // back to the context and returns the buffered output for subsequent processing.
-func ExecuteStep(cxt *portercontext.Context, step ExecutableStep) (string, error) {
+func ExecuteStep(pctx *portercontext.Context, step ExecutableStep) (string, error) {
+	ctx := context.TODO()
+
 	// Identify if any suffix arguments are defined
 	var suffixArgs []string
 	orderedArgs, ok := step.(HasOrderedArguments)
@@ -132,11 +135,11 @@ func ExecuteStep(cxt *portercontext.Context, step ExecutableStep) (string, error
 	// Add env vars if defined
 	if stepWithEnvVars, ok := step.(HasEnvironmentVars); ok {
 		for k, v := range stepWithEnvVars.GetEnvironmentVars() {
-			cxt.Setenv(k, v)
+			pctx.Setenv(k, v)
 		}
 	}
 
-	cmd := cxt.NewCommand(step.GetCommand(), args...)
+	cmd := pctx.NewCommand(ctx, step.GetCommand(), args...)
 
 	// ensure command is executed in the correct directory
 	wd := step.GetWorkingDir()
@@ -159,14 +162,14 @@ func ExecuteStep(cxt *portercontext.Context, step ExecutableStep) (string, error
 		// We still capture the output, but we won't print it
 		cmd.Stdout = stdout
 		cmd.Stderr = stderr
-		if cxt.Debug {
-			fmt.Fprintf(cxt.Err, "DEBUG: output suppressed for command %s\n", prettyCmd)
+		if pctx.Debug {
+			fmt.Fprintf(pctx.Err, "DEBUG: output suppressed for command %s\n", prettyCmd)
 		}
 	} else {
-		cmd.Stdout = io.MultiWriter(cxt.Out, stdout)
-		cmd.Stderr = io.MultiWriter(cxt.Err, stderr)
-		if cxt.Debug {
-			fmt.Fprintln(cxt.Err, prettyCmd)
+		cmd.Stdout = io.MultiWriter(pctx.Out, stdout)
+		cmd.Stderr = io.MultiWriter(pctx.Err, stderr)
+		if pctx.Debug {
+			fmt.Fprintln(pctx.Err, prettyCmd)
 		}
 	}
 
@@ -181,7 +184,7 @@ func ExecuteStep(cxt *portercontext.Context, step ExecutableStep) (string, error
 	if err != nil {
 		if exitErr, ok := err.(*exec.ExitError); ok {
 			if handler, ok := step.(HasErrorHandling); ok {
-				err = handler.HandleError(cxt, exitErr, stdout.String(), stderr.String())
+				err = handler.HandleError(pctx, exitErr, stdout.String(), stderr.String())
 			}
 		}
 	}

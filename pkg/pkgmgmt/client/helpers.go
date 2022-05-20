@@ -32,7 +32,7 @@ func (p *TestPackageManager) GetPackageDir(name string) (string, error) {
 	return path.Join("/home/myuser/.porter", p.PkgType, name), nil
 }
 
-func (p *TestPackageManager) GetMetadata(name string) (pkgmgmt.PackageMetadata, error) {
+func (p *TestPackageManager) GetMetadata(ctx context.Context, name string) (pkgmgmt.PackageMetadata, error) {
 	for _, pkg := range p.Packages {
 		if pkg.GetName() == name {
 			return pkg, nil
@@ -51,7 +51,7 @@ func (p *TestPackageManager) Uninstall(o pkgmgmt.UninstallOptions) error {
 	return nil
 }
 
-func (p *TestPackageManager) Run(pkgContext *portercontext.Context, name string, commandOpts pkgmgmt.CommandOptions) error {
+func (p *TestPackageManager) Run(ctx context.Context, pkgContext *portercontext.Context, name string, commandOpts pkgmgmt.CommandOptions) error {
 	for _, assert := range p.RunAssertions {
 		err := assert(pkgContext, name, commandOpts)
 		if err != nil {

@@ -2,6 +2,7 @@ package query
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io/ioutil"
 
@@ -48,7 +49,7 @@ type MixinInputGenerator interface {
 // Execute the specified command using an input generator.
 // For example, the ManifestGenerator will iterate over the mixins in a manifest and send
 // them their config and the steps associated with their mixin.
-func (q *MixinQuery) Execute(cmd string, inputGenerator MixinInputGenerator) (map[string]string, error) {
+func (q *MixinQuery) Execute(ctx context.Context, cmd string, inputGenerator MixinInputGenerator) (map[string]string, error) {
 	mixinNames := inputGenerator.ListMixins()
 	results := make(map[string]string, len(mixinNames))
 	type queryResponse struct {
@@ -84,7 +85,7 @@ func (q *MixinQuery) Execute(cmd string, inputGenerator MixinInputGenerator) (ma
 				Command: cmd,
 				Input:   string(inputB),
 			}
-			runErr := q.Mixins.Run(&mixinContext, mixinName, cmd)
+			runErr := q.Mixins.Run(ctx, &mixinContext, mixinName, cmd)
 
 			// Pack the error from running the command in the response so we can
 			// decide if we care about it, if we returned it normally, the

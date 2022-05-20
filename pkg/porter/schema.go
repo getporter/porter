@@ -1,6 +1,7 @@
 package porter
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"path/filepath"
@@ -13,8 +14,8 @@ import (
 type jsonSchema = map[string]interface{}
 type jsonObject = map[string]interface{}
 
-func (p *Porter) PrintManifestSchema() error {
-	schemaMap, err := p.GetManifestSchema()
+func (p *Porter) PrintManifestSchema(ctx context.Context) error {
+	schemaMap, err := p.GetManifestSchema(ctx)
 	if err != nil {
 		return err
 	}
@@ -28,7 +29,7 @@ func (p *Porter) PrintManifestSchema() error {
 	return nil
 }
 
-func (p *Porter) GetManifestSchema() (jsonSchema, error) {
+func (p *Porter) GetManifestSchema(ctx context.Context) (jsonSchema, error) {
 	replacementSchema, err := p.GetReplacementSchema()
 	if err != nil && p.Debug {
 		fmt.Fprintln(p.Err, errors.Wrap(err, "ignoring replacement schema"))
@@ -48,7 +49,7 @@ func (p *Porter) GetManifestSchema() (jsonSchema, error) {
 		return nil, errors.Wrap(err, "could not unmarshal the root porter manifest schema")
 	}
 
-	combinedSchema, err := p.injectMixinSchemas(manifestSchema)
+	combinedSchema, err := p.injectMixinSchemas(ctx, manifestSchema)
 	if err != nil {
 		if p.Debug {
 			fmt.Fprintln(p.Err, err)
@@ -60,7 +61,7 @@ func (p *Porter) GetManifestSchema() (jsonSchema, error) {
 	return combinedSchema, nil
 }
 
-func (p *Porter) injectMixinSchemas(manifestSchema jsonSchema) (jsonSchema, error) {
+func (p *Porter) injectMixinSchemas(ctx context.Context, manifestSchema jsonSchema) (jsonSchema, error) {
 	propertiesSchema, ok := manifestSchema["properties"].(jsonSchema)
 	if !ok {
 		return nil, errors.Errorf("root porter manifest schema has invalid properties type, expected map[string]interface{} but got %T", manifestSchema["properties"])
@@ -103,7 +104,7 @@ func (p *Porter) injectMixinSchemas(manifestSchema jsonSchema) (jsonSchema, erro
 
 	// If there is an error with any mixin, print a warning and skip the mixin, do not return an error
 	for _, mixin := range mixins {
-		mixinSchema, err := p.Mixins.GetSchema(mixin)
+		mixinSchema, err := p.Mixins.GetSchema(ctx, mixin)
 		if err != nil {
 			// if a mixin can't report its schema, don't include it and keep going
 			if p.Debug {

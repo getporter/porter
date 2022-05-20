@@ -5,6 +5,7 @@ package client
 
 import (
 	"bytes"
+	"context"
 	"io"
 	"path/filepath"
 	"testing"
@@ -17,12 +18,13 @@ import (
 )
 
 func TestRunner_Run(t *testing.T) {
+	ctx := context.Background()
 	// Provide a way for tests to capture stdout
 	output := &bytes.Buffer{}
 
-	cxt := portercontext.NewTestContext(t)
-	cxt.UseFilesystem()
-	binDir := cxt.FindBinDir()
+	c := portercontext.NewTestContext(t)
+	c.UseFilesystem()
+	binDir := c.FindBinDir()
 
 	// I'm not using the TestRunner because I want to use the current filesystem, not an isolated one
 	r := NewRunner("exec", filepath.Join(binDir, "mixins/exec"), false)
@@ -38,12 +40,14 @@ func TestRunner_Run(t *testing.T) {
 		Command: "install",
 		File:    "testdata/exec_input.yaml",
 	}
-	err = r.Run(cmd)
+	err = r.Run(ctx, cmd)
 	assert.NoError(t, err)
 	assert.Contains(t, string(output.Bytes()), "Hello World")
 }
 
 func TestRunner_RunWithMaskedOutput(t *testing.T) {
+	ctx := context.Background()
+
 	// Provide a way for tests to capture stdout
 	output := &bytes.Buffer{}
 
@@ -57,9 +61,9 @@ func TestRunner_RunWithMaskedOutput(t *testing.T) {
 	sensitiveValues = append(sensitiveValues, " ", "", "\n", "\r", "\t")
 	censoredWriter.SetSensitiveValues(sensitiveValues)
 
-	cxt := portercontext.NewTestContext(t)
-	cxt.UseFilesystem()
-	binDir := cxt.FindBinDir()
+	c := portercontext.NewTestContext(t)
+	c.UseFilesystem()
+	binDir := c.FindBinDir()
 
 	// I'm not using the TestRunner because I want to use the current filesystem, not an isolated one
 	r := NewRunner("exec", filepath.Join(binDir, "mixins/exec"), false)
@@ -76,7 +80,7 @@ func TestRunner_RunWithMaskedOutput(t *testing.T) {
 		File:    "testdata/exec_input_with_whitespace.yaml",
 	}
 
-	err = r.Run(cmd)
+	err = r.Run(ctx, cmd)
 	assert.NoError(t, err)
 	assert.Equal(t, `Hello ******* 	
 `, string(output.Bytes()))

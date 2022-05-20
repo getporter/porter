@@ -13,12 +13,12 @@ import (
 type PackageManager interface {
 	List() ([]string, error)
 	GetPackageDir(name string) (string, error)
-	GetMetadata(name string) (PackageMetadata, error)
+	GetMetadata(ctx context.Context, name string) (PackageMetadata, error)
 	Install(ctx context.Context, opts InstallOptions) error
 	Uninstall(UninstallOptions) error
 
 	// Run a command against the installed package.
-	Run(pkgContext *portercontext.Context, name string, commandOpts CommandOptions) error
+	Run(ctx context.Context, pkgContext *portercontext.Context, name string, commandOpts CommandOptions) error
 }
 
 type PreRunHandler func(command string, cmd *exec.Cmd)

@@ -34,7 +34,7 @@ const (
 	EnvCorrelationID = "PORTER_CORRELATION_ID"
 )
 
-type CommandBuilder func(name string, arg ...string) *exec.Cmd
+type CommandBuilder func(ctx context.Context, name string, arg ...string) *exec.Cmd
 
 type Context struct {
 	Debug              bool
@@ -255,12 +255,9 @@ func (c *Context) buildLogFileName() string {
 func (c *Context) Close() error {
 	var bigErr *multierror.Error
 
-	if c.logFile != nil {
-		if err := c.logFile.Close(); err != nil {
-			err = fmt.Errorf("error closing log file %s: %w", c.logFile.Name(), err)
-			bigErr = multierror.Append(bigErr, err)
-		}
-		c.logFile = nil
+	if err := c.tracer.Close(context.Background()); err != nil {
+		err = fmt.Errorf("error closing tracer: %w", err)
+		bigErr = multierror.Append(bigErr, err)
 	}
 
 	if c.traceFile != nil {
@@ -271,34 +268,37 @@ func (c *Context) Close() error {
 		c.traceFile = nil
 	}
 
-	if err := c.tracer.Close(context.Background()); err != nil {
-		err = fmt.Errorf("error closing tracer: %w", err)
-		bigErr = multierror.Append(bigErr, err)
+	if c.logFile != nil {
+		if err := c.logFile.Close(); err != nil {
+			err = fmt.Errorf("error closing log file %s: %w", c.logFile.Name(), err)
+			bigErr = multierror.Append(bigErr, err)
+		}
+		c.logFile = nil
 	}
 
 	return bigErr.ErrorOrNil()
 }
 
 func (c *Context) defaultNewCommand() {
-	c.NewCommand = func(name string, arg ...string) *exec.Cmd {
-		return c.Command(name, arg...)
+	c.NewCommand = func(ctx context.Context, name string, arg ...string) *exec.Cmd {
+		return c.CommandContext(ctx, name, arg...)
 	}
 }
 
-// Command creates a new exec.Cmd using the context's current directory.
-func (c *Context) Command(name string, arg ...string) *exec.Cmd {
-	cmd := &exec.Cmd{
-		Dir:  c.Getwd(),
-		Path: name,
-		Args: append([]string{name}, arg...),
-		Env:  c.Environ(),
-	}
-
+// CommandContext creates a new exec.Cmd in the current directory.
+// The provided context is used to kill the process (by calling
+// os.Process.Kill) if the context becomes done before the command
+// completes on its own.
+func (c *Context) CommandContext(ctx context.Context, name string, arg ...string) *exec.Cmd {
 	if filepath.Base(name) == name {
 		if lp, ok := c.LookPath(name); ok {
-			cmd.Path = lp
+			name = lp
 		}
 	}
+
+	cmd := exec.CommandContext(ctx, name, arg...)
+	cmd.Dir = c.Getwd()
+	cmd.Env = c.Environ()
 	return cmd
 }
 

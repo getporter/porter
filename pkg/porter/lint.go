@@ -65,7 +65,7 @@ func (p *Porter) Lint(ctx context.Context, opts LintOptions) (linter.Results, er
 	}
 
 	l := linter.New(p.Context, p.Mixins)
-	return l.Lint(manifest)
+	return l.Lint(ctx, manifest)
 }
 
 // PrintLintResults lints the manifest and prints the results to the attached output.

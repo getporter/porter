@@ -47,8 +47,8 @@ func (o *ShowPluginOptions) validateName(args []string) error {
 	}
 }
 
-func (p *Porter) PrintPlugins(opts PrintPluginsOptions) error {
-	installedPlugins, err := p.ListPlugins()
+func (p *Porter) PrintPlugins(ctx context.Context, opts PrintPluginsOptions) error {
+	installedPlugins, err := p.ListPlugins(ctx)
 	if err != nil {
 		return err
 	}
@@ -73,7 +73,7 @@ func (p *Porter) PrintPlugins(opts PrintPluginsOptions) error {
 	}
 }
 
-func (p *Porter) ListPlugins() ([]plugins.Metadata, error) {
+func (p *Porter) ListPlugins(ctx context.Context) ([]plugins.Metadata, error) {
 	// List out what is installed on the file system
 	names, err := p.Plugins.List()
 	if err != nil {
@@ -84,7 +84,7 @@ func (p *Porter) ListPlugins() ([]plugins.Metadata, error) {
 	// cast from the PackageMetadata interface to the concrete type
 	installedPlugins := make([]plugins.Metadata, len(names))
 	for i, name := range names {
-		plugin, err := p.Plugins.GetMetadata(name)
+		plugin, err := p.Plugins.GetMetadata(ctx, name)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "could not get version from plugin %s: %s\n ", name, err.Error())
 			continue
@@ -97,8 +97,8 @@ func (p *Porter) ListPlugins() ([]plugins.Metadata, error) {
 	return installedPlugins, nil
 }
 
-func (p *Porter) ShowPlugin(opts ShowPluginOptions) error {
-	plugin, err := p.GetPlugin(opts.Name)
+func (p *Porter) ShowPlugin(ctx context.Context, opts ShowPluginOptions) error {
+	plugin, err := p.GetPlugin(ctx, opts.Name)
 	if err != nil {
 		return err
 	}
@@ -137,8 +137,8 @@ func (p *Porter) ShowPlugin(opts ShowPluginOptions) error {
 	}
 }
 
-func (p *Porter) GetPlugin(name string) (*plugins.Metadata, error) {
-	meta, err := p.Plugins.GetMetadata(name)
+func (p *Porter) GetPlugin(ctx context.Context, name string) (*plugins.Metadata, error) {
+	meta, err := p.Plugins.GetMetadata(ctx, name)
 	if err != nil {
 		return nil, err
 	}
@@ -157,7 +157,7 @@ func (p *Porter) InstallPlugin(ctx context.Context, opts plugins.InstallOptions)
 		return err
 	}
 
-	plugin, err := p.Plugins.GetMetadata(opts.Name)
+	plugin, err := p.Plugins.GetMetadata(ctx, opts.Name)
 	if err != nil {
 		return err
 	}

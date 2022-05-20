@@ -72,9 +72,9 @@ func NewTestContext(t *testing.T) *TestContext {
 	return c
 }
 
-func (c *TestContext) NewTestCommand(name string, args ...string) *exec.Cmd {
+func (c *TestContext) NewTestCommand(ctx context.Context, name string, args ...string) *exec.Cmd {
 	testArgs := append([]string{name}, args...)
-	cmd := exec.Command(os.Args[0], testArgs...)
+	cmd := exec.CommandContext(ctx, os.Args[0], testArgs...)
 	cmd.Dir = c.Getwd()
 
 	cmd.Env = []string{

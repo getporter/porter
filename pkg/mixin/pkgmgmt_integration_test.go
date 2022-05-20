@@ -4,6 +4,7 @@
 package mixin
 
 import (
+	"context"
 	"io/ioutil"
 	"testing"
 
@@ -13,6 +14,8 @@ import (
 )
 
 func TestPackageManager_GetSchema(t *testing.T) {
+	ctx := context.Background()
+
 	c := config.NewTestConfig(t)
 	c.TestContext.UseFilesystem()
 
@@ -21,7 +24,7 @@ func TestPackageManager_GetSchema(t *testing.T) {
 	c.SetHomeDir(binDir)
 
 	p := NewPackageManager(c.Config)
-	gotSchema, err := p.GetSchema("exec")
+	gotSchema, err := p.GetSchema(ctx, "exec")
 	require.NoError(t, err)
 
 	wantSchema, err := ioutil.ReadFile("../exec/schema/exec.json")

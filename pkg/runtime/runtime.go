@@ -1,6 +1,7 @@
 package runtime
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"path/filepath"
@@ -31,7 +32,7 @@ func NewPorterRuntime(cxt *portercontext.Context, mixins pkgmgmt.PackageManager)
 	}
 }
 
-func (r *PorterRuntime) Execute(rm *RuntimeManifest) error {
+func (r *PorterRuntime) Execute(ctx context.Context, rm *RuntimeManifest) error {
 	r.RuntimeManifest = rm
 
 	installationName := r.Getenv(config.EnvInstallationName)
@@ -69,7 +70,7 @@ func (r *PorterRuntime) Execute(rm *RuntimeManifest) error {
 
 	var bigErr *multierror.Error
 	for _, step := range r.RuntimeManifest.GetSteps() {
-		err = r.executeStep(step)
+		err = r.executeStep(ctx, step)
 		if err != nil {
 			bigErr = multierror.Append(bigErr, err)
 			break
@@ -84,7 +85,7 @@ func (r *PorterRuntime) Execute(rm *RuntimeManifest) error {
 	return bigErr.ErrorOrNil()
 }
 
-func (r *PorterRuntime) executeStep(step *manifest.Step) error {
+func (r *PorterRuntime) executeStep(ctx context.Context, step *manifest.Step) error {
 	if step == nil {
 		return nil
 	}
@@ -111,7 +112,7 @@ func (r *PorterRuntime) executeStep(step *manifest.Step) error {
 		Input:   string(inputBytes),
 		Runtime: true,
 	}
-	err = r.mixins.Run(r.Context, step.GetMixinName(), cmd)
+	err = r.mixins.Run(ctx, r.Context, step.GetMixinName(), cmd)
 	if err != nil {
 		return errors.Wrap(err, "mixin execution failed")
 	}

@@ -18,7 +18,7 @@ import (
 	dtprinter "github.com/carolynvs/datetime-printer"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
-	tablewriter "github.com/olekukonko/tablewriter"
+	"github.com/olekukonko/tablewriter"
 	"github.com/pkg/errors"
 	"go.mongodb.org/mongo-driver/bson"
 )
@@ -183,7 +183,7 @@ func (p *Porter) EditParameter(ctx context.Context, opts ParameterEditOptions) e
 	}
 
 	editor := editor.New(p.Context, fmt.Sprintf("porter-%s.yaml", paramSet.Name), contents)
-	output, err := editor.Run()
+	output, err := editor.Run(ctx)
 	if err != nil {
 		return errors.Wrap(err, "unable to open editor to edit parameter set")
 	}

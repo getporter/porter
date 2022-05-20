@@ -65,9 +65,6 @@ func (c *Context) createTracer(ctx context.Context, cfg LogConfiguration, logger
 		return createNoopTracer(), nil
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, time.Second)
-	defer cancel()
-
 	var exporter sdktrace.SpanExporter
 	if cfg.TelemetryRedirectToFile {
 		// Instead of sending trace data to a collector
@@ -90,7 +87,9 @@ func (c *Context) createTracer(ctx context.Context, cfg LogConfiguration, logger
 			return tracing.Tracer{}, fmt.Errorf("error creating a file trace exporter: %w", err)
 		}
 	} else {
-		exporter, err = otlptrace.New(ctx, client)
+		createTraceCtx, cancel := context.WithTimeout(ctx, time.Second)
+		defer cancel()
+		exporter, err = otlptrace.New(createTraceCtx, client)
 		if err != nil {
 			return tracing.Tracer{}, fmt.Errorf("error creating an open telemetry trace exporter: %w", err)
 		}

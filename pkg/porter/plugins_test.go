@@ -14,6 +14,7 @@ import (
 
 func TestPorter_PrintPlugins(t *testing.T) {
 	t.Run("plaintext", func(t *testing.T) {
+		ctx := context.Background()
 		p := NewTestPorter(t)
 		defer p.Close()
 
@@ -22,7 +23,7 @@ func TestPorter_PrintPlugins(t *testing.T) {
 				Format: printer.FormatPlaintext,
 			},
 		}
-		err := p.PrintPlugins(opts)
+		err := p.PrintPlugins(ctx, opts)
 
 		require.Nil(t, err)
 
@@ -31,6 +32,7 @@ func TestPorter_PrintPlugins(t *testing.T) {
 	})
 
 	t.Run("yaml", func(t *testing.T) {
+		ctx := context.Background()
 		p := NewTestPorter(t)
 		defer p.Close()
 
@@ -39,7 +41,7 @@ func TestPorter_PrintPlugins(t *testing.T) {
 				Format: printer.FormatYaml,
 			},
 		}
-		err := p.PrintPlugins(opts)
+		err := p.PrintPlugins(ctx, opts)
 
 		require.Nil(t, err)
 		expected := `- name: plugin1
@@ -74,6 +76,7 @@ func TestPorter_PrintPlugins(t *testing.T) {
 	})
 
 	t.Run("json", func(t *testing.T) {
+		ctx := context.Background()
 		p := NewTestPorter(t)
 		defer p.Close()
 
@@ -82,7 +85,7 @@ func TestPorter_PrintPlugins(t *testing.T) {
 				Format: printer.FormatJson,
 			},
 		}
-		err := p.PrintPlugins(opts)
+		err := p.PrintPlugins(ctx, opts)
 
 		require.Nil(t, err)
 		expected := `[
@@ -134,12 +137,14 @@ func TestPorter_PrintPlugins(t *testing.T) {
 
 func TestPorter_ShowPlugin(t *testing.T) {
 	t.Run("plaintext", func(t *testing.T) {
+		ctx := context.Background()
+
 		p := NewTestPorter(t)
 		defer p.Close()
 
 		opts := ShowPluginOptions{Name: "plugin1"}
 		opts.Format = printer.FormatPlaintext
-		err := p.ShowPlugin(opts)
+		err := p.ShowPlugin(ctx, opts)
 		require.NoError(t, err, "ShowPlugin failed")
 
 		expected := `Name: plugin1
@@ -158,12 +163,13 @@ Author: Porter Authors
 	})
 
 	t.Run("yaml", func(t *testing.T) {
+		ctx := context.Background()
 		p := NewTestPorter(t)
 		defer p.Close()
 
 		opts := ShowPluginOptions{Name: "plugin1"}
 		opts.Format = printer.FormatYaml
-		err := p.ShowPlugin(opts)
+		err := p.ShowPlugin(ctx, opts)
 		require.NoError(t, err, "ShowPlugin failed")
 
 		expected := `name: plugin1
@@ -182,12 +188,14 @@ implementations:
 	})
 
 	t.Run("json", func(t *testing.T) {
+		ctx := context.Background()
+
 		p := NewTestPorter(t)
 		defer p.Close()
 
 		opts := ShowPluginOptions{Name: "plugin1"}
 		opts.Format = printer.FormatJson
-		err := p.ShowPlugin(opts)
+		err := p.ShowPlugin(ctx, opts)
 		require.NoError(t, err, "ShowPlugin failed")
 
 		expected := `{

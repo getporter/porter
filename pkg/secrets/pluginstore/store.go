@@ -21,7 +21,7 @@ var _ plugins.SecretsProtocol = &Store{}
 type Store struct {
 	*config.Config
 	plugin plugins.SecretsProtocol
-	conn   pluggable.PluginConnection
+	conn   *pluggable.PluginConnection
 }
 
 func NewStore(c *config.Config) *Store {
@@ -102,10 +102,10 @@ func (s *Store) Connect(ctx context.Context) error {
 	}
 	s.conn = conn
 
-	store, ok := conn.Client.(plugins.SecretsProtocol)
+	store, ok := conn.GetClient().(plugins.SecretsProtocol)
 	if !ok {
-		conn.Close()
-		return span.Error(errors.Errorf("the interface exposed by the %s plugin was not plugins.SecretsProtocol", l.SelectedPluginKey))
+		conn.Close(ctx)
+		return span.Error(fmt.Errorf("the interface (%T) exposed by the %s plugin was not plugins.SecretsProtocol", conn.GetClient(), conn))
 	}
 	s.plugin = store
 
@@ -113,7 +113,9 @@ func (s *Store) Connect(ctx context.Context) error {
 }
 
 func (s *Store) Close() error {
-	s.conn.Close()
-	s.plugin = nil
+	if s.conn != nil {
+		s.conn.Close(context.Background())
+		s.conn = nil
+	}
 	return nil
 }

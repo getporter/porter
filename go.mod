@@ -9,9 +9,9 @@ replace (
 
 	// See https://github.com/hashicorp/go-plugin/pull/127 and
 	// https://github.com/hashicorp/go-plugin/pull/163
-	// Also includes a branch we haven't PR'd yet: capture-yamux-logs
-	// Tagged from v1.4.3, the improved-configuration branch
-	github.com/hashicorp/go-plugin => github.com/getporter/go-plugin v1.4.3-improved-configuration.1
+	// Also includes branches we haven't PR'd yet: capture-yamux-logs, context-cancellation
+	// Tagged from v1.4.4, the porter branch
+	github.com/hashicorp/go-plugin => github.com/getporter/go-plugin v1.4.4-porter.1
 
 	// Fixes https://github.com/spf13/viper/issues/761
 	github.com/spf13/viper => github.com/getporter/viper v1.7.1-porter.2.0.20210514172839-3ea827168363

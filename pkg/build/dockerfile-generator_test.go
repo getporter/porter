@@ -208,13 +208,14 @@ COPY mybin /cnab/app/
 func TestPorter_buildMixinsSection_mixinErr(t *testing.T) {
 	t.Parallel()
 
+	ctx := context.Background()
 	c := config.NewTestConfig(t)
 	tmpl := templates.NewTemplates(c.Config)
 	configTpl, err := tmpl.GetManifest()
 	require.Nil(t, err)
 	c.TestContext.AddTestFileContents(configTpl, config.Name)
 
-	m, err := manifest.LoadManifestFrom(context.Background(), c.Config, config.Name)
+	m, err := manifest.LoadManifestFrom(ctx, c.Config, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
 	m.Mixins = []manifest.MixinDeclaration{{Name: "exec"}}
@@ -222,6 +223,6 @@ func TestPorter_buildMixinsSection_mixinErr(t *testing.T) {
 	mp := mixin.NewTestMixinProvider()
 	mp.ReturnBuildError = true
 	g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
-	_, err = g.buildMixinsSection()
+	_, err = g.buildMixinsSection(ctx)
 	require.EqualError(t, err, "1 error occurred:\n\t* error encountered from mixin \"exec\": encountered build error\n\n")
 }

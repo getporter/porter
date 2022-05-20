@@ -1,6 +1,7 @@
 package mixin
 
 import (
+	"context"
 	"testing"
 
 	"get.porter.sh/porter/pkg/pkgmgmt"
@@ -25,13 +26,14 @@ func TestRunner_BuildCommand(t *testing.T) {
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
+			ctx := context.Background()
 			r := client.NewTestRunner(t, "exec", "mixins", false)
 			r.Debug = false
 			r.Setenv(test.ExpectedCommandEnv, tc.wantCommand)
 
 			mgr := PackageManager{}
 			cmd := pkgmgmt.CommandOptions{Command: tc.runnerCommand, PreRun: mgr.PreRunMixinCommandHandler}
-			err := r.Run(cmd)
+			err := r.Run(ctx, cmd)
 			require.NoError(t, err)
 		})
 	}

@@ -169,7 +169,7 @@ func (p *Porter) EditCredential(ctx context.Context, opts CredentialEditOptions)
 	}
 
 	editor := editor.New(p.Context, fmt.Sprintf("porter-%s.yaml", credSet.Name), contents)
-	output, err := editor.Run()
+	output, err := editor.Run(ctx)
 	if err != nil {
 		return errors.Wrap(err, "unable to open editor to edit credentials")
 	}

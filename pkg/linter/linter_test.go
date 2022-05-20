@@ -1,6 +1,7 @@
 package linter
 
 import (
+	"context"
 	"testing"
 
 	"get.porter.sh/porter/pkg/manifest"
@@ -10,6 +11,7 @@ import (
 )
 
 func TestLinter_Lint(t *testing.T) {
+	ctx := context.Background()
 	t.Run("no results", func(t *testing.T) {
 		cxt := portercontext.NewTestContext(t)
 		mixins := mixin.NewTestMixinProvider()
@@ -23,7 +25,7 @@ func TestLinter_Lint(t *testing.T) {
 		}
 		mixins.LintResults = nil
 
-		results, err := l.Lint(m)
+		results, err := l.Lint(ctx, m)
 		require.NoError(t, err, "Lint failed")
 		require.Len(t, results, 0, "linter should have returned 0 results")
 	})
@@ -47,7 +49,7 @@ func TestLinter_Lint(t *testing.T) {
 			},
 		}
 
-		results, err := l.Lint(m)
+		results, err := l.Lint(ctx, m)
 		require.NoError(t, err, "Lint failed")
 		require.Len(t, results, 1, "linter should have returned 1 result")
 		require.Equal(t, mixins.LintResults, results, "unexpected lint results")
@@ -65,7 +67,7 @@ func TestLinter_Lint(t *testing.T) {
 			},
 		}
 
-		results, err := l.Lint(m)
+		results, err := l.Lint(ctx, m)
 		require.NoError(t, err, "Lint failed")
 		require.Len(t, results, 0, "linter should ignore mixins that doesn't support the lint command")
 	})

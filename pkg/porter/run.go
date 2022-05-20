@@ -87,7 +87,7 @@ func (p *Porter) Run(ctx context.Context, opts RunOptions) error {
 
 	runtimeManifest := runtime.NewRuntimeManifest(p.Context, opts.Action, m)
 	r := runtime.NewPorterRuntime(p.Context, p.Mixins)
-	err = r.Execute(runtimeManifest)
+	err = r.Execute(ctx, runtimeManifest)
 	if err == nil {
 		fmt.Fprintln(r.Out, "execution completed successfully!")
 	}

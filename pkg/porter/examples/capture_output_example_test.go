@@ -2,6 +2,7 @@ package examples_test
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"log"
 
@@ -17,7 +18,7 @@ func ExampleCaptureOutput() {
 	p.Out = &output
 
 	// porter schema
-	err := p.PrintManifestSchema()
+	err := p.PrintManifestSchema(context.Background())
 	if err != nil {
 		log.Fatal(err)
 	}

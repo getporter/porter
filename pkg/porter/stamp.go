@@ -93,7 +93,7 @@ func (p *Porter) IsBundleUpToDate(ctx context.Context, opts bundleFileOptions) (
 			return false, errors.Wrapf(err, "could not load stamp from %s", opts.CNABFile)
 		}
 
-		mixins, err := p.getUsedMixins(m)
+		mixins, err := p.getUsedMixins(ctx, m)
 		if err != nil {
 			return false, errors.Wrapf(err, "error while listing used mixins")
 		}
