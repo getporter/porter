@@ -331,7 +331,9 @@ func (p *Porter) printBundleExplainTable(bun *PrintableBundle, bundleReference s
 	p.printActionsExplainBlock(bun)
 	p.printDependenciesExplainBlock(bun)
 
-	fmt.Fprintf(p.Out, "This bundle uses the following tools: %s.\n", strings.Join(bun.Mixins, ", "))
+	if extendedBundle.IsPorterBundle() && len(bun.Mixins) > 0 {
+		fmt.Fprintf(p.Out, "This bundle uses the following tools: %s.\n", strings.Join(bun.Mixins, ", "))
+	}
 
 	if extendedBundle.SupportsDocker() {
 		fmt.Fprintln(p.Out, "") // force a blank line before this block
