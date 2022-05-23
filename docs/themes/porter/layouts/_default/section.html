@@ -18,7 +18,7 @@
       <div class="row full-width">
         <div class="small-1 columns">&nbsp;</div>
         <div class="small-10 columns">
-            {{ range .Pages }}
+            {{ range (where .Pages ".Params.unlisted" "!=" "true") }}
             <article>
               <header>
                 <h2><a href="{{ .Permalink }}">{{ .Title }}</a></h2>
