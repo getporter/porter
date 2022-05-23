@@ -447,3 +447,47 @@ func TestExplain_generateJSONForDependencies(t *testing.T) {
 
 	p.CompareGoldenFile("testdata/explain/expected-json-dependencies-output.json", gotOutput)
 }
+
+func TestExplain_generateTableNonPorterBundle(t *testing.T) {
+	p := NewTestPorter(t)
+	defer p.Close()
+
+	p.TestConfig.TestContext.AddTestFile("testdata/explain/params-bundle-non-porter.json", "params-bundle.json")
+	b, err := p.CNAB.LoadBundle("params-bundle.json")
+
+	pb, err := generatePrintable(b, "")
+	require.NoError(t, err)
+	opts := ExplainOpts{}
+	opts.RawFormat = "plaintext"
+
+	err = opts.Validate([]string{}, p.Context)
+	require.NoError(t, err)
+
+	err = p.printBundleExplain(opts, pb, b)
+	assert.NoError(t, err)
+
+	gotOutput := p.TestConfig.TestContext.GetOutput()
+	test.CompareGoldenFile(t, "testdata/explain/expected-table-output-non-porter.txt", gotOutput)
+}
+
+func TestExplain_generateTableBundleWithNoMixins(t *testing.T) {
+	p := NewTestPorter(t)
+	defer p.Close()
+
+	p.TestConfig.TestContext.AddTestFile("testdata/explain/params-bundle-no-mixins.json", "params-bundle.json")
+	b, err := p.CNAB.LoadBundle("params-bundle.json")
+
+	pb, err := generatePrintable(b, "")
+	require.NoError(t, err)
+	opts := ExplainOpts{}
+	opts.RawFormat = "plaintext"
+
+	err = opts.Validate([]string{}, p.Context)
+	require.NoError(t, err)
+
+	err = p.printBundleExplain(opts, pb, b)
+	assert.NoError(t, err)
+
+	gotOutput := p.TestConfig.TestContext.GetOutput()
+	test.CompareGoldenFile(t, "testdata/explain/expected-table-output-no-mixins.txt", gotOutput)
+}
