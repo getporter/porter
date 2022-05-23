@@ -284,6 +284,34 @@ func ConvertBsonToPrimitives(src interface{}) interface{} {
 	}
 }
 
+// ConvertSliceToBsonD converts go slices to bson primitive.
+// it also works around a weirdness in how numbers are represented
+// by structpb.Value, where integer values are stored in float64. When we
+// deserialize from protobuf, this walks the specified value, finds ints
+// that were encoded as floats, and converts them back to ints.
+func ConvertSliceToBsonD(src interface{}) interface{} {
+	switch tv := src.(type) {
+	case []interface{}:
+		toBson := make(bson.D, 0, len(tv))
+		for _, item := range tv {
+			converted := ConvertSliceToBsonD(item)
+			if m, ok := converted.(map[string]interface{}); ok {
+				for k, v := range m {
+					toBson = append(toBson, bson.E{Key: k, Value: v})
+				}
+			}
+		}
+		return toBson
+	case map[string]interface{}:
+		for k, v := range tv {
+			tv[k] = ConvertSliceToBsonD(v)
+		}
+		return tv
+	default:
+		return tv
+	}
+}
+
 // ConvertFloatToInt works around a weirdness in how numbers are represented
 // by structpb.Value, where integer values are stored in float64. When we
 // deserialize from protobuf, this walks the specified value, finds ints
@@ -358,10 +386,14 @@ func NewStruct(src map[string]interface{}) *structpb.Struct {
 }
 
 // AsMap converts a protobuf struct into its original representation, bson.M.
-func AsMap(src *structpb.Struct) bson.M {
+func AsMap(src *structpb.Struct, c ...converter) bson.M {
 	dest := src.AsMap()
 	for k, v := range dest {
-		dest[k] = ConvertFloatToInt(v)
+		converted := ConvertFloatToInt(v)
+		for _, convert := range c {
+			converted = convert(v)
+		}
+		dest[k] = converted
 	}
 	return dest
 }
@@ -374,12 +406,14 @@ func AsMapList(src []*structpb.Struct) []bson.M {
 	return dest
 }
 
+type converter func(src interface{}) interface{}
+
 // AsOrderedMap converts an array of protobuf structs into its original
 // representation, bson.D.
-func AsOrderedMap(src []*structpb.Struct) bson.D {
+func AsOrderedMap(src []*structpb.Struct, c ...converter) bson.D {
 	dest := make(bson.D, 0, len(src))
 	for _, item := range src {
-		for k, v := range AsMap(item) {
+		for k, v := range AsMap(item, c...) {
 			dest = append(dest, bson.E{Key: k, Value: v})
 		}
 	}
@@ -391,7 +425,7 @@ func AsOrderedMap(src []*structpb.Struct) bson.D {
 func AsOrderedMapList(src []*proto.Stage) []bson.D {
 	dest := make([]bson.D, len(src))
 	for i, item := range src {
-		dest[i] = AsOrderedMap(item.Steps)
+		dest[i] = AsOrderedMap(item.Steps, ConvertSliceToBsonD)
 	}
 	return dest
 }

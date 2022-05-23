@@ -66,4 +66,54 @@ func TestRoundTripDataOverGRPC(t *testing.T) {
 	var gotThing1 bson.M
 	require.NoError(t, bson.Unmarshal(results[0], &gotThing1))
 	assert.Equal(t, thing1, gotThing1)
+
+	opts := plugins.EnsureIndexOptions{
+		Indices: []plugins.Index{
+			// query most recent outputs by run (porter installation run show, when we list outputs)
+			{Collection: CollectionOutputs, Keys: bson.D{{"namespace", 1}, {"installation", 1}, {"-resultId", 1}}},
+			// query outputs by result (list)
+			{Collection: CollectionOutputs, Keys: bson.D{{"resultId", 1}, {"name", 1}}, Unique: true},
+			// query most recent outputs by name for an installation
+			{Collection: CollectionOutputs, Keys: bson.D{{"namespace", 1}, {"installation", 1}, {"name", 1}, {"-resultId", 1}}},
+		},
+	}
+
+	err = client.EnsureIndex(ctx, opts)
+	require.NoError(t, err)
+
+	err = client.Insert(ctx, plugins.InsertOptions{
+		Collection: CollectionOutputs,
+		Documents: []bson.M{{"namespace": "dev", "installation": "test", "name": "thing1", "resultId": "111"},
+			{"namespace": "dev", "installation": "test", "name": "thing2", "resultId": "111"},
+			{"namespace": "dev", "installation": "test", "name": "thing2", "resultId": "222"},
+		},
+	})
+	require.NoError(t, err)
+
+	aggregateResults, err := client.Aggregate(ctx, plugins.AggregateOptions{
+		Collection: CollectionOutputs,
+		Pipeline: []bson.D{
+			// List outputs by installation
+			{{"$match", bson.M{
+				"namespace":    "dev",
+				"installation": "test",
+			}}},
+			// Reverse sort them (newest on top)
+			{{"$sort", bson.D{
+				{"namespace", 1},
+				{"installation", 1},
+				{"name", 1},
+				{"resultId", -1},
+			}}},
+			// Group them by output name and select the last value for each output
+			{{"$group", bson.D{
+				{"_id", "$name"},
+				{"lastOutput", bson.M{"$first": "$$ROOT"}},
+			}}},
+		},
+	})
+	require.NoError(t, err)
+	require.Len(t, aggregateResults, 2)
+	// make sure the group function is picking the most recent output value with the same name
+	require.Contains(t, aggregateResults[0].Lookup("lastOutput").String(), "222")
 }
