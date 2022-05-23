@@ -64,7 +64,7 @@ do:
 
 * Add commands to the porter cli. This is work that never ends and is suitable
   for all levels of gophers.
-* Create a mixin! You can start use the [Porter Skeletor][skeletor] repository
+* Create a mixin! You can start using the [Porter Skeletor][skeletor] repository
   as a template to start, along with the [Mixin Developer Guide][mixin-dev-guide].
   Here's the list of [existing mixins] and [requested mixins].
 * Coordinate between writing an upstream CNAB specification, such as security or 
