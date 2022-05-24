@@ -61,3 +61,4 @@ and we will add you. **All** contributors belong here. 💯
 * [Quentin Petraroia](https://github.com/qpetraroia)
 * [Tamir Kamara](https://github.com/tamirkamara)
 * [Chioma Onyekpere](https://github.com/Simpcyclassy)
+* [Hrittik Roy](https://github.com/hrittikhere)
