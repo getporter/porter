@@ -214,30 +214,31 @@ func NewDisplayRun(run storage.Run) DisplayRun {
 }
 
 // ListInstallations lists installed bundles.
-func (p *Porter) ListInstallations(ctx context.Context, opts ListOptions) ([]storage.Installation, error) {
+func (p *Porter) ListInstallations(ctx context.Context, opts ListOptions) (DisplayInstallations, error) {
 	ctx, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
 
 	installations, err := p.Installations.ListInstallations(ctx, opts.GetNamespace(), opts.Name, opts.ParseLabels())
-	return installations, errors.Wrap(err, "could not list installations")
-}
-
-// PrintInstallations prints installed bundles.
-func (p *Porter) PrintInstallations(ctx context.Context, opts ListOptions) error {
-	installations, err := p.ListInstallations(ctx, opts)
 	if err != nil {
-		return err
+		return nil, errors.Wrap(err, "could not list installations")
 	}
 
 	var displayInstallations DisplayInstallations
 	for _, installation := range installations {
-		di, err := p.generateDisplayInstallation(ctx, installation)
-		if err != nil {
-			return err
-		}
+		di := NewDisplayInstallation(installation)
 		displayInstallations = append(displayInstallations, di)
 	}
 	sort.Sort(sort.Reverse(displayInstallations))
+
+	return displayInstallations, nil
+}
+
+// PrintInstallations prints installed bundles.
+func (p *Porter) PrintInstallations(ctx context.Context, opts ListOptions) error {
+	displayInstallations, err := p.ListInstallations(ctx, opts)
+	if err != nil {
+		return err
+	}
 
 	switch opts.Format {
 	case printer.FormatJson:
