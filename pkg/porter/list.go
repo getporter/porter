@@ -220,7 +220,7 @@ func (p *Porter) ListInstallations(ctx context.Context, opts ListOptions) (Displ
 
 	installations, err := p.Installations.ListInstallations(ctx, opts.GetNamespace(), opts.Name, opts.ParseLabels())
 	if err != nil {
-		return nil, errors.Wrap(err, "could not list installations")
+		return nil, log.Error(fmt.Errorf("could not list installations: %w", err))
 	}
 
 	var displayInstallations DisplayInstallations
