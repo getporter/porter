@@ -164,7 +164,7 @@ default-secrets-plugin = "kubernetes.secret"
   # The timeout enforced when communicating with the collector endpoint
   timeout = "3s"
 
-  # The timeout timeout enforced when establishing a connection with the collector endpoint
+  # The timeout enforced when establishing a connection with the collector endpoint
   start-timeout = "100ms"
 
   # Used for testing that porter is emitting spans without setting up an open telemetry collector
