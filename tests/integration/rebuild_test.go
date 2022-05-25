@@ -4,7 +4,6 @@
 package integration
 
 import (
-	"context"
 	"strings"
 	"testing"
 
@@ -12,7 +11,7 @@ import (
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/porter"
-	yaml "get.porter.sh/porter/pkg/yaml"
+	"get.porter.sh/porter/pkg/yaml"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -22,7 +21,7 @@ func TestRebuild_InstallNewBundle(t *testing.T) {
 
 	p := porter.NewTestPorter(t)
 	defer p.Close()
-	p.SetupIntegrationTest()
+	ctx := p.SetupIntegrationTest()
 	p.Debug = false
 
 	// Create a bundle
@@ -31,9 +30,9 @@ func TestRebuild_InstallNewBundle(t *testing.T) {
 
 	// Install a bundle without building first
 	installOpts := porter.NewInstallOptions()
-	err = installOpts.Validate(context.Background(), []string{}, p.Porter)
+	err = installOpts.Validate(ctx, []string{}, p.Porter)
 	require.NoError(t, err)
-	err = p.InstallBundle(context.Background(), installOpts)
+	err = p.InstallBundle(ctx, installOpts)
 	assert.NoError(t, err, "install should have succeeded")
 }
 
@@ -42,16 +41,16 @@ func TestRebuild_UpgradeModifiedBundle(t *testing.T) {
 
 	p := porter.NewTestPorter(t)
 	defer p.Close()
-	p.SetupIntegrationTest()
+	ctx := p.SetupIntegrationTest()
 	p.Debug = false
 
 	// Install a bundle
 	err := p.Create()
 	require.NoError(t, err)
 	installOpts := porter.NewInstallOptions()
-	err = installOpts.Validate(context.Background(), []string{}, p.Porter)
+	err = installOpts.Validate(ctx, []string{}, p.Porter)
 	require.NoError(t, err)
-	err = p.InstallBundle(context.Background(), installOpts)
+	err = p.InstallBundle(ctx, installOpts)
 	require.NoError(t, err)
 
 	// Modify the porter.yaml to trigger a rebuild
@@ -65,9 +64,9 @@ func TestRebuild_UpgradeModifiedBundle(t *testing.T) {
 
 	// Upgrade the bundle
 	upgradeOpts := porter.NewUpgradeOptions()
-	err = upgradeOpts.Validate(context.Background(), []string{}, p.Porter)
+	err = upgradeOpts.Validate(ctx, []string{}, p.Porter)
 	require.NoError(t, err)
-	err = p.UpgradeBundle(context.Background(), upgradeOpts)
+	err = p.UpgradeBundle(ctx, upgradeOpts)
 	require.NoError(t, err, "upgrade should have succeeded")
 
 	gotOutput := p.TestConfig.TestContext.GetOutput()
@@ -80,7 +79,7 @@ func TestRebuild_GenerateCredentialsNewBundle(t *testing.T) {
 
 	p := porter.NewTestPorter(t)
 	defer p.Close()
-	p.SetupIntegrationTest()
+	ctx := p.SetupIntegrationTest()
 	p.Debug = false
 
 	// Create a bundle that uses credentials
@@ -88,9 +87,9 @@ func TestRebuild_GenerateCredentialsNewBundle(t *testing.T) {
 
 	credentialOptions := porter.CredentialOptions{}
 	credentialOptions.Silent = true
-	err := credentialOptions.Validate(context.Background(), []string{}, p.Porter)
+	err := credentialOptions.Validate(ctx, []string{}, p.Porter)
 	require.NoError(t, err)
-	err = p.GenerateCredentials(context.Background(), credentialOptions)
+	err = p.GenerateCredentials(ctx, credentialOptions)
 	assert.NoError(t, err)
 
 	gotOutput := p.TestConfig.TestContext.GetOutput()
@@ -102,7 +101,7 @@ func TestRebuild_GenerateCredentialsExistingBundle(t *testing.T) {
 
 	p := porter.NewTestPorter(t)
 	defer p.Close()
-	p.SetupIntegrationTest()
+	ctx := p.SetupIntegrationTest()
 	p.Debug = false
 
 	// Create a bundle that uses credentials
@@ -110,9 +109,9 @@ func TestRebuild_GenerateCredentialsExistingBundle(t *testing.T) {
 
 	credentialOptions := porter.CredentialOptions{}
 	credentialOptions.Silent = true
-	err := credentialOptions.Validate(context.Background(), []string{}, p.Porter)
+	err := credentialOptions.Validate(ctx, []string{}, p.Porter)
 	require.NoError(t, err)
-	err = p.GenerateCredentials(context.Background(), credentialOptions)
+	err = p.GenerateCredentials(ctx, credentialOptions)
 	require.NoError(t, err)
 
 	// Modify the porter.yaml to trigger a rebuild
@@ -125,7 +124,7 @@ func TestRebuild_GenerateCredentialsExistingBundle(t *testing.T) {
 	require.NoError(t, err)
 
 	// Re-generate the credentials
-	err = p.GenerateCredentials(context.Background(), credentialOptions)
+	err = p.GenerateCredentials(ctx, credentialOptions)
 	require.NoError(t, err)
 
 	gotOutput := p.TestConfig.TestContext.GetOutput()

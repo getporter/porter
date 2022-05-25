@@ -472,6 +472,8 @@ Next run a Porter command to generate some trace data, such as `porter list`.
 Then go to the Jaeger website to see your data: http://localhost:16686.
 On the Jaeger dashboard, select "porter" from the service drop down, and click "Find Traces".
 
+The smoke and integration tests will run with telemetry enabled when the PORTER_TEST_TELEMETRY_ENABLED environment variable is true.
+
 [otel-jaeger bundle]: https://getporter.org/examples/src/otel-jaeger
 
 ## Command Documentation
