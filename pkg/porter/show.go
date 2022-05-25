@@ -172,16 +172,16 @@ func (p *Porter) ShowInstallation(ctx context.Context, opts ShowOptions) error {
 }
 
 func (p *Porter) NewDisplayInstallationWithSecrets(ctx context.Context, installation storage.Installation, run *storage.Run) (DisplayInstallation, error) {
-	bun := cnab.ExtendedBundle{run.Bundle}
-	installParams, err := p.Sanitizer.RestoreParameterSet(ctx, installation.Parameters, bun)
-	if err != nil {
-		return DisplayInstallation{}, err
-	}
-
 	displayInstallation := NewDisplayInstallation(installation)
-	displayInstallation.Parameters = installParams
 
 	if run != nil {
+		bun := cnab.ExtendedBundle{run.Bundle}
+		installParams, err := p.Sanitizer.RestoreParameterSet(ctx, installation.Parameters, bun)
+		if err != nil {
+			return DisplayInstallation{}, err
+		}
+		displayInstallation.Parameters = installParams
+
 		runParams, err := p.Sanitizer.RestoreParameterSet(ctx, run.Parameters, bun)
 		if err != nil {
 			return DisplayInstallation{}, err
