@@ -5,6 +5,7 @@ description: Useful short links to common project resources
 
 The Porter website has a number of useful short links defined to help you quickly navigate to project resources.
 
+* [/find-issue](/find-issue): View all Porter issues labeled with "help wanted" and "good first issue".
 * [/board](/board/): The Porter project board, contains issues for all repositories.
 * /board/ISSUE+LABEL: View all issues on the Porter project board with the specified label, using a plus sign in place of spaces.
     * [/board/good+first+issue](/board/good+first+issue): Good first issues for new contributors.

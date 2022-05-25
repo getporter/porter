@@ -170,7 +170,7 @@ For example, the 'debug' driver may be specified, which simply logs the info giv
 		"Name of a parameter set for the bundle. It should be a named set of parameters and may be specified multiple times.")
 	f.StringArrayVar(&opts.Params, "param", nil,
 		"Define an individual parameter in the form NAME=VALUE. Overrides parameters otherwise set via --parameter-set. May be specified multiple times.")
-	f.StringSliceVarP(&opts.CredentialIdentifiers, "cred", "c", nil,
+	f.StringArrayVarP(&opts.CredentialIdentifiers, "cred", "c", nil,
 		"Credential to use when installing the bundle. It should be a named set of credentials and may be specified multiple times.")
 	f.StringVarP(&opts.Driver, "driver", "d", porter.DefaultDriver,
 		"Specify a driver to use. Allowed values: docker, debug")
@@ -227,7 +227,7 @@ For example, the 'debug' driver may be specified, which simply logs the info giv
 		"Name of a parameter set file for the bundle. May be either a named set of parameters or a filepath, and specified multiple times.")
 	f.StringArrayVar(&opts.Params, "param", nil,
 		"Define an individual parameter in the form NAME=VALUE. Overrides parameters otherwise set via --parameter-set. May be specified multiple times.")
-	f.StringSliceVarP(&opts.CredentialIdentifiers, "cred", "c", nil,
+	f.StringArrayVarP(&opts.CredentialIdentifiers, "cred", "c", nil,
 		"Credential to use when installing the bundle. It should be a named set of credentials and may be specified multiple times.")
 	f.StringVarP(&opts.Driver, "driver", "d", porter.DefaultDriver,
 		"Specify a driver to use. Allowed values: docker, debug")
@@ -286,7 +286,7 @@ For example, the 'debug' driver may be specified, which simply logs the info giv
 		"Name of a parameter set file for the bundle. May be either a named set of parameters or a filepath, and specified multiple times.")
 	f.StringArrayVar(&opts.Params, "param", nil,
 		"Define an individual parameter in the form NAME=VALUE. Overrides parameters otherwise set via --parameter-set. May be specified multiple times.")
-	f.StringSliceVarP(&opts.CredentialIdentifiers, "cred", "c", nil,
+	f.StringArrayVarP(&opts.CredentialIdentifiers, "cred", "c", nil,
 		"Credential to use when installing the bundle. May be either a named set of credentials or a filepath, and specified multiple times.")
 	f.StringVarP(&opts.Driver, "driver", "d", porter.DefaultDriver,
 		"Specify a driver to use. Allowed values: docker, debug")
@@ -343,7 +343,7 @@ For example, the 'debug' driver may be specified, which simply logs the info giv
 		"Name of a parameter set file for the bundle. May be either a named set of parameters or a filepath, and specified multiple times.")
 	f.StringArrayVar(&opts.Params, "param", nil,
 		"Define an individual parameter in the form NAME=VALUE. Overrides parameters otherwise set via --parameter-set. May be specified multiple times.")
-	f.StringSliceVarP(&opts.CredentialIdentifiers, "cred", "c", nil,
+	f.StringArrayVarP(&opts.CredentialIdentifiers, "cred", "c", nil,
 		"Credential to use when uninstalling the bundle. May be either a named set of credentials or a filepath, and specified multiple times.")
 	f.StringVarP(&opts.Driver, "driver", "d", porter.DefaultDriver,
 		"Specify a driver to use. Allowed values: docker, debug")

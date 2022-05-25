@@ -26,6 +26,7 @@ out a particular registry and know that it will work for you.
 | **Harbor 2** | **Yes** |
 | Nexus | No |
 | Quay | No |
+| GitLab | No |
 
 If you test a registry with Porter and find that this page is out of date, [please
 let us know](https://github.com/deislabs/porter/issues/new)!

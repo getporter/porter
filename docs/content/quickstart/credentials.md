@@ -96,7 +96,7 @@ Pass credentials to a bundle with the \--cred or -c flag, where the flag value i
 For example:
 
 ```
-porter install --cred github
+porter install --cred github --reference getporter/credentials-tutorial:v0.3.0
 ```
 
 The output of this example bundle prints data from your public GitHub user profile.
