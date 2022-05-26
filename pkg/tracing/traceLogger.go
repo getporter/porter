@@ -61,6 +61,12 @@ type TraceLogger interface {
 
 	// IsTracingEnabled returns if the current logger is configed to send trace data.
 	IsTracingEnabled() bool
+}
+
+type RootTraceLogger interface {
+	TraceLogger
+
+	// Close the tracer and send data to the telemetry collector
 	Close()
 }
 
@@ -77,8 +83,10 @@ type traceLogger struct {
 	tracer Tracer
 }
 
-// Close releases the resources held by the tracer.
+// Close the root span and send the telemetry data to the collector.
 func (l traceLogger) Close() {
+	l.span.End()
+
 	if err := l.tracer.Close(context.Background()); err != nil {
 		l.Error(fmt.Errorf("error closing the Tracer: %w", err))
 	}
@@ -94,7 +102,7 @@ func (l traceLogger) IsTracingEnabled() bool {
 }
 
 // NewRootLogger creates a new TraceLogger and stores in on the context
-func NewRootLogger(ctx context.Context, span trace.Span, logger *zap.Logger, tracer Tracer) (context.Context, TraceLogger) {
+func NewRootLogger(ctx context.Context, span trace.Span, logger *zap.Logger, tracer Tracer) (context.Context, RootTraceLogger) {
 	childCtx := context.WithValue(ctx, contextKeyTraceLogger, traceLoggerContext{logger, tracer})
 	return childCtx, newTraceLogger(childCtx, span, logger, tracer)
 }

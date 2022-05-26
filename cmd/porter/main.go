@@ -79,7 +79,6 @@ func main() {
 				p.Close()
 				os.Exit(exitCodeErr)
 			} else {
-				log.EndSpan()
 				log.Close()
 				p.Close()
 			}

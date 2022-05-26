@@ -4,7 +4,6 @@
 package integration
 
 import (
-	"context"
 	"testing"
 
 	"get.porter.sh/porter/pkg/porter"
@@ -17,7 +16,7 @@ func TestSensitiveData(t *testing.T) {
 
 	p := porter.NewTestPorter(t)
 	defer p.Close()
-	p.SetupIntegrationTest()
+	ctx := p.SetupIntegrationTest()
 	p.Debug = false
 
 	bundleName := p.AddTestBundleDir("testdata/bundles/bundle-with-sensitive-data", true)
@@ -27,7 +26,6 @@ func TestSensitiveData(t *testing.T) {
 	installOpts := porter.NewInstallOptions()
 	installOpts.Params = []string{sensitiveParamName + "=" + sensitiveParamValue, "name=porter-test"}
 
-	ctx := context.Background()
 	err := installOpts.Validate(ctx, []string{}, p.Porter)
 	require.NoError(t, err)
 

@@ -116,6 +116,7 @@ func (c *Config) NewLogConfiguration() portercontext.LogConfiguration {
 		TelemetryServiceName:    "porter",
 		TelemetryDirectory:      filepath.Join(c.porterHome, "traces"),
 		TelemetryRedirectToFile: c.Data.Telemetry.RedirectToFile,
+		TelemetryStartTimeout:   c.Data.Telemetry.GetStartTimeout(),
 	}
 }
 
