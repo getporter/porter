@@ -102,8 +102,9 @@ func TestConfig_ExportRemoteConfigAsEnvironmentVariables(t *testing.T) {
 	wantEnvVars := []string{
 		"PORTER_DEBUG=true",
 		"PORTER_DEBUG_PLUGINS=true",
-		"PORTER_LOGS_LOG_TO_FILE=true",
 		"PORTER_LOGS_LEVEL=info",
+		"PORTER_LOGS_LOG_TO_FILE=true",
+		"PORTER_LOGS_STRUCTURED=true",
 		"PORTER_TELEMETRY_ENABLED=true",
 		"PORTER_TELEMETRY_REDIRECT_TO_FILE=true",
 	}

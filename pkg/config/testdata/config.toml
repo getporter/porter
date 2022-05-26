@@ -8,7 +8,7 @@ default-secrets = "red-team"
 
 
 [logs]
-  enabled = true
+  log-to-file = true
   level = "info"
   structured = true
 

@@ -134,7 +134,7 @@ default-secrets-plugin = "kubernetes.secret"
 # Log command output to a file in PORTER_HOME/logs/
 [logs]
   # Log command output to a file
-  enabled = true
+  log-to-file = true
 
   # When structured is true, the logs printed to the console 
   # include a timestamp and log level
@@ -209,11 +209,11 @@ Porter can be configured to [write a logfile for each command](/administrators/d
 
 The following log settings are available:
 
-| Setting | Environment Variable | Description |
-| -------------- | -------------------- | ----------- |
-| logs.enabled | PORTER_LOGS_ENABLED | Specifies if a logfile should be written for each command. |
-| logs.level | PORTER_LOGS_LEVEL | Filters the logs to the specified level and higher. The log level controls both the logs written to file, and the logs output to the console when porter is run. Allowed values are: debug, info, warn, error. |
+| Setting          | Environment Variable    | Description                                                                                                                                                                                                    |
+|------------------|-------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| logs.log-to-file | PORTER_LOGS_LOG_TO_FILE | Specifies if a logfile should be written for each command.                                                                                                                                                     |
 | logs.structured  | PORTER_LOGS_STRUCTURED  | Specifies if the logs printed to the console should include a timestamp and log level                                                                                                                          | 
+| logs.level       | PORTER_LOGS_LEVEL       | Filters the logs to the specified level and higher. The log level controls both the logs written to file, and the logs output to the console when porter is run. Allowed values are: debug, info, warn, error. |
 
 #### Telemetry
 
