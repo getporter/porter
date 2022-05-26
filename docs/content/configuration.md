@@ -136,6 +136,10 @@ default-secrets-plugin = "kubernetes.secret"
   # Log command output to a file
   enabled = true
 
+  # When structured is true, the logs printed to the console 
+  # include a timestamp and log level
+  structured = false
+
   # Sets the log level for what is written to the file
   # Allowed values: debug, info, warn, error
   level = "info"
@@ -209,6 +213,7 @@ The following log settings are available:
 | -------------- | -------------------- | ----------- |
 | logs.enabled | PORTER_LOGS_ENABLED | Specifies if a logfile should be written for each command. |
 | logs.level | PORTER_LOGS_LEVEL | Filters the logs to the specified level and higher. The log level controls both the logs written to file, and the logs output to the console when porter is run. Allowed values are: debug, info, warn, error. |
+| logs.structured  | PORTER_LOGS_STRUCTURED  | Specifies if the logs printed to the console should include a timestamp and log level                                                                                                                          | 
 
 #### Telemetry
 

@@ -6,11 +6,11 @@ default-storage = "dev"
 default-secrets-plugin = "azure.keyvault"
 default-secrets = "red-team"
 
-experimental = ["structured-logs"]
 
 [logs]
   enabled = true
   level = "info"
+  structured = true
 
 [telemetry]
   enabled = true

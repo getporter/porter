@@ -10,6 +10,8 @@ import (
 type LogConfig struct {
 	Enabled bool     `mapstructure:"enabled"`
 	Level   LogLevel `mapstructure:"level"`
+	// Structured indicates if the logs sent to the console should include timestamp and log levels
+	Structured bool     `mapstructure:"structured"`
 }
 
 // TelemetryConfig specifies how to connect to an open telemetry collector.
