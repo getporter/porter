@@ -16,7 +16,7 @@ type Data struct {
 	// Values are dynamically applied to flags and don't need to be defined
 
 	// BuildDriver is the driver to use when building bundles.
-	// Available values are: docker, buildkit.
+	// Available values are: buildkit.
 	// Do not use directly, use Config.GetBuildDriver.
 	BuildDriver string `mapstructure:"build-driver"`
 
