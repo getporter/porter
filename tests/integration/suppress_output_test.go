@@ -4,7 +4,6 @@
 package integration
 
 import (
-	"context"
 	"testing"
 
 	"get.porter.sh/porter/pkg/porter"
@@ -16,9 +15,8 @@ func TestSuppressOutput(t *testing.T) {
 
 	p := porter.NewTestPorter(t)
 	defer p.Close()
-	p.SetupIntegrationTest()
+	ctx := p.SetupIntegrationTest()
 	p.Debug = false
-	ctx := context.Background()
 
 	bundleName := p.AddTestBundleDir("testdata/bundles/suppressed-output-example", true)
 

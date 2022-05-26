@@ -13,3 +13,8 @@ Usage: Microsoft uses bundles to share best practices and quickstarts for runnin
 Status: Production ✅  
 Country: Germany 🇩🇪  
 Usage: We use bundles to handover deliverables to customers in a standardized, reliable, and secure way.
+
+#### [F5](https://www.f5.com)
+Status: Internal ✅  
+Country: United States 🇺🇸  
+Usage: F5, Inc uses bundles to provide a catalog of best practice architecture references and development environments.  
