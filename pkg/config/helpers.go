@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg"
-	"get.porter.sh/porter/pkg/experimental"
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/tracing"
 )
@@ -72,7 +71,6 @@ func (c *TestConfig) SetupIntegrationTest() (ctx context.Context, testDir string
 	// Check if telemetry should be enabled for the test
 	if telemetryEnabled, _ := strconv.ParseBool(os.Getenv("PORTER_TEST_TELEMETRY_ENABLED")); telemetryEnabled {
 		// Okay someone is listening, configure the tracer
-		c.SetExperimentalFlags(experimental.FlagStructuredLogs)
 		c.Data.Telemetry.Enabled = true
 		c.Data.Telemetry.Insecure = true
 		c.Data.Telemetry.Protocol = "grpc"

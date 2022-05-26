@@ -73,8 +73,8 @@ output = "json"
 # Allow all bundles access to the Docker Host
 allow-docker-host-access = true
 
-# Enable experimental v1 features
-experimental = ["build-drivers", "structured-logs"]
+# Enable experimental features
+experimental = ["flagA", "flagB"]
 
 # Use Docker buildkit to build the bundle
 build-driver = "buildkit"
@@ -191,20 +191,17 @@ feature by:
 
 ### Build Drivers
 
-The **build-drivers** experimental feature flag is no longer used.
+The **build-drivers** experimental feature flag is no longer active.
 Build drivers are enabled by default and the only available driver is buildkit.
 
 ### Structured Logs
 
-The **structured-logs** experimental feature flag enables advanced [logging configuration](#logs)
-and exporting [telemetry](#telemetry) data.
-
-When this feature is enabled, the logs output to the console will contain additional information such as the log level, timestamp and optional context information.
+The **structured-logs** experimental feature flag is no longer active.
+Use the trace and logs configuration sections below to configure how logs and telemetry should be collected.
 
 #### Logs
 
 Porter can be configured to [write a logfile for each command](/administrators/diagnostics/#logs).
-This feature requires the [structured-logs](#structured-logs) feature to be enabled.
 
 The following log settings are available:
 
@@ -216,7 +213,6 @@ The following log settings are available:
 #### Telemetry
 
 Porter supports the OpenTelemetry specification for exporting trace data.
-This feature requires the [structured-logs](#structured-logs) feature to be enabled.
 
 Porter automatically uses the standard [OpenTelemetry environment variables][otel] to configure the trace exporter.
 
@@ -234,8 +230,6 @@ Porter automatically uses the standard [OpenTelemetry environment variables][ote
 Below is a sample Porter configuration file that demonstrates how to set each of the telemetry settings:
 
 ```toml
-experimental = ["structured-logs"]
-
 [telemetry]
   enabled = true
   protocol = "grpc"
