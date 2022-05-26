@@ -138,7 +138,7 @@ func (l *PluginLoader) readPluginConfig() (io.Reader, error) {
 
 	b, err := json.Marshal(l.selectedPluginConfig)
 	if err != nil {
-		return nil, errors.Wrapf(err, "could not marshal plugin config %#v", l.selectedPluginConfig)
+		return nil, errors.Wrapf(err, "could not marshal plugin config for %s", l.selectedPluginKey)
 	}
 
 	return bytes.NewBuffer(b), nil
