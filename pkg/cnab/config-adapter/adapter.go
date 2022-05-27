@@ -9,7 +9,6 @@ import (
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/mixin"
-	"get.porter.sh/porter/pkg/portercontext"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
 )
@@ -18,20 +17,20 @@ const SchemaVersion = "v1.0.0"
 
 // ManifestConverter converts from a porter manifest to a CNAB bundle definition.
 type ManifestConverter struct {
-	*portercontext.Context
+	config          *config.Config
 	Manifest        *manifest.Manifest
 	ImageDigests    map[string]string
 	InstalledMixins []mixin.Metadata
 }
 
 func NewManifestConverter(
-	cxt *portercontext.Context,
+	config *config.Config,
 	manifest *manifest.Manifest,
 	imageDigests map[string]string,
 	mixins []mixin.Metadata,
 ) *ManifestConverter {
 	return &ManifestConverter{
-		Context:         cxt,
+		config:          config,
 		Manifest:        manifest,
 		ImageDigests:    imageDigests,
 		InstalledMixins: mixins,
@@ -197,7 +196,7 @@ func (c *ManifestConverter) generateBundleParameters(defs *definition.Definition
 				// Assume it's a string otherwise
 				param.Type = "string"
 			}
-			fmt.Fprintf(c.Out, "Defaulting the type of parameter %s to %s\n", param.Name, param.Type)
+			fmt.Fprintf(c.config.Err, "Defaulting the type of parameter %s to %s\n", param.Name, param.Type)
 		}
 
 		// Create a definition that matches the parameter if one isn't already defined
@@ -249,7 +248,7 @@ func (c *ManifestConverter) generateBundleOutputs(defs *definition.Definitions) 
 				// Assume it's a string otherwise
 				output.Type = "string"
 			}
-			fmt.Fprintf(c.Out, "Defaulting the type of output %s to %s\n", output.Name, output.Type)
+			fmt.Fprintf(c.config.Err, "Defaulting the type of output %s to %s\n", output.Name, output.Type)
 		}
 
 		// Create a definition that matches the output if one isn't already defined

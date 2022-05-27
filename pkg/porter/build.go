@@ -204,7 +204,7 @@ func (p *Porter) buildBundle(ctx context.Context, m *manifest.Manifest, digest d
 		return err
 	}
 
-	converter := configadapter.NewManifestConverter(p.Context, m, imageDigests, mixins)
+	converter := configadapter.NewManifestConverter(p.Config, m, imageDigests, mixins)
 	bun, err := converter.ToBundle()
 	if err != nil {
 		return err

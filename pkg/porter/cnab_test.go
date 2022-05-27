@@ -145,7 +145,7 @@ func TestSharedOptions_ParseParamSets_Failed(t *testing.T) {
 
 	m, err := manifest.LoadManifestFrom(context.Background(), p.Config, config.Name)
 	require.NoError(t, err)
-	bun, err := configadapter.ConvertToTestBundle(p.Context, m)
+	bun, err := configadapter.ConvertToTestBundle(p.Config, m)
 	require.NoError(t, err)
 
 	opts := sharedOptions{
@@ -172,7 +172,7 @@ func TestSharedOptions_LoadParameters(t *testing.T) {
 	p.TestConfig.TestContext.AddTestFile("testdata/porter.yaml", config.Name)
 	m, err := manifest.LoadManifestFrom(context.Background(), p.Config, config.Name)
 	require.NoError(t, err)
-	bun, err := configadapter.ConvertToTestBundle(p.Context, m)
+	bun, err := configadapter.ConvertToTestBundle(p.Config, m)
 	require.NoError(t, err)
 
 	opts := sharedOptions{}
@@ -368,7 +368,7 @@ func TestSharedOptions_populateInternalParameterSet(t *testing.T) {
 	p.TestConfig.TestContext.AddTestFile("testdata/porter.yaml", config.Name)
 	m, err := manifest.LoadManifestFrom(context.Background(), p.Config, config.Name)
 	require.NoError(t, err)
-	bun, err := configadapter.ConvertToTestBundle(p.Context, m)
+	bun, err := configadapter.ConvertToTestBundle(p.Config, m)
 	require.NoError(t, err)
 
 	sensitiveParamName := "my-second-param"

@@ -31,7 +31,7 @@ func TestConfig_GenerateStamp(t *testing.T) {
 		{Name: "exec", VersionInfo: pkgmgmt.VersionInfo{Version: "v1.2.3"}},
 	}
 
-	a := NewManifestConverter(c.Context, m, nil, installedMixins)
+	a := NewManifestConverter(c.Config, m, nil, installedMixins)
 	stamp, err := a.GenerateStamp()
 	require.NoError(t, err, "DigestManifest failed")
 	assert.Equal(t, simpleManifestDigest, stamp.ManifestDigest)
@@ -144,7 +144,7 @@ func TestConfig_DigestManifest(t *testing.T) {
 		m, err := manifest.LoadManifestFrom(context.Background(), c.Config, config.Name)
 		require.NoError(t, err, "could not load manifest")
 
-		a := NewManifestConverter(c.Context, m, nil, nil)
+		a := NewManifestConverter(c.Config, m, nil, nil)
 		digest, err := a.DigestManifest()
 		require.NoError(t, err, "DigestManifest failed")
 
@@ -173,7 +173,7 @@ func TestConfig_GenerateStamp_IncludeVersion(t *testing.T) {
 	m, err := manifest.LoadManifestFrom(context.Background(), c.Config, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
-	a := NewManifestConverter(c.Context, m, nil, nil)
+	a := NewManifestConverter(c.Config, m, nil, nil)
 	stamp, err := a.GenerateStamp()
 	require.NoError(t, err, "DigestManifest failed")
 	assert.Equal(t, "v1.2.3", stamp.Version)
