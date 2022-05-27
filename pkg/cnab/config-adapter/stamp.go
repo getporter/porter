@@ -1,6 +1,7 @@
 package configadapter
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
@@ -12,6 +13,7 @@ import (
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/portercontext"
+	"get.porter.sh/porter/pkg/tracing"
 	"github.com/pkg/errors"
 )
 
@@ -67,7 +69,9 @@ type MixinRecord struct {
 	Version string `json:"version"`
 }
 
-func (c *ManifestConverter) GenerateStamp() (Stamp, error) {
+func (c *ManifestConverter) GenerateStamp(ctx context.Context) (Stamp, error) {
+	log := tracing.LoggerFromContext(ctx)
+
 	stamp := Stamp{}
 
 	// Remember the original porter.yaml, base64 encoded to avoid canonical json shenanigans
@@ -89,7 +93,7 @@ func (c *ManifestConverter) GenerateStamp() (Stamp, error) {
 	if err != nil {
 		// The digest is only used to decide if we need to rebuild, it is not an error condition to not
 		// have a digest.
-		fmt.Fprintln(c.config.Err, errors.Wrap(err, "WARNING: Could not digest the porter manifest file"))
+		log.Error(fmt.Errorf("WARNING: Could not digest the porter manifest file: %w", err))
 		stamp.ManifestDigest = "unknown"
 	} else {
 		stamp.ManifestDigest = digest

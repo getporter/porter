@@ -143,9 +143,10 @@ func TestSharedOptions_ParseParamSets_Failed(t *testing.T) {
 	p.TestConfig.TestContext.AddTestFile("testdata/porter-with-file-param.yaml", config.Name)
 	p.TestConfig.TestContext.AddTestFile("testdata/paramset-with-file-param.json", "/paramset.json")
 
-	m, err := manifest.LoadManifestFrom(context.Background(), p.Config, config.Name)
+	ctx := context.Background()
+	m, err := manifest.LoadManifestFrom(ctx, p.Config, config.Name)
 	require.NoError(t, err)
-	bun, err := configadapter.ConvertToTestBundle(p.Config, m)
+	bun, err := configadapter.ConvertToTestBundle(ctx, p.Config, m)
 	require.NoError(t, err)
 
 	opts := sharedOptions{
@@ -157,10 +158,10 @@ func TestSharedOptions_ParseParamSets_Failed(t *testing.T) {
 		},
 	}
 
-	err = opts.Validate(context.Background(), []string{}, p.Porter)
+	err = opts.Validate(ctx, []string{}, p.Porter)
 	assert.NoError(t, err)
 
-	err = opts.parseParamSets(context.Background(), p.Porter, bun)
+	err = opts.parseParamSets(ctx, p.Porter, bun)
 	assert.Error(t, err)
 
 }
@@ -170,9 +171,11 @@ func TestSharedOptions_LoadParameters(t *testing.T) {
 	defer p.Close()
 
 	p.TestConfig.TestContext.AddTestFile("testdata/porter.yaml", config.Name)
-	m, err := manifest.LoadManifestFrom(context.Background(), p.Config, config.Name)
+
+	ctx := context.Background()
+	m, err := manifest.LoadManifestFrom(ctx, p.Config, config.Name)
 	require.NoError(t, err)
-	bun, err := configadapter.ConvertToTestBundle(p.Config, m)
+	bun, err := configadapter.ConvertToTestBundle(ctx, p.Config, m)
 	require.NoError(t, err)
 
 	opts := sharedOptions{}
@@ -368,7 +371,7 @@ func TestSharedOptions_populateInternalParameterSet(t *testing.T) {
 	p.TestConfig.TestContext.AddTestFile("testdata/porter.yaml", config.Name)
 	m, err := manifest.LoadManifestFrom(context.Background(), p.Config, config.Name)
 	require.NoError(t, err)
-	bun, err := configadapter.ConvertToTestBundle(p.Config, m)
+	bun, err := configadapter.ConvertToTestBundle(ctx, p.Config, m)
 	require.NoError(t, err)
 
 	sensitiveParamName := "my-second-param"

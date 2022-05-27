@@ -24,7 +24,8 @@ func TestConfig_GenerateStamp(t *testing.T) {
 	c := config.NewTestConfig(t)
 	c.TestContext.AddTestFileFromRoot("pkg/manifest/testdata/simple.porter.yaml", config.Name)
 
-	m, err := manifest.LoadManifestFrom(context.Background(), c.Config, config.Name)
+	ctx := context.Background()
+	m, err := manifest.LoadManifestFrom(ctx, c.Config, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
 	installedMixins := []mixin.Metadata{
@@ -32,7 +33,7 @@ func TestConfig_GenerateStamp(t *testing.T) {
 	}
 
 	a := NewManifestConverter(c.Config, m, nil, installedMixins)
-	stamp, err := a.GenerateStamp()
+	stamp, err := a.GenerateStamp(ctx)
 	require.NoError(t, err, "DigestManifest failed")
 	assert.Equal(t, simpleManifestDigest, stamp.ManifestDigest)
 	assert.Equal(t, map[string]MixinRecord{"exec": {Version: "v1.2.3"}}, stamp.Mixins, "Stamp.Mixins was not populated properly")
@@ -170,11 +171,12 @@ func TestConfig_GenerateStamp_IncludeVersion(t *testing.T) {
 	c := config.NewTestConfig(t)
 	c.TestContext.AddTestFileFromRoot("pkg/manifest/testdata/simple.porter.yaml", config.Name)
 
-	m, err := manifest.LoadManifestFrom(context.Background(), c.Config, config.Name)
+	ctx := context.Background()
+	m, err := manifest.LoadManifestFrom(ctx, c.Config, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
 	a := NewManifestConverter(c.Config, m, nil, nil)
-	stamp, err := a.GenerateStamp()
+	stamp, err := a.GenerateStamp(ctx)
 	require.NoError(t, err, "DigestManifest failed")
 	assert.Equal(t, "v1.2.3", stamp.Version)
 	assert.Equal(t, "abc123", stamp.Commit)
