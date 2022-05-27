@@ -46,7 +46,7 @@ default-secrets = "porter-secrets"
 ## Config Parameters
 #### path_prefix
 
-`path_prefix` lets allow you to specify prefix for your secret path.
+`path_prefix` allows you to specify a prefix for your secret path.
 Let's say you have a secret (`myawesomeproject`) with path `organization/team/project/myawesomeproject`, then you can configure `path_prefix` as `organization/team/project`.
 
 #### porter_secret
