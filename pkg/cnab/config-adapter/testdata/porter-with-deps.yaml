@@ -7,17 +7,18 @@ registry: "localhost:5000"
 dependencies:
   requires:
     - name: mysql
-      reference: "getporter/azure-mysql:5.7"
+      bundle:
+        reference: "getporter/azure-mysql:5.7"
     - name: ad
-      reference: "getporter/azure-active-directory"
-      prereleases: true
+      bundle:
+        reference: "getporter/azure-active-directory"
     - name: storage
-      reference: "getporter/azure-blob-storage"
-      versions:
-        - 1.x - 2
-        - 2.1 - 3.x
+      bundle:
+        reference: "getporter/azure-blob-storage"
+        version: 1.x - 2,2.1 - 3.x
     - name: dep-with-tag
-      reference: "getporter/dep-bun:v0.1.0"
+      bundle:
+        reference: "getporter/dep-bun:v0.1.0"
 
 mixins:
   - exec

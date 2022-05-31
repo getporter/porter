@@ -24,6 +24,7 @@ Both `name` and `reference` are required fields.
 dependencies:
   requires:
     - name: mysql
+      bundle:
         reference: getporter/mysql:v0.1.3
 ```
 
@@ -36,8 +37,10 @@ If more than one dependency is declared, they will be installed in the order the
 dependencies:
   requires:
     - name: mysql
+      bundle:
         reference: getporter/mysql:v0.1.3
     - name: nginx
+      bundle:
         reference: my/nginx-bundle:v0.1.0
 ```
 
@@ -52,8 +55,9 @@ to specific values, so that the user isn't required to provide values for those 
 dependencies:
   requires:
     - name: mysql
+      bundle:
         reference: getporter/mysql:v0.1.3
-        parameters:
+      parameters:
         database_name: wordpress
         mysql_user: wordpress
 ```
@@ -109,7 +113,8 @@ A parameter for a dependency can be set in a few places, here is the order of pr
     dependencies:
       requires:
        - name: mysql
-         reference: getporter/mysql:v0.1.3
+         bundle:
+           reference: getporter/mysql:v0.1.3
          parameters:
            database_name: wordpress
     ```

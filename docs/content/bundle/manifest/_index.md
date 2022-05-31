@@ -428,8 +428,9 @@ See [dependencies](/dependencies/) for more details on how Porter handles depend
 dependencies:
   requires:
     - name: mysql
+      bundle:
         reference: getporter/mysql:v0.1.0
-        parameters:
+      parameters:
         database_name: wordpress
         mysql_user: wordpress
 ```
