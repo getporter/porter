@@ -18,6 +18,7 @@ import (
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/docker/docker/pkg/term"
+	"github.com/google/go-containerregistry/pkg/crane"
 	"github.com/opencontainers/go-digest"
 	"github.com/pkg/errors"
 )
@@ -215,4 +216,13 @@ func (r *Registry) IsImageCached(ctx context.Context, invocationImage string) (b
 	}
 
 	return true, nil
+}
+
+func (r *Registry) ListTags(ctx context.Context, repository string) ([]string, error) {
+	tags, err := crane.ListTags(repository)
+	if err != nil {
+		return nil, fmt.Errorf("error listing tags for %s: %w", repository, err)
+	}
+
+	return tags, nil
 }
