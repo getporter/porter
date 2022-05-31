@@ -27,18 +27,8 @@ After the installation, let's try to install a bundle that works with sensitive 
 porter install --reference ghcr.io/getporter/examples/sensitive-data --param password=123a123
 ```
 
-You should get an error with an output that looks like this:
+You should see below error message in the output from the above command:
 ```
-Building bundle ===>
-Defaulting the type of output name to file
-Copying porter runtime ===> 
-Copying mixins ===> 
-Copying mixin exec ===> 
-
-Generating Dockerfile =======>
-
-Writing Dockerfile =======>
-Building invocation image
 failed to save sensitive param to secrete store: rpc error: code = Unknown desc = The default secrets plugin, secrets.porter.host, does not support persisting secrets: not implemented
 ```
 
@@ -49,12 +39,7 @@ By default, Porter does not provide a built-in solution to persist sensitive dat
 Now let's configure Porter to persist sensitive data using plain text file through the [filesystem](https://release-v1.porter.sh/plugins/filesystem/) plugin.
 
 ```yaml
-# ~/.porter/config.toml
-default-secrets- = "mysecret"
-
-secrets:
-  name = "mysecrets"
-  plugin = "filesystem"
+default-secrets-plugin: "filesystem"
 ```
 
 The [filesystem](https://release-v1.porter.sh/plugins/filesystem/) plugin resolves and stores sensitive bundle parameters and outpus as plaintext files in your PORTER_HOME directory.
