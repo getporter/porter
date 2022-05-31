@@ -83,7 +83,6 @@ func (c *TestContext) GetTestDefinitionDirectory() string {
 		if !ok {
 			c.T.Fatal("could not determine calling test directory")
 		}
-		filename = strings.ToLower(filename)
 		if strings.HasSuffix(filename, "_test.go") {
 			return filepath.Dir(filename)
 		}
