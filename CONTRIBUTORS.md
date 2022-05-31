@@ -69,3 +69,4 @@ and we will add you. **All** contributors belong here. 💯
 * [Tamir Kamara](https://github.com/tamirkamara)
 * [Chioma Onyekpere](https://github.com/Simpcyclassy)
 * [Hrittik Roy](https://github.com/hrittikhere)
+* [Tanmay Chaudhry](https://github.com/tchaudhry91)
