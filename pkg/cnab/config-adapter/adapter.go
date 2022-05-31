@@ -1,6 +1,7 @@
 package configadapter
 
 import (
+	"context"
 	"fmt"
 	"path"
 	"strings"
@@ -9,7 +10,7 @@ import (
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/mixin"
-	"get.porter.sh/porter/pkg/portercontext"
+	"get.porter.sh/porter/pkg/tracing"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
 )
@@ -18,30 +19,33 @@ const SchemaVersion = "v1.0.0"
 
 // ManifestConverter converts from a porter manifest to a CNAB bundle definition.
 type ManifestConverter struct {
-	*portercontext.Context
+	config          *config.Config
 	Manifest        *manifest.Manifest
 	ImageDigests    map[string]string
 	InstalledMixins []mixin.Metadata
 }
 
 func NewManifestConverter(
-	cxt *portercontext.Context,
+	config *config.Config,
 	manifest *manifest.Manifest,
 	imageDigests map[string]string,
 	mixins []mixin.Metadata,
 ) *ManifestConverter {
 	return &ManifestConverter{
-		Context:         cxt,
+		config:          config,
 		Manifest:        manifest,
 		ImageDigests:    imageDigests,
 		InstalledMixins: mixins,
 	}
 }
 
-func (c *ManifestConverter) ToBundle() (cnab.ExtendedBundle, error) {
-	stamp, err := c.GenerateStamp()
+func (c *ManifestConverter) ToBundle(ctx context.Context) (cnab.ExtendedBundle, error) {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
+	stamp, err := c.GenerateStamp(ctx)
 	if err != nil {
-		return cnab.ExtendedBundle{}, err
+		return cnab.ExtendedBundle{}, span.Error(err)
 	}
 
 	b := cnab.ExtendedBundle{bundle.Bundle{
@@ -63,8 +67,8 @@ func (c *ManifestConverter) ToBundle() (cnab.ExtendedBundle, error) {
 	b.Actions = c.generateCustomActionDefinitions()
 	b.Definitions = make(definition.Definitions, len(c.Manifest.Parameters)+len(c.Manifest.Outputs)+len(c.Manifest.StateBag))
 	b.InvocationImages = []bundle.InvocationImage{image}
-	b.Parameters = c.generateBundleParameters(&b.Definitions)
-	b.Outputs = c.generateBundleOutputs(&b.Definitions)
+	b.Parameters = c.generateBundleParameters(ctx, &b.Definitions)
+	b.Outputs = c.generateBundleOutputs(ctx, &b.Definitions)
 	b.Credentials = c.generateBundleCredentials()
 	b.Images = c.generateBundleImages()
 	b.Custom = c.generateCustomExtensions(&b)
@@ -155,7 +159,9 @@ func (c *ManifestConverter) generateDefaultAction(action string) bundle.Action {
 	}
 }
 
-func (c *ManifestConverter) generateBundleParameters(defs *definition.Definitions) map[string]bundle.Parameter {
+func (c *ManifestConverter) generateBundleParameters(ctx context.Context, defs *definition.Definitions) map[string]bundle.Parameter {
+	log := tracing.LoggerFromContext(ctx)
+
 	params := make(map[string]bundle.Parameter, len(c.Manifest.Parameters))
 
 	addParam := func(param manifest.ParameterDefinition) {
@@ -197,7 +203,8 @@ func (c *ManifestConverter) generateBundleParameters(defs *definition.Definition
 				// Assume it's a string otherwise
 				param.Type = "string"
 			}
-			fmt.Fprintf(c.Out, "Defaulting the type of parameter %s to %s\n", param.Name, param.Type)
+
+			log.Debugf("Defaulting the type of parameter %s to %s", param.Name, param.Type)
 		}
 
 		// Create a definition that matches the parameter if one isn't already defined
@@ -224,7 +231,9 @@ func (c *ManifestConverter) generateBundleParameters(defs *definition.Definition
 	return params
 }
 
-func (c *ManifestConverter) generateBundleOutputs(defs *definition.Definitions) map[string]bundle.Output {
+func (c *ManifestConverter) generateBundleOutputs(ctx context.Context, defs *definition.Definitions) map[string]bundle.Output {
+	log := tracing.LoggerFromContext(ctx)
+
 	outputs := make(map[string]bundle.Output, len(c.Manifest.Outputs))
 
 	addOutput := func(output manifest.OutputDefinition) {
@@ -249,7 +258,7 @@ func (c *ManifestConverter) generateBundleOutputs(defs *definition.Definitions) 
 				// Assume it's a string otherwise
 				output.Type = "string"
 			}
-			fmt.Fprintf(c.Out, "Defaulting the type of output %s to %s\n", output.Name, output.Type)
+			log.Debugf("Defaulting the type of output %s to %s", output.Name, output.Type)
 		}
 
 		// Create a definition that matches the output if one isn't already defined
