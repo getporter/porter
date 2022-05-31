@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestPorter_ShowBundle(t *testing.T) {
+func TestPorter_ShowInstallationWithBundle(t *testing.T) {
 	t.Parallel()
 
 	ref := "getporter/wordpress:v0.1.0"
@@ -140,4 +140,86 @@ func TestPorter_ShowBundle(t *testing.T) {
 			p.CompareGoldenFile(tc.outputFile, p.TestConfig.TestContext.GetOutput())
 		})
 	}
+}
+
+func TestPorter_ShowInstallationWithoutRecordedRun(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	p := NewTestPorter(t)
+	defer p.Close()
+
+	opts := ShowOptions{
+		sharedOptions: sharedOptions{
+			Namespace: "dev",
+			Name:      "mywordpress",
+		},
+		PrintOptions: printer.PrintOptions{
+			Format: printer.FormatPlaintext,
+		},
+	}
+
+	// Create test runs
+	writeOnly := true
+	b := bundle.Bundle{
+		Name:    "wordpress",
+		Version: "0.1.0",
+		Definitions: definition.Definitions{
+			"secretString": &definition.Schema{
+				Type:      "string",
+				WriteOnly: &writeOnly,
+			},
+			"bar": &definition.Schema{
+				Type: "string",
+			},
+			"logLevel": &definition.Schema{
+				Type: "integer",
+			},
+		},
+		Parameters: map[string]bundle.Parameter{
+			"logLevel": {
+				Definition: "logLevel",
+			},
+			"token": {
+				Definition: "foo",
+			},
+			"secretString": {
+				Definition: "secretString",
+			},
+		},
+		Outputs: map[string]bundle.Output{
+			"foo": {
+				Definition: "secretString",
+				Path:       "/path/to/foo",
+			},
+			"bar": {
+				Definition: "bar",
+			},
+		},
+	}
+
+	bun := cnab.ExtendedBundle{b}
+	p.TestInstallations.CreateInstallation(storage.NewInstallation("dev", "mywordpress"), p.TestInstallations.SetMutableInstallationValues, func(i *storage.Installation) {
+		i.TrackBundle(cnab.MustParseOCIReference("getporter/wordpress:v0.1.0"))
+		i.Labels = map[string]string{
+			"io.cnab/app":        "wordpress",
+			"io.cnab/appVersion": "v1.2.3",
+		}
+		params := []secrets.Strategy{
+			{Name: "logLevel", Source: secrets.Source{Value: "3"}, Value: "3"},
+			secrets.Strategy{Name: "secretString", Source: secrets.Source{Key: "secretString", Value: "foo"}, Value: "foo"},
+		}
+		i.Parameters = i.NewInternalParameterSet(params...)
+
+		i.ParameterSets = []string{"dev-env"}
+
+		i.Parameters.Parameters = p.SanitizeParameters(i.Parameters.Parameters, i.ID, bun)
+	})
+
+	// do not create a run, simulate that the installation failed before the bundle could execute (or show was called before the bundle was run)
+
+	err := p.ShowInstallation(ctx, opts)
+	require.NoError(t, err, "ShowInstallation failed")
+	p.CompareGoldenFile("testdata/show/bundle-never-run.txt", p.TestConfig.TestContext.GetOutput())
+
 }

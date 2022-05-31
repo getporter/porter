@@ -1,0 +1,22 @@
+Name: mywordpress
+Namespace: dev
+Created: 2020-04-18
+Modified: 2020-04-18
+
+Bundle:
+  Repository: getporter/wordpress
+  Version: 0.1.0
+
+Labels:
+  io.cnab/app: wordpress
+  io.cnab/appVersion: v1.2.3
+
+Parameter Sets:
+  - dev-env
+
+Status:
+  Reference: 
+  Version: 
+  Last Action: 
+  Status: 
+  Digest: 

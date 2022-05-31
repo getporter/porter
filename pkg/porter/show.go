@@ -41,30 +41,38 @@ func (so *ShowOptions) Validate(args []string, cxt *portercontext.Context) error
 }
 
 // GetInstallation retrieves information about an installation, including its most recent run.
-func (p *Porter) GetInstallation(ctx context.Context, opts ShowOptions) (storage.Installation, error) {
+func (p *Porter) GetInstallation(ctx context.Context, opts ShowOptions) (storage.Installation, *storage.Run, error) {
 	err := p.applyDefaultOptions(ctx, &opts.sharedOptions)
 	if err != nil {
-		return storage.Installation{}, err
+		return storage.Installation{}, nil, err
 	}
 
 	installation, err := p.Installations.GetInstallation(ctx, opts.Namespace, opts.Name)
 	if err != nil {
-		return storage.Installation{}, err
+		return storage.Installation{}, nil, err
 	}
 
-	return installation, nil
+	if installation.Status.RunID != "" {
+		run, err := p.Installations.GetRun(ctx, installation.Status.RunID)
+		if err != nil {
+			return storage.Installation{}, nil, err
+		}
+		return installation, &run, nil
+	}
+
+	return installation, nil, nil
 
 }
 
 // ShowInstallation shows a bundle installation, along with any
 // associated outputs
 func (p *Porter) ShowInstallation(ctx context.Context, opts ShowOptions) error {
-	installation, err := p.GetInstallation(ctx, opts)
+	installation, run, err := p.GetInstallation(ctx, opts)
 	if err != nil {
 		return err
 	}
 
-	displayInstallation, err := p.generateDisplayInstallation(ctx, installation)
+	displayInstallation, err := p.NewDisplayInstallationWithSecrets(ctx, installation, run)
 	if err != nil {
 		return err
 	}
@@ -163,27 +171,23 @@ func (p *Porter) ShowInstallation(ctx context.Context, opts ShowOptions) error {
 	}
 }
 
-func (p *Porter) generateDisplayInstallation(ctx context.Context, installation storage.Installation) (DisplayInstallation, error) {
-	run, err := p.Installations.GetRun(ctx, installation.Status.RunID)
-	if err != nil {
-		return DisplayInstallation{}, err
-	}
-
-	bun := cnab.ExtendedBundle{run.Bundle}
-	installParams, err := p.Sanitizer.RestoreParameterSet(ctx, installation.Parameters, bun)
-	if err != nil {
-		return DisplayInstallation{}, err
-	}
-	runParams, err := p.Sanitizer.RestoreParameterSet(ctx, run.Parameters, bun)
-	if err != nil {
-		return DisplayInstallation{}, err
-	}
-
+func (p *Porter) NewDisplayInstallationWithSecrets(ctx context.Context, installation storage.Installation, run *storage.Run) (DisplayInstallation, error) {
 	displayInstallation := NewDisplayInstallation(installation)
-	displayInstallation.Parameters = installParams
 
-	displayInstallation.ResolvedParameters = NewDisplayValuesFromParameters(bun, runParams)
+	if run != nil {
+		bun := cnab.ExtendedBundle{run.Bundle}
+		installParams, err := p.Sanitizer.RestoreParameterSet(ctx, installation.Parameters, bun)
+		if err != nil {
+			return DisplayInstallation{}, err
+		}
+		displayInstallation.Parameters = installParams
+
+		runParams, err := p.Sanitizer.RestoreParameterSet(ctx, run.Parameters, bun)
+		if err != nil {
+			return DisplayInstallation{}, err
+		}
+		displayInstallation.ResolvedParameters = NewDisplayValuesFromParameters(bun, runParams)
+	}
 
 	return displayInstallation, nil
-
 }
