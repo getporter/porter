@@ -101,8 +101,8 @@ func New() *Config {
 
 func (c *Config) NewLogConfiguration() portercontext.LogConfiguration {
 	return portercontext.LogConfiguration{
-		StructuredLogs:          c.IsFeatureEnabled(experimental.FlagStructuredLogs),
-		LogToFile:               c.Data.Logs.Enabled,
+		StructuredLogs:          c.Data.Logs.Structured,
+		LogToFile:               c.Data.Logs.LogToFile,
 		LogDirectory:            filepath.Join(c.porterHome, "logs"),
 		LogLevel:                c.Data.Logs.Level.Level(),
 		TelemetryEnabled:        c.Data.Telemetry.Enabled,

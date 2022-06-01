@@ -13,7 +13,6 @@ import (
 	"get.porter.sh/porter/pkg/build"
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
-	"get.porter.sh/porter/pkg/experimental"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/tracing"
 	buildx "github.com/docker/buildx/build"
@@ -144,7 +143,7 @@ func (b *Builder) BuildInvocationImage(ctx context.Context, manifest *manifest.M
 
 	out := ioutil.Discard
 	mode := progress.PrinterModeQuiet
-	if b.IsVerbose() || b.Config.IsFeatureEnabled(experimental.FlagStructuredLogs) {
+	if b.IsVerbose() {
 		mode = progress.PrinterModeAuto // Auto writes to stderr regardless of what you pass in
 
 		ctx, log = log.StartSpanWithName("buildkit", attribute.String("source", "porter.build.buildkit"))
