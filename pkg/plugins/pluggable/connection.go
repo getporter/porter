@@ -11,6 +11,7 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"get.porter.sh/porter/pkg/config"
@@ -54,6 +55,10 @@ type PluginConnection struct {
 
 	// cancelLogCtx is the cancellation function for our go-routine that collects the plugin logs
 	cancelLogCtx context.CancelFunc
+
+	// logsWaitGroup is used to ensure that any go routines spawned by the plugin connection
+	// complete when Close is called. Otherwise we can get into a race between us and when the logger is closed.
+	logsWaitGroup sync.WaitGroup
 
 	// logsWriter receives logs from the plugin's stdout.
 	logsWriter *io.PipeWriter
@@ -208,12 +213,14 @@ func (c *PluginConnection) Close(ctx context.Context) error {
 			c.client.HardKill()
 		}
 
-		// Stop processing logs from the plugin
+		// Stop processing logs from the plugin and wait for the log collection routine to complete
+		// This avoids a race where the log collector picks up a message but doesn't print it until
+		// after we close the logfile. This ensures that everything releated to the plugins is released
+		// when Close exits.
 		c.cancelLogCtx()
-
-		// Close the pipe between the plugin and porter
 		c.logsWriter.Close()
 		c.logsReader.Close()
+		c.logsWaitGroup.Wait()
 
 		c.client = nil
 	}
@@ -286,6 +293,9 @@ func (c *PluginConnection) setupLogCollector(ctx context.Context) {
 // The best way to get that information is to instrument the plugin itself. This is mainly a fallback mechanism to
 // collect logs from an uninstrumented plugin.
 func (c *PluginConnection) collectPluginLogs(ctx context.Context) {
+	c.logsWaitGroup.Add(1)
+	defer c.logsWaitGroup.Done()
+
 	ctx, span := tracing.StartSpan(ctx, attribute.String("plugin-key", c.key.String()))
 	defer span.EndSpan()
 
@@ -300,7 +310,7 @@ func (c *PluginConnection) collectPluginLogs(ctx context.Context) {
 				if err == io.EOF {
 					return
 				}
-				continue
+				return
 			}
 			if line == "" {
 				return
