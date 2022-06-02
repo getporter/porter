@@ -161,7 +161,7 @@ func EnsureMongoIsRunning(ctx context.Context, c *portercontext.Context, contain
 	// TODO(carolynvs): run this using the docker library
 	startMongo := func() error {
 		mongoImg := "mongo:4.0-xenial"
-		span.Debugf("pulling", mongoImg)
+		span.Debugf("pulling %s", mongoImg)
 
 		err := exec.Command("docker", "pull", mongoImg).Run()
 		if err != nil {
@@ -171,7 +171,7 @@ func EnsureMongoIsRunning(ctx context.Context, c *portercontext.Context, contain
 			return span.Error(fmt.Errorf("error pulling %s: %w", mongoImg, err))
 		}
 
-		span.Debugf("running a mongo server in a container on port", port)
+		span.Debugf("running a mongo server in a container on port %s", port)
 
 		args := []string{"run", "--name", container, "-p=" + port + ":27017", "-d"}
 		if dataVol != "" {

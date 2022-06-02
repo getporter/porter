@@ -6,11 +6,14 @@ default-storage = "dev"
 default-secrets-plugin = "azure.keyvault"
 default-secrets = "red-team"
 
-experimental = ["structured-logs"]
+
+# Keep this line because while there is only one build driver now, we may add more in the future
+build-driver = "buildkit"
 
 [logs]
-  enabled = true
+  log-to-file = true
   level = "info"
+  structured = true
 
 [telemetry]
   enabled = true

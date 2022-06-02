@@ -8,8 +8,10 @@ import (
 
 // LogConfig are settings related to Porter's log files.
 type LogConfig struct {
-	Enabled bool     `mapstructure:"enabled"`
-	Level   LogLevel `mapstructure:"level"`
+	// Structured indicates if the logs sent to the console should include timestamp and log levels
+	Structured bool     `mapstructure:"structured"`
+	LogToFile  bool     `mapstructure:"log-to-file"`
+	Level      LogLevel `mapstructure:"level"`
 }
 
 // TelemetryConfig specifies how to connect to an open telemetry collector.

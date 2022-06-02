@@ -14,6 +14,7 @@ type TestRegistry struct {
 	MockPushBundle          func(bundleRef cnab.BundleReference, insecureRegistry bool) (bundleReference cnab.BundleReference, err error)
 	MockPushInvocationImage func(ctx context.Context, invocationImage string) (imageDigest digest.Digest, err error)
 	MockIsImageCached       func(ctx context.Context, invocationImage string) (bool, error)
+	MockListTags            func(ctx context.Context, repository string) ([]string, error)
 }
 
 func NewTestRegistry() *TestRegistry {
@@ -49,4 +50,12 @@ func (t TestRegistry) IsImageCached(ctx context.Context, invocationImage string)
 	}
 
 	return true, nil
+}
+
+func (t TestRegistry) ListTags(ctx context.Context, repository string) ([]string, error) {
+	if t.MockListTags != nil {
+		return t.MockListTags(ctx, repository)
+	}
+
+	return nil, nil
 }
