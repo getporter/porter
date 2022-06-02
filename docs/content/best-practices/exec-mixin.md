@@ -1,6 +1,7 @@
 ---
 title: Best practices for the exec mixin
 description: How to effectively use the exec mixin and avoid common mistakes.
+weight: 10
 ---
 
 The [exec mixin](/mixins/exec/) is intended as the mixin of last resort. 😅 We
