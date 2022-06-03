@@ -120,7 +120,7 @@ install:
     description: "Install MySQL"
     name: mydb
     chart: bitnami/mysql
-    version: 6.14.2
+    version: 8.8.34
     namespace: mydb
     replace: true
     set:
@@ -148,7 +148,7 @@ upgrade:
     description: "Upgrade MySQL"
     name: porter-ci-mysql
     chart: bitnami/mysql
-    version: 6.14.2
+    version: 8.8.34
     wait: true
     resetValues: true
     reuseValues: false

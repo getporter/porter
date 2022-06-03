@@ -88,7 +88,7 @@ helm3:
   description: "Install MySQL"
   name: porter-ci-mysql
   chart: bitnami/mysql
-  version: 6.14.2
+  version: 8.8.34
   replace: true
   set:
     db.name: "{{ bundle.parameters.database-name }}"

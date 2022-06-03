@@ -289,7 +289,7 @@ install:
     description: "Install MySQL"
     name: porter-ci-mysql
     chart: bitnami/mysql
-    version: "6.14.2"
+    version: 8.8.34
 uninstall:
 - helm3:
     description: "Uninstall MySQL"

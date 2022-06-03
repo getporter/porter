@@ -29,7 +29,7 @@ install:
     description: "Install MySQL"
     name: porter-workshop-mysql
     chart: bitnami/mysql
-    version: 6.14.2
+    version: 8.8.34
     namespace: "{{ bundle.parameters.namespace }}"
     replace: true
     set:

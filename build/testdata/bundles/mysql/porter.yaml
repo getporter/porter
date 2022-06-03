@@ -38,7 +38,7 @@ install:
     description: "Install MySQL"
     name: "{{ bundle.parameters.mysql-name }}"
     chart: bitnami/mysql
-    version: 6.14.12
+    version: 8.8.34
     namespace: "{{ bundle.parameters.namespace }}"
     replace: true
     set:
@@ -67,7 +67,7 @@ upgrade:
       name: "{{ bundle.parameters.mysql-name }}"
       namespace: "{{ bundle.parameters.namespace }}"
       chart: bitnami/mysql
-      version: 6.14.12
+      version: 8.8.34
       outputs:
       - name: mysql-root-password
         secret: "{{ bundle.parameters.mysql-name }}"

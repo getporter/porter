@@ -310,7 +310,7 @@ install:
     description: "Install MySQL"
     name: mydb
     chart: bitnami/mysql
-    version: 6.14.2
+    version: 8.8.34
     set:
       db.name: "{{ bundle.parameters.database-name }}"
       db.user: "{{ bundle.parameters.mysql-user }}"
