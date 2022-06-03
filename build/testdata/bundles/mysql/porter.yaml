@@ -1,6 +1,7 @@
 mixins:
 - exec
 - helm3:
+    clientVersion: v3.9.0
     repositories:
       bitnami:
         url: "https://charts.bitnami.com/bitnami"
