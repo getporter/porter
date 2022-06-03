@@ -35,7 +35,11 @@ message FindRequest {
   int64 Limit = 4;
   repeated google.protobuf.Struct Select = 5;
   google.protobuf.Struct Filter = 6;
-  repeated google.protobuf.Struct Group = 7;
+
+  // The group field was removed
+  reserved 7;
+  reserved "group";
+
 }
 
 message InsertRequest {
