@@ -312,8 +312,8 @@ github.com/clbanning/x2j v0.0.0-20191024224557-825249438eec/go.mod h1:jMjuTZXRI4
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
 github.com/cloudflare/cfssl v0.0.0-20181213083726-b94e044bb51e/go.mod h1:yMWuSON2oQp+43nFtAV/uvKQIFpSPerB57DCt9t8sSA=
 github.com/cloudflare/cfssl v1.4.1 h1:vScfU2DrIUI9VPHBVeeAQ0q5A+9yshO1Gz+3QoUQiKw=
-github.com/cnabio/cnab-go v0.23.2 h1:AwMVF5/fmsZv1VHZQxiT9ZPpo9xuKNyCxNXft2MT7zg=
-github.com/cnabio/cnab-go v0.23.2/go.mod h1:cuExj5X7qJp7maA6Yl/NcKbfVaqzsRlqzOg4dM+OmnY=
+github.com/cnabio/cnab-go v0.23.3 h1:ehpE5PGe+g+Mybf3xz1trraMcVY+RkZdMRvpcWgXq2E=
+github.com/cnabio/cnab-go v0.23.3/go.mod h1:cuExj5X7qJp7maA6Yl/NcKbfVaqzsRlqzOg4dM+OmnY=
 github.com/cnabio/cnab-to-oci v0.3.3 h1:92sJJoOGWp4Dg9AErXPMHTFI6qYZuPMdL1PXU1WVyB4=
 github.com/cnabio/cnab-to-oci v0.3.3/go.mod h1:tp1FxK29rjLAP2v7tqzVmNI20B+2lCvEC7H3yUdIKD4=
 github.com/cncf/udpa/go v0.0.0-20191209042840-269d4d468f6f/go.mod h1:M8M6+tZqaGXZJjfX53e64911xZQV5JYwmTeXPW+k8Sc=
