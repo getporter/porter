@@ -415,15 +415,11 @@ func (c *ManifestConverter) generateDependencies() *cnab.Dependencies {
 	for _, dep := range c.Manifest.Dependencies.RequiredDependencies {
 		dependencyRef := cnab.Dependency{
 			Name:   dep.Name,
-			Bundle: dep.Reference,
+			Bundle: dep.Bundle.Reference,
 		}
-		if len(dep.Versions) > 0 || dep.AllowPrereleases {
+		if len(dep.Bundle.Version) > 0 {
 			dependencyRef.Version = &cnab.DependencyVersion{
-				AllowPrereleases: dep.AllowPrereleases,
-			}
-			if len(dep.Versions) > 0 {
-				dependencyRef.Version.Ranges = make([]string, len(dep.Versions))
-				copy(dependencyRef.Version.Ranges, dep.Versions)
+				Ranges: []string{dep.Bundle.Version},
 			}
 		}
 		deps.Sequence = append(deps.Sequence, dep.Name)

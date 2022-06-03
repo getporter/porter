@@ -17,7 +17,8 @@ credentials:
 dependencies:
   requires:
     - name: mysql
-      reference: "getporter/azure-mysql:5.7"
+      bundle:
+        reference: "getporter/azure-mysql:5.7"
 mixins:
 - exec
 
