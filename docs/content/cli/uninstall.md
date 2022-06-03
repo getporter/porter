@@ -13,8 +13,14 @@ Uninstall an installation
 
 The first argument is the installation name to uninstall. This defaults to the name of the bundle.
 
-Porter uses the Docker driver as the default runtime for executing a bundle's invocation image, but an alternate driver may be supplied via '--driver/-d'' or the PORTER_RUNTIME_DRIVER environment variable.
+Porter uses the docker driver as the default runtime for executing a bundle's invocation image, but an alternate driver may be supplied via '--driver/-d'' or the PORTER_RUNTIME_DRIVER environment variable.
 For example, the 'debug' driver may be specified, which simply logs the info given to it and then exits.
+
+The docker driver runs the bundle container using the local Docker host. To use a remote Docker host, set the following environment variables:
+  DOCKER_HOST (required)
+  DOCKER_TLS_VERIFY (optional)
+  DOCKER_CERT_PATH (optional)
+
 
 ```
 porter uninstall [INSTALLATION] [flags]
