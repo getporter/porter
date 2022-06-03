@@ -285,6 +285,7 @@ func (c *PluginConnection) setupLogCollector(ctx context.Context) {
 	c.logsReader, c.logsWriter = io.Pipe()
 	ctx, c.cancelLogCtx = context.WithCancel(ctx)
 
+	c.logsWaitGroup.Add(1)
 	go c.collectPluginLogs(ctx)
 }
 
@@ -293,7 +294,6 @@ func (c *PluginConnection) setupLogCollector(ctx context.Context) {
 // The best way to get that information is to instrument the plugin itself. This is mainly a fallback mechanism to
 // collect logs from an uninstrumented plugin.
 func (c *PluginConnection) collectPluginLogs(ctx context.Context) {
-	c.logsWaitGroup.Add(1)
 	defer c.logsWaitGroup.Done()
 
 	ctx, span := tracing.StartSpan(ctx, attribute.String("plugin-key", c.key.String()))
