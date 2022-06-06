@@ -71,6 +71,8 @@ func getViperValue(flags *pflag.FlagSet, f *pflag.Flag) interface{} {
 	switch flagType {
 	case "int":
 		out, err = flags.GetInt(f.Name)
+	case "int64":
+		out, err = flags.GetInt64(f.Name)
 	case "string":
 		out, err = flags.GetString(f.Name)
 	case "bool":

@@ -61,7 +61,7 @@ func TestManager_NoMigrationEmptyHome(t *testing.T) {
 	defer mgr.Close()
 	claimStore := storage.NewInstallationStore(mgr)
 
-	_, err := claimStore.ListInstallations(context.Background(), "", "", nil)
+	_, err := claimStore.ListInstallations(context.Background(), "", "", nil, 0, 0)
 	require.NoError(t, err, "ListInstallations failed")
 
 	credStore := storage.NewCredentialStore(mgr, nil)
@@ -101,7 +101,7 @@ storage.Schema{ID:"schema", Installations:"needs-migration", Credentials:"1.0.1"
 	}
 
 	t.Run("list", func(t *testing.T) {
-		_, err = claimStore.ListInstallations(context.Background(), "", "", nil)
+		_, err = claimStore.ListInstallations(context.Background(), "", "", nil, 0, 0)
 		checkMigrationError(t, err)
 	})
 
@@ -124,7 +124,7 @@ func TestClaimStorage_NoMigrationRequiredForEmptyHome(t *testing.T) {
 	defer mgr.Close()
 	claimStore := storage.NewInstallationStore(mgr)
 
-	names, err := claimStore.ListInstallations(context.Background(), "", "", nil)
+	names, err := claimStore.ListInstallations(context.Background(), "", "", nil, 0, 0)
 	require.NoError(t, err, "ListInstallations failed")
 	assert.Empty(t, names, "Expected an empty list of installations since porter home is new")
 }
