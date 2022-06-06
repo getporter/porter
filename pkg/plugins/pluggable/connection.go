@@ -131,7 +131,12 @@ func (c *PluginConnection) Start(ctx context.Context, pluginCfg io.Reader) error
 			MagicCookieKey:   plugins.HandshakeConfig.MagicCookieKey,
 			MagicCookieValue: plugins.HandshakeConfig.MagicCookieValue,
 		},
-		AllowedProtocols: []plugin.Protocol{plugin.ProtocolGRPC},
+		AllowedProtocols: []plugin.Protocol{
+			// All v1 plugins use gRPC
+			plugin.ProtocolGRPC,
+			// Enable net/rpc so that we can talk to older plugins from before v1
+			plugin.ProtocolNetRPC,
+		},
 		// Specify which plugin we want to connect to
 		Plugins: map[string]plugin.Plugin{
 			c.pluginType.Interface: c.pluginType.Plugin,
