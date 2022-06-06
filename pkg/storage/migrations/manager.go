@@ -2,14 +2,12 @@ package migrations
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 
 	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/tracing"
-	"github.com/cnabio/cnab-go/schema"
 	"github.com/pkg/errors"
 )
 
@@ -42,6 +40,11 @@ type Manager struct {
 	// Allow the schema to be out-of-date, defaults to false. Prevents
 	// connections to underlying storage when the schema is out-of-date
 	allowOutOfDateSchema bool
+
+	// Cleans sensitive data so that we don't store it in our database
+	// This is set by Initialize not the constructor due to a bit of a circular reference between Manager, ParameterStore, SecretStore and Sanitizer.
+	// Improvements could most definitely be made here!
+	sanitizer *storage.Sanitizer
 }
 
 // NewManager creates a storage manager for a backing datastore.
@@ -49,9 +52,16 @@ func NewManager(c *config.Config, storage storage.Store) *Manager {
 	mgr := &Manager{
 		Config: c,
 		store:  storage,
+		// We can't set sanitizer here yet, it is set in Initialize
 	}
 
 	return mgr
+}
+
+// Initialize configures the storage manager with additional configuration that wasn't available
+// when the manager instance was created.
+func (m *Manager) Initialize(sanitizer *storage.Sanitizer) {
+	m.sanitizer = sanitizer
 }
 
 // Connect initializes storage manager for use.
@@ -209,7 +219,12 @@ func (m *Manager) loadSchema(ctx context.Context) error {
 }
 
 // Migrate executes a migration on any/all of Porter's storage sub-systems.
-func (m *Manager) Migrate(ctx context.Context, sanitizer *storage.Sanitizer, opts storage.MigrateOptions) error {
+// You must call Initialize before calling Migrate.
+func (m *Manager) Migrate(ctx context.Context, opts storage.MigrateOptions) error {
+	if m.sanitizer == nil {
+		return fmt.Errorf("cannot call storage.Manager.Migrate before calling Initialize and passing a storage.Sanitizer")
+	}
+
 	m.reset()
 
 	// Let us call connect and not have it kick us out because the schema is out-of-date
@@ -225,10 +240,10 @@ func (m *Manager) Migrate(ctx context.Context, sanitizer *storage.Sanitizer, opt
 	}
 	defer m.Close()
 
-	migration := NewMigration(m.Config, opts, m.store, sanitizer)
+	migration := NewMigration(m.Config, opts, m.store, m.sanitizer)
 	defer migration.Close()
 
-	newSchema, err := migration.Migrate(ctx, m.schema)
+	newSchema, err := migration.Migrate(ctx)
 	if err != nil {
 		return err
 	}
@@ -295,36 +310,4 @@ func WriteSchema(ctx context.Context, store storage.Store) (storage.Schema, erro
 	}
 
 	return schema, nil
-}
-
-// ShouldMigrateCredentials determines if the credentials storage system requires a migration.
-func (m *Manager) ShouldMigrateCredentials() bool {
-	return m.schema.Credentials != storage.CredentialSetSchemaVersion
-}
-
-func (m *Manager) migrateCredentials(context.Context) error {
-	return nil
-}
-
-// ShouldMigrateParameters determines if the parameter set documents requires a migration.
-func (m *Manager) ShouldMigrateParameters() bool {
-	return m.schema.Parameters != storage.ParameterSetSchemaVersion
-}
-
-func (m *Manager) migrateParameters(context.Context) error {
-	return nil
-}
-
-// getSchemaVersion attempts to read the schemaVersion stamped on a document.
-func getSchemaVersion(data []byte) string {
-	var peek struct {
-		SchemaVersion schema.Version `json:"schemaVersion"`
-	}
-
-	err := json.Unmarshal(data, &peek)
-	if err != nil {
-		return "unknown"
-	}
-
-	return string(peek.SchemaVersion)
 }

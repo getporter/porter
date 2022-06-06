@@ -13,7 +13,7 @@ type Provider interface {
 	WriteSchema(ctx context.Context) error
 
 	// Migrate executes a migration on any/all of Porter's storage sub-systems.
-	Migrate(ctx context.Context, dataCleaner *Sanitizer, opts MigrateOptions) error
+	Migrate(ctx context.Context, opts MigrateOptions) error
 }
 
 // MigrateOptions are the set of available options to configure a storage data migration
@@ -22,10 +22,10 @@ type MigrateOptions struct {
 	// OldHome is the path to the PORTER_HOME directory for the previous version of porter.
 	OldHome string
 
-	// SourceAccount is the name of the storage account configured in MigrateOptions.OldHome
+	// OldStorageAccount is the name of the storage account configured in MigrateOptions.OldHome
 	// where records should be migrated from.
-	SourceAccount string
+	OldStorageAccount string
 
-	// DestinationNamespace is the namespace into which records should be imported.
-	DestinationNamespace string
+	// NewNamespace is the namespace into which records should be imported.
+	NewNamespace string
 }

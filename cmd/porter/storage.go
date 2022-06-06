@@ -25,21 +25,34 @@ func buildStorageCommand(p *porter.Porter) *cobra.Command {
 func buildStorageMigrateCommand(p *porter.Porter) *cobra.Command {
 	var opts porter.MigrateStorageOptions
 	cmd := &cobra.Command{
-		Use:   "migrate --src OLD_ACCOUNT --dest NEW_ACCOUNT",
-		Short: "Migrate data from an older version of Porter",
-		Long: `Copies data from a source storage account defined in Porter's config file into a destination storage account. 
+		Use:   "migrate --old-home OLD_PORTER_HOME [--old-account STORAGE_NAME] [--namespace NAMESPACE]",
+		Short: "Migrate data from a previous version of Porter",
+		Long: `Migrate data from a previous version of Porter into your current installation of Porter.
 
-This upgrades the data to the current storage schema, and does not change the data stored in the source account.`,
+Before running this command, you should have:
+
+1. Installed the new version of Porter
+2. Renamed the old PORTER_HOME directory, for example: mv ~/.porter ~/.porterv0
+3. Created a new PORTER_HOME directory for the new version of Porter, for example: mkdir ~/.porter
+4. Configured a default storage account for the new version of Porter. The data from the old account will be migrated into the default storage account.
+
+This upgrades the data to the current storage schema, and does not change the data stored in the old account.`,
+		Example: `  porter storage migrate --old-home ~/.porterv0
+  porter storage migrate --old-account my-azure --old-home ~/.porterv0
+  porter storage migrate --namespace new-namespace --old-home ~/.porterv0
+`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return p.MigrateStorage(cmd.Context(), opts)
 		},
 	}
 
 	flags := cmd.Flags()
-	flags.StringVarP(&opts.Source, "src", "s", "",
-		"Name of the source storage account defined in your Porter config file")
-	flags.StringVarP(&opts.Destination, "dest", "d", "",
-		"Name of the destination storage account defined in your Porter config file")
+	flags.StringVar(&opts.OldHome, "old-home", "",
+		"Path to the old PORTER_HOME directory where the previous version of Porter is installed")
+	flags.StringVar(&opts.OldStorageAccount, "old-account", "",
+		"Name of the storage account in the old Porter configuration file containing the data that should be migrated. If unspecified, the default storage account is used.")
+	flags.StringVarP(&opts.Namespace, "namespace", "n", "",
+		"Destination namespace where the migrated data should be saved.")
 	return cmd
 }
 

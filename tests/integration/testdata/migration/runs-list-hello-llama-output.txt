@@ -1,0 +1,8 @@
+--------------------------------------------------------------------------
+  Run ID                      Action   Started     Stopped     Status     
+--------------------------------------------------------------------------
+  01G4XDMPF2FAV54V4TKQ4382RB  upgrade  2022-06-06  2022-06-06  succeeded  
+  01G4XDM14SBFADM821XFRFMXWE  upgrade  2022-06-06  2022-06-06  failed     
+  01G4XDKP90DHZH85WJT2W89T3K  upgrade  2022-06-06  2022-06-06  succeeded  
+  01G4XDK06E3JNN2K22GF0AZNEY  upgrade  2022-06-06  2022-06-06  succeeded  
+  01G4XDHVAQ6B7ZPMC3WM9S5B8C  install  2022-06-06  2022-06-06  succeeded  

@@ -104,11 +104,11 @@ func (t Tester) startMongo(ctx context.Context) error {
 }
 
 // Run a porter command and fail the test if the command returns an error.
-func (t Tester) RequirePorter(args ...string) (string, string) {
+func (t Tester) RequirePorter(args ...string) (stdout string, combinedoutput string) {
 	t.T.Helper()
-	stdout, output, err := t.RunPorter(args...)
+	stdout, combinedoutput, err := t.RunPorter(args...)
 	require.NoError(t.T, err)
-	return stdout, output
+	return stdout, combinedoutput
 }
 
 // RunPorter executes a porter command returning stderr when it fails.

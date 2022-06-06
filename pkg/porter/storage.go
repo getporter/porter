@@ -8,22 +8,20 @@ import (
 	"path/filepath"
 
 	"get.porter.sh/porter/pkg"
+	"get.porter.sh/porter/pkg/storage"
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 )
 
 type MigrateStorageOptions struct {
-	Source      string
-	Destination string
+	OldHome           string
+	OldStorageAccount string
+	Namespace         string
 }
 
 func (o MigrateStorageOptions) Validate() error {
-	if o.Source == "" {
-		return errors.New("--src is required")
-	}
-
-	if o.Destination == "" {
-		return errors.New("--dest is required")
+	if o.OldHome == "" {
+		return errors.New("--old-home is required")
 	}
 
 	return nil
@@ -34,31 +32,12 @@ func (p *Porter) MigrateStorage(ctx context.Context, opts MigrateStorageOptions)
 		return err
 	}
 
-	/*
-		// Load the storage interface for both accounts
-		srcAcct, err := p.Config.GetStorage(opts.Source)
-		if err != nil {
-			return err
-		}
-
-		destAcct, err := p.Config.GetStorage(opts.Destination)
-		if err != nil {
-			return err
-		}
-
-		logfilePath, err := p.Storage.Migrate(TODO)
-
-		fmt.Fprintf(p.Out, "\nSaved migration logs to %s\n", logfilePath)
-
-		if err != nil {
-			// The error has already been printed, don't return it otherwise it will be double printed
-			return errors.New("Migration failed!")
-		}
-
-		fmt.Fprintln(p.Out, "Migration complete!")
-
-	*/
-	return nil
+	migrateOpts := storage.MigrateOptions{
+		OldHome:           opts.OldHome,
+		OldStorageAccount: opts.OldStorageAccount,
+		NewNamespace:      opts.Namespace,
+	}
+	return p.Storage.Migrate(ctx, migrateOpts)
 }
 
 func (p *Porter) FixPermissions() error {

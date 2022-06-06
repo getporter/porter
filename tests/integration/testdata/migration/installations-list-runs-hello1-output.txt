@@ -1,0 +1,8 @@
+----------------------------------------------------------------------------
+  Run ID                      Action     Started     Stopped     Status     
+----------------------------------------------------------------------------
+  01G1VJQJV0RN5AW5BSZHNTVYTV  uninstall  2022-04-29  2022-04-29  succeeded  
+  01G1VJHGVCSN7GR7B5Y05DH6GA  upgrade    2022-04-29  2022-04-29  failed     
+  01G1VJGY43HT3KZN82DS6DDPWK  install    2022-04-29  2022-04-29  succeeded  
+  01G1VJGY43HT3KZN82DS6DDPWI  install    2022-04-29  2022-04-29  failed     
+  01G1VJGY43HT3KZN82DS6DDPWH  dry-run    2022-04-28

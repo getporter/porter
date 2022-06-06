@@ -63,6 +63,8 @@ func NewFor(c *config.Config, store storage.Store, secretStorage secrets.Store) 
 	credStorage := storage.NewCredentialStore(storageManager, secretStorage)
 	paramStorage := storage.NewParameterStore(storageManager, secretStorage)
 	sanitizerService := storage.NewSanitizer(paramStorage, secretStorage)
+	storageManager.Initialize(sanitizerService) // we have a bit of a dependency problem here that it would be great to figure out eventually
+
 	return &Porter{
 		Config:        c,
 		Cache:         cache,

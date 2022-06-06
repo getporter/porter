@@ -1,0 +1,6 @@
+-------------------------------------------------------------------------------
+  NAMESPACE  NAME            CREATED     MODIFIED    LAST ACTION  LAST STATUS  
+-------------------------------------------------------------------------------
+  migrated   hello-llama     2022-06-06  2022-06-06  upgrade      succeeded    
+  migrated   creds-tutorial  2022-06-06  2022-06-06  upgrade      succeeded    
+  migrated   hello1          2022-04-28  2022-04-29  uninstall    succeeded    

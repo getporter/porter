@@ -1,9 +1,15 @@
 package migrations
 
 import (
+	"context"
 	"io/ioutil"
+	"path/filepath"
 	"testing"
 	"time"
+
+	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/portercontext"
+	testmigrations "get.porter.sh/porter/pkg/storage/migrations/testhelpers"
 
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/secrets"
@@ -15,16 +21,18 @@ import (
 
 func TestConvertInstallation(t *testing.T) {
 	inst := convertInstallation("mybuns")
-	assert.NotEmpty(t, inst.ID, "an id was not assigned")
+	assert.Empty(t, inst.ID, "the installation id should start off unitialized so that later we can set it using the claim")
 	assert.Empty(t, inst.Namespace, "by default installations are migrated into the global namespace")
 	assert.Equal(t, "mybuns", inst.Name, "incorrect name")
 	assert.Equal(t, storage.InstallationSchemaVersion, inst.SchemaVersion, "incorrect schema version")
 }
 
 func TestConvertClaimToRun(t *testing.T) {
+	c := portercontext.NewTestContext(t)
+
 	inst := storage.NewInstallation("", "mybuns")
 
-	claimData, err := ioutil.ReadFile("testdata/v0_home/claims/hello1/01G1VJGY43HT3KZN82DS6DDPWK.json")
+	claimData, err := ioutil.ReadFile(filepath.Join(c.FindRepoRoot(), "tests/testdata/porter_home/v0/claims/hello1/01G1VJGY43HT3KZN82DS6DDPWK.json"))
 	require.NoError(t, err, "could not read testdata")
 
 	run, err := convertClaimToRun(inst, claimData)
@@ -46,9 +54,11 @@ func TestConvertClaimToRun(t *testing.T) {
 }
 
 func TestConvertResult(t *testing.T) {
+	c := portercontext.NewTestContext(t)
+
 	run := storage.NewRun("myns", "mybuns")
 
-	resultData, err := ioutil.ReadFile("testdata/v0_home/results/01G1VJGY43HT3KZN82DS6DDPWK/01G1VJH2HP97B5B0N5S37KYMVG.json")
+	resultData, err := ioutil.ReadFile(filepath.Join(c.FindRepoRoot(), "tests/testdata/porter_home/v0/results/01G1VJGY43HT3KZN82DS6DDPWK/01G1VJH2HP97B5B0N5S37KYMVG.json"))
 	require.NoError(t, err, "could not read testdata result")
 
 	result, err := convertResult(run, resultData)
@@ -73,7 +83,9 @@ func TestConvertResult(t *testing.T) {
 }
 
 func TestConvertOutput(t *testing.T) {
-	outputData, err := ioutil.ReadFile("testdata/v0_home/outputs/01G1VJH2HP97B5B0N5S37KYMVG/01G1VJH2HP97B5B0N5S37KYMVG-io.cnab.outputs.invocationImageLogs")
+	c := portercontext.NewTestContext(t)
+
+	outputData, err := ioutil.ReadFile(filepath.Join(c.FindRepoRoot(), "tests/testdata/porter_home/v0/outputs/01G1VJH2HP97B5B0N5S37KYMVG/01G1VJH2HP97B5B0N5S37KYMVG-io.cnab.outputs.invocationImageLogs"))
 	require.NoError(t, err, "error reading testdata output file")
 
 	run := storage.NewRun("myns", "mybuns")
@@ -91,8 +103,8 @@ func TestConvertOutput(t *testing.T) {
 	require.Equal(t, outputData, output.Value, "incorrect output value")
 }
 
-func TestMigration_MigrateInstallations(t *testing.T) {
-	c := createLegacyPorterHome(t)
+func TestMigration_Migrate(t *testing.T) {
+	c := testmigrations.CreateLegacyPorterHome(t)
 	defer c.Close()
 	home, err := c.GetHomeDir()
 	require.NoError(t, err, "could not get the home directory")
@@ -104,9 +116,9 @@ func TestMigration_MigrateInstallations(t *testing.T) {
 	testSanitizer := storage.NewSanitizer(testParams, testSecrets)
 
 	opts := storage.MigrateOptions{
-		OldHome:              home,
-		SourceAccount:        "src",
-		DestinationNamespace: "myns",
+		OldHome:           home,
+		OldStorageAccount: "src",
+		NewNamespace:      "myns",
 	}
 	m := NewMigration(c.Config, opts, destStore, testSanitizer)
 	defer m.Close()
@@ -114,20 +126,29 @@ func TestMigration_MigrateInstallations(t *testing.T) {
 	err = m.Connect(ctx)
 	require.NoError(t, err, "connect failed")
 
-	err = m.migrateInstallations(ctx)
+	updatedSchema, err := m.Migrate(ctx)
 	require.NoError(t, err, "migrate installations failed")
+	assert.Equal(t, storage.NewSchema(), updatedSchema, "incorrect schema was applied after the migration")
 
+	validateMigratedInstallations(ctx, t, c, destStore, opts)
+	validateMigratedCredentialSets(ctx, t, destStore, opts)
+	validateMigratedParameterSets(ctx, t, destStore, opts)
+}
+
+func validateMigratedInstallations(ctx context.Context, t *testing.T, c *config.TestConfig, destStore storage.TestStore, opts storage.MigrateOptions) {
 	is := storage.NewInstallationStore(destStore)
-	installations, err := is.ListInstallations(ctx, opts.DestinationNamespace, "", nil)
+	installations, err := is.ListInstallations(ctx, storage.ListOptions{Namespace: opts.NewNamespace})
 	require.NoError(t, err, "could not list installations in the destination database")
-	assert.Len(t, installations, 1, "expected 1 installation to be migrated")
+	assert.Len(t, installations, 3, "expected 3 installation to be migrated")
 
 	// Validate that the installation as migrated correctly
-	inst := installations[0]
+	inst, err := is.GetInstallation(ctx, opts.NewNamespace, "hello1")
+	require.NoError(t, err, "could not retrieve the hello1 test installation")
+
 	assert.Equal(t, storage.InstallationSchemaVersion, inst.SchemaVersion, "incorrect installation schema")
-	assert.NotEmpty(t, inst.ID, "an installation id should have been assigned")
+	assert.Equal(t, "01G1VJGY43HT3KZN82DS6DDPWH", inst.ID, "the installation should set its installation id to the id of the earliest claim so that it's consistently generated")
 	assert.Equal(t, "hello1", inst.Name, "incorrect installation name")
-	assert.Equal(t, opts.DestinationNamespace, inst.Namespace, "installation namespace should be set to the destination namespace")
+	assert.Equal(t, opts.NewNamespace, inst.Namespace, "installation namespace should be set to the destination namespace")
 	assert.Empty(t, inst.Bundle, "We didn't track the bundle reference in v0, so this can't be populated")
 	assert.Empty(t, inst.Custom, "We didn't allow setting custom metadata on installations in v0, so this can't be populated")
 	assert.Empty(t, inst.Labels, "We didn't allow setting labels on installations in v0, so this can't be populated")
@@ -149,7 +170,7 @@ func TestMigration_MigrateInstallations(t *testing.T) {
 	assert.Empty(t, inst.Status.BundleReference, "We didn't track bundle reference in v0, so this can't be populated")
 	assert.Empty(t, inst.Status.BundleDigest, "We didn't track bundle digest in v0, so this can't be populated")
 
-	runs, results, err := is.ListRuns(ctx, opts.DestinationNamespace, inst.Name)
+	runs, results, err := is.ListRuns(ctx, opts.NewNamespace, inst.Name)
 	require.NoError(t, err, "could not list runs in the destination database")
 	assert.Len(t, runs, 5, "expected 5 runs") // dry-run, failed install, successful install, upgrade, uninstall
 
@@ -194,5 +215,55 @@ func TestMigration_MigrateInstallations(t *testing.T) {
 
 	logsOutput, err := is.GetLastOutput(ctx, inst.Namespace, inst.Name, cnab.OutputInvocationImageLogs)
 	require.NoError(t, err, "error retrieving the last set of logs for the installation")
-	test.CompareGoldenFile(t, "testdata/v0_home/outputs/01G1VJQM4AVN7SCXC8WV3M0D7N/01G1VJQM4AVN7SCXC8WV3M0D7N-io.cnab.outputs.invocationImageLogs", string(logsOutput.Value))
+
+	wantFile := filepath.Join(c.TestContext.FindRepoRoot(), "tests/testdata/porter_home/v0/outputs/01G1VJQM4AVN7SCXC8WV3M0D7N/01G1VJQM4AVN7SCXC8WV3M0D7N-io.cnab.outputs.invocationImageLogs")
+	test.CompareGoldenFile(t, wantFile, string(logsOutput.Value))
+}
+
+func validateMigratedCredentialSets(ctx context.Context, t *testing.T, destStore storage.TestStore, opts storage.MigrateOptions) {
+	store := storage.NewCredentialStore(destStore, nil)
+	credentialSets, err := store.ListCredentialSets(ctx, storage.ListOptions{Namespace: opts.NewNamespace})
+	require.NoError(t, err, "could not list credentialSets in the destination database")
+	assert.Len(t, credentialSets, 1, "expected 1 credential set to be migrated")
+
+	// Validate that the installation as migrated correctly
+	creds, err := store.GetCredentialSet(ctx, opts.NewNamespace, "credentials-tutorial")
+	require.NoError(t, err, "could not retrieve the migrated credentials-tutorial credential set")
+
+	assert.Equal(t, storage.CredentialSetSchemaVersion, creds.SchemaVersion, "incorrect schema version")
+	assert.Equal(t, "myns", creds.Namespace, "incorrect namespace")
+	assert.Equal(t, "credentials-tutorial", creds.Name, "incorrect name")
+	assert.Equal(t, "2022-06-06T16:06:52.099455-05:00", creds.Status.Created.Format(time.RFC3339Nano), "incorrect created timestamp")
+	assert.Equal(t, "2022-06-06T16:07:52.099455-05:00", creds.Status.Modified.Format(time.RFC3339Nano), "incorrect modified timestamp")
+	assert.Empty(t, creds.Labels, "incorrect labels")
+	require.Len(t, creds.Credentials, 1, "incorrect number of credentials migrated")
+
+	cred := creds.Credentials[0]
+	assert.Equal(t, "github-token", cred.Name, "incorrect credential name")
+	assert.Equal(t, "env", cred.Source.Key, "incorrect credential source key")
+	assert.Equal(t, "GITHUB_TOKEN", cred.Source.Value, "incorrect credential source value")
+}
+
+func validateMigratedParameterSets(ctx context.Context, t *testing.T, destStore storage.TestStore, opts storage.MigrateOptions) {
+	store := storage.NewParameterStore(destStore, nil)
+	parameterSets, err := store.ListParameterSets(ctx, storage.ListOptions{Namespace: opts.NewNamespace})
+	require.NoError(t, err, "could not list parameterSets in the destination database")
+	assert.Len(t, parameterSets, 1, "expected 1 parameter set to be migrated")
+
+	// Validate that the installation as migrated correctly
+	ps, err := store.GetParameterSet(ctx, opts.NewNamespace, "hello-llama")
+	require.NoError(t, err, "could not retrieve the migrated hello-llama parameter set")
+
+	assert.Equal(t, storage.ParameterSetSchemaVersion, ps.SchemaVersion, "incorrect schema version")
+	assert.Equal(t, "myns", ps.Namespace, "incorrect namespace")
+	assert.Equal(t, "hello-llama", ps.Name, "incorrect name")
+	assert.Equal(t, "2022-06-06T16:06:21.635528-05:00", ps.Status.Created.Format(time.RFC3339Nano), "incorrect created timestamp")
+	assert.Equal(t, "2022-06-06T17:06:21.635528-05:00", ps.Status.Modified.Format(time.RFC3339Nano), "incorrect modified timestamp")
+	assert.Empty(t, ps.Labels, "incorrect labels")
+	require.Len(t, ps.Parameters, 1, "incorrect number of parameters migrated")
+
+	param := ps.Parameters[0]
+	assert.Equal(t, "name", param.Name, "incorrect parameter name")
+	assert.Equal(t, "env", param.Source.Key, "incorrect parameter source key")
+	assert.Equal(t, "USER", param.Source.Value, "incorrect parameter source value")
 }

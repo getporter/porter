@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
@@ -44,7 +45,7 @@ func NewMigration(c *config.Config, opts storage.MigrateOptions, destStore stora
 // Connect loads the legacy plugin specified by the source storage account.
 func (m *Migration) Connect(ctx context.Context) error {
 	ctx, log := tracing.StartSpan(ctx,
-		attribute.String("storage-name", m.opts.SourceAccount))
+		attribute.String("storage-name", m.opts.OldStorageAccount))
 	defer log.EndSpan()
 
 	// Create a config file that uses the old PORTER_HOME
@@ -55,7 +56,7 @@ func (m *Migration) Connect(ctx context.Context) error {
 	oldConfig.Setenv(config.EnvHOME, m.opts.OldHome)
 
 	l := pluggable.NewPluginLoader(oldConfig)
-	conn, err := l.Load(ctx, m.LegacyStoragePluginConfig())
+	conn, err := l.Load(ctx, m.legacyStoragePluginConfig())
 	if err != nil {
 		return log.Error(fmt.Errorf("could not load legacy storage plugin: %w", err))
 	}
@@ -79,13 +80,13 @@ func (m *Migration) Connect(ctx context.Context) error {
 	return nil
 }
 
-func (m *Migration) LegacyStoragePluginConfig() pluggable.PluginTypeConfig {
+func (m *Migration) legacyStoragePluginConfig() pluggable.PluginTypeConfig {
 	return pluggable.PluginTypeConfig{
 		Interface: plugins.PluginInterface,
 		Plugin:    &crudstore.Plugin{},
 		GetDefaultPluggable: func(c *config.Config) string {
 			// Load the config for the specific storage account named as the source for the migration
-			return m.opts.SourceAccount
+			return m.opts.OldStorageAccount
 		},
 		GetPluggable: func(c *config.Config, name string) (pluggable.Entry, error) {
 			return c.GetStorage(name)
@@ -103,21 +104,27 @@ func (m *Migration) Close() error {
 	return nil
 }
 
-func (m *Migration) Migrate(ctx context.Context, currentSchema storage.Schema) (storage.Schema, error) {
-	ctx, span := tracing.StartSpan(ctx,
-		attribute.String("installationSchema", string(currentSchema.Installations)),
-		attribute.String("parameterSchema", string(currentSchema.Parameters)),
-		attribute.String("credentialSchema", string(currentSchema.Credentials)),
-	)
+func (m *Migration) Migrate(ctx context.Context) (storage.Schema, error) {
+	ctx, span := tracing.StartSpan(ctx)
 	defer span.EndSpan()
 
 	if err := m.Connect(ctx); err != nil {
 		return storage.Schema{}, err
 	}
 
+	currentSchema, err := m.loadSourceSchema()
+	if err != nil {
+		return storage.Schema{}, err
+	}
+
+	span.SetAttributes(
+		attribute.String("installationSchema", string(currentSchema.Installations)),
+		attribute.String("parameterSchema", string(currentSchema.Parameters)),
+		attribute.String("credentialSchema", string(currentSchema.Credentials)),
+	)
+
 	// Attempt to migrate all data, don't immediately stop when one fails
 	// Report how it went at the end
-	var err error
 	var migrationErr *multierror.Error
 	if currentSchema.ShouldMigrateInstallations() {
 		span.Info("Installations schema is out-of-date. Migrating...")
@@ -143,11 +150,34 @@ func (m *Migration) Migrate(ctx context.Context, currentSchema storage.Schema) (
 		span.Info("Parameter Sets schema is up-to-date")
 	}
 
+	// Write the updated schema if the migration was successful
 	if migrationErr.ErrorOrNil() == nil {
 		currentSchema, err = WriteSchema(ctx, m.destStore)
 		migrationErr = multierror.Append(migrationErr, err)
 	}
-	return currentSchema, m.migrateInstallations(ctx)
+
+	return currentSchema, migrationErr.ErrorOrNil()
+}
+
+func (m *Migration) loadSourceSchema() (storage.Schema, error) {
+	// Load the schema from the old PORTER_HOME
+	schemaData, err := m.sourceStore.Read("", "schema")
+	if err != nil {
+		return storage.Schema{}, fmt.Errorf("error reading the schema from the old PORTER_HOME: %w", err)
+	}
+
+	var srcSchema SourceSchema
+	if err = json.Unmarshal(schemaData, &srcSchema); err != nil {
+		return storage.Schema{}, fmt.Errorf("error parsing the schema from the old PORTER_HOME: %w", err)
+	}
+
+	currentSchema := storage.Schema{
+		ID:            "schema",
+		Installations: srcSchema.Claims,
+		Credentials:   srcSchema.Credentials,
+		Parameters:    srcSchema.Parameters,
+	}
+	return currentSchema, nil
 }
 
 func (m *Migration) migrateInstallations(ctx context.Context) error {
@@ -159,6 +189,8 @@ func (m *Migration) migrateInstallations(ctx context.Context) error {
 	if err != nil {
 		return span.Error(fmt.Errorf("error listing installations from the source account: %w", err))
 	}
+
+	span.Infof("Found %d installations to migrate", len(names))
 
 	var bigErr *multierror.Error
 	for _, name := range names {
@@ -175,7 +207,7 @@ func (m *Migration) migrateInstallations(ctx context.Context) error {
 
 func (m *Migration) migrateInstallation(ctx context.Context, installationName string) error {
 	inst := convertInstallation(installationName)
-	inst.Namespace = m.opts.DestinationNamespace
+	inst.Namespace = m.opts.NewNamespace
 
 	// Find all claims associated with the installation
 	claimIDs, err := m.listItems("claims", installationName)
@@ -189,14 +221,24 @@ func (m *Migration) migrateInstallation(ctx context.Context, installationName st
 		}
 	}
 
+	// Sort the claims earliest to latest and assign the installation id
+	// to the earliest claim id. This gives us a consistent installation id when the migration is repeated.
+	sort.Strings(claimIDs)
+	inst.ID = claimIDs[0]
+
 	err = m.destStore.Insert(ctx, storage.CollectionInstallations, storage.InsertOptions{Documents: []interface{}{inst}})
+	if err != nil {
+		return fmt.Errorf("error inserting migrated installation %s: %w", inst.Name, err)
+	}
+
 	return nil
 }
 
 func convertInstallation(installationName string) storage.Installation {
 	inst := storage.NewInstallation("", installationName)
 
-	// Clear the timestamp and populate them from the claim dates
+	// Clear fields that are generated and later we will set them consistently using the claim data
+	inst.ID = ""
 	inst.Status.Created = time.Time{}
 	inst.Status.Modified = time.Time{}
 
@@ -376,7 +418,11 @@ func (m *Migration) migrateOutput(ctx context.Context, run storage.Run, result s
 	}
 
 	err = m.destStore.Insert(ctx, storage.CollectionOutputs, storage.InsertOptions{Documents: []interface{}{output}})
-	return span.Error(err)
+	if err != nil {
+		return span.Error(fmt.Errorf("error inserting migrated output %s: %w", outputKey, err))
+	}
+
+	return nil
 }
 
 func convertOutput(result storage.Result, outputKey string, data []byte) (storage.Output, error) {
@@ -399,11 +445,157 @@ func convertOutput(result storage.Result, outputKey string, data []byte) (storag
 }
 
 func (m *Migration) migrateCredentialSets(ctx context.Context) error {
-	panic("not implemented")
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
+	// Get a list of all the credential set names
+	names, err := m.listItems("credentials", "")
+	if err != nil {
+		return span.Error(fmt.Errorf("error listing credential sets from the source account: %w", err))
+	}
+
+	span.Infof("Found %d credential sets to migrate", len(names))
+
+	var bigErr *multierror.Error
+	for _, name := range names {
+		if err = m.migrateCredentialSet(ctx, name); err != nil {
+			// Keep track of which ones failed but otherwise keep trying to migrate as many as possible
+			bigErr = multierror.Append(bigErr, err)
+		}
+	}
+
+	return bigErr.ErrorOrNil()
+}
+
+func (m *Migration) migrateCredentialSet(ctx context.Context, name string) error {
+	ctx, span := tracing.StartSpan(ctx, attribute.String("credential-set", name))
+	defer span.EndSpan()
+
+	data, err := m.sourceStore.Read("credentials", name)
+	if err != nil {
+		return span.Error(err)
+	}
+
+	dest, err := convertCredentialSet(m.opts.NewNamespace, data)
+	if err != nil {
+		return span.Error(err)
+	}
+
+	err = m.destStore.Insert(ctx, storage.CollectionCredentials, storage.InsertOptions{Documents: []interface{}{dest}})
+	if err != nil {
+		return span.Error(fmt.Errorf("error inserting migrated credential set %s: %w", name, err))
+	}
+
+	return nil
+}
+
+func convertCredentialSet(namespace string, data []byte) (storage.CredentialSet, error) {
+	var src SourceCredentialSet
+	if err := json.Unmarshal(data, &src); err != nil {
+		return storage.CredentialSet{}, fmt.Errorf("error parsing credential set record: %w", err)
+	}
+
+	dest := storage.CredentialSet{
+		CredentialSetSpec: storage.CredentialSetSpec{
+			SchemaVersion: storage.CredentialSetSchemaVersion,
+			Namespace:     namespace,
+			Name:          src.Name,
+			Credentials:   make([]secrets.Strategy, len(src.Credentials)),
+		},
+		Status: storage.CredentialSetStatus{
+			Created:  src.Created,
+			Modified: src.Modified,
+		},
+	}
+
+	for i, cred := range src.Credentials {
+		dest.CredentialSetSpec.Credentials[i] = secrets.Strategy{
+			Name: cred.Name,
+			Source: secrets.Source{
+				Key:   cred.Source.Key,
+				Value: cred.Source.Value,
+			},
+		}
+	}
+
+	return dest, nil
 }
 
 func (m *Migration) migrateParameterSets(ctx context.Context) error {
-	panic("not implemented")
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
+	// Get a list of all the parameter set names
+	names, err := m.listItems("parameters", "")
+	if err != nil {
+		return span.Error(fmt.Errorf("error listing credential sets from the source account: %w", err))
+	}
+
+	span.Infof("Found %d parameter sets to migrate", len(names))
+
+	var bigErr *multierror.Error
+	for _, name := range names {
+		if err = m.migrateParameterSet(ctx, name); err != nil {
+			// Keep track of which ones failed but otherwise keep trying to migrate as many as possible
+			bigErr = multierror.Append(bigErr, err)
+		}
+	}
+
+	return bigErr.ErrorOrNil()
+}
+
+func (m *Migration) migrateParameterSet(ctx context.Context, name string) error {
+	ctx, span := tracing.StartSpan(ctx, attribute.String("credential-set", name))
+	defer span.EndSpan()
+
+	data, err := m.sourceStore.Read("parameters", name)
+	if err != nil {
+		return span.Error(err)
+	}
+
+	dest, err := convertParameterSet(m.opts.NewNamespace, data)
+	if err != nil {
+		return span.Error(err)
+	}
+
+	err = m.destStore.Insert(ctx, storage.CollectionParameters, storage.InsertOptions{Documents: []interface{}{dest}})
+	if err != nil {
+		return span.Error(fmt.Errorf("error inserting migrated credential set %s: %w", name, err))
+	}
+
+	return nil
+}
+
+func convertParameterSet(namespace string, data []byte) (storage.ParameterSet, error) {
+	var src SourceParameterSet
+	if err := json.Unmarshal(data, &src); err != nil {
+		return storage.ParameterSet{}, fmt.Errorf("error parsing parameter set record: %w", err)
+	}
+
+	dest := storage.ParameterSet{
+		ParameterSetSpec: storage.ParameterSetSpec{
+			SchemaVersion: storage.ParameterSetSchemaVersion,
+			Namespace:     namespace,
+			Name:          src.Name,
+			Parameters:    make([]secrets.Strategy, len(src.Parameters)),
+		},
+		Status: storage.ParameterSetStatus{
+			Created:  src.Created,
+			Modified: src.Modified,
+		},
+	}
+
+	for i, cred := range src.Parameters {
+		dest.Parameters[i] = secrets.Strategy{
+			Name: cred.Name,
+			Source: secrets.Source{
+				Key:   cred.Source.Key,
+				Value: cred.Source.Value,
+			},
+		}
+	}
+
+	return dest, nil
 }
 
 // List items in a collection, and safely handles when there are no results
