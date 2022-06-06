@@ -3,7 +3,7 @@ title: Porter Documentation
 description: All the magic of Porter explained
 ---
 
-Porter is an open source project that lets you package your application artifact, client tools, configuration and deployment logic together as a versioned bundle that you can distribute, and then install with a single command.
+Porter is an open-source project that packages your application, client tools, configuration, and deployment logic into an installer that you can distribute and run with a single command.
 
 > 🚧 This is documentation for the most recent stable Porter release. Go to our [v1 prerelease docs](https://release-v1.porter.sh/docs/), if you are using a v1 prerelease of Porter.
 
