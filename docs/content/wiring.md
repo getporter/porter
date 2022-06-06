@@ -349,7 +349,8 @@ mixins:
 dependencies:
   requires:
     - name: mysql
-      reference: getporter/mysql:v0.1.3
+      bundle:
+        reference: getporter/mysql:v0.1.3
       parameters:
         database_name: wordpress
         mysql_user: wordpress

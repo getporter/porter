@@ -92,7 +92,7 @@ func TestExperimentalFlags(t *testing.T) {
 		cmd := buildRootCommandFrom(p.Porter)
 		cmd.SetArgs([]string{"install"})
 		cmd.Execute()
-		assert.False(t, p.Config.IsFeatureEnabled(experimental.FlagStructuredLogs))
+		assert.False(t, p.Config.IsFeatureEnabled(experimental.FlagNoopFeature))
 	})
 
 	t.Run("flag set", func(t *testing.T) {
@@ -100,14 +100,14 @@ func TestExperimentalFlags(t *testing.T) {
 		defer p.Close()
 
 		cmd := buildRootCommandFrom(p.Porter)
-		cmd.SetArgs([]string{"install", "--experimental", experimental.StructuredLogs})
+		cmd.SetArgs([]string{"install", "--experimental", experimental.NoopFeature})
 		cmd.Execute()
 
-		assert.True(t, p.Config.IsFeatureEnabled(experimental.FlagStructuredLogs))
+		assert.True(t, p.Config.IsFeatureEnabled(experimental.FlagNoopFeature))
 	})
 
 	t.Run("flag unset, env set", func(t *testing.T) {
-		os.Setenv(expEnvVar, experimental.StructuredLogs)
+		os.Setenv(expEnvVar, experimental.NoopFeature)
 		defer os.Unsetenv(expEnvVar)
 
 		p := porter.NewTestPorter(t)
@@ -117,6 +117,6 @@ func TestExperimentalFlags(t *testing.T) {
 		cmd.SetArgs([]string{"install"})
 		cmd.Execute()
 
-		assert.True(t, p.Config.IsFeatureEnabled(experimental.FlagStructuredLogs))
+		assert.True(t, p.Config.IsFeatureEnabled(experimental.FlagNoopFeature))
 	})
 }

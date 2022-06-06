@@ -9,9 +9,11 @@ mixins:
 dependencies:
   requires:
     - name: nginx
-      reference: "localhost:5000/nginx:1.19"
+      bundle:
+        reference: "localhost:5000/nginx:1.19"
     - name: mysql
-      reference: "getporter/azure-mysql:5.7"
+      bundle:
+        reference: "getporter/azure-mysql:5.7"
       parameters:
         database-name: wordpress
 install:

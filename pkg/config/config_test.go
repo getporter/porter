@@ -44,15 +44,15 @@ func TestConfig_GetHomeDirFromSymlink(t *testing.T) {
 func TestConfig_GetFeatureFlags(t *testing.T) {
 	t.Parallel()
 
-	t.Run("structured logs defaulted to disabled", func(t *testing.T) {
+	t.Run("feature defaulted to disabled", func(t *testing.T) {
 		c := Config{}
-		assert.False(t, c.IsFeatureEnabled(experimental.FlagStructuredLogs))
+		assert.False(t, c.IsFeatureEnabled(experimental.FlagNoopFeature))
 	})
 
-	t.Run("structured logs enabled", func(t *testing.T) {
+	t.Run("feature enabled", func(t *testing.T) {
 		c := Config{}
-		c.Data.ExperimentalFlags = []string{experimental.StructuredLogs}
-		assert.True(t, c.IsFeatureEnabled(experimental.FlagStructuredLogs))
+		c.Data.ExperimentalFlags = []string{experimental.NoopFeature}
+		assert.True(t, c.IsFeatureEnabled(experimental.FlagNoopFeature))
 	})
 }
 
@@ -61,23 +61,23 @@ func TestConfigExperimentalFlags(t *testing.T) {
 
 	t.Run("default off", func(t *testing.T) {
 		c := NewTestConfig(t)
-		assert.False(t, c.IsFeatureEnabled(experimental.FlagStructuredLogs))
+		assert.False(t, c.IsFeatureEnabled(experimental.FlagNoopFeature))
 	})
 
 	t.Run("user configuration", func(t *testing.T) {
-		os.Setenv("PORTER_EXPERIMENTAL", experimental.StructuredLogs)
+		os.Setenv("PORTER_EXPERIMENTAL", experimental.NoopFeature)
 		defer os.Unsetenv("PORTER_EXPERIMENTAL")
 
 		c := New()
 		require.NoError(t, c.Load(context.Background(), nil), "Load failed")
-		assert.True(t, c.IsFeatureEnabled(experimental.FlagStructuredLogs))
+		assert.True(t, c.IsFeatureEnabled(experimental.FlagNoopFeature))
 	})
 
 	t.Run("programmatically enabled", func(t *testing.T) {
 		c := NewTestConfig(t)
 		c.Data.ExperimentalFlags = nil
-		c.SetExperimentalFlags(experimental.FlagStructuredLogs)
-		assert.True(t, c.IsFeatureEnabled(experimental.FlagStructuredLogs))
+		c.SetExperimentalFlags(experimental.FlagNoopFeature)
+		assert.True(t, c.IsFeatureEnabled(experimental.FlagNoopFeature))
 	})
 }
 
@@ -85,9 +85,6 @@ func TestConfig_GetBuildDriver(t *testing.T) {
 	c := NewTestConfig(t)
 	c.Data.BuildDriver = "special"
 	require.Equal(t, BuildDriverBuildkit, c.GetBuildDriver(), "Default to docker when experimental is false, even when a build driver is set")
-
-	c.SetExperimentalFlags(experimental.FlagStructuredLogs)
-	require.Equal(t, BuildDriverBuildkit, c.GetBuildDriver(), "Use the specified driver when the build driver feature is enabled")
 }
 
 func TestConfig_ExportRemoteConfigAsEnvironmentVariables(t *testing.T) {
@@ -105,8 +102,9 @@ func TestConfig_ExportRemoteConfigAsEnvironmentVariables(t *testing.T) {
 	wantEnvVars := []string{
 		"PORTER_DEBUG=true",
 		"PORTER_DEBUG_PLUGINS=true",
-		"PORTER_LOGS_ENABLED=true",
 		"PORTER_LOGS_LEVEL=info",
+		"PORTER_LOGS_LOG_TO_FILE=true",
+		"PORTER_LOGS_STRUCTURED=true",
 		"PORTER_TELEMETRY_ENABLED=true",
 		"PORTER_TELEMETRY_REDIRECT_TO_FILE=true",
 	}

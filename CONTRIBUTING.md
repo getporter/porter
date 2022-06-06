@@ -444,7 +444,7 @@ the future. If you don't see your post, change the date to today's date.
 
 ## View a trace of a Porter command
 
-Porter has an experimental feature, structured-logs, that sends trace data about the commands run to an OpenTelemetry backend.
+Porter can send trace data about the commands run to an OpenTelemetry backend.
 It can be very helpful when figuring out why a command failed because you can see the values of variables and stack traces.
 
 In development, you can use the [otel-jaeger bundle] to set up a development instance of Jaeger, which gives you a nice website to see each command run.
@@ -458,7 +458,6 @@ This tells Porter to turn on tracing, and connect to OpenTelemetry server that y
 
 **Posix**
 ```bash
-export PORTER_EXPERIMENTAL="structured-logs"
 export PORTER_TELEMETRY_ENABLED="true"
 export OTEL_EXPORTER_OTLP_PROTOCOL="grpc"
 export OTEL_EXPORTER_OTLP_INSECURE="true"
@@ -466,7 +465,6 @@ export OTEL_EXPORTER_OTLP_INSECURE="true"
 
 **Powershell**
 ```powershell
-$env:PORTER_EXPERIMENTAL="structured-logs"
 $env:PORTER_TELEMETRY_ENABLED="true"
 $env:OTEL_EXPORTER_OTLP_PROTOCOL="grpc"
 $env:OTEL_EXPORTER_OTLP_INSECURE="true"

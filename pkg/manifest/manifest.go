@@ -594,13 +594,22 @@ type Dependencies struct {
 type RequiredDependency struct {
 	Name string `yaml:"name"`
 
+	Bundle BundleCriteria `yaml:"bundle"`
+
+	Parameters map[string]string `yaml:"parameters,omitempty"`
+}
+
+type BundleCriteria struct {
 	// Reference is the full bundle reference for the dependency
 	// in the format REGISTRY/NAME:TAG
 	Reference string `yaml:"reference"`
 
-	Versions         []string          `yaml:"versions"`
-	AllowPrereleases bool              `yaml:"prereleases"`
-	Parameters       map[string]string `yaml:"parameters,omitempty"`
+	// "When constraint checking is used for checks or validation
+	// it will follow a different set of rules that are common for ranges with tools like npm/js and Rust/Cargo.
+	// This includes considering prereleases to be invalid if the ranges does not include one.
+	// If you want to have it include pre-releases a simple solution is to include -0 in your range."
+	// https://github.com/Masterminds/semver/blob/master/README.md#checking-version-constraints
+	Version string `yaml:"versions,omitempty"`
 }
 
 func (d *RequiredDependency) Validate(cxt *portercontext.Context) error {
@@ -608,11 +617,11 @@ func (d *RequiredDependency) Validate(cxt *portercontext.Context) error {
 		return errors.New("dependency name is required")
 	}
 
-	if d.Reference == "" {
+	if d.Bundle.Reference == "" {
 		return fmt.Errorf("reference is required for dependency %q", d.Name)
 	}
 
-	if strings.Contains(d.Reference, ":") && len(d.Versions) > 0 {
+	if strings.Contains(d.Bundle.Reference, ":") && len(d.Bundle.Version) > 0 {
 		return fmt.Errorf("reference for dependency %q can only specify REGISTRY/NAME when version ranges are specified", d.Name)
 	}
 

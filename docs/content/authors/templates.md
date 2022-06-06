@@ -187,8 +187,9 @@ Here is an example porter.yaml that has a dependency and uses an output generate
 ```yaml
 dependencies:
   requires:
-    mysql:
-      reference: getporter/mysql:v0.1.3
+    - name: mysql
+      bundle:
+        reference: getporter/mysql:v0.1.3
 
 install:
   - helm3:

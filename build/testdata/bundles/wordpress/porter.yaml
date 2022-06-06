@@ -13,11 +13,12 @@ mixins:
 dependencies:
   requires:
     - name: mysql
-      reference: localhost:5000/mysql:v0.1.4
+      bundle:
+        reference: localhost:5000/mysql:v0.1.4
       parameters:
         database-name: wordpress
         mysql-user: wordpress
-      namespace: wordpress
+        namespace: wordpress
 
 credentials:
 - name: kubeconfig
