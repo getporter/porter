@@ -30,7 +30,7 @@ require (
 	github.com/cbroglie/mustache v1.0.1
 	github.com/cnabio/cnab-go v0.23.1
 	github.com/cnabio/cnab-to-oci v0.3.3
-	github.com/containerd/containerd v1.6.1
+	github.com/containerd/containerd v1.6.6
 	github.com/docker/cli v20.10.13+incompatible
 	github.com/docker/distribution v2.8.1+incompatible
 	github.com/docker/docker v20.10.13+incompatible
