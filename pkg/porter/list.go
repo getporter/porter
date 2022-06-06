@@ -194,7 +194,7 @@ func (l DisplayInstallations) Less(i, j int) bool {
 }
 
 type DisplayRun struct {
-	ClaimID    string                 `json:"claimID" yaml:"claimID"`
+	ID         string                 `json:"id" yaml:"id"`
 	Bundle     string                 `json:"bundle,omitempty" yaml:"bundle,omitempty"`
 	Version    string                 `json:"version" yaml:"version"`
 	Action     string                 `json:"action" yaml:"action"`
@@ -206,7 +206,7 @@ type DisplayRun struct {
 
 func NewDisplayRun(run storage.Run) DisplayRun {
 	return DisplayRun{
-		ClaimID:    run.ID,
+		ID:         run.ID,
 		Action:     run.Action,
 		Parameters: run.TypedParameterValues(),
 		Started:    run.Created,
