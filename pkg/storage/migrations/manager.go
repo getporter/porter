@@ -4,16 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
-	"path/filepath"
-	"time"
 
 	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/tracing"
 	"github.com/cnabio/cnab-go/schema"
-	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 )
 
@@ -72,7 +68,7 @@ func (m *Manager) Connect(ctx context.Context) error {
 			return err
 		}
 
-		if !m.allowOutOfDateSchema && m.MigrationRequired() {
+		if !m.allowOutOfDateSchema && m.schema.IsOutOfDate() {
 			m.Close()
 			return span.Error(errors.Errorf(`The schema of Porter's data is in an older format than supported by this version of Porter. 
 
@@ -115,10 +111,6 @@ func (m *Manager) Close() error {
 	m.store.Close()
 	m.initialized = false
 	return nil
-}
-
-func (m *Manager) GetDataStore() storage.Store {
-	return m.store
 }
 
 func (m *Manager) Aggregate(ctx context.Context, collection string, opts storage.AggregateOptions, out interface{}) error {
@@ -216,13 +208,8 @@ func (m *Manager) loadSchema(ctx context.Context) error {
 	return errors.Wrap(err, "could not parse storage schema document")
 }
 
-// MigrationRequired determines if a migration of Porter's storage system is necessary.
-func (m *Manager) MigrationRequired() bool {
-	return m.ShouldMigrateClaims() || m.ShouldMigrateCredentials() || m.ShouldMigrateParameters()
-}
-
 // Migrate executes a migration on any/all of Porter's storage sub-systems.
-func (m *Manager) Migrate(ctx context.Context) (string, error) {
+func (m *Manager) Migrate(ctx context.Context, sanitizer *storage.Sanitizer, opts storage.MigrateOptions) error {
 	m.reset()
 
 	// Let us call connect and not have it kick us out because the schema is out-of-date
@@ -234,54 +221,20 @@ func (m *Manager) Migrate(ctx context.Context) (string, error) {
 	// Reuse the same connection for the entire migration
 	err := m.Connect(ctx)
 	if err != nil {
-		return "", err
+		return err
 	}
 	defer m.Close()
 
-	home, err := m.GetHomeDir()
+	migration := NewMigration(m.Config, opts, m.store, sanitizer)
+	defer migration.Close()
+
+	newSchema, err := migration.Migrate(ctx, m.schema)
 	if err != nil {
-		return "", err
+		return err
 	}
 
-	logfilePath := filepath.Join(home, fmt.Sprintf("%s-migrate.log", time.Now().Format("20060102150405")))
-	logfile, err := m.FileSystem.Create(logfilePath)
-	if err != nil {
-		return "", errors.Wrapf(err, "error creating logfile for migration at %s", logfilePath)
-	}
-	defer logfile.Close()
-	w := io.MultiWriter(m.Err, logfile)
-
-	var migrationErr *multierror.Error
-	if m.ShouldMigrateClaims() {
-		fmt.Fprintf(w, "Installations schema is out-of-date (want: %s got: %s)\n", storage.InstallationSchemaVersion, m.schema.Installations)
-		err = m.migrateClaims()
-		migrationErr = multierror.Append(migrationErr, err)
-	} else {
-		fmt.Fprintln(w, "Installations schema is up-to-date")
-	}
-
-	if m.ShouldMigrateCredentials() {
-		fmt.Fprintf(w, "Credentials schema is out-of-date (want: %s got: %s)\n", storage.CredentialSetSchemaVersion, m.schema.Credentials)
-		err = m.migrateCredentials(w)
-		migrationErr = multierror.Append(migrationErr, err)
-	} else {
-		fmt.Fprintln(w, "Credentials schema is up-to-date")
-	}
-
-	if m.ShouldMigrateParameters() {
-		fmt.Fprintf(w, "Parameters schema is out-of-date (want: %s got: %s)\n", storage.ParameterSetSchemaVersion, m.schema.Parameters)
-		err = m.migrateParameters(w)
-		migrationErr = multierror.Append(migrationErr, err)
-	} else {
-		fmt.Fprintln(w, "Parameters schema is up-to-date")
-	}
-
-	if migrationErr.ErrorOrNil() == nil {
-		err = m.WriteSchema(ctx)
-		migrationErr = multierror.Append(migrationErr, err)
-	}
-
-	return logfilePath, migrationErr.ErrorOrNil()
+	m.schema = newSchema
+	return nil
 }
 
 // When there is no schema, and no existing storage data, create an initial
@@ -319,31 +272,29 @@ func (m *Manager) initEmptyPorterHome(ctx context.Context) (bool, error) {
 	return true, m.WriteSchema(ctx)
 }
 
-// ShouldMigrateClaims determines if the claims storage system requires a migration.
-func (m *Manager) ShouldMigrateClaims() bool {
-	return m.schema.Installations != storage.InstallationSchemaVersion
-}
-
-func (m *Manager) migrateClaims() error {
-	return nil
-}
-
 // reset allows us to relook at our schema.json even after it has been read.
 func (m *Manager) reset() {
 	m.schema = storage.Schema{}
 	m.initialized = false
 }
 
-// WriteSchema updates the schema with the most recent version then writes it to disk.
+// WriteSchema updates the database to indicate that it conforms with the current database schema.
 func (m *Manager) WriteSchema(ctx context.Context) error {
-	m.schema = storage.NewSchema()
+	var err error
+	m.schema, err = WriteSchema(ctx, m.store)
+	return err
+}
 
-	err := m.store.Update(ctx, CollectionConfig, storage.UpdateOptions{Document: m.schema, Upsert: true})
+// WriteSchema updates the database to indicate that it conforms with the current database schema.
+func WriteSchema(ctx context.Context, store storage.Store) (storage.Schema, error) {
+	schema := storage.NewSchema()
+
+	err := store.Update(ctx, CollectionConfig, storage.UpdateOptions{Document: schema, Upsert: true})
 	if err != nil {
-		return errors.Wrap(err, "Unable to save storage schema file")
+		return storage.Schema{}, fmt.Errorf("Unable to save storage schema file to the database: %w", err)
 	}
 
-	return nil
+	return schema, nil
 }
 
 // ShouldMigrateCredentials determines if the credentials storage system requires a migration.
@@ -351,7 +302,7 @@ func (m *Manager) ShouldMigrateCredentials() bool {
 	return m.schema.Credentials != storage.CredentialSetSchemaVersion
 }
 
-func (m *Manager) migrateCredentials(w io.Writer) error {
+func (m *Manager) migrateCredentials(context.Context) error {
 	return nil
 }
 
@@ -360,7 +311,7 @@ func (m *Manager) ShouldMigrateParameters() bool {
 	return m.schema.Parameters != storage.ParameterSetSchemaVersion
 }
 
-func (m *Manager) migrateParameters(w io.Writer) error {
+func (m *Manager) migrateParameters(context.Context) error {
 	return nil
 }
 

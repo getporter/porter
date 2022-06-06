@@ -12,17 +12,52 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (p *Porter) MigrateStorage(ctx context.Context) error {
-	logfilePath, err := p.Storage.Migrate(ctx)
+type MigrateStorageOptions struct {
+	Source      string
+	Destination string
+}
 
-	fmt.Fprintf(p.Out, "\nSaved migration logs to %s\n", logfilePath)
-
-	if err != nil {
-		// The error has already been printed, don't return it otherwise it will be double printed
-		return errors.New("Migration failed!")
+func (o MigrateStorageOptions) Validate() error {
+	if o.Source == "" {
+		return errors.New("--src is required")
 	}
 
-	fmt.Fprintln(p.Out, "Migration complete!")
+	if o.Destination == "" {
+		return errors.New("--dest is required")
+	}
+
+	return nil
+}
+
+func (p *Porter) MigrateStorage(ctx context.Context, opts MigrateStorageOptions) error {
+	if err := opts.Validate(); err != nil {
+		return err
+	}
+
+	/*
+		// Load the storage interface for both accounts
+		srcAcct, err := p.Config.GetStorage(opts.Source)
+		if err != nil {
+			return err
+		}
+
+		destAcct, err := p.Config.GetStorage(opts.Destination)
+		if err != nil {
+			return err
+		}
+
+		logfilePath, err := p.Storage.Migrate(TODO)
+
+		fmt.Fprintf(p.Out, "\nSaved migration logs to %s\n", logfilePath)
+
+		if err != nil {
+			// The error has already been printed, don't return it otherwise it will be double printed
+			return errors.New("Migration failed!")
+		}
+
+		fmt.Fprintln(p.Out, "Migration complete!")
+
+	*/
 	return nil
 }
 

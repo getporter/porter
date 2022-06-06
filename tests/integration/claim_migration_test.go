@@ -16,8 +16,6 @@ import (
 // Do a migration. This also checks for any problems with our
 // connection handling which can result in panics :-)
 func TestClaimMigration_List(t *testing.T) {
-	// TODO(carolynvs): skip until we have migrations defined for 1.0
-	t.Skip()
 	t.Parallel()
 
 	p := porter.NewTestPorter(t)
@@ -28,7 +26,11 @@ func TestClaimMigration_List(t *testing.T) {
 	schema.Installations = "v0.38.10"
 	p.TestStore.Insert(ctx, migrations.CollectionConfig, storage.InsertOptions{Documents: []interface{}{schema}})
 
-	err := p.MigrateStorage(ctx)
+	opts := porter.MigrateStorageOptions{
+		Source:      "TODO",
+		Destination: "TODO",
+	}
+	err := p.MigrateStorage(ctx, opts)
 	require.NoError(t, err, "MigrateStorage failed")
 
 	installations, err := p.ListInstallations(ctx, porter.ListOptions{})

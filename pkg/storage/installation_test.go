@@ -3,6 +3,7 @@ package storage
 import (
 	"testing"
 
+	"get.porter.sh/porter/pkg/cnab"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -54,4 +55,46 @@ func TestOCIReferenceParts_GetBundleReference(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestInstallation_ApplyResult(t *testing.T) {
+	inst := NewInstallation("myns", "mybuns")
+
+	logs := inst.NewRun("logs")
+	logs.Bundle = exampleBundle
+	logs.BundleReference = "mybuns:v0.1.1"
+	logsResult := logs.NewResult(cnab.StatusSucceeded)
+	inst.ApplyResult(logs, logsResult)
+	assert.Empty(t, inst.Bundle, "Only actions that modify should update the bundle reference")
+
+	// Try to install and fail
+	install1 := inst.NewRun("install")
+	install1.Bundle = exampleBundle
+	install1.BundleReference = "mybuns:v0.1.1"
+	installFailed := install1.NewResult(cnab.StatusFailed)
+	inst.ApplyResult(install1, installFailed)
+	assert.False(t, inst.IsInstalled())
+	assert.Equal(t, inst.Status.BundleVersion, install1.Bundle.Version)
+	assert.Equal(t, inst.Status.BundleReference, install1.BundleReference)
+	assert.Equal(t, inst.Status.RunID, install1.ID)
+	assert.Equal(t, inst.Status.ResultID, installFailed.ID)
+	assert.Equal(t, inst.Status.ResultStatus, installFailed.Status)
+
+	// Install and succeed
+	install2 := inst.NewRun("install")
+	installSucceeded := install2.NewResult(cnab.StatusSucceeded)
+	inst.ApplyResult(install2, installSucceeded)
+	assert.True(t, inst.IsInstalled())
+
+	// Uninstall and fail
+	uninstall1 := inst.NewRun("uninstall")
+	uninstallFailed := uninstall1.NewResult(cnab.StatusFailed)
+	inst.ApplyResult(uninstall1, uninstallFailed)
+	assert.False(t, inst.IsUninstalled())
+
+	// Uninstall and succeed
+	uninstall2 := inst.NewRun("uninstall")
+	uninstallSucceeded := uninstall2.NewResult(cnab.StatusSucceeded)
+	inst.ApplyResult(uninstall2, uninstallSucceeded)
+	assert.True(t, inst.IsUninstalled())
 }

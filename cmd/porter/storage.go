@@ -23,16 +23,24 @@ func buildStorageCommand(p *porter.Porter) *cobra.Command {
 }
 
 func buildStorageMigrateCommand(p *porter.Porter) *cobra.Command {
-	return &cobra.Command{
-		Use:   "migrate",
-		Short: "Migrate active storage account",
-		Long: `Migrate the data in the active storage account to the schema used by this version of Porter.
+	var opts porter.MigrateStorageOptions
+	cmd := &cobra.Command{
+		Use:   "migrate --src OLD_ACCOUNT --dest NEW_ACCOUNT",
+		Short: "Migrate data from an older version of Porter",
+		Long: `Copies data from a source storage account defined in Porter's config file into a destination storage account. 
 
-Always back up Porter's data before performing a migration. Instructions for backing up are at https://porter.sh/storage-migrate.`,
+This upgrades the data to the current storage schema, and does not change the data stored in the source account.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.MigrateStorage(cmd.Context())
+			return p.MigrateStorage(cmd.Context(), opts)
 		},
 	}
+
+	flags := cmd.Flags()
+	flags.StringVarP(&opts.Source, "src", "s", "",
+		"Name of the source storage account defined in your Porter config file")
+	flags.StringVarP(&opts.Destination, "dest", "d", "",
+		"Name of the destination storage account defined in your Porter config file")
+	return cmd
 }
 
 func buildStorageFixPermissionsCommand(p *porter.Porter) *cobra.Command {

@@ -5,22 +5,24 @@ url: /cli/porter_storage_migrate/
 ---
 ## porter storage migrate
 
-Migrate active storage account
+Migrate data from an older version of Porter
 
 ### Synopsis
 
-Migrate the data in the active storage account to the schema used by this version of Porter.
+Copies data from a source storage account defined in Porter's config file into a destination storage account. 
 
-Always back up Porter's data before performing a migration. Instructions for backing up are at https://porter.sh/storage-migrate.
+This upgrades the data to the current storage schema, and does not change the data stored in the source account.
 
 ```
-porter storage migrate [flags]
+porter storage migrate --src OLD_ACCOUNT --dest NEW_ACCOUNT [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for migrate
+  -d, --dest string   Name of the destination storage account defined in your Porter config file
+  -h, --help          help for migrate
+  -s, --src string    Name of the source storage account defined in your Porter config file
 ```
 
 ### Options inherited from parent commands

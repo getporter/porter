@@ -33,6 +33,7 @@ type Schema struct {
 	Parameters schema.Version `json:"parameters"`
 }
 
+// NewSchema creates a schema document with the currently supported version for all subsystems.
 func NewSchema() Schema {
 	return Schema{
 		ID:            "schema",
@@ -44,4 +45,20 @@ func NewSchema() Schema {
 
 func (s Schema) DefaultDocumentFilter() map[string]interface{} {
 	return map[string]interface{}{"_id": "schema"}
+}
+
+func (s Schema) IsOutOfDate() bool {
+	return s.ShouldMigrateInstallations() || s.ShouldMigrateCredentialSets() || s.ShouldMigrateParameterSets()
+}
+
+func (s Schema) ShouldMigrateInstallations() bool {
+	return s.Installations != InstallationSchemaVersion
+}
+
+func (s Schema) ShouldMigrateCredentialSets() bool {
+	return s.Credentials != CredentialSetSchemaVersion
+}
+
+func (s Schema) ShouldMigrateParameterSets() bool {
+	return s.Parameters != ParameterSetSchemaVersion
 }
