@@ -109,7 +109,7 @@ func (p *Porter) PrintInstallationRuns(ctx context.Context, opts RunListOptions)
 				if !ok {
 					return nil
 				}
-				return []string{a.ClaimID, a.Action, tp.Format(a.Started), tp.Format(a.Stopped), a.Status}
+				return []string{a.ID, a.Action, tp.Format(a.Started), tp.Format(a.Stopped), a.Status}
 			}
 		return printer.PrintTable(p.Out, displayRuns, row, "Run ID", "Action", "Started", "Stopped", "Status")
 	}
