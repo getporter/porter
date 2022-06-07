@@ -27,6 +27,10 @@ type InstallationProvider interface {
 	// UpsertInstallation saves an Installation document, creating it if it doesn't already exist.
 	UpsertInstallation(ctx context.Context, installation Installation) error
 
+	// FindInstallations applies the find operation against installations collection
+	// using the specified options.
+	FindInstallations(ctx context.Context, opts FindOptions) ([]Installation, error)
+
 	// GetInstallation retrieves an Installation document by name.
 	GetInstallation(ctx context.Context, namespace string, name string) (Installation, error)
 
