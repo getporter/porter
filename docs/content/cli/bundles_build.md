@@ -11,6 +11,13 @@ Build a bundle
 
 Builds the bundle in the current directory by generating a Dockerfile and a CNAB bundle.json, and then building the invocation image.
 
+The docker driver builds the bundle image using the local Docker host. To use a remote Docker host, set the following environment variables:
+  DOCKER_HOST (required)
+  DOCKER_TLS_VERIFY (optional)
+  DOCKER_CERT_PATH (optional)
+'
+
+
 ```
 porter bundles build [flags]
 ```

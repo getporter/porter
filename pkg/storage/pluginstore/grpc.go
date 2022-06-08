@@ -71,7 +71,6 @@ func (m *GClient) Find(ctx context.Context, opts plugins.FindOptions) ([]bson.Ra
 		Limit:      opts.Limit,
 		Select:     FromOrderedMap(opts.Select),
 		Filter:     FromMap(opts.Filter),
-		Group:      FromOrderedMap(opts.Group),
 	}
 	resp, err := m.client.Find(ctx, req)
 	if err != nil {
@@ -181,7 +180,6 @@ func (m *GServer) Find(ctx context.Context, request *proto.FindRequest) (*proto.
 		Limit:      request.Limit,
 		Select:     AsOrderedMap(request.Select),
 		Filter:     AsMap(request.Filter),
-		Group:      AsOrderedMap(request.Group),
 	}
 
 	results, err := m.impl.Find(ctx, opts)

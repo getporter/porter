@@ -198,6 +198,13 @@ feature by:
 The **build-drivers** experimental feature flag is no longer active.
 Build drivers are enabled by default and the only available driver is buildkit.
 
+The docker driver uses the local Docker host to build a bundle image, and run it in a container.
+To use a remote Docker host, set the following environment variables:
+
+* DOCKER_HOST (required)
+* DOCKER_TLS_VERIFY (optional)
+* DOCKER_CERTS_PATH (optional)
+
 ### Structured Logs
 
 The **structured-logs** experimental feature flag is no longer active.

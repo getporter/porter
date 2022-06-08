@@ -8,12 +8,12 @@ import (
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/tracing"
+	"github.com/cnabio/cnab-go/driver/docker"
 	"github.com/cnabio/cnab-to-oci/relocation"
 	"github.com/cnabio/cnab-to-oci/remotes"
 	containerdRemotes "github.com/containerd/containerd/remotes"
 	"github.com/docker/cli/cli/command"
 	dockerconfig "github.com/docker/cli/cli/config"
-	cliflags "github.com/docker/cli/cli/flags"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/pkg/jsonmessage"
@@ -122,7 +122,7 @@ func (r *Registry) PushInvocationImage(ctx context.Context, invocationImage stri
 	ctx, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
 
-	cli, err := r.getDockerClient()
+	cli, err := docker.GetDockerClient()
 	if err != nil {
 		return "", err
 	}
@@ -187,19 +187,8 @@ func (r *Registry) displayEvent(ev remotes.FixupEvent) {
 	}
 }
 
-func (r *Registry) getDockerClient() (*command.DockerCli, error) {
-	cli, err := command.NewDockerCli()
-	if err != nil {
-		return nil, errors.Wrap(err, "could not create new docker client")
-	}
-	if err := cli.Initialize(cliflags.NewClientOptions()); err != nil {
-		return nil, err
-	}
-	return cli, nil
-}
-
 func (r *Registry) IsImageCached(ctx context.Context, invocationImage string) (bool, error) {
-	cli, err := r.getDockerClient()
+	cli, err := docker.GetDockerClient()
 	if err != nil {
 		return false, err
 	}

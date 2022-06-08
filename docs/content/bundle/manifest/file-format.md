@@ -92,7 +92,8 @@ state:
 
 dependencies:
   - name: mysql
-    reference: getporter/mysql:v0.1.1
+    bundle:
+      reference: getporter/mysql:v0.1.1
     parameters:
       database: myapp
 
