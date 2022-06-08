@@ -46,17 +46,8 @@ type bundleFileOptions struct {
 func (o *bundleFileOptions) Validate(cxt *portercontext.Context) error {
 	var err error
 
-	err = o.validateBundleFiles(cxt)
-	if err != nil {
-		return err
-	}
-
 	if o.ReferenceSet {
 		return nil
-	}
-
-	if o.File != "" {
-		o.File = cxt.FileSystem.Abs(o.File)
 	}
 
 	// Resolve the proper build context directory
@@ -66,6 +57,19 @@ func (o *bundleFileOptions) Validate(cxt *portercontext.Context) error {
 			return errors.Wrapf(err, "%q is not a valid directory", o.Dir)
 		}
 		o.Dir = cxt.FileSystem.Abs(o.Dir)
+	}
+
+	if o.File != "" {
+		if o.Dir != "" {
+			o.File = cxt.FileSystem.Abs(filepath.Join(o.Dir, o.File))
+		} else {
+			o.File = cxt.FileSystem.Abs(o.File)
+		}
+	}
+
+	err = o.validateBundleFiles(cxt)
+	if err != nil {
+		return err
 	}
 
 	err = o.defaultBundleFiles(cxt)
