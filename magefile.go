@@ -7,7 +7,6 @@ package main
 
 import (
 	"fmt"
-	"get.porter.sh/porter/pkg"
 	"go/build"
 	"io/ioutil"
 	"log"
@@ -16,6 +15,8 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+
+	"get.porter.sh/porter/pkg"
 
 	"get.porter.sh/porter/mage/setup"
 
@@ -472,6 +473,17 @@ func Install() {
 		// Copy the mixin runtimes
 		mgx.Must(shx.Copy(filepath.Join(srcDir, "runtimes"), destDir, shx.CopyRecursive))
 	}
+}
+
+// Run Go Vet on the project
+func Vet() {
+	must.RunV("go", "vet", "./...")
+}
+
+// Run staticcheck on the project
+func Lint() {
+	tools.EnsureStaticCheck()
+	must.RunV("staticcheck", "./...")
 }
 
 func getPorterHome() string {
