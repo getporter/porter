@@ -298,7 +298,7 @@ func Test_bundleFileOptions(t *testing.T) {
 			setup: func(ctx *portercontext.Context, opts bundleFileOptions) error {
 				return ctx.FileSystem.MkdirAll(opts.Dir, pkg.FileModeDirectory)
 			},
-			wantFile:     config.Name,
+			wantFile:     "path/to/bundle/porter.yaml",
 			wantCNABFile: "/path/to/bundle/.cnab/bundle.json",
 			wantError:    "",
 		}, {
@@ -325,7 +325,7 @@ func Test_bundleFileOptions(t *testing.T) {
 				}
 				return ctx.FileSystem.MkdirAll(opts.Dir, pkg.FileModeDirectory)
 			},
-			wantFile:     "/alternate/porter.yaml",
+			wantFile:     "/path/to/bundle/alternate/porter.yaml",
 			wantCNABFile: "/path/to/bundle/.cnab/bundle.json",
 			wantError:    "",
 		}}
