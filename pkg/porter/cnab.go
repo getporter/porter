@@ -60,7 +60,7 @@ func (o *bundleFileOptions) Validate(cxt *portercontext.Context) error {
 	}
 
 	if o.File != "" {
-		if o.Dir != "" {
+		if o.Dir != "" && !filepath.IsAbs(o.File) {
 			o.File = cxt.FileSystem.Abs(filepath.Join(o.Dir, o.File))
 		} else {
 			o.File = cxt.FileSystem.Abs(o.File)
@@ -168,13 +168,17 @@ func (o *bundleFileOptions) defaultBundleFiles(cxt *portercontext.Context) error
 	} else if o.CNABFile != "" { // --cnab-file
 		// Nothing to default
 	} else {
-		manifestExists, err := cxt.FileSystem.Exists(config.Name)
+		defaultPath := config.Name
+		if o.Dir != "" {
+			defaultPath = filepath.Join(o.Dir, config.Name)
+		}
+		manifestExists, err := cxt.FileSystem.Exists(defaultPath)
 		if err != nil {
 			return errors.Wrap(err, "could not check if porter manifest exists in current directory")
 		}
 
 		if manifestExists {
-			o.File = config.Name
+			o.File = defaultPath
 			o.defaultCNABFile()
 		}
 	}

@@ -2,6 +2,7 @@ package porter
 
 import (
 	"context"
+	"path/filepath"
 	"testing"
 
 	"get.porter.sh/porter/pkg"
@@ -289,16 +290,20 @@ func Test_bundleFileOptions(t *testing.T) {
 			setup:        func(ctx *portercontext.Context, opts bundleFileOptions) error { return nil },
 			wantFile:     "",
 			wantCNABFile: "",
-			wantError:    "unable to access --file alternate/porter.yaml: open /alternate/porter.yaml: file does not exist",
+			wantError:    "unable to access --file /alternate/porter.yaml: open /alternate/porter.yaml: file does not exist",
 		}, {
 			name: "valid dir",
 			opts: bundleFileOptions{
 				Dir: "path/to/bundle",
 			},
 			setup: func(ctx *portercontext.Context, opts bundleFileOptions) error {
+				err := ctx.FileSystem.MkdirAll(filepath.Join(opts.Dir, config.Name), pkg.FileModeDirectory)
+				if err != nil {
+					return err
+				}
 				return ctx.FileSystem.MkdirAll(opts.Dir, pkg.FileModeDirectory)
 			},
-			wantFile:     "path/to/bundle/porter.yaml",
+			wantFile:     "/path/to/bundle/porter.yaml",
 			wantCNABFile: "/path/to/bundle/.cnab/bundle.json",
 			wantError:    "",
 		}, {
@@ -319,7 +324,7 @@ func Test_bundleFileOptions(t *testing.T) {
 				File: "alternate/porter.yaml",
 			},
 			setup: func(ctx *portercontext.Context, opts bundleFileOptions) error {
-				err := ctx.FileSystem.MkdirAll(opts.File, pkg.FileModeDirectory)
+				err := ctx.FileSystem.MkdirAll(filepath.Join(opts.Dir, opts.File), pkg.FileModeDirectory)
 				if err != nil {
 					return err
 				}

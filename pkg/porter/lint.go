@@ -43,10 +43,9 @@ func (o *LintOptions) validateFile(cxt *portercontext.Context) error {
 
 		if manifestExists {
 			o.File = config.Name
-		} else {
-			return fmt.Errorf("porter manifest does not exit in current directory")
 		}
 	}
+
 	// Verify the file can be accessed
 	if _, err := cxt.FileSystem.Stat(o.File); err != nil {
 		return errors.Wrapf(err, "unable to access --file %s", o.File)
