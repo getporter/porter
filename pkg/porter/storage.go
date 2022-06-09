@@ -25,7 +25,11 @@ func (p *Porter) MigrateStorage() error {
 }
 
 func (p *Porter) FixPermissions() error {
-	home, _ := p.GetHomeDir()
+	home, err := p.GetHomeDir()
+	if err != nil {
+		return err
+	}
+
 	fmt.Fprintf(p.Out, "Resetting file permissions in %s...\n", home)
 
 	// Fix as many files as we can, and then report any errors
@@ -37,6 +41,14 @@ func (p *Porter) FixPermissions() error {
 			} else {
 				return errors.Wrapf(err, "error checking file permissions for %s", path)
 			}
+		}
+
+		if info.IsDir() {
+			return fmt.Errorf("fixFile was called on a directory %s", path)
+		}
+
+		if _, err = filepath.Rel(home, path); err != nil {
+			return fmt.Errorf("fixFile was called on a path, %s, that isn't in the PORTER_HOME directory %s", path, home)
 		}
 
 		gotPerms := info.Mode().Perm()
@@ -73,7 +85,10 @@ func (p *Porter) FixPermissions() error {
 	}
 
 	var bigErr *multierror.Error
-	dataFiles := []string{p.ConfigFilePath, filepath.Join(home, "schema.json")}
+	dataFiles := []string{filepath.Join(home, "schema.json")}
+	if p.ConfigFilePath != "" {
+		dataFiles = append(dataFiles, p.ConfigFilePath)
+	}
 	for _, file := range dataFiles {
 		if err := fixFile(file, 0600); err != nil {
 			bigErr = multierror.Append(bigErr, err)
