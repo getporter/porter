@@ -13,7 +13,7 @@ import (
 func AssertFilePermissionsEqual(t *testing.T, path string, want os.FileMode, got os.FileMode) bool {
 	want = want.Perm()
 	got = got.Perm()
-	return assert.Equal(t, want, got|want,
+	return assert.Equal(t, want, got,
 		"incorrect file permissions on %s. want: %o, got %o", path, want, got)
 }
 
