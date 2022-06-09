@@ -57,10 +57,13 @@ func (o *bundleFileOptions) Validate(cxt *portercontext.Context) error {
 			return errors.Wrapf(err, "%q is not a valid directory", o.Dir)
 		}
 		o.Dir = cxt.FileSystem.Abs(o.Dir)
+	} else {
+		// default to current working directory
+		o.Dir = cxt.Getwd()
 	}
 
 	if o.File != "" {
-		if o.Dir != "" && !filepath.IsAbs(o.File) {
+		if !filepath.IsAbs(o.File) {
 			o.File = cxt.FileSystem.Abs(filepath.Join(o.Dir, o.File))
 		} else {
 			o.File = cxt.FileSystem.Abs(o.File)
@@ -79,7 +82,6 @@ func (o *bundleFileOptions) Validate(cxt *portercontext.Context) error {
 
 	// Enter the resolved build context directory after all defaults
 	// have been populated
-	// if an empty o.Dir is passed in, it will enter the current working directory
 	cxt.Chdir(o.Dir)
 	return nil
 }
@@ -169,31 +171,21 @@ func (o *bundleFileOptions) defaultBundleFiles(cxt *portercontext.Context) error
 	} else if o.CNABFile != "" { // --cnab-file
 		// Nothing to default
 	} else {
-		defaultPath := config.Name
-		if o.Dir != "" {
-			defaultPath = filepath.Join(o.Dir, config.Name)
-		}
+		defaultPath := filepath.Join(o.Dir, config.Name)
 		manifestExists, err := cxt.FileSystem.Exists(defaultPath)
-		if err != nil {
+		if err != nil || !manifestExists {
 			return errors.Wrapf(err, "could not find a porter manifest at %s", defaultPath)
 		}
 
-		if manifestExists {
-			o.File = defaultPath
-			o.defaultCNABFile()
-		}
+		o.File = defaultPath
+		o.defaultCNABFile()
 	}
 
 	return nil
 }
 
 func (o *bundleFileOptions) defaultCNABFile() {
-	// Place the bundle.json in o.Dir if set; otherwise place in current directory
-	if o.Dir != "" {
-		o.CNABFile = filepath.Join(o.Dir, build.LOCAL_BUNDLE)
-	} else {
-		o.CNABFile = build.LOCAL_BUNDLE
-	}
+	o.CNABFile = filepath.Join(o.Dir, build.LOCAL_BUNDLE)
 }
 
 func (o *bundleFileOptions) validateBundleFiles(cxt *portercontext.Context) error {

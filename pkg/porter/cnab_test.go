@@ -261,8 +261,8 @@ func Test_bundleFileOptions(t *testing.T) {
 			name:         "no opts",
 			opts:         bundleFileOptions{},
 			setup:        func(ctx *portercontext.Context, opts bundleFileOptions) error { return nil },
-			wantFile:     config.Name,
-			wantCNABFile: build.LOCAL_BUNDLE,
+			wantFile:     "/" + config.Name,
+			wantCNABFile: "/" + build.LOCAL_BUNDLE,
 			wantError:    "",
 		}, {
 			name: "reference set",
@@ -315,7 +315,7 @@ func Test_bundleFileOptions(t *testing.T) {
 				return ctx.FileSystem.MkdirAll(opts.File, pkg.FileModeDirectory)
 			},
 			wantFile:     "/alternate/porter.yaml",
-			wantCNABFile: build.LOCAL_BUNDLE,
+			wantCNABFile: "/" + build.LOCAL_BUNDLE,
 			wantError:    "",
 		}, {
 			name: "valid dir and file",
