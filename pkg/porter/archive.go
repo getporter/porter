@@ -11,10 +11,13 @@ import (
 
 	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/cnab"
+	"get.porter.sh/porter/pkg/encoding"
+	"get.porter.sh/porter/pkg/tracing"
 	"github.com/carolynvs/aferox"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/imagestore"
 	"github.com/cnabio/cnab-go/imagestore/construction"
+	"github.com/cnabio/cnab-to-oci/relocation"
 	"github.com/docker/docker/pkg/archive"
 	"github.com/pkg/errors"
 	"github.com/spf13/afero"
@@ -46,34 +49,46 @@ func (o *ArchiveOptions) Validate(ctx context.Context, args []string, p *Porter)
 // any referenced images locally (if needed), export them to individual layers, generate a bundle.json and
 // then generate a gzipped tar archive containing the bundle.json and the images
 func (p *Porter) Archive(ctx context.Context, opts ArchiveOptions) error {
+	ctx, log := tracing.StartSpan(ctx)
+	defer log.EndSpan()
+
 	dir := filepath.Dir(opts.ArchiveFile)
 	if _, err := p.Config.FileSystem.Stat(dir); os.IsNotExist(err) {
-		return fmt.Errorf("parent directory %q does not exist", dir)
+		return log.Error(fmt.Errorf("parent directory %q does not exist", dir))
 	}
 
 	bundleRef, err := p.resolveBundleReference(ctx, &opts.BundleActionOptions)
 	if err != nil {
-		return err
+		return log.Error(err)
 	}
 
+	if opts.RelocationMapping != "" {
+		err := encoding.UnmarshalFile(p.FileSystem, opts.RelocationMapping, &bundleRef.RelocationMap)
+		if err != nil {
+			return log.Error(errors.Wrapf(err, "could not parse the relocation mapping file at %s", opts.RelocationMapping))
+		}
+	}
 	// This allows you to export thin or thick bundles, we only support generating "thick" archives
 	ctor, err := construction.NewConstructor(false)
 	if err != nil {
-		return err
+		return log.Error(err)
 	}
 
 	dest, err := p.Config.FileSystem.OpenFile(opts.ArchiveFile, os.O_RDWR|os.O_CREATE, pkg.FileModeWritable)
+	if err != nil {
+		return log.Error(err)
+	}
 
 	exp := &exporter{
 		fs:                    p.Config.FileSystem,
 		out:                   p.Config.Out,
 		logs:                  p.Config.Out,
-		bundle:                bundleRef.Definition,
+		bundle:                bundleRef,
 		destination:           dest,
 		imageStoreConstructor: ctor,
 	}
 	if err := exp.export(); err != nil {
-		return err
+		return log.Error(err)
 	}
 
 	return nil
@@ -83,14 +98,16 @@ type exporter struct {
 	fs                    aferox.Aferox
 	out                   io.Writer
 	logs                  io.Writer
-	bundle                cnab.ExtendedBundle
+	bundle                cnab.BundleReference
 	destination           io.Writer
 	imageStoreConstructor imagestore.Constructor
 	imageStore            imagestore.Store
 }
 
 func (ex *exporter) export() error {
-	name := ex.bundle.Name + "-" + ex.bundle.Version
+	bundle := ex.bundle.Definition
+
+	name := bundle.Name + "-" + bundle.Version
 	archiveDir, err := ex.createArchiveFolder(name)
 	if err != nil {
 		return fmt.Errorf("can not create archive folder: %w", err)
@@ -102,7 +119,7 @@ func (ex *exporter) export() error {
 		return err
 	}
 	defer to.Close()
-	_, err = ex.bundle.WriteTo(to)
+	_, err = bundle.WriteTo(to)
 	if err != nil {
 		return errors.Wrap(err, "unable to write bundle.json in archive")
 	}
@@ -159,15 +176,15 @@ func (ex *exporter) chtimes(path string) error {
 
 // prepareArtifacts pulls all images, verifies their digests and
 // saves them to a directory called artifacts/ in the bundle directory
-func (ex *exporter) prepareArtifacts(bun cnab.ExtendedBundle) error {
-	for _, image := range bun.Images {
-		if err := ex.addImage(image.BaseImage); err != nil {
+func (ex *exporter) prepareArtifacts(bun cnab.BundleReference) error {
+	for _, image := range bun.Definition.Images {
+		if err := ex.addImage(image.BaseImage, bun.RelocationMap); err != nil {
 			return err
 		}
 	}
 
-	for _, in := range bun.InvocationImages {
-		if err := ex.addImage(in.BaseImage); err != nil {
+	for _, in := range bun.Definition.InvocationImages {
+		if err := ex.addImage(in.BaseImage, bun.RelocationMap); err != nil {
 			return err
 		}
 	}
@@ -176,12 +193,16 @@ func (ex *exporter) prepareArtifacts(bun cnab.ExtendedBundle) error {
 }
 
 // addImage pulls an image, adds it to the artifacts/ directory, and verifies its digest
-func (ex *exporter) addImage(image bundle.BaseImage) error {
-	dig, err := ex.imageStore.Add(image.Image)
+func (ex *exporter) addImage(base bundle.BaseImage, rm relocation.ImageRelocationMap) error {
+	location, ok := rm[base.Image]
+	if !ok {
+		return fmt.Errorf("can not locate the referenced image: %s", base.Image)
+	}
+	dig, err := ex.imageStore.Add(location)
 	if err != nil {
 		return err
 	}
-	return checkDigest(image, dig)
+	return checkDigest(base, dig)
 }
 
 // createArchiveFolder set up a temporary directory for storing all data needed to archive a bundle.

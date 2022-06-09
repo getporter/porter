@@ -99,6 +99,7 @@ func (p *Porter) resolveBundleReference(ctx context.Context, opts *BundleActionO
 			return err
 		}
 
+		opts.RelocationMapping = pullOpts.RelocationMapping
 		bundleRef = cachedBundle.BundleReference
 		return nil
 	}
