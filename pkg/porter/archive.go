@@ -101,9 +101,7 @@ type exporter struct {
 }
 
 func (ex *exporter) export() error {
-	bundle := ex.bundle
-
-	name := bundle.Name + "-" + bundle.Version
+	name := ex.bundle.Name + "-" + ex.bundle.Version
 	archiveDir, err := ex.createArchiveFolder(name)
 	if err != nil {
 		return fmt.Errorf("can not create archive folder: %w", err)
