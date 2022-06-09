@@ -56,9 +56,7 @@ ifndef HAS_PACKR2
 ifndef HAS_GOBIN_IN_PATH
 	$(error "$(CLIENT_GOPATH)/bin is not in path and packr2 is not installed. Install packr2 or add "$(CLIENT_GOPATH)/bin to your path")
 endif
-	curl -SLo /tmp/packr.tar.gz https://github.com/gobuffalo/packr/releases/download/v2.6.0/packr_2.6.0_$(CLIENT_PLATFORM)_$(CLIENT_ARCH).tar.gz
-	cd /tmp && tar -xzf /tmp/packr.tar.gz
-	install /tmp/packr2 $(CLIENT_GOPATH)/bin/
+	go install github.com/gobuffalo/packr/v2/packr2@v2.8.3
 endif
 
 xbuild-all: xbuild-porter xbuild-mixins
