@@ -13,6 +13,7 @@ import (
 
 	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/cnab"
+	"get.porter.sh/porter/pkg/encoding"
 	"get.porter.sh/porter/pkg/tracing"
 	"github.com/carolynvs/aferox"
 	"github.com/cnabio/cnab-go/bundle"
@@ -62,6 +63,12 @@ func (p *Porter) Archive(ctx context.Context, opts ArchiveOptions) error {
 		return log.Error(err)
 	}
 
+	if opts.RelocationMapping != "" {
+		err := encoding.UnmarshalFile(p.FileSystem, opts.RelocationMapping, &bundleRef.RelocationMap)
+		if err != nil {
+			return log.Error(errors.Wrapf(err, "could not parse the relocation mapping file at %s", opts.RelocationMapping))
+		}
+	}
 	// This allows you to export thin or thick bundles, we only support generating "thick" archives
 	ctor, err := construction.NewConstructor(false)
 	if err != nil {
@@ -101,7 +108,9 @@ type exporter struct {
 }
 
 func (ex *exporter) export() error {
-	name := ex.bundle.Name + "-" + ex.bundle.Version
+	bundle := ex.bundle
+
+	name := bundle.Name + "-" + bundle.Version
 	archiveDir, err := ex.createArchiveFolder(name)
 	if err != nil {
 		return fmt.Errorf("can not create archive folder: %w", err)
