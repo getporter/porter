@@ -76,7 +76,8 @@ func (p *Porter) Archive(ctx context.Context, opts ArchiveOptions) error {
 		fs:                    p.Config.FileSystem,
 		out:                   p.Config.Out,
 		logs:                  p.Config.Out,
-		bundle:                bundleRef,
+		bundle:                bundleRef.Definition,
+		relocationMap:         bundleRef.RelocationMap,
 		destination:           dest,
 		imageStoreConstructor: ctor,
 	}
@@ -91,16 +92,15 @@ type exporter struct {
 	fs                    aferox.Aferox
 	out                   io.Writer
 	logs                  io.Writer
-	bundle                cnab.BundleReference
+	bundle                cnab.ExtendedBundle
+	relocationMap         relocation.ImageRelocationMap
 	destination           io.Writer
 	imageStoreConstructor imagestore.Constructor
 	imageStore            imagestore.Store
 }
 
 func (ex *exporter) export() error {
-	bundle := ex.bundle.Definition
-
-	name := bundle.Name + "-" + bundle.Version
+	name := ex.bundle.Name + "-" + ex.bundle.Version
 	archiveDir, err := ex.createArchiveFolder(name)
 	if err != nil {
 		return fmt.Errorf("can not create archive folder: %w", err)
@@ -112,7 +112,7 @@ func (ex *exporter) export() error {
 		return err
 	}
 	defer to.Close()
-	_, err = bundle.WriteTo(to)
+	_, err = ex.bundle.WriteTo(to)
 	if err != nil {
 		return errors.Wrap(err, "unable to write bundle.json in archive")
 	}
@@ -169,15 +169,15 @@ func (ex *exporter) chtimes(path string) error {
 
 // prepareArtifacts pulls all images, verifies their digests and
 // saves them to a directory called artifacts/ in the bundle directory
-func (ex *exporter) prepareArtifacts(bun cnab.BundleReference) error {
-	for _, image := range bun.Definition.Images {
-		if err := ex.addImage(image.BaseImage, bun.RelocationMap); err != nil {
+func (ex *exporter) prepareArtifacts(bun cnab.ExtendedBundle) error {
+	for _, image := range bun.Images {
+		if err := ex.addImage(image.BaseImage); err != nil {
 			return err
 		}
 	}
 
-	for _, in := range bun.Definition.InvocationImages {
-		if err := ex.addImage(in.BaseImage, bun.RelocationMap); err != nil {
+	for _, in := range bun.InvocationImages {
+		if err := ex.addImage(in.BaseImage); err != nil {
 			return err
 		}
 	}
@@ -186,8 +186,11 @@ func (ex *exporter) prepareArtifacts(bun cnab.BundleReference) error {
 }
 
 // addImage pulls an image using relocation map, adds it to the artifacts/ directory, and verifies its digest
-func (ex *exporter) addImage(base bundle.BaseImage, rm relocation.ImageRelocationMap) error {
-	location, ok := rm[base.Image]
+func (ex *exporter) addImage(base bundle.BaseImage) error {
+	if ex.relocationMap == nil {
+		return errors.New("relocation map is not provided")
+	}
+	location, ok := ex.relocationMap[base.Image]
 	if !ok {
 		return fmt.Errorf("can not locate the referenced image: %s", base.Image)
 	}
