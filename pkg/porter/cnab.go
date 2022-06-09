@@ -79,6 +79,7 @@ func (o *bundleFileOptions) Validate(cxt *portercontext.Context) error {
 
 	// Enter the resolved build context directory after all defaults
 	// have been populated
+	// if an empty o.Dir is passed in, it will enter the current working directory
 	cxt.Chdir(o.Dir)
 	return nil
 }
@@ -174,7 +175,7 @@ func (o *bundleFileOptions) defaultBundleFiles(cxt *portercontext.Context) error
 		}
 		manifestExists, err := cxt.FileSystem.Exists(defaultPath)
 		if err != nil {
-			return errors.Wrap(err, "could not check if porter manifest exists in current directory")
+			return errors.Wrapf(err, "could not find a porter manifest at %s", defaultPath)
 		}
 
 		if manifestExists {

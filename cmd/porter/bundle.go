@@ -80,7 +80,7 @@ The docker driver builds the bundle image using the local Docker host. To use a 
 	f.StringVar(&opts.Name, "name", "", "Override the bundle name")
 	f.StringVar(&opts.Version, "version", "", "Override the bundle version")
 	f.StringVarP(&opts.File, "file", "f", "",
-		"Path to the Porter manifest. When build context directory is specified, relative path will be resolved using the build context directory as the root directory. Defaults to `porter.yaml` in the current directory.")
+		"Path to the Porter manifest. When a relative path is provided, the path is relative to the build context directory. Defaults to `porter.yaml` in the current directory.")
 	f.StringVarP(&opts.Dir, "dir", "d", "",
 		"Path to the build context directory where all bundle assets are located.")
 	f.StringVar(&opts.Driver, "driver", porter.BuildDriverDefault,
