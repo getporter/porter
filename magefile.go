@@ -149,7 +149,7 @@ func GetMixins() error {
 		{name: "arm"},
 		{name: "terraform"},
 		{name: "kubernetes"},
-		{name: "helm3", feed: "https://mchorfa.github.io/porter-helm3/atom.xml", version: "v0.1.14"},
+		{name: "helm3", feed: "https://mchorfa.github.io/porter-helm3/atom.xml", version: "v0.1.16"},
 	}
 	var errG errgroup.Group
 	for _, mixin := range mixins {
