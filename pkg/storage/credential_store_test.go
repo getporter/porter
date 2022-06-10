@@ -20,17 +20,35 @@ func TestCredentialStorage_CRUD(t *testing.T) {
 
 	require.NoError(t, cp.InsertCredentialSet(context.Background(), cs))
 
-	creds, err := cp.ListCredentialSets(context.Background(), "dev", "", nil)
+	creds, err := cp.ListCredentialSets(context.Background(), ListOptions{
+		Namespace: "dev",
+		Name:      "",
+		Labels:    nil,
+		Skip:      0,
+		Limit:     0,
+	})
 	require.NoError(t, err)
 	require.Len(t, creds, 1, "expected 1 credential set")
-	require.Equal(t, cs.Name, creds[0].Name, "expected to retrieve secreks credentials")
-	require.Equal(t, cs.Namespace, creds[0].Namespace, "expected to retrieve secreks credentials")
+	require.Equal(t, cs.Name, creds[0].Name, "expected to retrieve sekrets credentials")
+	require.Equal(t, cs.Namespace, creds[0].Namespace, "expected to retrieve sekrets credentials")
 
-	creds, err = cp.ListCredentialSets(context.Background(), "", "", nil)
+	creds, err = cp.ListCredentialSets(context.Background(), ListOptions{
+		Namespace: "",
+		Name:      "",
+		Labels:    nil,
+		Skip:      0,
+		Limit:     0,
+	})
 	require.NoError(t, err)
 	require.Len(t, creds, 0, "expected no global credential sets")
 
-	creds, err = cp.ListCredentialSets(context.Background(), "*", "", nil)
+	creds, err = cp.ListCredentialSets(context.Background(), ListOptions{
+		Namespace: "*",
+		Name:      "",
+		Labels:    nil,
+		Skip:      0,
+		Limit:     0,
+	})
 	require.NoError(t, err)
 	require.Len(t, creds, 1, "expected 1 credential set defined in all namespaces")
 
@@ -45,8 +63,41 @@ func TestCredentialStorage_CRUD(t *testing.T) {
 	require.NoError(t, err)
 	assert.Len(t, cs.Credentials, 2)
 
+	cs2 := NewCredentialSet("dev", "sekrets-2", secrets.Strategy{
+		Name: "password-2", Source: secrets.Source{
+			Key:   "secret-2",
+			Value: "dbPassword-2"}})
+	require.NoError(t, cp.InsertCredentialSet(context.Background(), cs2))
+
+	creds, err = cp.ListCredentialSets(context.Background(), ListOptions{
+		Namespace: "dev",
+		Name:      "",
+		Labels:    nil,
+		Skip:      1,
+		Limit:     0,
+	})
+	require.NoError(t, err)
+	require.Len(t, creds, 1, "expected 1 credential set")
+	require.Equal(t, cs2.Name, creds[0].Name, "expected to retrieve sekrets-2 credentials")
+	require.Equal(t, cs2.Namespace, creds[0].Namespace, "expected to retrieve sekrets-2 credentials")
+
+	creds, err = cp.ListCredentialSets(context.Background(), ListOptions{
+		Namespace: "dev",
+		Name:      "",
+		Labels:    nil,
+		Skip:      0,
+		Limit:     1,
+	})
+	require.NoError(t, err)
+	require.Len(t, creds, 1, "expected 1 credential set")
+	require.Equal(t, cs.Name, creds[0].Name, "expected to retrieve sekrets credentials")
+	require.Equal(t, cs.Namespace, creds[0].Namespace, "expected to retrieve sekrets credentials")
+
 	require.NoError(t, cp.RemoveCredentialSet(context.Background(), cs.Namespace, cs.Name))
+	require.NoError(t, cp.RemoveCredentialSet(context.Background(), cs2.Namespace, cs2.Name))
 	_, err = cp.GetCredentialSet(context.Background(), cs.Namespace, cs.Name)
+	require.ErrorIs(t, err, ErrNotFound{})
+	_, err = cp.GetCredentialSet(context.Background(), cs2.Namespace, cs2.Name)
 	require.ErrorIs(t, err, ErrNotFound{})
 }
 

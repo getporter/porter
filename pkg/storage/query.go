@@ -292,16 +292,36 @@ func convertToRawJsonDocument(in interface{}, raw interface{}) error {
 // * matching namespace
 // * name contains substring
 // * labels contains all matches
-func CreateListFiler(namespace string, name string, labels map[string]string) map[string]interface{} {
+// func CreateListFiler(namespace string, name string, labels map[string]string) map[string]interface{} {
+func CreateListFiler(listOptions ListOptions) map[string]interface{} {
 	filter := make(map[string]interface{}, 3)
-	if namespace != "*" {
-		filter["namespace"] = namespace
+	if listOptions.Namespace != "*" {
+		filter["namespace"] = listOptions.Namespace
 	}
-	if name != "" {
-		filter["name"] = map[string]interface{}{"$regex": name}
+	if listOptions.Name != "" {
+		filter["name"] = map[string]interface{}{"$regex": listOptions.Name}
 	}
-	for k, v := range labels {
+	for k, v := range listOptions.Labels {
 		filter["labels."+k] = v
 	}
 	return filter
+}
+
+// ListOptions is the set of options available to the list operation
+// on any storage provider.
+type ListOptions struct {
+	// Namespace in which the particular result list is defined. Used for filtering and sorting.
+	Namespace string
+
+	// Name specifies whether the result list name contain the specified substring. Also used for sorting.
+	Name string
+
+	// Labels is used to filter result list based on a key-value pair.
+	Labels map[string]string
+
+	// Skip is the number of results to skip past and exclude from the results.
+	Skip int64
+
+	// Limit is the number of results to return.
+	Limit int64
 }
