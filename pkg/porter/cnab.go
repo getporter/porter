@@ -46,17 +46,8 @@ type bundleFileOptions struct {
 func (o *bundleFileOptions) Validate(cxt *portercontext.Context) error {
 	var err error
 
-	err = o.validateBundleFiles(cxt)
-	if err != nil {
-		return err
-	}
-
 	if o.ReferenceSet {
 		return nil
-	}
-
-	if o.File != "" {
-		o.File = cxt.FileSystem.Abs(o.File)
 	}
 
 	// Resolve the proper build context directory
@@ -66,6 +57,22 @@ func (o *bundleFileOptions) Validate(cxt *portercontext.Context) error {
 			return errors.Wrapf(err, "%q is not a valid directory", o.Dir)
 		}
 		o.Dir = cxt.FileSystem.Abs(o.Dir)
+	} else {
+		// default to current working directory
+		o.Dir = cxt.Getwd()
+	}
+
+	if o.File != "" {
+		if !filepath.IsAbs(o.File) {
+			o.File = cxt.FileSystem.Abs(filepath.Join(o.Dir, o.File))
+		} else {
+			o.File = cxt.FileSystem.Abs(o.File)
+		}
+	}
+
+	err = o.validateBundleFiles(cxt)
+	if err != nil {
+		return err
 	}
 
 	err = o.defaultBundleFiles(cxt)
@@ -164,27 +171,21 @@ func (o *bundleFileOptions) defaultBundleFiles(cxt *portercontext.Context) error
 	} else if o.CNABFile != "" { // --cnab-file
 		// Nothing to default
 	} else {
-		manifestExists, err := cxt.FileSystem.Exists(config.Name)
-		if err != nil {
-			return errors.Wrap(err, "could not check if porter manifest exists in current directory")
+		defaultPath := filepath.Join(o.Dir, config.Name)
+		manifestExists, err := cxt.FileSystem.Exists(defaultPath)
+		if err != nil || !manifestExists {
+			return errors.Wrapf(err, "could not find a porter manifest at %s", defaultPath)
 		}
 
-		if manifestExists {
-			o.File = config.Name
-			o.defaultCNABFile()
-		}
+		o.File = defaultPath
+		o.defaultCNABFile()
 	}
 
 	return nil
 }
 
 func (o *bundleFileOptions) defaultCNABFile() {
-	// Place the bundle.json in o.Dir if set; otherwise place in current directory
-	if o.Dir != "" {
-		o.CNABFile = filepath.Join(o.Dir, build.LOCAL_BUNDLE)
-	} else {
-		o.CNABFile = build.LOCAL_BUNDLE
-	}
+	o.CNABFile = filepath.Join(o.Dir, build.LOCAL_BUNDLE)
 }
 
 func (o *bundleFileOptions) validateBundleFiles(cxt *portercontext.Context) error {
