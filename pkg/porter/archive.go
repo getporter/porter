@@ -2,6 +2,7 @@ package porter
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -107,14 +108,23 @@ func (ex *exporter) export() error {
 	}
 	defer ex.fs.RemoveAll(archiveDir)
 
-	to, err := ex.fs.OpenFile(filepath.Join(archiveDir, "bundle.json"), os.O_RDWR|os.O_CREATE, pkg.FileModeWritable)
+	bundleFile, err := ex.fs.OpenFile(filepath.Join(archiveDir, "bundle.json"), os.O_RDWR|os.O_CREATE, pkg.FileModeWritable)
 	if err != nil {
 		return err
 	}
-	defer to.Close()
-	_, err = ex.bundle.WriteTo(to)
+	defer bundleFile.Close()
+	_, err = ex.bundle.WriteTo(bundleFile)
 	if err != nil {
 		return errors.Wrap(err, "unable to write bundle.json in archive")
+	}
+
+	reloData, err := json.Marshal(ex.relocationMap)
+	if err != nil {
+		return err
+	}
+	err = ex.fs.WriteFile(filepath.Join(archiveDir, "relocation-mapping.json"), reloData, pkg.FileModeWritable)
+	if err != nil {
+		return errors.Wrap(err, "unable to write relocation-mapping.json in archive")
 	}
 
 	ex.imageStore, err = ex.imageStoreConstructor(imagestore.WithArchiveDir(archiveDir), imagestore.WithLogs(ex.logs))
