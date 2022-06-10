@@ -17,6 +17,7 @@ import (
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/schema"
+	"get.porter.sh/porter/pkg/tracing"
 	"get.porter.sh/porter/pkg/yaml"
 	"github.com/Masterminds/semver/v3"
 	"github.com/cbroglie/mustache"
@@ -1052,6 +1053,9 @@ func scanManifestTemplating(data []byte) (templateScanResult, error) {
 // LoadManifestFrom reads and validates the manifest at the specified location,
 // and returns a populated Manifest structure.
 func LoadManifestFrom(ctx context.Context, config *config.Config, file string) (*Manifest, error) {
+	ctx, log := tracing.StartSpan(ctx)
+	defer log.EndSpan()
+
 	m, err := ReadManifest(config.Context, file)
 	if err != nil {
 		return nil, err
