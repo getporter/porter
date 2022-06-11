@@ -68,14 +68,7 @@ func (s InstallationStore) ListInstallations(ctx context.Context, listOptions Li
 	defer log.EndSpan()
 
 	var out []Installation
-	findOpts := FindOptions{
-		Sort:   []string{"namespace", "name"},
-		Filter: CreateListFiler(listOptions),
-		Skip:   listOptions.Skip,
-		Limit:  listOptions.Limit,
-	}
-
-	err := s.store.Find(ctx, CollectionInstallations, findOpts, &out)
+	err := s.store.Find(ctx, CollectionInstallations, listOptions.ToFindOptions(), &out)
 	return out, err
 }
 

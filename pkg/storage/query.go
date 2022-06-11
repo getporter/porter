@@ -288,31 +288,13 @@ func convertToRawJsonDocument(in interface{}, raw interface{}) error {
 	return json.Unmarshal(data, raw)
 }
 
-// CreateListFiler builds a query for a list of documents by:
-// * matching namespace
-// * name contains substring
-// * labels contains all matches
-func CreateListFiler(listOptions ListOptions) map[string]interface{} {
-	filter := make(map[string]interface{}, 3)
-	if listOptions.Namespace != "*" {
-		filter["namespace"] = listOptions.Namespace
-	}
-	if listOptions.Name != "" {
-		filter["name"] = map[string]interface{}{"$regex": listOptions.Name}
-	}
-	for k, v := range listOptions.Labels {
-		filter["labels."+k] = v
-	}
-	return filter
-}
-
 // ListOptions is the set of options available to the list operation
 // on any storage provider.
 type ListOptions struct {
-	// Namespace in which the particular result list is defined. Used for filtering and sorting.
+	// Namespace in which the particular result list is defined.
 	Namespace string
 
-	// Name specifies whether the result list name contain the specified substring. Also used for sorting.
+	// Name specifies whether the result list name contain the specified substring.
 	Name string
 
 	// Labels is used to filter result list based on a key-value pair.
@@ -323,4 +305,28 @@ type ListOptions struct {
 
 	// Limit is the number of results to return.
 	Limit int64
+}
+
+// ToFindOptions builds a query for a list of documents with these conditions:
+// * sorted in ascending order by namespace first and then name
+// * filtered by matching namespace, name contains substring, and labels contain all matches
+// * skipped and limited to a certain number of result
+func (o ListOptions) ToFindOptions() FindOptions {
+	filter := make(map[string]interface{}, 3)
+	if o.Namespace != "*" {
+		filter["namespace"] = o.Namespace
+	}
+	if o.Name != "" {
+		filter["name"] = map[string]interface{}{"$regex": o.Name}
+	}
+	for k, v := range o.Labels {
+		filter["labels."+k] = v
+	}
+
+	return FindOptions{
+		Sort:   []string{"namespace", "name"},
+		Filter: filter,
+		Skip:   o.Skip,
+		Limit:  o.Limit,
+	}
 }

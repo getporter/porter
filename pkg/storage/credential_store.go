@@ -112,13 +112,7 @@ func (s CredentialStore) InsertCredentialSet(ctx context.Context, creds Credenti
 
 func (s CredentialStore) ListCredentialSets(ctx context.Context, listOptions ListOptions) ([]CredentialSet, error) {
 	var out []CredentialSet
-	opts := FindOptions{
-		Sort:   []string{"namespace", "name"},
-		Filter: CreateListFiler(listOptions),
-		Skip:   listOptions.Skip,
-		Limit:  listOptions.Limit,
-	}
-	err := s.Documents.Find(ctx, CollectionCredentials, opts, &out)
+	err := s.Documents.Find(ctx, CollectionCredentials, listOptions.ToFindOptions(), &out)
 	return out, err
 }
 

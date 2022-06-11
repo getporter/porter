@@ -102,13 +102,7 @@ func (s ParameterStore) InsertParameterSet(ctx context.Context, params Parameter
 
 func (s ParameterStore) ListParameterSets(ctx context.Context, listOptions ListOptions) ([]ParameterSet, error) {
 	var out []ParameterSet
-	opts := FindOptions{
-		Sort:   []string{"namespace", "name"},
-		Filter: CreateListFiler(listOptions),
-		Skip:   listOptions.Skip,
-		Limit:  listOptions.Limit,
-	}
-	err := s.Documents.Find(ctx, CollectionParameters, opts, &out)
+	err := s.Documents.Find(ctx, CollectionParameters, listOptions.ToFindOptions(), &out)
 	return out, err
 }
 
