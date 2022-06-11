@@ -14,13 +14,7 @@ func TestParameterStore_CRUD(t *testing.T) {
 	defer paramStore.Close()
 
 	ctx := context.Background()
-	params, err := paramStore.ListParameterSets(ctx, ListOptions{
-		Namespace: "dev",
-		Name:      "",
-		Labels:    nil,
-		Skip:      0,
-		Limit:     0,
-	})
+	params, err := paramStore.ListParameterSets(ctx, ListOptions{Namespace: "dev"})
 	require.NoError(t, err)
 	require.Empty(t, params, "Find should return no entries")
 
@@ -38,34 +32,16 @@ func TestParameterStore_CRUD(t *testing.T) {
 	err = paramStore.InsertParameterSet(ctx, myParamSet)
 	require.NoError(t, err, "Insert should successfully save")
 
-	params, err = paramStore.ListParameterSets(ctx, ListOptions{
-		Namespace: "dev",
-		Name:      "",
-		Labels:    nil,
-		Skip:      0,
-		Limit:     0,
-	})
+	params, err = paramStore.ListParameterSets(ctx, ListOptions{Namespace: "dev"})
 	require.NoError(t, err)
 	require.Len(t, params, 1, "expected 1 parameter set")
 	require.Equal(t, myParamSet.Name, params[0].Name, "expected to retrieve myparam")
 
-	params, err = paramStore.ListParameterSets(ctx, ListOptions{
-		Namespace: "",
-		Name:      "",
-		Labels:    nil,
-		Skip:      0,
-		Limit:     0,
-	})
+	params, err = paramStore.ListParameterSets(ctx, ListOptions{})
 	require.NoError(t, err)
 	require.Len(t, params, 0, "expected no global parameter sets")
 
-	params, err = paramStore.ListParameterSets(ctx, ListOptions{
-		Namespace: "*",
-		Name:      "",
-		Labels:    nil,
-		Skip:      0,
-		Limit:     0,
-	})
+	params, err = paramStore.ListParameterSets(ctx, ListOptions{Namespace: "*"})
 	require.NoError(t, err)
 	require.Len(t, params, 1, "expected 1 parameter set defined in all namespaces")
 
@@ -87,24 +63,12 @@ func TestParameterStore_CRUD(t *testing.T) {
 	err = paramStore.InsertParameterSet(ctx, myParamSet2)
 	require.NoError(t, err, "Insert should successfully save")
 
-	params, err = paramStore.ListParameterSets(ctx, ListOptions{
-		Namespace: "dev",
-		Name:      "",
-		Labels:    nil,
-		Skip:      1,
-		Limit:     0,
-	})
+	params, err = paramStore.ListParameterSets(ctx, ListOptions{Namespace: "dev", Skip: 1})
 	require.NoError(t, err)
 	require.Len(t, params, 1, "expected 1 parameter set")
 	require.Equal(t, myParamSet2.Name, params[0].Name, "expected to retrieve myparam2")
 
-	params, err = paramStore.ListParameterSets(ctx, ListOptions{
-		Namespace: "dev",
-		Name:      "",
-		Labels:    nil,
-		Skip:      0,
-		Limit:     1,
-	})
+	params, err = paramStore.ListParameterSets(ctx, ListOptions{Namespace: "dev", Limit: 1})
 	require.NoError(t, err)
 	require.Len(t, params, 1, "expected 1 parameter set")
 	require.Equal(t, myParamSet.Name, params[0].Name, "expected to retrieve myparam")
@@ -115,13 +79,7 @@ func TestParameterStore_CRUD(t *testing.T) {
 	err = paramStore.RemoveParameterSet(ctx, myParamSet2.Namespace, myParamSet2.Name)
 	require.NoError(t, err, "Remove should successfully delete the parameter set")
 
-	params, err = paramStore.ListParameterSets(ctx, ListOptions{
-		Namespace: "dev",
-		Name:      "",
-		Labels:    nil,
-		Skip:      0,
-		Limit:     0,
-	})
+	params, err = paramStore.ListParameterSets(ctx, ListOptions{Namespace: "dev"})
 	require.NoError(t, err)
 	require.Empty(t, params, "List should return no entries")
 

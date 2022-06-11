@@ -61,33 +61,15 @@ func TestManager_NoMigrationEmptyHome(t *testing.T) {
 	defer mgr.Close()
 	claimStore := storage.NewInstallationStore(mgr)
 
-	_, err := claimStore.ListInstallations(context.Background(), storage.ListOptions{
-		Namespace: "",
-		Name:      "",
-		Labels:    nil,
-		Skip:      0,
-		Limit:     0,
-	})
+	_, err := claimStore.ListInstallations(context.Background(), storage.ListOptions{})
 	require.NoError(t, err, "ListInstallations failed")
 
 	credStore := storage.NewCredentialStore(mgr, nil)
-	_, err = credStore.ListCredentialSets(context.Background(), storage.ListOptions{
-		Namespace: "",
-		Name:      "",
-		Labels:    nil,
-		Skip:      0,
-		Limit:     0,
-	})
+	_, err = credStore.ListCredentialSets(context.Background(), storage.ListOptions{})
 	require.NoError(t, err, "List credentials failed")
 
 	paramStore := storage.NewParameterStore(mgr, nil)
-	_, err = paramStore.ListParameterSets(context.Background(), storage.ListOptions{
-		Namespace: "",
-		Name:      "",
-		Labels:    nil,
-		Skip:      0,
-		Limit:     0,
-	})
+	_, err = paramStore.ListParameterSets(context.Background(), storage.ListOptions{})
 	require.NoError(t, err, "List credentials failed")
 }
 
@@ -119,13 +101,7 @@ storage.Schema{ID:"schema", Installations:"needs-migration", Credentials:"1.0.1"
 	}
 
 	t.Run("list", func(t *testing.T) {
-		_, err = claimStore.ListInstallations(context.Background(), storage.ListOptions{
-			Namespace: "",
-			Name:      "",
-			Labels:    nil,
-			Skip:      0,
-			Limit:     0,
-		})
+		_, err = claimStore.ListInstallations(context.Background(), storage.ListOptions{})
 		checkMigrationError(t, err)
 	})
 
@@ -148,13 +124,7 @@ func TestClaimStorage_NoMigrationRequiredForEmptyHome(t *testing.T) {
 	defer mgr.Close()
 	claimStore := storage.NewInstallationStore(mgr)
 
-	names, err := claimStore.ListInstallations(context.Background(), storage.ListOptions{
-		Namespace: "",
-		Name:      "",
-		Labels:    nil,
-		Skip:      0,
-		Limit:     0,
-	})
+	names, err := claimStore.ListInstallations(context.Background(), storage.ListOptions{})
 	require.NoError(t, err, "ListInstallations failed")
 	assert.Empty(t, names, "Expected an empty list of installations since porter home is new")
 }
@@ -186,13 +156,7 @@ storage.Schema{ID:"schema", Installations:"1.0.1", Credentials:"needs-migration"
 	}
 
 	t.Run("list", func(t *testing.T) {
-		_, err = credStore.ListCredentialSets(context.Background(), storage.ListOptions{
-			Namespace: "",
-			Name:      "",
-			Labels:    nil,
-			Skip:      0,
-			Limit:     0,
-		})
+		_, err = credStore.ListCredentialSets(context.Background(), storage.ListOptions{})
 		checkMigrationError(t, err)
 	})
 
@@ -251,13 +215,7 @@ storage.Schema{ID:"schema", Installations:"1.0.1", Credentials:"1.0.1", Paramete
 	}
 
 	t.Run("list", func(t *testing.T) {
-		_, err = paramStore.ListParameterSets(context.Background(), storage.ListOptions{
-			Namespace: "",
-			Name:      "",
-			Labels:    nil,
-			Skip:      0,
-			Limit:     0,
-		})
+		_, err = paramStore.ListParameterSets(context.Background(), storage.ListOptions{})
 		checkMigrationError(t, err)
 	})
 
@@ -278,13 +236,7 @@ func TestParameterStorage_NoMigrationRequiredForEmptyHome(t *testing.T) {
 	testSecrets := secrets.NewTestSecretsProvider()
 	paramStore := storage.NewTestParameterProviderFor(t, mgr, testSecrets)
 
-	names, err := paramStore.ListParameterSets(context.Background(), storage.ListOptions{
-		Namespace: "",
-		Name:      "",
-		Labels:    nil,
-		Skip:      0,
-		Limit:     0,
-	})
+	names, err := paramStore.ListParameterSets(context.Background(), storage.ListOptions{})
 	require.NoError(t, err, "List failed")
 	assert.Empty(t, names, "Expected an empty list of parameters since porter home is new")
 }
