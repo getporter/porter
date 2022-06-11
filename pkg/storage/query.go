@@ -292,7 +292,6 @@ func convertToRawJsonDocument(in interface{}, raw interface{}) error {
 // * matching namespace
 // * name contains substring
 // * labels contains all matches
-// func CreateListFiler(namespace string, name string, labels map[string]string) map[string]interface{} {
 func CreateListFiler(listOptions ListOptions) map[string]interface{} {
 	filter := make(map[string]interface{}, 3)
 	if listOptions.Namespace != "*" {
