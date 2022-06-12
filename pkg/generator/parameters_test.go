@@ -33,7 +33,7 @@ func TestGoodParametersName(t *testing.T) {
 			Name:   name,
 			Silent: true,
 		},
-		Bundle: cnab.ExtendedBundle{bundle.Bundle{
+		Bundle: cnab.ExtendedBundle{Bundle: bundle.Bundle{
 			Parameters: map[string]bundle.Parameter{
 				"one": {
 					Definition: "one",
@@ -98,7 +98,7 @@ func TestSkipParameters(t *testing.T) {
 			Name:   name,
 			Silent: true,
 		},
-		Bundle: cnab.ExtendedBundle{bundle.Bundle{
+		Bundle: cnab.ExtendedBundle{Bundle: bundle.Bundle{
 			Definitions: definition.Definitions{
 				"porter-debug": &definition.Schema{
 					Comment: cnab.PorterInternal,

@@ -659,7 +659,7 @@ func TestNewManifestConverter_generateOutputWiringParameter(t *testing.T) {
 	outputDef := definition.Schema{
 		Type: "string",
 	}
-	b := cnab.ExtendedBundle{bundle.Bundle{
+	b := cnab.ExtendedBundle{Bundle: bundle.Bundle{
 		Outputs: map[string]bundle.Output{
 			"msg": {
 				Definition: "stringDef",

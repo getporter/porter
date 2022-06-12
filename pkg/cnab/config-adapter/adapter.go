@@ -48,7 +48,7 @@ func (c *ManifestConverter) ToBundle(ctx context.Context) (cnab.ExtendedBundle, 
 		return cnab.ExtendedBundle{}, span.Error(err)
 	}
 
-	b := cnab.ExtendedBundle{bundle.Bundle{
+	b := cnab.ExtendedBundle{Bundle: bundle.Bundle{
 		SchemaVersion: SchemaVersion,
 		Name:          c.Manifest.Name,
 		Description:   c.Manifest.Description,

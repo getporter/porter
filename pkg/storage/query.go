@@ -57,7 +57,7 @@ func convertSortKeys(values []string) bson.D {
 			sortKey = strings.Trim(key, "-")
 			sortOrder = -1
 		}
-		keys[i] = bson.E{sortKey, sortOrder}
+		keys[i] = bson.E{Key: sortKey, Value: sortOrder}
 	}
 	return keys
 }

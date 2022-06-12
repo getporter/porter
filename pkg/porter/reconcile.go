@@ -221,7 +221,7 @@ func (p *Porter) IsInstallationInSync(ctx context.Context, i storage.Installatio
 		return compParams, nil
 	}
 
-	lastRunParams, err := p.Sanitizer.RestoreParameterSet(ctx, lastRun.Parameters, cnab.ExtendedBundle{lastRun.Bundle})
+	lastRunParams, err := p.Sanitizer.RestoreParameterSet(ctx, lastRun.Parameters, cnab.ExtendedBundle{Bundle: lastRun.Bundle})
 	if err != nil {
 		return false, err
 	}

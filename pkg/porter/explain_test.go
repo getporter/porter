@@ -110,7 +110,7 @@ func TestExplain_generateYAML(t *testing.T) {
 }
 
 func TestExplain_generatePrintableBundleParams(t *testing.T) {
-	bun := cnab.ExtendedBundle{bundle.Bundle{
+	bun := cnab.ExtendedBundle{Bundle: bundle.Bundle{
 		RequiredExtensions: []string{
 			cnab.FileParameterExtensionKey,
 		},
@@ -160,7 +160,7 @@ func TestExplain_generatePrintableBundleParams(t *testing.T) {
 }
 
 func TestExplain_generatePrintableBundleParamsWithAction(t *testing.T) {
-	bun := cnab.ExtendedBundle{bundle.Bundle{
+	bun := cnab.ExtendedBundle{Bundle: bundle.Bundle{
 		RequiredExtensions: []string{
 			cnab.FileParameterExtensionKey,
 		},
@@ -233,7 +233,7 @@ func TestExplain_generatePrintableBundleParamsWithAction(t *testing.T) {
 }
 
 func TestExplain_generatePrintableBundleOutputs(t *testing.T) {
-	bun := cnab.ExtendedBundle{bundle.Bundle{
+	bun := cnab.ExtendedBundle{Bundle: bundle.Bundle{
 		Definitions: definition.Definitions{
 			"string": &definition.Schema{
 				Type:    "string",
@@ -288,7 +288,7 @@ func TestExplain_generatePrintableBundleOutputs(t *testing.T) {
 }
 
 func TestExplain_generatePrintableBundleCreds(t *testing.T) {
-	bun := cnab.ExtendedBundle{bundle.Bundle{
+	bun := cnab.ExtendedBundle{Bundle: bundle.Bundle{
 		Credentials: map[string]bundle.Credential{
 			"kubeconfig": {
 				Required:    true,
@@ -348,7 +348,7 @@ func TestExplain_generatePrintableBundleCreds(t *testing.T) {
 }
 
 func TestExplain_generatePrintableBundlePorterVersion(t *testing.T) {
-	bun := cnab.ExtendedBundle{bundle.Bundle{
+	bun := cnab.ExtendedBundle{Bundle: bundle.Bundle{
 		Definitions: definition.Definitions{
 			"string": &definition.Schema{
 				Type:    "string",
@@ -371,7 +371,7 @@ func TestExplain_generatePrintableBundlePorterVersion(t *testing.T) {
 }
 
 func TestExplain_generatePrintableBundlePorterVersionNonPorterBundle(t *testing.T) {
-	bun := cnab.ExtendedBundle{bundle.Bundle{
+	bun := cnab.ExtendedBundle{Bundle: bundle.Bundle{
 		Definitions: definition.Definitions{
 			"string": &definition.Schema{
 				Type:    "string",
@@ -389,7 +389,7 @@ func TestExplain_generatePrintableBundlePorterVersionNonPorterBundle(t *testing.
 func TestExplain_generatePrintableBundleDependencies(t *testing.T) {
 
 	sequenceMock := []string{"nginx", "storage", "mysql"}
-	bun := cnab.ExtendedBundle{bundle.Bundle{
+	bun := cnab.ExtendedBundle{Bundle: bundle.Bundle{
 		Custom: map[string]interface{}{
 			cnab.DependenciesExtensionKey: cnab.Dependencies{
 				Sequence: sequenceMock,

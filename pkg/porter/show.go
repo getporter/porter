@@ -175,7 +175,7 @@ func (p *Porter) NewDisplayInstallationWithSecrets(ctx context.Context, installa
 	displayInstallation := NewDisplayInstallation(installation)
 
 	if run != nil {
-		bun := cnab.ExtendedBundle{run.Bundle}
+		bun := cnab.ExtendedBundle{Bundle: run.Bundle}
 		installParams, err := p.Sanitizer.RestoreParameterSet(ctx, installation.Parameters, bun)
 		if err != nil {
 			return DisplayInstallation{}, err

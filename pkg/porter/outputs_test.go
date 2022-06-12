@@ -103,7 +103,7 @@ func TestPorter_PrintBundleOutputs(t *testing.T) {
 				},
 			}
 
-			extB := cnab.ExtendedBundle{b}
+			extB := cnab.ExtendedBundle{Bundle: b}
 			i := p.TestInstallations.CreateInstallation(storage.NewInstallation("", "test"), func(i *storage.Installation) {
 				i.Parameters.Parameters = p.SanitizeParameters(i.Parameters.Parameters, i.ID, extB)
 			})

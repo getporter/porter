@@ -83,7 +83,7 @@ func TestPorter_ShowInstallationWithBundle(t *testing.T) {
 				},
 			}
 
-			bun := cnab.ExtendedBundle{b}
+			bun := cnab.ExtendedBundle{Bundle: b}
 			i := p.TestInstallations.CreateInstallation(storage.NewInstallation("dev", "mywordpress"), p.TestInstallations.SetMutableInstallationValues, func(i *storage.Installation) {
 				if tc.ref != "" {
 					i.TrackBundle(cnab.MustParseOCIReference(tc.ref))
@@ -198,7 +198,7 @@ func TestPorter_ShowInstallationWithoutRecordedRun(t *testing.T) {
 		},
 	}
 
-	bun := cnab.ExtendedBundle{b}
+	bun := cnab.ExtendedBundle{Bundle: b}
 	p.TestInstallations.CreateInstallation(storage.NewInstallation("dev", "mywordpress"), p.TestInstallations.SetMutableInstallationValues, func(i *storage.Installation) {
 		i.TrackBundle(cnab.MustParseOCIReference("getporter/wordpress:v0.1.0"))
 		i.Labels = map[string]string{
