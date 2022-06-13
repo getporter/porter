@@ -103,7 +103,7 @@ type DisplayInstallation struct {
 }
 
 type DisplayInstallationMetadata struct {
-	ResolvedParameters DisplayValues `json:"resolvedParameters", yaml:"resolvedParameters"`
+	ResolvedParameters DisplayValues `json:"resolvedParameters" yaml:"resolvedParameters"`
 }
 
 func NewDisplayInstallation(installation storage.Installation) DisplayInstallation {
