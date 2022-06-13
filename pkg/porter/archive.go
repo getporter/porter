@@ -16,6 +16,7 @@ import (
 	"github.com/cnabio/cnab-go/imagestore/construction"
 	"github.com/docker/docker/pkg/archive"
 	"github.com/pkg/errors"
+	"github.com/spf13/afero"
 )
 
 // ArchiveOptions defines the valid options for performing an archive operation
@@ -88,14 +89,10 @@ type exporter struct {
 }
 
 func (ex *exporter) export() error {
-
 	name := ex.bundle.Name + "-" + ex.bundle.Version
-	archiveDir, err := ex.fs.TempDir("", name)
+	archiveDir, err := ex.createArchiveFolder(name)
 	if err != nil {
-		return err
-	}
-	if err := ex.fs.MkdirAll(archiveDir, 0644); err != nil {
-		return err
+		return fmt.Errorf("can not create archive folder: %w", err)
 	}
 	defer ex.fs.RemoveAll(archiveDir)
 
@@ -184,6 +181,27 @@ func (ex *exporter) addImage(image bundle.BaseImage) error {
 		return err
 	}
 	return checkDigest(image, dig)
+}
+
+// createArchiveFolder set up a temporary directory for storing all data needed to archive a bundle.
+// It sanitizes the name and make sure only the current user has full permission to it.
+// If the name contains a path separator, all transit paths are created.
+func (ex *exporter) createArchiveFolder(name string) (string, error) {
+	cleanedPath := afero.UnicodeSanitize(name)
+	tmpDir := filepath.Join(os.TempDir(), filepath.Dir(cleanedPath))
+	if err := ex.fs.MkdirAll(tmpDir, 0744); err != nil {
+		return "", err
+	}
+
+	archiveDir, err := ex.fs.TempDir(tmpDir, filepath.Base(cleanedPath))
+	if err != nil {
+		return "", err
+	}
+	if err := ex.fs.Chmod(archiveDir, 0744); err != nil {
+		return "", err
+	}
+
+	return archiveDir, nil
 }
 
 // checkDigest compares the content digest of the given image to the given content digest and returns an error if they

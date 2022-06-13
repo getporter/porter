@@ -2,6 +2,7 @@ package porter
 
 import (
 	"context"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -50,4 +51,19 @@ func TestArchive_Validate(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestArchive_ArchiveDirectory(t *testing.T) {
+	p := NewTestPorter(t)
+	defer p.Close()
+	ex := exporter{
+		fs: p.FileSystem,
+	}
+
+	dir, err := ex.createArchiveFolder("examples/test-bundle-0.2.0")
+	require.NoError(t, err)
+
+	info, err := ex.fs.Stat(dir)
+	require.NoError(t, err)
+	require.Equal(t, os.FileMode(0744).String(), info.Mode().Perm().String(), dir)
 }
