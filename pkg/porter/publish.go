@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"path"
 	"path/filepath"
 	"strings"
@@ -216,7 +215,6 @@ func (p *Porter) publishFromArchive(ctx context.Context, opts PublishOptions) er
 		return errors.Wrap(err, "error creating temp directory for archive extraction")
 	}
 	defer p.FileSystem.RemoveAll(tmpDir)
-	extractedDir := filepath.Join(tmpDir, strings.TrimSuffix(filepath.Base(source), ".tgz"))
 
 	bundleRef, err := p.extractBundle(tmpDir, source)
 	if err != nil {
@@ -228,6 +226,7 @@ func (p *Porter) publishFromArchive(ctx context.Context, opts PublishOptions) er
 	fmt.Fprintf(p.Out, "Beginning bundle publish to %s. This may take some time.\n", opts.Reference)
 
 	// Use the ggcr client to read the extracted OCI Layout
+	extractedDir := filepath.Join(tmpDir, strings.TrimSuffix(filepath.Base(source), ".tgz"))
 	client := ggcr.NewRegistryClient()
 	layout, err := client.ReadLayout(filepath.Join(extractedDir, "artifacts/layout"))
 	if err != nil {
@@ -304,7 +303,7 @@ func (p *Porter) extractBundle(tmpDir, source string) (cnab.BundleReference, err
 	if err != nil {
 		return cnab.BundleReference{}, errors.Wrapf(err, "failed to load bundle from archive %s", source)
 	}
-	data, err := ioutil.ReadFile(filepath.Join(tmpDir, strings.TrimSuffix(filepath.Base(source), ".tgz"), "relocation-mapping.json"))
+	data, err := p.FileSystem.ReadFile(filepath.Join(tmpDir, strings.TrimSuffix(filepath.Base(source), ".tgz"), "relocation-mapping.json"))
 	if err != nil {
 		return cnab.BundleReference{}, errors.Wrapf(err, "failed to load relocation-mapping.json from archive %s", source)
 	}

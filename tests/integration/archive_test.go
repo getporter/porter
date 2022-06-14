@@ -7,11 +7,15 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"io"
+	"path/filepath"
+	"strings"
 	"testing"
 
 	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/porter"
 	"get.porter.sh/porter/tests"
+	"github.com/cnabio/cnab-go/bundle/loader"
+	"github.com/cnabio/cnab-go/packager"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -40,6 +44,7 @@ func TestArchive(t *testing.T) {
 	info, err := p.FileSystem.Stat(archiveFile1)
 	require.NoError(p.T(), err)
 	tests.AssertFilePermissionsEqual(t, archiveFile1, pkg.FileModeWritable, info.Mode())
+	containsRequiredMetadata(p, archiveFile1)
 
 	hash1 := getHash(p, archiveFile1)
 
@@ -55,8 +60,8 @@ func TestArchive(t *testing.T) {
 
 	err = p.Archive(ctx, archive2Opts)
 	require.NoError(t, err, "Second archive failed")
-
 	assert.Equal(p.T(), hash1, getHash(p, archiveFile2), "shasum of archive did not stay the same on the second call to archive")
+	containsRequiredMetadata(p, archiveFile2)
 
 	// Publish bundle from archive, with new reference
 	publishFromArchiveOpts := porter.PublishOptions{
@@ -82,4 +87,22 @@ func getHash(p *porter.TestPorter, path string) string {
 	require.NoError(p.T(), err, "hashing of archive failed")
 
 	return fmt.Sprintf("%x", h.Sum(nil))
+}
+
+func containsRequiredMetadata(p *porter.TestPorter, path string) {
+	tmpDir, err := p.FileSystem.TempDir("", "porter-integration-tests")
+	require.NoError(p.T(), err)
+	defer p.FileSystem.RemoveAll(tmpDir)
+
+	source := p.FileSystem.Abs(path)
+	l := loader.NewLoader()
+	imp := packager.NewImporter(source, tmpDir, l)
+	err = imp.Import()
+	require.NoError(p.T(), err, "opening archive failed")
+
+	_, err = p.FileSystem.Stat(filepath.Join(tmpDir, strings.TrimSuffix(filepath.Base(source), ".tgz"), "relocation-mapping.json"))
+	require.NoError(p.T(), err)
+
+	_, err = p.FileSystem.Stat(filepath.Join(tmpDir, strings.TrimSuffix(filepath.Base(source), ".tgz"), "bundle.json"))
+	require.NoError(p.T(), err)
 }
