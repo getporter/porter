@@ -16,7 +16,7 @@ In contrast, a database connection string used by your application is considered
 **If you want to use different values depending on the person executing the bundle, use credentials. Otherwise use sensitive parameters.**
 
 This is a convention recommended by Porter to avoid a situation where Sally installs a bundle with her personal credentials, and then every time another user subsequently upgrades the bundle, her credentials are re-used, making it look like Sally ran the upgrades.
-Ultimately the difference between the parameters and credentisl is that credentials are never stored or reused by a bundle.
+Ultimately the difference between the parameters and credentials is that credentials are never stored or reused by a bundle.
 
 Credentials are injected into a bundle as either an environment variable or a file.
 Depending on the bundle, a credential can apply to all actions (install/upgrade/uninstall) or may only apply to a particular action.
