@@ -142,7 +142,8 @@ The results may also be filtered by associated labels and the namespace in which
   porter parameters list --namespace prod -o json
   porter parameters list --all-namespaces,
   porter parameters list --name myapp
-  porter parameters list --label env=dev`,
+  porter parameters list --label env=dev
+  porter parameters list --skip 2 --limit 2`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate()
 		},
@@ -162,6 +163,10 @@ The results may also be filtered by associated labels and the namespace in which
 		"Filter the parameter sets by a label formatted as: KEY=VALUE. May be specified multiple times.")
 	f.StringVarP(&opts.RawFormat, "output", "o", "plaintext",
 		"Specify an output format.  Allowed values: plaintext, json, yaml")
+	f.Int64Var(&opts.Skip, "skip", 0,
+		"Skip the number of parameter sets by a certain amount. Defaults to 0.")
+	f.Int64Var(&opts.Limit, "limit", 0,
+		"Limit the number of parameter sets by a certain amount. Defaults to 0.")
 
 	return cmd
 }

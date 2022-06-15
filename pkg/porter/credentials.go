@@ -31,7 +31,13 @@ type CredentialEditOptions struct {
 
 // ListCredentials lists saved credential sets.
 func (p *Porter) ListCredentials(ctx context.Context, opts ListOptions) ([]storage.CredentialSet, error) {
-	return p.Credentials.ListCredentialSets(ctx, opts.GetNamespace(), opts.Name, opts.ParseLabels())
+	return p.Credentials.ListCredentialSets(ctx, storage.ListOptions{
+		Namespace: opts.GetNamespace(),
+		Name:      opts.Name,
+		Labels:    opts.ParseLabels(),
+		Skip:      opts.Skip,
+		Limit:     opts.Limit,
+	})
 }
 
 // PrintCredentials prints saved credential sets.

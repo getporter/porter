@@ -288,20 +288,45 @@ func convertToRawJsonDocument(in interface{}, raw interface{}) error {
 	return json.Unmarshal(data, raw)
 }
 
-// CreateListFiler builds a query for a list of documents by:
-// * matching namespace
-// * name contains substring
-// * labels contains all matches
-func CreateListFiler(namespace string, name string, labels map[string]string) map[string]interface{} {
+// ListOptions is the set of options available to the list operation
+// on any storage provider.
+type ListOptions struct {
+	// Namespace in which the particular result list is defined.
+	Namespace string
+
+	// Name specifies whether the result list name contain the specified substring.
+	Name string
+
+	// Labels is used to filter result list based on a key-value pair.
+	Labels map[string]string
+
+	// Skip is the number of results to skip past and exclude from the results.
+	Skip int64
+
+	// Limit is the number of results to return.
+	Limit int64
+}
+
+// ToFindOptions builds a query for a list of documents with these conditions:
+// * sorted in ascending order by namespace first and then name
+// * filtered by matching namespace, name contains substring, and labels contain all matches
+// * skipped and limited to a certain number of result
+func (o ListOptions) ToFindOptions() FindOptions {
 	filter := make(map[string]interface{}, 3)
-	if namespace != "*" {
-		filter["namespace"] = namespace
+	if o.Namespace != "*" {
+		filter["namespace"] = o.Namespace
 	}
-	if name != "" {
-		filter["name"] = map[string]interface{}{"$regex": name}
+	if o.Name != "" {
+		filter["name"] = map[string]interface{}{"$regex": o.Name}
 	}
-	for k, v := range labels {
+	for k, v := range o.Labels {
 		filter["labels."+k] = v
 	}
-	return filter
+
+	return FindOptions{
+		Sort:   []string{"namespace", "name"},
+		Filter: filter,
+		Skip:   o.Skip,
+		Limit:  o.Limit,
+	}
 }

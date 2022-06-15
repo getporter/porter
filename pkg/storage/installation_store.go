@@ -63,17 +63,12 @@ func (s InstallationStore) Initialize(ctx context.Context) error {
 	return span.Error(err)
 }
 
-func (s InstallationStore) ListInstallations(ctx context.Context, namespace string, name string, labels map[string]string) ([]Installation, error) {
+func (s InstallationStore) ListInstallations(ctx context.Context, listOptions ListOptions) ([]Installation, error) {
 	_, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
 
 	var out []Installation
-	findOpts := FindOptions{
-		Sort:   []string{"namespace", "name"},
-		Filter: CreateListFiler(namespace, name, labels),
-	}
-
-	err := s.store.Find(ctx, CollectionInstallations, findOpts, &out)
+	err := s.store.Find(ctx, CollectionInstallations, listOptions.ToFindOptions(), &out)
 	return out, err
 }
 

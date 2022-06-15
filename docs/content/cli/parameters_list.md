@@ -26,6 +26,7 @@ porter parameters list [flags]
   porter parameters list --all-namespaces,
   porter parameters list --name myapp
   porter parameters list --label env=dev
+  porter parameters list --skip 2 --limit 2
 ```
 
 ### Options
@@ -34,9 +35,11 @@ porter parameters list [flags]
       --all-namespaces     Include all namespaces in the results.
   -h, --help               help for list
   -l, --label strings      Filter the parameter sets by a label formatted as: KEY=VALUE. May be specified multiple times.
+      --limit int          Limit the number of parameter sets by a certain amount. Defaults to 0.
       --name string        Filter the parameter sets where the name contains the specified substring.
   -n, --namespace string   Namespace in which the parameter set is defined. Defaults to the global namespace. Use * to list across all namespaces.
   -o, --output string      Specify an output format.  Allowed values: plaintext, json, yaml (default "plaintext")
+      --skip int           Skip the number of parameter sets by a certain amount. Defaults to 0.
 ```
 
 ### Options inherited from parent commands
