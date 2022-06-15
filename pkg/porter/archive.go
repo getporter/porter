@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"get.porter.sh/porter/pkg"
@@ -185,22 +186,18 @@ func (ex *exporter) addImage(image bundle.BaseImage) error {
 
 // createArchiveFolder set up a temporary directory for storing all data needed to archive a bundle.
 // It sanitizes the name and make sure only the current user has full permission to it.
-// If the name contains a path separator, all transit paths are created.
+// If the name contains a path separator, all path separators will be replaced with "-".
 func (ex *exporter) createArchiveFolder(name string) (string, error) {
-	cleanedPath := afero.UnicodeSanitize(name)
-	tmpDir := filepath.Join(os.TempDir(), filepath.Dir(cleanedPath))
-	if err := ex.fs.MkdirAll(tmpDir, 0744); err != nil {
-		return "", err
-	}
-
-	archiveDir, err := ex.fs.TempDir(tmpDir, filepath.Base(cleanedPath))
+	cleanedPath := strings.ReplaceAll(afero.UnicodeSanitize(name), string(os.PathSeparator), "-")
+	archiveDir, err := ex.fs.TempDir("", cleanedPath)
 	if err != nil {
-		return "", err
-	}
-	if err := ex.fs.Chmod(archiveDir, 0744); err != nil {
-		return "", err
+		return "", fmt.Errorf("can not create a temporary archive folder: %w", err)
 	}
 
+	err = ex.fs.Chmod(archiveDir, pkg.FileModeDirectory)
+	if err != nil {
+		return "", fmt.Errorf("can not change permission for the temporary archive folder: %w", err)
+	}
 	return archiveDir, nil
 }
 

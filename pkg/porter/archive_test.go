@@ -2,9 +2,9 @@ package porter
 
 import (
 	"context"
-	"os"
 	"testing"
 
+	"get.porter.sh/porter/pkg"
 	"github.com/stretchr/testify/require"
 )
 
@@ -65,5 +65,5 @@ func TestArchive_ArchiveDirectory(t *testing.T) {
 
 	info, err := ex.fs.Stat(dir)
 	require.NoError(t, err)
-	require.Equal(t, os.FileMode(0744).String(), info.Mode().Perm().String(), dir)
+	require.Equal(t, pkg.FileModeDirectory.String(), info.Mode().Perm().String(), dir)
 }
