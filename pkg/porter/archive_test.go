@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg"
+	"get.porter.sh/porter/tests"
 	"github.com/stretchr/testify/require"
 )
 
@@ -62,8 +63,7 @@ func TestArchive_ArchiveDirectory(t *testing.T) {
 
 	dir, err := ex.createArchiveFolder("examples/test-bundle-0.2.0")
 	require.NoError(t, err)
+	require.Contains(t, dir, "/tmp/examples-test-bundle-0.2.0")
 
-	info, err := ex.fs.Stat(dir)
-	require.NoError(t, err)
-	require.Equal(t, pkg.FileModeDirectory.String(), info.Mode().Perm().String(), dir)
+	tests.AssertDirectoryPermissionsEqual(t, dir, pkg.FileModeDirectory)
 }
