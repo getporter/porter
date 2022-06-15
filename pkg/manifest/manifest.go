@@ -1007,7 +1007,7 @@ func ReadManifest(cxt *portercontext.Context, path string) (*Manifest, error) {
 
 	m, err := UnmarshalManifest(cxt, data)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "unsupported property set or a custom action is defined incorrectly")
 	}
 
 	m.ManifestPath = path

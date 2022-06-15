@@ -221,6 +221,19 @@ func TestManifest_Validate_Dockerfile(t *testing.T) {
 	assert.EqualError(t, err, "Dockerfile template cannot be named 'Dockerfile' because that is the filename generated during porter build")
 }
 
+func TestManifest_Validate_WrongSchema(t *testing.T) {
+	c := config.NewTestConfig(t)
+
+	c.TestContext.AddTestFile("testdata/porter-with-badschema.yaml", config.Name)
+	_, err := LoadManifestFrom(context.Background(), c.Config, config.Name)
+
+	assert.Error(t, err)
+	assert.Regexp(t,
+		"unsupported property set or a custom action is defined incorrectly: error unmarshaling custom action baddata",
+		err,
+	)
+}
+
 func TestReadManifest_URL(t *testing.T) {
 	cxt := portercontext.NewTestContext(t)
 	url := "https://raw.githubusercontent.com/getporter/porter/v0.27.1/pkg/manifest/testdata/simple.porter.yaml"
