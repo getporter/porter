@@ -44,7 +44,8 @@ Optional output formats include json and yaml.`,
   porter installations list -o json
   porter installations list --all-namespaces,
   porter installations list --label owner=myname --namespace dev
-  porter installations list --name myapp`,
+  porter installations list --name myapp
+  porter installations list --skip 2 --limit 2`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate()
 		},
@@ -64,6 +65,10 @@ Optional output formats include json and yaml.`,
 		"Filter the installations by a label formatted as: KEY=VALUE. May be specified multiple times.")
 	f.StringVarP(&opts.RawFormat, "output", "o", "plaintext",
 		"Specify an output format.  Allowed values: plaintext, json, yaml")
+	f.Int64Var(&opts.Skip, "skip", 0,
+		"Skip the number of installations by a certain amount. Defaults to 0.")
+	f.Int64Var(&opts.Limit, "limit", 0,
+		"Limit the number of installations by a certain amount. Defaults to 0.")
 
 	return cmd
 }

@@ -24,6 +24,8 @@ type ListOptions struct {
 	Namespace     string
 	Name          string
 	Labels        []string
+	Skip          int64
+	Limit         int64
 }
 
 func (o *ListOptions) Validate() error {
@@ -218,7 +220,13 @@ func (p *Porter) ListInstallations(ctx context.Context, opts ListOptions) (Displ
 	ctx, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
 
-	installations, err := p.Installations.ListInstallations(ctx, opts.GetNamespace(), opts.Name, opts.ParseLabels())
+	installations, err := p.Installations.ListInstallations(ctx, storage.ListOptions{
+		Namespace: opts.GetNamespace(),
+		Name:      opts.Name,
+		Labels:    opts.ParseLabels(),
+		Skip:      opts.Skip,
+		Limit:     opts.Limit,
+	})
 	if err != nil {
 		return nil, log.Error(fmt.Errorf("could not list installations: %w", err))
 	}

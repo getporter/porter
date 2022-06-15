@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 var _ Document = TestDocument{}
@@ -71,4 +72,28 @@ func TestFindOptions_ToPluginOptions(t *testing.T) {
 		{"_id", -1},
 		{"name", 1}}
 	require.Equal(t, wantSortDoc, po.Sort)
+}
+
+func TestListOptions_ToFindOptions(t *testing.T) {
+	opts := ListOptions{
+		Namespace: "dev",
+		Name:      "name",
+		Labels:    map[string]string{"key": "value"},
+		Skip:      1,
+		Limit:     1,
+	}
+
+	wantOpts := FindOptions{
+		Sort:  []string{"namespace", "name"},
+		Skip:  1,
+		Limit: 1,
+		Filter: primitive.M{
+			"labels.key": "value",
+			"name":       map[string]interface{}{"$regex": "name"},
+			"namespace":  "dev",
+		},
+	}
+
+	gotOpts := opts.ToFindOptions()
+	require.Equal(t, wantOpts, gotOpts)
 }

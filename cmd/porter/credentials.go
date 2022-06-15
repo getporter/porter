@@ -143,7 +143,8 @@ The results may also be filtered by associated labels and the namespace in which
   porter credentials list --namespace prod
   porter credentials list --all-namespaces,
   porter credentials list --name myapp
-  porter credentials list --label env=dev`,
+  porter credentials list --label env=dev
+  porter credentials list --skip 2 --limit 2`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate()
 		},
@@ -163,6 +164,10 @@ The results may also be filtered by associated labels and the namespace in which
 		"Filter the credential sets by a label formatted as: KEY=VALUE. May be specified multiple times.")
 	f.StringVarP(&opts.RawFormat, "output", "o", "plaintext",
 		"Specify an output format.  Allowed values: plaintext, json, yaml")
+	f.Int64Var(&opts.Skip, "skip", 0,
+		"Skip the number of credential sets by a certain amount. Defaults to 0.")
+	f.Int64Var(&opts.Limit, "limit", 0,
+		"Limit the number of credential sets by a certain amount. Defaults to 0.")
 
 	return cmd
 }

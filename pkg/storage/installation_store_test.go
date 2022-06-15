@@ -165,7 +165,7 @@ func TestInstallationStorageProvider_Installations(t *testing.T) {
 	defer cp.Close()
 
 	t.Run("ListInstallations", func(t *testing.T) {
-		installations, err := cp.ListInstallations(context.Background(), "dev", "", nil)
+		installations, err := cp.ListInstallations(context.Background(), ListOptions{Namespace: "dev"})
 		require.NoError(t, err, "ListInstallations failed")
 
 		require.Len(t, installations, 3, "Expected 3 installations")
@@ -181,6 +181,36 @@ func TestInstallationStorageProvider_Installations(t *testing.T) {
 		foo := installations[2]
 		assert.Equal(t, "foo", foo.Name)
 		assert.Equal(t, cnab.StatusSucceeded, foo.Status.ResultStatus)
+	})
+
+	t.Run("ListInstallations with skip option", func(t *testing.T) {
+		installations, err := cp.ListInstallations(context.Background(), ListOptions{Namespace: "dev", Skip: 1})
+		require.NoError(t, err, "ListInstallations failed")
+
+		require.Len(t, installations, 2, "Expected 2 installations")
+
+		bar := installations[0]
+		assert.Equal(t, "baz", bar.Name)
+		assert.Equal(t, cnab.StatusRunning, bar.Status.ResultStatus)
+
+		baz := installations[1]
+		assert.Equal(t, "foo", baz.Name)
+		assert.Equal(t, cnab.StatusSucceeded, baz.Status.ResultStatus)
+	})
+
+	t.Run("ListInstallations with limit option", func(t *testing.T) {
+		installations, err := cp.ListInstallations(context.Background(), ListOptions{Namespace: "dev", Limit: 2})
+		require.NoError(t, err, "ListInstallations failed")
+
+		require.Len(t, installations, 2, "Expected 2 installations")
+
+		bar := installations[0]
+		assert.Equal(t, "bar", bar.Name)
+		assert.Equal(t, cnab.StatusSucceeded, bar.Status.ResultStatus)
+
+		baz := installations[1]
+		assert.Equal(t, "baz", baz.Name)
+		assert.Equal(t, cnab.StatusRunning, baz.Status.ResultStatus)
 	})
 
 	t.Run("FindInstallations by label", func(t *testing.T) {
@@ -236,14 +266,14 @@ func TestInstallationStorageProvider_DeleteInstallation(t *testing.T) {
 	cp := generateInstallationData(t)
 	defer cp.Close()
 
-	installations, err := cp.ListInstallations(context.Background(), "dev", "", nil)
+	installations, err := cp.ListInstallations(context.Background(), ListOptions{Namespace: "dev"})
 	require.NoError(t, err, "ListInstallations failed")
 	assert.Len(t, installations, 3, "expected 3 installations")
 
 	err = cp.RemoveInstallation(context.Background(), "dev", "foo")
 	require.NoError(t, err, "RemoveInstallation failed")
 
-	installations, err = cp.ListInstallations(context.Background(), "dev", "", nil)
+	installations, err = cp.ListInstallations(context.Background(), ListOptions{Namespace: "dev"})
 	require.NoError(t, err, "ListInstallations failed")
 	assert.Len(t, installations, 2, "expected foo to be deleted")
 
