@@ -17,6 +17,11 @@ type ExtendedBundle struct {
 	bundle.Bundle
 }
 
+// NewBundle creates an ExtendedBundle from a given bundle.
+func NewBundle(bundle bundle.Bundle) ExtendedBundle {
+	return ExtendedBundle{bundle}
+}
+
 // LoadBundle from the specified filepath.
 func LoadBundle(c *portercontext.Context, bundleFile string) (ExtendedBundle, error) {
 	bunD, err := c.FileSystem.ReadFile(bundleFile)
@@ -29,7 +34,7 @@ func LoadBundle(c *portercontext.Context, bundleFile string) (ExtendedBundle, er
 		return ExtendedBundle{}, errors.Wrapf(err, "cannot load bundle from\n%s at %s", string(bunD), bundleFile)
 	}
 
-	return ExtendedBundle{*bun}, nil
+	return NewBundle(*bun), nil
 }
 
 // IsPorterBundle determines if the bundle was created by Porter.

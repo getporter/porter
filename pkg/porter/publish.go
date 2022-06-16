@@ -296,7 +296,7 @@ func (p *Porter) extractBundle(tmpDir, source string) (cnab.ExtendedBundle, erro
 		return cnab.ExtendedBundle{}, errors.Wrapf(err, "failed to load bundle from archive %s", source)
 	}
 
-	return cnab.ExtendedBundle{*bun}, nil
+	return cnab.NewBundle(*bun), nil
 }
 
 // pushUpdatedImage uses the provided layout to find the provided origImg,

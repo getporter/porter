@@ -41,7 +41,7 @@ func TestRoundTripDataOverGRPC(t *testing.T) {
 	// Add an index to support filtering
 	const collection = "things"
 	err = client.EnsureIndex(ctx, plugins.EnsureIndexOptions{Indices: []plugins.Index{
-		{Collection: collection, Keys: bson.D{{"namespace", 1}, {"name", 1}}},
+		{Collection: collection, Keys: bson.D{{Key: "namespace", Value: 1}, {Key: "name", Value: 1}}},
 	}})
 	require.NoError(t, err)
 
@@ -58,7 +58,7 @@ func TestRoundTripDataOverGRPC(t *testing.T) {
 	results, err := client.Find(ctx, plugins.FindOptions{
 		Collection: collection,
 		Filter:     bson.M{"namespace": "dev"},
-		Select:     bson.D{{"name", 1}, {"namespace", 1}, {"_id", 0}},
+		Select:     bson.D{{Key: "name", Value: 1}, {Key: "namespace", Value: 1}, {Key: "_id", Value: 0}},
 	})
 	require.NoError(t, err)
 	require.Len(t, results, 1)
@@ -70,11 +70,11 @@ func TestRoundTripDataOverGRPC(t *testing.T) {
 	opts := plugins.EnsureIndexOptions{
 		Indices: []plugins.Index{
 			// query most recent outputs by run (porter installation run show, when we list outputs)
-			{Collection: CollectionOutputs, Keys: bson.D{{"namespace", 1}, {"installation", 1}, {"-resultId", 1}}},
+			{Collection: CollectionOutputs, Keys: bson.D{{Key: "namespace", Value: 1}, {Key: "installation", Value: 1}, {Key: "-resultId", Value: 1}}},
 			// query outputs by result (list)
-			{Collection: CollectionOutputs, Keys: bson.D{{"resultId", 1}, {"name", 1}}, Unique: true},
+			{Collection: CollectionOutputs, Keys: bson.D{{Key: "resultId", Value: 1}, {Key: "name", Value: 1}}, Unique: true},
 			// query most recent outputs by name for an installation
-			{Collection: CollectionOutputs, Keys: bson.D{{"namespace", 1}, {"installation", 1}, {"name", 1}, {"-resultId", 1}}},
+			{Collection: CollectionOutputs, Keys: bson.D{{Key: "namespace", Value: 1}, {Key: "installation", Value: 1}, {Key: "name", Value: 1}, {Key: "-resultId", Value: 1}}},
 		},
 	}
 
@@ -94,21 +94,21 @@ func TestRoundTripDataOverGRPC(t *testing.T) {
 		Collection: CollectionOutputs,
 		Pipeline: []bson.D{
 			// List outputs by installation
-			{{"$match", bson.M{
+			{{Key: "$match", Value: bson.M{
 				"namespace":    "dev",
 				"installation": "test",
 			}}},
 			// Reverse sort them (newest on top)
-			{{"$sort", bson.D{
-				{"namespace", 1},
-				{"installation", 1},
-				{"name", 1},
-				{"resultId", -1},
+			{{Key: "$sort", Value: bson.D{
+				{Key: "namespace", Value: 1},
+				{Key: "installation", Value: 1},
+				{Key: "name", Value: 1},
+				{Key: "resultId", Value: -1},
 			}}},
 			// Group them by output name and select the last value for each output
-			{{"$group", bson.D{
-				{"_id", "$name"},
-				{"lastOutput", bson.M{"$first": "$$ROOT"}},
+			{{Key: "$group", Value: bson.D{
+				{Key: "_id", Value: "$name"},
+				{Key: "lastOutput", Value: bson.M{"$first": "$$ROOT"}},
 			}}},
 		},
 	})

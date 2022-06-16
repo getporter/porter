@@ -35,14 +35,14 @@ func TestSupportsFileParameters(t *testing.T) {
 	t.Parallel()
 
 	t.Run("supported", func(t *testing.T) {
-		b := ExtendedBundle{bundle.Bundle{
+		b := NewBundle(bundle.Bundle{
 			RequiredExtensions: []string{FileParameterExtensionKey},
-		}}
+		})
 
 		assert.True(t, b.SupportsFileParameters())
 	})
 	t.Run("unsupported", func(t *testing.T) {
-		b := ExtendedBundle{bundle.Bundle{}}
+		b := NewBundle(bundle.Bundle{})
 
 		assert.False(t, b.SupportsFileParameters())
 	})

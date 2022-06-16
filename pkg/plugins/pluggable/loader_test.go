@@ -51,7 +51,7 @@ func TestPluginLoader_SelectPlugin(t *testing.T) {
 		c.Data.DefaultStorage = "azure"
 		c.Data.StoragePlugins = []config.StoragePlugin{
 			{
-				config.PluginConfig{
+				PluginConfig: config.PluginConfig{
 					Name:         "azure",
 					PluginSubKey: "azure.blob",
 					Config: map[string]interface{}{

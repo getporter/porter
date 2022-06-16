@@ -8,7 +8,7 @@ import (
 	"get.porter.sh/porter/pkg/porter"
 )
 
-func ExampleInstall() {
+func ExamplePorter_install() {
 	// Create an instance of the Porter application
 	p := porter.New()
 

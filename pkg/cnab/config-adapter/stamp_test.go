@@ -50,7 +50,7 @@ func TestConfig_GenerateStamp(t *testing.T) {
 func TestConfig_LoadStamp(t *testing.T) {
 	t.Parallel()
 
-	bun := cnab.ExtendedBundle{bundle.Bundle{
+	bun := cnab.NewBundle(bundle.Bundle{
 		Custom: map[string]interface{}{
 			config.CustomPorterKey: map[string]interface{}{
 				"manifestDigest": "somedigest",
@@ -60,7 +60,7 @@ func TestConfig_LoadStamp(t *testing.T) {
 				},
 			},
 		},
-	}}
+	})
 
 	stamp, err := LoadStamp(bun)
 	require.NoError(t, err)
@@ -72,13 +72,13 @@ func TestConfig_LoadStamp(t *testing.T) {
 func TestConfig_LoadStamp_Invalid(t *testing.T) {
 	t.Parallel()
 
-	bun := cnab.ExtendedBundle{bundle.Bundle{
+	bun := cnab.NewBundle(bundle.Bundle{
 		Custom: map[string]interface{}{
 			config.CustomPorterKey: []string{
 				"somedigest",
 			},
 		},
-	}}
+	})
 
 	stamp, err := LoadStamp(bun)
 	require.Error(t, err)

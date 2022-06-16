@@ -212,21 +212,21 @@ func (s InstallationStore) GetLastOutputs(ctx context.Context, namespace string,
 	opts := AggregateOptions{
 		Pipeline: []bson.D{
 			// List outputs by installation
-			{{"$match", bson.M{
+			{{Key: "$match", Value: bson.M{
 				"namespace":    namespace,
 				"installation": installation,
 			}}},
 			// Reverse sort them (newest on top)
-			{{"$sort", bson.D{
-				{"namespace", 1},
-				{"installation", 1},
-				{"name", 1},
-				{"resultId", -1},
+			{{Key: "$sort", Value: bson.D{
+				{Key: "namespace", Value: 1},
+				{Key: "installation", Value: 1},
+				{Key: "name", Value: 1},
+				{Key: "resultId", Value: -1},
 			}}},
 			// Group them by output name and select the last value for each output
-			{{"$group", bson.D{
-				{"_id", "$name"},
-				{"lastOutput", bson.M{"$first": "$$ROOT"}},
+			{{Key: "$group", Value: bson.D{
+				{Key: "_id", Value: "$name"},
+				{Key: "lastOutput", Value: bson.M{"$first": "$$ROOT"}},
 			}}},
 		},
 	}
