@@ -8,7 +8,9 @@ import (
 	"get.porter.sh/porter/pkg/cache"
 	"get.porter.sh/porter/pkg/cnab"
 	"github.com/cnabio/cnab-go/bundle"
+	"github.com/cnabio/cnab-to-oci/relocation"
 	"github.com/pivotal/image-relocation/pkg/image"
+	"github.com/pivotal/image-relocation/pkg/registry"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -33,7 +35,7 @@ func TestPublish_Validate_PorterYamlDoesNotExist(t *testing.T) {
 	assert.EqualError(
 		t,
 		err,
-		"could not find porter.yaml in the current directory, make sure you are in the right directory or specify the porter manifest with --file",
+		"could not find porter.yaml in the current directory /, make sure you are in the right directory or specify the porter manifest with --file",
 		"porter.yaml not present so should have failed validation",
 	)
 }
@@ -145,51 +147,56 @@ func TestPublish_getNewImageNameFromBundleReference(t *testing.T) {
 	})
 }
 
-func TestPublish_UpdateBundleWithNewImage(t *testing.T) {
+func TestPublish_UpdateRelocationMapping(t *testing.T) {
 	p := NewTestPorter(t)
 	defer p.Close()
 
-	bun := cnab.NewBundle(bundle.Bundle{
-		Name: "mybuns",
-		InvocationImages: []bundle.InvocationImage{
-			{
-				BaseImage: bundle.BaseImage{
-					Image:  "myorg/myinvimg",
-					Digest: "abc",
-				},
-			},
-		},
-		Images: map[string]bundle.Image{
-			"myimg": {
-				BaseImage: bundle.BaseImage{
-					Image:  "myorg/myimg",
-					Digest: "abc",
-				},
-			},
-		},
-	})
+	originImg := "myorg/myinvimg"
 	tag := "myneworg/mynewbuns"
-
 	digest, err := image.NewDigest("sha256:6b5a28ccbb76f12ce771a23757880c6083234255c5ba191fca1c5db1f71c1687")
 	require.NoError(t, err, "should have successfully created a digest")
 
-	// update invocation image
-	newInvImgName, err := getNewImageNameFromBundleReference(bun.InvocationImages[0].Image, tag)
-	require.NoError(t, err, "should have successfully derived new image name from bundle tag")
+	testcases := []struct {
+		description   string
+		relocationMap relocation.ImageRelocationMap
+		layout        registry.Layout
+		hasError      bool
+	}{
+		{description: "has relocation mapping defined", relocationMap: relocation.ImageRelocationMap{"myorg/myinvimg": "private/myinvimg"}, layout: mockRegistryLayout{expectedDigest: digest}},
+		{description: "empty relocation map", relocationMap: relocation.ImageRelocationMap{}, layout: mockRegistryLayout{expectedDigest: digest}},
+		{description: "failed to update", relocationMap: relocation.ImageRelocationMap{"myorg/myinvimg": "private/myinvimg"}, layout: mockRegistryLayout{hasError: true}, hasError: true},
+	}
 
-	err = p.updateBundleWithNewImage(bun, newInvImgName, digest, 0)
-	require.NoError(t, err, "updating bundle with new image should not have failed")
-	require.Equal(t, tag+":535ae3fd0b6a46c169fd3d38b486a8a2@sha256:6b5a28ccbb76f12ce771a23757880c6083234255c5ba191fca1c5db1f71c1687", bun.InvocationImages[0].Image)
-	require.Equal(t, "sha256:6b5a28ccbb76f12ce771a23757880c6083234255c5ba191fca1c5db1f71c1687", bun.InvocationImages[0].Digest)
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.description, func(t *testing.T) {
+			newMap, err := p.updateRelocationMapping(tc.relocationMap, tc.layout, originImg, tag)
+			require.Equal(t, tc.hasError, err != nil)
+			if !tc.hasError {
+				require.Equal(t, tag+":535ae3fd0b6a46c169fd3d38b486a8a2@sha256:6b5a28ccbb76f12ce771a23757880c6083234255c5ba191fca1c5db1f71c1687", newMap[originImg])
+			}
+		})
+	}
+}
 
-	// update image
-	newImgName, err := getNewImageNameFromBundleReference(bun.Images["myimg"].Image, tag)
-	require.NoError(t, err, "should have successfully derived new image name from bundle tag")
+type mockRegistryLayout struct {
+	hasError       bool
+	expectedDigest image.Digest
+}
 
-	err = p.updateBundleWithNewImage(bun, newImgName, digest, "myimg")
-	require.NoError(t, err, "updating bundle with new image should not have failed")
-	require.Equal(t, tag+":2055d740dd5c7ec245f0ce739ef7ab57@sha256:6b5a28ccbb76f12ce771a23757880c6083234255c5ba191fca1c5db1f71c1687", bun.Images["myimg"].Image)
-	require.Equal(t, "sha256:6b5a28ccbb76f12ce771a23757880c6083234255c5ba191fca1c5db1f71c1687", bun.Images["myimg"].Digest)
+func (m mockRegistryLayout) Add(name image.Name) (image.Digest, error) {
+	if m.hasError {
+		return image.EmptyDigest, errors.New("failed to add image")
+	}
+	return m.expectedDigest, nil
+}
+
+func (m mockRegistryLayout) Push(digest image.Digest, name image.Name) error {
+	return nil
+}
+
+func (m mockRegistryLayout) Find(n image.Name) (image.Digest, error) {
+	return m.expectedDigest, nil
 }
 
 func TestPublish_RefreshCachedBundle(t *testing.T) {

@@ -77,6 +77,8 @@ func TestArchive_StableDigest(t *testing.T) {
 
 	// Use a fixed bundle to work with so that we can rely on the registry and layer digests
 	const reference = "ghcr.io/getporter/examples/whalegap:v0.2.0"
+	const referencedImg = "carolynvs/whalesayd@sha256:8b92b7269f59e3ed824e811a1ff1ee64f0d44c0218efefada57a4bebc2d7ef6f"
+	const invocationImg = "ghcr.io/getporter/examples/whalegap:2bed6d7bf087c159835ddfac5838fd34@sha256:5ada057d9b24c443d9fb0240b49c13a5a36a11d5f4dda8adaaa2ec74e39c0d24"
 
 	// Archive bundle
 	archive1Opts := porter.ArchiveOptions{}
@@ -91,7 +93,9 @@ func TestArchive_StableDigest(t *testing.T) {
 	info, err := p.FileSystem.Stat(archiveFile1)
 	require.NoError(p.T(), err)
 	tests.AssertFilePermissionsEqual(t, archiveFile1, pkg.FileModeWritable, info.Mode())
-	containsRequiredMetadata(p, archiveFile1)
+	relocMap := getRelocationMap(p, archiveFile1)
+	require.Equal(p.T(), relocMap[referencedImg], "ghcr.io/getporter/examples/whalegap@sha256:8b92b7269f59e3ed824e811a1ff1ee64f0d44c0218efefada57a4bebc2d7ef6f", relocMap)
+	require.Equal(p.T(), relocMap[invocationImg], "ghcr.io/getporter/examples/whalegap@sha256:5ada057d9b24c443d9fb0240b49c13a5a36a11d5f4dda8adaaa2ec74e39c0d24", relocMap)
 
 	hash1 := getHash(p, archiveFile1)
 
@@ -108,13 +112,16 @@ func TestArchive_StableDigest(t *testing.T) {
 	err = p.Archive(ctx, archive2Opts)
 	require.NoError(t, err, "Second archive failed")
 	assert.Equal(p.T(), hash1, getHash(p, archiveFile2), "shasum of archive did not stay the same on the second call to archive")
-	containsRequiredMetadata(p, archiveFile2)
+	relocMap = getRelocationMap(p, archiveFile1)
+	require.Equal(p.T(), relocMap[referencedImg], "ghcr.io/getporter/examples/whalegap@sha256:8b92b7269f59e3ed824e811a1ff1ee64f0d44c0218efefada57a4bebc2d7ef6f", relocMap)
+	require.Equal(p.T(), relocMap[invocationImg], "ghcr.io/getporter/examples/whalegap@sha256:5ada057d9b24c443d9fb0240b49c13a5a36a11d5f4dda8adaaa2ec74e39c0d24", relocMap)
 
 	// Publish bundle from archive, with new reference
+	localReference := "localhost:5000/archived-whalegap:v0.2.0"
 	publishFromArchiveOpts := porter.PublishOptions{
 		ArchiveFile: archiveFile1,
 		BundlePullOptions: porter.BundlePullOptions{
-			Reference: fmt.Sprintf("localhost:5000/archived-whalegap:v0.2.0"),
+			Reference: localReference,
 		},
 	}
 	err = publishFromArchiveOpts.Validate(p.Context)
@@ -122,6 +129,19 @@ func TestArchive_StableDigest(t *testing.T) {
 
 	err = p.Publish(ctx, publishFromArchiveOpts)
 	require.NoError(p.T(), err, "publish of bundle from archive failed")
+
+	// Archive from the newly published bundle in local registry
+	archive3Opts := porter.ArchiveOptions{}
+	archive3Opts.Reference = localReference
+	archiveFile3 := "mybuns3.tgz"
+	err = archive3Opts.Validate(ctx, []string{archiveFile3}, p.Porter)
+	require.NoError(p.T(), err, "validation of archive opts for bundle failed")
+	err = p.Archive(ctx, archive3Opts)
+	require.NoError(t, err, "archive from the published bundle in local registry failed")
+	// make sure the relocation map has updated to use local registry for referenced images
+	relocMap = getRelocationMap(p, archiveFile3)
+	require.Equal(p.T(), relocMap[referencedImg], "localhost:5000/archived-whalegap@sha256:8b92b7269f59e3ed824e811a1ff1ee64f0d44c0218efefada57a4bebc2d7ef6f", relocMap)
+	require.Equal(p.T(), relocMap[invocationImg], "localhost:5000/archived-whalegap@sha256:5ada057d9b24c443d9fb0240b49c13a5a36a11d5f4dda8adaaa2ec74e39c0d24", relocMap)
 }
 
 func getHash(p *porter.TestPorter, path string) string {
@@ -136,26 +156,24 @@ func getHash(p *porter.TestPorter, path string) string {
 	return fmt.Sprintf("%x", h.Sum(nil))
 }
 
-func containsRequiredMetadata(p *porter.TestPorter, path string) {
+func getRelocationMap(p *porter.TestPorter, archiveFilePath string) relocation.ImageRelocationMap {
 	tmpDir, err := p.FileSystem.TempDir("", "porter-integration-tests")
 	require.NoError(p.T(), err)
 	defer p.FileSystem.RemoveAll(tmpDir)
 
-	source := p.FileSystem.Abs(path)
+	source := p.FileSystem.Abs(archiveFilePath)
 	l := loader.NewLoader()
 	imp := packager.NewImporter(source, tmpDir, l)
 	err = imp.Import()
 	require.NoError(p.T(), err, "opening archive failed")
 
+	_, err = p.FileSystem.Stat(filepath.Join(tmpDir, strings.TrimSuffix(filepath.Base(source), ".tgz"), "bundle.json"))
+	require.NoError(p.T(), err)
 	relocMapBytes, err := p.FileSystem.ReadFile(filepath.Join(tmpDir, strings.TrimSuffix(filepath.Base(source), ".tgz"), "relocation-mapping.json"))
 	require.NoError(p.T(), err)
 
 	// make sure the relocation map contains the expected image
 	relocMap := relocation.ImageRelocationMap{}
 	require.NoError(p.T(), json.Unmarshal(relocMapBytes, &relocMap))
-	require.Equal(p.T(), relocMap["carolynvs/whalesayd@sha256:8b92b7269f59e3ed824e811a1ff1ee64f0d44c0218efefada57a4bebc2d7ef6f"], "ghcr.io/getporter/examples/whalegap@sha256:8b92b7269f59e3ed824e811a1ff1ee64f0d44c0218efefada57a4bebc2d7ef6f", relocMap)
-	require.Equal(p.T(), relocMap["ghcr.io/getporter/examples/whalegap:2bed6d7bf087c159835ddfac5838fd34@sha256:5ada057d9b24c443d9fb0240b49c13a5a36a11d5f4dda8adaaa2ec74e39c0d24"], "ghcr.io/getporter/examples/whalegap@sha256:5ada057d9b24c443d9fb0240b49c13a5a36a11d5f4dda8adaaa2ec74e39c0d24", relocMap)
-
-	_, err = p.FileSystem.Stat(filepath.Join(tmpDir, strings.TrimSuffix(filepath.Base(source), ".tgz"), "bundle.json"))
-	require.NoError(p.T(), err)
+	return relocMap
 }
