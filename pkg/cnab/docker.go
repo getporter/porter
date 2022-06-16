@@ -3,6 +3,7 @@ package cnab
 import (
 	"encoding/json"
 
+	"github.com/docker/docker/api/types/mount"
 	"github.com/pkg/errors"
 )
 
@@ -29,6 +30,10 @@ var DockerExtension = RequiredExtension{
 type Docker struct {
 	// Privileged represents whether or not the Docker container should run as --privileged
 	Privileged bool `json:"privileged,omitempty"`
+	Mounts []mount.Mount `json:"mounts,omitempty"`
+	Network string `json:"network,omitempty"`
+	CapAdd []string `json:"capadd,omitempty"`
+	CapDrop []string `json:"capdrop,omitempty"`
 }
 
 // DockerExtensionReader is a Reader for the DockerExtension,
