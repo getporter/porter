@@ -3,7 +3,7 @@ body.home {
   overflow-x: hidden;
   
   .row {
-  max-width: 72rem;
+  max-width: 100%;
   }
 
   .row.fullwidth {
@@ -31,7 +31,6 @@ html,body {
 }
 nav.home-nav {
   position: absolute;
-  min-height: 300px;
   left: 0;
   right: 0;
   top: 0;
@@ -55,14 +54,14 @@ nav.home-nav {
 
       a {
         display: inline-block;
-        margin: 0 1.333rem;
+        margin: 0 1rem;
         font-size: 1.25rem;
         line-height: 2;
         position: relative;
         letter-spacing: 0.0125em;
         color: $dark2;
         text-decoration: none;
-        @include klinicBold;
+        @include CBlack;
         @include ripple;
 
         img {
@@ -82,7 +81,7 @@ nav.home-nav {
 }
 
 #helm.home {
-  background: $blue;
+  background: #183d54;
 
   .billboard {
     background-color: white;
@@ -93,6 +92,15 @@ nav.home-nav {
     padding-top: 250px;
     position: relative;
     text-align: center;
+
+    .txt-github {
+      color: white;
+      font-size: 1.5rem;
+    }
+
+    .btn-github {
+      background: #d00052;
+    }
 
     h1 {
       @include klinicBold;
@@ -109,9 +117,10 @@ nav.home-nav {
 
     &:after {
       $height: 6px;
-      background: url('/img/pattern-waves.png') left top repeat-x;
+      // background: url('/img/pattern-waves.png') left top repeat-x;
       background-size: $gutter;
       bottom: 0;
+      left: 0;
       content: '';
       display: block;
       height: $height;
@@ -173,14 +182,44 @@ nav.home-nav {
     }
   }
 
+  .card {
+    background: none;
+    border: 5px solid #3bbdc4;
+    border-radius: 20px;
+
+    .card-img-top {
+      color: #a5d6d0;
+    }
+  }
+
+  .card-body {
+    .card-title {
+      @include CBlack;
+      font-size: 1.7rem;
+      text-transform: capitalize;
+      text-align: center;
+      letter-spacing: 0;
+    }
+
+    .card-text {
+      @include CLight;
+      line-height: 1.1;
+      font-weight: 400;
+      opacity: .7;
+      font-size: 1.4rem;
+      padding: 0;
+    }
+
+  }
+
   .content {
     h1, h2, h3, h5 {
       color: white;
-      @include klinicBold;
+      @include CBlack;
     }
 
     h2 {
-      font-size: 2.5rem;
+      font-size: 2.7rem;
       margin: 2rem 0;
       padding-top: 1em;
     }
@@ -189,7 +228,7 @@ nav.home-nav {
       color: white;
       font-size: 1.5rem;
       line-height: 1.4;
-      @include helvetica;
+      @include CLight;
       -webkit-font-smoothing: antialiased;
     }
 

@@ -91,6 +91,43 @@ $mono: "Lucida Console", "Courier New", monaco, monospace;
   font-style: normal;
 }
 
+@font-face {
+  font-family: 'CBlack';
+  src: url("/fonts/CBlack.otf") format("opentype");
+}
+
+@font-face {
+  font-family: 'CLight';
+  src: url("/fonts/CLight.otf") format("opentype");
+}
+
+@font-face {
+  font-family: 'CMedium';
+  src: url("/fonts/CMedium.otf") format("opentype");
+}
+
+@font-face {
+  font-family: 'CBold';
+  src: url("/fonts/CBold.otf") format("opentype");
+}
+
+@mixin CBlack {
+  font-family: 'CBlack';
+  font-weight: 900;
+}
+
+@mixin CBold {
+  font-family: 'CBold';
+}
+
+@mixin CLight {
+  font-family: 'CLight';
+}
+
+@mixin CMedium {
+  font-family: 'CMedium';
+}
+
 @mixin klinicBold {
   font-family: "klinic-bold", "klinic bold", $base;
   font-weight: 600;
@@ -253,8 +290,8 @@ $mono: "Lucida Console", "Courier New", monaco, monospace;
    &::after {
      display: inline-block;
      content: "";
-     background: $color;
-     height: 3px;
+     background: #cc0046;
+     height: 5px;
      position: absolute;
      bottom: 0;
      left: 50%;

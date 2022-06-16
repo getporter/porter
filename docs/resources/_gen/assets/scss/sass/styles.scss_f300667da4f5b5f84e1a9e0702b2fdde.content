@@ -4085,6 +4085,22 @@ th.hide-for-touch {
   font-weight: 500;
   font-style: normal; }
 
+@font-face {
+  font-family: 'CBlack';
+  src: url("/fonts/CBlack.otf") format("opentype"); }
+
+@font-face {
+  font-family: 'CLight';
+  src: url("/fonts/CLight.otf") format("opentype"); }
+
+@font-face {
+  font-family: 'CMedium';
+  src: url("/fonts/CMedium.otf") format("opentype"); }
+
+@font-face {
+  font-family: 'CBold';
+  src: url("/fonts/CBold.otf") format("opentype"); }
+
 /**
  * Media query breakpoints
  */
@@ -6377,7 +6393,7 @@ body.home {
   letter-spacing: 0;
   overflow-x: hidden; }
   body.home .row {
-    max-width: 72rem; }
+    max-width: 100%; }
   body.home .row.fullwidth {
     max-width: 100%; }
   body.home h1 {
@@ -6400,7 +6416,6 @@ html, body {
 
 nav.home-nav {
   position: absolute;
-  min-height: 300px;
   left: 0;
   right: 0;
   top: 0;
@@ -6419,17 +6434,15 @@ nav.home-nav {
       display: inline-block; }
       nav.home-nav ul li a {
         display: inline-block;
-        margin: 0 1.333rem;
+        margin: 0 1rem;
         font-size: 1.25rem;
         line-height: 2;
         position: relative;
         letter-spacing: 0.0125em;
         color: #464646;
         text-decoration: none;
-        font-family: "klinic-bold", "klinic bold", "Helvetica Neue", Helvetica, Arial, sans-serif;
-        font-weight: 600;
-        letter-spacing: 0.05em;
-        -webkit-font-smoothing: antialiased;
+        font-family: 'CBlack';
+        font-weight: 900;
         position: relative;
         display: inline-block;
         text-align: center;
@@ -6437,8 +6450,8 @@ nav.home-nav {
         nav.home-nav ul li a::after {
           display: inline-block;
           content: "";
-          background: #F99EAC;
-          height: 3px;
+          background: #cc0046;
+          height: 5px;
           position: absolute;
           bottom: 0;
           left: 50%;
@@ -6461,7 +6474,7 @@ nav.home-nav {
             opacity: 0.7; }
 
 #helm.home {
-  background: #3FB1E5; }
+  background: #183d54; }
   #helm.home .billboard {
     background-color: white;
     background-size: 376px;
@@ -6470,6 +6483,11 @@ nav.home-nav {
     padding-top: 250px;
     position: relative;
     text-align: center; }
+    #helm.home .billboard .txt-github {
+      color: white;
+      font-size: 1.5rem; }
+    #helm.home .billboard .btn-github {
+      background: #d00052; }
     #helm.home .billboard h1 {
       font-family: "klinic-bold", "klinic bold", "Helvetica Neue", Helvetica, Arial, sans-serif;
       font-weight: 600;
@@ -6484,9 +6502,9 @@ nav.home-nav {
       font-size: 1.25rem;
       margin-bottom: 30px; }
     #helm.home .billboard:after {
-      background: url("/img/pattern-waves.png") left top repeat-x;
       background-size: 20px;
       bottom: 0;
+      left: 0;
       content: '';
       display: block;
       height: 6px;
@@ -6525,22 +6543,39 @@ nav.home-nav {
       line-height: 1.2; }
       #helm.home #blog p.author small {
         font-size: 1rem; }
+  #helm.home .card {
+    background: none;
+    border: 5px solid #3bbdc4;
+    border-radius: 20px; }
+    #helm.home .card .card-img-top {
+      color: #a5d6d0; }
+  #helm.home .card-body .card-title {
+    font-family: 'CBlack';
+    font-weight: 900;
+    font-size: 1.7rem;
+    text-transform: capitalize;
+    text-align: center;
+    letter-spacing: 0; }
+  #helm.home .card-body .card-text {
+    font-family: 'CLight';
+    line-height: 1.1;
+    font-weight: 400;
+    opacity: .7;
+    font-size: 1.4rem;
+    padding: 0; }
   #helm.home .content h1, #helm.home .content h2, #helm.home .content h3, #helm.home .content h5 {
     color: white;
-    font-family: "klinic-bold", "klinic bold", "Helvetica Neue", Helvetica, Arial, sans-serif;
-    font-weight: 600;
-    letter-spacing: 0.05em;
-    -webkit-font-smoothing: antialiased; }
+    font-family: 'CBlack';
+    font-weight: 900; }
   #helm.home .content h2 {
-    font-size: 2.5rem;
+    font-size: 2.7rem;
     margin: 2rem 0;
     padding-top: 1em; }
   #helm.home .content p, #helm.home .content ul, #helm.home .content li {
     color: white;
     font-size: 1.5rem;
     line-height: 1.4;
-    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-    letter-spacing: 0;
+    font-family: 'CLight';
     -webkit-font-smoothing: antialiased; }
   #helm.home .content p {
     margin-bottom: 1.4rem; }
@@ -7048,8 +7083,8 @@ nav.home-nav {
       #helm .panel.panel--signoff .text-center h4 a::after {
         display: inline-block;
         content: "";
-        background: #F99EAC;
-        height: 3px;
+        background: #cc0046;
+        height: 5px;
         position: absolute;
         bottom: 0;
         left: 50%;
@@ -7185,8 +7220,8 @@ nav.home-nav {
   #helm .content a.ripple::after {
     display: inline-block;
     content: "";
-    background: #F99EAC;
-    height: 3px;
+    background: #cc0046;
+    height: 5px;
     position: absolute;
     bottom: 0;
     left: 50%;
@@ -7815,23 +7850,45 @@ body {
     .home #helm .billboard {
       background-color: white;
       background-size: 376px;
-      padding-top: 230px;
+      padding: 165px 60px 100px 60px;
       position: relative;
-      text-align: center; }
+      text-align: left; }
       .home #helm .billboard .helm-logo {
         max-width: 120px; }
+      .home #helm .billboard #underline, .home #helm .billboard #underline1 {
+        position: relative; }
+      .home #helm .billboard #underline::before {
+        content: "";
+        position: absolute;
+        left: 49%;
+        bottom: 10px;
+        width: 425px;
+        height: 14px;
+        transform: skew(-12deg) translateX(-50%);
+        background: rgba(238, 111, 87, 0.5); }
+      .home #helm .billboard #underline1::before {
+        content: "";
+        position: absolute;
+        left: 49%;
+        bottom: 10px;
+        width: 425px;
+        height: 14px;
+        transform: skew(-12deg) translateX(-50%);
+        background: rgba(238, 111, 87, 0.5); }
       .home #helm .billboard h1 {
-        font-family: "klinic-bold", "klinic bold", "Helvetica Neue", Helvetica, Arial, sans-serif;
-        font-weight: 600;
-        letter-spacing: 0.05em;
-        -webkit-font-smoothing: antialiased;
+        font-family: 'CBlack';
+        font-weight: 900;
         color: #2DAFE9;
-        font-size: 2.57rem;
+        line-height: 1.2;
+        letter-spacing: -2px;
+        font-size: 3.57rem;
+        position: relative;
         text-transform: none !important; }
       .home #helm .billboard h2 {
-        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+        font-family: 'CMedium';
         color: #277A9F;
-        font-size: 1.6rem;
+        font-size: 1.4rem;
+        line-height: 1.3;
         margin-bottom: 30px; }
       .home #helm .billboard .helm-logo {
         position: absolute;
@@ -7851,7 +7908,6 @@ body {
         .home #helm .billboard .fa:hover {
           opacity: 0.7; }
       .home #helm .billboard:after {
-        background: url("/img/pattern-waves.png") left top repeat-x;
         background-size: 20px;
         bottom: 0;
         content: '';
