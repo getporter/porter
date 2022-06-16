@@ -1,0 +1,17 @@
+# https://github.com/jpmcb/prow-github-actions
+
+# This will check all pull requests that have the lgtm label, and if GitHub thinks it is mergeable, then the PR is merged.
+name: "Merge Ready PRs"
+on: [pull_request_target]
+permissions:
+  issues: write # give permission to apply the lgtm label
+  pull-requests: write # give permission to approve the PR
+
+jobs:
+  execute:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: jpmcb/prow-github-actions@2ac4434b3ce3d523fc3e28a879ec671c4a7750fa # main
+        with:
+          jobs: "lgtm"
+          github-token: "${{ secrets.GITHUB_TOKEN }}"
