@@ -70,3 +70,4 @@ and we will add you. **All** contributors belong here. 💯
 * [Chioma Onyekpere](https://github.com/Simpcyclassy)
 * [Hrittik Roy](https://github.com/hrittikhere)
 * [Tanmay Chaudhry](https://github.com/tchaudhry91)
+* [Priyanshu Singh](https://github.com/reveurguy)
