@@ -48,14 +48,14 @@ func (c *ManifestConverter) ToBundle(ctx context.Context) (cnab.ExtendedBundle, 
 		return cnab.ExtendedBundle{}, span.Error(err)
 	}
 
-	b := cnab.ExtendedBundle{bundle.Bundle{
+	b := cnab.NewBundle(bundle.Bundle{
 		SchemaVersion: SchemaVersion,
 		Name:          c.Manifest.Name,
 		Description:   c.Manifest.Description,
 		Version:       c.Manifest.Version,
 		Maintainers:   c.generateBundleMaintainers(),
 		Custom:        make(map[string]interface{}, 1),
-	}}
+	})
 	image := bundle.InvocationImage{
 		BaseImage: bundle.BaseImage{
 			Image:     c.Manifest.Image,

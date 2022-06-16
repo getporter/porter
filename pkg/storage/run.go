@@ -16,36 +16,36 @@ type Run struct {
 	SchemaVersion schema.Version `json:"schemaVersion" yaml:"schemaVersion" toml:"schemaVersion"`
 
 	// ID of the Run.
-	ID string `json:"_id" yaml:"_id", toml:"_id"`
+	ID string `json:"_id" yaml:"_id" toml:"_id"`
 
 	// Created timestamp of the Run.
-	Created time.Time `json:"created" yaml:"created", toml:"created"`
+	Created time.Time `json:"created" yaml:"created" toml:"created"`
 
 	// Namespace of the installation.
-	Namespace string `json:"namespace" yaml:"namespace", toml:"namespace"`
+	Namespace string `json:"namespace" yaml:"namespace" toml:"namespace"`
 
 	// Installation name.
-	Installation string `json:"installation" yaml:"installation", toml:"installation"`
+	Installation string `json:"installation" yaml:"installation" toml:"installation"`
 
 	// Revision of the installation.
-	Revision string `json:"revision" yaml:"revision", toml:"revision"`
+	Revision string `json:"revision" yaml:"revision" toml:"revision"`
 
 	// Action executed against the installation.
-	Action string `json:"action" yaml:"action", toml:"action"`
+	Action string `json:"action" yaml:"action" toml:"action"`
 
 	// Bundle is the definition of the bundle.
-	Bundle bundle.Bundle `json:"bundle" yaml:"bundle", toml:"bundle"`
+	Bundle bundle.Bundle `json:"bundle" yaml:"bundle" toml:"bundle"`
 
 	// BundleReference is the canonical reference to the bundle used in the action.
-	BundleReference string `json:"bundleReference" yaml:"bundleReference", toml:"bundleReference"`
+	BundleReference string `json:"bundleReference" yaml:"bundleReference" toml:"bundleReference"`
 
 	// BundleDigest is the digest of the bundle.
 	// TODO(carolynvs): populate this
-	BundleDigest string `json:"bundleDigest" yaml:"bundleDigest", toml:"bundleDigest"`
+	BundleDigest string `json:"bundleDigest" yaml:"bundleDigest" toml:"bundleDigest"`
 
 	// ParameterOverrides are the key/value parameter overrides (taking precedence over
 	// parameters specified in a parameter set) specified during the run.
-	ParameterOverrides ParameterSet `json:"parameterOverrides, omitempty" yaml:"parameterOverrides, omitempty", toml:"parameterOverrides, omitempty"`
+	ParameterOverrides ParameterSet `json:"parameterOverrides,omitempty" yaml:"parameterOverrides,omitempty" toml:"parameterOverrides,omitempty"`
 
 	// CredentialSets is a list of the credential set names used during the run.
 	CredentialSets []string `json:"credentialSets,omitempty" yaml:"credentialSets,omitempty" toml:"credentialSets,omitempty"`
@@ -61,7 +61,7 @@ type Run struct {
 
 	// Custom extension data applicable to a given runtime.
 	// TODO(carolynvs): remove custom and populate it in ToCNAB
-	Custom interface{} `json:"custom" yaml:"custom", toml:"custom"`
+	Custom interface{} `json:"custom" yaml:"custom" toml:"custom"`
 }
 
 func (r Run) DefaultDocumentFilter() map[string]interface{} {
@@ -118,7 +118,7 @@ func (r Run) ToCNAB() cnab.Claim {
 // TypedParameterValues returns parameters values that have been converted to
 // its typed value based on its bundle definition.
 func (r Run) TypedParameterValues() map[string]interface{} {
-	bun := cnab.ExtendedBundle{r.Bundle}
+	bun := cnab.NewBundle(r.Bundle)
 	value := make(map[string]interface{})
 
 	for _, param := range r.Parameters.Parameters {

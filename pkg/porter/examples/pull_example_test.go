@@ -7,7 +7,7 @@ import (
 	"get.porter.sh/porter/pkg/porter"
 )
 
-func ExamplePullBundle() {
+func ExamplePorter_pullBundle() {
 	// Create an instance of the Porter application
 	p := porter.New()
 

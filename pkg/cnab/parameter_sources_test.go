@@ -60,7 +60,7 @@ func TestReadParameterSourcesProperties(t *testing.T) {
 
 	b, err := bundle.Unmarshal(data)
 	require.NoError(t, err, "could not unmarshal the bundle")
-	bun := ExtendedBundle{*b}
+	bun := NewBundle(*b)
 	assert.True(t, bun.HasParameterSources())
 
 	ps, err := bun.ReadParameterSources()
@@ -88,9 +88,9 @@ func TestSupportsParameterSources(t *testing.T) {
 	t.Parallel()
 
 	t.Run("supported", func(t *testing.T) {
-		b := ExtendedBundle{bundle.Bundle{
+		b := NewBundle(bundle.Bundle{
 			RequiredExtensions: []string{ParameterSourcesExtensionKey},
-		}}
+		})
 
 		assert.True(t, b.SupportsParameterSources())
 	})
@@ -105,19 +105,19 @@ func TestHasParameterSources(t *testing.T) {
 	t.Parallel()
 
 	t.Run("has parameter sources", func(t *testing.T) {
-		b := ExtendedBundle{bundle.Bundle{
+		b := NewBundle(bundle.Bundle{
 			RequiredExtensions: []string{ParameterSourcesExtensionKey},
 			Custom: map[string]interface{}{
 				ParameterSourcesExtensionKey: struct{}{},
 			},
-		}}
+		})
 
 		assert.True(t, b.HasParameterSources())
 	})
 	t.Run("no parameter sources", func(t *testing.T) {
-		b := ExtendedBundle{bundle.Bundle{
+		b := NewBundle(bundle.Bundle{
 			RequiredExtensions: []string{ParameterSourcesExtensionKey},
-		}}
+		})
 
 		assert.False(t, b.HasParameterSources())
 	})

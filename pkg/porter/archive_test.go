@@ -63,7 +63,7 @@ func TestArchive_ArchiveDirectory(t *testing.T) {
 
 	dir, err := ex.createArchiveFolder("examples/test-bundle-0.2.0")
 	require.NoError(t, err)
-	require.Contains(t, dir, "/tmp/examples-test-bundle-0.2.0")
+	require.Contains(t, dir, "examples-test-bundle-0.2.0")
 
 	tests.AssertDirectoryPermissionsEqual(t, dir, pkg.FileModeDirectory)
 }

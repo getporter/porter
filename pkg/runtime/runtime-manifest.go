@@ -109,7 +109,7 @@ func (m *RuntimeManifest) loadDependencyDefinitions() error {
 			return errors.Wrapf(err, "error unmarshaling bundle definition for dependency %s", dep.Name)
 		}
 
-		m.bundles[dep.Name] = cnab.ExtendedBundle{*bun}
+		m.bundles[dep.Name] = cnab.NewBundle(*bun)
 	}
 
 	return nil

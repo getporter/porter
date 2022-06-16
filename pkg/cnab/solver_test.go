@@ -11,7 +11,7 @@ import (
 func TestDependencySolver_ResolveDependencies(t *testing.T) {
 	t.Parallel()
 
-	bun := ExtendedBundle{bundle.Bundle{
+	bun := NewBundle(bundle.Bundle{
 		Custom: map[string]interface{}{
 			DependenciesExtensionKey: Dependencies{
 				Requires: map[string]Dependency{
@@ -24,7 +24,7 @@ func TestDependencySolver_ResolveDependencies(t *testing.T) {
 				},
 			},
 		},
-	}}
+	})
 
 	s := DependencySolver{}
 	locks, err := s.ResolveDependencies(bun)

@@ -140,11 +140,11 @@ func TestDependencyMetadataAvailableForTemplating(t *testing.T) {
 	require.NoError(t, err, "LoadManifestFrom failed")
 	rm := NewRuntimeManifest(c.Context, cnab.ActionInstall, m)
 	rm.bundles = map[string]cnab.ExtendedBundle{
-		"mysql": {bundle.Bundle{
+		"mysql": cnab.NewBundle(bundle.Bundle{
 			Name:        "Azure MySQL",
 			Description: "Azure MySQL database as a service",
 			Version:     "v1.0.0",
-		}},
+		}),
 	}
 
 	before, _ := yaml.Marshal(m.Install[0])
@@ -340,15 +340,15 @@ func TestResolveStep_DependencyOutput(t *testing.T) {
 	ps := cnab.ParameterSources{}
 	ps.SetParameterFromDependencyOutput("porter-mysql-password", "mysql", "password")
 	ps.SetParameterFromDependencyOutput("porter-mysql-root-password", "mysql", "root-password")
-	rm.bundle = cnab.ExtendedBundle{bundle.Bundle{
+	rm.bundle = cnab.NewBundle(bundle.Bundle{
 		Custom: map[string]interface{}{
 			cnab.ParameterSourcesExtensionKey: ps,
 		},
 		RequiredExtensions: []string{cnab.ParameterSourcesExtensionKey},
-	}}
+	})
 
 	rm.bundles = map[string]cnab.ExtendedBundle{
-		"mysql": {bundle.Bundle{
+		"mysql": cnab.NewBundle(bundle.Bundle{
 			Outputs: map[string]bundle.Output{
 				"password": {
 					Definition: "password",
@@ -361,7 +361,7 @@ func TestResolveStep_DependencyOutput(t *testing.T) {
 				"password":      {WriteOnly: makeBoolPtr(true)},
 				"root-password": {WriteOnly: makeBoolPtr(true)},
 			},
-		}},
+		}),
 	}
 
 	s := &manifest.Step{
@@ -858,11 +858,11 @@ func TestResolveImageWithUpdatedBundle(t *testing.T) {
 	img := bundle.Image{}
 	img.Image = "blah/ghost:latest"
 	img.Digest = "sha256:75c495e5ce9c428d482973d72e3ce9925e1db304a97946c9aa0b540d7537e041"
-	bun := cnab.ExtendedBundle{bundle.Bundle{
+	bun := cnab.NewBundle(bundle.Bundle{
 		Images: map[string]bundle.Image{
 			"machine": img,
 		},
-	}}
+	})
 
 	reloMap := relocation.ImageRelocationMap{}
 
@@ -888,11 +888,11 @@ func TestResolveImageWithUpdatedMismatchedBundle(t *testing.T) {
 	img := bundle.Image{}
 	img.Image = "blah/ghost:latest"
 	img.Digest = "sha256:75c495e5ce9c428d482973d72e3ce9925e1db304a97946c9aa0b540d7537e041"
-	bun := cnab.ExtendedBundle{bundle.Bundle{
+	bun := cnab.NewBundle(bundle.Bundle{
 		Images: map[string]bundle.Image{
 			"ghost": img,
 		},
-	}}
+	})
 
 	reloMap := relocation.ImageRelocationMap{}
 
@@ -918,11 +918,11 @@ func TestResolveImageWithRelo(t *testing.T) {
 	img := bundle.Image{}
 	img.Image = "gabrtv/microservice@sha256:cca460afa270d4c527981ef9ca4989346c56cf9b20217dcea37df1ece8120687"
 	img.Digest = "sha256:cca460afa270d4c527981ef9ca4989346c56cf9b20217dcea37df1ece8120687"
-	bun := cnab.ExtendedBundle{bundle.Bundle{
+	bun := cnab.NewBundle(bundle.Bundle{
 		Images: map[string]bundle.Image{
 			"machine": img,
 		},
-	}}
+	})
 
 	reloMap := relocation.ImageRelocationMap{
 		"gabrtv/microservice@sha256:cca460afa270d4c527981ef9ca4989346c56cf9b20217dcea37df1ece8120687": "my.registry/microservice@sha256:cca460afa270d4c527981ef9ca4989346c56cf9b20217dcea37df1ece8120687",
@@ -950,11 +950,11 @@ func TestResolveImageRelocationNoMatch(t *testing.T) {
 	img := bundle.Image{}
 	img.Image = "deislabs/ghost:latest"
 	img.Digest = "sha256:75c495e5ce9c428d482973d72e3ce9925e1db304a97946c9aa0b540d7537e041"
-	bun := cnab.ExtendedBundle{bundle.Bundle{
+	bun := cnab.NewBundle(bundle.Bundle{
 		Images: map[string]bundle.Image{
 			"machine": img,
 		},
-	}}
+	})
 
 	reloMap := relocation.ImageRelocationMap{
 		"deislabs/nogood:latest": "cnabio/ghost:latest",
