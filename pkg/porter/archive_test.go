@@ -74,25 +74,30 @@ func TestArchive_AddImage(t *testing.T) {
 	p := NewTestPorter(t)
 	defer p.Close()
 
-	tests := []struct {
-		name          string
-		relocationMap relocation.ImageRelocationMap
-		inputImg      string
-		expectedImg   string
-		hasError      bool
+	testcases := []struct {
+		name           string
+		relocationMap  relocation.ImageRelocationMap
+		inputImg       string
+		expectedImg    string
+		hasErr         bool
+		expectedErrMsg string
 	}{
-		{"no relocation map set", nil, "image:v0.1.0", "", true},
-		{"image not found in relocation map", relocation.ImageRelocationMap{"image:v0.1.0": "image@sha256:123"}, "not-found-image:v0.2.0", "", true},
-		{"image successfully added", relocation.ImageRelocationMap{"image:v0.1.0": "image@sha256:123"}, "image:v0.1.0", "image@sha256:123", false},
+		{"no relocation map set", nil, "image:v0.1.0", "", true, "relocation map is not provided"},
+		{"image not found in relocation map", relocation.ImageRelocationMap{"image:v0.1.0": "image@sha256:123"}, "not-found-image:v0.2.0", "", true, "can not locate the referenced image"},
+		{"image successfully added", relocation.ImageRelocationMap{"image:v0.1.0": "image@sha256:123"}, "image:v0.1.0", "image@sha256:123", false, ""},
 	}
 
-	for _, tc := range tests {
+	for _, tc := range testcases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			baseImage := bundle.BaseImage{Image: tc.inputImg, Digest: "digest"}
 			ex := exporter{relocationMap: tc.relocationMap, imageStore: mockImageStore{t: t, expected: tc.expectedImg}}
 			err := ex.addImage(baseImage)
-			require.Equal(t, tc.hasError, err != nil)
+			if tc.hasErr {
+				tests.RequireErrorContains(t, err, tc.expectedErrMsg)
+			} else {
+				require.NoError(t, err)
+			}
 		})
 	}
 
