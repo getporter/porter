@@ -229,7 +229,7 @@ func TestInstallationStorageProvider_Installations(t *testing.T) {
 
 	t.Run("FindInstallations - project results", func(t *testing.T) {
 		opts := FindOptions{
-			Select: bson.D{{"labels", false}},
+			Select: bson.D{{Key: "labels", Value: false}},
 			Sort:   []string{"-id"},
 			Filter: bson.M{
 				"labels.team": "red",
