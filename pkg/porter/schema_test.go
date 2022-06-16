@@ -2,6 +2,7 @@ package porter
 
 import (
 	"context"
+	"fmt"
 	"io/ioutil"
 	"testing"
 
@@ -23,33 +24,39 @@ func TestPorter_PrintManifestSchema(t *testing.T) {
 }
 
 func TestPorter_ValidateManifestSchema(t *testing.T) {
-	ctx := context.Background()
-	p := NewTestPorter(t)
-	defer p.Close()
+	manifests := []string{"testdata/porter.yaml", "testdata/porter-with-dependencies.yaml"}
+	for _, m := range manifests {
+		t.Run(fmt.Sprintf("Manifest %s", m), func(t *testing.T) {
 
-	// Load the default Porter manifest
-	b, err := ioutil.ReadFile("testdata/porter.yaml")
-	require.NoError(t, err)
+			ctx := context.Background()
+			p := NewTestPorter(t)
+			defer p.Close()
 
-	// Load the manifest as a go dump
-	m := make(map[string]interface{})
-	err = yaml.Unmarshal(b, &m)
-	require.NoError(t, err)
-	manifestLoader := gojsonschema.NewGoLoader(m)
+			// Load the default Porter manifest
+			b, err := ioutil.ReadFile(m)
+			require.NoError(t, err)
 
-	// Load the manifest schema
-	err = p.PrintManifestSchema(ctx)
-	require.NoError(t, err, "could not generate schema")
-	schema := p.TestConfig.TestContext.GetOutput()
-	schemaLoader := gojsonschema.NewStringLoader(schema)
+			// Load the manifest as a go dump
+			m := make(map[string]interface{})
+			err = yaml.Unmarshal(b, &m)
+			require.NoError(t, err)
+			manifestLoader := gojsonschema.NewGoLoader(m)
 
-	// Validate the manifest against the schema
-	fails, err := gojsonschema.Validate(schemaLoader, manifestLoader)
-	require.NoError(t, err)
+			// Load the manifest schema
+			err = p.PrintManifestSchema(ctx)
+			require.NoError(t, err, "could not generate schema")
+			schema := p.TestConfig.TestContext.GetOutput()
+			schemaLoader := gojsonschema.NewStringLoader(schema)
 
-	assert.Empty(t, fails.Errors(), "expected testdata/porter.yaml to validate against the porter schema")
-	// Print it pretty like
-	for _, err := range fails.Errors() {
-		t.Logf("%s", err)
+			// Validate the manifest against the schema
+			fails, err := gojsonschema.Validate(schemaLoader, manifestLoader)
+			require.NoError(t, err)
+
+			assert.Empty(t, fails.Errors(), "expected testdata/porter.yaml to validate against the porter schema")
+			// Print it pretty like
+			for _, err := range fails.Errors() {
+				t.Logf("%s", err)
+			}
+		})
 	}
 }

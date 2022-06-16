@@ -71,3 +71,4 @@ and we will add you. **All** contributors belong here. 💯
 * [Hrittik Roy](https://github.com/hrittikhere)
 * [Tanmay Chaudhry](https://github.com/tchaudhry91)
 * [Rich Baird](https://github.com/richbai90)
+* [Kevin Barbour](https://github.com/kevinbarbour)
