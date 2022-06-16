@@ -3,7 +3,9 @@ package cnab
 import (
 	"encoding/json"
 
+	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/mount"
+	"github.com/docker/go-connections/nat"
 	"github.com/pkg/errors"
 )
 
@@ -38,6 +40,11 @@ type Docker struct {
 	CapAdd []string `json:"capadd,omitempty"`
 	// CapDrop represents capabilities to exclude from the container kernel
 	CapDrop []string `json:"capdrop,omitempty"`
+	// Ports to bind between the host and the container
+	PortBindings []nat.PortMap `json:"portBindings,omitempty"`
+	// Restart policy to be used for the container
+	// This may be useful in some rare cases
+	RestartPolicy container.RestartPolicy `json:"restartPolicy"`
 }
 
 // DockerExtensionReader is a Reader for the DockerExtension,
