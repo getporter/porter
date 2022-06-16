@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"get.porter.sh/porter/pkg"
+	"get.porter.sh/porter/tests"
 	"github.com/stretchr/testify/require"
 )
 
@@ -50,4 +52,18 @@ func TestArchive_Validate(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestArchive_ArchiveDirectory(t *testing.T) {
+	p := NewTestPorter(t)
+	defer p.Close()
+	ex := exporter{
+		fs: p.FileSystem,
+	}
+
+	dir, err := ex.createArchiveFolder("examples/test-bundle-0.2.0")
+	require.NoError(t, err)
+	require.Contains(t, dir, "/tmp/examples-test-bundle-0.2.0")
+
+	tests.AssertDirectoryPermissionsEqual(t, dir, pkg.FileModeDirectory)
 }

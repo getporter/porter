@@ -17,7 +17,7 @@ type ParameterSetProvider interface {
 	Validate(ctx context.Context, params ParameterSet) error
 
 	InsertParameterSet(ctx context.Context, params ParameterSet) error
-	ListParameterSets(ctx context.Context, namespace string, name string, labels map[string]string) ([]ParameterSet, error)
+	ListParameterSets(ctx context.Context, listOptions ListOptions) ([]ParameterSet, error)
 	GetParameterSet(ctx context.Context, namespace string, name string) (ParameterSet, error)
 	UpdateParameterSet(ctx context.Context, params ParameterSet) error
 	UpsertParameterSet(ctx context.Context, params ParameterSet) error
