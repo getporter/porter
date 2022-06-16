@@ -99,9 +99,9 @@ func Test_loadParameters_paramNotDefined(t *testing.T) {
 	r := NewTestPorter(t)
 	defer r.Close()
 
-	b := cnab.ExtendedBundle{Bundle: bundle.Bundle{
+	b := cnab.NewBundle(bundle.Bundle{
 		Parameters: map[string]bundle.Parameter{},
-	}}
+	})
 
 	overrides := map[string]string{
 		"foo": "bar",
@@ -118,13 +118,13 @@ func Test_loadParameters_definitionNotDefined(t *testing.T) {
 	r := NewTestPorter(t)
 	defer r.Close()
 
-	b := cnab.ExtendedBundle{Bundle: bundle.Bundle{
+	b := cnab.NewBundle(bundle.Bundle{
 		Parameters: map[string]bundle.Parameter{
 			"foo": {
 				Definition: "foo",
 			},
 		},
-	}}
+	})
 
 	overrides := map[string]string{
 		"foo": "bar",
@@ -143,7 +143,7 @@ func Test_loadParameters_applyTo(t *testing.T) {
 
 	// Here we set default values, but expect nil/empty
 	// values for parameters that do not apply to a given action
-	b := cnab.ExtendedBundle{Bundle: bundle.Bundle{
+	b := cnab.NewBundle(bundle.Bundle{
 		Definitions: definition.Definitions{
 			"foo": &definition.Schema{
 				Type:    "string",
@@ -175,7 +175,7 @@ func Test_loadParameters_applyTo(t *testing.T) {
 				},
 			},
 		},
-	}}
+	})
 
 	overrides := map[string]string{
 		"foo":  "FOO",
@@ -198,7 +198,7 @@ func Test_loadParameters_applyToBundleDefaults(t *testing.T) {
 	r := NewTestPorter(t)
 	defer r.Close()
 
-	b := cnab.ExtendedBundle{Bundle: bundle.Bundle{
+	b := cnab.NewBundle(bundle.Bundle{
 		Definitions: definition.Definitions{
 			"foo": &definition.Schema{
 				Type:    "string",
@@ -213,7 +213,7 @@ func Test_loadParameters_applyToBundleDefaults(t *testing.T) {
 				},
 			},
 		},
-	}}
+	})
 
 	i := storage.Installation{}
 	params, err := r.resolveParameters(context.Background(), i, b, "action", nil)
@@ -228,7 +228,7 @@ func Test_loadParameters_requiredButDoesNotApply(t *testing.T) {
 	r := NewTestPorter(t)
 	defer r.Close()
 
-	b := cnab.ExtendedBundle{Bundle: bundle.Bundle{
+	b := cnab.NewBundle(bundle.Bundle{
 		Definitions: definition.Definitions{
 			"foo": &definition.Schema{
 				Type: "string",
@@ -243,7 +243,7 @@ func Test_loadParameters_requiredButDoesNotApply(t *testing.T) {
 				Required: true,
 			},
 		},
-	}}
+	})
 
 	i := storage.Installation{}
 	params, err := r.resolveParameters(context.Background(), i, b, "action", nil)
@@ -260,7 +260,7 @@ func Test_loadParameters_fileParameter(t *testing.T) {
 
 	r.TestConfig.TestContext.AddTestFile("testdata/file-param", "/path/to/file")
 
-	b := cnab.ExtendedBundle{Bundle: bundle.Bundle{
+	b := cnab.NewBundle(bundle.Bundle{
 		RequiredExtensions: []string{
 			cnab.FileParameterExtensionKey,
 		},
@@ -279,7 +279,7 @@ func Test_loadParameters_fileParameter(t *testing.T) {
 				},
 			},
 		},
-	}}
+	})
 
 	overrides := map[string]string{
 		"foo": "/path/to/file",
@@ -527,7 +527,7 @@ func Test_Paramapalooza(t *testing.T) {
 					r := NewTestPorter(t)
 					defer r.Close()
 
-					bun := cnab.ExtendedBundle{Bundle: bundle.Bundle{
+					bun := cnab.NewBundle(bundle.Bundle{
 						Name:          "mybuns",
 						Version:       "1.0.0",
 						SchemaVersion: "v1.0.0",
@@ -558,7 +558,7 @@ func Test_Paramapalooza(t *testing.T) {
 								},
 							},
 						},
-					}}
+					})
 
 					if tc.DefaultExists {
 						bun.Definitions["my-param"].Default = "my-param-default"

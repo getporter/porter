@@ -76,7 +76,7 @@ func (r *Registry) PullBundle(ref cnab.OCIReference, insecureRegistry bool) (cna
 	bundleRef := cnab.BundleReference{
 		Reference:     ref,
 		Digest:        digest,
-		Definition:    cnab.ExtendedBundle{Bundle: *bun},
+		Definition:    cnab.NewBundle(*bun),
 		RelocationMap: reloMap,
 	}
 

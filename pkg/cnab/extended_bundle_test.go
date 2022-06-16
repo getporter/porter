@@ -11,11 +11,11 @@ import (
 
 func TestExtendedBundle_IsPorterBundle(t *testing.T) {
 	t.Run("made by porter", func(t *testing.T) {
-		b := ExtendedBundle{bundle.Bundle{
+		b := NewBundle(bundle.Bundle{
 			Custom: map[string]interface{}{
 				"sh.porter": struct{}{},
 			},
-		}}
+		})
 
 		assert.True(t, b.IsPorterBundle())
 	})
@@ -35,7 +35,7 @@ func TestExtendedBundle_IsFileType(t *testing.T) {
 		Type:            "string",
 		ContentEncoding: "base64",
 	}
-	bun := ExtendedBundle{bundle.Bundle{
+	bun := NewBundle(bundle.Bundle{
 		RequiredExtensions: []string{
 			FileParameterExtensionKey,
 		},
@@ -52,7 +52,7 @@ func TestExtendedBundle_IsFileType(t *testing.T) {
 				Definition: "file",
 			},
 		},
-	}}
+	})
 
 	assert.False(t, bun.IsFileType(stringDef), "strings should not be flagged as files")
 	assert.True(t, bun.IsFileType(fileDef), "strings+base64 with the file-parameters extension should be categorized as files")
@@ -70,7 +70,7 @@ func TestExtendedBundle_IsFileType(t *testing.T) {
 }
 
 func TestExtendedBundle_IsInternalParameter(t *testing.T) {
-	bun := ExtendedBundle{bundle.Bundle{
+	bun := NewBundle(bundle.Bundle{
 		Definitions: definition.Definitions{
 			"foo": &definition.Schema{
 				Type: "string",
@@ -91,7 +91,7 @@ func TestExtendedBundle_IsInternalParameter(t *testing.T) {
 				Definition: "porter-debug",
 			},
 		},
-	}}
+	})
 
 	t.Run("empty bundle", func(t *testing.T) {
 		b := ExtendedBundle{}
@@ -117,7 +117,7 @@ func TestExtendedBundle_IsInternalParameter(t *testing.T) {
 
 func TestExtendedBundle_IsSensitiveParameter(t *testing.T) {
 	sensitive := true
-	bun := ExtendedBundle{bundle.Bundle{
+	bun := NewBundle(bundle.Bundle{
 		Definitions: definition.Definitions{
 			"foo": &definition.Schema{
 				Type:      "string",
@@ -139,7 +139,7 @@ func TestExtendedBundle_IsSensitiveParameter(t *testing.T) {
 				Definition: "porter-debug",
 			},
 		},
-	}}
+	})
 
 	t.Run("empty bundle", func(t *testing.T) {
 		b := ExtendedBundle{}

@@ -149,7 +149,7 @@ func TestPublish_UpdateBundleWithNewImage(t *testing.T) {
 	p := NewTestPorter(t)
 	defer p.Close()
 
-	bun := cnab.ExtendedBundle{Bundle: bundle.Bundle{
+	bun := cnab.NewBundle(bundle.Bundle{
 		Name: "mybuns",
 		InvocationImages: []bundle.InvocationImage{
 			{
@@ -167,7 +167,7 @@ func TestPublish_UpdateBundleWithNewImage(t *testing.T) {
 				},
 			},
 		},
-	}}
+	})
 	tag := "myneworg/mynewbuns"
 
 	digest, err := image.NewDigest("sha256:6b5a28ccbb76f12ce771a23757880c6083234255c5ba191fca1c5db1f71c1687")
@@ -198,7 +198,7 @@ func TestPublish_RefreshCachedBundle(t *testing.T) {
 
 	bundleRef := cnab.BundleReference{
 		Reference:  cnab.MustParseOCIReference("myreg/mybuns"),
-		Definition: cnab.ExtendedBundle{Bundle: bundle.Bundle{Name: "myreg/mybuns"}},
+		Definition: cnab.NewBundle(bundle.Bundle{Name: "myreg/mybuns"}),
 	}
 
 	// No-Op; bundle does not yet exist in cache
@@ -234,7 +234,7 @@ func TestPublish_RefreshCachedBundle_OnlyWarning(t *testing.T) {
 
 	bundleRef := cnab.BundleReference{
 		Reference:  cnab.MustParseOCIReference("myreg/mybuns"),
-		Definition: cnab.ExtendedBundle{Bundle: bundle.Bundle{Name: "myreg/mybuns"}},
+		Definition: cnab.NewBundle(bundle.Bundle{Name: "myreg/mybuns"}),
 	}
 
 	p.TestCache.FindBundleMock = func(ref cnab.OCIReference) (cachedBundle cache.CachedBundle, found bool, err error) {

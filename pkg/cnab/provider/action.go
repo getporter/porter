@@ -198,7 +198,7 @@ func (r *Runtime) CreateRun(ctx context.Context, args ActionArguments, b cnab.Ex
 	currentRun.BundleDigest = args.BundleReference.Digest.String()
 
 	var err error
-	extb := cnab.ExtendedBundle{Bundle: b.Bundle}
+	extb := cnab.NewBundle(b.Bundle)
 	currentRun.Parameters.Parameters, err = r.sanitizer.CleanRawParameters(ctx, args.Params, extb, currentRun.ID)
 	if err != nil {
 		return storage.Run{}, span.Error(err)

@@ -182,7 +182,7 @@ func (p *TestPorter) ReadBundle(path string) cnab.ExtendedBundle {
 	bun, err := bundle.Unmarshal(bunD)
 	require.NoError(p.T(), err, "Unmarshal failed for bundle at %s", path)
 
-	return cnab.ExtendedBundle{Bundle: *bun}
+	return cnab.NewBundle(*bun)
 }
 
 func (p *TestPorter) RandomString(len int) string {

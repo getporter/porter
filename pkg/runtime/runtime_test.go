@@ -258,7 +258,7 @@ func TestRuntimeManifest_ApplyUnboundBundleOutputs_File(t *testing.T) {
 				},
 			}
 			rm := NewRuntimeManifest(c.Context, cnab.ActionInstall, m)
-			rm.bundle = cnab.ExtendedBundle{Bundle: bundle.Bundle{
+			rm.bundle = cnab.NewBundle(bundle.Bundle{
 				Definitions: map[string]*definition.Schema{
 					tc.def.Name: &tc.def.Schema,
 				},
@@ -268,7 +268,7 @@ func TestRuntimeManifest_ApplyUnboundBundleOutputs_File(t *testing.T) {
 						Path:       tc.def.Path,
 					},
 				},
-			}}
+			})
 
 			_, err := rm.FileSystem.Create(srcPath)
 			require.NoError(t, err)

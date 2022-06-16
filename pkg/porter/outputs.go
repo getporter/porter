@@ -135,7 +135,7 @@ func (p *Porter) ListBundleOutputs(ctx context.Context, opts *OutputListOptions)
 		return nil, err
 	}
 
-	bun := cnab.ExtendedBundle{Bundle: c.Bundle}
+	bun := cnab.NewBundle(c.Bundle)
 
 	displayOutputs := NewDisplayValuesFromOutputs(bun, resolved)
 	if err != nil {

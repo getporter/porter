@@ -34,7 +34,7 @@ func TestRuntime_loadCredentials(t *testing.T) {
 	err := r.credentials.InsertCredentialSet(context.Background(), cs1)
 	require.NoError(t, err, "Save credential set failed")
 
-	b := cnab.ExtendedBundle{Bundle: bundle.Bundle{
+	b := cnab.NewBundle(bundle.Bundle{
 		Credentials: map[string]bundle.Credential{
 			"password": {
 				Location: bundle.Location{
@@ -47,7 +47,7 @@ func TestRuntime_loadCredentials(t *testing.T) {
 				},
 			},
 		},
-	}}
+	})
 
 	args := ActionArguments{Installation: storage.Installation{CredentialSets: []string{"mycreds"}}, Action: "install"}
 	gotValues, err := r.loadCredentials(context.Background(), b, args)

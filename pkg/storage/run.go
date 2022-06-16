@@ -118,7 +118,7 @@ func (r Run) ToCNAB() cnab.Claim {
 // TypedParameterValues returns parameters values that have been converted to
 // its typed value based on its bundle definition.
 func (r Run) TypedParameterValues() map[string]interface{} {
-	bun := cnab.ExtendedBundle{Bundle: r.Bundle}
+	bun := cnab.NewBundle(r.Bundle)
 	value := make(map[string]interface{})
 
 	for _, param := range r.Parameters.Parameters {

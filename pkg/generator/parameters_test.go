@@ -33,7 +33,7 @@ func TestGoodParametersName(t *testing.T) {
 			Name:   name,
 			Silent: true,
 		},
-		Bundle: cnab.ExtendedBundle{Bundle: bundle.Bundle{
+		Bundle: cnab.NewBundle(bundle.Bundle{
 			Parameters: map[string]bundle.Parameter{
 				"one": {
 					Definition: "one",
@@ -46,7 +46,7 @@ func TestGoodParametersName(t *testing.T) {
 				},
 			},
 		},
-		}}
+		)}
 
 	pset, err := opts.GenerateParameters()
 	require.NoError(t, err, "name should NOT have resulted in an error")
@@ -98,7 +98,7 @@ func TestSkipParameters(t *testing.T) {
 			Name:   name,
 			Silent: true,
 		},
-		Bundle: cnab.ExtendedBundle{Bundle: bundle.Bundle{
+		Bundle: cnab.NewBundle(bundle.Bundle{
 			Definitions: definition.Definitions{
 				"porter-debug": &definition.Schema{
 					Comment: cnab.PorterInternal,
@@ -110,7 +110,7 @@ func TestSkipParameters(t *testing.T) {
 				},
 			},
 		},
-		}}
+		)}
 
 	pset, err := opts.GenerateParameters()
 	require.NoError(t, err, "parameters generation should not have resulted in an error")
