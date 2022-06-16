@@ -227,7 +227,7 @@ func TestManifest_Validate_WrongSchema(t *testing.T) {
 	c.TestContext.AddTestFile("testdata/porter-with-badschema.yaml", config.Name)
 	_, err := LoadManifestFrom(context.Background(), c.Config, config.Name)
 
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.Regexp(t,
 		"unsupported property set or a custom action is defined incorrectly: error unmarshaling custom action baddata",
 		err,
