@@ -1,11 +1,165 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "type": "object",
-  "properties": {
-    "privileged": {
-      "description": "Option to set the --privileged flag when running the Docker container",
-      "type": "boolean"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "properties": {
+        "privileged": {
+            "description": "Option to set the --privileged flag when running the Docker container",
+            "type": "boolean"
+        },
+        "mounts": {
+            "description": "Specify mount configurations as parseable by the --mount flag",
+            "type": "array",
+            "items": {
+                "type": "object",
+                "description": "Options general to all mount configurations",
+                "properties": {
+                    "Type": {
+                        "type": "string",
+                        "description": "Sets the mount type (bind/volume/tmpfs/npipe)"
+                    },
+                    "Source": {
+                        "type": "string",
+                        "description": "The source of the mount on the host machine, or empty when using tmpfs"
+                    },
+                    "Target": {
+                        "type": "string",
+                        "description": "The target of the mount on the container"
+                    },
+                    "ReadOnly": {
+                        "type": "boolean",
+                        "description": "Specify that the mount has readonly access"
+                    },
+                    "Consistency": {
+                        "type": "string",
+                        "description": "Specify the concsistency type for the mount"
+                    },
+                    "BindOptions": {
+                        "type": "object",
+                        "properties": {
+                            "Propagation": {
+                                "type": "string",
+                                "description": "Specify the propagation behavior for the mount"
+                            },
+                            "NonRecursive": {
+                                "type": "boolean",
+                                "description": "Specify whether or not the mount should be recursive"
+                            }
+                        }
+                    },
+                    "VolumeOptions": {
+                        "type": "object",
+                        "description": "Options specific to the volume mount type",
+                        "properties": {
+                            "NoCopy": {
+                                "type": "boolean",
+                                "description": "Specify"
+                            },
+                            "Labels": {
+                                "type": "object",
+                                "description": "A map of volume labels in the form of <string>:<string>",
+                                "patternProperties": {
+                                    "[a-zA-Z_0-9-]+": {
+                                        "type": "string"
+                                    }
+                                }
+                            },
+                            "DriverConfig": {
+                                "type": "object",
+                                "description": "Driver configuration options",
+                                "properties": {
+                                    "Name": {
+                                        "type": "string",
+                                        "description": "The name of the driver to use"
+                                    },
+                                    "Options": {
+                                        "type": "object",
+                                        "description": "A map of driver configuration options to use in the form of {option: value}",
+                                        "patternProperties": {
+                                            "[a-zA-Z_0-9-]+": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "TmpfsOptions": {
+                        "type": "object",
+                        "description": "Options specific to the tmpfs mount type",
+                        "properties": {
+                            "SizeBytes": {
+                                "type": "integer",
+                                "description": "Specify the size of the filesystem in bytes"
+                            },
+                            "Mode": {
+                                "type": "integer",
+                                "description": "Specify the filemode for the fs"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "network": {
+            "type": "string",
+            "description": "Specify the network type to use when launching the container"
+        },
+        "capadd": {
+            "type": "array",
+            "description": "A list of capabilities to add",
+            "items": {
+                "type": "string"
+            }
+        },
+        "capdrop": {
+            "type": "array",
+            "description": "A llist of capabilities to drop",
+            "items": {
+                "type": "string"
+            },
+            "examples": []
+        },
+        "portBindings": {
+            "type": "array",
+            "description": "A list of ports to bind between the host and the container",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "patternProperties": {
+                        "[0-9]+": {
+                            "type": "array",
+                            "description": "The port on the container to bind",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "HostIp": {
+                                        "type": "The ip to bind the port to on the host"
+                                    },
+                                    "HostPort": {
+                                        "type": "string",
+                                        "description": "The port on the host to map the container port to"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "restartPolicy": {
+            "type": "object",
+            "description": "The restart policy for the container",
+            "properties": {
+                "Name": {
+                    "type": "string",
+                    "description": "The name of the restart policy"
+                },
+                "MaximumRetryCount": {
+                    "type": "integer",
+                    "description": "The maximum retry count"
+                }
+            }
+        }
     }
-  },
-  "additionalProperties": false
 }
