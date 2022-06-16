@@ -78,6 +78,34 @@ func (r *Runtime) dockerDriverWithHostAccess(config cnab.Docker) (driver.Driver,
 		})
 	}
 
+	if config.CapAdd != nil {
+		d.AddConfigurationOptions(func(cfg *container.Config, hostCfg *container.HostConfig) error {
+			hostCfg.CapAdd = config.CapAdd
+			return nil
+		})
+	}
+
+	if config.CapDrop != nil {
+		d.AddConfigurationOptions(func(cfg *container.Config, hostCfg *container.HostConfig) error {
+			hostCfg.CapDrop = config.CapDrop
+			return nil
+		})
+	}
+
+	if config.Mounts != nil {
+		d.AddConfigurationOptions(func(cfg *container.Config, hostCfg *container.HostConfig) error {
+			hostCfg.Mounts = config.Mounts
+			return nil
+		})
+	}
+
+	if config.Network != "" {
+		d.AddConfigurationOptions(func(cfg *container.Config, hostCfg *container.HostConfig) error {
+			hostCfg.NetworkMode = container.NetworkMode(config.Network)
+			return nil
+		})
+	}
+
 	// Mount the docker socket
 	d.AddConfigurationOptions(r.mountDockerSocket)
 
