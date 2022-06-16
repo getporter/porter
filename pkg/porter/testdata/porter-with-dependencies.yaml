@@ -1,0 +1,90 @@
+schemaVersion: 1.0.0-alpha.1
+name: porter-hello
+version: 0.1.0
+description: "A bundle with a custom action"
+registry: "localhost:5000"
+
+custom:
+  customKey1: "customValue1"
+
+credentials:
+  - name: my-first-cred
+    env: MY_FIRST_CRED
+  - name: my-second-cred
+    description: "My second cred"
+    path: /path/to/my-second-cred
+
+images:
+  something:
+    description: "an image"
+    imageType: "docker"
+    repository: "getporter/boo"
+
+dependencies:
+  requires:
+    - name: some-dep
+      bundle:
+        reference: some-repo
+        version: ">1.0"
+      parameters:
+        param1: first-param
+
+parameters:
+  - name: my-first-param
+    type: integer
+    default: 9
+    env: MY_FIRST_PARAM
+    applyTo:
+      - "install"
+  - name: my-second-param
+    description: "My second parameter"
+    type: string
+    default: spring-music-demo
+    path: /path/to/my-second-param
+    sensitive: true
+
+outputs:
+  - name: my-first-output
+    type: string
+    applyTo:
+      - "install"
+      - "upgrade"
+    sensitive: true
+  - name: my-second-output
+    description: "My second output"
+    type: boolean
+    sensitive: false
+  - name: kubeconfig
+    type: file
+    path: /home/nonroot/.kube/config
+
+mixins:
+  - exec
+
+install:
+  - exec:
+      description: "Install Hello World with custom arguments"
+      command: echo
+      arguments:
+        - "{{ bundle.custom.customKey1 }}"
+
+upgrade:
+  - exec:
+      description: "World 2.0"
+      command: bash
+      flags:
+        c: echo World 2.0
+
+zombies:
+  - exec:
+      description: "Trigger zombie apocalypse"
+      command: bash
+      flags:
+        c: echo oh noes my brains
+
+uninstall:
+  - exec:
+      description: "Uninstall Hello World"
+      command: bash
+      flags:
+        c: echo Goodbye World

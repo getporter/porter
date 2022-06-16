@@ -170,8 +170,8 @@
         "name": {
           "type": "string"
         },
-        "reference": {
-          "type": "string"
+        "bundle": {
+          "$ref": "#/definitions/bundle"
         },
         "parameters": {
           "type": "object"
@@ -179,6 +179,23 @@
       },
       "required": [
         "name",
+        "bundle"
+      ],
+      "type": "object"
+    },
+    "bundle": {
+      "description": "The defintion of a bundle reference",
+      "properties": {
+        "reference": {
+          "description": "The full bundle reference for the dependency in the format REGISTRY/NAME:TAG",
+          "type": "string"
+        },
+        "version": {
+          "description": "Bundle version contstraint for version matching, see https://github.com/Masterminds/semver/blob/master/README.md#checking-version-constraints",
+          "type": "string"
+        }
+      },
+      "required": [
         "reference"
       ],
       "type": "object"
