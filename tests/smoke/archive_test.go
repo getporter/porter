@@ -36,14 +36,16 @@ func TestArchive(t *testing.T) {
 	tempRegistryPort, err := shx.OutputE("docker", "inspect", tempRegistryId, "--format", `{{ (index (index .NetworkSettings.Ports "5000/tcp") 0).HostPort }}`)
 	require.NoError(t, err, "Could not get the published port of the temporary registry")
 
-	// Publish the bundle to one location
-	origRef := fmt.Sprintf("localhost:%s/orig-mydb:v0.1.1", tempRegistryPort)
-	test.MakeTestBundle(testdata.MyDb, origRef)
+	// Publish referenced bundle to one location
+	localRegRef := fmt.Sprintf("localhost:%s/whalesayd:latest", tempRegistryPort)
+	require.NoError(t, shx.RunE("docker", "pull", "carolynvs/whalesayd@sha256:8b92b7269f59e3ed824e811a1ff1ee64f0d44c0218efefada57a4bebc2d7ef6f"))
+	require.NoError(t, shx.RunE("docker", "tag", "carolynvs/whalesayd@sha256:8b92b7269f59e3ed824e811a1ff1ee64f0d44c0218efefada57a4bebc2d7ef6f", localRegRef))
+	require.NoError(t, shx.RunE("docker", "push", localRegRef))
 
-	archiveFilePath := filepath.Join(test.TestDir, "archive-test.tgz")
-	test.RequirePorter("archive", archiveFilePath, "--reference", origRef)
+	// publish a test bundle that reference the image from the temp registry
+	test.MakeTestBundle(testdata.MyBunsWithImgReference, testdata.MyBunsWithImgReferenceRef)
 	stopTempRegistry()
 
-	newRef := "localhost:5000/copy-new-mydb:v0.1.1"
-	test.RequirePorter("publish", "--archive", archiveFilePath, "--reference", newRef)
+	archiveFilePath := filepath.Join(test.TestDir, "archive-test.tgz")
+	test.RequirePorter("archive", archiveFilePath, "--reference", testdata.MyBunsWithImgReferenceRef)
 }
