@@ -8,8 +8,10 @@ import (
 	"path/filepath"
 	"testing"
 
+	"get.porter.sh/porter/pkg/yaml"
 	"get.porter.sh/porter/tests/testdata"
 	"get.porter.sh/porter/tests/tester"
+	"github.com/carolynvs/magex/mgx"
 	"github.com/carolynvs/magex/shx"
 	"github.com/stretchr/testify/require"
 )
@@ -43,7 +45,13 @@ func TestArchive(t *testing.T) {
 	require.NoError(t, shx.RunE("docker", "push", localRegRef))
 
 	// publish a test bundle that reference the image from the temp registry
-	test.MakeTestBundle(testdata.MyBunsWithImgReference, testdata.MyBunsWithImgReferenceRef)
+	originTestBun := filepath.Join(test.RepoRoot, fmt.Sprintf("tests/testdata/%s/porter.yaml", testdata.MyBunsWithImgReference))
+	testBun := filepath.Join(test.TestDir, "mybuns-img-reference.yaml")
+	mgx.Must(shx.Copy(originTestBun, testBun))
+	test.EditYaml(testBun, func(yq *yaml.Editor) error {
+		return yq.SetValue("images.whalesayd.repository", fmt.Sprintf("localhost:%s/whalesayd", tempRegistryPort))
+	})
+	test.RequirePorter("publish", "--file", "mybuns-img-reference.yaml", "--dir", test.TestDir)
 	stopTempRegistry()
 
 	archiveFilePath := filepath.Join(test.TestDir, "archive-test.tgz")
