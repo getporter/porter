@@ -5,7 +5,9 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"path/filepath"
 	"sort"
+	"strings"
 	"time"
 
 	"get.porter.sh/porter/pkg/cnab"
@@ -693,4 +695,71 @@ func (p *Porter) resolveParameterSources(ctx context.Context, bun cnab.ExtendedB
 	}
 
 	return values, nil
+}
+
+// ParameterCreateOptions represent options for Porter's parameter create command
+type ParameterCreateOptions struct {
+	FileName   string
+	OutputType string
+}
+
+func (o *ParameterCreateOptions) Validate(args []string) error {
+	if len(args) > 1 {
+		return errors.Errorf("only one positional argument may be specified, fileName, but multiple were received: %s", args)
+	}
+
+	if len(args) > 0 {
+		o.FileName = args[0]
+	}
+
+	if o.OutputType == "" && o.FileName != "" && strings.Trim(filepath.Ext(o.FileName), ".") == "" {
+		return errors.New("could not detect the file format from the file extension (.txt). Specify the format with --output.")
+	}
+
+	return nil
+}
+
+func (p *Porter) CreateParameter(opts ParameterCreateOptions) error {
+	if opts.OutputType == "" {
+		opts.OutputType = strings.Trim(filepath.Ext(opts.FileName), ".")
+	}
+
+	if opts.FileName == "" {
+		if opts.OutputType == "" {
+			opts.OutputType = "yaml"
+		}
+
+		switch opts.OutputType {
+		case "json":
+			parameterSet, err := p.Templates.GetParameterSetJSON()
+			if err != nil {
+				return err
+			}
+			fmt.Fprintln(p.Out, string(parameterSet))
+
+			return nil
+		case "yaml", "yml":
+			parameterSet, err := p.Templates.GetParameterSetYAML()
+			if err != nil {
+				return err
+			}
+			fmt.Fprintln(p.Out, string(parameterSet))
+
+			return nil
+		default:
+			return newUnsupportedFormatError(opts.OutputType)
+		}
+
+	}
+
+	fmt.Fprintln(p.Err, "creating porter parameter set in the current directory")
+
+	switch opts.OutputType {
+	case "json":
+		return p.CopyTemplate(p.Templates.GetParameterSetJSON, opts.FileName)
+	case "yaml", "yml":
+		return p.CopyTemplate(p.Templates.GetParameterSetYAML, opts.FileName)
+	default:
+		return newUnsupportedFormatError(opts.OutputType)
+	}
 }

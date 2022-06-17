@@ -1,0 +1,34 @@
+# See the Parameter Set file format documentation at https://release-v1.porter.sh/reference/file-formats/#parameter-set
+schemaType: ParameterSet
+schemaVersion: 1.0.1
+# Name of the parameter set.
+name: NAME
+# The namespace in which the parameter set is defined.
+# Omit the namespace to define the parameter set in the current current namespace.
+namespace: NAMESPACE
+# Optionally define labels which can be used for filtering. Labels must be string values.
+labels:
+  LABEL: LABEL_VALUE
+# Parameters specify how Porter can resolve parameters when executing a bundle.
+# Allowed sources are: value, path, env, secret, and command.
+parameters:
+  - name: parameter-path
+    source:
+      # Resolve the parameter value from the contents of the specified file.
+      path: /path/to/parameter-path-file.txt
+  - name: parameter-command
+    source:
+      # Resolve the parameter value from the output of the specified command.
+      command: echo 'parameter command'
+  - name: parameter-env
+    source:
+      # Resolve the parameter value from the value of the specified environment variable.
+      env: PARAMETER_ENV
+  - name: parameter-value
+    source:
+      # Use the specified value for the parameter. Do not use "value" for sensitive data.
+      value: parametervalue
+  - name: parameter-secret
+    source:
+      # Resolve the parameter value from the secret store specified in your Porter configuration file.
+      secret: parameter-secret
