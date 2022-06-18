@@ -222,6 +222,11 @@ func (i Installation) IsUninstalled() bool {
 	return i.Status.Uninstalled != nil
 }
 
+// IsDefined checks if the installation is has already been defined but not installed yet.
+func (i Installation) IsDefined() bool {
+	return i.Status.Installed == nil
+}
+
 // OCIReferenceParts is our storage representation of cnab.OCIReference
 // with the parts explicitly stored separately so that they are queryable.
 type OCIReferenceParts struct {

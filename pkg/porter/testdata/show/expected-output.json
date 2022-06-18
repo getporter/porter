@@ -53,5 +53,7 @@
         "value": "top-secret"
       }
     ]
-  }
+  },
+  "displayInstallationState": "installed",
+  "displayInstallationStatus": "succeeded"
 }

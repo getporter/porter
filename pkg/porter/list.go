@@ -17,6 +17,16 @@ import (
 	"github.com/pkg/errors"
 )
 
+const (
+	StateInstalled   = "installed"
+	StateUninstalled = "uninstalled"
+	StateDefined     = "defined"
+
+	StatusInstalling   = "installing"
+	StatusUninstalling = "uninstalling"
+	StatusUpgrading    = "upgrading"
+)
+
 // ListOptions represent generic options for use by Porter's list commands
 type ListOptions struct {
 	printer.PrintOptions
@@ -102,6 +112,9 @@ type DisplayInstallation struct {
 	// Status of the installation.
 	Status                      storage.InstallationStatus `json:"status,omitempty" yaml:"status,omitempty" toml:"status,omitempty"`
 	DisplayInstallationMetadata `json:"_calculated" yaml:"_calculated"`
+
+	DisplayInstallationState  string `json:"displayInstallationState,omitempty" yaml:"displayInstallationState,omitempty" toml:"displayInstallationState,omitempty"`
+	DisplayInstallationStatus string `json:"displayInstallationStatus,omitempty" yaml:"displayInstallationStatus,omitempty" toml:"displayInstallationStatus,omitempty"`
 }
 
 type DisplayInstallationMetadata struct {
@@ -111,18 +124,20 @@ type DisplayInstallationMetadata struct {
 func NewDisplayInstallation(installation storage.Installation) DisplayInstallation {
 
 	di := DisplayInstallation{
-		SchemaType:     "Installation",
-		SchemaVersion:  installation.SchemaVersion,
-		ID:             installation.ID,
-		Name:           installation.Name,
-		Namespace:      installation.Namespace,
-		Uninstalled:    installation.Uninstalled,
-		Bundle:         installation.Bundle,
-		Custom:         installation.Custom,
-		Labels:         installation.Labels,
-		CredentialSets: installation.CredentialSets,
-		ParameterSets:  installation.ParameterSets,
-		Status:         installation.Status,
+		SchemaType:                "Installation",
+		SchemaVersion:             installation.SchemaVersion,
+		ID:                        installation.ID,
+		Name:                      installation.Name,
+		Namespace:                 installation.Namespace,
+		Uninstalled:               installation.Uninstalled,
+		Bundle:                    installation.Bundle,
+		Custom:                    installation.Custom,
+		Labels:                    installation.Labels,
+		CredentialSets:            installation.CredentialSets,
+		ParameterSets:             installation.ParameterSets,
+		Status:                    installation.Status,
+		DisplayInstallationState:  setDisplayInstallationState(installation),
+		DisplayInstallationStatus: setDisplayInstallationStatus(installation),
 	}
 
 	return di
@@ -266,11 +281,49 @@ func (p *Porter) PrintInstallations(ctx context.Context, opts ListOptions) error
 				if !ok {
 					return nil
 				}
-				return []string{cl.Namespace, cl.Name, tp.Format(cl.Status.Created), tp.Format(cl.Status.Modified), cl.Status.Action, cl.Status.ResultStatus}
+				return []string{cl.Namespace, cl.Name, cl.Status.BundleVersion, cl.DisplayInstallationState, cl.DisplayInstallationStatus, tp.Format(cl.Status.Modified)}
 			}
 		return printer.PrintTable(p.Out, displayInstallations, row,
-			"NAMESPACE", "NAME", "CREATED", "MODIFIED", "LAST ACTION", "LAST STATUS")
+			"NAMESPACE", "NAME", "VERSION", "STATE", "STATUS", "MODIFIED")
 	default:
 		return fmt.Errorf("invalid format: %s", opts.Format)
 	}
+}
+
+func setDisplayInstallationState(installation storage.Installation) string {
+	var state string
+
+	if installation.IsInstalled() {
+		state = StateInstalled
+	} else if installation.IsUninstalled() {
+		state = StateUninstalled
+	} else if installation.IsDefined() {
+		state = StateDefined
+	}
+
+	return state
+}
+
+func setDisplayInstallationStatus(installation storage.Installation) string {
+	var status string
+
+	switch installation.Status.ResultStatus {
+	case cnab.StatusSucceeded:
+		status = cnab.StatusSucceeded
+	case cnab.StatusFailed:
+		status = cnab.StatusFailed
+	case cnab.StatusRunning:
+		switch installation.Status.Action {
+		case cnab.ActionInstall:
+			status = StatusInstalling
+		case cnab.ActionUninstall:
+			status = StatusUninstalling
+		case cnab.ActionUpgrade:
+			status = StatusUpgrading
+		default:
+			status = fmt.Sprintf("running %s", installation.Status.Action)
+		}
+	}
+
+	return status
 }
