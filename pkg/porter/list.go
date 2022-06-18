@@ -113,7 +113,11 @@ type DisplayInstallation struct {
 	Status                      storage.InstallationStatus `json:"status,omitempty" yaml:"status,omitempty" toml:"status,omitempty"`
 	DisplayInstallationMetadata `json:"_calculated" yaml:"_calculated"`
 
-	DisplayInstallationState  string `json:"displayInstallationState,omitempty" yaml:"displayInstallationState,omitempty" toml:"displayInstallationState,omitempty"`
+	// DisplayInstallationState is the latest state of the installation.
+	// It is either "installed", "uninstalled", or "defined".
+	DisplayInstallationState string `json:"displayInstallationState,omitempty" yaml:"displayInstallationState,omitempty" toml:"displayInstallationState,omitempty"`
+	// DisplayInstallationStatus is the latest status of the installation.
+	// It is either "succeeded, "failed", "installing", "uninstalling", "upgrading", or "running <custom action>"
 	DisplayInstallationStatus string `json:"displayInstallationStatus,omitempty" yaml:"displayInstallationStatus,omitempty" toml:"displayInstallationStatus,omitempty"`
 }
 
