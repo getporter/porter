@@ -12,7 +12,6 @@ import (
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/encoding"
 	"github.com/opencontainers/go-digest"
-	"github.com/pkg/errors"
 )
 
 type BundleCache interface {
@@ -75,24 +74,24 @@ func (c *Cache) StoreBundle(bundleRef cnab.BundleReference) (CachedBundle, error
 	// Remove any previously cached bundle files
 	err = c.FileSystem.RemoveAll(cb.cacheDir)
 	if err != nil {
-		return CachedBundle{}, errors.Wrapf(err, "cannot remove existing cache directory %s", cb.BundlePath)
+		return CachedBundle{}, fmt.Errorf("cannot remove existing cache directory %s: %w", cb.BundlePath, err)
 	}
 
 	cb.BundlePath = cb.BuildBundlePath()
 	err = c.FileSystem.MkdirAll(filepath.Dir(cb.BundlePath), pkg.FileModeDirectory)
 	if err != nil {
-		return CachedBundle{}, errors.Wrap(err, "unable to create cache directory")
+		return CachedBundle{}, fmt.Errorf("unable to create cache directory: %w", err)
 	}
 
 	f, err := c.FileSystem.OpenFile(cb.BundlePath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, pkg.FileModeWritable)
 	defer f.Close()
 	if err != nil {
-		return CachedBundle{}, errors.Wrapf(err, "error creating cnab/bundle.json for %s", cb.Reference)
+		return CachedBundle{}, fmt.Errorf("error creating cnab/bundle.json for %s: %w", cb.Reference, err)
 	}
 
 	_, err = cb.Definition.WriteTo(f)
 	if err != nil {
-		return CachedBundle{}, errors.Wrapf(err, "error writing to cnab/bundle.json for %s", cb.Reference)
+		return CachedBundle{}, fmt.Errorf("error writing to cnab/bundle.json for %s: %w", cb.Reference, err)
 	}
 
 	err = c.cacheMetadata(&cb)
@@ -111,17 +110,17 @@ func (c *Cache) StoreBundle(bundleRef cnab.BundleReference) (CachedBundle, error
 		f, err = c.FileSystem.OpenFile(cb.RelocationFilePath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, pkg.FileModeWritable)
 		defer f.Close()
 		if err != nil {
-			return CachedBundle{}, errors.Wrapf(err, "error creating cnab/relocation-mapping.json for %s", cb.Reference)
+			return CachedBundle{}, fmt.Errorf("error creating cnab/relocation-mapping.json for %s: %w", cb.Reference, err)
 		}
 
 		b, err := json.Marshal(cb.RelocationMap)
 		if err != nil {
-			return CachedBundle{}, errors.Wrapf(err, "couldn't marshall relocation mapping for %s", cb.Reference)
+			return CachedBundle{}, fmt.Errorf("couldn't marshall relocation mapping for %s: %w", cb.Reference, err)
 		}
 
 		_, err = f.Write(b)
 		if err != nil {
-			return CachedBundle{}, errors.Wrapf(err, "couldn't write relocation mapping for %s", cb.Reference)
+			return CachedBundle{}, fmt.Errorf("couldn't write relocation mapping for %s: %w", cb.Reference, err)
 		}
 
 	}
@@ -163,7 +162,7 @@ func (c *Cache) cacheManifest(cb *CachedBundle) error {
 		cb.ManifestPath = cb.BuildManifestPath()
 		err = stamp.WriteManifest(c.Context, cb.ManifestPath)
 		if err != nil {
-			return errors.Wrapf(err, "error writing porter.yaml for %s", cb.Reference)
+			return fmt.Errorf("error writing porter.yaml for %s: %w", cb.Reference, err)
 		}
 	}
 
