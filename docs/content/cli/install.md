@@ -15,8 +15,14 @@ The first argument is the name of the installation to create. This defaults to t
 
 Once a bundle has been successfully installed, the install action cannot be repeated. This is a precaution to avoid accidentally overwriting an existing installation. If you need to re-run install, which is common when authoring a bundle, you can use the --force flag to by-pass this check.
 
-Porter uses the Docker driver as the default runtime for executing a bundle's invocation image, but an alternate driver may be supplied via '--driver/-d' or the PORTER_RUNTIME_DRIVER environment variable.
+Porter uses the docker driver as the default runtime for executing a bundle's invocation image, but an alternate driver may be supplied via '--driver/-d' or the PORTER_RUNTIME_DRIVER environment variable.
 For example, the 'debug' driver may be specified, which simply logs the info given to it and then exits.
+
+The docker driver runs the bundle container using the local Docker host. To use a remote Docker host, set the following environment variables:
+  DOCKER_HOST (required)
+  DOCKER_TLS_VERIFY (optional)
+  DOCKER_CERT_PATH (optional)
+
 
 ```
 porter install [INSTALLATION] [flags]
@@ -41,7 +47,7 @@ porter install [INSTALLATION] [flags]
 ```
       --allow-docker-host-access    Controls if the bundle should have access to the host's Docker daemon with elevated privileges. See https://porter.sh/configuration/#allow-docker-host-access for the full implications of this flag.
       --cnab-file string            Path to the CNAB bundle.json file.
-  -c, --cred strings                Credential to use when installing the bundle. It should be a named set of credentials and may be specified multiple times.
+  -c, --cred stringArray            Credential to use when installing the bundle. It should be a named set of credentials and may be specified multiple times.
   -d, --driver string               Specify a driver to use. Allowed values: docker, debug (default "docker")
   -f, --file string                 Path to the porter manifest file. Defaults to the bundle in the current directory.
       --force                       Force a fresh pull of the bundle

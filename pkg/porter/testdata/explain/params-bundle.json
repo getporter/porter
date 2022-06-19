@@ -60,7 +60,9 @@
     },
     "namespace": {
       "definition": "namespace",
-      "applyTo": ["upgrade"],
+      "applyTo": [
+        "upgrade"
+      ],
       "destination": {
         "env": "NAMESPACE"
       }

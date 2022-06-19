@@ -38,7 +38,13 @@ type ParameterEditOptions struct {
 
 // ListParameters lists saved parameter sets.
 func (p *Porter) ListParameters(ctx context.Context, opts ListOptions) ([]storage.ParameterSet, error) {
-	return p.Parameters.ListParameterSets(ctx, opts.GetNamespace(), opts.Name, opts.ParseLabels())
+	return p.Parameters.ListParameterSets(ctx, storage.ListOptions{
+		Namespace: opts.GetNamespace(),
+		Name:      opts.Name,
+		Labels:    opts.ParseLabels(),
+		Skip:      opts.Skip,
+		Limit:     opts.Limit,
+	})
 }
 
 // PrintParameters prints saved parameter sets.

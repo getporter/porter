@@ -200,7 +200,7 @@ type InstallationStatus struct {
 
 	// Uninstalled indicates if the installation has successfully completed the uninstall action.
 	// Once that state is reached, Porter should not allow further stateful actions.
-	Uninstalled *time.Time `json:"uninstalled" yaml"uninstalled" toml:"uninstalled"`
+	Uninstalled *time.Time `json:"uninstalled" yaml:"uninstalled" toml:"uninstalled"`
 
 	// BundleReference of the bundle that last altered the installation state.
 	BundleReference string `json:"bundleReference" yaml:"bundleReference" toml:"bundleReference"`

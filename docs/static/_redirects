@@ -3,6 +3,7 @@
 /board/pull-requests    https://github.com/pulls?q=is:open+is:pr+user:getporter
 /board/*                https://github.com/orgs/getporter/projects/1?card_filter_query=label:":splat"
 /roadmap                https://github.com/getporter/porter/projects/4
+/find-issue             https://github.com/search?q=org%3Agetporter+label%3A%22good+first+issue%22%2C%22help+wanted%22+no%3Aassignee&state=open&type=Issues
 
 # Redirect source code links
 /:repo/src/*        https://github.com/getporter/:repo/blob/main/:splat

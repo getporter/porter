@@ -73,8 +73,8 @@ output = "json"
 # Allow all bundles access to the Docker Host
 allow-docker-host-access = true
 
-# Enable experimental v1 features
-experimental = ["build-drivers", "structured-logs"]
+# Enable experimental features
+experimental = ["flagA", "flagB"]
 
 # Use Docker buildkit to build the bundle
 build-driver = "buildkit"
@@ -134,7 +134,11 @@ default-secrets-plugin = "kubernetes.secret"
 # Log command output to a file in PORTER_HOME/logs/
 [logs]
   # Log command output to a file
-  enabled = true
+  log-to-file = true
+
+  # When structured is true, the logs printed to the console 
+  # include a timestamp and log level
+  structured = false
 
   # Sets the log level for what is written to the file
   # Allowed values: debug, info, warn, error
@@ -164,6 +168,12 @@ default-secrets-plugin = "kubernetes.secret"
   # The timeout enforced when communicating with the collector endpoint
   timeout = "3s"
 
+  # The timeout enforced when establishing a connection with the collector endpoint
+  start-timeout = "100ms"
+
+  # Used for testing that porter is emitting spans without setting up an open telemetry collector
+  redirect-to-file = false
+
   # Additional headers to send to the open telemetry collector
   [telemetry.headers]
     environment = "dev"
@@ -185,32 +195,36 @@ feature by:
 
 ### Build Drivers
 
-The **build-drivers** experimental feature flag is no longer used.
+The **build-drivers** experimental feature flag is no longer active.
 Build drivers are enabled by default and the only available driver is buildkit.
+
+The docker driver uses the local Docker host to build a bundle image, and run it in a container.
+To use a remote Docker host, set the following environment variables:
+
+* DOCKER_HOST (required)
+* DOCKER_TLS_VERIFY (optional)
+* DOCKER_CERTS_PATH (optional)
 
 ### Structured Logs
 
-The **structured-logs** experimental feature flag enables advanced [logging configuration](#logs)
-and exporting [telemetry](#telemetry) data.
-
-When this feature is enabled, the logs output to the console will contain additional information such as the log level, timestamp and optional context information.
+The **structured-logs** experimental feature flag is no longer active.
+Use the trace and logs configuration sections below to configure how logs and telemetry should be collected.
 
 #### Logs
 
 Porter can be configured to [write a logfile for each command](/administrators/diagnostics/#logs).
-This feature requires the [structured-logs](#structured-logs) feature to be enabled.
 
 The following log settings are available:
 
-| Setting | Environment Variable | Description |
-| -------------- | -------------------- | ----------- |
-| logs.enabled | PORTER_LOGS_ENABLED | Specifies if a logfile should be written for each command. |
-| logs.level | PORTER_LOGS_LEVEL | Filters the logs to the specified level and higher. The log level controls both the logs written to file, and the logs output to the console when porter is run. Allowed values are: debug, info, warn, error. |
+| Setting          | Environment Variable    | Description                                                                                                                                                                                                    |
+|------------------|-------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| logs.log-to-file | PORTER_LOGS_LOG_TO_FILE | Specifies if a logfile should be written for each command.                                                                                                                                                     |
+| logs.structured  | PORTER_LOGS_STRUCTURED  | Specifies if the logs printed to the console should include a timestamp and log level                                                                                                                          | 
+| logs.level       | PORTER_LOGS_LEVEL       | Filters the logs to the specified level and higher. The log level controls both the logs written to file, and the logs output to the console when porter is run. Allowed values are: debug, info, warn, error. |
 
 #### Telemetry
 
 Porter supports the OpenTelemetry specification for exporting trace data.
-This feature requires the [structured-logs](#structured-logs) feature to be enabled.
 
 Porter automatically uses the standard [OpenTelemetry environment variables][otel] to configure the trace exporter.
 
@@ -228,8 +242,6 @@ Porter automatically uses the standard [OpenTelemetry environment variables][ote
 Below is a sample Porter configuration file that demonstrates how to set each of the telemetry settings:
 
 ```toml
-experimental = ["structured-logs"]
-
 [telemetry]
   enabled = true
   protocol = "grpc"
@@ -238,9 +250,7 @@ experimental = ["structured-logs"]
   certificate = "/home/me/some-cert.pem"
   compression = "gzip"
   timeout = "3s"
-
-  # Used for testing that porter is emitting spans without setting up an open telemetry collector
-  redirect-to-file = false
+  start-timeout = "100ms"
 
   [telemetry.headers]
     environment = "dev"

@@ -87,7 +87,7 @@ Set VERSION to the most recent [v1 prerelease] version number.
 
 ```bash
 export PORTER_HOME=~/.porterv1
-export VERSION="v1.0.0-alpha.10"
+export VERSION="v1.0.0-alpha.19"
 curl -L https://cdn.porter.sh/$VERSION/install-mac.sh | bash
 ```
 
@@ -104,7 +104,7 @@ porter version
 
 ```bash
 export PORTER_HOME=~/.porterv1
-export VERSION="v1.0.0-alpha.10"
+export VERSION="v1.0.0-alpha.19"
 curl -L https://cdn.porter.sh/$VERSION/install-linux.sh | bash
 ```
 
@@ -121,7 +121,7 @@ porter version
 
 ```powershell
 $PORTER_HOME="$env:USERPROFILE\.porterv1"
-$VERSION="v1.0.0-alpha.10"
+$VERSION="v1.0.0-alpha.19"
 (New-Object System.Net.WebClient).DownloadFile("https://cdn.porter.sh/$VERSION/install-windows.ps1", "install-porter.ps1")
 .\install-porter.ps1 -PORTER_HOME $PORTER_HOME
 ```

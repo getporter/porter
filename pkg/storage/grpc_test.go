@@ -41,7 +41,7 @@ func TestRoundTripDataOverGRPC(t *testing.T) {
 	// Add an index to support filtering
 	const collection = "things"
 	err = client.EnsureIndex(ctx, plugins.EnsureIndexOptions{Indices: []plugins.Index{
-		{Collection: collection, Keys: bson.D{{"namespace", 1}, {"name", 1}}},
+		{Collection: collection, Keys: bson.D{{Key: "namespace", Value: 1}, {Key: "name", Value: 1}}},
 	}})
 	require.NoError(t, err)
 
@@ -58,7 +58,7 @@ func TestRoundTripDataOverGRPC(t *testing.T) {
 	results, err := client.Find(ctx, plugins.FindOptions{
 		Collection: collection,
 		Filter:     bson.M{"namespace": "dev"},
-		Select:     bson.D{{"name", 1}, {"namespace", 1}, {"_id", 0}},
+		Select:     bson.D{{Key: "name", Value: 1}, {Key: "namespace", Value: 1}, {Key: "_id", Value: 0}},
 	})
 	require.NoError(t, err)
 	require.Len(t, results, 1)
@@ -66,4 +66,54 @@ func TestRoundTripDataOverGRPC(t *testing.T) {
 	var gotThing1 bson.M
 	require.NoError(t, bson.Unmarshal(results[0], &gotThing1))
 	assert.Equal(t, thing1, gotThing1)
+
+	opts := plugins.EnsureIndexOptions{
+		Indices: []plugins.Index{
+			// query most recent outputs by run (porter installation run show, when we list outputs)
+			{Collection: CollectionOutputs, Keys: bson.D{{Key: "namespace", Value: 1}, {Key: "installation", Value: 1}, {Key: "-resultId", Value: 1}}},
+			// query outputs by result (list)
+			{Collection: CollectionOutputs, Keys: bson.D{{Key: "resultId", Value: 1}, {Key: "name", Value: 1}}, Unique: true},
+			// query most recent outputs by name for an installation
+			{Collection: CollectionOutputs, Keys: bson.D{{Key: "namespace", Value: 1}, {Key: "installation", Value: 1}, {Key: "name", Value: 1}, {Key: "-resultId", Value: 1}}},
+		},
+	}
+
+	err = client.EnsureIndex(ctx, opts)
+	require.NoError(t, err)
+
+	err = client.Insert(ctx, plugins.InsertOptions{
+		Collection: CollectionOutputs,
+		Documents: []bson.M{{"namespace": "dev", "installation": "test", "name": "thing1", "resultId": "111"},
+			{"namespace": "dev", "installation": "test", "name": "thing2", "resultId": "111"},
+			{"namespace": "dev", "installation": "test", "name": "thing2", "resultId": "222"},
+		},
+	})
+	require.NoError(t, err)
+
+	aggregateResults, err := client.Aggregate(ctx, plugins.AggregateOptions{
+		Collection: CollectionOutputs,
+		Pipeline: []bson.D{
+			// List outputs by installation
+			{{Key: "$match", Value: bson.M{
+				"namespace":    "dev",
+				"installation": "test",
+			}}},
+			// Reverse sort them (newest on top)
+			{{Key: "$sort", Value: bson.D{
+				{Key: "namespace", Value: 1},
+				{Key: "installation", Value: 1},
+				{Key: "name", Value: 1},
+				{Key: "resultId", Value: -1},
+			}}},
+			// Group them by output name and select the last value for each output
+			{{Key: "$group", Value: bson.D{
+				{Key: "_id", Value: "$name"},
+				{Key: "lastOutput", Value: bson.M{"$first": "$$ROOT"}},
+			}}},
+		},
+	})
+	require.NoError(t, err)
+	require.Len(t, aggregateResults, 2)
+	// make sure the group function is picking the most recent output value with the same name
+	require.Contains(t, aggregateResults[0].Lookup("lastOutput").String(), "222")
 }

@@ -9,7 +9,7 @@ functionality.
 
 For example, Porter saves installation data, credential sets and
 parameter sets using the [mongodb-docker plugin], which is
-suitable for development and testing. Porter also includes a [mongdb plugin],
+suitable for development and testing. Porter also includes a [mongodb plugin],
 which connects to a remote MongoDB server using a configured connection string,
 which is intended for production use. You could write your own plugin to better
 integrate with a MongoDB as a Server offering from your cloud provider.

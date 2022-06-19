@@ -18,7 +18,7 @@ func TestReadDependencyProperties(t *testing.T) {
 	b, err := bundle.Unmarshal(data)
 	require.NoError(t, err, "could not unmarshal the bundle")
 
-	bun := ExtendedBundle{*b}
+	bun := NewBundle(*b)
 	assert.True(t, bun.HasDependencies())
 
 	deps, err := bun.ReadDependencies()
@@ -44,7 +44,7 @@ func TestDependencies_ListBySequence(t *testing.T) {
 
 	sequenceMock := []string{"nginx", "storage", "mysql"}
 
-	bun := ExtendedBundle{bundle.Bundle{
+	bun := NewBundle(bundle.Bundle{
 		Custom: map[string]interface{}{
 			DependenciesExtensionKey: Dependencies{
 				Sequence: sequenceMock,
@@ -68,7 +68,7 @@ func TestDependencies_ListBySequence(t *testing.T) {
 				},
 			},
 		},
-	}}
+	})
 
 	rawDeps, err := bun.ReadDependencies()
 	orderedDeps := rawDeps.ListBySequence()
@@ -92,9 +92,9 @@ func TestSupportsDependencies(t *testing.T) {
 	t.Parallel()
 
 	t.Run("supported", func(t *testing.T) {
-		b := ExtendedBundle{bundle.Bundle{
+		b := NewBundle(bundle.Bundle{
 			RequiredExtensions: []string{DependenciesExtensionKey},
-		}}
+		})
 
 		assert.True(t, b.SupportsDependencies())
 	})
@@ -109,19 +109,19 @@ func TestHasDependencies(t *testing.T) {
 	t.Parallel()
 
 	t.Run("has dependencies", func(t *testing.T) {
-		b := ExtendedBundle{bundle.Bundle{
+		b := NewBundle(bundle.Bundle{
 			RequiredExtensions: []string{DependenciesExtensionKey},
 			Custom: map[string]interface{}{
 				DependenciesExtensionKey: struct{}{},
 			},
-		}}
+		})
 
 		assert.True(t, b.HasDependencies())
 	})
 	t.Run("no dependencies", func(t *testing.T) {
-		b := ExtendedBundle{bundle.Bundle{
+		b := NewBundle(bundle.Bundle{
 			RequiredExtensions: []string{DependenciesExtensionKey},
-		}}
+		})
 
 		assert.False(t, b.HasDependencies())
 	})

@@ -53,10 +53,17 @@ func TestNewDisplayInstallation(t *testing.T) {
 }
 
 func TestPorter_ListInstallations(t *testing.T) {
+	ctx := context.Background()
 	p := NewTestPorter(t)
 	defer p.Close()
 
-	p.TestInstallations.CreateInstallation(storage.NewInstallation("", "shared-mysql"))
+	i1 := storage.NewInstallation("", "shared-mysql")
+	i1.Parameters.Parameters = []secrets.Strategy{ // Define a parameter that is stored in a secret, list should not retrieve it
+		{Name: "password", Source: secrets.Source{Key: "secret", Value: "mypassword"}},
+	}
+	i1.Status.RunID = "10" // Add a run but don't populate the data for it, list should not retrieve it
+
+	p.TestInstallations.CreateInstallation(i1)
 	p.TestInstallations.CreateInstallation(storage.NewInstallation("dev", "carolyn-wordpress"))
 	p.TestInstallations.CreateInstallation(storage.NewInstallation("dev", "vaughn-wordpress"))
 	p.TestInstallations.CreateInstallation(storage.NewInstallation("test", "staging-wordpress"))
@@ -65,26 +72,31 @@ func TestPorter_ListInstallations(t *testing.T) {
 
 	t.Run("all-namespaces", func(t *testing.T) {
 		opts := ListOptions{AllNamespaces: true}
-		results, err := p.ListInstallations(context.Background(), opts)
+		results, err := p.ListInstallations(ctx, opts)
 		require.NoError(t, err)
 		assert.Len(t, results, 6)
+
+		// Check that porter didn't go off and retrieve extra data for each installation
+		for _, r := range results {
+			assert.Empty(t, r.ResolvedParameters, "ListInstallations should not resolve secrets used by the installations")
+		}
 	})
 
 	t.Run("local namespace", func(t *testing.T) {
 		opts := ListOptions{Namespace: "dev"}
-		results, err := p.ListInstallations(context.Background(), opts)
+		results, err := p.ListInstallations(ctx, opts)
 		require.NoError(t, err)
 		assert.Len(t, results, 2)
 
 		opts = ListOptions{Namespace: "test"}
-		results, err = p.ListInstallations(context.Background(), opts)
+		results, err = p.ListInstallations(ctx, opts)
 		require.NoError(t, err)
 		assert.Len(t, results, 3)
 	})
 
 	t.Run("global namespace", func(t *testing.T) {
 		opts := ListOptions{Namespace: ""}
-		results, err := p.ListInstallations(context.Background(), opts)
+		results, err := p.ListInstallations(ctx, opts)
 		require.NoError(t, err)
 		assert.Len(t, results, 1)
 	})

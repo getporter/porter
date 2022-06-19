@@ -24,6 +24,8 @@ type ListOptions struct {
 	Namespace     string
 	Name          string
 	Labels        []string
+	Skip          int64
+	Limit         int64
 }
 
 func (o *ListOptions) Validate() error {
@@ -103,7 +105,7 @@ type DisplayInstallation struct {
 }
 
 type DisplayInstallationMetadata struct {
-	ResolvedParameters DisplayValues `json:"resolvedParameters", yaml:"resolvedParameters"`
+	ResolvedParameters DisplayValues `json:"resolvedParameters" yaml:"resolvedParameters"`
 }
 
 func NewDisplayInstallation(installation storage.Installation) DisplayInstallation {
@@ -192,7 +194,7 @@ func (l DisplayInstallations) Less(i, j int) bool {
 }
 
 type DisplayRun struct {
-	ClaimID    string                 `json:"claimID" yaml:"claimID"`
+	ID         string                 `json:"id" yaml:"id"`
 	Bundle     string                 `json:"bundle,omitempty" yaml:"bundle,omitempty"`
 	Version    string                 `json:"version" yaml:"version"`
 	Action     string                 `json:"action" yaml:"action"`
@@ -204,7 +206,7 @@ type DisplayRun struct {
 
 func NewDisplayRun(run storage.Run) DisplayRun {
 	return DisplayRun{
-		ClaimID:    run.ID,
+		ID:         run.ID,
 		Action:     run.Action,
 		Parameters: run.TypedParameterValues(),
 		Started:    run.Created,
@@ -214,30 +216,37 @@ func NewDisplayRun(run storage.Run) DisplayRun {
 }
 
 // ListInstallations lists installed bundles.
-func (p *Porter) ListInstallations(ctx context.Context, opts ListOptions) ([]storage.Installation, error) {
+func (p *Porter) ListInstallations(ctx context.Context, opts ListOptions) (DisplayInstallations, error) {
 	ctx, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
 
-	installations, err := p.Installations.ListInstallations(ctx, opts.GetNamespace(), opts.Name, opts.ParseLabels())
-	return installations, errors.Wrap(err, "could not list installations")
-}
-
-// PrintInstallations prints installed bundles.
-func (p *Porter) PrintInstallations(ctx context.Context, opts ListOptions) error {
-	installations, err := p.ListInstallations(ctx, opts)
+	installations, err := p.Installations.ListInstallations(ctx, storage.ListOptions{
+		Namespace: opts.GetNamespace(),
+		Name:      opts.Name,
+		Labels:    opts.ParseLabels(),
+		Skip:      opts.Skip,
+		Limit:     opts.Limit,
+	})
 	if err != nil {
-		return err
+		return nil, log.Error(fmt.Errorf("could not list installations: %w", err))
 	}
 
 	var displayInstallations DisplayInstallations
 	for _, installation := range installations {
-		di, err := p.generateDisplayInstallation(ctx, installation)
-		if err != nil {
-			return err
-		}
+		di := NewDisplayInstallation(installation)
 		displayInstallations = append(displayInstallations, di)
 	}
 	sort.Sort(sort.Reverse(displayInstallations))
+
+	return displayInstallations, nil
+}
+
+// PrintInstallations prints installed bundles.
+func (p *Porter) PrintInstallations(ctx context.Context, opts ListOptions) error {
+	displayInstallations, err := p.ListInstallations(ctx, opts)
+	if err != nil {
+		return err
+	}
 
 	switch opts.Format {
 	case printer.FormatJson:

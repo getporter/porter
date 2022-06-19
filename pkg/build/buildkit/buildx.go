@@ -13,9 +13,9 @@ import (
 	"get.porter.sh/porter/pkg/build"
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
-	"get.porter.sh/porter/pkg/experimental"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/tracing"
+	"github.com/cnabio/cnab-go/driver/docker"
 	buildx "github.com/docker/buildx/build"
 	"github.com/docker/buildx/driver"
 	_ "github.com/docker/buildx/driver/docker" // Register the docker driver with buildkit
@@ -24,9 +24,7 @@ import (
 	"github.com/docker/buildx/util/confutil"
 	"github.com/docker/buildx/util/progress"
 	"github.com/docker/cli/cli/command"
-	cliconfig "github.com/docker/cli/cli/config"
-	"github.com/docker/cli/cli/context/docker"
-	cliflags "github.com/docker/cli/cli/flags"
+	dockercontext "github.com/docker/cli/cli/context/docker"
 	dockerclient "github.com/docker/docker/client"
 	"github.com/moby/buildkit/session"
 	"github.com/moby/buildkit/session/auth/authprovider"
@@ -70,19 +68,14 @@ func (b *Builder) BuildInvocationImage(ctx context.Context, manifest *manifest.M
 
 	log.Info("Building invocation image")
 
-	cli, err := command.NewDockerCli()
+	cli, err := docker.GetDockerClient()
 	if err != nil {
-		return log.Error(errors.Wrap(err, "could not create new docker client"))
-	}
-	cliOpts := cliflags.NewClientOptions()
-	cliOpts.ConfigDir = cliconfig.Dir()
-	if err = cli.Initialize(cliOpts); err != nil {
-		return log.Error(errors.Wrapf(err, "error initializing docker client"))
+		return log.Error(err)
 	}
 
 	imageopt, err := storeutil.GetImageConfig(cli, nil)
 	if err != nil {
-		return err
+		return log.Error(err)
 	}
 
 	d, err := driver.GetDriver(ctx, "porter-driver", nil, cli.Client(), imageopt.Auth, nil, nil, nil, nil, nil, b.Getwd())
@@ -121,7 +114,7 @@ func (b *Builder) BuildInvocationImage(ctx context.Context, manifest *manifest.M
 	convertedCustomInput := make(map[string]string)
 	convertedCustomInput, err = flattenMap(manifest.Custom)
 	if err != nil {
-		return err
+		return log.Error(err)
 	}
 
 	for k, v := range convertedCustomInput {
@@ -144,7 +137,7 @@ func (b *Builder) BuildInvocationImage(ctx context.Context, manifest *manifest.M
 
 	out := ioutil.Discard
 	mode := progress.PrinterModeQuiet
-	if b.IsVerbose() || b.Config.IsFeatureEnabled(experimental.FlagStructuredLogs) {
+	if b.IsVerbose() {
 		mode = progress.PrinterModeAuto // Auto writes to stderr regardless of what you pass in
 
 		ctx, log = log.StartSpanWithName("buildkit", attribute.String("source", "porter.build.buildkit"))
@@ -182,7 +175,7 @@ type dockerToBuildx struct {
 }
 
 func (d dockerToBuildx) DockerAPI(_ string) (dockerclient.APIClient, error) {
-	endpoint := docker.Endpoint{}
+	endpoint := dockercontext.Endpoint{}
 	endpoint.Host = d.cli.CurrentContext()
 
 	clientOpts, err := endpoint.ClientOpts()
@@ -197,12 +190,9 @@ func (b *Builder) TagInvocationImage(ctx context.Context, origTag, newTag string
 	ctx, log := tracing.StartSpan(ctx, attribute.String("source-tag", origTag), attribute.String("destination-tag", newTag))
 	defer log.EndSpan()
 
-	cli, err := command.NewDockerCli()
+	cli, err := docker.GetDockerClient()
 	if err != nil {
-		return log.Error(errors.Wrap(err, "could not create new docker client"))
-	}
-	if err := cli.Initialize(cliflags.NewClientOptions()); err != nil {
-		return log.Error(errors.Wrap(err, "could not initialize a new docker client"))
+		return log.Error(err)
 	}
 
 	if err := cli.Client().ImageTag(ctx, origTag, newTag); err != nil {

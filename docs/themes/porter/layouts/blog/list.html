@@ -11,7 +11,7 @@
       <h1>{{ .Title }}</h1>
       {{ .Content }}
 
-      {{ range .Paginator.Pages }}
+      {{ range .Pages }}
         <article>
           <header>
             <h2><a href="{{ .Permalink }}">{{ .Title }}</a></h2>

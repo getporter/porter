@@ -24,15 +24,16 @@ func TestConfig_GenerateStamp(t *testing.T) {
 	c := config.NewTestConfig(t)
 	c.TestContext.AddTestFileFromRoot("pkg/manifest/testdata/simple.porter.yaml", config.Name)
 
-	m, err := manifest.LoadManifestFrom(context.Background(), c.Config, config.Name)
+	ctx := context.Background()
+	m, err := manifest.LoadManifestFrom(ctx, c.Config, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
 	installedMixins := []mixin.Metadata{
 		{Name: "exec", VersionInfo: pkgmgmt.VersionInfo{Version: "v1.2.3"}},
 	}
 
-	a := NewManifestConverter(c.Context, m, nil, installedMixins)
-	stamp, err := a.GenerateStamp()
+	a := NewManifestConverter(c.Config, m, nil, installedMixins)
+	stamp, err := a.GenerateStamp(ctx)
 	require.NoError(t, err, "DigestManifest failed")
 	assert.Equal(t, simpleManifestDigest, stamp.ManifestDigest)
 	assert.Equal(t, map[string]MixinRecord{"exec": {Version: "v1.2.3"}}, stamp.Mixins, "Stamp.Mixins was not populated properly")
@@ -49,7 +50,7 @@ func TestConfig_GenerateStamp(t *testing.T) {
 func TestConfig_LoadStamp(t *testing.T) {
 	t.Parallel()
 
-	bun := cnab.ExtendedBundle{bundle.Bundle{
+	bun := cnab.NewBundle(bundle.Bundle{
 		Custom: map[string]interface{}{
 			config.CustomPorterKey: map[string]interface{}{
 				"manifestDigest": "somedigest",
@@ -59,7 +60,7 @@ func TestConfig_LoadStamp(t *testing.T) {
 				},
 			},
 		},
-	}}
+	})
 
 	stamp, err := LoadStamp(bun)
 	require.NoError(t, err)
@@ -71,13 +72,13 @@ func TestConfig_LoadStamp(t *testing.T) {
 func TestConfig_LoadStamp_Invalid(t *testing.T) {
 	t.Parallel()
 
-	bun := cnab.ExtendedBundle{bundle.Bundle{
+	bun := cnab.NewBundle(bundle.Bundle{
 		Custom: map[string]interface{}{
 			config.CustomPorterKey: []string{
 				"somedigest",
 			},
 		},
-	}}
+	})
 
 	stamp, err := LoadStamp(bun)
 	require.Error(t, err)
@@ -144,7 +145,7 @@ func TestConfig_DigestManifest(t *testing.T) {
 		m, err := manifest.LoadManifestFrom(context.Background(), c.Config, config.Name)
 		require.NoError(t, err, "could not load manifest")
 
-		a := NewManifestConverter(c.Context, m, nil, nil)
+		a := NewManifestConverter(c.Config, m, nil, nil)
 		digest, err := a.DigestManifest()
 		require.NoError(t, err, "DigestManifest failed")
 
@@ -170,11 +171,12 @@ func TestConfig_GenerateStamp_IncludeVersion(t *testing.T) {
 	c := config.NewTestConfig(t)
 	c.TestContext.AddTestFileFromRoot("pkg/manifest/testdata/simple.porter.yaml", config.Name)
 
-	m, err := manifest.LoadManifestFrom(context.Background(), c.Config, config.Name)
+	ctx := context.Background()
+	m, err := manifest.LoadManifestFrom(ctx, c.Config, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
-	a := NewManifestConverter(c.Context, m, nil, nil)
-	stamp, err := a.GenerateStamp()
+	a := NewManifestConverter(c.Config, m, nil, nil)
+	stamp, err := a.GenerateStamp(ctx)
 	require.NoError(t, err, "DigestManifest failed")
 	assert.Equal(t, "v1.2.3", stamp.Version)
 	assert.Equal(t, "abc123", stamp.Commit)

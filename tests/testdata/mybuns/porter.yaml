@@ -52,7 +52,8 @@ state:
 dependencies:
   required:
     - name: db
-      reference: "localhost:5000/mydb:v0.1.0"
+      bundle:
+        reference: "localhost:5000/mydb:v0.1.0"
       parameters:
         database: bigdb
 

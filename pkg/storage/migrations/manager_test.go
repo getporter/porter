@@ -61,19 +61,19 @@ func TestManager_NoMigrationEmptyHome(t *testing.T) {
 	defer mgr.Close()
 	claimStore := storage.NewInstallationStore(mgr)
 
-	_, err := claimStore.ListInstallations(context.Background(), "", "", nil)
+	_, err := claimStore.ListInstallations(context.Background(), storage.ListOptions{})
 	require.NoError(t, err, "ListInstallations failed")
 
 	credStore := storage.NewCredentialStore(mgr, nil)
-	_, err = credStore.ListCredentialSets(context.Background(), "", "", nil)
+	_, err = credStore.ListCredentialSets(context.Background(), storage.ListOptions{})
 	require.NoError(t, err, "List credentials failed")
 
 	paramStore := storage.NewParameterStore(mgr, nil)
-	_, err = paramStore.ListParameterSets(context.Background(), "", "", nil)
+	_, err = paramStore.ListParameterSets(context.Background(), storage.ListOptions{})
 	require.NoError(t, err, "List credentials failed")
 }
 
-func TestClaimStorage_HaltOnMigrationRequired(t *testing.T) {
+func TestInstallationStorage_HaltOnMigrationRequired(t *testing.T) {
 	t.Parallel()
 
 	tc := config.NewTestConfig(t)
@@ -86,16 +86,28 @@ func TestClaimStorage_HaltOnMigrationRequired(t *testing.T) {
 	err := mgr.store.Update(context.Background(), CollectionConfig, storage.UpdateOptions{Document: schema, Upsert: true})
 	require.NoError(t, err, "Save schema failed")
 
-	t.Run("list", func(t *testing.T) {
-		_, err = claimStore.ListInstallations(context.Background(), "", "", nil)
+	checkMigrationError := func(t *testing.T, err error) {
 		require.Error(t, err, "Operation should halt because a migration is required")
-		assert.Contains(t, err.Error(), "The schema of Porter's data is in an older format than supported by this version of Porter")
+		assert.Contains(t, err.Error(), "The schema of Porter's data is in an older format than supported by this version of Porter", "The error should be a migration error")
+
+		wantVersionComp := `Porter  uses the following database schema:
+
+storage.Schema{ID:"schema", Installations:"1.0.1", Credentials:"1.0.1", Parameters:"1.0.1"}
+
+Your database schema is:
+
+storage.Schema{ID:"schema", Installations:"needs-migration", Credentials:"1.0.1", Parameters:"1.0.1"}`
+		assert.Contains(t, err.Error(), wantVersionComp, "the migration error should contain the current and expected db schema")
+	}
+
+	t.Run("list", func(t *testing.T) {
+		_, err = claimStore.ListInstallations(context.Background(), storage.ListOptions{})
+		checkMigrationError(t, err)
 	})
 
 	t.Run("read", func(t *testing.T) {
 		_, err = claimStore.GetInstallation(context.Background(), "", "mybun")
-		require.Error(t, err, "Operation should halt because a migration is required")
-		assert.Contains(t, err.Error(), "The schema of Porter's data is in an older format than supported by this version of Porter")
+		checkMigrationError(t, err)
 	})
 
 }
@@ -112,7 +124,7 @@ func TestClaimStorage_NoMigrationRequiredForEmptyHome(t *testing.T) {
 	defer mgr.Close()
 	claimStore := storage.NewInstallationStore(mgr)
 
-	names, err := claimStore.ListInstallations(context.Background(), "", "", nil)
+	names, err := claimStore.ListInstallations(context.Background(), storage.ListOptions{})
 	require.NoError(t, err, "ListInstallations failed")
 	assert.Empty(t, names, "Expected an empty list of installations since porter home is new")
 }
@@ -129,16 +141,28 @@ func TestCredentialStorage_HaltOnMigrationRequired(t *testing.T) {
 	err := mgr.store.Update(context.Background(), CollectionConfig, storage.UpdateOptions{Document: schema, Upsert: true})
 	require.NoError(t, err, "Save schema failed")
 
-	t.Run("list", func(t *testing.T) {
-		_, err = credStore.ListCredentialSets(context.Background(), "", "", nil)
+	checkMigrationError := func(t *testing.T, err error) {
 		require.Error(t, err, "Operation should halt because a migration is required")
-		assert.Contains(t, err.Error(), "The schema of Porter's data is in an older format than supported by this version of Porter")
+		assert.Contains(t, err.Error(), "The schema of Porter's data is in an older format than supported by this version of Porter", "The error should be a migration error")
+
+		wantVersionComp := `Porter  uses the following database schema:
+
+storage.Schema{ID:"schema", Installations:"1.0.1", Credentials:"1.0.1", Parameters:"1.0.1"}
+
+Your database schema is:
+
+storage.Schema{ID:"schema", Installations:"1.0.1", Credentials:"needs-migration", Parameters:"1.0.1"}`
+		assert.Contains(t, err.Error(), wantVersionComp, "the migration error should contain the current and expected db schema")
+	}
+
+	t.Run("list", func(t *testing.T) {
+		_, err = credStore.ListCredentialSets(context.Background(), storage.ListOptions{})
+		checkMigrationError(t, err)
 	})
 
 	t.Run("read", func(t *testing.T) {
 		_, err = credStore.GetCredentialSet(context.Background(), "", "mybun")
-		require.Error(t, err, "Operation should halt because a migration is required")
-		assert.Contains(t, err.Error(), "The schema of Porter's data is in an older format than supported by this version of Porter")
+		checkMigrationError(t, err)
 	})
 }
 
@@ -153,7 +177,13 @@ func TestCredentialStorage_NoMigrationRequiredForEmptyHome(t *testing.T) {
 	testSecrets := secrets.NewTestSecretsProvider()
 	credStore := storage.NewTestCredentialProviderFor(t, mgr, testSecrets)
 
-	names, err := credStore.ListCredentialSets(context.Background(), "", "", nil)
+	names, err := credStore.ListCredentialSets(context.Background(), storage.ListOptions{
+		Namespace: "",
+		Name:      "",
+		Labels:    nil,
+		Skip:      0,
+		Limit:     0,
+	})
 	require.NoError(t, err, "List failed")
 	assert.Empty(t, names, "Expected an empty list of credentials since porter home is new")
 }
@@ -170,16 +200,28 @@ func TestParameterStorage_HaltOnMigrationRequired(t *testing.T) {
 	err := mgr.store.Update(context.Background(), CollectionConfig, storage.UpdateOptions{Document: schema, Upsert: true})
 	require.NoError(t, err, "Save schema failed")
 
-	t.Run("list", func(t *testing.T) {
-		_, err = paramStore.ListParameterSets(context.Background(), "", "", nil)
+	checkMigrationError := func(t *testing.T, err error) {
 		require.Error(t, err, "Operation should halt because a migration is required")
-		assert.Contains(t, err.Error(), "The schema of Porter's data is in an older format than supported by this version of Porter")
+		assert.Contains(t, err.Error(), "The schema of Porter's data is in an older format than supported by this version of Porter", "The error should be a migration error")
+
+		wantVersionComp := `Porter  uses the following database schema:
+
+storage.Schema{ID:"schema", Installations:"1.0.1", Credentials:"1.0.1", Parameters:"1.0.1"}
+
+Your database schema is:
+
+storage.Schema{ID:"schema", Installations:"1.0.1", Credentials:"1.0.1", Parameters:"needs-migration"}`
+		assert.Contains(t, err.Error(), wantVersionComp, "the migration error should contain the current and expected db schema")
+	}
+
+	t.Run("list", func(t *testing.T) {
+		_, err = paramStore.ListParameterSets(context.Background(), storage.ListOptions{})
+		checkMigrationError(t, err)
 	})
 
 	t.Run("read", func(t *testing.T) {
 		_, err = paramStore.GetParameterSet(context.Background(), "", "mybun")
-		require.Error(t, err, "Operation should halt because a migration is required")
-		assert.Contains(t, err.Error(), "The schema of Porter's data is in an older format than supported by this version of Porter")
+		checkMigrationError(t, err)
 	})
 }
 
@@ -194,7 +236,7 @@ func TestParameterStorage_NoMigrationRequiredForEmptyHome(t *testing.T) {
 	testSecrets := secrets.NewTestSecretsProvider()
 	paramStore := storage.NewTestParameterProviderFor(t, mgr, testSecrets)
 
-	names, err := paramStore.ListParameterSets(context.Background(), "", "", nil)
+	names, err := paramStore.ListParameterSets(context.Background(), storage.ListOptions{})
 	require.NoError(t, err, "List failed")
 	assert.Empty(t, names, "Expected an empty list of parameters since porter home is new")
 }

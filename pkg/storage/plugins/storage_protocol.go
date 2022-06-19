@@ -101,10 +101,6 @@ type FindOptions struct {
 	// Filter specifies how to filter the results.
 	// See https://docs.mongodb.com/manual/core/document/#std-label-document-query-filter
 	Filter bson.M
-
-	// Group specifies how to group the results.
-	// See https://docs.mongodb.com/manual/reference/operator/aggregation/group/
-	Group bson.D
 }
 
 // InsertOptions is the set of options for the StorageProtocol.Insert operation.

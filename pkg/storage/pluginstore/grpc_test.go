@@ -64,18 +64,18 @@ func TestConvertBsonM(t *testing.T) {
 
 func TestConvertBsonD(t *testing.T) {
 	src := bson.D{
-		{"a", "1"},
-		{"b", bson.D{
-			{"c", 1},
+		{Key: "a", Value: "1"},
+		{Key: "b", Value: bson.D{
+			{Key: "c", Value: 1},
 		}},
 	}
 
 	tmp := FromOrderedMap(src)
-	dest := AsOrderedMap(tmp)
+	dest := AsOrderedMap(tmp, ConvertSliceToBsonD)
 
 	wantDest := bson.D{
-		{"a", "1"},
-		{"b", []interface{}{map[string]interface{}{"c": int64(1)}}},
+		{Key: "a", Value: "1"},
+		{Key: "b", Value: bson.D{{Key: "c", Value: int64(1)}}},
 	}
 	require.Equal(t, wantDest, dest)
 }

@@ -13,8 +13,14 @@ Invoke a custom action on an installation.
 
 The first argument is the installation name upon which to invoke the action. This defaults to the name of the bundle.
 
-Porter uses the Docker driver as the default runtime for executing a bundle's invocation image, but an alternate driver may be supplied via '--driver/-d' or the PORTER_RUNTIME_DRIVER environment variable.
+Porter uses the docker driver as the default runtime for executing a bundle's invocation image, but an alternate driver may be supplied via '--driver/-d' or the PORTER_RUNTIME_DRIVER environment variable.
 For example, the 'debug' driver may be specified, which simply logs the info given to it and then exits.
+
+The docker driver runs the bundle container using the local Docker host. To use a remote Docker host, set the following environment variables:
+  DOCKER_HOST (required)
+  DOCKER_TLS_VERIFY (optional)
+  DOCKER_CERT_PATH (optional)
+
 
 ```
 porter invoke [INSTALLATION] --action ACTION [flags]
@@ -39,7 +45,7 @@ porter invoke [INSTALLATION] --action ACTION [flags]
       --action string               Custom action name to invoke.
       --allow-docker-host-access    Controls if the bundle should have access to the host's Docker daemon with elevated privileges. See https://porter.sh/configuration/#allow-docker-host-access for the full implications of this flag.
       --cnab-file string            Path to the CNAB bundle.json file.
-  -c, --cred strings                Credential to use when installing the bundle. May be either a named set of credentials or a filepath, and specified multiple times.
+  -c, --cred stringArray            Credential to use when installing the bundle. May be either a named set of credentials or a filepath, and specified multiple times.
   -d, --driver string               Specify a driver to use. Allowed values: docker, debug (default "docker")
   -f, --file string                 Path to the porter manifest file. Defaults to the bundle in the current directory.
       --force                       Force a fresh pull of the bundle

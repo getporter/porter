@@ -17,6 +17,7 @@ import (
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/schema"
+	"get.porter.sh/porter/pkg/tracing"
 	"get.porter.sh/porter/pkg/yaml"
 	"github.com/Masterminds/semver/v3"
 	"github.com/cbroglie/mustache"
@@ -594,13 +595,22 @@ type Dependencies struct {
 type RequiredDependency struct {
 	Name string `yaml:"name"`
 
+	Bundle BundleCriteria `yaml:"bundle"`
+
+	Parameters map[string]string `yaml:"parameters,omitempty"`
+}
+
+type BundleCriteria struct {
 	// Reference is the full bundle reference for the dependency
 	// in the format REGISTRY/NAME:TAG
 	Reference string `yaml:"reference"`
 
-	Versions         []string          `yaml:"versions"`
-	AllowPrereleases bool              `yaml:"prereleases"`
-	Parameters       map[string]string `yaml:"parameters,omitempty"`
+	// "When constraint checking is used for checks or validation
+	// it will follow a different set of rules that are common for ranges with tools like npm/js and Rust/Cargo.
+	// This includes considering prereleases to be invalid if the ranges does not include one.
+	// If you want to have it include pre-releases a simple solution is to include -0 in your range."
+	// https://github.com/Masterminds/semver/blob/master/README.md#checking-version-constraints
+	Version string `yaml:"versions,omitempty"`
 }
 
 func (d *RequiredDependency) Validate(cxt *portercontext.Context) error {
@@ -608,11 +618,11 @@ func (d *RequiredDependency) Validate(cxt *portercontext.Context) error {
 		return errors.New("dependency name is required")
 	}
 
-	if d.Reference == "" {
+	if d.Bundle.Reference == "" {
 		return fmt.Errorf("reference is required for dependency %q", d.Name)
 	}
 
-	if strings.Contains(d.Reference, ":") && len(d.Versions) > 0 {
+	if strings.Contains(d.Bundle.Reference, ":") && len(d.Bundle.Version) > 0 {
 		return fmt.Errorf("reference for dependency %q can only specify REGISTRY/NAME when version ranges are specified", d.Name)
 	}
 
@@ -997,7 +1007,7 @@ func ReadManifest(cxt *portercontext.Context, path string) (*Manifest, error) {
 
 	m, err := UnmarshalManifest(cxt, data)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unsupported property set or a custom action is defined incorrectly: %w", err)
 	}
 
 	m.ManifestPath = path
@@ -1043,6 +1053,9 @@ func scanManifestTemplating(data []byte) (templateScanResult, error) {
 // LoadManifestFrom reads and validates the manifest at the specified location,
 // and returns a populated Manifest structure.
 func LoadManifestFrom(ctx context.Context, config *config.Config, file string) (*Manifest, error) {
+	ctx, log := tracing.StartSpan(ctx)
+	defer log.EndSpan()
+
 	m, err := ReadManifest(config.Context, file)
 	if err != nil {
 		return nil, err

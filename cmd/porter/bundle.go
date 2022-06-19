@@ -51,7 +51,14 @@ func buildBundleBuildCommand(p *porter.Porter) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "build",
 		Short: "Build a bundle",
-		Long:  `Builds the bundle in the current directory by generating a Dockerfile and a CNAB bundle.json, and then building the invocation image.`,
+		Long: `Builds the bundle in the current directory by generating a Dockerfile and a CNAB bundle.json, and then building the invocation image.
+
+The docker driver builds the bundle image using the local Docker host. To use a remote Docker host, set the following environment variables:
+  DOCKER_HOST (required)
+  DOCKER_TLS_VERIFY (optional)
+  DOCKER_CERT_PATH (optional)
+'
+`,
 		Example: `  porter build
   porter build --name newbuns
   porter build --version 0.1.0
@@ -73,9 +80,9 @@ func buildBundleBuildCommand(p *porter.Porter) *cobra.Command {
 	f.StringVar(&opts.Name, "name", "", "Override the bundle name")
 	f.StringVar(&opts.Version, "version", "", "Override the bundle version")
 	f.StringVarP(&opts.File, "file", "f", "",
-		"Path to the Porter manifest. Defaults to `porter.yaml` in the current directory.")
+		"Path to the Porter manifest. The path is relative to the build context directory. Defaults to porter.yaml in the current directory.")
 	f.StringVarP(&opts.Dir, "dir", "d", "",
-		"Path to the build context directory where all bundle assets are located.")
+		"Path to the build context directory where all bundle assets are located. Defaults to the current directory.")
 	f.StringVar(&opts.Driver, "driver", porter.BuildDriverDefault,
 		fmt.Sprintf("Driver for building the invocation image. Allowed values are: %s", strings.Join(porter.BuildDriverAllowedValues, ", ")))
 	f.MarkHidden("driver") // Hide the driver flag since there aren't any choices to make right now
@@ -140,8 +147,14 @@ The first argument is the name of the installation to create. This defaults to t
 
 Once a bundle has been successfully installed, the install action cannot be repeated. This is a precaution to avoid accidentally overwriting an existing installation. If you need to re-run install, which is common when authoring a bundle, you can use the --force flag to by-pass this check.
 
-Porter uses the Docker driver as the default runtime for executing a bundle's invocation image, but an alternate driver may be supplied via '--driver/-d' or the PORTER_RUNTIME_DRIVER environment variable.
-For example, the 'debug' driver may be specified, which simply logs the info given to it and then exits.`,
+Porter uses the docker driver as the default runtime for executing a bundle's invocation image, but an alternate driver may be supplied via '--driver/-d' or the PORTER_RUNTIME_DRIVER environment variable.
+For example, the 'debug' driver may be specified, which simply logs the info given to it and then exits.
+
+The docker driver runs the bundle container using the local Docker host. To use a remote Docker host, set the following environment variables:
+  DOCKER_HOST (required)
+  DOCKER_TLS_VERIFY (optional)
+  DOCKER_CERT_PATH (optional)
+`,
 		Example: `  porter bundle install
   porter bundle install MyAppFromReference --reference ghcr.io/getporter/examples/kubernetes:v0.2.0 --namespace dev
   porter bundle install --reference localhost:5000/ghcr.io/getporter/examples/kubernetes:v0.2.0 --insecure-registry --force
@@ -170,7 +183,7 @@ For example, the 'debug' driver may be specified, which simply logs the info giv
 		"Name of a parameter set for the bundle. It should be a named set of parameters and may be specified multiple times.")
 	f.StringArrayVar(&opts.Params, "param", nil,
 		"Define an individual parameter in the form NAME=VALUE. Overrides parameters otherwise set via --parameter-set. May be specified multiple times.")
-	f.StringSliceVarP(&opts.CredentialIdentifiers, "cred", "c", nil,
+	f.StringArrayVarP(&opts.CredentialIdentifiers, "cred", "c", nil,
 		"Credential to use when installing the bundle. It should be a named set of credentials and may be specified multiple times.")
 	f.StringVarP(&opts.Driver, "driver", "d", porter.DefaultDriver,
 		"Specify a driver to use. Allowed values: docker, debug")
@@ -198,8 +211,14 @@ func buildBundleUpgradeCommand(p *porter.Porter) *cobra.Command {
 
 The first argument is the installation name to upgrade. This defaults to the name of the bundle.
 
-Porter uses the Docker driver as the default runtime for executing a bundle's invocation image, but an alternate driver may be supplied via '--driver/-d' or the PORTER_RUNTIME_DRIVER environment variable.
-For example, the 'debug' driver may be specified, which simply logs the info given to it and then exits.`,
+Porter uses the docker driver as the default runtime for executing a bundle's invocation image, but an alternate driver may be supplied via '--driver/-d' or the PORTER_RUNTIME_DRIVER environment variable.
+For example, the 'debug' driver may be specified, which simply logs the info given to it and then exits.
+
+The docker driver runs the bundle container using the local Docker host. To use a remote Docker host, set the following environment variables:
+  DOCKER_HOST (required)
+  DOCKER_TLS_VERIFY (optional)
+  DOCKER_CERT_PATH (optional)
+`,
 		Example: `  porter bundle upgrade --version 0.2.0
   porter bundle upgrade --reference ghcr.io/getporter/examples/kubernetes:v0.2.0
   porter bundle upgrade --reference localhost:5000/ghcr.io/getporter/examples/kubernetes:v0.2.0 --insecure-registry --force
@@ -227,7 +246,7 @@ For example, the 'debug' driver may be specified, which simply logs the info giv
 		"Name of a parameter set file for the bundle. May be either a named set of parameters or a filepath, and specified multiple times.")
 	f.StringArrayVar(&opts.Params, "param", nil,
 		"Define an individual parameter in the form NAME=VALUE. Overrides parameters otherwise set via --parameter-set. May be specified multiple times.")
-	f.StringSliceVarP(&opts.CredentialIdentifiers, "cred", "c", nil,
+	f.StringArrayVarP(&opts.CredentialIdentifiers, "cred", "c", nil,
 		"Credential to use when installing the bundle. It should be a named set of credentials and may be specified multiple times.")
 	f.StringVarP(&opts.Driver, "driver", "d", porter.DefaultDriver,
 		"Specify a driver to use. Allowed values: docker, debug")
@@ -255,8 +274,14 @@ func buildBundleInvokeCommand(p *porter.Porter) *cobra.Command {
 
 The first argument is the installation name upon which to invoke the action. This defaults to the name of the bundle.
 
-Porter uses the Docker driver as the default runtime for executing a bundle's invocation image, but an alternate driver may be supplied via '--driver/-d' or the PORTER_RUNTIME_DRIVER environment variable.
-For example, the 'debug' driver may be specified, which simply logs the info given to it and then exits.`,
+Porter uses the docker driver as the default runtime for executing a bundle's invocation image, but an alternate driver may be supplied via '--driver/-d' or the PORTER_RUNTIME_DRIVER environment variable.
+For example, the 'debug' driver may be specified, which simply logs the info given to it and then exits.
+
+The docker driver runs the bundle container using the local Docker host. To use a remote Docker host, set the following environment variables:
+  DOCKER_HOST (required)
+  DOCKER_TLS_VERIFY (optional)
+  DOCKER_CERT_PATH (optional)
+`,
 		Example: `  porter bundle invoke --action ACTION
   porter bundle invoke --reference ghcr.io/getporter/examples/kubernetes:v0.2.0
   porter bundle invoke --reference localhost:5000/ghcr.io/getporter/examples/kubernetes:v0.2.0 --insecure-registry --force
@@ -286,7 +311,7 @@ For example, the 'debug' driver may be specified, which simply logs the info giv
 		"Name of a parameter set file for the bundle. May be either a named set of parameters or a filepath, and specified multiple times.")
 	f.StringArrayVar(&opts.Params, "param", nil,
 		"Define an individual parameter in the form NAME=VALUE. Overrides parameters otherwise set via --parameter-set. May be specified multiple times.")
-	f.StringSliceVarP(&opts.CredentialIdentifiers, "cred", "c", nil,
+	f.StringArrayVarP(&opts.CredentialIdentifiers, "cred", "c", nil,
 		"Credential to use when installing the bundle. May be either a named set of credentials or a filepath, and specified multiple times.")
 	f.StringVarP(&opts.Driver, "driver", "d", porter.DefaultDriver,
 		"Specify a driver to use. Allowed values: docker, debug")
@@ -312,8 +337,14 @@ func buildBundleUninstallCommand(p *porter.Porter) *cobra.Command {
 
 The first argument is the installation name to uninstall. This defaults to the name of the bundle.
 
-Porter uses the Docker driver as the default runtime for executing a bundle's invocation image, but an alternate driver may be supplied via '--driver/-d'' or the PORTER_RUNTIME_DRIVER environment variable.
-For example, the 'debug' driver may be specified, which simply logs the info given to it and then exits.`,
+Porter uses the docker driver as the default runtime for executing a bundle's invocation image, but an alternate driver may be supplied via '--driver/-d'' or the PORTER_RUNTIME_DRIVER environment variable.
+For example, the 'debug' driver may be specified, which simply logs the info given to it and then exits.
+
+The docker driver runs the bundle container using the local Docker host. To use a remote Docker host, set the following environment variables:
+  DOCKER_HOST (required)
+  DOCKER_TLS_VERIFY (optional)
+  DOCKER_CERT_PATH (optional)
+`,
 		Example: `  porter bundle uninstall
   porter bundle uninstall --reference ghcr.io/getporter/examples/kubernetes:v0.2.0
   porter bundle uninstall --reference localhost:5000/ghcr.io/getporter/examples/kubernetes:v0.2.0 --insecure-registry --force
@@ -343,7 +374,7 @@ For example, the 'debug' driver may be specified, which simply logs the info giv
 		"Name of a parameter set file for the bundle. May be either a named set of parameters or a filepath, and specified multiple times.")
 	f.StringArrayVar(&opts.Params, "param", nil,
 		"Define an individual parameter in the form NAME=VALUE. Overrides parameters otherwise set via --parameter-set. May be specified multiple times.")
-	f.StringSliceVarP(&opts.CredentialIdentifiers, "cred", "c", nil,
+	f.StringArrayVarP(&opts.CredentialIdentifiers, "cred", "c", nil,
 		"Credential to use when uninstalling the bundle. May be either a named set of credentials or a filepath, and specified multiple times.")
 	f.StringVarP(&opts.Driver, "driver", "d", porter.DefaultDriver,
 		"Specify a driver to use. Allowed values: docker, debug")

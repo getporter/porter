@@ -87,7 +87,7 @@ func (c *Context) createTracer(ctx context.Context, cfg LogConfiguration, logger
 			return tracing.Tracer{}, fmt.Errorf("error creating a file trace exporter: %w", err)
 		}
 	} else {
-		createTraceCtx, cancel := context.WithTimeout(ctx, time.Second)
+		createTraceCtx, cancel := context.WithTimeout(ctx, cfg.TelemetryStartTimeout)
 		defer cancel()
 		exporter, err = otlptrace.New(createTraceCtx, client)
 		if err != nil {

@@ -63,17 +63,12 @@ func (s InstallationStore) Initialize(ctx context.Context) error {
 	return span.Error(err)
 }
 
-func (s InstallationStore) ListInstallations(ctx context.Context, namespace string, name string, labels map[string]string) ([]Installation, error) {
+func (s InstallationStore) ListInstallations(ctx context.Context, listOptions ListOptions) ([]Installation, error) {
 	_, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
 
 	var out []Installation
-	findOpts := FindOptions{
-		Sort:   []string{"namespace", "name"},
-		Filter: CreateListFiler(namespace, name, labels),
-	}
-
-	err := s.store.Find(ctx, CollectionInstallations, findOpts, &out)
+	err := s.store.Find(ctx, CollectionInstallations, listOptions.ToFindOptions(), &out)
 	return out, err
 }
 
@@ -135,6 +130,15 @@ func (s InstallationStore) ListOutputs(ctx context.Context, resultID string) ([]
 		},
 	}
 	err := s.store.Find(ctx, CollectionOutputs, opts, &out)
+	return out, err
+}
+
+func (s InstallationStore) FindInstallations(ctx context.Context, findOpts FindOptions) ([]Installation, error) {
+	_, log := tracing.StartSpan(ctx)
+	defer log.EndSpan()
+
+	var out []Installation
+	err := s.store.Find(ctx, CollectionInstallations, findOpts, &out)
 	return out, err
 }
 
@@ -208,21 +212,21 @@ func (s InstallationStore) GetLastOutputs(ctx context.Context, namespace string,
 	opts := AggregateOptions{
 		Pipeline: []bson.D{
 			// List outputs by installation
-			{{"$match", bson.M{
+			{{Key: "$match", Value: bson.M{
 				"namespace":    namespace,
 				"installation": installation,
 			}}},
 			// Reverse sort them (newest on top)
-			{{"$sort", bson.D{
-				{"namespace", 1},
-				{"installation", 1},
-				{"name", 1},
-				{"resultId", -1},
+			{{Key: "$sort", Value: bson.D{
+				{Key: "namespace", Value: 1},
+				{Key: "installation", Value: 1},
+				{Key: "name", Value: 1},
+				{Key: "resultId", Value: -1},
 			}}},
 			// Group them by output name and select the last value for each output
-			{{"$group", bson.D{
-				{"_id", "$name"},
-				{"lastOutput", bson.M{"$first": "$$ROOT"}},
+			{{Key: "$group", Value: bson.D{
+				{Key: "_id", Value: "$name"},
+				{Key: "lastOutput", Value: bson.M{"$first": "$$ROOT"}},
 			}}},
 		},
 	}

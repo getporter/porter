@@ -18,11 +18,11 @@ import (
 const (
 	// PluginStartTimeoutDefault is the default amount of time to wait for a plugin
 	// to start. Override with PluginStartTimeoutEnvVar.
-	PluginStartTimeoutDefault = 1 * time.Second
+	PluginStartTimeoutDefault = 5 * time.Second
 
 	// PluginStopTimeoutDefault is the default amount of time to wait for a plugin
 	// to stop (kill). Override with PluginStopTimeoutEnvVar.
-	PluginStopTimeoutDefault = 100 * time.Millisecond
+	PluginStopTimeoutDefault = 5 * time.Second
 
 	// PluginStartTimeoutEnvVar is the environment variable used to override
 	// PluginStartTimeoutDefault.
@@ -138,7 +138,7 @@ func (l *PluginLoader) readPluginConfig() (io.Reader, error) {
 
 	b, err := json.Marshal(l.selectedPluginConfig)
 	if err != nil {
-		return nil, errors.Wrapf(err, "could not marshal plugin config %#v", l.selectedPluginConfig)
+		return nil, errors.Wrapf(err, "could not marshal plugin config for %s", l.selectedPluginKey)
 	}
 
 	return bytes.NewBuffer(b), nil

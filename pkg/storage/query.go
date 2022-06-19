@@ -57,7 +57,7 @@ func convertSortKeys(values []string) bson.D {
 			sortKey = strings.Trim(key, "-")
 			sortOrder = -1
 		}
-		keys[i] = bson.E{sortKey, sortOrder}
+		keys[i] = bson.E{Key: sortKey, Value: sortOrder}
 	}
 	return keys
 }
@@ -81,7 +81,7 @@ func (o EnsureIndexOptions) ToPluginOptions() plugins.EnsureIndexOptions {
 type CountOptions struct {
 	// Query is a query filter document
 	// See https://docs.mongodb.com/manual/core/document/#std-label-document-query-filter
-	Filter map[string]interface{}
+	Filter bson.M
 }
 
 func (o CountOptions) ToPluginOptions(collection string) plugins.CountOptions {
@@ -109,22 +109,23 @@ type FindOptions struct {
 
 	// Filter specifies a filter the results.
 	// See https://docs.mongodb.com/manual/core/document/#std-label-document-query-filter
-	Filter map[string]interface{}
+	Filter bson.M
 
 	// Select is a projection document. The entire document is returned by default.
 	// See https://docs.mongodb.com/manual/tutorial/project-fields-from-query-results/
-	Select []map[string]interface{}
+	Select bson.D
 }
 
 func (o FindOptions) ToPluginOptions(collection string) plugins.FindOptions {
 	if o.Filter == nil {
-		o.Filter = map[string]interface{}{}
+		o.Filter = bson.M{}
 	}
 	return plugins.FindOptions{
 		Collection: collection,
 		Sort:       convertSortKeys(o.Sort),
 		Skip:       o.Skip,
 		Limit:      o.Limit,
+		Select:     o.Select,
 		Filter:     o.Filter,
 	}
 }
@@ -179,7 +180,7 @@ func (o InsertOptions) ToPluginOptions(collection string) (plugins.InsertOptions
 type PatchOptions struct {
 	// Query is a query filter document
 	// See https://docs.mongodb.com/manual/core/document/#std-label-document-query-filter
-	QueryDocument map[string]interface{}
+	QueryDocument bson.M
 
 	// Transformation is set of instructions to modify matching
 	// documents.
@@ -198,7 +199,7 @@ func (o PatchOptions) ToPluginOptions(collection string) plugins.PatchOptions {
 type RemoveOptions struct {
 	// Filter is a query filter document
 	// See https://docs.mongodb.com/manual/core/document/#std-label-document-query-filter
-	Filter map[string]interface{}
+	Filter bson.M
 
 	// All matching documents should be removed. Defaults to false, which only
 	// removes the first matching document.
@@ -235,7 +236,7 @@ func (o RemoveOptions) ToPluginOptions(collection string) plugins.RemoveOptions 
 type UpdateOptions struct {
 	// Filter is a query filter document. Defaults to filtering by the document id.
 	// See https://docs.mongodb.com/manual/core/document/#std-label-document-query-filter
-	Filter map[string]interface{}
+	Filter bson.M
 
 	// Upsert indicates that the document should be inserted if not found
 	Upsert bool
@@ -287,20 +288,45 @@ func convertToRawJsonDocument(in interface{}, raw interface{}) error {
 	return json.Unmarshal(data, raw)
 }
 
-// CreateListFiler builds a query for a list of documents by:
-// * matching namespace
-// * name contains substring
-// * labels contains all matches
-func CreateListFiler(namespace string, name string, labels map[string]string) map[string]interface{} {
+// ListOptions is the set of options available to the list operation
+// on any storage provider.
+type ListOptions struct {
+	// Namespace in which the particular result list is defined.
+	Namespace string
+
+	// Name specifies whether the result list name contain the specified substring.
+	Name string
+
+	// Labels is used to filter result list based on a key-value pair.
+	Labels map[string]string
+
+	// Skip is the number of results to skip past and exclude from the results.
+	Skip int64
+
+	// Limit is the number of results to return.
+	Limit int64
+}
+
+// ToFindOptions builds a query for a list of documents with these conditions:
+// * sorted in ascending order by namespace first and then name
+// * filtered by matching namespace, name contains substring, and labels contain all matches
+// * skipped and limited to a certain number of result
+func (o ListOptions) ToFindOptions() FindOptions {
 	filter := make(map[string]interface{}, 3)
-	if namespace != "*" {
-		filter["namespace"] = namespace
+	if o.Namespace != "*" {
+		filter["namespace"] = o.Namespace
 	}
-	if name != "" {
-		filter["name"] = map[string]interface{}{"$regex": name}
+	if o.Name != "" {
+		filter["name"] = map[string]interface{}{"$regex": o.Name}
 	}
-	for k, v := range labels {
+	for k, v := range o.Labels {
 		filter["labels."+k] = v
 	}
-	return filter
+
+	return FindOptions{
+		Sort:   []string{"namespace", "name"},
+		Filter: filter,
+		Skip:   o.Skip,
+		Limit:  o.Limit,
+	}
 }

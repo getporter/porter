@@ -14,6 +14,7 @@ import (
 	"get.porter.sh/porter/pkg/mixin"
 	"get.porter.sh/porter/pkg/printer"
 	"get.porter.sh/porter/pkg/storage"
+	"get.porter.sh/porter/pkg/tracing"
 	"github.com/Masterminds/semver/v3"
 	"github.com/opencontainers/go-digest"
 	"github.com/pkg/errors"
@@ -92,6 +93,9 @@ func (o *BuildOptions) parseCustomInputs() error {
 }
 
 func (p *Porter) Build(ctx context.Context, opts BuildOptions) error {
+	ctx, log := tracing.StartSpan(ctx)
+	defer log.EndSpan()
+
 	opts.Apply(p.Context)
 
 	if p.Debug {
@@ -120,7 +124,7 @@ func (p *Porter) Build(ctx context.Context, opts BuildOptions) error {
 	m.ManifestPath = opts.File
 
 	if !opts.NoLint {
-		if err := p.preLint(ctx); err != nil {
+		if err := p.preLint(ctx, opts.File); err != nil {
 			return err
 		}
 	}
@@ -148,10 +152,11 @@ func (p *Porter) Build(ctx context.Context, opts BuildOptions) error {
 	return errors.Wrap(builder.BuildInvocationImage(ctx, m, opts.BuildImageOptions), "unable to build CNAB invocation image")
 }
 
-func (p *Porter) preLint(ctx context.Context) error {
+func (p *Porter) preLint(ctx context.Context, file string) error {
 	lintOpts := LintOptions{
 		contextOptions: NewContextOptions(p.Context),
 		PrintOptions:   printer.PrintOptions{},
+		File:           file,
 	}
 	lintOpts.RawFormat = string(printer.FormatPlaintext)
 	err := lintOpts.Validate(p.Context)
@@ -204,8 +209,8 @@ func (p *Porter) buildBundle(ctx context.Context, m *manifest.Manifest, digest d
 		return err
 	}
 
-	converter := configadapter.NewManifestConverter(p.Context, m, imageDigests, mixins)
-	bun, err := converter.ToBundle()
+	converter := configadapter.NewManifestConverter(p.Config, m, imageDigests, mixins)
+	bun, err := converter.ToBundle(ctx)
 	if err != nil {
 		return err
 	}

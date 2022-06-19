@@ -1,16 +1,21 @@
 package config
 
 import (
+	"context"
+	"os"
 	"path/filepath"
+	"strconv"
 	"testing"
 
 	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/portercontext"
+	"get.porter.sh/porter/pkg/tracing"
 )
 
 type TestConfig struct {
 	*Config
 	TestContext *portercontext.TestContext
+	TestSpan    tracing.RootTraceLogger
 }
 
 // NewTestConfig initializes a configuration suitable for testing:
@@ -49,7 +54,8 @@ func (c *TestConfig) SetupUnitTest() {
 
 // SetupIntegrationTest initializes the filesystem with the supporting files in
 // a temp PORTER_HOME directory.
-func (c *TestConfig) SetupIntegrationTest() (testDir string, homeDir string) {
+func (c *TestConfig) SetupIntegrationTest() (ctx context.Context, testDir string, homeDir string) {
+	ctx = context.Background()
 	testDir, homeDir = c.TestContext.UseFilesystem()
 	c.SetHomeDir(homeDir)
 
@@ -62,9 +68,23 @@ func (c *TestConfig) SetupIntegrationTest() (testDir string, homeDir string) {
 	// Copy bin dir contents to the home directory
 	c.TestContext.AddTestDirectory(c.TestContext.FindBinDir(), homeDir, pkg.FileModeDirectory)
 
-	return testDir, homeDir
+	// Check if telemetry should be enabled for the test
+	if telemetryEnabled, _ := strconv.ParseBool(os.Getenv("PORTER_TEST_TELEMETRY_ENABLED")); telemetryEnabled {
+		// Okay someone is listening, configure the tracer
+		c.Data.Telemetry.Enabled = true
+		c.Data.Telemetry.Insecure = true
+		c.Data.Telemetry.Protocol = "grpc"
+		c.ConfigureLogging(ctx, c.NewLogConfiguration())
+		ctx, c.TestSpan = c.StartRootSpan(ctx, c.TestContext.T.Name())
+	}
+
+	return ctx, testDir, homeDir
 }
 
 func (c *TestConfig) Close() {
+	if c.TestSpan != nil {
+		c.TestSpan.Close()
+		c.TestSpan = nil
+	}
 	c.TestContext.Close()
 }

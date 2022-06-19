@@ -198,7 +198,7 @@ func (r *Runtime) CreateRun(ctx context.Context, args ActionArguments, b cnab.Ex
 	currentRun.BundleDigest = args.BundleReference.Digest.String()
 
 	var err error
-	extb := cnab.ExtendedBundle{b.Bundle}
+	extb := cnab.NewBundle(b.Bundle)
 	currentRun.Parameters.Parameters, err = r.sanitizer.CleanRawParameters(ctx, args.Params, extb, currentRun.ID)
 	if err != nil {
 		return storage.Run{}, span.Error(err)
@@ -271,7 +271,7 @@ func (r *Runtime) SaveOperationResult(ctx context.Context, opResult driver.Opera
 
 	for outputName, outputValue := range opResult.Outputs {
 		output := result.NewOutput(outputName, []byte(outputValue))
-		output, err = r.sanitizer.CleanOutput(ctx, output, cnab.ExtendedBundle{run.Bundle})
+		output, err = r.sanitizer.CleanOutput(ctx, output, cnab.ExtendedBundle{Bundle: run.Bundle})
 		if err != nil {
 			bigerr = multierror.Append(bigerr, errors.Wrapf(err, "error sanitizing sensitive %s output for %s run of installation %s\n%#v", output.Name, run.Action, installation, output))
 		}

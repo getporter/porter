@@ -7,7 +7,7 @@ import (
 	"github.com/opencontainers/go-digest"
 )
 
-// Registry handles talking with an OCI registry.
+// RegistryProvider handles talking with an OCI registry.
 type RegistryProvider interface {
 	// PullBundle pulls a bundle from an OCI registry.
 	PullBundle(ref cnab.OCIReference, insecureRegistry bool) (cnab.BundleReference, error)
@@ -22,4 +22,7 @@ type RegistryProvider interface {
 
 	// IsImageCached checks whether a particular invocation image exists in the local image cache.
 	IsImageCached(ctx context.Context, invocationImage string) (bool, error)
+
+	// ListTags returns all tags defined on the specified repository.
+	ListTags(ctx context.Context, repository string) ([]string, error)
 }

@@ -1,0 +1,64 @@
+{
+    "custom": {
+        "io.cnab.dependencies": null
+    },
+    "definitions": {
+        "porter-debug": {
+            "$comment": "porter-internal",
+            "default": false,
+            "description": "Print debug information from Porter when executing the bundle",
+            "type": "boolean"
+        },
+        "region": {
+            "default": "mars",
+            "type": "string"
+        },
+        "seed": {
+            "type": "boolean"
+        },
+        "namespace": {
+            "type": "string"
+        }
+    },
+    "description": "An example Porter configuration",
+    "invocationImages": [
+        {
+            "image": "porter-hello:latest",
+            "imageType": "docker"
+        }
+    ],
+    "name": "porter-hello",
+    "parameters": {
+        "porter-debug": {
+            "definition": "porter-debug",
+            "description": "Print debug information from Porter when executing the bundle",
+            "destination": {
+                "env": "PORTER_DEBUG"
+            }
+        },
+        "region": {
+            "definition": "region",
+            "destination": {
+                "env": "REGION"
+            }
+        },
+        "seed": {
+            "definition": "seed",
+            "required": true,
+            "destination": {
+                "env": "SEED"
+            }
+        },
+        "namespace": {
+            "definition": "namespace",
+            "applyTo": [
+                "upgrade"
+            ],
+            "destination": {
+                "env": "NAMESPACE"
+            }
+        }
+    },
+    "schemaVersion": "v1.0.0-WD",
+    "version": "0.1.0"
+}

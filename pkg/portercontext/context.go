@@ -119,7 +119,7 @@ func New() *Context {
 
 // StartRootSpan creates the root tracing span for the porter application.
 // This should only be done once.
-func (c *Context) StartRootSpan(ctx context.Context, op string, attrs ...attribute.KeyValue) (context.Context, tracing.TraceLogger) {
+func (c *Context) StartRootSpan(ctx context.Context, op string, attrs ...attribute.KeyValue) (context.Context, tracing.RootTraceLogger) {
 	childCtx, span := c.tracer.Start(ctx, op)
 	attrs = append(attrs, attribute.String("correlation-id", c.correlationId))
 	span.SetAttributes(attrs...)
@@ -154,6 +154,7 @@ type LogConfiguration struct {
 	TelemetryServiceName    string
 	TelemetryDirectory      string
 	TelemetryRedirectToFile bool
+	TelemetryStartTimeout   time.Duration
 }
 
 // ConfigureLogging applies different configuration to our logging and tracing.

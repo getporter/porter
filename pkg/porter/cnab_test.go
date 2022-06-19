@@ -2,6 +2,7 @@ package porter
 
 import (
 	"context"
+	"path/filepath"
 	"testing"
 
 	"get.porter.sh/porter/pkg"
@@ -143,9 +144,10 @@ func TestSharedOptions_ParseParamSets_Failed(t *testing.T) {
 	p.TestConfig.TestContext.AddTestFile("testdata/porter-with-file-param.yaml", config.Name)
 	p.TestConfig.TestContext.AddTestFile("testdata/paramset-with-file-param.json", "/paramset.json")
 
-	m, err := manifest.LoadManifestFrom(context.Background(), p.Config, config.Name)
+	ctx := context.Background()
+	m, err := manifest.LoadManifestFrom(ctx, p.Config, config.Name)
 	require.NoError(t, err)
-	bun, err := configadapter.ConvertToTestBundle(p.Context, m)
+	bun, err := configadapter.ConvertToTestBundle(ctx, p.Config, m)
 	require.NoError(t, err)
 
 	opts := sharedOptions{
@@ -157,10 +159,10 @@ func TestSharedOptions_ParseParamSets_Failed(t *testing.T) {
 		},
 	}
 
-	err = opts.Validate(context.Background(), []string{}, p.Porter)
+	err = opts.Validate(ctx, []string{}, p.Porter)
 	assert.NoError(t, err)
 
-	err = opts.parseParamSets(context.Background(), p.Porter, bun)
+	err = opts.parseParamSets(ctx, p.Porter, bun)
 	assert.Error(t, err)
 
 }
@@ -170,9 +172,11 @@ func TestSharedOptions_LoadParameters(t *testing.T) {
 	defer p.Close()
 
 	p.TestConfig.TestContext.AddTestFile("testdata/porter.yaml", config.Name)
-	m, err := manifest.LoadManifestFrom(context.Background(), p.Config, config.Name)
+
+	ctx := context.Background()
+	m, err := manifest.LoadManifestFrom(ctx, p.Config, config.Name)
 	require.NoError(t, err)
-	bun, err := configadapter.ConvertToTestBundle(p.Context, m)
+	bun, err := configadapter.ConvertToTestBundle(ctx, p.Config, m)
 	require.NoError(t, err)
 
 	opts := sharedOptions{}
@@ -257,8 +261,8 @@ func Test_bundleFileOptions(t *testing.T) {
 			name:         "no opts",
 			opts:         bundleFileOptions{},
 			setup:        func(ctx *portercontext.Context, opts bundleFileOptions) error { return nil },
-			wantFile:     config.Name,
-			wantCNABFile: build.LOCAL_BUNDLE,
+			wantFile:     "/" + config.Name,
+			wantCNABFile: "/" + build.LOCAL_BUNDLE,
 			wantError:    "",
 		}, {
 			name: "reference set",
@@ -286,16 +290,20 @@ func Test_bundleFileOptions(t *testing.T) {
 			setup:        func(ctx *portercontext.Context, opts bundleFileOptions) error { return nil },
 			wantFile:     "",
 			wantCNABFile: "",
-			wantError:    "unable to access --file alternate/porter.yaml: open /alternate/porter.yaml: file does not exist",
+			wantError:    "unable to access --file /alternate/porter.yaml: open /alternate/porter.yaml: file does not exist",
 		}, {
 			name: "valid dir",
 			opts: bundleFileOptions{
 				Dir: "path/to/bundle",
 			},
 			setup: func(ctx *portercontext.Context, opts bundleFileOptions) error {
+				err := ctx.FileSystem.MkdirAll(filepath.Join(opts.Dir, config.Name), pkg.FileModeDirectory)
+				if err != nil {
+					return err
+				}
 				return ctx.FileSystem.MkdirAll(opts.Dir, pkg.FileModeDirectory)
 			},
-			wantFile:     config.Name,
+			wantFile:     "/path/to/bundle/porter.yaml",
 			wantCNABFile: "/path/to/bundle/.cnab/bundle.json",
 			wantError:    "",
 		}, {
@@ -307,7 +315,7 @@ func Test_bundleFileOptions(t *testing.T) {
 				return ctx.FileSystem.MkdirAll(opts.File, pkg.FileModeDirectory)
 			},
 			wantFile:     "/alternate/porter.yaml",
-			wantCNABFile: build.LOCAL_BUNDLE,
+			wantCNABFile: "/" + build.LOCAL_BUNDLE,
 			wantError:    "",
 		}, {
 			name: "valid dir and file",
@@ -316,13 +324,13 @@ func Test_bundleFileOptions(t *testing.T) {
 				File: "alternate/porter.yaml",
 			},
 			setup: func(ctx *portercontext.Context, opts bundleFileOptions) error {
-				err := ctx.FileSystem.MkdirAll(opts.File, pkg.FileModeDirectory)
+				err := ctx.FileSystem.MkdirAll(filepath.Join(opts.Dir, opts.File), pkg.FileModeDirectory)
 				if err != nil {
 					return err
 				}
 				return ctx.FileSystem.MkdirAll(opts.Dir, pkg.FileModeDirectory)
 			},
-			wantFile:     "/alternate/porter.yaml",
+			wantFile:     "/path/to/bundle/alternate/porter.yaml",
 			wantCNABFile: "/path/to/bundle/.cnab/bundle.json",
 			wantError:    "",
 		}}
@@ -368,7 +376,7 @@ func TestSharedOptions_populateInternalParameterSet(t *testing.T) {
 	p.TestConfig.TestContext.AddTestFile("testdata/porter.yaml", config.Name)
 	m, err := manifest.LoadManifestFrom(context.Background(), p.Config, config.Name)
 	require.NoError(t, err)
-	bun, err := configadapter.ConvertToTestBundle(p.Context, m)
+	bun, err := configadapter.ConvertToTestBundle(ctx, p.Config, m)
 	require.NoError(t, err)
 
 	sensitiveParamName := "my-second-param"

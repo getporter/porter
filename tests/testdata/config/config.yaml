@@ -2,12 +2,16 @@ namespace: dev
 debug: true
 debug-plugins: true
 default-storage: testdb
-experimental: [structured-logs]
 default-secrets-plugin: filesystem
 
 logs:
   enabled: true
   level: debug
+
+telemetry:
+  enabled: ${env.PORTER_TEST_TELEMETRY_ENABLED}
+  protocol: grpc
+  insecure: true
 
 storage:
   - name: testdb

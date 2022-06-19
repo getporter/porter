@@ -102,11 +102,11 @@ func TestLoadManifestWithDependenciesInOrder(t *testing.T) {
 
 	nginxDep := m.Dependencies.RequiredDependencies[0]
 	assert.Equal(t, "nginx", nginxDep.Name)
-	assert.Equal(t, "localhost:5000/nginx:1.19", nginxDep.Reference)
+	assert.Equal(t, "localhost:5000/nginx:1.19", nginxDep.Bundle.Reference)
 
 	mysqlDep := m.Dependencies.RequiredDependencies[1]
 	assert.Equal(t, "mysql", mysqlDep.Name)
-	assert.Equal(t, "getporter/azure-mysql:5.7", mysqlDep.Reference)
+	assert.Equal(t, "getporter/azure-mysql:5.7", mysqlDep.Bundle.Reference)
 	assert.Len(t, mysqlDep.Parameters, 1)
 
 }
@@ -219,6 +219,19 @@ func TestManifest_Validate_Dockerfile(t *testing.T) {
 	err = m.Validate(c.Context, schema.CheckStrategyNone)
 
 	assert.EqualError(t, err, "Dockerfile template cannot be named 'Dockerfile' because that is the filename generated during porter build")
+}
+
+func TestManifest_Validate_WrongSchema(t *testing.T) {
+	c := config.NewTestConfig(t)
+
+	c.TestContext.AddTestFile("testdata/porter-with-badschema.yaml", config.Name)
+	_, err := LoadManifestFrom(context.Background(), c.Config, config.Name)
+
+	require.Error(t, err)
+	assert.Regexp(t,
+		"unsupported property set or a custom action is defined incorrectly: error unmarshaling custom action baddata",
+		err,
+	)
 }
 
 func TestReadManifest_URL(t *testing.T) {

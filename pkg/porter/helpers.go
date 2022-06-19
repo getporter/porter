@@ -108,19 +108,19 @@ func (p *TestPorter) Close() error {
 	return err
 }
 
-func (p *TestPorter) SetupIntegrationTest() {
+func (p *TestPorter) SetupIntegrationTest() context.Context {
 	t := p.TestConfig.TestContext.T
 
 	// Undo changes above to make a unit test friendly Porter, so we hit the host
 	p.Porter = NewFor(p.Config, p.TestStore, p.TestSecrets)
 
 	// Run the test in a temp directory
-	testDir, _ := p.TestConfig.SetupIntegrationTest()
+	ctx, testDir, _ := p.TestConfig.SetupIntegrationTest()
 	p.TestDir = testDir
 	p.CreateBundleDir()
 
 	// Write out a storage schema so that we don't trigger a migration check
-	err := p.Storage.WriteSchema(context.Background())
+	err := p.Storage.WriteSchema(ctx)
 	require.NoError(t, err, "failed to set the storage schema")
 
 	// Load test credentials, with KUBECONFIG replaced properly
@@ -135,6 +135,8 @@ func (p *TestPorter) SetupIntegrationTest() {
 	require.NoError(t, err, "could not unmarshal test credentials %s", ciCredsPath)
 	err = p.Credentials.UpsertCredentialSet(context.Background(), testCreds)
 	require.NoError(t, err, "could not save test credentials")
+
+	return ctx
 }
 
 func (p *TestPorter) AddTestFile(src string, dest string) {
@@ -180,7 +182,7 @@ func (p *TestPorter) ReadBundle(path string) cnab.ExtendedBundle {
 	bun, err := bundle.Unmarshal(bunD)
 	require.NoError(p.T(), err, "Unmarshal failed for bundle at %s", path)
 
-	return cnab.ExtendedBundle{*bun}
+	return cnab.NewBundle(*bun)
 }
 
 func (p *TestPorter) RandomString(len int) string {

@@ -122,4 +122,7 @@ func TestHelloBundle(t *testing.T) {
 	require.Error(t, err, "the chaos monkey should have failed the installation")
 	myLogs, _ := test.RequirePorter("installation", "outputs", "show", "mylogs", "-i=fail-with-outputs")
 	require.Contains(t, myLogs, "Hello, porterci")
+
+	myLogsListed, _ := test.RequirePorter("installation", "outputs", "list", "-i=fail-with-outputs")
+	require.Contains(t, myLogsListed, "Hello, porterci")
 }

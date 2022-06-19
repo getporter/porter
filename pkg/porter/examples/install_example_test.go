@@ -8,7 +8,7 @@ import (
 	"get.porter.sh/porter/pkg/porter"
 )
 
-func ExampleInstall() {
+func ExamplePorter_install() {
 	// Create an instance of the Porter application
 	p := porter.New()
 
@@ -37,7 +37,7 @@ func ExampleInstall() {
 		log.Fatal(err)
 	}
 
-	installation, err := p.GetInstallation(context.Background(), showOpts)
+	installation, _, err := p.GetInstallation(context.Background(), showOpts)
 	if err != nil {
 		log.Fatal(err)
 	}

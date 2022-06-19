@@ -4,7 +4,6 @@
 package integration
 
 import (
-	"context"
 	"path/filepath"
 	"testing"
 
@@ -22,7 +21,7 @@ func TestInstall_relativePathPorterHome(t *testing.T) {
 
 	p := porter.NewTestPorter(t)
 	defer p.Close()
-	p.SetupIntegrationTest() // This creates a temp porter home directory
+	ctx := p.SetupIntegrationTest() // This creates a temp porter home directory
 	p.Debug = false
 
 	// Crux for this test: change Porter's home dir to a relative path
@@ -36,11 +35,11 @@ func TestInstall_relativePathPorterHome(t *testing.T) {
 	p.AddTestBundleDir("testdata/bundles/bundle-with-custom-action", true)
 
 	installOpts := porter.NewInstallOptions()
-	err = installOpts.Validate(context.Background(), []string{}, p.Porter)
+	err = installOpts.Validate(ctx, []string{}, p.Porter)
 	require.NoError(t, err)
 
 	// Install the bundle, assert no error occurs due to Porter home as relative path
-	err = p.InstallBundle(context.Background(), installOpts)
+	err = p.InstallBundle(ctx, installOpts)
 	require.NoError(t, err)
 }
 
@@ -49,9 +48,8 @@ func TestInstall_fileParam(t *testing.T) {
 
 	p := porter.NewTestPorter(t)
 	defer p.Close()
-	p.SetupIntegrationTest()
+	ctx := p.SetupIntegrationTest()
 	p.Debug = false
-	ctx := context.Background()
 
 	bundleName := p.AddTestBundleDir("testdata/bundles/bundle-with-file-params", false)
 
@@ -68,10 +66,10 @@ func TestInstall_fileParam(t *testing.T) {
 
 	p.TestParameters.InsertParameterSet(ctx, testParamSets)
 
-	err := installOpts.Validate(context.Background(), []string{}, p.Porter)
+	err := installOpts.Validate(ctx, []string{}, p.Porter)
 	require.NoError(t, err)
 
-	err = p.InstallBundle(context.Background(), installOpts)
+	err = p.InstallBundle(ctx, installOpts)
 	require.NoError(t, err)
 
 	output := p.TestConfig.TestContext.GetOutput()
@@ -92,7 +90,7 @@ func TestInstall_withDockerignore(t *testing.T) {
 
 	p := porter.NewTestPorter(t)
 	defer p.Close()
-	p.SetupIntegrationTest()
+	ctx := p.SetupIntegrationTest()
 	p.Debug = false
 
 	p.AddTestBundleDir("testdata/bundles/outputs-example", true)
@@ -102,11 +100,11 @@ func TestInstall_withDockerignore(t *testing.T) {
 	require.NoError(t, err)
 
 	opts := porter.NewInstallOptions()
-	err = opts.Validate(context.Background(), []string{}, p.Porter)
+	err = opts.Validate(ctx, []string{}, p.Porter)
 	require.NoError(t, err)
 
 	// Verify Porter uses the .dockerignore file (no helpers script added to installer image)
-	err = p.InstallBundle(context.Background(), opts)
+	err = p.InstallBundle(ctx, opts)
 	// The following line would be seen from the daemon, but is printed directly to stdout:
 	// Error: couldn't run command ./helpers.sh dump-config: fork/exec ./helpers.sh: no such file or directory
 	// We should check this once https://github.com/cnabio/cnab-go/issues/78 is closed
@@ -117,7 +115,7 @@ func TestInstall_stringParam(t *testing.T) {
 
 	p := porter.NewTestPorter(t)
 	defer p.Close()
-	p.SetupIntegrationTest()
+	ctx := p.SetupIntegrationTest()
 	p.Debug = false
 
 	p.AddTestBundleDir("testdata/bundles/bundle-with-string-params", false)
@@ -125,10 +123,10 @@ func TestInstall_stringParam(t *testing.T) {
 	installOpts := porter.NewInstallOptions()
 	installOpts.Params = []string{"name=Demo Time"}
 
-	err := installOpts.Validate(context.Background(), []string{}, p.Porter)
+	err := installOpts.Validate(ctx, []string{}, p.Porter)
 	require.NoError(t, err)
 
-	err = p.InstallBundle(context.Background(), installOpts)
+	err = p.InstallBundle(ctx, installOpts)
 	require.NoError(t, err)
 
 	output := p.TestConfig.TestContext.GetOutput()

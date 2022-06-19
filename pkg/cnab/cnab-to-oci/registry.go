@@ -8,16 +8,17 @@ import (
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/tracing"
+	"github.com/cnabio/cnab-go/driver/docker"
 	"github.com/cnabio/cnab-to-oci/relocation"
 	"github.com/cnabio/cnab-to-oci/remotes"
 	containerdRemotes "github.com/containerd/containerd/remotes"
 	"github.com/docker/cli/cli/command"
 	dockerconfig "github.com/docker/cli/cli/config"
-	cliflags "github.com/docker/cli/cli/flags"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/docker/docker/pkg/term"
+	"github.com/google/go-containerregistry/pkg/crane"
 	"github.com/opencontainers/go-digest"
 	"github.com/pkg/errors"
 )
@@ -75,7 +76,7 @@ func (r *Registry) PullBundle(ref cnab.OCIReference, insecureRegistry bool) (cna
 	bundleRef := cnab.BundleReference{
 		Reference:     ref,
 		Digest:        digest,
-		Definition:    cnab.ExtendedBundle{*bun},
+		Definition:    cnab.NewBundle(*bun),
 		RelocationMap: reloMap,
 	}
 
@@ -121,7 +122,7 @@ func (r *Registry) PushInvocationImage(ctx context.Context, invocationImage stri
 	ctx, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
 
-	cli, err := r.getDockerClient()
+	cli, err := docker.GetDockerClient()
 	if err != nil {
 		return "", err
 	}
@@ -186,19 +187,8 @@ func (r *Registry) displayEvent(ev remotes.FixupEvent) {
 	}
 }
 
-func (r *Registry) getDockerClient() (*command.DockerCli, error) {
-	cli, err := command.NewDockerCli()
-	if err != nil {
-		return nil, errors.Wrap(err, "could not create new docker client")
-	}
-	if err := cli.Initialize(cliflags.NewClientOptions()); err != nil {
-		return nil, err
-	}
-	return cli, nil
-}
-
 func (r *Registry) IsImageCached(ctx context.Context, invocationImage string) (bool, error) {
-	cli, err := r.getDockerClient()
+	cli, err := docker.GetDockerClient()
 	if err != nil {
 		return false, err
 	}
@@ -215,4 +205,13 @@ func (r *Registry) IsImageCached(ctx context.Context, invocationImage string) (b
 	}
 
 	return true, nil
+}
+
+func (r *Registry) ListTags(ctx context.Context, repository string) ([]string, error) {
+	tags, err := crane.ListTags(repository)
+	if err != nil {
+		return nil, fmt.Errorf("error listing tags for %s: %w", repository, err)
+	}
+
+	return tags, nil
 }

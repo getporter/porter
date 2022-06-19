@@ -29,6 +29,7 @@ porter list [flags]
   porter list --all-namespaces,
   porter list --label owner=myname --namespace dev
   porter list --name myapp
+  porter list --skip 2 --limit 2
 ```
 
 ### Options
@@ -37,9 +38,11 @@ porter list [flags]
       --all-namespaces     Include all namespaces in the results.
   -h, --help               help for list
   -l, --label strings      Filter the installations by a label formatted as: KEY=VALUE. May be specified multiple times.
+      --limit int          Limit the number of installations by a certain amount. Defaults to 0.
       --name string        Filter the installations where the name contains the specified substring.
   -n, --namespace string   Filter the installations by namespace. Defaults to the global namespace.
   -o, --output string      Specify an output format.  Allowed values: plaintext, json, yaml (default "plaintext")
+      --skip int           Skip the number of installations by a certain amount. Defaults to 0.
 ```
 
 ### Options inherited from parent commands

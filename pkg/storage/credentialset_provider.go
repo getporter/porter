@@ -12,7 +12,7 @@ type CredentialSetProvider interface {
 	ResolveAll(ctx context.Context, creds CredentialSet) (secrets.Set, error)
 	Validate(ctx context.Context, creds CredentialSet) error
 	InsertCredentialSet(ctx context.Context, creds CredentialSet) error
-	ListCredentialSets(ctx context.Context, namespace string, name string, labels map[string]string) ([]CredentialSet, error)
+	ListCredentialSets(ctx context.Context, listOptions ListOptions) ([]CredentialSet, error)
 	GetCredentialSet(ctx context.Context, namespace string, name string) (CredentialSet, error)
 	UpdateCredentialSet(ctx context.Context, creds CredentialSet) error
 	RemoveCredentialSet(ctx context.Context, namespace string, name string) error

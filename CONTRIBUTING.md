@@ -47,7 +47,10 @@ slack, interactions on social media, project meetings, conferences and meetups.
 
 ## Find an issue
 
-We have good first issues for new contributors and help wanted issues for our other contributors. When you have been contributing for a while, take a look at the "Backlog" column on our [project board][board] for high priority issues. The project board is at the organization level, so it contains issues from across all of the Porter repositories. 
+Use the [getporter.org/find-issue] link to find good first issues for new contributors and help wanted issues for our other contributors.
+
+When you have been contributing for a while, take a look at the "Backlog" column on our [project board][board] for high priority issues.
+The project board is at the organization level, so it contains issues from across all the Porter repositories. 
 
 * [`good first issues`][good-first-issue] has extra information to help you make your first contribution.
 * [`help wanted`][help-wanted] are issues suitable for someone who isn't a core maintainer.
@@ -55,7 +58,7 @@ We have good first issues for new contributors and help wanted issues for our ot
   because they are not finished being designed or we aren't sure if we want the
   feature, etc.
 
-Maintainers will do their best to regularly make new issues for you to solve and then
+Maintainers will do their best to regularly make new issues for you to solve and then 
 help out as you work on them. 💖
 
 We have a [roadmap] that will give you a good idea of the
@@ -70,7 +73,8 @@ Another great way to contribute is to create a mixin! You can start using the
 
 When you create your first pull request, add your name to the bottom of our 
 [Contributors][contributors] list. Thank you for making Porter better! 🙇‍♀️
-                                          
+
+[getporter.org/find-issue]: https://getporter.org/find-issue/
 [contributors]: https://porter.sh/src/CONTRIBUTORS.md                                          
 [skeletor]: https://github.com/getporter/skeletor
 [mixin-dev-guide]: https://porter.sh/mixin-dev-guide/
@@ -440,7 +444,7 @@ the future. If you don't see your post, change the date to today's date.
 
 ## View a trace of a Porter command
 
-Porter has an experimental feature, structured-logs, that sends trace data about the commands run to an OpenTelemetry backend.
+Porter can send trace data about the commands run to an OpenTelemetry backend.
 It can be very helpful when figuring out why a command failed because you can see the values of variables and stack traces.
 
 In development, you can use the [otel-jaeger bundle] to set up a development instance of Jaeger, which gives you a nice website to see each command run.
@@ -454,7 +458,6 @@ This tells Porter to turn on tracing, and connect to OpenTelemetry server that y
 
 **Posix**
 ```bash
-export PORTER_EXPERIMENTAL="structured-logs"
 export PORTER_TELEMETRY_ENABLED="true"
 export OTEL_EXPORTER_OTLP_PROTOCOL="grpc"
 export OTEL_EXPORTER_OTLP_INSECURE="true"
@@ -462,7 +465,6 @@ export OTEL_EXPORTER_OTLP_INSECURE="true"
 
 **Powershell**
 ```powershell
-$env:PORTER_EXPERIMENTAL="structured-logs"
 $env:PORTER_TELEMETRY_ENABLED="true"
 $env:OTEL_EXPORTER_OTLP_PROTOCOL="grpc"
 $env:OTEL_EXPORTER_OTLP_INSECURE="true"
@@ -471,6 +473,8 @@ $env:OTEL_EXPORTER_OTLP_INSECURE="true"
 Next run a Porter command to generate some trace data, such as `porter list`.
 Then go to the Jaeger website to see your data: http://localhost:16686.
 On the Jaeger dashboard, select "porter" from the service drop down, and click "Find Traces".
+
+The smoke and integration tests will run with telemetry enabled when the PORTER_TEST_TELEMETRY_ENABLED environment variable is true.
 
 [otel-jaeger bundle]: https://getporter.org/examples/src/otel-jaeger
 

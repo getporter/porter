@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/tracing"
@@ -73,14 +74,22 @@ func (m *Manager) Connect(ctx context.Context) error {
 
 		if !m.allowOutOfDateSchema && m.MigrationRequired() {
 			m.Close()
-			return span.Error(errors.New(`The schema of Porter's data is in an older format than supported by this version of Porter. 
+			return span.Error(errors.Errorf(`The schema of Porter's data is in an older format than supported by this version of Porter. 
+
+Porter %s uses the following database schema:
+
+%#v
+
+Your database schema is:
+
+%#v
+
 Refer to https://porter.sh/storage-migrate for more information and instructions to back up your data. 
 Once your data has been backed up, run the following command to perform the migration:
 
     porter storage migrate
-`))
+`, pkg.Version, storage.NewSchema(), m.schema))
 		}
-
 		m.initialized = true
 
 		cs := storage.NewInstallationStore(m.store)
