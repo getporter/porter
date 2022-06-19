@@ -1,4 +1,5 @@
 /docs/public/
+/docs/sources/
 /bin
 /porter
 *-packr.go
