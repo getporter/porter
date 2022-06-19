@@ -29,7 +29,8 @@ install:
       description: "Echo step-level output"
       command: ./helpers.sh
       arguments:
-        - "dump {{ bundle.outputs.user }}"
+        - dump
+        - "{{ bundle.outputs.user }}"
 
 upgrade:
   - exec:
