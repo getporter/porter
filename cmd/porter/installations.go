@@ -1,6 +1,7 @@
 package main
 
 import (
+	"get.porter.sh/porter/pkg/cli"
 	"get.porter.sh/porter/pkg/porter"
 	"github.com/spf13/cobra"
 )
@@ -12,9 +13,7 @@ func buildInstallationCommands(p *porter.Porter) *cobra.Command {
 		Short:   "Installation commands",
 		Long:    "Commands for working with installations of a bundle",
 	}
-	cmd.Annotations = map[string]string{
-		"group": "resource",
-	}
+	cli.SetCommandGroup(cmd, "resource")
 
 	cmd.AddCommand(buildInstallationsListCommand(p))
 	cmd.AddCommand(buildInstallationShowCommand(p))

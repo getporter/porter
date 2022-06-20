@@ -1,6 +1,7 @@
 package main
 
 import (
+	"get.porter.sh/porter/pkg/cli"
 	"get.porter.sh/porter/pkg/mixin"
 	"get.porter.sh/porter/pkg/pkgmgmt"
 	"get.porter.sh/porter/pkg/pkgmgmt/feed"
@@ -13,10 +14,9 @@ func buildMixinCommands(p *porter.Porter) *cobra.Command {
 		Use:     "mixins",
 		Aliases: []string{"mixin"},
 		Short:   "Mixin commands. Mixins assist with authoring bundles.",
-		Annotations: map[string]string{
-			"group": "resource",
-		},
 	}
+
+	cli.SetCommandGroup(cmd, "resource")
 
 	cmd.AddCommand(buildMixinsListCommand(p))
 	cmd.AddCommand(buildMixinsSearchCommand(p))
@@ -132,10 +132,8 @@ func buildMixinsFeedCommand(p *porter.Porter) *cobra.Command {
 		Use:     "feed",
 		Aliases: []string{"feeds"},
 		Short:   "Feed commands",
-		Annotations: map[string]string{
-			"group": "resource",
-		},
 	}
+	cli.SetCommandGroup(cmd, "resource")
 
 	cmd.AddCommand(BuildMixinFeedGenerateCommand(p))
 	cmd.AddCommand(BuildMixinFeedTemplateCommand(p))

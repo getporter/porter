@@ -3,17 +3,11 @@ package main
 import (
 	"context"
 	_ "embed"
-	"fmt"
-	"os"
-	"os/signal"
-	"runtime/debug"
-	"strings"
 
 	"get.porter.sh/porter/pkg/cli"
 	"get.porter.sh/porter/pkg/porter"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
-	"go.opentelemetry.io/otel/attribute"
 )
 
 var includeDocsCommand = false
@@ -21,143 +15,12 @@ var includeDocsCommand = false
 //go:embed helptext/usage.txt
 var usageText string
 
-const (
-	// Indicates that config should not be loaded for this command.
-	// This is used for commands like help and version which should never
-	// fail, even with porter is misconfigured.
-	skipConfig string = "skipConfig"
-
-	// exitCodeSuccess indicates the program ran successfully
-	exitCodeSuccess = 0
-
-	// exitCodeErr indicates the program encountered an error
-	exitCodeErr = 1
-
-	// exitCodeInterrupt indicates the program was cancelled
-	exitCodeInterrupt = 2
-)
-
 func main() {
-	run := func() int {
-		p := porter.New()
-		ctx, cancel := handleInterrupt(context.Background(), p)
-		defer cancel()
+	ctx := context.Background()
+	app := porter.New()
+	rootCmd := buildRootCommandFrom(app)
 
-		rootCmd := buildRootCommandFrom(p)
-
-		// Trace the command that called porter, e.g. porter installation show
-		cmd, commandName, formattedCommand := getCalledCommand(rootCmd)
-
-		// When running an internal plugin, switch how we log to be compatible
-		// with the hashicorp go-plugin framework
-		if commandName == "porter plugins run" {
-			p.IsInternalPlugin = true
-			if len(os.Args) > 3 {
-				p.InternalPluginKey = os.Args[3]
-			}
-		}
-
-		// Only run init logic that could fail for commands that
-		// really need it, skip it for commands that should NEVER
-		// fail.
-		if !shouldSkipConfig(cmd) {
-			if err := p.Connect(ctx); err != nil {
-				fmt.Fprintln(os.Stderr, err.Error())
-				os.Exit(exitCodeErr)
-			}
-		}
-
-		ctx, log := p.StartRootSpan(ctx, commandName, attribute.String("command", formattedCommand))
-		defer func() {
-			// Capture panics and trace them
-			if panicErr := recover(); panicErr != nil {
-				log.Error(fmt.Errorf("%s", panicErr),
-					attribute.Bool("panic", true),
-					attribute.String("stackTrace", string(debug.Stack())))
-				log.EndSpan()
-				p.Close()
-				os.Exit(exitCodeErr)
-			} else {
-				log.Close()
-				p.Close()
-			}
-		}()
-
-		if err := rootCmd.ExecuteContext(ctx); err != nil {
-			// Ideally we log all errors in the span that generated it,
-			// but as a failsafe, always log the error at the root span as well
-			log.Error(err)
-			return exitCodeErr
-		}
-		return exitCodeSuccess
-	}
-
-	// Wrapping the main run logic in a function because os.Exit will not
-	// execute defer statements
-	os.Exit(run())
-}
-
-// Try to exit gracefully when the interrupt signal is sent (CTRL+C)
-// Thanks to Mat Ryer, https://pace.dev/blog/2020/02/17/repond-to-ctrl-c-interrupt-signals-gracefully-with-context-in-golang-by-mat-ryer.html
-func handleInterrupt(ctx context.Context, p *porter.Porter) (context.Context, func()) {
-	ctx, cancel := context.WithCancel(ctx)
-	signalChan := make(chan os.Signal, 1)
-	signal.Notify(signalChan, os.Interrupt)
-
-	go func() {
-		select {
-		case <-signalChan: // first signal, cancel context
-			fmt.Println("cancel requested", p.InternalPluginKey)
-			cancel()
-		case <-ctx.Done():
-		}
-		<-signalChan // second signal, hard exit
-		fmt.Println("hard interrupt received, bye!")
-		os.Exit(exitCodeInterrupt)
-	}()
-
-	return ctx, func() {
-		signal.Stop(signalChan)
-		cancel()
-	}
-}
-
-func shouldSkipConfig(cmd *cobra.Command) bool {
-	if cmd.Name() == "help" {
-		return true
-	}
-
-	_, skip := cmd.Annotations[skipConfig]
-	return skip
-}
-
-// Returns the porter command called, e.g. porter installation list
-// and also the fully formatted command as passed with arguments/flags.
-func getCalledCommand(cmd *cobra.Command) (*cobra.Command, string, string) {
-	// Ask cobra what sub-command was called, and walk up the tree to get the full command called.
-	var cmdChain []string
-	calledCommand, _, err := cmd.Find(os.Args[1:])
-	if err != nil {
-		cmdChain = append(cmdChain, "porter")
-	} else {
-		cmd := calledCommand
-		for cmd != nil {
-			cmdChain = append(cmdChain, cmd.Name())
-			cmd = cmd.Parent()
-		}
-	}
-	// reverse the command from [list installations porter] to porter installation list
-	var calledCommandBuilder strings.Builder
-	for i := len(cmdChain); i > 0; i-- {
-		calledCommandBuilder.WriteString(cmdChain[i-1])
-		calledCommandBuilder.WriteString(" ")
-	}
-	calledCommandStr := calledCommandBuilder.String()[0 : calledCommandBuilder.Len()-1]
-
-	// Also figure out the full command called, with args/flags.
-	formattedCommand := fmt.Sprintf("porter %s", strings.Join(os.Args[1:], " "))
-
-	return calledCommand, calledCommandStr, formattedCommand
+	cli.Main(ctx, rootCmd, app)
 }
 
 func buildRootCommand() *cobra.Command {
@@ -184,7 +47,7 @@ Try our QuickStart https://porter.sh/quickstart to learn how to use Porter.
 			p.Out = cmd.OutOrStdout()
 			p.Err = cmd.OutOrStderr()
 
-			if shouldSkipConfig(cmd) {
+			if cli.ShouldSkipConfig(cmd) {
 				return nil
 			}
 
@@ -212,9 +75,7 @@ Try our QuickStart https://porter.sh/quickstart to learn how to use Porter.
 		SilenceErrors: true, // Errors are printed by main
 	}
 
-	cmd.Annotations = map[string]string{
-		skipConfig: "",
-	}
+	cli.SkipConfigForCommand(cmd)
 
 	// These flags are available for every command
 	globalFlags := cmd.PersistentFlags()
@@ -264,7 +125,11 @@ func ShouldShowGroupCommands(cmd *cobra.Command, group string) bool {
 }
 
 func ShouldShowGroupCommand(cmd *cobra.Command, group string) bool {
-	return cmd.Annotations["group"] == group
+	if cmd.Annotations[cli.AnnotationGroup] == group {
+		return true
+	}
+
+	return false
 }
 
 func ShouldShowUngroupedCommands(cmd *cobra.Command) bool {
@@ -281,7 +146,7 @@ func ShouldShowUngroupedCommand(cmd *cobra.Command) bool {
 		return false
 	}
 
-	_, hasGroup := cmd.Annotations["group"]
+	_, hasGroup := cmd.Annotations[cli.AnnotationGroup]
 	return !hasGroup
 }
 

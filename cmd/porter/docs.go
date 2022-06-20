@@ -1,6 +1,7 @@
 package main
 
 import (
+	"get.porter.sh/porter/pkg/cli"
 	"get.porter.sh/porter/pkg/docs"
 	"get.porter.sh/porter/pkg/porter"
 	"github.com/spf13/cobra"
@@ -23,10 +24,8 @@ func buildDocsCommand(p *porter.Porter) *cobra.Command {
 		},
 	}
 
-	cmd.Annotations = map[string]string{
-		"group":    "meta",
-		skipConfig: "",
-	}
+	cli.SkipConfigForCommand(cmd)
+	cli.SetCommandGroup(cmd, "meta")
 
 	flags := cmd.Flags()
 	flags.StringVarP(&opts.Destination, "dest", "d", docs.DefaultDestination,

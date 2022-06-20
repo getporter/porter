@@ -11,7 +11,6 @@ Manage data stored by Porter
 
 Manage the data stored by Porter, such as credentials and installation data.
 
-
 ### Options
 
 ```

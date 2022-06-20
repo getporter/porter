@@ -1,6 +1,7 @@
 package main
 
 import (
+	"get.porter.sh/porter/pkg/cli"
 	"get.porter.sh/porter/pkg/porter"
 	"get.porter.sh/porter/pkg/porter/version"
 	"github.com/spf13/cobra"
@@ -18,10 +19,9 @@ func buildVersionCommand(p *porter.Porter) *cobra.Command {
 			return p.PrintVersion(cmd.Context(), opts)
 		},
 	}
-	cmd.Annotations = map[string]string{
-		"group":    "meta",
-		skipConfig: "",
-	}
+
+	cli.SkipConfigForCommand(cmd)
+	cli.SetCommandGroup(cmd, "meta")
 
 	f := cmd.Flags()
 	f.StringVarP(&opts.RawFormat, "output", "o", string(version.DefaultVersionFormat),
