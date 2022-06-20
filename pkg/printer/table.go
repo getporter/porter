@@ -1,11 +1,11 @@
 package printer
 
 import (
+	"fmt"
 	"io"
 	"reflect"
 
 	"github.com/olekukonko/tablewriter"
-	"github.com/pkg/errors"
 )
 
 func NewTableSection(out io.Writer) *tablewriter.Table {
@@ -24,7 +24,7 @@ func NewTableSection(out io.Writer) *tablewriter.Table {
 // PrintTable outputs a dataset in tabular format
 func PrintTable(out io.Writer, v interface{}, getRow func(row interface{}) []string, headers ...string) error {
 	if reflect.TypeOf(v).Kind() != reflect.Slice {
-		return errors.Errorf("invalid data passed to PrintTable, must be a slice but got %T", v)
+		return fmt.Errorf("invalid data passed to PrintTable, must be a slice but got %T", v)
 	}
 
 	rows := reflect.ValueOf(v)
