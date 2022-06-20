@@ -3,13 +3,13 @@ package builder
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os/exec"
 	"strings"
 
 	"get.porter.sh/porter/pkg/portercontext"
-	"github.com/pkg/errors"
 )
 
 var DefaultFlagDashes = Dashes{
@@ -69,7 +69,7 @@ type ExitError interface {
 func ExecuteSingleStepAction(cxt *portercontext.Context, action ExecutableAction) (string, error) {
 	steps := action.GetSteps()
 	if len(steps) != 1 {
-		return "", errors.Errorf("expected a single step, but got %d", len(steps))
+		return "", fmt.Errorf("expected a single step, but got %d", len(steps))
 	}
 	step := steps[0]
 
@@ -175,7 +175,7 @@ func ExecuteStep(pctx *portercontext.Context, step ExecutableStep) (string, erro
 
 	err := cmd.Start()
 	if err != nil {
-		return "", errors.Wrap(err, fmt.Sprintf("couldn't run command %s", prettyCmd))
+		return "", fmt.Errorf("couldn't run command %s: %w", prettyCmd, err)
 	}
 
 	err = cmd.Wait()
@@ -191,7 +191,7 @@ func ExecuteStep(pctx *portercontext.Context, step ExecutableStep) (string, erro
 
 	// Ok, now check if we still have a problem
 	if err != nil {
-		return "", errors.Wrap(err, fmt.Sprintf("error running command %s", prettyCmd))
+		return "", fmt.Errorf("error running command %s: %w", prettyCmd, err)
 	}
 
 	return stdout.String(), nil
