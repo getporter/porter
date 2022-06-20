@@ -23,7 +23,7 @@ func (fs *FileSystem) uninstallByName(name string) error {
 	}
 	pkgDir := filepath.Join(parentDir, name)
 	exists, _ := fs.FileSystem.Exists(pkgDir)
-	if exists == true {
+	if exists {
 		err = fs.FileSystem.RemoveAll(pkgDir)
 		if err != nil {
 			return errors.Wrapf(err, "could not remove %s directory %q", fs.PackageType, pkgDir)

@@ -14,6 +14,6 @@ func PrintYaml(out io.Writer, v interface{}) error {
 	if err != nil {
 		return errors.Wrap(err, "could not marshal value to yaml")
 	}
-	fmt.Fprintf(out, string(b)) // yaml already includes a trailing newline, so don't print another
+	fmt.Fprint(out, string(b)) // yaml already includes a trailing newline, so don't print another
 	return nil
 }

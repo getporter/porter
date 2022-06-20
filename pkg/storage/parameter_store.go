@@ -80,7 +80,7 @@ func (s ParameterStore) Validate(ctx context.Context, params ParameterSet) error
 				break
 			}
 		}
-		if valid == false {
+		if !valid {
 			errors = multierror.Append(errors, fmt.Errorf(
 				"%s is not a valid source. Valid sources are: %s",
 				cs.Source.Key,

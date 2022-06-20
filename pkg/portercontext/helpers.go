@@ -257,12 +257,12 @@ func (c *TestContext) AddTestDriver(src, name string) string {
 
 // GetOutput returns all text printed to stdout.
 func (c *TestContext) GetOutput() string {
-	return string(c.capturedOut.Bytes())
+	return c.capturedOut.String()
 }
 
 // GetError returns all text printed to stderr.
 func (c *TestContext) GetError() string {
-	return string(c.capturedErr.Bytes())
+	return c.capturedErr.String()
 }
 
 func (c *TestContext) ClearOutputs() {

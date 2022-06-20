@@ -63,6 +63,9 @@ func (p *Porter) Archive(ctx context.Context, opts ArchiveOptions) error {
 	}
 
 	dest, err := p.Config.FileSystem.OpenFile(opts.ArchiveFile, os.O_RDWR|os.O_CREATE, pkg.FileModeWritable)
+	if err != nil {
+		return errors.WithMessage(err, "unable to open archive file")
+	}
 
 	exp := &exporter{
 		fs:                    p.Config.FileSystem,

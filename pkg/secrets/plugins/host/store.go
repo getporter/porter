@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"get.porter.sh/porter/pkg/secrets/plugins"
 	secretsplugins "get.porter.sh/porter/pkg/secrets/plugins"
 	"github.com/cnabio/cnab-go/secrets/host"
 )
@@ -24,5 +23,5 @@ func (s Store) Resolve(ctx context.Context, keyName string, keyValue string) (st
 }
 
 func (s Store) Create(ctx context.Context, keyName string, keyValue string, value string) error {
-	return fmt.Errorf("The default secrets plugin, %s, does not support persisting secrets: %w", PluginKey, plugins.ErrNotImplemented)
+	return fmt.Errorf("the default secrets plugin, %s, does not support persisting secrets: %w", PluginKey, secretsplugins.ErrNotImplemented)
 }

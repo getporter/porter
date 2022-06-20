@@ -98,7 +98,7 @@ func (l traceLogger) ShouldLog(level zapcore.Level) bool {
 }
 
 func (l traceLogger) IsTracingEnabled() bool {
-	return l.tracer.IsNoOp == false
+	return !l.tracer.IsNoOp
 }
 
 // NewRootLogger creates a new TraceLogger and stores in on the context

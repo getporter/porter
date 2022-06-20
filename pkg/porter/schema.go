@@ -130,7 +130,7 @@ func (p *Porter) injectMixinSchemas(ctx context.Context, manifestSchema jsonSche
 
 		for _, action := range coreActions {
 			actionItemSchema, ok := actionSchemas[action]["items"].(jsonSchema)
-			if err != nil && p.Debug {
+			if !ok && p.Debug {
 				fmt.Fprintln(p.Err, errors.Errorf("root porter manifest schema has invalid properties.%s.items type, expected map[string]interface{} but got %T", action, actionSchemas[string(action)]["items"]))
 				continue
 			}
@@ -153,7 +153,7 @@ func (p *Porter) injectMixinSchemas(ctx context.Context, manifestSchema jsonSche
 		_, err = jsonpath.Get("$.definitions.invokeStep", mixinSchemaMap)
 		if err == nil {
 			actionItemSchema, ok := additionalPropertiesSchema["items"].(jsonSchema)
-			if err != nil && p.Debug {
+			if !ok && p.Debug {
 				fmt.Fprintln(p.Err, errors.Errorf("root porter manifest schema has invalid additionalProperties.items type, expected map[string]interface{} but got %T", additionalPropertiesSchema["items"]))
 				continue
 			}

@@ -380,8 +380,7 @@ func (pd *ParameterDefinition) Validate() error {
 
 // DeepCopy copies a ParameterDefinition and returns the copy
 func (pd *ParameterDefinition) DeepCopy() *ParameterDefinition {
-	var p2 ParameterDefinition
-	p2 = *pd
+	p2 := *pd
 	p2.ApplyTo = make([]string, len(pd.ApplyTo))
 	copy(p2.ApplyTo, pd.ApplyTo)
 	return &p2
@@ -685,8 +684,7 @@ type OutputDefinition struct {
 
 // DeepCopy copies a ParameterDefinition and returns the copy
 func (od *OutputDefinition) DeepCopy() *OutputDefinition {
-	var o2 OutputDefinition
-	o2 = *od
+	o2 := *od
 	o2.ApplyTo = make([]string, len(od.ApplyTo))
 	copy(o2.ApplyTo, od.ApplyTo)
 	return &o2

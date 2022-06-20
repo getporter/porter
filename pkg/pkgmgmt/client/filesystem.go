@@ -45,6 +45,9 @@ type FileSystem struct {
 
 func (fs *FileSystem) List() ([]string, error) {
 	parentDir, err := fs.GetPackagesDir()
+	if err != nil {
+		return nil, errors.Wrap(err, "could not get package directory")
+	}
 
 	files, err := fs.FileSystem.ReadDir(parentDir)
 	if err != nil {
@@ -72,8 +75,7 @@ func (fs *FileSystem) GetMetadata(ctx context.Context, name string) (pkgmgmt.Pac
 
 	// Copy the existing context and tweak to pipe the output differently
 	jsonB := &bytes.Buffer{}
-	var pkgContext portercontext.Context
-	pkgContext = *fs.Context
+	pkgContext := *fs.Context
 	pkgContext.Out = jsonB
 	if !fs.Debug {
 		pkgContext.Err = ioutil.Discard

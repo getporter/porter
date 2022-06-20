@@ -85,10 +85,10 @@ func (c *Cache) StoreBundle(bundleRef cnab.BundleReference) (CachedBundle, error
 	}
 
 	f, err := c.FileSystem.OpenFile(cb.BundlePath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, pkg.FileModeWritable)
-	defer f.Close()
 	if err != nil {
 		return CachedBundle{}, errors.Wrapf(err, "error creating cnab/bundle.json for %s", cb.Reference)
 	}
+	defer f.Close()
 
 	_, err = cb.Definition.WriteTo(f)
 	if err != nil {
@@ -109,10 +109,10 @@ func (c *Cache) StoreBundle(bundleRef cnab.BundleReference) (CachedBundle, error
 	if len(cb.RelocationMap) > 0 {
 		cb.RelocationFilePath = cb.BuildRelocationFilePath()
 		f, err = c.FileSystem.OpenFile(cb.RelocationFilePath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, pkg.FileModeWritable)
-		defer f.Close()
 		if err != nil {
 			return CachedBundle{}, errors.Wrapf(err, "error creating cnab/relocation-mapping.json for %s", cb.Reference)
 		}
+		defer f.Close()
 
 		b, err := json.Marshal(cb.RelocationMap)
 		if err != nil {

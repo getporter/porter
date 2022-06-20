@@ -86,7 +86,7 @@ func (s CredentialStore) Validate(ctx context.Context, creds CredentialSet) erro
 				break
 			}
 		}
-		if valid == false {
+		if !valid {
 			errors = multierror.Append(errors, fmt.Errorf(
 				"%s is not a valid source. Valid sources are: %s",
 				cs.Source.Key,
