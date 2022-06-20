@@ -85,18 +85,22 @@ test-smoke:
 	go run mage.go testSmoke
 
 .PHONY: docs
-docs:
+docs: docs/sources/CONTRIBUTING.md
 	hugo --source docs/ $(BASEURL_FLAG)
 
 docs-gen:
 	$(GO) run --tags=docs ./cmd/porter docs
 
-docs-preview: docs-stop-preview
+docs-preview: docs/sources/CONTRIBUTING.md docs-stop-preview
 	@docker run -d -v $$PWD:/src -p 1313:1313 --name porter-docs -w /src/docs \
 	klakegg/hugo:0.78.1-ext-alpine server -D -F --noHTTPCache --watch --bind=0.0.0.0
 	# Wait for the documentation web server to finish rendering
 	@until docker logs porter-docs | grep -m 1  "Web Server is available"; do : ; done
 	@open "http://localhost:1313/docs/"
+
+docs/sources/CONTRIBUTING.md:
+	mkdir -p docs/sources/
+	curl -sLo docs/sources/CONTRIBUTING.md https://raw.githubusercontent.com/getporter/porter/release/v1/CONTRIBUTING.md
 
 docs-stop-preview:
 	@docker rm -f porter-docs &> /dev/null || true
