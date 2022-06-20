@@ -21,7 +21,7 @@ func TestPorter_Lint_ChecksManifestSchemaVersion(t *testing.T) {
 		wantErr       string
 	}{
 		{name: "valid version", schemaVersion: manifest.SupportedSchemaVersion},
-		{name: "invalid version", schemaVersion: "", wantErr: "Invalid schema version"},
+		{name: "invalid version", schemaVersion: "", wantErr: "invalid schema version"},
 	}
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
