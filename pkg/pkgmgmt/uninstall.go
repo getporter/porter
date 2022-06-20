@@ -1,9 +1,9 @@
 package pkgmgmt
 
 import (
+	"errors"
+	"fmt"
 	"strings"
-
-	"github.com/pkg/errors"
 )
 
 type UninstallOptions struct {
@@ -13,12 +13,12 @@ type UninstallOptions struct {
 func (o *UninstallOptions) Validate(args []string) error {
 	switch len(args) {
 	case 0:
-		return errors.Errorf("no name was specified")
+		return errors.New("no name was specified")
 	case 1:
 		o.Name = strings.ToLower(args[0])
 		return nil
 	default:
-		return errors.Errorf("only one positional argument may be specified, the name, but multiple were received: %s", args)
+		return fmt.Errorf("only one positional argument may be specified, the name, but multiple were received: %s", args)
 
 	}
 }

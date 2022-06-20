@@ -7,8 +7,6 @@ import (
 	"net/http"
 	"sort"
 	"strings"
-
-	"github.com/pkg/errors"
 )
 
 // Searcher can locate a mixin or plugin from the community feeds.
@@ -40,7 +38,7 @@ func (s *Searcher) Search(name, pkgType string) (PackageList, error) {
 	}
 
 	if results.Len() == 0 {
-		return PackageList{}, errors.Errorf("no %ss found for %s", pkgType, name)
+		return PackageList{}, fmt.Errorf("no %ss found for %s", pkgType, name)
 	}
 
 	sort.Sort(results)
@@ -51,7 +49,7 @@ func (s *Searcher) Search(name, pkgType string) (PackageList, error) {
 func GetPackageListings(url string) (PackageList, error) {
 	resp, err := http.Get(url)
 	if err != nil {
-		return PackageList{}, errors.Wrapf(err, "unable to fetch package list via %s", url)
+		return PackageList{}, fmt.Errorf("unable to fetch package list via %s: %w", url, err)
 	}
 	if resp.StatusCode != http.StatusOK {
 		return PackageList{}, fmt.Errorf("unable to fetch package list via %s: %s", url, http.StatusText(resp.StatusCode))
@@ -60,13 +58,13 @@ func GetPackageListings(url string) (PackageList, error) {
 	defer resp.Body.Close()
 	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return PackageList{}, errors.Wrapf(err, "unable to read package list via %s", url)
+		return PackageList{}, fmt.Errorf("unable to read package list via %s: %w", url, err)
 	}
 
 	list := PackageList{}
 	err = json.Unmarshal(data, &list)
 	if err != nil {
-		return PackageList{}, errors.Wrap(err, "unable to unmarshal package list")
+		return PackageList{}, fmt.Errorf("unable to unmarshal package list: %w", err)
 	}
 
 	return list, nil
