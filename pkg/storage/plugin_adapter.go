@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"get.porter.sh/porter/pkg/storage/plugins"
-	"github.com/pkg/errors"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -83,7 +82,11 @@ func (a PluginAdapter) FindOne(ctx context.Context, collection string, opts Find
 	}
 
 	err = a.unmarshal(rawResults[0], out)
-	return errors.Wrapf(err, "could not unmarshal document of type %T", out)
+	if err != nil {
+		return fmt.Errorf("could not unmarshal document of type %T: %w", out, err)
+	}
+
+	return nil
 }
 
 // unmarshalSlice unpacks a slice of bson documents onto the specified type slice (out)
@@ -108,12 +111,16 @@ func (a PluginAdapter) unmarshalSlice(bsonResults []bson.Raw, out interface{}) e
 	// Marshal the consolidated document to json
 	data, err := json.Marshal(tmpResults)
 	if err != nil {
-		return errors.Wrap(err, "error marshaling results into a single result document")
+		return fmt.Errorf("error marshaling results into a single result document: %w", err)
 	}
 
 	// Unmarshal the consolidated results onto our destination output
 	err = json.Unmarshal(data, out)
-	return errors.Wrapf(err, "could not unmarshal slice onto type %T", out)
+	if err != nil {
+		return fmt.Errorf("could not unmarshal slice onto type %T: %w", out, err)
+	}
+
+	return nil
 }
 
 // unmarshalSlice a bson document onto the specified typed output
@@ -132,12 +139,16 @@ func (a PluginAdapter) unmarshal(bsonResult bson.Raw, out interface{}) error {
 	// Marshal the consolidated document to json
 	data, err := json.Marshal(tmpResult)
 	if err != nil {
-		return errors.Wrap(err, "error marshaling results into a single result document")
+		return fmt.Errorf("error marshaling results into a single result document: %w", err)
 	}
 
 	// Unmarshal the consolidated results onto our destination output
 	err = json.Unmarshal(data, out)
-	return errors.Wrapf(err, "could not unmarshal slice onto type %T", out)
+	if err != nil {
+		return fmt.Errorf("could not unmarshal slice onto type %T: %w", out, err)
+	}
+
+	return nil
 }
 
 func (a PluginAdapter) Get(ctx context.Context, collection string, opts GetOptions, out interface{}) error {
@@ -167,8 +178,8 @@ func (a PluginAdapter) Remove(ctx context.Context, collection string, opts Remov
 }
 
 func (a PluginAdapter) Update(ctx context.Context, collection string, opts UpdateOptions) error {
-	pluginOpts, err := opts.ToPluginOptions(collection)
-	err = a.plugin.Update(ctx, pluginOpts)
+	pluginOpts, _ := opts.ToPluginOptions(collection)
+	err := a.plugin.Update(ctx, pluginOpts)
 	return a.handleError(err, collection)
 }
 

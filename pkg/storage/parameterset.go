@@ -6,7 +6,6 @@ import (
 
 	"get.porter.sh/porter/pkg/secrets"
 	"github.com/cnabio/cnab-go/schema"
-	"github.com/pkg/errors"
 )
 
 const INTERNAL_PARAMETERER_SET = "internal-parameter-set"
@@ -80,7 +79,7 @@ func (s ParameterSet) Validate() error {
 		if s.SchemaVersion == "" {
 			s.SchemaVersion = "(none)"
 		}
-		return errors.Errorf("invalid schemaVersion provided: %s. This version of Porter is compatible with %s.", s.SchemaVersion, ParameterSetSchemaVersion)
+		return fmt.Errorf("invalid schemaVersion provided: %s. This version of Porter is compatible with %s.", s.SchemaVersion, ParameterSetSchemaVersion)
 	}
 	return nil
 }

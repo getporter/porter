@@ -2,9 +2,9 @@ package storage
 
 import (
 	"context"
+	"errors"
 
 	"get.porter.sh/porter/pkg/tracing"
-	"github.com/pkg/errors"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
