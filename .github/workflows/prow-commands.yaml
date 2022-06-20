@@ -1,0 +1,19 @@
+# https://github.com/jpmcb/prow-github-actions
+
+# This reacts to issue comments and checks for prow slash comments, and runs the command if found.
+name: "React to Prow Commands"
+on: [issue_comment]
+permissions:
+  issues: write # give permission to apply the lgtm label
+  pull-requests: write # give permission to approve the PR
+
+jobs:
+  execute:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: jpmcb/prow-github-actions@2ac4434b3ce3d523fc3e28a879ec671c4a7750fa # main
+        with:
+          prow-commands: |
+            /approve
+            /lgtm
+          github-token: "${{ secrets.GITHUB_TOKEN }}"
