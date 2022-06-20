@@ -6,7 +6,6 @@ import (
 
 	"get.porter.sh/porter/pkg/pkgmgmt"
 	"get.porter.sh/porter/pkg/printer"
-	"github.com/pkg/errors"
 )
 
 // SearchOptions are options for searching packages
@@ -45,7 +44,7 @@ func (o *SearchOptions) validatePackageName(args []string) error {
 		o.Name = strings.ToLower(args[0])
 		return nil
 	default:
-		return errors.Errorf("only one positional argument may be specified, the package name, but multiple were received: %s", args)
+		return fmt.Errorf("only one positional argument may be specified, the package name, but multiple were received: %s", args)
 	}
 }
 

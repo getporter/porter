@@ -2,6 +2,7 @@ package porter
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -21,7 +22,6 @@ import (
 	"get.porter.sh/porter/pkg/templates"
 	"get.porter.sh/porter/pkg/tracing"
 	"github.com/hashicorp/go-multierror"
-	"github.com/pkg/errors"
 )
 
 // Porter is the logic behind the porter client.

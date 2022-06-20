@@ -2,11 +2,12 @@ package porter
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"time"
 
 	"get.porter.sh/porter/pkg/cnab"
 	"github.com/Masterminds/semver/v3"
-	"github.com/pkg/errors"
 )
 
 var _ BundleAction = NewUpgradeOptions()
@@ -60,7 +61,7 @@ func (p *Porter) UpgradeBundle(ctx context.Context, opts UpgradeOptions) error {
 	// Sync any changes specified by the user to the installation before running upgrade
 	i, err := p.Installations.GetInstallation(ctx, opts.Namespace, opts.Name)
 	if err != nil {
-		return errors.Wrapf(err, "could not find installation %s/%s", opts.Namespace, opts.Name)
+		return fmt.Errorf("could not find installation %s/%s: %w", opts.Namespace, opts.Name, err)
 	}
 
 	if opts.Reference != "" {
@@ -71,7 +72,9 @@ func (p *Porter) UpgradeBundle(ctx context.Context, opts UpgradeOptions) error {
 		i.Bundle.Tag = ""
 	}
 
-	err = p.applyActionOptionsToInstallation(ctx, &i, opts.BundleActionOptions)
+	// FIXME: Should we check err here?
+	_ = p.applyActionOptionsToInstallation(ctx, &i, opts.BundleActionOptions)
+
 	i.Status.Modified = time.Now()
 	err = i.Validate()
 	if err != nil {

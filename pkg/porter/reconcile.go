@@ -2,6 +2,7 @@ package porter
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sort"
 
@@ -11,7 +12,6 @@ import (
 	"get.porter.sh/porter/pkg/yaml"
 	"github.com/google/go-cmp/cmp"
 	_ "github.com/google/go-cmp/cmp"
-	"github.com/pkg/errors"
 	"go.opentelemetry.io/otel/attribute"
 )
 
@@ -56,7 +56,7 @@ func (p *Porter) ReconcileInstallation(ctx context.Context, opts ReconcileOption
 	}
 	if !ok {
 		instYaml, _ := yaml.Marshal(opts.Installation)
-		return errors.Errorf("The installation does not define a valid bundle reference.\n%s", instYaml)
+		return fmt.Errorf("The installation does not define a valid bundle reference.\n%s", instYaml)
 	}
 
 	// Configure the bundle action that we should execute IF IT'S OUT OF SYNC
@@ -228,12 +228,12 @@ func (p *Porter) IsInstallationInSync(ctx context.Context, i storage.Installatio
 
 	oldParams, err := prepParametersForComparison(lastRunParams)
 	if err != nil {
-		return false, errors.Wrapf(err, "error prepping old parameters for comparision")
+		return false, fmt.Errorf("error prepping old parameters for comparision: %w", err)
 	}
 
 	newParams, err := prepParametersForComparison(resolvedParams)
 	if err != nil {
-		return false, errors.Wrapf(err, "error prepping current parameters for comparision")
+		return false, fmt.Errorf("error prepping current parameters for comparision: %w", err)
 	}
 
 	if !cmp.Equal(oldParams, newParams) {

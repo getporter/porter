@@ -2,6 +2,7 @@ package porter
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -14,7 +15,6 @@ import (
 	"get.porter.sh/porter/pkg/storage"
 	dtprinter "github.com/carolynvs/datetime-printer"
 	"github.com/olekukonko/tablewriter"
-	"github.com/pkg/errors"
 )
 
 // CredentialShowOptions represent options for Porter's credential show command
@@ -101,7 +101,7 @@ func (o *CredentialOptions) validateCredName(args []string) error {
 	if len(args) == 1 {
 		o.Name = args[0]
 	} else if len(args) > 1 {
-		return errors.Errorf("only one positional argument may be specified, the credential name, but multiple were received: %s", args)
+		return fmt.Errorf("only one positional argument may be specified, the credential name, but multiple were received: %s", args)
 	}
 	return nil
 }
@@ -133,14 +133,18 @@ func (p *Porter) GenerateCredentials(ctx context.Context, opts CredentialOptions
 
 	cs, err := generator.GenerateCredentials(genOpts)
 	if err != nil {
-		return errors.Wrap(err, "unable to generate credentials")
+		return fmt.Errorf("unable to generate credentials: %w", err)
 	}
 
 	cs.Status.Created = time.Now()
 	cs.Status.Modified = cs.Status.Created
 
 	err = p.Credentials.UpsertCredentialSet(ctx, cs)
-	return errors.Wrapf(err, "unable to save credentials")
+	if err != nil {
+		return fmt.Errorf("unable to save credentials: %w", err)
+	}
+
+	return nil
 }
 
 // Validate validates the args provided to Porter's credential show command
@@ -171,29 +175,29 @@ func (p *Porter) EditCredential(ctx context.Context, opts CredentialEditOptions)
 	// TODO(carolynvs): support editing in yaml, json or toml
 	contents, err := encoding.MarshalYaml(credSet)
 	if err != nil {
-		return errors.Wrap(err, "unable to load credentials")
+		return fmt.Errorf("unable to load credentials: %w", err)
 	}
 
 	editor := editor.New(p.Context, fmt.Sprintf("porter-%s.yaml", credSet.Name), contents)
 	output, err := editor.Run(ctx)
 	if err != nil {
-		return errors.Wrap(err, "unable to open editor to edit credentials")
+		return fmt.Errorf("unable to open editor to edit credentials: %w", err)
 	}
 
 	err = encoding.UnmarshalYaml(output, &credSet)
 	if err != nil {
-		return errors.Wrap(err, "unable to process credentials")
+		return fmt.Errorf("unable to process credentials: %w", err)
 	}
 
 	err = p.Credentials.Validate(ctx, credSet)
 	if err != nil {
-		return errors.Wrap(err, "credentials are invalid")
+		return fmt.Errorf("credentials are invalid: %w", err)
 	}
 
 	credSet.Status.Modified = time.Now()
 	err = p.Credentials.UpdateCredentialSet(ctx, credSet)
 	if err != nil {
-		return errors.Wrap(err, "unable to save credentials")
+		return fmt.Errorf("unable to save credentials: %w", err)
 	}
 
 	return nil
@@ -296,7 +300,11 @@ func (p *Porter) DeleteCredential(ctx context.Context, opts CredentialDeleteOpti
 		}
 		return nil
 	}
-	return errors.Wrapf(err, "unable to delete credential set")
+	if err != nil {
+		return fmt.Errorf("unable to delete credential set: %w", err)
+	}
+
+	return nil
 }
 
 // Validate validates the args provided Porter's credential delete command
@@ -311,11 +319,11 @@ func (o *CredentialDeleteOptions) Validate(args []string) error {
 func validateCredentialName(args []string) error {
 	switch len(args) {
 	case 0:
-		return errors.Errorf("no credential name was specified")
+		return fmt.Errorf("no credential name was specified")
 	case 1:
 		return nil
 	default:
-		return errors.Errorf("only one positional argument may be specified, the credential name, but multiple were received: %s", args)
+		return fmt.Errorf("only one positional argument may be specified, the credential name, but multiple were received: %s", args)
 	}
 }
 
@@ -338,11 +346,11 @@ func (p *Porter) CredentialsApply(ctx context.Context, o ApplyOptions) error {
 	var creds storage.CredentialSet
 	err = encoding.UnmarshalFile(p.FileSystem, o.File, &creds)
 	if err != nil {
-		return errors.Wrapf(err, "could not load %s as a credential set", o.File)
+		return fmt.Errorf("could not load %s as a credential set: %w", o.File, err)
 	}
 
 	if err = creds.Validate(); err != nil {
-		return errors.Wrap(err, "invalid credential set")
+		return fmt.Errorf("invalid credential set: %w", err)
 	}
 
 	creds.Namespace = namespace
@@ -350,7 +358,7 @@ func (p *Porter) CredentialsApply(ctx context.Context, o ApplyOptions) error {
 
 	err = p.Credentials.Validate(ctx, creds)
 	if err != nil {
-		return errors.Wrap(err, "credential set is invalid")
+		return fmt.Errorf("credential set is invalid: %w", err)
 	}
 
 	err = p.Credentials.UpsertCredentialSet(ctx, creds)
@@ -367,7 +375,7 @@ func (p *Porter) getNamespaceFromFile(o ApplyOptions) (string, error) {
 	var raw map[string]interface{}
 	err := encoding.UnmarshalFile(p.FileSystem, o.File, &raw)
 	if err != nil {
-		return "", errors.Wrapf(err, "invalid file '%s'", o.File)
+		return "", fmt.Errorf("invalid file '%s': %w", o.File, err)
 	}
 
 	if rawNamespace, ok := raw["namespace"]; ok {
@@ -389,7 +397,7 @@ type CredentialCreateOptions struct {
 
 func (o *CredentialCreateOptions) Validate(args []string) error {
 	if len(args) > 1 {
-		return errors.Errorf("only one positional argument may be specified, fileName, but multiple were received: %s", args)
+		return fmt.Errorf("only one positional argument may be specified, fileName, but multiple were received: %s", args)
 	}
 
 	if len(args) > 0 {
@@ -397,7 +405,7 @@ func (o *CredentialCreateOptions) Validate(args []string) error {
 	}
 
 	if o.OutputType == "" && o.FileName != "" && strings.Trim(filepath.Ext(o.FileName), ".") == "" {
-		return errors.New("could not detect the file format from the file extension (.txt). Specify the format with --output.")
+		return errors.New("could not detect the file format from the file extension (.txt). Specify the format with --output")
 	}
 
 	return nil
@@ -449,5 +457,5 @@ func (p *Porter) CreateCredential(opts CredentialCreateOptions) error {
 }
 
 func newUnsupportedFormatError(format string) error {
-	return errors.Errorf("unsupported format %s. Supported formats are: yaml and json.", format)
+	return fmt.Errorf("unsupported format %s. Supported formats are: yaml and json", format)
 }

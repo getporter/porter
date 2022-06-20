@@ -2,6 +2,7 @@ package porter
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -12,7 +13,6 @@ import (
 	"get.porter.sh/porter/pkg/runtime"
 	"get.porter.sh/porter/pkg/storage"
 	"github.com/hashicorp/go-multierror"
-	"github.com/pkg/errors"
 )
 
 type dependencyExecutioner struct {
@@ -131,7 +131,7 @@ func (e *dependencyExecutioner) identifyDependencies(ctx context.Context) error 
 	} else if e.parentOpts.Reference != "" {
 		cachedBundle, err := e.Resolver.Resolve(e.parentOpts.BundlePullOptions)
 		if err != nil {
-			return errors.Wrapf(err, "could not resolve bundle")
+			return fmt.Errorf("could not resolve bundle: %w", err)
 		}
 
 		bun = cachedBundle.Definition
@@ -175,23 +175,23 @@ func (e *dependencyExecutioner) prepareDependency(ctx context.Context, dep *queu
 		Force:            e.parentOpts.Force,
 	}
 	if err := pullOpts.Validate(); err != nil {
-		return errors.Wrapf(err, "error preparing dependency %s", dep.Alias)
+		return fmt.Errorf("error preparing dependency %s: %w", dep.Alias, err)
 	}
 	cachedDep, err := e.Resolver.Resolve(pullOpts)
 	if err != nil {
-		return errors.Wrapf(err, "error pulling dependency %s", dep.Alias)
+		return fmt.Errorf("error pulling dependency %s: %w", dep.Alias, err)
 	}
 	dep.BundleReference = cachedDep.BundleReference
 
 	err = cachedDep.Definition.Validate()
 	if err != nil {
-		return errors.Wrapf(err, "invalid bundle %s", dep.Alias)
+		return fmt.Errorf("invalid bundle %s: %w", dep.Alias, err)
 	}
 
 	// Cache the bundle.json for later
 	dep.cnabFileContents, err = e.FileSystem.ReadFile(cachedDep.BundlePath)
 	if err != nil {
-		return errors.Wrapf(err, "error reading %s", cachedDep.BundlePath)
+		return fmt.Errorf("error reading %s: %w", cachedDep.BundlePath, err)
 	}
 
 	// Make a lookup of which parameters are defined in the dependent bundle
@@ -222,7 +222,7 @@ func (e *dependencyExecutioner) prepareDependency(ctx context.Context, dep *queu
 			for paramName, value := range manifestDep.Parameters {
 				// Make sure the parameter is defined in the bundle
 				if _, ok := depParams[paramName]; !ok {
-					return errors.Errorf("invalid dependencies.%s.parameters entry, %s is not a parameter defined in that bundle", dep.Alias, paramName)
+					return fmt.Errorf("invalid dependencies.%s.parameters entry, %s is not a parameter defined in that bundle", dep.Alias, paramName)
 				}
 
 				if dep.Parameters == nil {
@@ -242,7 +242,7 @@ func (e *dependencyExecutioner) prepareDependency(ctx context.Context, dep *queu
 
 			// Make sure the parameter is defined in the bundle
 			if _, ok := depParams[paramName]; !ok {
-				return errors.Errorf("invalid --param %s, %s is not a parameter defined in the bundle %s", key, paramName, dep.Alias)
+				return fmt.Errorf("invalid --param %s, %s is not a parameter defined in the bundle %s", key, paramName, dep.Alias)
 			}
 
 			if dep.Parameters == nil {
@@ -279,7 +279,7 @@ func (e *dependencyExecutioner) executeDependency(ctx context.Context, dep *queu
 
 	resolvedParameters, err := e.porter.resolveParameters(ctx, depInstallation, dep.BundleReference.Definition, e.parentArgs.Action, dep.Parameters)
 	if err != nil {
-		return errors.Wrapf(err, "error resolving parameters for dependency %s", dep.Alias)
+		return fmt.Errorf("error resolving parameters for dependency %s: %w", dep.Alias, err)
 	}
 
 	depArgs := cnabprovider.ActionArguments{
@@ -303,7 +303,7 @@ func (e *dependencyExecutioner) executeDependency(ctx context.Context, dep *queu
 	fmt.Fprintf(e.Out, "Executing dependency %s...\n", dep.Alias)
 	err = e.CNAB.Execute(ctx, depArgs)
 	if err != nil {
-		executeErrs = multierror.Append(executeErrs, errors.Wrapf(err, "error executing dependency %s", dep.Alias))
+		executeErrs = multierror.Append(executeErrs, fmt.Errorf("error executing dependency %s: %w", dep.Alias, err))
 
 		// Handle errors when/if the action is uninstall
 		// If uninstallOpts is an empty struct, executeErrs will pass through
