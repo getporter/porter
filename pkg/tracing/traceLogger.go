@@ -2,11 +2,11 @@ package tracing
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"runtime"
 	"strings"
 
-	"github.com/pkg/errors"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
@@ -201,9 +201,14 @@ func (l traceLogger) Error(err error, attrs ...attribute.KeyValue) error {
 		trace.WithAttributes(attrs...),
 	}
 
-	if st := findStack(err); st != nil {
+	// Find the closest stack trace to where the error was generated
+	closestErr := err
+	for errors.Unwrap(closestErr) != nil {
+		closestErr = errors.Unwrap(closestErr)
+	}
+	if closestErr != nil {
 		errOpts = append(errOpts, trace.WithAttributes(
-			semconv.ExceptionStacktraceKey.String(fmt.Sprintf("%+v", st)),
+			semconv.ExceptionStacktraceKey.String(fmt.Sprintf("%+v", closestErr)),
 		))
 	}
 
@@ -218,38 +223,6 @@ func addLogToSpan(span trace.Span, msg string, level string, attrs ...attribute.
 	attrs = append(attrs,
 		attribute.String("level", level))
 	span.AddEvent(msg, trace.WithAttributes(attrs...))
-}
-
-// Find the closest stack trace to where the error was generated
-// https://github.com/pkg/errors/issues/173#issuecomment-456729811
-func findStack(err error) errors.StackTrace {
-	type causer interface {
-		Cause() error
-	}
-
-	type stackTracer interface {
-		StackTrace() errors.StackTrace
-	}
-
-	var stackErr error
-
-	for {
-		if _, ok := err.(stackTracer); ok {
-			stackErr = err
-		}
-
-		if causer, ok := err.(causer); ok {
-			err = causer.Cause()
-		} else {
-			break
-		}
-	}
-
-	if stackErr != nil {
-		return stackErr.(stackTracer).StackTrace()
-	}
-
-	return nil
 }
 
 func callerFunc() string {
