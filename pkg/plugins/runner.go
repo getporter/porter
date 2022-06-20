@@ -2,12 +2,12 @@ package plugins
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/portercontext"
-	"github.com/pkg/errors"
 )
 
 type CommandOptions struct {
@@ -33,15 +33,15 @@ func (r *PluginRunner) Validate() error {
 
 	pluginPath, err := config.New().GetPluginPath(r.pluginName)
 	if err != nil {
-		return errors.Wrapf(err, "Failed to get plugin path for %s", r.pluginName)
+		return fmt.Errorf("Failed to get plugin path for %s: %w", r.pluginName, err)
 	}
 
 	exists, err := r.FileSystem.Exists(pluginPath)
 	if err != nil {
-		return errors.Wrapf(err, "Failed to stat path %s", pluginPath)
+		return fmt.Errorf("Failed to stat path %s: %w", pluginPath, err)
 	}
 	if !exists {
-		return errors.Errorf("Plugin %s doesn't exist in filesystem with path %s", r.pluginName, pluginPath)
+		return fmt.Errorf("Plugin %s doesn't exist in filesystem with path %s", r.pluginName, pluginPath)
 	}
 
 	return nil
@@ -58,7 +58,7 @@ func (r *PluginRunner) Run(ctx context.Context, commandOpts CommandOptions) erro
 		fmt.Fprintln(r.Err, "DEBUG Plugin Path: ", pluginPath)
 	}
 	if err != nil {
-		return errors.Wrapf(err, "Failed to get plugin path for %s", r.pluginName)
+		return fmt.Errorf("Failed to get plugin path for %s: %w", r.pluginName, err)
 	}
 
 	cmdArgs := strings.Split(commandOpts.Command, " ")
@@ -75,7 +75,7 @@ func (r *PluginRunner) Run(ctx context.Context, commandOpts CommandOptions) erro
 
 	err = cmd.Start()
 	if err != nil {
-		return errors.Wrapf(err, "could not run plugin command %s", prettyCmd)
+		return fmt.Errorf("could not run plugin command %s: %w", prettyCmd, err)
 	}
 
 	return cmd.Wait()

@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -20,7 +21,6 @@ import (
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-multierror"
 	"github.com/hashicorp/go-plugin"
-	"github.com/pkg/errors"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.opentelemetry.io/otel/attribute"
 	"google.golang.org/grpc"
@@ -91,7 +91,7 @@ func (c *PluginConnection) Start(ctx context.Context, pluginCfg io.Reader) error
 	if c.key.IsInternal {
 		porterPath, err := c.config.GetPorterPath()
 		if err != nil {
-			return errors.Wrap(err, "could not determine the path to the porter pluginProtocol")
+			return fmt.Errorf("could not determine the path to the porter pluginProtocol: %w", err)
 		}
 
 		c.pluginCmd = c.config.NewCommand(ctx, porterPath, "plugin", "run", c.key.String())
@@ -158,22 +158,22 @@ func (c *PluginConnection) Start(ctx context.Context, pluginCfg io.Reader) error
 	if err != nil {
 		c.Close(ctx)
 		if stderr := errbuf.String(); stderr != "" {
-			err = errors.Wrap(errors.New(stderr), err.Error())
+			err = fmt.Errorf("%s: %w", err.Error(), errors.New(stderr))
 		}
-		return span.Error(errors.Wrapf(err, "could not connect to the %s plugin", c.key))
+		return span.Error(fmt.Errorf("could not connect to the %s plugin: %w", c.key, err))
 	}
 
 	err = c.setUpDebugger(ctx, c.client)
 	if err != nil {
 		c.Close(ctx)
-		return span.Error(errors.Wrap(err, "could not set up debugger for plugin"))
+		return span.Error(fmt.Errorf("could not set up debugger for plugin: %w", err))
 	}
 
 	// Get a connection to the plugin
 	c.pluginProtocol, err = rpcClient.Dispense(c.key.Interface)
 	if err != nil {
 		c.Close(ctx)
-		return span.Error(errors.Wrapf(err, "could not connect to the %s plugin", c.key))
+		return span.Error(fmt.Errorf("could not connect to the %s plugin: %w", c.key, err))
 	}
 
 	span.SetAttributes(attribute.Int("negotiated-protocol-version", c.client.NegotiatedVersion()))
@@ -266,12 +266,12 @@ func (c *PluginConnection) setUpDebugger(ctx context.Context, client *plugin.Cli
 	}
 
 	if !isDelveInstalled() {
-		return log.Error(errors.New("Delve needs to be installed to debug plugins"))
+		return log.Error(errors.New("delve needs to be installed to debug plugins"))
 	}
 
 	listen := fmt.Sprintf("--listen=127.0.0.1:%s", debugContext.DebuggerPort)
 	if len(debugContext.PlugInWorkingDirectory) == 0 {
-		return log.Error(errors.New("Plugin Working Directory is required for debugging"))
+		return log.Error(errors.New("plugin Working Directory is required for debugging"))
 	}
 	wd := fmt.Sprintf("--wd=%s", debugContext.PlugInWorkingDirectory)
 	pid := client.ReattachConfig().Pid
@@ -280,7 +280,7 @@ func (c *PluginConnection) setUpDebugger(ctx context.Context, client *plugin.Cli
 	c.debugger.Stdout = os.Stdout
 	err := c.debugger.Start()
 	if err != nil {
-		return log.Error(fmt.Errorf("Error starting dlv: %w", err))
+		return log.Error(fmt.Errorf("error starting dlv: %w", err))
 	}
 	return nil
 }
