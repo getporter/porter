@@ -91,7 +91,7 @@ func (g *DockerfileGenerator) getBaseDockerfile(ctx context.Context) ([]string, 
 	if g.Manifest.Dockerfile != "" {
 		exists, err := g.FileSystem.Exists(g.Manifest.Dockerfile)
 		if err != nil {
-			return nil, fmt.Errorf("error checking if Dockerfile %q exists: %w", g.Manifest.Dockerfile, err)
+			return nil, fmt.Errorf("error checking if Dockerfile exists: %q: %w", g.Manifest.Dockerfile, err)
 		}
 		if !exists {
 			return nil, fmt.Errorf("the Dockerfile specified in the manifest doesn't exist: %q", g.Manifest.Dockerfile)
