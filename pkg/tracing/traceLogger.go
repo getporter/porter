@@ -2,7 +2,6 @@ package tracing
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"runtime"
 	"strings"
@@ -202,15 +201,15 @@ func (l traceLogger) Error(err error, attrs ...attribute.KeyValue) error {
 	}
 
 	// Find the closest stack trace to where the error was generated
-	closestErr := err
-	for errors.Unwrap(closestErr) != nil {
-		closestErr = errors.Unwrap(closestErr)
-	}
-	if closestErr != nil {
-		errOpts = append(errOpts, trace.WithAttributes(
-			semconv.ExceptionStacktraceKey.String(fmt.Sprintf("%+v", closestErr)),
-		))
-	}
+	// closestErr := err
+	// for errors.Unwrap(closestErr) != nil {
+	// 	closestErr = errors.Unwrap(closestErr)
+	// }
+	// if closestErr != nil {
+	errOpts = append(errOpts, trace.WithAttributes(
+		semconv.ExceptionStacktraceKey.String(fmt.Sprintf("%+v", err)),
+	))
+	// }
 
 	l.span.RecordError(err, errOpts...)
 	l.span.SetStatus(codes.Error, err.Error())
