@@ -65,3 +65,27 @@ func TestTemplates_GetCredentialSetYAML(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, wantTmpl, gotTmpl)
 }
+
+func TestTemplates_GetParameterSetJSON(t *testing.T) {
+	c := config.NewTestConfig(t)
+	tmpl := NewTemplates(c.Config)
+
+	gotTmpl, err := tmpl.GetParameterSetJSON()
+	require.NoError(t, err)
+
+	wantTmpl, err := ioutil.ReadFile("./templates/parameters/create/parameter-set.json")
+	require.NoError(t, err)
+	assert.Equal(t, wantTmpl, gotTmpl)
+}
+
+func TestTemplates_GetParameterSetYAML(t *testing.T) {
+	c := config.NewTestConfig(t)
+	tmpl := NewTemplates(c.Config)
+
+	gotTmpl, err := tmpl.GetParameterSetYAML()
+	require.NoError(t, err)
+
+	wantTmpl, err := ioutil.ReadFile("./templates/parameters/create/parameter-set.yaml")
+	require.NoError(t, err)
+	assert.Equal(t, wantTmpl, gotTmpl)
+}
