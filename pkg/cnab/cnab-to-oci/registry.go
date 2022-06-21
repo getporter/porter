@@ -196,7 +196,7 @@ func (r *Registry) IsImageCached(ctx context.Context, invocationImage string) (b
 
 	imageSummaries, err := cli.Client().ImageList(ctx, imageListOpts)
 	if err != nil {
-		return false, fmt.Errorf("not list images: %w", err)
+		return false, fmt.Errorf("could not list images: %w", err)
 	}
 
 	if len(imageSummaries) == 0 {
