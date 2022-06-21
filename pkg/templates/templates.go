@@ -87,3 +87,13 @@ func (t *Templates) GetCredentialSetJSON() ([]byte, error) {
 func (t *Templates) GetCredentialSetYAML() ([]byte, error) {
 	return t.fs.ReadFile("templates/credentials/create/credential-set.yaml")
 }
+
+// GetParameterSetJSON returns a parameter-set.schema.json template file to define new parameter set.
+func (t *Templates) GetParameterSetJSON() ([]byte, error) {
+	return t.fs.ReadFile("templates/parameters/create/parameter-set.json")
+}
+
+// GetParameterSetYAML returns a parameter-set.yaml template file to define new parameter set.
+func (t *Templates) GetParameterSetYAML() ([]byte, error) {
+	return t.fs.ReadFile("templates/parameters/create/parameter-set.yaml")
+}

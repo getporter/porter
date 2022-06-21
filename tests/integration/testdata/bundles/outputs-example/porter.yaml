@@ -29,7 +29,8 @@ install:
       description: "Echo step-level output"
       command: ./helpers.sh
       arguments:
-        - "dump {{ bundle.outputs.user }}"
+        - dump
+        - "{{ bundle.outputs.user }}"
 
 upgrade:
   - exec:
@@ -48,7 +49,9 @@ upgrade:
       description: "Validate bundle-level output value in the same action as it was produced"
       command: ./helpers.sh
       arguments:
-        - "assert-output-value {{ bundle.outputs.user-output }} 'sally'"
+        - assert-output-value
+        - "{{ bundle.outputs.user-output }}"
+        - "sally"
 
 uninstall:
   # This step tests successful interpolation of a bundle-level output across actions  
@@ -56,4 +59,5 @@ uninstall:
       description: "Echo bundle-level output"
       command: ./helpers.sh
       arguments:
-        - "dump {{ bundle.outputs.user-output }}"
+        - dump
+        - "{{ bundle.outputs.user-output }}"

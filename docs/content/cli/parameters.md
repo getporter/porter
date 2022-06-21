@@ -30,6 +30,7 @@ Most commands require a Docker daemon, either local or remote.
 Try our QuickStart https://porter.sh/quickstart to learn how to use Porter.
 
 * [porter parameters apply](/cli/porter_parameters_apply/)	 - Apply changes to a parameter set
+* [porter parameters create](/cli/porter_parameters_create/)	 - Create a Parameter Set
 * [porter parameters delete](/cli/porter_parameters_delete/)	 - Delete a Parameter Set
 * [porter parameters edit](/cli/porter_parameters_edit/)	 - Edit Parameter Set
 * [porter parameters generate](/cli/porter_parameters_generate/)	 - Generate Parameter Set
