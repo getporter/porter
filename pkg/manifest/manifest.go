@@ -971,7 +971,7 @@ func readFromFile(cxt *portercontext.Context, path string) ([]byte, error) {
 
 	data, err := cxt.FileSystem.ReadFile(path)
 	if err != nil {
-		return data, fmt.Errorf("could not read manifest at %q: %w", path, err)
+		return nil, fmt.Errorf("could not read manifest at %q: %w", path, err)
 	}
 	return data, nil
 }
