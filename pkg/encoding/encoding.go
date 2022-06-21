@@ -64,7 +64,7 @@ func Marshal(format string, in interface{}) (data []byte, err error) {
 	}
 
 	if err != nil {
-		return data, fmt.Errorf("error marshaling to %s: %w", format, err)
+		return nil, fmt.Errorf("error marshaling to %s: %w", format, err)
 	}
 
 	return data, nil
