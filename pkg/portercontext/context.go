@@ -456,6 +456,8 @@ func (c *Context) CopyDirectory(srcDir, destDir string, includeBaseDir bool) err
 			if err != nil {
 				return fmt.Errorf("%w", err)
 			}
+
+			return nil
 		}
 
 		return c.CopyFile(path, dest)
