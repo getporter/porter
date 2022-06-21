@@ -1,0 +1,41 @@
+{
+    "schemaType": "ParameterSet",
+    "schemaVersion": "1.0.1",
+    "name": "NAME",
+    "namespace": "NAMESPACE",
+    "labels": {
+        "LABEL": "LABEL_VALUE"
+    },
+    "parameters": [
+        {
+            "name": "parameter-path",
+            "source": {
+                "path": "/path/to/parameter-path-file.txt"
+            }
+        },
+        {
+            "name": "parameter-command",
+            "source": {
+                "command": "echo 'parameter command'"
+            }
+        },
+        {
+            "name": "parameter-env",
+            "source": {
+                "ENV": "PARAMETER_ENV"
+            }
+        },
+        {
+            "name": "parameter-value",
+            "source": {
+                "value": "parametervalue"
+            }
+        },
+        {
+            "name": "parameter-secret",
+            "source": {
+                "secret": "parameter-secret"
+            }
+        }
+    ]
+}
