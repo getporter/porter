@@ -33,7 +33,7 @@ func (g ManifestGenerator) BuildInput(mixinName string) ([]byte, error) {
 	input := g.buildInputForMixin(mixinName)
 	inputB, err := yaml.Marshal(input)
 	if err != nil {
-		return inputB, fmt.Errorf("could not marshal mixin build input for %s: %w", mixinName, err)
+		return nil, fmt.Errorf("could not marshal mixin build input for %s: %w", mixinName, err)
 	}
 
 	return inputB, nil
