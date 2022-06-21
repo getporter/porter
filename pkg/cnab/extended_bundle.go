@@ -152,7 +152,7 @@ func WriteParameterToString(paramName string, value interface{}) (string, error)
 
 	contents, err := json.Marshal(value)
 	if err != nil {
-		return string(contents), fmt.Errorf("could not marshal the value for parameter %s to a json string %#v: %w", paramName, value, err)
+		return "", fmt.Errorf("could not marshal the value for parameter %s to a json string %#v: %w", paramName, value, err)
 	}
 
 	return string(contents), nil
