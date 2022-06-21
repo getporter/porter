@@ -72,7 +72,6 @@ func (p *Porter) UpgradeBundle(ctx context.Context, opts UpgradeOptions) error {
 		i.Bundle.Tag = ""
 	}
 
-	// FIXME: Should we check err here?
 	_ = p.applyActionOptionsToInstallation(ctx, &i, opts.BundleActionOptions)
 
 	i.Status.Modified = time.Now()
