@@ -200,7 +200,7 @@ type DisplayRun struct {
 	Action     string                 `json:"action" yaml:"action"`
 	Parameters map[string]interface{} `json:"parameters,omitempty" yaml:"parameters,omitempty"`
 	Started    time.Time              `json:"started" yaml:"started"`
-	Stopped    time.Time              `json:"stopped" yaml:"stopped"`
+	Stopped    *time.Time             `json:"stopped" yaml:"stopped"`
 	Status     string                 `json:"status" yaml:"status"`
 }
 
