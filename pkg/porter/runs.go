@@ -70,11 +70,11 @@ func (p *Porter) ListInstallationRuns(ctx context.Context, opts RunListOptions) 
 			switch len(results) {
 			case 2:
 				displayRun.Started = results[0].Created
-				displayRun.Stopped = results[1].Created
+				displayRun.Stopped = &results[1].Created
 			case 1:
 				displayRun.Started = results[0].Created
 			default:
-				displayRun.Stopped = results[len(results)-1].Created
+				displayRun.Stopped = &results[len(results)-1].Created
 			}
 		}
 
@@ -109,7 +109,13 @@ func (p *Porter) PrintInstallationRuns(ctx context.Context, opts RunListOptions)
 				if !ok {
 					return nil
 				}
-				return []string{a.ID, a.Action, tp.Format(a.Started), tp.Format(a.Stopped), a.Status}
+
+				stopped := ""
+				if a.Stopped != nil {
+					stopped = tp.Format(*a.Stopped)
+				}
+
+				return []string{a.ID, a.Action, tp.Format(a.Started), stopped, a.Status}
 			}
 		return printer.PrintTable(p.Out, displayRuns, row, "Run ID", "Action", "Started", "Stopped", "Status")
 	}
