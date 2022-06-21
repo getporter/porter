@@ -985,7 +985,7 @@ func readFromURL(path string) ([]byte, error) {
 	defer resp.Body.Close()
 	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return data, fmt.Errorf("could not read from url %s: %w", path, err)
+		return nil, fmt.Errorf("could not read from url %s: %w", path, err)
 	}
 	return data, nil
 }
