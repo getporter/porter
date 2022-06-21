@@ -197,14 +197,9 @@ func (p *Porter) publishFromFile(ctx context.Context, opts PublishOptions) error
 // OCI Layout, rename each based on the registry/org values derived from the provided tag
 // and then push each updated image with the original digests
 //
-// Finally, we generate a new bundle from the old, with all image names and digests updated, based
-// on the newly copied images, and then push this new bundle using the provided tag.
+// Finally, we update the relocation map in the original bundle, based
+// on the newly copied images, and then push the bundle using the provided tag.
 // (Currently we use the docker/cnab-to-oci library for this logic.)
-//
-// In the generation of a new bundle, we therefore don't preserve content digests and can't maintain
-// signature verification throughout the process.  Once we wish to preserve content digest and such verification,
-// this approach will need to be refactored, via preserving the original bundle and employing
-// a relocation mapping approach to associate the bundle's (old) images with the newly copied images.
 func (p *Porter) publishFromArchive(ctx context.Context, opts PublishOptions) error {
 	ctx, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
