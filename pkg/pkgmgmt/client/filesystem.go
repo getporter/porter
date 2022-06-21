@@ -43,10 +43,7 @@ type FileSystem struct {
 }
 
 func (fs *FileSystem) List() ([]string, error) {
-	parentDir, err := fs.GetPackagesDir()
-	if err != nil {
-		return nil, fmt.Errorf("could not get packages dir: %w", err)
-	}
+	parentDir, _ := fs.GetPackagesDir()
 
 	files, err := fs.FileSystem.ReadDir(parentDir)
 	if err != nil {
