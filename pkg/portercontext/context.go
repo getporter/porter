@@ -472,7 +472,7 @@ func (c *Context) CopyFile(src, dest string) error {
 
 	data, err := c.FileSystem.ReadFile(src)
 	if err != nil {
-		return fmt.Errorf("%w", err)
+		return err
 	}
 
 	err = c.FileSystem.WriteFile(dest, data, info.Mode())
