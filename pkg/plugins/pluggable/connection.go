@@ -156,24 +156,27 @@ func (c *PluginConnection) Start(ctx context.Context, pluginCfg io.Reader) error
 	span.Debug("Connecting to plugin", attribute.String("plugin-command", strings.Join(c.pluginCmd.Args, " ")))
 	rpcClient, err := c.client.Client(ctx)
 	if err != nil {
-		c.Close(ctx)
 		if stderr := errbuf.String(); stderr != "" {
-			err = errors.Wrap(errors.New(stderr), err.Error())
+			err = fmt.Errorf("could not connect to the %s plugin: %w: %s", c.key, err, stderr)
 		}
-		return span.Error(errors.Wrapf(err, "could not connect to the %s plugin", c.key))
+		span.Error(err) // Emit the error before trying to close the connection
+		c.Close(ctx)
+		return err
 	}
 
 	err = c.setUpDebugger(ctx, c.client)
 	if err != nil {
-		c.Close(ctx)
-		return span.Error(errors.Wrap(err, "could not set up debugger for plugin"))
+		err = span.Error(fmt.Errorf("could not set up debugger for plugin: %w", err))
+		c.Close(ctx) // Emit the error before trying to close the connection
+		return err
 	}
 
 	// Get a connection to the plugin
 	c.pluginProtocol, err = rpcClient.Dispense(c.key.Interface)
 	if err != nil {
-		c.Close(ctx)
-		return span.Error(errors.Wrapf(err, "could not connect to the %s plugin", c.key))
+		err = span.Error(fmt.Errorf("could not connect to the %s plugin: %w", c.key, err))
+		c.Close(ctx) // Emit the error before trying to close the connection
+		return err
 	}
 
 	span.SetAttributes(attribute.Int("negotiated-protocol-version", c.client.NegotiatedVersion()))

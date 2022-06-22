@@ -111,16 +111,28 @@ func (t Tester) RequirePorter(args ...string) (string, string) {
 	return stdout, output
 }
 
-// Run a porter command returning stderr when it fails
+// RunPorter executes a porter command returning stderr when it fails.
 func (t Tester) RunPorter(args ...string) (stdout string, combinedoutput string, err error) {
 	t.T.Helper()
+	return t.RunPorterWith(func(cmd *shx.PreparedCommand) {
+		cmd.Args(args...)
+	})
+}
+
+// RunPorterWith works like RunPorter, but you can customize the command before it's run.
+func (t Tester) RunPorterWith(opts ...func(*shx.PreparedCommand)) (stdout string, combinedoutput string, err error) {
+	t.T.Helper()
+
+	cmd := t.buildPorterCommand(opts...)
+
 	// Copy stderr to stdout so we can return the "full" output printed to the console
 	stdoutBuf := &bytes.Buffer{}
 	stderrBuf := &bytes.Buffer{}
 	output := &bytes.Buffer{}
-	cmd := t.buildPorterCommand(args...)
+	cmd.Stdout(io.MultiWriter(stdoutBuf, output)).Stderr(io.MultiWriter(stderrBuf, output))
+
 	t.T.Log(cmd.String())
-	ran, _, err := cmd.Stdout(io.MultiWriter(stdoutBuf, output)).Stderr(io.MultiWriter(stderrBuf, output)).Exec()
+	ran, _, err := cmd.Exec()
 	if err != nil {
 		if ran {
 			err = errors.Wrap(err, stderrBuf.String())
@@ -131,10 +143,13 @@ func (t Tester) RunPorter(args ...string) (stdout string, combinedoutput string,
 }
 
 // Build a porter command, ready to be executed or further customized.
-func (t Tester) buildPorterCommand(args ...string) shx.PreparedCommand {
-	args = append(args, "--debug")
-	return shx.Command("porter", args...).
+func (t Tester) buildPorterCommand(opts ...func(*shx.PreparedCommand)) shx.PreparedCommand {
+	cmd := shx.Command("porter", "--debug").
 		Env("PORTER_HOME="+t.PorterHomeDir, "PORTER_TEST_DB_NAME="+t.dbName)
+	for _, opt := range opts {
+		opt(&cmd)
+	}
+	return cmd
 }
 
 func (t Tester) Close() {

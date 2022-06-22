@@ -2,11 +2,11 @@
   version: ""
   action: install
   started: 2020-04-18T01:02:03.000000004Z
-  stopped: 0001-01-01T00:00:00Z
+  stopped: null
   status: succeeded
 - id: "2"
   version: ""
   action: uninstall
   started: 2020-04-18T01:02:03.000000004Z
-  stopped: 0001-01-01T00:00:00Z
+  stopped: null
   status: succeeded
