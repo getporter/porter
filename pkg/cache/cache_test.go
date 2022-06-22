@@ -181,7 +181,7 @@ func TestStoreRelocationMapping(t *testing.T) {
 			assert.Equal(t, tc.wantedReloPath, cb.RelocationFilePath, "didn't get expected path for store")
 
 			cb, _, err = c.FindBundle(tc.tag)
-			assert.NoError(t, err, fmt.Sprintf("didn't expect find bundle error for test %s", tc.tag))
+			assert.NoError(t, err, "didn't expect find bundle error for test %s", tc.tag)
 			assert.Equal(t, tc.wantedReloPath, cb.RelocationFilePath, "didn't get expected path for load")
 		})
 	}
