@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/md5"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -25,11 +26,10 @@ import (
 	"github.com/cnabio/cnab-go/bundle/definition"
 	multierror "github.com/hashicorp/go-multierror"
 	"github.com/opencontainers/go-digest"
-	"github.com/pkg/errors"
 )
 
 const (
-	invalidStepErrorFormat = "validation of action \"%s\" failed"
+	invalidStepErrorFormat = "validation of action \"%s\" failed: %w"
 
 	// SupportedSchemaVersion is the Porter manifest (porter.yaml) schema
 	// version supported by this version of Porter.
@@ -120,7 +120,7 @@ func (m *Manifest) Validate(cxt *portercontext.Context, strategy schema.CheckStr
 	}
 	err = m.Install.Validate(m)
 	if err != nil {
-		result = multierror.Append(result, errors.Wrapf(err, fmt.Sprintf(invalidStepErrorFormat, "install")))
+		result = multierror.Append(result, fmt.Errorf(invalidStepErrorFormat, "install", err))
 	}
 
 	if m.Uninstall == nil {
@@ -128,13 +128,13 @@ func (m *Manifest) Validate(cxt *portercontext.Context, strategy schema.CheckStr
 	}
 	err = m.Uninstall.Validate(m)
 	if err != nil {
-		result = multierror.Append(result, errors.Wrapf(err, fmt.Sprintf(invalidStepErrorFormat, "uninstall")))
+		result = multierror.Append(result, fmt.Errorf(invalidStepErrorFormat, "uninstall", err))
 	}
 
 	for actionName, steps := range m.CustomActions {
 		err := steps.Validate(m)
 		if err != nil {
-			result = multierror.Append(result, errors.Wrapf(err, fmt.Sprintf(invalidStepErrorFormat, actionName)))
+			result = multierror.Append(result, fmt.Errorf(invalidStepErrorFormat, actionName, err))
 		}
 	}
 
@@ -196,7 +196,7 @@ func (m *Manifest) validateMetadata(cxt *portercontext.Context, strategy schema.
 	if m.Version != "" {
 		v, err := semver.NewVersion(m.Version)
 		if err != nil {
-			return errors.Wrapf(err, "version %q is not a valid semver value", m.Version)
+			return fmt.Errorf("version %q is not a valid semver value: %w", m.Version, err)
 		}
 		m.Version = v.String()
 	}
@@ -362,13 +362,13 @@ func (pd *ParameterDefinition) Validate() error {
 
 	// Validate the Parameter Definition schema itself
 	if _, err := pdCopy.Schema.ValidateSchema(); err != nil {
-		return multierror.Append(result, errors.Wrapf(err, "encountered an error while validating definition for parameter %q", pdCopy.Name))
+		return multierror.Append(result, fmt.Errorf("encountered an error while validating definition for parameter %q: %w", pdCopy.Name, err))
 	}
 
 	if pdCopy.Default != nil {
 		schemaValidationErrs, err := pdCopy.Schema.Validate(pdCopy.Default)
 		if err != nil {
-			result = multierror.Append(result, errors.Wrapf(err, "encountered error while validating parameter %s", pdCopy.Name))
+			result = multierror.Append(result, fmt.Errorf("encountered error while validating parameter %s: %w", pdCopy.Name, err))
 		}
 		for _, schemaValidationErr := range schemaValidationErrs {
 			result = multierror.Append(result, fmt.Errorf("encountered an error validating the default value %v for parameter %q: %s", pdCopy.Default, pdCopy.Name, schemaValidationErr.Error))
@@ -526,7 +526,7 @@ func (m *MixinDeclaration) UnmarshalYAML(unmarshal func(interface{}) error) erro
 	mixinWithConfig := map[string]interface{}{}
 	err = unmarshal(&mixinWithConfig)
 	if err != nil {
-		return errors.Wrap(err, "could not unmarshal raw yaml of mixin declarations")
+		return fmt.Errorf("could not unmarshal raw yaml of mixin declarations: %w", err)
 	}
 
 	if len(mixinWithConfig) == 0 {
@@ -711,13 +711,13 @@ func (od *OutputDefinition) Validate() error {
 
 	// Validate the Output Definition schema itself
 	if _, err := odCopy.Schema.ValidateSchema(); err != nil {
-		return multierror.Append(result, errors.Wrapf(err, "encountered an error while validating definition for output %q", odCopy.Name))
+		return multierror.Append(result, fmt.Errorf("encountered an error while validating definition for output %q: %w", odCopy.Name, err))
 	}
 
 	if odCopy.Default != nil {
 		schemaValidationErrs, err := odCopy.Schema.Validate(odCopy.Default)
 		if err != nil {
-			result = multierror.Append(result, errors.Wrapf(err, "encountered error while validating output %s", odCopy.Name))
+			result = multierror.Append(result, fmt.Errorf("encountered error while validating output %s: %w", odCopy.Name, err))
 		}
 		for _, schemaValidationErr := range schemaValidationErrs {
 			result = multierror.Append(result, fmt.Errorf("encountered an error validating the default value %v for output %q: %s", odCopy.Default, odCopy.Name, schemaValidationErr.Error))
@@ -769,7 +769,7 @@ func (s *Step) Validate(m *Manifest) error {
 		}
 	}
 	if !mixinDeclared {
-		return errors.Errorf("mixin (%s) was not declared", mixinType)
+		return fmt.Errorf("mixin (%s) was not declared", mixinType)
 	}
 
 	if _, err := s.GetDescription(); err != nil {
@@ -794,7 +794,7 @@ func (s *Step) GetDescription() (string, error) {
 	}
 	desc, ok := d.(string)
 	if !ok {
-		return "", errors.Errorf("invalid description type (%T) for mixin step (%s)", desc, mixinName)
+		return "", fmt.Errorf("invalid description type (%T) for mixin step (%s)", desc, mixinName)
 	}
 
 	return desc, nil
@@ -813,7 +813,7 @@ func UnmarshalManifest(cxt *portercontext.Context, manifestData []byte) (*Manife
 	manifest := &Manifest{}
 	err := yaml.Unmarshal(manifestData, &manifest)
 	if err != nil {
-		return nil, errors.Wrap(err, "error unmarshaling the typed manifest")
+		return nil, fmt.Errorf("error unmarshaling the typed manifest: %w", err)
 	}
 
 	// Do a second pass to identify custom actions, which don't have yaml tags since they are dynamic
@@ -825,7 +825,7 @@ func UnmarshalManifest(cxt *portercontext.Context, manifestData []byte) (*Manife
 	unmappedData := make(map[string]interface{})
 	err = yaml.Unmarshal(manifestData, &unmappedData)
 	if err != nil {
-		return nil, errors.Wrap(err, "error unmarshaling the untyped manifest")
+		return nil, fmt.Errorf("error unmarshaling the untyped manifest: %w", err)
 	}
 
 	// Use reflection to figure out which fields are on the manifest and have yaml tags
@@ -853,13 +853,13 @@ func UnmarshalManifest(cxt *portercontext.Context, manifestData []byte) (*Manife
 	for key, chunk := range unmappedData {
 		chunkData, err := yaml.Marshal(chunk)
 		if err != nil {
-			return nil, errors.Wrapf(err, "error remarshaling custom action %s", key)
+			return nil, fmt.Errorf("error remarshaling custom action %s: %w", key, err)
 		}
 
 		steps := Steps{}
 		err = yaml.Unmarshal(chunkData, &steps)
 		if err != nil {
-			return nil, errors.Wrapf(err, "error unmarshaling custom action %s", key)
+			return nil, fmt.Errorf("error unmarshaling custom action %s: %w", key, err)
 		}
 
 		manifest.CustomActions[key] = steps
@@ -884,19 +884,19 @@ func (m *Manifest) SetInvocationImageAndReference(ref string) error {
 	if m.Reference == "" && m.Registry != "" {
 		repo, err := cnab.ParseOCIReference(path.Join(m.Registry, m.Name))
 		if err != nil {
-			return errors.Wrapf(err, "invalid bundle reference %s", path.Join(m.Registry, m.Name))
+			return fmt.Errorf("invalid bundle reference %s: %w", path.Join(m.Registry, m.Name), err)
 		}
 		m.Reference = repo.Repository()
 	}
 
 	bundleRef, err := cnab.ParseOCIReference(m.Reference)
 	if err != nil {
-		return errors.Wrapf(err, "invalid bundle reference %s", m.Reference)
+		return fmt.Errorf("invalid bundle reference %s: %w", m.Reference, err)
 	}
 
 	dockerTag, err := m.getDockerTagFromBundleRef(bundleRef)
 	if err != nil {
-		return errors.Wrapf(err, "unable to derive docker tag from bundle reference %q", m.Reference)
+		return fmt.Errorf("unable to derive docker tag from bundle reference %q: %w", m.Reference, err)
 	}
 
 	// If the docker tag is initially missing from bundleTag, update with
@@ -904,20 +904,20 @@ func (m *Manifest) SetInvocationImageAndReference(ref string) error {
 	if !bundleRef.HasTag() {
 		bundleRef, err = bundleRef.WithTag(dockerTag)
 		if err != nil {
-			return errors.Wrapf(err, "could not set bundle tag to %q", dockerTag)
+			return fmt.Errorf("could not set bundle tag to %q: %w", dockerTag, err)
 		}
 		m.Reference = bundleRef.String()
 	}
 
 	imageName, err := cnab.ParseOCIReference(bundleRef.Repository())
 	if err != nil {
-		return errors.Wrapf(err, "could not set invocation image to %q", bundleRef.Repository())
+		return fmt.Errorf("could not set invocation image to %q: %w", bundleRef.Repository(), err)
 	}
 	referenceHash := md5.Sum([]byte(bundleRef.String()))
 	imgTag := hex.EncodeToString(referenceHash[:])
 	imageRef, err := imageName.WithTag(imgTag)
 	if err != nil {
-		return errors.Wrapf(err, "could not set invocation image tag to %q", dockerTag)
+		return fmt.Errorf("could not set invocation image tag to %q: %w", dockerTag, err)
 	}
 	m.Image = imageRef.String()
 
@@ -964,22 +964,28 @@ func ResolvePath(value string) string {
 
 func readFromFile(cxt *portercontext.Context, path string) ([]byte, error) {
 	if exists, _ := cxt.FileSystem.Exists(path); !exists {
-		return nil, errors.Errorf("the specified porter configuration file %s does not exist", path)
+		return nil, fmt.Errorf("the specified porter configuration file %s does not exist", path)
 	}
 
 	data, err := cxt.FileSystem.ReadFile(path)
-	return data, errors.Wrapf(err, "could not read manifest at %q", path)
+	if err != nil {
+		return nil, fmt.Errorf("could not read manifest at %q: %w", path, err)
+	}
+	return data, nil
 }
 
 func readFromURL(path string) ([]byte, error) {
 	resp, err := http.Get(path)
 	if err != nil {
-		return nil, errors.Wrapf(err, "could not reach url %s", path)
+		return nil, fmt.Errorf("could not reach url %s: %w", path, err)
 	}
 
 	defer resp.Body.Close()
 	data, err := ioutil.ReadAll(resp.Body)
-	return data, errors.Wrapf(err, "could not read from url %s", path)
+	if err != nil {
+		return nil, fmt.Errorf("could not read from url %s: %w", path, err)
+	}
+	return data, nil
 }
 
 func ReadManifestData(cxt *portercontext.Context, path string) ([]byte, error) {
@@ -1024,7 +1030,7 @@ func scanManifestTemplating(data []byte) (templateScanResult, error) {
 	const disableHtmlEscaping = true
 	tmpl, err := mustache.ParseStringRaw(string(data), disableHtmlEscaping)
 	if err != nil {
-		return templateScanResult{}, errors.Wrap(err, "error parsing the templating used in the manifest")
+		return templateScanResult{}, fmt.Errorf("error parsing the templating used in the manifest: %w", err)
 	}
 
 	tags := tmpl.Tags()
@@ -1094,7 +1100,7 @@ func (r *RequiredExtension) UnmarshalYAML(unmarshal func(interface{}) error) err
 	extWithConfig := map[string]map[string]interface{}{}
 	err = unmarshal(&extWithConfig)
 	if err != nil {
-		return errors.Wrap(err, "could not unmarshal raw yaml of required extensions")
+		return fmt.Errorf("could not unmarshal raw yaml of required extensions: %w", err)
 	}
 
 	if len(extWithConfig) == 0 {

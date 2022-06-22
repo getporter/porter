@@ -2,6 +2,7 @@ package porter
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 
@@ -17,7 +18,6 @@ import (
 	"get.porter.sh/porter/pkg/tracing"
 	"github.com/Masterminds/semver/v3"
 	"github.com/opencontainers/go-digest"
-	"github.com/pkg/errors"
 )
 
 type BuildOptions struct {
@@ -56,7 +56,7 @@ func (o *BuildOptions) Validate(p *Porter) error {
 		o.Driver = p.GetBuildDriver()
 	}
 	if !stringSliceContains(BuildDriverAllowedValues, o.Driver) {
-		return errors.Errorf("invalid --driver value %s", o.Driver)
+		return fmt.Errorf("invalid --driver value %s", o.Driver)
 	}
 
 	// Syncing value back to the config and we will always use the config
@@ -105,12 +105,12 @@ func (p *Porter) Build(ctx context.Context, opts BuildOptions) error {
 	// Start with a fresh .cnab directory before building
 	err := p.FileSystem.RemoveAll(build.LOCAL_CNAB)
 	if err != nil {
-		return errors.Wrap(err, "could not cleanup generated .cnab directory before building")
+		return fmt.Errorf("could not cleanup generated .cnab directory before building: %w", err)
 	}
 
 	// Generate Porter's canonical version of the user-provided manifest
 	if err := p.generateInternalManifest(opts); err != nil {
-		return errors.Wrap(err, "unable to generate manifest")
+		return fmt.Errorf("unable to generate manifest: %w", err)
 	}
 
 	m, err := manifest.LoadManifestFrom(ctx, p.Config, build.LOCAL_MANIFEST)
@@ -136,7 +136,7 @@ func (p *Porter) Build(ctx context.Context, opts BuildOptions) error {
 	// to a registry.  The bundle.json will need to be updated after publishing
 	// and provided just-in-time during bundle execution.
 	if err := p.buildBundle(ctx, m, ""); err != nil {
-		return errors.Wrap(err, "unable to build bundle")
+		return fmt.Errorf("unable to build bundle: %w", err)
 	}
 
 	generator := build.NewDockerfileGenerator(p.Config, m, p.Templates, p.Mixins)
@@ -149,7 +149,13 @@ func (p *Porter) Build(ctx context.Context, opts BuildOptions) error {
 	}
 
 	builder := p.GetBuilder(ctx)
-	return errors.Wrap(builder.BuildInvocationImage(ctx, m, opts.BuildImageOptions), "unable to build CNAB invocation image")
+
+	err = builder.BuildInvocationImage(ctx, m, opts.BuildImageOptions)
+	if err != nil {
+		return fmt.Errorf("unable to build CNAB invocation image: %w", err)
+	}
+
+	return nil
 }
 
 func (p *Porter) preLint(ctx context.Context, file string) error {
@@ -175,7 +181,7 @@ func (p *Porter) preLint(ctx context.Context, file string) error {
 
 	if results.HasError() {
 		// An error was found during linting, stop and let the user correct it
-		return errors.New("Lint errors were detected. Rerun with --no-lint ignore the errors.")
+		return errors.New("lint errors were detected. Rerun with --no-lint ignore the errors")
 	}
 
 	return nil
@@ -185,7 +191,7 @@ func (p *Porter) getUsedMixins(ctx context.Context, m *manifest.Manifest) ([]mix
 	installedMixins, err := p.ListMixins(ctx)
 
 	if err != nil {
-		return nil, errors.Wrapf(err, "error while listing mixins")
+		return nil, fmt.Errorf("error while listing mixins: %w", err)
 	}
 
 	var usedMixins []mixin.Metadata
@@ -221,9 +227,13 @@ func (p *Porter) buildBundle(ctx context.Context, m *manifest.Manifest, digest d
 func (p Porter) writeBundle(b cnab.ExtendedBundle) error {
 	f, err := p.Config.FileSystem.OpenFile(build.LOCAL_BUNDLE, os.O_RDWR|os.O_CREATE|os.O_TRUNC, pkg.FileModeWritable)
 	if err != nil {
-		return errors.Wrapf(err, "error creating %s", build.LOCAL_BUNDLE)
+		return fmt.Errorf("error creating %s: %w", build.LOCAL_BUNDLE, err)
 	}
 	defer f.Close()
 	_, err = b.WriteTo(f)
-	return errors.Wrapf(err, "error writing to %s", build.LOCAL_BUNDLE)
+	if err != nil {
+		return fmt.Errorf("error writing to %s: %w", build.LOCAL_BUNDLE, err)
+	}
+
+	return nil
 }

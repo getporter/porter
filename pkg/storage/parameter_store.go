@@ -9,7 +9,6 @@ import (
 	"get.porter.sh/porter/pkg/tracing"
 	"github.com/cnabio/cnab-go/secrets/host"
 	"github.com/hashicorp/go-multierror"
-	"github.com/pkg/errors"
 )
 
 var _ ParameterSetProvider = &ParameterStore{}
@@ -59,7 +58,7 @@ func (s ParameterStore) ResolveAll(ctx context.Context, params ParameterSet) (se
 	for _, param := range params.Parameters {
 		value, err := s.Secrets.Resolve(ctx, param.Source.Key, param.Source.Value)
 		if err != nil {
-			resolveErrors = multierror.Append(resolveErrors, errors.Wrapf(err, "unable to resolve parameter %s.%s from %s %s", params.Name, param.Name, param.Source.Key, param.Source.Value))
+			resolveErrors = multierror.Append(resolveErrors, fmt.Errorf("unable to resolve parameter %s.%s from %s %s: %w", params.Name, param.Name, param.Source.Key, param.Source.Value, err))
 		}
 
 		resolvedParams[param.Name] = value

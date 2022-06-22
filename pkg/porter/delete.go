@@ -2,11 +2,11 @@ package porter
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/portercontext"
-	"github.com/pkg/errors"
 )
 
 const installationDeleteTmpl = "deleting installation records for %s...\n"
@@ -45,7 +45,7 @@ func (p *Porter) DeleteInstallation(ctx context.Context, opts DeleteOptions) err
 
 	installation, err := p.Installations.GetInstallation(ctx, opts.Namespace, opts.Name)
 	if err != nil {
-		return errors.Wrapf(err, "unable to read status for installation %s", opts.Name)
+		return fmt.Errorf("unable to read status for installation %s: %w", opts.Name, err)
 	}
 
 	if (installation.Status.Action != cnab.ActionUninstall || installation.Status.ResultStatus != cnab.StatusSucceeded) && !opts.Force {

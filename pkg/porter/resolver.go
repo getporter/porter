@@ -1,9 +1,10 @@
 package porter
 
 import (
+	"fmt"
+
 	"get.porter.sh/porter/pkg/cache"
 	cnabtooci "get.porter.sh/porter/pkg/cnab/cnab-to-oci"
-	"github.com/pkg/errors"
 )
 
 type BundleResolver struct {
@@ -17,7 +18,7 @@ func (r *BundleResolver) Resolve(opts BundlePullOptions) (cache.CachedBundle, er
 	if !opts.Force {
 		cachedBundle, ok, err := r.Cache.FindBundle(opts.GetReference())
 		if err != nil {
-			return cache.CachedBundle{}, errors.Wrapf(err, "unable to load bundle %s from cache", opts.Reference)
+			return cache.CachedBundle{}, fmt.Errorf("unable to load bundle %s from cache: %w", opts.Reference, err)
 		}
 		// If we found the bundle, return the path to the bundle.json
 		if ok {

@@ -12,7 +12,6 @@ import (
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/printer"
 	"github.com/cnabio/cnab-go/bundle"
-	"github.com/pkg/errors"
 )
 
 type ExplainOpts struct {
@@ -162,7 +161,7 @@ func (p *Porter) Explain(ctx context.Context, o ExplainOpts) error {
 
 	pb, err := generatePrintable(bundleRef.Definition, o.Action)
 	if err != nil {
-		return errors.Wrap(err, "unable to print bundle")
+		return fmt.Errorf("unable to print bundle: %w", err)
 	}
 	return p.printBundleExplain(o, pb, bundleRef.Definition)
 }
@@ -191,7 +190,7 @@ func generatePrintable(bun cnab.ExtendedBundle, action string) (*PrintableBundle
 	solver := &cnab.DependencySolver{}
 	deps, err := solver.ResolveDependencies(bun)
 	if err != nil {
-		return nil, errors.Wrapf(err, "error resolving bundle dependencies")
+		return nil, fmt.Errorf("error resolving bundle dependencies: %w", err)
 	}
 
 	pb := PrintableBundle{
@@ -353,7 +352,7 @@ func (p *Porter) printCredentialsExplainBlock(bun *PrintableBundle) error {
 	fmt.Fprintln(p.Out, "Credentials:")
 	err := p.printCredentialsExplainTable(bun)
 	if err != nil {
-		return errors.Wrap(err, "unable to print credentials table")
+		return fmt.Errorf("unable to print credentials table: %w", err)
 	}
 
 	fmt.Fprintln(p.Out, "") // force a blank line after this block
@@ -379,7 +378,7 @@ func (p *Porter) printParametersExplainBlock(bun *PrintableBundle) error {
 	fmt.Fprintln(p.Out, "Parameters:")
 	err := p.printParametersExplainTable(bun)
 	if err != nil {
-		return errors.Wrap(err, "unable to print parameters table")
+		return fmt.Errorf("unable to print parameters table: %w", err)
 	}
 
 	fmt.Fprintln(p.Out, "") // force a blank line after this block
@@ -405,7 +404,7 @@ func (p *Porter) printOutputsExplainBlock(bun *PrintableBundle) error {
 	fmt.Fprintln(p.Out, "Outputs:")
 	err := p.printOutputsExplainTable(bun)
 	if err != nil {
-		return errors.Wrap(err, "unable to print outputs table")
+		return fmt.Errorf("unable to print outputs table: %w", err)
 	}
 
 	fmt.Fprintln(p.Out, "") // force a blank line after this block
@@ -432,7 +431,7 @@ func (p *Porter) printActionsExplainBlock(bun *PrintableBundle) error {
 	fmt.Fprintln(p.Out, "Actions:")
 	err := p.printActionsExplainTable(bun)
 	if err != nil {
-		return errors.Wrap(err, "unable to print actions block")
+		return fmt.Errorf("unable to print actions block: %w", err)
 	}
 
 	fmt.Fprintln(p.Out, "") // force a blank line after this block
@@ -460,7 +459,7 @@ func (p *Porter) printDependenciesExplainBlock(bun *PrintableBundle) error {
 	fmt.Fprintln(p.Out, "Dependencies:")
 	err := p.printDependenciesExplainTable(bun)
 	if err != nil {
-		return errors.Wrap(err, "unable to print dependencies table")
+		return fmt.Errorf("unable to print dependencies table: %w", err)
 	}
 
 	fmt.Fprintln(p.Out, "") // force a blank line after this block

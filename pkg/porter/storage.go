@@ -2,6 +2,7 @@ package porter
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io/fs"
 	"os"
@@ -9,7 +10,6 @@ import (
 
 	"get.porter.sh/porter/pkg"
 	"github.com/hashicorp/go-multierror"
-	"github.com/pkg/errors"
 )
 
 func (p *Porter) MigrateStorage(ctx context.Context) error {
@@ -37,14 +37,14 @@ func (p *Porter) FixPermissions() error {
 			if os.IsNotExist(err) {
 				return nil
 			} else {
-				return errors.Wrapf(err, "error checking file permissions for %s", path)
+				return fmt.Errorf("error checking file permissions for %s: %w", path, err)
 			}
 		}
 
 		gotPerms := info.Mode().Perm()
 		if mode != gotPerms|mode {
 			if err := p.FileSystem.Chmod(path, mode); err != nil {
-				return errors.Wrapf(err, "could not set permissions on file %s to %o", path, mode)
+				return fmt.Errorf("could not set permissions on file %s to %o: %w", path, mode, err)
 			}
 		}
 		return nil
@@ -55,14 +55,14 @@ func (p *Porter) FixPermissions() error {
 		p.FileSystem.Walk(dir, func(path string, info fs.FileInfo, err error) error {
 			if err != nil {
 				if !os.IsNotExist(err) {
-					bigErr = multierror.Append(bigErr, errors.Wrapf(err, "error walking path %s", path))
+					bigErr = multierror.Append(bigErr, fmt.Errorf("error walking path %s: %w", path, err))
 				}
 				return nil
 			}
 
 			if info.IsDir() {
 				if err := p.FileSystem.Chmod(path, pkg.FileModeDirectory); err != nil {
-					bigErr = multierror.Append(bigErr, errors.Wrapf(err, "could not set permissions on directory %s to %o", path, mode))
+					bigErr = multierror.Append(bigErr, fmt.Errorf("could not set permissions on directory %s to %o: %w", path, mode, err))
 				}
 			} else {
 				if err = fixFile(path, mode); err != nil {

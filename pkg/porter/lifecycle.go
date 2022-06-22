@@ -2,6 +2,7 @@ package porter
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -11,7 +12,6 @@ import (
 	"get.porter.sh/porter/pkg/encoding"
 	"get.porter.sh/porter/pkg/storage"
 	"github.com/opencontainers/go-digest"
-	"github.com/pkg/errors"
 )
 
 // BundleAction is an interface that defines a method for supplying
@@ -73,7 +73,7 @@ func (o *BundleActionOptions) Validate(ctx context.Context, args []string, porte
 	}
 
 	if o.Name == "" && o.File == "" && o.CNABFile == "" && o.Reference == "" {
-		return errors.New("No bundle specified. Either an installation name, --reference, --file or --cnab-file must be specified or the current directory must contain a porter.yaml file.")
+		return errors.New("no bundle specified. Either an installation name, --reference, --file or --cnab-file must be specified or the current directory must contain a porter.yaml file")
 	}
 
 	return nil
@@ -123,12 +123,12 @@ func (p *Porter) resolveBundleReference(ctx context.Context, opts *BundleActionO
 	} else if opts.Name != "" { // Return the bundle associated with the installation
 		i, err := p.Installations.GetInstallation(ctx, opts.Namespace, opts.Name)
 		if err != nil {
-			return cnab.BundleReference{}, errors.Wrapf(err, "installation %s/%s not found", opts.Namespace, opts.Name)
+			return cnab.BundleReference{}, fmt.Errorf("installation %s/%s not found: %w", opts.Namespace, opts.Name, err)
 		}
 		if i.Status.BundleReference != "" {
 			ref, err := cnab.ParseOCIReference(i.Status.BundleReference)
 			if err != nil {
-				return cnab.BundleReference{}, errors.Wrapf(err, "installation.Status.BundleReference is invalid")
+				return cnab.BundleReference{}, fmt.Errorf("installation.Status.BundleReference is invalid: %w", err)
 			}
 			if err := useReference(ref); err != nil {
 				return cnab.BundleReference{}, err
@@ -136,7 +136,7 @@ func (p *Porter) resolveBundleReference(ctx context.Context, opts *BundleActionO
 		} else { // The bundle was installed from source
 			lastRun, err := p.Installations.GetLastRun(ctx, opts.Namespace, opts.Name)
 			if err != nil {
-				return cnab.BundleReference{}, errors.Wrap(err, "could not load the bundle definition from the installation's last run")
+				return cnab.BundleReference{}, fmt.Errorf("could not load the bundle definition from the installation's last run: %w", err)
 			}
 
 			bundleRef = cnab.BundleReference{
@@ -146,12 +146,12 @@ func (p *Porter) resolveBundleReference(ctx context.Context, opts *BundleActionO
 			if lastRun.BundleReference != "" {
 				bundleRef.Reference, err = cnab.ParseOCIReference(lastRun.BundleReference)
 				if err != nil {
-					return cnab.BundleReference{}, errors.Wrapf(err, "invalid bundle reference, %s, found on the last bundle run record %s", lastRun.BundleReference, lastRun.ID)
+					return cnab.BundleReference{}, fmt.Errorf("invalid bundle reference, %s, found on the last bundle run record %s: %w", lastRun.BundleReference, lastRun.ID, err)
 				}
 			}
 		}
 	} else { // Nothing was referenced
-		return cnab.BundleReference{}, errors.New("No bundle specified")
+		return cnab.BundleReference{}, errors.New("no bundle specified")
 	}
 
 	if opts.Name == "" {
@@ -174,7 +174,7 @@ func (p *Porter) BuildActionArgs(ctx context.Context, installation storage.Insta
 	if opts.RelocationMapping != "" {
 		err := encoding.UnmarshalFile(p.FileSystem, opts.RelocationMapping, &bundleRef.RelocationMap)
 		if err != nil {
-			return cnabprovider.ActionArguments{}, errors.Wrapf(err, "could not parse the relocation mapping file at %s", opts.RelocationMapping)
+			return cnabprovider.ActionArguments{}, fmt.Errorf("could not parse the relocation mapping file at %s: %w", opts.RelocationMapping, err)
 		}
 	}
 

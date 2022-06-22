@@ -1,11 +1,11 @@
 package cnab
 
 import (
+	"fmt"
 	"sort"
 
 	"github.com/Masterminds/semver/v3"
 	"github.com/google/go-containerregistry/pkg/crane"
-	"github.com/pkg/errors"
 )
 
 type DependencyLock struct {
@@ -27,7 +27,7 @@ func (s *DependencySolver) ResolveDependencies(bun ExtendedBundle) ([]Dependency
 	orderedDeps := rawDeps.ListBySequence()
 
 	if err != nil {
-		return nil, errors.Wrapf(err, "error executing dependencies for %s", bun.Name)
+		return nil, fmt.Errorf("error executing dependencies for %s: %w", bun.Name, err)
 	}
 
 	q := make([]DependencyLock, 0, len(orderedDeps))
@@ -51,7 +51,7 @@ func (s *DependencySolver) ResolveDependencies(bun ExtendedBundle) ([]Dependency
 func (s *DependencySolver) ResolveVersion(name string, dep Dependency) (OCIReference, error) {
 	ref, err := ParseOCIReference(dep.Bundle)
 	if err != nil {
-		return OCIReference{}, errors.Wrapf(err, "error parsing dependency (%s) bundle %q as OCI reference", name, dep.Bundle)
+		return OCIReference{}, fmt.Errorf("error parsing dependency (%s) bundle %q as OCI reference: %w", name, dep.Bundle, err)
 	}
 
 	// Here is where we could split out this logic into multiple strategy funcs / structs if necessary
@@ -69,13 +69,13 @@ func (s *DependencySolver) ResolveVersion(name string, dep Dependency) (OCIRefer
 		return ref.WithTag(tag)
 	}
 
-	return OCIReference{}, errors.Errorf("not implemented: dependency version range specified for %s", name)
+	return OCIReference{}, fmt.Errorf("not implemented: dependency version range specified for %s: %w", name, err)
 }
 
 func (s *DependencySolver) determineDefaultTag(dep Dependency) (string, error) {
 	tags, err := crane.ListTags(dep.Bundle)
 	if err != nil {
-		return "", errors.Wrapf(err, "error listing tags for %s", dep.Bundle)
+		return "", fmt.Errorf("error listing tags for %s: %w", dep.Bundle, err)
 	}
 
 	allowPrereleases := false
@@ -104,7 +104,7 @@ func (s *DependencySolver) determineDefaultTag(dep Dependency) (string, error) {
 		if hasLatest {
 			return "latest", nil
 		} else {
-			return "", errors.Errorf("no tag was specified for %s and none of the tags defined in the registry meet the criteria: semver formatted or 'latest'", dep.Bundle)
+			return "", fmt.Errorf("no tag was specified for %s and none of the tags defined in the registry meet the criteria: semver formatted or 'latest'", dep.Bundle)
 		}
 	}
 

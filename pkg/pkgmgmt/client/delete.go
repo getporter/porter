@@ -5,7 +5,6 @@ import (
 	"path/filepath"
 
 	"get.porter.sh/porter/pkg/pkgmgmt"
-	"github.com/pkg/errors"
 )
 
 func (fs *FileSystem) Uninstall(opts pkgmgmt.UninstallOptions) error {
@@ -13,7 +12,7 @@ func (fs *FileSystem) Uninstall(opts pkgmgmt.UninstallOptions) error {
 		return fs.uninstallByName(opts.Name)
 	}
 
-	return errors.Errorf("No %s name was provided to uninstall", fs.PackageType)
+	return fmt.Errorf("No %s name was provided to uninstall", fs.PackageType)
 }
 
 func (fs *FileSystem) uninstallByName(name string) error {
@@ -26,7 +25,7 @@ func (fs *FileSystem) uninstallByName(name string) error {
 	if exists {
 		err = fs.FileSystem.RemoveAll(pkgDir)
 		if err != nil {
-			return errors.Wrapf(err, "could not remove %s directory %q", fs.PackageType, pkgDir)
+			return fmt.Errorf("could not remove %s directory %q: %w", fs.PackageType, pkgDir, err)
 		}
 
 		return nil

@@ -7,7 +7,6 @@ import (
 
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/yaml"
-	"github.com/pkg/errors"
 )
 
 // UnmarshalAction handles unmarshaling any action, given a pointer to a slice of Steps.
@@ -26,7 +25,7 @@ func UnmarshalAction(unmarshal func(interface{}) error, builder BuildableAction)
 	actionMap := map[string][]interface{}{}
 	err := unmarshal(&actionMap)
 	if err != nil {
-		return nil, errors.Wrap(err, "could not unmarshal yaml into an action map of exec steps")
+		return nil, fmt.Errorf("could not unmarshal yaml into an action map of exec steps: %w", err)
 	}
 
 	return unmarshalActionMap(actionMap, builder)
@@ -84,7 +83,11 @@ func LoadAction(cxt *portercontext.Context, commandFile string, unmarshal func([
 	if cxt.Debug {
 		fmt.Fprintf(cxt.Err, "DEBUG Parsed Input:\n%#v\n", result)
 	}
-	return errors.Wrapf(err, "could not unmarshal input:\n %s", string(contents))
+	if err != nil {
+		return fmt.Errorf("could not unmarshal input:\n %s: %w", string(contents), err)
+	}
+
+	return nil
 }
 
 func readInputFromStdinOrFile(cxt *portercontext.Context, commandFile string) ([]byte, error) {
@@ -102,7 +105,7 @@ func readInputFromStdinOrFile(cxt *portercontext.Context, commandFile string) ([
 		if commandFile == "" {
 			source = commandFile
 		}
-		return nil, errors.Wrapf(err, "could not load input from %s", source)
+		return nil, fmt.Errorf("could not load input from %s: %w", source, err)
 	}
 	return b, nil
 }

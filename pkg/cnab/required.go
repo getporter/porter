@@ -1,8 +1,6 @@
 package cnab
 
-import (
-	"github.com/pkg/errors"
-)
+import "fmt"
 
 // RequiredExtension represents a required extension that is known and supported by Porter
 type RequiredExtension struct {
@@ -43,7 +41,7 @@ func (b ExtendedBundle) ProcessRequiredExtensions() (ProcessedExtensions, error)
 
 		raw, err := supportedExtension.Reader(b)
 		if err != nil {
-			return processed, errors.Wrapf(err, "unable to process extension: %s", reqExt)
+			return processed, fmt.Errorf("unable to process extension: %s: %w", reqExt, err)
 		}
 
 		processed[supportedExtension.Key] = raw
@@ -63,5 +61,5 @@ func GetSupportedExtension(e string) (*RequiredExtension, error) {
 			return &ext, nil
 		}
 	}
-	return nil, errors.Errorf("unsupported required extension: %s", e)
+	return nil, fmt.Errorf("unsupported required extension: %s", e)
 }

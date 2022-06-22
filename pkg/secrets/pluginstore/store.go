@@ -2,13 +2,13 @@ package pluginstore
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/plugins/pluggable"
 	"get.porter.sh/porter/pkg/secrets/plugins"
 	"get.porter.sh/porter/pkg/tracing"
-	"github.com/pkg/errors"
 )
 
 var _ plugins.SecretsProtocol = &Store{}

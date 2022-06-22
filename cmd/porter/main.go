@@ -11,7 +11,6 @@ import (
 
 	"get.porter.sh/porter/pkg/cli"
 	"get.porter.sh/porter/pkg/porter"
-	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"go.opentelemetry.io/otel/attribute"
@@ -72,7 +71,7 @@ func main() {
 		defer func() {
 			// Capture panics and trace them
 			if panicErr := recover(); panicErr != nil {
-				log.Error(errors.New(fmt.Sprintf("%s", panicErr)),
+				log.Error(fmt.Errorf("%s", panicErr),
 					attribute.Bool("panic", true),
 					attribute.String("stackTrace", string(debug.Stack())))
 				log.EndSpan()

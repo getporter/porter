@@ -3,6 +3,7 @@ package porter
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -19,7 +20,6 @@ import (
 	"github.com/cnabio/cnab-go/imagestore/construction"
 	"github.com/cnabio/cnab-to-oci/relocation"
 	"github.com/docker/docker/pkg/archive"
-	"github.com/pkg/errors"
 	"github.com/spf13/afero"
 )
 
@@ -35,7 +35,7 @@ func (o *ArchiveOptions) Validate(ctx context.Context, args []string, p *Porter)
 		return errors.New("destination file is required")
 	}
 	if len(args) > 1 {
-		return errors.Errorf("only one positional argument may be specified, the archive file name, but multiple were received: %s", args)
+		return fmt.Errorf("only one positional argument may be specified, the archive file name, but multiple were received: %s", args)
 	}
 	o.ArchiveFile = args[0]
 
@@ -115,7 +115,7 @@ func (ex *exporter) export() error {
 	defer bundleFile.Close()
 	_, err = ex.bundle.WriteTo(bundleFile)
 	if err != nil {
-		return errors.Wrap(err, "unable to write bundle.json in archive")
+		return fmt.Errorf("unable to write bundle.json in archive: %w", err)
 	}
 
 	reloData, err := json.Marshal(ex.relocationMap)
@@ -124,7 +124,7 @@ func (ex *exporter) export() error {
 	}
 	err = ex.fs.WriteFile(filepath.Join(archiveDir, "relocation-mapping.json"), reloData, pkg.FileModeWritable)
 	if err != nil {
-		return errors.Wrap(err, "unable to write relocation-mapping.json in archive")
+		return fmt.Errorf("unable to write relocation-mapping.json in archive: %w", err)
 	}
 
 	ex.imageStore, err = ex.imageStoreConstructor(imagestore.WithArchiveDir(archiveDir), imagestore.WithLogs(ex.logs))
