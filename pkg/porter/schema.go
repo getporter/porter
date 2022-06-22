@@ -135,11 +135,9 @@ func (p *Porter) injectMixinSchemas(ctx context.Context, manifestSchema jsonSche
 			}
 
 			actionAnyOfSchema, ok := actionItemSchema["anyOf"].([]interface{})
-			if !ok {
-				if err != nil && p.Debug {
-					fmt.Fprintln(p.Err, fmt.Errorf("root porter manifest schema has invalid properties.%s.items.anyOf type, expected []interface{} but got %T", action, actionItemSchema["anyOf"]))
-					continue
-				}
+			if !ok && p.Debug {
+				fmt.Fprintln(p.Err, fmt.Errorf("root porter manifest schema has invalid properties.%s.items.anyOf type, expected []interface{} but got %T", action, actionItemSchema["anyOf"]))
+				continue
 			}
 
 			actionRef := fmt.Sprintf("#/mixin.%s/definitions/%sStep", mixin, action)
