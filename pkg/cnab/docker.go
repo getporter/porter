@@ -3,6 +3,9 @@ package cnab
 import (
 	"encoding/json"
 
+	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/mount"
+	"github.com/docker/go-connections/nat"
 	"github.com/pkg/errors"
 )
 
@@ -29,6 +32,19 @@ var DockerExtension = RequiredExtension{
 type Docker struct {
 	// Privileged represents whether or not the Docker container should run as --privileged
 	Privileged bool `json:"privileged,omitempty"`
+	// Mounts represent mounts to be attached to the host machine with all configurable options.
+	Mounts []mount.Mount `json:"mounts,omitempty"`
+	// Network represents the network type applied to the container "host,bridged,etc"
+	Network string `json:"network,omitempty"`
+	// CapAdd represents the capabilities available to the container kernel
+	CapAdd []string `json:"capadd,omitempty"`
+	// CapDrop represents capabilities to exclude from the container kernel
+	CapDrop []string `json:"capdrop,omitempty"`
+	// Ports to bind between the host and the container
+	PortBindings []nat.PortMap `json:"portBindings,omitempty"`
+	// Restart policy to be used for the container
+	// This may be useful in some rare cases
+	RestartPolicy container.RestartPolicy `json:"restartPolicy"`
 }
 
 // DockerExtensionReader is a Reader for the DockerExtension,
