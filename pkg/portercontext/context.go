@@ -454,7 +454,7 @@ func (c *Context) CopyDirectory(srcDir, destDir string, includeBaseDir bool) err
 		if info.IsDir() {
 			err := c.FileSystem.MkdirAll(dest, info.Mode())
 			if err != nil {
-				return fmt.Errorf("%w", err)
+				return err
 			}
 
 			return nil
