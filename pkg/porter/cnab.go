@@ -2,6 +2,8 @@ package porter
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"path/filepath"
 
 	"get.porter.sh/porter/pkg/build"
@@ -12,7 +14,6 @@ import (
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
-	"github.com/pkg/errors"
 )
 
 const (
@@ -54,7 +55,7 @@ func (o *bundleFileOptions) Validate(cxt *portercontext.Context) error {
 	if o.Dir != "" {
 		_, err = cxt.FileSystem.IsDir(o.Dir)
 		if err != nil {
-			return errors.Wrapf(err, "%q is not a valid directory", o.Dir)
+			return fmt.Errorf("%q is not a valid directory: %w", o.Dir, err)
 		}
 		o.Dir = cxt.FileSystem.Abs(o.Dir)
 	} else {
@@ -158,7 +159,7 @@ func (o *sharedOptions) validateInstallationName(args []string) error {
 	if len(args) == 1 {
 		o.Name = args[0]
 	} else if len(args) > 1 {
-		return errors.Errorf("only one positional argument may be specified, the installation name, but multiple were received: %s", args)
+		return fmt.Errorf("only one positional argument may be specified, the installation name, but multiple were received: %s", args)
 	}
 
 	return nil
@@ -173,8 +174,10 @@ func (o *bundleFileOptions) defaultBundleFiles(cxt *portercontext.Context) error
 	} else {
 		defaultPath := filepath.Join(o.Dir, config.Name)
 		manifestExists, err := cxt.FileSystem.Exists(defaultPath)
-		if err != nil || !manifestExists {
-			return errors.Wrapf(err, "could not find a porter manifest at %s", defaultPath)
+		if err != nil {
+			return fmt.Errorf("could not find a porter manifest at %s: %w", defaultPath, err)
+		} else if !manifestExists {
+			return nil
 		}
 
 		o.File = defaultPath
@@ -213,7 +216,7 @@ func (o *bundleFileOptions) validateFile(cxt *portercontext.Context) error {
 
 	// Verify the file can be accessed
 	if _, err := cxt.FileSystem.Stat(o.File); err != nil {
-		return errors.Wrapf(err, "unable to access --file %s", o.File)
+		return fmt.Errorf("unable to access --file %s: %w", o.File, err)
 	}
 
 	return nil
@@ -234,7 +237,7 @@ func (o *bundleFileOptions) validateCNABFile(cxt *portercontext.Context) error {
 	// Verify the file can be accessed
 	if _, err := cxt.FileSystem.Stat(o.CNABFile); err != nil {
 		// warn about the original relative path
-		return errors.Wrapf(err, "unable to access --cnab-file %s", originalPath)
+		return fmt.Errorf("unable to access --cnab-file %s: %w", originalPath, err)
 	}
 
 	return nil
@@ -303,7 +306,7 @@ func (o *sharedOptions) parseParamSets(ctx context.Context, p *Porter, bun cnab.
 	if len(o.ParameterSets) > 0 {
 		parsed, err := p.loadParameterSets(ctx, bun, o.Namespace, o.ParameterSets)
 		if err != nil {
-			return errors.Wrap(err, "unable to process provided parameter sets")
+			return fmt.Errorf("unable to process provided parameter sets: %w", err)
 		}
 		o.parsedParamSets = parsed
 	}

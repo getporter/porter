@@ -18,7 +18,6 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"github.com/mattn/go-colorable"
 	"github.com/mattn/go-isatty"
-	"github.com/pkg/errors"
 	"github.com/spf13/afero"
 	"go.opentelemetry.io/otel/attribute"
 	"go.uber.org/zap"
@@ -182,7 +181,7 @@ func (c *Context) configureLoggingWith(ctx context.Context, baseLogger zapcore.C
 	if c.logCfg.LogToFile {
 		fileLogger, err = c.configureFileLog(c.logCfg.LogDirectory)
 		if err != nil {
-			tmpLog.Error(errors.Wrap(err, "could not configure a file logger").Error())
+			tmpLog.Error(fmt.Errorf("could not configure a file logger: %w", err).Error())
 		} else {
 			tmpLog.Debug("Writing logs to " + c.logFile.Name())
 		}
@@ -194,7 +193,7 @@ func (c *Context) configureLoggingWith(ctx context.Context, baseLogger zapcore.C
 		if !c.tracerInitalized {
 			err = c.configureTelemetry(ctx, c.logCfg, tmpLog)
 			if err != nil {
-				tmpLog.Error(errors.Wrap(err, "could not configure a tracer").Error())
+				tmpLog.Error(fmt.Errorf("could not configure a tracer: %w", err).Error())
 			}
 		}
 	} else {
@@ -235,7 +234,7 @@ func (c *Context) configureFileLog(dir string) (zapcore.Core, error) {
 	if c.logFile == nil { // We may have already opened this logfile, and we are just changing the log level
 		f, err := c.FileSystem.OpenFile(logfile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, pkg.FileModeWritable)
 		if err != nil {
-			return zapcore.NewNopCore(), errors.Wrapf(err, "could not start log file at %s", logfile)
+			return zapcore.NewNopCore(), fmt.Errorf("could not start log file at %s: %w", logfile, err)
 		}
 		c.logFile = f
 	}
@@ -443,7 +442,7 @@ func (c *Context) CopyDirectory(srcDir, destDir string, includeBaseDir bool) err
 
 	return c.FileSystem.Walk(srcDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
-			return errors.WithStack(err)
+			return err
 		}
 
 		// Translate the path from the src to the final destination
@@ -453,7 +452,12 @@ func (c *Context) CopyDirectory(srcDir, destDir string, includeBaseDir bool) err
 		}
 
 		if info.IsDir() {
-			return errors.WithStack(c.FileSystem.MkdirAll(dest, info.Mode()))
+			err := c.FileSystem.MkdirAll(dest, info.Mode())
+			if err != nil {
+				return err
+			}
+
+			return nil
 		}
 
 		return c.CopyFile(path, dest)
@@ -463,16 +467,20 @@ func (c *Context) CopyDirectory(srcDir, destDir string, includeBaseDir bool) err
 func (c *Context) CopyFile(src, dest string) error {
 	info, err := c.FileSystem.Stat(src)
 	if err != nil {
-		return errors.WithStack(err)
+		return err
 	}
 
 	data, err := c.FileSystem.ReadFile(src)
 	if err != nil {
-		return errors.WithStack(err)
+		return err
 	}
 
 	err = c.FileSystem.WriteFile(dest, data, info.Mode())
-	return errors.WithStack(err)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // WriteMixinOutputToFile writes the provided bytes (representing a mixin output)
@@ -484,7 +492,7 @@ func (c *Context) WriteMixinOutputToFile(filename string, bytes []byte) error {
 	}
 	if !exists {
 		if err := c.FileSystem.MkdirAll(MixinOutputsDir, pkg.FileModeDirectory); err != nil {
-			return errors.Wrap(err, "couldn't make output directory")
+			return fmt.Errorf("couldn't make output directory: %w", err)
 		}
 	}
 

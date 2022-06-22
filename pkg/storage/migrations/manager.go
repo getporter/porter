@@ -2,13 +2,13 @@ package migrations
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/tracing"
-	"github.com/pkg/errors"
 )
 
 const (
@@ -80,7 +80,7 @@ func (m *Manager) Connect(ctx context.Context) error {
 
 		if !m.allowOutOfDateSchema && m.schema.IsOutOfDate() {
 			m.Close()
-			return span.Error(errors.Errorf(`The schema of Porter's data is in an older format than supported by this version of Porter. 
+			return span.Error(fmt.Errorf(`The schema of Porter's data is in an older format than supported by this version of Porter. 
 
 Porter %s uses the following database schema:
 
@@ -210,12 +210,16 @@ func (m *Manager) loadSchema(ctx context.Context) error {
 				return nil
 			}
 		}
-		return errors.Wrap(err, "could not read storage schema document")
+		return fmt.Errorf("could not read storage schema document: %w", err)
 	}
 
 	m.schema = schema
 
-	return errors.Wrap(err, "could not parse storage schema document")
+	if err != nil {
+		return fmt.Errorf("could not parse storage schema document: %w", err)
+	}
+
+	return nil
 }
 
 // Migrate executes a migration on any/all of Porter's storage sub-systems.
@@ -263,7 +267,7 @@ func (m *Manager) initEmptyPorterHome(ctx context.Context) (bool, error) {
 	itemCheck := func(itemType string) (bool, error) {
 		itemCount, err := m.store.Count(ctx, itemType, storage.CountOptions{})
 		if err != nil {
-			return false, errors.Wrapf(err, "error checking for existing %s when checking if PORTER_HOME is new", itemType)
+			return false, fmt.Errorf("error checking for existing %s when checking if PORTER_HOME is new: %w", itemType, err)
 		}
 
 		return itemCount > 0, nil

@@ -7,7 +7,6 @@ import (
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/printer"
 	"github.com/cnabio/cnab-go/bundle"
-	"github.com/pkg/errors"
 )
 
 type InspectableBundle struct {
@@ -37,7 +36,7 @@ func (p *Porter) Inspect(ctx context.Context, o ExplainOpts) error {
 
 	ib, err := generateInspectableBundle(bundleRef)
 	if err != nil {
-		return errors.Wrap(err, "unable to inspect bundle")
+		return fmt.Errorf("unable to inspect bundle: %w", err)
 	}
 	return p.printBundleInspect(o, ib)
 }
@@ -107,7 +106,7 @@ func (p *Porter) printInvocationImageInspectBlock(bun *InspectableBundle) error 
 	fmt.Fprintln(p.Out, "Invocation Images:")
 	err := p.printInvocationImageInspectTable(bun)
 	if err != nil {
-		return errors.Wrap(err, "unable to print invocation images table")
+		return fmt.Errorf("unable to print invocation images table: %w", err)
 	}
 	fmt.Fprintln(p.Out, "") // force a blank line after this block
 	return nil
@@ -133,7 +132,7 @@ func (p *Porter) printImagesInspectBlock(bun *InspectableBundle) error {
 	fmt.Fprintln(p.Out, "Images:")
 	err := p.printImagesInspectTable(bun)
 	if err != nil {
-		return errors.Wrap(err, "unable to print images table")
+		return fmt.Errorf("unable to print images table: %w", err)
 	}
 	fmt.Fprintln(p.Out, "") // force a blank line after this block
 

@@ -3,6 +3,7 @@ package porter
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 
@@ -17,7 +18,6 @@ import (
 	"get.porter.sh/porter/pkg/storage/plugins/mongodb_docker"
 	"get.porter.sh/porter/pkg/tracing"
 	"github.com/hashicorp/go-plugin"
-	"github.com/pkg/errors"
 )
 
 type RunInternalPluginOpts struct {
@@ -42,7 +42,7 @@ func (o *RunInternalPluginOpts) Validate() error {
 	}
 
 	if _, ok := internalPlugins[o.Key]; !ok {
-		return errors.Errorf("invalid plugin key specified: %s", o.Key)
+		return fmt.Errorf("invalid plugin key specified: %s", o.Key)
 	}
 
 	return nil

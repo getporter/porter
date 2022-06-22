@@ -71,32 +71,36 @@ func TestPorter_PrintInstallationRunsOutput(t *testing.T) {
 	}
 
 	for _, tc := range outputTestcases {
-		p := NewTestPorter(t)
-		defer p.Close()
-		ctx := context.Background()
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			p := NewTestPorter(t)
+			defer p.Close()
+			ctx := context.Background()
 
-		installation := p.TestInstallations.CreateInstallation(storage.NewInstallation("staging", "shared-k8s"), p.TestInstallations.SetMutableInstallationValues)
+			installation := p.TestInstallations.CreateInstallation(storage.NewInstallation("staging", "shared-k8s"), p.TestInstallations.SetMutableInstallationValues)
 
-		installRun := p.TestInstallations.CreateRun(installation.NewRun(cnab.ActionInstall), p.TestInstallations.SetMutableRunValues)
-		uninstallRun := p.TestInstallations.CreateRun(installation.NewRun(cnab.ActionUninstall), p.TestInstallations.SetMutableRunValues)
-		result := p.TestInstallations.CreateResult(installRun.NewResult(cnab.StatusSucceeded), p.TestInstallations.SetMutableResultValues)
-		result2 := p.TestInstallations.CreateResult(uninstallRun.NewResult(cnab.StatusSucceeded), p.TestInstallations.SetMutableResultValues)
+			installRun := p.TestInstallations.CreateRun(installation.NewRun(cnab.ActionInstall), p.TestInstallations.SetMutableRunValues)
+			uninstallRun := p.TestInstallations.CreateRun(installation.NewRun(cnab.ActionUninstall), p.TestInstallations.SetMutableRunValues)
+			result := p.TestInstallations.CreateResult(installRun.NewResult(cnab.StatusSucceeded), p.TestInstallations.SetMutableResultValues)
+			result2 := p.TestInstallations.CreateResult(uninstallRun.NewResult(cnab.StatusSucceeded), p.TestInstallations.SetMutableResultValues)
 
-		installation.ApplyResult(installRun, result)
-		installation.ApplyResult(uninstallRun, result2)
-		installation.Status.Installed = &now
+			installation.ApplyResult(installRun, result)
+			installation.ApplyResult(uninstallRun, result2)
+			installation.Status.Installed = &now
 
-		require.NoError(t, p.TestInstallations.UpdateInstallation(ctx, installation))
+			require.NoError(t, p.TestInstallations.UpdateInstallation(ctx, installation))
 
-		opts := RunListOptions{sharedOptions: sharedOptions{
-			Namespace: "staging",
-			Name:      "shared-k8s",
-		}, PrintOptions: printer.PrintOptions{Format: tc.format},
-		}
+			opts := RunListOptions{sharedOptions: sharedOptions{
+				Namespace: "staging",
+				Name:      "shared-k8s",
+			}, PrintOptions: printer.PrintOptions{Format: tc.format},
+			}
 
-		err := p.PrintInstallationRuns(context.Background(), opts)
-		require.NoError(t, err)
+			err := p.PrintInstallationRuns(context.Background(), opts)
+			require.NoError(t, err)
 
-		p.CompareGoldenFile(tc.outputFile, p.TestConfig.TestContext.GetOutput())
+			p.CompareGoldenFile(tc.outputFile, p.TestConfig.TestContext.GetOutput())
+		})
+
 	}
 }

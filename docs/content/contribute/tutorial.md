@@ -310,8 +310,7 @@ YOURNAME` that prints `Hello YOURNAME!`.
     
     import (
         "fmt"
-        
-        "github.com/pkg/errors"
+        "errors"
     )
     
     // Define flags and arguments for `porter hello`.

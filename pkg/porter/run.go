@@ -9,7 +9,6 @@ import (
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/runtime"
 	"get.porter.sh/porter/pkg/schema"
-	"github.com/pkg/errors"
 )
 
 type RunOptions struct {
@@ -63,7 +62,7 @@ func (o *RunOptions) defaultDebug() error {
 
 	debug, err := strconv.ParseBool(rawDebug)
 	if err != nil {
-		return errors.Wrapf(err, "invalid PORTER_DEBUG, expected a bool (true/false) but got %s", rawDebug)
+		return fmt.Errorf("invalid PORTER_DEBUG, expected a bool (true/false) but got %s: %w", rawDebug, err)
 	}
 
 	if debug {

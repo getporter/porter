@@ -14,7 +14,6 @@ import (
 	"get.porter.sh/porter/pkg/tracing"
 	dtprinter "github.com/carolynvs/datetime-printer"
 	"github.com/cnabio/cnab-go/schema"
-	"github.com/pkg/errors"
 )
 
 // ListOptions represent generic options for use by Porter's list commands
@@ -152,7 +151,7 @@ func (d DisplayInstallation) ConvertToInstallation() (storage.Installation, erro
 	}
 
 	if err := i.Validate(); err != nil {
-		return storage.Installation{}, errors.Wrap(err, "invalid installation")
+		return storage.Installation{}, fmt.Errorf("invalid installation: %w", err)
 	}
 
 	return i, nil

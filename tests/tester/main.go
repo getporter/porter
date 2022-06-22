@@ -3,6 +3,7 @@ package tester
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -13,7 +14,6 @@ import (
 	"get.porter.sh/porter/pkg/storage/plugins/mongodb_docker"
 	"get.porter.sh/porter/tests"
 	"github.com/carolynvs/magex/shx"
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 )
 
@@ -63,7 +63,7 @@ func NewTestWithConfig(t *testing.T, configFilePath string) (Tester, error) {
 
 	test.TestDir, err = ioutil.TempDir("", "porter-test")
 	if err != nil {
-		return *test, errors.Wrap(err, "could not create temp test directory")
+		return *test, fmt.Errorf("could not create temp test directory: %w", err)
 	}
 
 	test.dbName = tests.GenerateDatabaseName(t.Name())
@@ -135,7 +135,7 @@ func (t Tester) RunPorterWith(opts ...func(*shx.PreparedCommand)) (stdout string
 	ran, _, err := cmd.Exec()
 	if err != nil {
 		if ran {
-			err = errors.Wrap(err, stderrBuf.String())
+			err = fmt.Errorf("%s: %w", stderrBuf.String(), err)
 		}
 		return stdoutBuf.String(), output.String(), err
 	}
@@ -177,7 +177,7 @@ func (t *Tester) createPorterHome(configFilePath string) error {
 	binDir := filepath.Join(t.RepoRoot, "bin")
 	t.PorterHomeDir, err = ioutil.TempDir("", "porter")
 	if err != nil {
-		return errors.Wrap(err, "could not create temp PORTER_HOME directory")
+		return fmt.Errorf("could not create temp PORTER_HOME directory: %w", err)
 	}
 
 	require.NoError(t.T, shx.Copy(filepath.Join(binDir, "porter*"), t.PorterHomeDir),

@@ -35,7 +35,6 @@ import (
 	"github.com/carolynvs/magex/xplat"
 	"github.com/magefile/mage/mg"
 	"github.com/magefile/mage/sh"
-	"github.com/pkg/errors"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -411,7 +410,11 @@ func UseXBuildBinaries() error {
 // Run `chmod +x -R bin`.
 func SetBinExecutable() error {
 	err := chmodRecursive("bin", pkg.FileModeExecutable)
-	return errors.Wrap(err, "could not set +x on the test bin")
+	if err != nil {
+		return fmt.Errorf("could not set +x on the test bin: %w", err)
+	}
+
+	return nil
 }
 
 func chmodRecursive(name string, mode os.FileMode) error {
@@ -456,7 +459,10 @@ func Install() {
 	// Copy mixin binaries
 	mixinsDir := filepath.Join("bin", "mixins")
 	mixinsDirItems, err := ioutil.ReadDir(mixinsDir)
-	mgx.Must(errors.Wrap(err, "could not list mixins in bin"))
+	if err != nil {
+		mgx.Must(fmt.Errorf("could not list mixins in bin: %w", err))
+	}
+
 	for _, fi := range mixinsDirItems {
 		if !fi.IsDir() {
 			continue
@@ -490,7 +496,10 @@ func getPorterHome() string {
 	porterHome := os.Getenv("PORTER_HOME")
 	if porterHome == "" {
 		home, err := os.UserHomeDir()
-		mgx.Must(errors.Wrap(err, "could not determine home directory"))
+		if err != nil {
+			mgx.Must(fmt.Errorf("could not determine home directory: %w", err))
+		}
+
 		porterHome = filepath.Join(home, ".porter")
 	}
 	return porterHome

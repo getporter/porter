@@ -2,6 +2,7 @@ package porter
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -10,7 +11,6 @@ import (
 	configadapter "get.porter.sh/porter/pkg/cnab/config-adapter"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/tracing"
-	"github.com/pkg/errors"
 )
 
 // ensureLocalBundleIsUpToDate ensures that the bundle is up to date with the porter manifest,
@@ -64,7 +64,7 @@ func (p *Porter) IsBundleUpToDate(ctx context.Context, opts bundleFileOptions) (
 	if exists, _ := p.FileSystem.Exists(opts.CNABFile); exists {
 		bun, err := cnab.LoadBundle(p.Context, opts.CNABFile)
 		if err != nil {
-			return false, errors.Wrapf(err, "could not marshal data from %s", opts.CNABFile)
+			return false, fmt.Errorf("could not marshal data from %s: %w", opts.CNABFile, err)
 		}
 
 		// Check whether invocation images exist in host registry.
@@ -90,19 +90,19 @@ func (p *Porter) IsBundleUpToDate(ctx context.Context, opts bundleFileOptions) (
 
 		oldStamp, err := configadapter.LoadStamp(bun)
 		if err != nil {
-			return false, errors.Wrapf(err, "could not load stamp from %s", opts.CNABFile)
+			return false, fmt.Errorf("could not load stamp from %s: %w", opts.CNABFile, err)
 		}
 
 		mixins, err := p.getUsedMixins(ctx, m)
 		if err != nil {
-			return false, errors.Wrapf(err, "error while listing used mixins")
+			return false, fmt.Errorf("error while listing used mixins: %w", err)
 		}
 
 		converter := configadapter.NewManifestConverter(p.Config, m, nil, mixins)
 		newDigest, err := converter.DigestManifest()
 		if err != nil {
 			if p.Debug {
-				fmt.Fprintln(p.Err, errors.Wrap(err, "could not determine if the bundle is up-to-date so will rebuild just in case"))
+				fmt.Fprintln(p.Err, fmt.Errorf("could not determine if the bundle is up-to-date so will rebuild just in case: %w", err))
 			}
 			return false, nil
 		}

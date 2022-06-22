@@ -9,7 +9,6 @@ import (
 	"get.porter.sh/porter/pkg/tracing"
 	"github.com/cnabio/cnab-go/secrets/host"
 	"github.com/hashicorp/go-multierror"
-	"github.com/pkg/errors"
 )
 
 var _ CredentialSetProvider = &CredentialStore{}
@@ -65,7 +64,7 @@ func (s CredentialStore) ResolveAll(ctx context.Context, creds CredentialSet) (s
 	for _, cred := range creds.Credentials {
 		value, err := s.Secrets.Resolve(ctx, cred.Source.Key, cred.Source.Value)
 		if err != nil {
-			resolveErrors = multierror.Append(resolveErrors, errors.Wrapf(err, "unable to resolve credential %s.%s from %s %s", creds.Name, cred.Name, cred.Source.Key, cred.Source.Value))
+			resolveErrors = multierror.Append(resolveErrors, fmt.Errorf("unable to resolve credential %s.%s from %s %s: %w", creds.Name, cred.Name, cred.Source.Key, cred.Source.Value, err))
 		}
 
 		resolvedCreds[cred.Name] = value

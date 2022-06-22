@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"fmt"
 	"io/ioutil"
 	"path/filepath"
 	"testing"
@@ -10,7 +11,6 @@ import (
 	"get.porter.sh/porter/pkg/encoding"
 	"get.porter.sh/porter/pkg/secrets"
 	"github.com/carolynvs/aferox"
-	"github.com/pkg/errors"
 	"github.com/spf13/afero"
 )
 
@@ -56,26 +56,29 @@ func (p TestParameterSetProvider) Load(path string) (ParameterSet, error) {
 	fs := aferox.NewAferox(".", afero.NewOsFs())
 	var pset ParameterSet
 	err := encoding.UnmarshalFile(fs, path, &pset)
+	if err != nil {
+		return pset, fmt.Errorf("error reading %s as a parameter set: %w", path, err)
+	}
 
-	return pset, errors.Wrapf(err, "error reading %s as a parameter set", path)
+	return pset, nil
 }
 
 func (p TestParameterSetProvider) AddTestParameters(path string) {
 	ps, err := p.Load(path)
 	if err != nil {
-		p.T.Fatal(errors.Wrapf(err, "could not read test parameters from %s", path))
+		p.T.Fatal(fmt.Errorf("could not read test parameters from %s: %w", path, err))
 	}
 
 	err = p.ParameterStore.InsertParameterSet(context.Background(), ps)
 	if err != nil {
-		p.T.Fatal(errors.Wrap(err, "could not load test parameters"))
+		p.T.Fatal(fmt.Errorf("could not load test parameters: %w", err))
 	}
 }
 
 func (p TestParameterSetProvider) AddTestParametersDirectory(dir string) {
 	files, err := ioutil.ReadDir(dir)
 	if err != nil {
-		p.T.Fatal(errors.Wrapf(err, "could not list test directory %s", dir))
+		p.T.Fatal(fmt.Errorf("could not list test directory %s: %w", dir, err))
 	}
 
 	for _, fi := range files {

@@ -1,9 +1,10 @@
 package porter
 
 import (
+	"fmt"
+
 	"get.porter.sh/porter/pkg/cache"
 	"get.porter.sh/porter/pkg/cnab"
-	"github.com/pkg/errors"
 )
 
 type BundlePullOptions struct {
@@ -31,7 +32,7 @@ func (b *BundlePullOptions) GetReference() cnab.OCIReference {
 func (b *BundlePullOptions) validateReference() error {
 	ref, err := cnab.ParseOCIReference(b.Reference)
 	if err != nil {
-		return errors.Wrap(err, "invalid value for --reference, specified value should be of the form REGISTRY/bundle:tag")
+		return fmt.Errorf("invalid value for --reference, specified value should be of the form REGISTRY/bundle:tag: %w", err)
 	}
 	b._ref = &ref
 	return nil

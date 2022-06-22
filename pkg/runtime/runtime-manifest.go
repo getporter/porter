@@ -21,7 +21,6 @@ import (
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-to-oci/relocation"
 	"github.com/hashicorp/go-multierror"
-	"github.com/pkg/errors"
 )
 
 const (
@@ -72,7 +71,7 @@ func (m *RuntimeManifest) Validate() error {
 
 	err = m.steps.Validate(m.Manifest)
 	if err != nil {
-		return errors.Wrap(err, "invalid action configuration")
+		return fmt.Errorf("invalid action configuration: %w", err)
 	}
 
 	return nil
@@ -106,7 +105,7 @@ func (m *RuntimeManifest) loadDependencyDefinitions() error {
 
 		bun, err := bundle.Unmarshal(bunD)
 		if err != nil {
-			return errors.Wrapf(err, "error unmarshaling bundle definition for dependency %s", dep.Name)
+			return fmt.Errorf("error unmarshaling bundle definition for dependency %s: %w", dep.Name, err)
 		}
 
 		m.bundles[dep.Name] = cnab.NewBundle(*bun)
@@ -142,7 +141,7 @@ func (m *RuntimeManifest) resolveBundleOutput(outputName string) (string, error)
 	psParamEnv := manifest.ParamToEnvVar(ps)
 	outputValue, ok := m.LookupEnv(psParamEnv)
 	if !ok {
-		return "", errors.Errorf("No parameter source was injected for output %s", outputName)
+		return "", fmt.Errorf("no parameter source was injected for output %s", outputName)
 	}
 	return outputValue, nil
 }
@@ -196,7 +195,7 @@ func (m *RuntimeManifest) setStepsByAction() error {
 			for a := range m.CustomActions {
 				actions = append(actions, a)
 			}
-			errors.Errorf("unsupported action %q, custom actions are defined for: %s", m.Action, strings.Join(actions, ", "))
+			return fmt.Errorf("unsupported action %q, custom actions are defined for: %s", m.Action, strings.Join(actions, ", "))
 		}
 		m.steps = customAction
 	}
@@ -407,7 +406,7 @@ func (m *RuntimeManifest) ResolveStep(step *manifest.Step) error {
 	mustache.AllowMissingVariables = false
 	sourceData, err := m.buildSourceData()
 	if err != nil {
-		return errors.Wrap(err, "unable to build step template data")
+		return fmt.Errorf("unable to build step template data: %w", err)
 	}
 
 	if m.Debug {
@@ -416,7 +415,7 @@ func (m *RuntimeManifest) ResolveStep(step *manifest.Step) error {
 
 	payload, err := yaml.Marshal(step)
 	if err != nil {
-		return errors.Wrapf(err, "invalid step data %v", step)
+		return fmt.Errorf("invalid step data %v: %w", step, err)
 	}
 
 	if m.Debug {
@@ -425,7 +424,7 @@ func (m *RuntimeManifest) ResolveStep(step *manifest.Step) error {
 
 	rendered, err := mustache.RenderRaw(string(payload), true, sourceData)
 	if err != nil {
-		return errors.Wrapf(err, "unable to render step template %s", string(payload))
+		return fmt.Errorf("unable to render step template %s: %w", string(payload), err)
 	}
 
 	if m.Debug {
@@ -434,7 +433,7 @@ func (m *RuntimeManifest) ResolveStep(step *manifest.Step) error {
 
 	err = yaml.Unmarshal([]byte(rendered), step)
 	if err != nil {
-		return errors.Wrapf(err, "invalid step yaml\n%s", rendered)
+		return fmt.Errorf("invalid step yaml\n%s: %w", rendered, err)
 	}
 
 	return nil
@@ -469,7 +468,7 @@ func (m *RuntimeManifest) Initialize() error {
 				if os.IsNotExist(err) {
 					continue
 				}
-				return errors.Wrapf(err, "unable to acquire value for parameter %s", paramName)
+				return fmt.Errorf("unable to acquire value for parameter %s: %w", paramName, err)
 			}
 
 			// TODO(carolynvs): hack around parameters ALWAYS being injected even when empty files mess things up
@@ -483,12 +482,12 @@ func (m *RuntimeManifest) Initialize() error {
 			}
 			decoded, err := base64.StdEncoding.DecodeString(string(bytes))
 			if err != nil {
-				return errors.Wrapf(err, "unable to decode parameter %s", paramName)
+				return fmt.Errorf("unable to decode parameter %s: %w", paramName, err)
 			}
 
 			err = m.FileSystem.WriteFile(param.Destination.Path, decoded, pkg.FileModeWritable)
 			if err != nil {
-				return errors.Wrapf(err, "unable to write decoded parameter %s", paramName)
+				return fmt.Errorf("unable to write decoded parameter %s: %w", paramName, err)
 			}
 		}
 	}
@@ -499,7 +498,7 @@ func (m *RuntimeManifest) Initialize() error {
 func (m *RuntimeManifest) createOutputsDir() error {
 	// Ensure outputs directory exists
 	if err := m.FileSystem.MkdirAll(config.BundleOutputsDir, pkg.FileModeDirectory); err != nil {
-		return errors.Wrap(err, "unable to ensure CNAB outputs directory exists")
+		return fmt.Errorf("unable to ensure CNAB outputs directory exists: %w", err)
 	}
 	return nil
 }
@@ -534,12 +533,16 @@ func (m *RuntimeManifest) unpackStateBag() error {
 
 		f, err := os.OpenFile(dest, os.O_CREATE|os.O_RDWR, os.FileMode(header.Mode))
 		if err != nil {
-			return errors.Wrapf(err, "error creating state file %s", dest)
+			return fmt.Errorf("error creating state file %s: %w", dest, err)
 		}
 		defer f.Close()
 
 		_, err = io.Copy(f, tr)
-		return errors.Wrapf(err, "error unpacking state file %s", dest)
+		if err != nil {
+			return fmt.Errorf("error unpacking state file %s: %w", dest, err)
+		}
+
+		return nil
 	}
 
 	stateArchive, err := m.FileSystem.Open(statePath)
@@ -603,21 +606,25 @@ func (m *RuntimeManifest) packStateBag() error {
 		}
 		header, err := tar.FileInfoHeader(fi, fi.Name())
 		if err != nil {
-			return errors.Wrapf(err, "error creating tar header for state variable %s from path %s", s.Name, s.Path)
+			return fmt.Errorf("error creating tar header for state variable %s from path %s: %w", s.Name, s.Path, err)
 		}
 		header.Name = filepath.Join("porter-state", s.Name)
 
 		if err := tw.WriteHeader(header); err != nil {
-			return errors.Wrapf(err, "error writing tar header for state variable %s", s.Name)
+			return fmt.Errorf("error writing tar header for state variable %s: %w", s.Name, err)
 		}
 
 		f, err := os.Open(s.Path)
 		if err != nil {
-			return errors.Wrapf(err, "error reading state file %s for variable %s", s.Path, s.Name)
+			return fmt.Errorf("error reading state file %s for variable %s: %w", s.Path, s.Name, err)
 		}
 
 		_, err = io.Copy(tw, f)
-		return errors.Wrapf(err, "error archiving state file %s for variable %s", s.Path, s.Name)
+		if err != nil {
+			return fmt.Errorf("error archiving state file %s for variable %s: %w", s.Path, s.Name, err)
+		}
+
+		return nil
 	}
 
 	// Save directly to the final output location since we've already collected outputs at this point
@@ -689,7 +696,7 @@ func (m *RuntimeManifest) applyUnboundBundleOutputs() error {
 
 			err := m.CopyFile(srcPath, dstPath)
 			if err != nil {
-				bigErr = multierror.Append(bigErr, errors.Wrapf(err, "unable to copy output file from %s to %s", srcPath, dstPath))
+				bigErr = multierror.Append(bigErr, fmt.Errorf("unable to copy output file from %s to %s: %w", srcPath, dstPath, err))
 				continue
 			}
 		}
@@ -715,7 +722,7 @@ func (m *RuntimeManifest) ResolveImages(bun cnab.ExtendedBundle, reloMap relocat
 		manifestImage.Digest = image.Digest
 		err := resolveImage(&manifestImage, image.Image)
 		if err != nil {
-			return errors.Wrap(err, "unable to update image map from bundle.json")
+			return fmt.Errorf("unable to update image map from bundle.json: %w", err)
 		}
 		m.ImageMap[alias] = manifestImage
 		reverseLookup[image.Image] = alias
@@ -725,7 +732,7 @@ func (m *RuntimeManifest) ResolveImages(bun cnab.ExtendedBundle, reloMap relocat
 		if manifestImage, ok := m.ImageMap[alias]; ok { //note, there might be other images in the relocation mapping, like the invocation image
 			err := resolveImage(&manifestImage, reloRef)
 			if err != nil {
-				return errors.Wrap(err, "unable to update image map from relocation mapping")
+				return fmt.Errorf("unable to update image map from relocation mapping: %w", err)
 			}
 			m.ImageMap[alias] = manifestImage
 		}

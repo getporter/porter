@@ -10,7 +10,6 @@ import (
 	"get.porter.sh/porter/pkg/plugins"
 	"get.porter.sh/porter/pkg/printer"
 	"github.com/olekukonko/tablewriter"
-	"github.com/pkg/errors"
 )
 
 // PrintPluginsOptions represent options for the PrintPlugins function
@@ -37,12 +36,12 @@ func (o *ShowPluginOptions) Validate(args []string) error {
 func (o *ShowPluginOptions) validateName(args []string) error {
 	switch len(args) {
 	case 0:
-		return errors.Errorf("no name was specified")
+		return fmt.Errorf("no name was specified")
 	case 1:
 		o.Name = strings.ToLower(args[0])
 		return nil
 	default:
-		return errors.Errorf("only one positional argument may be specified, the name, but multiple were received: %s", args)
+		return fmt.Errorf("only one positional argument may be specified, the name, but multiple were received: %s", args)
 
 	}
 }
@@ -145,7 +144,7 @@ func (p *Porter) GetPlugin(ctx context.Context, name string) (*plugins.Metadata,
 
 	plugin, ok := meta.(*plugins.Metadata)
 	if !ok {
-		return nil, errors.Errorf("could not cast plugin %s to plugins.Metadata", name)
+		return nil, fmt.Errorf("could not cast plugin %s to plugins.Metadata", name)
 	}
 
 	return plugin, nil

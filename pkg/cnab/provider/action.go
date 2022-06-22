@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"sort"
 
@@ -15,7 +16,6 @@ import (
 	cnabaction "github.com/cnabio/cnab-go/action"
 	"github.com/cnabio/cnab-go/driver"
 	"github.com/hashicorp/go-multierror"
-	"github.com/pkg/errors"
 	"go.opentelemetry.io/otel/attribute"
 )
 
@@ -75,7 +75,7 @@ func (r *Runtime) AddFiles(ctx context.Context, args ActionArguments) cnabaction
 		if err == nil {
 			claimBytes, err := json.Marshal(claim)
 			if err != nil {
-				return errors.Wrapf(err, "could not marshal claim %s for installation %s", claim.ID, args.Installation)
+				return fmt.Errorf("could not marshal claim %s for installation %s: %w", claim.ID, args.Installation, err)
 			}
 			op.Files[config.ClaimFilepath] = string(claimBytes)
 		}
@@ -99,7 +99,7 @@ func (r *Runtime) AddRelocation(args ActionArguments) cnabaction.OperationConfig
 		if len(args.BundleReference.RelocationMap) > 0 {
 			b, err := json.MarshalIndent(args.BundleReference.RelocationMap, "", "    ")
 			if err != nil {
-				return errors.Wrapf(err, "error marshaling relocation mapping file")
+				return fmt.Errorf("error marshaling relocation mapping file: %w", err)
 			}
 
 			op.Files["/cnab/app/relocation-mapping.json"] = string(b)
@@ -146,18 +146,18 @@ func (r *Runtime) Execute(ctx context.Context, args ActionArguments) error {
 
 		// Validate the action
 		if _, err := b.GetAction(currentRun.Action); err != nil {
-			return log.Error(errors.Wrapf(err, "invalid action '%s' specified for bundle %s", currentRun.Action, b.Name))
+			return log.Error(fmt.Errorf("invalid action '%s' specified for bundle %s: %w", currentRun.Action, b.Name, err))
 		}
 
 		creds, err := r.loadCredentials(ctx, b, args)
 		if err != nil {
-			return log.Error(errors.Wrap(err, "could not load credentials"))
+			return log.Error(fmt.Errorf("not load credentials: %w", err))
 		}
 
 		log.Debugf("Using runtime driver %s\n", args.Driver)
 		driver, err := r.newDriver(args.Driver, args)
 		if err != nil {
-			return log.Error(errors.Wrap(err, "unable to instantiate driver"))
+			return log.Error(fmt.Errorf("unable to instantiate driver: %w", err))
 		}
 
 		a := cnabaction.New(driver)
@@ -166,7 +166,7 @@ func (r *Runtime) Execute(ctx context.Context, args ActionArguments) error {
 		if currentRun.ShouldRecord() {
 			err = r.SaveRun(ctx, args.Installation, currentRun, cnab.StatusRunning)
 			if err != nil {
-				return log.Error(errors.Wrap(err, "could not save the pending action's status, the bundle was not executed"))
+				return log.Error(fmt.Errorf("could not save the pending action's status, the bundle was not executed: %w", err))
 			}
 		}
 
@@ -177,12 +177,16 @@ func (r *Runtime) Execute(ctx context.Context, args ActionArguments) error {
 		if currentRun.ShouldRecord() {
 			if err != nil {
 				err = r.appendFailedResult(ctx, err, currentRun)
-				return log.Error(errors.Wrapf(err, "failed to record that %s for installation %s failed", args.Action, args.Installation.Name))
+				return log.Error(fmt.Errorf("failed to record that %s for installation %s failed: %w", args.Action, args.Installation.Name, err))
 			}
 			return r.SaveOperationResult(ctx, opResult, args.Installation, currentRun, currentRun.NewResultFrom(result))
-		} else {
-			return log.Error(errors.Wrapf(err, "execution of %s for installation %s failed", args.Action, args.Installation.Name))
 		}
+
+		if err != nil {
+			return log.Error(fmt.Errorf("execution of %s for installation %s failed: %w", args.Action, args.Installation.Name, err))
+		}
+
+		return nil
 	}
 }
 
@@ -259,24 +263,24 @@ func (r *Runtime) SaveOperationResult(ctx context.Context, opResult driver.Opera
 
 	err := r.installations.InsertResult(ctx, result)
 	if err != nil {
-		bigerr = multierror.Append(bigerr, errors.Wrapf(err, "error adding %s result for %s run of installation %s\n%#v", result.Status, run.Action, installation, result))
+		bigerr = multierror.Append(bigerr, fmt.Errorf("error adding %s result for %s run of installation %s\n%#v: %w", result.Status, run.Action, installation, result, err))
 	}
 
 	installation.ApplyResult(run, result)
 	err = r.installations.UpdateInstallation(ctx, installation)
 	if err != nil {
-		bigerr = multierror.Append(bigerr, errors.Wrapf(err, "error updating installation record for %s\n%#v", installation, installation))
+		bigerr = multierror.Append(bigerr, fmt.Errorf("error updating installation record for %s\n%#v: %w", installation, installation, err))
 	}
 
 	for outputName, outputValue := range opResult.Outputs {
 		output := result.NewOutput(outputName, []byte(outputValue))
 		output, err = r.sanitizer.CleanOutput(ctx, output, cnab.ExtendedBundle{Bundle: run.Bundle})
 		if err != nil {
-			bigerr = multierror.Append(bigerr, errors.Wrapf(err, "error sanitizing sensitive %s output for %s run of installation %s\n%#v", output.Name, run.Action, installation, output))
+			bigerr = multierror.Append(bigerr, fmt.Errorf("error sanitizing sensitive %s output for %s run of installation %s\n%#v: %w", output.Name, run.Action, installation, output, err))
 		}
 		err = r.installations.InsertOutput(ctx, output)
 		if err != nil {
-			bigerr = multierror.Append(bigerr, errors.Wrapf(err, "error adding %s output for %s run of installation %s\n%#v", output.Name, run.Action, installation, output))
+			bigerr = multierror.Append(bigerr, fmt.Errorf("error adding %s output for %s run of installation %s\n%#v: %w", output.Name, run.Action, installation, output, err))
 		}
 	}
 

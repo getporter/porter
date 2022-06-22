@@ -9,6 +9,8 @@ import (
 )
 
 func TestInstallation_String(t *testing.T) {
+	t.Parallel()
+
 	i := Installation{Name: "mybun"}
 	assert.Equal(t, "/mybun", i.String())
 
@@ -58,43 +60,62 @@ func TestOCIReferenceParts_GetBundleReference(t *testing.T) {
 }
 
 func TestInstallation_ApplyResult(t *testing.T) {
-	inst := NewInstallation("myns", "mybuns")
+	t.Parallel()
 
-	logs := inst.NewRun("logs")
-	logs.Bundle = exampleBundle
-	logs.BundleReference = "mybuns:v0.1.1"
-	logsResult := logs.NewResult(cnab.StatusSucceeded)
-	inst.ApplyResult(logs, logsResult)
-	assert.Empty(t, inst.Bundle, "Only actions that modify should update the bundle reference")
+	t.Run("install failed", func(t *testing.T) {
+		// try to install a bundle and fail
+		inst := NewInstallation("dev", "mybuns")
+		run := inst.NewRun(cnab.ActionInstall)
+		result := run.NewResult(cnab.StatusFailed)
 
-	// Try to install and fail
-	install1 := inst.NewRun("install")
-	install1.Bundle = exampleBundle
-	install1.BundleReference = "mybuns:v0.1.1"
-	installFailed := install1.NewResult(cnab.StatusFailed)
-	inst.ApplyResult(install1, installFailed)
-	assert.False(t, inst.IsInstalled())
-	assert.Equal(t, inst.Status.BundleVersion, install1.Bundle.Version)
-	assert.Equal(t, inst.Status.BundleReference, install1.BundleReference)
-	assert.Equal(t, inst.Status.RunID, install1.ID)
-	assert.Equal(t, inst.Status.ResultID, installFailed.ID)
-	assert.Equal(t, inst.Status.ResultStatus, installFailed.Status)
+		inst.ApplyResult(run, result)
 
-	// Install and succeed
-	install2 := inst.NewRun("install")
-	installSucceeded := install2.NewResult(cnab.StatusSucceeded)
-	inst.ApplyResult(install2, installSucceeded)
-	assert.True(t, inst.IsInstalled())
+		assert.False(t, inst.IsInstalled(), "a failed install should not mark the installation as installed")
+		assert.Empty(t, inst.Status.Installed, "the installed timestamp should not be set")
+	})
 
-	// Uninstall and fail
-	uninstall1 := inst.NewRun("uninstall")
-	uninstallFailed := uninstall1.NewResult(cnab.StatusFailed)
-	inst.ApplyResult(uninstall1, uninstallFailed)
-	assert.False(t, inst.IsUninstalled())
+	t.Run("install succeeded", func(t *testing.T) {
+		// install a bundle
+		inst := NewInstallation("dev", "mybuns")
+		run := inst.NewRun(cnab.ActionInstall)
+		result := run.NewResult(cnab.StatusSucceeded)
 
-	// Uninstall and succeed
-	uninstall2 := inst.NewRun("uninstall")
-	uninstallSucceeded := uninstall2.NewResult(cnab.StatusSucceeded)
-	inst.ApplyResult(uninstall2, uninstallSucceeded)
-	assert.True(t, inst.IsUninstalled())
+		inst.ApplyResult(run, result)
+
+		assert.True(t, inst.IsInstalled(), "a failed install should not mark the installation as installed")
+		assert.Equal(t, &result.Created, inst.Status.Installed, "the installed timestamp should be set to the result timestamp")
+	})
+
+	t.Run("uninstall failed", func(t *testing.T) {
+		// Make an installed bundle
+		inst := NewInstallation("dev", "mybuns")
+		inst.Status.Installed = &inst.Status.Created
+
+		// try to uninstall it and fail
+		run := inst.NewRun(cnab.ActionUninstall)
+		result := run.NewResult(cnab.StatusFailed)
+
+		inst.ApplyResult(run, result)
+
+		assert.True(t, inst.IsInstalled(), "the installation should still be marked as installed")
+		assert.False(t, inst.IsUninstalled(), "the installation should not be marked as uninstalled")
+		assert.Empty(t, inst.Status.Uninstalled, "the uninstalled timestamp should not be set")
+	})
+
+	t.Run("uninstall succeeded", func(t *testing.T) {
+		// Make an installed bundle
+		inst := NewInstallation("dev", "mybuns")
+		inst.Status.Installed = &inst.Status.Created
+
+		// uninstall it
+		run := inst.NewRun(cnab.ActionUninstall)
+		result := run.NewResult(cnab.StatusSucceeded)
+
+		inst.ApplyResult(run, result)
+
+		assert.False(t, inst.IsInstalled(), "the installation should no longer be considered installed")
+		assert.True(t, inst.IsUninstalled(), "the installation should be marked as uninstalled")
+		assert.Equal(t, &inst.Status.Created, inst.Status.Installed, "the installed timestamp should still be set")
+		assert.Equal(t, &result.Created, inst.Status.Uninstalled, "the uninstalled timestamp should not be set")
+	})
 }

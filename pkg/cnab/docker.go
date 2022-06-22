@@ -2,8 +2,8 @@ package cnab
 
 import (
 	"encoding/json"
-
-	"github.com/pkg/errors"
+	"errors"
+	"fmt"
 )
 
 const (
@@ -49,15 +49,15 @@ func (b ExtendedBundle) DockerExtensionReader() (interface{}, error) {
 
 	dataB, err := json.Marshal(data)
 	if err != nil {
-		return nil, errors.Wrapf(err, "could not marshal the untyped %q extension data %q",
-			DockerExtensionKey, string(dataB))
+		return nil, fmt.Errorf("could not marshal the untyped %q extension data %q: %w",
+			DockerExtensionKey, string(dataB), err)
 	}
 
 	dha := Docker{}
 	err = json.Unmarshal(dataB, &dha)
 	if err != nil {
-		return nil, errors.Wrapf(err, "could not unmarshal the %q extension %q",
-			DockerExtensionKey, string(dataB))
+		return nil, fmt.Errorf("could not unmarshal the %q extension %q: %w",
+			DockerExtensionKey, string(dataB), err)
 	}
 
 	return dha, nil
@@ -70,7 +70,7 @@ func (e ProcessedExtensions) GetDocker() (dockerExt Docker, dockerRequired bool,
 
 	dockerExt, ok := ext.(Docker)
 	if !ok && extensionRequired {
-		return Docker{}, extensionRequired, errors.Errorf("unable to parse Docker extension config: %+v", dockerExt)
+		return Docker{}, extensionRequired, fmt.Errorf("unable to parse Docker extension config: %+v", dockerExt)
 	}
 
 	return dockerExt, extensionRequired, nil

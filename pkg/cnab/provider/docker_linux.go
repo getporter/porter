@@ -2,26 +2,26 @@ package cnabprovider
 
 import (
 	"context"
+	"fmt"
 	"os/exec"
 	"strings"
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/mount"
-	"github.com/pkg/errors"
 )
 
 func (r *Runtime) getDockerGroupId() (string, error) {
 	resp, err := r.NewCommand(context.Background(), "getent", "group", "docker").Output()
 	if err != nil {
 		if exitErr, ok := err.(*exec.ExitError); ok {
-			return "", errors.Errorf("error querying for the docker group id: %s", string(exitErr.Stderr))
+			return "", fmt.Errorf("error querying for the docker group id: %s", string(exitErr.Stderr))
 		}
-		return "", errors.Wrapf(err, "error querying for the docker group id")
+		return "", fmt.Errorf("error querying for the docker group id: %w", err)
 	}
 	output := strings.TrimSpace(string(resp))
 	parts := strings.Split(output, ":")
 	if len(parts) < 3 {
-		return "", errors.Errorf("could not determine the id of the docker group, unexpected output returned from 'getent group docker': '%s'", output)
+		return "", fmt.Errorf("could not determine the id of the docker group, unexpected output returned from 'getent group docker': '%s'", output)
 	}
 
 	// The command should return GROUP:x:GID

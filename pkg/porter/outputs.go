@@ -2,6 +2,7 @@ package porter
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sort"
 
@@ -9,7 +10,6 @@ import (
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/printer"
 	"get.porter.sh/porter/pkg/storage"
-	"github.com/pkg/errors"
 )
 
 // OutputShowOptions represent options for a bundle output show command
@@ -33,7 +33,7 @@ func (o *OutputShowOptions) Validate(args []string, cxt *portercontext.Context) 
 	case 1:
 		o.Output = args[0]
 	default:
-		return errors.Errorf("only one positional argument may be specified, the output name, but multiple were received: %s", args)
+		return fmt.Errorf("only one positional argument may be specified, the output name, but multiple were received: %s", args)
 	}
 
 	// If not provided, attempt to derive installation name from context
@@ -59,7 +59,7 @@ func (o *OutputListOptions) Validate(args []string, cxt *portercontext.Context) 
 	// Attempt to derive installation name from context
 	err = o.sharedOptions.defaultBundleFiles(cxt)
 	if err != nil {
-		return errors.Wrap(err, "installation name must be provided")
+		return fmt.Errorf("installation name must be provided: %w", err)
 	}
 
 	return o.ParseFormat()
@@ -74,7 +74,7 @@ func (p *Porter) ShowBundleOutput(ctx context.Context, opts *OutputShowOptions) 
 
 	output, err := p.ReadBundleOutput(ctx, opts.Output, opts.Name, opts.Namespace)
 	if err != nil {
-		return errors.Wrapf(err, "unable to read output '%s' for installation '%s/%s'", opts.Output, opts.Namespace, opts.Name)
+		return fmt.Errorf("unable to read output '%s' for installation '%s/%s': %w", opts.Output, opts.Namespace, opts.Name, err)
 	}
 
 	fmt.Fprintln(p.Out, output)
