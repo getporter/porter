@@ -195,7 +195,7 @@ func (m *RuntimeManifest) setStepsByAction() error {
 			for a := range m.CustomActions {
 				actions = append(actions, a)
 			}
-			// fmt.Errorf("unsupported action %q, custom actions are defined for: %s", m.Action, strings.Join(actions, ", "))
+			return fmt.Errorf("unsupported action %q, custom actions are defined for: %s", m.Action, strings.Join(actions, ", "))
 		}
 		m.steps = customAction
 	}
