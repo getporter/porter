@@ -283,7 +283,7 @@ func (c *PluginConnection) setUpDebugger(ctx context.Context, client *plugin.Cli
 	c.debugger.Stdout = os.Stdout
 	err := c.debugger.Start()
 	if err != nil {
-		return log.Error(fmt.Errorf("Error starting dlv: %w", err))
+		return log.Error(fmt.Errorf("error starting dlv: %w", err))
 	}
 	return nil
 }

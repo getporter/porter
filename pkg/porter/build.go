@@ -220,10 +220,10 @@ func (p *Porter) buildBundle(ctx context.Context, m *manifest.Manifest, digest d
 
 func (p Porter) writeBundle(b cnab.ExtendedBundle) error {
 	f, err := p.Config.FileSystem.OpenFile(build.LOCAL_BUNDLE, os.O_RDWR|os.O_CREATE|os.O_TRUNC, pkg.FileModeWritable)
-	defer f.Close()
 	if err != nil {
 		return errors.Wrapf(err, "error creating %s", build.LOCAL_BUNDLE)
 	}
+	defer f.Close()
 	_, err = b.WriteTo(f)
 	return errors.Wrapf(err, "error writing to %s", build.LOCAL_BUNDLE)
 }

@@ -12,7 +12,6 @@ import (
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/tracing"
-	"github.com/cnabio/cnab-go/action"
 	cnabaction "github.com/cnabio/cnab-go/action"
 	"github.com/cnabio/cnab-go/driver"
 	"github.com/hashicorp/go-multierror"
@@ -49,7 +48,7 @@ type ActionArguments struct {
 }
 
 func (r *Runtime) ApplyConfig(ctx context.Context, args ActionArguments) cnabaction.OperationConfigs {
-	return action.OperationConfigs{
+	return cnabaction.OperationConfigs{
 		r.SetOutput(),
 		r.AddFiles(ctx, args),
 		r.AddEnvironment(args),
@@ -57,7 +56,7 @@ func (r *Runtime) ApplyConfig(ctx context.Context, args ActionArguments) cnabact
 	}
 }
 
-func (r *Runtime) SetOutput() action.OperationConfigFunc {
+func (r *Runtime) SetOutput() cnabaction.OperationConfigFunc {
 	return func(op *driver.Operation) error {
 		op.Out = r.Out
 		op.Err = r.Err
@@ -85,7 +84,7 @@ func (r *Runtime) AddFiles(ctx context.Context, args ActionArguments) cnabaction
 	}
 }
 
-func (r *Runtime) AddEnvironment(args ActionArguments) action.OperationConfigFunc {
+func (r *Runtime) AddEnvironment(args ActionArguments) cnabaction.OperationConfigFunc {
 	return func(op *driver.Operation) error {
 		op.Environment[config.EnvPorterInstallationNamespace] = args.Installation.Namespace
 		op.Environment[config.EnvPorterInstallationName] = args.Installation.Name
@@ -95,7 +94,7 @@ func (r *Runtime) AddEnvironment(args ActionArguments) action.OperationConfigFun
 
 // AddRelocation operates on an ActionArguments and adds any provided relocation mapping
 // to the operation's files.
-func (r *Runtime) AddRelocation(args ActionArguments) action.OperationConfigFunc {
+func (r *Runtime) AddRelocation(args ActionArguments) cnabaction.OperationConfigFunc {
 	return func(op *driver.Operation) error {
 		if len(args.BundleReference.RelocationMap) > 0 {
 			b, err := json.MarshalIndent(args.BundleReference.RelocationMap, "", "    ")

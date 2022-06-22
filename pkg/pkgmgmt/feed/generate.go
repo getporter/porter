@@ -167,6 +167,9 @@ func (feed *MixinFeed) Save(opts GenerateOptions) error {
 	tmplData["Updated"] = entries[0].Updated()
 
 	atomXml, err := mustache.Render(string(feedTmpl), tmplData)
+	if err != nil {
+		return fmt.Errorf("error rendering template:%w", err)
+	}
 	err = feed.FileSystem.WriteFile(opts.AtomFile, []byte(atomXml), pkg.FileModeWritable)
 	if err != nil {
 		return errors.Wrapf(err, "could not write feed to %s", opts.AtomFile)

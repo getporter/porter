@@ -10,7 +10,6 @@ import (
 	"get.porter.sh/porter/pkg/tracing"
 	"get.porter.sh/porter/pkg/yaml"
 	"github.com/google/go-cmp/cmp"
-	_ "github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
 	"go.opentelemetry.io/otel/attribute"
 )

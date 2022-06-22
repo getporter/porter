@@ -162,7 +162,7 @@ func (c *Context) ConfigureLogging(ctx context.Context, cfg LogConfiguration) {
 	c.logCfg = cfg
 
 	var baseLogger zapcore.Core
-	if c.IsInternalPlugin == true {
+	if c.IsInternalPlugin {
 		c.logCfg.TelemetryServiceName = c.InternalPluginKey
 		baseLogger = c.makePluginLogger(c.InternalPluginKey, cfg)
 	} else {

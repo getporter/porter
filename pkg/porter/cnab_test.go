@@ -52,6 +52,7 @@ func TestSharedOptions_defaultBundleFiles_CNABFile(t *testing.T) {
 
 	// Add existing porter manifest; ensure it isn't processed when cnab-file is spec'd
 	_, err := cxt.FileSystem.Create("porter.yaml")
+	require.NoError(t, err)
 	_, err = cxt.FileSystem.Create("mycnabfile.json")
 	require.NoError(t, err)
 

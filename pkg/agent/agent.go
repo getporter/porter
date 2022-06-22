@@ -29,6 +29,10 @@ func Execute(porterCommand []string, porterHome string, porterConfig string) (er
 
 	// Copy config files into PORTER_HOME
 	err := filepath.Walk(porterConfig, func(path string, info fs.FileInfo, err error) error {
+		// if Walk sends a non nil err, then return it back
+		if err != nil {
+			return err
+		}
 		if info.IsDir() {
 			return nil
 		}

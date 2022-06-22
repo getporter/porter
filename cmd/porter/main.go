@@ -88,9 +88,9 @@ func main() {
 			// Ideally we log all errors in the span that generated it,
 			// but as a failsafe, always log the error at the root span as well
 			log.Error(err)
-			return 1
+			return exitCodeErr
 		}
-		return 0
+		return exitCodeSuccess
 	}
 
 	// Wrapping the main run logic in a function because os.Exit will not
@@ -265,10 +265,7 @@ func ShouldShowGroupCommands(cmd *cobra.Command, group string) bool {
 }
 
 func ShouldShowGroupCommand(cmd *cobra.Command, group string) bool {
-	if cmd.Annotations["group"] == group {
-		return true
-	}
-	return false
+	return cmd.Annotations["group"] == group
 }
 
 func ShouldShowUngroupedCommands(cmd *cobra.Command) bool {

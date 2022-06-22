@@ -2,6 +2,7 @@ package porter
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"get.porter.sh/porter/pkg/cnab"
@@ -72,6 +73,9 @@ func (p *Porter) UpgradeBundle(ctx context.Context, opts UpgradeOptions) error {
 	}
 
 	err = p.applyActionOptionsToInstallation(ctx, &i, opts.BundleActionOptions)
+	if err != nil {
+		return fmt.Errorf("could not apply options to installation: %w", err)
+	}
 	i.Status.Modified = time.Now()
 	err = i.Validate()
 	if err != nil {
