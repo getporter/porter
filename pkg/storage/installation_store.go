@@ -34,7 +34,8 @@ func NewInstallationStore(datastore Store) InstallationStore {
 	}
 }
 
-func (s InstallationStore) Initialize(ctx context.Context) error {
+// EnsureInstallationIndices created indices on the installations collection.
+func EnsureInstallationIndices(ctx context.Context, store Store) error {
 	ctx, span := tracing.StartSpan(ctx)
 	defer span.EndSpan()
 
@@ -59,7 +60,7 @@ func (s InstallationStore) Initialize(ctx context.Context) error {
 		},
 	}
 
-	err := s.store.EnsureIndex(ctx, opts)
+	err := store.EnsureIndex(ctx, opts)
 	return span.Error(err)
 }
 
