@@ -312,7 +312,7 @@ func (p *Porter) DeleteParameter(ctx context.Context, opts ParameterDeleteOption
 		return nil
 	}
 	if err != nil {
-		return fmt.Errorf("unable to delete parameter set")
+		return fmt.Errorf("unable to delete parameter set: %w", err)
 	}
 
 	return nil
