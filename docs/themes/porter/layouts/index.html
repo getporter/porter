@@ -54,11 +54,11 @@
 
           <section class="billboard row mx-0">
             <div class="container col-md-6">
-              <h1 class="mb-3"> <span id="underline"> Your Application </span> and everything <br> you need to <br> <span id="underline1">Deploy Together </span> </h1>
-              <h2>Package your application artifact, client tools, configuration and deployment logic together as a versioned bundle that you can distribute, and then install with a single command</h2>
+              <h1 class="mb-3">Your Application and everything you need to, <br> <span id="underline1">Deploy Together </span> </h1>
+              <h2>Package your application, client tools, configuration, and deployment logic into an installer that you can distribute and run with a single command.</h2>
 
               <button class="btn btn-github mt-3 btn-lg text-center">
-                <h2 class="mb-0 p-2 txt-github">Get Started  <i class="fa-brands fa-github"></i></h2>
+                <h2 class="mb-0 p-2 txt-github"><a style=" text-decoration:none; color:white" href="{{ .Site.BaseURL }}quickstart">Get Started  </a></h2>
               </button>
 
             </div>
@@ -92,7 +92,6 @@
                 <p class="p-0">Porter is never a replacement for an existing tool. Think of it as doing extra nice things on top of what those great tools already do!</p>
                 <ul class="emoji-list row p-0 my-5" style="justify-content: center;">
                   <li class="card p-3" style="width: 20rem; margin-right: 2%;">
-                    <!-- <span class="emoji">📦</span>  -->
                     <i class="fa-solid fa-box fa-3x card-img-top text-center"></i>
                     <div class="card-body">
                       <h5 class="card-title">Package</h5>
@@ -103,7 +102,6 @@
                   </li>
 
                   <li class="card p-3" style="width: 20rem; margin-right: 2%;">
-                    <!-- <span class="emoji">📦</span>  -->
                     <i class="fa-solid fa-file-signature fa-3x card-img-top text-center"></i>
                     <div class="card-body">
                       <h5 class="card-title">Signature</h5>
@@ -114,7 +112,6 @@
                   </li>
 
                   <li class="card p-3" style="width: 20rem;">
-                    <!-- <span class="emoji">📦</span>  -->
                     <i class="fa-solid fa-clock fa-3x card-img-top text-center"></i>
                     <div class="card-body">
                       <h5 class="card-title">Time</h5>
@@ -124,8 +121,7 @@
                     </div>
                   </li>
 
-                  <li class="card p-3 mt-4" style="width: 62rem; margin-right: 2%;">
-                    <!-- <span class="emoji">📦</span>  -->
+                  <li class="card p-3 mt-4" style="width: 63rem;">
                     <i class="fa-solid fa-folder fa-3x card-img-top text-center" ></i>
                     <div class="card-body">
                       <h5 class="card-title">Rich Metadata</h5>
@@ -135,8 +131,7 @@
                     </div>
                   </li>
 
-                  <li class="card p-3 mt-4" style="width: 62rem; margin-right: 2%;">
-                    <!-- <span class="emoji">📦</span>  -->
+                  <li class="card p-3 mt-4" style="width: 63rem;">
                     <i class="fa-solid fa-brain fa-3x card-img-top text-center"></i>
                     <div class="card-body">
                       <h5 class="card-title">Operational Knowledge</h5>
@@ -146,8 +141,7 @@
                     </div>
                   </li>
 
-                  <li class="card p-3 mt-4" style="width: 62rem;">
-                    <!-- <span class="emoji">📦</span>  -->
+                  <li class="card p-3 mt-4" style="width: 63rem;">
                     <i class="fa-solid fa-people-group fa-3x card-img-top text-center" ></i>
                     <div class="card-body">
                       <h5 class="card-title">Team</h5>
@@ -156,12 +150,6 @@
                       </p>
                     </div>
                   </li>
-
-                  <!-- <li><span class="emoji">🔏</span> </li>
-                  <li><span class="emoji">🕑</span> </li>
-                  <li><span class="emoji">🗂</span> </li>
-                  <li><span class="emoji">🧠</span> </li>
-                  <li><span class="emoji">💁‍♀️</span> </li> -->
                 </ul>
                 <p class="p-0">These are just some of the reasons why working with bundles with the tools embedded inside is helpful vs. using the same tools standalone.</p>
               </div>
@@ -170,72 +158,72 @@
             </div>
           </div>
 
-          <div class="container helm-features">
-            <div class="row ">
+          <div class="helm-features">
+            <div class="row mx-0">
               <div class="small-12 columns">
-                <h2>Porter Features</h2>
+                <h1 id="underline">Porter Features</h1>
               </div>
             </div>
 
-            <div class="row">
+            <div class="row mx-0" style="padding-bottom: 100px;">
               <div class="small-12 columns">
-                <h3>Credentials and Secrets <span style="font-size: 1.5em">🔐</span></h3>
+                <h3>Credentials and Secrets <img src="../static/img/lock.png"/></h3>
                 <figure>
                   <figcaption>
                     <p>
                       Credentials and secrets are retrieved from industry standard secret stores and securely injected.
                     </p>
                   </figcaption>
-                  <img src="/images/inject-credentials.png" width=800px />
+                  <img src="/images/inject-credentials.png" width=900px />
                 </figure>
               </div>
               <div class="small-12 columns">
-                <h3>Parameterized Bundles <span style="font-size: 1.5em">👩🏽‍🔬🧬</span></h3>
+                <h3>Parameterized Bundles <img src="../static/img/bundle.png"/></h3>
                 <figure>
                   <figcaption>
                     <p>
                       Use different configuration for production and staging, toggle feature switches and customize each installation of a bundle with parameters.
                     </p>
                   </figcaption>
-                  <img src="/images/parameterize.png" width=800px />
+                  <img src="/images/parameterize.png" width=900px />
               </div>
               <div class="small-12 columns">
-                <h3>Connect Action Inputs and Outputs<span style="font-size: 1.5em">🧩</span></h3>
+                <h3>Connect Action Inputs and Outputs <img src="../static/img/connect.png"/></h3>
                 <figure>
                   <figcaption>
                     <p>
                       Wire together tools that were not designed to integrate and seamlessly pass data between them.
                     </p>
                   </figcaption>
-                  <img src="/images/wire-outputs-to-inputs.png" width=800px />
+                  <img src="/images/wire-outputs-to-inputs.png" width=900px />
               </div>
             </div>
           </div>
 
           <div class="container content">
-            <div class="row">
+            <div class="row mx-0" style="justify-content: space-around;">
 
-              <div class="small-12 medium-12 large-7 get-helm columns">
-                <a href="{{ .Site.BaseURL }}mixin-dev-guide"><h2>Contribute a Mixin</h2></a>
+              <div class="col-md-7 mr-3 get-helm columns">
+                <a href="{{ .Site.BaseURL }}mixin-dev-guide"><h2 id="underline">Contribute a Mixin</h2></a>
                 <p>
                   Porter is a cloud-agnostic tool that can work anywhere and with any tool, but in order to
                   have great support for these clouds and tools, custom-made mixins are best.</p>
 
-                  <p>Do you know tools we don't have <a href="{{.Site.BaseURL}}mixins">custom mixins</a> for yet?</p>
+                  <p>Do you know tools we don't have <a style="text-decoration: underline;" href="{{.Site.BaseURL}}mixins"> <b>Custom Mixins </b></a> for yet?</p>
                     
-                  <p align="center"><a href="{{ .Site.BaseURL }}mixin-dev-guide">Help us make more mixins!</a> 🙌</p>
+                  <p align="center" style="font-family: 'CBlack'; font-size: 1.7rem; padding-right: 0;"><a style="text-decoration: underline;" href="{{ .Site.BaseURL }}mixin-dev-guide">Help us make more mixins!</a> 🙌</p>
                 </p>
               </div>
 
-              <div class="small-12 medium-12 large-5 get-charts columns">
+              <div class="col-md-4 get-charts columns">
                 <a href="https://github.com/getporter/examples/">
-                  <h2>Example Bundles</h2>
+                  <h2 id="underline1">Example Bundles</h2>
                 </a>
 
-                <p>Looking for ideas and copy/pasta?</p>
+                <p class="px-0">Looking for ideas and copy/paste?</p>
 
                 <a href="https://github.com/getporter/examples/">
-                  <p><img src="{{ .Site.BaseURL }}/img/helm-charts.png" alt="Example Bundles"></p>
+                  <p class="px-0 text-center pt-4"><img style="transform: scaleY(1.3);" src="{{ .Site.BaseURL }}/img/helm-charts.png" alt="Example Bundles"></p>
                 </a>
 
               </div>
