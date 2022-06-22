@@ -1,13 +1,20 @@
 ---
-title: Data Migration
+title: Migrate from Porter v0 to v1
 description: How to prepare for and migrate Porter's data
 ---
+
 Porter's data storage backend and format are changing from v0 to v1.0.
 When you upgrade to Porter v1, you need to migrate both your Porter database and any files that you used with Porter, such as saved parameter or credential sets.
 This guide will walk you through upgrading your data and documents.
 
-1. [Make a new PORTER_HOME](#1--make-a-new-porter-home)
-2. [Install Porter v1]
+1. [Make a new PORTER_HOME](#1-make-a-new-porter_home)
+2. [Install Porter v1](#2-install-porter-v1)
+3. [Configure a Storage Plugin](#3-configure-a-storage-plugin)
+4. [Validate Your Porter Configuration](#4-validate-your-porter-configuration)
+5. [Migrate Your Data](#5-migrate-your-data)
+6. [View Your Migrated Data](#6-view-your-migrated-data)
+7. [Migrate Standalone Files](#7-migrate-standalone-files)
+8. [Migrate Your Bundles](#8-migrate-your-bundles)
 
 ## 1. Make a new PORTER_HOME
 
