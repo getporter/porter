@@ -178,8 +178,11 @@ func (a PluginAdapter) Remove(ctx context.Context, collection string, opts Remov
 }
 
 func (a PluginAdapter) Update(ctx context.Context, collection string, opts UpdateOptions) error {
-	pluginOpts, _ := opts.ToPluginOptions(collection)
-	err := a.plugin.Update(ctx, pluginOpts)
+	pluginOpts, err := opts.ToPluginOptions(collection)
+	if err != nil {
+		return err
+	}
+	err = a.plugin.Update(ctx, pluginOpts)
 	return a.handleError(err, collection)
 }
 
