@@ -477,7 +477,7 @@ func (c *Context) CopyFile(src, dest string) error {
 
 	err = c.FileSystem.WriteFile(dest, data, info.Mode())
 	if err != nil {
-		return fmt.Errorf("%w", err)
+		return err
 	}
 
 	return nil
