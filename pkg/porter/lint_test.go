@@ -116,6 +116,7 @@ exec:
 			require.NoError(t, err, "PrintLintResults failed")
 
 			wantOutputB, err := ioutil.ReadFile(tc.wantOutputFile)
+			require.NoError(t, err, "Reading output file failed")
 			gotOutput := p.TestConfig.TestContext.GetOutput()
 			assert.Equal(t, string(wantOutputB), gotOutput, "unexpected output printed")
 		})

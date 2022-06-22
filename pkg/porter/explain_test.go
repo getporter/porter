@@ -29,6 +29,7 @@ func TestExplain_generateTable(t *testing.T) {
 
 	p.TestConfig.TestContext.AddTestFile("testdata/explain/params-bundle.json", "params-bundle.json")
 	b, err := p.CNAB.LoadBundle("params-bundle.json")
+	require.NoError(t, err)
 
 	pb, err := generatePrintable(b, "")
 	require.NoError(t, err)
@@ -51,6 +52,7 @@ func TestExplain_generateTableRequireDockerHostAccess(t *testing.T) {
 
 	p.TestConfig.TestContext.AddTestFile("testdata/explain/bundle-docker.json", "bundle-docker.json")
 	b, err := p.CNAB.LoadBundle("bundle-docker.json")
+	require.NoError(t, err)
 
 	pb, err := generatePrintable(b, "")
 	require.NoError(t, err)
@@ -72,6 +74,7 @@ func TestExplain_generateJSON(t *testing.T) {
 
 	p.TestConfig.TestContext.AddTestFile("testdata/explain/params-bundle.json", "params-bundle.json")
 	b, err := p.CNAB.LoadBundle("params-bundle.json")
+	require.NoError(t, err)
 
 	pb, err := generatePrintable(b, "")
 	require.NoError(t, err)
@@ -93,6 +96,7 @@ func TestExplain_generateYAML(t *testing.T) {
 
 	p.TestConfig.TestContext.AddTestFile("testdata/explain/params-bundle.json", "params-bundle.json")
 	b, err := p.CNAB.LoadBundle("params-bundle.json")
+	require.NoError(t, err)
 
 	pb, err := generatePrintable(b, "")
 	require.NoError(t, err)
@@ -394,15 +398,15 @@ func TestExplain_generatePrintableBundleDependencies(t *testing.T) {
 			cnab.DependenciesExtensionKey: cnab.Dependencies{
 				Sequence: sequenceMock,
 				Requires: map[string]cnab.Dependency{
-					"mysql": cnab.Dependency{
+					"mysql": {
 						Name:   "mysql",
 						Bundle: "somecloud/mysql:0.1.0",
 					},
-					"storage": cnab.Dependency{
+					"storage": {
 						Name:   "storage",
 						Bundle: "localhost:5000/blob-storage:0.1.0",
 					},
-					"nginx": cnab.Dependency{
+					"nginx": {
 						Name:   "nginx",
 						Bundle: "localhost:5000/nginx:1.19",
 					},
@@ -432,6 +436,7 @@ func TestExplain_generateJSONForDependencies(t *testing.T) {
 
 	p.TestConfig.TestContext.AddTestFile("testdata/explain/dependencies-bundle.json", "dependencies-bundle.json")
 	b, err := p.CNAB.LoadBundle("dependencies-bundle.json")
+	require.NoError(t, err)
 
 	pb, err := generatePrintable(b, "")
 	require.NoError(t, err)
@@ -454,6 +459,7 @@ func TestExplain_generateTableNonPorterBundle(t *testing.T) {
 
 	p.TestConfig.TestContext.AddTestFile("testdata/explain/params-bundle-non-porter.json", "params-bundle.json")
 	b, err := p.CNAB.LoadBundle("params-bundle.json")
+	require.NoError(t, err)
 
 	pb, err := generatePrintable(b, "")
 	require.NoError(t, err)
@@ -476,6 +482,7 @@ func TestExplain_generateTableBundleWithNoMixins(t *testing.T) {
 
 	p.TestConfig.TestContext.AddTestFile("testdata/explain/params-bundle-no-mixins.json", "params-bundle.json")
 	b, err := p.CNAB.LoadBundle("params-bundle.json")
+	require.NoError(t, err)
 
 	pb, err := generatePrintable(b, "")
 	require.NoError(t, err)

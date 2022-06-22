@@ -11,7 +11,6 @@ import (
 	"get.porter.sh/porter/pkg/tracing"
 	"get.porter.sh/porter/pkg/yaml"
 	"github.com/google/go-cmp/cmp"
-	_ "github.com/google/go-cmp/cmp"
 	"go.opentelemetry.io/otel/attribute"
 )
 
@@ -56,7 +55,7 @@ func (p *Porter) ReconcileInstallation(ctx context.Context, opts ReconcileOption
 	}
 	if !ok {
 		instYaml, _ := yaml.Marshal(opts.Installation)
-		return fmt.Errorf("The installation does not define a valid bundle reference.\n%s", instYaml)
+		return fmt.Errorf("the installation does not define a valid bundle reference.\n%s", instYaml)
 	}
 
 	// Configure the bundle action that we should execute IF IT'S OUT OF SYNC

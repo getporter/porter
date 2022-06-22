@@ -32,8 +32,8 @@ func NewCredentialStore(storage Store, secrets secrets.Store) *CredentialStore {
 	}
 }
 
-// Initialize the underlying storage with any additional schema changes, such as indexes.
-func (s CredentialStore) Initialize(ctx context.Context) error {
+// EnsureCredentialIndices creates indices on the credentials collection.
+func EnsureCredentialIndices(ctx context.Context, store Store) error {
 	ctx, span := tracing.StartSpan(ctx)
 	defer span.EndSpan()
 
@@ -45,7 +45,7 @@ func (s CredentialStore) Initialize(ctx context.Context) error {
 			{Collection: CollectionCredentials, Keys: []string{"namespace", "name"}, Unique: true},
 		},
 	}
-	err := s.Documents.EnsureIndex(ctx, indices)
+	err := store.EnsureIndex(ctx, indices)
 	return span.Error(err)
 }
 
@@ -85,7 +85,7 @@ func (s CredentialStore) Validate(ctx context.Context, creds CredentialSet) erro
 				break
 			}
 		}
-		if valid == false {
+		if !valid {
 			errors = multierror.Append(errors, fmt.Errorf(
 				"%s is not a valid source. Valid sources are: %s",
 				cs.Source.Key,

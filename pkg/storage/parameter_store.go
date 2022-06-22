@@ -31,8 +31,8 @@ func NewParameterStore(storage Store, secrets secrets.Store) *ParameterStore {
 	}
 }
 
-// Initialize the backend storage with any necessary schema changes, such as indexes.
-func (s ParameterStore) Initialize(ctx context.Context) error {
+// EnsureParameterIndices creates indices on the parameters collection.
+func EnsureParameterIndices(ctx context.Context, store Store) error {
 	ctx, span := tracing.StartSpan(ctx)
 	defer span.EndSpan()
 
@@ -43,7 +43,7 @@ func (s ParameterStore) Initialize(ctx context.Context) error {
 			{Collection: CollectionParameters, Keys: []string{"namespace", "name"}, Unique: true},
 		},
 	}
-	err := s.Documents.EnsureIndex(ctx, indices)
+	err := store.EnsureIndex(ctx, indices)
 	return span.Error(err)
 }
 
@@ -79,7 +79,7 @@ func (s ParameterStore) Validate(ctx context.Context, params ParameterSet) error
 				break
 			}
 		}
-		if valid == false {
+		if !valid {
 			errors = multierror.Append(errors, fmt.Errorf(
 				"%s is not a valid source. Valid sources are: %s",
 				cs.Source.Key,

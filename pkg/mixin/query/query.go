@@ -65,7 +65,7 @@ func (q *MixinQuery) Execute(ctx context.Context, cmd string, inputGenerator Mix
 		gerr.Go(func() error {
 			// Copy the existing context and tweak to pipe the output differently
 			mixinStdout := &bytes.Buffer{}
-			var mixinContext portercontext.Context = *q.Context
+			mixinContext := *q.Context
 			mixinContext.Out = mixinStdout // mixin stdout -> mixin response
 
 			if q.LogMixinErrors {

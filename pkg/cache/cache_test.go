@@ -17,10 +17,9 @@ import (
 )
 
 var (
-	kahn1dot0Hash  = "887e7e65e39277f8744bd00278760b06"
-	kahn1dot01     = cnab.MustParseOCIReference("deislabs/kubekahn:1.0")
-	kahnlatestHash = "fd4bbe38665531d10bb653140842a370"
-	kahnlatest     = cnab.MustParseOCIReference("deislabs/kubekahn:latest")
+	kahn1dot0Hash = "887e7e65e39277f8744bd00278760b06"
+	kahn1dot01    = cnab.MustParseOCIReference("deislabs/kubekahn:1.0")
+	kahnlatest    = cnab.MustParseOCIReference("deislabs/kubekahn:latest")
 )
 
 func TestFindBundleCacheExists(t *testing.T) {
@@ -65,6 +64,7 @@ func TestFindBundleBundleCached(t *testing.T) {
 	expectedCacheCNABDirectory := filepath.Join(expectedCacheDirectory, "cnab")
 	expectedCacheFile := filepath.Join(expectedCacheCNABDirectory, "bundle.json")
 	foundIt, err := cfg.Config.FileSystem.Exists(expectedCacheFile)
+	require.NoError(t, err, "the cache dir should exist, no error should have happened")
 	require.True(t, foundIt, "test data not loaded")
 	c := New(cfg.Config)
 
@@ -95,6 +95,7 @@ func TestCacheWriteNoCacheDir(t *testing.T) {
 
 	c := New(cfg.Config)
 	cb, err := c.StoreBundle(cnab.BundleReference{Reference: kahn1dot01, Definition: bun})
+	assert.NoError(t, err, "storing bundle should have succeeded")
 
 	home, err := cfg.Config.GetHomeDir()
 	require.NoError(t, err, "should have had a porter home dir")
@@ -104,7 +105,6 @@ func TestCacheWriteNoCacheDir(t *testing.T) {
 	expectedCacheFile := filepath.Join(expectedCacheCNABDirectory, "bundle.json")
 
 	assert.Equal(t, expectedCacheFile, cb.BundlePath)
-	assert.NoError(t, err, "storing bundle should have succeeded")
 }
 
 func TestCacheWriteCacheDirExists(t *testing.T) {
@@ -181,6 +181,7 @@ func TestStoreRelocationMapping(t *testing.T) {
 			assert.Equal(t, tc.wantedReloPath, cb.RelocationFilePath, "didn't get expected path for store")
 
 			cb, _, err = c.FindBundle(tc.tag)
+			assert.NoError(t, err, "didn't expect find bundle error for test %s", tc.tag)
 			assert.Equal(t, tc.wantedReloPath, cb.RelocationFilePath, "didn't get expected path for load")
 		})
 	}

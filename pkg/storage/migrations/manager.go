@@ -92,20 +92,17 @@ Once your data has been backed up, run the following command to perform the migr
 		}
 		m.initialized = true
 
-		cs := storage.NewInstallationStore(m.store)
-		err := cs.Initialize(ctx)
+		err := storage.EnsureInstallationIndices(ctx, m.store)
 		if err != nil {
 			return err
 		}
 
-		paramStore := storage.NewParameterStore(m.store, nil)
-		err = paramStore.Initialize(ctx)
+		err = storage.EnsureParameterIndices(ctx, m.store)
 		if err != nil {
 			return err
 		}
 
-		credStore := storage.NewCredentialStore(m.store, nil)
-		err = credStore.Initialize(ctx)
+		err = storage.EnsureCredentialIndices(ctx, m.store)
 		if err != nil {
 			return err
 		}

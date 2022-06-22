@@ -110,8 +110,7 @@ func (b *Builder) BuildInvocationImage(ctx context.Context, manifest *manifest.M
 	parseBuildArgs(opts.BuildArgs, args)
 	args["BUNDLE_DIR"] = build.BUNDLE_DIR
 
-	convertedCustomInput := make(map[string]string)
-	convertedCustomInput, err = flattenMap(manifest.Custom)
+	convertedCustomInput, err := flattenMap(manifest.Custom)
 	if err != nil {
 		return log.Error(err)
 	}

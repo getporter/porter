@@ -518,7 +518,7 @@ func (p *Porter) printInstallationInstructionBlock(bun *PrintableBundle, bundleR
 		porterInstallCommand += " --allow-docker-host-access"
 	}
 
-	fmt.Fprintf(p.Out, porterInstallCommand)
+	fmt.Fprint(p.Out, porterInstallCommand)
 	fmt.Fprintln(p.Out, "") // force a blank line after this block
 
 	return nil

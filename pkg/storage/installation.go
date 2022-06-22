@@ -22,7 +22,7 @@ type Installation struct {
 	// SchemaVersion is the version of the installation state schema.
 	SchemaVersion schema.Version `json:"schemaVersion"`
 
-	// ID is the unique identifire for an installation record.
+	// ID is the unique identifier for an installation record.
 	ID string `json:"id"`
 
 	// Name of the installation. Immutable.
@@ -104,8 +104,11 @@ func (i *Installation) ApplyResult(run Run, result Result) {
 	}
 
 	if !i.IsInstalled() && run.Action == cnab.ActionInstall && result.Status == cnab.StatusSucceeded {
-		now := time.Now()
-		i.Status.Installed = &now
+		i.Status.Installed = &result.Created
+	}
+
+	if !i.IsUninstalled() && run.Action == cnab.ActionUninstall && result.Status == cnab.StatusSucceeded {
+		i.Status.Uninstalled = &result.Created
 	}
 }
 
