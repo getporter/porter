@@ -467,7 +467,7 @@ func (c *Context) CopyDirectory(srcDir, destDir string, includeBaseDir bool) err
 func (c *Context) CopyFile(src, dest string) error {
 	info, err := c.FileSystem.Stat(src)
 	if err != nil {
-		return fmt.Errorf("%w", err)
+		return err
 	}
 
 	data, err := c.FileSystem.ReadFile(src)
