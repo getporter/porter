@@ -442,7 +442,7 @@ func (c *Context) CopyDirectory(srcDir, destDir string, includeBaseDir bool) err
 
 	return c.FileSystem.Walk(srcDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
-			return fmt.Errorf("%w", err)
+			return err
 		}
 
 		// Translate the path from the src to the final destination
