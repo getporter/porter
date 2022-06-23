@@ -295,17 +295,13 @@ func (p *Porter) PrintInstallations(ctx context.Context, opts ListOptions) error
 }
 
 func setDisplayInstallationState(installation storage.Installation) string {
-	var state string
-
 	if installation.IsInstalled() {
-		state = StateInstalled
+		return StateInstalled
 	} else if installation.IsUninstalled() {
-		state = StateUninstalled
-	} else if installation.IsDefined() {
-		state = StateDefined
+		return StateUninstalled
 	}
 
-	return state
+	return StateDefined
 }
 
 func setDisplayInstallationStatus(installation storage.Installation) string {
