@@ -112,6 +112,10 @@ type DisplayInstallation struct {
 	// Status of the installation.
 	Status                      storage.InstallationStatus `json:"status,omitempty" yaml:"status,omitempty" toml:"status,omitempty"`
 	DisplayInstallationMetadata `json:"_calculated" yaml:"_calculated"`
+}
+
+type DisplayInstallationMetadata struct {
+	ResolvedParameters DisplayValues `json:"resolvedParameters" yaml:"resolvedParameters"`
 
 	// DisplayInstallationState is the latest state of the installation.
 	// It is either "installed", "uninstalled", or "defined".
@@ -121,27 +125,25 @@ type DisplayInstallation struct {
 	DisplayInstallationStatus string `json:"displayInstallationStatus,omitempty" yaml:"displayInstallationStatus,omitempty" toml:"displayInstallationStatus,omitempty"`
 }
 
-type DisplayInstallationMetadata struct {
-	ResolvedParameters DisplayValues `json:"resolvedParameters" yaml:"resolvedParameters"`
-}
-
 func NewDisplayInstallation(installation storage.Installation) DisplayInstallation {
 
 	di := DisplayInstallation{
-		SchemaType:                "Installation",
-		SchemaVersion:             installation.SchemaVersion,
-		ID:                        installation.ID,
-		Name:                      installation.Name,
-		Namespace:                 installation.Namespace,
-		Uninstalled:               installation.Uninstalled,
-		Bundle:                    installation.Bundle,
-		Custom:                    installation.Custom,
-		Labels:                    installation.Labels,
-		CredentialSets:            installation.CredentialSets,
-		ParameterSets:             installation.ParameterSets,
-		Status:                    installation.Status,
-		DisplayInstallationState:  setDisplayInstallationState(installation),
-		DisplayInstallationStatus: setDisplayInstallationStatus(installation),
+		SchemaType:     "Installation",
+		SchemaVersion:  installation.SchemaVersion,
+		ID:             installation.ID,
+		Name:           installation.Name,
+		Namespace:      installation.Namespace,
+		Uninstalled:    installation.Uninstalled,
+		Bundle:         installation.Bundle,
+		Custom:         installation.Custom,
+		Labels:         installation.Labels,
+		CredentialSets: installation.CredentialSets,
+		ParameterSets:  installation.ParameterSets,
+		Status:         installation.Status,
+		DisplayInstallationMetadata: DisplayInstallationMetadata{
+			DisplayInstallationState:  setDisplayInstallationState(installation),
+			DisplayInstallationStatus: setDisplayInstallationStatus(installation),
+		},
 	}
 
 	return di

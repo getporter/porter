@@ -40,5 +40,5 @@ _calculated:
       type: unknown
       sensitive: false
       value: top-secret
-displayInstallationState: installed
-displayInstallationStatus: succeeded
+  displayInstallationState: installed
+  displayInstallationStatus: succeeded
