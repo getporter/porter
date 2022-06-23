@@ -21,7 +21,7 @@
   h3 {
     color: #f6fbfe;
     font-size: 1.125rem;
-    @include klinicBold;
+    @include CBold;
   }
 
   #helm {
@@ -42,7 +42,6 @@
 
     .billboard {
       background-color: white;
-      //background: url('/img/pattern-topo.png') left top repeat;
       background-size: 376px;
       padding: 165px 60px 100px 60px;
       position: relative;
@@ -64,7 +63,6 @@
         width: 425px;
         height: 14px;
         transform: skew(-12deg) translateX(-50%);
-        // background: rgba(255,203,124,0.7);
         background: rgba(238,111,87,0.5);
       }     
       
@@ -124,7 +122,6 @@
 
       &:after {
         $height: 6px;
-        // background: url('/img/pattern-waves.png') left top repeat-x;
         background-size: $gutter;
         bottom: 0;
         content: '';
@@ -193,7 +190,7 @@
         margin: 0 auto 1rem;
         font-size: 1rem;
         color: $blue3;
-        @include klinicBold;
+        @include CBold;
         letter-spacing: 0.02em;
       }
 

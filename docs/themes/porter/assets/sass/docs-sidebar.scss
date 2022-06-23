@@ -78,7 +78,7 @@
         color: $blue3;
         left: 6.5rem;
         letter-spacing: -0.125rem;
-        @include klinicReg;
+        @include CMedium;
       }
 
       &:hover {
@@ -104,7 +104,7 @@
         line-height: 1.4;
         text-transform: capitalize;
         font-size: 1.5em;
-        @include klinicBold;
+        @include CBold;
         letter-spacing: 0.02em;
         @include transition(all, 0.3s, cubic-bezier(0.25,0.1,0.25,1));
 
