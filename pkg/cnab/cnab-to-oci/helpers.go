@@ -15,6 +15,7 @@ type TestRegistry struct {
 	MockPushInvocationImage func(ctx context.Context, invocationImage string) (imageDigest digest.Digest, err error)
 	MockIsImageCached       func(ctx context.Context, invocationImage string) (bool, error)
 	MockListTags            func(ctx context.Context, repository string) ([]string, error)
+	MockPullImage           func(ctx context.Context, image string) (string, error)
 }
 
 func NewTestRegistry() *TestRegistry {
@@ -58,4 +59,11 @@ func (t TestRegistry) ListTags(ctx context.Context, repository string) ([]string
 	}
 
 	return nil, nil
+}
+
+func (t TestRegistry) PullImage(ctx context.Context, image string) (string, error) {
+	if t.MockPullImage != nil {
+		return t.MockPullImage(ctx, image)
+	}
+	return "", nil
 }

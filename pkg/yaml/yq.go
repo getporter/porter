@@ -2,6 +2,7 @@ package yaml
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -127,4 +128,26 @@ func (e *Editor) GetNode(path string) (*yaml.Node, error) {
 	default:
 		return nil, fmt.Errorf("multiple nodes matched the path %s", path)
 	}
+}
+
+// WalkNodes executes f for all yaml nodes found in path.
+// If an error is returned from f, the WalkNodes function will return the error and stop interating through
+// the rest of the nodes.
+func (e *Editor) WalkNodes(ctx context.Context, path string, f func(ctx context.Context, nc *yqlib.NodeContext) error) error {
+	nodes, err := e.yq.Get(e.node, path)
+	if err != nil {
+		return fmt.Errorf("failed to find nodes with path %s: %w", path, err)
+	}
+
+	for _, node := range nodes {
+		if node.Node.IsZero() {
+			continue
+		}
+		if err := f(ctx, node); err != nil {
+			return err
+		}
+
+	}
+
+	return nil
 }

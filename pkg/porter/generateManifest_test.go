@@ -1,6 +1,7 @@
 package porter
 
 import (
+	"context"
 	"path/filepath"
 	"testing"
 
@@ -18,7 +19,7 @@ func Test_generateInternalManifest(t *testing.T) {
 	}{{
 		name:         "no opts",
 		opts:         BuildOptions{},
-		wantManifest: "original.yaml",
+		wantManifest: "expected-result.yaml",
 	}, {
 		name: "--file set",
 		opts: BuildOptions{
@@ -26,7 +27,7 @@ func Test_generateInternalManifest(t *testing.T) {
 				File: "alternate.yaml",
 			},
 		},
-		wantManifest: "original.yaml",
+		wantManifest: "expected-result.yaml",
 	}, {
 		name:         "name set",
 		opts:         BuildOptions{metadataOpts: metadataOpts{Name: "newname"}},
@@ -47,8 +48,10 @@ func Test_generateInternalManifest(t *testing.T) {
 
 	p := NewTestPorter(t)
 	defer p.Close()
+	p.TestRegistry.MockPullImage = mockPullImage
 
 	for _, tc := range testcases {
+		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			manifest := config.Name
 			if tc.opts.File != "" {
@@ -59,7 +62,7 @@ func Test_generateInternalManifest(t *testing.T) {
 			err := tc.opts.Validate(p.Porter)
 			require.NoError(t, err)
 
-			err = p.generateInternalManifest(tc.opts)
+			err = p.generateInternalManifest(context.Background(), tc.opts)
 			require.NoError(t, err)
 
 			goldenFile := filepath.Join("testdata/generateManifest", tc.wantManifest)
@@ -69,4 +72,8 @@ func Test_generateInternalManifest(t *testing.T) {
 			test.CompareGoldenFile(t, goldenFile, string(got))
 		})
 	}
+}
+
+func mockPullImage(ctx context.Context, image string) (string, error) {
+	return "sha256:8b92b7269f59e3ed824e811a1ff1ee64f0d44c0218efefada57a4bebc2d7ef6f", nil
 }

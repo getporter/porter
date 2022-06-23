@@ -2,7 +2,10 @@ package cnabtooci
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"strings"
 
 	"get.porter.sh/porter/pkg/cnab"
@@ -175,6 +178,60 @@ func (r *Registry) PushInvocationImage(ctx context.Context, invocationImage stri
 		return "", fmt.Errorf("unable to inspect docker image: %w", err)
 	}
 	return dist.Descriptor.Digest, nil
+}
+
+func (r *Registry) PullImage(ctx context.Context, imgRef string) (string, error) {
+	ctx, log := tracing.StartSpan(ctx)
+	defer log.EndSpan()
+
+	cli, err := docker.GetDockerClient()
+	if err != nil {
+		return "", err
+	}
+
+	ref, err := cnab.ParseOCIReference(imgRef)
+	if err != nil {
+		return "", err
+	}
+	// Resolve the Repository name from fqn to RepositoryInfo
+	repoInfo, err := ref.ParseRepositoryInfo()
+	if err != nil {
+		return "", err
+	}
+	authConfig := command.ResolveAuthConfig(ctx, cli, repoInfo.Index)
+	encodedAuth, err := command.EncodeAuthToBase64(authConfig)
+	if err != nil {
+		return "", err
+	}
+	options := types.ImagePullOptions{
+		RegistryAuth: encodedAuth,
+	}
+
+	pullResp, err := cli.Client().ImagePull(ctx, imgRef, options)
+	if err != nil {
+		return "", fmt.Errorf("docker pull failed: %w", err)
+	}
+	defer pullResp.Close()
+
+	decoder := json.NewDecoder(pullResp)
+	type pullResponse struct {
+		Status string `json:"status"`
+	}
+	for decoder.More() {
+		data := pullResponse{}
+		err := decoder.Decode(&data)
+		if err != nil && err != io.EOF {
+			return "", err
+		}
+
+		parsed := strings.SplitAfterN(data.Status, ":", 2)
+		if len(parsed) > 1 && strings.Contains(parsed[0], "Digest") {
+			return strings.TrimSpace(parsed[1]), nil
+		}
+
+	}
+
+	return "", errors.New("digest not found")
 }
 
 func (r *Registry) createResolver(insecureRegistries []string) containerdRemotes.Resolver {

@@ -25,4 +25,7 @@ type RegistryProvider interface {
 
 	// ListTags returns all tags defined on the specified repository.
 	ListTags(ctx context.Context, repository string) ([]string, error)
+
+	// PullImage pulls a image from an OCI registry and returns the image's digest
+	PullImage(ctx context.Context, image string) (string, error)
 }

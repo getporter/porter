@@ -386,6 +386,7 @@ func (c *ManifestConverter) generateBundleImages() map[string]bundle.Image {
 			imgRefStr = fmt.Sprintf("%s:%s", imgRefStr, refImage.Tag)
 		} else { // default to `latest` if no tag is provided
 			imgRefStr = fmt.Sprintf("%s:latest", imgRefStr)
+
 		}
 		imgType := refImage.ImageType
 		if imgType == "" {

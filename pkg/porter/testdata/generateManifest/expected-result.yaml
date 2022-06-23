@@ -4,9 +4,9 @@ version: 0.1.0
 description: "An example Porter configuration"
 registry: "localhost:5000"
 custom:
-  key1: editedValue1
+  key1: value1
   key2:
-    nestedKey2: editedValue2
+    nestedKey2: value2
 mixins:
   - exec
 images:
