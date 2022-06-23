@@ -2,13 +2,13 @@ package pluginstore
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/plugins/pluggable"
 	"get.porter.sh/porter/pkg/secrets/plugins"
 	"get.porter.sh/porter/pkg/tracing"
-	"github.com/pkg/errors"
 )
 
 var _ plugins.SecretsProtocol = &Store{}
@@ -74,7 +74,7 @@ func (s *Store) Create(ctx context.Context, keyName string, keyValue string, val
 	err := s.plugin.Create(ctx, keyName, keyValue, value)
 	if errors.Is(err, plugins.ErrNotImplemented) {
 		//TODO: add the doc page link once it exists
-		return span.Error(fmt.Errorf(`The current secrets plugin does not support persisting secrets. You need to edit your porter configuration file and configure a different secrets plugin.
+		return span.Error(fmt.Errorf(`the current secrets plugin does not support persisting secrets. You need to edit your porter configuration file and configure a different secrets plugin.
 		
 If you are just testing out Porter, and are not working with production secrets, you can edit your config file and set default-storage-plugin to "filesystem" to use the insecure filesystem plugin. Do not use the filesystem plugin for production data.: %w`, err))
 	}

@@ -14,7 +14,6 @@ import (
 	"get.porter.sh/porter/pkg/tracing"
 	dtprinter "github.com/carolynvs/datetime-printer"
 	"github.com/cnabio/cnab-go/schema"
-	"github.com/pkg/errors"
 )
 
 const (
@@ -173,7 +172,7 @@ func (d DisplayInstallation) ConvertToInstallation() (storage.Installation, erro
 	}
 
 	if err := i.Validate(); err != nil {
-		return storage.Installation{}, errors.Wrap(err, "invalid installation")
+		return storage.Installation{}, fmt.Errorf("invalid installation: %w", err)
 	}
 
 	return i, nil
@@ -221,7 +220,7 @@ type DisplayRun struct {
 	Action     string                 `json:"action" yaml:"action"`
 	Parameters map[string]interface{} `json:"parameters,omitempty" yaml:"parameters,omitempty"`
 	Started    time.Time              `json:"started" yaml:"started"`
-	Stopped    time.Time              `json:"stopped" yaml:"stopped"`
+	Stopped    *time.Time             `json:"stopped" yaml:"stopped"`
 	Status     string                 `json:"status" yaml:"status"`
 }
 

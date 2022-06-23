@@ -2,6 +2,7 @@ package cnab
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -9,7 +10,6 @@ import (
 	"github.com/docker/distribution/reference"
 	"github.com/docker/docker/registry"
 	"github.com/opencontainers/go-digest"
-	"github.com/pkg/errors"
 )
 
 // ParseOCIReference parses the specified value as an OCIReference.
@@ -17,7 +17,7 @@ import (
 func ParseOCIReference(value string) (OCIReference, error) {
 	named, err := reference.ParseNormalizedNamed(value)
 	if err != nil {
-		return OCIReference{}, errors.Wrapf(err, "invalid reference format %s", value)
+		return OCIReference{}, fmt.Errorf("invalid reference format %s: %w", value, err)
 	}
 
 	ref := OCIReference{Named: named}
@@ -192,7 +192,7 @@ func (r OCIReference) WithVersion(version string) (OCIReference, error) {
 
 	v, err := semver.NewVersion(version)
 	if err != nil {
-		return OCIReference{}, errors.Wrapf(err, "invalid bundle version specified %s", version)
+		return OCIReference{}, fmt.Errorf("invalid bundle version specified %s: %w", version, err)
 	}
 
 	newRef, err := reference.WithTag(r.Named, "v"+v.String())

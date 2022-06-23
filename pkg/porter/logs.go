@@ -2,10 +2,10 @@ package porter
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"get.porter.sh/porter/pkg/portercontext"
-	"github.com/pkg/errors"
 )
 
 // LogsShowOptions represent options for an installation logs show command

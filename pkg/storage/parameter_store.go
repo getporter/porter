@@ -9,7 +9,6 @@ import (
 	"get.porter.sh/porter/pkg/tracing"
 	"github.com/cnabio/cnab-go/secrets/host"
 	"github.com/hashicorp/go-multierror"
-	"github.com/pkg/errors"
 )
 
 var _ ParameterSetProvider = &ParameterStore{}
@@ -32,8 +31,8 @@ func NewParameterStore(storage Store, secrets secrets.Store) *ParameterStore {
 	}
 }
 
-// Initialize the backend storage with any necessary schema changes, such as indexes.
-func (s ParameterStore) Initialize(ctx context.Context) error {
+// EnsureParameterIndices creates indices on the parameters collection.
+func EnsureParameterIndices(ctx context.Context, store Store) error {
 	ctx, span := tracing.StartSpan(ctx)
 	defer span.EndSpan()
 
@@ -44,7 +43,7 @@ func (s ParameterStore) Initialize(ctx context.Context) error {
 			{Collection: CollectionParameters, Keys: []string{"namespace", "name"}, Unique: true},
 		},
 	}
-	err := s.Documents.EnsureIndex(ctx, indices)
+	err := store.EnsureIndex(ctx, indices)
 	return span.Error(err)
 }
 
@@ -59,7 +58,7 @@ func (s ParameterStore) ResolveAll(ctx context.Context, params ParameterSet) (se
 	for _, param := range params.Parameters {
 		value, err := s.Secrets.Resolve(ctx, param.Source.Key, param.Source.Value)
 		if err != nil {
-			resolveErrors = multierror.Append(resolveErrors, errors.Wrapf(err, "unable to resolve parameter %s.%s from %s %s", params.Name, param.Name, param.Source.Key, param.Source.Value))
+			resolveErrors = multierror.Append(resolveErrors, fmt.Errorf("unable to resolve parameter %s.%s from %s %s: %w", params.Name, param.Name, param.Source.Key, param.Source.Value, err))
 		}
 
 		resolvedParams[param.Name] = value
@@ -80,7 +79,7 @@ func (s ParameterStore) Validate(ctx context.Context, params ParameterSet) error
 				break
 			}
 		}
-		if valid == false {
+		if !valid {
 			errors = multierror.Append(errors, fmt.Errorf(
 				"%s is not a valid source. Valid sources are: %s",
 				cs.Source.Key,

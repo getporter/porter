@@ -2,6 +2,7 @@ package porter
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 
@@ -9,7 +10,6 @@ import (
 	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/tracing"
 	"github.com/hashicorp/go-multierror"
-	"github.com/pkg/errors"
 )
 
 var _ BundleAction = NewUninstallOptions()
@@ -80,7 +80,7 @@ func (p *Porter) UninstallBundle(ctx context.Context, opts UninstallOptions) err
 
 	installation, err := p.Installations.GetInstallation(ctx, opts.Namespace, opts.Name)
 	if err != nil {
-		return errors.Wrapf(err, "could not find installation %s/%s", opts.Namespace, opts.Name)
+		return fmt.Errorf("could not find installation %s/%s: %w", opts.Namespace, opts.Name, err)
 	}
 
 	err = p.applyActionOptionsToInstallation(ctx, &installation, opts.BundleActionOptions)
@@ -107,7 +107,7 @@ func (p *Porter) UninstallBundle(ctx context.Context, opts UninstallOptions) err
 		uninstallErrs = multierror.Append(uninstallErrs, err)
 
 		// If the installation is not found, no further action is needed
-		err := errors.Cause(err)
+		err := errors.Unwrap(err)
 		if errors.Is(err, storage.ErrNotFound{}) {
 			return err
 		}

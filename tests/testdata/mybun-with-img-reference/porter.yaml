@@ -1,0 +1,25 @@
+schemaVersion: 1.0.0-alpha.1
+name: mybun-with-img-reference
+version: 0.1.0
+description: "An example Porter configuration that contains image reference"
+registry: "localhost:5000"
+
+images:
+  whalesayd:
+    description: "Whalesay as a service"
+    imageType: "docker"
+    repository: localhost:5000/whalesayd
+    digest: "sha256:499f71eec2e3bd78f26c268bbf5b2a65f73b96216fac4a89b86b5ebf115527b6"
+    tag: "latest"
+
+mixins:
+  - exec
+install:
+  - exec:
+      description: "Install Hello World"
+upgrade:
+  - exec:
+      description: "World 2.0"
+uninstall:
+  - exec:
+      description: "Uninstall Hello World"

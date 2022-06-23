@@ -11,7 +11,6 @@ import (
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/pkgmgmt"
 	"get.porter.sh/porter/pkg/portercontext"
-	"github.com/pkg/errors"
 )
 
 var _ pkgmgmt.PackageManager = &FileSystem{}
@@ -45,10 +44,13 @@ type FileSystem struct {
 
 func (fs *FileSystem) List() ([]string, error) {
 	parentDir, err := fs.GetPackagesDir()
+	if err != nil {
+		return nil, fmt.Errorf("could not get package directory:%w", err)
+	}
 
 	files, err := fs.FileSystem.ReadDir(parentDir)
 	if err != nil {
-		return nil, errors.Wrapf(err, "could not list the contents of the %s directory %q", fs.PackageType, parentDir)
+		return nil, fmt.Errorf("could not list the contents of the %s directory %q: %w", fs.PackageType, parentDir, err)
 	}
 
 	names := make([]string, 0, len(files))
@@ -72,8 +74,7 @@ func (fs *FileSystem) GetMetadata(ctx context.Context, name string) (pkgmgmt.Pac
 
 	// Copy the existing context and tweak to pipe the output differently
 	jsonB := &bytes.Buffer{}
-	var pkgContext portercontext.Context
-	pkgContext = *fs.Context
+	pkgContext := *fs.Context
 	pkgContext.Out = jsonB
 	if !fs.Debug {
 		pkgContext.Err = ioutil.Discard
@@ -131,7 +132,7 @@ func (fs *FileSystem) GetPackageDir(name string) (string, error) {
 	pkgDir := filepath.Join(parentDir, name)
 	dirExists, err := fs.FileSystem.DirExists(pkgDir)
 	if err != nil {
-		return "", errors.Wrapf(err, "%s %s not accessible at %s", fs.PackageType, name, pkgDir)
+		return "", fmt.Errorf("%s %s not accessible at %s: %w", fs.PackageType, name, pkgDir, err)
 	}
 	if !dirExists {
 		return "", fmt.Errorf("%s %s not installed in %s", fs.PackageType, name, pkgDir)

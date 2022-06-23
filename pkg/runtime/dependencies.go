@@ -1,10 +1,10 @@
 package runtime
 
 import (
+	"fmt"
 	"path/filepath"
 
 	"get.porter.sh/porter/pkg/portercontext"
-	"github.com/pkg/errors"
 )
 
 const (
@@ -18,5 +18,8 @@ func GetDependencyDefinitionPath(alias string) string {
 func GetDependencyDefinition(c *portercontext.Context, alias string) ([]byte, error) {
 	f := GetDependencyDefinitionPath(alias)
 	data, err := c.FileSystem.ReadFile(f)
-	return data, errors.Wrapf(err, "error reading bundle definition for %s at %s", alias, f)
+	if err != nil {
+		return nil, fmt.Errorf("error reading bundle definition for %s at %s: %w", alias, f, err)
+	}
+	return data, nil
 }

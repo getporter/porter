@@ -1,7 +1,6 @@
-//go:build smoke
-// +build smoke
+//go:build integration
 
-package smoke
+package integration
 
 import (
 	"encoding/json"
@@ -14,12 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// Start up another docker registry to host the original bundle
-// Publish a bundle to the temporary registry
-// Copy the bundle to our integration test registry
-// Stop the temporary registry
-// Copy the bundle to another location, this will fail unless we are properly using the relocation map
-func TestCopy(t *testing.T) {
+func TestCopy_UsesRelocationMap(t *testing.T) {
 	test, err := tester.NewTest(t)
 	defer test.Close()
 	require.NoError(t, err, "test setup failed")

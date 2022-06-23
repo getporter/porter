@@ -1,5 +1,4 @@
 //go:build smoke
-// +build smoke
 
 package smoke
 
@@ -99,6 +98,11 @@ func TestHelloBundle(t *testing.T) {
 
 	// Uninstall and remove the installation
 	test.RequirePorter("uninstall", testdata.MyBuns, "--namespace", test.CurrentNamespace(), "-c=mybuns")
+	displayInstallations, err := test.ListInstallations(false, test.CurrentNamespace(), testdata.MyBuns, nil)
+	require.NoError(t, err, "List installations failed")
+	require.Len(t, displayInstallations, 1, "expected the installation to still be returned by porter list even though it's uninstalled")
+	require.NotEmpty(t, displayInstallations[0].Status.Uninstalled, "expected the installation to be flagged as uninstalled")
+
 	test.RequirePorter("installation", "delete", testdata.MyBuns, "--namespace", test.CurrentNamespace())
 	test.RequireInstallationNotFound(test.CurrentNamespace(), testdata.MyBuns)
 

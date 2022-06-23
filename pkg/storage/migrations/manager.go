@@ -3,6 +3,7 @@ package migrations
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"path/filepath"
@@ -14,7 +15,6 @@ import (
 	"get.porter.sh/porter/pkg/tracing"
 	"github.com/cnabio/cnab-go/schema"
 	"github.com/hashicorp/go-multierror"
-	"github.com/pkg/errors"
 )
 
 const (
@@ -74,7 +74,7 @@ func (m *Manager) Connect(ctx context.Context) error {
 
 		if !m.allowOutOfDateSchema && m.MigrationRequired() {
 			m.Close()
-			return span.Error(errors.Errorf(`The schema of Porter's data is in an older format than supported by this version of Porter. 
+			return span.Error(fmt.Errorf(`The schema of Porter's data is in an older format than supported by this version of Porter. 
 
 Porter %s uses the following database schema:
 
@@ -92,20 +92,17 @@ Once your data has been backed up, run the following command to perform the migr
 		}
 		m.initialized = true
 
-		cs := storage.NewInstallationStore(m.store)
-		err := cs.Initialize(ctx)
+		err := storage.EnsureInstallationIndices(ctx, m.store)
 		if err != nil {
 			return err
 		}
 
-		paramStore := storage.NewParameterStore(m.store, nil)
-		err = paramStore.Initialize(ctx)
+		err = storage.EnsureParameterIndices(ctx, m.store)
 		if err != nil {
 			return err
 		}
 
-		credStore := storage.NewCredentialStore(m.store, nil)
-		err = credStore.Initialize(ctx)
+		err = storage.EnsureCredentialIndices(ctx, m.store)
 		if err != nil {
 			return err
 		}
@@ -211,12 +208,16 @@ func (m *Manager) loadSchema(ctx context.Context) error {
 				return nil
 			}
 		}
-		return errors.Wrap(err, "could not read storage schema document")
+		return fmt.Errorf("could not read storage schema document: %w", err)
 	}
 
 	m.schema = schema
 
-	return errors.Wrap(err, "could not parse storage schema document")
+	if err != nil {
+		return fmt.Errorf("could not parse storage schema document: %w", err)
+	}
+
+	return nil
 }
 
 // MigrationRequired determines if a migration of Porter's storage system is necessary.
@@ -249,7 +250,7 @@ func (m *Manager) Migrate(ctx context.Context) (string, error) {
 	logfilePath := filepath.Join(home, fmt.Sprintf("%s-migrate.log", time.Now().Format("20060102150405")))
 	logfile, err := m.FileSystem.Create(logfilePath)
 	if err != nil {
-		return "", errors.Wrapf(err, "error creating logfile for migration at %s", logfilePath)
+		return "", fmt.Errorf("error creating logfile for migration at %s: %w", logfilePath, err)
 	}
 	defer logfile.Close()
 	w := io.MultiWriter(m.Err, logfile)
@@ -298,7 +299,7 @@ func (m *Manager) initEmptyPorterHome(ctx context.Context) (bool, error) {
 	itemCheck := func(itemType string) (bool, error) {
 		itemCount, err := m.store.Count(ctx, itemType, storage.CountOptions{})
 		if err != nil {
-			return false, errors.Wrapf(err, "error checking for existing %s when checking if PORTER_HOME is new", itemType)
+			return false, fmt.Errorf("error checking for existing %s when checking if PORTER_HOME is new: %w", itemType, err)
 		}
 
 		return itemCount > 0, nil
@@ -343,7 +344,7 @@ func (m *Manager) WriteSchema(ctx context.Context) error {
 
 	err := m.store.Update(ctx, CollectionConfig, storage.UpdateOptions{Document: m.schema, Upsert: true})
 	if err != nil {
-		return errors.Wrap(err, "Unable to save storage schema file")
+		return fmt.Errorf("Unable to save storage schema file: %w", err)
 	}
 
 	return nil

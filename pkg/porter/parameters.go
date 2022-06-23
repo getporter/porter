@@ -4,8 +4,11 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"path/filepath"
 	"sort"
+	"strings"
 	"time"
 
 	"get.porter.sh/porter/pkg/cnab"
@@ -19,7 +22,6 @@ import (
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/olekukonko/tablewriter"
-	"github.com/pkg/errors"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -108,7 +110,7 @@ func (o *ParameterOptions) validateParamName(args []string) error {
 	if len(args) == 1 {
 		o.Name = args[0]
 	} else if len(args) > 1 {
-		return errors.Errorf("only one positional argument may be specified, the parameter set name, but multiple were received: %s", args)
+		return fmt.Errorf("only one positional argument may be specified, the parameter set name, but multiple were received: %s", args)
 	}
 	return nil
 }
@@ -148,14 +150,18 @@ func (p *Porter) GenerateParameters(ctx context.Context, opts ParameterOptions) 
 
 	pset, err := genOpts.GenerateParameters()
 	if err != nil {
-		return errors.Wrap(err, "unable to generate parameter set")
+		return fmt.Errorf("unable to generate parameter set: %w", err)
 	}
 
 	pset.Status.Created = time.Now()
 	pset.Status.Modified = pset.Status.Created
 
 	err = p.Parameters.UpsertParameterSet(ctx, pset)
-	return errors.Wrapf(err, "unable to save parameter set")
+	if err != nil {
+		return fmt.Errorf("unable to save parameter set: %w", err)
+	}
+
+	return nil
 }
 
 // Validate validates the args provided to Porter's parameter show command
@@ -185,29 +191,29 @@ func (p *Porter) EditParameter(ctx context.Context, opts ParameterEditOptions) e
 
 	contents, err := encoding.MarshalYaml(paramSet)
 	if err != nil {
-		return errors.Wrap(err, "unable to load parameter set")
+		return fmt.Errorf("unable to load parameter set: %w", err)
 	}
 
 	editor := editor.New(p.Context, fmt.Sprintf("porter-%s.yaml", paramSet.Name), contents)
 	output, err := editor.Run(ctx)
 	if err != nil {
-		return errors.Wrap(err, "unable to open editor to edit parameter set")
+		return fmt.Errorf("unable to open editor to edit parameter set: %w", err)
 	}
 
 	err = encoding.UnmarshalYaml(output, &paramSet)
 	if err != nil {
-		return errors.Wrap(err, "unable to process parameter set")
+		return fmt.Errorf("unable to process parameter set: %w", err)
 	}
 
 	err = p.Parameters.Validate(ctx, paramSet)
 	if err != nil {
-		return errors.Wrap(err, "parameter set is invalid")
+		return fmt.Errorf("parameter set is invalid: %w", err)
 	}
 
 	paramSet.Status.Modified = time.Now()
 	err = p.Parameters.UpdateParameterSet(ctx, paramSet)
 	if err != nil {
-		return errors.Wrap(err, "unable to save parameter set")
+		return fmt.Errorf("unable to save parameter set: %w", err)
 	}
 
 	return nil
@@ -305,7 +311,11 @@ func (p *Porter) DeleteParameter(ctx context.Context, opts ParameterDeleteOption
 		}
 		return nil
 	}
-	return errors.Wrapf(err, "unable to delete parameter set")
+	if err != nil {
+		return fmt.Errorf("unable to delete parameter set: %w", err)
+	}
+
+	return nil
 }
 
 // Validate the args provided to the delete parameter command
@@ -320,11 +330,11 @@ func (o *ParameterDeleteOptions) Validate(args []string) error {
 func validateParameterName(args []string) error {
 	switch len(args) {
 	case 0:
-		return errors.Errorf("no parameter set name was specified")
+		return fmt.Errorf("no parameter set name was specified")
 	case 1:
 		return nil
 	default:
-		return errors.Errorf("only one positional argument may be specified, the parameter set name, but multiple were received: %s", args)
+		return fmt.Errorf("only one positional argument may be specified, the parameter set name, but multiple were received: %s", args)
 	}
 }
 
@@ -390,7 +400,11 @@ func (p *Porter) loadParameterSets(ctx context.Context, bun cnab.ExtendedBundle,
 func (p *Porter) loadParameterFromFile(path string) (storage.ParameterSet, error) {
 	var cs storage.ParameterSet
 	err := encoding.UnmarshalFile(p.FileSystem, path, &cs)
-	return cs, errors.Wrapf(err, "error loading parameter set in %s", path)
+	if err != nil {
+		return cs, fmt.Errorf("error loading parameter set in %s: %w", path, err)
+	}
+
+	return cs, nil
 }
 
 type DisplayValue struct {
@@ -510,11 +524,11 @@ func (p *Porter) ParametersApply(ctx context.Context, o ApplyOptions) error {
 	var params storage.ParameterSet
 	err = encoding.UnmarshalFile(p.FileSystem, o.File, &params)
 	if err != nil {
-		return errors.Wrapf(err, "could not load %s as a parameter set", o.File)
+		return fmt.Errorf("could not load %s as a parameter set: %w", o.File, err)
 	}
 
 	if err = params.Validate(); err != nil {
-		return errors.Wrap(err, "invalid parameter set")
+		return fmt.Errorf("invalid parameter set: %w", err)
 	}
 
 	params.Namespace = namespace
@@ -522,7 +536,7 @@ func (p *Porter) ParametersApply(ctx context.Context, o ApplyOptions) error {
 
 	err = p.Parameters.Validate(ctx, params)
 	if err != nil {
-		return errors.Wrap(err, "parameter set is invalid")
+		return fmt.Errorf("parameter set is invalid: %w", err)
 	}
 
 	err = p.Parameters.UpsertParameterSet(ctx, params)
@@ -586,7 +600,7 @@ func (p *Porter) resolveParameters(ctx context.Context, installation storage.Ins
 		if def.Type != nil {
 			value, err := def.ConvertValue(unconverted)
 			if err != nil {
-				return nil, errors.Wrapf(err, "unable to convert parameter's %s value %s to the destination parameter type %s", key, unconverted, def.Type)
+				return nil, fmt.Errorf("unable to convert parameter's %s value %s to the destination parameter type %s: %w", key, unconverted, def.Type, err)
 			}
 			typedParams[key] = value
 		} else {
@@ -605,7 +619,7 @@ func (p *Porter) getUnconvertedValueFromRaw(b cnab.ExtendedBundle, def *definiti
 		if _, err := p.FileSystem.Stat(rawValue); err == nil {
 			bytes, err := p.FileSystem.ReadFile(rawValue)
 			if err != nil {
-				return "", errors.Wrapf(err, "unable to read file parameter %s", key)
+				return "", fmt.Errorf("unable to read file parameter %s: %w", key, err)
 			}
 			return base64.StdEncoding.EncodeToString(bytes), nil
 		}
@@ -658,14 +672,14 @@ func (p *Porter) resolveParameterSources(ctx context.Context, bun cnab.ExtendedB
 					continue
 				}
 				// Otherwise, something else has happened, perhaps bad data or connectivity problems, we can't ignore it
-				return nil, errors.Wrapf(err, "could not set parameter %s from output %s of %s", parameterName, outputName, installation)
+				return nil, fmt.Errorf("could not set parameter %s from output %s of %s: %w", parameterName, outputName, installation, err)
 			}
 
 			if output.Key != "" {
 
 				resolved, err := p.Sanitizer.RestoreOutput(ctx, output)
 				if err != nil {
-					return nil, errors.Wrapf(err, "could not resolve %s's output %s", installation, outputName)
+					return nil, fmt.Errorf("could not resolve %s's output %s: %w", installation, outputName, err)
 				}
 				output = resolved
 			}
@@ -693,4 +707,71 @@ func (p *Porter) resolveParameterSources(ctx context.Context, bun cnab.ExtendedB
 	}
 
 	return values, nil
+}
+
+// ParameterCreateOptions represent options for Porter's parameter create command
+type ParameterCreateOptions struct {
+	FileName   string
+	OutputType string
+}
+
+func (o *ParameterCreateOptions) Validate(args []string) error {
+	if len(args) > 1 {
+		return fmt.Errorf("only one positional argument may be specified, fileName, but multiple were received: %s", args)
+	}
+
+	if len(args) > 0 {
+		o.FileName = args[0]
+	}
+
+	if o.OutputType == "" && o.FileName != "" && strings.Trim(filepath.Ext(o.FileName), ".") == "" {
+		return errors.New("could not detect the file format from the file extension (.txt). Specify the format with --output")
+	}
+
+	return nil
+}
+
+func (p *Porter) CreateParameter(opts ParameterCreateOptions) error {
+	if opts.OutputType == "" {
+		opts.OutputType = strings.Trim(filepath.Ext(opts.FileName), ".")
+	}
+
+	if opts.FileName == "" {
+		if opts.OutputType == "" {
+			opts.OutputType = "yaml"
+		}
+
+		switch opts.OutputType {
+		case "json":
+			parameterSet, err := p.Templates.GetParameterSetJSON()
+			if err != nil {
+				return err
+			}
+			fmt.Fprintln(p.Out, string(parameterSet))
+
+			return nil
+		case "yaml", "yml":
+			parameterSet, err := p.Templates.GetParameterSetYAML()
+			if err != nil {
+				return err
+			}
+			fmt.Fprintln(p.Out, string(parameterSet))
+
+			return nil
+		default:
+			return newUnsupportedFormatError(opts.OutputType)
+		}
+
+	}
+
+	fmt.Fprintln(p.Err, "creating porter parameter set in the current directory")
+
+	switch opts.OutputType {
+	case "json":
+		return p.CopyTemplate(p.Templates.GetParameterSetJSON, opts.FileName)
+	case "yaml", "yml":
+		return p.CopyTemplate(p.Templates.GetParameterSetYAML, opts.FileName)
+	default:
+		return newUnsupportedFormatError(opts.OutputType)
+	}
 }

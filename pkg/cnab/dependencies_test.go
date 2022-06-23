@@ -22,6 +22,7 @@ func TestReadDependencyProperties(t *testing.T) {
 	assert.True(t, bun.HasDependencies())
 
 	deps, err := bun.ReadDependencies()
+	assert.NoError(t, err, "did not expect error while reading bundle dependencies")
 
 	assert.NotNil(t, deps, "Dependencies was not populated")
 	assert.Len(t, deps.Requires, 2, "Dependencies.Requires is the wrong length")

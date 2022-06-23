@@ -2,6 +2,7 @@ package filesystem
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -11,7 +12,6 @@ import (
 	"get.porter.sh/porter/pkg/secrets/plugins"
 	"get.porter.sh/porter/pkg/secrets/plugins/host"
 	"get.porter.sh/porter/pkg/tracing"
-	"github.com/pkg/errors"
 )
 
 var _ plugins.SecretsProtocol = &Store{}

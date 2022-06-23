@@ -1,6 +1,7 @@
 package porter
 
 import (
+	"errors"
 	"testing"
 
 	"get.porter.sh/porter/pkg"
@@ -8,7 +9,6 @@ import (
 	"get.porter.sh/porter/pkg/cnab"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/pivotal/image-relocation/pkg/image"
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

@@ -2,9 +2,8 @@ package cnab
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
-
-	"github.com/pkg/errors"
 )
 
 const (
@@ -88,18 +87,18 @@ func DependencyReader(bun ExtendedBundle) (interface{}, error) {
 func (b ExtendedBundle) DependencyReader() (interface{}, error) {
 	data, ok := b.Custom[DependenciesExtensionKey]
 	if !ok {
-		return nil, errors.Errorf("attempted to read dependencies from bundle but none are defined")
+		return nil, errors.New("attempted to read dependencies from bundle but none are defined")
 	}
 
 	dataB, err := json.Marshal(data)
 	if err != nil {
-		return nil, errors.Wrapf(err, "could not marshal the untyped dependencies extension data %q", string(dataB))
+		return nil, fmt.Errorf("could not marshal the untyped dependencies extension data %q: %w", string(dataB), err)
 	}
 
 	deps := Dependencies{}
 	err = json.Unmarshal(dataB, &deps)
 	if err != nil {
-		return nil, errors.Wrapf(err, "could not unmarshal the dependencies extension %q", string(dataB))
+		return nil, fmt.Errorf("could not unmarshal the dependencies extension %q: %w", string(dataB), err)
 	}
 
 	return deps, nil

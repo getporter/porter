@@ -3,11 +3,14 @@ package storage
 import (
 	"testing"
 
+	"get.porter.sh/porter/pkg/cnab"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestInstallation_String(t *testing.T) {
+	t.Parallel()
+
 	i := Installation{Name: "mybun"}
 	assert.Equal(t, "/mybun", i.String())
 
@@ -54,4 +57,65 @@ func TestOCIReferenceParts_GetBundleReference(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestInstallation_ApplyResult(t *testing.T) {
+	t.Parallel()
+
+	t.Run("install failed", func(t *testing.T) {
+		// try to install a bundle and fail
+		inst := NewInstallation("dev", "mybuns")
+		run := inst.NewRun(cnab.ActionInstall)
+		result := run.NewResult(cnab.StatusFailed)
+
+		inst.ApplyResult(run, result)
+
+		assert.False(t, inst.IsInstalled(), "a failed install should not mark the installation as installed")
+		assert.Empty(t, inst.Status.Installed, "the installed timestamp should not be set")
+	})
+
+	t.Run("install succeeded", func(t *testing.T) {
+		// install a bundle
+		inst := NewInstallation("dev", "mybuns")
+		run := inst.NewRun(cnab.ActionInstall)
+		result := run.NewResult(cnab.StatusSucceeded)
+
+		inst.ApplyResult(run, result)
+
+		assert.True(t, inst.IsInstalled(), "a failed install should not mark the installation as installed")
+		assert.Equal(t, &result.Created, inst.Status.Installed, "the installed timestamp should be set to the result timestamp")
+	})
+
+	t.Run("uninstall failed", func(t *testing.T) {
+		// Make an installed bundle
+		inst := NewInstallation("dev", "mybuns")
+		inst.Status.Installed = &inst.Status.Created
+
+		// try to uninstall it and fail
+		run := inst.NewRun(cnab.ActionUninstall)
+		result := run.NewResult(cnab.StatusFailed)
+
+		inst.ApplyResult(run, result)
+
+		assert.True(t, inst.IsInstalled(), "the installation should still be marked as installed")
+		assert.False(t, inst.IsUninstalled(), "the installation should not be marked as uninstalled")
+		assert.Empty(t, inst.Status.Uninstalled, "the uninstalled timestamp should not be set")
+	})
+
+	t.Run("uninstall succeeded", func(t *testing.T) {
+		// Make an installed bundle
+		inst := NewInstallation("dev", "mybuns")
+		inst.Status.Installed = &inst.Status.Created
+
+		// uninstall it
+		run := inst.NewRun(cnab.ActionUninstall)
+		result := run.NewResult(cnab.StatusSucceeded)
+
+		inst.ApplyResult(run, result)
+
+		assert.False(t, inst.IsInstalled(), "the installation should no longer be considered installed")
+		assert.True(t, inst.IsUninstalled(), "the installation should be marked as uninstalled")
+		assert.Equal(t, &inst.Status.Created, inst.Status.Installed, "the installed timestamp should still be set")
+		assert.Equal(t, &result.Created, inst.Status.Uninstalled, "the uninstalled timestamp should not be set")
+	})
 }
