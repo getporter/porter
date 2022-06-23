@@ -141,8 +141,8 @@ func NewDisplayInstallation(installation storage.Installation) DisplayInstallati
 		ParameterSets:  installation.ParameterSets,
 		Status:         installation.Status,
 		DisplayInstallationMetadata: DisplayInstallationMetadata{
-			DisplayInstallationState:  setDisplayInstallationState(installation),
-			DisplayInstallationStatus: setDisplayInstallationStatus(installation),
+			DisplayInstallationState:  getDisplayInstallationState(installation),
+			DisplayInstallationStatus: getDisplayInstallationStatus(installation),
 		},
 	}
 
@@ -296,7 +296,7 @@ func (p *Porter) PrintInstallations(ctx context.Context, opts ListOptions) error
 	}
 }
 
-func setDisplayInstallationState(installation storage.Installation) string {
+func getDisplayInstallationState(installation storage.Installation) string {
 	if installation.IsInstalled() {
 		return StateInstalled
 	} else if installation.IsUninstalled() {
@@ -306,7 +306,7 @@ func setDisplayInstallationState(installation storage.Installation) string {
 	return StateDefined
 }
 
-func setDisplayInstallationStatus(installation storage.Installation) string {
+func getDisplayInstallationStatus(installation storage.Installation) string {
 	var status string
 
 	switch installation.Status.ResultStatus {
