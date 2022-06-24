@@ -26,14 +26,14 @@ func buildStorageMigrateCommand(p *porter.Porter) *cobra.Command {
 	var opts porter.MigrateStorageOptions
 	cmd := &cobra.Command{
 		Use:   "migrate --old-home OLD_PORTER_HOME [--old-account STORAGE_NAME] [--namespace NAMESPACE]",
-		Short: "Migrate data from a previous version of Porter",
-		Long: `Migrate data from a previous version of Porter into your current installation of Porter.
+		Short: "Migrate data from v0.38 to v1",
+		Long: `Migrate data from Porter v0.38 into a v1 installation of Porter.
 
 Before running this command, you should have:
 
-1. Installed the new version of Porter
-2. Renamed the old PORTER_HOME directory, for example: mv ~/.porter ~/.porterv0
-3. Created a new PORTER_HOME directory for the new version of Porter, for example: mkdir ~/.porter
+1. Installed Porter v1, see https://getporter.org/install for instructions.
+2. Renamed the old PORTER_HOME directory, for example: mv ~/.porter ~/.porterv0.
+3. Created a new PORTER_HOME directory for the new version of Porter, for example: mkdir ~/.porter.
 4. Configured a default storage account for the new version of Porter. The data from the old account will be migrated into the default storage account.
 
 This upgrades the data to the current storage schema, and does not change the data stored in the old account.`,
@@ -52,7 +52,7 @@ This upgrades the data to the current storage schema, and does not change the da
 	flags.StringVar(&opts.OldStorageAccount, "old-account", "",
 		"Name of the storage account in the old Porter configuration file containing the data that should be migrated. If unspecified, the default storage account is used.")
 	flags.StringVarP(&opts.Namespace, "namespace", "n", "",
-		"Destination namespace where the migrated data should be saved.")
+		"Destination namespace where the migrated data should be saved. By default, Porter migrates your data into the current namespace as configured by environment variables and your config file, and otherwise the global namespace is used.")
 	return cmd
 }
 

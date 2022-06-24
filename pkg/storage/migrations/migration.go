@@ -226,9 +226,10 @@ func (m *Migration) migrateInstallation(ctx context.Context, installationName st
 	sort.Strings(claimIDs)
 	inst.ID = claimIDs[0]
 
-	err = m.destStore.Insert(ctx, storage.CollectionInstallations, storage.InsertOptions{Documents: []interface{}{inst}})
+	updateOpts := storage.UpdateOptions{Document: []interface{}{inst}, Upsert: true}
+	err = m.destStore.Update(ctx, storage.CollectionInstallations, updateOpts)
 	if err != nil {
-		return fmt.Errorf("error inserting migrated installation %s: %w", inst.Name, err)
+		return fmt.Errorf("error upserting migrated installation %s: %w", inst.Name, err)
 	}
 
 	return nil

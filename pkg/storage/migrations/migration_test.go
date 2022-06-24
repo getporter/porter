@@ -226,7 +226,7 @@ func validateMigratedCredentialSets(ctx context.Context, t *testing.T, destStore
 	require.NoError(t, err, "could not list credentialSets in the destination database")
 	assert.Len(t, credentialSets, 1, "expected 1 credential set to be migrated")
 
-	// Validate that the installation as migrated correctly
+	// Validate that the credential sets are migrated correctly
 	creds, err := store.GetCredentialSet(ctx, opts.NewNamespace, "credentials-tutorial")
 	require.NoError(t, err, "could not retrieve the migrated credentials-tutorial credential set")
 
@@ -250,7 +250,7 @@ func validateMigratedParameterSets(ctx context.Context, t *testing.T, destStore 
 	require.NoError(t, err, "could not list parameterSets in the destination database")
 	assert.Len(t, parameterSets, 1, "expected 1 parameter set to be migrated")
 
-	// Validate that the installation as migrated correctly
+	// Validate that the parameter sets are migrated correctly
 	ps, err := store.GetParameterSet(ctx, opts.NewNamespace, "hello-llama")
 	require.NoError(t, err, "could not retrieve the migrated hello-llama parameter set")
 
