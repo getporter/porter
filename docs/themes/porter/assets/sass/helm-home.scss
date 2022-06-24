@@ -601,21 +601,19 @@ nav.home-nav {
 }
 
 .cncf {
-  background: RGBA(246, 246, 246, 1.00);
+  background: white;
   min-height: 5rem;
   margin-top: 4rem;
   text-align: center;
   padding-left: 0 !important;
 
   img {
-    float: left;
     display: inline-block;
     max-width: 14rem;
     margin: 3rem 5%;
   }
 
   p {
-    float: right;
     margin: 3.5rem 5%;
     display: inline-block;
     color: #777;
@@ -627,13 +625,14 @@ nav.home-nav {
 }
 
 .copyright {
-  background: $blue;
+  background: #193d54;
   color: white;
   font-size: 1.3rem;
   padding: 1rem;
 
   a, a:focus, a:visited {
-    color: $dark2;
+    color: $blue2;
+    text-decoration:none !important ;
   }
 }
 

@@ -6781,18 +6781,16 @@ nav.home-nav {
   min-width: 100%; }
 
 .cncf {
-  background: RGBA(246, 246, 246, 1);
+  background: white;
   min-height: 5rem;
   margin-top: 4rem;
   text-align: center;
   padding-left: 0 !important; }
   .cncf img {
-    float: left;
     display: inline-block;
     max-width: 14rem;
     margin: 3rem 5%; }
   .cncf p {
-    float: right;
     margin: 3.5rem 5%;
     display: inline-block;
     color: #777; }
@@ -6800,12 +6798,13 @@ nav.home-nav {
       color: #7FCCF0; }
 
 .copyright {
-  background: #3FB1E5;
+  background: #193d54;
   color: white;
   font-size: 1.3rem;
   padding: 1rem; }
   .copyright a, .copyright a:focus, .copyright a:visited {
-    color: #464646; }
+    color: #2BA0D3;
+    text-decoration: none !important; }
 
 @media only screen and (min-device-width: 415px) {
   @keyframes animatedBoat {
@@ -7734,20 +7733,21 @@ body {
   max-width: 100%; }
 
 .cncf {
-  background: #e4e4e4;
+  background: #193d54;
   min-height: 2rem;
   text-align: center;
   padding-left: 300px; }
   .cncf img {
-    float: left;
     display: inline-block;
     max-width: 10rem;
+    filter: invert(1);
+    transform: scale(2);
     margin: 1.5rem 0 1.5rem 7.5%; }
   .cncf p {
-    float: right;
     margin: 1.5rem 2.5% 0 0;
     display: inline-block;
-    color: #222; }
+    color: white;
+    font-size: 22px; }
     .cncf p:hover {
       color: #2BA0D3; }
 
