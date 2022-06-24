@@ -27,7 +27,7 @@ This is the default bundle generated for you when you run `porter create`.
     porter upgrade hello
     ```
 
-1. Uninstall the bundles
+1. Uninstall the bundle
     ```
     porter uninstall hello
     ```
