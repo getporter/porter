@@ -11,7 +11,6 @@ import (
 	"get.porter.sh/porter/pkg/pkgmgmt"
 	"get.porter.sh/porter/pkg/portercontext"
 	"github.com/dustin/go-humanize"
-	"github.com/pkg/errors"
 )
 
 // Level of severity for a lint result.
@@ -171,7 +170,7 @@ func (l *Linter) Lint(ctx context.Context, m *manifest.Manifest) (Results, error
 		var r Results
 		err = json.Unmarshal([]byte(response), &r)
 		if err != nil {
-			return nil, errors.Wrapf(err, "unable to parse lint response from mixin %q", mixin)
+			return nil, fmt.Errorf("unable to parse lint response from mixin %q: %w", mixin, err)
 		}
 
 		results = append(results, r...)

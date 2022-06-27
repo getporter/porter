@@ -3,13 +3,13 @@ package config
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"sort"
 	"strings"
 
 	"get.porter.sh/porter/pkg/tracing"
 	"github.com/osteele/liquid"
 	"github.com/osteele/liquid/render"
-	"github.com/pkg/errors"
 	"github.com/spf13/viper"
 	"go.opentelemetry.io/otel/attribute"
 )
@@ -61,7 +61,7 @@ func LoadFromViper(viperCfg func(v *viper.Viper)) DataStoreLoaderFunc {
 		// Initialize empty config
 		err := v.SetDefaultsFrom(cfg.Data)
 		if err != nil {
-			return log.Error(errors.Wrap(err, "error initializing configuration data"))
+			return log.Error(fmt.Errorf("error initializing configuration data: %w", err))
 		}
 
 		if viperCfg != nil {
@@ -78,7 +78,7 @@ func LoadFromViper(viperCfg func(v *viper.Viper)) DataStoreLoaderFunc {
 			err = v.ReadInConfig()
 			if err != nil {
 				if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
-					return log.Error(errors.Wrap(err, "error reading config file"))
+					return log.Error(fmt.Errorf("error reading config file: %w", err))
 				}
 			}
 		}
@@ -89,7 +89,7 @@ func LoadFromViper(viperCfg func(v *viper.Viper)) DataStoreLoaderFunc {
 
 			cfgContents, err := cfg.FileSystem.ReadFile(cfgFile)
 			if err != nil {
-				return log.Error(errors.Wrap(err, "error reading config file template"))
+				return log.Error(fmt.Errorf("error reading config file template: %w", err))
 			}
 
 			// Render any template variables used in the config file
@@ -97,12 +97,12 @@ func LoadFromViper(viperCfg func(v *viper.Viper)) DataStoreLoaderFunc {
 			engine.Delims("${", "}", "${%", "%}")
 			tmpl, err := engine.ParseTemplate(cfgContents)
 			if err != nil {
-				return log.Error(errors.Wrapf(err, "error parsing config file as a liquid template:\n%s\n\n", cfgContents))
+				return log.Error(fmt.Errorf("error parsing config file as a liquid template:\n%s\n\n: %w", cfgContents, err))
 			}
 
 			finalCfg, err := tmpl.Render(templateData)
 			if err != nil {
-				return log.Error(errors.Wrapf(err, "error rendering config file as a liquid template:\n%s\n\n", cfgContents))
+				return log.Error(fmt.Errorf("error rendering config file as a liquid template:\n%s\n\n: %w", cfgContents, err))
 			}
 
 			// Remember what variables are used in the template
@@ -112,12 +112,12 @@ func LoadFromViper(viperCfg func(v *viper.Viper)) DataStoreLoaderFunc {
 			}
 
 			if err := v.ReadConfig(bytes.NewReader(finalCfg)); err != nil {
-				return log.Error(errors.Wrapf(err, "error loading configuration file"))
+				return log.Error(fmt.Errorf("error loading configuration file: %w", err))
 			}
 		}
 
 		if err = v.Unmarshal(&cfg.Data); err != nil {
-			log.Error(errors.Wrap(err, "error unmarshaling viper config as porter config"))
+			log.Error(fmt.Errorf("error unmarshaling viper config as porter config: %w", err))
 		}
 
 		cfg.viper = v

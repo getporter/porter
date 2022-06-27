@@ -14,7 +14,16 @@ import (
 	"get.porter.sh/porter/pkg/tracing"
 	dtprinter "github.com/carolynvs/datetime-printer"
 	"github.com/cnabio/cnab-go/schema"
-	"github.com/pkg/errors"
+)
+
+const (
+	StateInstalled   = "installed"
+	StateUninstalled = "uninstalled"
+	StateDefined     = "defined"
+
+	StatusInstalling   = "installing"
+	StatusUninstalling = "uninstalling"
+	StatusUpgrading    = "upgrading"
 )
 
 // ListOptions represent generic options for use by Porter's list commands
@@ -106,6 +115,13 @@ type DisplayInstallation struct {
 
 type DisplayInstallationMetadata struct {
 	ResolvedParameters DisplayValues `json:"resolvedParameters" yaml:"resolvedParameters"`
+
+	// DisplayInstallationState is the latest state of the installation.
+	// It is either "installed", "uninstalled", or "defined".
+	DisplayInstallationState string `json:"displayInstallationState,omitempty" yaml:"displayInstallationState,omitempty" toml:"displayInstallationState,omitempty"`
+	// DisplayInstallationStatus is the latest status of the installation.
+	// It is either "succeeded, "failed", "installing", "uninstalling", "upgrading", or "running <custom action>"
+	DisplayInstallationStatus string `json:"displayInstallationStatus,omitempty" yaml:"displayInstallationStatus,omitempty" toml:"displayInstallationStatus,omitempty"`
 }
 
 func NewDisplayInstallation(installation storage.Installation) DisplayInstallation {
@@ -123,6 +139,10 @@ func NewDisplayInstallation(installation storage.Installation) DisplayInstallati
 		CredentialSets: installation.CredentialSets,
 		ParameterSets:  installation.ParameterSets,
 		Status:         installation.Status,
+		DisplayInstallationMetadata: DisplayInstallationMetadata{
+			DisplayInstallationState:  getDisplayInstallationState(installation),
+			DisplayInstallationStatus: getDisplayInstallationStatus(installation),
+		},
 	}
 
 	return di
@@ -152,7 +172,7 @@ func (d DisplayInstallation) ConvertToInstallation() (storage.Installation, erro
 	}
 
 	if err := i.Validate(); err != nil {
-		return storage.Installation{}, errors.Wrap(err, "invalid installation")
+		return storage.Installation{}, fmt.Errorf("invalid installation: %w", err)
 	}
 
 	return i, nil
@@ -266,11 +286,45 @@ func (p *Porter) PrintInstallations(ctx context.Context, opts ListOptions) error
 				if !ok {
 					return nil
 				}
-				return []string{cl.Namespace, cl.Name, tp.Format(cl.Status.Created), tp.Format(cl.Status.Modified), cl.Status.Action, cl.Status.ResultStatus}
+				return []string{cl.Namespace, cl.Name, cl.Status.BundleVersion, cl.DisplayInstallationState, cl.DisplayInstallationStatus, tp.Format(cl.Status.Modified)}
 			}
 		return printer.PrintTable(p.Out, displayInstallations, row,
-			"NAMESPACE", "NAME", "CREATED", "MODIFIED", "LAST ACTION", "LAST STATUS")
+			"NAMESPACE", "NAME", "VERSION", "STATE", "STATUS", "MODIFIED")
 	default:
 		return fmt.Errorf("invalid format: %s", opts.Format)
 	}
+}
+
+func getDisplayInstallationState(installation storage.Installation) string {
+	if installation.IsInstalled() {
+		return StateInstalled
+	} else if installation.IsUninstalled() {
+		return StateUninstalled
+	}
+
+	return StateDefined
+}
+
+func getDisplayInstallationStatus(installation storage.Installation) string {
+	var status string
+
+	switch installation.Status.ResultStatus {
+	case cnab.StatusSucceeded:
+		status = cnab.StatusSucceeded
+	case cnab.StatusFailed:
+		status = cnab.StatusFailed
+	case cnab.StatusRunning:
+		switch installation.Status.Action {
+		case cnab.ActionInstall:
+			status = StatusInstalling
+		case cnab.ActionUninstall:
+			status = StatusUninstalling
+		case cnab.ActionUpgrade:
+			status = StatusUpgrading
+		default:
+			status = fmt.Sprintf("running %s", installation.Status.Action)
+		}
+	}
+
+	return status
 }

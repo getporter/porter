@@ -2,10 +2,10 @@ package porter
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"testing"
 
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 )
 

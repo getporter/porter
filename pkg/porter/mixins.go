@@ -3,6 +3,7 @@ package porter
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -14,7 +15,6 @@ import (
 	"get.porter.sh/porter/pkg/pkgmgmt/feed"
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/printer"
-	"github.com/pkg/errors"
 )
 
 const (
@@ -132,7 +132,7 @@ func (o *MixinsCreateOptions) Validate(args []string, cxt *portercontext.Context
 	}
 
 	if len(args) > 1 {
-		return errors.Errorf("only one positional argument may be specified, the mixin name, but multiple were received: %s", args)
+		return fmt.Errorf("only one positional argument may be specified, the mixin name, but multiple were received: %s", args)
 	}
 
 	o.MixinName = args[0]
@@ -150,7 +150,7 @@ func (o *MixinsCreateOptions) Validate(args []string, cxt *portercontext.Context
 	}
 
 	if _, err := cxt.FileSystem.Stat(o.DirPath); err != nil {
-		return errors.Wrapf(err, "invalid --dir: %s", o.DirPath)
+		return fmt.Errorf("invalid --dir: %s: %w", o.DirPath, err)
 	}
 
 	return nil
@@ -160,7 +160,7 @@ func (p *Porter) CreateMixin(opts MixinsCreateOptions) error {
 	skeletorDestPath := opts.DirPath + "/" + opts.MixinName
 
 	if err := exec.Command("git", "clone", SkeletorRepo, skeletorDestPath).Run(); err != nil {
-		return errors.Wrapf(err, "failed cloning skeletor repo")
+		return fmt.Errorf("failed cloning skeletor repo: %w", err)
 	}
 
 	err := os.Rename(skeletorDestPath+"/cmd/skeletor", skeletorDestPath+"/cmd/"+opts.MixinName)

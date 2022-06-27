@@ -2,6 +2,7 @@ package porter
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"get.porter.sh/porter/pkg/encoding"
@@ -9,7 +10,6 @@ import (
 	"get.porter.sh/porter/pkg/printer"
 	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/tracing"
-	"github.com/pkg/errors"
 	"go.opentelemetry.io/otel/attribute"
 )
 
@@ -40,10 +40,10 @@ func (o *ApplyOptions) Validate(cxt *portercontext.Context, args []string) error
 
 	info, err := cxt.FileSystem.Stat(o.File)
 	if err != nil {
-		return errors.Wrapf(err, "invalid file argument %s", o.File)
+		return fmt.Errorf("invalid file argument %s: %w", o.File, err)
 	}
 	if info.IsDir() {
-		return errors.Errorf("invalid file argument %s, must be a file not a directory", o.File)
+		return fmt.Errorf("invalid file argument %s, must be a file not a directory", o.File)
 	}
 
 	return nil
@@ -68,7 +68,7 @@ func (p *Porter) InstallationApply(ctx context.Context, opts ApplyOptions) error
 
 	var input DisplayInstallation
 	if err := encoding.UnmarshalFile(p.FileSystem, opts.File, &input); err != nil {
-		return errors.Wrapf(err, "unable to parse %s as an installation document", opts.File)
+		return fmt.Errorf("unable to parse %s as an installation document: %w", opts.File, err)
 	}
 	input.Namespace = namespace
 	inputInstallation, err := input.ConvertToInstallation()
@@ -79,7 +79,7 @@ func (p *Porter) InstallationApply(ctx context.Context, opts ApplyOptions) error
 	installation, err := p.Installations.GetInstallation(ctx, inputInstallation.Namespace, inputInstallation.Name)
 	if err != nil {
 		if !errors.Is(err, storage.ErrNotFound{}) {
-			return errors.Wrapf(err, "could not query for an existing installation document for %s", inputInstallation)
+			return fmt.Errorf("could not query for an existing installation document for %s: %w", inputInstallation, err)
 		}
 
 		// Create a new installation

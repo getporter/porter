@@ -68,7 +68,7 @@ func TestEnsureOperatorRepository(t *testing.T) {
 		require.NoError(t, os.Remove(readme))
 
 		// Make sure rerunning resets the change
-		repoPath, err = ensureOperatorRepositoryIn("", tmp)
+		_, err = ensureOperatorRepositoryIn("", tmp)
 		require.NoError(t, err)
 		require.FileExists(t, readme)
 	})

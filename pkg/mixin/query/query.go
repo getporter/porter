@@ -9,7 +9,6 @@ import (
 	"get.porter.sh/porter/pkg/pkgmgmt"
 	"get.porter.sh/porter/pkg/portercontext"
 	"github.com/hashicorp/go-multierror"
-	"github.com/pkg/errors"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -66,8 +65,7 @@ func (q *MixinQuery) Execute(ctx context.Context, cmd string, inputGenerator Mix
 		gerr.Go(func() error {
 			// Copy the existing context and tweak to pipe the output differently
 			mixinStdout := &bytes.Buffer{}
-			var mixinContext portercontext.Context
-			mixinContext = *q.Context
+			mixinContext := *q.Context
 			mixinContext.Out = mixinStdout // mixin stdout -> mixin response
 
 			if q.LogMixinErrors {
@@ -112,7 +110,7 @@ func (q *MixinQuery) Execute(ctx context.Context, cmd string, inputGenerator Mix
 			results[response.mixinName] = response.output
 		} else {
 			runErr = multierror.Append(runErr,
-				errors.Wrapf(response.runErr, "error encountered from mixin %q", response.mixinName))
+				fmt.Errorf("error encountered from mixin %q: %w", response.mixinName, response.runErr))
 		}
 	}
 
@@ -125,7 +123,7 @@ func (q *MixinQuery) Execute(ctx context.Context, cmd string, inputGenerator Mix
 		// optional commands, like lint and don't want to print their error
 		// message when we query them with a command they don't support.
 		if q.Debug {
-			fmt.Fprintln(q.Err, errors.Wrap(runErr, "not all mixins responded successfully"))
+			fmt.Fprintln(q.Err, fmt.Errorf("not all mixins responded successfully: %w", runErr))
 		}
 	}
 

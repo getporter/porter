@@ -7,13 +7,12 @@ import (
 	"path"
 
 	"github.com/mmcdole/gofeed/atom"
-	"github.com/pkg/errors"
 )
 
 func (feed *MixinFeed) Load(file string) error {
 	contents, err := feed.FileSystem.ReadFile(file)
 	if err != nil {
-		return errors.Wrapf(err, "error reading mixin feed at %s", file)
+		return fmt.Errorf("error reading mixin feed at %s: %w", file, err)
 	}
 
 	p := atom.Parser{}
@@ -22,7 +21,7 @@ func (feed *MixinFeed) Load(file string) error {
 		if feed.Debug {
 			fmt.Fprintln(feed.Err, string(contents))
 		}
-		return errors.Wrap(err, "error parsing the mixin feed as an atom xml file")
+		return fmt.Errorf("error parsing the mixin feed as an atom xml file: %w", err)
 	}
 
 	feed.Updated = atomFeed.UpdatedParsed

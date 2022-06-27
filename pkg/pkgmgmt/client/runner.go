@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"path/filepath"
@@ -9,7 +10,6 @@ import (
 
 	"get.porter.sh/porter/pkg/pkgmgmt"
 	"get.porter.sh/porter/pkg/portercontext"
-	"github.com/pkg/errors"
 )
 
 type Runner struct {
@@ -38,10 +38,10 @@ func (r *Runner) Validate() error {
 	pkgPath := r.getExecutablePath()
 	exists, err := r.FileSystem.Exists(pkgPath)
 	if err != nil {
-		return errors.Wrapf(err, "failed to stat package (%s)", pkgPath)
+		return fmt.Errorf("failed to stat package (%s: %w)", pkgPath, err)
 	}
 	if !exists {
-		return errors.Errorf("package not found (%s)", pkgPath)
+		return fmt.Errorf("package not found (%s)", pkgPath)
 	}
 
 	return nil
@@ -94,7 +94,7 @@ func (r *Runner) Run(ctx context.Context, commandOpts pkgmgmt.CommandOptions) er
 
 	err := cmd.Start()
 	if err != nil {
-		return errors.Wrapf(err, "could not run package command %s", prettyCmd)
+		return fmt.Errorf("could not run package command %s: %w", prettyCmd, err)
 	}
 
 	return cmd.Wait()

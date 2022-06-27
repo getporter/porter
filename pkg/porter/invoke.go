@@ -2,10 +2,10 @@ package porter
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"get.porter.sh/porter/pkg/storage"
-	"github.com/pkg/errors"
 )
 
 var _ BundleAction = NewInvokeOptions()
@@ -56,7 +56,7 @@ func (p *Porter) InvokeBundle(ctx context.Context, opts InvokeOptions) error {
 
 		// Only allow actions on a non-existing installation when it won't change anything
 		if action.Modifies || !action.Stateless {
-			return errors.Wrapf(err, "could not find installation %s/%s", opts.Namespace, opts.Name)
+			return fmt.Errorf("could not find installation %s/%s: %w", opts.Namespace, opts.Name, err)
 		}
 
 		// Create an ephemeral installation just for this run
