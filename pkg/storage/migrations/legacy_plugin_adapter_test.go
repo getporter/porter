@@ -30,8 +30,8 @@ func TestLegacyPluginAdapter(t *testing.T) {
 	// List installation names
 	installationNames, err := adapter.List(ctx, "installations", "")
 	require.NoError(t, err, "failed to list the installation names")
-	wantInstallationNames := []string{"creds-tutorial", "hello-llama", "hello1"}
-	require.Equal(t, wantInstallationNames, installationNames, "expected 3 installations")
+	wantInstallationNames := []string{"creds-tutorial", "hello-llama", "hello1", "sensitive-data"}
+	require.Equal(t, wantInstallationNames, installationNames, "expected 4 installations")
 
 	// Retrieve a claim document
 	result, err := adapter.Read(ctx, "claims", "01G1VJQJV0RN5AW5BSZHNTVYTV")

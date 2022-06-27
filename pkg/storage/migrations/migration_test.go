@@ -139,7 +139,7 @@ func validateMigratedInstallations(ctx context.Context, t *testing.T, c *config.
 	is := storage.NewInstallationStore(destStore)
 	installations, err := is.ListInstallations(ctx, storage.ListOptions{Namespace: opts.NewNamespace})
 	require.NoError(t, err, "could not list installations in the destination database")
-	assert.Len(t, installations, 3, "expected 3 installation to be migrated")
+	assert.Len(t, installations, 4, "expected 3 installation to be migrated")
 
 	// Validate that the installation as migrated correctly
 	inst, err := is.GetInstallation(ctx, opts.NewNamespace, "hello1")
