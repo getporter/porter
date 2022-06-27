@@ -19,6 +19,8 @@
     "bundleDigest": ""
   },
   "_calculated": {
-    "resolvedParameters": []
+    "resolvedParameters": [],
+    "displayInstallationState": "installed",
+    "displayInstallationStatus": "succeeded"
   }
 }

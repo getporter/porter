@@ -26,6 +26,8 @@
         "sensitive": false,
         "value": "big red"
       }
-    ]
+    ],
+    "displayInstallationState": "installed",
+    "displayInstallationStatus": "succeeded"
   }
 }
