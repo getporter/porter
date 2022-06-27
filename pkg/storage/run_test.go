@@ -1,11 +1,13 @@
 package storage
 
 import (
+	"encoding/json"
 	"testing"
 	"time"
 
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/secrets"
+	"get.porter.sh/porter/pkg/test"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/stretchr/testify/assert"
@@ -151,4 +153,20 @@ func TestRun_TypedParameterValues(t *testing.T) {
 		require.True(t, ok)
 		require.Equal(t, v, value)
 	}
+}
+
+func TestRun_MarshalJSON(t *testing.T) {
+	// Verify that when a run is marshaled that the bundle field is saved as an escaped json string
+	r1 := Run{ID: "foo", Bundle: exampleBundle}
+
+	data, err := json.Marshal(r1)
+	require.NoError(t, err, "Marshal failed")
+
+	test.CompareGoldenFile(t, "testdata/marshaled_run.json", string(data))
+
+	var r2 Run
+	err = json.Unmarshal(data, &r2)
+	require.NoError(t, err, "Unmarshal failed")
+
+	assert.Equal(t, r1, r2, "The run did not survive the round trip")
 }

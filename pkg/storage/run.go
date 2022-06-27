@@ -1,6 +1,8 @@
 package storage
 
 import (
+	"encoding/json"
+	"fmt"
 	"time"
 
 	"get.porter.sh/porter/pkg/cnab"
@@ -9,59 +11,100 @@ import (
 )
 
 var _ Document = Run{}
+var _ json.Marshaler = Run{}
+var _ json.Unmarshaler = &Run{}
 
 // Run represents the execution of an installation's bundle.
 type Run struct {
 	// SchemaVersion of the document.
-	SchemaVersion schema.Version `json:"schemaVersion" yaml:"schemaVersion" toml:"schemaVersion"`
+	SchemaVersion schema.Version `json:"schemaVersion"`
 
 	// ID of the Run.
-	ID string `json:"_id" yaml:"_id" toml:"_id"`
+	ID string `json:"_id"`
 
 	// Created timestamp of the Run.
-	Created time.Time `json:"created" yaml:"created" toml:"created"`
+	Created time.Time `json:"created"`
 
 	// Namespace of the installation.
-	Namespace string `json:"namespace" yaml:"namespace" toml:"namespace"`
+	Namespace string `json:"namespace"`
 
 	// Installation name.
-	Installation string `json:"installation" yaml:"installation" toml:"installation"`
+	Installation string `json:"installation"`
 
 	// Revision of the installation.
-	Revision string `json:"revision" yaml:"revision" toml:"revision"`
+	Revision string `json:"revision"`
 
 	// Action executed against the installation.
-	Action string `json:"action" yaml:"action" toml:"action"`
+	Action string `json:"action"`
 
 	// Bundle is the definition of the bundle.
-	Bundle bundle.Bundle `json:"bundle" yaml:"bundle" toml:"bundle"`
+	// Bundle has custom marshal logic in MarshalJson.
+	Bundle bundle.Bundle `json:"-"`
 
 	// BundleReference is the canonical reference to the bundle used in the action.
-	BundleReference string `json:"bundleReference" yaml:"bundleReference" toml:"bundleReference"`
+	BundleReference string `json:"bundleReference"`
 
 	// BundleDigest is the digest of the bundle.
 	// TODO(carolynvs): populate this
-	BundleDigest string `json:"bundleDigest" yaml:"bundleDigest" toml:"bundleDigest"`
+	BundleDigest string `json:"bundleDigest"`
 
 	// ParameterOverrides are the key/value parameter overrides (taking precedence over
 	// parameters specified in a parameter set) specified during the run.
-	ParameterOverrides ParameterSet `json:"parameterOverrides,omitempty" yaml:"parameterOverrides,omitempty" toml:"parameterOverrides,omitempty"`
+	ParameterOverrides ParameterSet `json:"parameterOverrides,omitempty"`
 
 	// CredentialSets is a list of the credential set names used during the run.
-	CredentialSets []string `json:"credentialSets,omitempty" yaml:"credentialSets,omitempty" toml:"credentialSets,omitempty"`
+	CredentialSets []string `json:"credentialSets,omitempty"`
 
 	// ParameterSets is the list of parameter set names used during the run.
-	ParameterSets []string `json:"parameterSets,omitempty" yaml:"parameterSets,omitempty" toml:"parameterSets,omitempty"`
+	ParameterSets []string `json:"parameterSets,omitempty"`
 
 	// Parameters is the full set of parameters that's being used during the
 	// current run.
 	// This includes internal parameters, parameter sources, values from parameter sets, etc.
 	// Any sensitive data will be sannitized before saving to the database.
-	Parameters ParameterSet `json:"parameters,omitempty" yaml:"parameters,omitempty" toml:"parameters,omitempty"`
+	Parameters ParameterSet `json:"parameters,omitempty"`
 
 	// Custom extension data applicable to a given runtime.
 	// TODO(carolynvs): remove custom and populate it in ToCNAB
-	Custom interface{} `json:"custom" yaml:"custom" toml:"custom"`
+	Custom interface{} `json:"custom"`
+}
+
+// rawRun is an alias for Run that does not have a json marshal functions defined,
+// so it's safe to marshal without causing infinite recursive calls.
+// See http://choly.ca/post/go-json-marshalling/
+type rawRun Run
+
+// mongoRun is the representation of the Run that we store in mongodb.
+type mongoRun struct {
+	rawRun
+
+	// Bundle is stored in mongo as a string because it has fields that are prefixed with a $, such as $id and $comment.
+	// It overrides Run.Bundle.
+	Bundle BundleDocument `json:"bundle"`
+}
+
+// MarshalJSON converts the run to its storage representation in mongo.
+func (r Run) MarshalJSON() ([]byte, error) {
+	data, err := json.Marshal(mongoRun{
+		rawRun: rawRun(r),
+		Bundle: BundleDocument(r.Bundle),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling Run into its storage representation: %w", err)
+	}
+	return data, nil
+}
+
+// UnmarshalJSON converts the run to its storage representation in mongo.
+func (r *Run) UnmarshalJSON(data []byte) error {
+	var mr mongoRun
+	if err := json.Unmarshal(data, &mr); err != nil {
+		return fmt.Errorf("error unmarshaling Run from its storage representation: %w", err)
+	}
+
+	mr.rawRun.Bundle = bundle.Bundle(mr.Bundle)
+	*r = Run(mr.rawRun)
+	return nil
 }
 
 func (r Run) DefaultDocumentFilter() map[string]interface{} {
