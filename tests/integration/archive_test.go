@@ -47,10 +47,15 @@ func TestArchive_AirgappedEnvironment(t *testing.T) {
 	require.NoError(t, err, "Could not get the published port of the temporary registry")
 
 	// Publish referenced bundle to one location
-	localRegRef := fmt.Sprintf("localhost:%s/whalesayd:latest", tempRegistryPort)
-	require.NoError(t, shx.RunE("docker", "pull", "carolynvs/whalesayd@sha256:8b92b7269f59e3ed824e811a1ff1ee64f0d44c0218efefada57a4bebc2d7ef6f"))
-	require.NoError(t, shx.RunE("docker", "tag", "carolynvs/whalesayd@sha256:8b92b7269f59e3ed824e811a1ff1ee64f0d44c0218efefada57a4bebc2d7ef6f", localRegRef))
-	require.NoError(t, shx.RunE("docker", "push", localRegRef))
+	referencedImg := "carolynvs/whalesayd@sha256:8b92b7269f59e3ed824e811a1ff1ee64f0d44c0218efefada57a4bebc2d7ef6f"
+	localRegRepo := fmt.Sprintf("localhost:%s/whalesayd", tempRegistryPort)
+	localRegRef := localRegRepo + ":latest"
+	require.NoError(t, shx.RunE("docker", "pull", referencedImg))
+	require.NoError(t, shx.RunE("docker", "tag", referencedImg, localRegRef))
+	output, err := shx.OutputE("docker", "push", localRegRef)
+	require.NoError(t, err)
+	digest := getDigestFromDockerOutput(test.T, output)
+	localRefWithDigest := fmt.Sprintf("%s@%s", localRegRepo, digest)
 
 	// publish a test bundle that reference the image from the temp registry
 	originTestBun := filepath.Join(test.RepoRoot, fmt.Sprintf("tests/testdata/%s/porter.yaml", testdata.MyBunsWithImgReference))
@@ -64,6 +69,16 @@ func TestArchive_AirgappedEnvironment(t *testing.T) {
 
 	archiveFilePath := filepath.Join(test.TestDir, "archive-test.tgz")
 	test.RequirePorter("archive", archiveFilePath, "--reference", testdata.MyBunsWithImgReferenceRef)
+	relocMap := getRelocationMap(test, archiveFilePath)
+	require.Equal(test.T, relocMap[localRefWithDigest], "localhost:5000/mybun-with-img-reference@sha256:499f71eec2e3bd78f26c268bbf5b2a65f73b96216fac4a89b86b5ebf115527b6", relocMap)
+
+	// publish from the archived bundle
+	newRef := fmt.Sprintf("localhost:5000/%s-%s:%s", testdata.MyBunsWithImgReference, "second", "v0.2.0")
+	test.RequirePorter("publish", "--archive", archiveFilePath, "-r", newRef)
+	archiveFilePath2 := filepath.Join(test.TestDir, "archive-test2.tgz")
+	test.RequirePorter("archive", archiveFilePath2, "--reference", newRef)
+	relocMap2 := getRelocationMap(test, archiveFilePath2)
+	require.Equal(test.T, relocMap2[localRefWithDigest], "localhost:5000/mybun-with-img-reference-second@sha256:499f71eec2e3bd78f26c268bbf5b2a65f73b96216fac4a89b86b5ebf115527b6", relocMap)
 }
 
 // Validate that archiving a bundle twice results in the same digest
@@ -77,8 +92,6 @@ func TestArchive_StableDigest(t *testing.T) {
 
 	// Use a fixed bundle to work with so that we can rely on the registry and layer digests
 	const reference = "ghcr.io/getporter/examples/whalegap:v0.2.0"
-	const referencedImg = "carolynvs/whalesayd@sha256:8b92b7269f59e3ed824e811a1ff1ee64f0d44c0218efefada57a4bebc2d7ef6f"
-	const invocationImg = "ghcr.io/getporter/examples/whalegap:2bed6d7bf087c159835ddfac5838fd34@sha256:5ada057d9b24c443d9fb0240b49c13a5a36a11d5f4dda8adaaa2ec74e39c0d24"
 
 	// Archive bundle
 	archive1Opts := porter.ArchiveOptions{}
@@ -93,9 +106,6 @@ func TestArchive_StableDigest(t *testing.T) {
 	info, err := p.FileSystem.Stat(archiveFile1)
 	require.NoError(p.T(), err)
 	tests.AssertFilePermissionsEqual(t, archiveFile1, pkg.FileModeWritable, info.Mode())
-	relocMap := getRelocationMap(p, archiveFile1)
-	require.Equal(p.T(), relocMap[referencedImg], "ghcr.io/getporter/examples/whalegap@sha256:8b92b7269f59e3ed824e811a1ff1ee64f0d44c0218efefada57a4bebc2d7ef6f", relocMap)
-	require.Equal(p.T(), relocMap[invocationImg], "ghcr.io/getporter/examples/whalegap@sha256:5ada057d9b24c443d9fb0240b49c13a5a36a11d5f4dda8adaaa2ec74e39c0d24", relocMap)
 
 	hash1 := getHash(p, archiveFile1)
 
@@ -112,10 +122,6 @@ func TestArchive_StableDigest(t *testing.T) {
 	err = p.Archive(ctx, archive2Opts)
 	require.NoError(t, err, "Second archive failed")
 	assert.Equal(p.T(), hash1, getHash(p, archiveFile2), "shasum of archive did not stay the same on the second call to archive")
-	relocMap = getRelocationMap(p, archiveFile1)
-	require.Equal(p.T(), relocMap[referencedImg], "ghcr.io/getporter/examples/whalegap@sha256:8b92b7269f59e3ed824e811a1ff1ee64f0d44c0218efefada57a4bebc2d7ef6f", relocMap)
-	require.Equal(p.T(), relocMap[invocationImg], "ghcr.io/getporter/examples/whalegap@sha256:5ada057d9b24c443d9fb0240b49c13a5a36a11d5f4dda8adaaa2ec74e39c0d24", relocMap)
-
 	// Publish bundle from archive, with new reference
 	localReference := "localhost:5000/archived-whalegap:v0.2.0"
 	publishFromArchiveOpts := porter.PublishOptions{
@@ -138,10 +144,6 @@ func TestArchive_StableDigest(t *testing.T) {
 	require.NoError(p.T(), err, "validation of archive opts for bundle failed")
 	err = p.Archive(ctx, archive3Opts)
 	require.NoError(t, err, "archive from the published bundle in local registry failed")
-	// make sure the relocation map has updated to use local registry for referenced images
-	relocMap = getRelocationMap(p, archiveFile3)
-	require.Equal(p.T(), relocMap[referencedImg], "localhost:5000/archived-whalegap@sha256:8b92b7269f59e3ed824e811a1ff1ee64f0d44c0218efefada57a4bebc2d7ef6f", relocMap)
-	require.Equal(p.T(), relocMap[invocationImg], "localhost:5000/archived-whalegap@sha256:5ada057d9b24c443d9fb0240b49c13a5a36a11d5f4dda8adaaa2ec74e39c0d24", relocMap)
 }
 
 func getHash(p *porter.TestPorter, path string) string {
@@ -156,24 +158,29 @@ func getHash(p *porter.TestPorter, path string) string {
 	return fmt.Sprintf("%x", h.Sum(nil))
 }
 
-func getRelocationMap(p *porter.TestPorter, archiveFilePath string) relocation.ImageRelocationMap {
-	tmpDir, err := p.FileSystem.TempDir("", "porter-integration-tests")
-	require.NoError(p.T(), err)
-	defer p.FileSystem.RemoveAll(tmpDir)
-
-	source := p.FileSystem.Abs(archiveFilePath)
+func getRelocationMap(test tester.Tester, archiveFilePath string) relocation.ImageRelocationMap {
 	l := loader.NewLoader()
-	imp := packager.NewImporter(source, tmpDir, l)
-	err = imp.Import()
-	require.NoError(p.T(), err, "opening archive failed")
+	imp := packager.NewImporter(archiveFilePath, test.TestDir, l)
+	err := imp.Import()
+	require.NoError(test.T, err, "opening archive failed")
 
-	_, err = p.FileSystem.Stat(filepath.Join(tmpDir, strings.TrimSuffix(filepath.Base(source), ".tgz"), "bundle.json"))
-	require.NoError(p.T(), err)
-	relocMapBytes, err := p.FileSystem.ReadFile(filepath.Join(tmpDir, strings.TrimSuffix(filepath.Base(source), ".tgz"), "relocation-mapping.json"))
-	require.NoError(p.T(), err)
+	_, err = test.TestContext.FileSystem.Stat(filepath.Join(test.TestDir, strings.TrimSuffix(filepath.Base(archiveFilePath), ".tgz"), "bundle.json"))
+	require.NoError(test.T, err)
+	relocMapBytes, err := test.TestContext.FileSystem.ReadFile(filepath.Join(test.TestDir, strings.TrimSuffix(filepath.Base(archiveFilePath), ".tgz"), "relocation-mapping.json"))
+	require.NoError(test.T, err)
 
 	// make sure the relocation map contains the expected image
 	relocMap := relocation.ImageRelocationMap{}
-	require.NoError(p.T(), json.Unmarshal(relocMapBytes, &relocMap))
+	require.NoError(test.T, json.Unmarshal(relocMapBytes, &relocMap))
 	return relocMap
+}
+
+func getDigestFromDockerOutput(t *testing.T, output string) string {
+	_, after, found := strings.Cut(output, "digest: ")
+	require.True(t, found)
+	results := strings.Split(after, " ")
+	require.Greater(t, len(results), 1)
+	require.Contains(t, results[0], "sha256")
+
+	return results[0]
 }

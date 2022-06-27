@@ -231,7 +231,7 @@ func (p *Porter) publishFromArchive(ctx context.Context, opts PublishOptions) er
 	// Push updated images (renamed based on provided bundle tag) with same digests
 	// then update the bundle with new values (image name, digest)
 	for _, invImg := range bundleRef.Definition.InvocationImages {
-		relocMap, err := p.updateRelocationMapping(bundleRef.RelocationMap, layout, invImg.Image, opts.Reference)
+		relocMap, err := p.relocateImage(bundleRef.RelocationMap, layout, invImg.Image, opts.Reference)
 		if err != nil {
 			return err
 		}
@@ -239,7 +239,7 @@ func (p *Porter) publishFromArchive(ctx context.Context, opts PublishOptions) er
 		bundleRef.RelocationMap = relocMap
 	}
 	for _, img := range bundleRef.Definition.Images {
-		relocMap, err := p.updateRelocationMapping(bundleRef.RelocationMap, layout, img.Image, opts.Reference)
+		relocMap, err := p.relocateImage(bundleRef.RelocationMap, layout, img.Image, opts.Reference)
 		if err != nil {
 			return err
 		}
@@ -357,7 +357,7 @@ func (p *Porter) rewriteBundleWithInvocationImageDigest(ctx context.Context, m *
 	return bun, nil
 }
 
-func (p *Porter) updateRelocationMapping(relocationMap relocation.ImageRelocationMap, layout registry.Layout, originImg string, newReference string) (relocation.ImageRelocationMap, error) {
+func (p *Porter) relocateImage(relocationMap relocation.ImageRelocationMap, layout registry.Layout, originImg string, newReference string) (relocation.ImageRelocationMap, error) {
 	newImgName, err := getNewImageNameFromBundleReference(originImg, newReference)
 	if err != nil {
 		return nil, err
@@ -369,7 +369,7 @@ func (p *Porter) updateRelocationMapping(relocationMap relocation.ImageRelocatio
 	}
 	digest, err := pushUpdatedImage(layout, originImgRef, newImgName)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unable to push updated image: %w", err)
 	}
 
 	taggedImage, err := p.rewriteImageWithDigest(newImgName.String(), digest.String())

@@ -147,7 +147,7 @@ func TestPublish_getNewImageNameFromBundleReference(t *testing.T) {
 	})
 }
 
-func TestPublish_UpdateRelocationMapping(t *testing.T) {
+func TestPublish_RelocateImage(t *testing.T) {
 	p := NewTestPorter(t)
 	defer p.Close()
 
@@ -160,21 +160,22 @@ func TestPublish_UpdateRelocationMapping(t *testing.T) {
 		description   string
 		relocationMap relocation.ImageRelocationMap
 		layout        registry.Layout
-		hasError      bool
+		wantErr       error
 	}{
 		{description: "has relocation mapping defined", relocationMap: relocation.ImageRelocationMap{"myorg/myinvimg": "private/myinvimg"}, layout: mockRegistryLayout{expectedDigest: digest}},
 		{description: "empty relocation map", relocationMap: relocation.ImageRelocationMap{}, layout: mockRegistryLayout{expectedDigest: digest}},
-		{description: "failed to update", relocationMap: relocation.ImageRelocationMap{"myorg/myinvimg": "private/myinvimg"}, layout: mockRegistryLayout{hasError: true}, hasError: true},
+		{description: "failed to update", relocationMap: relocation.ImageRelocationMap{"myorg/myinvimg": "private/myinvimg"}, layout: mockRegistryLayout{hasError: true}, wantErr: errors.New("unable to push updated image")},
 	}
 
 	for _, tc := range testcases {
 		tc := tc
 		t.Run(tc.description, func(t *testing.T) {
-			newMap, err := p.updateRelocationMapping(tc.relocationMap, tc.layout, originImg, tag)
-			require.Equal(t, tc.hasError, err != nil)
-			if !tc.hasError {
-				require.Equal(t, tag+":535ae3fd0b6a46c169fd3d38b486a8a2@sha256:6b5a28ccbb76f12ce771a23757880c6083234255c5ba191fca1c5db1f71c1687", newMap[originImg])
+			newMap, err := p.relocateImage(tc.relocationMap, tc.layout, originImg, tag)
+			if tc.wantErr != nil {
+				require.ErrorContains(t, err, tc.wantErr.Error())
+				return
 			}
+			require.Equal(t, tag+":535ae3fd0b6a46c169fd3d38b486a8a2@sha256:6b5a28ccbb76f12ce771a23757880c6083234255c5ba191fca1c5db1f71c1687", newMap[originImg])
 		})
 	}
 }
@@ -185,13 +186,13 @@ type mockRegistryLayout struct {
 }
 
 func (m mockRegistryLayout) Add(name image.Name) (image.Digest, error) {
-	if m.hasError {
-		return image.EmptyDigest, errors.New("failed to add image")
-	}
-	return m.expectedDigest, nil
+	return image.EmptyDigest, nil
 }
 
 func (m mockRegistryLayout) Push(digest image.Digest, name image.Name) error {
+	if m.hasError {
+		return errors.New("failed to add image")
+	}
 	return nil
 }
 
