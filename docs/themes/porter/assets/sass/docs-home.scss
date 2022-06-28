@@ -51,27 +51,16 @@
         max-width: 120px;
       }
 
-      #underline, #underline1 {
+      #underline1 {
         position: relative;
       }
 
-      #underline::before {
-        content: "";
-        position: absolute;
-        left: 49%;
-        bottom: 10px;
-        width: 425px;
-        height: 14px;
-        transform: skew(-12deg) translateX(-50%);
-        background: rgba(238,111,87,0.5);
-      }     
-      
       #underline1::before {
         content: "";
         position: absolute;
-        left: 49%;
+        left: 52%;
         bottom: 10px;
-        width: 425px;
+        width: 235px;
         height: 14px;
         transform: skew(-12deg) translateX(-50%);
         background: rgba(238,111,87,0.5);
@@ -133,7 +122,7 @@
     }
   }
 
-  
+
 
   @media only screen and (min-device-width: $mobile-maximum-width + 1) {
     @include boat-animation-rules(-$boat-size, 25%, 145%, 0);

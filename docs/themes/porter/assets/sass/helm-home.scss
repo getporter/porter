@@ -1,7 +1,7 @@
 body.home {
   overflow-x: hidden;
   font-family: 'CLight';
-  
+
   .row {
   max-width: 100%;
   }
@@ -17,7 +17,7 @@ body.home {
   h2, h3, h4, h5 {
     @include CMedium;
   }
-  
+
   #footer {
     max-width: 100%;
 
@@ -253,29 +253,21 @@ nav.home-nav {
       position: relative;
     }
 
-    #underline::before {
-      content: "";
-      position: absolute;
-      left: 28%;
-      bottom: 2px;
-      width: 400px;
-      height: 14px;
-      transform: skew(-12deg) translateX(-50%);
-      background: rgba(126, 204, 241, 0.5);
+    #underline {
       z-index: -2;
-    } 
+      background-image: linear-gradient(to right, #4b84a3 0%, #4b84a3 100%);
+      background-repeat: no-repeat;
+      background-size: 70% 0.7em;
+      background-position: -5px 170%;
+    }
 
-    #underline1::before {
-      content: "";
-      position: absolute;
-      left: 40%;
-      bottom: 2px;
-      width: 360px;
-      height: 14px;
-      transform: skew(-12deg) translateX(-50%);
-      background: rgba(126, 204, 241, 0.5);
+    #underline1 {
+      background-image: linear-gradient(to right, #4b84a3 0%, #4b84a3 100%);
+      background-repeat: no-repeat;
+      background-size: 97% 0.7em;
+      background-position: -5px 170%;
       z-index: -2;
-    }   
+    }
 
     .helm-overview-img {
       margin: 3.5rem 0 3rem;
@@ -378,7 +370,7 @@ nav.home-nav {
       height: 10px;
       transform: skew(-12deg) translateX(-50%);
       background: rgba(57,190,197,0.5);
-    }   
+    }
   }
 
   .get-helm {

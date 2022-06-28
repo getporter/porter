@@ -6535,25 +6535,17 @@ nav.home-nav {
     text-decoration: none; }
   #helm.home .content #underline, #helm.home .content #underline1 {
     position: relative; }
-  #helm.home .content #underline::before {
-    content: "";
-    position: absolute;
-    left: 28%;
-    bottom: 2px;
-    width: 400px;
-    height: 14px;
-    transform: skew(-12deg) translateX(-50%);
-    background: rgba(126, 204, 241, 0.5);
-    z-index: -2; }
-  #helm.home .content #underline1::before {
-    content: "";
-    position: absolute;
-    left: 40%;
-    bottom: 2px;
-    width: 360px;
-    height: 14px;
-    transform: skew(-12deg) translateX(-50%);
-    background: rgba(126, 204, 241, 0.5);
+  #helm.home .content #underline {
+    z-index: -2;
+    background-image: linear-gradient(to right, #4b84a3 0%, #4b84a3 100%);
+    background-repeat: no-repeat;
+    background-size: 70% 0.7em;
+    background-position: -5px 170%; }
+  #helm.home .content #underline1 {
+    background-image: linear-gradient(to right, #4b84a3 0%, #4b84a3 100%);
+    background-repeat: no-repeat;
+    background-size: 97% 0.7em;
+    background-position: -5px 170%;
     z-index: -2; }
   #helm.home .content .helm-overview-img {
     margin: 3.5rem 0 3rem; }
@@ -7785,23 +7777,14 @@ body {
       text-align: left; }
       .home #helm .billboard .helm-logo {
         max-width: 120px; }
-      .home #helm .billboard #underline, .home #helm .billboard #underline1 {
+      .home #helm .billboard #underline1 {
         position: relative; }
-      .home #helm .billboard #underline::before {
-        content: "";
-        position: absolute;
-        left: 49%;
-        bottom: 10px;
-        width: 425px;
-        height: 14px;
-        transform: skew(-12deg) translateX(-50%);
-        background: rgba(238, 111, 87, 0.5); }
       .home #helm .billboard #underline1::before {
         content: "";
         position: absolute;
-        left: 49%;
+        left: 52%;
         bottom: 10px;
-        width: 425px;
+        width: 235px;
         height: 14px;
         transform: skew(-12deg) translateX(-50%);
         background: rgba(238, 111, 87, 0.5); }
