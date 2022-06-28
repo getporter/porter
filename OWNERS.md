@@ -19,3 +19,4 @@ These are the members of the [maintainers team](https://github.com/orgs/getporte
     * Plugin and mixin execution
 * [Jennifer Davis](https://github.com/iennae)
     * Documentation and new contributor experience
+* [Yingrong Zhao](https://github.com/vinozzz)
