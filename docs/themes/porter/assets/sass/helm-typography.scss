@@ -54,7 +54,7 @@ body {
 // Base Typography Styles
 //
 h1, h2, h3, h4, h5, h6 {
-  @include klinicReg;
+  @include CMedium;
   margin-top: $base-vertical-space / 3;
   margin-bottom: $base-vertical-space / 3;
 }
@@ -63,7 +63,7 @@ h1 {
   color: $blue4;
   font-size: $scalex10;
   @include upperCase;
-  @include klinicBold;
+  @include CBold;
 }
 
 h2 {
@@ -73,7 +73,7 @@ h2 {
   .onboard-welcome {
     color: $blue4;
     font-size: $scalex10;
-    @include klinicBold;
+    @include CBold;
   }
 
   &.onboard-tasks,
@@ -90,7 +90,7 @@ h2 {
   .welcome-text {
     color: $blue4;
     font-size: $base-font-size * 1.75;
-    @include klinicReg;
+    @include CMedium;
   }
 }
 
@@ -101,7 +101,7 @@ h3 {
 .content {
   h3 {
     @include upperCase;
-    @include klinicBold;
+    @include CBold;
     font-size: $scalex2;
     color: $grey2;
   }
@@ -109,7 +109,7 @@ h3 {
 
 h4 {
   font-size: $base-font-size * 0.75;
-  @include klinicBold;
+  @include CBold;
 
   &.day,
   .day {
@@ -123,7 +123,7 @@ h5 {
 
 .content h5,
 .line-chart-wrap h5 {
-  @include klinicReg;
+  @include CMedium;
   @include upperCase;
   font-size: $base-font-size * 0.75;
 }
@@ -154,11 +154,11 @@ a {
 }
 
 .regular-text {
-  @include klinicReg;
+  @include CMedium;
 }
 
 .prefix, .postfix {
-  @include klinicBold;
+  @include CBold;
   @include border-radius;
   @include upperCase;
   font-size: $scalex3;

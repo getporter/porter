@@ -26,6 +26,9 @@
   {{ $style := resources.Get "sass/styles.scss" | resources.ToCSS }}
   <link rel="stylesheet" href="{{ $style.Permalink }}">
 
+  <!-- CSS only -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-0evHe/X+R7YkIZDRvuzKMRqM+OrBnVFBL6DOitfPri4tjfHxaWutUpFmBp4vmVor" crossorigin="anonymous">
+<script src="https://kit.fontawesome.com/106dacd3a9.js" crossorigin="anonymous"></script>
   <link href="/css/custom.css" rel="stylesheet">
 </head>
 
@@ -49,21 +52,29 @@
 
         <div id="helm" class="home">
 
-          <section class="billboard">
-            <div class="container">
-              <h1>Your application and everything you need to deploy<br/>Together 💝</h1>
-              <h2>Package your application artifact, client tools, configuration and deployment logic together as a versioned bundle that you can distribute, and then install with a single command</h2>
+
+          <section class="billboard row mx-0">
+            <div class="container col-md-10 text-center">
+              <h1 class="mb-3">Your Application and everything you need to Deploy, <span id="underline1"> Together </span> </h1>
+              <h2>Package your application, client tools, configuration, and deployment logic into an installer that you can distribute and run with a single command.</h2>
+
+              <button class="btn btn-github mt-3 btn-lg text-center">
+                <h2 class="mb-0 p-2 txt-github"><a style=" text-decoration:none; color:white" href="{{ .Site.BaseURL }}quickstart">Get Started  </a></h2>
+              </button>
             </div>
+            <!-- <div class="col-md-6">
+
+            </div> -->
           </section>
 
           <div class="container content">
             <div class="row">
               <div class="small-12 columns">
                 <h2>What is Porter?</h2>
-                <p>Take everything you need to do a deployment, the application itself and the entire process 
-                  to deploy it: command-line tools, configuration files, secrets, and bash scripts to glue it all together. 
+                <p class="p-0">Take everything you need to do a deployment, the application itself and the entire process
+                  to deploy it: command-line tools, configuration files, secrets, and bash scripts to glue it all together.
                   Package that into a versioned bundle distributed over standard Docker registries or plain tgz files.</p>
-                <p>Now anyone can install your application without deep knowledge of your deployment process,
+                <p class="p-0">Now anyone can install your application without deep knowledge of your deployment process,
                    or following a step-by-step deployment doc, regardless of the tech stack.
                 </p>
 
@@ -76,87 +87,143 @@
                   <li>Reliable deployments because the client environment: cli versions, installed commands, configuration... is dependable and consistent.</li>
                 </ul>
 
+                <div>
                 <h2>When would I use Porter?</h2>
-                <p>Porter is never a replacement for an existing tool. Think of it as doing extra nice things on top of what those great tools already do!</p>
-                <ul class="emoji-list">
-                  <li><span class="emoji">📦</span> Package everything you use to deploy in a single artifact that can be easily distributed over registries and across air gapped networks.</li>
-                  <li><span class="emoji">🔏</span> Sign the bundle and verify its signature before installing as part of your supply chain security solution.</li>
-                  <li><span class="emoji">🕑</span> Save time because the bundle contains the exact version of your deployment tools. Users don’t need to find and install tools or switch between versions.</li>
-                  <li><span class="emoji">🗂</span> View rich metadata about a deployment. Run porter explain to quickly see how to customize an installation with parameters, what credentials are needed by the bundle. There is no need for detailed installation documentation.</li>
-                  <li><span class="emoji">🧠</span> Reduce the operational knowledge required to manage an application. Often deployments involve multiple tools, such as terraform, AND helm, AND kubectl; all glued together with bash scripts. Bundles abstract away the details of a deployment, and provide a consistent set of commands to deploy any application.</li>
-                  <li><span class="emoji">💁‍♀️</span> Manage deployments securely as a team. Porter uses secure just-in-time credential injection and remembers the parameters last used to deploy. Teammates don’t need to hunt down the proper values themselves, or copy sensitive credentials into local environment variables or files. Secrets remain secure in a secret store such as Hashicorp Vault or Azure Key Vault.</li>
+                <p class="p-0">Porter is never a replacement for an existing tool. Think of it as doing extra nice things on top of what those great tools already do!</p>
+                <ul class="emoji-list row p-0 my-5" style="justify-content: center;">
+                  <li class="card p-3" style="width: 20rem; margin-right: 2%;">
+                    <i class="fa-solid fa-box fa-3x card-img-top text-center"></i>
+                    <div class="card-body">
+                      <h5 class="card-title">Package</h5>
+                      <p class="card-text mb-0">
+                        Package everything you use to deploy in a single artifact that can be easily distributed over registries and across air gapped networks.
+                      </p>
+                    </div>
+                  </li>
+
+                  <li class="card p-3" style="width: 20rem; margin-right: 2%;">
+                    <i class="fa-solid fa-file-signature fa-3x card-img-top text-center"></i>
+                    <div class="card-body">
+                      <h5 class="card-title">Signature</h5>
+                      <p class="card-text mb-0">
+                        Sign the bundle and verify its signature before installing as part of your supply chain security solution.
+                      </p>
+                    </div>
+                  </li>
+
+                  <li class="card p-3" style="width: 20rem;">
+                    <i class="fa-solid fa-clock fa-3x card-img-top text-center"></i>
+                    <div class="card-body">
+                      <h5 class="card-title">Time</h5>
+                      <p class="card-text mb-0">
+                        Save time because the bundle contains the exact version of your deployment tools. Users don’t need to find and install tools or switch between versions.
+                      </p>
+                    </div>
+                  </li>
+
+                  <li class="card p-3 mt-4" style="width: 63rem;">
+                    <i class="fa-solid fa-folder fa-3x card-img-top text-center" ></i>
+                    <div class="card-body">
+                      <h5 class="card-title">Rich Metadata</h5>
+                      <p class="card-text mb-0">
+                        View rich metadata about a deployment. Run porter explain to quickly see how to customize an installation with parameters, what credentials are needed by the bundle. There is no need for detailed installation documentation.
+                      </p>
+                    </div>
+                  </li>
+
+                  <li class="card p-3 mt-4" style="width: 63rem;">
+                    <i class="fa-solid fa-brain fa-3x card-img-top text-center"></i>
+                    <div class="card-body">
+                      <h5 class="card-title">Operational Knowledge</h5>
+                      <p class="card-text mb-0">
+                        Reduce the operational knowledge required to manage an application. Often deployments involve multiple tools, such as terraform, helm, kubectl; all glued together with bash scripts. Bundles abstract away the details of a deployment, and provide a consistent set of commands to deploy any application.
+                      </p>
+                    </div>
+                  </li>
+
+                  <li class="card p-3 mt-4" style="width: 63rem;">
+                    <i class="fa-solid fa-people-group fa-3x card-img-top text-center" ></i>
+                    <div class="card-body">
+                      <h5 class="card-title">Team</h5>
+                      <p class="card-text mb-0">
+                        Manage deployments securely as a team. Porter uses secure just-in-time credential injection and remembers the parameters last used to deploy. Teammates don’t need to hunt down the proper values themselves, or copy sensitive credentials into local environment variables or files. Secrets remain secure in a secret store such as Hashicorp Vault or Azure Key Vault.
+                      </p>
+                    </div>
+                  </li>
                 </ul>
-                <p>These are just some of the reasons why working with bundles with the tools embedded inside is helpful vs. using the same tools standalone.</p>
+                <p class="p-0">These are just some of the reasons why working with bundles with the tools embedded inside is helpful vs. using the same tools standalone.</p>
+              </div>
+
               </div>
             </div>
           </div>
 
-          <div class="container helm-features">
-            <div class="row ">
+          <div class="helm-features">
+            <div class="row mx-0">
               <div class="small-12 columns">
-                <h2>Porter Features</h2>
+                <h1 id="underline">Porter Features</h1>
               </div>
             </div>
 
-            <div class="row">
+            <div class="row mx-0" style="padding-bottom: 100px;">
               <div class="small-12 columns">
-                <h3>Credentials and Secrets <span style="font-size: 1.5em">🔐</span></h3>
+                <h3><img src="/images/lock.png"/> Credentials and Secrets </h3>
                 <figure>
                   <figcaption>
                     <p>
                       Credentials and secrets are retrieved from industry standard secret stores and securely injected.
                     </p>
                   </figcaption>
-                  <img src="/images/inject-credentials.png" width=800px />
+                  <img src="/images/inject-credentials.png" width=900px />
                 </figure>
               </div>
               <div class="small-12 columns">
-                <h3>Parameterized Bundles <span style="font-size: 1.5em">👩🏽‍🔬🧬</span></h3>
+                <h3><img src="/images/bundle.png"/> Parameterized Bundles </h3>
                 <figure>
                   <figcaption>
                     <p>
                       Use different configuration for production and staging, toggle feature switches and customize each installation of a bundle with parameters.
                     </p>
                   </figcaption>
-                  <img src="/images/parameterize.png" width=800px />
+                  <img src="/images/parameterize.png" width=900px />
               </div>
               <div class="small-12 columns">
-                <h3>Connect Action Inputs and Outputs<span style="font-size: 1.5em">🧩</span></h3>
+                <h3><img src="/images/connect.png"/> Connect Action Inputs and Outputs </h3>
                 <figure>
                   <figcaption>
                     <p>
                       Wire together tools that were not designed to integrate and seamlessly pass data between them.
                     </p>
                   </figcaption>
-                  <img src="/images/wire-outputs-to-inputs.png" width=800px />
+                  <img src="/images/wire-outputs-to-inputs.png" width=900px />
               </div>
             </div>
           </div>
 
           <div class="container content">
-            <div class="row">
+            <div class="row mx-0" style="justify-content: space-around;">
 
-              <div class="small-12 medium-12 large-7 get-helm columns">
-                <a href="{{ .Site.BaseURL }}mixin-dev-guide"><h2>Contribute a Mixin</h2></a>
+              <div class="col-md-7 mr-3 get-helm columns">
+                <a href="{{ .Site.BaseURL }}mixin-dev-guide"><h2 id="underline">Contribute a Mixin</h2></a>
                 <p>
                   Porter is a cloud-agnostic tool that can work anywhere and with any tool, but in order to
                   have great support for these clouds and tools, custom-made mixins are best.</p>
 
-                  <p>Do you know tools we don't have <a href="{{.Site.BaseURL}}mixins">custom mixins</a> for yet?</p>
-                    
-                  <p align="center"><a href="{{ .Site.BaseURL }}mixin-dev-guide">Help us make more mixins!</a> 🙌</p>
+                  <p>Do you know tools we don't have <a style="text-decoration: underline;" href="{{.Site.BaseURL}}mixins"> <b>Custom Mixins </b></a> for yet?</p>
+
+                  <p align="center" style="font-family: 'CBlack'; font-size: 1.7rem; padding-right: 0;"><a style="text-decoration: underline;" href="{{ .Site.BaseURL }}mixin-dev-guide">Help us make more mixins!</a> 🙌</p>
                 </p>
               </div>
 
-              <div class="small-12 medium-12 large-5 get-charts columns">
+              <div class="col-md-4 get-charts columns">
                 <a href="https://github.com/getporter/examples/">
-                  <h2>Example Bundles</h2>
+                  <h2 id="underline1">Example Bundles</h2>
                 </a>
 
-                <p>Looking for ideas and copy/pasta?</p>
+                <p class="px-0">Looking for ideas and copy/paste?</p>
 
                 <a href="https://github.com/getporter/examples/">
-                  <p><img src="{{ .Site.BaseURL }}/img/helm-charts.png" alt="Example Bundles"></p>
+                  <p class="px-0 text-center pt-4"><img style="transform: scaleY(1.3);" src="{{ .Site.BaseURL }}/img/helm-charts.png" alt="Example Bundles"></p>
                 </a>
 
               </div>
@@ -204,32 +271,32 @@
 
         </div> <!-- / #helm -->
 
+        <footer id="footer">
+          <div class="row mx-0">
+            <div class="small-12 medium-12 large-12 columns cncf" style="padding:30px 20px ;">
+              <a href="https://www.cncf.io/" style="text-decoration:none;" title="Cloud Native Computing Foundation">
+                <p>We are a <b>Cloud Native Computing Foundation</b> Sandbox Project.</p>
+                <img href="https://www.cncf.io/" src="/img/cncf-color.png" alt="We are a Cloud Native Computing Foundation Sandbox Project">
+              </a>
+            </div>
+
+            <div class="small-12 medium-12 large-12 columns copyright" style="padding:0px 135px 30px;">
+              © The Porter Authors 2022<br/>
+              © 2022 The Linux Foundation. All rights reserved. The Linux Foundation has registered trademarks and uses
+              trademarks. For a list of trademarks of The Linux Foundation, please see the
+              <a href="https://www.linuxfoundation.org/trademark-usage"target="_blank">Trademark Usage</a> page.
+            </div>
+          </div>
+        </footer>
+
       </section>
 
-      
+
 
       <a class="exit-off-canvas" data-proofer-ignore></a>
     </div>
   </div>
 
-  <footer id="footer">
-    <div class="row">
-      <div class="small-12 medium-12 large-12 columns cncf">
-        <a href="https://www.cncf.io/" title="Cloud Native Computing Foundation" target="_blank">
-          <img src="/img/cncf-color.png" alt="We are a Cloud Native Computing Foundation sandbox project">
-          <p>We are a <strong>Cloud Native Computing Foundation</strong> sandbox project.</p>
-        </a>
-      </div>
-    </div>
-    <div class="row">
-      <div class="small-12 medium-12 large-12 columns copyright">
-        Copyright The Porter Authors.<br/>
-        Copyright The Linux Foundation. All rights reserved. The Linux Foundation has registered trademarks and uses
-        trademarks. For a list of trademarks of The Linux Foundation, please see the
-        <a href="https://www.linuxfoundation.org/trademark-usage"target="_blank">Trademark Usage</a> page.
-      </div>
-    </div>
-  </footer>
 
   <script async defer id="github-bjs" src="https://buttons.github.io/buttons.js"></script>
 

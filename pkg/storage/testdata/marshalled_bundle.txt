@@ -1,0 +1,1 @@
+"{\"actions\":{\"logs\":{},\"test\":{\"modifies\":true}},\"description\":\"this is my bundle\",\"invocationImages\":[],\"name\":\"mybun\",\"schemaVersion\":\"schemaVersion\",\"version\":\"v0.1.0\"}"

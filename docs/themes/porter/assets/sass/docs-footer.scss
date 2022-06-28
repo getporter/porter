@@ -37,7 +37,7 @@
     color: $grey2;
     line-height: 1.7;
     font-size: 0.667rem;
-    @include klinicReg;
+    @include CMedium;
   }
 
   li a {
@@ -216,24 +216,24 @@
 }
 
 .cncf {
-  background: desaturate($light2, 50%);
+  background:#193d54;
   min-height: 2rem;
   text-align: center;
   padding-left: 300px;
 
   img {
-    float: left;
     display: inline-block;
     max-width: 10rem;
+    filter: invert(1);
+    transform: scale(2);
     margin: 1.5rem 0 1.5rem 7.5%;
   }
 
   p {
-    float: right;
     margin: 1.5rem 2.5% 0 0;
     display: inline-block;
-    font-family: helvetica;
-    color: #222;
+    color: white;
+    font-size: 22px;
 
     &:hover {
       color: $blue2;
