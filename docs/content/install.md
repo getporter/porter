@@ -24,7 +24,7 @@ bundles.
 ## NOTES
 * Learn how to configure [command completion](#command-completion)
 * All the scripts support [customizing the installation through parameters](#install-script-parameters).
-* If you are using the [Porter Operator](https://release-v1.porter.sh/operator/), then you must use the most recent v1 prerelease of Porter.
+* If you are using the [Porter Operator](/operator/), then you must use the most recent v1 prerelease of Porter.
 
 <a id="prerelease"></a>
 

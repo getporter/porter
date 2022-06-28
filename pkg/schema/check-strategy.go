@@ -35,7 +35,7 @@ func ValidateSchemaVersion(strategy CheckStrategy, supported string, specified s
 	if specified == "" {
 		specified = "(none)"
 	}
-	baseMessage := fmt.Errorf("the schema version is %s but the supported schema version is %s. See https://release-v1.porter.sh/reference/file-formats/#supported-versions for more details: %w",
+	baseMessage := fmt.Errorf("the schema version is %s but the supported schema version is %s. See https://getporter.org/reference/file-formats/#supported-versions for more details: %w",
 		specified, supported, ErrInvalidSchemaVersion)
 
 	switch strategy {
