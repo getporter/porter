@@ -8,7 +8,6 @@ import (
 	"get.porter.sh/porter/pkg/exec/builder"
 	"get.porter.sh/porter/pkg/linter"
 	"get.porter.sh/porter/pkg/yaml"
-	"github.com/pkg/errors"
 )
 
 // BuildInput represents stdin sent by porter to the build and lint commands
@@ -120,7 +119,7 @@ func (m *Mixin) PrintLintResults() error {
 
 	b, err := encoding.MarshalJson(results)
 	if err != nil {
-		return errors.Wrapf(err, "could not marshal lint results %#v", results)
+		return fmt.Errorf("could not marshal lint results %#v: %w", results, err)
 	}
 
 	// Print the results as json to stdout for Porter to read

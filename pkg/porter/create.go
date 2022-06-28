@@ -7,7 +7,6 @@ import (
 
 	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/config"
-	"github.com/pkg/errors"
 )
 
 func (p *Porter) Create() error {
@@ -54,7 +53,7 @@ func (p *Porter) CopyTemplate(getTemplate func() ([]byte, error), dest string) e
 
 	err = p.FileSystem.WriteFile(dest, tmpl, mode)
 	if err != nil {
-		return errors.Wrapf(err, "failed to write template to %s", dest)
+		return fmt.Errorf("failed to write template to %s: %w", dest, err)
 	}
 	return nil
 }

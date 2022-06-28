@@ -72,3 +72,4 @@ and we will add you. **All** contributors belong here. 💯
 * [Tanmay Chaudhry](https://github.com/tchaudhry91)
 * [Priyanshu Singh](https://github.com/reveurguy)
 * [Kevin Barbour](https://github.com/kevinbarbour)
+* [Epsxy](https://github.com/epsxy)

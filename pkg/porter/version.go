@@ -12,7 +12,6 @@ import (
 	"get.porter.sh/porter/pkg/pkgmgmt"
 	"get.porter.sh/porter/pkg/porter/version"
 	"get.porter.sh/porter/pkg/printer"
-	"github.com/pkg/errors"
 )
 
 type VersionOpts struct {
@@ -106,7 +105,7 @@ Mixins
 `
 		tmpl, err := template.New("systemDebugInfo").Parse(plaintextTmpl)
 		if err != nil {
-			return errors.Wrap(err, "Failed to parse plaintext template")
+			return fmt.Errorf("Failed to parse plaintext template: %w", err)
 		}
 		err = tmpl.Execute(p.Out, sysDebugInfo)
 		return err

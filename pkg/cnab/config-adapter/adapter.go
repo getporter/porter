@@ -503,8 +503,7 @@ func (c *ManifestConverter) generateOutputWiringParameter(b cnab.ExtendedBundle,
 	// and identify the definition as a porter internal structure
 	outputDefName := b.Outputs[outputName].Definition
 	outputDef := b.Definitions[outputDefName]
-	var wiringDef definition.Schema
-	wiringDef = *outputDef
+	wiringDef := *outputDef
 	wiringDef.ID = "https://porter.sh/generated-bundle/#porter-parameter-source-definition"
 	wiringDef.Comment = cnab.PorterInternal
 

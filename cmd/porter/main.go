@@ -11,7 +11,6 @@ import (
 
 	"get.porter.sh/porter/pkg/cli"
 	"get.porter.sh/porter/pkg/porter"
-	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"go.opentelemetry.io/otel/attribute"
@@ -72,7 +71,7 @@ func main() {
 		defer func() {
 			// Capture panics and trace them
 			if panicErr := recover(); panicErr != nil {
-				log.Error(errors.New(fmt.Sprintf("%s", panicErr)),
+				log.Error(fmt.Errorf("%s", panicErr),
 					attribute.Bool("panic", true),
 					attribute.String("stackTrace", string(debug.Stack())))
 				log.EndSpan()
@@ -88,9 +87,9 @@ func main() {
 			// Ideally we log all errors in the span that generated it,
 			// but as a failsafe, always log the error at the root span as well
 			log.Error(err)
-			return 1
+			return exitCodeErr
 		}
-		return 0
+		return exitCodeSuccess
 	}
 
 	// Wrapping the main run logic in a function because os.Exit will not
@@ -265,10 +264,7 @@ func ShouldShowGroupCommands(cmd *cobra.Command, group string) bool {
 }
 
 func ShouldShowGroupCommand(cmd *cobra.Command, group string) bool {
-	if cmd.Annotations["group"] == group {
-		return true
-	}
-	return false
+	return cmd.Annotations["group"] == group
 }
 
 func ShouldShowUngroupedCommands(cmd *cobra.Command) bool {

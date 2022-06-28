@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"get.porter.sh/porter/pkg"
@@ -14,7 +15,6 @@ import (
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/tracing"
-	"github.com/pkg/errors"
 )
 
 // Stamp contains Porter specific metadata about a bundle that we can place
@@ -46,7 +46,7 @@ func (s Stamp) DecodeManifest() ([]byte, error) {
 
 	resultB, err := base64.StdEncoding.DecodeString(s.EncodedManifest)
 	if err != nil {
-		return nil, errors.Wrapf(err, "could not base64 decode the manifest in the stamp\n%s", s.EncodedManifest)
+		return nil, fmt.Errorf("could not base64 decode the manifest in the stamp\n%s: %w", s.EncodedManifest, err)
 	}
 
 	return resultB, nil
@@ -59,7 +59,11 @@ func (s Stamp) WriteManifest(cxt *portercontext.Context, path string) error {
 	}
 
 	err = cxt.FileSystem.WriteFile(path, manifestB, pkg.FileModeWritable)
-	return errors.Wrapf(err, "could not save decoded manifest to %s", path)
+	if err != nil {
+		return fmt.Errorf("could not save decoded manifest to %s: %w", path, err)
+	}
+
+	return nil
 }
 
 // MixinRecord contains information about a mixin used in a bundle
@@ -107,12 +111,12 @@ func (c *ManifestConverter) GenerateStamp(ctx context.Context) (Stamp, error) {
 
 func (c *ManifestConverter) DigestManifest() (string, error) {
 	if exists, _ := c.config.FileSystem.Exists(c.Manifest.ManifestPath); !exists {
-		return "", errors.Errorf("the specified porter configuration file %s does not exist", c.Manifest.ManifestPath)
+		return "", fmt.Errorf("the specified porter configuration file %s does not exist", c.Manifest.ManifestPath)
 	}
 
 	data, err := c.config.FileSystem.ReadFile(c.Manifest.ManifestPath)
 	if err != nil {
-		return "", errors.Wrapf(err, "could not read manifest at %q", c.Manifest.ManifestPath)
+		return "", fmt.Errorf("could not read manifest at %q: %w", c.Manifest.ManifestPath, err)
 	}
 
 	v := pkg.Version
@@ -131,18 +135,18 @@ func LoadStamp(bun cnab.ExtendedBundle) (Stamp, error) {
 	// TODO(carolynvs): can we simplify some of this by using the extended bundle?
 	data, ok := bun.Custom[config.CustomPorterKey]
 	if !ok {
-		return Stamp{}, errors.Errorf("porter stamp (custom.%s) was not present on the bundle", config.CustomPorterKey)
+		return Stamp{}, fmt.Errorf("porter stamp (custom.%s) was not present on the bundle", config.CustomPorterKey)
 	}
 
 	dataB, err := json.Marshal(data)
 	if err != nil {
-		return Stamp{}, errors.Wrapf(err, "could not marshal the porter stamp %q", string(dataB))
+		return Stamp{}, fmt.Errorf("could not marshal the porter stamp %q: %w", string(dataB), err)
 	}
 
 	stamp := Stamp{}
 	err = json.Unmarshal(dataB, &stamp)
 	if err != nil {
-		return Stamp{}, errors.Wrapf(err, "could not unmarshal the porter stamp %q", string(dataB))
+		return Stamp{}, fmt.Errorf("could not unmarshal the porter stamp %q: %w", string(dataB), err)
 	}
 
 	return stamp, nil

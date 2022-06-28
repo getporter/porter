@@ -1,10 +1,11 @@
 package porter
 
 import (
+	"fmt"
+
 	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/build"
 	"get.porter.sh/porter/pkg/yaml"
-	"github.com/pkg/errors"
 )
 
 // metadataOpts contain manifest fields eligible for dynamic
@@ -21,7 +22,7 @@ func (p *Porter) generateInternalManifest(opts BuildOptions) error {
 	// Create the local app dir if it does not already exist
 	err := p.FileSystem.MkdirAll(build.LOCAL_APP, pkg.FileModeDirectory)
 	if err != nil {
-		return errors.Wrapf(err, "unable to create directory %s", build.LOCAL_APP)
+		return fmt.Errorf("unable to create directory %s: %w", build.LOCAL_APP, err)
 	}
 
 	e := yaml.NewEditor(p.Context)

@@ -2,11 +2,12 @@ package porter
 
 import (
 	"context"
+	"errors"
+	"fmt"
 
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/tracing"
-	"github.com/pkg/errors"
 )
 
 var _ BundleAction = NewInstallOptions()
@@ -74,7 +75,7 @@ func (p *Porter) InstallBundle(ctx context.Context, opts InstallOptions) error {
 		// Create the installation record
 		i = storage.NewInstallation(opts.Namespace, opts.Name)
 	} else {
-		err = errors.Wrapf(err, "could not retrieve the installation record")
+		err = fmt.Errorf("could not retrieve the installation record: %w", err)
 		return log.Error(err)
 	}
 
@@ -86,7 +87,7 @@ func (p *Porter) InstallBundle(ctx context.Context, opts InstallOptions) error {
 	i.Labels = opts.ParseLabels()
 	err = p.Installations.UpsertInstallation(ctx, i)
 	if err != nil {
-		return errors.Wrap(err, "error saving installation record")
+		return fmt.Errorf("error saving installation record: %w", err)
 	}
 
 	// Run install using the updated installation record

@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"path/filepath"
@@ -12,7 +13,6 @@ import (
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/secrets"
 	"github.com/carolynvs/aferox"
-	"github.com/pkg/errors"
 	"github.com/spf13/afero"
 )
 
@@ -63,26 +63,29 @@ func (p TestCredentialSetProvider) Load(path string) (CredentialSet, error) {
 	fs := aferox.NewAferox(".", afero.NewOsFs())
 	var cset CredentialSet
 	err := encoding.UnmarshalFile(fs, path, &cset)
+	if err != nil {
+		return cset, fmt.Errorf("error reading %s as a credential set: %w", path, err)
+	}
 
-	return cset, errors.Wrapf(err, "error reading %s as a credential set", path)
+	return cset, nil
 }
 
 func (p TestCredentialSetProvider) AddTestCredentials(path string) {
 	cs, err := p.Load(path)
 	if err != nil {
-		p.T.Fatal(errors.Wrapf(err, "could not read test credentials from %s", path))
+		p.T.Fatal(fmt.Errorf("could not read test credentials from %s: %w", path, err))
 	}
 
 	err = p.CredentialStore.InsertCredentialSet(context.Background(), cs)
 	if err != nil {
-		p.T.Fatal(errors.Wrap(err, "could not load test credentials into in memory credential storage"))
+		p.T.Fatal(fmt.Errorf("could not load test credentials into in memory credential storage: %w", err))
 	}
 }
 
 func (p TestCredentialSetProvider) AddTestCredentialsDirectory(dir string) {
 	files, err := ioutil.ReadDir(dir)
 	if err != nil {
-		p.T.Fatal(errors.Wrapf(err, "could not list test directory %s", dir))
+		p.T.Fatal(fmt.Errorf("could not list test directory %s: %w", dir, err))
 	}
 
 	for _, fi := range files {

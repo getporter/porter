@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"get.porter.sh/porter/pkg/portercontext"
-	"github.com/pkg/errors"
 )
 
 type OutputRegex interface {
@@ -41,7 +40,7 @@ func ProcessRegexOutputs(cxt *portercontext.Context, step StepWithOutputs, stdou
 
 		r, err := regexp.Compile(outputRegex)
 		if err != nil {
-			return errors.Wrapf(err, "invalid regular expression %q for output %q", outputRegex, outputName)
+			return fmt.Errorf("invalid regular expression %q for output %q: %w", outputRegex, outputName, err)
 		}
 
 		// Find every submatch / capture and put it on its own line in the output file
@@ -55,7 +54,7 @@ func ProcessRegexOutputs(cxt *portercontext.Context, step StepWithOutputs, stdou
 		value := strings.Join(matches, "\n")
 		err = cxt.WriteMixinOutputToFile(outputName, []byte(value))
 		if err != nil {
-			return errors.Wrapf(err, "error writing mixin output for %q", outputName)
+			return fmt.Errorf("error writing mixin output for %q: %w", outputName, err)
 		}
 	}
 

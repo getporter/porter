@@ -70,6 +70,7 @@ func TestArchive_ArchiveDirectory(t *testing.T) {
 
 	tests.AssertDirectoryPermissionsEqual(t, dir, pkg.FileModeDirectory)
 }
+
 func TestArchive_AddImage(t *testing.T) {
 	p := NewTestPorter(t)
 	defer p.Close()

@@ -20,7 +20,6 @@ import (
 	"github.com/docker/docker/pkg/term"
 	"github.com/google/go-containerregistry/pkg/crane"
 	"github.com/opencontainers/go-digest"
-	"github.com/pkg/errors"
 )
 
 // ErrNoContentDigest represents an error due to an image not having a
@@ -65,7 +64,7 @@ func (r *Registry) PullBundle(ref cnab.OCIReference, insecureRegistry bool) (cna
 
 	bun, reloMap, digest, err := remotes.Pull(context.Background(), ref.Named, r.createResolver(insecureRegistries))
 	if err != nil {
-		return cnab.BundleReference{}, errors.Wrap(err, "unable to pull bundle")
+		return cnab.BundleReference{}, fmt.Errorf("unable to pull bundle: %w", err)
 	}
 
 	invocationImage := bun.InvocationImages[0]
@@ -101,13 +100,13 @@ func (r *Registry) PushBundle(ctx context.Context, bundleRef cnab.BundleReferenc
 	}
 	rm, err := remotes.FixupBundle(context.Background(), &bundleRef.Definition.Bundle, bundleRef.Reference.Named, resolver, remotes.WithEventCallback(r.displayEvent), remotes.WithAutoBundleUpdate(), remotes.WithRelocationMap(bundleRef.RelocationMap))
 	if err != nil {
-		return cnab.BundleReference{}, log.Error(errors.Wrap(err, "error preparing the bundle with cnab-to-oci before pushing"))
+		return cnab.BundleReference{}, log.Error(fmt.Errorf("error preparing the bundle with cnab-to-oci before pushing: %w", err))
 	}
 	bundleRef.RelocationMap = rm
 
 	d, err := remotes.Push(ctx, &bundleRef.Definition.Bundle, rm, bundleRef.Reference.Named, resolver, true)
 	if err != nil {
-		return cnab.BundleReference{}, log.Error(errors.Wrapf(err, "error pushing the bundle to %s", bundleRef.Reference))
+		return cnab.BundleReference{}, log.Error(fmt.Errorf("error pushing the bundle to %s: %w", bundleRef.Reference, err))
 	}
 	bundleRef.Digest = d.Digest
 
@@ -148,7 +147,7 @@ func (r *Registry) PushInvocationImage(ctx context.Context, invocationImage stri
 	fmt.Fprintln(r.Out, "Pushing CNAB invocation image...")
 	pushResponse, err := cli.Client().ImagePush(ctx, invocationImage, options)
 	if err != nil {
-		return "", errors.Wrap(err, "docker push failed")
+		return "", fmt.Errorf("docker push failed: %w", err)
 	}
 	defer pushResponse.Close()
 
@@ -159,13 +158,13 @@ func (r *Registry) PushInvocationImage(ctx context.Context, invocationImage stri
 	err = jsonmessage.DisplayJSONMessagesStream(pushResponse, r.Out, termFd, isTerm, nil)
 	if err != nil {
 		if strings.HasPrefix(err.Error(), "denied") {
-			return "", errors.Wrap(err, "docker push authentication failed")
+			return "", fmt.Errorf("docker push authentication failed: %w", err)
 		}
-		return "", errors.Wrap(err, "failed to stream docker push stdout")
+		return "", fmt.Errorf("failed to stream docker push stdout: %w", err)
 	}
 	dist, err := cli.Client().DistributionInspect(ctx, invocationImage, encodedAuth)
 	if err != nil {
-		return "", errors.Wrap(err, "unable to inspect docker image")
+		return "", fmt.Errorf("unable to inspect docker image: %w", err)
 	}
 	return dist.Descriptor.Digest, nil
 }
@@ -197,7 +196,7 @@ func (r *Registry) IsImageCached(ctx context.Context, invocationImage string) (b
 
 	imageSummaries, err := cli.Client().ImageList(ctx, imageListOpts)
 	if err != nil {
-		return false, errors.Wrapf(err, "could not list images")
+		return false, fmt.Errorf("could not list images: %w", err)
 	}
 
 	if len(imageSummaries) == 0 {

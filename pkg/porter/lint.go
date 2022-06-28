@@ -9,7 +9,6 @@ import (
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/printer"
-	"github.com/pkg/errors"
 )
 
 type LintOptions struct {
@@ -38,7 +37,7 @@ func (o *LintOptions) validateFile(cxt *portercontext.Context) error {
 	if o.File == "" {
 		manifestExists, err := cxt.FileSystem.Exists(config.Name)
 		if err != nil {
-			return errors.Wrap(err, "could not check if porter manifest exists in current directory")
+			return fmt.Errorf("could not check if porter manifest exists in current directory: %w", err)
 		}
 
 		if manifestExists {
@@ -48,7 +47,7 @@ func (o *LintOptions) validateFile(cxt *portercontext.Context) error {
 
 	// Verify the file can be accessed
 	if _, err := cxt.FileSystem.Stat(o.File); err != nil {
-		return errors.Wrapf(err, "unable to access --file %s", o.File)
+		return fmt.Errorf("unable to access --file %s: %w", o.File, err)
 	}
 
 	return nil

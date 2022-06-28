@@ -15,7 +15,6 @@ import (
 	"get.porter.sh/porter/pkg/pkgmgmt"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -922,5 +921,5 @@ func getMaintainerByName(source []bundle.Maintainer, name string) (bundle.Mainta
 			return m, nil
 		}
 	}
-	return bundle.Maintainer{}, errors.New(fmt.Sprintf("Could not find maintainer with name '%s'", name))
+	return bundle.Maintainer{}, fmt.Errorf("Could not find maintainer with name '%s'", name)
 }

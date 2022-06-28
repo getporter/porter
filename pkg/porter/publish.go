@@ -5,6 +5,7 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"path"
 	"path/filepath"
@@ -22,7 +23,6 @@ import (
 	"github.com/pivotal/image-relocation/pkg/image"
 	"github.com/pivotal/image-relocation/pkg/registry"
 	"github.com/pivotal/image-relocation/pkg/registry/ggcr"
-	"github.com/pkg/errors"
 )
 
 // PublishOptions are options that may be specified when publishing a bundle.
@@ -40,7 +40,7 @@ func (o *PublishOptions) Validate(cxt *portercontext.Context) error {
 	if o.ArchiveFile != "" {
 		// Verify the archive file can be accessed
 		if _, err := cxt.FileSystem.Stat(o.ArchiveFile); err != nil {
-			return errors.Wrapf(err, "unable to access --archive %s", o.ArchiveFile)
+			return fmt.Errorf("unable to access --archive %s: %w", o.ArchiveFile, err)
 		}
 
 		if o.Reference == "" {
@@ -149,7 +149,7 @@ func (p *Porter) publishFromFile(ctx context.Context, opts PublishOptions) error
 	// empty, which is fine - we still may need to pick up tag and/or registry
 	// overrides
 	if err := m.SetInvocationImageAndReference(opts.Reference); err != nil {
-		return errors.Wrap(err, "unable to set invocation image name and reference")
+		return fmt.Errorf("unable to set invocation image name and reference: %w", err)
 	}
 
 	if origInvImg != m.Image {
@@ -167,12 +167,12 @@ func (p *Porter) publishFromFile(ctx context.Context, opts PublishOptions) error
 	var bundleRef cnab.BundleReference
 	bundleRef.Reference, err = cnab.ParseOCIReference(m.Reference)
 	if err != nil {
-		return errors.Wrapf(err, "invalid reference %s", m.Reference)
+		return fmt.Errorf("invalid reference %s: %w", m.Reference, err)
 	}
 
 	bundleRef.Digest, err = p.Registry.PushInvocationImage(ctx, m.Image)
 	if err != nil {
-		return errors.Wrapf(err, "unable to push CNAB invocation image %q", m.Image)
+		return fmt.Errorf("unable to push CNAB invocation image %q: %w", m.Image, err)
 	}
 
 	bundleRef.Definition, err = p.rewriteBundleWithInvocationImageDigest(ctx, m, bundleRef.Digest)
@@ -212,7 +212,7 @@ func (p *Porter) publishFromArchive(ctx context.Context, opts PublishOptions) er
 	source := p.FileSystem.Abs(opts.ArchiveFile)
 	tmpDir, err := p.FileSystem.TempDir("", "porter")
 	if err != nil {
-		return errors.Wrap(err, "error creating temp directory for archive extraction")
+		return fmt.Errorf("error creating temp directory for archive extraction: %w", err)
 	}
 	defer p.FileSystem.RemoveAll(tmpDir)
 
@@ -230,7 +230,7 @@ func (p *Porter) publishFromArchive(ctx context.Context, opts PublishOptions) er
 	client := ggcr.NewRegistryClient()
 	layout, err := client.ReadLayout(filepath.Join(extractedDir, "artifacts/layout"))
 	if err != nil {
-		return errors.Wrapf(err, "failed to parse OCI Layout from archive %s", opts.ArchiveFile)
+		return fmt.Errorf("failed to parse OCI Layout from archive %s: %w", opts.ArchiveFile, err)
 	}
 
 	// Push updated images (renamed based on provided bundle tag) with same digests
@@ -296,21 +296,21 @@ func (p *Porter) extractBundle(tmpDir, source string) (cnab.BundleReference, err
 	imp := packager.NewImporter(source, tmpDir, l)
 	err := imp.Import()
 	if err != nil {
-		return cnab.BundleReference{}, errors.Wrapf(err, "failed to extract bundle from archive %s", source)
+		return cnab.BundleReference{}, fmt.Errorf("failed to extract bundle from archive %s: %w", source, err)
 	}
 
 	bun, err := l.Load(filepath.Join(tmpDir, strings.TrimSuffix(filepath.Base(source), ".tgz"), "bundle.json"))
 	if err != nil {
-		return cnab.BundleReference{}, errors.Wrapf(err, "failed to load bundle from archive %s", source)
+		return cnab.BundleReference{}, fmt.Errorf("failed to load bundle from archive %s: %w", source, err)
 	}
 	data, err := p.FileSystem.ReadFile(filepath.Join(tmpDir, strings.TrimSuffix(filepath.Base(source), ".tgz"), "relocation-mapping.json"))
 	if err != nil {
-		return cnab.BundleReference{}, errors.Wrapf(err, "failed to load relocation-mapping.json from archive %s", source)
+		return cnab.BundleReference{}, fmt.Errorf("failed to load relocation-mapping.json from archive %s: %w", source, err)
 	}
 	var reloMap relocation.ImageRelocationMap
 	err = json.Unmarshal(data, &reloMap)
 	if err != nil {
-		return cnab.BundleReference{}, errors.Wrapf(err, "failed to parse relocation-mapping.json from archive %s", source)
+		return cnab.BundleReference{}, fmt.Errorf("failed to parse relocation-mapping.json from archive %s: %w", source, err)
 	}
 
 	return cnab.BundleReference{Definition: cnab.ExtendedBundle{Bundle: *bun}, RelocationMap: reloMap}, nil
@@ -321,17 +321,17 @@ func (p *Porter) extractBundle(tmpDir, source string) (cnab.BundleReference, err
 func pushUpdatedImage(layout registry.Layout, origImg string, newImgName image.Name) (image.Digest, error) {
 	origImgName, err := image.NewName(origImg)
 	if err != nil {
-		return image.EmptyDigest, errors.Wrapf(err, "unable to parse image %q into domain/path components", origImg)
+		return image.EmptyDigest, fmt.Errorf("unable to parse image %q into domain/path components: %w", origImg, err)
 	}
 
 	digest, err := layout.Find(origImgName)
 	if err != nil {
-		return image.EmptyDigest, errors.Wrapf(err, "unable to find image %s in archived OCI Layout", origImgName.String())
+		return image.EmptyDigest, fmt.Errorf("unable to find image %s in archived OCI Layout: %w", origImgName.String(), err)
 	}
 
 	err = layout.Push(digest, newImgName)
 	if err != nil {
-		return image.EmptyDigest, errors.Wrapf(err, "unable to push image %s", newImgName.String())
+		return image.EmptyDigest, fmt.Errorf("unable to push image %s: %w", newImgName.String(), err)
 	}
 
 	return digest, nil
@@ -341,7 +341,7 @@ func pushUpdatedImage(layout registry.Layout, origImg string, newImgName image.N
 func (p *Porter) updateBundleWithNewImage(bun cnab.ExtendedBundle, newImg image.Name, digest image.Digest, index interface{}) error {
 	taggedImage, err := p.rewriteImageWithDigest(newImg.String(), digest.String())
 	if err != nil {
-		return errors.Wrapf(err, "unable to update image reference for %s", newImg.String())
+		return fmt.Errorf("unable to update image reference for %s: %w", newImg.String(), err)
 	}
 
 	// update bundle with new image
@@ -372,12 +372,12 @@ func (p *Porter) updateBundleWithNewImage(bun cnab.ExtendedBundle, newImg image.
 func getNewImageNameFromBundleReference(origImg, bundleTag string) (image.Name, error) {
 	origName, err := image.NewName(origImg)
 	if err != nil {
-		return image.EmptyName, errors.Wrapf(err, "unable to parse image %q into domain/path components", origImg)
+		return image.EmptyName, fmt.Errorf("unable to parse image %q into domain/path components: %w", origImg, err)
 	}
 
 	bundleName, err := image.NewName(bundleTag)
 	if err != nil {
-		return image.EmptyName, errors.Wrapf(err, "unable to parse bundle tag %q into domain/path components", bundleTag)
+		return image.EmptyName, fmt.Errorf("unable to parse bundle tag %q into domain/path components: %w", bundleTag, err)
 	}
 
 	// Use the original image name with the bundle location to generate a randomized tag
@@ -389,7 +389,7 @@ func getNewImageNameFromBundleReference(origImg, bundleTag string) (image.Name, 
 	imgName := bundleName.Name()
 	newImgName, err := image.NewName(imgName)
 	if err != nil {
-		return image.EmptyName, errors.Wrapf(err, "unable to parse bundle %q into domain/path components", bundleName.Name())
+		return image.EmptyName, fmt.Errorf("unable to parse bundle %q into domain/path components: %w", bundleName.Name(), err)
 	}
 
 	return newImgName.WithTag(imgTag)
@@ -398,19 +398,19 @@ func getNewImageNameFromBundleReference(origImg, bundleTag string) (image.Name, 
 func (p *Porter) rewriteBundleWithInvocationImageDigest(ctx context.Context, m *manifest.Manifest, digest digest.Digest) (cnab.ExtendedBundle, error) {
 	taggedImage, err := p.rewriteImageWithDigest(m.Image, digest.String())
 	if err != nil {
-		return cnab.ExtendedBundle{}, errors.Wrap(err, "unable to update invocation image reference")
+		return cnab.ExtendedBundle{}, fmt.Errorf("unable to update invocation image reference: %w", err)
 	}
 	m.Image = taggedImage
 
 	fmt.Fprintln(p.Out, "\nRewriting CNAB bundle.json...")
 	err = p.buildBundle(ctx, m, digest)
 	if err != nil {
-		return cnab.ExtendedBundle{}, errors.Wrap(err, "unable to rewrite CNAB bundle.json with updated invocation image digest")
+		return cnab.ExtendedBundle{}, fmt.Errorf("unable to rewrite CNAB bundle.json with updated invocation image digest: %w", err)
 	}
 
 	bun, err := cnab.LoadBundle(p.Context, build.LOCAL_BUNDLE)
 	if err != nil {
-		return cnab.ExtendedBundle{}, errors.Wrap(err, "unable to load CNAB bundle")
+		return cnab.ExtendedBundle{}, fmt.Errorf("unable to load CNAB bundle: %w", err)
 	}
 
 	return bun, nil

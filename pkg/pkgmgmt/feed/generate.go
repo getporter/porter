@@ -11,7 +11,6 @@ import (
 	"get.porter.sh/porter/pkg/portercontext"
 	"github.com/Masterminds/semver/v3"
 	"github.com/cbroglie/mustache"
-	"github.com/pkg/errors"
 )
 
 type GenerateOptions struct {
@@ -35,7 +34,7 @@ func (o *GenerateOptions) ValidateSearchDirectory(cxt *portercontext.Context) er
 	}
 
 	if _, err := cxt.FileSystem.Stat(o.SearchDirectory); err != nil {
-		return errors.Wrapf(err, "invalid --dir %s", o.SearchDirectory)
+		return fmt.Errorf("invalid --dir %s: %w", o.SearchDirectory, err)
 	}
 
 	return nil
@@ -43,7 +42,7 @@ func (o *GenerateOptions) ValidateSearchDirectory(cxt *portercontext.Context) er
 
 func (o *GenerateOptions) ValidateTemplateFile(cxt *portercontext.Context) error {
 	if _, err := cxt.FileSystem.Stat(o.TemplateFile); err != nil {
-		return errors.Wrapf(err, "invalid --template %s", o.TemplateFile)
+		return fmt.Errorf("invalid --template %s: %w", o.TemplateFile, err)
 	}
 
 	return nil
@@ -113,7 +112,7 @@ func (feed *MixinFeed) Generate(opts GenerateOptions) error {
 	})
 
 	if err != nil {
-		return errors.Wrapf(err, "failed to traverse the %s directory", opts.SearchDirectory)
+		return fmt.Errorf("failed to traverse the %s directory: %w", opts.SearchDirectory, err)
 	}
 
 	if len(feed.Index) == 0 {
@@ -146,7 +145,7 @@ func shouldPublishVersion(version string) bool {
 func (feed *MixinFeed) Save(opts GenerateOptions) error {
 	feedTmpl, err := feed.FileSystem.ReadFile(opts.TemplateFile)
 	if err != nil {
-		return errors.Wrapf(err, "error reading template file at %s", opts.TemplateFile)
+		return fmt.Errorf("error reading template file at %s: %w", opts.TemplateFile, err)
 	}
 
 	tmplData := map[string]interface{}{}
@@ -167,9 +166,12 @@ func (feed *MixinFeed) Save(opts GenerateOptions) error {
 	tmplData["Updated"] = entries[0].Updated()
 
 	atomXml, err := mustache.Render(string(feedTmpl), tmplData)
+	if err != nil {
+		return fmt.Errorf("error rendering template:%w", err)
+	}
 	err = feed.FileSystem.WriteFile(opts.AtomFile, []byte(atomXml), pkg.FileModeWritable)
 	if err != nil {
-		return errors.Wrapf(err, "could not write feed to %s", opts.AtomFile)
+		return fmt.Errorf("could not write feed to %s: %w", opts.AtomFile, err)
 	}
 
 	fmt.Fprintf(feed.Out, "wrote feed to %s\n", opts.AtomFile)

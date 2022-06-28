@@ -2,10 +2,10 @@ package inmemory
 
 import (
 	"context"
+	"errors"
 
 	"get.porter.sh/porter/pkg/secrets/plugins"
 	"github.com/cnabio/cnab-go/secrets/host"
-	"github.com/pkg/errors"
 )
 
 var _ plugins.SecretsProtocol = &Store{}

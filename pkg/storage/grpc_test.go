@@ -2,7 +2,6 @@ package storage
 
 import (
 	"context"
-	"fmt"
 	"net"
 	"testing"
 
@@ -25,7 +24,7 @@ func TestRoundTripDataOverGRPC(t *testing.T) {
 	ctx := context.Background()
 
 	server := pluginstore.NewServer(c.Context, store)
-	addr := fmt.Sprintf("localhost:")
+	addr := "localhost:"
 	lis, err := net.Listen("tcp", addr)
 	require.NoError(t, err)
 	grpcServer := grpc.NewServer()

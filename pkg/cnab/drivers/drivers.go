@@ -1,13 +1,14 @@
 package drivers
 
 import (
+	"fmt"
+
 	"get.porter.sh/porter/pkg/portercontext"
 	"github.com/cnabio/cnab-go/driver"
 	"github.com/cnabio/cnab-go/driver/command"
 	"github.com/cnabio/cnab-go/driver/debug"
 	"github.com/cnabio/cnab-go/driver/docker"
 	"github.com/cnabio/cnab-go/driver/kubernetes"
-	"github.com/pkg/errors"
 )
 
 // LookupDriver creates a driver by name.
@@ -30,6 +31,6 @@ func LookupDriver(cxt *portercontext.Context, name string) (driver.Driver, error
 			return d, nil
 		}
 
-		return nil, errors.Errorf("unsupported driver or driver not found in PATH: %s", name)
+		return nil, fmt.Errorf("unsupported driver or driver not found in PATH: %s", name)
 	}
 }
