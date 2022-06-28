@@ -194,5 +194,5 @@ func (t *Tester) createPorterHome(configFilePath string) error {
 
 func (t Tester) Chdir(dir string) {
 	t.TestContext.Chdir(dir)
-	os.Chdir(dir)
+	require.NoError(t.T, os.Chdir(dir))
 }
