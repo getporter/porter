@@ -6,18 +6,81 @@ description: Installing the Porter client and mixins
 > Join our [mailing list] for announcements of releases and announcements of new features.
 > Connect with other Porter users and contributors on [Slack].
 
-We have a few release types available for you to use:
+Porter is about to release v1.0.0 and we strongly recommend that you install that version of Porter if you are just starting out.
 
-* [Latest](#latest)
-* [Canary](#canary)
-* [Prerelease](#prerelease)
-* [Older Version](#older-version)
+* [Install Porter v1](#recommended)
+
+If you are already using Porter, here are links to install an older v0 version of Porter.
+Heads up that v0 will be deprecated a few months after v1.0.0 is released!
+
+* [Latest](#latest) installs the latest stable version of v0. We recommend new users start with v1 instead.
+* [Canary](#canary) installs the most recent build of v0.
+* [Older Version](#older-version) installs a specific version of Porter.
 
 You can also install and manage [mixins](#mixins) and [plugins](#plugins) using
-porter, and use the [Porter VS Code Extension][vscode-ext] to help author
+Porter, and use the [Porter VS Code Extension][vscode-ext] to help author
 bundles.
 
-All the scripts for Porter v0.37.3+ support [customizing the installation through parameters](#install-script-parameters).
+## NOTES
+* Learn how to configure [command completion](#command-completion)
+* All the scripts support [customizing the installation through parameters](#install-script-parameters).
+* If you are using the [Porter Operator](https://release-v1.porter.sh/operator/), then you must use the most recent v1 prerelease of Porter.
+
+<a id="prerelease"></a>
+
+# Recommended
+
+We recommend installing v1 of Porter if you are trying out Porter for the first time.
+Keep in mind that prereleases are not suitable for production workloads.
+Data migrations will not be provided or supported for prereleases until v1.0.0-beta.1 (coming soon).
+Prereleases are intended for you to try out new features in Porter and provide feedback about the direction of the feature.
+
+The examples below use a hard-coded version of the prerelease and there may be a newer version available.
+Set VERSION to the most recent [v1 prerelease] version number.
+
+**MacOS**
+
+```bash
+export VERSION="v1.0.0-alpha.22"
+curl -L https://cdn.porter.sh/$VERSION/install-mac.sh | bash
+```
+
+**Linux**
+
+```bash
+export VERSION="v1.0.0-alpha.22"
+curl -L https://cdn.porter.sh/$VERSION/install-linux.sh | bash
+```
+
+**Windows**
+
+```powershell
+$VERSION="v1.0.0-alpha.22"
+(New-Object System.Net.WebClient).DownloadFile("https://cdn.porter.sh/$VERSION/install-windows.ps1", "install-porter.ps1")
+.\install-porter.ps1 -PORTER_HOME $PORTER_HOME
+```
+
+## Running multiple versions 
+
+If you have multiple versions of Porter installed on the same machine, you can switch between then by setting the PORTER_HOME environment variable and adding the desired version of Porter to your PATH.
+
+**Bash**
+
+```bash
+export PORTER_HOME=~/.porterv1
+export PATH=$PORTER_HOME:$PATH
+# Check that you are using the desired version of porter
+porter version
+```
+
+**Windows**
+
+```powershell
+$env:PORTER_HOME="$env:USERPROFILE\.porterv1"
+$env:PATH+=";$env:PORTER_HOME"
+# Check that you are using the desired version of porter
+porter version
+```
 
 [vscode-ext]: https://marketplace.visualstudio.com/items?itemName=ms-kubernetes-tools.porter-vscode
 [ps-link]: https://www.howtogeek.com/126469/how-to-create-a-powershell-profile/
@@ -26,7 +89,7 @@ All the scripts for Porter v0.37.3+ support [customizing the installation throug
 
 # Latest
 
-Install the most recent stable release of porter and the [exec mixin].
+Install the most recent stable v0 release of porter and the [exec mixin].
 
 ## Latest MacOS
 ```
@@ -47,7 +110,7 @@ iwr "https://cdn.porter.sh/latest/install-windows.ps1" -UseBasicParsing | iex
 
 # Canary
 
-Install the most recent build from the "main" branch of porter and the [exec mixin].
+Install the most recent build of Porter v0 and the [exec mixin].
 
 This saves you the trouble of cloning and building porter and its mixin
 repositories yourself. The build may not be stable but it will have new features
@@ -70,74 +133,9 @@ You will need to create a [PowerShell Profile][ps-link] if you do not have one.
 iwr "https://cdn.porter.sh/canary/install-windows.ps1" -UseBasicParsing | iex
 ```
 
-# Prerelease
-
-We would love for you to try out our v1 prerelease and send us any feedback that you have!
-Keep in mind that prereleases are not suitable for production workloads. Data migrations will not be provided or supported for prereleases.
-Prereleases are intended for you to try out potential new features in Porter and provide feedback about the direction of the feature. They won't work with existing installations.
-
-You can try out different versions of Porter without impacting your current version of Porter by installing to a different location via a modified PORTER_HOME environment variable.
-
-If you are using the [Porter Operator](https://release-v1.porter.sh/operator/), then you must use the most recent v1 prerelease of Porter.
-
-The examples below use a hard-coded version of the prerelease and there may be a newer version available.
-Set VERSION to the most recent [v1 prerelease] version number.
-
-**MacOS**
-
-```bash
-export PORTER_HOME=~/.porterv1
-export VERSION="v1.0.0-alpha.19"
-curl -L https://cdn.porter.sh/$VERSION/install-mac.sh | bash
-```
-
-After installing the prerelease, you can switch your current shell session to use the prerelease by setting the PORTER_HOME environment variable and prepending that location to your PATH environment variable.
-
-```bash
-export PORTER_HOME=~/.porterv1
-export PATH=$PORTER_HOME:$PATH
-# Check that you are using the desired version of porter
-porter version
-```
-
-**Linux**
-
-```bash
-export PORTER_HOME=~/.porterv1
-export VERSION="v1.0.0-alpha.19"
-curl -L https://cdn.porter.sh/$VERSION/install-linux.sh | bash
-```
-
-After installing the prerelease, you can switch your current shell session to use the prerelease by setting the PORTER_HOME environment variable and prepending that location to your PATH environment variable.
-
-```bash
-export PORTER_HOME=~/.porterv1
-export PATH=$PORTER_HOME:$PATH
-# Check that you are using the desired version of porter
-porter version
-```
-
-**Windows**
-
-```powershell
-$PORTER_HOME="$env:USERPROFILE\.porterv1"
-$VERSION="v1.0.0-alpha.19"
-(New-Object System.Net.WebClient).DownloadFile("https://cdn.porter.sh/$VERSION/install-windows.ps1", "install-porter.ps1")
-.\install-porter.ps1 -PORTER_HOME $PORTER_HOME
-```
-
-After installing the prerelease, you can switch your current shell session to use the prerelease by setting the PORTER_HOME environment variable and prepending that location to your PATH environment variable.
-
-```powershell
-$env:PORTER_HOME="$env:USERPROFILE\.porterv1"
-$env:PATH+=";$env:PORTER_HOME"
-# Check that you are using the desired version of porter
-porter version
-```
-
 # Older Version
 
-Install an older version of porter, starting with `v0.18.1-beta.2`.
+Install an older version of porter, starting with `v0.38.0`.
 Porter v1.0.0+ only installs porter and the [exec mixin].
 Older versions of Porter installed more mixins by default. 
 
@@ -148,13 +146,13 @@ Set `VERSION` to the version of Porter that you want to install.
 
 ## Older Version MacOS
 ```
-VERSION="v0.18.1-beta.2"
+VERSION="v0.38.10"
 curl -L https://cdn.porter.sh/$VERSION/install-mac.sh | bash
 ```
 
 ## Older Version Linux
 ```
-VERSION="v0.18.1-beta.2"
+VERSION="v0.38.10"
 curl -L https://cdn.porter.sh/$VERSION/install-linux.sh | bash
 ```
 
@@ -162,7 +160,7 @@ curl -L https://cdn.porter.sh/$VERSION/install-linux.sh | bash
 You will need to create a [PowerShell Profile][ps-link] if you do not have one.
 
 ```
-$VERSION="v0.18.1-beta.2"
+$VERSION="v0.38.10"
 iwr "https://cdn.porter.sh/$VERSION/install-windows.ps1" -UseBasicParsing | iex
 ```
 
@@ -179,7 +177,7 @@ $ porter mixin install terraform
 installed terraform mixin v0.3.0-beta.1 (0d24b85)
 ```
 
-All of the Porter-authored mixins are published to `https://cdn.porter.sh/mixins/atom.xml`.
+All the Porter-authored mixins are published to `https://cdn.porter.sh/mixins/atom.xml`.
 
 # Plugins
 
@@ -193,7 +191,7 @@ $ porter plugin install azure --version canary
 installed azure plugin v0.1.1-10-g7071451 (7071451)
 ```
 
-All of the Porter-authored plugins are published to `https://cdn.porter.sh/plugins/atom.xml`.
+All the Porter-authored plugins are published to `https://cdn.porter.sh/plugins/atom.xml`.
 
 
 [releases]: https://github.com/getporter/porter/releases
