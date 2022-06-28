@@ -409,7 +409,7 @@ func TestResolveInMainDict(t *testing.T) {
 	t.Logf("install data %v", installStep.Data)
 	exec := installStep.Data["exec"].(map[string]interface{})
 	assert.NotNil(t, exec)
-	command := exec["command"].(interface{})
+	command := exec["command"]
 	assert.NotNil(t, command)
 	cmdVal, ok := command.(string)
 	assert.True(t, ok)

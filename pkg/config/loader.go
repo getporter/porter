@@ -48,7 +48,7 @@ func LoadFromViper(viperCfg func(v *viper.Viper)) DataStoreLoaderFunc {
 	return func(ctx context.Context, cfg *Config, templateData map[string]interface{}) error {
 		home, _ := cfg.GetHomeDir()
 
-		ctx, log := tracing.StartSpanWithName(ctx, "LoadFromViper", attribute.String("porter.PORTER_HOME", home))
+		_, log := tracing.StartSpanWithName(ctx, "LoadFromViper", attribute.String("porter.PORTER_HOME", home))
 		defer log.EndSpan()
 
 		v := viper.New()

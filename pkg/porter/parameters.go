@@ -397,6 +397,7 @@ func (p *Porter) loadParameterSets(ctx context.Context, bun cnab.ExtendedBundle,
 	return resolvedParameters, nil
 }
 
+//lint:ignore U1000 Ignore unused function
 func (p *Porter) loadParameterFromFile(path string) (storage.ParameterSet, error) {
 	var cs storage.ParameterSet
 	err := encoding.UnmarshalFile(p.FileSystem, path, &cs)

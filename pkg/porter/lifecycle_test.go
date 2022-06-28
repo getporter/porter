@@ -14,8 +14,11 @@ import (
 )
 
 var (
-	kahn1dot0Hash  = "887e7e65e39277f8744bd00278760b06"
-	kahn1dot01     = cnab.MustParseOCIReference("deislabs/kubekahn:1.0")
+	//lint:ignore U1000 ignore unused variables
+	kahn1dot0Hash = "887e7e65e39277f8744bd00278760b06"
+	//lint:ignore U1000 ignore unused variables
+	kahn1dot01 = cnab.MustParseOCIReference("deislabs/kubekahn:1.0")
+	//lint:ignore U1000 ignore unused variables
 	kahnlatestHash = "fd4bbe38665531d10bb653140842a370"
 	kahnlatest     = cnab.MustParseOCIReference("deislabs/kubekahn:latest")
 )

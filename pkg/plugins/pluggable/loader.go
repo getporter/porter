@@ -88,7 +88,7 @@ func (l *PluginLoader) Load(ctx context.Context, pluginType PluginTypeConfig) (*
 
 // selectPlugin picks the plugin to use and loads its configuration.
 func (l *PluginLoader) selectPlugin(ctx context.Context, cfg PluginTypeConfig) error {
-	ctx, span := tracing.StartSpan(ctx)
+	_, span := tracing.StartSpan(ctx)
 	defer span.EndSpan()
 
 	l.selectedPluginKey = nil

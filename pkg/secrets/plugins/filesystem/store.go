@@ -48,7 +48,7 @@ func (s *Store) Connect(ctx context.Context) error {
 		return nil
 	}
 
-	ctx, log := tracing.StartSpan(ctx)
+	_, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
 
 	if _, err := s.SetSecretDir(); err != nil {

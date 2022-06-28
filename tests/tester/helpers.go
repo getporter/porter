@@ -15,6 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+//lint:ignore U1000 ignore unused var
 var testBundleBuilt = false
 
 // PrepareTestBundle ensures that the mybuns test bundle has been built.
