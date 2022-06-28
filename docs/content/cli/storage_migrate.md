@@ -11,7 +11,7 @@ Migrate active storage account
 
 Migrate the data in the active storage account to the schema used by this version of Porter.
 
-Always back up Porter's data before performing a migration. Instructions for backing up are at https://porter.sh/storage-migrate.
+Always back up Porter's data before performing a migration. Instructions for backing up are at https://getporter.org/storage-migrate.
 
 ```
 porter storage migrate [flags]
@@ -28,7 +28,7 @@ porter storage migrate [flags]
 ```
       --debug                  Enable debug logging
       --debug-plugins          Enable plugin debug logging
-      --experimental strings   Comma separated list of experimental features to enable. See https://porter.sh/configuration/#experimental-feature-flags for available feature flags.
+      --experimental strings   Comma separated list of experimental features to enable. See https://getporter.org/configuration/#experimental-feature-flags for available feature flags.
 ```
 
 ### SEE ALSO

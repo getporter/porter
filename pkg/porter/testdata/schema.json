@@ -1,5 +1,5 @@
 {
-  "$id": "https://porter.sh/schema/v1/manifest.schema.json",
+  "$id": "https://getporter.org/schema/v1/manifest.schema.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": {
     "items": {
@@ -172,7 +172,7 @@
     "output": {
       "allOf": [
         {
-          "$ref": "https://porter.sh/schema/json-schema.json"
+          "$ref": "https://getporter.org/schema/json-schema.json"
         },
         {
           "properties": {
@@ -207,7 +207,7 @@
     "parameter": {
       "allOf": [
         {
-          "$ref": "https://porter.sh/schema/json-schema.json"
+          "$ref": "https://getporter.org/schema/json-schema.json"
         },
         {
           "properties": {

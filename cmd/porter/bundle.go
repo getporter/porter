@@ -174,7 +174,7 @@ The docker driver runs the bundle container using the local Docker host. To use 
 
 	f := cmd.Flags()
 	f.BoolVar(&opts.AllowDockerHostAccess, "allow-docker-host-access", false,
-		"Controls if the bundle should have access to the host's Docker daemon with elevated privileges. See https://porter.sh/configuration/#allow-docker-host-access for the full implications of this flag.")
+		"Controls if the bundle should have access to the host's Docker daemon with elevated privileges. See https://getporter.org/configuration/#allow-docker-host-access for the full implications of this flag.")
 	f.StringVarP(&opts.File, "file", "f", "",
 		"Path to the porter manifest file. Defaults to the bundle in the current directory.")
 	f.StringVar(&opts.CNABFile, "cnab-file", "",
@@ -237,7 +237,7 @@ The docker driver runs the bundle container using the local Docker host. To use 
 
 	f := cmd.Flags()
 	f.BoolVar(&opts.AllowDockerHostAccess, "allow-docker-host-access", false,
-		"Controls if the bundle should have access to the host's Docker daemon with elevated privileges. See https://porter.sh/configuration/#allow-docker-host-access for the full implications of this flag.")
+		"Controls if the bundle should have access to the host's Docker daemon with elevated privileges. See https://getporter.org/configuration/#allow-docker-host-access for the full implications of this flag.")
 	f.StringVarP(&opts.File, "file", "f", "",
 		"Path to the porter manifest file. Defaults to the bundle in the current directory.")
 	f.StringVar(&opts.CNABFile, "cnab-file", "",
@@ -300,7 +300,7 @@ The docker driver runs the bundle container using the local Docker host. To use 
 
 	f := cmd.Flags()
 	f.BoolVar(&opts.AllowDockerHostAccess, "allow-docker-host-access", false,
-		"Controls if the bundle should have access to the host's Docker daemon with elevated privileges. See https://porter.sh/configuration/#allow-docker-host-access for the full implications of this flag.")
+		"Controls if the bundle should have access to the host's Docker daemon with elevated privileges. See https://getporter.org/configuration/#allow-docker-host-access for the full implications of this flag.")
 	f.StringVar(&opts.Action, "action", "",
 		"Custom action name to invoke.")
 	f.StringVarP(&opts.File, "file", "f", "",
@@ -365,7 +365,7 @@ The docker driver runs the bundle container using the local Docker host. To use 
 
 	f := cmd.Flags()
 	f.BoolVar(&opts.AllowDockerHostAccess, "allow-docker-host-access", false,
-		"Controls if the bundle should have access to the host's Docker daemon with elevated privileges. See https://porter.sh/configuration/#allow-docker-host-access for the full implications of this flag.")
+		"Controls if the bundle should have access to the host's Docker daemon with elevated privileges. See https://getporter.org/configuration/#allow-docker-host-access for the full implications of this flag.")
 	f.StringVarP(&opts.File, "file", "f", "",
 		"Path to the porter manifest file. Defaults to the bundle in the current directory. Optional unless a newer version of the bundle should be used to uninstall the bundle.")
 	f.StringVar(&opts.CNABFile, "cnab-file", "",

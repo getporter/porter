@@ -28,7 +28,7 @@ func buildStorageMigrateCommand(p *porter.Porter) *cobra.Command {
 		Short: "Migrate active storage account",
 		Long: `Migrate the data in the active storage account to the schema used by this version of Porter.
 
-Always back up Porter's data before performing a migration. Instructions for backing up are at https://porter.sh/storage-migrate.`,
+Always back up Porter's data before performing a migration. Instructions for backing up are at https://getporter.org/storage-migrate.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return p.MigrateStorage(cmd.Context())
 		},

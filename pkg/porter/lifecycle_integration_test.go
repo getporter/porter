@@ -108,7 +108,7 @@ func buildExampleBundle() bundle.Bundle {
 		Definitions: map[string]*definition.Schema{
 			"porter-debug-parameter": {
 				Comment:     "porter-internal",
-				ID:          "https://porter.sh/generated-bundle/#porter-debug",
+				ID:          "https://getporter.org/generated-bundle/#porter-debug",
 				Default:     false,
 				Description: "Print debug information from Porter when executing the bundle",
 				Type:        "boolean",

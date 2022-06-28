@@ -6,7 +6,7 @@ This is an empty bundle that porter has created to get you started!
 
 ## porter.yaml
 
-This is the porter manifest. See https://porter.sh/author-bundles/ for 
+This is the porter manifest. See https://getporter.org/author-bundles/ for 
 details on every field and how to configure your bundle. This is a required
 file.
 

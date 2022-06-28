@@ -310,7 +310,7 @@ func (c *ManifestConverter) buildDefaultPorterParameters() []manifest.ParameterD
 				EnvironmentVariable: "PORTER_DEBUG",
 			},
 			Schema: definition.Schema{
-				ID:          "https://porter.sh/generated-bundle/#porter-debug",
+				ID:          "https://getporter.org/generated-bundle/#porter-debug",
 				Description: "Print debug information from Porter when executing the bundle",
 				Type:        "boolean",
 				Default:     false,
@@ -324,7 +324,7 @@ func (c *ManifestConverter) buildDefaultPorterParameters() []manifest.ParameterD
 				Path: "/porter/state.tgz",
 			},
 			Schema: definition.Schema{
-				ID:              "https://porter.sh/generated-bundle/#porter-state",
+				ID:              "https://getporter.org/generated-bundle/#porter-state",
 				Description:     "Supports persisting state for bundles. Porter internal parameter that should not be set manually.",
 				Type:            "string",
 				ContentEncoding: "base64",
@@ -341,7 +341,7 @@ func (c *ManifestConverter) buildDefaultPorterOutputs() []manifest.OutputDefinit
 			IsState: true,
 			Path:    "/cnab/app/outputs/porter-state.tgz",
 			Schema: definition.Schema{
-				ID:              "https://porter.sh/generated-bundle/#porter-state",
+				ID:              "https://getporter.org/generated-bundle/#porter-state",
 				Description:     "Supports persisting state for bundles. Porter internal parameter that should not be set manually.",
 				Type:            "string",
 				ContentEncoding: "base64",
@@ -504,7 +504,7 @@ func (c *ManifestConverter) generateOutputWiringParameter(b cnab.ExtendedBundle,
 	outputDefName := b.Outputs[outputName].Definition
 	outputDef := b.Definitions[outputDefName]
 	wiringDef := *outputDef
-	wiringDef.ID = "https://porter.sh/generated-bundle/#porter-parameter-source-definition"
+	wiringDef.ID = "https://getporter.org/generated-bundle/#porter-parameter-source-definition"
 	wiringDef.Comment = cnab.PorterInternal
 
 	return wiringName, wiringParam, wiringDef
@@ -519,7 +519,7 @@ func (c *ManifestConverter) generateDependencyOutputWiringParameter(reference ma
 	wiringParam := c.generateWiringParameter(wiringName, paramDesc)
 
 	wiringDef := definition.Schema{
-		ID:      "https://porter.sh/generated-bundle/#porter-parameter-source-definition",
+		ID:      "https://getporter.org/generated-bundle/#porter-parameter-source-definition",
 		Comment: cnab.PorterInternal,
 		// any type, the dependency's bundle definition is not available at buildtime
 	}

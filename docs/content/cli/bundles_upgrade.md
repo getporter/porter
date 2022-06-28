@@ -42,7 +42,7 @@ porter bundles upgrade [INSTALLATION] [flags]
 ### Options
 
 ```
-      --allow-docker-host-access    Controls if the bundle should have access to the host's Docker daemon with elevated privileges. See https://porter.sh/configuration/#allow-docker-host-access for the full implications of this flag.
+      --allow-docker-host-access    Controls if the bundle should have access to the host's Docker daemon with elevated privileges. See https://getporter.org/configuration/#allow-docker-host-access for the full implications of this flag.
       --cnab-file string            Path to the CNAB bundle.json file.
   -c, --cred stringArray            Credential to use when installing the bundle. It should be a named set of credentials and may be specified multiple times.
   -d, --driver string               Specify a driver to use. Allowed values: docker, debug (default "docker")
@@ -63,7 +63,7 @@ porter bundles upgrade [INSTALLATION] [flags]
 ```
       --debug                  Enable debug logging
       --debug-plugins          Enable plugin debug logging
-      --experimental strings   Comma separated list of experimental features to enable. See https://porter.sh/configuration/#experimental-feature-flags for available feature flags.
+      --experimental strings   Comma separated list of experimental features to enable. See https://getporter.org/configuration/#experimental-feature-flags for available feature flags.
 ```
 
 ### SEE ALSO

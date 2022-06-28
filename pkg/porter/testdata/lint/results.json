@@ -10,6 +10,6 @@
     "Code": "exec-100",
     "Title": "bash -c argument missing wrapping quotes",
     "Message": "The bash -c flag argument must be wrapped in quotes, for example\nexec:\n  description: Say Hello\n  command: bash\n  flags:\n    c: '\"echo Hello World\"'\n",
-    "URL": "https://porter.sh/best-practices/exec-mixin/#quoting-escaping-bash-and-yaml"
+    "URL": "https://getporter.org/best-practices/exec-mixin/#quoting-escaping-bash-and-yaml"
   }
 ]
