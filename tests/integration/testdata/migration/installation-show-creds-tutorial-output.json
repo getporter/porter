@@ -1,6 +1,6 @@
 {
   "schemaType": "Installation",
-  "schemaVersion": "1.0.1",
+  "schemaVersion": "1.0.2",
   "id": "01G4XDG6XY7940XN5A57SGHPN0",
   "name": "creds-tutorial",
   "namespace": "migrated",

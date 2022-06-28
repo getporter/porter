@@ -1,6 +1,6 @@
 {
   "schemaType": "Installation",
-  "schemaVersion": "1.0.1",
+  "schemaVersion": "1.0.2",
   "id": "01G4XDHVAQ6B7ZPMC3WM9S5B8C",
   "name": "hello-llama",
   "namespace": "migrated",
