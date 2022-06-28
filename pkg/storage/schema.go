@@ -9,7 +9,7 @@ var _ Document = Schema{}
 const (
 	// InstallationSchemaVersion represents the version associated with the schema
 	// for all installation documents: installations, runs, results and outputs.
-	InstallationSchemaVersion = schema.Version("1.0.1")
+	InstallationSchemaVersion = schema.Version("1.0.2")
 
 	// CredentialSetSchemaVersion represents the version associated with the schema
 	// credential set documents.

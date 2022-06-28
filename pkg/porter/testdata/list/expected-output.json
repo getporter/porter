@@ -1,7 +1,7 @@
 [
   {
     "schemaType": "Installation",
-    "schemaVersion": "1.0.1",
+    "schemaVersion": "1.0.2",
     "id": "01FZVC5AVP8Z7A78CSCP1EJ604",
     "name": "mywordpress",
     "namespace": "dev",
