@@ -118,6 +118,7 @@ func (c *TestContext) UseFilesystem() (testDir string, homeDir string) {
 	testDir = c.GetTestDefinitionDirectory()
 	c.FileSystem = aferox.NewAferox(testDir, afero.NewOsFs())
 	c.defaultNewCommand()
+	c.DisableUmask()
 
 	return testDir, homeDir
 }

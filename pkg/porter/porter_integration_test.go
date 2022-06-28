@@ -34,7 +34,29 @@ func TestPorter_FixPermissions(t *testing.T) {
 			err := p.FixPermissions()
 			require.NoError(t, err)
 
+			// Check that all files in the directory have the correct permissions
 			tests.AssertDirectoryPermissionsEqual(t, dir, pkg.FileModeWritable)
 		})
 	}
+}
+
+func TestPorter_FixPermissions_NoConfigFile(t *testing.T) {
+	p := NewTestPorter(t)
+	p.SetupIntegrationTest()
+	defer p.Close()
+
+	// Remember the original permissions on the current working directory
+	wd := p.Getwd()
+	wdInfo, err := p.FileSystem.Stat(wd)
+	require.NoError(t, err, "stat on the current working directory failed")
+	wantMode := wdInfo.Mode()
+
+	err = p.FixPermissions()
+	require.NoError(t, err)
+
+	// Check that the current working directory didn't have its permissions changed
+	wdInfo, err = p.FileSystem.Stat(wd)
+	require.NoError(t, err, "stat on the current working directory failed")
+	gotMode := wdInfo.Mode()
+	tests.AssertFilePermissionsEqual(t, wd, wantMode, gotMode)
 }
