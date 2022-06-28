@@ -11,16 +11,16 @@ import (
 var _ Document = Output{}
 
 type Output struct {
-	SchemaVersion schema.Version `json:"schemaVersion" yaml:"schemaVersion" toml:"schemaVersion"`
-	Name          string         `json:"name" yaml:"name" toml:"name"`
-	Namespace     string         `json:"namespace" yaml:"namespace" toml:"namespace"`
-	Installation  string         `json:"installation" yaml:"installation" toml:"installation"`
-	RunID         string         `json:"runId" yaml:"runId" toml:"runId"`
-	ResultID      string         `json:"resultId" yaml:"resultId" toml:"resultId"`
+	SchemaVersion schema.Version `json:"schemaVersion"`
+	Name          string         `json:"name"`
+	Namespace     string         `json:"namespace"`
+	Installation  string         `json:"installation"`
+	RunID         string         `json:"runId"`
+	ResultID      string         `json:"resultId"`
 
 	// Key holds the secret key to retrieve a sensitive output value
-	Key   string `json:"key" yaml:"key" toml:"key"`
-	Value []byte `json:"value" yaml:"value" toml:"value"`
+	Key   string `json:"key"`
+	Value []byte `json:"value"`
 }
 
 func (o Output) DefaultDocumentFilter() map[string]interface{} {
