@@ -369,6 +369,7 @@ func (m *Manager) migrateParameters(w io.Writer) error {
 }
 
 // getSchemaVersion attempts to read the schemaVersion stamped on a document.
+//lint:ignore U1000 ignore unused function warning
 func getSchemaVersion(data []byte) string {
 	var peek struct {
 		SchemaVersion schema.Version `json:"schemaVersion"`

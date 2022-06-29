@@ -145,7 +145,6 @@ func (s *Store) EnsureIndex(ctx context.Context, opts plugins.EnsureIndexOptions
 			Options: options.Index(),
 		}
 		model.Options.SetUnique(index.Unique)
-		model.Options.SetBackground(true)
 
 		c, ok := indices[index.Collection]
 		if !ok {

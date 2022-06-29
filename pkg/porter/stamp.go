@@ -82,7 +82,7 @@ func (p *Porter) IsBundleUpToDate(ctx context.Context, opts bundleFileOptions) (
 
 			if !isImageCached {
 				if p.Debug {
-					fmt.Fprintln(p.Err, errors.New(fmt.Sprintf("Invocation image %s doesn't exist in the local image cache, will need to build first", invocationImage.Image)))
+					fmt.Fprintln(p.Err, fmt.Errorf("Invocation image %s doesn't exist in the local image cache, will need to build first", invocationImage.Image))
 				}
 				return false, nil
 			}
