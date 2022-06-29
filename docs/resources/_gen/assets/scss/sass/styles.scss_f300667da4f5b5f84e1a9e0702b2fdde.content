@@ -7818,6 +7818,12 @@ body {
         max-width: 120px; }
       .home #helm .billboard #underline1 {
         position: relative; }
+        @media only screen and (max-width: 60em) {
+          .home #helm .billboard #underline1 {
+            background-image: linear-gradient(to right, #f6b6aa 0%, #f6b6aa 100%) !important;
+            background-repeat: no-repeat !important;
+            background-size: 100% 0.3em !important;
+            background-position: 0px 85% !important; } }
       .home #helm .billboard #underline1::before {
         content: "";
         position: absolute;
@@ -7829,15 +7835,7 @@ body {
         background: rgba(238, 111, 87, 0.5); }
         @media only screen and (max-width: 60em) {
           .home #helm .billboard #underline1::before {
-            content: "";
-            position: absolute;
-            right: -32px;
-            left: auto;
-            bottom: 10px;
-            width: 200px;
-            height: 14px;
-            transform: skew(-12deg) translateX(-50%);
-            background: rgba(238, 111, 87, 0.5); } }
+            content: none; } }
       .home #helm .billboard h1 {
         font-family: 'CBlack';
         font-weight: 900;
