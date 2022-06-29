@@ -14,7 +14,20 @@ pool:
 variables:
   GOVERSION: "1.18"
 
-jobs:
+stages:
+- stage: Setup
+  jobs:
+    - job: pr_type
+      displayName: "Determine PR Type"
+      steps:
+        - bash: ./build/doc-only-build.sh
+          name: BUILD
+          displayName: "Is Doc Only?"
+
+- stage: Validate
+  dependsOn: Setup
+  condition: eq(dependencies.Setup.outputs['pr_type.BUILD.DOCS_ONLY'], 'false')
+  jobs:
   - job: integration_test
     displayName: "Integration Test"
     steps:
