@@ -104,4 +104,4 @@ assisted as always with emoji and markdown.
 
 <p align=center><a href="https://carolynvanslyck.com/blog/2019/04/porter">Free Glue Code - Porter</a></p>
 
-[CNCF Porter Community]: https://porter.sh/videos
+[CNCF Porter Community]: /videos

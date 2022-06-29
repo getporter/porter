@@ -11,7 +11,7 @@ class: center, middle
 # CNAB Unpacked
 
 <h3 style="margin-top: 3em">
-  <a href="https://porter.sh/cnab-unpacked/">porter.sh/cnab-unpacked</a>
+  <a href="/cnab-unpacked/">getporter.org/cnab-unpacked</a>
 </h3>
 
 ---
@@ -427,15 +427,15 @@ The friendly cloud installer that bootstraps your bundles using tools and assets
 
 * [cnab.io][cnab]
 * [cnab.io/community-meetings/#communications][cnab-slack] - #cnab CNCF Slack
-* [porter.sh][porter]
-* [porter.sh/contribute][contribute] - New Contributor Guide
-* [porter.sh/community][porter-slack] - #porter CNCF Slack and Office Hours
+* [getporter.org][porter]
+* [getporter.org/contribute][contribute] - New Contributor Guide
+* [getporter.org/community][porter-slack] - #porter CNCF Slack and Office Hours
 
 ???
 * Office hours this Tuesday at 11am Central Time
 
 [cnab]: https://cnab.io
 [cnab-slack]: https://cnab.io/community-meetings/#communications
-[porter]: https://porter.sh
-[contribute]: https://porter.sh/contribute
-[porter-slack]: https://porter.sh/community
+[porter]: /
+[contribute]: /contribute
+[porter-slack]: /community

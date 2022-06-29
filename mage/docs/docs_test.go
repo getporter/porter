@@ -83,5 +83,5 @@ func Test_setPullRequestBaseURL(t *testing.T) {
 func TestDocsBranchPreview(t *testing.T) {
 	os.Setenv("BRANCH", "release/v1")
 	setBranchBaseURL()
-	assert.Equal(t, "https://release-v1.porter.sh/", os.Getenv("BASEURL"))
+	assert.Equal(t, "https://release-v1.getporter.org/", os.Getenv("BASEURL"))
 }

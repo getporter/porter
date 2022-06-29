@@ -7,7 +7,7 @@
 Package your application, client tools, configuration, and deployment logic into an installer that you can distribute and run with a single command.
 Based on the Cloud Native Application Bundle Specification, [CNAB](https://deislabs.io/cnab), Porter provides a declarative authoring experience that lets you focus on what you know best: your application.
 
-<p align="center">Learn all about Porter at <a href="https://getporter.org">porter.sh</a></p>
+<p align="center">Learn all about Porter at <a href="https://getporter.org">getporter.org</a></p>
 
 # <a name="mixins"></a>Porter Mixins
 

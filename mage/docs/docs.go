@@ -87,7 +87,7 @@ func setBranchBaseURL() {
 	// Change the branch to a URL safe slug, e.g. release/v1 -> release-v1
 	escapedBranch := strings.ReplaceAll(os.Getenv("BRANCH"), "/", "-")
 	// Append a trailing / to the URL for use in Hugo
-	baseURL := fmt.Sprintf("https://%s.porter.sh/", escapedBranch)
+	baseURL := fmt.Sprintf("https://%s.getporter.org/", escapedBranch)
 	os.Setenv("BASEURL", baseURL)
 }
 
