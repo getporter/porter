@@ -48,6 +48,7 @@ require (
 	github.com/mitchellh/mapstructure v1.4.2
 	github.com/mmcdole/gofeed v1.0.0-beta2
 	github.com/moby/buildkit v0.10.0
+	github.com/moby/term v0.0.0-20210619224110-3f7ff695adc6
 	github.com/olekukonko/tablewriter v0.0.4
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/osteele/liquid v1.3.0
@@ -161,7 +162,6 @@ require (
 	github.com/moby/sys/mount v0.3.0 // indirect
 	github.com/moby/sys/mountinfo v0.6.0 // indirect
 	github.com/moby/sys/signal v0.6.0 // indirect
-	github.com/moby/term v0.0.0-20210619224110-3f7ff695adc6 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/morikuni/aec v1.0.0 // indirect
