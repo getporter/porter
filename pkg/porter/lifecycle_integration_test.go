@@ -15,6 +15,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+var (
+	kahnlatestHash = "fd4bbe38665531d10bb653140842a370"
+)
+
 func TestResolveBundleReference(t *testing.T) {
 	t.Parallel()
 	t.Run("current bundle source", func(t *testing.T) {

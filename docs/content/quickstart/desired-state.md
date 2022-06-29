@@ -109,7 +109,7 @@ Define an installation that uses these parameter and credential sets to install 
 Create a file named installation.yaml, paste the following definition into the file, and then save it.
 
 ```yaml
-schemaVersion: 1.0.0
+schemaVersion: 1.0.2
 name: desired-state
 bundle:
   repository: getporter/credentials-tutorial

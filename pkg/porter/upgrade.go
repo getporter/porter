@@ -35,6 +35,7 @@ func (o UpgradeOptions) Validate(ctx context.Context, args []string, p *Porter) 
 		if err != nil {
 			return errors.New("invalid bundle version --version. Must be a semantic version, for example 1.2.3")
 		}
+		//lint:ignore SA4005 the bundle options are validated below, so ignore ineffective assignment warning
 		o.Version = v.String()
 	}
 

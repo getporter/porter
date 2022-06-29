@@ -216,6 +216,7 @@ func (m *RuntimeManifest) ApplyStepOutputs(assignments map[string]string) error 
 
 type StepOutput struct {
 	// The final value of the output returned by the mixin after executing
+	//lint:ignore U1000 ignore unused warning
 	value string
 
 	Name string                 `yaml:"name"`

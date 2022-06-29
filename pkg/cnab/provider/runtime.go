@@ -13,7 +13,8 @@ var _ CNABProvider = &Runtime{}
 
 type Runtime struct {
 	*config.Config
-	credentials   storage.CredentialSetProvider
+	credentials storage.CredentialSetProvider
+	//lint:ignore U1000 unused at the moment, will be used in the future
 	parameters    storage.ParameterSetProvider
 	secrets       secrets.Store
 	installations storage.InstallationProvider

@@ -64,49 +64,41 @@ $light1: lighten($light2, 2.5%);
 // Fonts
 //
 
-$base: "Helvetica Neue", Helvetica, Arial, sans-serif;
-$mono: "Lucida Console", "Courier New", monaco, monospace;
-
 @font-face {
-  font-family: 'klinic-reg';
-  src: url('/fonts/klinicslabbook-webfont.eot');
-  src: url('/fonts/klinicslabbook-webfont.eot?#iefix') format('embedded-opentype'),
-   url('/fonts/klinicslabbook-webfont.woff2') format('woff2'),
-   url('/fonts/klinicslabbook-webfont.woff') format('woff'),
-   url('/fonts/klinicslabbook-webfont.ttf') format('truetype'),
-   url('/fonts/klinicslabbook-webfont.svg#klinic_slabbook') format('svg');
-  font-weight: 400;
-  font-style: normal;
+  font-family: 'CBlack';
+  src: url("/fonts/CBlack.otf") format("opentype");
 }
 
 @font-face {
-  font-family: 'klinic-bold';
-  src: url('/fonts/klinicslabmedium-webfont.eot');
-  src: url('/fonts/klinicslabmedium-webfont.eot?#iefix') format('embedded-opentype'),
-   url('/fonts/klinicslabmedium-webfont.woff2') format('woff2'),
-   url('/fonts/klinicslabmedium-webfont.woff') format('woff'),
-   url('/fonts/klinicslabmedium-webfont.ttf') format('truetype'),
-   url('/fonts/klinicslabmedium-webfont.svg#klinic_slabmedium') format('svg');
-  font-weight: 500;
-  font-style: normal;
+  font-family: 'CLight';
+  src: url("/fonts/CLight.otf") format("opentype");
 }
 
-@mixin klinicBold {
-  font-family: "klinic-bold", "klinic bold", $base;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  -webkit-font-smoothing: antialiased;
+@font-face {
+  font-family: 'CMedium';
+  src: url("/fonts/CMedium.otf") format("opentype");
 }
 
-@mixin klinicReg {
-  font-family: "klinic-reg", "klinic", $base;
-  font-weight: 400;
-  letter-spacing: 0.0075em;
-  -webkit-font-smoothing: antialiased;
+@font-face {
+  font-family: 'CBold';
+  src: url("/fonts/CBold.otf") format("opentype");
 }
-@mixin helvetica {
-  font-family: $base;
-  letter-spacing: 0;
+
+@mixin CBlack {
+  font-family: 'CBlack';
+  font-weight: 900;
+}
+
+@mixin CBold {
+  font-family: 'CBold';
+}
+
+@mixin CLight {
+  font-family: 'CLight';
+}
+
+@mixin CMedium {
+  font-family: 'CMedium';
 }
 
 @mixin upperCase {
@@ -253,8 +245,8 @@ $mono: "Lucida Console", "Courier New", monaco, monospace;
    &::after {
      display: inline-block;
      content: "";
-     background: $color;
-     height: 3px;
+     background: #cc0046;
+     height: 5px;
      position: absolute;
      bottom: 0;
      left: 50%;
