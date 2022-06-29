@@ -18,6 +18,7 @@ import (
 	"get.porter.sh/porter/pkg/tracing"
 	"github.com/Masterminds/semver/v3"
 	"github.com/opencontainers/go-digest"
+	"golang.org/x/sync/errgroup"
 )
 
 type BuildOptions struct {
@@ -188,19 +189,33 @@ func (p *Porter) preLint(ctx context.Context, file string) error {
 }
 
 func (p *Porter) getUsedMixins(ctx context.Context, m *manifest.Manifest) ([]mixin.Metadata, error) {
-	installedMixins, err := p.ListMixins(ctx)
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
 
-	if err != nil {
-		return nil, fmt.Errorf("error while listing mixins: %w", err)
+	usedMixins := make([]mixin.Metadata, len(m.Mixins))
+
+	g := new(errgroup.Group)
+	results := make(chan *mixin.Metadata, len(m.Mixins))
+	for _, m := range m.Mixins {
+		m := m
+		g.Go(func() error {
+			result, err := p.Mixins.GetMetadata(ctx, m.Name)
+			if err != nil {
+				return err
+			}
+
+			results <- result.(*mixin.Metadata)
+			return nil
+		})
 	}
 
-	var usedMixins []mixin.Metadata
-	for _, installedMixin := range installedMixins {
-		for _, m := range m.Mixins {
-			if installedMixin.Name == m.Name {
-				usedMixins = append(usedMixins, installedMixin)
-			}
-		}
+	if err := g.Wait(); err != nil {
+		return nil, err
+	}
+
+	for i := 0; i < len(usedMixins); i++ {
+		result := <-results
+		usedMixins[i] = *result
 	}
 
 	return usedMixins, nil
