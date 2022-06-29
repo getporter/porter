@@ -351,6 +351,15 @@ nav.home-nav {
     .columns {
       position: relative;
       padding: 30px;
+
+      @include mobile {
+        padding: 10px;
+
+        figcaption + img {
+          padding: 10px;
+          border-radius: 2em;
+        }
+      }
     }
 
     img {
@@ -400,6 +409,12 @@ nav.home-nav {
       height: 10px;
       transform: skew(-12deg) translateX(-50%);
       background: rgba(57,190,197,0.5);
+    }
+  }
+
+  .helm-features + .container{
+    @include mobile{
+      padding-bottom: 75px;
     }
   }
 
@@ -656,6 +671,11 @@ nav.home-nav {
     color: $blue2;
     text-decoration:none !important ;
   }
+
+  @include mobile {
+    padding: 20px 20px 30px !important;
+    font-size: 1rem;
+  }
 }
 
 @media only screen and (min-device-width: $mobile-maximum-width + 1) {
@@ -722,7 +742,8 @@ nav.home-nav {
     img,
     p {
       float: none;
-      margin: 1.5rem auto;
+      padding: 0;
+      margin: 1.5rem 0 !important;
     }
 
     img {

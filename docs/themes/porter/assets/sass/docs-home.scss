@@ -65,24 +65,32 @@
 
       #underline1 {
         position: relative;
+
+        // @include mobile {
+        //   background-image: linear-gradient(to right, #f6b6aa 0%, #f6b6aa 100%) !important;
+        //   background-repeat: no-repeat !important;
+        //   background-size: 100% 0.3em !important;
+        //   background-position: 0px 85% !important;
+        // }
       }
 
       #underline1::before {
         content: "";
         position: absolute;
-        left: 52%;
+        left: 115px;
         bottom: 10px;
         width: 235px;
         height: 14px;
         transform: skew(-12deg) translateX(-50%);
         background: rgba(238,111,87,0.5);
 
-        @media screen and (max-width: 568px) {
+        @include mobile {
           content: "";
           position: absolute;
-          left: 48%;
+          right: -32px;
+          left: auto;
           bottom: 10px;
-          width: 235px;
+          width: 200px;
           height: 14px;
           transform: skew(-12deg) translateX(-50%);
           background: rgba(238,111,87,0.5);

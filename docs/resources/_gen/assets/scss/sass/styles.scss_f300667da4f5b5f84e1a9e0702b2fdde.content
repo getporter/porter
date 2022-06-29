@@ -6606,6 +6606,12 @@ nav.home-nav {
     #helm.home .helm-features .columns {
       position: relative;
       padding: 30px; }
+      @media only screen and (max-width: 60em) {
+        #helm.home .helm-features .columns {
+          padding: 10px; }
+          #helm.home .helm-features .columns figcaption + img {
+            padding: 10px;
+            border-radius: 2em; } }
     #helm.home .helm-features img {
       top: 0;
       left: 50%;
@@ -6639,6 +6645,9 @@ nav.home-nav {
       height: 10px;
       transform: skew(-12deg) translateX(-50%);
       background: rgba(57, 190, 197, 0.5); }
+  @media only screen and (max-width: 60em) {
+    #helm.home .helm-features + .container {
+      padding-bottom: 75px; } }
   #helm.home .get-helm {
     padding-bottom: 50px;
     border: 5px solid wheat;
@@ -6817,7 +6826,10 @@ nav.home-nav {
   .copyright a, .copyright a:focus, .copyright a:visited {
     color: #2BA0D3;
     text-decoration: none !important; }
-
+  @media only screen and (max-width: 60em) {
+    .copyright {
+      padding: 20px 20px 30px !important;
+      font-size: 1rem; } }
 @media only screen and (min-device-width: 415px) {
   @keyframes animatedBoat {
     0% {
@@ -6986,7 +6998,8 @@ nav.home-nav {
     .cncf img,
     .cncf p {
       float: none;
-      margin: 1.5rem auto; }
+      padding: 0;
+      margin: 1.5rem 0 !important; }
     .cncf img {
       max-width: 51%; } }
 
@@ -7808,19 +7821,20 @@ body {
       .home #helm .billboard #underline1::before {
         content: "";
         position: absolute;
-        left: 52%;
+        left: 115px;
         bottom: 10px;
         width: 235px;
         height: 14px;
         transform: skew(-12deg) translateX(-50%);
         background: rgba(238, 111, 87, 0.5); }
-        @media screen and (max-width: 568px) {
+        @media only screen and (max-width: 60em) {
           .home #helm .billboard #underline1::before {
             content: "";
             position: absolute;
-            left: 48%;
+            right: -32px;
+            left: auto;
             bottom: 10px;
-            width: 235px;
+            width: 200px;
             height: 14px;
             transform: skew(-12deg) translateX(-50%);
             background: rgba(238, 111, 87, 0.5); } }
