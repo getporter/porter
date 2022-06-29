@@ -6435,6 +6435,10 @@ nav.home-nav {
     #helm.home .billboard .txt-github {
       color: white;
       font-size: 1.5rem; }
+      @media only screen and (max-width: 60em) {
+        #helm.home .billboard .txt-github {
+          margin: 0 !important;
+          padding: 0 !important; } }
     #helm.home .billboard .btn-github {
       background: #d00052; }
     #helm.home .billboard h1 {
@@ -6492,6 +6496,9 @@ nav.home-nav {
     border: 5px solid #3bbdc4;
     box-shadow: none;
     border-radius: 20px; }
+    @media only screen and (max-width: 60em) {
+      #helm.home .card {
+        width: 63rem !important; } }
     #helm.home .card .card-img-top {
       color: #a5d6d0; }
     #helm.home .card:hover {
@@ -6975,7 +6982,7 @@ nav.home-nav {
   padding: 13.33333333px 0;
   width: 100%;
   position: relative; }
-  @media only screen and (max-width: 40em) {
+  @media only screen and (max-width: 60em) {
     #helm .panel {
       padding: 10px 0; } }
   #helm .panel.-blue {
@@ -7189,7 +7196,7 @@ nav.home-nav {
     padding: 0.5em 0;
     margin: 0;
     color: #787878; }
-  @media only screen and (max-width: 40em) {
+  @media only screen and (max-width: 60em) {
     #helm .content .breakout-cta-row p.left,
     #helm .content .breakout-cta-row button {
       float: none;
@@ -7210,13 +7217,13 @@ nav.home-nav {
 #helm .off-canvas-wrap.move-left {
   position: fixed; }
 
-@media only screen and (max-width: 40em) {
+@media only screen and (max-width: 60em) {
   #helm .navbar.top-bar {
     top: 0; } }
 
 #helm #tos {
   padding-top: 100px; }
-  @media only screen and (max-width: 40em) {
+  @media only screen and (max-width: 60em) {
     #helm #tos {
       padding: 80px 20px 20px 20px; } }
 .blog-layout .main {
@@ -7775,6 +7782,9 @@ body {
       padding: 165px 60px 100px 60px;
       position: relative;
       text-align: left; }
+      @media only screen and (max-width: 60em) {
+        .home #helm .billboard {
+          padding: 200px 23px 100px 20px; } }
       .home #helm .billboard .helm-logo {
         max-width: 120px; }
       .home #helm .billboard #underline1 {
@@ -7788,6 +7798,16 @@ body {
         height: 14px;
         transform: skew(-12deg) translateX(-50%);
         background: rgba(238, 111, 87, 0.5); }
+        @media screen and (max-width: 568px) {
+          .home #helm .billboard #underline1::before {
+            content: "";
+            position: absolute;
+            left: 48%;
+            bottom: 10px;
+            width: 235px;
+            height: 14px;
+            transform: skew(-12deg) translateX(-50%);
+            background: rgba(238, 111, 87, 0.5); } }
       .home #helm .billboard h1 {
         font-family: 'CBlack';
         font-weight: 900;
@@ -7797,12 +7817,22 @@ body {
         font-size: 3.57rem;
         position: relative;
         text-transform: none !important; }
+        @media only screen and (max-width: 60em) {
+          .home #helm .billboard h1 {
+            font-size: 11.755vw !important;
+            margin: 3rem 0 0 0 !important; } }
       .home #helm .billboard h2 {
         font-family: 'CMedium';
         color: #277A9F;
         font-size: 1.4rem;
         line-height: 1.3;
         margin-bottom: 30px; }
+        @media only screen and (max-width: 60em) {
+          .home #helm .billboard h2 {
+            font-size: 1.3rem !important;
+            line-height: 1.3 !important;
+            margin: 2rem 0 0 !important;
+            padding-bottom: 0rem !important; } }
       .home #helm .billboard .helm-logo {
         position: absolute;
         left: 5rem;

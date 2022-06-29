@@ -95,6 +95,11 @@ nav.home-nav {
     .txt-github {
       color: white;
       font-size: 1.5rem;
+
+      @include mobile {
+        margin: 0 !important;
+        padding: 0 !important;
+      }
     }
 
     .btn-github {
@@ -184,6 +189,10 @@ nav.home-nav {
     border: 5px solid #3bbdc4;
     box-shadow: none;
     border-radius: 20px;
+
+    @include mobile {
+      width: 63rem !important;
+    }
 
     .card-img-top {
       color: #a5d6d0;
