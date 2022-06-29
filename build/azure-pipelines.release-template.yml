@@ -59,8 +59,8 @@ stages:
               targetPath: $(System.DefaultWorkingDirectory)/bin
               archiveFilePatterns: "**"
               artifactName: "xbuild-bin"
-      - job: Vet
-        displayName: "Vet"
+      - job: VetLint
+        displayName: "Vet and Lint"
         pool:
           vmImage: ${{variables.vmImage}}
         steps:
@@ -72,17 +72,6 @@ stages:
             displayName: "Configure Agent"
           - bash: mage Vet
             displayName: "Vet"
-      - job: Lint
-        displayName: "Lint"
-        pool:
-          vmImage: ${{variables.vmImage}}
-        steps:
-          - task: GoTool@0
-            displayName: "Set Go Version"
-            inputs:
-              version: ${{parameters.goVersion}}
-          - script: go run mage.go ConfigureAgent
-            displayName: "Configure Agent"
           - bash: mage Lint
             displayName: "Lint"
       - job: unit_test
