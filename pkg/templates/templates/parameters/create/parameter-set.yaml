@@ -1,4 +1,4 @@
-# See the Parameter Set file format documentation at https://release-v1.porter.sh/reference/file-formats/#parameter-set
+# See the Parameter Set file format documentation at https://getporter.org/reference/file-formats/#parameter-set
 schemaType: ParameterSet
 schemaVersion: 1.0.1
 # Name of the parameter set.

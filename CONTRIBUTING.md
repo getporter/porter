@@ -589,8 +589,8 @@ When you realize that you may need to make a breaking change, discuss it with a 
 Here are some examples of breaking changes:
 
 * The schema of porter.yaml changed.
-* The schema of Porter's [file formats](https://release-v1.porter.sh/reference/file-formats) changed.
-* The schema of Porter's [config file](https://release-v1.porter.sh/configuration/#config-file) changed.
+* The schema of Porter's [file formats](https://getporter.org/reference/file-formats) changed.
+* The schema of Porter's [config file](https://getporter.org/configuration/#config-file) changed.
 * Flags or behavior of a CLI command changed, such as removing a flag or adding a validation that can result in a hard error, preventing the command from running.
 
 All of Porter's documents have a schemaVersion field and when the schema of the document is changed, the version number should be incremented as well in the default set on new documents, the supported schema version constant in the code, and in the documentation for that document.
