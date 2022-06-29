@@ -83,10 +83,10 @@ func TestParameterStore_CRUD(t *testing.T) {
 	require.NoError(t, err)
 	require.Empty(t, params, "List should return no entries")
 
-	pset, err = paramStore.GetParameterSet(ctx, "", myParamSet.Name)
+	_, err = paramStore.GetParameterSet(ctx, "", myParamSet.Name)
 	require.ErrorIs(t, err, ErrNotFound{})
 
-	pset, err = paramStore.GetParameterSet(ctx, "", myParamSet2.Name)
+	_, err = paramStore.GetParameterSet(ctx, "", myParamSet2.Name)
 	require.ErrorIs(t, err, ErrNotFound{})
 }
 

@@ -397,16 +397,6 @@ func (p *Porter) loadParameterSets(ctx context.Context, bun cnab.ExtendedBundle,
 	return resolvedParameters, nil
 }
 
-func (p *Porter) loadParameterFromFile(path string) (storage.ParameterSet, error) {
-	var cs storage.ParameterSet
-	err := encoding.UnmarshalFile(p.FileSystem, path, &cs)
-	if err != nil {
-		return cs, fmt.Errorf("error loading parameter set in %s: %w", path, err)
-	}
-
-	return cs, nil
-}
-
 type DisplayValue struct {
 	Name      string      `json:"name" yaml:"name"`
 	Type      string      `json:"type" yaml:"type"`

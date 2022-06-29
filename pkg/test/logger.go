@@ -9,6 +9,7 @@ type Logger struct {
 
 func (l Logger) Write(p []byte) (n int, err error) {
 	defer func() {
+		//lint:ignore SA9003 ignore empty branch
 		if err := recover(); err != nil {
 			// ignore logs written after the test is complete, don't panic
 		}
