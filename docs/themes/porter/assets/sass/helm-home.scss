@@ -473,6 +473,10 @@ nav.home-nav {
         padding: 1.5em 2.25em;
         border-radius: 1em;
 
+        @include mobile {
+          padding: 0;
+        }
+
         li {
           font-size: 1.5rem;
           list-style: none;

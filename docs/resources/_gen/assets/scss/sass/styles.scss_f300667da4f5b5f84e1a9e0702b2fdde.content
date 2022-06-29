@@ -6684,6 +6684,9 @@ nav.home-nav {
       background-color: white;
       padding: 1.5em 2.25em;
       border-radius: 1em; }
+      @media only screen and (max-width: 60em) {
+        #helm.home .helm-community .helm-community-links ul {
+          padding: 0; } }
       #helm.home .helm-community .helm-community-links ul li {
         font-size: 1.5rem;
         list-style: none;
