@@ -40,6 +40,14 @@
       position: fixed;
     }
 
+    .content{
+      .emoji-list {
+        @include mobile {
+          margin: 0 0 35px 0 !important;
+        }
+        }
+    }
+
     .billboard {
       background-color: white;
       background-size: 376px;

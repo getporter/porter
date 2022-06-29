@@ -237,6 +237,16 @@ nav.home-nav {
       padding-top: 1em;
     }
 
+
+  @include mobile{
+    h2 {
+      font-size:2rem !important;
+    }
+    p, .why-porter, .why-porter li {
+      font-size: 1.2rem !important;
+    }
+  }
+
     p, ul, li {
       color: white;
       font-size: 1.5rem;
@@ -325,6 +335,13 @@ nav.home-nav {
         font-size: 0.6em;
         margin-left: -5em;
       }
+
+      @include mobile {
+        font-size: 1.7rem;
+        img{
+          width: 65px ;
+        }
+    }
     }
 
     h3:not(:first-child) {
@@ -351,6 +368,10 @@ nav.home-nav {
 
       code {
         border: none;
+      }
+
+      @include mobile {
+        font-size: 1.2rem;
       }
     }
 

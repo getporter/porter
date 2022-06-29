@@ -6527,6 +6527,11 @@ nav.home-nav {
     font-size: 2.7rem;
     margin: 2rem 0;
     padding-top: 1em; }
+  @media only screen and (max-width: 60em) {
+    #helm.home .content h2 {
+      font-size: 2rem !important; }
+    #helm.home .content p, #helm.home .content .why-porter, #helm.home .content .why-porter li {
+      font-size: 1.2rem !important; } }
   #helm.home .content p, #helm.home .content ul, #helm.home .content li {
     color: white;
     font-size: 1.5rem;
@@ -6591,6 +6596,11 @@ nav.home-nav {
         left: 50%;
         font-size: 0.6em;
         margin-left: -5em; }
+      @media only screen and (max-width: 60em) {
+        #helm.home .helm-features h3 {
+          font-size: 1.7rem; }
+          #helm.home .helm-features h3 img {
+            width: 65px; } }
     #helm.home .helm-features h3:not(:first-child) {
       padding-top: 2em; }
     #helm.home .helm-features .columns {
@@ -6608,6 +6618,9 @@ nav.home-nav {
       padding: 0 5%; }
       #helm.home .helm-features p code {
         border: none; }
+      @media only screen and (max-width: 60em) {
+        #helm.home .helm-features p {
+          font-size: 1.2rem; } }
     #helm.home .helm-features .row {
       background-color: white; }
       #helm.home .helm-features .row:first-child {
@@ -7776,6 +7789,9 @@ body {
       width: 100%;
       bottom: 0;
       position: fixed; }
+    @media only screen and (max-width: 60em) {
+      .home #helm .content .emoji-list {
+        margin: 0 0 35px 0 !important; } }
     .home #helm .billboard {
       background-color: white;
       background-size: 376px;
