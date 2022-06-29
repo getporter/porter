@@ -52,7 +52,7 @@ This upgrades the data to the current storage schema, and does not change the da
 	flags.StringVar(&opts.OldStorageAccount, "old-account", "",
 		"Name of the storage account in the old Porter configuration file containing the data that should be migrated. If unspecified, the default storage account is used.")
 	flags.StringVarP(&opts.Namespace, "namespace", "n", "",
-		"Destination namespace where the migrated data should be saved. By default, Porter migrates your data into the current namespace as configured by environment variables and your config file, and otherwise the global namespace is used.")
+		"Destination namespace where the migrated data should be saved. By default, Porter migrates your data into the current namespace as configured by environment variables and your config file, otherwise the global namespace is used.")
 	return cmd
 }
 
