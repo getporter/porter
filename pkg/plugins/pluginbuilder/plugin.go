@@ -2,7 +2,12 @@ package pluginbuilder
 
 import (
 	"context"
+	"fmt"
 	"strings"
+
+	storageplugins "get.porter.sh/porter/pkg/storage/plugins"
+
+	secretsplugins "get.porter.sh/porter/pkg/secrets/plugins"
 
 	"get.porter.sh/porter/pkg/cli"
 	"get.porter.sh/porter/pkg/config"
@@ -87,4 +92,32 @@ func (opts *PluginOptions) ListSupportedKeys() string {
 		keys = append(keys, key)
 	}
 	return strings.Join(keys, ", ")
+}
+
+// RegisterSecretsPlugin adds a secrets plugin implementation to the list of available plugins.
+func (opts *PluginOptions) RegisterSecretsPlugin(implementationName string, handler plugins.CreatePluginHandler) {
+	if opts.RegisteredPlugins == nil {
+		opts.RegisteredPlugins = make(map[string]plugins.PluginRegistration, 1)
+	}
+
+	key := fmt.Sprintf("%s.%s.%s", secretsplugins.PluginInterface, opts.Name, implementationName)
+	opts.RegisteredPlugins[key] = plugins.PluginRegistration{
+		Interface:       secretsplugins.PluginInterface,
+		ProtocolVersion: secretsplugins.PluginProtocolVersion,
+		Create:          handler,
+	}
+}
+
+// RegisterStoragePlugin adds a storage plugin implementation to the list of available plugins.
+func (opts *PluginOptions) RegisterStoragePlugin(implementationName string, handler plugins.CreatePluginHandler) {
+	if opts.RegisteredPlugins == nil {
+		opts.RegisteredPlugins = make(map[string]plugins.PluginRegistration, 1)
+	}
+
+	key := fmt.Sprintf("%s.%s.%s", storageplugins.PluginInterface, opts.Name, implementationName)
+	opts.RegisteredPlugins[key] = plugins.PluginRegistration{
+		Interface:       storageplugins.PluginInterface,
+		ProtocolVersion: storageplugins.PluginProtocolVersion,
+		Create:          handler,
+	}
 }

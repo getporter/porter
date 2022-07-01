@@ -53,6 +53,9 @@ func ParsePluginKey(value string) (PluginKey, error) {
 	return key, nil
 }
 
+// CreatePluginHandler creates an instance of a plugin given its configuration.
+type CreatePluginHandler func(porterCfg *config.Config, pluginCfg interface{}) (plugin.Plugin, error)
+
 // PluginRegistration is the info needed to automatically handle
 // running a plugin when requested.
 type PluginRegistration struct {
@@ -63,7 +66,7 @@ type PluginRegistration struct {
 	ProtocolVersion int
 
 	// Create is the handler called to make an instance of the plugin.
-	Create func(c *config.Config, pluginCfg interface{}) (plugin.Plugin, error)
+	Create CreatePluginHandler
 }
 
 // PluginCloser is the interface that plugins should implement when they need to

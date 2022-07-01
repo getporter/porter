@@ -7,7 +7,6 @@ import (
 	"os/signal"
 	"runtime/debug"
 
-	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"go.opentelemetry.io/otel/attribute"
 )
@@ -64,7 +63,7 @@ func RunCommand(ctx context.Context, rootCmd *cobra.Command, app PorterApp) int 
 	defer func() {
 		// Capture panics and trace them
 		if panicErr := recover(); panicErr != nil {
-			log.Error(errors.New(fmt.Sprintf("%s", panicErr)),
+			log.Error(fmt.Errorf("%s", panicErr),
 				attribute.Bool("panic", true),
 				attribute.String("stackTrace", string(debug.Stack())))
 			log.EndSpan()

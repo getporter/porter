@@ -24,6 +24,10 @@ var (
 // plugin. This is the plugin's implementation for the porter plugins list
 // command.
 func (p *PorterPlugin) PrintVersion(ctx context.Context, opts version.Options) error {
+	if err := opts.Validate(); err != nil {
+		return err
+	}
+
 	metadata := plugins.Metadata{
 		Metadata: pkgmgmt.Metadata{
 			Name: p.Name(),
@@ -39,8 +43,11 @@ func (p *PorterPlugin) PrintVersion(ctx context.Context, opts version.Options) e
 	for key := range p.opts.RegisteredPlugins {
 		parts := strings.Split(key, ".")
 		if len(parts) != 3 {
-			return fmt.Errorf("the plugin is configured with an invalid set of plugin implementations: plugin keys should have 3 parts but got %s", key)
+			// Keep going so that we can at least print the version
+			fmt.Fprintf(p.porterConfig.Err, "WARNING: the plugin is configured with an invalid set of plugin implementations: plugin keys should have 3 parts but got %s\n", key)
+			continue
 		}
+
 		pluginInterface := parts[0]
 		pluginImplementation := parts[2]
 		metadata.Implementations = append(metadata.Implementations, plugins.Implementation{
