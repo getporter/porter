@@ -16,16 +16,15 @@ func main() {
 	opts := PluginOptions{
 		Name:              "myplugin",
 		RegisteredPlugins: nil,
-		Version:           "v1",
-		Commit:            "abc123",
 	}
 	ctx := context.Background()
 	app := NewPlugin(opts)
-	rootCmd := buildPluginCommand(app)
+	rootCmd := BuildPluginCommand(app)
 	cli.Main(ctx, rootCmd, app)
 }
 
-func buildPluginCommand(p *PorterPlugin) *cobra.Command {
+// BuildPluginCommand creates the cobra.Command
+func BuildPluginCommand(p *PorterPlugin) *cobra.Command {
 	p.porterConfig.In = getInput()
 
 	cmd := &cobra.Command{

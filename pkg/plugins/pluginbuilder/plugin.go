@@ -53,7 +53,12 @@ func (p *PorterPlugin) Name() string {
 // plugin.
 type PluginOptions struct {
 	// Name of the plugin.
+	// This must match the plugin binary name.
 	Name string
+
+	// Author of the plugin.
+	// This is displayed in the output of porter plugins list.
+	Author string
 
 	// DefaultConfig contains the default configuration data structure into which
 	// the plugin's configuration will be placed when the plugin is run.
@@ -63,12 +68,6 @@ type PluginOptions struct {
 	// RegisteredPlugins is a lookup from a fully-qualified 3-part plugin key
 	// to the information necessary to run the plugin.
 	RegisteredPlugins map[string]plugins.PluginRegistration
-
-	// Version is the semantic version for this build of the plugin.
-	Version string
-
-	// Commit is the git commit hash for this build of the plugin.
-	Commit string
 }
 
 // NewPlugin creates a PorterPlugin and customizes the implementation using the

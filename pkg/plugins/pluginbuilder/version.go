@@ -10,6 +10,16 @@ import (
 	"get.porter.sh/porter/pkg/porter/version"
 )
 
+var (
+	// Version of your plugin
+	// This is set by ldflags when you compile the go binary for your plugin
+	Version string
+
+	// Commit hash of your plugin
+	// This is set by ldflags when you compile the go binary for your plugin
+	Commit string
+)
+
 // PrintVersion introspects the configured plugin and returns metadata about the
 // plugin. This is the plugin's implementation for the porter plugins list
 // command.
@@ -18,9 +28,9 @@ func (p *PorterPlugin) PrintVersion(ctx context.Context, opts version.Options) e
 		Metadata: pkgmgmt.Metadata{
 			Name: p.Name(),
 			VersionInfo: pkgmgmt.VersionInfo{
-				Version: p.opts.Version,
-				Commit:  p.opts.Commit,
-				Author:  "Porter Authors",
+				Version: Version,
+				Commit:  Commit,
+				Author:  p.opts.Author,
 			},
 		},
 		Implementations: make([]plugins.Implementation, 0, len(p.opts.RegisteredPlugins)),
