@@ -245,8 +245,5 @@ func EnsureMongoIsRunning(ctx context.Context, c *portercontext.Context, contain
 
 func checkDockerAvailability(ctx context.Context) error {
 	_, err := exec.Command("docker", "info").Output()
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
