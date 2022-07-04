@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"io"
 
+	"get.porter.sh/porter/pkg/storage/plugins/noop"
+
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/plugins"
 	"get.porter.sh/porter/pkg/portercontext"
@@ -127,6 +129,13 @@ func getInternalPlugins() map[string]InternalPlugin {
 			ProtocolVersion: secretsplugins.PluginProtocolVersion,
 			Create: func(c *config.Config, pluginCfg interface{}) (plugin.Plugin, error) {
 				return filesystem.NewPlugin(c, pluginCfg), nil
+			},
+		},
+		noop.PluginKey: {
+			Interface:       storageplugins.PluginInterface,
+			ProtocolVersion: storageplugins.PluginProtocolVersion,
+			Create: func(c *config.Config, pluginCfg interface{}) (plugin.Plugin, error) {
+				return noop.NewPlugin(c.Context)
 			},
 		},
 		mongodb.PluginKey: {
