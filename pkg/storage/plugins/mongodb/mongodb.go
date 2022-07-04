@@ -189,7 +189,7 @@ func (s *Store) Find(ctx context.Context, opts plugins.FindOptions) ([]bson.Raw,
 	}
 
 	c := s.getCollection(opts.Collection)
-	findOpts, err := s.buildFindOptions(opts)
+	findOpts, err := BuildFindOptions(opts)
 	if err != nil {
 		return nil, span.Error(err)
 	}
@@ -209,7 +209,8 @@ func (s *Store) Find(ctx context.Context, opts plugins.FindOptions) ([]bson.Raw,
 	return results, span.Error(err)
 }
 
-func (s *Store) buildFindOptions(opts plugins.FindOptions) (*options.FindOptions, error) {
+// BuildFindOptions converts from Porter's FindOptions structure to the FindOptions for mongodb.
+func BuildFindOptions(opts plugins.FindOptions) (*options.FindOptions, error) {
 	query := options.Find()
 
 	if opts.Select != nil {
