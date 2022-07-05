@@ -173,7 +173,7 @@ func buildRootCommandFrom(p *porter.Porter) *cobra.Command {
 
 Most commands require a Docker daemon, either local or remote.
 
-Try our QuickStart https://porter.sh/quickstart to learn how to use Porter.
+Try our QuickStart https://getporter.org/quickstart to learn how to use Porter.
 `,
 		Example: `  porter create
   porter build
@@ -220,7 +220,7 @@ Try our QuickStart https://porter.sh/quickstart to learn how to use Porter.
 	globalFlags := cmd.PersistentFlags()
 	globalFlags.BoolVar(&p.Debug, "debug", false, "Enable debug logging")
 	globalFlags.BoolVar(&p.DebugPlugins, "debug-plugins", false, "Enable plugin debug logging")
-	globalFlags.StringSliceVar(&p.Data.ExperimentalFlags, "experimental", nil, "Comma separated list of experimental features to enable. See https://porter.sh/configuration/#experimental-feature-flags for available feature flags.")
+	globalFlags.StringSliceVar(&p.Data.ExperimentalFlags, "experimental", nil, "Comma separated list of experimental features to enable. See https://getporter.org/configuration/#experimental-feature-flags for available feature flags.")
 
 	// Flags for just the porter command only, does not apply to sub-commands
 	cmd.Flags().BoolVarP(&printVersion, "version", "v", false, "Print the application version")

@@ -1,11 +1,11 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
-    <id>https://porter.sh/mixins</id>
+    <id>https://getporter.org/mixins</id>
     <title>Porter Mixins</title>
     <updated>2013-02-10T00:00:00Z</updated>
     <link rel="self" href="https://cdn.porter.sh/mixins/atom.xml"/>
     <author>
         <name>Porter Authors</name>
-        <uri>https://porter.sh/mixins</uri>
+        <uri>https://getporter.org/mixins</uri>
     </author>
     <category term="exec"/>
     <category term="helm"/>

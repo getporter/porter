@@ -126,14 +126,14 @@
     },
     "porter-debug-parameter": {
       "$comment": "porter-internal",
-      "$id": "https://porter.sh/generated-bundle/#porter-debug",
+      "$id": "https://getporter.org/generated-bundle/#porter-debug",
       "default": false,
       "description": "Print debug information from Porter when executing the bundle",
       "type": "boolean"
     },
     "porter-state": {
       "$comment": "porter-internal",
-      "$id": "https://porter.sh/generated-bundle/#porter-state",
+      "$id": "https://getporter.org/generated-bundle/#porter-state",
       "contentEncoding": "base64",
       "description": "Supports persisting state for bundles. Porter internal parameter that should not be set manually.",
       "type": "string"

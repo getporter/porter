@@ -43,7 +43,7 @@ porter invoke [INSTALLATION] --action ACTION [flags]
 
 ```
       --action string               Custom action name to invoke.
-      --allow-docker-host-access    Controls if the bundle should have access to the host's Docker daemon with elevated privileges. See https://porter.sh/configuration/#allow-docker-host-access for the full implications of this flag.
+      --allow-docker-host-access    Controls if the bundle should have access to the host's Docker daemon with elevated privileges. See https://getporter.org/configuration/#allow-docker-host-access for the full implications of this flag.
       --cnab-file string            Path to the CNAB bundle.json file.
   -c, --cred stringArray            Credential to use when installing the bundle. May be either a named set of credentials or a filepath, and specified multiple times.
   -d, --driver string               Specify a driver to use. Allowed values: docker, debug (default "docker")
@@ -63,7 +63,7 @@ porter invoke [INSTALLATION] --action ACTION [flags]
 ```
       --debug                  Enable debug logging
       --debug-plugins          Enable plugin debug logging
-      --experimental strings   Comma separated list of experimental features to enable. See https://porter.sh/configuration/#experimental-feature-flags for available feature flags.
+      --experimental strings   Comma separated list of experimental features to enable. See https://getporter.org/configuration/#experimental-feature-flags for available feature flags.
 ```
 
 ### SEE ALSO
@@ -72,6 +72,6 @@ porter invoke [INSTALLATION] --action ACTION [flags]
 
 Most commands require a Docker daemon, either local or remote.
 
-Try our QuickStart https://porter.sh/quickstart to learn how to use Porter.
+Try our QuickStart https://getporter.org/quickstart to learn how to use Porter.
 
 

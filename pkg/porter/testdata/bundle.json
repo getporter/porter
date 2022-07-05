@@ -49,7 +49,7 @@
       "writeOnly": true
     },
     "porter-debug-parameter": {
-      "$id":"https://porter.sh/generated-bundle/#porter-debug",
+      "$id":"https://getporter.org/generated-bundle/#porter-debug",
       "$comment":"porter-internal",
       "default": false,
       "description": "Print debug information from Porter when executing the bundle",

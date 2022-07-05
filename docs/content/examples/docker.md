@@ -56,7 +56,7 @@ The user running the bundle, and Porter, needs to know that this bundle
 requires the local Docker daemon connected to the bundle. We have added a new
 section to porter.yaml for required extensions, and defined a new prototype
 extension that says that the bundle [requires access to a Docker
-daemon](https://porter.sh/author-bundles/#docker):
+daemon](/author-bundles/#docker):
 
 ```yaml
 required:
@@ -105,7 +105,7 @@ After I have tested the bundle, I used `porter publish` to push it up to `ghcr.i
 
 Now that the bundle is ready to use, the user running the bundle needs to
 give the bundle elevated permission with the [Allow Docker Host
-Access](https://porter.sh/configuration/#allow-docker-host-access) setting. This
+Access](/configuration/#allow-docker-host-access) setting. This
 is because giving a container access to the host's Docker socket, or running a
 container with `--privileged`, has security implications for the underlying host,
 and should only be given to trusted containers, or in this case trusted bundles.

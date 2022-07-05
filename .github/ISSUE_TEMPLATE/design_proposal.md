@@ -23,5 +23,5 @@ Provide other approaches considered prior to deciding on the submitted proposal.
 If applicable, provide potential implementation details assuming the proposal is accepted.
 
 # Checklist
-- [ ] An announcement of this proposal has been sent to the Porter mailing list: https://porter.sh/mailing-list
+- [ ] An announcement of this proposal has been sent to the Porter mailing list: https://getporter.org/mailing-list
 - [ ] This proposal has remained open for at least one week, to allow time for community feedback.

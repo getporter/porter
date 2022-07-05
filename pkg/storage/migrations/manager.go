@@ -90,7 +90,7 @@ Your database schema is:
 
 %#v
 
-Refer to https://porter.sh/storage-migrate for more information and instructions to back up your data. 
+Refer to https://getporter.org/storage-migrate for more information and instructions to back up your data. 
 Once your data has been backed up, run the following command to perform the migration:
 
     porter storage migrate

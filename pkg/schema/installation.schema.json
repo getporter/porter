@@ -1,5 +1,5 @@
 {
-    "$id": "https://porter.sh/schema/v1/installation.schema.json",
+    "$id": "https://getporter.org/schema/v1/installation.schema.json",
     "$schema": "http://json-schema.org/draft-07/schema#",
     "properties": {
       "name": {

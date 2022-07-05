@@ -11,6 +11,8 @@ Migrate data from v0.38 to v1
 
 Migrate data from Porter v0.38 into a v1 installation of Porter.
 
+See https://getporter.org/storage-migrate for a full description of the migration process. Below is a summary:
+
 Before running this command, you should have:
 
 1. Installed Porter v1, see https://getporter.org/install for instructions.
@@ -37,7 +39,7 @@ porter storage migrate --old-home OLD_PORTER_HOME [--old-account STORAGE_NAME] [
 
 ```
   -h, --help                 help for migrate
-  -n, --namespace string     Destination namespace where the migrated data should be saved. By default, Porter migrates your data into the current namespace as configured by environment variables and your config file, and otherwise the global namespace is used.
+  -n, --namespace string     Destination namespace where the migrated data should be saved. By default, Porter migrates your data into the current namespace as configured by environment variables and your config file, otherwise the global namespace is used.
       --old-account string   Name of the storage account in the old Porter configuration file containing the data that should be migrated. If unspecified, the default storage account is used.
       --old-home string      Path to the old PORTER_HOME directory where the previous version of Porter is installed
 ```
@@ -47,7 +49,7 @@ porter storage migrate --old-home OLD_PORTER_HOME [--old-account STORAGE_NAME] [
 ```
       --debug                  Enable debug logging
       --debug-plugins          Enable plugin debug logging
-      --experimental strings   Comma separated list of experimental features to enable. See https://porter.sh/configuration/#experimental-feature-flags for available feature flags.
+      --experimental strings   Comma separated list of experimental features to enable. See https://getporter.org/configuration/#experimental-feature-flags for available feature flags.
 ```
 
 ### SEE ALSO

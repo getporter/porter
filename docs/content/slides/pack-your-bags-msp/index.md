@@ -19,12 +19,12 @@ It can take a while for things to download and install over the workshop wifi,
 so please go to the workshop materials directory and follow the setup instructions
 to get all the materials ready.
 
-.center[👩🏽‍✈️ https://porter.sh/pack-your-bags-msp/#setup 👩🏽‍✈️ ]
+.center[👩🏽‍✈️ https://getporter.org/pack-your-bags-msp/#setup 👩🏽‍✈️ ]
 
 1. Go to https://labs.play-with-docker.com/
 1. Sign in with your Docker Hub account, or create one if you don't already have an account.
 1. Click `Add new instance`
-1. [Install Porter](https://porter.sh/install)
+1. [Install Porter](/install)
    ```
    curl https://deislabs.blob.core.windows.net/porter/latest/install-linux.sh | bash
    export PATH=$PATH:~/.porter
@@ -414,7 +414,7 @@ class: center, middle
 .center[
   🚨 Not Setup Yet? 🚨
 
-  https://porter.sh/pack-your-bags-msp/#setup
+  https://getporter.org/pack-your-bags-msp/#setup
   
   ]
 
@@ -1278,7 +1278,7 @@ _They adapt between CNAB and existing tools. Porter is just glue."_
 * gcloud
 * terraform
 
-.center[ https://porter.sh/mixins ]
+.center[ https://getporter.org/mixins ]
 
 ---
 name: helm
