@@ -92,7 +92,7 @@ func TestInstallationStorage_HaltOnMigrationRequired(t *testing.T) {
 
 		wantVersionComp := `Porter  uses the following database schema:
 
-storage.Schema{ID:"schema", Installations:"1.0.1", Credentials:"1.0.1", Parameters:"1.0.1"}
+storage.Schema{ID:"schema", Installations:"1.0.2", Credentials:"1.0.1", Parameters:"1.0.1"}
 
 Your database schema is:
 
@@ -147,11 +147,11 @@ func TestCredentialStorage_HaltOnMigrationRequired(t *testing.T) {
 
 		wantVersionComp := `Porter  uses the following database schema:
 
-storage.Schema{ID:"schema", Installations:"1.0.1", Credentials:"1.0.1", Parameters:"1.0.1"}
+storage.Schema{ID:"schema", Installations:"1.0.2", Credentials:"1.0.1", Parameters:"1.0.1"}
 
 Your database schema is:
 
-storage.Schema{ID:"schema", Installations:"1.0.1", Credentials:"needs-migration", Parameters:"1.0.1"}`
+storage.Schema{ID:"schema", Installations:"1.0.2", Credentials:"needs-migration", Parameters:"1.0.1"}`
 		assert.Contains(t, err.Error(), wantVersionComp, "the migration error should contain the current and expected db schema")
 	}
 
@@ -206,11 +206,11 @@ func TestParameterStorage_HaltOnMigrationRequired(t *testing.T) {
 
 		wantVersionComp := `Porter  uses the following database schema:
 
-storage.Schema{ID:"schema", Installations:"1.0.1", Credentials:"1.0.1", Parameters:"1.0.1"}
+storage.Schema{ID:"schema", Installations:"1.0.2", Credentials:"1.0.1", Parameters:"1.0.1"}
 
 Your database schema is:
 
-storage.Schema{ID:"schema", Installations:"1.0.1", Credentials:"1.0.1", Parameters:"needs-migration"}`
+storage.Schema{ID:"schema", Installations:"1.0.2", Credentials:"1.0.1", Parameters:"needs-migration"}`
 		assert.Contains(t, err.Error(), wantVersionComp, "the migration error should contain the current and expected db schema")
 	}
 

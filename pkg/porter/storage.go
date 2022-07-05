@@ -9,21 +9,35 @@ import (
 	"path/filepath"
 
 	"get.porter.sh/porter/pkg"
+	"get.porter.sh/porter/pkg/storage"
 	"github.com/hashicorp/go-multierror"
 )
 
-func (p *Porter) MigrateStorage(ctx context.Context) error {
-	logfilePath, err := p.Storage.Migrate(ctx)
+type MigrateStorageOptions struct {
+	OldHome           string
+	OldStorageAccount string
+	Namespace         string
+}
 
-	fmt.Fprintf(p.Out, "\nSaved migration logs to %s\n", logfilePath)
-
-	if err != nil {
-		// The error has already been printed, don't return it otherwise it will be double printed
-		return errors.New("Migration failed!")
+func (o MigrateStorageOptions) Validate() error {
+	if o.OldHome == "" {
+		return errors.New("--old-home is required")
 	}
 
-	fmt.Fprintln(p.Out, "Migration complete!")
 	return nil
+}
+
+func (p *Porter) MigrateStorage(ctx context.Context, opts MigrateStorageOptions) error {
+	if err := opts.Validate(); err != nil {
+		return err
+	}
+
+	migrateOpts := storage.MigrateOptions{
+		OldHome:           opts.OldHome,
+		OldStorageAccount: opts.OldStorageAccount,
+		NewNamespace:      opts.Namespace,
+	}
+	return p.Storage.Migrate(ctx, migrateOpts)
 }
 
 func (p *Porter) FixPermissions() error {

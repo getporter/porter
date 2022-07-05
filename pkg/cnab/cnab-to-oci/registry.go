@@ -17,8 +17,8 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/pkg/jsonmessage"
-	"github.com/docker/docker/pkg/term"
 	"github.com/google/go-containerregistry/pkg/crane"
+	"github.com/moby/term"
 	"github.com/opencontainers/go-digest"
 )
 

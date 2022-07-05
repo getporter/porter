@@ -47,6 +47,12 @@ pygmentsStyle = "friendly"
     weight = 11
     parent = "get-started"
   [[menu.main]]
+    name = "Migrate from v0"
+    url = "/storage-migrate/"
+    identifier = "migrate"
+    weight = 12
+    parent = "get-started"
+  [[menu.main]]
     name = "QuickStart"
     identifier = "quickstart"
     url = "/quickstart/"

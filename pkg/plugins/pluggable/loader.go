@@ -88,6 +88,7 @@ func (l *PluginLoader) Load(ctx context.Context, pluginType PluginTypeConfig) (*
 
 // selectPlugin picks the plugin to use and loads its configuration.
 func (l *PluginLoader) selectPlugin(ctx context.Context, cfg PluginTypeConfig) error {
+	//lint:ignore SA4006 ignore unused ctx for now.
 	ctx, span := tracing.StartSpan(ctx)
 	defer span.EndSpan()
 
