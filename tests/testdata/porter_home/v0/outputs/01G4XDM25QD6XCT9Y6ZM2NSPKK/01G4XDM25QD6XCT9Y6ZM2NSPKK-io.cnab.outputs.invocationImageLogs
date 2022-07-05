@@ -1,0 +1,8 @@
+executing upgrade action from hello-llama (installation: hello-llama)
+Error: unable to resolve step: invalid step yaml
+exec:
+  arguments:
+    - upgrade
+    - ''big red''
+  command: ./helpers.sh
+: yaml: line 2: did not find expected '-' indicator

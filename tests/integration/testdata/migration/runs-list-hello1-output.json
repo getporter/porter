@@ -1,0 +1,57 @@
+[
+  {
+    "id": "01G1VJQJV0RN5AW5BSZHNTVYTV",
+    "version": "0.1.1",
+    "action": "uninstall",
+    "parameters": {
+      "porter-debug": ""
+    },
+    "started": "2022-04-29T16:13:20.48032-05:00",
+    "stopped": "2022-04-29T16:13:21.802457-05:00",
+    "status": "succeeded"
+  },
+  {
+    "id": "01G1VJHGVCSN7GR7B5Y05DH6GA",
+    "version": "0.1.1",
+    "action": "upgrade",
+    "parameters": {
+      "porter-debug": ""
+    },
+    "started": "2022-04-29T16:10:01.836336-05:00",
+    "stopped": "2022-04-29T16:10:02.140731-05:00",
+    "status": "failed"
+  },
+  {
+    "id": "01G1VJGY43HT3KZN82DS6DDPWK",
+    "version": "0.1.1",
+    "action": "install",
+    "parameters": {
+      "porter-debug": ""
+    },
+    "started": "2022-04-29T16:09:42.659119-05:00",
+    "stopped": "2022-04-29T16:09:47.190534-05:00",
+    "status": "succeeded"
+  },
+  {
+    "id": "01G1VJGY43HT3KZN82DS6DDPWI",
+    "version": "0.1.1",
+    "action": "install",
+    "parameters": {
+      "porter-debug": ""
+    },
+    "started": "2022-04-29T14:09:42.659119-05:00",
+    "stopped": "2022-04-29T14:09:47.190534-05:00",
+    "status": "failed"
+  },
+  {
+    "id": "01G1VJGY43HT3KZN82DS6DDPWH",
+    "version": "0.1.1",
+    "action": "dry-run",
+    "parameters": {
+      "porter-debug": ""
+    },
+    "started": "2022-04-28T16:09:42.65907-05:00",
+    "stopped": null,
+    "status": ""
+  }
+]

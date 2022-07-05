@@ -1,0 +1,13 @@
+{
+  "id": "01G1VJQM4AVN7SCXC8WV3M0D7N",
+  "claimId": "01G1VJQJV0RN5AW5BSZHNTVYTV",
+  "created": "2022-04-29T16:13:21.802457-05:00",
+  "status": "succeeded",
+  "message": "yipee",
+  "outputs": {
+    "io.cnab.outputs.invocationImageLogs": {
+      "contentDigest": "sha256:a7fdc86f826691ae1c6bf6bbcba43abbb67cf45b45093652a98327521a62d69c",
+      "generatedByBundle": "false"
+    }
+  }
+}

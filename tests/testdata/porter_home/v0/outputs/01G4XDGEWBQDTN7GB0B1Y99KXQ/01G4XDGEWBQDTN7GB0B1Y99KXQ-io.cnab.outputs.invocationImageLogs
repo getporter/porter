@@ -1,0 +1,37 @@
+executing install action from credentials-tutorial (installation: creds-tutorial)
+Retrieve current user profile from GitHub
+{
+  "login": "carolynvs",
+  "id": 1368985,
+  "node_id": "MDQ6VXNlcjEzNjg5ODU=",
+  "avatar_url": "https://avatars.githubusercontent.com/u/1368985?v=4",
+  "gravatar_id": "",
+  "url": "https://api.github.com/users/carolynvs",
+  "html_url": "https://github.com/carolynvs",
+  "followers_url": "https://api.github.com/users/carolynvs/followers",
+  "following_url": "https://api.github.com/users/carolynvs/following{/other_user}",
+  "gists_url": "https://api.github.com/users/carolynvs/gists{/gist_id}",
+  "starred_url": "https://api.github.com/users/carolynvs/starred{/owner}{/repo}",
+  "subscriptions_url": "https://api.github.com/users/carolynvs/subscriptions",
+  "organizations_url": "https://api.github.com/users/carolynvs/orgs",
+  "repos_url": "https://api.github.com/users/carolynvs/repos",
+  "events_url": "https://api.github.com/users/carolynvs/events{/privacy}",
+  "received_events_url": "https://api.github.com/users/carolynvs/received_events",
+  "type": "User",
+  "site_admin": false,
+  "name": "Carolyn Van Slyck",
+  "company": "@Azure ",
+  "blog": "carolynvanslyck.com",
+  "location": "Chicago, IL",
+  "email": null,
+  "hireable": null,
+  "bio": "Professional Yak Shaver",
+  "twitter_username": "carolynvs",
+  "public_repos": 265,
+  "public_gists": 27,
+  "followers": 350,
+  "following": 2,
+  "created_at": "2012-01-22T21:34:25Z",
+  "updated_at": "2022-04-29T17:15:42Z"
+}
+execution completed successfully!

@@ -43,6 +43,14 @@ func LoadFromEnvironment() DataStoreLoaderFunc {
 	})
 }
 
+// LoadFromFilesystem loads data with the following precedence:
+// * Config file
+// * Flag default (lowest)
+// This is used for testing only.
+func LoadFromFilesystem() DataStoreLoaderFunc {
+	return LoadFromViper(func(v *viper.Viper) {})
+}
+
 // LoadFromViper loads data from a configurable viper instance.
 func LoadFromViper(viperCfg func(v *viper.Viper)) DataStoreLoaderFunc {
 	return func(ctx context.Context, cfg *Config, templateData map[string]interface{}) error {

@@ -1,0 +1,72 @@
+{
+  "schemaVersion": "1.0.0-DRAFT+b5ed2f3",
+  "id": "01G4XDK06E3JNN2K22GF0AZNEY",
+  "installation": "hello-llama",
+  "revision": "01G4XDK06E3JNN2K22GF2YPV54",
+  "created": "2022-06-06T16:09:01.774148-05:00",
+  "action": "upgrade",
+  "bundle": {
+    "schemaVersion": "v1.0.0",
+    "name": "hello-llama",
+    "version": "0.1.1",
+    "description": "An example Porter bundle with parameters",
+    "invocationImages": [
+      {
+        "imageType": "docker",
+        "image": "getporter/hello-llama-installer:v0.1.1",
+        "contentDigest": "sha256:3da8764e4f375f1f81bffde319d893719c85a7544715fad76f3ccfe0ce1548b8",
+        "size": 1991,
+        "mediaType": "application/vnd.docker.distribution.manifest.v2+json"
+      }
+    ],
+    "parameters": {
+      "name": {
+        "definition": "name-parameter",
+        "description": "Name of to whom we should say hello",
+        "destination": {
+          "env": "NAME"
+        }
+      },
+      "porter-debug": {
+        "definition": "porter-debug-parameter",
+        "description": "Print debug information from Porter when executing the bundle",
+        "destination": {
+          "env": "PORTER_DEBUG"
+        }
+      }
+    },
+    "definitions": {
+      "name-parameter": {
+        "default": "llama",
+        "description": "Name of to whom we should say hello",
+        "type": "string"
+      },
+      "porter-debug-parameter": {
+        "$comment": "porter-internal",
+        "$id": "https://porter.sh/generated-bundle/#porter-debug",
+        "default": false,
+        "description": "Print debug information from Porter when executing the bundle",
+        "type": "boolean"
+      }
+    },
+    "requiredExtensions": [
+      "sh.porter.file-parameters"
+    ],
+    "custom": {
+      "sh.porter": {
+        "commit": "b76f5c1c",
+        "manifest": "bmFtZTogaGVsbG8tbGxhbWEKdmVyc2lvbjogMC4xLjEKZGVzY3JpcHRpb246ICJBbiBleGFtcGxlIFBvcnRlciBidW5kbGUgd2l0aCBwYXJhbWV0ZXJzIgpyZWdpc3RyeTogZ2V0cG9ydGVyCgptaXhpbnM6CiAgLSBleGVjCgpwYXJhbWV0ZXJzOgotIG5hbWU6IG5hbWUKICBkZXNjcmlwdGlvbjogTmFtZSBvZiB0byB3aG9tIHdlIHNob3VsZCBzYXkgaGVsbG8KICB0eXBlOiBzdHJpbmcKICBkZWZhdWx0OiBsbGFtYQoKaW5zdGFsbDoKICAtIGV4ZWM6CiAgICAgIGNvbW1hbmQ6IC4vaGVscGVycy5zaAogICAgICBhcmd1bWVudHM6CiAgICAgICAgLSBpbnN0YWxsCiAgICAgICAgLSAie3sgYnVuZGxlLnBhcmFtZXRlcnMubmFtZSB9fSIKCnVwZ3JhZGU6CiAgLSBleGVjOgogICAgICBjb21tYW5kOiAuL2hlbHBlcnMuc2gKICAgICAgYXJndW1lbnRzOgogICAgICAgIC0gdXBncmFkZQogICAgICAgIC0gInt7IGJ1bmRsZS5wYXJhbWV0ZXJzLm5hbWUgfX0iCgp1bmluc3RhbGw6CiAgLSBleGVjOgogICAgICBjb21tYW5kOiAuL2hlbHBlcnMuc2gKICAgICAgYXJndW1lbnRzOgogICAgICAgIC0gdW5pbnN0YWxsCiAgICAgICAgLSAie3sgYnVuZGxlLnBhcmFtZXRlcnMubmFtZSB9fSIK",
+        "manifestDigest": "58312d6f012dd22fad8d9678f7165980a28d53c2d434ec039e9cfad6cf792725",
+        "mixins": {
+          "exec": {}
+        },
+        "version": "v0.38.1-32-gb76f5c1c"
+      },
+      "sh.porter.file-parameters": {}
+    }
+  },
+  "parameters": {
+    "name": "smokey",
+    "porter-debug": false
+  }
+}

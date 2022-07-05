@@ -1,0 +1,59 @@
+{
+  "schemaVersion": "1.0.0-DRAFT+b5ed2f3",
+  "id": "01G1VJHGVCSN7GR7B5Y05DH6GA",
+  "installation": "hello1",
+  "revision": "01G1VJHGVCSN7GR7B5Y2ZQ67FT",
+  "created": "2022-04-29T16:10:01.836294-05:00",
+  "action": "upgrade",
+  "bundle": {
+    "schemaVersion": "v1.0.0",
+    "name": "porter-hello",
+    "version": "0.1.1",
+    "description": "An example Porter configuration",
+    "invocationImages": [
+      {
+        "imageType": "docker",
+        "image": "getporter/porter-hello-installer:v0.1.1",
+        "contentDigest": "sha256:1b5a7b823b2243d95d52cc8dc1510fd91b7a1e240bd63d05d828f29ff4f55e13",
+        "size": 1579,
+        "mediaType": "application/vnd.docker.distribution.manifest.v2+json"
+      }
+    ],
+    "parameters": {
+      "porter-debug": {
+        "definition": "porter-debug-parameter",
+        "description": "Print debug information from Porter when executing the bundle",
+        "destination": {
+          "env": "PORTER_DEBUG"
+        }
+      }
+    },
+    "definitions": {
+      "porter-debug-parameter": {
+        "$comment": "porter-internal",
+        "$id": "https://porter.sh/generated-bundle/#porter-debug",
+        "default": false,
+        "description": "Print debug information from Porter when executing the bundle",
+        "type": "boolean"
+      }
+    },
+    "requiredExtensions": [
+      "sh.porter.file-parameters"
+    ],
+    "custom": {
+      "sh.porter": {
+        "commit": "55d92c0f",
+        "manifest": "bmFtZTogcG9ydGVyLWhlbGxvCnZlcnNpb246IDAuMS4xCmRlc2NyaXB0aW9uOiAiQW4gZXhhbXBsZSBQb3J0ZXIgY29uZmlndXJhdGlvbiIKcmVnaXN0cnk6IGdldHBvcnRlcgoKbWl4aW5zOgogIC0gZXhlYwoKaW5zdGFsbDoKICAtIGV4ZWM6CiAgICAgIGRlc2NyaXB0aW9uOiAiSW5zdGFsbCBIZWxsbyBXb3JsZCIKICAgICAgY29tbWFuZDogLi9oZWxwZXJzLnNoCiAgICAgIGFyZ3VtZW50czoKICAgICAgICAtIGluc3RhbGwKCnVwZ3JhZGU6CiAgLSBleGVjOgogICAgICBkZXNjcmlwdGlvbjogIldvcmxkIDIuMCIKICAgICAgY29tbWFuZDogLi9oZWxwZXJzLnNoCiAgICAgIGFyZ3VtZW50czoKICAgICAgICAtIHVwZ3JhZGUKCnVuaW5zdGFsbDoKICAtIGV4ZWM6CiAgICAgIGRlc2NyaXB0aW9uOiAiVW5pbnN0YWxsIEhlbGxvIFdvcmxkIgogICAgICBjb21tYW5kOiAuL2hlbHBlcnMuc2gKICAgICAgYXJndW1lbnRzOgogICAgICAgIC0gdW5pbnN0YWxsCg==",
+        "manifestDigest": "fe390b3297354fc70ada6181430fc1d941c2ef895fa9db8cdc5ea42a77ddb404",
+        "mixins": {
+          "exec": {}
+        },
+        "version": "v0.38.10"
+      },
+      "sh.porter.file-parameters": {}
+    }
+  },
+  "parameters": {
+    "porter-debug": false
+  }
+}

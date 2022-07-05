@@ -1,0 +1,26 @@
+{
+  "schemaType": "Installation",
+  "schemaVersion": "1.0.2",
+  "id": "01G1VJGY43HT3KZN82DS6DDPWH",
+  "name": "hello1",
+  "namespace": "migrated",
+  "bundle": {},
+  "status": {
+    "runId": "01G1VJQJV0RN5AW5BSZHNTVYTV",
+    "action": "uninstall",
+    "resultId": "01G1VJQM4AVN7SCXC8WV3M0D7N",
+    "resultStatus": "succeeded",
+    "created": "2022-04-28T16:09:42.65907-05:00",
+    "modified": "2022-04-29T16:13:20.48026-05:00",
+    "installed": "2022-04-29T16:09:47.190534-05:00",
+    "uninstalled": "2022-04-29T16:13:21.802457-05:00",
+    "bundleReference": "",
+    "bundleVersion": "0.1.1",
+    "bundleDigest": ""
+  },
+  "_calculated": {
+    "resolvedParameters": [],
+    "displayInstallationState": "uninstalled",
+    "displayInstallationStatus": "succeeded"
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "schemaType": "Installation",
+  "schemaVersion": "1.0.2",
+  "id": "01G6K8CZ08T78WXTJYHR0NTYBS",
+  "name": "sensitive-data",
+  "namespace": "migrated",
+  "bundle": {},
+  "status": {
+    "runId": "01G6K8CZ08T78WXTJYHR0NTYBS",
+    "action": "install",
+    "resultId": "01G6K8D05SHAHR6PBBCT49B1JM",
+    "resultStatus": "succeeded",
+    "created": "2022-06-23T13:57:20.392626-05:00",
+    "modified": "2022-06-23T13:57:20.392626-05:00",
+    "installed": "2022-06-23T13:57:21.593107-05:00",
+    "uninstalled": null,
+    "bundleReference": "",
+    "bundleVersion": "0.0.1",
+    "bundleDigest": ""
+  },
+  "_calculated": {
+    "resolvedParameters": [
+      {
+        "name": "name",
+        "type": "string",
+        "sensitive": false,
+        "value": "example-bundle"
+      },
+      {
+        "name": "password",
+        "type": "string",
+        "sensitive": true,
+        "value": "topsecret"
+      }
+    ],
+    "displayInstallationState": "installed",
+    "displayInstallationStatus": "succeeded"
+  }
+}

@@ -1,0 +1,4 @@
+executing install action from examples/sensitive-data (installation: sensitive-data)
+Install Hello World
+Hello, installing example-bundle with password: *******
+execution completed successfully!

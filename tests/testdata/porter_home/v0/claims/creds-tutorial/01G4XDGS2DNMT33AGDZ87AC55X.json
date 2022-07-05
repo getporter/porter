@@ -1,0 +1,70 @@
+{
+  "schemaVersion": "1.0.0-DRAFT+b5ed2f3",
+  "id": "01G4XDGS2DNMT33AGDZ87AC55X",
+  "installation": "creds-tutorial",
+  "revision": "01G4XDGS2DNMT33AGDZAA6KMJP",
+  "created": "2022-06-06T16:07:48.941115-05:00",
+  "action": "upgrade",
+  "bundle": {
+    "schemaVersion": "v1.0.0",
+    "name": "credentials-tutorial",
+    "version": "0.1.0",
+    "description": "An example Porter bundle with credentials. Uses your GitHub token to retrieve your public user profile from GitHub.",
+    "invocationImages": [
+      {
+        "imageType": "docker",
+        "image": "getporter/credentials-tutorial-installer:v0.1.0",
+        "contentDigest": "sha256:21d7fa87f4d333d1ffdd6e2504e731a4afbb85d0173dace26baf9098f29a8409",
+        "size": 1579,
+        "mediaType": "application/vnd.docker.distribution.manifest.v2+json"
+      }
+    ],
+    "parameters": {
+      "porter-debug": {
+        "definition": "porter-debug-parameter",
+        "description": "Print debug information from Porter when executing the bundle",
+        "destination": {
+          "env": "PORTER_DEBUG"
+        }
+      }
+    },
+    "credentials": {
+      "github-token": {
+        "env": "GITHUB_TOKEN",
+        "description": "A GitHub Personal Access Token. Generate one at https://github.com/settings/tokens. No scopes are required.",
+        "required": true,
+        "applyTo": [
+          "install",
+          "upgrade"
+        ]
+      }
+    },
+    "definitions": {
+      "porter-debug-parameter": {
+        "$comment": "porter-internal",
+        "$id": "https://porter.sh/generated-bundle/#porter-debug",
+        "default": false,
+        "description": "Print debug information from Porter when executing the bundle",
+        "type": "boolean"
+      }
+    },
+    "requiredExtensions": [
+      "sh.porter.file-parameters"
+    ],
+    "custom": {
+      "sh.porter": {
+        "commit": "7db0ea7d",
+        "manifest": "bmFtZTogY3JlZGVudGlhbHMtdHV0b3JpYWwKdmVyc2lvbjogMC4xLjAKZGVzY3JpcHRpb246ICJBbiBleGFtcGxlIFBvcnRlciBidW5kbGUgd2l0aCBjcmVkZW50aWFscy4gVXNlcyB5b3VyIEdpdEh1YiB0b2tlbiB0byByZXRyaWV2ZSB5b3VyIHB1YmxpYyB1c2VyIHByb2ZpbGUgZnJvbSBHaXRIdWIuIgpyZWdpc3RyeTogZ2V0cG9ydGVyCmRvY2tlcmZpbGU6IERvY2tlcmZpbGUudG1wbAoKbWl4aW5zOgogIC0gZXhlYwoKY3JlZGVudGlhbHM6CiAgLSBuYW1lOiBnaXRodWItdG9rZW4KICAgIGRlc2NyaXB0aW9uOiBBIEdpdEh1YiBQZXJzb25hbCBBY2Nlc3MgVG9rZW4uIEdlbmVyYXRlIG9uZSBhdCBodHRwczovL2dpdGh1Yi5jb20vc2V0dGluZ3MvdG9rZW5zLiBObyBzY29wZXMgYXJlIHJlcXVpcmVkLgogICAgZW52OiBHSVRIVUJfVE9LRU4KICAgIGFwcGx5VG86CiAgICAgIC0gaW5zdGFsbAogICAgICAtIHVwZ3JhZGUKCmluc3RhbGw6CiAgLSBleGVjOgogICAgICBkZXNjcmlwdGlvbjogIlJldHJpZXZlIGN1cnJlbnQgdXNlciBwcm9maWxlIGZyb20gR2l0SHViIgogICAgICBjb21tYW5kOiAuL2hlbHBlcnMuc2gKICAgICAgYXJndW1lbnRzOgogICAgICAgIC0gZ2V0VXNlcgoKdXBncmFkZToKICAtIGV4ZWM6CiAgICAgIGRlc2NyaXB0aW9uOiAiUmV0cmlldmUgY3VycmVudCB1c2VyIHByb2ZpbGUgZnJvbSBHaXRIdWIiCiAgICAgIGNvbW1hbmQ6IC4vaGVscGVycy5zaAogICAgICBhcmd1bWVudHM6CiAgICAgICAgLSBnZXRVc2VyCgp1bmluc3RhbGw6CiAgLSBleGVjOgogICAgICBkZXNjcmlwdGlvbjogIlVuaW5zdGFsbCBjcmVkZW50aWFscyB0dXRvcmlhbCIKICAgICAgY29tbWFuZDogZWNobwogICAgICBhcmd1bWVudHM6CiAgICAgICAgLSAiTm90aGluZyB0byB1bmluc3RhbGwuIEJ5ZSEiCg==",
+        "manifestDigest": "6f3345abc4ab65a9605819fc5364294fca36836c1dab2d42d466ccaa259a6817",
+        "mixins": {
+          "exec": {}
+        },
+        "version": "v0.38.11"
+      },
+      "sh.porter.file-parameters": {}
+    }
+  },
+  "parameters": {
+    "porter-debug": false
+  }
+}
