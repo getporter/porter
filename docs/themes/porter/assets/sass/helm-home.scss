@@ -95,6 +95,11 @@ nav.home-nav {
     .txt-github {
       color: white;
       font-size: 1.5rem;
+
+      @include mobile {
+        margin: 0 !important;
+        padding: 0 !important;
+      }
     }
 
     .btn-github {
@@ -185,6 +190,10 @@ nav.home-nav {
     box-shadow: none;
     border-radius: 20px;
 
+    @include mobile {
+      width: 63rem !important;
+    }
+
     .card-img-top {
       color: #a5d6d0;
     }
@@ -227,6 +236,16 @@ nav.home-nav {
       margin: 2rem 0;
       padding-top: 1em;
     }
+
+
+  @include mobile{
+    h2 {
+      font-size:2rem !important;
+    }
+    p, .why-porter, .why-porter li {
+      font-size: 1.2rem !important;
+    }
+  }
 
     p, ul, li {
       color: white;
@@ -316,6 +335,13 @@ nav.home-nav {
         font-size: 0.6em;
         margin-left: -5em;
       }
+
+      @include mobile {
+        font-size: 1.7rem;
+        img{
+          width: 65px ;
+        }
+    }
     }
 
     h3:not(:first-child) {
@@ -325,6 +351,15 @@ nav.home-nav {
     .columns {
       position: relative;
       padding: 30px;
+
+      @include mobile {
+        padding: 10px;
+
+        figcaption + img {
+          padding: 10px;
+          border-radius: 2em;
+        }
+      }
     }
 
     img {
@@ -342,6 +377,10 @@ nav.home-nav {
 
       code {
         border: none;
+      }
+
+      @include mobile {
+        font-size: 1.2rem;
       }
     }
 
@@ -370,6 +409,12 @@ nav.home-nav {
       height: 10px;
       transform: skew(-12deg) translateX(-50%);
       background: rgba(57,190,197,0.5);
+    }
+  }
+
+  .helm-features + .container{
+    @include mobile{
+      padding-bottom: 75px;
     }
   }
 
@@ -427,6 +472,10 @@ nav.home-nav {
         background-color: white;
         padding: 1.5em 2.25em;
         border-radius: 1em;
+
+        @include mobile {
+          padding: 0;
+        }
 
         li {
           font-size: 1.5rem;
@@ -626,6 +675,11 @@ nav.home-nav {
     color: $blue2;
     text-decoration:none !important ;
   }
+
+  @include mobile {
+    padding: 20px 20px 30px !important;
+    font-size: 1rem;
+  }
 }
 
 @media only screen and (min-device-width: $mobile-maximum-width + 1) {
@@ -692,7 +746,8 @@ nav.home-nav {
     img,
     p {
       float: none;
-      margin: 1.5rem auto;
+      padding: 0;
+      margin: 1.5rem 0 !important;
     }
 
     img {

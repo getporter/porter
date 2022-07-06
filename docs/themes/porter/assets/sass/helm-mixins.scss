@@ -173,75 +173,75 @@ $light1: lighten($light2, 2.5%);
  $desktopFloor: 64.0625em;
  $tabletFloor: 40.063em;
  $tabletCeiling: 64.0624em;
- $mobileCeiling: 40em;
- 
+ $mobileCeiling: 60em;
+
  @mixin mobile {
    @media only screen and (max-width: $mobileCeiling) {
      @content;
    }
  }
- 
+
  @mixin tablet {
    @media only screen and (min-width: $tabletFloor) {
      @content;
    }
  }
- 
+
  @mixin mobileAndTablet {
    @media only screen and (max-width: $tabletCeiling) {
      @content;
    }
  }
- 
+
  @mixin desktop {
    @media only screen and (min-width: $desktopFloor) {
      @content;
    }
  }
- 
+
  @mixin landscape {
    @media only screen and (min-width: 569px) and (max-width: 736px) and (orientation: landscape) {
      @content;
    }
  }
- 
+
  @mixin smallLandscape {
    @media only screen and (max-width: 568px) and (orientation: landscape) {
      @content;
    }
  }
- 
+
  // vertical alignment
- 
+
  @mixin fullheight {
    min-height: 100%;
    height: 100%;
  }
- 
+
  @mixin centerer {
    position: absolute;
    top: 50%;
    left: 50%;
    transform: translate(-50%, -50%);
  }
- 
+
  @mixin topper {
    position: absolute;
    top: 0%;
  }
- 
+
  @mixin bottomer {
    position: absolute;
    bottom: 0%;
  }
- 
+
  // link effect
  @mixin ripple($color: $salmon) {
    position: relative;
    display: inline-block;
    text-align: center;
    @include transition;
- 
+
    &::after {
      display: inline-block;
      content: "";
@@ -255,7 +255,7 @@ $light1: lighten($light2, 2.5%);
      margin: 0 0 0 -5%;
      @include transition;
    }
- 
+
    &:hover::after {
      width: 100%;
      left: 0;

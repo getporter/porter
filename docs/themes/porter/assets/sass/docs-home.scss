@@ -40,6 +40,14 @@
       position: fixed;
     }
 
+    .content{
+      .emoji-list {
+        @include mobile {
+          margin: 0 0 35px 0 !important;
+        }
+        }
+    }
+
     .billboard {
       background-color: white;
       background-size: 376px;
@@ -47,23 +55,38 @@
       position: relative;
       text-align:left;
 
+      @include mobile{
+        padding: 200px 23px 100px 20px;
+      }
+
       .helm-logo {
         max-width: 120px;
       }
 
       #underline1 {
         position: relative;
+
+        @include mobile {
+          background-image: linear-gradient(to right, #f6b6aa 0%, #f6b6aa 100%) !important;
+          background-repeat: no-repeat !important;
+          background-size: 100% 0.3em !important;
+          background-position: 0px 85% !important;
+        }
       }
 
       #underline1::before {
         content: "";
         position: absolute;
-        left: 52%;
+        left: 115px;
         bottom: 10px;
         width: 235px;
         height: 14px;
         transform: skew(-12deg) translateX(-50%);
         background: rgba(238,111,87,0.5);
+
+        @include mobile {
+          content: none;
+        }
       }
 
       h1 {
@@ -74,6 +97,11 @@
         font-size: 3.57rem;
         position: relative;
         text-transform: none !important;
+
+        @include mobile {
+          font-size: 11.755vw !important;
+          margin: 3rem 0 0 0 !important;
+        }
       }
 
       h2 {
@@ -82,6 +110,13 @@
         font-size: 1.4rem;
         line-height: 1.3;
         margin-bottom: 30px;
+
+        @include mobile {
+          font-size: 1.3rem !important;
+          line-height: 1.3 !important;
+          margin: 2rem 0 0 !important;
+          padding-bottom: 0rem !important;
+        }
       }
 
       .helm-logo {
