@@ -192,10 +192,8 @@ func (p *Porter) getUsedMixins(ctx context.Context, m *manifest.Manifest) ([]mix
 	ctx, span := tracing.StartSpan(ctx)
 	defer span.EndSpan()
 
-	usedMixins := make([]mixin.Metadata, len(m.Mixins))
-
 	g := new(errgroup.Group)
-	results := make(chan *mixin.Metadata, len(m.Mixins))
+	results := make(chan mixin.Metadata, len(m.Mixins))
 	for _, m := range m.Mixins {
 		m := m
 		g.Go(func() error {
@@ -204,7 +202,8 @@ func (p *Porter) getUsedMixins(ctx context.Context, m *manifest.Manifest) ([]mix
 				return err
 			}
 
-			results <- result.(*mixin.Metadata)
+			mixinMetadata := result.(*mixin.Metadata)
+			results <- *mixinMetadata
 			return nil
 		})
 	}
@@ -213,9 +212,10 @@ func (p *Porter) getUsedMixins(ctx context.Context, m *manifest.Manifest) ([]mix
 		return nil, err
 	}
 
+	usedMixins := make([]mixin.Metadata, len(m.Mixins))
 	for i := 0; i < len(usedMixins); i++ {
 		result := <-results
-		usedMixins[i] = *result
+		usedMixins[i] = result
 	}
 
 	return usedMixins, nil
