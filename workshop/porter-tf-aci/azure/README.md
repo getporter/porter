@@ -1,12 +1,12 @@
 # Advanced Azure + Terraform Cloud Native Application Bundle Using Porter
 
-This exercise extends the [porter-tf](https://porter.sh/src/workshop/porter-tf)  example in order provide a more complete example of buiding a CNAB that combines both infrastructure and deployment of an application. As in the `porter-tf` example, we will use the `arm` and `terraform` mixins to provision a MySQL database on Azure. We will then use the `arm` mixin with a custom [ARM](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-authoring-templates) template to deploy a notional web service as an Azure Container Instance. This part of the bundle could easily be replaced with deployment to Kubernetes or any other container runtime system, but this exercise will use Azure.
+This exercise extends the [porter-tf](https://getporter.org/src/workshop/porter-tf)  example in order provide a more complete example of buiding a CNAB that combines both infrastructure and deployment of an application. As in the `porter-tf` example, we will use the `arm` and `terraform` mixins to provision a MySQL database on Azure. We will then use the `arm` mixin with a custom [ARM](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-authoring-templates) template to deploy a notional web service as an Azure Container Instance. This part of the bundle could easily be replaced with deployment to Kubernetes or any other container runtime system, but this exercise will use Azure.
 
 ## Prerequisites
 
 In order to complete this exercise, you will need to have a recent Docker Desktop installed or you'll want to use [Play With Docker](https://labs.play-with-docker.com/) and you'll also need a Docker registry that you can push to. If you don't have one, a free DockerHub account will work. To create one of those, please visit https://hub.docker.com/signup.
 
-You'll also need to make sure Porter is [installed](https://porter.sh/install/).
+You'll also need to make sure Porter is [installed](https://getporter.org/install/).
 
 To install the bundle, you'll also need an Azure credential.
 

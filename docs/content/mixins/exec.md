@@ -7,7 +7,7 @@ Run a command or script.
 
 ✅ Learn how to use the exec mixin with our [Exec Mixin Best Practice Guide](/best-practices/exec-mixin/)
 
-Source: https://porter.sh/src/pkg/exec
+Source: https://getporter.org/src/pkg/exec
 
 ### Install or Upgrade
 ```

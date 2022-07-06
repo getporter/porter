@@ -86,7 +86,7 @@ exec:
   flags:
     c: '"echo Hello World"'
 `,
-			URL: "https://porter.sh/best-practices/exec-mixin/#quoting-escaping-bash-and-yaml",
+			URL: "https://getporter.org/best-practices/exec-mixin/#quoting-escaping-bash-and-yaml",
 		},
 	}
 

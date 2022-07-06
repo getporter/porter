@@ -16,8 +16,8 @@ We use our own tag for latest (instead of relying upon GitHub's latest release l
 
 We have a [packages](https://github.com/getporter/packages) repository that has our official mixin and plugin atom feeds used by porter mixin install and porter plugin install. It also contains an index of all known mixins and plugins from both the Porter Authors and the community, which is used by porter mixins search and porter plugins search.
 
-## DNS for porter.sh
+## DNS
 
-DNS entries for the `porter.sh` domain are managed via a [Netlify](https://www.netlify.com/) account.  A `cdn` CNAME record exists in this configuration such that `cdn.porter.sh` can represent the hostname for all artifact URLs.
+DNS entries for the `porter.sh` and `getporter.org` domains are managed via a [Netlify](https://www.netlify.com/) account.  A `cdn` CNAME record exists in this configuration such that `cdn.porter.sh` can represent the hostname for all artifact URLs.
 
 Netlify handles redirecting traffic to cdn.porter.sh to the appropriate backing store (either a GH release artifact or a file in a repo).

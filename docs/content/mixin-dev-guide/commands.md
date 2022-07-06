@@ -304,5 +304,5 @@ $ ~/.porter/mixins/exec/exec version --output json
 [skeletor]: https://github.com/getporter/skeletor
 [JSON Schema Validator]: https://www.jsonschemavalidator.net/
 [YAML to JSON converter]: https://www.convertjson.com/yaml-to-json.htm
-[exec mixin schema]: https://porter.sh/src/pkg/exec/schema/exec.json
-[helm mixin schema]: https://porter.sh/helm-mixin/src/pkg/helm/schema/schema.json
+[exec mixin schema]: /src/pkg/exec/schema/exec.json
+[helm mixin schema]: /helm-mixin/src/pkg/helm/schema/schema.json

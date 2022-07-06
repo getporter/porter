@@ -6,7 +6,7 @@ This exercise will show you how to build a Terraform based Cloud Native Applicat
 
 In order to complete this exercise, you will need to have a recent Docker Desktop installed or you'll want to use [Play With Docker](https://labs.play-with-docker.com/) and you'll also need a Docker registry that you can push to. If you don't have one, a free DockerHub account will work. To create one of those, please visit https://hub.docker.com/signup.
 
-You'll also need to make sure Porter is [installed](https://porter.sh/install/).
+You'll also need to make sure Porter is [installed](https://getporter.org/install/).
 
 ## Review the terraform/ directory
 

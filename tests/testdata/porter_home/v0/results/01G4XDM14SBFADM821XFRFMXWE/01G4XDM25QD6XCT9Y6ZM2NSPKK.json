@@ -1,0 +1,13 @@
+{
+  "id": "01G4XDM25QD6XCT9Y6ZM2NSPKK",
+  "claimId": "01G4XDM14SBFADM821XFRFMXWE",
+  "created": "2022-06-06T16:09:36.567085-05:00",
+  "message": "1 error occurred:\n\t* container exit code: 1, message: \u003cnil\u003e\n\n",
+  "status": "failed",
+  "outputs": {
+    "io.cnab.outputs.invocationImageLogs": {
+      "contentDigest": "sha256:3a7988f45ec1a4fda153eb0324e498f933d04f44c9a704ae808244dea688204a",
+      "generatedByBundle": "false"
+    }
+  }
+}

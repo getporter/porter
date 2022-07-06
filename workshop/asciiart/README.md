@@ -12,7 +12,7 @@ your invocation image to pick up your changes.
 * Don't forget to copy your images into your invocation image to /cnab/app/.
 * The command to run is `goasciiart -p=gopher.png -w=100`.
 
-[asciiart]: https://porter.sh/src/workshop/asciiart
+[asciiart]: https://getporter.org/src/workshop/asciiart
 
 ## Gophers!
 [Gopher artwork][gophers] is copyright Ashley McNamara and is licensed under the 

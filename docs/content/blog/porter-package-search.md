@@ -55,7 +55,7 @@ installed terraform mixin v0.5.1-beta.1 (597a442)
 ```
 
 
-The [Terraform mixin](https://porter.sh/mixins/terraform) is now available for use in our next Porter bundle.
+The [Terraform mixin](/mixins/terraform) is now available for use in our next Porter bundle.
 To peruse the full list of mixins, simply issue `porter mixin search` without
 any query.
 
@@ -73,16 +73,16 @@ plugin added to the list.
 instructions on how to add new entries to the lists.
 
 🎉 Interested in developing a new mixin? Check out the
-[Mixin Development Guide](https://porter.sh/mixin-dev-guide/) to get started.
+[Mixin Development Guide](/mixin-dev-guide/) to get started.
 We hope to craft a similar guide for plugin development, but in the meantime,
 check out the code for the `azure` plugin via the
 [Porter Azure Plugins](https://github.com/deislabs/porter-azure-plugins) repo.
 
-[mixins]: https://porter.sh/mixins/
-[plugins]: https://porter.sh/plugins/
-[install]: https://porter.sh/install/
-[exec]: https://porter.sh/mixins/exec/
-[helm]: https://porter.sh/mixins/helm/
-[kubernetes]: https://porter.sh/mixins/kubernetes/
+[mixins]: /mixins/
+[plugins]: /plugins/
+[install]: /install/
+[exec]: /mixins/exec/
+[helm]: /mixins/helm/
+[kubernetes]: /mixins/kubernetes/
 [porter-packages]: https://github.com/deislabs/porter-packages
-[package-search]: https://porter.sh/package-search/
+[package-search]: /package-search/

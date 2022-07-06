@@ -2,6 +2,7 @@ package migrations
 
 import (
 	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
 )
 
@@ -13,10 +14,15 @@ type TestManager struct {
 
 func NewTestManager(c *config.TestConfig) *TestManager {
 	testStore := storage.NewTestStore(c)
-	return &TestManager{
+	m := &TestManager{
 		testStore: testStore,
 		Manager:   NewManager(c.Config, testStore),
 	}
+	ps := storage.NewTestParameterProvider(c.TestContext.T)
+	ss := secrets.NewTestSecretsProvider()
+	sanitizer := storage.NewSanitizer(ps, ss)
+	m.Initialize(sanitizer)
+	return m
 }
 
 func (m *TestManager) Close() error {
