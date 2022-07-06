@@ -3,6 +3,7 @@ package cnab
 import (
 	"testing"
 
+	depsv1 "get.porter.sh/porter/pkg/cnab/dependencies/v1"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -13,8 +14,8 @@ func TestDependencySolver_ResolveDependencies(t *testing.T) {
 
 	bun := NewBundle(bundle.Bundle{
 		Custom: map[string]interface{}{
-			DependenciesExtensionKey: Dependencies{
-				Requires: map[string]Dependency{
+			DependenciesV1ExtensionKey: depsv1.Dependencies{
+				Requires: map[string]depsv1.Dependency{
 					"mysql": {
 						Bundle: "getporter/mysql:5.7",
 					},
@@ -51,30 +52,30 @@ func TestDependencySolver_ResolveVersion(t *testing.T) {
 
 	testcases := []struct {
 		name        string
-		dep         Dependency
+		dep         depsv1.Dependency
 		wantVersion string
 		wantError   string
 	}{
 		{name: "pinned version",
-			dep:         Dependency{Bundle: "mysql:5.7"},
+			dep:         depsv1.Dependency{Bundle: "mysql:5.7"},
 			wantVersion: "5.7"},
 		{name: "unimplemented range",
-			dep:       Dependency{Bundle: "mysql", Version: &DependencyVersion{Ranges: []string{"1 - 1.5"}}},
+			dep:       depsv1.Dependency{Bundle: "mysql", Version: &depsv1.DependencyVersion{Ranges: []string{"1 - 1.5"}}},
 			wantError: "not implemented"},
 		{name: "default tag to latest",
-			dep:         Dependency{Bundle: "getporterci/porter-test-only-latest"},
+			dep:         depsv1.Dependency{Bundle: "getporterci/porter-test-only-latest"},
 			wantVersion: "latest"},
 		{name: "no default tag",
-			dep:       Dependency{Bundle: "getporterci/porter-test-no-default-tag"},
+			dep:       depsv1.Dependency{Bundle: "getporterci/porter-test-no-default-tag"},
 			wantError: "no tag was specified"},
 		{name: "default tag to highest semver",
-			dep:         Dependency{Bundle: "getporterci/porter-test-with-versions", Version: &DependencyVersion{Ranges: nil, AllowPrereleases: true}},
+			dep:         depsv1.Dependency{Bundle: "getporterci/porter-test-with-versions", Version: &depsv1.DependencyVersion{Ranges: nil, AllowPrereleases: true}},
 			wantVersion: "v1.3-beta1"},
 		{name: "default tag to highest semver, explicitly excluding prereleases",
-			dep:         Dependency{Bundle: "getporterci/porter-test-with-versions", Version: &DependencyVersion{Ranges: nil, AllowPrereleases: false}},
+			dep:         depsv1.Dependency{Bundle: "getporterci/porter-test-with-versions", Version: &depsv1.DependencyVersion{Ranges: nil, AllowPrereleases: false}},
 			wantVersion: "v1.2"},
 		{name: "default tag to highest semver, excluding prereleases by default",
-			dep:         Dependency{Bundle: "getporterci/porter-test-with-versions"},
+			dep:         depsv1.Dependency{Bundle: "getporterci/porter-test-with-versions"},
 			wantVersion: "v1.2"},
 	}
 

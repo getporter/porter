@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg/cnab"
+	depsv1 "get.porter.sh/porter/pkg/cnab/dependencies/v1"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/mixin"
@@ -85,7 +86,7 @@ func TestManifestConverter_ToBundle(t *testing.T) {
 	assert.Contains(t, bun.Parameters, "porter-debug", "porter-debug parameter was not defined")
 	assert.Contains(t, bun.Definitions, "porter-debug-parameter", "porter-debug definition was not defined")
 
-	assert.True(t, bun.HasDependencies(), "Dependencies was not populated")
+	assert.True(t, bun.HasDependenciesV1(), "DependenciesV1 was not populated")
 
 	assert.Len(t, bun.Outputs, 1, "expected one output for the bundle state")
 }
@@ -538,24 +539,24 @@ func TestManifestConverter_generateDependencies(t *testing.T) {
 
 	testcases := []struct {
 		name    string
-		wantDep cnab.Dependency
+		wantDep depsv1.Dependency
 	}{
-		{"no-version", cnab.Dependency{
+		{"no-version", depsv1.Dependency{
 			Name:   "mysql",
 			Bundle: "getporter/azure-mysql:5.7",
 		}},
-		{"no-ranges, uses prerelease", cnab.Dependency{
+		{"no-ranges, uses prerelease", depsv1.Dependency{
 			Name:   "ad",
 			Bundle: "getporter/azure-active-directory",
-			Version: &cnab.DependencyVersion{
+			Version: &depsv1.DependencyVersion{
 				AllowPrereleases: true,
 				Ranges:           []string{"1.0.0-0"},
 			},
 		}},
-		{"with-ranges", cnab.Dependency{
+		{"with-ranges", depsv1.Dependency{
 			Name:   "storage",
 			Bundle: "getporter/azure-blob-storage",
-			Version: &cnab.DependencyVersion{
+			Version: &depsv1.DependencyVersion{
 				Ranges: []string{
 					"1.x - 2,2.1 - 3.x",
 				},
@@ -583,7 +584,7 @@ func TestManifestConverter_generateDependencies(t *testing.T) {
 			require.Len(t, deps.Requires, 3, "incorrect number of dependencies were generated")
 			require.Equal(t, []string{"mysql", "ad", "storage"}, deps.Sequence, "incorrect sequence was generated")
 
-			var dep *cnab.Dependency
+			var dep *depsv1.Dependency
 			for _, d := range deps.Requires {
 				if d.Bundle == tc.wantDep.Bundle {
 					dep = &d

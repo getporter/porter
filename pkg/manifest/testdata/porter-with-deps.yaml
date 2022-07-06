@@ -16,6 +16,7 @@ dependencies:
         reference: "getporter/azure-mysql:5.7"
       parameters:
         database-name: wordpress
+
 install:
   - exec:
       description: "Install Hello World"

@@ -78,16 +78,19 @@ func TestLoadManifestWithDependencies(t *testing.T) {
 	m, err := LoadManifestFrom(context.Background(), c.Config, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
-	assert.NotNil(t, m)
+	require.NotNil(t, m)
 	assert.Equal(t, []MixinDeclaration{{Name: "exec"}}, m.Mixins)
-	assert.Len(t, m.Install, 1)
+	require.Len(t, m.Install, 1)
 
 	installStep := m.Install[0]
 	description, _ := installStep.GetDescription()
-	assert.NotNil(t, description)
+	require.NotNil(t, description)
 
 	mixin := installStep.GetMixinName()
 	assert.Equal(t, "exec", mixin)
+
+	require.Len(t, m.Dependencies.RequiredDependencies, 1, "expected one dependency")
+	assert.Equal(t, "getporter/azure-mysql:5.7", m.Dependencies.RequiredDependencies[0].Bundle.Reference, "expected a v1 schema for the dependency delcaration")
 }
 
 func TestLoadManifestWithDependenciesInOrder(t *testing.T) {
