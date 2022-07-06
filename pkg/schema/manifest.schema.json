@@ -191,7 +191,7 @@
           "type": "string"
         },
         "version": {
-          "description": "Bundle version contstraint for version matching, see https://github.com/Masterminds/semver/blob/master/README.md#checking-version-constraints",
+          "description": "Bundle version constraint for version matching, see https://github.com/Masterminds/semver/blob/master/README.md#checking-version-constraints",
           "type": "string"
         }
       },
