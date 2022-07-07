@@ -11,6 +11,8 @@ import (
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/pkgmgmt"
 	"get.porter.sh/porter/pkg/portercontext"
+	"get.porter.sh/porter/pkg/tracing"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 var _ pkgmgmt.PackageManager = &FileSystem{}
@@ -66,6 +68,9 @@ func (fs *FileSystem) List() ([]string, error) {
 }
 
 func (fs *FileSystem) GetMetadata(ctx context.Context, name string) (pkgmgmt.PackageMetadata, error) {
+	ctx, span := tracing.StartSpan(ctx, attribute.String("package.type", fs.PackageType), attribute.String("package.name", name))
+	defer span.EndSpan()
+
 	pkgDir, err := fs.GetPackageDir(name)
 	if err != nil {
 		return nil, err
