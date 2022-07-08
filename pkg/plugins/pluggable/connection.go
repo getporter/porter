@@ -156,9 +156,11 @@ func (c *PluginConnection) Start(ctx context.Context, pluginCfg io.Reader) error
 	span.Debug("Connecting to plugin", attribute.String("plugin-command", strings.Join(c.pluginCmd.Args, " ")))
 	rpcClient, err := c.client.Client(ctx)
 	if err != nil {
-		if stderr := errbuf.String(); stderr != "" {
-			err = fmt.Errorf("could not connect to the %s plugin: %w: %s", c.key, err, stderr)
+		pluginErr := errbuf.String()
+		if pluginErr != "" {
+			pluginErr = ": plugin stderr was " + pluginErr
 		}
+		err = fmt.Errorf("could not connect to the %s plugin%s: %w", c.key, pluginErr, err)
 		span.Error(err) // Emit the error before trying to close the connection
 		c.Close(ctx)
 		return err
