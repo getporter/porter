@@ -430,7 +430,7 @@ func chmodRecursive(name string, mode os.FileMode) error {
 
 // Run integration tests (slow).
 func TestIntegration() {
-	mg.Deps(tests.EnsureTestCluster, copySchema)
+	mg.Deps(tests.EnsureTestCluster, copySchema, BuildTestPlugin)
 
 	var run string
 	runTest := os.Getenv("PORTER_RUN_TEST")
@@ -442,8 +442,12 @@ func TestIntegration() {
 	if mg.Verbose() {
 		verbose = "-v"
 	}
-	must.RunV("go", "build", "-o", "bin/testplugin", "./cmd/testplugin")
+
 	must.Command("go", "test", verbose, "-timeout=30m", run, "-tags=integration", "./...").CollapseArgs().RunV()
+}
+
+func BuildTestPlugin() {
+	must.RunV("go", "build", "-o", "bin/testplugin", "./cmd/testplugin")
 }
 
 // Copy the locally built porter and exec binaries to PORTER_HOME
