@@ -609,7 +609,7 @@ type BundleCriteria struct {
 	// This includes considering prereleases to be invalid if the ranges does not include one.
 	// If you want to have it include pre-releases a simple solution is to include -0 in your range."
 	// https://github.com/Masterminds/semver/blob/master/README.md#checking-version-constraints
-	Version string `yaml:"versions,omitempty"`
+	Version string `yaml:"version,omitempty"`
 }
 
 func (d *RequiredDependency) Validate(cxt *portercontext.Context) error {

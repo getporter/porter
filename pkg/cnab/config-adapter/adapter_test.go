@@ -544,11 +544,12 @@ func TestManifestConverter_generateDependencies(t *testing.T) {
 			Name:   "mysql",
 			Bundle: "getporter/azure-mysql:5.7",
 		}},
-		{"no-ranges", cnab.Dependency{
+		{"no-ranges, uses prerelease", cnab.Dependency{
 			Name:   "ad",
 			Bundle: "getporter/azure-active-directory",
 			Version: &cnab.DependencyVersion{
 				AllowPrereleases: true,
+				Ranges:           []string{"1.0.0-0"},
 			},
 		}},
 		{"with-ranges", cnab.Dependency{
@@ -556,21 +557,17 @@ func TestManifestConverter_generateDependencies(t *testing.T) {
 			Bundle: "getporter/azure-blob-storage",
 			Version: &cnab.DependencyVersion{
 				Ranges: []string{
-					"1.x - 2",
-					"2.1 - 3.x",
+					"1.x - 2,2.1 - 3.x",
 				},
 			},
-		}},
-		{"with-tag", cnab.Dependency{
-			Name:   "dep-with-tag",
-			Bundle: "getporter/dep-bun:v0.1.0",
 		}},
 	}
 
 	for _, tc := range testcases {
+		tc := tc
+
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			tc := tc
 
 			c := config.NewTestConfig(t)
 			c.TestContext.AddTestFile("testdata/porter-with-deps.yaml", config.Name)
@@ -581,9 +578,10 @@ func TestManifestConverter_generateDependencies(t *testing.T) {
 
 			a := NewManifestConverter(c.Config, m, nil, nil)
 
-			deps := a.generateDependencies()
-			require.Len(t, deps.Requires, 4, "incorrect number of dependencies were generated")
-			require.Equal(t, []string{"mysql", "ad", "storage", "dep-with-tag"}, deps.Sequence, "incorrect sequence was generated")
+			deps, err := a.generateDependencies()
+			require.NoError(t, err, "generateDependencies failed")
+			require.Len(t, deps.Requires, 3, "incorrect number of dependencies were generated")
+			require.Equal(t, []string{"mysql", "ad", "storage"}, deps.Sequence, "incorrect sequence was generated")
 
 			var dep *cnab.Dependency
 			for _, d := range deps.Requires {

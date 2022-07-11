@@ -11,6 +11,7 @@ import (
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/mixin"
 	"get.porter.sh/porter/pkg/tracing"
+	"github.com/Masterminds/semver/v3"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
 )
@@ -71,7 +72,11 @@ func (c *ManifestConverter) ToBundle(ctx context.Context) (cnab.ExtendedBundle, 
 	b.Outputs = c.generateBundleOutputs(ctx, &b.Definitions)
 	b.Credentials = c.generateBundleCredentials()
 	b.Images = c.generateBundleImages()
-	b.Custom = c.generateCustomExtensions(&b)
+	custom, err := c.generateCustomExtensions(&b)
+	if err != nil {
+		return cnab.ExtendedBundle{}, err
+	}
+	b.Custom = custom
 	b.RequiredExtensions = c.generateRequiredExtensions(b)
 
 	b.Custom[config.CustomPorterKey] = stamp
@@ -401,10 +406,9 @@ func (c *ManifestConverter) generateBundleImages() map[string]bundle.Image {
 	return images
 }
 
-func (c *ManifestConverter) generateDependencies() *cnab.Dependencies {
-
+func (c *ManifestConverter) generateDependencies() (*cnab.Dependencies, error) {
 	if len(c.Manifest.Dependencies.RequiredDependencies) == 0 {
-		return nil
+		return nil, nil
 	}
 
 	deps := &cnab.Dependencies{
@@ -421,12 +425,18 @@ func (c *ManifestConverter) generateDependencies() *cnab.Dependencies {
 			dependencyRef.Version = &cnab.DependencyVersion{
 				Ranges: []string{dep.Bundle.Version},
 			}
+
+			// If we can detect that prereleases are used in the version, then set AllowPrereleases to true
+			v, err := semver.NewVersion(dep.Bundle.Version)
+			if err == nil {
+				dependencyRef.Version.AllowPrereleases = v.Prerelease() != ""
+			}
 		}
 		deps.Sequence = append(deps.Sequence, dep.Name)
 		deps.Requires[dep.Name] = dependencyRef
 	}
 
-	return deps
+	return deps, nil
 }
 
 func (c *ManifestConverter) generateParameterSources(b *cnab.ExtendedBundle) cnab.ParameterSources {
@@ -576,7 +586,7 @@ func toFloat(v float64) *float64 {
 	return &v
 }
 
-func (c *ManifestConverter) generateCustomExtensions(b *cnab.ExtendedBundle) map[string]interface{} {
+func (c *ManifestConverter) generateCustomExtensions(b *cnab.ExtendedBundle) (map[string]interface{}, error) {
 	customExtensions := map[string]interface{}{
 		cnab.FileParameterExtensionKey: struct{}{},
 	}
@@ -587,7 +597,10 @@ func (c *ManifestConverter) generateCustomExtensions(b *cnab.ExtendedBundle) map
 	}
 
 	// Add the dependency extension
-	deps := c.generateDependencies()
+	deps, err := c.generateDependencies()
+	if err != nil {
+		return nil, err
+	}
 	if deps != nil && len(deps.Requires) > 0 {
 		customExtensions[cnab.DependenciesExtensionKey] = deps
 	}
@@ -603,7 +616,7 @@ func (c *ManifestConverter) generateCustomExtensions(b *cnab.ExtendedBundle) map
 		customExtensions[lookupExtensionKey(ext.Name)] = ext.Config
 	}
 
-	return customExtensions
+	return customExtensions, nil
 }
 
 func (c *ManifestConverter) generateRequiredExtensions(b cnab.ExtendedBundle) []string {
