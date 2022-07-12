@@ -1,6 +1,7 @@
 package porter
 
 import (
+	"context"
 	"testing"
 
 	"get.porter.sh/porter/pkg/cache"
@@ -12,6 +13,7 @@ import (
 )
 
 func TestBundleResolver_Resolve_ForcePull(t *testing.T) {
+	ctx := context.Background()
 	tc := config.NewTestConfig(t)
 	testReg := cnabtooci.NewTestRegistry()
 	testCache := cache.NewTestCache(cache.New(tc.Config))
@@ -37,13 +39,14 @@ func TestBundleResolver_Resolve_ForcePull(t *testing.T) {
 		Force:     true,
 	}
 	require.NoError(t, opts.Validate())
-	resolver.Resolve(opts)
+	resolver.Resolve(ctx, opts)
 
 	assert.False(t, cacheSearched, "Force should have skipped the cache")
 	assert.True(t, pulled, "The bundle should have been re-pulled")
 }
 
 func TestBundleResolver_Resolve_CacheHit(t *testing.T) {
+	ctx := context.Background()
 	tc := config.NewTestConfig(t)
 	testReg := cnabtooci.NewTestRegistry()
 	testCache := cache.NewTestCache(cache.New(tc.Config))
@@ -65,13 +68,14 @@ func TestBundleResolver_Resolve_CacheHit(t *testing.T) {
 	}
 
 	opts := BundlePullOptions{Reference: "ghcr.io/getporter/examples/porter-hello:v0.2.0"}
-	resolver.Resolve(opts)
+	resolver.Resolve(ctx, opts)
 
 	assert.True(t, cacheSearched, "The cache should be searched when force is not specified")
 	assert.False(t, pulled, "The bundle should NOT be pulled because it was found in the cache")
 }
 
 func TestBundleResolver_Resolve_CacheMiss(t *testing.T) {
+	ctx := context.Background()
 	tc := config.NewTestConfig(t)
 	testReg := cnabtooci.NewTestRegistry()
 	testCache := cache.NewTestCache(cache.New(tc.Config))
@@ -93,7 +97,7 @@ func TestBundleResolver_Resolve_CacheMiss(t *testing.T) {
 	}
 
 	opts := BundlePullOptions{Reference: "ghcr.io/getporter/examples/porter-hello:v0.2.0"}
-	resolver.Resolve(opts)
+	resolver.Resolve(ctx, opts)
 
 	assert.True(t, cacheSearched, "The cache should be searched when force is not specified")
 	assert.True(t, pulled, "The bundle should have been pulled because the bundle was not in the cache")

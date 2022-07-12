@@ -94,7 +94,7 @@ func (p *Porter) resolveBundleReference(ctx context.Context, opts *BundleActionO
 	useReference := func(ref cnab.OCIReference) error {
 		pullOpts := *opts // make a copy just to do the pull
 		pullOpts.Reference = ref.String()
-		cachedBundle, err := p.prepullBundleByReference(&pullOpts)
+		cachedBundle, err := p.prepullBundleByReference(ctx, &pullOpts)
 		if err != nil {
 			return err
 		}
@@ -218,12 +218,12 @@ func (p *Porter) BuildActionArgs(ctx context.Context, installation storage.Insta
 // prepullBundleByReference handles calling the bundle pull operation and updating
 // the shared options like name and bundle file path. This is used by install, upgrade
 // and uninstall
-func (p *Porter) prepullBundleByReference(opts *BundleActionOptions) (cache.CachedBundle, error) {
+func (p *Porter) prepullBundleByReference(ctx context.Context, opts *BundleActionOptions) (cache.CachedBundle, error) {
 	if opts.Reference == "" {
 		return cache.CachedBundle{}, nil
 	}
 
-	cachedBundle, err := p.PullBundle(opts.BundlePullOptions)
+	cachedBundle, err := p.PullBundle(ctx, opts.BundlePullOptions)
 	if err != nil {
 		return cache.CachedBundle{}, err
 	}
