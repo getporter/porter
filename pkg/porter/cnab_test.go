@@ -190,13 +190,12 @@ func TestSharedOptions_LoadParameters(t *testing.T) {
 }
 
 func TestSharedOptions_CombineParameters(t *testing.T) {
-	c := portercontext.NewTestContext(t)
-	c.Debug = false
+	ctx := context.Background()
 
 	t.Run("no override present, no parameter set present", func(t *testing.T) {
 		opts := sharedOptions{}
 
-		params := opts.combineParameters(c.Context)
+		params := opts.combineParameters(ctx)
 		require.Equal(t, map[string]string{}, params,
 			"expected combined params to be empty")
 	})
@@ -208,7 +207,7 @@ func TestSharedOptions_CombineParameters(t *testing.T) {
 			},
 		}
 
-		params := opts.combineParameters(c.Context)
+		params := opts.combineParameters(ctx)
 		require.Equal(t, "foo_cli_override", params["foo"],
 			"expected param 'foo' to have override value")
 	})
@@ -220,7 +219,7 @@ func TestSharedOptions_CombineParameters(t *testing.T) {
 			},
 		}
 
-		params := opts.combineParameters(c.Context)
+		params := opts.combineParameters(ctx)
 		require.Equal(t, "foo_via_paramset", params["foo"],
 			"expected param 'foo' to have parameter set value")
 	})
@@ -235,17 +234,9 @@ func TestSharedOptions_CombineParameters(t *testing.T) {
 			},
 		}
 
-		params := opts.combineParameters(c.Context)
+		params := opts.combineParameters(ctx)
 		require.Equal(t, "foo_cli_override", params["foo"],
 			"expected param 'foo' to have override value, which has precedence over the parameter set value")
-	})
-
-	t.Run("debug on", func(t *testing.T) {
-		var opts sharedOptions
-		debugContext := portercontext.NewTestContext(t)
-		debugContext.Debug = true
-		params := opts.combineParameters(debugContext.Context)
-		require.Equal(t, "true", params["porter-debug"], "porter-debug should be set to true when p.Debug is true")
 	})
 }
 
