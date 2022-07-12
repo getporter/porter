@@ -19,7 +19,6 @@ install:
       flags:
         c: "{{ bundle.parameters.command }}"
 
-
 uninstall:
   - exec:
       description: "Uninstall Hello World"

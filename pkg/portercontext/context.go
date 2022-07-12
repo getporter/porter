@@ -26,7 +26,8 @@ import (
 
 const (
 	// MixinOutputsDir represents the directory where mixin output files are written/read
-	MixinOutputsDir = "/cnab/app/porter/outputs"
+	MixinOutputsDir               = "/cnab/app/porter/outputs"
+	MixinOutputMetadataFileSuffix = "-metadata"
 
 	// EnvCorrelationID is the name of the environment variable containing the
 	// id to correlate logs with a workflow.
@@ -485,7 +486,7 @@ func (c *Context) CopyFile(src, dest string) error {
 
 // WriteMixinOutputToFile writes the provided bytes (representing a mixin output)
 // to a file named by the provided filename in Porter's mixin outputs directory
-func (c *Context) WriteMixinOutputToFile(filename string, bytes []byte) error {
+func (c *Context) WriteMixinOutputToFile(filename string, content []byte) error {
 	exists, err := c.FileSystem.DirExists(MixinOutputsDir)
 	if err != nil {
 		return err
@@ -496,7 +497,7 @@ func (c *Context) WriteMixinOutputToFile(filename string, bytes []byte) error {
 		}
 	}
 
-	return c.FileSystem.WriteFile(filepath.Join(MixinOutputsDir, filename), bytes, pkg.FileModeWritable)
+	return c.FileSystem.WriteFile(filepath.Join(MixinOutputsDir, filename), content, pkg.FileModeWritable)
 }
 
 // SetSensitiveValues sets the sensitive values needing masking on output/err streams

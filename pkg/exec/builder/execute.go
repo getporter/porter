@@ -3,11 +3,14 @@ package builder
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"os/exec"
+	"strconv"
 	"strings"
+	"time"
 
 	"get.porter.sh/porter/pkg/portercontext"
 )
@@ -94,6 +97,14 @@ func ExecuteSingleStepAction(cxt *portercontext.Context, action ExecutableAction
 	}
 
 	err = ProcessFileOutputs(cxt, swo)
+	if err != nil {
+		return output, err
+	}
+
+	err = SaveStepMetadata(cxt, swo)
+	if err != nil {
+		return output, err
+	}
 	return output, err
 }
 
@@ -300,4 +311,21 @@ func findNextWord(input string) (string, string, error) {
 	}
 
 	return buf.String(), "", nil
+}
+
+func SaveStepMetadata(cxt *portercontext.Context, swo StepWithOutputs) error {
+	outputs := swo.GetOutputs()
+
+	var metadata StepMetadata
+	for _, o := range outputs {
+		metadata.AddSensitiveOutput(o)
+	}
+
+	content, err := json.Marshal(metadata)
+	if err != nil {
+		return fmt.Errorf("failed to marshal step metadata: %w", err)
+	}
+
+	name := strconv.FormatInt(time.Now().Unix(), 10) + portercontext.MixinOutputMetadataFileSuffix
+	return cxt.WriteMixinOutputToFile(name, content)
 }

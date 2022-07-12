@@ -155,10 +155,11 @@ var _ builder.OutputFile = Output{}
 var _ builder.OutputJsonPath = Output{}
 
 type Output struct {
-	Name     string `yaml:"name"`
-	FilePath string `yaml:"path,omitempty"`
-	JsonPath string `yaml:"jsonPath,omitempty"`
-	Regex    string `yaml:"regex,omitempty"`
+	Name      string `yaml:"name"`
+	FilePath  string `yaml:"path,omitempty"`
+	JsonPath  string `yaml:"jsonPath,omitempty"`
+	Regex     string `yaml:"regex,omitempty"`
+	Sensitive bool   `yaml:"sensitive,omitempty"`
 }
 
 func (o Output) GetName() string {
@@ -175,4 +176,8 @@ func (o Output) GetJsonPath() string {
 
 func (o Output) GetRegex() string {
 	return o.Regex
+}
+
+func (o Output) IsSensitive() bool {
+	return o.Sensitive
 }

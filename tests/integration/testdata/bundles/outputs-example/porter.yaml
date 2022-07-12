@@ -22,7 +22,6 @@ install:
         - dump-config
       outputs:
         - name: user
-          sensitive: false
           jsonPath: '$.user'
   # This step tests successful interpolation of a step-level output
   - exec:

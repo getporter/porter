@@ -727,12 +727,6 @@ func (od *OutputDefinition) Validate() error {
 	return result.ErrorOrNil()
 }
 
-type BundleOutput struct {
-	Name                string `yaml:"name"`
-	Path                string `yaml:"path"`
-	EnvironmentVariable string `yaml:"env"`
-}
-
 type Steps []*Step
 
 func (s Steps) Validate(m *Manifest) error {
