@@ -1,6 +1,7 @@
 package exec
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -26,10 +27,10 @@ const (
 	CodeBashCArgMissingQuotes linter.Code = "exec-101"
 )
 
-func (m *Mixin) Lint() (linter.Results, error) {
+func (m *Mixin) Lint(ctx context.Context) (linter.Results, error) {
 	var input BuildInput
 
-	err := builder.LoadAction(m.Context, "", func(contents []byte) (interface{}, error) {
+	err := builder.LoadAction(ctx, m.Context, "", func(contents []byte) (interface{}, error) {
 		err := yaml.Unmarshal(contents, &input)
 		return &input, err
 	})
@@ -111,8 +112,8 @@ exec:
 	return results, nil
 }
 
-func (m *Mixin) PrintLintResults() error {
-	results, err := m.Lint()
+func (m *Mixin) PrintLintResults(ctx context.Context) error {
+	results, err := m.Lint(ctx)
 	if err != nil {
 		return err
 	}

@@ -12,7 +12,7 @@ func buildInstallCommand(m *exec.Mixin) *cobra.Command {
 		Use:   "install",
 		Short: "Execute the install functionality of this mixin",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return m.Execute(opts)
+			return m.Execute(cmd.Context(), opts)
 		},
 	}
 	flags := cmd.Flags()
