@@ -11,6 +11,7 @@ import (
 	"get.porter.sh/porter/pkg/mixin"
 	"get.porter.sh/porter/pkg/templates"
 	"get.porter.sh/porter/pkg/test"
+	"get.porter.sh/porter/tests"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -111,13 +112,20 @@ COPY mybin /cnab/app/
 func TestPorter_generateDockerfile(t *testing.T) {
 	t.Parallel()
 
+	ctx := context.Background()
 	c := config.NewTestConfig(t)
+	defer c.Close()
+
+	// Start a span so we can capture the output
+	ctx, log := c.StartRootSpan(ctx, t.Name())
+	defer log.Close()
+
 	tmpl := templates.NewTemplates(c.Config)
 	configTpl, err := tmpl.GetManifest()
 	require.Nil(t, err)
 	c.TestContext.AddTestFileContents(configTpl, config.Name)
 
-	m, err := manifest.LoadManifestFrom(context.Background(), c.Config, config.Name)
+	m, err := manifest.LoadManifestFrom(ctx, c.Config, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
 	// ignore mixins in the unit tests
@@ -125,18 +133,16 @@ func TestPorter_generateDockerfile(t *testing.T) {
 
 	mp := mixin.NewTestMixinProvider()
 	g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
-	err = g.GenerateDockerFile(context.Background())
+	err = g.GenerateDockerFile(ctx)
 	require.NoError(t, err)
 
 	wantDockerfilePath := ".cnab/Dockerfile"
-	dockerfileExists, err := c.FileSystem.Exists(wantDockerfilePath)
+	gotDockerfile, err := c.FileSystem.ReadFile(wantDockerfilePath)
 	require.NoError(t, err)
-	require.True(t, dockerfileExists, "Dockerfile wasn't written")
 
-	f, _ := c.FileSystem.Stat(wantDockerfilePath)
-	if f.Size() == 0 {
-		t.Fatalf("Dockerfile is empty")
-	}
+	// Verify that we logged the dockerfile contents
+	tests.RequireOutputContains(t, c.TestContext.GetError(), string(gotDockerfile), "expected the dockerfile to be printed to the logs")
+	test.CompareGoldenFile(t, "testdata/buildkit.Dockerfile", string(gotDockerfile))
 
 	// Verify that we didn't generate a Dockerfile at the root of the bundle dir
 	oldDockerfilePathExists, _ := c.FileSystem.Exists("Dockerfile")
