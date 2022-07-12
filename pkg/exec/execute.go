@@ -27,6 +27,6 @@ func (m *Mixin) Execute(ctx context.Context, opts ExecuteOptions) error {
 		return err
 	}
 
-	_, err = builder.ExecuteSingleStepAction(ctx, m.Config, action)
+	_, err = builder.ExecuteSingleStepAction(m.Context, action)
 	return err
 }

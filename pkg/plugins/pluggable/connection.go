@@ -89,7 +89,7 @@ func (c *PluginConnection) Start(ctx context.Context, pluginCfg io.Reader) error
 
 	// Create a command to run the plugin
 	if c.key.IsInternal {
-		porterPath, err := c.config.GetPorterPath()
+		porterPath, err := c.config.GetPorterPath(ctx)
 		if err != nil {
 			return fmt.Errorf("could not determine the path to the porter pluginProtocol: %w", err)
 		}

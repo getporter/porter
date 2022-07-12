@@ -1,6 +1,7 @@
 package feed
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"regexp"
@@ -9,6 +10,7 @@ import (
 
 	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/portercontext"
+	"get.porter.sh/porter/pkg/tracing"
 	"github.com/Masterminds/semver/v3"
 	"github.com/cbroglie/mustache"
 )
@@ -48,13 +50,16 @@ func (o *GenerateOptions) ValidateTemplateFile(cxt *portercontext.Context) error
 	return nil
 }
 
-func (feed *MixinFeed) Generate(opts GenerateOptions) error {
+func (feed *MixinFeed) Generate(ctx context.Context, opts GenerateOptions) error {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
 	existingFeed, err := feed.FileSystem.Exists(opts.AtomFile)
 	if err != nil {
 		return err
 	}
 	if existingFeed {
-		err := feed.Load(opts.AtomFile)
+		err := feed.Load(ctx, opts.AtomFile)
 		if err != nil {
 			return err
 		}
@@ -112,11 +117,11 @@ func (feed *MixinFeed) Generate(opts GenerateOptions) error {
 	})
 
 	if err != nil {
-		return fmt.Errorf("failed to traverse the %s directory: %w", opts.SearchDirectory, err)
+		return span.Error(fmt.Errorf("failed to traverse the %s directory: %w", opts.SearchDirectory, err))
 	}
 
 	if len(feed.Index) == 0 {
-		return fmt.Errorf("no mixin binaries found in %s matching the regex %q", opts.SearchDirectory, mixinRegex)
+		return span.Error(fmt.Errorf("no mixin binaries found in %s matching the regex %q", opts.SearchDirectory, mixinRegex))
 	}
 
 	return nil

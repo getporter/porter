@@ -15,7 +15,7 @@ type PackageManager interface {
 	GetPackageDir(name string) (string, error)
 	GetMetadata(ctx context.Context, name string) (PackageMetadata, error)
 	Install(ctx context.Context, opts InstallOptions) error
-	Uninstall(UninstallOptions) error
+	Uninstall(ctx context.Context, opts UninstallOptions) error
 
 	// Run a command against the installed package.
 	Run(ctx context.Context, pkgContext *portercontext.Context, name string, commandOpts CommandOptions) error

@@ -1,6 +1,7 @@
 package client
 
 import (
+	"context"
 	"path"
 	"testing"
 
@@ -10,6 +11,7 @@ import (
 )
 
 func TestFileSystem_Delete_DeletePackage(t *testing.T) {
+	ctx := context.Background()
 	c := config.NewTestConfig(t)
 	p := NewFileSystem(c.Config, "packages")
 
@@ -20,7 +22,7 @@ func TestFileSystem_Delete_DeletePackage(t *testing.T) {
 		Name: "mixxin",
 	}
 
-	err := p.Uninstall(opts)
+	err := p.Uninstall(ctx, opts)
 
 	assert.Nil(t, err)
 
