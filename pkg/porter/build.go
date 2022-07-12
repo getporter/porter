@@ -94,24 +94,20 @@ func (o *BuildOptions) parseCustomInputs() error {
 }
 
 func (p *Porter) Build(ctx context.Context, opts BuildOptions) error {
-	ctx, log := tracing.StartSpan(ctx)
-	defer log.EndSpan()
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
 
-	opts.Apply(p.Context)
-
-	if p.Debug {
-		fmt.Fprintf(p.Err, "Using %s build driver\n", p.GetBuildDriver())
-	}
+	span.Debugf("Using %s build driver\n", p.GetBuildDriver())
 
 	// Start with a fresh .cnab directory before building
 	err := p.FileSystem.RemoveAll(build.LOCAL_CNAB)
 	if err != nil {
-		return fmt.Errorf("could not cleanup generated .cnab directory before building: %w", err)
+		return span.Error(fmt.Errorf("could not cleanup generated .cnab directory before building: %w", err))
 	}
 
 	// Generate Porter's canonical version of the user-provided manifest
 	if err := p.generateInternalManifest(opts); err != nil {
-		return fmt.Errorf("unable to generate manifest: %w", err)
+		return span.Error(fmt.Errorf("unable to generate manifest: %w", err))
 	}
 
 	m, err := manifest.LoadManifestFrom(ctx, p.Config, build.LOCAL_MANIFEST)
@@ -137,23 +133,23 @@ func (p *Porter) Build(ctx context.Context, opts BuildOptions) error {
 	// to a registry.  The bundle.json will need to be updated after publishing
 	// and provided just-in-time during bundle execution.
 	if err := p.buildBundle(ctx, m, ""); err != nil {
-		return fmt.Errorf("unable to build bundle: %w", err)
+		return span.Error(fmt.Errorf("unable to build bundle: %w", err))
 	}
 
 	generator := build.NewDockerfileGenerator(p.Config, m, p.Templates, p.Mixins)
 
 	if err := generator.PrepareFilesystem(); err != nil {
-		return fmt.Errorf("unable to copy run script, runtimes or mixins: %s", err)
+		return span.Error(fmt.Errorf("unable to copy run script, runtimes or mixins: %s", err))
 	}
 	if err := generator.GenerateDockerFile(ctx); err != nil {
-		return fmt.Errorf("unable to generate Dockerfile: %s", err)
+		return span.Error(fmt.Errorf("unable to generate Dockerfile: %s", err))
 	}
 
 	builder := p.GetBuilder(ctx)
 
 	err = builder.BuildInvocationImage(ctx, m, opts.BuildImageOptions)
 	if err != nil {
-		return fmt.Errorf("unable to build CNAB invocation image: %w", err)
+		return span.Error(fmt.Errorf("unable to build CNAB invocation image: %w", err))
 	}
 
 	return nil
