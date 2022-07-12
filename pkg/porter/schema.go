@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"get.porter.sh/porter/pkg/tracing"
 	"github.com/PaesslerAG/jsonpath"
 )
 
@@ -29,9 +30,12 @@ func (p *Porter) PrintManifestSchema(ctx context.Context) error {
 }
 
 func (p *Porter) GetManifestSchema(ctx context.Context) (jsonSchema, error) {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
 	replacementSchema, err := p.GetReplacementSchema()
-	if err != nil && p.Debug {
-		fmt.Fprintln(p.Err, fmt.Errorf("ignoring replacement schema: %w", err))
+	if err != nil {
+		span.Debugf("ignoring replacement schema: %w", err)
 	}
 	if replacementSchema != nil {
 		return replacementSchema, nil
@@ -39,20 +43,18 @@ func (p *Porter) GetManifestSchema(ctx context.Context) (jsonSchema, error) {
 
 	b, err := p.Templates.GetSchema()
 	if err != nil {
-		return nil, err
+		return nil, span.Error(err)
 	}
 
 	manifestSchema := make(jsonSchema)
 	err = json.Unmarshal(b, &manifestSchema)
 	if err != nil {
-		return nil, fmt.Errorf("could not unmarshal the root porter manifest schema: %w", err)
+		return nil, span.Error(fmt.Errorf("could not unmarshal the root porter manifest schema: %w", err))
 	}
 
 	combinedSchema, err := p.injectMixinSchemas(ctx, manifestSchema)
 	if err != nil {
-		if p.Debug {
-			fmt.Fprintln(p.Err, err)
-		}
+		span.Warn(err.Error())
 		// Fallback to the porter schema, without any mixins
 		return manifestSchema, nil
 	}
@@ -61,29 +63,32 @@ func (p *Porter) GetManifestSchema(ctx context.Context) (jsonSchema, error) {
 }
 
 func (p *Porter) injectMixinSchemas(ctx context.Context, manifestSchema jsonSchema) (jsonSchema, error) {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
 	propertiesSchema, ok := manifestSchema["properties"].(jsonSchema)
 	if !ok {
-		return nil, fmt.Errorf("root porter manifest schema has invalid properties type, expected map[string]interface{} but got %T", manifestSchema["properties"])
+		return nil, span.Error(fmt.Errorf("root porter manifest schema has invalid properties type, expected map[string]interface{} but got %T", manifestSchema["properties"]))
 	}
 
 	additionalPropertiesSchema, ok := manifestSchema["additionalProperties"].(jsonSchema)
 	if !ok {
-		return nil, fmt.Errorf("root porter manifest schema has invalid additionalProperties type, expected map[string]interface{} but got %T", manifestSchema["additionalProperties"])
+		return nil, span.Error(fmt.Errorf("root porter manifest schema has invalid additionalProperties type, expected map[string]interface{} but got %T", manifestSchema["additionalProperties"]))
 	}
 
 	mixinSchema, ok := propertiesSchema["mixins"].(jsonSchema)
 	if !ok {
-		return nil, fmt.Errorf("root porter manifest schema has invalid properties.mixins type, expected map[string]interface{} but got %T", propertiesSchema["mixins"])
+		return nil, span.Error(fmt.Errorf("root porter manifest schema has invalid properties.mixins type, expected map[string]interface{} but got %T", propertiesSchema["mixins"]))
 	}
 
 	mixinItemSchema, ok := mixinSchema["items"].(jsonSchema)
 	if !ok {
-		return nil, fmt.Errorf("root porter manifest schema has invalid properties.mixins.items type, expected map[string]interface{} but got %T", mixinSchema["items"])
+		return nil, span.Error(fmt.Errorf("root porter manifest schema has invalid properties.mixins.items type, expected map[string]interface{} but got %T", mixinSchema["items"]))
 	}
 
 	mixinEnumSchema, ok := mixinItemSchema["enum"].([]interface{})
 	if !ok {
-		return nil, fmt.Errorf("root porter manifest schema has invalid properties.mixins.items.enum type, expected []interface{} but got %T", mixinItemSchema["enum"])
+		return nil, span.Error(fmt.Errorf("root porter manifest schema has invalid properties.mixins.items.enum type, expected []interface{} but got %T", mixinItemSchema["enum"]))
 	}
 
 	coreActions := []string{"install", "upgrade", "uninstall"} // custom actions are defined in json schema as additionalProperties
@@ -91,14 +96,14 @@ func (p *Porter) injectMixinSchemas(ctx context.Context, manifestSchema jsonSche
 	for _, action := range coreActions {
 		actionSchema, ok := propertiesSchema[action].(jsonSchema)
 		if !ok {
-			return nil, fmt.Errorf("root porter manifest schema has invalid properties.%s type, expected map[string]interface{} but got %T", action, propertiesSchema[string(action)])
+			return nil, span.Error(fmt.Errorf("root porter manifest schema has invalid properties.%s type, expected map[string]interface{} but got %T", action, propertiesSchema[string(action)]))
 		}
 		actionSchemas[action] = actionSchema
 	}
 
 	mixins, err := p.Mixins.List()
 	if err != nil {
-		return nil, err
+		return nil, span.Error(err)
 	}
 
 	// If there is an error with any mixin, print a warning and skip the mixin, do not return an error
@@ -106,9 +111,7 @@ func (p *Porter) injectMixinSchemas(ctx context.Context, manifestSchema jsonSche
 		mixinSchema, err := p.Mixins.GetSchema(ctx, mixin)
 		if err != nil {
 			// if a mixin can't report its schema, don't include it and keep going
-			if p.Debug {
-				fmt.Fprintln(p.Err, fmt.Errorf("could not query mixin %s for its schema: %w", mixin, err))
-			}
+			span.Debugf("could not query mixin %s for its schema: %w", mixin, err)
 			continue
 		}
 
@@ -117,8 +120,8 @@ func (p *Porter) injectMixinSchemas(ctx context.Context, manifestSchema jsonSche
 
 		mixinSchemaMap := make(jsonSchema)
 		err = json.Unmarshal([]byte(mixinSchema), &mixinSchemaMap)
-		if err != nil && p.Debug {
-			fmt.Fprintln(p.Err, fmt.Errorf("could not unmarshal mixin schema for %s, %q: %w", mixin, mixinSchema, err))
+		if err != nil {
+			span.Debugf("could not unmarshal mixin schema for %s, %q: %w", mixin, mixinSchema, err)
 			continue
 		}
 
@@ -129,14 +132,14 @@ func (p *Porter) injectMixinSchemas(ctx context.Context, manifestSchema jsonSche
 
 		for _, action := range coreActions {
 			actionItemSchema, ok := actionSchemas[action]["items"].(jsonSchema)
-			if !ok && p.Debug {
-				fmt.Fprintln(p.Err, fmt.Errorf("root porter manifest schema has invalid properties.%s.items type, expected map[string]interface{} but got %T", action, actionSchemas[string(action)]["items"]))
+			if !ok {
+				span.Debugf("root porter manifest schema has invalid properties.%s.items type, expected map[string]interface{} but got %T", action, actionSchemas[string(action)]["items"])
 				continue
 			}
 
 			actionAnyOfSchema, ok := actionItemSchema["anyOf"].([]interface{})
-			if !ok && p.Debug {
-				fmt.Fprintln(p.Err, fmt.Errorf("root porter manifest schema has invalid properties.%s.items.anyOf type, expected []interface{} but got %T", action, actionItemSchema["anyOf"]))
+			if !ok {
+				span.Debugf("root porter manifest schema has invalid properties.%s.items.anyOf type, expected []interface{} but got %T", action, actionItemSchema["anyOf"])
 				continue
 			}
 
@@ -150,14 +153,14 @@ func (p *Porter) injectMixinSchemas(ctx context.Context, manifestSchema jsonSche
 		_, err = jsonpath.Get("$.definitions.invokeStep", mixinSchemaMap)
 		if err == nil {
 			actionItemSchema, ok := additionalPropertiesSchema["items"].(jsonSchema)
-			if !ok && p.Debug {
-				fmt.Fprintln(p.Err, fmt.Errorf("root porter manifest schema has invalid additionalProperties.items type, expected map[string]interface{} but got %T", additionalPropertiesSchema["items"]))
+			if !ok {
+				span.Debugf("root porter manifest schema has invalid additionalProperties.items type, expected map[string]interface{} but got %T", additionalPropertiesSchema["items"])
 				continue
 			}
 
 			actionAnyOfSchema, ok := actionItemSchema["anyOf"].([]interface{})
-			if !ok && p.Debug {
-				fmt.Fprintln(p.Err, fmt.Errorf("root porter manifest schema has invalid additionalProperties.items.anyOf type, expected []interface{} but got %T", actionItemSchema["anyOf"]))
+			if !ok {
+				span.Debugf("root porter manifest schema has invalid additionalProperties.items.anyOf type, expected []interface{} but got %T", actionItemSchema["anyOf"])
 				continue
 			}
 
@@ -170,7 +173,7 @@ func (p *Porter) injectMixinSchemas(ctx context.Context, manifestSchema jsonSche
 	// Save the updated arrays into the json schema document
 	mixinItemSchema["enum"] = mixinEnumSchema
 
-	return manifestSchema, err
+	return manifestSchema, span.Error(err)
 }
 
 func (p *Porter) GetReplacementSchema() (jsonSchema, error) {
