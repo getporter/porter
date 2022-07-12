@@ -14,8 +14,6 @@ import (
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
-	"get.porter.sh/porter/pkg/tracing"
-	"go.uber.org/zap/zapcore"
 )
 
 const (
@@ -264,7 +262,7 @@ func (o *sharedOptions) LoadParameters(ctx context.Context, p *Porter, bun cnab.
 		return err
 	}
 
-	o.combinedParameters = o.combineParameters(ctx)
+	o.combinedParameters = o.combineParameters(p.Context)
 
 	return nil
 }
@@ -319,7 +317,7 @@ func (o *sharedOptions) parseParamSets(ctx context.Context, p *Porter, bun cnab.
 // The params set on the command line take precedence over the params set in
 // parameter set files
 // Anything set multiple times, is decided by "last one set wins"
-func (o *sharedOptions) combineParameters(ctx context.Context) map[string]string {
+func (o *sharedOptions) combineParameters(c *portercontext.Context) map[string]string {
 	final := make(map[string]string)
 
 	for k, v := range o.parsedParamSets {
@@ -331,10 +329,9 @@ func (o *sharedOptions) combineParameters(ctx context.Context) map[string]string
 	}
 
 	//
-	// Default the porter-debug param based on the verbosity level
+	// Default the porter-debug param to --debug
 	//
-	log := tracing.LoggerFromContext(ctx)
-	if log.ShouldLog(zapcore.DebugLevel) {
+	if c.Debug {
 		final["porter-debug"] = "true"
 	}
 

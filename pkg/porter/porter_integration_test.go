@@ -1,5 +1,4 @@
 //go:build integration
-// +build integration
 
 package porter
 
@@ -15,7 +14,7 @@ import (
 
 func TestPorter_FixPermissions(t *testing.T) {
 	p := NewTestPorter(t)
-	p.SetupIntegrationTest()
+	ctx := p.SetupIntegrationTest()
 	defer p.Close()
 
 	home, _ := p.GetHomeDir()
@@ -31,7 +30,7 @@ func TestPorter_FixPermissions(t *testing.T) {
 			require.NoError(t, os.MkdirAll(dir, pkg.FileModeDirectory))
 			require.NoError(t, os.WriteFile(tc, []byte(""), 0750))
 
-			err := p.FixPermissions()
+			err := p.FixPermissions(ctx)
 			require.NoError(t, err)
 
 			// Check that all files in the directory have the correct permissions
@@ -42,7 +41,7 @@ func TestPorter_FixPermissions(t *testing.T) {
 
 func TestPorter_FixPermissions_NoConfigFile(t *testing.T) {
 	p := NewTestPorter(t)
-	p.SetupIntegrationTest()
+	ctx := p.SetupIntegrationTest()
 	defer p.Close()
 
 	// Remember the original permissions on the current working directory
@@ -51,7 +50,7 @@ func TestPorter_FixPermissions_NoConfigFile(t *testing.T) {
 	require.NoError(t, err, "stat on the current working directory failed")
 	wantMode := wdInfo.Mode()
 
-	err = p.FixPermissions()
+	err = p.FixPermissions(ctx)
 	require.NoError(t, err)
 
 	// Check that the current working directory didn't have its permissions changed
