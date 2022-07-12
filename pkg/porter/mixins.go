@@ -92,8 +92,8 @@ func (p *Porter) InstallMixin(ctx context.Context, opts mixin.InstallOptions) er
 	return nil
 }
 
-func (p *Porter) UninstallMixin(opts pkgmgmt.UninstallOptions) error {
-	err := p.Mixins.Uninstall(opts)
+func (p *Porter) UninstallMixin(ctx context.Context, opts pkgmgmt.UninstallOptions) error {
+	err := p.Mixins.Uninstall(ctx, opts)
 	if err != nil {
 		return err
 	}
@@ -103,10 +103,10 @@ func (p *Porter) UninstallMixin(opts pkgmgmt.UninstallOptions) error {
 	return nil
 }
 
-func (p *Porter) GenerateMixinFeed(opts feed.GenerateOptions) error {
+func (p *Porter) GenerateMixinFeed(ctx context.Context, opts feed.GenerateOptions) error {
 	f := feed.NewMixinFeed(p.Context)
 
-	err := f.Generate(opts)
+	err := f.Generate(ctx, opts)
 	if err != nil {
 		return err
 	}

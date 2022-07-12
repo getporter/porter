@@ -48,6 +48,7 @@ func TestPorter_InstallMixin(t *testing.T) {
 }
 
 func TestPorter_UninstallMixin(t *testing.T) {
+	ctx := context.Background()
 	p := NewTestPorter(t)
 	defer p.Close()
 
@@ -55,7 +56,7 @@ func TestPorter_UninstallMixin(t *testing.T) {
 	err := opts.Validate([]string{"exec"})
 	require.NoError(t, err, "Validate failed")
 
-	err = p.UninstallMixin(opts)
+	err = p.UninstallMixin(ctx, opts)
 	require.NoError(t, err, "UninstallMixin failed")
 
 	wantOutput := "Uninstalled exec mixin"
