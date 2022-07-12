@@ -506,11 +506,12 @@ func TestCredentialsCreate(t *testing.T) {
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
+			ctx := context.Background()
 			p := NewTestPorter(t)
 			defer p.Close()
 
 			opts := CredentialCreateOptions{FileName: tc.fileName, OutputType: tc.outputType}
-			err := p.CreateCredential(opts)
+			err := p.CreateCredential(ctx, opts)
 			if tc.wantErr == "" {
 				require.NoError(t, err, "no error should have existed")
 				return
