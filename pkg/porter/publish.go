@@ -211,7 +211,7 @@ func (p *Porter) publishFromArchive(ctx context.Context, opts PublishOptions) er
 	}
 	defer p.FileSystem.RemoveAll(tmpDir)
 
-	bundleRef, err := p.extractBundle(tmpDir, source)
+	bundleRef, err := p.extractBundle(ctx, tmpDir, source)
 	if err != nil {
 		return err
 	}
@@ -258,30 +258,31 @@ func (p *Porter) publishFromArchive(ctx context.Context, opts PublishOptions) er
 }
 
 // extractBundle extracts a bundle using the provided opts and returns the extracted bundle
-func (p *Porter) extractBundle(tmpDir, source string) (cnab.BundleReference, error) {
-	if p.Debug {
-		fmt.Fprintf(p.Err, "Extracting bundle from archive %s...\n", source)
-	}
+func (p *Porter) extractBundle(ctx context.Context, tmpDir, source string) (cnab.BundleReference, error) {
+	//lint:ignore SA4006 ignore unused ctx for now
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
 
+	span.Debugf("Extracting bundle from archive %s...", source)
 	l := loader.NewLoader()
 	imp := packager.NewImporter(source, tmpDir, l)
 	err := imp.Import()
 	if err != nil {
-		return cnab.BundleReference{}, fmt.Errorf("failed to extract bundle from archive %s: %w", source, err)
+		return cnab.BundleReference{}, span.Error(fmt.Errorf("failed to extract bundle from archive %s: %w", source, err))
 	}
 
 	bun, err := l.Load(filepath.Join(tmpDir, strings.TrimSuffix(filepath.Base(source), ".tgz"), "bundle.json"))
 	if err != nil {
-		return cnab.BundleReference{}, fmt.Errorf("failed to load bundle from archive %s: %w", source, err)
+		return cnab.BundleReference{}, span.Error(fmt.Errorf("failed to load bundle from archive %s: %w", source, err))
 	}
 	data, err := p.FileSystem.ReadFile(filepath.Join(tmpDir, strings.TrimSuffix(filepath.Base(source), ".tgz"), "relocation-mapping.json"))
 	if err != nil {
-		return cnab.BundleReference{}, fmt.Errorf("failed to load relocation-mapping.json from archive %s: %w", source, err)
+		return cnab.BundleReference{}, span.Error(fmt.Errorf("failed to load relocation-mapping.json from archive %s: %w", source, err))
 	}
 	var reloMap relocation.ImageRelocationMap
 	err = json.Unmarshal(data, &reloMap)
 	if err != nil {
-		return cnab.BundleReference{}, fmt.Errorf("failed to parse relocation-mapping.json from archive %s: %w", source, err)
+		return cnab.BundleReference{}, span.Error(fmt.Errorf("failed to parse relocation-mapping.json from archive %s: %w", source, err))
 	}
 
 	return cnab.BundleReference{Definition: cnab.ExtendedBundle{Bundle: *bun}, RelocationMap: reloMap}, nil

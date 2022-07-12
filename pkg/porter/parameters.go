@@ -18,11 +18,13 @@ import (
 	"get.porter.sh/porter/pkg/printer"
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
+	"get.porter.sh/porter/pkg/tracing"
 	dtprinter "github.com/carolynvs/datetime-printer"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/olekukonko/tablewriter"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.uber.org/zap/zapcore"
 )
 
 // ParameterShowOptions represent options for Porter's parameter show command
@@ -304,15 +306,16 @@ type ParameterDeleteOptions struct {
 // DeleteParameter deletes the parameter set corresponding to the provided
 // names.
 func (p *Porter) DeleteParameter(ctx context.Context, opts ParameterDeleteOptions) error {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
 	err := p.Parameters.RemoveParameterSet(ctx, opts.Namespace, opts.Name)
 	if errors.Is(err, storage.ErrNotFound{}) {
-		if p.Debug {
-			fmt.Fprintln(p.Err, err)
-		}
+		span.Debug("Cannot remove parameter set because it already doesn't exist")
 		return nil
 	}
 	if err != nil {
-		return fmt.Errorf("unable to delete parameter set: %w", err)
+		return span.Error(fmt.Errorf("unable to delete parameter set: %w", err))
 	}
 
 	return nil
@@ -496,29 +499,29 @@ func (p *Porter) printDisplayValuesTable(values []DisplayValue) error {
 }
 
 func (p *Porter) ParametersApply(ctx context.Context, o ApplyOptions) error {
-	if p.Debug {
-		fmt.Fprintf(p.Err, "Reading input file %s...\n", o.File)
-	}
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
 
+	span.Debugf("Reading input file %s...", o.File)
 	namespace, err := p.getNamespaceFromFile(o)
 	if err != nil {
-		return err
+		return span.Error(err)
 	}
 
-	if p.Debug {
+	if span.ShouldLog(zapcore.DebugLevel) {
 		// ignoring any error here, printing debug info isn't critical
 		contents, _ := p.FileSystem.ReadFile(o.File)
-		fmt.Fprintf(p.Err, "Input file contents:\n%s\n", contents)
+		span.Debugf("Input file contents:\n%s", contents)
 	}
 
 	var params storage.ParameterSet
 	err = encoding.UnmarshalFile(p.FileSystem, o.File, &params)
 	if err != nil {
-		return fmt.Errorf("could not load %s as a parameter set: %w", o.File, err)
+		return span.Error(fmt.Errorf("could not load %s as a parameter set: %w", o.File, err))
 	}
 
 	if err = params.Validate(); err != nil {
-		return fmt.Errorf("invalid parameter set: %w", err)
+		return span.Error(fmt.Errorf("invalid parameter set: %w", err))
 	}
 
 	params.Namespace = namespace
@@ -526,7 +529,7 @@ func (p *Porter) ParametersApply(ctx context.Context, o ApplyOptions) error {
 
 	err = p.Parameters.Validate(ctx, params)
 	if err != nil {
-		return fmt.Errorf("parameter set is invalid: %w", err)
+		return span.Error(fmt.Errorf("parameter set is invalid: %w", err))
 	}
 
 	err = p.Parameters.UpsertParameterSet(ctx, params)
@@ -534,7 +537,7 @@ func (p *Porter) ParametersApply(ctx context.Context, o ApplyOptions) error {
 		return err
 	}
 
-	fmt.Fprintf(p.Err, "Applied %s parameter set\n", params)
+	span.Infof("Applied %s parameter set", params)
 	return nil
 }
 
@@ -618,27 +621,23 @@ func (p *Porter) getUnconvertedValueFromRaw(b cnab.ExtendedBundle, def *definiti
 }
 
 func (p *Porter) resolveParameterSources(ctx context.Context, bun cnab.ExtendedBundle, installation storage.Installation) (secrets.Set, error) {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
 	if !bun.HasParameterSources() {
-		if p.Debug {
-			fmt.Fprintln(p.Err, "No parameter sources defined, skipping")
-		}
+		span.Debug("No parameter sources defined, skipping")
 		return nil, nil
 	}
 
-	if p.Debug {
-		fmt.Fprintln(p.Err, "Resolving parameter sources...")
-	}
-
+	span.Debug("Resolving parameter sources...")
 	parameterSources, err := bun.ReadParameterSources()
 	if err != nil {
-		return nil, err
+		return nil, span.Error(err)
 	}
 
 	values := secrets.Set{}
 	for parameterName, parameterSource := range parameterSources {
-		if p.Debug {
-			fmt.Fprintln(p.Err, "Resolving parameter source", parameterName)
-		}
+		span.Debugf("Resolving parameter source %s", parameterName)
 		for _, rawSource := range parameterSource.ListSourcesByPriority() {
 			var installationName string
 			var outputName string
@@ -656,32 +655,29 @@ func (p *Porter) resolveParameterSources(ctx context.Context, bun cnab.ExtendedB
 			if err != nil {
 				// When we can't find the output, skip it and let the parameter be set another way
 				if errors.Is(err, storage.ErrNotFound{}) {
-					if p.Debug {
-						fmt.Fprintf(p.Err, "No previous output found for %s from %s/%s\n", outputName, installation.Namespace, installationName)
-					}
+					span.Debugf("No previous output found for %s from %s/%s", outputName, installation.Namespace, installationName)
 					continue
 				}
 				// Otherwise, something else has happened, perhaps bad data or connectivity problems, we can't ignore it
-				return nil, fmt.Errorf("could not set parameter %s from output %s of %s: %w", parameterName, outputName, installation, err)
+				return nil, span.Error(fmt.Errorf("could not set parameter %s from output %s of %s: %w", parameterName, outputName, installation, err))
 			}
 
 			if output.Key != "" {
-
 				resolved, err := p.Sanitizer.RestoreOutput(ctx, output)
 				if err != nil {
-					return nil, fmt.Errorf("could not resolve %s's output %s: %w", installation, outputName, err)
+					return nil, span.Error(fmt.Errorf("could not resolve %s's output %s: %w", installation, outputName, err))
 				}
 				output = resolved
 			}
 
 			param, ok := bun.Parameters[parameterName]
 			if !ok {
-				return nil, fmt.Errorf("resolveParameterSources:  %s not defined in bundle", parameterName)
+				return nil, span.Error(fmt.Errorf("resolveParameterSources:  %s not defined in bundle", parameterName))
 			}
 
 			def, ok := bun.Definitions[param.Definition]
 			if !ok {
-				return nil, fmt.Errorf("definition %s not defined in bundle", param.Definition)
+				return nil, span.Error(fmt.Errorf("definition %s not defined in bundle", param.Definition))
 			}
 
 			if bun.IsFileType(def) {
@@ -690,9 +686,7 @@ func (p *Porter) resolveParameterSources(ctx context.Context, bun cnab.ExtendedB
 				values[parameterName] = string(output.Value)
 			}
 
-			if p.Debug {
-				fmt.Fprintf(p.Out, "Injected installation %s output %s as parameter %s\n", installation, outputName, parameterName)
-			}
+			span.Debugf("Injected installation %s output %s as parameter %s", installation, outputName, parameterName)
 		}
 	}
 
