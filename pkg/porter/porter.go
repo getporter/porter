@@ -3,7 +3,6 @@ package porter
 import (
 	"context"
 	"errors"
-	"fmt"
 	"strings"
 
 	"get.porter.sh/porter/pkg/build"
@@ -100,10 +99,6 @@ func (p *Porter) Connect(ctx context.Context) error {
 
 // Close releases resources used by Porter before terminating the application.
 func (p *Porter) Close() error {
-	if p.Debug {
-		fmt.Fprintln(p.Err, "Closing plugins")
-	}
-
 	// Shutdown our plugins
 	var bigErr *multierror.Error
 

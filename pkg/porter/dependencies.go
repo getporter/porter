@@ -12,6 +12,7 @@ import (
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/runtime"
 	"get.porter.sh/porter/pkg/storage"
+	"get.porter.sh/porter/pkg/tracing"
 	"github.com/hashicorp/go-multierror"
 )
 
@@ -120,6 +121,9 @@ func (e *dependencyExecutioner) PrepareRootActionArguments(ctx context.Context) 
 }
 
 func (e *dependencyExecutioner) identifyDependencies(ctx context.Context) error {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
 	// Load parent CNAB bundle definition
 	var bun cnab.ExtendedBundle
 	if e.parentOpts.CNABFile != "" {
@@ -129,7 +133,7 @@ func (e *dependencyExecutioner) identifyDependencies(ctx context.Context) error 
 		}
 		bun = bundle
 	} else if e.parentOpts.Reference != "" {
-		cachedBundle, err := e.Resolver.Resolve(e.parentOpts.BundlePullOptions)
+		cachedBundle, err := e.Resolver.Resolve(ctx, e.parentOpts.BundlePullOptions)
 		if err != nil {
 			return fmt.Errorf("could not resolve bundle: %w", err)
 		}
@@ -155,9 +159,7 @@ func (e *dependencyExecutioner) identifyDependencies(ctx context.Context) error 
 
 	e.deps = make([]*queuedDependency, len(locks))
 	for i, lock := range locks {
-		if e.Debug {
-			fmt.Fprintf(e.Out, "Resolved dependency %s to %s\n", lock.Alias, lock.Reference)
-		}
+		span.Debugf("Resolved dependency %s to %s", lock.Alias, lock.Reference)
 		e.deps[i] = &queuedDependency{
 			DependencyLock: lock,
 		}
@@ -177,7 +179,7 @@ func (e *dependencyExecutioner) prepareDependency(ctx context.Context, dep *queu
 	if err := pullOpts.Validate(); err != nil {
 		return fmt.Errorf("error preparing dependency %s: %w", dep.Alias, err)
 	}
-	cachedDep, err := e.Resolver.Resolve(pullOpts)
+	cachedDep, err := e.Resolver.Resolve(ctx, pullOpts)
 	if err != nil {
 		return fmt.Errorf("error pulling dependency %s: %w", dep.Alias, err)
 	}
