@@ -727,12 +727,6 @@ func (od *OutputDefinition) Validate() error {
 	return result.ErrorOrNil()
 }
 
-type BundleOutput struct {
-	Name                string `yaml:"name"`
-	Path                string `yaml:"path"`
-	EnvironmentVariable string `yaml:"env"`
-}
-
 type Steps []*Step
 
 func (s Steps) Validate(m *Manifest) error {
@@ -743,6 +737,21 @@ func (s Steps) Validate(m *Manifest) error {
 		}
 	}
 	return nil
+}
+
+func (s Steps) GetSensitiveOutputs() (map[string]struct{}, error) {
+	sensitiveOutputs := make(map[string]struct{}, len(s))
+	for _, step := range s {
+		outputs, err := step.GetSensitiveOutputs()
+		if err != nil {
+			return nil, err
+		}
+
+		for _, o := range outputs {
+			sensitiveOutputs[o] = struct{}{}
+		}
+	}
+	return sensitiveOutputs, nil
 }
 
 type Step struct {
@@ -800,6 +809,53 @@ func (s *Step) GetDescription() (string, error) {
 	return desc, nil
 }
 
+// GetDescription returns a description of the step.
+// Every step must have this property.
+func (s *Step) GetSensitiveOutputs() ([]string, error) {
+	if s.Data == nil {
+		return nil, errors.New("empty step data")
+	}
+
+	mixinName := s.GetMixinName()
+	children := s.Data[mixinName]
+	outputs, ok := children.(map[string]interface{})["outputs"]
+	if !ok {
+		return nil, nil
+	}
+	outputsVal, ok := outputs.([]interface{})
+	if !ok {
+		return nil, fmt.Errorf("invalid outputs type (%T) for mixin step (%s)", outputs, mixinName)
+	}
+
+	sensitiveOutputs := make([]string, 0, len(outputsVal))
+	for _, output := range outputsVal {
+		output, ok := output.(map[string]interface{})
+		if !ok {
+			return nil, fmt.Errorf("invalid sensitive outputs type (%T) for mixin step (%s)", outputs, mixinName)
+		}
+		if sensitive, ok := output["sensitive"]; ok {
+			isSensitive, ok := sensitive.(bool)
+			if !ok {
+				return nil, fmt.Errorf("invalid sensitive outputs type (%T) for mixin step (%s)", outputs, sensitive)
+			}
+
+			if isSensitive {
+				outputName, ok := output["name"]
+				if !ok {
+					continue
+				}
+				name, ok := outputName.(string)
+				if !ok {
+					continue
+				}
+				sensitiveOutputs = append(sensitiveOutputs, name)
+			}
+
+		}
+	}
+
+	return sensitiveOutputs, nil
+}
 func (s *Step) GetMixinName() string {
 	var mixinName string
 	for k := range s.Data {

@@ -121,6 +121,11 @@ func TestStepLevelAndBundleLevelOutputs(t *testing.T) {
 	err = p.InstallBundle(ctx, installOpts)
 	require.NoError(t, err, "install should have succeeded")
 
+	logs, found, err := p.Installations.GetLastLogs(ctx, installOpts.Namespace, installOpts.Name)
+	require.NoError(t, err)
+	require.True(t, found)
+	require.Contains(t, logs, "sally", "step output not found in installation logs")
+
 	// Upgrade the bundle
 	// A bundle-level output will be produced during this action
 	upgradeOpts := porter.NewUpgradeOptions()

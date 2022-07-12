@@ -214,15 +214,6 @@ func (m *RuntimeManifest) ApplyStepOutputs(assignments map[string]string) error 
 	return nil
 }
 
-type StepOutput struct {
-	// The final value of the output returned by the mixin after executing
-	//lint:ignore U1000 ignore unused warning
-	value string
-
-	Name string                 `yaml:"name"`
-	Data map[string]interface{} `yaml:",inline"`
-}
-
 func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 	data := make(map[string]interface{})
 	m.sensitiveValues = []string{}
@@ -286,17 +277,31 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 	}
 
 	bun["outputs"] = m.outputs
+	// TODO: this should be all steps not just install
+	sensitiveStepOutputs, err := m.Manifest.Install.GetSensitiveOutputs()
+	if err != nil {
+		return nil, err
+	}
 
 	// Iterate through the runtime manifest's step outputs and determine if we should mask
 	for name, val := range m.outputs {
 		// TODO: support configuring sensitivity for step outputs that aren't also bundle-level outputs
 		// See https://github.com/getporter/porter/issues/855
+		var isSensitive bool
 
 		// If step output is also a bundle-level output, defer to bundle-level output sensitivity
-		if outputDef, ok := m.Outputs[name]; ok && !outputDef.Sensitive {
-			continue
+		outputDef, defined := m.Outputs[name]
+		if defined {
+			isSensitive = outputDef.Sensitive
 		}
-		m.setSensitiveValue(val)
+
+		if _, ok := sensitiveStepOutputs[name]; ok && !defined {
+			isSensitive = true
+		}
+
+		if isSensitive {
+			m.setSensitiveValue(val)
+		}
 	}
 
 	// Externally injected outputs (bundle level outputs and dependency outputs) are
