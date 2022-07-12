@@ -10,6 +10,7 @@ import (
 
 	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/storage"
+	"get.porter.sh/porter/pkg/tracing"
 	"github.com/hashicorp/go-multierror"
 )
 
@@ -40,13 +41,16 @@ func (p *Porter) MigrateStorage(ctx context.Context, opts MigrateStorageOptions)
 	return p.Storage.Migrate(ctx, migrateOpts)
 }
 
-func (p *Porter) FixPermissions() error {
+func (p *Porter) FixPermissions(ctx context.Context) error {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
 	home, err := p.GetHomeDir()
 	if err != nil {
 		return err
 	}
 
-	fmt.Fprintf(p.Out, "Resetting file permissions in %s...\n", home)
+	span.Infof("Resetting file permissions in %s", home)
 
 	// Fix as many files as we can, and then report any errors
 	fixFile := func(path string, mode os.FileMode) error {
@@ -55,22 +59,22 @@ func (p *Porter) FixPermissions() error {
 			if os.IsNotExist(err) {
 				return nil
 			} else {
-				return fmt.Errorf("error checking file permissions for %s: %w", path, err)
+				return span.Error(fmt.Errorf("error checking file permissions for %s: %w", path, err))
 			}
 		}
 
 		if info.IsDir() {
-			return fmt.Errorf("fixFile was called on a directory %s", path)
+			return span.Error(fmt.Errorf("fixFile was called on a directory %s", path))
 		}
 
 		if _, err = filepath.Rel(home, path); err != nil {
-			return fmt.Errorf("fixFile was called on a path, %s, that isn't in the PORTER_HOME directory %s", path, home)
+			return span.Error(fmt.Errorf("fixFile was called on a path, %s, that isn't in the PORTER_HOME directory %s", path, home))
 		}
 
 		gotPerms := info.Mode().Perm()
 		if mode != gotPerms|mode {
 			if err := p.FileSystem.Chmod(path, mode); err != nil {
-				return fmt.Errorf("could not set permissions on file %s to %o: %w", path, mode, err)
+				return span.Error(fmt.Errorf("could not set permissions on file %s to %o: %w", path, mode, err))
 			}
 		}
 		return nil
@@ -118,7 +122,7 @@ func (p *Porter) FixPermissions() error {
 		}
 	}
 
-	porterPath, _ := p.GetPorterPath()
+	porterPath, _ := p.GetPorterPath(ctx)
 	binFiles := []string{porterPath}
 	for _, file := range binFiles {
 		if err := fixFile(file, pkg.FileModeExecutable); err != nil {
@@ -133,5 +137,5 @@ func (p *Porter) FixPermissions() error {
 		}
 	}
 
-	return bigErr.ErrorOrNil()
+	return span.Error(bigErr.ErrorOrNil())
 }
