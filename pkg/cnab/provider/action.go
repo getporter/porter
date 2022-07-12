@@ -1,12 +1,12 @@
 package cnabprovider
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"sort"
+	"strings"
 
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
@@ -17,6 +17,7 @@ import (
 	"github.com/cnabio/cnab-go/driver"
 	"github.com/hashicorp/go-multierror"
 	"go.opentelemetry.io/otel/attribute"
+	"go.uber.org/zap/zapcore"
 )
 
 // Shared arguments for all CNAB actions
@@ -170,7 +171,7 @@ func (r *Runtime) Execute(ctx context.Context, args ActionArguments) error {
 			}
 		}
 
-		r.printDebugInfo(b, creds, args.Params)
+		r.printDebugInfo(ctx, b, creds, args.Params)
 
 		opResult, result, err := a.Run(currentRun.ToCNAB(), creds.ToCNAB(), r.ApplyConfig(ctx, args)...)
 
@@ -301,28 +302,30 @@ func (r *Runtime) appendFailedResult(ctx context.Context, opErr error, run stora
 	return multierror.Append(opErr, resultErr).ErrorOrNil()
 }
 
-func (r *Runtime) printDebugInfo(b cnab.ExtendedBundle, creds secrets.Set, params map[string]interface{}) {
-	if r.Debug {
-		dump := &bytes.Buffer{}
+func (r *Runtime) printDebugInfo(ctx context.Context, b cnab.ExtendedBundle, creds secrets.Set, params map[string]interface{}) {
+	log := tracing.LoggerFromContext(ctx)
+
+	if log.ShouldLog(zapcore.DebugLevel) {
+		var dump strings.Builder
 		secrets := make([]string, 0, len(params)+len(creds))
 
-		fmt.Fprintf(dump, "params:\n")
+		dump.WriteString("params:\n")
 		for k, v := range params {
 			if b.IsSensitiveParameter(k) {
 				// TODO(carolynvs): When we consolidate our conversion logic of parameters into strings, let's use it here.
 				// https://github.com/cnabio/cnab-go/issues/270
 				secrets = append(secrets, fmt.Sprintf("%v", v))
 			}
-			fmt.Fprintf(dump, "  - %s: %v\n", k, v)
+			dump.WriteString(fmt.Sprintf("  - %s: %v\n", k, v))
 		}
 
-		fmt.Fprintf(dump, "creds:\n")
+		dump.WriteString("creds:\n")
 		for k, v := range creds {
 			secrets = append(secrets, fmt.Sprintf("%v", v))
-			fmt.Fprintf(dump, "  - %s: %v\n", k, v)
+			dump.WriteString(fmt.Sprintf("  - %s: %v\n", k, v))
 		}
 
 		r.Context.SetSensitiveValues(secrets)
-		fmt.Fprintln(r.Err, dump.String())
+		log.Debug(dump.String())
 	}
 }
