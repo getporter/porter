@@ -87,7 +87,7 @@ func (p *Porter) PrintParameters(ctx context.Context, opts ListOptions) error {
 
 // ParameterOptions represent generic/base options for a Porter parameters command
 type ParameterOptions struct {
-	BundleActionOptions
+	BundleReferenceOptions
 	Silent bool
 	Labels []string
 }
@@ -105,7 +105,7 @@ func (o *ParameterOptions) Validate(ctx context.Context, args []string, p *Porte
 		return err
 	}
 
-	return o.BundleActionOptions.Validate(ctx, args, p)
+	return o.BundleReferenceOptions.Validate(ctx, args, p)
 }
 
 func (o *ParameterOptions) validateParamName(args []string) error {
@@ -121,7 +121,7 @@ func (o *ParameterOptions) validateParamName(args []string) error {
 // a silent build, based on the opts.Silent flag, or interactive using a survey. Returns an
 // error if unable to generate parameters
 func (p *Porter) GenerateParameters(ctx context.Context, opts ParameterOptions) error {
-	bundleRef, err := p.resolveBundleReference(ctx, &opts.BundleActionOptions)
+	bundleRef, err := p.resolveBundleReference(ctx, &opts.BundleReferenceOptions)
 
 	if err != nil {
 		return err

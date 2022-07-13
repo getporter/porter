@@ -20,19 +20,19 @@ var (
 
 // ShowOptions represent options for showing a particular installation
 type ShowOptions struct {
-	sharedOptions
+	installationOptions
 	printer.PrintOptions
 }
 
 // Validate prepares for a show bundle action and validates the args/options.
 func (so *ShowOptions) Validate(args []string, cxt *portercontext.Context) error {
 	// Ensure only one argument exists (installation name) if args length non-zero
-	err := so.sharedOptions.validateInstallationName(args)
+	err := so.installationOptions.validateInstallationName(args)
 	if err != nil {
 		return err
 	}
 
-	err = so.sharedOptions.defaultBundleFiles(cxt)
+	err = so.installationOptions.defaultBundleFiles(cxt)
 	if err != nil {
 		return err
 	}
@@ -42,7 +42,7 @@ func (so *ShowOptions) Validate(args []string, cxt *portercontext.Context) error
 
 // GetInstallation retrieves information about an installation, including its most recent run.
 func (p *Porter) GetInstallation(ctx context.Context, opts ShowOptions) (storage.Installation, *storage.Run, error) {
-	err := p.applyDefaultOptions(ctx, &opts.sharedOptions)
+	err := p.applyDefaultOptions(ctx, &opts.installationOptions)
 	if err != nil {
 		return storage.Installation{}, nil, err
 	}

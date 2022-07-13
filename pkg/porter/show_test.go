@@ -35,7 +35,7 @@ func TestPorter_ShowInstallationWithBundle(t *testing.T) {
 			defer p.Close()
 
 			opts := ShowOptions{
-				sharedOptions: sharedOptions{
+				installationOptions: installationOptions{
 					Namespace: "dev",
 					Name:      "mywordpress",
 				},
@@ -150,7 +150,7 @@ func TestPorter_ShowInstallationWithoutRecordedRun(t *testing.T) {
 	defer p.Close()
 
 	opts := ShowOptions{
-		sharedOptions: sharedOptions{
+		installationOptions: installationOptions{
 			Namespace: "dev",
 			Name:      "mywordpress",
 		},

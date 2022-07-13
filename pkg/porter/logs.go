@@ -10,13 +10,13 @@ import (
 
 // LogsShowOptions represent options for an installation logs show command
 type LogsShowOptions struct {
-	sharedOptions
+	installationOptions
 	RunID string
 }
 
 // Installation name passed to the command.
 func (o *LogsShowOptions) Installation() string {
-	return o.sharedOptions.Name
+	return o.installationOptions.Name
 }
 
 // Validate validates the provided args, using the provided context,
@@ -27,7 +27,7 @@ func (o *LogsShowOptions) Validate(cxt *portercontext.Context) error {
 	}
 
 	// Attempt to derive installation name from context
-	err := o.sharedOptions.defaultBundleFiles(cxt)
+	err := o.installationOptions.defaultBundleFiles(cxt)
 	if err != nil {
 		return err
 	}
@@ -56,11 +56,11 @@ func (p *Porter) ShowInstallationLogs(ctx context.Context, opts *LogsShowOptions
 
 // GetInstallationLogs gets logs for an installation, according to the provided options
 func (p *Porter) GetInstallationLogs(ctx context.Context, opts *LogsShowOptions) (string, bool, error) {
-	err := p.applyDefaultOptions(ctx, &opts.sharedOptions)
+	err := p.applyDefaultOptions(ctx, &opts.installationOptions)
 	if err != nil {
 		return "", false, err
 	}
-	installation := opts.sharedOptions.Name
+	installation := opts.installationOptions.Name
 
 	if opts.RunID != "" {
 		return p.Installations.GetLogs(ctx, opts.RunID)

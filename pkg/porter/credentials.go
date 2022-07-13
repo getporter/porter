@@ -81,7 +81,7 @@ func (p *Porter) PrintCredentials(ctx context.Context, opts ListOptions) error {
 
 // CredentialsOptions are the set of options available to Porter.GenerateCredentials
 type CredentialOptions struct {
-	BundleActionOptions
+	BundleReferenceOptions
 	Silent bool
 	Labels []string
 }
@@ -99,7 +99,7 @@ func (o *CredentialOptions) Validate(ctx context.Context, args []string, p *Port
 		return err
 	}
 
-	return o.BundleActionOptions.Validate(ctx, args, p)
+	return o.BundleReferenceOptions.Validate(ctx, args, p)
 }
 
 func (o *CredentialOptions) validateCredName(args []string) error {
@@ -119,7 +119,7 @@ func (p *Porter) GenerateCredentials(ctx context.Context, opts CredentialOptions
 		attribute.String("reference", opts.Reference))
 	defer span.EndSpan()
 
-	bundleRef, err := p.resolveBundleReference(ctx, &opts.BundleActionOptions)
+	bundleRef, err := p.resolveBundleReference(ctx, &opts.BundleReferenceOptions)
 	if err != nil {
 		return err
 	}
