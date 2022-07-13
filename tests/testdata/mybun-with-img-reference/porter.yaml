@@ -9,7 +9,6 @@ images:
     description: "Whalesay as a service"
     imageType: "docker"
     repository: localhost:5000/whalesayd
-    digest: "sha256:499f71eec2e3bd78f26c268bbf5b2a65f73b96216fac4a89b86b5ebf115527b6"
     tag: "latest"
 
 mixins:

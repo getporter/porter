@@ -20,12 +20,12 @@ type RegistryProvider interface {
 	// Returns the image digest from the registry.
 	PushInvocationImage(ctx context.Context, invocationImage string) (digest.Digest, error)
 
-	// IsImageCached checks whether a particular invocation image exists in the local image cache.
-	IsImageCached(ctx context.Context, invocationImage string) (bool, error)
+	// GetCachedImage returns an particular image from the local image cache.
+	GetCachedImage(ctx context.Context, invocationImage string) (ImageSummary, error)
 
 	// ListTags returns all tags defined on the specified repository.
 	ListTags(ctx context.Context, repository string) ([]string, error)
 
 	// PullImage pulls a image from an OCI registry and returns the image's digest
-	PullImage(ctx context.Context, image string) (string, error)
+	PullImage(ctx context.Context, image string) error
 }

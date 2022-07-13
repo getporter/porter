@@ -6,8 +6,10 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg/build"
+	cnabtooci "get.porter.sh/porter/pkg/cnab/cnab-to-oci"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/test"
+	"github.com/docker/docker/api/types"
 	"github.com/stretchr/testify/require"
 )
 
@@ -48,7 +50,7 @@ func Test_generateInternalManifest(t *testing.T) {
 
 	p := NewTestPorter(t)
 	defer p.Close()
-	p.TestRegistry.MockPullImage = mockPullImage
+	p.Porter.Registry = &mockRegistry{}
 
 	for _, tc := range testcases {
 		tc := tc
@@ -74,6 +76,32 @@ func Test_generateInternalManifest(t *testing.T) {
 	}
 }
 
-func mockPullImage(ctx context.Context, image string) (string, error) {
-	return "sha256:8b92b7269f59e3ed824e811a1ff1ee64f0d44c0218efefada57a4bebc2d7ef6f", nil
+type mockRegistry struct {
+	cache map[string]cnabtooci.ImageSummary
+	cnabtooci.TestRegistry
+}
+
+func (m *mockRegistry) PullImage(ctx context.Context, image string) error {
+	if m.cache == nil {
+		m.cache = make(map[string]cnabtooci.ImageSummary)
+	}
+	imageSummary, err := cnabtooci.NewImageSummary(image)
+	if err != nil {
+		return err
+	}
+	imageSummary.ImageSummary = types.ImageSummary{
+		ID:          "testID",
+		RepoDigests: []string{"test/whalesayd@sha256:8b92b7269f59e3ed824e811a1ff1ee64f0d44c0218efefada57a4bebc2d7ef6f"},
+	}
+
+	m.cache[image] = imageSummary
+	return nil
+}
+
+func (m *mockRegistry) GetCachedImage(ctx context.Context, image string) (cnabtooci.ImageSummary, error) {
+	if m.cache == nil {
+		m.cache = make(map[string]cnabtooci.ImageSummary)
+		return cnabtooci.ImageSummary{}, nil
+	}
+	return m.cache[image], nil
 }

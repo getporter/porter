@@ -12,6 +12,7 @@ import (
 	"get.porter.sh/porter/pkg/tracing"
 	"get.porter.sh/porter/pkg/yaml"
 	"github.com/mikefarah/yq/v3/pkg/yqlib"
+	"github.com/opencontainers/go-digest"
 	"go.opentelemetry.io/otel/attribute"
 )
 
@@ -89,7 +90,23 @@ func (p *Porter) generateInternalManifest(ctx context.Context, opts BuildOptions
 		}
 		ref := fmt.Sprintf("%s:%s", img.Repository, imgTag)
 
-		digest, err := p.Registry.PullImage(ctx, ref)
+		imgSummary, err := p.Registry.GetCachedImage(ctx, ref)
+		if err != nil {
+			return err
+		}
+
+		var imgDigest digest.Digest
+		if imgSummary.IsZero() || len(imgSummary.RepoDigests) == 0 {
+			err := p.Registry.PullImage(ctx, ref)
+			if err != nil {
+				return err
+			}
+			imgSummary, err = p.Registry.GetCachedImage(ctx, ref)
+			if err != nil {
+				return err
+			}
+		}
+		imgDigest, err = imgSummary.Digest()
 		if err != nil {
 			return err
 		}
@@ -106,7 +123,7 @@ func (p *Porter) generateInternalManifest(ctx context.Context, opts BuildOptions
 				continue
 			}
 		}
-		return e.SetValue(path+"digest", digest)
+		return e.SetValue(path+"digest", imgDigest.String())
 	})
 	if err != nil {
 		return span.Error(err)
