@@ -60,6 +60,9 @@ type queuedDependency struct {
 }
 
 func (e *dependencyExecutioner) Prepare(ctx context.Context) error {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
 	parentActionArgs, err := e.porter.BuildActionArgs(ctx, e.parentInstallation, e.parentAction)
 	if err != nil {
 		return err
@@ -82,11 +85,14 @@ func (e *dependencyExecutioner) Prepare(ctx context.Context) error {
 }
 
 func (e *dependencyExecutioner) Execute(ctx context.Context) error {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
 	if e.deps == nil {
-		return errors.New("Prepare must be called before Execute")
+		return span.Error(errors.New("Prepare must be called before Execute"))
 	}
 
-	// executeDependency the requested action against all of the dependencies
+	// executeDependency the requested action against all the dependencies
 	for _, dep := range e.deps {
 		err := e.executeDependency(ctx, dep)
 		if err != nil {
@@ -129,13 +135,13 @@ func (e *dependencyExecutioner) identifyDependencies(ctx context.Context) error 
 	if e.parentOpts.CNABFile != "" {
 		bundle, err := e.CNAB.LoadBundle(e.parentOpts.CNABFile)
 		if err != nil {
-			return err
+			return span.Error(err)
 		}
 		bun = bundle
 	} else if e.parentOpts.Reference != "" {
 		cachedBundle, err := e.Resolver.Resolve(ctx, e.parentOpts.BundlePullOptions)
 		if err != nil {
-			return fmt.Errorf("could not resolve bundle: %w", err)
+			return span.Error(fmt.Errorf("could not resolve bundle: %w", err))
 		}
 
 		bun = cachedBundle.Definition
@@ -148,13 +154,13 @@ func (e *dependencyExecutioner) identifyDependencies(ctx context.Context) error 
 		bun = cnab.NewBundle(c.Bundle)
 	} else {
 		// If we hit here, there is a bug somewhere
-		return errors.New("identifyDependencies failed to load the bundle because no bundle was specified. Please report this bug to https://github.com/getporter/porter/issues/new/choose")
+		return span.Error(errors.New("identifyDependencies failed to load the bundle because no bundle was specified. Please report this bug to https://github.com/getporter/porter/issues/new/choose"))
 	}
 
 	solver := &cnab.DependencySolver{}
 	locks, err := solver.ResolveDependencies(bun)
 	if err != nil {
-		return err
+		return span.Error(err)
 	}
 
 	e.deps = make([]*queuedDependency, len(locks))
@@ -169,6 +175,9 @@ func (e *dependencyExecutioner) identifyDependencies(ctx context.Context) error 
 }
 
 func (e *dependencyExecutioner) prepareDependency(ctx context.Context, dep *queuedDependency) error {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
 	// Pull the dependency
 	var err error
 	pullOpts := BundlePullOptions{
@@ -177,23 +186,23 @@ func (e *dependencyExecutioner) prepareDependency(ctx context.Context, dep *queu
 		Force:            e.parentOpts.Force,
 	}
 	if err := pullOpts.Validate(); err != nil {
-		return fmt.Errorf("error preparing dependency %s: %w", dep.Alias, err)
+		return span.Error(fmt.Errorf("error preparing dependency %s: %w", dep.Alias, err))
 	}
 	cachedDep, err := e.Resolver.Resolve(ctx, pullOpts)
 	if err != nil {
-		return fmt.Errorf("error pulling dependency %s: %w", dep.Alias, err)
+		return span.Error(fmt.Errorf("error pulling dependency %s: %w", dep.Alias, err))
 	}
 	dep.BundleReference = cachedDep.BundleReference
 
 	err = cachedDep.Definition.Validate()
 	if err != nil {
-		return fmt.Errorf("invalid bundle %s: %w", dep.Alias, err)
+		return span.Error(fmt.Errorf("invalid bundle %s: %w", dep.Alias, err))
 	}
 
 	// Cache the bundle.json for later
 	dep.cnabFileContents, err = e.FileSystem.ReadFile(cachedDep.BundlePath)
 	if err != nil {
-		return fmt.Errorf("error reading %s: %w", cachedDep.BundlePath, err)
+		return span.Error(fmt.Errorf("error reading %s: %w", cachedDep.BundlePath, err))
 	}
 
 	// Make a lookup of which parameters are defined in the dependent bundle
@@ -263,6 +272,9 @@ func (e *dependencyExecutioner) executeDependency(ctx context.Context, dep *queu
 	// even the root bundle uses the execution engine here. This would set up how
 	// we want dependencies and mixins as bundles to work in the future.
 
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
 	depName := cnab.BuildPrerequisiteInstallationName(e.parentOpts.Name, dep.Alias)
 	depInstallation, err := e.Installations.GetInstallation(ctx, e.parentOpts.Namespace, depName)
 	if err != nil {
@@ -281,7 +293,7 @@ func (e *dependencyExecutioner) executeDependency(ctx context.Context, dep *queu
 
 	resolvedParameters, err := e.porter.resolveParameters(ctx, depInstallation, dep.BundleReference.Definition, e.parentArgs.Action, dep.Parameters)
 	if err != nil {
-		return fmt.Errorf("error resolving parameters for dependency %s: %w", dep.Alias, err)
+		return span.Error(fmt.Errorf("error resolving parameters for dependency %s: %w", dep.Alias, err))
 	}
 
 	depArgs := cnabprovider.ActionArguments{
@@ -302,23 +314,23 @@ func (e *dependencyExecutioner) executeDependency(ctx context.Context, dep *queu
 	}
 
 	var executeErrs error
-	fmt.Fprintf(e.Out, "Executing dependency %s...\n", dep.Alias)
+	span.Infof("Executing dependency %s...", dep.Alias)
 	err = e.CNAB.Execute(ctx, depArgs)
 	if err != nil {
 		executeErrs = multierror.Append(executeErrs, fmt.Errorf("error executing dependency %s: %w", dep.Alias, err))
 
 		// Handle errors when/if the action is uninstall
 		// If uninstallOpts is an empty struct, executeErrs will pass through
-		executeErrs = uninstallOpts.handleUninstallErrs(e.Out, executeErrs)
+		executeErrs = uninstallOpts.handleUninstallErrs(e.Err, executeErrs)
 		if executeErrs != nil {
-			return executeErrs
+			return span.Error(executeErrs)
 		}
 	}
 
 	// If uninstallOpts is an empty struct (i.e., action not Uninstall), this
 	// will resolve to false and thus be a no-op
 	if uninstallOpts.shouldDelete() {
-		fmt.Fprintf(e.Out, installationDeleteTmpl, depArgs.Installation)
+		span.Infof(installationDeleteTmpl, depArgs.Installation)
 		return e.Installations.RemoveInstallation(ctx, depArgs.Installation.Namespace, depArgs.Installation.Name)
 	}
 	return nil
