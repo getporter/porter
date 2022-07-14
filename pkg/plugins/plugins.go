@@ -1,10 +1,11 @@
 package plugins
 
 import (
-	"errors"
+	"context"
 	"fmt"
 	"strings"
 
+	"get.porter.sh/porter/pkg/config"
 	"github.com/hashicorp/go-plugin"
 )
 
@@ -42,7 +43,7 @@ func ParsePluginKey(value string) (PluginKey, error) {
 		key.Binary = parts[1]
 		key.Implementation = parts[2]
 	default:
-		return PluginKey{}, errors.New("invalid plugin key '%s', allowed format is [INTERFACE].BINARY.IMPLEMENTATION")
+		return PluginKey{}, fmt.Errorf("invalid plugin key '%s', allowed format is [INTERFACE].BINARY.IMPLEMENTATION", value)
 	}
 
 	if key.Binary == "porter" {
@@ -50,4 +51,28 @@ func ParsePluginKey(value string) (PluginKey, error) {
 	}
 
 	return key, nil
+}
+
+// CreatePluginHandler creates an instance of a plugin given its configuration.
+type CreatePluginHandler func(porterCfg *config.Config, pluginCfg interface{}) (plugin.Plugin, error)
+
+// PluginRegistration is the info needed to automatically handle
+// running a plugin when requested.
+type PluginRegistration struct {
+	// Interface that the plugin implements, such as storage or secrets.
+	Interface string
+
+	// ProtocolVersion is the version of the plugin protocol that the plugin supports.
+	ProtocolVersion int
+
+	// Create is the handler called to make an instance of the plugin.
+	Create CreatePluginHandler
+}
+
+// PluginCloser is the interface that plugins should implement when they need to
+// clean up resources when Porter is done with the plugin.
+type PluginCloser interface {
+	// Close requests that the plugin clean up long-held resources.
+	// A context is passed so that the plugin can still output log/trace data.
+	Close(ctx context.Context) error
 }

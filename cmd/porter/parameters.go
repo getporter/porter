@@ -1,17 +1,18 @@
 package main
 
 import (
+	"get.porter.sh/porter/pkg/cli"
 	"get.porter.sh/porter/pkg/porter"
 	"github.com/spf13/cobra"
 )
 
 func buildParametersCommands(p *porter.Porter) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:         "parameters",
-		Aliases:     []string{"parameter", "param", "params"},
-		Annotations: map[string]string{"group": "resource"},
-		Short:       "Parameter set commands",
+		Use:     "parameters",
+		Aliases: []string{"parameter", "param", "params"},
+		Short:   "Parameter set commands",
 	}
+	cli.SetCommandGroup(cmd, "resource")
 
 	cmd.AddCommand(buildParametersApplyCommand(p))
 	cmd.AddCommand(buildParametersEditCommand(p))

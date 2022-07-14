@@ -1,17 +1,18 @@
 package main
 
 import (
+	"get.porter.sh/porter/pkg/cli"
 	"get.porter.sh/porter/pkg/porter"
 	"github.com/spf13/cobra"
 )
 
 func buildCredentialsCommands(p *porter.Porter) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:         "credentials",
-		Aliases:     []string{"credential", "cred", "creds"},
-		Annotations: map[string]string{"group": "resource"},
-		Short:       "Credentials commands",
+		Use:     "credentials",
+		Aliases: []string{"credential", "cred", "creds"},
+		Short:   "Credentials commands",
 	}
+	cli.SetCommandGroup(cmd, "resource")
 
 	cmd.AddCommand(buildCredentialsApplyCommand(p))
 	cmd.AddCommand(buildCredentialsEditCommand(p))

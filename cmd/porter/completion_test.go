@@ -5,6 +5,7 @@ import (
 	"os"
 	"testing"
 
+	"get.porter.sh/porter/pkg/cli"
 	"get.porter.sh/porter/pkg/porter"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -29,6 +30,6 @@ func TestCompletion(t *testing.T) {
 func TestCompletion_SkipConfig(t *testing.T) {
 	p := porter.NewTestPorter(t)
 	cmd := buildCompletionCommand(p.Porter)
-	shouldSkip := shouldSkipConfig(cmd)
+	shouldSkip := cli.ShouldSkipConfig(cmd)
 	require.True(t, shouldSkip, "expected that we skip loading configuration for the completion command")
 }

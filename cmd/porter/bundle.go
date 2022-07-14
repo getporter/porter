@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"get.porter.sh/porter/pkg/cli"
 	"get.porter.sh/porter/pkg/porter"
 	"github.com/spf13/cobra"
 )
@@ -15,9 +16,7 @@ func buildBundleCommands(p *porter.Porter) *cobra.Command {
 		Short:   "Bundle commands",
 		Long:    "Commands for working with bundles. These all have shortcuts so that you can call these commands without the bundle resource prefix. For example, porter bundle install is available as porter install as well.",
 	}
-	cmd.Annotations = map[string]string{
-		"group": "resource",
-	}
+	cli.SetCommandGroup(cmd, "resource")
 
 	cmd.AddCommand(buildBundleCreateCommand(p))
 	cmd.AddCommand(buildBundleBuildCommand(p))

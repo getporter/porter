@@ -1,6 +1,7 @@
 package main
 
 import (
+	"get.porter.sh/porter/pkg/cli"
 	"get.porter.sh/porter/pkg/porter"
 	"github.com/spf13/cobra"
 )
@@ -13,8 +14,7 @@ func buildSchemaCommand(p *porter.Porter) *cobra.Command {
 			return p.PrintManifestSchema(cmd.Context())
 		},
 	}
-	cmd.Annotations = map[string]string{
-		"group": "meta",
-	}
+	cli.SetCommandGroup(cmd, "meta")
+
 	return cmd
 }

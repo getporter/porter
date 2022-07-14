@@ -1,25 +1,23 @@
 package main
 
 import (
+	"get.porter.sh/porter/pkg/cli"
 	"get.porter.sh/porter/pkg/porter"
 	"github.com/spf13/cobra"
 )
 
 func buildStorageCommand(p *porter.Porter) *cobra.Command {
-	cmd := cobra.Command{
+	cmd := &cobra.Command{
 		Use:   "storage",
 		Short: "Manage data stored by Porter",
-		Long: `Manage the data stored by Porter, such as credentials and installation data.
-`,
-		Annotations: map[string]string{
-			"group": "resource",
-		},
+		Long:  `Manage the data stored by Porter, such as credentials and installation data.`,
 	}
+	cli.SetCommandGroup(cmd, "resource")
 
 	cmd.AddCommand(buildStorageMigrateCommand(p))
 	cmd.AddCommand(buildStorageFixPermissionsCommand(p))
 
-	return &cmd
+	return cmd
 }
 
 func buildStorageMigrateCommand(p *porter.Porter) *cobra.Command {

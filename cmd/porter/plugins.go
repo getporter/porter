@@ -1,6 +1,7 @@
 package main
 
 import (
+	"get.porter.sh/porter/pkg/cli"
 	"get.porter.sh/porter/pkg/pkgmgmt"
 	"get.porter.sh/porter/pkg/plugins"
 	"get.porter.sh/porter/pkg/porter"
@@ -12,10 +13,8 @@ func buildPluginsCommands(p *porter.Porter) *cobra.Command {
 		Use:     "plugins",
 		Aliases: []string{"plugin"},
 		Short:   "Plugin commands. Plugins enable Porter to work on different cloud providers and systems.",
-		Annotations: map[string]string{
-			"group": "resource",
-		},
 	}
+	cli.SetCommandGroup(cmd, "resource")
 
 	cmd.AddCommand(buildPluginsListCommand(p))
 	cmd.AddCommand(buildPluginSearchCommand(p))
@@ -160,6 +159,8 @@ func buildPluginRunCommand(p *porter.Porter) *cobra.Command {
 		},
 		Hidden: true, // This should ALWAYS be hidden, it is not a user-facing command
 	}
+
+	cli.MarkCommandAsPlugin(cmd)
 
 	return cmd
 }

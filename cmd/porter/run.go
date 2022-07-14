@@ -1,6 +1,7 @@
 package main
 
 import (
+	"get.porter.sh/porter/pkg/cli"
 	"get.porter.sh/porter/pkg/porter"
 	"github.com/spf13/cobra"
 )
@@ -19,13 +20,10 @@ func buildRunCommand(p *porter.Porter) *cobra.Command {
 		},
 		Hidden: true, // Hide runtime commands from the helptext
 	}
+	cli.SetCommandGroup(cmd, "runtime")
 
 	cmd.Flags().StringVarP(&opts.File, "file", "f", "porter.yaml", "The porter configuration file (Defaults to porter.yaml)")
 	cmd.Flags().StringVar(&opts.Action, "action", "", "The bundle action to execute (Defaults to CNAB_ACTION)")
-
-	cmd.Annotations = map[string]string{
-		"group": "runtime",
-	}
 
 	return cmd
 }

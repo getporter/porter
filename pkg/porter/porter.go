@@ -9,6 +9,7 @@ import (
 	"get.porter.sh/porter/pkg/build"
 	"get.porter.sh/porter/pkg/build/buildkit"
 	"get.porter.sh/porter/pkg/cache"
+	"get.porter.sh/porter/pkg/cli"
 	cnabtooci "get.porter.sh/porter/pkg/cnab/cnab-to-oci"
 	cnabprovider "get.porter.sh/porter/pkg/cnab/provider"
 	"get.porter.sh/porter/pkg/config"
@@ -23,6 +24,8 @@ import (
 	"get.porter.sh/porter/pkg/tracing"
 	"github.com/hashicorp/go-multierror"
 )
+
+var _ cli.PorterApp = &Porter{}
 
 // Porter is the logic behind the porter client.
 type Porter struct {
@@ -80,6 +83,10 @@ func NewFor(c *config.Config, store storage.Store, secretStorage secrets.Store) 
 		CNAB:          cnabprovider.NewRuntime(c, installationStorage, credStorage, secretStorage, sanitizerService),
 		Sanitizer:     sanitizerService,
 	}
+}
+
+func (p *Porter) GetConfig() *config.Config {
+	return p.Config
 }
 
 // Connect initializes Porter for use and must be called before other Porter methods.

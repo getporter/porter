@@ -1,6 +1,7 @@
 package main
 
 import (
+	"get.porter.sh/porter/pkg/cli"
 	"get.porter.sh/porter/pkg/porter"
 	"github.com/spf13/cobra"
 )
@@ -29,9 +30,8 @@ For additional details see: https://getporter.org/install#command-completion`,
 			}
 		},
 	}
-	cmd.Annotations = map[string]string{
-		"group":    "meta",
-		skipConfig: "",
-	}
+	cli.SetCommandGroup(cmd, "meta")
+	cli.SkipConfigForCommand(cmd)
+
 	return cmd
 }
