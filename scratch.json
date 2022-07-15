@@ -1,0 +1,58 @@
+{
+    "required": 
+      {
+        "docker": {
+      "privileged": false,
+      "mounts": [
+          {
+              "Type": "",
+              "Source": "",
+              "Target": "",
+              "ReadOnly": false,
+              "Consistency": "",
+              "BindOptions": {
+                  "Propagation": "",
+                  "NonRecursive": false
+              },
+              "VolumeOptions": {
+                  "NoCopy": false,
+                  "Labels": {
+                      "": ""
+                  },
+                  "DriverConfig": {
+                      "Name": "",
+                      "Options": {
+                          "": ""
+                      }
+                  }
+              },
+              "TmpfsOptions": {
+                  "SizeBytes": 0,
+                  "Mode": 0
+              }
+          }
+      ],
+      "network": "",
+      "capadd": [
+          "c1",
+          "c2"
+      ],
+      "capdrop": [
+          "c3",
+          "c4"
+      ],
+      "portBindings": [
+          {
+              "80": [
+                  {
+                      "HostIp": "0.0.0.0",
+                      "HostPort": "8080"
+                  }
+              ]
+          }
+      ],
+      "restartPolicy": {
+          "Name": "",
+          "MaximumRetryCount": 0
+      }
+        }}}

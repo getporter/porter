@@ -348,11 +348,13 @@ func (pd *ParameterDefinition) Validate() error {
 		result = multierror.Append(result, errors.New("parameter name is required"))
 	}
 
-	// Porter supports declaring a parameter of type: "file",
+	// Porter supports declaring a parameter of types: "file" and "directory",
 	// which we will convert to the appropriate bundle.Parameter type in adapter.go
 	// Here, we copy the ParameterDefinition and make the same modification before validation
 	pdCopy := pd.DeepCopy()
-	if pdCopy.Type == "file" {
+	if MakeCNABCompatible(pdCopy) {
+		// TODO: Currently all custom parameter types require a path property. This may not be the case in the future,
+		//       Instead, we should do the validation separately for each type.
 		if pd.Destination.Path == "" {
 			result = multierror.Append(result, fmt.Errorf("no destination path supplied for parameter %s", pd.Name))
 		}

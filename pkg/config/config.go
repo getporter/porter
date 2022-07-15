@@ -56,6 +56,13 @@ const (
 	EnvPorterInstallationName = "PORTER_INSTALLATION_NAME"
 )
 
+// PorterParamMap maps custom porter parameter types to a CNAB compatible alternative
+var PorterParamMap = map[string]string {
+	"file": "string",
+	"directory": "string",
+}
+
+
 // These are functions that afero doesn't support, so this lets us stub them out for tests to set the
 // location of the current executable porter binary and resolve PORTER_HOME.
 var getExecutable = os.Executable

@@ -3,6 +3,7 @@ package configadapter
 import (
 	"context"
 	"fmt"
+	"os"
 	"path"
 	"strings"
 
@@ -196,8 +197,11 @@ func (c *ManifestConverter) generateBundleParameters(ctx context.Context, defs *
 		}
 
 		if param.Type == nil {
-			// Default to a file type if the param is stored in a file
-			if param.Destination.Path != "" {
+			// Default to a directory type if the param is a directory
+			if param.Destination.Path != "" && strings.HasSuffix(param.Destination.Path, string(os.PathSeparator)) {
+				param.Type = "directory"
+			} else if param.Destination.Path != "" {
+				// If the path could refer to a file assume that it does unless specified explicity
 				param.Type = "file"
 			} else {
 				// Assume it's a string otherwise
@@ -291,12 +295,8 @@ func (c *ManifestConverter) addDefinition(name string, kind string, def definiti
 		defName = name + "-" + kind
 	}
 
-	// file is a porter specific type, swap it out for something CNAB understands
-	if def.Type == "file" {
-		def.Type = "string"
-		def.ContentEncoding = "base64"
-	}
-
+	// Type may be a porter specific type, swap it out for something CNAB understands
+	MakeCNABCompatible(&def)
 	(*defs)[defName] = &def
 
 	return defName
