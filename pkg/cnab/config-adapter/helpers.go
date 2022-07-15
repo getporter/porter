@@ -17,12 +17,17 @@ func ConvertToTestBundle(ctx context.Context, cfg *config.Config, manifest *mani
 	return converter.ToBundle(ctx)
 }
 
-
-func MakeCNABCompatible(schema *definition.Schema) {
+// MakeCNABCompatible receives a schema with possible porter specific parameters
+// and converts those parameters to CNAB compatible versions.
+// Returns true if values were replaced and false otherwise.
+func MakeCNABCompatible(schema *definition.Schema) bool {
 	if v, ok := schema.Type.(string); ok {
 		if t, ok := config.PorterParamMap[v]; ok {
-			schema.Type = t;
+			schema.Type = t
 			schema.ContentEncoding = "base64"
+			return ok
 		}
 	}
+
+	return false
 }
