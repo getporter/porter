@@ -192,9 +192,9 @@ func (g *DockerfileGenerator) buildMixinsSection(ctx context.Context) ([]string,
 func (g *DockerfileGenerator) buildInitSection() []string {
 	return []string{
 		"ARG BUNDLE_DIR",
-		fmt.Sprintf("ARG BUNDLE_UID=%d", BUNDLE_UID),
-		fmt.Sprintf("ARG BUNDLE_USER=%s", BUNDLE_USER),
-		fmt.Sprintf("ARG BUNDLE_GID=%d", BUNDLE_GID),
+		"ARG BUNDLE_UID=65532",
+		"ARG BUNDLE_USER=nonroot",
+		"ARG BUNDLE_GID=0",
 		// Create a non-root user that is in the root group with the specified id and a home directory
 		"RUN useradd ${BUNDLE_USER} -m -u ${BUNDLE_UID} -g ${BUNDLE_GID} -o",
 	}
