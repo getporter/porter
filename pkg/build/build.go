@@ -33,6 +33,16 @@ var (
 	// BUNDLE_DIR is the directory where the bundle is located in the CNAB execution environment.
 	BUNDLE_DIR = "/cnab/app"
 
+	// BUNDLE_UID is the user id assigned to the user executing the bundle
+	BUNDLE_UID = 65532
+
+	// BUNDLE_GID is the group assigned to the user executing the bundle
+	// Defaults to root
+	BUNDLE_GID = 0
+
+	// BUNDLE_USER is the username assigned to the user executing the bundle
+	BUNDLE_USER="nonroot"
+
 	// PORTER_MIXINS_TOKEN can control where mixin instructions will be placed in
 	// Dockerfile.
 	PORTER_MIXINS_TOKEN = "# PORTER_MIXINS"
