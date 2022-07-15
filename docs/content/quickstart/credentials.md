@@ -92,11 +92,11 @@ See the list of available [plugins](/plugins/) for which secret providers are su
 
 ## Specify a credential with a Credential Set
 
-Pass credentials to a bundle with the \--cred or -c flag, where the flag value is either the name of a credential set stored in Porter, or a path to a credential set file.
+Pass credentials to a bundle with the \--credential-set or -c flag, where the flag value is either the name of a credential set stored in Porter, or a path to a credential set file.
 For example:
 
 ```
-porter install --cred github --reference getporter/credentials-tutorial:v0.3.0
+porter install --credential-set github --reference getporter/credentials-tutorial:v0.3.0
 ```
 
 The output of this example bundle prints data from your public GitHub user profile.

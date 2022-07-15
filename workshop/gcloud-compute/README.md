@@ -33,15 +33,15 @@ credentials:
 
 ## Create a VM
 ```console
-$ porter install --cred gcloud
+$ porter install --credential-set gcloud
 ```
 
 ## Label a VM
 ```console
-$ porter upgrade --cred gcloud
+$ porter upgrade --credential-set gcloud
 ```
 
 ## Delete a VM
 ```console
-$ porter uninstall --cred gcloud
+$ porter uninstall --credential-set gcloud
 ```
