@@ -251,11 +251,10 @@ func (r *Registry) GetCachedImage(ctx context.Context, image string) (ImageSumma
 		return ImageSummary{}, nil
 	}
 
-	summary, err := NewImageSummary(image)
+	summary, err := NewImageSummary(image, imageSummaries[0])
 	if err != nil {
 		return ImageSummary{}, log.Error(fmt.Errorf("failed to extract image %s in docker cache: %w", image, err))
 	}
-	summary.ImageSummary = imageSummaries[0]
 
 	return summary, nil
 }
@@ -275,14 +274,25 @@ type ImageSummary struct {
 	imageRef cnab.OCIReference
 }
 
-func NewImageSummary(imageRef string) (ImageSummary, error) {
+func NewImageSummary(imageRef string, sum types.ImageSummary) (ImageSummary, error) {
 	ref, err := cnab.ParseOCIReference(imageRef)
 	if err != nil {
 		return ImageSummary{}, err
 	}
-	return ImageSummary{
-		imageRef: ref,
-	}, nil
+
+	img := ImageSummary{
+		imageRef:     ref,
+		ImageSummary: sum,
+	}
+	if img.IsZero() {
+		return ImageSummary{}, fmt.Errorf("invalid image summary for image reference %s", imageRef)
+	}
+
+	return img, nil
+}
+
+func (i ImageSummary) GetImageReference() cnab.OCIReference {
+	return i.imageRef
 }
 
 func (i ImageSummary) IsZero() bool {
@@ -310,6 +320,10 @@ func (i ImageSummary) Digest() (digest.Digest, error) {
 
 		imgDigest = imgRef.Digest()
 		break
+	}
+
+	if err := imgDigest.Validate(); err != nil {
+		return "", err
 	}
 
 	return imgDigest, nil

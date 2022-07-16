@@ -2,6 +2,7 @@ package porter
 
 import (
 	"context"
+	"errors"
 	"path/filepath"
 	"testing"
 
@@ -17,6 +18,7 @@ func Test_generateInternalManifest(t *testing.T) {
 	testcases := []struct {
 		name         string
 		opts         BuildOptions
+		wantErr      string
 		wantManifest string
 	}{{
 		name:         "no opts",
@@ -46,11 +48,17 @@ func Test_generateInternalManifest(t *testing.T) {
 		name:         "custom input set",
 		opts:         BuildOptions{Customs: []string{"key1=editedValue1", "key2.nestedKey2=editedValue2"}},
 		wantManifest: "custom-input.yaml",
-	}}
+	}, {
+		name:         "failed to pull image reference",
+		opts:         BuildOptions{},
+		wantErr:      "failed to pull image",
+		wantManifest: "expected-result.yaml",
+	},
+	}
 
 	p := NewTestPorter(t)
 	defer p.Close()
-	p.Porter.Registry = &mockRegistry{}
+	p.TestRegistry.MockGetCachedImage = mockGetCachedImage
 
 	for _, tc := range testcases {
 		tc := tc
@@ -64,7 +72,15 @@ func Test_generateInternalManifest(t *testing.T) {
 			err := tc.opts.Validate(p.Porter)
 			require.NoError(t, err)
 
+			if tc.wantErr != "" {
+				p.TestRegistry.MockPullImage = mockPullImage
+			}
+
 			err = p.generateInternalManifest(context.Background(), tc.opts)
+			if tc.wantErr != "" {
+				require.ErrorContains(t, err, "failed to pull image")
+				return
+			}
 			require.NoError(t, err)
 
 			goldenFile := filepath.Join("testdata/generateManifest", tc.wantManifest)
@@ -76,32 +92,14 @@ func Test_generateInternalManifest(t *testing.T) {
 	}
 }
 
-type mockRegistry struct {
-	cache map[string]cnabtooci.ImageSummary
-	cnabtooci.TestRegistry
+func mockPullImage(ctx context.Context, image string) error {
+	return errors.New("failed to pull image")
 }
 
-func (m *mockRegistry) PullImage(ctx context.Context, image string) error {
-	if m.cache == nil {
-		m.cache = make(map[string]cnabtooci.ImageSummary)
-	}
-	imageSummary, err := cnabtooci.NewImageSummary(image)
-	if err != nil {
-		return err
-	}
-	imageSummary.ImageSummary = types.ImageSummary{
-		ID:          "testID",
+func mockGetCachedImage(ctx context.Context, image string) (cnabtooci.ImageSummary, error) {
+	sum := types.ImageSummary{
+		ID:          "test-id",
 		RepoDigests: []string{"test/whalesayd@sha256:8b92b7269f59e3ed824e811a1ff1ee64f0d44c0218efefada57a4bebc2d7ef6f"},
 	}
-
-	m.cache[image] = imageSummary
-	return nil
-}
-
-func (m *mockRegistry) GetCachedImage(ctx context.Context, image string) (cnabtooci.ImageSummary, error) {
-	if m.cache == nil {
-		m.cache = make(map[string]cnabtooci.ImageSummary)
-		return cnabtooci.ImageSummary{}, nil
-	}
-	return m.cache[image], nil
+	return cnabtooci.NewImageSummary(image, sum)
 }
