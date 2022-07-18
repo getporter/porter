@@ -97,7 +97,8 @@ func (p *Porter) Build(ctx context.Context, opts BuildOptions) error {
 	ctx, span := tracing.StartSpan(ctx)
 	defer span.EndSpan()
 
-	span.Debugf("Using %s build driver\n", p.GetBuildDriver())
+	opts.Apply(p.Context)
+	span.Debugf("Using %s build driver", p.GetBuildDriver())
 
 	// Start with a fresh .cnab directory before building
 	err := p.FileSystem.RemoveAll(build.LOCAL_CNAB)

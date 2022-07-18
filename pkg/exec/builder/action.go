@@ -85,12 +85,11 @@ func LoadAction(ctx context.Context, porterCtx *portercontext.Context, commandFi
 		return span.Error(err)
 	}
 
-	result, err := unmarshal(contents)
+	_, err = unmarshal(contents)
 	if err != nil {
 		return span.Error(fmt.Errorf("could not unmarshal input:\n %s: %w", string(contents), err))
 	}
 
-	span.Debugf("Parsed Mixin Input:\n%#v", result)
 	return nil
 }
 

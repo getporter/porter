@@ -316,7 +316,7 @@ func (p *Porter) DeleteCredential(ctx context.Context, opts CredentialDeleteOpti
 		attribute.String("namespace", opts.Namespace),
 		attribute.String("name", opts.Name),
 	)
-	span.EndSpan()
+	defer span.EndSpan()
 
 	err := p.Credentials.RemoveCredentialSet(ctx, opts.Namespace, opts.Name)
 	if errors.Is(err, storage.ErrNotFound{}) {
