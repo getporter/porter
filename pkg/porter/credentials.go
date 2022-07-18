@@ -17,7 +17,6 @@ import (
 	dtprinter "github.com/carolynvs/datetime-printer"
 	"github.com/olekukonko/tablewriter"
 	"go.opentelemetry.io/otel/attribute"
-	"go.uber.org/zap/zapcore"
 )
 
 // CredentialShowOptions represent options for Porter's credential show command
@@ -358,12 +357,6 @@ func (p *Porter) CredentialsApply(ctx context.Context, o ApplyOptions) error {
 	namespace, err := p.getNamespaceFromFile(o)
 	if err != nil {
 		return span.Error(err)
-	}
-
-	if span.ShouldLog(zapcore.DebugLevel) {
-		// ignoring any error here, printing debug info isn't critical
-		contents, _ := p.FileSystem.ReadFile(o.File)
-		span.Debugf("Input file contents:\n%s", contents)
 	}
 
 	var creds storage.CredentialSet

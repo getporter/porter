@@ -25,7 +25,6 @@ import (
 	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/olekukonko/tablewriter"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.uber.org/zap/zapcore"
 )
 
 // ParameterShowOptions represent options for Porter's parameter show command
@@ -507,12 +506,6 @@ func (p *Porter) ParametersApply(ctx context.Context, o ApplyOptions) error {
 	namespace, err := p.getNamespaceFromFile(o)
 	if err != nil {
 		return span.Error(err)
-	}
-
-	if span.ShouldLog(zapcore.DebugLevel) {
-		// ignoring any error here, printing debug info isn't critical
-		contents, _ := p.FileSystem.ReadFile(o.File)
-		span.Debugf("Input file contents:\n%s", contents)
 	}
 
 	var params storage.ParameterSet
