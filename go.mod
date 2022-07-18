@@ -54,6 +54,7 @@ require (
 	github.com/osteele/liquid v1.3.0
 	github.com/pelletier/go-toml v1.9.4
 	github.com/pivotal/image-relocation v0.0.0-20191111101224-e94aff6df06c
+	github.com/pkg/errors v0.9.1
 	github.com/spf13/afero v1.5.1
 	github.com/spf13/cobra v1.2.1
 	github.com/spf13/pflag v1.0.5
@@ -173,7 +174,6 @@ require (
 	github.com/opencontainers/runc v1.1.2 // indirect
 	github.com/osteele/tuesday v1.0.3 // indirect
 	github.com/pierrec/lz4/v4 v4.0.3 // indirect
-	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/client_golang v1.12.1 // indirect
 	github.com/prometheus/client_model v0.2.0 // indirect
