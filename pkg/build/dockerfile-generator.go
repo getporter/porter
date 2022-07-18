@@ -42,28 +42,30 @@ func NewDockerfileGenerator(config *config.Config, m *manifest.Manifest, tmpl *t
 }
 
 func (g *DockerfileGenerator) GenerateDockerFile(ctx context.Context) error {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
 	lines, err := g.buildDockerfile(ctx)
 	if err != nil {
-		return fmt.Errorf("error generating the Dockerfile: %w", err)
+		return span.Error(fmt.Errorf("error generating the Dockerfile: %w", err))
 	}
 
-	fmt.Fprintf(g.Out, "\nWriting Dockerfile =======>\n")
 	contents := strings.Join(lines, "\n")
 
-	if g.IsVerbose() {
-		fmt.Fprintln(g.Out, contents)
-	}
+	// Output the generated dockerfile
+	span.Debug(contents)
 
 	err = g.FileSystem.WriteFile(DOCKER_FILE, []byte(contents), pkg.FileModeWritable)
 	if err != nil {
-		return fmt.Errorf("couldn't write the Dockerfile: %w", err)
+		return span.Error(fmt.Errorf("couldn't write the Dockerfile: %w", err))
 	}
 
 	return nil
 }
 
 func (g *DockerfileGenerator) buildDockerfile(ctx context.Context) ([]string, error) {
-	fmt.Fprintf(g.Out, "\nGenerating Dockerfile =======>\n")
+	log := tracing.LoggerFromContext(ctx)
+	log.Debug("Generating Dockerfile")
 
 	lines, err := g.getBaseDockerfile(ctx)
 	if err != nil {
@@ -74,12 +76,6 @@ func (g *DockerfileGenerator) buildDockerfile(ctx context.Context) ([]string, er
 	lines = append(lines, g.buildCNABSection()...)
 	lines = append(lines, g.buildWORKDIRSection())
 	lines = append(lines, g.buildCMDSection())
-
-	if g.IsVerbose() {
-		for _, line := range lines {
-			fmt.Fprintln(g.Out, line)
-		}
-	}
 
 	return lines, nil
 }

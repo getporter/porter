@@ -47,7 +47,6 @@ porter bundles build [flags]
       --no-lint                 Do not run the linter
       --secret stringArray      Secret file to expose to the build (format: id=mysecret,src=/local/secret). Custom values are assessible as build arguments in the template Dockerfile and in the manifest using template variables. May be specified multiple times.
       --ssh stringArray         SSH agent socket or keys to expose to the build (format: default|<id>[=<socket>|<key>[,<key>]]). May be specified multiple times.
-  -v, --verbose                 Enable verbose logging
       --version string          Override the bundle version
 ```
 

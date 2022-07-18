@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -133,16 +132,8 @@ func (b *Builder) BuildInvocationImage(ctx context.Context, manifest *manifest.M
 		},
 	}
 
-	out := ioutil.Discard
-	mode := progress.PrinterModeQuiet
-	if b.IsVerbose() {
-		mode = progress.PrinterModeAuto // Auto writes to stderr regardless of what you pass in
-
-		ctx, log = log.StartSpanWithName("buildkit", attribute.String("source", "porter.build.buildkit"))
-		defer log.EndSpan()
-		out = unstructuredLogger{log}
-	}
-
+	mode := progress.PrinterModeAuto // Auto writes to stderr regardless of what you pass in
+	out := unstructuredLogger{log}
 	printer := progress.NewPrinter(ctx, out, os.Stderr, mode)
 	_, buildErr := buildx.Build(ctx, drivers, buildxOpts, dockerToBuildx{cli}, confutil.ConfigDir(cli), printer)
 	printErr := printer.Wait()

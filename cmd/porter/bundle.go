@@ -76,7 +76,6 @@ The docker driver builds the bundle image using the local Docker host. To use a 
 
 	f := cmd.Flags()
 	f.BoolVar(&opts.NoLint, "no-lint", false, "Do not run the linter")
-	f.BoolVarP(&opts.Verbose, "verbose", "v", false, "Enable verbose logging")
 	f.StringVar(&opts.Name, "name", "", "Override the bundle name")
 	f.StringVar(&opts.Version, "version", "", "Override the bundle version")
 	f.StringVarP(&opts.File, "file", "f", "",
