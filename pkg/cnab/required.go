@@ -13,7 +13,7 @@ type RequiredExtension struct {
 // SupportedExtensions represent a listing of the current required extensions
 // that Porter supports
 var SupportedExtensions = []RequiredExtension{
-	DependenciesExtension,
+	DependenciesV1Extension,
 	DockerExtension,
 	FileParameterExtension,
 	ParameterSourcesExtension,
