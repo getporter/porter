@@ -111,8 +111,8 @@ func (t Tester) RequirePorter(args ...string) (stdout string, combinedoutput str
 	if err != nil {
 		t.T.Logf("failed to run porter %s", strings.Join(args, " "))
 		t.T.Log(combinedoutput)
-		require.NoError(t.T, err)
 	}
+	require.NoError(t.T, err)
 	return stdout, combinedoutput
 }
 

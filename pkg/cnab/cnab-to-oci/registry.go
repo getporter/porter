@@ -12,7 +12,6 @@ import (
 	"github.com/cnabio/cnab-to-oci/relocation"
 	"github.com/cnabio/cnab-to-oci/remotes"
 	containerdRemotes "github.com/containerd/containerd/remotes"
-	"github.com/davecgh/go-spew/spew"
 	"github.com/docker/cli/cli/command"
 	dockerconfig "github.com/docker/cli/cli/config"
 	"github.com/docker/docker/api/types"
@@ -205,7 +204,6 @@ func (r *Registry) PullImage(ctx context.Context, imgRef string) error {
 		RegistryAuth: encodedAuth,
 	}
 
-	spew.Dump("pulling image", imgRef)
 	_, err = cli.Client().ImagePull(ctx, imgRef, options)
 	if err != nil {
 		return log.Error(fmt.Errorf("docker pull for image %s failed: %w", imgRef, err))
@@ -241,13 +239,10 @@ func (r *Registry) GetCachedImage(ctx context.Context, image string) (ImageSumma
 		return ImageSummary{}, log.Error(err)
 	}
 
-	spew.Dump("inspect image", image)
 	result, _, err := cli.Client().ImageInspectWithRaw(ctx, image)
 	if err != nil {
 		return ImageSummary{}, log.Error(fmt.Errorf("failed to find image %s in docker cache: %w", image, err))
 	}
-
-	spew.Dump(result)
 
 	summary, err := NewImageSummary(image, result)
 	if err != nil {
