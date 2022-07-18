@@ -130,12 +130,14 @@ func (s SortPrintableAction) Swap(i, j int) {
 }
 
 func (o *ExplainOpts) Validate(args []string, pctx *portercontext.Context) error {
-	err := o.validateInstallationName(args)
-	if err != nil {
-		return err
+	// Allow reference to be specified as a positional argument, or using --reference
+	if len(args) == 1 {
+		o.Reference = args[0]
+	} else if len(args) > 1 {
+		return fmt.Errorf("only one positional argument may be specified, the bundle reference, but multiple were received: %s", args)
 	}
 
-	err = o.bundleFileOptions.Validate(pctx)
+	err := o.bundleFileOptions.Validate(pctx)
 	if err != nil {
 		return err
 	}
