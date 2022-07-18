@@ -250,6 +250,7 @@ func (r *Registry) GetCachedImage(ctx context.Context, image string) (ImageSumma
 	if len(imageSummaries) == 0 {
 		return ImageSummary{}, nil
 	}
+	fmt.Fprintln(r.Err, "all value\n", imageSummaries)
 
 	summary, err := NewImageSummary(image, imageSummaries[0])
 	if err != nil {
@@ -315,7 +316,7 @@ func (i ImageSummary) Digest() (digest.Digest, error) {
 		}
 
 		if !imgRef.HasDigest() {
-			return "", fmt.Errorf("failed to get digest for image: %s", imgRef.String())
+			return "", fmt.Errorf("image summary does not contain digest for image: %s", imgRef.String())
 		}
 
 		imgDigest = imgRef.Digest()

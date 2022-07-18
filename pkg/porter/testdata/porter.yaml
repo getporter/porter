@@ -19,6 +19,7 @@ images:
       description: "an image"
       imageType: "docker"
       repository: "getporter/boo"
+      digest: "sha256:6b5a28ccbb76f12ce771a23757880c6083234255c5ba191fca1c5db1f71c1687"
 
 parameters:
   - name: my-first-param
