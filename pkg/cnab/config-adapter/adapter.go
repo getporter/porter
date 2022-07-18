@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"get.porter.sh/porter/pkg/cnab"
+	depsv1 "get.porter.sh/porter/pkg/cnab/dependencies/v1"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/mixin"
@@ -406,23 +407,23 @@ func (c *ManifestConverter) generateBundleImages() map[string]bundle.Image {
 	return images
 }
 
-func (c *ManifestConverter) generateDependencies() (*cnab.Dependencies, error) {
+func (c *ManifestConverter) generateDependencies() (*depsv1.Dependencies, error) {
 	if len(c.Manifest.Dependencies.RequiredDependencies) == 0 {
 		return nil, nil
 	}
 
-	deps := &cnab.Dependencies{
+	deps := &depsv1.Dependencies{
 		Sequence: make([]string, 0, len(c.Manifest.Dependencies.RequiredDependencies)),
-		Requires: make(map[string]cnab.Dependency, len(c.Manifest.Dependencies.RequiredDependencies)),
+		Requires: make(map[string]depsv1.Dependency, len(c.Manifest.Dependencies.RequiredDependencies)),
 	}
 
 	for _, dep := range c.Manifest.Dependencies.RequiredDependencies {
-		dependencyRef := cnab.Dependency{
+		dependencyRef := depsv1.Dependency{
 			Name:   dep.Name,
 			Bundle: dep.Bundle.Reference,
 		}
 		if len(dep.Bundle.Version) > 0 {
-			dependencyRef.Version = &cnab.DependencyVersion{
+			dependencyRef.Version = &depsv1.DependencyVersion{
 				Ranges: []string{dep.Bundle.Version},
 			}
 
@@ -602,7 +603,7 @@ func (c *ManifestConverter) generateCustomExtensions(b *cnab.ExtendedBundle) (ma
 		return nil, err
 	}
 	if deps != nil && len(deps.Requires) > 0 {
-		customExtensions[cnab.DependenciesExtensionKey] = deps
+		customExtensions[cnab.DependenciesV1ExtensionKey] = deps
 	}
 
 	// Add the parameter sources extension
@@ -623,8 +624,8 @@ func (c *ManifestConverter) generateRequiredExtensions(b cnab.ExtendedBundle) []
 	requiredExtensions := []string{cnab.FileParameterExtensionKey}
 
 	// Add the appropriate dependencies key if applicable
-	if b.HasDependencies() {
-		requiredExtensions = append(requiredExtensions, cnab.DependenciesExtensionKey)
+	if b.HasDependenciesV1() {
+		requiredExtensions = append(requiredExtensions, cnab.DependenciesV1ExtensionKey)
 	}
 
 	// Add the appropriate parameter sources key if applicable

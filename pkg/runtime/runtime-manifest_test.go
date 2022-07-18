@@ -574,7 +574,7 @@ func TestReadManifest_Validate_BundleOutput_Error(t *testing.T) {
 	require.Error(t, err)
 }
 
-func TestDependency_Validate(t *testing.T) {
+func TestDependencyV1_Validate(t *testing.T) {
 	testcases := []struct {
 		name       string
 		dep        manifest.RequiredDependency

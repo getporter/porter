@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"get.porter.sh/porter/pkg/cnab"
+	depsv1 "get.porter.sh/porter/pkg/cnab/dependencies/v1"
 	cnabprovider "get.porter.sh/porter/pkg/cnab/provider"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/manifest"
@@ -275,7 +276,7 @@ func (e *dependencyExecutioner) executeDependency(ctx context.Context, dep *queu
 	ctx, span := tracing.StartSpan(ctx)
 	defer span.EndSpan()
 
-	depName := cnab.BuildPrerequisiteInstallationName(e.parentOpts.Name, dep.Alias)
+	depName := depsv1.BuildPrerequisiteInstallationName(e.parentOpts.Name, dep.Alias)
 	depInstallation, err := e.Installations.GetInstallation(ctx, e.parentOpts.Namespace, depName)
 	if err != nil {
 		if errors.Is(err, storage.ErrNotFound{}) {
