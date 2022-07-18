@@ -97,9 +97,9 @@ func mockPullImage(ctx context.Context, image string) error {
 }
 
 func mockGetCachedImage(ctx context.Context, image string) (cnabtooci.ImageSummary, error) {
-	sum := types.ImageSummary{
+	_ = types.ImageSummary{
 		ID:          "test-id",
 		RepoDigests: []string{"test/whalesayd@sha256:8b92b7269f59e3ed824e811a1ff1ee64f0d44c0218efefada57a4bebc2d7ef6f"},
 	}
-	return cnabtooci.NewImageSummary(image, sum)
+	panic("not implemented")
 }

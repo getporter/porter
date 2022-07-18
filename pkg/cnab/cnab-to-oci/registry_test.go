@@ -18,27 +18,27 @@ func TestImageSummary(t *testing.T) {
 	testcases := []struct {
 		name         string
 		imgRef       string
-		imageSummary types.ImageSummary
+		imageSummary types.ImageInspect
 		expected     expectedOutput
 		expectedErr  string
 	}{
 		{
 			name:         "successful initialization",
 			imgRef:       "test/image:latest",
-			imageSummary: types.ImageSummary{ID: "test", RepoDigests: []string{"test/image@sha256:6b5a28ccbb76f12ce771a23757880c6083234255c5ba191fca1c5db1f71c1687"}},
+			imageSummary: types.ImageInspect{ID: "test", RepoDigests: []string{"test/image@sha256:6b5a28ccbb76f12ce771a23757880c6083234255c5ba191fca1c5db1f71c1687"}},
 			expected:     expectedOutput{imageRef: "test/image:latest", digest: "sha256:6b5a28ccbb76f12ce771a23757880c6083234255c5ba191fca1c5db1f71c1687"},
 			expectedErr:  "",
 		},
 		{
 			name:         "invalid image reference",
 			imgRef:       "test-",
-			imageSummary: types.ImageSummary{ID: "test", RepoDigests: []string{"test/image@sha256:6b5a28ccbb76f12ce771a23757880c6083234255c5ba191fca1c5db1f71c1687"}},
+			imageSummary: types.ImageInspect{ID: "test", RepoDigests: []string{"test/image@sha256:6b5a28ccbb76f12ce771a23757880c6083234255c5ba191fca1c5db1f71c1687"}},
 			expectedErr:  "invalid reference format",
 		},
 		{
 			name:         "empty repo digests",
 			imgRef:       "test/image:latest",
-			imageSummary: types.ImageSummary{ID: "test", RepoDigests: []string{}},
+			imageSummary: types.ImageInspect{ID: "test", RepoDigests: []string{}},
 			expectedErr:  "failed to get digest",
 			expected: expectedOutput{
 				imageRef: "test/image:latest",
@@ -47,7 +47,7 @@ func TestImageSummary(t *testing.T) {
 		{
 			name:         "failed to find valid digest",
 			imgRef:       "test/image:latest",
-			imageSummary: types.ImageSummary{ID: "test", RepoDigests: []string{"test/image-another-repo@sha256:6b5a28ccbb76f12ce771a23757880c6083234255c5ba191fca1c5db1f71c1687"}},
+			imageSummary: types.ImageInspect{ID: "test", RepoDigests: []string{"test/image-another-repo@sha256:6b5a28ccbb76f12ce771a23757880c6083234255c5ba191fca1c5db1f71c1687"}},
 			expectedErr:  digest.ErrDigestInvalidFormat.Error(),
 			expected: expectedOutput{
 				imageRef: "test/image:latest",

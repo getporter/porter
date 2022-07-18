@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"get.porter.sh/porter/pkg/portercontext"
@@ -107,7 +108,11 @@ func (t Tester) startMongo(ctx context.Context) error {
 func (t Tester) RequirePorter(args ...string) (stdout string, combinedoutput string) {
 	t.T.Helper()
 	stdout, combinedoutput, err := t.RunPorter(args...)
-	require.NoError(t.T, err)
+	if err != nil {
+		t.T.Logf("failed to run porter %s", strings.Join(args, " "))
+		t.T.Log(combinedoutput)
+		require.NoError(t.T, err)
+	}
 	return stdout, combinedoutput
 }
 

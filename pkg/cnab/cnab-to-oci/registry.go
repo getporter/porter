@@ -12,10 +12,10 @@ import (
 	"github.com/cnabio/cnab-to-oci/relocation"
 	"github.com/cnabio/cnab-to-oci/remotes"
 	containerdRemotes "github.com/containerd/containerd/remotes"
+	"github.com/davecgh/go-spew/spew"
 	"github.com/docker/cli/cli/command"
 	dockerconfig "github.com/docker/cli/cli/config"
 	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/google/go-containerregistry/pkg/crane"
 	"github.com/moby/term"
@@ -205,6 +205,7 @@ func (r *Registry) PullImage(ctx context.Context, imgRef string) error {
 		RegistryAuth: encodedAuth,
 	}
 
+	spew.Dump("pulling image", imgRef)
 	_, err = cli.Client().ImagePull(ctx, imgRef, options)
 	if err != nil {
 		return log.Error(fmt.Errorf("docker pull for image %s failed: %w", imgRef, err))
@@ -240,19 +241,15 @@ func (r *Registry) GetCachedImage(ctx context.Context, image string) (ImageSumma
 		return ImageSummary{}, log.Error(err)
 	}
 
-	imageListOpts := types.ImageListOptions{All: true, Filters: filters.NewArgs(filters.KeyValuePair{Key: "reference", Value: image})}
-
-	imageSummaries, err := cli.Client().ImageList(ctx, imageListOpts)
+	spew.Dump("inspect image", image)
+	result, _, err := cli.Client().ImageInspectWithRaw(ctx, image)
 	if err != nil {
 		return ImageSummary{}, log.Error(fmt.Errorf("failed to find image %s in docker cache: %w", image, err))
 	}
 
-	if len(imageSummaries) == 0 {
-		return ImageSummary{}, nil
-	}
-	fmt.Fprintln(r.Err, "all value\n", imageSummaries)
+	spew.Dump(result)
 
-	summary, err := NewImageSummary(image, imageSummaries[0])
+	summary, err := NewImageSummary(image, result)
 	if err != nil {
 		return ImageSummary{}, log.Error(fmt.Errorf("failed to extract image %s in docker cache: %w", image, err))
 	}
@@ -271,11 +268,11 @@ func (r *Registry) ListTags(ctx context.Context, repository string) ([]string, e
 
 //ImageSummary contains information about an OCI image.
 type ImageSummary struct {
-	types.ImageSummary
+	types.ImageInspect
 	imageRef cnab.OCIReference
 }
 
-func NewImageSummary(imageRef string, sum types.ImageSummary) (ImageSummary, error) {
+func NewImageSummary(imageRef string, sum types.ImageInspect) (ImageSummary, error) {
 	ref, err := cnab.ParseOCIReference(imageRef)
 	if err != nil {
 		return ImageSummary{}, err
@@ -283,7 +280,7 @@ func NewImageSummary(imageRef string, sum types.ImageSummary) (ImageSummary, err
 
 	img := ImageSummary{
 		imageRef:     ref,
-		ImageSummary: sum,
+		ImageInspect: sum,
 	}
 	if img.IsZero() {
 		return ImageSummary{}, fmt.Errorf("invalid image summary for image reference %s", imageRef)
