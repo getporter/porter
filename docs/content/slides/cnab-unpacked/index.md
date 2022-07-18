@@ -114,7 +114,7 @@ class: middle
 # Get ready...
 
 ```
-$ porter explain --reference deislabs/tron:v1.0
+$ porter explain deislabs/tron:v1.0
 
 name: Tron
 description: The classic game of light cycles and disc wars

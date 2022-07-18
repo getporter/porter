@@ -37,7 +37,7 @@ Use this command to see:
 * dependencies of the bundle
 
 ```console
-$ porter explain --reference getporter/wordpress:v0.1.3
+$ porter explain getporter/wordpress:v0.1.3
 Name: wordpress
 Description:
 Version: 0.1.3
@@ -64,7 +64,7 @@ mysql   getporter/mysql:v0.1.3
 For this quickstart we are going to use the hello world bundle which is a bit simpler:
 
 ```console
-$ porter explain --reference ghcr.io/getporter/examples/porter-hello:v0.2.0
+$ porter explain ghcr.io/getporter/examples/porter-hello:v0.2.0
 Name: HELLO
 Description: An example Porter configuration
 Version: 0.1.0
