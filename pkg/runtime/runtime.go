@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"path/filepath"
+	"strings"
 
 	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/cnab"
@@ -164,33 +165,43 @@ func (r *PorterRuntime) shouldApplyOutput(output manifest.OutputDefinition) bool
 	return false
 }
 
-func (r *PorterRuntime) readMixinOutputs() (map[string]string, error) {
+func (r *PorterRuntime) readMixinOutputs() (map[string]string, map[string]interface{}, error) {
 	outputs := map[string]string{}
+	metadata := map[string]interface{}{}
 
 	outfiles, err := r.FileSystem.ReadDir(portercontext.MixinOutputsDir)
 	if err != nil {
-		return nil, fmt.Errorf("could not list %s: %w", portercontext.MixinOutputsDir, err)
+		return nil, nil, fmt.Errorf("could not list %s: %w", portercontext.MixinOutputsDir, err)
 	}
 
 	for _, outfile := range outfiles {
 		if outfile.IsDir() {
 			continue
 		}
+
 		outpath := filepath.Join(portercontext.MixinOutputsDir, outfile.Name())
 		contents, err := r.FileSystem.ReadFile(outpath)
 		if err != nil {
-			return nil, fmt.Errorf("could not read output file %s: %w", outpath, err)
+			return nil, nil, fmt.Errorf("could not read output file %s: %w", outpath, err)
+		}
+
+		if strings.HasSuffix(outfile.Name(), portercontext.MixinOutputMetadataFileSuffix) {
+			err := json.Unmarshal(contents, metadata)
+			if err != nil {
+				return nil, nil, fmt.Errorf("could not read output metadata file %s: %w", outpath, err)
+			}
+			continue
 		}
 
 		outputs[outfile.Name()] = string(contents)
 
 		err = r.FileSystem.Remove(outpath)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 	}
 
-	return outputs, nil
+	return outputs, nil, nil
 }
 
 func (r *PorterRuntime) getImageMappingFiles() (cnab.ExtendedBundle, relocation.ImageRelocationMap, error) {
