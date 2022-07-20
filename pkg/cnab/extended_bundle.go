@@ -84,6 +84,8 @@ func (b ExtendedBundle) GetParameterType(def *definition.Schema) string {
 	return fmt.Sprintf("%v", def.Type)
 }
 
+
+
 // IsFileType determines if the parameter/credential is of type "file".
 func (b ExtendedBundle) IsFileType(def *definition.Schema) bool {
 	return b.SupportsFileParameters() &&

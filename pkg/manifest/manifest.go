@@ -320,11 +320,14 @@ func (pd *ParameterDefinitions) UnmarshalYAML(unmarshal func(interface{}) error)
 
 var _ bundle.Scoped = &ParameterDefinition{}
 
+
+
 // ParameterDefinition defines a single parameter for a CNAB bundle
 type ParameterDefinition struct {
-	Name      string          `yaml:"name"`
-	Sensitive bool            `yaml:"sensitive"`
-	Source    ParameterSource `yaml:"source,omitempty"`
+	cnab.DirectoryParameterDefinition `yaml:",inline"`
+	Name                              string          `yaml:"name"`
+	Sensitive                         bool            `yaml:"sensitive"`
+	Source                            ParameterSource `yaml:"source,omitempty"`
 
 	// These fields represent a subset of bundle.Parameter as defined in cnabio/cnab-go,
 	// minus the 'Description' field (definition.Schema's will be used) and `Definition` field
@@ -423,8 +426,9 @@ func (pd *ParameterDefinition) UpdateApplyTo(m *Manifest) {
 }
 
 type ParameterSource struct {
-	Dependency string `yaml:"dependency,omitempty"`
-	Output     string `yaml:"output"`
+	cnab.DirectorySources `yaml:",inline"`
+	Dependency            string `yaml:"dependency,omitempty"`
+	Output                string `yaml:"output"`
 }
 
 // CredentialDefinitions allows us to represent credentials as a list in the YAML
@@ -439,6 +443,11 @@ func (cd CredentialDefinitions) MarshalYAML() (interface{}, error) {
 	}
 
 	return raw, nil
+}
+
+// IsDirSource returns true if the Parameter Source is a Directory Source
+func (p *ParameterSource) IsDirSource() bool {
+	return reflect.Indirect(reflect.ValueOf(p)).Kind() == reflect.ValueOf(cnab.DirectorySources{}).Kind()
 }
 
 func (cd *CredentialDefinitions) UnmarshalYAML(unmarshal func(interface{}) error) error {

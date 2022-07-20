@@ -56,10 +56,24 @@ const (
 	EnvPorterInstallationName = "PORTER_INSTALLATION_NAME"
 )
 
+type CustomParam struct {
+	Type string
+	Encoding string
+	Comment string
+}
+
 // PorterParamMap maps custom porter parameter types to a CNAB compatible alternative
-var PorterParamMap = map[string]string {
-	"file": "string",
-	"directory": "string",
+// Comment is specified to indicate the original type, which is required to differentiate
+// between multiple custom param types
+var PorterParamMap = map[string]CustomParam {
+	"file": {
+		Type: "string",
+		Encoding: "base64",
+	},
+	"directory": {
+		Type: "string",
+		Comment: fmt.Sprintf("%s.directory-parameter", CustomPorterKey),
+	},
 }
 
 

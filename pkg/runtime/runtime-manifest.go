@@ -12,7 +12,7 @@ import (
 	"strings"
 
 	"get.porter.sh/porter/pkg"
-	"get.porter.sh/porter/pkg/cnab"
+	cnab "get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/portercontext"
@@ -115,7 +115,20 @@ func (m *RuntimeManifest) loadDependencyDefinitions() error {
 	return nil
 }
 
-func (m *RuntimeManifest) resolveParameter(pd manifest.ParameterDefinition) string {
+func (m *RuntimeManifest) resolveParameter(pd manifest.ParameterDefinition) interface{} {
+	// Handle directories separately
+	if pd.Schema.Comment == cnab.DirectoryParameterExtensionKey {
+		if pd.Source.Mount.Source != "" {
+			pd.Source.Mount.Target = pd.Destination.Path
+		}
+		return map[string]interface{}{
+			"path": pd.Destination.Path,
+			"uid": cnab.IDToInt(pd.UID),
+			"gid": cnab.IDToInt(pd.GID),
+			"writeable": pd.Writeable,
+			"source": pd.Source,
+		}		
+	}
 	if pd.Destination.EnvironmentVariable != "" {
 		return m.Getenv(pd.Destination.EnvironmentVariable)
 	}
@@ -152,6 +165,27 @@ func (m *RuntimeManifest) GetSensitiveValues() []string {
 		return []string{}
 	}
 	return m.sensitiveValues
+}
+
+// setRecursiveSensitiveValue handles the case of a sensitive parameter being a map of strings
+// of arbitrary depth
+func (m *RuntimeManifest) setRecursiveSensitiveValue(v interface{}, key string) error {
+	var ok bool = true
+	for ok {
+		v, ok = v.(map[string]interface{})
+		for k, i := range v.(map[string]interface{}) {
+			key += "." + k
+			m.setRecursiveSensitiveValue(i, key)
+		}
+	}
+
+	if s, ok := v.(string); ok {
+		m.setSensitiveValue(s)
+		return nil
+	}
+
+	return errors.Wrapf(errors.New("Conversion Error"), "Could not convert %s to string", key)
+
 }
 
 func (m *RuntimeManifest) setSensitiveValue(val string) {
@@ -256,7 +290,14 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 		pe := param.Name
 		val := m.resolveParameter(param)
 		if param.Sensitive {
-			m.setSensitiveValue(val)
+			if val, ok := val.(string); ok {
+				m.setSensitiveValue(val)
+			} else {
+				err := m.setRecursiveSensitiveValue(val, "parameters")
+				if err != nil {
+					return nil, err
+				}
+			}
 		}
 		params[pe] = val
 	}
@@ -456,6 +497,14 @@ func (m *RuntimeManifest) Initialize() error {
 		def, hasDef := m.bundle.Definitions[param.Definition]
 		if !hasDef {
 			continue
+		}
+
+		if m.bundle.IsDirType(def) {
+			// Update the manifest schema so we can detect directory type
+			// when we inject parameter values
+			p := m.Parameters[paramName]
+			p.Schema = *def
+			m.Parameters[paramName] = p
 		}
 
 		if m.bundle.IsFileType(def) {

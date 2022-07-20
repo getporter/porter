@@ -172,7 +172,6 @@ func (r *Runtime) Execute(ctx context.Context, args ActionArguments) error {
 		}
 
 		r.printDebugInfo(b, creds, args.Params)
-
 		opResult, result, err := a.Run(currentRun.ToCNAB(), creds.ToCNAB(), r.ApplyConfig(ctx, args)...)
 
 		if currentRun.ShouldRecord() {

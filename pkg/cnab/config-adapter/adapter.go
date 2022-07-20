@@ -74,7 +74,6 @@ func (c *ManifestConverter) ToBundle(ctx context.Context) (cnab.ExtendedBundle, 
 	b.Images = c.generateBundleImages()
 	b.Custom = c.generateCustomExtensions(&b)
 	b.RequiredExtensions = c.generateRequiredExtensions(b)
-
 	b.Custom[config.CustomPorterKey] = stamp
 
 	return b, nil
@@ -438,16 +437,31 @@ func (c *ManifestConverter) generateParameterSources(b *cnab.ExtendedBundle) cna
 	// 3. directly when they use `source` on a parameter
 
 	// Directly wired outputs to parameters
-	for _, p := range c.Manifest.Parameters {
-		// Skip parameters that aren't set from an output
-		if p.Source.Output == "" {
+	for k, p := range c.Manifest.Parameters {
+		// Skip parameters that aren't set from an output or from a directory source
+		if (!p.Source.IsDirSource()) && p.Source.Output == "" {
 			continue
 		}
 
 		var pso cnab.ParameterSource
-		if p.Source.Dependency == "" {
+		if p.Source.IsDirSource() {
+			// If it's a directory handle it accordingly
+			defName := fmt.Sprintf("%s-parameter", p.Name)
+			pso = c.generateDirectoryParameterSource(p.Source.Mount, p.Name, p.Destination.Path)
+			def := c.generateDirectoryParameterSchema(*b, defName)
+			// Make sure that the destination is changed to an env var instead of a path
+			// Otherwise cnab will attempt to place the path into the container which will fail
+			if pb, ok := b.Parameters[k]; ok {
+				c.sanitizeDirParameters(pb.Destination, k)
+				b.Parameters[k] = pb
+			}
+			b.Definitions[defName] = &def
+
+		} else if p.Source.Dependency == "" {
+			// If it's not a directory and it doesn't have a dependency, it's a standard output
 			pso = c.generateOutputParameterSource(p.Source.Output)
 		} else {
+			// Otherwise it must be a dependency
 			ref := manifest.DependencyOutputReference{
 				Dependency: p.Source.Dependency,
 				Output:     p.Source.Output,
@@ -488,6 +502,28 @@ func (c *ManifestConverter) generateParameterSources(b *cnab.ExtendedBundle) cna
 	}
 
 	return ps
+}
+
+func (c *ManifestConverter) generateDirectoryParameterSchema(b cnab.ExtendedBundle, name string) definition.Schema {
+	var def definition.Schema
+	pdef, ok := b.Definitions[name]
+	if ok {
+		MakeCNABCompatible(b.Definitions[name])
+		def = *pdef
+	} else {
+		def = definition.Schema{}
+		def.Type = "directory"
+		MakeCNABCompatible(&def)
+	}
+	def.ID = "https://porter.sh/generated-bundle/#porter-parameter-source-definition"
+	return def
+}
+
+// Remove the path value from directory parameters so they aren't assumed to be files
+// By the cnab.io package. Apply the destination to an env var "directory-parameters.[name]"
+func(c *ManifestConverter) sanitizeDirParameters(destination *bundle.Location, name string) {
+	destination.Path = ""
+	destination.EnvironmentVariable = cnab.DirectoryExtensionShortHand + "." + name
 }
 
 // generateOutputWiringParameter creates an internal parameter used only by porter, it won't be visible to the user.
@@ -552,6 +588,30 @@ func (c *ManifestConverter) generateOutputParameterSource(outputName string) cna
 	}
 }
 
+// Pass the inferred info from the parameter to the parameter source
+func (c *ManifestConverter) generateDirectoryParameterSource(source interface{}, name string, target string) cnab.ParameterSource {
+	switch source.(type) {
+	case cnab.MountParameterSourceDefn:
+		return c.generateMountParameterSource(source.(cnab.MountParameterSourceDefn), name, target)
+	default:
+		return cnab.ParameterSource{}
+	}
+}
+
+// generateMountParameterSource builds a parameter source that connects a parameter to a mount.
+func (c *ManifestConverter) generateMountParameterSource(mount cnab.MountParameterSourceDefn, name string, target string) cnab.ParameterSource {
+	return cnab.ParameterSource{
+		Priority: []string{cnab.ParameterSourceTypeMount},
+		Sources: map[string]cnab.ParameterSourceDefinition{
+			cnab.ParameterSourceTypeMount: func() cnab.MountParameterSourceDefn {
+				mount.Name = name
+				mount.Target = target
+				return mount
+			}(),
+		},
+	}
+}
+
 // generateDependencyOutputParameterSource builds a parameter source that connects a dependency output to a parameter.
 func (c *ManifestConverter) generateDependencyOutputParameterSource(ref manifest.DependencyOutputReference) cnab.ParameterSource {
 	return cnab.ParameterSource{
@@ -599,12 +659,42 @@ func (c *ManifestConverter) generateCustomExtensions(b *cnab.ExtendedBundle) map
 		customExtensions[cnab.ParameterSourcesExtensionKey] = ps
 	}
 
+	// Add the directory extension
+	if dirs, err := c.generateDirectoryExtension(ps); err == nil && len(dirs) > 0 {
+		customExtensions[cnab.DirectoryParameterExtensionKey] = dirs
+	} else if err != nil {
+		fmt.Fprintln(os.Stderr, err.Error())
+	}
+
 	// Add entries for user-specified required extensions, like docker
 	for _, ext := range c.Manifest.Required {
 		customExtensions[lookupExtensionKey(ext.Name)] = ext.Config
 	}
 
 	return customExtensions
+}
+
+func (c *ManifestConverter) generateDirectoryExtension(ps cnab.ParameterSources) (map[string]cnab.DirectoryDetails, error) {
+	dirs := make(map[string]cnab.DirectoryDetails, 0)
+	for name, param := range ps {
+		for _, src := range param.Sources {
+			switch src.(type) {
+			case cnab.MountParameterSourceDefn:
+				dirs[name] = cnab.DirectoryDetails{
+					DirectorySources: cnab.DirectorySources{
+						Mount: src.(cnab.MountParameterSourceDefn),
+					},
+					DirectoryParameterDefinition: c.Manifest.Parameters[name].DirectoryParameterDefinition,
+					Kind: cnab.ParameterSourceTypeMount,
+				}
+				break
+			default:
+				continue
+			}
+		}
+	}
+
+	return dirs, nil
 }
 
 func (c *ManifestConverter) generateRequiredExtensions(b cnab.ExtendedBundle) []string {
@@ -618,6 +708,10 @@ func (c *ManifestConverter) generateRequiredExtensions(b cnab.ExtendedBundle) []
 	// Add the appropriate parameter sources key if applicable
 	if b.HasParameterSources() {
 		requiredExtensions = append(requiredExtensions, cnab.ParameterSourcesExtensionKey)
+	}
+
+	if b.HasDirectoryParameters() {
+		requiredExtensions = append(requiredExtensions, cnab.DirectoryParameterExtensionKey)
 	}
 
 	// Add all under required section of manifest

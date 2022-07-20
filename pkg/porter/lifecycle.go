@@ -202,6 +202,8 @@ func (p *Porter) BuildActionArgs(ctx context.Context, installation storage.Insta
 		return cnabprovider.ActionArguments{}, err
 	}
 
+	
+
 	args := cnabprovider.ActionArguments{
 		Action:                action.GetAction(),
 		Installation:          installation,

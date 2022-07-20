@@ -638,6 +638,7 @@ func (p *Porter) resolveParameterSources(ctx context.Context, bun cnab.ExtendedB
 		for _, rawSource := range parameterSource.ListSourcesByPriority() {
 			var installationName string
 			var outputName string
+			var mount *cnab.MountParameterSourceDefn
 			switch source := rawSource.(type) {
 			case cnab.OutputParameterSource:
 				installationName = installation.Name
@@ -646,19 +647,18 @@ func (p *Porter) resolveParameterSources(ctx context.Context, bun cnab.ExtendedB
 				// TODO(carolynvs): does this need to take namespace into account
 				installationName = cnab.BuildPrerequisiteInstallationName(installation.Name, source.Dependency)
 				outputName = source.OutputName
+			case cnab.MountParameterSourceDefn:
+				installationName = installation.Name
+				mount = &source
 			}
 
 			output, err := p.Installations.GetLastOutput(ctx, installation.Namespace, installationName, outputName)
 			if err != nil {
-				// When we can't find the output, skip it and let the parameter be set another way
-				if errors.Is(err, storage.ErrNotFound{}) {
-					if p.Debug {
-						fmt.Fprintf(p.Err, "No previous output found for %s from %s/%s\n", outputName, installation.Namespace, installationName)
-					}
-					continue
+				// When we can't find the output, it may be a directory parameter, or we may have to find it some other way
+				if !errors.Is(err, storage.ErrNotFound{}) {
+					// Otherwise, something else has happened, perhaps bad data or connectivity problems, we can't ignore it
+					return nil, errors.Wrapf(err, "could not set parameter %s from output %s of %s", parameterName, outputName, installation)
 				}
-				// Otherwise, something else has happened, perhaps bad data or connectivity problems, we can't ignore it
-				return nil, errors.Wrapf(err, "could not set parameter %s from output %s of %s", parameterName, outputName, installation)
 			}
 
 			if output.Key != "" {
@@ -682,6 +682,15 @@ func (p *Porter) resolveParameterSources(ctx context.Context, bun cnab.ExtendedB
 
 			if bun.IsFileType(def) {
 				values[parameterName] = base64.StdEncoding.EncodeToString(output.Value)
+			} else if bun.IsDirType(def) && mount != nil {
+				p := bun.Parameters[parameterName]
+				// p.Definition = config.CustomPorterKey + ".directory"
+				bun.Parameters[parameterName] = p
+				if bytes, err := json.Marshal(mount); err == nil {
+					values[parameterName] = string(bytes)
+				} else {
+					return nil, fmt.Errorf("Could not marshal source for definition %s", param.Definition)
+				}
 			} else {
 				values[parameterName] = string(output.Value)
 			}

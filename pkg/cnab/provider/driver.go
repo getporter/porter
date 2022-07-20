@@ -1,11 +1,15 @@
 package cnabprovider
 
 import (
+	"os"
+	"strings"
+
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/cnab/drivers"
 	"github.com/cnabio/cnab-go/driver"
 	"github.com/cnabio/cnab-go/driver/docker"
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/mount"
 	"github.com/pkg/errors"
 )
 
@@ -42,6 +46,40 @@ func (r *Runtime) newDriver(driverName string, args ActionArguments) (driver.Dri
 	}
 	if err != nil {
 		return nil, err
+	}
+
+	// Handle Directory support for the docker driver
+	// TODO: Handle directory support for other runtimes -- how?
+	if driverName == "docker" && r.Extensions.DirectoryParameterSupport() {
+		d := driverImpl.(*docker.Driver)
+		for _, dd := range r.Extensions[cnab.DirectoryParameterExtension.Key].([]cnab.DirectoryDetails) {
+				switch dd.Kind {
+				case cnab.ParameterSourceTypeMount:
+					d.AddConfigurationOptions(func(cfg *container.Config, hostCfg *container.HostConfig) error {
+						x := dd.Mount
+						x.Type = "bind"
+						x.ReadOnly = !dd.Writeable
+						pairs := make([]string, len(os.Environ())*2)
+						for i, env := range os.Environ() {
+							parts := strings.Split(env, "=")
+							pairs[i*2] = "$" + parts[0]
+							pairs[i*2+1] = parts[1]
+						}
+
+						rep := strings.NewReplacer(pairs...)
+						x.Source = rep.Replace(x.Source)
+						x.Target = rep.Replace(x.Target)
+						if hostCfg.Mounts == nil || len(hostCfg.Mounts) < 1 {
+							hostCfg.Mounts = []mount.Mount{
+								x.Mount,
+							}
+						} else {
+							hostCfg.Mounts = append(hostCfg.Mounts, x.Mount)
+						}
+						return nil
+					})
+				}
+			}
 	}
 
 	if configurable, ok := driverImpl.(driver.Configurable); ok {

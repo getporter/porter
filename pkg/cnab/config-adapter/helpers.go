@@ -22,9 +22,10 @@ func ConvertToTestBundle(ctx context.Context, cfg *config.Config, manifest *mani
 // Returns true if values were replaced and false otherwise.
 func MakeCNABCompatible(schema *definition.Schema) bool {
 	if v, ok := schema.Type.(string); ok {
-		if t, ok := config.PorterParamMap[v]; ok {
-			schema.Type = t
-			schema.ContentEncoding = "base64"
+		if c, ok := config.PorterParamMap[v]; ok {
+			schema.Type = c.Type
+			schema.ContentEncoding = c.Encoding
+			schema.Comment = c.Comment
 			return ok
 		}
 	}
