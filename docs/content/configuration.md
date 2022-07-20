@@ -17,6 +17,7 @@ You may set a default value for a configuration value in the config file, overri
 * [Experimental Feature Flags](#experimental-feature-flags)
   * [Build Drivers](#build-drivers)
   * [Structured Logs](#structured-logs)
+  * [Dependencies v2](#dependencies-v2)
 * [Common Configuration Settings](#common-configuration-settings)
   * [Set Current Namespace](#namespace)
   * [Enable Debug Output](#debug)
@@ -258,6 +259,11 @@ Below is a sample Porter configuration file that demonstrates how to set each of
 ```
 
 [otel]: https://github.com/open-telemetry/opentelemetry-specification/blob/v1.8.0/specification/protocol/exporter.md
+
+### Dependencies v2
+
+The `dependencies-v2` experimental flag is not yet implemented.
+When it is completed, it is used to activate the features from [PEP003 - Advanced Dependencies](https://github.com/getporter/proposals/blob/main/pep/003-dependency-namespaces-and-labels.md).
 
 ## Common Configuration Settings
 
