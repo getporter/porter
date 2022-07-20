@@ -314,12 +314,7 @@ func findNextWord(input string) (string, string, error) {
 }
 
 func SaveStepMetadata(cxt *portercontext.Context, swo StepWithOutputs) error {
-	outputs := swo.GetOutputs()
-
-	var metadata StepMetadata
-	for _, o := range outputs {
-		metadata.AddSensitiveOutput(o)
-	}
+	metadata := NewStepOutputMeta(swo)
 
 	content, err := json.Marshal(metadata)
 	if err != nil {

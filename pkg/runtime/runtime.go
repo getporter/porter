@@ -10,6 +10,7 @@ import (
 	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/exec/builder"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/pkgmgmt"
 	"get.porter.sh/porter/pkg/portercontext"
@@ -117,12 +118,12 @@ func (r *PorterRuntime) executeStep(ctx context.Context, step *manifest.Step) er
 		return fmt.Errorf("mixin execution failed: %w", err)
 	}
 
-	outputs, err := r.readMixinOutputs()
+	outputs, metadata, err := r.readMixinOutputs()
 	if err != nil {
 		return fmt.Errorf("could not read step outputs: %w", err)
 	}
 
-	err = r.RuntimeManifest.ApplyStepOutputs(outputs)
+	err = r.RuntimeManifest.ApplyStepOutputs(outputs, metadata)
 	if err != nil {
 		return err
 	}
@@ -165,9 +166,9 @@ func (r *PorterRuntime) shouldApplyOutput(output manifest.OutputDefinition) bool
 	return false
 }
 
-func (r *PorterRuntime) readMixinOutputs() (map[string]string, map[string]interface{}, error) {
+func (r *PorterRuntime) readMixinOutputs() (map[string]string, builder.StepOutputMeta, error) {
 	outputs := map[string]string{}
-	metadata := map[string]interface{}{}
+	var metadata builder.StepOutputMeta
 
 	outfiles, err := r.FileSystem.ReadDir(portercontext.MixinOutputsDir)
 	if err != nil {
@@ -186,7 +187,7 @@ func (r *PorterRuntime) readMixinOutputs() (map[string]string, map[string]interf
 		}
 
 		if strings.HasSuffix(outfile.Name(), portercontext.MixinOutputMetadataFileSuffix) {
-			err := json.Unmarshal(contents, metadata)
+			err := json.Unmarshal(contents, &metadata)
 			if err != nil {
 				return nil, nil, fmt.Errorf("could not read output metadata file %s: %w", outpath, err)
 			}
@@ -201,7 +202,7 @@ func (r *PorterRuntime) readMixinOutputs() (map[string]string, map[string]interf
 		}
 	}
 
-	return outputs, nil, nil
+	return outputs, metadata, nil
 }
 
 func (r *PorterRuntime) getImageMappingFiles() (cnab.ExtendedBundle, relocation.ImageRelocationMap, error) {

@@ -23,6 +23,10 @@ func (o TestFileOutput) GetFilePath() string {
 	return o.FilePath
 }
 
+func (o TestFileOutput) GetMetadata() OutputMetadata {
+	return OutputMetadata{}
+}
+
 func TestFilePathOutputs(t *testing.T) {
 	c := portercontext.NewTestContext(t)
 

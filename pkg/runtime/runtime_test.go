@@ -31,7 +31,7 @@ func TestPorterRuntime_Execute_readMixinOutputs(t *testing.T) {
 			filepath.Join(portercontext.MixinOutputsDir, testFile))
 	}
 
-	gotOutputs, err := r.readMixinOutputs()
+	gotOutputs, gotMetadata, err := r.readMixinOutputs()
 	require.NoError(t, err)
 
 	for _, testFile := range testFiles {
@@ -57,7 +57,8 @@ BAZ`,
 		"oneliner": "ABC",
 	}
 
-	assert.Equal(t, wantOutputs, gotOutputs)
+	require.Equal(t, wantOutputs, gotOutputs)
+	require.Equal(t, wantMetadata, gotMetadata)
 }
 
 func TestPorterRuntime_ApplyStepOutputsToBundle_None(t *testing.T) {

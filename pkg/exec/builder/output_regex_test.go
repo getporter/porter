@@ -22,6 +22,10 @@ func (o TestRegexOutput) GetRegex() string {
 	return o.Regex
 }
 
+func (o TestRegexOutput) GetMetadata() OutputMetadata {
+	return OutputMetadata{}
+}
+
 func TestTestRegexOutputs(t *testing.T) {
 	c := portercontext.NewTestContext(t)
 

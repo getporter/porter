@@ -14,6 +14,7 @@ import (
 	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/exec/builder"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/yaml"
@@ -203,13 +204,19 @@ func (m *RuntimeManifest) setStepsByAction() error {
 	return nil
 }
 
-func (m *RuntimeManifest) ApplyStepOutputs(assignments map[string]string) error {
+func (m *RuntimeManifest) ApplyStepOutputs(assignments map[string]string, metadata builder.StepOutputMeta) error {
 	if m.outputs == nil {
 		m.outputs = map[string]string{}
 	}
 
 	for outvar, outval := range assignments {
 		m.outputs[outvar] = outval
+	}
+
+	for name, md := range metadata {
+		if md.Sensitive {
+			m.setSensitiveValue(name)
+		}
 	}
 	return nil
 }
@@ -277,11 +284,6 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 	}
 
 	bun["outputs"] = m.outputs
-	// TODO: this should be all steps not just install
-	sensitiveStepOutputs, err := m.Manifest.Install.GetSensitiveOutputs()
-	if err != nil {
-		return nil, err
-	}
 
 	// Iterate through the runtime manifest's step outputs and determine if we should mask
 	for name, val := range m.outputs {
@@ -293,10 +295,6 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 		outputDef, defined := m.Outputs[name]
 		if defined {
 			isSensitive = outputDef.Sensitive
-		}
-
-		if _, ok := sensitiveStepOutputs[name]; ok && !defined {
-			isSensitive = true
 		}
 
 		if isSensitive {

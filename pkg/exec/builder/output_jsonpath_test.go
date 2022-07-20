@@ -56,6 +56,10 @@ func (o TestJsonPathOutput) GetJsonPath() string {
 	return o.JsonPath
 }
 
+func (o TestJsonPathOutput) GetMetadata() OutputMetadata {
+	return OutputMetadata{}
+}
+
 func TestJsonPathOutputs(t *testing.T) {
 	testcases := []struct {
 		name       string

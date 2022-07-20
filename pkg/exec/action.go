@@ -178,6 +178,8 @@ func (o Output) GetRegex() string {
 	return o.Regex
 }
 
-func (o Output) IsSensitive() bool {
-	return o.Sensitive
+func (o Output) GetMetadata() builder.OutputMetadata {
+	return builder.OutputMetadata{
+		Sensitive: o.Sensitive,
+	}
 }
