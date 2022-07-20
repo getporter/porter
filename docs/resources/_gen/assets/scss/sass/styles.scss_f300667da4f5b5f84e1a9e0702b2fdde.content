@@ -6670,63 +6670,75 @@ nav.home-nav {
       padding: 0; }
   #helm.home .helm-community {
     background-color: white;
-    padding-top: 50px;
     padding-bottom: 100px;
+    border-radius: 25px;
     color: #27759A;
     background: linear-gradient(0deg, #fff, #F7F7F7); }
     #helm.home .helm-community h2, #helm.home .helm-community p {
       color: #27759A; }
     #helm.home .helm-community h2 {
-      margin-bottom: 0.5em; }
-      #helm.home .helm-community h2 + p {
-        margin-bottom: 4.5rem; }
-    #helm.home .helm-community .helm-community-links ul {
-      background-color: white;
-      padding: 1.5em 2.25em;
-      border-radius: 1em; }
-      @media only screen and (max-width: 60em) {
-        #helm.home .helm-community .helm-community-links ul {
-          padding: 0; } }
-      #helm.home .helm-community .helm-community-links ul li {
-        font-size: 1.5rem;
-        list-style: none;
-        color: #27759A;
-        line-height: 2.5;
-        padding-left: 2.25em;
-        position: relative;
-        font-family: 'CMedium'; }
-        #helm.home .helm-community .helm-community-links ul li a {
-          color: #464646;
-          border-bottom: 3px solid #3FB1E5;
-          text-decoration: none; }
-          #helm.home .helm-community .helm-community-links ul li a:hover {
-            color: #3FB1E5;
-            border-color: #7FCCF0; }
-        #helm.home .helm-community .helm-community-links ul li .fa {
-          color: #3FB1E5;
-          font-size: 2rem;
-          width: 1.25em;
-          padding-right: 0em;
-          position: absolute;
-          left: 0;
-          top: 0.525em; }
+      margin-bottom: 0.3em;
+      font-size: 3rem; }
+    @media only screen and (max-width: 60em) {
+      #helm.home .helm-community .helm-community-links ul {
+        padding: 0 !important;
+        margin: 0 !important;
+        text-align: left !important; } }
+    #helm.home .helm-community .helm-community-links ul .btn-section {
+      display: inline-block;
+      padding: 10px 20px 10px 20px;
+      border-radius: 20px; }
+    #helm.home .helm-community .helm-community-links ul li {
+      font-size: 1.5rem;
+      list-style: none;
+      color: #27759A;
+      line-height: 2.5;
+      padding-left: 2.25em;
+      position: relative;
+      font-family: 'CMedium'; }
+      #helm.home .helm-community .helm-community-links ul li a {
+        color: #464646;
+        text-decoration: none;
+        background-image: linear-gradient(to right, #A7BFE8 0%, #6190E8 100%);
+        background-repeat: no-repeat;
+        background-size: 100% 0.3em;
+        padding: 15px 10px;
+        background-position: 0 88%;
+        transition: background-size 0.1s ease-in-out; }
+        #helm.home .helm-community .helm-community-links ul li a:hover {
+          background-size: 100% 80%;
+          color: white; }
+      #helm.home .helm-community .helm-community-links ul li .fa-solid, #helm.home .helm-community .helm-community-links ul li .fa-brands {
+        font-size: 1.5rem; }
+    #helm.home .helm-community .topbar {
+      height: 20px;
+      background-color: #f8cc88; }
+    #helm.home .helm-community .topbar--1 {
+      height: 20px;
+      background-color: #bc0047; }
+    #helm.home .helm-community .text-content {
+      padding: 2rem; }
     #helm.home .helm-community .helm-community-blocks section {
-      border: 1px solid #27759A;
-      border-radius: 1rem;
+      border: 25px solid white;
+      border-bottom: none;
+      border-top: none;
       margin: 0 0 2em;
-      padding: 1.25rem 1.5rem;
       min-height: 125px;
+      background-color: ghostwhite;
       position: relative; }
       #helm.home .helm-community .helm-community-blocks section h4 {
         color: #27759A;
         font-size: 1.5em;
-        font-family: 'CBold';
+        font-family: 'CBlack';
+        font-weight: 900;
         margin: -0.25em 0 0.667em; }
       #helm.home .helm-community .helm-community-blocks section p {
         color: #27759A;
         font-size: 1.4rem; }
       #helm.home .helm-community .helm-community-blocks section a {
-        color: #464646; }
+        color: #bc0047;
+        text-decoration: underline;
+        font-weight: 600; }
       #helm.home .helm-community .helm-community-blocks section iframe {
         width: 35%;
         display: inline-block;
@@ -7768,7 +7780,6 @@ body {
   .cncf img {
     display: inline-block;
     max-width: 10rem;
-    filter: invert(1);
     transform: scale(2);
     margin: 1.5rem 0 1.5rem 7.5%; }
   .cncf p {
