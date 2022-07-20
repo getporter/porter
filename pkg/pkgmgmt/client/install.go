@@ -127,7 +127,7 @@ func (fs *FileSystem) InstallFromFeedURL(ctx context.Context, opts pkgmgmt.Insta
 	}
 
 	searchFeed := feed.NewMixinFeed(fs.Context)
-	err = searchFeed.Load(feedPath)
+	err = searchFeed.Load(ctx, feedPath)
 	if err != nil {
 		return err
 	}

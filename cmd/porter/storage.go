@@ -64,7 +64,7 @@ func buildStorageFixPermissionsCommand(p *porter.Porter) *cobra.Command {
 		Short: "Fix the permissions on your PORTER_HOME directory",
 		Long:  `This will reset the permissions on your PORTER_HOME directory to the least permissions required, where only the current user has permissions.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.FixPermissions()
+			return p.FixPermissions(cmd.Context())
 		},
 	}
 }

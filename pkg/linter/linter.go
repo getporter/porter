@@ -10,6 +10,7 @@ import (
 	"get.porter.sh/porter/pkg/mixin/query"
 	"get.porter.sh/porter/pkg/pkgmgmt"
 	"get.porter.sh/porter/pkg/portercontext"
+	"get.porter.sh/porter/pkg/tracing"
 	"github.com/dustin/go-humanize"
 )
 
@@ -155,14 +156,14 @@ func (l *Linter) Lint(ctx context.Context, m *manifest.Manifest) (Results, error
 	// TODO: perform any porter level linting
 	// e.g. metadata, credentials, properties, outputs, dependencies, etc
 
-	if l.Debug {
-		fmt.Fprintln(l.Err, "Running linters for each mixin used in the manifest...")
-	}
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
 
+	span.Debug("Running linters for each mixin used in the manifest...")
 	q := query.New(l.Context, l.Mixins)
 	responses, err := q.Execute(ctx, "lint", query.NewManifestGenerator(m))
 	if err != nil {
-		return nil, err
+		return nil, span.Error(err)
 	}
 
 	var results Results
@@ -170,7 +171,7 @@ func (l *Linter) Lint(ctx context.Context, m *manifest.Manifest) (Results, error
 		var r Results
 		err = json.Unmarshal([]byte(response), &r)
 		if err != nil {
-			return nil, fmt.Errorf("unable to parse lint response from mixin %q: %w", mixin, err)
+			return nil, span.Error(fmt.Errorf("unable to parse lint response from mixin %q: %w", mixin, err))
 		}
 
 		results = append(results, r...)

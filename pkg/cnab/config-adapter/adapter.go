@@ -9,6 +9,7 @@ import (
 	"get.porter.sh/porter/pkg/cnab"
 	depsv1 "get.porter.sh/porter/pkg/cnab/dependencies/v1"
 	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/experimental"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/mixin"
 	"get.porter.sh/porter/pkg/tracing"
@@ -407,7 +408,24 @@ func (c *ManifestConverter) generateBundleImages() map[string]bundle.Image {
 	return images
 }
 
-func (c *ManifestConverter) generateDependencies() (*depsv1.Dependencies, error) {
+func (c *ManifestConverter) generateDependencies() (interface{}, string, error) {
+	if len(c.Manifest.Dependencies.RequiredDependencies) == 0 {
+		return nil, "", nil
+	}
+
+	// Check if they are using v1 of the dependencies spec or v2
+	if c.config.IsFeatureEnabled(experimental.FlagDependenciesV2) {
+		panic("the dependencies-v2 experimental flag was specified but is not yet implemented")
+	}
+
+	deps, err := c.generateDependenciesV1()
+	if err != nil {
+		return nil, "", err
+	}
+	return deps, cnab.DependenciesV1ExtensionKey, nil
+}
+
+func (c *ManifestConverter) generateDependenciesV1() (*depsv1.Dependencies, error) {
 	if len(c.Manifest.Dependencies.RequiredDependencies) == 0 {
 		return nil, nil
 	}
@@ -598,12 +616,12 @@ func (c *ManifestConverter) generateCustomExtensions(b *cnab.ExtendedBundle) (ma
 	}
 
 	// Add the dependency extension
-	deps, err := c.generateDependencies()
+	deps, depsExtKey, err := c.generateDependencies()
 	if err != nil {
 		return nil, err
 	}
-	if deps != nil && len(deps.Requires) > 0 {
-		customExtensions[cnab.DependenciesV1ExtensionKey] = deps
+	if depsExtKey != "" {
+		customExtensions[depsExtKey] = deps
 	}
 
 	// Add the parameter sources extension

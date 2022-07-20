@@ -12,7 +12,7 @@ func buildInvokeCommand(m *exec.Mixin) *cobra.Command {
 		Use:   "invoke",
 		Short: "Execute the invoke functionality of this mixin",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return m.Execute(opts)
+			return m.Execute(cmd.Context(), opts)
 		},
 	}
 	flags := cmd.Flags()

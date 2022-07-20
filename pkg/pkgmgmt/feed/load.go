@@ -2,26 +2,31 @@ package feed
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"net/url"
 	"path"
 
+	"get.porter.sh/porter/pkg/tracing"
 	"github.com/mmcdole/gofeed/atom"
+	"go.opentelemetry.io/otel/attribute"
 )
 
-func (feed *MixinFeed) Load(file string) error {
+func (feed *MixinFeed) Load(ctx context.Context, file string) error {
+	//lint:ignore SA4006 ignore unused ctx for now
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
 	contents, err := feed.FileSystem.ReadFile(file)
 	if err != nil {
-		return fmt.Errorf("error reading mixin feed at %s: %w", file, err)
+		return span.Error(fmt.Errorf("error reading mixin feed at %s: %w", file, err))
 	}
 
 	p := atom.Parser{}
 	atomFeed, err := p.Parse(bytes.NewReader(contents))
 	if err != nil {
-		if feed.Debug {
-			fmt.Fprintln(feed.Err, string(contents))
-		}
-		return fmt.Errorf("error parsing the mixin feed as an atom xml file: %w", err)
+		return span.Error(fmt.Errorf("error parsing the mixin feed as an atom xml file: %w", err),
+			attribute.String("contents", string(contents)))
 	}
 
 	feed.Updated = atomFeed.UpdatedParsed
@@ -34,24 +39,18 @@ func (feed *MixinFeed) Load(file string) error {
 		fileset := &MixinFileset{}
 
 		if len(entry.Categories) == 0 {
-			if feed.Debug {
-				fmt.Fprintf(feed.Err, "skipping invalid entry %s, missing category (mixin name)", entry.ID)
-			}
+			span.Debugf("skipping invalid entry %s, missing category (mixin name)", entry.ID)
 			continue
 		}
 		fileset.Mixin = entry.Categories[0].Term
 		if fileset.Mixin == "" {
-			if feed.Debug {
-				fmt.Fprintf(feed.Err, "skipping invalid entry %s, empty category (mixin name)", entry.ID)
-			}
+			span.Debugf("skipping invalid entry %s, empty category (mixin name)", entry.ID)
 			continue
 		}
 
 		fileset.Version = entry.Content.Value
 		if fileset.Version == "" {
-			if feed.Debug {
-				fmt.Fprintf(feed.Err, "skipping invalid entry %s, empty content (version)", entry.ID)
-			}
+			span.Debugf("skipping invalid entry %s, empty content (version)", entry.ID)
 			continue
 		}
 
@@ -59,17 +58,13 @@ func (feed *MixinFeed) Load(file string) error {
 		for _, link := range entry.Links {
 			if link.Rel == "download" {
 				if entry.UpdatedParsed == nil {
-					if feed.Debug {
-						fmt.Fprintf(feed.Err, "skipping invalid entry %s, invalid updated %q could not be parsed as RFC3339", entry.ID, entry.Updated)
-					}
+					span.Debugf("skipping invalid entry %s, invalid updated %q could not be parsed as RFC3339", entry.ID, entry.Updated)
 					continue
 				}
 
 				parsedUrl, err := url.Parse(link.Href)
 				if err != nil || link.Href == "" {
-					if feed.Debug {
-						fmt.Fprintf(feed.Err, "skipping invalid entry %s, invalid link.href %q", entry.ID, link.Href)
-					}
+					span.Debugf("skipping invalid entry %s, invalid link.href %q", entry.ID, link.Href)
 					continue
 				}
 

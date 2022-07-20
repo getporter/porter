@@ -579,8 +579,11 @@ func TestManifestConverter_generateDependencies(t *testing.T) {
 
 			a := NewManifestConverter(c.Config, m, nil, nil)
 
-			deps, err := a.generateDependencies()
-			require.NoError(t, err, "generateDependencies failed")
+			depsExt, depsExtKey, err := a.generateDependencies()
+			require.NoError(t, err)
+			require.Equal(t, cnab.DependenciesV1ExtensionKey, depsExtKey, "expected the v1 dependencies extension key")
+			require.IsType(t, &depsv1.Dependencies{}, depsExt, "expected a v1 dependencies extension section")
+			deps := depsExt.(*depsv1.Dependencies)
 			require.Len(t, deps.Requires, 3, "incorrect number of dependencies were generated")
 			require.Equal(t, []string{"mysql", "ad", "storage"}, deps.Sequence, "incorrect sequence was generated")
 

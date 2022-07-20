@@ -25,7 +25,7 @@ If the source bundle is a digest reference, destination must be a tagged referen
 			return opts.Validate()
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.CopyBundle(opts)
+			return p.CopyBundle(cmd.Context(), opts)
 		},
 	}
 	f := cmd.Flags()

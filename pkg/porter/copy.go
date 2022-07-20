@@ -7,6 +7,8 @@ import (
 	"strings"
 
 	"get.porter.sh/porter/pkg/cnab"
+	"get.porter.sh/porter/pkg/tracing"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 type CopyOpts struct {
@@ -51,22 +53,28 @@ func generateNewBundleRef(source cnab.OCIReference, dest string) (cnab.OCIRefere
 }
 
 // CopyBundle copies a bundle from one repository to another
-func (p *Porter) CopyBundle(c *CopyOpts) error {
+func (p *Porter) CopyBundle(ctx context.Context, c *CopyOpts) error {
+	ctx, span := tracing.StartSpan(ctx,
+		attribute.String("source", c.sourceRef.String()),
+		attribute.String("destination", c.Destination),
+	)
+	defer span.EndSpan()
+
 	destinationRef, err := generateNewBundleRef(c.sourceRef, c.Destination)
 	if err != nil {
-		return err
+		return span.Error(err)
 	}
 
-	fmt.Fprintf(p.Out, "Beginning bundle copy to %s. This may take some time.\n", destinationRef)
-	bunRef, err := p.Registry.PullBundle(c.sourceRef, c.InsecureRegistry)
+	span.Infof("Beginning bundle copy to %s. This may take some time.", destinationRef)
+	bunRef, err := p.Registry.PullBundle(ctx, c.sourceRef, c.InsecureRegistry)
 	if err != nil {
-		return fmt.Errorf("unable to pull bundle before copying: %w", err)
+		return span.Error(fmt.Errorf("unable to pull bundle before copying: %w", err))
 	}
 
 	bunRef.Reference = destinationRef
 	_, err = p.Registry.PushBundle(context.Background(), bunRef, c.InsecureRegistry)
 	if err != nil {
-		return fmt.Errorf("unable to copy bundle to new location: %w", err)
+		return span.Error(fmt.Errorf("unable to copy bundle to new location: %w", err))
 	}
 	return nil
 }

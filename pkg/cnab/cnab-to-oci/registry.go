@@ -20,6 +20,8 @@ import (
 	"github.com/google/go-containerregistry/pkg/crane"
 	"github.com/moby/term"
 	"github.com/opencontainers/go-digest"
+	"go.opentelemetry.io/otel/attribute"
+	"go.uber.org/zap/zapcore"
 )
 
 // ErrNoContentDigest represents an error due to an image not having a
@@ -45,24 +47,30 @@ func NewRegistry(c *portercontext.Context) *Registry {
 }
 
 // PullBundle pulls a bundle from an OCI registry. Returns the bundle, and an optional image relocation mapping, if applicable.
-func (r *Registry) PullBundle(ref cnab.OCIReference, insecureRegistry bool) (cnab.BundleReference, error) {
+func (r *Registry) PullBundle(ctx context.Context, ref cnab.OCIReference, insecureRegistry bool) (cnab.BundleReference, error) {
+	ctx, span := tracing.StartSpan(ctx,
+		attribute.String("reference", ref.String()),
+		attribute.Bool("insecure", insecureRegistry),
+	)
+	defer span.EndSpan()
+
 	var insecureRegistries []string
 	if insecureRegistry {
 		reg := ref.Registry()
 		insecureRegistries = append(insecureRegistries, reg)
 	}
 
-	if r.Debug {
+	if span.ShouldLog(zapcore.DebugLevel) {
 		msg := strings.Builder{}
 		msg.WriteString("Pulling bundle ")
 		msg.WriteString(ref.String())
 		if insecureRegistry {
 			msg.WriteString(" with --insecure-registry")
 		}
-		fmt.Fprintln(r.Err, msg.String())
+		span.Debug(msg.String())
 	}
 
-	bun, reloMap, digest, err := remotes.Pull(context.Background(), ref.Named, r.createResolver(insecureRegistries))
+	bun, reloMap, digest, err := remotes.Pull(ctx, ref.Named, r.createResolver(insecureRegistries))
 	if err != nil {
 		return cnab.BundleReference{}, fmt.Errorf("unable to pull bundle: %w", err)
 	}

@@ -34,13 +34,15 @@ func TestInstallFromTagIgnoresCurrentBundle(t *testing.T) {
 }
 
 func TestPorter_BuildActionArgs(t *testing.T) {
+	ctx := context.Background()
+
 	t.Run("no bundle set", func(t *testing.T) {
 		p := NewTestPorter(t)
 		defer p.Close()
 		opts := NewInstallOptions()
 		opts.Name = "mybuns"
 
-		err := opts.Validate(context.Background(), nil, p.Porter)
+		err := opts.Validate(ctx, nil, p.Porter)
 		require.Error(t, err, "Validate should fail")
 		assert.Contains(t, err.Error(), "No bundle specified")
 	})
@@ -54,9 +56,9 @@ func TestPorter_BuildActionArgs(t *testing.T) {
 		p.TestConfig.TestContext.AddTestFile("testdata/porter.yaml", "porter.yaml")
 		p.TestConfig.TestContext.AddTestFile("testdata/bundle.json", ".cnab/bundle.json")
 
-		err := opts.Validate(context.Background(), nil, p.Porter)
+		err := opts.Validate(ctx, nil, p.Porter)
 		require.NoError(t, err, "Validate failed")
-		args, err := p.BuildActionArgs(context.TODO(), storage.Installation{}, opts)
+		args, err := p.BuildActionArgs(ctx, storage.Installation{}, opts)
 		require.NoError(t, err, "BuildActionArgs failed")
 
 		assert.NotEmpty(t, args.BundleReference.Definition)
@@ -69,9 +71,9 @@ func TestPorter_BuildActionArgs(t *testing.T) {
 		opts.CNABFile = "/bundle.json"
 		p.TestConfig.TestContext.AddTestFile("testdata/bundle.json", "/bundle.json")
 
-		err := opts.Validate(context.Background(), nil, p.Porter)
+		err := opts.Validate(ctx, nil, p.Porter)
 		require.NoError(t, err, "Validate failed")
-		args, err := p.BuildActionArgs(context.TODO(), storage.Installation{}, opts)
+		args, err := p.BuildActionArgs(ctx, storage.Installation{}, opts)
 		require.NoError(t, err, "BuildActionArgs failed")
 
 		assert.NotEmpty(t, args.BundleReference.Definition, "BundlePath was not populated correctly")
@@ -106,10 +108,10 @@ func TestPorter_BuildActionArgs(t *testing.T) {
 		p.TestParameters.AddSecret("PARAM2_SECRET", "VALUE2")
 		p.TestParameters.AddTestParameters("testdata/paramset2.json")
 
-		err := opts.Validate(context.Background(), nil, p.Porter)
+		err := opts.Validate(ctx, nil, p.Porter)
 		require.NoError(t, err, "Validate failed")
 		existingInstall := storage.Installation{Name: opts.Name}
-		args, err := p.BuildActionArgs(context.TODO(), existingInstall, opts)
+		args, err := p.BuildActionArgs(ctx, existingInstall, opts)
 		require.NoError(t, err, "BuildActionArgs failed")
 
 		expectedParams := map[string]interface{}{

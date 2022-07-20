@@ -220,24 +220,23 @@ func (c *Config) SetPorterPath(path string) {
 	c.porterPath = path
 }
 
-func (c *Config) GetPorterPath() (string, error) {
+func (c *Config) GetPorterPath(ctx context.Context) (string, error) {
 	if c.porterPath != "" {
 		return c.porterPath, nil
 	}
 
+	log := tracing.LoggerFromContext(ctx)
 	porterPath, err := getExecutable()
 	if err != nil {
-		return "", fmt.Errorf("could not get path to the executing porter binary: %w", err)
+		return "", log.Error(fmt.Errorf("could not get path to the executing porter binary: %w", err))
 	}
 
 	// We try to resolve back to the original location
 	hardPath, err := evalSymlinks(porterPath)
 	if err != nil { // if we have trouble resolving symlinks, skip trying to help people who used symlinks
-		fmt.Fprintln(c.Err, fmt.Errorf("WARNING could not resolve %s for symbolic links\n: %w", porterPath, err))
+		log.Error(fmt.Errorf("WARNING could not resolve %s for symbolic links: %w", porterPath, err))
 	} else if hardPath != porterPath {
-		if c.Debug {
-			fmt.Fprintf(c.Err, "Resolved porter binary from %s to %s\n", porterPath, hardPath)
-		}
+		log.Debugf("Resolved porter binary from %s to %s", porterPath, hardPath)
 		porterPath = hardPath
 	}
 

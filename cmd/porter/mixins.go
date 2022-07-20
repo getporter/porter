@@ -120,7 +120,7 @@ func BuildMixinUninstallCommand(p *porter.Porter) *cobra.Command {
 			return opts.Validate(args)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.UninstallMixin(opts)
+			return p.UninstallMixin(cmd.Context(), opts)
 		},
 	}
 
@@ -172,7 +172,7 @@ See https://getporter.org/mixin-dev-guide/distribution more details.
 			return opts.Validate(p.Context)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.GenerateMixinFeed(opts)
+			return p.GenerateMixinFeed(cmd.Context(), opts)
 		},
 	}
 

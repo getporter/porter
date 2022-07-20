@@ -8,6 +8,7 @@ import (
 
 	"get.porter.sh/porter/pkg/pkgmgmt"
 	"get.porter.sh/porter/pkg/portercontext"
+	"get.porter.sh/porter/pkg/tracing"
 	"github.com/hashicorp/go-multierror"
 	"golang.org/x/sync/errgroup"
 )
@@ -49,6 +50,9 @@ type MixinInputGenerator interface {
 // For example, the ManifestGenerator will iterate over the mixins in a manifest and send
 // them their config and the steps associated with their mixin.
 func (q *MixinQuery) Execute(ctx context.Context, cmd string, inputGenerator MixinInputGenerator) (map[string]string, error) {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
 	mixinNames := inputGenerator.ListMixins()
 	results := make(map[string]string, len(mixinNames))
 	type queryResponse struct {
@@ -116,15 +120,13 @@ func (q *MixinQuery) Execute(ctx context.Context, cmd string, inputGenerator Mix
 
 	if runErr != nil {
 		if q.RequireAllMixinResponses {
-			return nil, runErr
+			return nil, span.Error(runErr)
 		}
 
 		// This is a debug because we expect not all mixins to implement some
 		// optional commands, like lint and don't want to print their error
 		// message when we query them with a command they don't support.
-		if q.Debug {
-			fmt.Fprintln(q.Err, fmt.Errorf("not all mixins responded successfully: %w", runErr))
-		}
+		span.Debugf(fmt.Errorf("not all mixins responded successfully: %w", runErr).Error())
 	}
 
 	return results, nil

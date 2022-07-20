@@ -236,7 +236,7 @@ func buildCredentialsCreateCommand(p *porter.Porter) *cobra.Command {
 			return opts.Validate(args)
 		},
 		RunE: func(cmd *cobra.Command, argrs []string) error {
-			return p.CreateCredential(opts)
+			return p.CreateCredential(cmd.Context(), opts)
 		},
 	}
 
