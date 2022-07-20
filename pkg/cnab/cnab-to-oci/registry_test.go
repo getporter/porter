@@ -5,14 +5,14 @@ import (
 
 	cnabtooci "get.porter.sh/porter/pkg/cnab/cnab-to-oci"
 	"github.com/docker/docker/api/types"
-	"github.com/opencontainers/go-digest"
 	"github.com/stretchr/testify/require"
 )
 
 func TestImageSummary(t *testing.T) {
 	type expectedOutput struct {
-		imageRef string
-		digest   string
+		imageRef   string
+		digest     string
+		hasInitErr bool
 	}
 
 	testcases := []struct {
@@ -33,6 +33,7 @@ func TestImageSummary(t *testing.T) {
 			name:         "invalid image reference",
 			imgRef:       "test-",
 			imageSummary: types.ImageInspect{ID: "test", RepoDigests: []string{"test/image@sha256:6b5a28ccbb76f12ce771a23757880c6083234255c5ba191fca1c5db1f71c1687"}},
+			expected:     expectedOutput{hasInitErr: true},
 			expectedErr:  "invalid reference format",
 		},
 		{
@@ -48,7 +49,7 @@ func TestImageSummary(t *testing.T) {
 			name:         "failed to find valid digest",
 			imgRef:       "test/image:latest",
 			imageSummary: types.ImageInspect{ID: "test", RepoDigests: []string{"test/image-another-repo@sha256:6b5a28ccbb76f12ce771a23757880c6083234255c5ba191fca1c5db1f71c1687"}},
-			expectedErr:  digest.ErrDigestInvalidFormat.Error(),
+			expectedErr:  "cannot find image digest for desired repo",
 			expected: expectedOutput{
 				imageRef: "test/image:latest",
 			},
@@ -59,7 +60,7 @@ func TestImageSummary(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			sum, err := cnabtooci.NewImageSummary(tt.imgRef, tt.imageSummary)
-			if tt.expected.imageRef == "" {
+			if tt.expected.hasInitErr {
 				require.ErrorContains(t, err, tt.expectedErr)
 				return
 			}

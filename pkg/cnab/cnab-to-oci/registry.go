@@ -198,7 +198,7 @@ func (r *Registry) PullImage(ctx context.Context, imgRef string) error {
 	authConfig := command.ResolveAuthConfig(ctx, cli, repoInfo.Index)
 	encodedAuth, err := command.EncodeAuthToBase64(authConfig)
 	if err != nil {
-		return log.Error(err)
+		return log.Error(fmt.Errorf("failed to serialize docker auth config: %w", err))
 	}
 	options := types.ImagePullOptions{
 		RegistryAuth: encodedAuth,
@@ -313,6 +313,10 @@ func (i ImageSummary) Digest() (digest.Digest, error) {
 
 		imgDigest = imgRef.Digest()
 		break
+	}
+
+	if imgDigest == "" {
+		return "", fmt.Errorf("cannot find image digest for desired repo %s", i.imageRef.String())
 	}
 
 	if err := imgDigest.Validate(); err != nil {

@@ -8,10 +8,12 @@ import (
 
 	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/build"
+	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/tracing"
 	"get.porter.sh/porter/pkg/yaml"
 	"github.com/mikefarah/yq/v3/pkg/yqlib"
+	"github.com/opencontainers/go-digest"
 	"go.opentelemetry.io/otel/attribute"
 )
 
@@ -33,13 +35,13 @@ func (p *Porter) generateInternalManifest(ctx context.Context, opts BuildOptions
 	// Create the local app dir if it does not already exist
 	err := p.FileSystem.MkdirAll(build.LOCAL_APP, pkg.FileModeDirectory)
 	if err != nil {
-		return fmt.Errorf("unable to create directory %s: %w", build.LOCAL_APP, err)
+		return span.Error(fmt.Errorf("unable to create directory %s: %w", build.LOCAL_APP, err))
 	}
 
 	e := yaml.NewEditor(p.Context)
 	err = e.ReadFile(opts.File)
 	if err != nil {
-		return err
+		return span.Error(fmt.Errorf("unable to read manifest file %s: %w", opts.File, err))
 	}
 
 	if opts.Name != "" {
@@ -62,14 +64,15 @@ func (p *Porter) generateInternalManifest(ctx context.Context, opts BuildOptions
 
 	// find all referenced images that does not have digest specified
 	// get the image digest for all of them and update the manifest with the digest
-	err = e.WalkNodes(ctx, "images.*.*", func(ctx context.Context, nc *yqlib.NodeContext) error {
-		ctx, span := tracing.StartSpanWithName(ctx, "getImageDigest")
+	err = e.WalkNodes(ctx, "images.*", func(ctx context.Context, nc *yqlib.NodeContext) error {
+		ctx, span := tracing.StartSpanWithName(ctx, "updateReferencedImageTagToDigest")
 		defer span.EndSpan()
 
 		img := &manifest.MappedImage{}
 		if err := nc.Node.Decode(img); err != nil {
-			return err
+			return span.Errorf("failed to deserialize referenced image in manifest: %w", err)
 		}
+
 		span.SetAttributes(attribute.String("image", img.Repository))
 
 		// if image digest is specified in the manifest, we don't need to get it
@@ -78,28 +81,12 @@ func (p *Porter) generateInternalManifest(ctx context.Context, opts BuildOptions
 			return nil
 		}
 
-		if err := img.Validate(); err != nil {
-			return err
-		}
-
-		// if no image tag is specified, defautl to use latest
-		imgTag := "latest"
-		if img.Tag != "" {
-			imgTag = img.Tag
-		}
-		ref := fmt.Sprintf("%s:%s", img.Repository, imgTag)
-
-		err := p.Registry.PullImage(ctx, ref)
+		ref, err := img.ToOCIReference()
 		if err != nil {
-			return err
+			return span.Errorf("failed to parse image %s reference: %w", img.Repository, err)
 		}
 
-		imgSummary, err := p.Registry.GetCachedImage(ctx, ref)
-		if err != nil {
-			return err
-		}
-
-		imgDigest, err := imgSummary.Digest()
+		digest, err := p.getImageLatestDigest(ctx, ref)
 		if err != nil {
 			return err
 		}
@@ -116,11 +103,38 @@ func (p *Porter) generateInternalManifest(ctx context.Context, opts BuildOptions
 				continue
 			}
 		}
-		return e.SetValue(path+"digest", imgDigest.String())
+		return e.SetValue(path+"digest", digest.String())
+
 	})
 	if err != nil {
-		return span.Error(err)
+		return err
 	}
 
 	return e.WriteFile(build.LOCAL_MANIFEST)
+}
+
+func (p *Porter) getImageLatestDigest(ctx context.Context, img cnab.OCIReference) (digest.Digest, error) {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
+	// if no image tag is specified, defautl to use latest
+	if img.Tag() == "" {
+		refWithTag, err := img.WithTag("latest")
+		if err != nil {
+			return "", span.Errorf("failed to create image reference %s with tag latest: %w", img.String(), err)
+		}
+		img = refWithTag
+	}
+
+	err := p.Registry.PullImage(ctx, img.String())
+	if err != nil {
+		return "", err
+	}
+
+	imgSummary, err := p.Registry.GetCachedImage(ctx, img.String())
+	if err != nil {
+		return "", err
+	}
+
+	return imgSummary.Digest()
 }
