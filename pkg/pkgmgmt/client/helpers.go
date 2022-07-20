@@ -63,7 +63,7 @@ func (p *TestPackageManager) Install(ctx context.Context, opts pkgmgmt.InstallOp
 	return nil
 }
 
-func (p *TestPackageManager) Uninstall(o pkgmgmt.UninstallOptions) error {
+func (p *TestPackageManager) Uninstall(ctx context.Context, opts pkgmgmt.UninstallOptions) error {
 	// do nothing
 	return nil
 }

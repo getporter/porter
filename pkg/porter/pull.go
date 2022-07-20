@@ -1,6 +1,7 @@
 package porter
 
 import (
+	"context"
 	"fmt"
 
 	"get.porter.sh/porter/pkg/cache"
@@ -40,10 +41,10 @@ func (b *BundlePullOptions) validateReference() error {
 
 // PullBundle looks for a given bundle tag in the bundle cache. If it is not found, it is
 // pulled and stored in the cache. The path to the cached bundle is returned.
-func (p *Porter) PullBundle(opts BundlePullOptions) (cache.CachedBundle, error) {
+func (p *Porter) PullBundle(ctx context.Context, opts BundlePullOptions) (cache.CachedBundle, error) {
 	resolver := BundleResolver{
 		Cache:    p.Cache,
 		Registry: p.Registry,
 	}
-	return resolver.Resolve(opts)
+	return resolver.Resolve(ctx, opts)
 }

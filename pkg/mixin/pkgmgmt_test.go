@@ -28,7 +28,6 @@ func TestRunner_BuildCommand(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			ctx := context.Background()
 			r := client.NewTestRunner(t, "exec", "mixins", false)
-			r.Debug = false
 			r.Setenv(test.ExpectedCommandEnv, tc.wantCommand)
 
 			mgr := PackageManager{}

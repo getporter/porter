@@ -8,6 +8,8 @@ import (
 
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/portercontext"
+	"get.porter.sh/porter/pkg/tracing"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 type CommandOptions struct {
@@ -48,18 +50,17 @@ func (r *PluginRunner) Validate() error {
 }
 
 func (r *PluginRunner) Run(ctx context.Context, commandOpts CommandOptions) error {
-	if r.Debug {
-		fmt.Fprintln(r.Err, "DEBUG Plugin Name: ", r.pluginName)
-		fmt.Fprintln(r.Err, "DEBUG Plugin Command: ", commandOpts.Command)
-	}
+	ctx, span := tracing.StartSpan(ctx,
+		attribute.String("name", r.pluginName),
+		attribute.String("partial-command", commandOpts.Command),
+	)
+	defer span.EndSpan()
 
 	pluginPath, err := config.New().GetPluginPath(r.pluginName)
-	if r.Debug {
-		fmt.Fprintln(r.Err, "DEBUG Plugin Path: ", pluginPath)
-	}
 	if err != nil {
-		return fmt.Errorf("Failed to get plugin path for %s: %w", r.pluginName, err)
+		return span.Error(fmt.Errorf("Failed to get plugin path for %s: %w", r.pluginName, err))
 	}
+	span.SetAttributes(attribute.String("plugin-path", pluginPath))
 
 	cmdArgs := strings.Split(commandOpts.Command, " ")
 	cmd := r.NewCommand(ctx, pluginPath, cmdArgs...)
@@ -69,14 +70,12 @@ func (r *PluginRunner) Run(ctx context.Context, commandOpts CommandOptions) erro
 	cmd.Stderr = r.Err
 
 	prettyCmd := fmt.Sprintf("%s%s", cmd.Dir, strings.Join(cmd.Args, " "))
-	if r.Debug {
-		fmt.Fprintln(r.Err, "DEBUG Plugin Full Command: ", prettyCmd)
-	}
+	span.SetAttributes(attribute.String("full-command", prettyCmd))
 
 	err = cmd.Start()
 	if err != nil {
-		return fmt.Errorf("could not run plugin command %s: %w", prettyCmd, err)
+		return span.Error(fmt.Errorf("could not run plugin command %s: %w", prettyCmd, err))
 	}
 
-	return cmd.Wait()
+	return span.Error(cmd.Wait())
 }

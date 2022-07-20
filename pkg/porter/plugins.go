@@ -167,8 +167,8 @@ func (p *Porter) InstallPlugin(ctx context.Context, opts plugins.InstallOptions)
 	return nil
 }
 
-func (p *Porter) UninstallPlugin(opts pkgmgmt.UninstallOptions) error {
-	err := p.Plugins.Uninstall(opts)
+func (p *Porter) UninstallPlugin(ctx context.Context, opts pkgmgmt.UninstallOptions) error {
+	err := p.Plugins.Uninstall(ctx, opts)
 	if err != nil {
 		return err
 	}

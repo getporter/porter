@@ -13,6 +13,7 @@ import (
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/tracing"
 	"go.opentelemetry.io/otel/attribute"
+	"go.uber.org/zap/zapcore"
 )
 
 var _ pkgmgmt.PackageManager = &FileSystem{}
@@ -73,7 +74,7 @@ func (fs *FileSystem) GetMetadata(ctx context.Context, name string) (pkgmgmt.Pac
 
 	pkgDir, err := fs.GetPackageDir(name)
 	if err != nil {
-		return nil, err
+		return nil, span.Error(err)
 	}
 	r := NewRunner(name, pkgDir, false)
 
@@ -81,7 +82,7 @@ func (fs *FileSystem) GetMetadata(ctx context.Context, name string) (pkgmgmt.Pac
 	jsonB := &bytes.Buffer{}
 	pkgContext := *fs.Context
 	pkgContext.Out = jsonB
-	if !fs.Debug {
+	if span.ShouldLog(zapcore.DebugLevel) {
 		pkgContext.Err = ioutil.Discard
 	}
 	r.Context = &pkgContext
@@ -89,13 +90,13 @@ func (fs *FileSystem) GetMetadata(ctx context.Context, name string) (pkgmgmt.Pac
 	cmd := pkgmgmt.CommandOptions{Command: "version --output json", PreRun: fs.PreRun}
 	err = r.Run(ctx, cmd)
 	if err != nil {
-		return nil, err
+		return nil, span.Error(err)
 	}
 
 	result := fs.BuildMetadata()
 	err = json.Unmarshal(jsonB.Bytes(), &result)
 	if err != nil {
-		return nil, err
+		return nil, span.Error(err)
 	}
 
 	return result, nil
