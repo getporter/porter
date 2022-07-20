@@ -3,6 +3,7 @@ package printer
 import (
 	"testing"
 
+	"get.porter.sh/porter/tests"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -28,11 +29,10 @@ func TestParseFormat(t *testing.T) {
 
 			err := opts.ParseFormat()
 			if tc.wantErr == "" {
-				require.Nil(t, err)
-				require.Equal(t, tc.wantFormat, opts.Format)
+				require.NoError(t, err)
+				require.Equal(t, tc.wantFormat, opts.Format, "incorrect format was returned by ParseFormat")
 			} else {
-				require.NotNil(t, err)
-				require.Contains(t, err.Error(), tc.wantErr)
+				tests.RequireErrorContains(t, err, tc.wantErr, "unexpected error returned by ParseFormat")
 			}
 		})
 	}
