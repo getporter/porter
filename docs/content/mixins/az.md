@@ -136,9 +136,9 @@ az:
     - login
   flags:
     service-principal:
-    username: "{{ bundle.credentials.AZURE_SP_CLIENT_ID}}"
-    password: "{{ bundle.credentials.AZURE_SP_PASSWORD}}"
-    tenant: "{{ bundle.credentials.AZURE_TENANT}}"
+    username: ${ bundle.credentials.AZURE_SP_CLIENT_ID}
+    password: ${ bundle.credentials.AZURE_SP_PASSWORD}
+    tenant: ${ bundle.credentials.AZURE_TENANT}
 ```
 
 ### Provision a VM
@@ -183,6 +183,6 @@ install:
         - appsettings
         - set
       flags:
-        ids: '{{ bundle.outputs.WEBAPI_ID }}'
-        settings: 'PGHOST={{ bundle.outputs.POSTGRES_HOST }} PGUSER={{ bundle.outputs.POSTGRES_USER }} PGPASSWORD={{ bundle.outputs.POSTGRES_PASSWORD }} PGDB={{ bundle.outputs.POSTGRES_DB }}'
+        ids: '${ bundle.outputs.WEBAPI_ID }'
+        settings: 'PGHOST=${ bundle.outputs.POSTGRES_HOST } PGUSER=${ bundle.outputs.POSTGRES_USER } PGPASSWORD=${ bundle.outputs.POSTGRES_PASSWORD } PGDB=${ bundle.outputs.POSTGRES_DB }'
 ```

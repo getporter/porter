@@ -9,7 +9,7 @@ aliases:
 When you are authoring a bundle, you can define what credentials your bundle
 requires such as a github token, cloud provider username/password, etc. Then in
 your action's steps you can reference the credentials using porter's template
-language `{{ bundle.credentials.github_token }}`, or directly access the 
+language `${ bundle.credentials.github_token }`, or directly access the 
 environment variable or path where the credential is stored.
 
 In the example below, the bundle defines two credentials. A kubeconfig file,
@@ -55,7 +55,7 @@ credential values, and then injects them into the bundle's execution environment
 as either environment variables or files.
 
 Inside the bundle's execution environment Porter replaces the template placeholders
-like `{{ bundle.credentials.github_token }}` with the actual credential value
+like `${ bundle.credentials.github_token }` with the actual credential value
 before executing the step. Credentials are also available directly through the
 environment variable or path used in its declaration.
 

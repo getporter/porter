@@ -188,10 +188,10 @@ install:
     chart: bitnami/mysql
     outputs:
       - name: mysql-root-password
-        secret: "{{ bundle.parameters.mysql-name }}"
+        secret: ${ bundle.parameters.mysql-name }
         key: mysql-root-password
       - name: mysql-password
-        secret: "{{ bundle.parameters.mysql-name }}"
+        secret: ${ bundle.parameters.mysql-name }
         key: mysql-password
 ```
 
@@ -225,7 +225,7 @@ upgrade:
     name: porter-ci-mysql
     replace: true
     set:
-      mysqlPassword: "{{ bundle.parameters.mysql-password }}"
+      mysqlPassword: ${ bundle.parameters.mysql-password }
 ```
 
 **/cnab/app/porter/outputs/mysql-root-password**
@@ -251,7 +251,7 @@ uninstall:
     description: "Uninstall MySQL"
     purge: true
     releases:
-      - "{{ bundle.parameters.mysql-name }}"
+      - ${ bundle.parameters.mysql-name }
 ```
 
 # invoke

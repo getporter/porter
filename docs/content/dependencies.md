@@ -17,7 +17,7 @@ Here is a [full example][example] of a Porter manifest that uses dependencies.
 
 In the manifest, add entries for each dependency of your bundle. The `name` field takes a short name for the dependent bundle that
 you will use to reference the dependent bundle elsewhere in the bundle. For example you can reference the dependent bundle's
-outputs via `{{ bundle.dependencies.NAME.outputs }}`.  The `reference` field takes the bundle reference of the dependency.
+outputs via `${ bundle.dependencies.NAME.outputs }`.  The `reference` field takes the bundle reference of the dependency.
 Both `name` and `reference` are required fields.
 
 ```yaml

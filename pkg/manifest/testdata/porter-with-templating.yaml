@@ -1,4 +1,4 @@
-schemaVersion: 1.0.0-alpha.1
+schemaVersion: 1.0.0
 name: hello-with-templating
 version: 0.1.0
 registry: "localhost:5000"
@@ -38,7 +38,7 @@ install:
       command: ./helpers.sh
       arguments:
         - install
-        - "{{ bundle.dependencies.mysql.outputs.mysql-password }}"
+        - ${ bundle.dependencies.mysql.outputs.mysql-password }
       outputs:
         - name: name
           regex: Hello (.*)
@@ -49,7 +49,7 @@ install:
       command: ./helpers.sh
       arguments:
         - debug
-        - "{{ bundle.outputs.name }}"
+        - ${ bundle.outputs.name }
 
 upgrade:
   - exec:
@@ -57,7 +57,7 @@ upgrade:
       command: ./helpers.sh
       arguments:
         - upgrade
-        - "{{ bundle.outputs.msg }}"
+        - ${ bundle.outputs.msg }
 
 uninstall:
   - exec:
@@ -65,4 +65,4 @@ uninstall:
       command: ./helpers.sh
       arguments:
         - uninstall
-        - "{{ bundle.outputs.msg }}"
+        - ${ bundle.outputs.msg }

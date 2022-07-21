@@ -10,8 +10,8 @@ your bundle. These parameters are restricted to a list of [allowable data
 types](/author-bundles/#parameter-types) and are used to define parameters such as
 username and password values for a backing database, or the region that a
 certain resource should be deployed in, etc. Then in your action's steps you can
-reference the parameters using porter's template language `{{
-bundle.parameters.db_name }}`.
+reference the parameters using porter's template language `${
+bundle.parameters.db_name }`.
 
 Parameter values are resolved from a combination of supplied parameter set
 files, user-specified overrides and defaults defined by the bundle itself.

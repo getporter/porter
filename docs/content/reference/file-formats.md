@@ -14,15 +14,16 @@ description: Defines the format of files used by Porter
 
 Below are schema versions for each of the file formats, and the corresponding Porter version that supports it.
 
-| Schema Type   | Schema Version | Porter Version   |
-|---------------|----------------|------------------|
-| Bundle        | (none)         | v0.38.*          |
-| Bundle        | 1.0.0-alpha.1  | v1.0.0-alpha.14+ |
-| CredentialSet | (none)         | v0.38.*          |
-| CredentialSet | 1.0.1          | v1.0.0-alpha.1+  |
-| ParameterSet  | (none)         | v0.38.*          |
-| ParameterSet  | 1.0.1          | v1.0.0-alpha.1+  |
-| Installation  | 1.0.1          | v1.0.0-alpha.20+ |
+| Schema Type   | Schema Version                                               | Porter Version   |
+|---------------|--------------------------------------------------------------|------------------|
+| Bundle        | (none)                                                       | v0.38.*          |
+| Bundle        | [1.0.0-alpha.1](/bundle/manifest/file-format/1.0.0-alpha.1/) | v1.0.0-alpha.14+ |
+| Bundle        | [1.0.0](/bundle/manifest/file-format/1.0.0/)                 | v1.0.0-beta.2+   |
+| CredentialSet | (none)                                                       | v0.38.*          |
+| CredentialSet | 1.0.1                                                        | v1.0.0-alpha.1+  |
+| ParameterSet  | (none)                                                       | v0.38.*          |
+| ParameterSet  | 1.0.1                                                        | v1.0.0-alpha.1+  |
+| Installation  | 1.0.1                                                        | v1.0.0-alpha.20+ |
 
 Sometimes you may want to work with a different version of a resource than what is supported by Porter, especially when migrating from one version of Porter to another.
 The [schema-check] configuration setting allows you to change how Porter behaves when the schemaVersion of a resource doesn't match Porter's supported version.

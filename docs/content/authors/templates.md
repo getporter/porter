@@ -5,26 +5,10 @@ aliases:
 - /wiring/
 ---
 
-Porter supports templates in the action steps of porter.yaml, and uses the [mustache] template language.
-Templates are surrounded by the double curly brace delimiters, `{{ template here }}` and must be double-quoted when the entire value is a template.
-Below is an example demonstrating when double-quotes are necessary:
+Porter supports templates in the action steps of porter.yaml and can perform variable substitution.
+Templates are surrounded by a dollar sign curly brace delimiter, `${ template here }`.
 
-```yaml
-install:
-  - exec:
-      description: "Use some templates"
-      command: ./helpers/{{ parameters.scriptName }}.sh
-      arguments:
-        - "{{ installation.name }}"
-  - helm3:
-      description: "Install Java App"
-      name: "{{ bundle.parameters.cool-app}}"
-      chart: bitnami/wordpress
-      version: "9.9.3"
-      replace: true
-      set:
-        jdbc_url: jdbc:mysql://{{ bundle.outputs.mysql_host }}:{{ bundle.outputs.mysql_port }}/{{ bundle.parameters.database_name }}
-```
+Starting in Porter v1.0.0-beta.2, templating does not require surrounding quotes and can now substitute in non-string variables, such as booleans and numbers.
 
 ## Variables
 
@@ -55,7 +39,7 @@ In the example below, we install a helm chart and set the release name to the in
 install:
   helm3:
     description: Install myapp
-    name: "{{ installation.name }}"
+    name: ${ installation.name }
     chart: charts/myapp
 ```
 
@@ -65,7 +49,7 @@ In the next example, we install some kubernetes resources using the namespace of
 install:
   kubernetes:
     description: Install myapp
-    namespace: "{{ installation.namespace }}"
+    namespace: ${ installation.namespace }
     manifests:
       - manifests
 ```
@@ -96,9 +80,9 @@ custom:
 install:
   - helm3:
       description: "Install my chart"
-      name: "{{ installation.name }}"
-      chart: "{{ bundle.custom.chart.name }}"
-      version: "{{ bundle.custom.chart.version }}"
+      name: ${ installation.name }
+      chart: ${ bundle.custom.chart.name }
+      version: "${ bundle.custom.chart.version }"
       namespace: "myNamespace"
 ```
 
@@ -121,7 +105,7 @@ install:
       name: "myRelease"
       chart: "myChart"
       version: "1.2.3"
-      namespace: "{{ bundle.parameters.namespace }}"
+      namespace: ${ bundle.parameters.namespace }
 ```
 
 #### credentials
@@ -143,7 +127,7 @@ install:
       version: "1.2.3"
       namespace: "myNamespace"
       set:
-        mysql-password: "{{ bundle.credentials.database-password }}"
+        mysql-password: ${ bundle.credentials.database-password }
 ```
 
 #### outputs
@@ -168,7 +152,7 @@ install:
       version: "1.2.3"
       namespace: "myNamespace"
       set:
-        wordpress-username: "{{ bundle.outputs.username }}"
+        wordpress-username: ${ bundle.outputs.username }
 ```
 
 #### dependencies
@@ -199,7 +183,7 @@ install:
       version: "1.2.3"
       namespace: "myNamespace"
       set:
-        database-password: "{{ bundle.dependencies.mysql.outputs.mysql-password }}"
+        database-password: ${ bundle.dependencies.mysql.outputs.mysql-password }
 ```
 
 #### images
@@ -226,7 +210,7 @@ install:
       version: "1.2.3"
       namespace: "myNameespace"
       set:
-        image: "{{bundle.images.mysql.repository}}@{{bundle.images.mysql.digest}}"
+        image: ${bundle.images.mysql.repository}@${bundle.images.mysql.digest}
 ```
 
 [referenced images]: /author-bundles/#images
@@ -242,7 +226,7 @@ install:
       description: "Access environment variables"
       command: ./helpers/login.sh
       arguments:
-        - "{{ env.CNAB_REVISION }}"
+        - ${ env.CNAB_REVISION }
 ```
 
 

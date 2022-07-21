@@ -1,4 +1,4 @@
-schemaVersion: 1.0.0-alpha.1
+schemaVersion: 1.0.0
 name: hello
 description: "An example Porter configuration"
 version: v0.1.0

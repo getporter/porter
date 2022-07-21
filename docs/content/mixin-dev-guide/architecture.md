@@ -94,8 +94,8 @@ helm3:
   version: 6.14.2
   replace: true
   set:
-    db.name: "{{ bundle.parameters.database-name }}"
-    db.user: "{{ bundle.parameters.mysql-user }}"
+    db.name: ${ bundle.parameters.database-name }
+    db.user: ${ bundle.parameters.mysql-user }
   outputs:
   - name: mysql-root-password
     secret: porter-ci-mysql
