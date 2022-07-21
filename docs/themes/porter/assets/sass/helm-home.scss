@@ -450,8 +450,8 @@ nav.home-nav {
 
   .helm-community {
     background-color: white;
-    padding-top: 50px;
     padding-bottom: 100px;
+    border-radius: 25px;
     color: $darkblue;
     background: linear-gradient( 0deg, #fff, #F7F7F7);
 
@@ -460,21 +460,23 @@ nav.home-nav {
     }
 
     h2 {
-      margin-bottom: 0.5em;
-
-      & + p {
-        margin-bottom: 4.5rem;
-      }
+      margin-bottom: 0.3em;
+      font-size: 3rem;
     }
 
     .helm-community-links {
       ul {
-        background-color: white;
-        padding: 1.5em 2.25em;
-        border-radius: 1em;
 
         @include mobile {
-          padding: 0;
+          padding: 0 !important;
+          margin: 0 !important;
+          text-align: left !important;
+        }
+
+        .btn-section {
+          display: inline-block;
+          padding: 10px 20px 10px 20px;
+          border-radius: 20px;
         }
 
         li {
@@ -488,41 +490,55 @@ nav.home-nav {
 
           a {
             color: $dark2;
-            border-bottom: 3px solid $blue;
             text-decoration: none;
+            background-image: linear-gradient(to right, #A7BFE8 0%, #6190E8 100%);
+            background-repeat: no-repeat;
+            background-size: 100% 0.3em;
+            padding: 15px 10px;
+            background-position: 0 88%;
+            transition: background-size 0.1s ease-in-out;
 
             &:hover {
-              color: $blue;
-              border-color: $lightblue;
+              // color: $blue;
+              // border-color: $lightblue;
+              background-size: 100% 80%;
+              color: white;
             }
           }
 
-          .fa {
-            color: $blue;
-            font-size: 2rem;
-            width: 1.25em;
-            padding-right: 0em;
-            position: absolute;
-            left: 0;
-            top: 0.525em;
+          .fa-solid, .fa-brands{
+            font-size: 1.5rem;
           }
         }
       }
     }
+    .topbar {
+      height: 20px;
+      background-color: #f8cc88;
+    }
+    .topbar--1 {
+      height: 20px;
+      background-color: #bc0047;
+    }
+
+    .text-content {
+       padding: 2rem;
+    }
 
     .helm-community-blocks {
       section {
-        border: 1px solid $darkblue;
-        border-radius: 1rem;
+        border: 25px solid white;
+        border-bottom: none;
+        border-top: none;
         margin: 0 0 2em;
-        padding: 1.25rem 1.5rem;
         min-height: 125px;
+        background-color: ghostwhite;
         position: relative;
 
         h4 {
           color: $darkblue;
           font-size: 1.5em;
-          @include CBold;
+          @include CBlack;
           margin: -0.25em 0 0.667em;
         }
 
@@ -532,7 +548,9 @@ nav.home-nav {
         }
 
         a {
-          color: $dark2;
+          color: #bc0047;
+          text-decoration: underline;
+          font-weight: 600;
         }
 
         iframe {
