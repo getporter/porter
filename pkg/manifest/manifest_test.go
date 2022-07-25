@@ -563,7 +563,7 @@ func TestValidateImageMap(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, "getporter/myserver@sha256:8f1133d81f1b078c865cdb11d17d1ff15f55c449d3eecca50190eed0f5e5e26f", ref.String(), "failed to convert image map to its OCI reference")
 	})
-	t.Run("with both valid image digest and valid tag format", func(t *testing.T) {
+	t.Run("with valid repository format and valid tag", func(t *testing.T) {
 		mi := MappedImage{
 			Repository: "getporter/myserver",
 			Tag:        "v0.1.0",

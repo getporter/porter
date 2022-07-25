@@ -10,10 +10,10 @@ custom:
 mixins:
   - exec
 images:
-  - whalesayd:
-      description: "Whalesay as a service"
-      imageType: "docker"
-      repository: "test/whalesayd"
+  whalesayd:
+    description: "Whalesay as a service"
+    imageType: "docker"
+    repository: "test/whalesayd"
 install:
   - exec:
       description: "Install Hello World"

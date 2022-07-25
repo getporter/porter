@@ -184,7 +184,7 @@ func (l traceLogger) Warnf(format string, args ...interface{}) {
 }
 
 func (l traceLogger) Errorf(format string, args ...interface{}) error {
-	return l.Error(fmt.Errorf(format, args))
+	return l.Error(fmt.Errorf(format, args...))
 }
 
 // Error logs a message at the error level, when the specified error is not nil.
