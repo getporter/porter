@@ -6,12 +6,34 @@ import (
 
 	"get.porter.sh/porter/pkg/cnab"
 	depsv1 "get.porter.sh/porter/pkg/cnab/dependencies/v1"
+	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/test"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestExplain_ValidateReference(t *testing.T) {
+	const ref = "ghcr.io/getporter/examples/porter-hello:v0.2.0"
+	t.Run("--reference specified", func(t *testing.T) {
+		porterCtx := portercontext.NewTestContext(t)
+		opts := ExplainOpts{}
+		opts.Reference = ref
+
+		err := opts.Validate(nil, porterCtx.Context)
+		require.NoError(t, err, "Validate failed")
+		assert.Equal(t, ref, opts.Reference)
+	})
+	t.Run("reference positional argument specified", func(t *testing.T) {
+		porterCtx := portercontext.NewTestContext(t)
+		opts := ExplainOpts{}
+
+		err := opts.Validate([]string{ref}, porterCtx.Context)
+		require.NoError(t, err, "Validate failed")
+		assert.Equal(t, ref, opts.Reference)
+	})
+}
 
 func TestExplain_validateBadFormat(t *testing.T) {
 	p := NewTestPorter(t)

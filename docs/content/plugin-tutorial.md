@@ -219,7 +219,7 @@ We will use the `ghcr.io/getporter/examples/plugins-tutorial:v0.2.0` bundle, let
 explain` to see what credentials are necessary.
 
 ```console
-$ porter explain --reference ghcr.io/getporter/examples/plugins-tutorial:v0.2.0
+$ porter explain ghcr.io/getporter/examples/plugins-tutorial:v0.2.0
 Name: plugins-tutorial
 Description: Example of porter resolving credentials from a secrets store using a plugin. 
 This bundle is a companion for the plugin tutorial at https://getporter.org/plugins/tutorial/.

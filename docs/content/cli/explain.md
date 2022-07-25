@@ -12,15 +12,15 @@ Explain a bundle
 Explain how to use a bundle by printing the parameters, credentials, outputs, actions.
 
 ```
-porter explain [flags]
+porter explain REFERENCE [flags]
 ```
 
 ### Examples
 
 ```
   porter explain
-  porter explain --reference ghcr.io/getporter/examples/porter-hello:v0.2.0
-  porter explain --reference localhost:5000/ghcr.io/getporter/examples/porter-hello:v0.2.0 --insecure-registry --force
+  porter explain ghcr.io/getporter/examples/porter-hello:v0.2.0
+  porter explain localhost:5000/ghcr.io/getporter/examples/porter-hello:v0.2.0 --insecure-registry --force
   porter explain --file another/porter.yaml
   porter explain --cnab-file some/bundle.json
   porter explain --action install

@@ -14,7 +14,7 @@ This is the default bundle generated for you when you run `porter create`.
 
 1. Use `porter explain` to see what is included in the bundle and how to use it.
     ```console
-    porter explain --reference ghcr.io/getporter/examples/porter-hello:v0.2.0
+    porter explain ghcr.io/getporter/examples/porter-hello:v0.2.0
     ```
 
 1. Install the bundle

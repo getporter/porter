@@ -16,15 +16,15 @@ like parameters, credentials, outputs and custom actions available.
 
 
 ```
-porter bundles inspect [flags]
+porter bundles inspect REFERENCE [flags]
 ```
 
 ### Examples
 
 ```
   porter bundle inspect
-  porter bundle inspect --reference ghcr.io/getporter/examples/porter-hello:v0.2.0
-  porter bundle inspect --reference localhost:5000/ghcr.io/getporter/examples/porter-hello:v0.2.0 --insecure-registry --force
+  porter bundle inspect ghcr.io/getporter/examples/porter-hello:v0.2.0
+  porter bundle inspect localhost:5000/ghcr.io/getporter/examples/porter-hello:v0.2.0 --insecure-registry --force
   porter bundle inspect --file another/porter.yaml
   porter bundle inspect --cnab-file some/bundle.json
 		  

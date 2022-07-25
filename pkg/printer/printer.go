@@ -32,6 +32,10 @@ func (p *PrintOptions) ParseFormat() error {
 	case FormatJson, FormatYaml, FormatPlaintext:
 		p.Format = format
 		return nil
+	case "":
+		// This helps us out in our unit tests, defaulting the output to plaintext
+		p.Format = FormatPlaintext
+		return nil
 	default:
 		return fmt.Errorf("invalid format: %s", p.RawFormat)
 	}
