@@ -1,20 +1,13 @@
 package porter
 
 import (
-	"context"
 	"path/filepath"
 	"testing"
 
 	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/build"
-	"get.porter.sh/porter/pkg/cnab"
-	configadapter "get.porter.sh/porter/pkg/cnab/config-adapter"
 	"get.porter.sh/porter/pkg/config"
-	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/portercontext"
-	"get.porter.sh/porter/pkg/secrets"
-	"get.porter.sh/porter/pkg/storage"
-	"github.com/cnabio/cnab-go/secrets/host"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -25,7 +18,7 @@ func TestSharedOptions_defaultBundleFiles(t *testing.T) {
 	_, err := cxt.FileSystem.Create("porter.yaml")
 	require.NoError(t, err)
 
-	opts := sharedOptions{}
+	opts := installationOptions{}
 	err = opts.defaultBundleFiles(cxt.Context)
 	require.NoError(t, err)
 
@@ -36,7 +29,7 @@ func TestSharedOptions_defaultBundleFiles(t *testing.T) {
 func TestSharedOptions_defaultBundleFiles_AltManifest(t *testing.T) {
 	cxt := portercontext.NewTestContext(t)
 
-	opts := sharedOptions{
+	opts := installationOptions{
 		bundleFileOptions: bundleFileOptions{
 			File: "mybun/porter.yaml",
 		},
@@ -56,7 +49,7 @@ func TestSharedOptions_defaultBundleFiles_CNABFile(t *testing.T) {
 	_, err = cxt.FileSystem.Create("mycnabfile.json")
 	require.NoError(t, err)
 
-	opts := sharedOptions{}
+	opts := installationOptions{}
 	opts.CNABFile = "mycnabfile.json"
 	err = opts.defaultBundleFiles(cxt.Context)
 	require.NoError(t, err)
@@ -85,7 +78,7 @@ func TestSharedOptions_validateBundleJson(t *testing.T) {
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			opts := sharedOptions{
+			opts := installationOptions{
 				bundleFileOptions: bundleFileOptions{
 					CNABFile: tc.cnabFile,
 				},
@@ -102,151 +95,6 @@ func TestSharedOptions_validateBundleJson(t *testing.T) {
 			}
 		})
 	}
-}
-
-func TestSharedOptions_defaultDriver(t *testing.T) {
-	opts := sharedOptions{}
-
-	opts.defaultDriver()
-
-	assert.Equal(t, DefaultDriver, opts.Driver)
-}
-
-func TestSharedOptions_ParseParamSets(t *testing.T) {
-	p := NewTestPorter(t)
-	defer p.Close()
-
-	p.TestParameters.AddSecret("foo_secret", "foo_value")
-	p.TestParameters.AddSecret("PARAM2_SECRET", "VALUE2")
-	p.TestParameters.AddTestParameters("testdata/paramset2.json")
-
-	opts := sharedOptions{
-		ParameterSets: []string{
-			"porter-hello",
-		},
-	}
-
-	err := opts.Validate(context.Background(), []string{}, p.Porter)
-	assert.NoError(t, err)
-
-	err = opts.parseParamSets(context.Background(), p.Porter, cnab.ExtendedBundle{})
-	assert.NoError(t, err)
-
-	wantParams := map[string]string{
-		"my-second-param": "VALUE2",
-	}
-	assert.Equal(t, wantParams, opts.parsedParamSets, "resolved unexpected parameter values")
-}
-
-func TestSharedOptions_ParseParamSets_Failed(t *testing.T) {
-	p := NewTestPorter(t)
-	defer p.Close()
-
-	p.TestConfig.TestContext.AddTestFile("testdata/porter-with-file-param.yaml", config.Name)
-	p.TestConfig.TestContext.AddTestFile("testdata/paramset-with-file-param.json", "/paramset.json")
-
-	ctx := context.Background()
-	m, err := manifest.LoadManifestFrom(ctx, p.Config, config.Name)
-	require.NoError(t, err)
-	bun, err := configadapter.ConvertToTestBundle(ctx, p.Config, m)
-	require.NoError(t, err)
-
-	opts := sharedOptions{
-		ParameterSets: []string{
-			"/paramset.json",
-		},
-		bundleFileOptions: bundleFileOptions{
-			File: "porter.yaml",
-		},
-	}
-
-	err = opts.Validate(ctx, []string{}, p.Porter)
-	assert.NoError(t, err)
-
-	err = opts.parseParamSets(ctx, p.Porter, bun)
-	assert.Error(t, err)
-
-}
-
-func TestSharedOptions_LoadParameters(t *testing.T) {
-	p := NewTestPorter(t)
-	defer p.Close()
-
-	p.TestConfig.TestContext.AddTestFile("testdata/porter.yaml", config.Name)
-
-	ctx := context.Background()
-	m, err := manifest.LoadManifestFrom(ctx, p.Config, config.Name)
-	require.NoError(t, err)
-	bun, err := configadapter.ConvertToTestBundle(ctx, p.Config, m)
-	require.NoError(t, err)
-
-	opts := sharedOptions{}
-	opts.Params = []string{"my-first-param=1", "my-second-param=2"}
-
-	err = opts.LoadParameters(context.Background(), p.Porter, bun)
-	require.NoError(t, err)
-
-	assert.Len(t, opts.Params, 2)
-}
-
-func TestSharedOptions_CombineParameters(t *testing.T) {
-	c := portercontext.NewTestContext(t)
-	c.Debug = false
-
-	t.Run("no override present, no parameter set present", func(t *testing.T) {
-		opts := sharedOptions{}
-
-		params := opts.combineParameters(c.Context)
-		require.Equal(t, map[string]string{}, params,
-			"expected combined params to be empty")
-	})
-
-	t.Run("override present, no parameter set present", func(t *testing.T) {
-		opts := sharedOptions{
-			parsedParams: map[string]string{
-				"foo": "foo_cli_override",
-			},
-		}
-
-		params := opts.combineParameters(c.Context)
-		require.Equal(t, "foo_cli_override", params["foo"],
-			"expected param 'foo' to have override value")
-	})
-
-	t.Run("no override present, parameter set present", func(t *testing.T) {
-		opts := sharedOptions{
-			parsedParamSets: map[string]string{
-				"foo": "foo_via_paramset",
-			},
-		}
-
-		params := opts.combineParameters(c.Context)
-		require.Equal(t, "foo_via_paramset", params["foo"],
-			"expected param 'foo' to have parameter set value")
-	})
-
-	t.Run("override present, parameter set present", func(t *testing.T) {
-		opts := sharedOptions{
-			parsedParams: map[string]string{
-				"foo": "foo_cli_override",
-			},
-			parsedParamSets: map[string]string{
-				"foo": "foo_via_paramset",
-			},
-		}
-
-		params := opts.combineParameters(c.Context)
-		require.Equal(t, "foo_cli_override", params["foo"],
-			"expected param 'foo' to have override value, which has precedence over the parameter set value")
-	})
-
-	t.Run("debug on", func(t *testing.T) {
-		var opts sharedOptions
-		debugContext := portercontext.NewTestContext(t)
-		debugContext.Debug = true
-		params := opts.combineParameters(debugContext.Context)
-		require.Equal(t, "true", params["porter-debug"], "porter-debug should be set to true when p.Debug is true")
-	})
 }
 
 func Test_bundleFileOptions(t *testing.T) {
@@ -366,56 +214,4 @@ func Test_bundleFileOptions(t *testing.T) {
 			}
 		})
 	}
-}
-
-func TestSharedOptions_populateInternalParameterSet(t *testing.T) {
-	p := NewTestPorter(t)
-	defer p.Close()
-
-	ctx := context.Background()
-
-	p.TestConfig.TestContext.AddTestFile("testdata/porter.yaml", config.Name)
-	m, err := manifest.LoadManifestFrom(context.Background(), p.Config, config.Name)
-	require.NoError(t, err)
-	bun, err := configadapter.ConvertToTestBundle(ctx, p.Config, m)
-	require.NoError(t, err)
-
-	sensitiveParamName := "my-second-param"
-	sensitiveParamValue := "2"
-	nonsensitiveParamName := "my-first-param"
-	nonsensitiveParamValue := "1"
-	opts := sharedOptions{}
-	opts.Params = []string{nonsensitiveParamName + "=" + nonsensitiveParamValue, sensitiveParamName + "=" + sensitiveParamValue}
-
-	err = opts.LoadParameters(ctx, p.Porter, bun)
-	require.NoError(t, err)
-
-	i := storage.NewInstallation("", bun.Name)
-
-	err = opts.populateInternalParameterSet(ctx, p.Porter, bun, &i)
-	require.NoError(t, err)
-
-	require.Len(t, i.Parameters.Parameters, 2)
-
-	// there should be no sensitive value on installation record
-	for _, param := range i.Parameters.Parameters {
-		if param.Name == sensitiveParamName {
-			require.Equal(t, param.Source.Key, secrets.SourceSecret)
-			require.NotEqual(t, param.Source.Value, sensitiveParamValue)
-			continue
-		}
-		require.Equal(t, param.Source.Key, host.SourceValue)
-		require.Equal(t, param.Source.Value, nonsensitiveParamValue)
-	}
-
-	// if no parameter override specified, installation record should be updated
-	// as well
-	opts.combinedParameters = nil
-	opts.Params = make([]string, 0)
-	err = opts.LoadParameters(ctx, p.Porter, bun)
-	require.NoError(t, err)
-	err = opts.populateInternalParameterSet(ctx, p.Porter, bun, &i)
-	require.NoError(t, err)
-
-	require.Len(t, i.Parameters.Parameters, 0)
 }

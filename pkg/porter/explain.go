@@ -15,7 +15,7 @@ import (
 )
 
 type ExplainOpts struct {
-	BundleActionOptions
+	BundleReferenceOptions
 	printer.PrintOptions
 
 	Action string
@@ -154,7 +154,7 @@ func (o *ExplainOpts) Validate(args []string, pctx *portercontext.Context) error
 }
 
 func (p *Porter) Explain(ctx context.Context, o ExplainOpts) error {
-	bundleRef, err := p.resolveBundleReference(ctx, &o.BundleActionOptions)
+	bundleRef, err := p.resolveBundleReference(ctx, &o.BundleReferenceOptions)
 	if err != nil {
 		return err
 	}

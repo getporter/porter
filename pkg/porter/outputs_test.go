@@ -118,7 +118,7 @@ func TestPorter_PrintBundleOutputs(t *testing.T) {
 			p.CreateOutput(r.NewOutput("porter-state", []byte("porter-state.tgz contents")), extB)
 
 			opts := OutputListOptions{
-				sharedOptions: sharedOptions{
+				installationOptions: installationOptions{
 					Name: "test",
 				},
 				PrintOptions: printer.PrintOptions{
