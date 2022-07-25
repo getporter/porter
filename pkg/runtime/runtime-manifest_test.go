@@ -48,15 +48,13 @@ install:
 	err := rm.ResolveStep(0, s)
 	require.NoError(t, err)
 
-	require.IsType(t, map[string]interface{}{}, s.Data["mymixin"])
-	mixin, ok := s.Data["mymixin"].(map[string]interface{})
-	require.True(t, ok)
+	require.IsType(t, map[string]interface{}{}, s.Data["mymixin"], "Data.mymixin has incorrect type")
+	mixin := s.Data["mymixin"].(map[string]interface{})
+	require.IsType(t, mixin["Parameters"], map[string]interface{}{}, "Data.mymixin.Parameters has incorrect type")
+	pms := mixin["Parameters"].(map[string]interface{})
+	require.IsType(t, "string", pms["Thing"], "Data.mymixin.Parameters.Thing has incorrect type")
+	val := pms["Thing"].(string)
 
-	require.IsType(t, mixin["Parameters"], map[string]interface{}{})
-	pms, ok := mixin["Parameters"].(map[string]interface{})
-	require.True(t, ok)
-	val, ok := pms["Thing"].(string)
-	require.True(t, ok)
 	assert.Equal(t, "Ralpha", val)
 	assert.NotContains(t, "place", pms, "parameters that don't apply to the current action should not be resolved")
 
@@ -83,15 +81,13 @@ install:
 	err := rm.ResolveStep(0, s)
 	require.NoError(t, err)
 
-	require.IsType(t, s.Data["mymixin"], map[string]interface{}{})
-	mixin, ok := s.Data["mymixin"].(map[string]interface{})
-	require.True(t, ok)
+	require.IsType(t, map[string]interface{}{}, s.Data["mymixin"], "Data.mymixin has incorrect type")
+	mixin := s.Data["mymixin"].(map[string]interface{})
+	require.IsType(t, mixin["Parameters"], map[string]interface{}{}, "Data.mymixin.Parameters has incorrect type")
+	pms := mixin["Parameters"].(map[string]interface{})
+	require.IsType(t, "string", pms["Thing"], "Data.mymixin.Parameters.Thing has incorrect type")
+	val := pms["Thing"].(string)
 
-	require.IsType(t, mixin["Parameters"], map[string]interface{}{})
-	pms, ok := mixin["Parameters"].(map[string]interface{})
-	require.True(t, ok)
-	val, ok := pms["Thing"].(string)
-	require.True(t, ok)
 	assert.Equal(t, "person.txt", val)
 }
 
@@ -194,12 +190,11 @@ install:
 	err := rm.ResolveStep(0, s)
 	require.NoError(t, err)
 
-	require.IsType(t, s.Data["mymixin"], map[string]interface{}{})
-	mixin, ok := s.Data["mymixin"].(map[string]interface{})
-	require.True(t, ok)
+	require.IsType(t, map[string]interface{}{}, s.Data["mymixin"], "Data.mymixin has incorrect type")
+	mixin := s.Data["mymixin"].(map[string]interface{})
+	require.IsType(t, mixin["Arguments"], []interface{}{}, "Data.mymixin.Arguments has incorrect type")
+	args := mixin["Arguments"].([]interface{})
 
-	args, ok := mixin["Arguments"].([]interface{})
-	require.True(t, ok)
 	assert.Equal(t, "Ralpha", args[0].(string))
 }
 
@@ -229,12 +224,11 @@ install:
 	err := rm.ResolveStep(0, s)
 	require.NoError(t, err)
 
-	require.IsType(t, s.Data["mymixin"], map[string]interface{}{})
-	mixin, ok := s.Data["mymixin"].(map[string]interface{})
-	require.True(t, ok)
+	require.IsType(t, map[string]interface{}{}, s.Data["mymixin"], "Data.mymixin has incorrect type")
+	mixin := s.Data["mymixin"].(map[string]interface{})
+	require.IsType(t, mixin["Arguments"], []interface{}{}, "Data.mymixin.Arguments has incorrect type")
+	args := mixin["Arguments"].([]interface{})
 
-	args, ok := mixin["Arguments"].([]interface{})
-	require.True(t, ok)
 	require.Len(t, args, 2)
 	assert.Equal(t, "deliciou$dubonnet", args[0])
 	assert.Equal(t, "regular param value", args[1])
@@ -266,14 +260,12 @@ install:
 	err := rm.ResolveStep(0, s)
 	require.NoError(t, err)
 
-	require.IsType(t, s.Data["mymixin"], map[string]interface{}{})
-	mixin, ok := s.Data["mymixin"].(map[string]interface{})
-	require.True(t, ok)
+	require.IsType(t, map[string]interface{}{}, s.Data["mymixin"], "Data.mymixin has incorrect type")
+	mixin := s.Data["mymixin"].(map[string]interface{})
+	require.IsType(t, mixin["Arguments"], []interface{}{}, "Data.mymixin.Arguments has incorrect type")
+	args := mixin["Arguments"].([]interface{})
 
-	args, ok := mixin["Arguments"].([]interface{})
-	assert.True(t, ok)
 	assert.Equal(t, "deliciou$dubonnet", args[0])
-
 	// There should now be a sensitive value tracked under the manifest
 	assert.Equal(t, []string{"deliciou$dubonnet"}, rm.GetSensitiveValues())
 }
@@ -328,12 +320,11 @@ install:
 	err := rm.ResolveStep(0, s)
 	require.NoError(t, err)
 
-	require.IsType(t, s.Data["mymixin"], map[string]interface{}{})
-	mixin, ok := s.Data["mymixin"].(map[string]interface{})
-	require.True(t, ok)
+	require.IsType(t, map[string]interface{}{}, s.Data["mymixin"], "Data.mymixin has incorrect type")
+	mixin := s.Data["mymixin"].(map[string]interface{})
+	require.IsType(t, mixin["Arguments"], []interface{}{}, "Data.mymixin.Arguments has incorrect type")
+	args := mixin["Arguments"].([]interface{})
 
-	args, ok := mixin["Arguments"].([]interface{})
-	require.True(t, ok)
 	assert.Equal(t, []interface{}{"password", "mysql-password"}, args, "Incorrect template args passed to the mixin step")
 
 	// There should now be a sensitive value tracked under the manifest
@@ -358,13 +349,12 @@ func TestResolveInMainDict(t *testing.T) {
 	err = rm.ResolveStep(0, installStep)
 	require.NoError(t, err)
 
-	assert.NotNil(t, installStep.Data)
+	require.IsType(t, map[string]interface{}{}, installStep.Data["exec"], "Data.exec has the wrong type")
 	exec := installStep.Data["exec"].(map[string]interface{})
-	require.NotNil(t, exec)
 	command := exec["command"]
-	require.NotNil(t, command)
-	cmdVal, ok := command.(string)
-	require.True(t, ok)
+	require.IsType(t, "string", command, "Data.exec.command has the wrong type")
+	cmdVal := command.(string)
+
 	assert.Equal(t, "echo hello world", cmdVal)
 }
 
@@ -432,12 +422,11 @@ install:
 	err := rm.ResolveStep(0, s)
 	require.NoError(t, err)
 
-	require.IsType(t, s.Data["mymixin"], map[string]interface{}{})
-	mixin, ok := s.Data["mymixin"].(map[string]interface{})
-	require.True(t, ok)
+	require.IsType(t, s.Data["mymixin"], map[string]interface{}{}, "Data.mymixin has the wrong type")
+	mixin := s.Data["mymixin"].(map[string]interface{})
+	require.IsType(t, []interface{}{}, mixin["Arguments"], "Data.mymixin.Arguments has the wrong type")
+	args := mixin["Arguments"].([]interface{})
 
-	args, ok := mixin["Arguments"].([]interface{})
-	require.True(t, ok)
 	require.Len(t, args, 2)
 	require.Equal(t, "sally", args[0])
 	require.Equal(t, "top$ecret!", args[1])
@@ -460,12 +449,11 @@ install:
 	err := rm.ResolveStep(0, s)
 	require.NoError(t, err)
 
-	require.IsType(t, s.Data["mymixin"], map[string]interface{}{})
-	mixin, ok := s.Data["mymixin"].(map[string]interface{})
-	require.True(t, ok)
+	require.IsType(t, s.Data["mymixin"], map[string]interface{}{}, "Data.mymixin has the wrong type")
+	mixin := s.Data["mymixin"].(map[string]interface{})
+	require.IsType(t, []interface{}{}, mixin["Arguments"], "Data.mymixin.Arguments has the wrong type")
+	args := mixin["Arguments"].([]interface{})
 
-	args, ok := mixin["Arguments"].([]interface{})
-	require.True(t, ok)
 	assert.Equal(t, "mybuns", args[0].(string))
 }
 
@@ -894,11 +882,11 @@ install:
 	err := rm.ResolveStep(0, s)
 	require.NoError(t, err)
 
-	require.IsType(t, map[string]interface{}{}, s.Data["mymixin"])
-	mixin, ok := s.Data["mymixin"].(map[string]interface{})
-	require.True(t, ok)
-
+	require.IsType(t, s.Data["mymixin"], map[string]interface{}{}, "Data.mymixin has the wrong type")
+	mixin := s.Data["mymixin"].(map[string]interface{})
+	require.IsType(t, map[string]interface{}{}, mixin["Flags"], "Data.mymixin.Flags has the wrong type")
 	flags := mixin["Flags"].(map[string]interface{})
+
 	assert.Equal(t, flags["c"], wantValue)
 }
 
@@ -919,12 +907,8 @@ install:
 	err := rm.ResolveStep(0, s)
 	require.NoError(t, err)
 
-	require.IsType(t, map[string]interface{}{}, s.Data["mymixin"])
-	mixin, ok := s.Data["mymixin"].(map[string]interface{})
-	require.True(t, ok)
-
-	err = rm.ResolveStep(0, s)
-	require.NoError(t, err, "ResolveStep failed")
+	require.IsType(t, map[string]interface{}{}, s.Data["mymixin"], "Data.mymixin has the wrong type")
+	mixin := s.Data["mymixin"].(map[string]interface{})
 
 	assert.Equal(t, "mynamespace", mixin["ns"], "installation.namespace was not rendered")
 	assert.Equal(t, "mybun", mixin["release"], "installation.name was not rendered")
@@ -951,9 +935,8 @@ install:
 	err := rm.ResolveStep(0, s)
 	require.NoError(t, err)
 
-	require.IsType(t, map[string]interface{}{}, s.Data["mymixin"])
-	mixin, ok := s.Data["mymixin"].(map[string]interface{})
-	require.True(t, ok)
+	require.IsType(t, map[string]interface{}{}, s.Data["mymixin"], "Data.mymixin has the wrong type")
+	mixin := s.Data["mymixin"].(map[string]interface{})
 
 	err = rm.ResolveStep(0, s)
 	require.NoError(t, err, "ResolveStep failed")
@@ -979,12 +962,8 @@ install:
 	err := rm.ResolveStep(0, s)
 	require.NoError(t, err)
 
-	require.IsType(t, map[string]interface{}{}, s.Data["mymixin"])
-	mixin, ok := s.Data["mymixin"].(map[string]interface{})
-	require.True(t, ok)
-
-	err = rm.ResolveStep(0, s)
-	require.NoError(t, err, "ResolveStep failed")
+	require.IsType(t, map[string]interface{}{}, s.Data["mymixin"], "Data.mymixin has the wrong type")
+	mixin := s.Data["mymixin"].(map[string]interface{})
 
 	assert.Equal(t, "foo-value", mixin["someInput"], "expected lower-case foo env var was resolved")
 	assert.Equal(t, "bar-value", mixin["moreInput"], "expected upper-case BAR env var was resolved")
