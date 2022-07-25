@@ -447,7 +447,7 @@ func (cd CredentialDefinitions) MarshalYAML() (interface{}, error) {
 
 // IsDirSource returns true if the Parameter Source is a Directory Source
 func (p *ParameterSource) IsDirSource() bool {
-	return reflect.Indirect(reflect.ValueOf(p)).Kind() == reflect.ValueOf(cnab.DirectorySources{}).Kind()
+	return p.DirectorySources != cnab.DirectorySources{}
 }
 
 func (cd *CredentialDefinitions) UnmarshalYAML(unmarshal func(interface{}) error) error {
