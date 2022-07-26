@@ -1,17 +1,19 @@
 ---
-title: "porter bundles upgrade"
-slug: porter_bundles_upgrade
-url: /cli/porter_bundles_upgrade/
+title: "porter installations install"
+slug: porter_installations_install
+url: /cli/porter_installations_install/
 ---
-## porter bundles upgrade
+## porter installations install
 
-Upgrade an installation
+Create a new installation of a bundle
 
 ### Synopsis
 
-Upgrade an installation.
+Create a new installation of a bundle.
 
-The first argument is the installation name to upgrade. This defaults to the name of the bundle.
+The first argument is the name of the installation to create. This defaults to the name of the bundle. 
+
+Once a bundle has been successfully installed, the install action cannot be repeated. This is a precaution to avoid accidentally overwriting an existing installation. If you need to re-run install, which is common when authoring a bundle, you can use the --force flag to by-pass this check.
 
 Porter uses the docker driver as the default runtime for executing a bundle's invocation image, but an alternate driver may be supplied via '--driver/-d' or the PORTER_RUNTIME_DRIVER environment variable.
 For example, the 'debug' driver may be specified, which simply logs the info given to it and then exits.
@@ -23,19 +25,20 @@ The docker driver runs the bundle container using the local Docker host. To use 
 
 
 ```
-porter bundles upgrade [INSTALLATION] [flags]
+porter installations install [INSTALLATION] [flags]
 ```
 
 ### Examples
 
 ```
-  porter bundle upgrade --version 0.2.0
-  porter bundle upgrade --reference ghcr.io/getporter/examples/kubernetes:v0.2.0
-  porter bundle upgrade --reference localhost:5000/ghcr.io/getporter/examples/kubernetes:v0.2.0 --insecure-registry --force
-  porter bundle upgrade MyAppInDev --file myapp/bundle.json
-  porter bundle upgrade --parameter-set azure --param test-mode=true --param header-color=blue
-  porter bundle upgrade --cred azure --cred kubernetes
-  porter bundle upgrade --driver debug
+  porter bundle install
+  porter bundle install MyAppFromReference --reference ghcr.io/getporter/examples/kubernetes:v0.2.0 --namespace dev
+  porter bundle install --reference localhost:5000/ghcr.io/getporter/examples/kubernetes:v0.2.0 --insecure-registry --force
+  porter bundle install MyAppInDev --file myapp/bundle.json
+  porter bundle install --parameter-set azure --param test-mode=true --param header-color=blue
+  porter bundle install --cred azure --cred kubernetes
+  porter bundle install --driver debug
+  porter bundle install --label env=dev --label owner=myuser
 
 ```
 
@@ -48,14 +51,14 @@ porter bundles upgrade [INSTALLATION] [flags]
   -d, --driver string               Specify a driver to use. Allowed values: docker, debug (default "docker")
   -f, --file string                 Path to the porter manifest file. Defaults to the bundle in the current directory.
       --force                       Force a fresh pull of the bundle
-  -h, --help                        help for upgrade
+  -h, --help                        help for install
       --insecure-registry           Don't require TLS for the registry
-  -n, --namespace string            Namespace of the specified installation. Defaults to the global namespace.
+  -l, --label strings               Associate the specified labels with the installation. May be specified multiple times.
+  -n, --namespace string            Create the installation in the specified namespace. Defaults to the global namespace.
       --no-logs                     Do not persist the bundle execution logs
       --param stringArray           Define an individual parameter in the form NAME=VALUE. Overrides parameters otherwise set via --parameter-set. May be specified multiple times.
-  -p, --parameter-set stringArray   Name of a parameter set file for the bundle. May be either a named set of parameters or a filepath, and specified multiple times.
+  -p, --parameter-set stringArray   Name of a parameter set for the bundle. It should be a named set of parameters and may be specified multiple times.
   -r, --reference string            Use a bundle in an OCI registry specified by the given reference.
-      --version string              Version to which the installation should be upgraded. This represents the version of the bundle, which assumes the convention of setting the bundle tag to its version.
 ```
 
 ### Options inherited from parent commands
@@ -68,5 +71,5 @@ porter bundles upgrade [INSTALLATION] [flags]
 
 ### SEE ALSO
 
-* [porter bundles](/cli/porter_bundles/)	 - Bundle commands
+* [porter installations](/cli/porter_installations/)	 - Installation commands
 

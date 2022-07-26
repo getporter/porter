@@ -1,9 +1,9 @@
 ---
-title: "porter bundles uninstall"
-slug: porter_bundles_uninstall
-url: /cli/porter_bundles_uninstall/
+title: "porter installations uninstall"
+slug: porter_installations_uninstall
+url: /cli/porter_installations_uninstall/
 ---
-## porter bundles uninstall
+## porter installations uninstall
 
 Uninstall an installation
 
@@ -23,7 +23,7 @@ The docker driver runs the bundle container using the local Docker host. To use 
 
 
 ```
-porter bundles uninstall [INSTALLATION] [flags]
+porter installations uninstall [INSTALLATION] [flags]
 ```
 
 ### Examples
@@ -71,5 +71,5 @@ porter bundles uninstall [INSTALLATION] [flags]
 
 ### SEE ALSO
 
-* [porter bundles](/cli/porter_bundles/)	 - Bundle commands
+* [porter installations](/cli/porter_installations/)	 - Installation commands
 
