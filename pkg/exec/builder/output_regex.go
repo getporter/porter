@@ -1,11 +1,13 @@
 package builder
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"strings"
 
-	"get.porter.sh/porter/pkg/portercontext"
+	"get.porter.sh/porter/pkg/runtime"
+	"get.porter.sh/porter/pkg/tracing"
 )
 
 type OutputRegex interface {
@@ -13,9 +15,13 @@ type OutputRegex interface {
 	GetRegex() string
 }
 
-// ProcessJsonPathOutputs looks through the outputs for any that implement the OutputRegex,
+// ProcessRegexOutputs looks through the outputs for any that implement the OutputRegex,
 // applies the regular expression to the output buffer and extracts their output.
-func ProcessRegexOutputs(cxt *portercontext.Context, step StepWithOutputs, stdout string) error {
+func ProcessRegexOutputs(ctx context.Context, cfg runtime.RuntimeConfig, step StepWithOutputs, stdout string) error {
+	//lint:ignore SA4006 ignore unused ctx for now
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
 	outputs := step.GetOutputs()
 
 	if len(outputs) == 0 {
@@ -34,13 +40,11 @@ func ProcessRegexOutputs(cxt *portercontext.Context, step StepWithOutputs, stdou
 			continue
 		}
 
-		if cxt.Debug {
-			fmt.Fprintf(cxt.Err, "Processing regex output %s...", outputName)
-		}
+		span.Debugf("Processing regex output %s...", outputName)
 
 		r, err := regexp.Compile(outputRegex)
 		if err != nil {
-			return fmt.Errorf("invalid regular expression %q for output %q: %w", outputRegex, outputName, err)
+			return span.Error(fmt.Errorf("invalid regular expression %q for output %q: %w", outputRegex, outputName, err))
 		}
 
 		// Find every submatch / capture and put it on its own line in the output file
@@ -52,9 +56,9 @@ func ProcessRegexOutputs(cxt *portercontext.Context, step StepWithOutputs, stdou
 			}
 		}
 		value := strings.Join(matches, "\n")
-		err = cxt.WriteMixinOutputToFile(outputName, []byte(value))
+		err = cfg.WriteMixinOutputToFile(outputName, []byte(value))
 		if err != nil {
-			return fmt.Errorf("error writing mixin output for %q: %w", outputName, err)
+			return span.Error(fmt.Errorf("error writing mixin output for %q: %w", outputName, err))
 		}
 	}
 

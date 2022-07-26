@@ -9,7 +9,8 @@ import (
 	"os/exec"
 	"strings"
 
-	"get.porter.sh/porter/pkg/portercontext"
+	"get.porter.sh/porter/pkg/runtime"
+	"get.porter.sh/porter/pkg/tracing"
 )
 
 var DefaultFlagDashes = Dashes{
@@ -55,7 +56,7 @@ type SuppressesOutput interface {
 // themselves, and possibly allow failed commands to either pass, or to improve
 // the displayed error message
 type HasErrorHandling interface {
-	HandleError(cxt *portercontext.Context, err ExitError, stdout string, stderr string) error
+	HandleError(ctx context.Context, err ExitError, stdout string, stderr string) error
 }
 
 type ExitError interface {
@@ -66,14 +67,14 @@ type ExitError interface {
 // ExecuteSingleStepAction runs the command represented by an ExecutableAction, where only
 // a single step is allowed to be defined in the Action (which is what happens when Porter
 // executes steps one at a time).
-func ExecuteSingleStepAction(cxt *portercontext.Context, action ExecutableAction) (string, error) {
+func ExecuteSingleStepAction(ctx context.Context, cfg runtime.RuntimeConfig, action ExecutableAction) (string, error) {
 	steps := action.GetSteps()
 	if len(steps) != 1 {
 		return "", fmt.Errorf("expected a single step, but got %d", len(steps))
 	}
 	step := steps[0]
 
-	output, err := ExecuteStep(cxt, step)
+	output, err := ExecuteStep(ctx, cfg, step)
 	if err != nil {
 		return output, err
 	}
@@ -83,24 +84,25 @@ func ExecuteSingleStepAction(cxt *portercontext.Context, action ExecutableAction
 		return output, nil
 	}
 
-	err = ProcessJsonPathOutputs(cxt, swo, output)
+	err = ProcessJsonPathOutputs(ctx, cfg, swo, output)
 	if err != nil {
 		return output, err
 	}
 
-	err = ProcessRegexOutputs(cxt, swo, output)
+	err = ProcessRegexOutputs(ctx, cfg, swo, output)
 	if err != nil {
 		return output, err
 	}
 
-	err = ProcessFileOutputs(cxt, swo)
+	err = ProcessFileOutputs(ctx, cfg, swo)
 	return output, err
 }
 
 // ExecuteStep runs the command represented by an ExecutableStep, piping stdout/stderr
 // back to the context and returns the buffered output for subsequent processing.
-func ExecuteStep(pctx *portercontext.Context, step ExecutableStep) (string, error) {
-	ctx := context.TODO()
+func ExecuteStep(ctx context.Context, cfg runtime.RuntimeConfig, step ExecutableStep) (string, error) {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
 
 	// Identify if any suffix arguments are defined
 	var suffixArgs []string
@@ -136,11 +138,11 @@ func ExecuteStep(pctx *portercontext.Context, step ExecutableStep) (string, erro
 	// Add env vars if defined
 	if stepWithEnvVars, ok := step.(HasEnvironmentVars); ok {
 		for k, v := range stepWithEnvVars.GetEnvironmentVars() {
-			pctx.Setenv(k, v)
+			cfg.Setenv(k, v)
 		}
 	}
 
-	cmd := pctx.NewCommand(ctx, step.GetCommand(), args...)
+	cmd := cfg.NewCommand(ctx, step.GetCommand(), args...)
 
 	// ensure command is executed in the correct directory
 	wd := step.GetWorkingDir()
@@ -163,20 +165,16 @@ func ExecuteStep(pctx *portercontext.Context, step ExecutableStep) (string, erro
 		// We still capture the output, but we won't print it
 		cmd.Stdout = stdout
 		cmd.Stderr = stderr
-		if pctx.Debug {
-			fmt.Fprintf(pctx.Err, "DEBUG: output suppressed for command %s\n", prettyCmd)
-		}
+		span.Debugf("output suppressed for command %s", prettyCmd)
 	} else {
-		cmd.Stdout = io.MultiWriter(pctx.Out, stdout)
-		cmd.Stderr = io.MultiWriter(pctx.Err, stderr)
-		if pctx.Debug {
-			fmt.Fprintln(pctx.Err, prettyCmd)
-		}
+		cmd.Stdout = io.MultiWriter(cfg.Out, stdout)
+		cmd.Stderr = io.MultiWriter(cfg.Err, stderr)
+		span.Debug(prettyCmd)
 	}
 
 	err := cmd.Start()
 	if err != nil {
-		return "", fmt.Errorf("couldn't run command %s: %w", prettyCmd, err)
+		return "", span.Error(fmt.Errorf("couldn't run command %s: %w", prettyCmd, err))
 	}
 
 	err = cmd.Wait()
@@ -185,14 +183,14 @@ func ExecuteStep(pctx *portercontext.Context, step ExecutableStep) (string, erro
 	if err != nil {
 		if exitErr, ok := err.(*exec.ExitError); ok {
 			if handler, ok := step.(HasErrorHandling); ok {
-				err = handler.HandleError(pctx, exitErr, stdout.String(), stderr.String())
+				err = handler.HandleError(ctx, exitErr, stdout.String(), stderr.String())
 			}
 		}
 	}
 
 	// Ok, now check if we still have a problem
 	if err != nil {
-		return "", fmt.Errorf("error running command %s: %w", prettyCmd, err)
+		return "", span.Error(fmt.Errorf("error running command %s: %w", prettyCmd, err))
 	}
 
 	return stdout.String(), nil

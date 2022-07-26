@@ -1,10 +1,12 @@
 package builder
 
 import (
+	"context"
 	"path/filepath"
 	"testing"
 
 	"get.porter.sh/porter/pkg/portercontext"
+	"get.porter.sh/porter/pkg/runtime"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -23,7 +25,8 @@ func (o TestRegexOutput) GetRegex() string {
 }
 
 func TestTestRegexOutputs(t *testing.T) {
-	c := portercontext.NewTestContext(t)
+	ctx := context.Background()
+	c := runtime.NewTestRuntimeConfig(t)
 
 	step := TestStep{
 		Outputs: []Output{
@@ -37,7 +40,7 @@ things
 --- FAIL: TestMixin_Upgrade (0.00s)
 more
 logs`
-	err := ProcessRegexOutputs(c.Context, step, stdout)
+	err := ProcessRegexOutputs(ctx, c.RuntimeConfig, step, stdout)
 	require.NoError(t, err, "ProcessRegexOutputs should not return an error")
 
 	f := filepath.Join(portercontext.MixinOutputsDir, "failed-test")
