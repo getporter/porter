@@ -656,10 +656,6 @@ func (p *Porter) resolveParameterSources(ctx context.Context, bun cnab.ExtendedB
 					// Otherwise, something else has happened, perhaps bad data or connectivity problems, we can't ignore it
 					return nil, errors.Wrapf(err, "could not set parameter %s from output %s of %s", parameterName, outputName, installation)
 				}
-
-				// Otherwise, something else has happened, perhaps bad data or connectivity problems, we can't ignore it
-				return nil, span.Error(fmt.Errorf("could not set parameter %s from output %s of %s: %w", parameterName, outputName, installation, err))
-
 			}
 
 			if output.Key != "" {
