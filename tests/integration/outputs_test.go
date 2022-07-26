@@ -109,7 +109,6 @@ func TestStepLevelAndBundleLevelOutputs(t *testing.T) {
 	p := porter.NewTestPorter(t)
 	defer p.Close()
 	ctx := p.SetupIntegrationTest()
-	p.Debug = false
 
 	p.AddTestBundleDir("testdata/bundles/outputs-example", true)
 

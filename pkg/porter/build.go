@@ -23,7 +23,6 @@ import (
 
 type BuildOptions struct {
 	bundleFileOptions
-	contextOptions
 	metadataOpts
 	build.BuildImageOptions
 
@@ -97,7 +96,6 @@ func (p *Porter) Build(ctx context.Context, opts BuildOptions) error {
 	ctx, span := tracing.StartSpan(ctx)
 	defer span.EndSpan()
 
-	opts.Apply(p.Context)
 	span.Debugf("Using %s build driver", p.GetBuildDriver())
 
 	// Start with a fresh .cnab directory before building
@@ -158,9 +156,8 @@ func (p *Porter) Build(ctx context.Context, opts BuildOptions) error {
 
 func (p *Porter) preLint(ctx context.Context, file string) error {
 	lintOpts := LintOptions{
-		contextOptions: NewContextOptions(p.Context),
-		PrintOptions:   printer.PrintOptions{},
-		File:           file,
+		PrintOptions: printer.PrintOptions{},
+		File:         file,
 	}
 	lintOpts.RawFormat = string(printer.FormatPlaintext)
 	err := lintOpts.Validate(p.Context)

@@ -17,7 +17,6 @@ func TestPull_ContentDigestMissing(t *testing.T) {
 	p := porter.NewTestPorter(t)
 	defer p.Close()
 	ctx := p.SetupIntegrationTest()
-	p.Debug = false
 
 	opts := porter.BundlePullOptions{}
 	opts.Reference = "getporterci/mysql:no-content-digest"

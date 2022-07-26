@@ -17,7 +17,6 @@ func TestSensitiveData(t *testing.T) {
 	p := porter.NewTestPorter(t)
 	defer p.Close()
 	ctx := p.SetupIntegrationTest()
-	p.Debug = false
 
 	bundleName := p.AddTestBundleDir("testdata/bundles/bundle-with-sensitive-data", true)
 

@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"get.porter.sh/porter/pkg/cli"
+	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/porter"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -218,8 +219,7 @@ Try our QuickStart https://getporter.org/quickstart to learn how to use Porter.
 
 	// These flags are available for every command
 	globalFlags := cmd.PersistentFlags()
-	globalFlags.BoolVar(&p.Debug, "debug", false, "Enable debug logging")
-	globalFlags.BoolVar(&p.DebugPlugins, "debug-plugins", false, "Enable plugin debug logging")
+	globalFlags.StringVar(&p.Data.Verbosity, "verbosity", config.DefaultVerbosity, "Threshold for printing messages to the console. Available values are: debug, info, warning, error. Defaults to info.")
 	globalFlags.StringSliceVar(&p.Data.ExperimentalFlags, "experimental", nil, "Comma separated list of experimental features to enable. See https://getporter.org/configuration/#experimental-feature-flags for available feature flags.")
 
 	// Flags for just the porter command only, does not apply to sub-commands

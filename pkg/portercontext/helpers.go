@@ -45,14 +45,14 @@ func NewTestContext(t *testing.T) *TestContext {
 	innerContext := New()
 	innerContext.correlationId = "0"
 	innerContext.timestampLogs = false
-	innerContext.Debug = true
 	innerContext.environ = getEnviron()
 	innerContext.FileSystem = aferox.NewAferox("/", afero.NewMemMapFs())
 	innerContext.In = &bytes.Buffer{}
 	innerContext.Out = aggOut
 	innerContext.Err = aggErr
 	innerContext.ConfigureLogging(context.Background(), LogConfiguration{
-		LogLevel: zapcore.DebugLevel,
+		LogLevel:  zapcore.DebugLevel,
+		Verbosity: zapcore.DebugLevel,
 	})
 	innerContext.PlugInDebugContext = &PluginDebugContext{
 		DebuggerPort:           "2735",

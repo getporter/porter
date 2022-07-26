@@ -22,7 +22,6 @@ func TestInstall_relativePathPorterHome(t *testing.T) {
 	p := porter.NewTestPorter(t)
 	defer p.Close()
 	ctx := p.SetupIntegrationTest() // This creates a temp porter home directory
-	p.Debug = false
 
 	// Crux for this test: change Porter's home dir to a relative path
 	homeDir, err := p.Config.GetHomeDir()
@@ -49,7 +48,6 @@ func TestInstall_fileParam(t *testing.T) {
 	p := porter.NewTestPorter(t)
 	defer p.Close()
 	ctx := p.SetupIntegrationTest()
-	p.Debug = false
 
 	bundleName := p.AddTestBundleDir("testdata/bundles/bundle-with-file-params", false)
 
@@ -91,7 +89,6 @@ func TestInstall_withDockerignore(t *testing.T) {
 	p := porter.NewTestPorter(t)
 	defer p.Close()
 	ctx := p.SetupIntegrationTest()
-	p.Debug = false
 
 	p.AddTestBundleDir("testdata/bundles/outputs-example", true)
 
@@ -116,7 +113,6 @@ func TestInstall_stringParam(t *testing.T) {
 	p := porter.NewTestPorter(t)
 	defer p.Close()
 	ctx := p.SetupIntegrationTest()
-	p.Debug = false
 
 	p.AddTestBundleDir("testdata/bundles/bundle-with-string-params", false)
 

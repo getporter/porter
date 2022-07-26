@@ -17,7 +17,6 @@ func TestInvokeCustomAction(t *testing.T) {
 	p := porter.NewTestPorter(t)
 	defer p.Close()
 	ctx := p.SetupIntegrationTest()
-	p.Debug = false
 
 	// Install a bundle with a custom action defined
 	err := p.Create()

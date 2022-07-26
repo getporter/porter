@@ -130,8 +130,6 @@ The lint command is run automatically when you build a bundle. The command is av
 		"Path to the porter manifest file. Defaults to the bundle in the current directory.")
 	f.StringVarP(&opts.RawFormat, "output", "o", string(porter.LintDefaultFormats),
 		"Specify an output format.  Allowed values: "+porter.LintAllowFormats.String())
-	f.BoolVarP(&opts.Verbose, "verbose", "v", false,
-		"Enable verbose logging")
 
 	return cmd
 }

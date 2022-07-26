@@ -22,7 +22,6 @@ func TestRebuild_InstallNewBundle(t *testing.T) {
 	p := porter.NewTestPorter(t)
 	defer p.Close()
 	ctx := p.SetupIntegrationTest()
-	p.Debug = false
 
 	// Create a bundle
 	err := p.Create()
@@ -42,7 +41,6 @@ func TestRebuild_UpgradeModifiedBundle(t *testing.T) {
 	p := porter.NewTestPorter(t)
 	defer p.Close()
 	ctx := p.SetupIntegrationTest()
-	p.Debug = false
 
 	// Install a bundle
 	err := p.Create()
@@ -80,7 +78,6 @@ func TestRebuild_GenerateCredentialsNewBundle(t *testing.T) {
 	p := porter.NewTestPorter(t)
 	defer p.Close()
 	ctx := p.SetupIntegrationTest()
-	p.Debug = false
 
 	// Create a bundle that uses credentials
 	p.AddTestBundleDir("testdata/bundles/bundle-with-credentials", true)
@@ -102,7 +99,6 @@ func TestRebuild_GenerateCredentialsExistingBundle(t *testing.T) {
 	p := porter.NewTestPorter(t)
 	defer p.Close()
 	ctx := p.SetupIntegrationTest()
-	p.Debug = false
 
 	// Create a bundle that uses credentials
 	p.AddTestBundleDir("testdata/bundles/bundle-with-credentials", true)
