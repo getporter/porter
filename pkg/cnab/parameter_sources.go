@@ -2,7 +2,7 @@ package cnab
 
 import (
 	"encoding/json"
-	"errors"
+	"github.com/pkg/errors"
 	"fmt"
 )
 

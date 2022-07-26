@@ -11,7 +11,6 @@ import (
 	"github.com/cnabio/cnab-go/driver/docker"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/mount"
-	"github.com/pkg/errors"
 )
 
 const (
