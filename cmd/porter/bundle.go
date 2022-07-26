@@ -446,6 +446,8 @@ func addBundleActionFlags(f *pflag.FlagSet, actionOpts porter.BundleAction) {
 	addBundlePullFlags(f, &opts.BundlePullOptions)
 	f.BoolVar(&opts.AllowDockerHostAccess, "allow-docker-host-access", false,
 		"Controls if the bundle should have access to the host's Docker daemon with elevated privileges. See https://getporter.org/configuration/#allow-docker-host-access for the full implications of this flag.")
+	f.BoolVar(&opts.DebugMode, "debug", false,
+		"Run the bundle in debug mode.")
 	f.BoolVar(&opts.NoLogs, "no-logs", false,
 		"Do not persist the bundle execution logs")
 }

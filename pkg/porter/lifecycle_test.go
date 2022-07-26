@@ -91,6 +91,7 @@ func TestPorter_BuildActionArgs(t *testing.T) {
 		opts := InstallOptions{
 			BundleExecutionOptions: &BundleExecutionOptions{
 				AllowDockerHostAccess: true,
+				DebugMode:             true,
 				Params: []string{
 					"my-first-param=1",
 				},
@@ -268,7 +269,6 @@ func TestBundleExecutionOptions_LoadParameters(t *testing.T) {
 
 func TestBundleExecutionOptions_CombineParameters(t *testing.T) {
 	c := portercontext.NewTestContext(t)
-	c.Debug = false
 
 	t.Run("no override present, no parameter set present", func(t *testing.T) {
 		opts := NewBundleExecutionOptions()
@@ -314,10 +314,10 @@ func TestBundleExecutionOptions_CombineParameters(t *testing.T) {
 			"expected param 'foo' to have override value, which has precedence over the parameter set value")
 	})
 
-	t.Run("debug on", func(t *testing.T) {
+	t.Run("debug mode on", func(t *testing.T) {
 		var opts BundleExecutionOptions
+		opts.DebugMode = true
 		debugContext := portercontext.NewTestContext(t)
-		debugContext.Debug = true
 		params := opts.combineParameters(debugContext.Context)
 		require.Equal(t, "true", params["porter-debug"], "porter-debug should be set to true when p.Debug is true")
 	})

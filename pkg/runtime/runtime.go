@@ -19,24 +19,24 @@ import (
 
 // PorterRuntime orchestrates executing a bundle and managing state.
 type PorterRuntime struct {
-	*portercontext.Context
+	config          RuntimeConfig
 	mixins          pkgmgmt.PackageManager
 	RuntimeManifest *RuntimeManifest
 }
 
-func NewPorterRuntime(cxt *portercontext.Context, mixins pkgmgmt.PackageManager) *PorterRuntime {
+func NewPorterRuntime(runtimeCfg RuntimeConfig, mixins pkgmgmt.PackageManager) *PorterRuntime {
 	return &PorterRuntime{
-		Context: cxt,
-		mixins:  mixins,
+		config: runtimeCfg,
+		mixins: mixins,
 	}
 }
 
 func (r *PorterRuntime) Execute(ctx context.Context, rm *RuntimeManifest) error {
 	r.RuntimeManifest = rm
 
-	installationName := r.Getenv(config.EnvInstallationName)
-	bundleName := r.Getenv(config.EnvBundleName)
-	fmt.Fprintf(r.Out, "executing %s action from %s (installation: %s)\n", r.RuntimeManifest.Action, bundleName, installationName)
+	installationName := r.config.Getenv(config.EnvInstallationName)
+	bundleName := r.config.Getenv(config.EnvBundleName)
+	fmt.Fprintf(r.config.Out, "executing %s action from %s (installation: %s)\n", r.RuntimeManifest.Action, bundleName, installationName)
 
 	err := r.RuntimeManifest.Validate()
 	if err != nil {
@@ -46,7 +46,7 @@ func (r *PorterRuntime) Execute(ctx context.Context, rm *RuntimeManifest) error 
 	// Prepare prepares the runtime environment prior to step execution.
 	// As an example, for parameters of type "file", we may need to decode file contents
 	// on the filesystem before execution of the step/action
-	err = r.RuntimeManifest.Initialize()
+	err = r.RuntimeManifest.Initialize(ctx)
 	if err != nil {
 		return err
 	}
@@ -62,7 +62,7 @@ func (r *PorterRuntime) Execute(ctx context.Context, rm *RuntimeManifest) error 
 		return fmt.Errorf("unable to resolve bundle images: %w", err)
 	}
 
-	err = r.FileSystem.MkdirAll(portercontext.MixinOutputsDir, pkg.FileModeDirectory)
+	err = r.config.FileSystem.MkdirAll(portercontext.MixinOutputsDir, pkg.FileModeDirectory)
 	if err != nil {
 		return fmt.Errorf("could not create outputs directory %s: %w", portercontext.MixinOutputsDir, err)
 	}
@@ -76,7 +76,7 @@ func (r *PorterRuntime) Execute(ctx context.Context, rm *RuntimeManifest) error 
 		}
 	}
 
-	err = r.RuntimeManifest.Finalize()
+	err = r.RuntimeManifest.Finalize(ctx)
 	if err != nil {
 		bigErr = multierror.Append(bigErr, err)
 	}
@@ -88,18 +88,18 @@ func (r *PorterRuntime) executeStep(ctx context.Context, stepIndex int, step *ma
 	if step == nil {
 		return nil
 	}
-	err := r.RuntimeManifest.ResolveStep(stepIndex, step)
+	err := r.RuntimeManifest.ResolveStep(ctx, stepIndex, step)
 	if err != nil {
 		return fmt.Errorf("unable to resolve step: %w", err)
 	}
 
 	description, _ := step.GetDescription()
 	if len(description) > 0 {
-		fmt.Fprintln(r.Out, description)
+		fmt.Fprintln(r.config.Out, description)
 	}
 
-	// Hand over values needing masking in context output streams
-	r.Context.SetSensitiveValues(r.RuntimeManifest.GetSensitiveValues())
+	// Hand over values needing masking in config output streams
+	r.config.Context.SetSensitiveValues(r.RuntimeManifest.GetSensitiveValues())
 
 	input := &ActionInput{
 		action: r.RuntimeManifest.Action,
@@ -111,7 +111,7 @@ func (r *PorterRuntime) executeStep(ctx context.Context, stepIndex int, step *ma
 		Input:   string(inputBytes),
 		Runtime: true,
 	}
-	err = r.mixins.Run(ctx, r.Context, step.GetMixinName(), cmd)
+	err = r.mixins.Run(ctx, r.config.Context, step.GetMixinName(), cmd)
 	if err != nil {
 		return fmt.Errorf("mixin execution failed: %w", err)
 	}
@@ -142,7 +142,7 @@ func (r *PorterRuntime) applyStepOutputsToBundle(outputs map[string]string) erro
 		if r.shouldApplyOutput(bundleOutput) {
 			outpath := filepath.Join(config.BundleOutputsDir, bundleOutput.Name)
 
-			err := r.FileSystem.WriteFile(outpath, []byte(outputValue), pkg.FileModeWritable)
+			err := r.config.FileSystem.WriteFile(outpath, []byte(outputValue), pkg.FileModeWritable)
 			if err != nil {
 				return fmt.Errorf("unable to write output file %s: %w", outpath, err)
 			}
@@ -167,7 +167,7 @@ func (r *PorterRuntime) shouldApplyOutput(output manifest.OutputDefinition) bool
 func (r *PorterRuntime) readMixinOutputs() (map[string]string, error) {
 	outputs := map[string]string{}
 
-	outfiles, err := r.FileSystem.ReadDir(portercontext.MixinOutputsDir)
+	outfiles, err := r.config.FileSystem.ReadDir(portercontext.MixinOutputsDir)
 	if err != nil {
 		return nil, fmt.Errorf("could not list %s: %w", portercontext.MixinOutputsDir, err)
 	}
@@ -177,14 +177,14 @@ func (r *PorterRuntime) readMixinOutputs() (map[string]string, error) {
 			continue
 		}
 		outpath := filepath.Join(portercontext.MixinOutputsDir, outfile.Name())
-		contents, err := r.FileSystem.ReadFile(outpath)
+		contents, err := r.config.FileSystem.ReadFile(outpath)
 		if err != nil {
 			return nil, fmt.Errorf("could not read output file %s: %w", outpath, err)
 		}
 
 		outputs[outfile.Name()] = string(contents)
 
-		err = r.FileSystem.Remove(outpath)
+		err = r.config.FileSystem.Remove(outpath)
 		if err != nil {
 			return nil, err
 		}
@@ -195,14 +195,14 @@ func (r *PorterRuntime) readMixinOutputs() (map[string]string, error) {
 
 func (r *PorterRuntime) getImageMappingFiles() (cnab.ExtendedBundle, relocation.ImageRelocationMap, error) {
 	// TODO(carolynvs): switch to returning a BundleReference
-	b, err := cnab.LoadBundle(r.Context, "/cnab/bundle.json")
+	b, err := cnab.LoadBundle(r.config.Context, "/cnab/bundle.json")
 	if err != nil {
 		return cnab.ExtendedBundle{}, nil, err
 	}
 
 	var reloMap relocation.ImageRelocationMap
-	if _, err := r.FileSystem.Stat("/cnab/app/relocation-mapping.json"); err == nil {
-		reloBytes, err := r.FileSystem.ReadFile("/cnab/app/relocation-mapping.json")
+	if _, err := r.config.FileSystem.Stat("/cnab/app/relocation-mapping.json"); err == nil {
+		reloBytes, err := r.config.FileSystem.ReadFile("/cnab/app/relocation-mapping.json")
 		if err != nil {
 			return cnab.ExtendedBundle{}, nil, fmt.Errorf("couldn't read relocation file: %w", err)
 		}
@@ -212,4 +212,8 @@ func (r *PorterRuntime) getImageMappingFiles() (cnab.ExtendedBundle, relocation.
 		}
 	}
 	return b, reloMap, nil
+}
+
+func (r *PorterRuntime) NewRuntimeManifest(action string, m *manifest.Manifest) *RuntimeManifest {
+	return NewRuntimeManifest(r.config.Context, action, m)
 }
