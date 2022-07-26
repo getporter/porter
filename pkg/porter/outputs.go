@@ -14,13 +14,13 @@ import (
 
 // OutputShowOptions represent options for a bundle output show command
 type OutputShowOptions struct {
-	sharedOptions
+	installationOptions
 	Output string
 }
 
 // OutputListOptions represent options for a bundle output list command
 type OutputListOptions struct {
-	sharedOptions
+	installationOptions
 	printer.PrintOptions
 }
 
@@ -37,8 +37,8 @@ func (o *OutputShowOptions) Validate(args []string, cxt *portercontext.Context) 
 	}
 
 	// If not provided, attempt to derive installation name from context
-	if o.sharedOptions.Name == "" {
-		err := o.sharedOptions.defaultBundleFiles(cxt)
+	if o.installationOptions.Name == "" {
+		err := o.installationOptions.defaultBundleFiles(cxt)
 		if err != nil {
 			return errors.New("installation name must be provided via [--installation|-i INSTALLATION]")
 		}
@@ -51,13 +51,13 @@ func (o *OutputShowOptions) Validate(args []string, cxt *portercontext.Context) 
 // setting attributes of OutputListOptions as applicable
 func (o *OutputListOptions) Validate(args []string, cxt *portercontext.Context) error {
 	// Ensure only one argument exists (installation name) if args length non-zero
-	err := o.sharedOptions.validateInstallationName(args)
+	err := o.installationOptions.validateInstallationName(args)
 	if err != nil {
 		return err
 	}
 
 	// Attempt to derive installation name from context
-	err = o.sharedOptions.defaultBundleFiles(cxt)
+	err = o.installationOptions.defaultBundleFiles(cxt)
 	if err != nil {
 		return fmt.Errorf("installation name must be provided: %w", err)
 	}
@@ -67,7 +67,7 @@ func (o *OutputListOptions) Validate(args []string, cxt *portercontext.Context) 
 
 // ShowBundleOutput shows a bundle output value, according to the provided options
 func (p *Porter) ShowBundleOutput(ctx context.Context, opts *OutputShowOptions) error {
-	err := p.applyDefaultOptions(ctx, &opts.sharedOptions)
+	err := p.applyDefaultOptions(ctx, &opts.installationOptions)
 	if err != nil {
 		return err
 	}
@@ -115,7 +115,7 @@ func NewDisplayValuesFromOutputs(bun cnab.ExtendedBundle, outputs storage.Output
 // ListBundleOutputs lists the outputs for a given bundle according to the
 // provided display format
 func (p *Porter) ListBundleOutputs(ctx context.Context, opts *OutputListOptions) (DisplayValues, error) {
-	err := p.applyDefaultOptions(ctx, &opts.sharedOptions)
+	err := p.applyDefaultOptions(ctx, &opts.installationOptions)
 	if err != nil {
 		return nil, err
 	}

@@ -20,12 +20,14 @@ var ErrUnsafeInstallationDeleteRetryForceDelete = fmt.Errorf("%s; if you are sur
 // UninstallOptions that may be specified when uninstalling a bundle.
 // Porter handles defaulting any missing values.
 type UninstallOptions struct {
-	*BundleActionOptions
+	*BundleExecutionOptions
 	UninstallDeleteOptions
 }
 
 func NewUninstallOptions() UninstallOptions {
-	return UninstallOptions{BundleActionOptions: &BundleActionOptions{}}
+	return UninstallOptions{
+		BundleExecutionOptions: NewBundleExecutionOptions(),
+	}
 }
 
 func (o UninstallOptions) GetAction() string {
@@ -73,7 +75,7 @@ func (p *Porter) UninstallBundle(ctx context.Context, opts UninstallOptions) err
 	defer log.EndSpan()
 
 	// Figure out which bundle/installation we are working with
-	_, err := p.resolveBundleReference(ctx, opts.BundleActionOptions)
+	_, err := p.resolveBundleReference(ctx, opts.BundleReferenceOptions)
 	if err != nil {
 		return err
 	}
@@ -83,7 +85,7 @@ func (p *Porter) UninstallBundle(ctx context.Context, opts UninstallOptions) err
 		return fmt.Errorf("could not find installation %s/%s: %w", opts.Namespace, opts.Name, err)
 	}
 
-	err = p.applyActionOptionsToInstallation(ctx, &installation, opts.BundleActionOptions)
+	err = p.applyActionOptionsToInstallation(ctx, &installation, opts.BundleExecutionOptions)
 	if err != nil {
 		return err
 	}

@@ -39,7 +39,7 @@ func TestPorter_ListInstallationRuns(t *testing.T) {
 	p.TestInstallations.CreateRun(run3)
 
 	t.Run("global namespace", func(t *testing.T) {
-		opts := RunListOptions{sharedOptions: sharedOptions{
+		opts := RunListOptions{installationOptions: installationOptions{
 			Namespace: "",
 			Name:      installationName1,
 		}}
@@ -49,7 +49,7 @@ func TestPorter_ListInstallationRuns(t *testing.T) {
 	})
 
 	t.Run("specified namespace", func(t *testing.T) {
-		opts := RunListOptions{sharedOptions: sharedOptions{
+		opts := RunListOptions{installationOptions: installationOptions{
 			Namespace: "dev",
 			Name:      installationName2,
 		}}
@@ -90,7 +90,7 @@ func TestPorter_PrintInstallationRunsOutput(t *testing.T) {
 
 			require.NoError(t, p.TestInstallations.UpdateInstallation(ctx, installation))
 
-			opts := RunListOptions{sharedOptions: sharedOptions{
+			opts := RunListOptions{installationOptions: installationOptions{
 				Namespace: "staging",
 				Name:      "shared-k8s",
 			}, PrintOptions: printer.PrintOptions{Format: tc.format},

@@ -78,7 +78,7 @@ func (p *Porter) ReconcileInstallation(ctx context.Context, opts ReconcileOption
 	lifecycleOpts.Params = make([]string, 0, len(opts.Installation.Parameters.Parameters))
 
 	// Write out the parameters as string values. Not efficient but reusing ExecuteAction would need more refactoring otherwise
-	_, err = p.resolveBundleReference(ctx, lifecycleOpts)
+	_, err = p.resolveBundleReference(ctx, lifecycleOpts.BundleReferenceOptions)
 	if err != nil {
 		return err
 	}
@@ -168,7 +168,7 @@ func (p *Porter) IsInstallationInSync(ctx context.Context, i storage.Installatio
 	// Figure out if we need to upgrade
 	opts := action.GetOptions()
 
-	newRef, err := p.resolveBundleReference(ctx, opts)
+	newRef, err := p.resolveBundleReference(ctx, opts.BundleReferenceOptions)
 	if err != nil {
 		return false, err
 	}

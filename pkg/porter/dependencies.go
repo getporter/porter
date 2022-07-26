@@ -27,7 +27,7 @@ type dependencyExecutioner struct {
 
 	parentInstallation storage.Installation
 	parentAction       BundleAction
-	parentOpts         *BundleActionOptions
+	parentOpts         *BundleExecutionOptions
 
 	// These are populated by Prepare, call it or perish in inevitable errors
 	parentArgs cnabprovider.ActionArguments

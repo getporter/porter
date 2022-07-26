@@ -12,19 +12,19 @@ import (
 
 // RunListOptions represent options for showing runs of an installation
 type RunListOptions struct {
-	sharedOptions
+	installationOptions
 	printer.PrintOptions
 }
 
 // Validate prepares for the list installation runs action and validates the args/options.
 func (so *RunListOptions) Validate(args []string, cxt *portercontext.Context) error {
 	// Ensure only one argument exists (installation name) if args length non-zero
-	err := so.sharedOptions.validateInstallationName(args)
+	err := so.installationOptions.validateInstallationName(args)
 	if err != nil {
 		return err
 	}
 
-	err = so.sharedOptions.defaultBundleFiles(cxt)
+	err = so.installationOptions.defaultBundleFiles(cxt)
 	if err != nil {
 		return err
 	}
@@ -47,7 +47,7 @@ func (l DisplayRuns) Less(i, j int) bool {
 }
 
 func (p *Porter) ListInstallationRuns(ctx context.Context, opts RunListOptions) (DisplayRuns, error) {
-	err := p.applyDefaultOptions(ctx, &opts.sharedOptions)
+	err := p.applyDefaultOptions(ctx, &opts.installationOptions)
 	if err != nil {
 		return nil, err
 	}

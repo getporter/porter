@@ -50,13 +50,8 @@ func TestInstallOptions_validateDriver(t *testing.T) {
 	cxt := portercontext.NewTestContext(t)
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			opts := InstallOptions{
-				BundleActionOptions: &BundleActionOptions{
-					sharedOptions: sharedOptions{
-						Driver: tc.driver,
-					},
-				},
-			}
+			opts := NewInstallOptions()
+			opts.Driver = tc.driver
 			err := opts.validateDriver(cxt.Context)
 
 			if tc.wantError == "" {

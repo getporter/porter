@@ -21,24 +21,24 @@ var (
 
 // DeleteOptions represent options for Porter's installation delete command
 type DeleteOptions struct {
-	sharedOptions
+	installationOptions
 	Force bool
 }
 
 // Validate prepares for an installation delete action and validates the args/options.
 func (o *DeleteOptions) Validate(args []string, cxt *portercontext.Context) error {
 	// Ensure only one argument exists (installation name) if args length non-zero
-	err := o.sharedOptions.validateInstallationName(args)
+	err := o.installationOptions.validateInstallationName(args)
 	if err != nil {
 		return err
 	}
 
-	return o.sharedOptions.defaultBundleFiles(cxt)
+	return o.installationOptions.defaultBundleFiles(cxt)
 }
 
 // DeleteInstallation handles deletion of an installation
 func (p *Porter) DeleteInstallation(ctx context.Context, opts DeleteOptions) error {
-	err := p.applyDefaultOptions(ctx, &opts.sharedOptions)
+	err := p.applyDefaultOptions(ctx, &opts.installationOptions)
 	if err != nil {
 		return err
 	}

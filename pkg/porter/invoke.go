@@ -13,13 +13,16 @@ var _ BundleAction = NewInvokeOptions()
 // InvokeOptions that may be specified when invoking a bundle.
 // Porter handles defaulting any missing values.
 type InvokeOptions struct {
+	*BundleExecutionOptions
+
 	// Action name to invoke
 	Action string
-	*BundleActionOptions
 }
 
 func NewInvokeOptions() InvokeOptions {
-	return InvokeOptions{BundleActionOptions: &BundleActionOptions{}}
+	return InvokeOptions{
+		BundleExecutionOptions: NewBundleExecutionOptions(),
+	}
 }
 
 func (o InvokeOptions) GetAction() string {
@@ -35,14 +38,14 @@ func (o InvokeOptions) Validate(ctx context.Context, args []string, p *Porter) e
 		return errors.New("--action is required")
 	}
 
-	return o.BundleActionOptions.Validate(ctx, args, p)
+	return o.BundleExecutionOptions.Validate(ctx, args, p)
 }
 
 // InvokeBundle accepts a set of pre-validated InvokeOptions and uses
 // them to upgrade a bundle.
 func (p *Porter) InvokeBundle(ctx context.Context, opts InvokeOptions) error {
 	// Figure out which bundle/installation we are working with
-	bundleRef, err := p.resolveBundleReference(ctx, opts.BundleActionOptions)
+	bundleRef, err := p.resolveBundleReference(ctx, opts.BundleReferenceOptions)
 	if err != nil {
 		return err
 	}
@@ -62,7 +65,7 @@ func (p *Porter) InvokeBundle(ctx context.Context, opts InvokeOptions) error {
 		// Create an ephemeral installation just for this run
 		installation = storage.Installation{Namespace: opts.Namespace, Name: opts.Name}
 	}
-	err = p.applyActionOptionsToInstallation(ctx, &installation, opts.BundleActionOptions)
+	err = p.applyActionOptionsToInstallation(ctx, &installation, opts.BundleExecutionOptions)
 	if err != nil {
 		return err
 	}

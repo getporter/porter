@@ -29,7 +29,7 @@ func TestResolveBundleReference(t *testing.T) {
 
 		p.AddTestBundleDir(filepath.Join(p.RepoRoot, "tests/testdata/mybuns"), true)
 
-		opts := &BundleActionOptions{}
+		opts := &BundleReferenceOptions{}
 		require.NoError(t, opts.Validate(context.Background(), nil, p.Porter))
 		ref, err := p.resolveBundleReference(context.Background(), opts)
 		require.NoError(t, err)
@@ -45,7 +45,7 @@ func TestResolveBundleReference(t *testing.T) {
 
 		p.AddTestFile(filepath.Join(p.RepoRoot, "build/testdata/bundles/mysql/.cnab/bundle.json"), "bundle.json")
 
-		opts := &BundleActionOptions{}
+		opts := &BundleReferenceOptions{}
 		opts.CNABFile = "bundle.json"
 		require.NoError(t, opts.Validate(context.Background(), nil, p.Porter))
 		ref, err := p.resolveBundleReference(context.Background(), opts)
@@ -61,7 +61,7 @@ func TestResolveBundleReference(t *testing.T) {
 		defer p.Close()
 		ctx := p.SetupIntegrationTest()
 
-		opts := &BundleActionOptions{}
+		opts := &BundleReferenceOptions{}
 		opts.Reference = "ghcr.io/getporter/examples/porter-hello:v0.2.0"
 		require.NoError(t, opts.Validate(ctx, nil, p.Porter))
 		ref, err := p.resolveBundleReference(ctx, opts)
@@ -84,7 +84,7 @@ func TestResolveBundleReference(t *testing.T) {
 			r.Bundle = buildExampleBundle()
 			r.BundleDigest = kahnlatestHash
 		})
-		opts := &BundleActionOptions{}
+		opts := &BundleReferenceOptions{}
 		opts.Name = "example"
 		opts.Namespace = "dev"
 		require.NoError(t, opts.Validate(context.Background(), nil, p.Porter))

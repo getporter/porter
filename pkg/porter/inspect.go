@@ -29,7 +29,7 @@ type PrintableImage struct {
 }
 
 func (p *Porter) Inspect(ctx context.Context, o ExplainOpts) error {
-	bundleRef, err := p.resolveBundleReference(ctx, &o.BundleActionOptions)
+	bundleRef, err := p.resolveBundleReference(ctx, &o.BundleReferenceOptions)
 	if err != nil {
 		return err
 	}
