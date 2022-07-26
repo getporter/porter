@@ -9,7 +9,7 @@ import (
 var schema string
 
 func (m *Mixin) PrintSchema() {
-	fmt.Fprint(m.Out, m.GetSchema())
+	fmt.Fprint(m.Config.Out, m.GetSchema())
 }
 
 func (m *Mixin) GetSchema() string {

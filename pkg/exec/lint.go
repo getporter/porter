@@ -30,7 +30,7 @@ const (
 func (m *Mixin) Lint(ctx context.Context) (linter.Results, error) {
 	var input BuildInput
 
-	err := builder.LoadAction(ctx, m.Context, "", func(contents []byte) (interface{}, error) {
+	err := builder.LoadAction(ctx, m.Config, "", func(contents []byte) (interface{}, error) {
 		err := yaml.Unmarshal(contents, &input)
 		return &input, err
 	})
@@ -125,7 +125,7 @@ func (m *Mixin) PrintLintResults(ctx context.Context) error {
 
 	// Print the results as json to stdout for Porter to read
 	resultsJson := string(b)
-	fmt.Fprintln(m.Out, resultsJson)
+	fmt.Fprintln(m.Config.Out, resultsJson)
 
 	return nil
 }
