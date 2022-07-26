@@ -47,6 +47,7 @@ porter bundles uninstall [INSTALLATION] [flags]
       --allow-docker-host-access    Controls if the bundle should have access to the host's Docker daemon with elevated privileges. See https://getporter.org/configuration/#allow-docker-host-access for the full implications of this flag.
       --cnab-file string            Path to the CNAB bundle.json file.
   -c, --cred stringArray            Credential to use when uninstalling the bundle. May be either a named set of credentials or a filepath, and specified multiple times.
+      --debug                       Run the bundle in debug mode.
       --delete                      Delete all records associated with the installation, assuming the uninstall action succeeds
   -d, --driver string               Specify a driver to use. Allowed values: docker, debug (default "docker")
   -f, --file string                 Path to the porter manifest file. Defaults to the bundle in the current directory. Optional unless a newer version of the bundle should be used to uninstall the bundle.
@@ -64,9 +65,8 @@ porter bundles uninstall [INSTALLATION] [flags]
 ### Options inherited from parent commands
 
 ```
-      --debug                  Enable debug logging
-      --debug-plugins          Enable plugin debug logging
       --experimental strings   Comma separated list of experimental features to enable. See https://getporter.org/configuration/#experimental-feature-flags for available feature flags.
+      --verbosity string       Threshold for printing messages to the console. Available values are: debug, info, warning, error. (default "info")
 ```
 
 ### SEE ALSO

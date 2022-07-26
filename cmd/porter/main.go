@@ -219,7 +219,7 @@ Try our QuickStart https://getporter.org/quickstart to learn how to use Porter.
 
 	// These flags are available for every command
 	globalFlags := cmd.PersistentFlags()
-	globalFlags.StringVar(&p.Data.Verbosity, "verbosity", config.DefaultVerbosity, "Threshold for printing messages to the console. Available values are: debug, info, warning, error. Defaults to info.")
+	globalFlags.StringVar(&p.Data.Verbosity, "verbosity", config.DefaultVerbosity, "Threshold for printing messages to the console. Available values are: debug, info, warning, error.")
 	globalFlags.StringSliceVar(&p.Data.ExperimentalFlags, "experimental", nil, "Comma separated list of experimental features to enable. See https://getporter.org/configuration/#experimental-feature-flags for available feature flags.")
 
 	// Flags for just the porter command only, does not apply to sub-commands

@@ -31,9 +31,8 @@ porter completion bash > /usr/local/etc/bash_completions.d/porter
 ### Options inherited from parent commands
 
 ```
-      --debug                  Enable debug logging
-      --debug-plugins          Enable plugin debug logging
       --experimental strings   Comma separated list of experimental features to enable. See https://getporter.org/configuration/#experimental-feature-flags for available feature flags.
+      --verbosity string       Threshold for printing messages to the console. Available values are: debug, info, warning, error. (default "info")
 ```
 
 ### SEE ALSO

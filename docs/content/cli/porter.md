@@ -28,10 +28,9 @@ porter [flags]
 ### Options
 
 ```
-      --debug                  Enable debug logging
-      --debug-plugins          Enable plugin debug logging
       --experimental strings   Comma separated list of experimental features to enable. See https://getporter.org/configuration/#experimental-feature-flags for available feature flags.
   -h, --help                   help for porter
+      --verbosity string       Threshold for printing messages to the console. Available values are: debug, info, warning, error. (default "info")
   -v, --version                Print the application version
 ```
 
