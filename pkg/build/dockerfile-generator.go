@@ -16,7 +16,6 @@ import (
 	"get.porter.sh/porter/pkg/pkgmgmt"
 	"get.porter.sh/porter/pkg/templates"
 	"get.porter.sh/porter/pkg/tracing"
-	"github.com/pkg/errors"
 )
 
 const (
@@ -43,24 +42,30 @@ func NewDockerfileGenerator(config *config.Config, m *manifest.Manifest, tmpl *t
 }
 
 func (g *DockerfileGenerator) GenerateDockerFile(ctx context.Context) error {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
 	lines, err := g.buildDockerfile(ctx)
 	if err != nil {
-		return errors.Wrap(err, "error generating the Dockerfile")
+		return span.Error(fmt.Errorf("error generating the Dockerfile: %w", err))
 	}
 
-	fmt.Fprintf(g.Out, "\nWriting Dockerfile =======>\n")
 	contents := strings.Join(lines, "\n")
 
-	if g.IsVerbose() {
-		fmt.Fprintln(g.Out, contents)
-	}
+	// Output the generated dockerfile
+	span.Debug(contents)
 
 	err = g.FileSystem.WriteFile(DOCKER_FILE, []byte(contents), pkg.FileModeWritable)
-	return errors.Wrap(err, "couldn't write the Dockerfile")
+	if err != nil {
+		return span.Error(fmt.Errorf("couldn't write the Dockerfile: %w", err))
+	}
+
+	return nil
 }
 
 func (g *DockerfileGenerator) buildDockerfile(ctx context.Context) ([]string, error) {
-	fmt.Fprintf(g.Out, "\nGenerating Dockerfile =======>\n")
+	log := tracing.LoggerFromContext(ctx)
+	log.Debug("Generating Dockerfile")
 
 	lines, err := g.getBaseDockerfile(ctx)
 	if err != nil {
@@ -72,12 +77,6 @@ func (g *DockerfileGenerator) buildDockerfile(ctx context.Context) ([]string, er
 	lines = append(lines, g.buildWORKDIRSection())
 	lines = append(lines, g.buildCMDSection())
 
-	if g.IsVerbose() {
-		for _, line := range lines {
-			fmt.Fprintln(g.Out, line)
-		}
-	}
-
 	return lines, nil
 }
 
@@ -88,10 +87,10 @@ func (g *DockerfileGenerator) getBaseDockerfile(ctx context.Context) ([]string, 
 	if g.Manifest.Dockerfile != "" {
 		exists, err := g.FileSystem.Exists(g.Manifest.Dockerfile)
 		if err != nil {
-			return nil, errors.Wrapf(err, "error checking if Dockerfile exists: %q", g.Manifest.Dockerfile)
+			return nil, fmt.Errorf("error checking if Dockerfile exists: %q: %w", g.Manifest.Dockerfile, err)
 		}
 		if !exists {
-			return nil, errors.Errorf("the Dockerfile specified in the manifest doesn't exist: %q", g.Manifest.Dockerfile)
+			return nil, fmt.Errorf("the Dockerfile specified in the manifest doesn't exist: %q", g.Manifest.Dockerfile)
 		}
 
 		file, err := g.FileSystem.Open(g.Manifest.Dockerfile)
@@ -103,7 +102,7 @@ func (g *DockerfileGenerator) getBaseDockerfile(ctx context.Context) ([]string, 
 	} else {
 		contents, err := g.Templates.GetDockerfile()
 		if err != nil {
-			return nil, errors.Wrap(err, "error loading default Dockerfile template")
+			return nil, fmt.Errorf("error loading default Dockerfile template: %w", err)
 		}
 		reader = bytes.NewReader(contents)
 	}
@@ -215,7 +214,7 @@ func (g *DockerfileGenerator) PrepareFilesystem() error {
 
 	err = g.FileSystem.WriteFile(LOCAL_RUN, runTmpl, pkg.FileModeExecutable)
 	if err != nil {
-		return errors.Wrapf(err, "failed to write %s", LOCAL_RUN)
+		return fmt.Errorf("failed to write %s: %w", LOCAL_RUN, err)
 	}
 
 	homeDir, err := g.GetHomeDir()
@@ -246,7 +245,11 @@ func (g *DockerfileGenerator) copyMixin(mixin string) error {
 	}
 
 	err = g.Context.CopyDirectory(mixinDir, LOCAL_MIXINS, true)
-	return errors.Wrapf(err, "could not copy mixin directory contents for %s", mixin)
+	if err != nil {
+		return fmt.Errorf("could not copy mixin directory contents for %s: %w", mixin, err)
+	}
+
+	return nil
 }
 
 func (g *DockerfileGenerator) getIndexOfToken(lines []string, token string) int {
@@ -263,7 +266,7 @@ func (g *DockerfileGenerator) getIndexOfToken(lines []string, token string) int 
 func (g *DockerfileGenerator) replaceTokens(ctx context.Context, lines []string) ([]string, error) {
 	mixinLines, err := g.buildMixinsSection(ctx)
 	if err != nil {
-		return nil, errors.Wrap(err, "error generating Dockerfile content for mixins")
+		return nil, fmt.Errorf("error generating Dockerfile content for mixins: %w", err)
 	}
 
 	fromToken := g.getIndexOfToken(lines, "FROM")

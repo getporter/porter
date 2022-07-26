@@ -19,6 +19,7 @@ func buildParametersCommands(p *porter.Porter) *cobra.Command {
 	cmd.AddCommand(buildParametersListCommand(p))
 	cmd.AddCommand(buildParametersDeleteCommand(p))
 	cmd.AddCommand(buildParametersShowCommand(p))
+	cmd.AddCommand(buildParametersCreateCommand(p))
 
 	return cmd
 }
@@ -214,6 +215,31 @@ func buildParametersShowCommand(p *porter.Porter) *cobra.Command {
 		"Namespace in which the parameter set is defined. Defaults to the global namespace.")
 	f.StringVarP(&opts.RawFormat, "output", "o", "plaintext",
 		"Specify an output format.  Allowed values: plaintext, json, yaml")
+
+	return cmd
+}
+
+func buildParametersCreateCommand(p *porter.Porter) *cobra.Command {
+	opts := porter.ParameterCreateOptions{}
+
+	cmd := &cobra.Command{
+		Use:   "create",
+		Short: "Create a Parameter Set",
+		Long:  "Create a new blank resource for the definition of a Parameter Set.",
+		Example: `
+		porter parameters create FILE [--output yaml|json]
+		porter parameters create parameter-set.json
+		porter parameters create parameter-set --output yaml`,
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			return opts.Validate(args)
+		},
+		RunE: func(cmd *cobra.Command, argrs []string) error {
+			return p.CreateParameter(opts)
+		},
+	}
+
+	f := cmd.Flags()
+	f.StringVar(&opts.OutputType, "output", "", "Parameter set resource file format")
 
 	return cmd
 }

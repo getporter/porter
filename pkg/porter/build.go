@@ -2,6 +2,7 @@ package porter
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 
@@ -17,7 +18,7 @@ import (
 	"get.porter.sh/porter/pkg/tracing"
 	"github.com/Masterminds/semver/v3"
 	"github.com/opencontainers/go-digest"
-	"github.com/pkg/errors"
+	"golang.org/x/sync/errgroup"
 )
 
 type BuildOptions struct {
@@ -56,7 +57,7 @@ func (o *BuildOptions) Validate(p *Porter) error {
 		o.Driver = p.GetBuildDriver()
 	}
 	if !stringSliceContains(BuildDriverAllowedValues, o.Driver) {
-		return errors.Errorf("invalid --driver value %s", o.Driver)
+		return fmt.Errorf("invalid --driver value %s", o.Driver)
 	}
 
 	// Syncing value back to the config and we will always use the config
@@ -93,24 +94,21 @@ func (o *BuildOptions) parseCustomInputs() error {
 }
 
 func (p *Porter) Build(ctx context.Context, opts BuildOptions) error {
-	ctx, log := tracing.StartSpan(ctx)
-	defer log.EndSpan()
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
 
 	opts.Apply(p.Context)
-
-	if p.Debug {
-		fmt.Fprintf(p.Err, "Using %s build driver\n", p.GetBuildDriver())
-	}
+	span.Debugf("Using %s build driver", p.GetBuildDriver())
 
 	// Start with a fresh .cnab directory before building
 	err := p.FileSystem.RemoveAll(build.LOCAL_CNAB)
 	if err != nil {
-		return errors.Wrap(err, "could not cleanup generated .cnab directory before building")
+		return span.Error(fmt.Errorf("could not cleanup generated .cnab directory before building: %w", err))
 	}
 
 	// Generate Porter's canonical version of the user-provided manifest
 	if err := p.generateInternalManifest(opts); err != nil {
-		return errors.Wrap(err, "unable to generate manifest")
+		return span.Error(fmt.Errorf("unable to generate manifest: %w", err))
 	}
 
 	m, err := manifest.LoadManifestFrom(ctx, p.Config, build.LOCAL_MANIFEST)
@@ -136,20 +134,26 @@ func (p *Porter) Build(ctx context.Context, opts BuildOptions) error {
 	// to a registry.  The bundle.json will need to be updated after publishing
 	// and provided just-in-time during bundle execution.
 	if err := p.buildBundle(ctx, m, ""); err != nil {
-		return errors.Wrap(err, "unable to build bundle")
+		return span.Error(fmt.Errorf("unable to build bundle: %w", err))
 	}
 
 	generator := build.NewDockerfileGenerator(p.Config, m, p.Templates, p.Mixins)
 
 	if err := generator.PrepareFilesystem(); err != nil {
-		return fmt.Errorf("unable to copy run script, runtimes or mixins: %s", err)
+		return span.Error(fmt.Errorf("unable to copy run script, runtimes or mixins: %s", err))
 	}
 	if err := generator.GenerateDockerFile(ctx); err != nil {
-		return fmt.Errorf("unable to generate Dockerfile: %s", err)
+		return span.Error(fmt.Errorf("unable to generate Dockerfile: %s", err))
 	}
 
 	builder := p.GetBuilder(ctx)
-	return errors.Wrap(builder.BuildInvocationImage(ctx, m, opts.BuildImageOptions), "unable to build CNAB invocation image")
+
+	err = builder.BuildInvocationImage(ctx, m, opts.BuildImageOptions)
+	if err != nil {
+		return span.Error(fmt.Errorf("unable to build CNAB invocation image: %w", err))
+	}
+
+	return nil
 }
 
 func (p *Porter) preLint(ctx context.Context, file string) error {
@@ -175,26 +179,40 @@ func (p *Porter) preLint(ctx context.Context, file string) error {
 
 	if results.HasError() {
 		// An error was found during linting, stop and let the user correct it
-		return errors.New("Lint errors were detected. Rerun with --no-lint ignore the errors.")
+		return errors.New("lint errors were detected. Rerun with --no-lint ignore the errors")
 	}
 
 	return nil
 }
 
 func (p *Porter) getUsedMixins(ctx context.Context, m *manifest.Manifest) ([]mixin.Metadata, error) {
-	installedMixins, err := p.ListMixins(ctx)
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
 
-	if err != nil {
-		return nil, errors.Wrapf(err, "error while listing mixins")
+	g := new(errgroup.Group)
+	results := make(chan mixin.Metadata, len(m.Mixins))
+	for _, m := range m.Mixins {
+		m := m
+		g.Go(func() error {
+			result, err := p.Mixins.GetMetadata(ctx, m.Name)
+			if err != nil {
+				return err
+			}
+
+			mixinMetadata := result.(*mixin.Metadata)
+			results <- *mixinMetadata
+			return nil
+		})
 	}
 
-	var usedMixins []mixin.Metadata
-	for _, installedMixin := range installedMixins {
-		for _, m := range m.Mixins {
-			if installedMixin.Name == m.Name {
-				usedMixins = append(usedMixins, installedMixin)
-			}
-		}
+	if err := g.Wait(); err != nil {
+		return nil, err
+	}
+
+	usedMixins := make([]mixin.Metadata, len(m.Mixins))
+	for i := 0; i < len(usedMixins); i++ {
+		result := <-results
+		usedMixins[i] = result
 	}
 
 	return usedMixins, nil
@@ -220,10 +238,14 @@ func (p *Porter) buildBundle(ctx context.Context, m *manifest.Manifest, digest d
 
 func (p Porter) writeBundle(b cnab.ExtendedBundle) error {
 	f, err := p.Config.FileSystem.OpenFile(build.LOCAL_BUNDLE, os.O_RDWR|os.O_CREATE|os.O_TRUNC, pkg.FileModeWritable)
-	defer f.Close()
 	if err != nil {
-		return errors.Wrapf(err, "error creating %s", build.LOCAL_BUNDLE)
+		return fmt.Errorf("error creating %s: %w", build.LOCAL_BUNDLE, err)
 	}
+	defer f.Close()
 	_, err = b.WriteTo(f)
-	return errors.Wrapf(err, "error writing to %s", build.LOCAL_BUNDLE)
+	if err != nil {
+		return fmt.Errorf("error writing to %s: %w", build.LOCAL_BUNDLE, err)
+	}
+
+	return nil
 }

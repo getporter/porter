@@ -1,0 +1,103 @@
+{
+  "schemaVersion": "1.0.0-DRAFT+b5ed2f3",
+  "id": "01G6K8CZ08T78WXTJYHR0NTYBS",
+  "installation": "sensitive-data",
+  "revision": "01G6K8CZ08T78WXTJYHVP62MKS",
+  "created": "2022-06-23T13:57:20.392626-05:00",
+  "action": "install",
+  "bundle": {
+    "schemaVersion": "v1.0.0",
+    "name": "examples/sensitive-data",
+    "version": "0.0.1",
+    "description": "An example bundle that generates sensitive data",
+    "invocationImages": [
+      {
+        "imageType": "docker",
+        "image": "ghcr.io/getporter/examples/sensitive-data-installer:v0.0.1"
+      }
+    ],
+    "parameters": {
+      "name": {
+        "definition": "name-parameter",
+        "destination": {
+          "path": "/cnab/app/foo/name.txt"
+        }
+      },
+      "password": {
+        "definition": "password-parameter",
+        "destination": {
+          "env": "PASSWORD"
+        },
+        "required": true
+      },
+      "porter-debug": {
+        "definition": "porter-debug-parameter",
+        "description": "Print debug information from Porter when executing the bundle",
+        "destination": {
+          "env": "PORTER_DEBUG"
+        }
+      }
+    },
+    "outputs": {
+      "name": {
+        "definition": "name-output",
+        "path": "/cnab/app/outputs/name"
+      }
+    },
+    "definitions": {
+      "name-output": {
+        "contentEncoding": "base64",
+        "type": "string",
+        "writeOnly": true
+      },
+      "name-parameter": {
+        "default": "example-bundle",
+        "type": "string"
+      },
+      "password-parameter": {
+        "type": "string",
+        "writeOnly": true
+      },
+      "porter-debug-parameter": {
+        "$comment": "porter-internal",
+        "$id": "https://porter.sh/generated-bundle/#porter-debug",
+        "default": false,
+        "description": "Print debug information from Porter when executing the bundle",
+        "type": "boolean"
+      }
+    },
+    "requiredExtensions": [
+      "sh.porter.file-parameters",
+      "io.cnab.parameter-sources"
+    ],
+    "custom": {
+      "io.cnab.parameter-sources": {
+        "name": {
+          "priority": [
+            "output"
+          ],
+          "sources": {
+            "output": {
+              "name": "name"
+            }
+          }
+        }
+      },
+      "sh.porter": {
+        "commit": "55d92c0f",
+        "manifest": "I3NjaGVtYVZlcnNpb246IDEuMC4wLWFscGhhLjEKbmFtZTogZXhhbXBsZXMvc2Vuc2l0aXZlLWRhdGEKdmVyc2lvbjogMC4wLjEKZGVzY3JpcHRpb246ICJBbiBleGFtcGxlIGJ1bmRsZSB0aGF0IGdlbmVyYXRlcyBzZW5zaXRpdmUgZGF0YSIKcmVnaXN0cnk6IGdoY3IuaW8vZ2V0cG9ydGVyCgpwYXJhbWV0ZXJzOgogIC0gbmFtZTogbmFtZQogICAgdHlwZTogc3RyaW5nCiAgICBkZWZhdWx0OiBleGFtcGxlLWJ1bmRsZQogICAgcGF0aDogL2NuYWIvYXBwL2Zvby9uYW1lLnR4dAogICAgc291cmNlOgogICAgICBvdXRwdXQ6IG5hbWUKICAtIG5hbWU6IHBhc3N3b3JkCiAgICB0eXBlOiBzdHJpbmcKICAgIHNlbnNpdGl2ZTogdHJ1ZQoKb3V0cHV0czoKICAtIG5hbWU6IG5hbWUKICAgIHBhdGg6IC9jbmFiL2FwcC9mb28vbmFtZS50eHQKICAgIHNlbnNpdGl2ZTogdHJ1ZQoKbWl4aW5zOgogIC0gZXhlYwoKaW5zdGFsbDoKICAtIGV4ZWM6CiAgICAgIGRlc2NyaXB0aW9uOiAiSW5zdGFsbCBIZWxsbyBXb3JsZCIKICAgICAgY29tbWFuZDogLi9oZWxwZXJzLnNoCiAgICAgIGFyZ3VtZW50czoKICAgICAgICAtIGluc3RhbGwKICAgICAgICAtICJ7eyBidW5kbGUucGFyYW1ldGVycy5wYXNzd29yZCB9fSIKCnVwZ3JhZGU6CiAgLSBleGVjOgogICAgICBkZXNjcmlwdGlvbjogIldvcmxkIDIuMCIKICAgICAgY29tbWFuZDogLi9oZWxwZXJzLnNoCiAgICAgIGFyZ3VtZW50czoKICAgICAgICAtIHVwZ3JhZGUKCnVuaW5zdGFsbDoKICAtIGV4ZWM6CiAgICAgIGRlc2NyaXB0aW9uOiAiVW5pbnN0YWxsIEhlbGxvIFdvcmxkIgogICAgICBjb21tYW5kOiAuL2hlbHBlcnMuc2gKICAgICAgYXJndW1lbnRzOgogICAgICAgIC0gdW5pbnN0YWxsCgo=",
+        "manifestDigest": "91ccd27d547869085c98810292703ce4977bfc213592d89520ea0ae8db24bd82",
+        "mixins": {
+          "exec": {}
+        },
+        "version": "v0.38.10"
+      },
+      "sh.porter.file-parameters": {}
+    }
+  },
+  "parameters": {
+    "name": "example-bundle",
+    "password": "topsecret",
+    "porter-debug": false
+  }
+}

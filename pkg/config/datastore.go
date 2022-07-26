@@ -7,6 +7,12 @@ const (
 	// BuildDriverBuildkit is the configuration value for specifying BuildKit as
 	// the build driver.
 	BuildDriverBuildkit = "buildkit"
+
+	// RuntimeDriverDocker specifies that the invocation image should be executed on docker.
+	RuntimeDriverDocker = "docker"
+
+	// RuntimeDriverKubernetes specifies that the invocation image should be executed on kubernetes.
+	RuntimeDriverKubernetes = "kubernetes"
 )
 
 // Data is the data stored in PORTER_HOME/porter.toml|yaml|json.
@@ -70,6 +76,7 @@ type Data struct {
 func DefaultDataStore() Data {
 	return Data{
 		BuildDriver:          BuildDriverBuildkit,
+		RuntimeDriver:        RuntimeDriverDocker,
 		DefaultStoragePlugin: "mongodb-docker",
 		DefaultSecretsPlugin: "host",
 		Logs:                 LogConfig{Level: "info"},

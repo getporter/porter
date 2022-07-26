@@ -12,19 +12,19 @@ import (
 
 // RunListOptions represent options for showing runs of an installation
 type RunListOptions struct {
-	sharedOptions
+	installationOptions
 	printer.PrintOptions
 }
 
 // Validate prepares for the list installation runs action and validates the args/options.
 func (so *RunListOptions) Validate(args []string, cxt *portercontext.Context) error {
 	// Ensure only one argument exists (installation name) if args length non-zero
-	err := so.sharedOptions.validateInstallationName(args)
+	err := so.installationOptions.validateInstallationName(args)
 	if err != nil {
 		return err
 	}
 
-	err = so.sharedOptions.defaultBundleFiles(cxt)
+	err = so.installationOptions.defaultBundleFiles(cxt)
 	if err != nil {
 		return err
 	}
@@ -47,7 +47,7 @@ func (l DisplayRuns) Less(i, j int) bool {
 }
 
 func (p *Porter) ListInstallationRuns(ctx context.Context, opts RunListOptions) (DisplayRuns, error) {
-	err := p.applyDefaultOptions(ctx, &opts.sharedOptions)
+	err := p.applyDefaultOptions(ctx, &opts.installationOptions)
 	if err != nil {
 		return nil, err
 	}
@@ -70,11 +70,11 @@ func (p *Porter) ListInstallationRuns(ctx context.Context, opts RunListOptions) 
 			switch len(results) {
 			case 2:
 				displayRun.Started = results[0].Created
-				displayRun.Stopped = results[1].Created
+				displayRun.Stopped = &results[1].Created
 			case 1:
 				displayRun.Started = results[0].Created
 			default:
-				displayRun.Stopped = results[len(results)-1].Created
+				displayRun.Stopped = &results[len(results)-1].Created
 			}
 		}
 
@@ -109,7 +109,13 @@ func (p *Porter) PrintInstallationRuns(ctx context.Context, opts RunListOptions)
 				if !ok {
 					return nil
 				}
-				return []string{a.ID, a.Action, tp.Format(a.Started), tp.Format(a.Stopped), a.Status}
+
+				stopped := ""
+				if a.Stopped != nil {
+					stopped = tp.Format(*a.Stopped)
+				}
+
+				return []string{a.ID, a.Action, tp.Format(a.Started), stopped, a.Status}
 			}
 		return printer.PrintTable(p.Out, displayRuns, row, "Run ID", "Action", "Started", "Stopped", "Status")
 	}

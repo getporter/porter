@@ -64,49 +64,41 @@ $light1: lighten($light2, 2.5%);
 // Fonts
 //
 
-$base: "Helvetica Neue", Helvetica, Arial, sans-serif;
-$mono: "Lucida Console", "Courier New", monaco, monospace;
-
 @font-face {
-  font-family: 'klinic-reg';
-  src: url('/fonts/klinicslabbook-webfont.eot');
-  src: url('/fonts/klinicslabbook-webfont.eot?#iefix') format('embedded-opentype'),
-   url('/fonts/klinicslabbook-webfont.woff2') format('woff2'),
-   url('/fonts/klinicslabbook-webfont.woff') format('woff'),
-   url('/fonts/klinicslabbook-webfont.ttf') format('truetype'),
-   url('/fonts/klinicslabbook-webfont.svg#klinic_slabbook') format('svg');
-  font-weight: 400;
-  font-style: normal;
+  font-family: 'CBlack';
+  src: url("/fonts/CBlack.otf") format("opentype");
 }
 
 @font-face {
-  font-family: 'klinic-bold';
-  src: url('/fonts/klinicslabmedium-webfont.eot');
-  src: url('/fonts/klinicslabmedium-webfont.eot?#iefix') format('embedded-opentype'),
-   url('/fonts/klinicslabmedium-webfont.woff2') format('woff2'),
-   url('/fonts/klinicslabmedium-webfont.woff') format('woff'),
-   url('/fonts/klinicslabmedium-webfont.ttf') format('truetype'),
-   url('/fonts/klinicslabmedium-webfont.svg#klinic_slabmedium') format('svg');
-  font-weight: 500;
-  font-style: normal;
+  font-family: 'CLight';
+  src: url("/fonts/CLight.otf") format("opentype");
 }
 
-@mixin klinicBold {
-  font-family: "klinic-bold", "klinic bold", $base;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  -webkit-font-smoothing: antialiased;
+@font-face {
+  font-family: 'CMedium';
+  src: url("/fonts/CMedium.otf") format("opentype");
 }
 
-@mixin klinicReg {
-  font-family: "klinic-reg", "klinic", $base;
-  font-weight: 400;
-  letter-spacing: 0.0075em;
-  -webkit-font-smoothing: antialiased;
+@font-face {
+  font-family: 'CBold';
+  src: url("/fonts/CBold.otf") format("opentype");
 }
-@mixin helvetica {
-  font-family: $base;
-  letter-spacing: 0;
+
+@mixin CBlack {
+  font-family: 'CBlack';
+  font-weight: 900;
+}
+
+@mixin CBold {
+  font-family: 'CBold';
+}
+
+@mixin CLight {
+  font-family: 'CLight';
+}
+
+@mixin CMedium {
+  font-family: 'CMedium';
 }
 
 @mixin upperCase {
@@ -181,80 +173,80 @@ $mono: "Lucida Console", "Courier New", monaco, monospace;
  $desktopFloor: 64.0625em;
  $tabletFloor: 40.063em;
  $tabletCeiling: 64.0624em;
- $mobileCeiling: 40em;
- 
+ $mobileCeiling: 60em;
+
  @mixin mobile {
    @media only screen and (max-width: $mobileCeiling) {
      @content;
    }
  }
- 
+
  @mixin tablet {
    @media only screen and (min-width: $tabletFloor) {
      @content;
    }
  }
- 
+
  @mixin mobileAndTablet {
    @media only screen and (max-width: $tabletCeiling) {
      @content;
    }
  }
- 
+
  @mixin desktop {
    @media only screen and (min-width: $desktopFloor) {
      @content;
    }
  }
- 
+
  @mixin landscape {
    @media only screen and (min-width: 569px) and (max-width: 736px) and (orientation: landscape) {
      @content;
    }
  }
- 
+
  @mixin smallLandscape {
    @media only screen and (max-width: 568px) and (orientation: landscape) {
      @content;
    }
  }
- 
+
  // vertical alignment
- 
+
  @mixin fullheight {
    min-height: 100%;
    height: 100%;
  }
- 
+
  @mixin centerer {
    position: absolute;
    top: 50%;
    left: 50%;
    transform: translate(-50%, -50%);
  }
- 
+
  @mixin topper {
    position: absolute;
    top: 0%;
  }
- 
+
  @mixin bottomer {
    position: absolute;
    bottom: 0%;
  }
- 
+
  // link effect
  @mixin ripple($color: $salmon) {
    position: relative;
    display: inline-block;
    text-align: center;
    @include transition;
- 
+
    &::after {
      display: inline-block;
      content: "";
-     background: $color;
-     height: 3px;
+     background: #cc0046;
+     height: 5px;
      position: absolute;
      bottom: 0;
      left: 50%;
@@ -263,7 +255,7 @@ $mono: "Lucida Console", "Courier New", monaco, monospace;
      margin: 0 0 0 -5%;
      @include transition;
    }
- 
+
    &:hover::after {
      width: 100%;
      left: 0;

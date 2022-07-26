@@ -2,6 +2,7 @@ package config
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -12,7 +13,6 @@ import (
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/schema"
 	"get.porter.sh/porter/pkg/tracing"
-	"github.com/pkg/errors"
 	"github.com/spf13/viper"
 	"go.opentelemetry.io/otel/attribute"
 )
@@ -184,7 +184,7 @@ func (c *Config) GetStorage(name string) (StoragePlugin, error) {
 		}
 	}
 
-	return StoragePlugin{}, errors.Errorf("store '%s' not defined", name)
+	return StoragePlugin{}, fmt.Errorf("store '%s' not defined", name)
 }
 
 func (c *Config) GetSecretsPlugin(name string) (SecretsPlugin, error) {
@@ -212,7 +212,7 @@ func (c *Config) GetHomeDir() (string, error) {
 	if home == "" {
 		userHome, err := os.UserHomeDir()
 		if err != nil {
-			return "", errors.Wrap(err, "could not get user home directory")
+			return "", fmt.Errorf("could not get user home directory: %w", err)
 		}
 		home = filepath.Join(userHome, ".porter")
 	}
@@ -241,24 +241,23 @@ func (c *Config) SetPorterPath(path string) {
 	c.porterPath = path
 }
 
-func (c *Config) GetPorterPath() (string, error) {
+func (c *Config) GetPorterPath(ctx context.Context) (string, error) {
 	if c.porterPath != "" {
 		return c.porterPath, nil
 	}
 
+	log := tracing.LoggerFromContext(ctx)
 	porterPath, err := getExecutable()
 	if err != nil {
-		return "", errors.Wrap(err, "could not get path to the executing porter binary")
+		return "", log.Error(fmt.Errorf("could not get path to the executing porter binary: %w", err))
 	}
 
 	// We try to resolve back to the original location
 	hardPath, err := evalSymlinks(porterPath)
 	if err != nil { // if we have trouble resolving symlinks, skip trying to help people who used symlinks
-		fmt.Fprintln(c.Err, errors.Wrapf(err, "WARNING could not resolve %s for symbolic links\n", porterPath))
+		log.Error(fmt.Errorf("WARNING could not resolve %s for symbolic links: %w", porterPath, err))
 	} else if hardPath != porterPath {
-		if c.Debug {
-			fmt.Fprintf(c.Err, "Resolved porter binary from %s to %s\n", porterPath, hardPath)
-		}
+		log.Debugf("Resolved porter binary from %s to %s", porterPath, hardPath)
 		porterPath = hardPath
 	}
 
@@ -392,7 +391,7 @@ func (c *Config) loadFinalPass(ctx context.Context, resolveSecret func(ctx conte
 			defer childLog.EndSpan()
 			secretValue, err := resolveSecret(ctx, secretKey)
 			if err != nil {
-				return childLog.Error(errors.Wrapf(err, "could not render config file because ${secret.%s} could not be resolved", secretKey))
+				return childLog.Error(fmt.Errorf("could not render config file because ${secret.%s} could not be resolved: %w", secretKey, err))
 			}
 
 			secrets[secretKey] = secretValue

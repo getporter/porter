@@ -11,7 +11,6 @@ import (
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/plugins"
 	"get.porter.sh/porter/pkg/tracing"
-	"github.com/pkg/errors"
 	"go.opentelemetry.io/otel/attribute"
 )
 
@@ -89,6 +88,7 @@ func (l *PluginLoader) Load(ctx context.Context, pluginType PluginTypeConfig) (*
 
 // selectPlugin picks the plugin to use and loads its configuration.
 func (l *PluginLoader) selectPlugin(ctx context.Context, cfg PluginTypeConfig) error {
+	//lint:ignore SA4006 ignore unused ctx for now.
 	ctx, span := tracing.StartSpan(ctx)
 	defer span.EndSpan()
 
@@ -138,7 +138,7 @@ func (l *PluginLoader) readPluginConfig() (io.Reader, error) {
 
 	b, err := json.Marshal(l.selectedPluginConfig)
 	if err != nil {
-		return nil, errors.Wrapf(err, "could not marshal plugin config for %s", l.selectedPluginKey)
+		return nil, fmt.Errorf("could not marshal plugin config for %s: %w", l.selectedPluginKey, err)
 	}
 
 	return bytes.NewBuffer(b), nil

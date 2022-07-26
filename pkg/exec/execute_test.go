@@ -2,6 +2,7 @@ package exec
 
 import (
 	"bytes"
+	"context"
 	"io/ioutil"
 	"testing"
 
@@ -12,6 +13,7 @@ import (
 )
 
 func TestMixin_Execute(t *testing.T) {
+	ctx := context.Background()
 	m := NewTestMixin(t)
 
 	err := m.FileSystem.WriteFile("config.txt", []byte("abc123"), pkg.FileModeWritable)
@@ -23,7 +25,7 @@ func TestMixin_Execute(t *testing.T) {
 
 	m.Setenv(test.ExpectedCommandEnv, "foo")
 
-	err = m.Execute(ExecuteOptions{})
+	err = m.Execute(ctx, ExecuteOptions{})
 	require.NoError(t, err, "Execute should not have returned an error")
 
 	exists, _ := m.FileSystem.Exists("/cnab/app/porter/outputs/file")

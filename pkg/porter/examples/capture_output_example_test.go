@@ -9,7 +9,7 @@ import (
 	"get.porter.sh/porter/pkg/porter"
 )
 
-func ExampleCaptureOutput() {
+func ExamplePorter_captureOutput() {
 	// Create an instance of the Porter application
 	p := porter.New()
 

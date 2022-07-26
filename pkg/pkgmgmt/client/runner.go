@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"path/filepath"
@@ -9,7 +10,9 @@ import (
 
 	"get.porter.sh/porter/pkg/pkgmgmt"
 	"get.porter.sh/porter/pkg/portercontext"
-	"github.com/pkg/errors"
+	"get.porter.sh/porter/pkg/tracing"
+	"go.opentelemetry.io/otel/attribute"
+	"go.uber.org/zap/zapcore"
 )
 
 type Runner struct {
@@ -38,22 +41,23 @@ func (r *Runner) Validate() error {
 	pkgPath := r.getExecutablePath()
 	exists, err := r.FileSystem.Exists(pkgPath)
 	if err != nil {
-		return errors.Wrapf(err, "failed to stat package (%s)", pkgPath)
+		return fmt.Errorf("failed to stat package (%s: %w)", pkgPath, err)
 	}
 	if !exists {
-		return errors.Errorf("package not found (%s)", pkgPath)
+		return fmt.Errorf("package not found (%s)", pkgPath)
 	}
 
 	return nil
 }
 
 func (r *Runner) Run(ctx context.Context, commandOpts pkgmgmt.CommandOptions) error {
-	if r.Debug {
-		fmt.Fprintf(r.Err, "DEBUG name:    %s\n", r.pkgName)
-		fmt.Fprintf(r.Err, "DEBUG pkgDir: %s\n", r.pkgDir)
-		fmt.Fprintf(r.Err, "DEBUG file:     %s\n", commandOpts.File)
-		fmt.Fprintf(r.Err, "DEBUG stdin:\n%s\n", commandOpts.Input)
-	}
+	ctx, span := tracing.StartSpan(ctx,
+		attribute.String("name", r.pkgName),
+		attribute.String("pkgDir", r.pkgDir),
+		attribute.String("file", commandOpts.File),
+		attribute.String("stdin", commandOpts.Input),
+	)
+	defer span.EndSpan()
 
 	pkgPath := r.getExecutablePath()
 	cmdArgs := strings.Split(commandOpts.Command, " ")
@@ -72,14 +76,14 @@ func (r *Runner) Run(ctx context.Context, commandOpts pkgmgmt.CommandOptions) er
 		cmd.Args = append(cmd.Args, "-f", commandOpts.File)
 	}
 
-	if r.Debug {
+	if span.ShouldLog(zapcore.DebugLevel) {
 		cmd.Args = append(cmd.Args, "--debug")
 	}
 
 	if commandOpts.Input != "" {
 		stdin, err := cmd.StdinPipe()
 		if err != nil {
-			return err
+			return span.Error(err)
 		}
 		go func() {
 			defer stdin.Close()
@@ -88,16 +92,14 @@ func (r *Runner) Run(ctx context.Context, commandOpts pkgmgmt.CommandOptions) er
 	}
 
 	prettyCmd := fmt.Sprintf("%s%s", cmd.Dir, strings.Join(cmd.Args, " "))
-	if r.Debug {
-		fmt.Fprintln(r.Err, prettyCmd)
-	}
+	span.SetAttributes(attribute.String("command", prettyCmd))
 
 	err := cmd.Start()
 	if err != nil {
-		return errors.Wrapf(err, "could not run package command %s", prettyCmd)
+		return span.Error(fmt.Errorf("could not run package command %s: %w", prettyCmd, err))
 	}
 
-	return cmd.Wait()
+	return span.Error(cmd.Wait())
 }
 
 func (r *Runner) getExecutablePath() string {

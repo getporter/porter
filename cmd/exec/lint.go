@@ -10,7 +10,7 @@ func buildLintCommand(m *exec.Mixin) *cobra.Command {
 		Use:   "lint",
 		Short: "Check sections of the bundle associated with this mixin for problems and adherence to best practices",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return m.PrintLintResults()
+			return m.PrintLintResults(cmd.Context())
 		},
 	}
 	return cmd

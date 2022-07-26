@@ -412,7 +412,7 @@ func TestCredentialsCreateOptions_Validate(t *testing.T) {
 			name:       "no file format defined from file extension or output flag",
 			args:       []string{"credential-set"},
 			outputType: "",
-			wantErr:    "could not detect the file format from the file extension (.txt). Specify the format with --output.",
+			wantErr:    "could not detect the file format from the file extension (.txt). Specify the format with --output",
 		},
 		{
 			name:       "different file format",
@@ -494,23 +494,24 @@ func TestCredentialsCreate(t *testing.T) {
 			name:       "invalid input: invalid file format from fileName",
 			fileName:   "fileName.txt",
 			outputType: "",
-			wantErr:    fmt.Sprintf("unsupported format %s. Supported formats are: yaml and json.", "txt"),
+			wantErr:    fmt.Sprintf("unsupported format %s. Supported formats are: yaml and json", "txt"),
 		},
 		{
 			name:       "invalid input: invalid file format from outputType",
 			fileName:   "fileName",
 			outputType: "txt",
-			wantErr:    fmt.Sprintf("unsupported format %s. Supported formats are: yaml and json.", "txt"),
+			wantErr:    fmt.Sprintf("unsupported format %s. Supported formats are: yaml and json", "txt"),
 		},
 	}
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
+			ctx := context.Background()
 			p := NewTestPorter(t)
 			defer p.Close()
 
 			opts := CredentialCreateOptions{FileName: tc.fileName, OutputType: tc.outputType}
-			err := p.CreateCredential(opts)
+			err := p.CreateCredential(ctx, opts)
 			if tc.wantErr == "" {
 				require.NoError(t, err, "no error should have existed")
 				return

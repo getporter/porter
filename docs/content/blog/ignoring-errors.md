@@ -95,10 +95,10 @@ uninstall:
 ## Create Custom Idempotent Mixin Commands
 
 Whenever possible, I encourage you to avoid the exec mixin and use a custom mixin for the tooling that you are automating.
-For example, if you are automating terraform, use the [terraform mixin](https://porter.sh/mixins/terraform/).
+For example, if you are automating terraform, use the [terraform mixin](/mixins/terraform/).
 Mixins are meant to adapt a tool to work well inside a bundle.
 
-I used the new ignore errors capability of the exec mixin's library to create a custom command for the [az mixin](https://porter.sh/mixins/az/).
+I used the new ignore errors capability of the exec mixin's library to create a custom command for the [az mixin](/mixins/az/).
 The **group** command allows you to declare a resource group, and the mixin will handle creating it if it doesn't exist, and cleaning it up when the bundle is uninstalled.
 
 ```yaml

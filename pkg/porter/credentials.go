@@ -2,6 +2,7 @@ package porter
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -12,9 +13,10 @@ import (
 	"get.porter.sh/porter/pkg/generator"
 	"get.porter.sh/porter/pkg/printer"
 	"get.porter.sh/porter/pkg/storage"
+	"get.porter.sh/porter/pkg/tracing"
 	dtprinter "github.com/carolynvs/datetime-printer"
 	"github.com/olekukonko/tablewriter"
-	"github.com/pkg/errors"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 // CredentialShowOptions represent options for Porter's credential show command
@@ -42,6 +44,9 @@ func (p *Porter) ListCredentials(ctx context.Context, opts ListOptions) ([]stora
 
 // PrintCredentials prints saved credential sets.
 func (p *Porter) PrintCredentials(ctx context.Context, opts ListOptions) error {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
 	creds, err := p.ListCredentials(ctx, opts)
 	if err != nil {
 		return err
@@ -70,13 +75,13 @@ func (p *Porter) PrintCredentials(ctx context.Context, opts ListOptions) error {
 		return printer.PrintTable(p.Out, creds, printCredRow,
 			"NAMESPACE", "NAME", "MODIFIED")
 	default:
-		return fmt.Errorf("invalid format: %s", opts.Format)
+		return span.Error(fmt.Errorf("invalid format: %s", opts.Format))
 	}
 }
 
 // CredentialsOptions are the set of options available to Porter.GenerateCredentials
 type CredentialOptions struct {
-	BundleActionOptions
+	BundleReferenceOptions
 	Silent bool
 	Labels []string
 }
@@ -94,14 +99,14 @@ func (o *CredentialOptions) Validate(ctx context.Context, args []string, p *Port
 		return err
 	}
 
-	return o.BundleActionOptions.Validate(ctx, args, p)
+	return o.BundleReferenceOptions.Validate(ctx, args, p)
 }
 
 func (o *CredentialOptions) validateCredName(args []string) error {
 	if len(args) == 1 {
 		o.Name = args[0]
 	} else if len(args) > 1 {
-		return errors.Errorf("only one positional argument may be specified, the credential name, but multiple were received: %s", args)
+		return fmt.Errorf("only one positional argument may be specified, the credential name, but multiple were received: %s", args)
 	}
 	return nil
 }
@@ -110,7 +115,11 @@ func (o *CredentialOptions) validateCredName(args []string) error {
 // a silent build, based on the opts.Silent flag, or interactive using a survey. Returns an
 // error if unable to generate credentials
 func (p *Porter) GenerateCredentials(ctx context.Context, opts CredentialOptions) error {
-	bundleRef, err := p.resolveBundleReference(ctx, &opts.BundleActionOptions)
+	ctx, span := tracing.StartSpan(ctx,
+		attribute.String("reference", opts.Reference))
+	defer span.EndSpan()
+
+	bundleRef, err := p.resolveBundleReference(ctx, &opts.BundleReferenceOptions)
 	if err != nil {
 		return err
 	}
@@ -128,19 +137,23 @@ func (p *Porter) GenerateCredentials(ctx context.Context, opts CredentialOptions
 		},
 		Credentials: bundleRef.Definition.Credentials,
 	}
-	fmt.Fprintf(p.Out, "Generating new credential %s from bundle %s\n", genOpts.Name, bundleRef.Definition.Name)
-	fmt.Fprintf(p.Out, "==> %d credentials required for bundle %s\n", len(genOpts.Credentials), bundleRef.Definition.Name)
+	span.Infof("Generating new credential %s from bundle %s\n", genOpts.Name, bundleRef.Definition.Name)
+	span.Infof("==> %d credentials required for bundle %s\n", len(genOpts.Credentials), bundleRef.Definition.Name)
 
 	cs, err := generator.GenerateCredentials(genOpts)
 	if err != nil {
-		return errors.Wrap(err, "unable to generate credentials")
+		return span.Error(fmt.Errorf("unable to generate credentials: %w", err))
 	}
 
 	cs.Status.Created = time.Now()
 	cs.Status.Modified = cs.Status.Created
 
 	err = p.Credentials.UpsertCredentialSet(ctx, cs)
-	return errors.Wrapf(err, "unable to save credentials")
+	if err != nil {
+		return span.Error(fmt.Errorf("unable to save credentials: %w", err))
+	}
+
+	return nil
 }
 
 // Validate validates the args provided to Porter's credential show command
@@ -163,6 +176,9 @@ func (o *CredentialEditOptions) Validate(args []string) error {
 
 // EditCredential edits the credentials of the provided name.
 func (p *Porter) EditCredential(ctx context.Context, opts CredentialEditOptions) error {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
 	credSet, err := p.Credentials.GetCredentialSet(ctx, opts.Namespace, opts.Name)
 	if err != nil {
 		return err
@@ -171,29 +187,29 @@ func (p *Porter) EditCredential(ctx context.Context, opts CredentialEditOptions)
 	// TODO(carolynvs): support editing in yaml, json or toml
 	contents, err := encoding.MarshalYaml(credSet)
 	if err != nil {
-		return errors.Wrap(err, "unable to load credentials")
+		return span.Error(fmt.Errorf("unable to load credentials: %w", err))
 	}
 
 	editor := editor.New(p.Context, fmt.Sprintf("porter-%s.yaml", credSet.Name), contents)
 	output, err := editor.Run(ctx)
 	if err != nil {
-		return errors.Wrap(err, "unable to open editor to edit credentials")
+		return span.Error(fmt.Errorf("unable to open editor to edit credentials: %w", err))
 	}
 
 	err = encoding.UnmarshalYaml(output, &credSet)
 	if err != nil {
-		return errors.Wrap(err, "unable to process credentials")
+		return span.Error(fmt.Errorf("unable to process credentials: %w", err))
 	}
 
 	err = p.Credentials.Validate(ctx, credSet)
 	if err != nil {
-		return errors.Wrap(err, "credentials are invalid")
+		return span.Error(fmt.Errorf("credentials are invalid: %w", err))
 	}
 
 	credSet.Status.Modified = time.Now()
 	err = p.Credentials.UpdateCredentialSet(ctx, credSet)
 	if err != nil {
-		return errors.Wrap(err, "unable to save credentials")
+		return span.Error(fmt.Errorf("unable to save credentials: %w", err))
 	}
 
 	return nil
@@ -208,6 +224,9 @@ type DisplayCredentialSet struct {
 // ShowCredential shows the credential set corresponding to the provided name, using
 // the provided printer.PrintOptions for display.
 func (p *Porter) ShowCredential(ctx context.Context, opts CredentialShowOptions) error {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
 	cs, err := p.Credentials.GetCredentialSet(ctx, opts.Namespace, opts.Name)
 	if err != nil {
 		return err
@@ -224,6 +243,8 @@ func (p *Porter) ShowCredential(ctx context.Context, opts CredentialShowOptions)
 		if err != nil {
 			return err
 		}
+
+		// Note that we are not using span.Info because the command's output must go to standard out
 		fmt.Fprintln(p.Out, string(result))
 		return nil
 	case printer.FormatPlaintext:
@@ -253,6 +274,7 @@ func (p *Porter) ShowCredential(ctx context.Context, opts CredentialShowOptions)
 		table.SetAutoFormatHeaders(false)
 
 		// First, print the CredentialSet metadata
+		// Note that we are not using span.Info because the command's output must go to standard out
 		fmt.Fprintf(p.Out, "Name: %s\n", credSet.Name)
 		fmt.Fprintf(p.Out, "Namespace: %s\n", credSet.Namespace)
 		fmt.Fprintf(p.Out, "Created: %s\n", tp.Format(credSet.Status.Created))
@@ -276,7 +298,7 @@ func (p *Porter) ShowCredential(ctx context.Context, opts CredentialShowOptions)
 		table.Render()
 		return nil
 	default:
-		return fmt.Errorf("invalid format: %s", opts.Format)
+		return span.Error(fmt.Errorf("invalid format: %s", opts.Format))
 	}
 }
 
@@ -289,14 +311,22 @@ type CredentialDeleteOptions struct {
 // DeleteCredential deletes the credential set corresponding to the provided
 // names.
 func (p *Porter) DeleteCredential(ctx context.Context, opts CredentialDeleteOptions) error {
+	ctx, span := tracing.StartSpan(ctx,
+		attribute.String("namespace", opts.Namespace),
+		attribute.String("name", opts.Name),
+	)
+	defer span.EndSpan()
+
 	err := p.Credentials.RemoveCredentialSet(ctx, opts.Namespace, opts.Name)
 	if errors.Is(err, storage.ErrNotFound{}) {
-		if p.Debug {
-			fmt.Fprintln(p.Err, err)
-		}
+		span.Debug("nothing to remove, credential already does not exist")
 		return nil
 	}
-	return errors.Wrapf(err, "unable to delete credential set")
+	if err != nil {
+		return span.Error(fmt.Errorf("unable to delete credential set: %w", err))
+	}
+
+	return nil
 }
 
 // Validate validates the args provided Porter's credential delete command
@@ -311,38 +341,32 @@ func (o *CredentialDeleteOptions) Validate(args []string) error {
 func validateCredentialName(args []string) error {
 	switch len(args) {
 	case 0:
-		return errors.Errorf("no credential name was specified")
+		return fmt.Errorf("no credential name was specified")
 	case 1:
 		return nil
 	default:
-		return errors.Errorf("only one positional argument may be specified, the credential name, but multiple were received: %s", args)
+		return fmt.Errorf("only one positional argument may be specified, the credential name, but multiple were received: %s", args)
 	}
 }
 
 func (p *Porter) CredentialsApply(ctx context.Context, o ApplyOptions) error {
-	if p.Debug {
-		fmt.Fprintf(p.Err, "Reading input file %s...\n", o.File)
-	}
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
 
+	span.Debugf("Reading input file %s...\n", o.File)
 	namespace, err := p.getNamespaceFromFile(o)
 	if err != nil {
-		return err
-	}
-
-	if p.Debug {
-		// ignoring any error here, printing debug info isn't critical
-		contents, _ := p.FileSystem.ReadFile(o.File)
-		fmt.Fprintf(p.Err, "Input file contents:\n%s\n", contents)
+		return span.Error(err)
 	}
 
 	var creds storage.CredentialSet
 	err = encoding.UnmarshalFile(p.FileSystem, o.File, &creds)
 	if err != nil {
-		return errors.Wrapf(err, "could not load %s as a credential set", o.File)
+		return span.Error(fmt.Errorf("could not load %s as a credential set: %w", o.File, err))
 	}
 
 	if err = creds.Validate(); err != nil {
-		return errors.Wrap(err, "invalid credential set")
+		return span.Error(fmt.Errorf("invalid credential set: %w", err))
 	}
 
 	creds.Namespace = namespace
@@ -350,7 +374,7 @@ func (p *Porter) CredentialsApply(ctx context.Context, o ApplyOptions) error {
 
 	err = p.Credentials.Validate(ctx, creds)
 	if err != nil {
-		return errors.Wrap(err, "credential set is invalid")
+		return span.Error(fmt.Errorf("credential set is invalid: %w", err))
 	}
 
 	err = p.Credentials.UpsertCredentialSet(ctx, creds)
@@ -358,7 +382,7 @@ func (p *Porter) CredentialsApply(ctx context.Context, o ApplyOptions) error {
 		return err
 	}
 
-	fmt.Fprintf(p.Err, "Applied %s credential set\n", creds)
+	span.Infof("Applied %s credential set", creds)
 	return nil
 }
 
@@ -367,7 +391,7 @@ func (p *Porter) getNamespaceFromFile(o ApplyOptions) (string, error) {
 	var raw map[string]interface{}
 	err := encoding.UnmarshalFile(p.FileSystem, o.File, &raw)
 	if err != nil {
-		return "", errors.Wrapf(err, "invalid file '%s'", o.File)
+		return "", fmt.Errorf("invalid file '%s': %w", o.File, err)
 	}
 
 	if rawNamespace, ok := raw["namespace"]; ok {
@@ -389,7 +413,7 @@ type CredentialCreateOptions struct {
 
 func (o *CredentialCreateOptions) Validate(args []string) error {
 	if len(args) > 1 {
-		return errors.Errorf("only one positional argument may be specified, fileName, but multiple were received: %s", args)
+		return fmt.Errorf("only one positional argument may be specified, fileName, but multiple were received: %s", args)
 	}
 
 	if len(args) > 0 {
@@ -397,13 +421,17 @@ func (o *CredentialCreateOptions) Validate(args []string) error {
 	}
 
 	if o.OutputType == "" && o.FileName != "" && strings.Trim(filepath.Ext(o.FileName), ".") == "" {
-		return errors.New("could not detect the file format from the file extension (.txt). Specify the format with --output.")
+		return errors.New("could not detect the file format from the file extension (.txt). Specify the format with --output")
 	}
 
 	return nil
 }
 
-func (p *Porter) CreateCredential(opts CredentialCreateOptions) error {
+func (p *Porter) CreateCredential(ctx context.Context, opts CredentialCreateOptions) error {
+	//lint:ignore SA4006 ignore unused ctx for now
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
 	if opts.OutputType == "" {
 		opts.OutputType = strings.Trim(filepath.Ext(opts.FileName), ".")
 	}
@@ -419,6 +447,8 @@ func (p *Porter) CreateCredential(opts CredentialCreateOptions) error {
 			if err != nil {
 				return err
 			}
+
+			// Note that we are not using span.Info because this must be printed to stdout
 			fmt.Fprintln(p.Out, string(credentialSet))
 
 			return nil
@@ -427,27 +457,31 @@ func (p *Porter) CreateCredential(opts CredentialCreateOptions) error {
 			if err != nil {
 				return err
 			}
+
+			// Note that we are not using span.Info because this must be printed to stdout
 			fmt.Fprintln(p.Out, string(credentialSet))
 
 			return nil
 		default:
-			return newUnsupportedFormatError(opts.OutputType)
+			return span.Error(newUnsupportedFormatError(opts.OutputType))
 		}
 
 	}
 
-	fmt.Fprintln(p.Err, "creating porter credential set in the current directory")
+	span.Info("creating porter credential set in the current directory")
 
 	switch opts.OutputType {
 	case "json":
-		return p.CopyTemplate(p.Templates.GetCredentialSetJSON, opts.FileName)
+		err := p.CopyTemplate(p.Templates.GetCredentialSetJSON, opts.FileName)
+		return span.Error(err)
 	case "yaml", "yml":
-		return p.CopyTemplate(p.Templates.GetCredentialSetYAML, opts.FileName)
+		err := p.CopyTemplate(p.Templates.GetCredentialSetYAML, opts.FileName)
+		return span.Error(err)
 	default:
-		return newUnsupportedFormatError(opts.OutputType)
+		return span.Error(newUnsupportedFormatError(opts.OutputType))
 	}
 }
 
 func newUnsupportedFormatError(format string) error {
-	return errors.Errorf("unsupported format %s. Supported formats are: yaml and json.", format)
+	return fmt.Errorf("unsupported format %s. Supported formats are: yaml and json", format)
 }

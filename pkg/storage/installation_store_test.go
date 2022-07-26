@@ -2,7 +2,6 @@ package storage
 
 import (
 	"context"
-	"encoding/base64"
 	"testing"
 
 	"get.porter.sh/porter/pkg/cnab"
@@ -14,18 +13,6 @@ import (
 )
 
 var _ InstallationProvider = InstallationStore{}
-
-var b64encode = func(src []byte) ([]byte, error) {
-	dst := make([]byte, base64.StdEncoding.EncodedLen(len(src)))
-	base64.StdEncoding.Encode(dst, src)
-	return dst, nil
-}
-
-var b64decode = func(src []byte) ([]byte, error) {
-	dst := make([]byte, base64.StdEncoding.DecodedLen(len(src)))
-	n, err := base64.StdEncoding.Decode(dst, src)
-	return dst[:n], err
-}
 
 var exampleBundle = bundle.Bundle{
 	SchemaVersion:    "schemaVersion",
@@ -229,7 +216,7 @@ func TestInstallationStorageProvider_Installations(t *testing.T) {
 
 	t.Run("FindInstallations - project results", func(t *testing.T) {
 		opts := FindOptions{
-			Select: bson.D{{"labels", false}},
+			Select: bson.D{{Key: "labels", Value: false}},
 			Sort:   []string{"-id"},
 			Filter: bson.M{
 				"labels.team": "red",

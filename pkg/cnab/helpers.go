@@ -15,5 +15,5 @@ func ReadTestBundle(t *testing.T, path string) ExtendedBundle {
 	bun, err := bundle.Unmarshal(bunD)
 	require.NoError(t, err, "Unmarshal failed for bundle at %s", path)
 
-	return ExtendedBundle{*bun}
+	return NewBundle(*bun)
 }

@@ -152,7 +152,7 @@ func TestPorter_LintDuringBuild(t *testing.T) {
 
 		err = p.Build(context.Background(), opts)
 		require.Errorf(t, err, "Build should have been aborted with lint errors")
-		assert.Contains(t, err.Error(), "Lint errors were detected")
+		assert.Contains(t, err.Error(), "lint errors were detected")
 	})
 
 	t.Run("ignores lint error with --no-lint", func(t *testing.T) {

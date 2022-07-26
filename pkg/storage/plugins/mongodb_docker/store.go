@@ -2,6 +2,7 @@ package mongodb_docker
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os/exec"
 	"runtime"
@@ -12,7 +13,6 @@ import (
 	"get.porter.sh/porter/pkg/storage/plugins"
 	"get.porter.sh/porter/pkg/storage/plugins/mongodb"
 	"get.porter.sh/porter/pkg/tracing"
-	"github.com/pkg/errors"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -143,6 +143,10 @@ func EnsureMongoIsRunning(ctx context.Context, c *portercontext.Context, contain
 	ctx, span := tracing.StartSpan(ctx)
 	defer span.EndSpan()
 
+	if err := checkDockerAvailability(ctx); err != nil {
+		return nil, span.Error(errors.New("Docker is not available"))
+	}
+
 	if dataVol != "" {
 		err := exec.Command("docker", "volume", "inspect", dataVol).Run()
 		if err != nil {
@@ -237,4 +241,9 @@ func EnsureMongoIsRunning(ctx context.Context, c *portercontext.Context, contain
 			}
 		}
 	}
+}
+
+func checkDockerAvailability(ctx context.Context) error {
+	_, err := exec.Command("docker", "info").Output()
+	return err
 }

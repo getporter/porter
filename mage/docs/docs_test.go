@@ -68,7 +68,7 @@ func TestEnsureOperatorRepository(t *testing.T) {
 		require.NoError(t, os.Remove(readme))
 
 		// Make sure rerunning resets the change
-		repoPath, err = ensureOperatorRepositoryIn("", tmp)
+		_, err = ensureOperatorRepositoryIn("", tmp)
 		require.NoError(t, err)
 		require.FileExists(t, readme)
 	})
@@ -83,5 +83,5 @@ func Test_setPullRequestBaseURL(t *testing.T) {
 func TestDocsBranchPreview(t *testing.T) {
 	os.Setenv("BRANCH", "release/v1")
 	setBranchBaseURL()
-	assert.Equal(t, "https://release-v1.porter.sh/", os.Getenv("BASEURL"))
+	assert.Equal(t, "https://release-v1.getporter.org/", os.Getenv("BASEURL"))
 }

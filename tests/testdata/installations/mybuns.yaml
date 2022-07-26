@@ -1,4 +1,4 @@
-schemaVersion: 1.0.1
+schemaVersion: 1.0.2
 name: mybuns
 labels:
   generator: porter-operator

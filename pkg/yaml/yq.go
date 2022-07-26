@@ -2,6 +2,7 @@ package yaml
 
 import (
 	"bytes"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"sync"
@@ -10,7 +11,6 @@ import (
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/portercontext"
 	"github.com/mikefarah/yq/v3/pkg/yqlib"
-	"github.com/pkg/errors"
 	"gopkg.in/op/go-logging.v1"
 	"gopkg.in/yaml.v3"
 )
@@ -60,7 +60,7 @@ func (e *Editor) Read(data []byte) (n int, err error) {
 	var decoder = yaml.NewDecoder(bytes.NewReader(data))
 	err = decoder.Decode(e.node)
 	if err != nil {
-		return len(data), errors.Wrapf(err, "could not parse manifest:\n%s", string(data))
+		return len(data), fmt.Errorf("could not parse manifest:\n%s: %w", string(data), err)
 	}
 
 	return len(data), nil
@@ -69,23 +69,32 @@ func (e *Editor) Read(data []byte) (n int, err error) {
 func (e *Editor) ReadFile(src string) error {
 	contents, err := e.context.FileSystem.ReadFile(src)
 	if err != nil {
-		return errors.Wrapf(err, "could not read the manifest at %q", src)
+		return fmt.Errorf("could not read the manifest at %q: %w", src, err)
 	}
 	_, err = e.Read(contents)
-	return errors.Wrapf(err, "could not parse the manifest at %q", src)
+	if err != nil {
+		return fmt.Errorf("could not parse the manifest at %q: %w", src, err)
+	}
+
+	return nil
 }
 
 func (e *Editor) WriteFile(dest string) error {
 	destFile, err := e.context.FileSystem.OpenFile(dest, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, pkg.FileModeWritable)
 	if err != nil {
-		return errors.Wrapf(err, "could not open destination manifest location %s", config.Name)
+		return fmt.Errorf("could not open destination manifest location %s: %w", config.Name, err)
 	}
 	defer destFile.Close()
 
 	// Encode the updated manifest to the proper location
 	// yqlib.NewYamlEncoder takes: dest (io.Writer), indent spaces (int), colorized output (bool)
 	var encoder = yqlib.NewYamlEncoder(destFile, 2, false)
-	return errors.Wrapf(encoder.Encode(e.node), "unable to write the manifest to %s", dest)
+	err = encoder.Encode(e.node)
+	if err != nil {
+		return fmt.Errorf("unable to write the manifest to %s: %w", dest, err)
+	}
+
+	return nil
 }
 
 func (e *Editor) SetValue(path string, value string) error {
@@ -95,5 +104,27 @@ func (e *Editor) SetValue(path string, value string) error {
 	var parsedValue = valueParser.Parse(value, "", "", "", false)
 	cmd := yqlib.UpdateCommand{Command: "update", Path: path, Value: parsedValue, Overwrite: true}
 	err := e.yq.Update(e.node, cmd, true)
-	return errors.Wrapf(err, "could not update manifest path %q with value %q", path, value)
+	if err != nil {
+		return fmt.Errorf("could not update manifest path %q with value %q: %w", path, value, err)
+	}
+
+	return nil
+}
+
+// GetNode evaluates the specified yaml path to a single node.
+// Returns an error if a node isn't found, or more than one is found.
+func (e *Editor) GetNode(path string) (*yaml.Node, error) {
+	results, err := e.yq.Get(e.node, path)
+	if err != nil {
+		return nil, err
+	}
+
+	switch len(results) {
+	case 0:
+		return nil, fmt.Errorf("no matching nodes found for %s", path)
+	case 1:
+		return results[0].Node, nil
+	default:
+		return nil, fmt.Errorf("multiple nodes matched the path %s", path)
+	}
 }

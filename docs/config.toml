@@ -1,4 +1,4 @@
-baseURL = "https://porter.sh/"
+baseURL = "https://getporter.org/"
 languageCode = "en-us"
 title = "Porter"
 theme = "porter"
@@ -45,6 +45,12 @@ pygmentsStyle = "friendly"
     url = "/install/"
     identifier = "install"
     weight = 11
+    parent = "get-started"
+  [[menu.main]]
+    name = "Migrate from v0"
+    url = "/storage-migrate/"
+    identifier = "migrate"
+    weight = 12
     parent = "get-started"
   [[menu.main]]
     name = "QuickStart"

@@ -1,5 +1,4 @@
 //go:build integration
-// +build integration
 
 package integration
 
@@ -13,8 +12,6 @@ import (
 )
 
 func TestUninstall_DeleteInstallation(t *testing.T) {
-	t.Parallel()
-
 	test, err := tester.NewTest(t)
 	defer test.Close()
 	require.NoError(t, err, "test setup failed")

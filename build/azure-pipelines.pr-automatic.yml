@@ -72,6 +72,19 @@ stages:
             displayName: "Configure Agent"
           - bash: mage TestUnit
             displayName: "Unit Test"
+      - job: VetLint
+        displayName: "Vet and Lint"
+        steps:
+          - task: GoTool@0
+            displayName: "Set Go Version"
+            inputs:
+              version: "$(GOVERSION)"
+          - script: go run mage.go ConfigureAgent
+            displayName: "Configure Agent"
+          - bash: mage Vet
+            displayName: "Vet"
+          - bash: mage Lint
+            displayName: "Lint"
       - job: build_docker
         dependsOn: xbuild
         steps:

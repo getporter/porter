@@ -7,5 +7,5 @@
   the [Porter Workshop Docker Image][workshop] documentation for examples of 
   how to use it.
 
-[client]: https://porter.sh/docker-images/client/
-[workshop]: https://porter.sh/docker-images/workshop/
+[client]: https://getporter.org/docker-images/client/
+[workshop]: https://getporter.org/docker-images/workshop/

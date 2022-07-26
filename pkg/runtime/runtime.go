@@ -15,7 +15,6 @@ import (
 	"get.porter.sh/porter/pkg/yaml"
 	"github.com/cnabio/cnab-to-oci/relocation"
 	"github.com/hashicorp/go-multierror"
-	"github.com/pkg/errors"
 )
 
 // PorterRuntime orchestrates executing a bundle and managing state.
@@ -60,17 +59,17 @@ func (r *PorterRuntime) Execute(ctx context.Context, rm *RuntimeManifest) error 
 
 	err = r.RuntimeManifest.ResolveImages(rtb, reloMap)
 	if err != nil {
-		return errors.Wrap(err, "unable to resolve bundle images")
+		return fmt.Errorf("unable to resolve bundle images: %w", err)
 	}
 
 	err = r.FileSystem.MkdirAll(portercontext.MixinOutputsDir, pkg.FileModeDirectory)
 	if err != nil {
-		return errors.Wrapf(err, "could not create outputs directory %s", portercontext.MixinOutputsDir)
+		return fmt.Errorf("could not create outputs directory %s: %w", portercontext.MixinOutputsDir, err)
 	}
 
 	var bigErr *multierror.Error
-	for _, step := range r.RuntimeManifest.GetSteps() {
-		err = r.executeStep(ctx, step)
+	for stepIndex, step := range r.RuntimeManifest.GetSteps() {
+		err = r.executeStep(ctx, stepIndex, step)
 		if err != nil {
 			bigErr = multierror.Append(bigErr, err)
 			break
@@ -85,13 +84,13 @@ func (r *PorterRuntime) Execute(ctx context.Context, rm *RuntimeManifest) error 
 	return bigErr.ErrorOrNil()
 }
 
-func (r *PorterRuntime) executeStep(ctx context.Context, step *manifest.Step) error {
+func (r *PorterRuntime) executeStep(ctx context.Context, stepIndex int, step *manifest.Step) error {
 	if step == nil {
 		return nil
 	}
-	err := r.RuntimeManifest.ResolveStep(step)
+	err := r.RuntimeManifest.ResolveStep(stepIndex, step)
 	if err != nil {
-		return errors.Wrap(err, "unable to resolve step")
+		return fmt.Errorf("unable to resolve step: %w", err)
 	}
 
 	description, _ := step.GetDescription()
@@ -114,12 +113,12 @@ func (r *PorterRuntime) executeStep(ctx context.Context, step *manifest.Step) er
 	}
 	err = r.mixins.Run(ctx, r.Context, step.GetMixinName(), cmd)
 	if err != nil {
-		return errors.Wrap(err, "mixin execution failed")
+		return fmt.Errorf("mixin execution failed: %w", err)
 	}
 
 	outputs, err := r.readMixinOutputs()
 	if err != nil {
-		return errors.Wrap(err, "could not read step outputs")
+		return fmt.Errorf("could not read step outputs: %w", err)
 	}
 
 	err = r.RuntimeManifest.ApplyStepOutputs(outputs)
@@ -145,7 +144,7 @@ func (r *PorterRuntime) applyStepOutputsToBundle(outputs map[string]string) erro
 
 			err := r.FileSystem.WriteFile(outpath, []byte(outputValue), pkg.FileModeWritable)
 			if err != nil {
-				return errors.Wrapf(err, "unable to write output file %s", outpath)
+				return fmt.Errorf("unable to write output file %s: %w", outpath, err)
 			}
 		}
 	}
@@ -170,7 +169,7 @@ func (r *PorterRuntime) readMixinOutputs() (map[string]string, error) {
 
 	outfiles, err := r.FileSystem.ReadDir(portercontext.MixinOutputsDir)
 	if err != nil {
-		return nil, errors.Wrapf(err, "could not list %s", portercontext.MixinOutputsDir)
+		return nil, fmt.Errorf("could not list %s: %w", portercontext.MixinOutputsDir, err)
 	}
 
 	for _, outfile := range outfiles {
@@ -180,7 +179,7 @@ func (r *PorterRuntime) readMixinOutputs() (map[string]string, error) {
 		outpath := filepath.Join(portercontext.MixinOutputsDir, outfile.Name())
 		contents, err := r.FileSystem.ReadFile(outpath)
 		if err != nil {
-			return nil, errors.Wrapf(err, "could not read output file %s", outpath)
+			return nil, fmt.Errorf("could not read output file %s: %w", outpath, err)
 		}
 
 		outputs[outfile.Name()] = string(contents)
@@ -205,11 +204,11 @@ func (r *PorterRuntime) getImageMappingFiles() (cnab.ExtendedBundle, relocation.
 	if _, err := r.FileSystem.Stat("/cnab/app/relocation-mapping.json"); err == nil {
 		reloBytes, err := r.FileSystem.ReadFile("/cnab/app/relocation-mapping.json")
 		if err != nil {
-			return cnab.ExtendedBundle{}, nil, errors.Wrap(err, "couldn't read relocation file")
+			return cnab.ExtendedBundle{}, nil, fmt.Errorf("couldn't read relocation file: %w", err)
 		}
 		err = json.Unmarshal(reloBytes, &reloMap)
 		if err != nil {
-			return cnab.ExtendedBundle{}, nil, errors.Wrap(err, "couldn't load relocation file")
+			return cnab.ExtendedBundle{}, nil, fmt.Errorf("couldn't load relocation file: %w", err)
 		}
 	}
 	return b, reloMap, nil

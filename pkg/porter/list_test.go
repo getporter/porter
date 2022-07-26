@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg/cnab"
+	"get.porter.sh/porter/pkg/printer"
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
 	"github.com/stretchr/testify/assert"
@@ -158,4 +159,110 @@ func TestDisplayInstallation_ConvertToInstallation(t *testing.T) {
 	require.Equal(t, cnab.ActionUpgrade, convertedInstallation.Status.Action, "invalid last action")
 	require.Equal(t, cnab.StatusRunning, convertedInstallation.Status.ResultStatus, "invalid last status")
 
+}
+
+func TestPorter_PrintInstallations(t *testing.T) {
+	t.Parallel()
+
+	testcases := []struct {
+		name       string
+		format     printer.Format
+		outputFile string
+	}{
+		{name: "plain", format: printer.FormatPlaintext, outputFile: "testdata/list/expected-output.txt"},
+		{name: "no reference, plain", format: printer.FormatPlaintext, outputFile: "testdata/list/no-reference-expected-output.txt"},
+		{name: "json", format: printer.FormatJson, outputFile: "testdata/list/expected-output.json"},
+		{name: "yaml", format: printer.FormatYaml, outputFile: "testdata/list/expected-output.yaml"},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			p := NewTestPorter(t)
+			defer p.Close()
+
+			opts := ListOptions{
+				Namespace: "dev",
+				Name:      "mywordpress",
+				PrintOptions: printer.PrintOptions{
+					Format: tc.format,
+				},
+			}
+
+			p.TestInstallations.CreateInstallation(storage.NewInstallation("dev", "mywordpress"), p.TestInstallations.SetMutableInstallationValues, func(i *storage.Installation) {
+				i.Status.BundleVersion = "v1.2.3"
+				i.Status.ResultStatus = cnab.StatusSucceeded
+			})
+
+			ctx := context.Background()
+
+			err := p.PrintInstallations(ctx, opts)
+			require.NoError(t, err, "PrintInstallation failed")
+			p.CompareGoldenFile(tc.outputFile, p.TestConfig.TestContext.GetOutput())
+		})
+	}
+}
+
+func TestPorter_getDisplayInstallationState(t *testing.T) {
+	p := NewTestPorter(t)
+	defer p.Close()
+
+	installation := p.TestInstallations.CreateInstallation(storage.NewInstallation("dev", "mywordpress"), p.TestInstallations.SetMutableInstallationValues)
+	displayInstallationState := getDisplayInstallationState(installation)
+	require.Equal(t, StateDefined, displayInstallationState)
+
+	run := p.TestInstallations.CreateRun(installation.NewRun(cnab.ActionInstall), p.TestInstallations.SetMutableRunValues)
+	result := p.TestInstallations.CreateResult(run.NewResult(cnab.StatusSucceeded), p.TestInstallations.SetMutableResultValues)
+	installation.ApplyResult(run, result)
+	installation.Status.Installed = &now
+	displayInstallationState = getDisplayInstallationState(installation)
+	require.Equal(t, StateInstalled, displayInstallationState)
+
+	run = p.TestInstallations.CreateRun(installation.NewRun(cnab.ActionUninstall), p.TestInstallations.SetMutableRunValues)
+	result = p.TestInstallations.CreateResult(run.NewResult(cnab.StatusSucceeded), p.TestInstallations.SetMutableResultValues)
+	installation.ApplyResult(run, result)
+	installation.Status.Uninstalled = &now
+	displayInstallationState = getDisplayInstallationState(installation)
+	require.Equal(t, StateUninstalled, displayInstallationState)
+}
+
+func TestPorter_getDisplayInstallationStatus(t *testing.T) {
+	p := NewTestPorter(t)
+	defer p.Close()
+
+	installation := p.TestInstallations.CreateInstallation(storage.NewInstallation("dev", "mywordpress"), p.TestInstallations.SetMutableInstallationValues)
+	run := p.TestInstallations.CreateRun(installation.NewRun(cnab.ActionInstall), p.TestInstallations.SetMutableRunValues)
+	result := p.TestInstallations.CreateResult(run.NewResult(cnab.StatusSucceeded), p.TestInstallations.SetMutableResultValues)
+	installation.ApplyResult(run, result)
+	displayInstallationStatus := getDisplayInstallationStatus(installation)
+	require.Equal(t, cnab.StatusSucceeded, displayInstallationStatus)
+
+	result = p.TestInstallations.CreateResult(run.NewResult(cnab.StatusFailed), p.TestInstallations.SetMutableResultValues)
+	installation.ApplyResult(run, result)
+	displayInstallationStatus = getDisplayInstallationStatus(installation)
+	require.Equal(t, cnab.StatusFailed, displayInstallationStatus)
+
+	run = p.TestInstallations.CreateRun(installation.NewRun(cnab.ActionInstall), p.TestInstallations.SetMutableRunValues)
+	result = p.TestInstallations.CreateResult(run.NewResult(cnab.StatusRunning), p.TestInstallations.SetMutableResultValues)
+	installation.ApplyResult(run, result)
+	displayInstallationStatus = getDisplayInstallationStatus(installation)
+	require.Equal(t, StatusInstalling, displayInstallationStatus)
+
+	run = p.TestInstallations.CreateRun(installation.NewRun(cnab.ActionUninstall), p.TestInstallations.SetMutableRunValues)
+	result = p.TestInstallations.CreateResult(run.NewResult(cnab.StatusRunning), p.TestInstallations.SetMutableResultValues)
+	installation.ApplyResult(run, result)
+	displayInstallationStatus = getDisplayInstallationStatus(installation)
+	require.Equal(t, StatusUninstalling, displayInstallationStatus)
+
+	run = p.TestInstallations.CreateRun(installation.NewRun(cnab.ActionUpgrade), p.TestInstallations.SetMutableRunValues)
+	result = p.TestInstallations.CreateResult(run.NewResult(cnab.StatusRunning), p.TestInstallations.SetMutableResultValues)
+	installation.ApplyResult(run, result)
+	displayInstallationStatus = getDisplayInstallationStatus(installation)
+	require.Equal(t, StatusUpgrading, displayInstallationStatus)
+
+	run = p.TestInstallations.CreateRun(installation.NewRun("customaction"), p.TestInstallations.SetMutableRunValues)
+	result = p.TestInstallations.CreateResult(run.NewResult(cnab.StatusRunning), p.TestInstallations.SetMutableResultValues)
+	installation.ApplyResult(run, result)
+	installation.Status.Action = "customaction"
+	displayInstallationStatus = getDisplayInstallationStatus(installation)
+	require.Equal(t, "running customaction", displayInstallationStatus)
 }

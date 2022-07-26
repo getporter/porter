@@ -8,7 +8,6 @@ import (
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/cnabio/cnab-go/claim"
-	"github.com/pkg/errors"
 )
 
 // ExtendedBundle is a bundle that has typed access to extensions declared in the bundle,
@@ -17,19 +16,24 @@ type ExtendedBundle struct {
 	bundle.Bundle
 }
 
+// NewBundle creates an ExtendedBundle from a given bundle.
+func NewBundle(bundle bundle.Bundle) ExtendedBundle {
+	return ExtendedBundle{bundle}
+}
+
 // LoadBundle from the specified filepath.
 func LoadBundle(c *portercontext.Context, bundleFile string) (ExtendedBundle, error) {
 	bunD, err := c.FileSystem.ReadFile(bundleFile)
 	if err != nil {
-		return ExtendedBundle{}, errors.Wrapf(err, "cannot read bundle at %s", bundleFile)
+		return ExtendedBundle{}, fmt.Errorf("cannot read bundle at %s: %w", bundleFile, err)
 	}
 
 	bun, err := bundle.Unmarshal(bunD)
 	if err != nil {
-		return ExtendedBundle{}, errors.Wrapf(err, "cannot load bundle from\n%s at %s", string(bunD), bundleFile)
+		return ExtendedBundle{}, fmt.Errorf("cannot load bundle from\n%s at %s: %w", string(bunD), bundleFile, err)
 	}
 
-	return ExtendedBundle{*bun}, nil
+	return NewBundle(*bun), nil
 }
 
 // IsPorterBundle determines if the bundle was created by Porter.
@@ -111,7 +115,7 @@ func (b ExtendedBundle) ConvertParameterValue(key string, value interface{}) (in
 		case string:
 			typedValue, err := def.ConvertValue(t)
 			if err != nil {
-				return nil, errors.Wrapf(err, "unable to convert parameter's %s value %s to the destination parameter type %s", key, value, def.Type)
+				return nil, fmt.Errorf("unable to convert parameter's %s value %s to the destination parameter type %s: %w", key, value, def.Type, err)
 			}
 			return typedValue, nil
 		case json.Number:
@@ -149,5 +153,9 @@ func WriteParameterToString(paramName string, value interface{}) (string, error)
 	}
 
 	contents, err := json.Marshal(value)
-	return string(contents), errors.Wrapf(err, "could not marshal the value for parameter %s to a json string: %#v", paramName, value)
+	if err != nil {
+		return "", fmt.Errorf("could not marshal the value for parameter %s to a json string %#v: %w", paramName, value, err)
+	}
+
+	return string(contents), nil
 }

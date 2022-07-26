@@ -189,5 +189,5 @@ reference us. Please have fun with Porter Cat!
 [CNAB]: https://cnab.io
 [Duffle]: https://duffle.sh
 [cnab-go]: https://github.com/cnabio/cnab-go
-[contact us]: https://porter.sh/src/README.md#contact
+[contact us]: /src/README.md#contact
 [cat face emoji]: https://emojipedia.org/cat-face/

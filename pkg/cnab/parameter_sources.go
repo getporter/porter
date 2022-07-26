@@ -2,8 +2,8 @@ package cnab
 
 import (
 	"encoding/json"
-
-	"github.com/pkg/errors"
+	"errors"
+	"fmt"
 )
 
 const (
@@ -112,7 +112,7 @@ func (m *ParameterSourceMap) UnmarshalJSON(data []byte) error {
 	for sourceKey, sourceDef := range rawMap {
 		rawDef, err := json.Marshal(sourceDef)
 		if err != nil {
-			return errors.Wrapf(err, "error re-marshaling parameter source definition")
+			return fmt.Errorf("error re-marshaling parameter source definition: %w", err)
 		}
 
 		switch sourceKey {
@@ -120,14 +120,14 @@ func (m *ParameterSourceMap) UnmarshalJSON(data []byte) error {
 			var output OutputParameterSource
 			err := json.Unmarshal(rawDef, &output)
 			if err != nil {
-				return errors.Wrapf(err, "invalid parameter source definition for key %s", sourceKey)
+				return fmt.Errorf("invalid parameter source definition for key %s: %w", sourceKey, err)
 			}
 			(*m)[ParameterSourceTypeOutput] = output
 		case ParameterSourceTypeDependencyOutput:
 			var depOutput DependencyOutputParameterSource
 			err := json.Unmarshal(rawDef, &depOutput)
 			if err != nil {
-				return errors.Wrapf(err, "invalid parameter source definition for key %s", sourceKey)
+				return fmt.Errorf("invalid parameter source definition for key %s: %w", sourceKey, err)
 			}
 			(*m)[ParameterSourceTypeDependencyOutput] = depOutput
 		case ParameterSourceTypeMount:
@@ -139,7 +139,7 @@ func (m *ParameterSourceMap) UnmarshalJSON(data []byte) error {
 			(*m)[ParameterSourceTypeMount] = src
 
 		default:
-			return errors.Errorf("unsupported parameter source key %s", sourceKey)
+			return fmt.Errorf("unsupported parameter source key %s", sourceKey)
 		}
 	}
 
@@ -192,20 +192,20 @@ func ParameterSourcesReader(bun ExtendedBundle) (interface{}, error) {
 func (b ExtendedBundle) ParameterSourcesReader() (interface{}, error) {
 	data, ok := b.Custom[ParameterSourcesExtensionKey]
 	if !ok {
-		return nil, errors.Errorf("attempted to read parameter sources from bundle but none are defined")
+		return nil, errors.New("attempted to read parameter sources from bundle but none are defined")
 	}
 
 	dataB, err := json.Marshal(data)
 	if err != nil {
-		return nil, errors.Wrapf(err, "could not marshal the untyped %q extension data %q",
-			ParameterSourcesExtensionKey, string(dataB))
+		return nil, fmt.Errorf("could not marshal the untyped %q extension data %q: %w",
+			ParameterSourcesExtensionKey, string(dataB), err)
 	}
 
 	ps := ParameterSources{}
 	err = json.Unmarshal(dataB, &ps)
 	if err != nil {
-		return nil, errors.Wrapf(err, "could not unmarshal the %q extension %q",
-			ParameterSourcesExtensionKey, string(dataB))
+		return nil, fmt.Errorf("could not unmarshal the %q extension %q: %w",
+			ParameterSourcesExtensionKey, string(dataB), err)
 	}
 
 	return ps, nil
@@ -223,7 +223,7 @@ func (e ProcessedExtensions) GetParameterSources() (ParameterSources, bool, erro
 
 	ext, ok := rawExt.(ParameterSources)
 	if !ok && required {
-		return ParameterSources{}, required, errors.Errorf("unable to parse Parameter Sources extension config: %+v", rawExt)
+		return ParameterSources{}, required, fmt.Errorf("unable to parse Parameter Sources extension config: %+v", rawExt)
 	}
 
 	return ext, required, nil

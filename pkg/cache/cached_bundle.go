@@ -4,6 +4,7 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"path/filepath"
 
 	"get.porter.sh/porter/pkg/cnab"
@@ -11,7 +12,6 @@ import (
 	"get.porter.sh/porter/pkg/encoding"
 	"get.porter.sh/porter/pkg/portercontext"
 	"github.com/cnabio/cnab-to-oci/relocation"
-	"github.com/pkg/errors"
 )
 
 // CachedBundle represents a bundle pulled from a registry that has been cached to
@@ -73,7 +73,7 @@ func (cb *CachedBundle) Load(cxt *portercontext.Context) (bool, error) {
 	metaPath := cb.BuildMetadataPath()
 	metaExists, err := cxt.FileSystem.Exists(metaPath)
 	if err != nil {
-		return false, errors.Wrapf(err, "unable to access bundle metadata %s at %s", cb.Reference, metaPath)
+		return false, fmt.Errorf("unable to access bundle metadata %s at %s: %w", cb.Reference, metaPath, err)
 	}
 	if !metaExists {
 		// consider this a miss, recache with the metadata
@@ -82,7 +82,7 @@ func (cb *CachedBundle) Load(cxt *portercontext.Context) (bool, error) {
 	var meta Metadata
 	err = encoding.UnmarshalFile(cxt.FileSystem, metaPath, &meta)
 	if err != nil {
-		return false, errors.Wrapf(err, "unable to parse cached bundle metadata %s at %s", cb.Reference, metaPath)
+		return false, fmt.Errorf("unable to parse cached bundle metadata %s at %s: %w", cb.Reference, metaPath, err)
 	}
 	cb.Digest = meta.Digest
 
@@ -90,7 +90,7 @@ func (cb *CachedBundle) Load(cxt *portercontext.Context) (bool, error) {
 	reloPath := cb.BuildRelocationFilePath()
 	reloExists, err := cxt.FileSystem.Exists(reloPath)
 	if err != nil {
-		return true, errors.Wrapf(err, "unable to read relocation mapping %s at %s", cb.Reference, reloPath)
+		return true, fmt.Errorf("unable to read relocation mapping %s at %s: %w", cb.Reference, reloPath, err)
 	}
 	if reloExists {
 		cb.RelocationFilePath = reloPath
@@ -100,7 +100,7 @@ func (cb *CachedBundle) Load(cxt *portercontext.Context) (bool, error) {
 	manifestPath := cb.BuildManifestPath()
 	manifestExists, err := cxt.FileSystem.Exists(manifestPath)
 	if err != nil {
-		return true, errors.Wrapf(err, "unable to read manifest %s at %s", cb.Reference, manifestPath)
+		return true, fmt.Errorf("unable to read manifest %s at %s: %w", cb.Reference, manifestPath, err)
 	}
 	if manifestExists {
 		cb.ManifestPath = manifestPath
@@ -108,20 +108,20 @@ func (cb *CachedBundle) Load(cxt *portercontext.Context) (bool, error) {
 
 	bun, err := cnab.LoadBundle(cxt, cb.BundlePath)
 	if err != nil {
-		return true, errors.Wrapf(err, "unable to parse cached bundle file at %s", cb.BundlePath)
+		return true, fmt.Errorf("unable to parse cached bundle file at %s: %w", cb.BundlePath, err)
 	}
 	cb.Definition = bun
 
 	if cb.RelocationFilePath != "" {
 		data, err := cxt.FileSystem.ReadFile(cb.RelocationFilePath)
 		if err != nil {
-			return true, errors.Wrapf(err, "unable to read cached relocation file at %s", cb.RelocationFilePath)
+			return true, fmt.Errorf("unable to read cached relocation file at %s: %w", cb.RelocationFilePath, err)
 		}
 
 		reloMap := relocation.ImageRelocationMap{}
 		err = json.Unmarshal(data, &reloMap)
 		if err != nil {
-			return true, errors.Wrapf(err, "unable to parse cached relocation file at %s", cb.RelocationFilePath)
+			return true, fmt.Errorf("unable to parse cached relocation file at %s: %w", cb.RelocationFilePath, err)
 		}
 		cb.RelocationMap = reloMap
 	}

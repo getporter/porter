@@ -1,10 +1,9 @@
 package schema
 
 import (
+	"errors"
 	"fmt"
 	"strings"
-
-	"github.com/pkg/errors"
 )
 
 // CheckStrategy is an enum of values for handling schemaVersion
@@ -27,7 +26,7 @@ const (
 )
 
 // ErrInvalidSchemaVersion is used when the schemaVersion of two resources do not match exactly.
-var ErrInvalidSchemaVersion = errors.New("Invalid schema version")
+var ErrInvalidSchemaVersion = errors.New("invalid schema version")
 
 // ValidateSchemaVersion checks the specified schema version against the supported version,
 // returning if the result is a warning only. Warnings are returned when the versions are not an exact match.
@@ -36,8 +35,8 @@ func ValidateSchemaVersion(strategy CheckStrategy, supported string, specified s
 	if specified == "" {
 		specified = "(none)"
 	}
-	baseMessage := errors.Wrapf(ErrInvalidSchemaVersion, "The schema version is %s but the supported schema version is %s. See https://release-v1.porter.sh/reference/file-formats/#supported-versions for more details.",
-		specified, supported)
+	baseMessage := fmt.Errorf("the schema version is %s but the supported schema version is %s. See https://getporter.org/reference/file-formats/#supported-versions for more details: %w",
+		specified, supported, ErrInvalidSchemaVersion)
 
 	switch strategy {
 	case CheckStrategyNone:
@@ -59,7 +58,7 @@ func ValidateSchemaVersion(strategy CheckStrategy, supported string, specified s
 		supportedMinor := getMinor(supported)
 
 		if specifiedMinor != supportedMinor {
-			return false, errors.Wrapf(baseMessage, "The schema version MAJOR.MINOR values do not match")
+			return false, fmt.Errorf("the schema version MAJOR.MINOR values do not match: %w", baseMessage)
 		}
 	case CheckStrategyMajor:
 		getMajor := func(version string) string {
@@ -71,7 +70,7 @@ func ValidateSchemaVersion(strategy CheckStrategy, supported string, specified s
 		supportedMajor := getMajor(supported)
 
 		if specifiedMajor != supportedMajor {
-			return false, errors.Wrapf(baseMessage, "The schema version MAJOR values do not match")
+			return false, fmt.Errorf("the schema version MAJOR values do not match: %w", baseMessage)
 		}
 	default:
 		return false, fmt.Errorf("unknown schema.CheckStrategy %v", strategy)
@@ -82,5 +81,5 @@ func ValidateSchemaVersion(strategy CheckStrategy, supported string, specified s
 	}
 
 	// Even if the check passed, print a warning if it wasn't exactly the same
-	return true, errors.Wrap(baseMessage, "WARNING")
+	return true, fmt.Errorf("WARNING: %w", baseMessage)
 }

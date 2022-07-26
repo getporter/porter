@@ -2,6 +2,7 @@ package filesystem
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -11,7 +12,6 @@ import (
 	"get.porter.sh/porter/pkg/secrets/plugins"
 	"get.porter.sh/porter/pkg/secrets/plugins/host"
 	"get.porter.sh/porter/pkg/tracing"
-	"github.com/pkg/errors"
 )
 
 var _ plugins.SecretsProtocol = &Store{}
@@ -48,6 +48,7 @@ func (s *Store) Connect(ctx context.Context) error {
 		return nil
 	}
 
+	//lint:ignore SA4006 ignore unused ctx for now
 	ctx, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
 

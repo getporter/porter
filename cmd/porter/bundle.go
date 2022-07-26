@@ -6,6 +6,7 @@ import (
 
 	"get.porter.sh/porter/pkg/porter"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 )
 
 func buildBundleCommands(p *porter.Porter) *cobra.Command {
@@ -76,7 +77,6 @@ The docker driver builds the bundle image using the local Docker host. To use a 
 
 	f := cmd.Flags()
 	f.BoolVar(&opts.NoLint, "no-lint", false, "Do not run the linter")
-	f.BoolVarP(&opts.Verbose, "verbose", "v", false, "Enable verbose logging")
 	f.StringVar(&opts.Name, "name", "", "Override the bundle name")
 	f.StringVar(&opts.Version, "version", "", "Override the bundle version")
 	f.StringVarP(&opts.File, "file", "f", "",
@@ -173,8 +173,6 @@ The docker driver runs the bundle container using the local Docker host. To use 
 	}
 
 	f := cmd.Flags()
-	f.BoolVar(&opts.AllowDockerHostAccess, "allow-docker-host-access", false,
-		"Controls if the bundle should have access to the host's Docker daemon with elevated privileges. See https://porter.sh/configuration/#allow-docker-host-access for the full implications of this flag.")
 	f.StringVarP(&opts.File, "file", "f", "",
 		"Path to the porter manifest file. Defaults to the bundle in the current directory.")
 	f.StringVar(&opts.CNABFile, "cnab-file", "",
@@ -191,9 +189,7 @@ The docker driver runs the bundle container using the local Docker host. To use 
 		"Create the installation in the specified namespace. Defaults to the global namespace.")
 	f.StringSliceVarP(&opts.Labels, "label", "l", nil,
 		"Associate the specified labels with the installation. May be specified multiple times.")
-	f.BoolVar(&opts.NoLogs, "no-logs", false,
-		"Do not persist the bundle execution logs")
-	addBundlePullFlags(f, &opts.BundlePullOptions)
+	addBundleActionFlags(f, opts)
 
 	// Allow configuring the --driver flag with runtime-driver, to avoid conflicts with other commands
 	cmd.Flag("driver").Annotations = map[string][]string{
@@ -236,8 +232,6 @@ The docker driver runs the bundle container using the local Docker host. To use 
 	}
 
 	f := cmd.Flags()
-	f.BoolVar(&opts.AllowDockerHostAccess, "allow-docker-host-access", false,
-		"Controls if the bundle should have access to the host's Docker daemon with elevated privileges. See https://porter.sh/configuration/#allow-docker-host-access for the full implications of this flag.")
 	f.StringVarP(&opts.File, "file", "f", "",
 		"Path to the porter manifest file. Defaults to the bundle in the current directory.")
 	f.StringVar(&opts.CNABFile, "cnab-file", "",
@@ -254,9 +248,7 @@ The docker driver runs the bundle container using the local Docker host. To use 
 		"Namespace of the specified installation. Defaults to the global namespace.")
 	f.StringVar(&opts.Version, "version", "",
 		"Version to which the installation should be upgraded. This represents the version of the bundle, which assumes the convention of setting the bundle tag to its version.")
-	f.BoolVar(&opts.NoLogs, "no-logs", false,
-		"Do not persist the bundle execution logs")
-	addBundlePullFlags(f, &opts.BundlePullOptions)
+	addBundleActionFlags(f, opts)
 
 	// Allow configuring the --driver flag with runtime-driver, to avoid conflicts with other commands
 	cmd.Flag("driver").Annotations = map[string][]string{
@@ -299,8 +291,6 @@ The docker driver runs the bundle container using the local Docker host. To use 
 	}
 
 	f := cmd.Flags()
-	f.BoolVar(&opts.AllowDockerHostAccess, "allow-docker-host-access", false,
-		"Controls if the bundle should have access to the host's Docker daemon with elevated privileges. See https://porter.sh/configuration/#allow-docker-host-access for the full implications of this flag.")
 	f.StringVar(&opts.Action, "action", "",
 		"Custom action name to invoke.")
 	f.StringVarP(&opts.File, "file", "f", "",
@@ -317,9 +307,7 @@ The docker driver runs the bundle container using the local Docker host. To use 
 		"Specify a driver to use. Allowed values: docker, debug")
 	f.StringVarP(&opts.Namespace, "namespace", "n", "",
 		"Namespace of the specified installation. Defaults to the global namespace.")
-	f.BoolVar(&opts.NoLogs, "no-logs", false,
-		"Do not persist the bundle execution logs")
-	addBundlePullFlags(f, &opts.BundlePullOptions)
+	addBundleActionFlags(f, opts)
 
 	// Allow configuring the --driver flag with runtime-driver, to avoid conflicts with other commands
 	cmd.Flag("driver").Annotations = map[string][]string{
@@ -364,8 +352,6 @@ The docker driver runs the bundle container using the local Docker host. To use 
 	}
 
 	f := cmd.Flags()
-	f.BoolVar(&opts.AllowDockerHostAccess, "allow-docker-host-access", false,
-		"Controls if the bundle should have access to the host's Docker daemon with elevated privileges. See https://porter.sh/configuration/#allow-docker-host-access for the full implications of this flag.")
 	f.StringVarP(&opts.File, "file", "f", "",
 		"Path to the porter manifest file. Defaults to the bundle in the current directory. Optional unless a newer version of the bundle should be used to uninstall the bundle.")
 	f.StringVar(&opts.CNABFile, "cnab-file", "",
@@ -384,9 +370,7 @@ The docker driver runs the bundle container using the local Docker host. To use 
 		"UNSAFE. Delete all records associated with the installation, even if uninstall fails. This is intended for cleaning up test data and is not recommended for production environments.")
 	f.StringVarP(&opts.Namespace, "namespace", "n", "",
 		"Namespace of the specified installation. Defaults to the global namespace.")
-	f.BoolVar(&opts.NoLogs, "no-logs", false,
-		"Do not persist the bundle execution logs")
-	addBundlePullFlags(f, &opts.BundlePullOptions)
+	addBundleActionFlags(f, opts)
 
 	// Allow configuring the --driver flag with runtime-driver, to avoid conflicts with other commands
 	cmd.Flag("driver").Annotations = map[string][]string{
@@ -454,4 +438,14 @@ func buildBundleArchiveCommand(p *porter.Porter) *cobra.Command {
 	addBundlePullFlags(cmd.Flags(), &opts.BundlePullOptions)
 
 	return &cmd
+}
+
+// Add flags for command that execute a bundle (install, upgrade, invoke and uninstall)
+func addBundleActionFlags(f *pflag.FlagSet, actionOpts porter.BundleAction) {
+	opts := actionOpts.GetOptions()
+	addBundlePullFlags(f, &opts.BundlePullOptions)
+	f.BoolVar(&opts.AllowDockerHostAccess, "allow-docker-host-access", false,
+		"Controls if the bundle should have access to the host's Docker daemon with elevated privileges. See https://getporter.org/configuration/#allow-docker-host-access for the full implications of this flag.")
+	f.BoolVar(&opts.NoLogs, "no-logs", false,
+		"Do not persist the bundle execution logs")
 }

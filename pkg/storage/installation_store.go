@@ -2,9 +2,9 @@ package storage
 
 import (
 	"context"
+	"errors"
 
 	"get.porter.sh/porter/pkg/tracing"
-	"github.com/pkg/errors"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -34,7 +34,8 @@ func NewInstallationStore(datastore Store) InstallationStore {
 	}
 }
 
-func (s InstallationStore) Initialize(ctx context.Context) error {
+// EnsureInstallationIndices created indices on the installations collection.
+func EnsureInstallationIndices(ctx context.Context, store Store) error {
 	ctx, span := tracing.StartSpan(ctx)
 	defer span.EndSpan()
 
@@ -59,7 +60,7 @@ func (s InstallationStore) Initialize(ctx context.Context) error {
 		},
 	}
 
-	err := s.store.EnsureIndex(ctx, opts)
+	err := store.EnsureIndex(ctx, opts)
 	return span.Error(err)
 }
 
@@ -212,21 +213,21 @@ func (s InstallationStore) GetLastOutputs(ctx context.Context, namespace string,
 	opts := AggregateOptions{
 		Pipeline: []bson.D{
 			// List outputs by installation
-			{{"$match", bson.M{
+			{{Key: "$match", Value: bson.M{
 				"namespace":    namespace,
 				"installation": installation,
 			}}},
 			// Reverse sort them (newest on top)
-			{{"$sort", bson.D{
-				{"namespace", 1},
-				{"installation", 1},
-				{"name", 1},
-				{"resultId", -1},
+			{{Key: "$sort", Value: bson.D{
+				{Key: "namespace", Value: 1},
+				{Key: "installation", Value: 1},
+				{Key: "name", Value: 1},
+				{Key: "resultId", Value: -1},
 			}}},
 			// Group them by output name and select the last value for each output
-			{{"$group", bson.D{
-				{"_id", "$name"},
-				{"lastOutput", bson.M{"$first": "$$ROOT"}},
+			{{Key: "$group", Value: bson.D{
+				{Key: "_id", Value: "$name"},
+				{Key: "lastOutput", Value: bson.M{"$first": "$$ROOT"}},
 			}}},
 		},
 	}

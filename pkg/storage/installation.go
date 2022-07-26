@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
@@ -11,7 +12,6 @@ import (
 	"github.com/Masterminds/semver/v3"
 	"github.com/cnabio/cnab-go/schema"
 	"github.com/opencontainers/go-digest"
-	"github.com/pkg/errors"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -22,7 +22,7 @@ type Installation struct {
 	// SchemaVersion is the version of the installation state schema.
 	SchemaVersion schema.Version `json:"schemaVersion"`
 
-	// ID is the unique identifire for an installation record.
+	// ID is the unique identifier for an installation record.
 	ID string `json:"id"`
 
 	// Name of the installation. Immutable.
@@ -104,8 +104,11 @@ func (i *Installation) ApplyResult(run Run, result Result) {
 	}
 
 	if !i.IsInstalled() && run.Action == cnab.ActionInstall && result.Status == cnab.StatusSucceeded {
-		now := time.Now()
-		i.Status.Installed = &now
+		i.Status.Installed = &result.Created
+	}
+
+	if !i.IsUninstalled() && run.Action == cnab.ActionUninstall && result.Status == cnab.StatusSucceeded {
+		i.Status.Uninstalled = &result.Created
 	}
 }
 
@@ -127,14 +130,18 @@ func (i *Installation) Validate() error {
 		if i.SchemaVersion == "" {
 			i.SchemaVersion = "(none)"
 		}
-		return errors.Errorf("invalid schemaVersion provided: %s. This version of Porter is compatible with %s.", i.SchemaVersion, InstallationSchemaVersion)
+		return fmt.Errorf("invalid schemaVersion provided: %s. This version of Porter is compatible with %s.", i.SchemaVersion, InstallationSchemaVersion)
 	}
 
 	// We can change these to better checks if we consolidate our logic around the various ways we let you
 	// install from a bundle definition https://github.com/getporter/porter/issues/1024#issuecomment-899828081
 	// Until then, these are pretty weak checks
 	_, _, err := i.Bundle.GetBundleReference()
-	return errors.Wrapf(err, "could not determine the fully-qualified bundle reference")
+	if err != nil {
+		return fmt.Errorf("could not determine the fully-qualified bundle reference: %w", err)
+	}
+
+	return nil
 }
 
 // TrackBundle updates the bundle that the installation is tracking.
@@ -200,7 +207,7 @@ type InstallationStatus struct {
 
 	// Uninstalled indicates if the installation has successfully completed the uninstall action.
 	// Once that state is reached, Porter should not allow further stateful actions.
-	Uninstalled *time.Time `json:"uninstalled" yaml"uninstalled" toml:"uninstalled"`
+	Uninstalled *time.Time `json:"uninstalled" yaml:"uninstalled" toml:"uninstalled"`
 
 	// BundleReference of the bundle that last altered the installation state.
 	BundleReference string `json:"bundleReference" yaml:"bundleReference" toml:"bundleReference"`
@@ -220,6 +227,11 @@ func (i Installation) IsInstalled() bool {
 // IsUninstalled checks if the installation has been uninstalled.
 func (i Installation) IsUninstalled() bool {
 	return i.Status.Uninstalled != nil
+}
+
+// IsDefined checks if the installation is has already been defined but not installed yet.
+func (i Installation) IsDefined() bool {
+	return i.Status.Installed == nil
 }
 
 // OCIReferenceParts is our storage representation of cnab.OCIReference
@@ -249,18 +261,18 @@ func (r OCIReferenceParts) GetBundleReference() (cnab.OCIReference, bool, error)
 
 	ref, err := cnab.ParseOCIReference(r.Repository)
 	if err != nil {
-		return cnab.OCIReference{}, false, errors.Wrapf(err, "invalid bundle Repository %s", r.Repository)
+		return cnab.OCIReference{}, false, fmt.Errorf("invalid bundle Repository %s: %w", r.Repository, err)
 	}
 
 	if r.Digest != "" {
 		d, err := digest.Parse(r.Digest)
 		if err != nil {
-			return cnab.OCIReference{}, false, errors.Wrapf(err, "invalid bundle Digest %s", r.Digest)
+			return cnab.OCIReference{}, false, fmt.Errorf("invalid bundle Digest %s: %w", r.Digest, err)
 		}
 
 		ref, err = ref.WithDigest(d)
 		if err != nil {
-			return cnab.OCIReference{}, false, errors.Wrapf(err, "error joining the bundle Repository %s and Digest %s", r.Repository, r.Digest)
+			return cnab.OCIReference{}, false, fmt.Errorf("error joining the bundle Repository %s and Digest %s: %w", r.Repository, r.Digest, err)
 		}
 		return ref, true, nil
 	}
@@ -275,7 +287,7 @@ func (r OCIReferenceParts) GetBundleReference() (cnab.OCIReference, bool, error)
 		// everyone else can use the tag field if they do weird things
 		ref, err = ref.WithTag("v" + v.String())
 		if err != nil {
-			return cnab.OCIReference{}, false, errors.Wrapf(err, "error joining the bundle Repository %s and Version %s", r.Repository, r.Version)
+			return cnab.OCIReference{}, false, fmt.Errorf("error joining the bundle Repository %s and Version %s: %w", r.Repository, r.Version, err)
 		}
 		return ref, true, nil
 	}
@@ -283,7 +295,7 @@ func (r OCIReferenceParts) GetBundleReference() (cnab.OCIReference, bool, error)
 	if r.Tag != "" {
 		ref, err = ref.WithTag(r.Tag)
 		if err != nil {
-			return cnab.OCIReference{}, false, errors.Wrapf(err, "error joining the bundle Repository %s and Tag %s", r.Repository, r.Tag)
+			return cnab.OCIReference{}, false, fmt.Errorf("error joining the bundle Repository %s and Tag %s: %w", r.Repository, r.Tag, err)
 		}
 		return ref, true, nil
 	}

@@ -7,6 +7,6 @@ exec:
   flags:
     c: '"echo Hello World"'
 
-See https://porter.sh/best-practices/exec-mixin/#quoting-escaping-bash-and-yaml for more information
+See https://getporter.org/best-practices/exec-mixin/#quoting-escaping-bash-and-yaml for more information
 ---
 

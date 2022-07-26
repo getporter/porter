@@ -119,7 +119,7 @@ func TestGetPackageListings_Success(t *testing.T) {
 	require.NoError(t, err)
 
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, string(bytes))
+		fmt.Fprint(w, string(bytes))
 	}))
 	defer ts.Close()
 

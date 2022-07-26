@@ -8,7 +8,7 @@ import (
 func buildBundleInspectCommand(p *porter.Porter) *cobra.Command {
 	opts := porter.ExplainOpts{}
 	cmd := cobra.Command{
-		Use:   "inspect",
+		Use:   "inspect REFERENCE",
 		Short: "Inspect a bundle",
 		Long: `Inspect a bundle by printing the invocation images and any related images images.
 
@@ -16,8 +16,8 @@ If you would like more information about the bundle, the porter explain command 
 like parameters, credentials, outputs and custom actions available.
 `,
 		Example: `  porter bundle inspect
-  porter bundle inspect --reference ghcr.io/getporter/examples/porter-hello:v0.2.0
-  porter bundle inspect --reference localhost:5000/ghcr.io/getporter/examples/porter-hello:v0.2.0 --insecure-registry --force
+  porter bundle inspect ghcr.io/getporter/examples/porter-hello:v0.2.0
+  porter bundle inspect localhost:5000/ghcr.io/getporter/examples/porter-hello:v0.2.0 --insecure-registry --force
   porter bundle inspect --file another/porter.yaml
   porter bundle inspect --cnab-file some/bundle.json
 		  `,

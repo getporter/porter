@@ -142,7 +142,7 @@ func BuildPluginUninstallCommand(p *porter.Porter) *cobra.Command {
 			return opts.Validate(args)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.UninstallPlugin(opts)
+			return p.UninstallPlugin(cmd.Context(), opts)
 		},
 	}
 

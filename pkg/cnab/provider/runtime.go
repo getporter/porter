@@ -1,18 +1,20 @@
 package cnabprovider
 
 import (
+	"fmt"
+
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
-	"github.com/pkg/errors"
 )
 
 var _ CNABProvider = &Runtime{}
 
 type Runtime struct {
 	*config.Config
-	credentials   storage.CredentialSetProvider
+	credentials storage.CredentialSetProvider
+	//lint:ignore U1000 unused at the moment, will be used in the future
 	parameters    storage.ParameterSetProvider
 	secrets       secrets.Store
 	installations storage.InstallationProvider
@@ -34,7 +36,7 @@ func NewRuntime(c *config.Config, installations storage.InstallationProvider, cr
 func (r *Runtime) ProcessRequiredExtensions(b cnab.ExtendedBundle) error {
 	exts, err := b.ProcessRequiredExtensions()
 	if err != nil {
-		return errors.Wrap(err, "unable to process required extensions")
+		return fmt.Errorf("unable to process required extensions: %w", err)
 	}
 	r.Extensions = exts
 	return nil

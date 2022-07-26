@@ -1,0 +1,8 @@
+[
+  {
+    "name": "name",
+    "type": "file",
+    "sensitive": true,
+    "value": "example-bundle"
+  }
+]

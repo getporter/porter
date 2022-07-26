@@ -3,6 +3,7 @@ package cnabprovider
 import (
 	"os"
 	"strings"
+	"fmt"
 
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/cnab/drivers"
@@ -33,13 +34,13 @@ func (r *Runtime) newDriver(driverName string, args ActionArguments) (driver.Dri
 
 	if args.AllowDockerHostAccess {
 		if driverName != DriverNameDocker {
-			return nil, errors.Errorf("allow-docker-host-access was enabled, but the driver is %s", driverName)
+			return nil, fmt.Errorf("allow-docker-host-access was enabled, but the driver is %s", driverName)
 		}
 
 		driverImpl, err = r.dockerDriverWithHostAccess(dockerExt)
 	} else {
 		if dockerRequired {
-			return nil, errors.Errorf("extension %q is required but allow-docker-host-access was not enabled",
+			return nil, fmt.Errorf("extension %q is required but allow-docker-host-access was not enabled",
 				cnab.DockerExtensionKey)
 		}
 		driverImpl, err = drivers.LookupDriver(r.Context, driverName)
@@ -101,7 +102,7 @@ func (r *Runtime) dockerDriverWithHostAccess(config cnab.Docker) (driver.Driver,
 	const dockerSock = "/var/run/docker.sock"
 
 	if exists, _ := r.FileSystem.Exists(dockerSock); !exists {
-		return nil, errors.Errorf("allow-docker-host-access was specified but could not detect a local docker daemon running by checking for %s", dockerSock)
+		return nil, fmt.Errorf("allow-docker-host-access was specified but could not detect a local docker daemon running by checking for %s", dockerSock)
 	}
 
 	d := &docker.Driver{}

@@ -16,7 +16,7 @@ Keeping sensitive data off your machine, and safely in a secret store or vault w
 Now Porter's config file is getting the same white glove treatment that bundle credentials always have!
 We have [added templating support to Porter's config file][cfg-docs] so that you can use environment variables and secrets without hard-coding sensitive data in the file.
 
-[cfg-docs]: https://release-v1.porter.sh/configuration/#config-file
+[cfg-docs]: /configuration/#config-file
 
 Porter has plugins for retrieving secrets from a secret store, and for storing its data in a Mongo database.
 Configuring the plugins with credentials to connect to those resources is how sensitive data sneaks into the config file.

@@ -22,7 +22,7 @@ Commands for working with installations of a bundle
 ```
       --debug                  Enable debug logging
       --debug-plugins          Enable plugin debug logging
-      --experimental strings   Comma separated list of experimental features to enable. See https://porter.sh/configuration/#experimental-feature-flags for available feature flags.
+      --experimental strings   Comma separated list of experimental features to enable. See https://getporter.org/configuration/#experimental-feature-flags for available feature flags.
 ```
 
 ### SEE ALSO
@@ -31,7 +31,7 @@ Commands for working with installations of a bundle
 
 Most commands require a Docker daemon, either local or remote.
 
-Try our QuickStart https://porter.sh/quickstart to learn how to use Porter.
+Try our QuickStart https://getporter.org/quickstart to learn how to use Porter.
 
 * [porter installations apply](/cli/porter_installations_apply/)	 - Apply changes to an installation
 * [porter installations delete](/cli/porter_installations_delete/)	 - Delete an installation

@@ -7,7 +7,6 @@ import (
 	"get.porter.sh/porter/pkg/secrets"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/schema"
-	"github.com/pkg/errors"
 )
 
 var _ Document = &CredentialSet{}
@@ -83,7 +82,7 @@ func (s CredentialSet) Validate() error {
 		if s.SchemaVersion == "" {
 			s.SchemaVersion = "(none)"
 		}
-		return errors.Errorf("invalid schemaVersion provided: %s. This version of Porter is compatible with %s.", s.SchemaVersion, CredentialSetSchemaVersion)
+		return fmt.Errorf("invalid schemaVersion provided: %s. This version of Porter is compatible with %s.", s.SchemaVersion, CredentialSetSchemaVersion)
 	}
 	return nil
 }
