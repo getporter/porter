@@ -88,17 +88,17 @@ func (p *Porter) generateInternalManifest(ctx context.Context, opts BuildOptions
 
 		digest, err := p.getImageLatestDigest(ctx, ref)
 		if err != nil {
-			return err
+			return span.Error(err)
 		}
 
 		var path string
 		for _, p := range nc.PathStack {
 			switch t := p.(type) {
 			case string:
-				path += (t + ".")
+				path += fmt.Sprintf("%s.", t)
 			case int:
 				path = strings.TrimSuffix(path, ".")
-				path += ("[" + strconv.Itoa(t) + "]" + ".")
+				path += fmt.Sprintf("[%s].", strconv.Itoa(t))
 			default:
 				continue
 			}

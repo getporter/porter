@@ -17,7 +17,7 @@ import (
 func ParseOCIReference(value string) (OCIReference, error) {
 	named, err := reference.ParseNormalizedNamed(value)
 	if err != nil {
-		return OCIReference{}, fmt.Errorf("invalid reference format %s: %w", value, err)
+		return OCIReference{}, fmt.Errorf("failed to parse named reference %s: %w", value, err)
 	}
 
 	ref := OCIReference{Named: named}

@@ -609,7 +609,7 @@ func TestValidateImageMap(t *testing.T) {
 		err := mi.Validate()
 		assert.Error(t, err)
 		_, err = mi.ToOCIReference()
-		assert.Error(t, err)
+		assert.ErrorContains(t, err, "failed to parse named reference")
 	})
 
 	t.Run("with invalid image digest format", func(t *testing.T) {
@@ -621,7 +621,7 @@ func TestValidateImageMap(t *testing.T) {
 		err := mi.Validate()
 		assert.Error(t, err)
 		_, err = mi.ToOCIReference()
-		assert.Error(t, err)
+		assert.ErrorContains(t, err, "failed to create a new reference with digest for repository")
 	})
 }
 
