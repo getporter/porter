@@ -2,6 +2,7 @@ package porter
 
 import (
 	"context"
+	"fmt"
 	"sort"
 	"testing"
 
@@ -99,9 +100,9 @@ func Test_loadParameters_paramNotDefined(t *testing.T) {
 	r := NewTestPorter(t)
 	defer r.Close()
 
-	b := cnab.ExtendedBundle{bundle.Bundle{
+	b := cnab.NewBundle(bundle.Bundle{
 		Parameters: map[string]bundle.Parameter{},
-	}}
+	})
 
 	overrides := map[string]string{
 		"foo": "bar",
@@ -118,13 +119,13 @@ func Test_loadParameters_definitionNotDefined(t *testing.T) {
 	r := NewTestPorter(t)
 	defer r.Close()
 
-	b := cnab.ExtendedBundle{bundle.Bundle{
+	b := cnab.NewBundle(bundle.Bundle{
 		Parameters: map[string]bundle.Parameter{
 			"foo": {
 				Definition: "foo",
 			},
 		},
-	}}
+	})
 
 	overrides := map[string]string{
 		"foo": "bar",
@@ -143,7 +144,7 @@ func Test_loadParameters_applyTo(t *testing.T) {
 
 	// Here we set default values, but expect nil/empty
 	// values for parameters that do not apply to a given action
-	b := cnab.ExtendedBundle{bundle.Bundle{
+	b := cnab.NewBundle(bundle.Bundle{
 		Definitions: definition.Definitions{
 			"foo": &definition.Schema{
 				Type:    "string",
@@ -175,7 +176,7 @@ func Test_loadParameters_applyTo(t *testing.T) {
 				},
 			},
 		},
-	}}
+	})
 
 	overrides := map[string]string{
 		"foo":  "FOO",
@@ -198,7 +199,7 @@ func Test_loadParameters_applyToBundleDefaults(t *testing.T) {
 	r := NewTestPorter(t)
 	defer r.Close()
 
-	b := cnab.ExtendedBundle{bundle.Bundle{
+	b := cnab.NewBundle(bundle.Bundle{
 		Definitions: definition.Definitions{
 			"foo": &definition.Schema{
 				Type:    "string",
@@ -213,7 +214,7 @@ func Test_loadParameters_applyToBundleDefaults(t *testing.T) {
 				},
 			},
 		},
-	}}
+	})
 
 	i := storage.Installation{}
 	params, err := r.resolveParameters(context.Background(), i, b, "action", nil)
@@ -228,7 +229,7 @@ func Test_loadParameters_requiredButDoesNotApply(t *testing.T) {
 	r := NewTestPorter(t)
 	defer r.Close()
 
-	b := cnab.ExtendedBundle{bundle.Bundle{
+	b := cnab.NewBundle(bundle.Bundle{
 		Definitions: definition.Definitions{
 			"foo": &definition.Schema{
 				Type: "string",
@@ -243,7 +244,7 @@ func Test_loadParameters_requiredButDoesNotApply(t *testing.T) {
 				Required: true,
 			},
 		},
-	}}
+	})
 
 	i := storage.Installation{}
 	params, err := r.resolveParameters(context.Background(), i, b, "action", nil)
@@ -260,7 +261,7 @@ func Test_loadParameters_fileParameter(t *testing.T) {
 
 	r.TestConfig.TestContext.AddTestFile("testdata/file-param", "/path/to/file")
 
-	b := cnab.ExtendedBundle{bundle.Bundle{
+	b := cnab.NewBundle(bundle.Bundle{
 		RequiredExtensions: []string{
 			cnab.FileParameterExtensionKey,
 		},
@@ -279,7 +280,7 @@ func Test_loadParameters_fileParameter(t *testing.T) {
 				},
 			},
 		},
-	}}
+	})
 
 	overrides := map[string]string{
 		"foo": "/path/to/file",
@@ -527,7 +528,7 @@ func Test_Paramapalooza(t *testing.T) {
 					r := NewTestPorter(t)
 					defer r.Close()
 
-					bun := cnab.ExtendedBundle{bundle.Bundle{
+					bun := cnab.NewBundle(bundle.Bundle{
 						Name:          "mybuns",
 						Version:       "1.0.0",
 						SchemaVersion: "v1.0.0",
@@ -558,7 +559,7 @@ func Test_Paramapalooza(t *testing.T) {
 								},
 							},
 						},
-					}}
+					})
 
 					if tc.DefaultExists {
 						bun.Definitions["my-param"].Default = "my-param-default"
@@ -679,6 +680,137 @@ func TestShowParameters_Found(t *testing.T) {
 			require.NoError(t, err, "an error should not have occurred")
 			gotOutput := p.TestConfig.TestContext.GetOutput()
 			test.CompareGoldenFile(t, tc.expectedOutputFile, gotOutput)
+		})
+	}
+}
+
+func TestParametersCreateOptions_Validate(t *testing.T) {
+	testcases := []struct {
+		name       string
+		args       []string
+		outputType string
+		wantErr    string
+	}{
+		{
+			name:       "no fileName defined",
+			args:       []string{},
+			outputType: "",
+			wantErr:    "",
+		},
+		{
+			name:       "two positional arguments",
+			args:       []string{"parameter-set1", "parameter-set2"},
+			outputType: "",
+			wantErr:    "only one positional argument may be specified",
+		},
+		{
+			name:       "no file format defined from file extension or output flag",
+			args:       []string{"parameter-set"},
+			outputType: "",
+			wantErr:    "could not detect the file format from the file extension (.txt). Specify the format with --output",
+		},
+		{
+			name:       "different file format",
+			args:       []string{"parameter-set.json"},
+			outputType: "yaml",
+			wantErr:    "",
+		},
+		{
+			name:       "format from output flag",
+			args:       []string{"parameters"},
+			outputType: "json",
+			wantErr:    "",
+		},
+		{
+			name:       "format from file extension",
+			args:       []string{"parameter-set.yml"},
+			outputType: "",
+			wantErr:    "",
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			opts := ParameterCreateOptions{OutputType: tc.outputType}
+			err := opts.Validate(tc.args)
+			if tc.wantErr == "" {
+				require.NoError(t, err, "no error should have existed")
+				return
+			}
+			assert.Contains(t, err.Error(), tc.wantErr)
+		})
+	}
+}
+
+func TestParametersCreate(t *testing.T) {
+	testcases := []struct {
+		name       string
+		fileName   string
+		outputType string
+		wantErr    string
+	}{
+		{
+			name:       "valid input: no input defined, will output yaml format to stdout",
+			fileName:   "",
+			outputType: "",
+			wantErr:    "",
+		},
+		{
+			name:       "valid input: output to stdout with format json",
+			fileName:   "",
+			outputType: "json",
+			wantErr:    "",
+		},
+		{
+			name:       "valid input: file format from fileName",
+			fileName:   "fileName.json",
+			outputType: "",
+			wantErr:    "",
+		},
+		{
+			name:       "valid input: file format from outputType",
+			fileName:   "fileName",
+			outputType: "json",
+			wantErr:    "",
+		},
+		{
+			name:       "valid input: different file format from fileName and outputType",
+			fileName:   "fileName.yaml",
+			outputType: "json",
+			wantErr:    "",
+		},
+		{
+			name:       "valid input: same file format in fileName and outputType",
+			fileName:   "fileName.json",
+			outputType: "json",
+			wantErr:    "",
+		},
+		{
+			name:       "invalid input: invalid file format from fileName",
+			fileName:   "fileName.txt",
+			outputType: "",
+			wantErr:    fmt.Sprintf("unsupported format %s. Supported formats are: yaml and json", "txt"),
+		},
+		{
+			name:       "invalid input: invalid file format from outputType",
+			fileName:   "fileName",
+			outputType: "txt",
+			wantErr:    fmt.Sprintf("unsupported format %s. Supported formats are: yaml and json", "txt"),
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			p := NewTestPorter(t)
+			defer p.Close()
+
+			opts := ParameterCreateOptions{FileName: tc.fileName, OutputType: tc.outputType}
+			err := p.CreateParameter(opts)
+			if tc.wantErr == "" {
+				require.NoError(t, err, "no error should have existed")
+				return
+			}
+			assert.Contains(t, err.Error(), tc.wantErr)
 		})
 	}
 }

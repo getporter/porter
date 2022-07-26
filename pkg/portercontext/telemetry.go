@@ -11,7 +11,6 @@ import (
 
 	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/tracing"
-	"github.com/pkg/errors"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
@@ -137,14 +136,14 @@ func (c *Context) createTraceClient(cfg LogConfiguration) (otlptrace.Client, err
 		if cfg.TelemetryCertificate != "" {
 			creds, err := credentials.NewClientTLSFromFile(cfg.TelemetryCertificate, "")
 			if err != nil {
-				return nil, errors.Wrapf(err, "invalid telemetry certificate in %s", cfg.TelemetryCertificate)
+				return nil, fmt.Errorf("invalid telemetry certificate in %s: %w", cfg.TelemetryCertificate, err)
 			}
 			opts = append(opts, otlptracegrpc.WithTLSCredentials(creds))
 		}
 		if cfg.TelemetryTimeout != "" {
 			timeout, err := time.ParseDuration(cfg.TelemetryTimeout)
 			if err != nil {
-				return nil, errors.Wrapf(err, "invalid telemetry timeout %s", cfg.TelemetryTimeout)
+				return nil, fmt.Errorf("invalid telemetry timeout %s: %w", cfg.TelemetryTimeout, err)
 			}
 			opts = append(opts, otlptracegrpc.WithTimeout(timeout))
 		}
@@ -166,18 +165,18 @@ func (c *Context) createTraceClient(cfg LogConfiguration) (otlptrace.Client, err
 		if cfg.TelemetryCertificate != "" {
 			certB, err := c.FileSystem.ReadFile(cfg.TelemetryCertificate)
 			if err != nil {
-				return nil, errors.Wrapf(err, "invalid telemetry certificate in %s", cfg.TelemetryCertificate)
+				return nil, fmt.Errorf("invalid telemetry certificate in %s: %w", cfg.TelemetryCertificate, err)
 			}
 			cp := x509.NewCertPool()
 			if ok := cp.AppendCertsFromPEM(certB); !ok {
-				return nil, errors.Errorf("could not use certificate in %s", cfg.TelemetryCertificate)
+				return nil, fmt.Errorf("could not use certificate in %s", cfg.TelemetryCertificate)
 			}
 			opts = append(opts, otlptracehttp.WithTLSClientConfig(&tls.Config{RootCAs: cp}))
 		}
 		if cfg.TelemetryTimeout != "" {
 			timeout, err := time.ParseDuration(cfg.TelemetryTimeout)
 			if err != nil {
-				return nil, errors.Wrapf(err, "invalid telemetry timeout %s. Supported values are durations such as 30s or 1m.", cfg.TelemetryTimeout)
+				return nil, fmt.Errorf("invalid telemetry timeout %s. Supported values are durations such as 30s or 1m: %w", cfg.TelemetryTimeout, err)
 			}
 			opts = append(opts, otlptracehttp.WithTimeout(timeout))
 		}
@@ -196,6 +195,6 @@ func (c *Context) createTraceClient(cfg LogConfiguration) (otlptrace.Client, err
 		}
 		return otlptracehttp.NewClient(opts...), nil
 	default:
-		return nil, errors.Errorf("invalid OTEL_EXPORTER_OTLP_PROTOCOL value %s. Only grpc and http/protobuf are supported", cfg.TelemetryProtocol)
+		return nil, fmt.Errorf("invalid OTEL_EXPORTER_OTLP_PROTOCOL value %s. Only grpc and http/protobuf are supported", cfg.TelemetryProtocol)
 	}
 }

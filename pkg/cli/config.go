@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"get.porter.sh/porter/pkg/config"
-	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
@@ -82,11 +81,11 @@ func getViperValue(flags *pflag.FlagSet, f *pflag.Flag) interface{} {
 	case "stringArray":
 		out, err = flags.GetStringArray(f.Name)
 	default:
-		panic(errors.Errorf("unsupported type for conversion between flag %s and viper configuration: %T", f.Name, flagType))
+		panic(fmt.Errorf("unsupported type for conversion between flag %s and viper configuration: %T", f.Name, flagType))
 	}
 
 	if err != nil {
-		panic(errors.Wrapf(err, "error parsing config key %s as %T", f.Name, flagType))
+		panic(fmt.Errorf("error parsing config key %s as %T: %w", f.Name, flagType, err))
 	}
 
 	return out

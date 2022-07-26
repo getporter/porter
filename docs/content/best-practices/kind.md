@@ -55,7 +55,7 @@ To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'.
 
 Porter bundles that access a Kubernetes cluster when running can now be installed as normal, once the [Credential Set](../credentials) is generated/edited to use the KinD kubeconfig.
 
-Here we'll generate credentials and install the [MySQL bundle](https://porter.sh/src/build/testdata/bundles/mysql):
+Here we'll generate credentials and install the [MySQL bundle](/src/build/testdata/bundles/mysql):
 
 ```console
  $ porter credentials generate

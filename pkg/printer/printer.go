@@ -1,9 +1,8 @@
 package printer
 
 import (
+	"fmt"
 	"strings"
-
-	"github.com/pkg/errors"
 )
 
 type Format string
@@ -33,8 +32,12 @@ func (p *PrintOptions) ParseFormat() error {
 	case FormatJson, FormatYaml, FormatPlaintext:
 		p.Format = format
 		return nil
+	case "":
+		// This helps us out in our unit tests, defaulting the output to plaintext
+		p.Format = FormatPlaintext
+		return nil
 	default:
-		return errors.Errorf("invalid format: %s", p.RawFormat)
+		return fmt.Errorf("invalid format: %s", p.RawFormat)
 	}
 }
 
@@ -51,7 +54,7 @@ func (p *PrintOptions) Validate(defaultFormat Format, allowedFormats []Format) e
 			return nil
 		}
 	}
-	return errors.Errorf("invalid format: %s", p.RawFormat)
+	return fmt.Errorf("invalid format: %s", p.RawFormat)
 }
 
 type PrintOptions struct {

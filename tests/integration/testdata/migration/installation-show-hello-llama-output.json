@@ -1,0 +1,33 @@
+{
+  "schemaType": "Installation",
+  "schemaVersion": "1.0.2",
+  "id": "01G4XDHVAQ6B7ZPMC3WM9S5B8C",
+  "name": "hello-llama",
+  "namespace": "migrated",
+  "bundle": {},
+  "status": {
+    "runId": "01G4XDMPF2FAV54V4TKQ4382RB",
+    "action": "upgrade",
+    "resultId": "01G4XDMQQ9NNX2DYJB433Y4ZK0",
+    "resultStatus": "succeeded",
+    "created": "2022-06-06T16:08:24.02396-05:00",
+    "modified": "2022-06-06T16:09:57.346798-05:00",
+    "installed": "2022-06-06T16:08:32.695559-05:00",
+    "uninstalled": null,
+    "bundleReference": "",
+    "bundleVersion": "0.1.1",
+    "bundleDigest": ""
+  },
+  "_calculated": {
+    "resolvedParameters": [
+      {
+        "name": "name",
+        "type": "string",
+        "sensitive": false,
+        "value": "big red"
+      }
+    ],
+    "displayInstallationState": "installed",
+    "displayInstallationStatus": "succeeded"
+  }
+}

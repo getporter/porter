@@ -3,6 +3,7 @@ package portercontext
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -16,7 +17,6 @@ import (
 	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/test"
 	"github.com/carolynvs/aferox"
-	"github.com/pkg/errors"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap/zapcore"
@@ -118,6 +118,7 @@ func (c *TestContext) UseFilesystem() (testDir string, homeDir string) {
 	testDir = c.GetTestDefinitionDirectory()
 	c.FileSystem = aferox.NewAferox(testDir, afero.NewOsFs())
 	c.defaultNewCommand()
+	c.DisableUmask()
 
 	return testDir, homeDir
 }
@@ -142,12 +143,12 @@ func (c *TestContext) AddTestFileFromRoot(src, dest string) []byte {
 // mode is optional and only the first one passed is used.
 func (c *TestContext) AddTestFile(src, dest string, mode ...os.FileMode) []byte {
 	if strings.Contains(src, "..") {
-		c.T.Fatal(errors.New("Use AddTestFileFromRoot when referencing a test file in a different directory than the test"))
+		c.T.Fatal(errors.New("use AddTestFileFromRoot when referencing a test file in a different directory than the test"))
 	}
 
 	data, err := ioutil.ReadFile(src)
 	if err != nil {
-		c.T.Fatal(errors.Wrapf(err, "error reading file %s from host filesystem", src))
+		c.T.Fatal(fmt.Errorf("error reading file %s from host filesystem: %w", src, err))
 	}
 
 	var perms os.FileMode
@@ -164,7 +165,7 @@ func (c *TestContext) AddTestFile(src, dest string, mode ...os.FileMode) []byte 
 
 	err = c.FileSystem.WriteFile(dest, data, perms)
 	if err != nil {
-		c.T.Fatal(errors.Wrapf(err, "error writing file %s to test filesystem", dest))
+		c.T.Fatal(fmt.Errorf("error writing file %s to test filesystem: %w", dest, err))
 	}
 
 	return data
@@ -184,7 +185,7 @@ func (c *TestContext) AddTestDirectoryFromRoot(srcDir, destDir string) {
 // mode is optional and should only be specified once
 func (c *TestContext) AddTestDirectory(srcDir, destDir string, mode ...os.FileMode) {
 	if strings.Contains(srcDir, "..") {
-		c.T.Fatal(errors.New("Use AddTestDirectoryFromRoot when referencing a test directory in a different directory than the test"))
+		c.T.Fatal(errors.New("use AddTestDirectoryFromRoot when referencing a test directory in a different directory than the test"))
 	}
 
 	err := filepath.Walk(srcDir, func(path string, info os.FileInfo, err error) error {
@@ -257,12 +258,12 @@ func (c *TestContext) AddTestDriver(src, name string) string {
 
 // GetOutput returns all text printed to stdout.
 func (c *TestContext) GetOutput() string {
-	return string(c.capturedOut.Bytes())
+	return c.capturedOut.String()
 }
 
 // GetError returns all text printed to stderr.
 func (c *TestContext) GetError() string {
-	return string(c.capturedErr.Bytes())
+	return c.capturedErr.String()
 }
 
 func (c *TestContext) ClearOutputs() {

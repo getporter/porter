@@ -1,9 +1,12 @@
 package porter
 
 import (
+	"context"
+	"fmt"
+
 	"get.porter.sh/porter/pkg/cache"
 	cnabtooci "get.porter.sh/porter/pkg/cnab/cnab-to-oci"
-	"github.com/pkg/errors"
+	"get.porter.sh/porter/pkg/tracing"
 )
 
 type BundleResolver struct {
@@ -13,11 +16,13 @@ type BundleResolver struct {
 
 // Resolves a bundle from the cache, or pulls it and caches it
 // Returns the location of the bundle or an error
-func (r *BundleResolver) Resolve(opts BundlePullOptions) (cache.CachedBundle, error) {
+func (r *BundleResolver) Resolve(ctx context.Context, opts BundlePullOptions) (cache.CachedBundle, error) {
+	log := tracing.LoggerFromContext(ctx)
+
 	if !opts.Force {
 		cachedBundle, ok, err := r.Cache.FindBundle(opts.GetReference())
 		if err != nil {
-			return cache.CachedBundle{}, errors.Wrapf(err, "unable to load bundle %s from cache", opts.Reference)
+			return cache.CachedBundle{}, log.Error(fmt.Errorf("unable to load bundle %s from cache: %w", opts.Reference, err))
 		}
 		// If we found the bundle, return the path to the bundle.json
 		if ok {
@@ -25,7 +30,7 @@ func (r *BundleResolver) Resolve(opts BundlePullOptions) (cache.CachedBundle, er
 		}
 	}
 
-	bundleRef, err := r.Registry.PullBundle(opts.GetReference(), opts.InsecureRegistry)
+	bundleRef, err := r.Registry.PullBundle(ctx, opts.GetReference(), opts.InsecureRegistry)
 	if err != nil {
 		return cache.CachedBundle{}, err
 	}

@@ -103,7 +103,7 @@ func TestPorter_PrintBundleOutputs(t *testing.T) {
 				},
 			}
 
-			extB := cnab.ExtendedBundle{b}
+			extB := cnab.NewBundle(b)
 			i := p.TestInstallations.CreateInstallation(storage.NewInstallation("", "test"), func(i *storage.Installation) {
 				i.Parameters.Parameters = p.SanitizeParameters(i.Parameters.Parameters, i.ID, extB)
 			})
@@ -118,7 +118,7 @@ func TestPorter_PrintBundleOutputs(t *testing.T) {
 			p.CreateOutput(r.NewOutput("porter-state", []byte("porter-state.tgz contents")), extB)
 
 			opts := OutputListOptions{
-				sharedOptions: sharedOptions{
+				installationOptions: installationOptions{
 					Name: "test",
 				},
 				PrintOptions: printer.PrintOptions{

@@ -3,13 +3,13 @@ package encoding
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"path/filepath"
 	"strings"
 
 	"get.porter.sh/porter/pkg"
 	"github.com/carolynvs/aferox"
 	"github.com/pelletier/go-toml"
-	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
 )
 
@@ -63,7 +63,11 @@ func Marshal(format string, in interface{}) (data []byte, err error) {
 		return nil, newUnsupportedFormatError(format)
 	}
 
-	return data, errors.Wrapf(err, "error marshaling to %s", format)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling to %s: %w", format, err)
+	}
+
+	return data, nil
 }
 
 // Unmarshal from the specified file into a struct.
@@ -71,7 +75,7 @@ func Marshal(format string, in interface{}) (data []byte, err error) {
 func UnmarshalFile(fs aferox.Aferox, path string, out interface{}) error {
 	data, err := fs.ReadFile(path)
 	if err != nil {
-		return errors.Wrapf(err, "error reading file %s", path)
+		return fmt.Errorf("error reading file %s: %w", path, err)
 	}
 	format := strings.TrimPrefix(filepath.Ext(path), ".")
 	return Unmarshal(format, data, out)
@@ -108,5 +112,5 @@ func Unmarshal(format string, data []byte, out interface{}) error {
 }
 
 func newUnsupportedFormatError(format string) error {
-	return errors.Errorf("unsupported format %s. Supported formats are: yaml, json and toml.", format)
+	return fmt.Errorf("unsupported format %s. Supported formats are: yaml, json and toml", format)
 }

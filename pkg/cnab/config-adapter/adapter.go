@@ -7,10 +7,13 @@ import (
 	"strings"
 
 	"get.porter.sh/porter/pkg/cnab"
+	depsv1 "get.porter.sh/porter/pkg/cnab/dependencies/v1"
 	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/experimental"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/mixin"
 	"get.porter.sh/porter/pkg/tracing"
+	"github.com/Masterminds/semver/v3"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
 )
@@ -48,14 +51,14 @@ func (c *ManifestConverter) ToBundle(ctx context.Context) (cnab.ExtendedBundle, 
 		return cnab.ExtendedBundle{}, span.Error(err)
 	}
 
-	b := cnab.ExtendedBundle{bundle.Bundle{
+	b := cnab.NewBundle(bundle.Bundle{
 		SchemaVersion: SchemaVersion,
 		Name:          c.Manifest.Name,
 		Description:   c.Manifest.Description,
 		Version:       c.Manifest.Version,
 		Maintainers:   c.generateBundleMaintainers(),
 		Custom:        make(map[string]interface{}, 1),
-	}}
+	})
 	image := bundle.InvocationImage{
 		BaseImage: bundle.BaseImage{
 			Image:     c.Manifest.Image,
@@ -71,7 +74,11 @@ func (c *ManifestConverter) ToBundle(ctx context.Context) (cnab.ExtendedBundle, 
 	b.Outputs = c.generateBundleOutputs(ctx, &b.Definitions)
 	b.Credentials = c.generateBundleCredentials()
 	b.Images = c.generateBundleImages()
-	b.Custom = c.generateCustomExtensions(&b)
+	custom, err := c.generateCustomExtensions(&b)
+	if err != nil {
+		return cnab.ExtendedBundle{}, err
+	}
+	b.Custom = custom
 	b.RequiredExtensions = c.generateRequiredExtensions(b)
 
 	b.Custom[config.CustomPorterKey] = stamp
@@ -310,7 +317,7 @@ func (c *ManifestConverter) buildDefaultPorterParameters() []manifest.ParameterD
 				EnvironmentVariable: "PORTER_DEBUG",
 			},
 			Schema: definition.Schema{
-				ID:          "https://porter.sh/generated-bundle/#porter-debug",
+				ID:          "https://getporter.org/generated-bundle/#porter-debug",
 				Description: "Print debug information from Porter when executing the bundle",
 				Type:        "boolean",
 				Default:     false,
@@ -324,7 +331,7 @@ func (c *ManifestConverter) buildDefaultPorterParameters() []manifest.ParameterD
 				Path: "/porter/state.tgz",
 			},
 			Schema: definition.Schema{
-				ID:              "https://porter.sh/generated-bundle/#porter-state",
+				ID:              "https://getporter.org/generated-bundle/#porter-state",
 				Description:     "Supports persisting state for bundles. Porter internal parameter that should not be set manually.",
 				Type:            "string",
 				ContentEncoding: "base64",
@@ -341,7 +348,7 @@ func (c *ManifestConverter) buildDefaultPorterOutputs() []manifest.OutputDefinit
 			IsState: true,
 			Path:    "/cnab/app/outputs/porter-state.tgz",
 			Schema: definition.Schema{
-				ID:              "https://porter.sh/generated-bundle/#porter-state",
+				ID:              "https://getporter.org/generated-bundle/#porter-state",
 				Description:     "Supports persisting state for bundles. Porter internal parameter that should not be set manually.",
 				Type:            "string",
 				ContentEncoding: "base64",
@@ -401,32 +408,54 @@ func (c *ManifestConverter) generateBundleImages() map[string]bundle.Image {
 	return images
 }
 
-func (c *ManifestConverter) generateDependencies() *cnab.Dependencies {
-
+func (c *ManifestConverter) generateDependencies() (interface{}, string, error) {
 	if len(c.Manifest.Dependencies.RequiredDependencies) == 0 {
-		return nil
+		return nil, "", nil
 	}
 
-	deps := &cnab.Dependencies{
+	// Check if they are using v1 of the dependencies spec or v2
+	if c.config.IsFeatureEnabled(experimental.FlagDependenciesV2) {
+		panic("the dependencies-v2 experimental flag was specified but is not yet implemented")
+	}
+
+	deps, err := c.generateDependenciesV1()
+	if err != nil {
+		return nil, "", err
+	}
+	return deps, cnab.DependenciesV1ExtensionKey, nil
+}
+
+func (c *ManifestConverter) generateDependenciesV1() (*depsv1.Dependencies, error) {
+	if len(c.Manifest.Dependencies.RequiredDependencies) == 0 {
+		return nil, nil
+	}
+
+	deps := &depsv1.Dependencies{
 		Sequence: make([]string, 0, len(c.Manifest.Dependencies.RequiredDependencies)),
-		Requires: make(map[string]cnab.Dependency, len(c.Manifest.Dependencies.RequiredDependencies)),
+		Requires: make(map[string]depsv1.Dependency, len(c.Manifest.Dependencies.RequiredDependencies)),
 	}
 
 	for _, dep := range c.Manifest.Dependencies.RequiredDependencies {
-		dependencyRef := cnab.Dependency{
+		dependencyRef := depsv1.Dependency{
 			Name:   dep.Name,
 			Bundle: dep.Bundle.Reference,
 		}
 		if len(dep.Bundle.Version) > 0 {
-			dependencyRef.Version = &cnab.DependencyVersion{
+			dependencyRef.Version = &depsv1.DependencyVersion{
 				Ranges: []string{dep.Bundle.Version},
+			}
+
+			// If we can detect that prereleases are used in the version, then set AllowPrereleases to true
+			v, err := semver.NewVersion(dep.Bundle.Version)
+			if err == nil {
+				dependencyRef.Version.AllowPrereleases = v.Prerelease() != ""
 			}
 		}
 		deps.Sequence = append(deps.Sequence, dep.Name)
 		deps.Requires[dep.Name] = dependencyRef
 	}
 
-	return deps
+	return deps, nil
 }
 
 func (c *ManifestConverter) generateParameterSources(b *cnab.ExtendedBundle) cnab.ParameterSources {
@@ -503,9 +532,8 @@ func (c *ManifestConverter) generateOutputWiringParameter(b cnab.ExtendedBundle,
 	// and identify the definition as a porter internal structure
 	outputDefName := b.Outputs[outputName].Definition
 	outputDef := b.Definitions[outputDefName]
-	var wiringDef definition.Schema
-	wiringDef = *outputDef
-	wiringDef.ID = "https://porter.sh/generated-bundle/#porter-parameter-source-definition"
+	wiringDef := *outputDef
+	wiringDef.ID = "https://getporter.org/generated-bundle/#porter-parameter-source-definition"
 	wiringDef.Comment = cnab.PorterInternal
 
 	return wiringName, wiringParam, wiringDef
@@ -520,7 +548,7 @@ func (c *ManifestConverter) generateDependencyOutputWiringParameter(reference ma
 	wiringParam := c.generateWiringParameter(wiringName, paramDesc)
 
 	wiringDef := definition.Schema{
-		ID:      "https://porter.sh/generated-bundle/#porter-parameter-source-definition",
+		ID:      "https://getporter.org/generated-bundle/#porter-parameter-source-definition",
 		Comment: cnab.PorterInternal,
 		// any type, the dependency's bundle definition is not available at buildtime
 	}
@@ -577,7 +605,7 @@ func toFloat(v float64) *float64 {
 	return &v
 }
 
-func (c *ManifestConverter) generateCustomExtensions(b *cnab.ExtendedBundle) map[string]interface{} {
+func (c *ManifestConverter) generateCustomExtensions(b *cnab.ExtendedBundle) (map[string]interface{}, error) {
 	customExtensions := map[string]interface{}{
 		cnab.FileParameterExtensionKey: struct{}{},
 	}
@@ -588,9 +616,12 @@ func (c *ManifestConverter) generateCustomExtensions(b *cnab.ExtendedBundle) map
 	}
 
 	// Add the dependency extension
-	deps := c.generateDependencies()
-	if deps != nil && len(deps.Requires) > 0 {
-		customExtensions[cnab.DependenciesExtensionKey] = deps
+	deps, depsExtKey, err := c.generateDependencies()
+	if err != nil {
+		return nil, err
+	}
+	if depsExtKey != "" {
+		customExtensions[depsExtKey] = deps
 	}
 
 	// Add the parameter sources extension
@@ -604,15 +635,15 @@ func (c *ManifestConverter) generateCustomExtensions(b *cnab.ExtendedBundle) map
 		customExtensions[lookupExtensionKey(ext.Name)] = ext.Config
 	}
 
-	return customExtensions
+	return customExtensions, nil
 }
 
 func (c *ManifestConverter) generateRequiredExtensions(b cnab.ExtendedBundle) []string {
 	requiredExtensions := []string{cnab.FileParameterExtensionKey}
 
 	// Add the appropriate dependencies key if applicable
-	if b.HasDependencies() {
-		requiredExtensions = append(requiredExtensions, cnab.DependenciesExtensionKey)
+	if b.HasDependenciesV1() {
+		requiredExtensions = append(requiredExtensions, cnab.DependenciesV1ExtensionKey)
 	}
 
 	// Add the appropriate parameter sources key if applicable

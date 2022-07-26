@@ -2,10 +2,10 @@ package storage
 
 import (
 	"context"
+	"fmt"
 
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/secrets"
-	"github.com/pkg/errors"
 )
 
 // Sanitizer identifies sensitive data in a database record, and replaces it with
@@ -64,7 +64,7 @@ func (s *Sanitizer) CleanParameters(ctx context.Context, params []secrets.Strate
 			cleaned := sanitizedParam(strategy, id)
 			err := s.secrets.Create(ctx, cleaned.Source.Key, cleaned.Source.Value, cleaned.Value)
 			if err != nil {
-				return nil, errors.Wrap(err, "failed to save sensitive param to secrete store")
+				return nil, fmt.Errorf("failed to save sensitive param to secrete store: %w", err)
 			}
 			strategy = cleaned
 		}
@@ -167,7 +167,7 @@ func (s *Sanitizer) RestoreOutputs(ctx context.Context, o Outputs) (Outputs, err
 	for _, ot := range o.Value() {
 		r, err := s.RestoreOutput(ctx, ot)
 		if err != nil {
-			return o, errors.WithMessagef(err, "failed to resolve output %q using key %q", ot.Name, ot.Key)
+			return o, fmt.Errorf("failed to resolve output %q using key %q: %w", ot.Name, ot.Key, err)
 		}
 		resolved = append(resolved, r)
 	}

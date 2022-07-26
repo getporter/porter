@@ -16,15 +16,15 @@ like parameters, credentials, outputs and custom actions available.
 
 
 ```
-porter inspect [flags]
+porter inspect REFERENCE [flags]
 ```
 
 ### Examples
 
 ```
   porter inspect
-  porter inspect --reference ghcr.io/getporter/examples/porter-hello:v0.2.0
-  porter inspect --reference localhost:5000/ghcr.io/getporter/examples/porter-hello:v0.2.0 --insecure-registry --force
+  porter inspect ghcr.io/getporter/examples/porter-hello:v0.2.0
+  porter inspect localhost:5000/ghcr.io/getporter/examples/porter-hello:v0.2.0 --insecure-registry --force
   porter inspect --file another/porter.yaml
   porter inspect --cnab-file some/bundle.json
 		  
@@ -47,7 +47,7 @@ porter inspect [flags]
 ```
       --debug                  Enable debug logging
       --debug-plugins          Enable plugin debug logging
-      --experimental strings   Comma separated list of experimental features to enable. See https://porter.sh/configuration/#experimental-feature-flags for available feature flags.
+      --experimental strings   Comma separated list of experimental features to enable. See https://getporter.org/configuration/#experimental-feature-flags for available feature flags.
 ```
 
 ### SEE ALSO
@@ -56,6 +56,6 @@ porter inspect [flags]
 
 Most commands require a Docker daemon, either local or remote.
 
-Try our QuickStart https://porter.sh/quickstart to learn how to use Porter.
+Try our QuickStart https://getporter.org/quickstart to learn how to use Porter.
 
 

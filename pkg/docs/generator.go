@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"get.porter.sh/porter/pkg/portercontext"
-	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
 )
@@ -27,10 +26,10 @@ func (o *DocsOptions) Validate(cxt *portercontext.Context) error {
 
 	exists, err := cxt.FileSystem.Exists(o.Destination)
 	if err != nil {
-		return errors.Wrapf(err, "error checking if --destination exists: %q", o.Destination)
+		return fmt.Errorf("error checking if --destination exists: %q: %w", o.Destination, err)
 	}
 	if !exists {
-		return errors.Errorf("--destination %q doesn't exist", o.Destination)
+		return fmt.Errorf("--destination %q doesn't exist", o.Destination)
 	}
 
 	return nil
@@ -41,20 +40,20 @@ func GenerateCliDocs(opts *DocsOptions) error {
 
 	err := doc.GenMarkdownTreeCustom(opts.RootCommand, opts.Destination, docfileHandler(), doclinkHandler())
 	if err != nil {
-		return errors.Wrap(err, "error generating the markdown documentation from the cli")
+		return fmt.Errorf("error generating the markdown documentation from the cli: %w", err)
 	}
 
 	// Strip off the leading porter_ from every file
 	items, err := filepath.Glob(filepath.Join(opts.Destination, "porter_*.md"))
 	if err != nil {
-		return errors.Wrapf(err, "unable to list generated cli docs directory %q", opts.Destination)
+		return fmt.Errorf("unable to list generated cli docs directory %q: %w", opts.Destination, err)
 	}
 
 	for _, i := range items {
 		inew := strings.Replace(i, "porter_", "", -1)
 		err := os.Rename(i, inew)
 		if err != nil {
-			return errors.Wrapf(err, "unable to rename markdown file")
+			return fmt.Errorf("unable to rename markdown file: %w", err)
 		}
 	}
 	return nil

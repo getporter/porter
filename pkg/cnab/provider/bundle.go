@@ -1,8 +1,9 @@
 package cnabprovider
 
 import (
+	"fmt"
+
 	"get.porter.sh/porter/pkg/cnab"
-	"github.com/pkg/errors"
 )
 
 func (r *Runtime) LoadBundle(bundleFile string) (cnab.ExtendedBundle, error) {
@@ -21,7 +22,7 @@ func (r *Runtime) ProcessBundleFromFile(bundleFile string) (cnab.ExtendedBundle,
 func (r *Runtime) ProcessBundle(b cnab.ExtendedBundle) (cnab.ExtendedBundle, error) {
 	err := b.Validate()
 	if err != nil {
-		return b, errors.Wrap(err, "invalid bundle")
+		return b, fmt.Errorf("invalid bundle: %w", err)
 	}
 
 	return b, r.ProcessRequiredExtensions(b)

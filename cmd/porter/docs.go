@@ -12,7 +12,7 @@ func buildDocsCommand(p *porter.Porter) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:    "docs",
 		Short:  "Generate markdown docs",
-		Long:   "Generate markdown docs for https://porter.sh/cli",
+		Long:   "Generate markdown docs for https://getporter.org/cli",
 		Hidden: true,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			opts.RootCommand = cmd.Root()

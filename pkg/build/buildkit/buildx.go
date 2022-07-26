@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -28,7 +27,6 @@ import (
 	dockerclient "github.com/docker/docker/client"
 	"github.com/moby/buildkit/session"
 	"github.com/moby/buildkit/session/auth/authprovider"
-	"github.com/pkg/errors"
 	"go.opentelemetry.io/otel/attribute"
 )
 
@@ -80,7 +78,7 @@ func (b *Builder) BuildInvocationImage(ctx context.Context, manifest *manifest.M
 
 	d, err := driver.GetDriver(ctx, "porter-driver", nil, cli.Client(), imageopt.Auth, nil, nil, nil, nil, nil, b.Getwd())
 	if err != nil {
-		return log.Error(errors.Wrapf(err, "error loading buildx driver"))
+		return log.Error(fmt.Errorf("error loading buildx driver: %w", err))
 	}
 
 	drivers := []buildx.DriverInfo{
@@ -97,13 +95,13 @@ func (b *Builder) BuildInvocationImage(ctx context.Context, manifest *manifest.M
 	session := []session.Attachable{authprovider.NewDockerAuthProvider(b.Err)}
 	ssh, err := buildflags.ParseSSHSpecs(opts.SSH)
 	if err != nil {
-		return errors.Wrap(err, "error parsing the --ssh flags")
+		return fmt.Errorf("error parsing the --ssh flags: %w", err)
 	}
 	session = append(session, ssh)
 
 	secrets, err := buildflags.ParseSecretSpecs(opts.Secrets)
 	if err != nil {
-		return errors.Wrap(err, "error parsing the --secret flags")
+		return fmt.Errorf("error parsing the --secret flags: %w", err)
 	}
 	session = append(session, secrets)
 
@@ -111,8 +109,7 @@ func (b *Builder) BuildInvocationImage(ctx context.Context, manifest *manifest.M
 	parseBuildArgs(opts.BuildArgs, args)
 	args["BUNDLE_DIR"] = build.BUNDLE_DIR
 
-	convertedCustomInput := make(map[string]string)
-	convertedCustomInput, err = flattenMap(manifest.Custom)
+	convertedCustomInput, err := flattenMap(manifest.Custom)
 	if err != nil {
 		return log.Error(err)
 	}
@@ -135,24 +132,21 @@ func (b *Builder) BuildInvocationImage(ctx context.Context, manifest *manifest.M
 		},
 	}
 
-	out := ioutil.Discard
-	mode := progress.PrinterModeQuiet
-	if b.IsVerbose() {
-		mode = progress.PrinterModeAuto // Auto writes to stderr regardless of what you pass in
-
-		ctx, log = log.StartSpanWithName("buildkit", attribute.String("source", "porter.build.buildkit"))
-		defer log.EndSpan()
-		out = unstructuredLogger{log}
-	}
-
+	mode := progress.PrinterModeAuto // Auto writes to stderr regardless of what you pass in
+	out := unstructuredLogger{log}
 	printer := progress.NewPrinter(ctx, out, os.Stderr, mode)
 	_, buildErr := buildx.Build(ctx, drivers, buildxOpts, dockerToBuildx{cli}, confutil.ConfigDir(cli), printer)
 	printErr := printer.Wait()
 
-	if buildErr == nil {
-		return log.Error(errors.Wrapf(printErr, "error with docker printer"))
+	if buildErr == nil && printErr != nil {
+		return log.Error(fmt.Errorf("error with docker printer: %w", printErr))
 	}
-	return log.Error(errors.Wrapf(buildErr, "error building docker image"))
+
+	if buildErr != nil {
+		return log.Error(fmt.Errorf("error building docker image: %w", buildErr))
+	}
+
+	return nil
 }
 
 func parseBuildArgs(unparsed []string, parsed map[string]string) {
@@ -196,7 +190,7 @@ func (b *Builder) TagInvocationImage(ctx context.Context, origTag, newTag string
 	}
 
 	if err := cli.Client().ImageTag(ctx, origTag, newTag); err != nil {
-		return log.Error(errors.Wrapf(err, "could not tag image %s with value %s", origTag, newTag))
+		return log.Error(fmt.Errorf("could not tag image %s with value %s: %w", origTag, newTag, err))
 	}
 	return nil
 }

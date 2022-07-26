@@ -1,0 +1,10 @@
+# reviewers can comment with /lgtm, a label "lgtm" is put on the issue
+reviewers:
+- vinozzz
+
+# approvers can comment with /approve, the bot leaves an approve code review, allowing it to be merged
+approvers:
+- carolynvs
+- vinozzz
+
+# Once a PR has the lgtm label, and a "green" code review (from /approve), a cron job will notice the PR and merge it

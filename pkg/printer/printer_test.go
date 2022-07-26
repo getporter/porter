@@ -3,30 +3,36 @@ package printer
 import (
 	"testing"
 
+	"get.porter.sh/porter/tests"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestParseFormat(t *testing.T) {
-	testcases := map[string]bool{
-		"plaintext": true,
-		"json":      true,
-		"human":     false,
+	testcases := []struct {
+		rawFormat  string
+		wantFormat Format
+		wantErr    string
+	}{
+		{rawFormat: "plaintext", wantFormat: FormatPlaintext},
+		{rawFormat: "json", wantFormat: FormatJson},
+		{rawFormat: "yaml", wantFormat: FormatYaml},
+		{rawFormat: "", wantFormat: FormatPlaintext},
+		{rawFormat: "human", wantErr: "invalid format"},
 	}
 
-	for name, valid := range testcases {
-		t.Run(name, func(t *testing.T) {
+	for _, tc := range testcases {
+		t.Run(tc.rawFormat, func(t *testing.T) {
 			opts := PrintOptions{
-				RawFormat: name,
+				RawFormat: tc.rawFormat,
 			}
 
 			err := opts.ParseFormat()
-			if valid {
-				require.Nil(t, err)
-				require.Equal(t, name, string(opts.Format))
+			if tc.wantErr == "" {
+				require.NoError(t, err)
+				require.Equal(t, tc.wantFormat, opts.Format, "incorrect format was returned by ParseFormat")
 			} else {
-				require.NotNil(t, err)
-				require.Contains(t, err.Error(), "invalid format")
+				tests.RequireErrorContains(t, err, tc.wantErr, "unexpected error returned by ParseFormat")
 			}
 		})
 	}

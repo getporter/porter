@@ -5,12 +5,35 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg/cnab"
+	depsv1 "get.porter.sh/porter/pkg/cnab/dependencies/v1"
+	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/test"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestExplain_ValidateReference(t *testing.T) {
+	const ref = "ghcr.io/getporter/examples/porter-hello:v0.2.0"
+	t.Run("--reference specified", func(t *testing.T) {
+		porterCtx := portercontext.NewTestContext(t)
+		opts := ExplainOpts{}
+		opts.Reference = ref
+
+		err := opts.Validate(nil, porterCtx.Context)
+		require.NoError(t, err, "Validate failed")
+		assert.Equal(t, ref, opts.Reference)
+	})
+	t.Run("reference positional argument specified", func(t *testing.T) {
+		porterCtx := portercontext.NewTestContext(t)
+		opts := ExplainOpts{}
+
+		err := opts.Validate([]string{ref}, porterCtx.Context)
+		require.NoError(t, err, "Validate failed")
+		assert.Equal(t, ref, opts.Reference)
+	})
+}
 
 func TestExplain_validateBadFormat(t *testing.T) {
 	p := NewTestPorter(t)
@@ -29,6 +52,7 @@ func TestExplain_generateTable(t *testing.T) {
 
 	p.TestConfig.TestContext.AddTestFile("testdata/explain/params-bundle.json", "params-bundle.json")
 	b, err := p.CNAB.LoadBundle("params-bundle.json")
+	require.NoError(t, err)
 
 	pb, err := generatePrintable(b, "")
 	require.NoError(t, err)
@@ -51,6 +75,7 @@ func TestExplain_generateTableRequireDockerHostAccess(t *testing.T) {
 
 	p.TestConfig.TestContext.AddTestFile("testdata/explain/bundle-docker.json", "bundle-docker.json")
 	b, err := p.CNAB.LoadBundle("bundle-docker.json")
+	require.NoError(t, err)
 
 	pb, err := generatePrintable(b, "")
 	require.NoError(t, err)
@@ -72,6 +97,7 @@ func TestExplain_generateJSON(t *testing.T) {
 
 	p.TestConfig.TestContext.AddTestFile("testdata/explain/params-bundle.json", "params-bundle.json")
 	b, err := p.CNAB.LoadBundle("params-bundle.json")
+	require.NoError(t, err)
 
 	pb, err := generatePrintable(b, "")
 	require.NoError(t, err)
@@ -93,6 +119,7 @@ func TestExplain_generateYAML(t *testing.T) {
 
 	p.TestConfig.TestContext.AddTestFile("testdata/explain/params-bundle.json", "params-bundle.json")
 	b, err := p.CNAB.LoadBundle("params-bundle.json")
+	require.NoError(t, err)
 
 	pb, err := generatePrintable(b, "")
 	require.NoError(t, err)
@@ -110,7 +137,7 @@ func TestExplain_generateYAML(t *testing.T) {
 }
 
 func TestExplain_generatePrintableBundleParams(t *testing.T) {
-	bun := cnab.ExtendedBundle{bundle.Bundle{
+	bun := cnab.NewBundle(bundle.Bundle{
 		RequiredExtensions: []string{
 			cnab.FileParameterExtensionKey,
 		},
@@ -140,7 +167,7 @@ func TestExplain_generatePrintableBundleParams(t *testing.T) {
 				"commit":   "3b7c85ba",
 			},
 		},
-	}}
+	})
 
 	pb, err := generatePrintable(bun, "")
 	require.NoError(t, err)
@@ -160,7 +187,7 @@ func TestExplain_generatePrintableBundleParams(t *testing.T) {
 }
 
 func TestExplain_generatePrintableBundleParamsWithAction(t *testing.T) {
-	bun := cnab.ExtendedBundle{bundle.Bundle{
+	bun := cnab.NewBundle(bundle.Bundle{
 		RequiredExtensions: []string{
 			cnab.FileParameterExtensionKey,
 		},
@@ -191,7 +218,7 @@ func TestExplain_generatePrintableBundleParamsWithAction(t *testing.T) {
 				"commit":   "3b7c85ba",
 			},
 		},
-	}}
+	})
 
 	t.Run("action applies", func(t *testing.T) {
 		pb, err := generatePrintable(bun, "install")
@@ -233,7 +260,7 @@ func TestExplain_generatePrintableBundleParamsWithAction(t *testing.T) {
 }
 
 func TestExplain_generatePrintableBundleOutputs(t *testing.T) {
-	bun := cnab.ExtendedBundle{bundle.Bundle{
+	bun := cnab.NewBundle(bundle.Bundle{
 		Definitions: definition.Definitions{
 			"string": &definition.Schema{
 				Type:    "string",
@@ -256,7 +283,7 @@ func TestExplain_generatePrintableBundleOutputs(t *testing.T) {
 				"commit":   "3b7c85ba",
 			},
 		},
-	}}
+	})
 
 	pb, err := generatePrintable(bun, "")
 	require.NoError(t, err)
@@ -288,7 +315,7 @@ func TestExplain_generatePrintableBundleOutputs(t *testing.T) {
 }
 
 func TestExplain_generatePrintableBundleCreds(t *testing.T) {
-	bun := cnab.ExtendedBundle{bundle.Bundle{
+	bun := cnab.NewBundle(bundle.Bundle{
 		Credentials: map[string]bundle.Credential{
 			"kubeconfig": {
 				Required:    true,
@@ -306,7 +333,7 @@ func TestExplain_generatePrintableBundleCreds(t *testing.T) {
 				"commit":   "3b7c85ba",
 			},
 		},
-	}}
+	})
 
 	t.Run("action applies", func(t *testing.T) {
 		pb, err := generatePrintable(bun, "install")
@@ -348,7 +375,7 @@ func TestExplain_generatePrintableBundleCreds(t *testing.T) {
 }
 
 func TestExplain_generatePrintableBundlePorterVersion(t *testing.T) {
-	bun := cnab.ExtendedBundle{bundle.Bundle{
+	bun := cnab.NewBundle(bundle.Bundle{
 		Definitions: definition.Definitions{
 			"string": &definition.Schema{
 				Type:    "string",
@@ -362,7 +389,7 @@ func TestExplain_generatePrintableBundlePorterVersion(t *testing.T) {
 				"commit":   "3b7c85ba",
 			},
 		},
-	}}
+	})
 
 	pb, err := generatePrintable(bun, "")
 	assert.NoError(t, err)
@@ -371,14 +398,14 @@ func TestExplain_generatePrintableBundlePorterVersion(t *testing.T) {
 }
 
 func TestExplain_generatePrintableBundlePorterVersionNonPorterBundle(t *testing.T) {
-	bun := cnab.ExtendedBundle{bundle.Bundle{
+	bun := cnab.NewBundle(bundle.Bundle{
 		Definitions: definition.Definitions{
 			"string": &definition.Schema{
 				Type:    "string",
 				Default: "clippy",
 			},
 		},
-	}}
+	})
 
 	pb, err := generatePrintable(bun, "")
 	assert.NoError(t, err)
@@ -387,22 +414,21 @@ func TestExplain_generatePrintableBundlePorterVersionNonPorterBundle(t *testing.
 }
 
 func TestExplain_generatePrintableBundleDependencies(t *testing.T) {
-
 	sequenceMock := []string{"nginx", "storage", "mysql"}
-	bun := cnab.ExtendedBundle{bundle.Bundle{
+	bun := cnab.NewBundle(bundle.Bundle{
 		Custom: map[string]interface{}{
-			cnab.DependenciesExtensionKey: cnab.Dependencies{
+			cnab.DependenciesV1ExtensionKey: depsv1.Dependencies{
 				Sequence: sequenceMock,
-				Requires: map[string]cnab.Dependency{
-					"mysql": cnab.Dependency{
+				Requires: map[string]depsv1.Dependency{
+					"mysql": {
 						Name:   "mysql",
 						Bundle: "somecloud/mysql:0.1.0",
 					},
-					"storage": cnab.Dependency{
+					"storage": {
 						Name:   "storage",
 						Bundle: "localhost:5000/blob-storage:0.1.0",
 					},
-					"nginx": cnab.Dependency{
+					"nginx": {
 						Name:   "nginx",
 						Bundle: "localhost:5000/nginx:1.19",
 					},
@@ -414,7 +440,7 @@ func TestExplain_generatePrintableBundleDependencies(t *testing.T) {
 				"commit":   "3b7c85ba",
 			},
 		},
-	}}
+	})
 
 	pd, err := generatePrintable(bun, "")
 	assert.NoError(t, err)
@@ -432,6 +458,7 @@ func TestExplain_generateJSONForDependencies(t *testing.T) {
 
 	p.TestConfig.TestContext.AddTestFile("testdata/explain/dependencies-bundle.json", "dependencies-bundle.json")
 	b, err := p.CNAB.LoadBundle("dependencies-bundle.json")
+	require.NoError(t, err)
 
 	pb, err := generatePrintable(b, "")
 	require.NoError(t, err)
@@ -454,6 +481,7 @@ func TestExplain_generateTableNonPorterBundle(t *testing.T) {
 
 	p.TestConfig.TestContext.AddTestFile("testdata/explain/params-bundle-non-porter.json", "params-bundle.json")
 	b, err := p.CNAB.LoadBundle("params-bundle.json")
+	require.NoError(t, err)
 
 	pb, err := generatePrintable(b, "")
 	require.NoError(t, err)
@@ -476,6 +504,7 @@ func TestExplain_generateTableBundleWithNoMixins(t *testing.T) {
 
 	p.TestConfig.TestContext.AddTestFile("testdata/explain/params-bundle-no-mixins.json", "params-bundle.json")
 	b, err := p.CNAB.LoadBundle("params-bundle.json")
+	require.NoError(t, err)
 
 	pb, err := generatePrintable(b, "")
 	require.NoError(t, err)

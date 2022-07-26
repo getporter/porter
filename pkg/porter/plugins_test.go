@@ -238,6 +238,7 @@ func TestPorter_InstallPlugin(t *testing.T) {
 }
 
 func TestPorter_UninstallPlugin(t *testing.T) {
+	ctx := context.Background()
 	p := NewTestPorter(t)
 	defer p.Close()
 
@@ -245,7 +246,7 @@ func TestPorter_UninstallPlugin(t *testing.T) {
 	err := opts.Validate([]string{"plugin1"})
 	require.NoError(t, err, "Validate failed")
 
-	err = p.UninstallPlugin(opts)
+	err = p.UninstallPlugin(ctx, opts)
 	require.NoError(t, err, "UninstallPlugin failed")
 
 	wantOutput := "Uninstalled plugin1 plugin"

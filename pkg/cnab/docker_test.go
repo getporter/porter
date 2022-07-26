@@ -55,14 +55,14 @@ func TestSupportsDocker(t *testing.T) {
 	t.Parallel()
 
 	t.Run("supported", func(t *testing.T) {
-		b := ExtendedBundle{bundle.Bundle{
+		b := NewBundle(bundle.Bundle{
 			RequiredExtensions: []string{DockerExtensionKey},
-		}}
+		})
 
 		assert.True(t, b.SupportsDocker())
 	})
 	t.Run("unsupported", func(t *testing.T) {
-		b := ExtendedBundle{bundle.Bundle{}}
+		b := NewBundle(bundle.Bundle{})
 
 		assert.False(t, b.SupportsDocker())
 	})

@@ -11,6 +11,9 @@ and test it out.
 If you run into any trouble, please let us know! The best way to ask for help is
 to start a new discussion on our [forum].
 
+ℹ️ Heads up that we are getting ready for our 1.0 release!
+All new development should be against the **release/v1** branch.
+
 {{< toc >}}
 
 [forum]: /forum/
@@ -43,20 +46,12 @@ so the next person has a better experience.
 First let's get your computer setup so that you can work on Porter. You will
 need a few things.
 
-We are improving our support for building Porter on Windows. In a few weeks, we
-will have it all working on any Windows shell. For now, if you are on Windows,
-please use [Windows Subsystem for Linux][wsl] (WSL). The rest of this tutorial
-assumes that you are inside your WSL distribution when installing prerequisites
-and executing the commands.
-
-* [Git]
-   
+* [Git]  
    If you are new to Git or GitHub, we recommend reading the [GitHub Guides].
    They will walk you through installing Git, forking a repository and
    submitting a pull request.
-* [Go](https://golang.org/doc/install) version 1.17 or higher
+* [Go](https://golang.org/doc/install) version 1.18 or higher
 * [Docker]
-* Make. You can install it with a package manager such as apt-get, or homebrew.
 * [Mage](#install-mage)
 
 [GitHub Guides]: https://guides.github.com/
@@ -66,7 +61,7 @@ and executing the commands.
 
 ### Add GOPATH/bin to your PATH
 
-Porter relies on a few tools that will be installed in your $GOPATH/bin directory.
+Porter relies on a few tools that will be installed in your GOPATH/bin directory.
 When go tools are installed, they automatically are put into GOPATH/bin and in
 order to use them that directory needs to be included in your PATH environment
 variable. This is a standard Go developer environment configuration and will be
@@ -110,14 +105,12 @@ The default locations are:
 
 ## Checkout Code
 
-Porter can either be cloned into your GOPATH (usually ~/go) or anywhere on your
-computer. Porter has [many repositories](https://github.com/getporter/). If you
-decide to not clone Porter into your GOPATH, you may still want to clone Porter
-and its other repositories into a dedicated directory so they are easier to find
-later.
+Porter has [many repositories](https://github.com/getporter/)
+and https://github.com/getporter/porter is our core repository where Porter is implemented.
+You can clone the repositories anywhere on your computer, they do not need to be in the GOPATH.
 
 ```bash
-git clone https://github.com/getporter/porter.git ~/go/src/get.porter.sh/porter
+git clone https://github.com/getporter/porter.git ~/porter-src
 ```
 
 If you are planning on contributing back to the project, you'll need to
@@ -127,7 +120,10 @@ the original porter repository and `origin` to refer to your fork:
 
 1. Fork the repository in GitHub and copy your fork's reference.
     ![click on the green code button on the repository's homepage, and copy the reference](/images/clone-ref.png)
-1. In a terminal, cd to where you cloned Porter.
+1. In a terminal, change to the directory where you cloned Porter.
+   ```bash
+   cd ~/porter-src
+   ```
 1. Rename the origin remote to upstream: 
     ```bash
     git remote rename origin upstream
@@ -145,9 +141,9 @@ the original porter repository and `origin` to refer to your fork:
     upstream    https://github.com/getporter/porter.git (fetch)
     upstream    https://github.com/getporter/porter.git (push)
     ```
-1. Create a branch for your changes:
+1. Create a branch for your changes. Note that we are working from the **release/v1** branch as we work towards our 1.0 release.
     ```bash
-    git checkout -b YOURBRANCH main
+    git checkout -b YOURBRANCH release/v1
     ```
 1. Push your branch to your fork (origin):
     ```bash
@@ -156,20 +152,19 @@ the original porter repository and `origin` to refer to your fork:
 
     Afterwards you can use just `git push` to synchronize your
     local branch with your fork on GitHub.
-1. Run `git branch -vv` to verify that the `main` branch is synchronized with
-   `upstream/main` and your branch is synchronized with `origin/YOURBRANCH`.
+1. Run `git branch -vv` to verify that the **release/v1** branch is synchronized with
+   **upstream/release/v1** and your branch is synchronized with origin/YOURBRANCH`.
     ```bash
     $ git branch -vv
     * mybranch      26d8358f [origin/mybranch] Review feedback
-    main            7e120aab [upstream/main]   Bump cnab-go
+    release/v1      7e120aab [upstream/release/v1]   Bump cnab-go
     ```
 
 
 ### Install Mage
 
-We are transitioning from Make to [Mage]. Installing mage isn't strictly required,
-you can always run `go run mage.go TARGET` instead of `mage TARGET`. However, having
-the tool saves typing and time!
+Installing mage isn't strictly required, you can always run `go run mage.go TARGET` instead of `mage TARGET`.
+However, having the tool saves typing and time!
 
 Mage targets are not case-sensitive, but in our docs we use camel case to make
 it easier to read. Run the following commands from the porter directory to install mage:
@@ -184,10 +179,9 @@ Targets:
   <List of available targets>
 ```
 
-You know that your $GOPATH/bin is configured correctly if you see a list of mage
-targets.
+You know that your $GOPATH/bin is [configured correctly](#add-gopathbin-to-your-path) if you see a list of mage targets.
 
-You can enable tab completion for mage as well, so that you can type 
+If you use Bash, you can enable tab completion for mage as well, so that you can type 
 `mage t[TAB]` and it will complete it with the name of matching targets.
 
 1. Install bash-completion if it isn't already installed with either `brew install
@@ -208,12 +202,14 @@ You can enable tab completion for mage as well, so that you can type
 
 ## Configure Signing
 
-Porter requires that [all commits are signed][dco]. Run the following command to
+Porter requires that [all commits are signed][dco]. Run the following bash script to
 tell git to automatically sign your commits in the Porter repository:
 
 ```bash
-make setup-dco
+./scripts/setup-dco/setup.sh
 ```
+
+If you are using Powershell, see our Contributing Guide for [how to sign your commits][dco].
 
 [dco]: /contribute/guide/#signing-your-commits
 
@@ -223,12 +219,12 @@ Now that we have the source code, let's build porter and make sure everything is
 working.
 
 ```bash
-make build
+mage Build
 ```
 
 You may see a message about your Go bin not being in your PATH. If that happens,
 [Add $GOPATH/bin to your PATH](#add-gopathbin-to-your-path) and then run 
-`make build` again. It should work now but if it doesn't, please let us know!
+`mage Build` again. It should work now but if it doesn't, please let us know!
 
 
 ## Verify Porter
@@ -310,8 +306,7 @@ YOURNAME` that prints `Hello YOURNAME!`.
     
     import (
         "fmt"
-        
-        "github.com/pkg/errors"
+        "errors"
     )
     
     // Define flags and arguments for `porter hello`.
@@ -382,7 +377,7 @@ YOURNAME` that prints `Hello YOURNAME!`.
 After you have modified Porter, and [aliased the `porter` command to use your
 local changes](#use-the-locally-built-porter), let's rebuild and test your changes.
 
-1. Build porter to incorporate your new command by running `make build`.
+1. Build porter to incorporate your new command by running `mage Build`.
 1. Run `porter hello --help` to see the helptext for your command.
 1. Run `porter hello --name YOURNAME` to try out your new command.
 
@@ -391,18 +386,17 @@ $ porter hello --name Carolyn
 Hello Carolyn!
 ```
 
-That verifies your change but let's also run the [unit tests] and [end-to-end] tests
+That verifies your change but let's also run the [unit tests] and [smoke tests]
 to make sure there aren't any regressions.
 
-> In MacOS Monterey, port 5000 is already in use blocking `mage testSmoke` from running properly. To free port 5000, uncheck `AirPlay Receiver` in Sharing under System Preferences.
+> In MacOS Monterey, port 5000 is already in use blocking `mage TestSmoke` from running properly. To free port 5000, uncheck `AirPlay Receiver` in Sharing under System Preferences.
 
 ```
-make test-unit
-mage testSmoke
+mage TestUnit TestSmoke
 ```
 
-[unit tests]: /contribute/#unit-tests
-[end-to-end]: /contribute/#end-to-end-tests
+[unit tests]: /contribute/guide/#unit-tests
+[smoke tests]: /contribute/guide/#smoke-tests
 
 ## Celebrate!
 

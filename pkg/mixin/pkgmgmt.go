@@ -9,7 +9,8 @@ import (
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/pkgmgmt"
 	"get.porter.sh/porter/pkg/pkgmgmt/client"
-	"get.porter.sh/porter/pkg/portercontext"
+	"get.porter.sh/porter/pkg/tracing"
+	"go.uber.org/zap/zapcore"
 )
 
 const (
@@ -48,6 +49,8 @@ func (c *PackageManager) PreRunMixinCommandHandler(command string, cmd *exec.Cmd
 }
 
 func (c *PackageManager) GetSchema(ctx context.Context, name string) (string, error) {
+	log := tracing.LoggerFromContext(ctx)
+
 	mixinDir, err := c.GetPackageDir(name)
 	if err != nil {
 		return "", err
@@ -57,10 +60,9 @@ func (c *PackageManager) GetSchema(ctx context.Context, name string) (string, er
 
 	// Copy the existing context and tweak to pipe the output differently
 	mixinSchema := &bytes.Buffer{}
-	var mixinContext portercontext.Context
-	mixinContext = *c.Context
+	mixinContext := *c.Context
 	mixinContext.Out = mixinSchema
-	if !c.Debug {
+	if !log.ShouldLog(zapcore.DebugLevel) {
 		mixinContext.Err = ioutil.Discard
 	}
 	r.Context = &mixinContext

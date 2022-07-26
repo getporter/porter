@@ -21,7 +21,7 @@ func TestPorter_Lint_ChecksManifestSchemaVersion(t *testing.T) {
 		wantErr       string
 	}{
 		{name: "valid version", schemaVersion: manifest.SupportedSchemaVersion},
-		{name: "invalid version", schemaVersion: "", wantErr: "Invalid schema version"},
+		{name: "invalid version", schemaVersion: "", wantErr: "invalid schema version"},
 	}
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -86,7 +86,7 @@ exec:
   flags:
     c: '"echo Hello World"'
 `,
-			URL: "https://porter.sh/best-practices/exec-mixin/#quoting-escaping-bash-and-yaml",
+			URL: "https://getporter.org/best-practices/exec-mixin/#quoting-escaping-bash-and-yaml",
 		},
 	}
 
@@ -116,6 +116,7 @@ exec:
 			require.NoError(t, err, "PrintLintResults failed")
 
 			wantOutputB, err := ioutil.ReadFile(tc.wantOutputFile)
+			require.NoError(t, err, "Reading output file failed")
 			gotOutput := p.TestConfig.TestContext.GetOutput()
 			assert.Equal(t, string(wantOutputB), gotOutput, "unexpected output printed")
 		})

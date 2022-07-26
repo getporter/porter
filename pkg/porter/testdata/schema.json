@@ -1,5 +1,5 @@
 {
-  "$id": "https://porter.sh/schema/v1/manifest.schema.json",
+  "$id": "https://getporter.org/schema/v1/manifest.schema.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": {
     "items": {
@@ -18,6 +18,23 @@
         "type": "string"
       },
       "type": "array"
+    },
+    "bundle": {
+      "description": "The defintion of a bundle reference",
+      "properties": {
+        "reference": {
+          "description": "The full bundle reference for the dependency in the format REGISTRY/NAME:TAG",
+          "type": "string"
+        },
+        "version": {
+          "description": "Bundle version constraint for version matching, see https://github.com/Masterminds/semver/blob/master/README.md#checking-version-constraints",
+          "type": "string"
+        }
+      },
+      "required": [
+        "reference"
+      ],
+      "type": "object"
     },
     "credential": {
       "description": "Credential defines a particular credential, and where it should be placed in the invocation image",
@@ -72,19 +89,19 @@
     "dependency": {
       "additionalProperties": false,
       "properties": {
+        "bundle": {
+          "$ref": "#/definitions/bundle"
+        },
         "name": {
           "type": "string"
         },
         "parameters": {
           "type": "object"
-        },
-        "reference": {
-          "type": "string"
         }
       },
       "required": [
         "name",
-        "reference"
+        "bundle"
       ],
       "type": "object"
     },
@@ -155,7 +172,7 @@
     "output": {
       "allOf": [
         {
-          "$ref": "https://porter.sh/schema/json-schema.json"
+          "$ref": "https://getporter.org/schema/json-schema.json"
         },
         {
           "properties": {
@@ -190,7 +207,7 @@
     "parameter": {
       "allOf": [
         {
-          "$ref": "https://porter.sh/schema/json-schema.json"
+          "$ref": "https://getporter.org/schema/json-schema.json"
         },
         {
           "properties": {

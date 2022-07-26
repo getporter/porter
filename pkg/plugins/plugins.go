@@ -1,11 +1,11 @@
 package plugins
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/hashicorp/go-plugin"
-	"github.com/pkg/errors"
 )
 
 // HandshakeConfig is common handshake config between Porter and its plugins.

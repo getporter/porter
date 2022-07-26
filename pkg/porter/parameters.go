@@ -4,22 +4,26 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"path/filepath"
 	"sort"
+	"strings"
 	"time"
 
 	"get.porter.sh/porter/pkg/cnab"
+	depsv1 "get.porter.sh/porter/pkg/cnab/dependencies/v1"
 	"get.porter.sh/porter/pkg/editor"
 	"get.porter.sh/porter/pkg/encoding"
 	"get.porter.sh/porter/pkg/generator"
 	"get.porter.sh/porter/pkg/printer"
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
+	"get.porter.sh/porter/pkg/tracing"
 	dtprinter "github.com/carolynvs/datetime-printer"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/olekukonko/tablewriter"
-	"github.com/pkg/errors"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -83,7 +87,7 @@ func (p *Porter) PrintParameters(ctx context.Context, opts ListOptions) error {
 
 // ParameterOptions represent generic/base options for a Porter parameters command
 type ParameterOptions struct {
-	BundleActionOptions
+	BundleReferenceOptions
 	Silent bool
 	Labels []string
 }
@@ -101,14 +105,14 @@ func (o *ParameterOptions) Validate(ctx context.Context, args []string, p *Porte
 		return err
 	}
 
-	return o.BundleActionOptions.Validate(ctx, args, p)
+	return o.BundleReferenceOptions.Validate(ctx, args, p)
 }
 
 func (o *ParameterOptions) validateParamName(args []string) error {
 	if len(args) == 1 {
 		o.Name = args[0]
 	} else if len(args) > 1 {
-		return errors.Errorf("only one positional argument may be specified, the parameter set name, but multiple were received: %s", args)
+		return fmt.Errorf("only one positional argument may be specified, the parameter set name, but multiple were received: %s", args)
 	}
 	return nil
 }
@@ -117,7 +121,7 @@ func (o *ParameterOptions) validateParamName(args []string) error {
 // a silent build, based on the opts.Silent flag, or interactive using a survey. Returns an
 // error if unable to generate parameters
 func (p *Porter) GenerateParameters(ctx context.Context, opts ParameterOptions) error {
-	bundleRef, err := p.resolveBundleReference(ctx, &opts.BundleActionOptions)
+	bundleRef, err := p.resolveBundleReference(ctx, &opts.BundleReferenceOptions)
 
 	if err != nil {
 		return err
@@ -148,14 +152,18 @@ func (p *Porter) GenerateParameters(ctx context.Context, opts ParameterOptions) 
 
 	pset, err := genOpts.GenerateParameters()
 	if err != nil {
-		return errors.Wrap(err, "unable to generate parameter set")
+		return fmt.Errorf("unable to generate parameter set: %w", err)
 	}
 
 	pset.Status.Created = time.Now()
 	pset.Status.Modified = pset.Status.Created
 
 	err = p.Parameters.UpsertParameterSet(ctx, pset)
-	return errors.Wrapf(err, "unable to save parameter set")
+	if err != nil {
+		return fmt.Errorf("unable to save parameter set: %w", err)
+	}
+
+	return nil
 }
 
 // Validate validates the args provided to Porter's parameter show command
@@ -185,29 +193,29 @@ func (p *Porter) EditParameter(ctx context.Context, opts ParameterEditOptions) e
 
 	contents, err := encoding.MarshalYaml(paramSet)
 	if err != nil {
-		return errors.Wrap(err, "unable to load parameter set")
+		return fmt.Errorf("unable to load parameter set: %w", err)
 	}
 
 	editor := editor.New(p.Context, fmt.Sprintf("porter-%s.yaml", paramSet.Name), contents)
 	output, err := editor.Run(ctx)
 	if err != nil {
-		return errors.Wrap(err, "unable to open editor to edit parameter set")
+		return fmt.Errorf("unable to open editor to edit parameter set: %w", err)
 	}
 
 	err = encoding.UnmarshalYaml(output, &paramSet)
 	if err != nil {
-		return errors.Wrap(err, "unable to process parameter set")
+		return fmt.Errorf("unable to process parameter set: %w", err)
 	}
 
 	err = p.Parameters.Validate(ctx, paramSet)
 	if err != nil {
-		return errors.Wrap(err, "parameter set is invalid")
+		return fmt.Errorf("parameter set is invalid: %w", err)
 	}
 
 	paramSet.Status.Modified = time.Now()
 	err = p.Parameters.UpdateParameterSet(ctx, paramSet)
 	if err != nil {
-		return errors.Wrap(err, "unable to save parameter set")
+		return fmt.Errorf("unable to save parameter set: %w", err)
 	}
 
 	return nil
@@ -298,14 +306,19 @@ type ParameterDeleteOptions struct {
 // DeleteParameter deletes the parameter set corresponding to the provided
 // names.
 func (p *Porter) DeleteParameter(ctx context.Context, opts ParameterDeleteOptions) error {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
 	err := p.Parameters.RemoveParameterSet(ctx, opts.Namespace, opts.Name)
 	if errors.Is(err, storage.ErrNotFound{}) {
-		if p.Debug {
-			fmt.Fprintln(p.Err, err)
-		}
+		span.Debug("Cannot remove parameter set because it already doesn't exist")
 		return nil
 	}
-	return errors.Wrapf(err, "unable to delete parameter set")
+	if err != nil {
+		return span.Error(fmt.Errorf("unable to delete parameter set: %w", err))
+	}
+
+	return nil
 }
 
 // Validate the args provided to the delete parameter command
@@ -320,11 +333,11 @@ func (o *ParameterDeleteOptions) Validate(args []string) error {
 func validateParameterName(args []string) error {
 	switch len(args) {
 	case 0:
-		return errors.Errorf("no parameter set name was specified")
+		return fmt.Errorf("no parameter set name was specified")
 	case 1:
 		return nil
 	default:
-		return errors.Errorf("only one positional argument may be specified, the parameter set name, but multiple were received: %s", args)
+		return fmt.Errorf("only one positional argument may be specified, the parameter set name, but multiple were received: %s", args)
 	}
 }
 
@@ -385,12 +398,6 @@ func (p *Porter) loadParameterSets(ctx context.Context, bun cnab.ExtendedBundle,
 	}
 
 	return resolvedParameters, nil
-}
-
-func (p *Porter) loadParameterFromFile(path string) (storage.ParameterSet, error) {
-	var cs storage.ParameterSet
-	err := encoding.UnmarshalFile(p.FileSystem, path, &cs)
-	return cs, errors.Wrapf(err, "error loading parameter set in %s", path)
 }
 
 type DisplayValue struct {
@@ -492,29 +499,23 @@ func (p *Porter) printDisplayValuesTable(values []DisplayValue) error {
 }
 
 func (p *Porter) ParametersApply(ctx context.Context, o ApplyOptions) error {
-	if p.Debug {
-		fmt.Fprintf(p.Err, "Reading input file %s...\n", o.File)
-	}
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
 
+	span.Debugf("Reading input file %s...", o.File)
 	namespace, err := p.getNamespaceFromFile(o)
 	if err != nil {
-		return err
-	}
-
-	if p.Debug {
-		// ignoring any error here, printing debug info isn't critical
-		contents, _ := p.FileSystem.ReadFile(o.File)
-		fmt.Fprintf(p.Err, "Input file contents:\n%s\n", contents)
+		return span.Error(err)
 	}
 
 	var params storage.ParameterSet
 	err = encoding.UnmarshalFile(p.FileSystem, o.File, &params)
 	if err != nil {
-		return errors.Wrapf(err, "could not load %s as a parameter set", o.File)
+		return span.Error(fmt.Errorf("could not load %s as a parameter set: %w", o.File, err))
 	}
 
 	if err = params.Validate(); err != nil {
-		return errors.Wrap(err, "invalid parameter set")
+		return span.Error(fmt.Errorf("invalid parameter set: %w", err))
 	}
 
 	params.Namespace = namespace
@@ -522,7 +523,7 @@ func (p *Porter) ParametersApply(ctx context.Context, o ApplyOptions) error {
 
 	err = p.Parameters.Validate(ctx, params)
 	if err != nil {
-		return errors.Wrap(err, "parameter set is invalid")
+		return span.Error(fmt.Errorf("parameter set is invalid: %w", err))
 	}
 
 	err = p.Parameters.UpsertParameterSet(ctx, params)
@@ -530,7 +531,7 @@ func (p *Porter) ParametersApply(ctx context.Context, o ApplyOptions) error {
 		return err
 	}
 
-	fmt.Fprintf(p.Err, "Applied %s parameter set\n", params)
+	span.Infof("Applied %s parameter set", params)
 	return nil
 }
 
@@ -586,7 +587,7 @@ func (p *Porter) resolveParameters(ctx context.Context, installation storage.Ins
 		if def.Type != nil {
 			value, err := def.ConvertValue(unconverted)
 			if err != nil {
-				return nil, errors.Wrapf(err, "unable to convert parameter's %s value %s to the destination parameter type %s", key, unconverted, def.Type)
+				return nil, fmt.Errorf("unable to convert parameter's %s value %s to the destination parameter type %s: %w", key, unconverted, def.Type, err)
 			}
 			typedParams[key] = value
 		} else {
@@ -605,7 +606,7 @@ func (p *Porter) getUnconvertedValueFromRaw(b cnab.ExtendedBundle, def *definiti
 		if _, err := p.FileSystem.Stat(rawValue); err == nil {
 			bytes, err := p.FileSystem.ReadFile(rawValue)
 			if err != nil {
-				return "", errors.Wrapf(err, "unable to read file parameter %s", key)
+				return "", fmt.Errorf("unable to read file parameter %s: %w", key, err)
 			}
 			return base64.StdEncoding.EncodeToString(bytes), nil
 		}
@@ -614,27 +615,23 @@ func (p *Porter) getUnconvertedValueFromRaw(b cnab.ExtendedBundle, def *definiti
 }
 
 func (p *Porter) resolveParameterSources(ctx context.Context, bun cnab.ExtendedBundle, installation storage.Installation) (secrets.Set, error) {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
 	if !bun.HasParameterSources() {
-		if p.Debug {
-			fmt.Fprintln(p.Err, "No parameter sources defined, skipping")
-		}
+		span.Debug("No parameter sources defined, skipping")
 		return nil, nil
 	}
 
-	if p.Debug {
-		fmt.Fprintln(p.Err, "Resolving parameter sources...")
-	}
-
+	span.Debug("Resolving parameter sources...")
 	parameterSources, err := bun.ReadParameterSources()
 	if err != nil {
-		return nil, err
+		return nil, span.Error(err)
 	}
 
 	values := secrets.Set{}
 	for parameterName, parameterSource := range parameterSources {
-		if p.Debug {
-			fmt.Fprintln(p.Err, "Resolving parameter source", parameterName)
-		}
+		span.Debugf("Resolving parameter source %s", parameterName)
 		for _, rawSource := range parameterSource.ListSourcesByPriority() {
 			var installationName string
 			var outputName string
@@ -644,7 +641,7 @@ func (p *Porter) resolveParameterSources(ctx context.Context, bun cnab.ExtendedB
 				outputName = source.OutputName
 			case cnab.DependencyOutputParameterSource:
 				// TODO(carolynvs): does this need to take namespace into account
-				installationName = cnab.BuildPrerequisiteInstallationName(installation.Name, source.Dependency)
+				installationName = depsv1.BuildPrerequisiteInstallationName(installation.Name, source.Dependency)
 				outputName = source.OutputName
 			}
 
@@ -652,32 +649,29 @@ func (p *Porter) resolveParameterSources(ctx context.Context, bun cnab.ExtendedB
 			if err != nil {
 				// When we can't find the output, skip it and let the parameter be set another way
 				if errors.Is(err, storage.ErrNotFound{}) {
-					if p.Debug {
-						fmt.Fprintf(p.Err, "No previous output found for %s from %s/%s\n", outputName, installation.Namespace, installationName)
-					}
+					span.Debugf("No previous output found for %s from %s/%s", outputName, installation.Namespace, installationName)
 					continue
 				}
 				// Otherwise, something else has happened, perhaps bad data or connectivity problems, we can't ignore it
-				return nil, errors.Wrapf(err, "could not set parameter %s from output %s of %s", parameterName, outputName, installation)
+				return nil, span.Error(fmt.Errorf("could not set parameter %s from output %s of %s: %w", parameterName, outputName, installation, err))
 			}
 
 			if output.Key != "" {
-
 				resolved, err := p.Sanitizer.RestoreOutput(ctx, output)
 				if err != nil {
-					return nil, errors.Wrapf(err, "could not resolve %s's output %s", installation, outputName)
+					return nil, span.Error(fmt.Errorf("could not resolve %s's output %s: %w", installation, outputName, err))
 				}
 				output = resolved
 			}
 
 			param, ok := bun.Parameters[parameterName]
 			if !ok {
-				return nil, fmt.Errorf("resolveParameterSources:  %s not defined in bundle", parameterName)
+				return nil, span.Error(fmt.Errorf("resolveParameterSources:  %s not defined in bundle", parameterName))
 			}
 
 			def, ok := bun.Definitions[param.Definition]
 			if !ok {
-				return nil, fmt.Errorf("definition %s not defined in bundle", param.Definition)
+				return nil, span.Error(fmt.Errorf("definition %s not defined in bundle", param.Definition))
 			}
 
 			if bun.IsFileType(def) {
@@ -686,11 +680,76 @@ func (p *Porter) resolveParameterSources(ctx context.Context, bun cnab.ExtendedB
 				values[parameterName] = string(output.Value)
 			}
 
-			if p.Debug {
-				fmt.Fprintf(p.Out, "Injected installation %s output %s as parameter %s\n", installation, outputName, parameterName)
-			}
+			span.Debugf("Injected installation %s output %s as parameter %s", installation, outputName, parameterName)
 		}
 	}
 
 	return values, nil
+}
+
+// ParameterCreateOptions represent options for Porter's parameter create command
+type ParameterCreateOptions struct {
+	FileName   string
+	OutputType string
+}
+
+func (o *ParameterCreateOptions) Validate(args []string) error {
+	if len(args) > 1 {
+		return fmt.Errorf("only one positional argument may be specified, fileName, but multiple were received: %s", args)
+	}
+
+	if len(args) > 0 {
+		o.FileName = args[0]
+	}
+
+	if o.OutputType == "" && o.FileName != "" && strings.Trim(filepath.Ext(o.FileName), ".") == "" {
+		return errors.New("could not detect the file format from the file extension (.txt). Specify the format with --output")
+	}
+
+	return nil
+}
+
+func (p *Porter) CreateParameter(opts ParameterCreateOptions) error {
+	if opts.OutputType == "" {
+		opts.OutputType = strings.Trim(filepath.Ext(opts.FileName), ".")
+	}
+
+	if opts.FileName == "" {
+		if opts.OutputType == "" {
+			opts.OutputType = "yaml"
+		}
+
+		switch opts.OutputType {
+		case "json":
+			parameterSet, err := p.Templates.GetParameterSetJSON()
+			if err != nil {
+				return err
+			}
+			fmt.Fprintln(p.Out, string(parameterSet))
+
+			return nil
+		case "yaml", "yml":
+			parameterSet, err := p.Templates.GetParameterSetYAML()
+			if err != nil {
+				return err
+			}
+			fmt.Fprintln(p.Out, string(parameterSet))
+
+			return nil
+		default:
+			return newUnsupportedFormatError(opts.OutputType)
+		}
+
+	}
+
+	fmt.Fprintln(p.Err, "creating porter parameter set in the current directory")
+
+	switch opts.OutputType {
+	case "json":
+		return p.CopyTemplate(p.Templates.GetParameterSetJSON, opts.FileName)
+	case "yaml", "yml":
+		return p.CopyTemplate(p.Templates.GetParameterSetYAML, opts.FileName)
+	default:
+		return newUnsupportedFormatError(opts.OutputType)
+	}
 }

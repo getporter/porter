@@ -2,6 +2,7 @@ package porter
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 
@@ -9,7 +10,6 @@ import (
 	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/tracing"
 	"github.com/hashicorp/go-multierror"
-	"github.com/pkg/errors"
 )
 
 var _ BundleAction = NewUninstallOptions()
@@ -20,12 +20,14 @@ var ErrUnsafeInstallationDeleteRetryForceDelete = fmt.Errorf("%s; if you are sur
 // UninstallOptions that may be specified when uninstalling a bundle.
 // Porter handles defaulting any missing values.
 type UninstallOptions struct {
-	*BundleActionOptions
+	*BundleExecutionOptions
 	UninstallDeleteOptions
 }
 
 func NewUninstallOptions() UninstallOptions {
-	return UninstallOptions{BundleActionOptions: &BundleActionOptions{}}
+	return UninstallOptions{
+		BundleExecutionOptions: NewBundleExecutionOptions(),
+	}
 }
 
 func (o UninstallOptions) GetAction() string {
@@ -73,17 +75,17 @@ func (p *Porter) UninstallBundle(ctx context.Context, opts UninstallOptions) err
 	defer log.EndSpan()
 
 	// Figure out which bundle/installation we are working with
-	_, err := p.resolveBundleReference(ctx, opts.BundleActionOptions)
+	_, err := p.resolveBundleReference(ctx, opts.BundleReferenceOptions)
 	if err != nil {
 		return err
 	}
 
 	installation, err := p.Installations.GetInstallation(ctx, opts.Namespace, opts.Name)
 	if err != nil {
-		return errors.Wrapf(err, "could not find installation %s/%s", opts.Namespace, opts.Name)
+		return fmt.Errorf("could not find installation %s/%s: %w", opts.Namespace, opts.Name, err)
 	}
 
-	err = p.applyActionOptionsToInstallation(ctx, &installation, opts.BundleActionOptions)
+	err = p.applyActionOptionsToInstallation(ctx, &installation, opts.BundleExecutionOptions)
 	if err != nil {
 		return err
 	}
@@ -107,7 +109,7 @@ func (p *Porter) UninstallBundle(ctx context.Context, opts UninstallOptions) err
 		uninstallErrs = multierror.Append(uninstallErrs, err)
 
 		// If the installation is not found, no further action is needed
-		err := errors.Cause(err)
+		err := errors.Unwrap(err)
 		if errors.Is(err, storage.ErrNotFound{}) {
 			return err
 		}

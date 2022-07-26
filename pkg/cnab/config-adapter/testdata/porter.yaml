@@ -19,6 +19,7 @@ dependencies:
     - name: mysql
       bundle:
         reference: "getporter/azure-mysql:5.7"
+
 mixins:
 - exec
 

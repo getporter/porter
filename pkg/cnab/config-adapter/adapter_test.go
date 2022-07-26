@@ -9,13 +9,13 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg/cnab"
+	depsv1 "get.porter.sh/porter/pkg/cnab/dependencies/v1"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/mixin"
 	"get.porter.sh/porter/pkg/pkgmgmt"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -86,7 +86,7 @@ func TestManifestConverter_ToBundle(t *testing.T) {
 	assert.Contains(t, bun.Parameters, "porter-debug", "porter-debug parameter was not defined")
 	assert.Contains(t, bun.Definitions, "porter-debug-parameter", "porter-debug definition was not defined")
 
-	assert.True(t, bun.HasDependencies(), "Dependencies was not populated")
+	assert.True(t, bun.HasDependenciesV1(), "DependenciesV1 was not populated")
 
 	assert.Len(t, bun.Outputs, 1, "expected one output for the bundle state")
 }
@@ -523,7 +523,7 @@ func TestManifestConverter_generateBundleOutputs(t *testing.T) {
 			ContentEncoding: "base64",
 		},
 		"porter-state": &definition.Schema{
-			ID:              "https://porter.sh/generated-bundle/#porter-state",
+			ID:              "https://getporter.org/generated-bundle/#porter-state",
 			Comment:         "porter-internal",
 			Description:     "Supports persisting state for bundles. Porter internal parameter that should not be set manually.",
 			Type:            "string",
@@ -539,39 +539,36 @@ func TestManifestConverter_generateDependencies(t *testing.T) {
 
 	testcases := []struct {
 		name    string
-		wantDep cnab.Dependency
+		wantDep depsv1.Dependency
 	}{
-		{"no-version", cnab.Dependency{
+		{"no-version", depsv1.Dependency{
 			Name:   "mysql",
 			Bundle: "getporter/azure-mysql:5.7",
 		}},
-		{"no-ranges", cnab.Dependency{
+		{"no-ranges, uses prerelease", depsv1.Dependency{
 			Name:   "ad",
 			Bundle: "getporter/azure-active-directory",
-			Version: &cnab.DependencyVersion{
+			Version: &depsv1.DependencyVersion{
 				AllowPrereleases: true,
+				Ranges:           []string{"1.0.0-0"},
 			},
 		}},
-		{"with-ranges", cnab.Dependency{
+		{"with-ranges", depsv1.Dependency{
 			Name:   "storage",
 			Bundle: "getporter/azure-blob-storage",
-			Version: &cnab.DependencyVersion{
+			Version: &depsv1.DependencyVersion{
 				Ranges: []string{
-					"1.x - 2",
-					"2.1 - 3.x",
+					"1.x - 2,2.1 - 3.x",
 				},
 			},
-		}},
-		{"with-tag", cnab.Dependency{
-			Name:   "dep-with-tag",
-			Bundle: "getporter/dep-bun:v0.1.0",
 		}},
 	}
 
 	for _, tc := range testcases {
+		tc := tc
+
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			tc := tc
 
 			c := config.NewTestConfig(t)
 			c.TestContext.AddTestFile("testdata/porter-with-deps.yaml", config.Name)
@@ -582,11 +579,15 @@ func TestManifestConverter_generateDependencies(t *testing.T) {
 
 			a := NewManifestConverter(c.Config, m, nil, nil)
 
-			deps := a.generateDependencies()
-			require.Len(t, deps.Requires, 4, "incorrect number of dependencies were generated")
-			require.Equal(t, []string{"mysql", "ad", "storage", "dep-with-tag"}, deps.Sequence, "incorrect sequence was generated")
+			depsExt, depsExtKey, err := a.generateDependencies()
+			require.NoError(t, err)
+			require.Equal(t, cnab.DependenciesV1ExtensionKey, depsExtKey, "expected the v1 dependencies extension key")
+			require.IsType(t, &depsv1.Dependencies{}, depsExt, "expected a v1 dependencies extension section")
+			deps := depsExt.(*depsv1.Dependencies)
+			require.Len(t, deps.Requires, 3, "incorrect number of dependencies were generated")
+			require.Equal(t, []string{"mysql", "ad", "storage"}, deps.Sequence, "incorrect sequence was generated")
 
-			var dep *cnab.Dependency
+			var dep *depsv1.Dependency
 			for _, d := range deps.Requires {
 				if d.Bundle == tc.wantDep.Bundle {
 					dep = &d
@@ -659,7 +660,7 @@ func TestNewManifestConverter_generateOutputWiringParameter(t *testing.T) {
 	outputDef := definition.Schema{
 		Type: "string",
 	}
-	b := cnab.ExtendedBundle{bundle.Bundle{
+	b := cnab.NewBundle(bundle.Bundle{
 		Outputs: map[string]bundle.Output{
 			"msg": {
 				Definition: "stringDef",
@@ -671,7 +672,7 @@ func TestNewManifestConverter_generateOutputWiringParameter(t *testing.T) {
 		Definitions: map[string]*definition.Schema{
 			"stringDef": &outputDef,
 		},
-	}}
+	})
 
 	t.Run("generate parameter", func(t *testing.T) {
 		t.Parallel()
@@ -683,7 +684,7 @@ func TestNewManifestConverter_generateOutputWiringParameter(t *testing.T) {
 		require.NotNil(t, param.Destination, "wiring parameters should have a destination set")
 		assert.Equal(t, "PORTER_MSG_OUTPUT", param.Destination.EnvironmentVariable, "unexpected destination environment variable set")
 
-		assert.Equal(t, "https://porter.sh/generated-bundle/#porter-parameter-source-definition", paramDef.ID, "wiring parameter should have a schema id set")
+		assert.Equal(t, "https://getporter.org/generated-bundle/#porter-parameter-source-definition", paramDef.ID, "wiring parameter should have a schema id set")
 		assert.NotSame(t, outputDef, paramDef, "wiring parameter definition should be a copy")
 		assert.Equal(t, outputDef.Type, paramDef.Type, "output def and param def should have the same type")
 		assert.Equal(t, cnab.PorterInternal, paramDef.Comment, "wiring parameter should be flagged as internal")
@@ -720,7 +721,7 @@ func TestNewManifestConverter_generateDependencyOutputWiringParameter(t *testing
 	require.NotNil(t, param.Destination, "wiring parameters should have a destination set")
 	assert.Equal(t, "PORTER_MYSQL_MYSQL_PASSWORD_DEP_OUTPUT", param.Destination.EnvironmentVariable, "unexpected destination environment variable set")
 
-	assert.Equal(t, "https://porter.sh/generated-bundle/#porter-parameter-source-definition", paramDef.ID, "wiring parameter should have a schema id set")
+	assert.Equal(t, "https://getporter.org/generated-bundle/#porter-parameter-source-definition", paramDef.ID, "wiring parameter should have a schema id set")
 	assert.Equal(t, cnab.PorterInternal, paramDef.Comment, "wiring parameter should be flagged as internal")
 	assert.Empty(t, paramDef.Type, "dependency output types are of unknown types and should not be defined")
 }
@@ -922,5 +923,5 @@ func getMaintainerByName(source []bundle.Maintainer, name string) (bundle.Mainta
 			return m, nil
 		}
 	}
-	return bundle.Maintainer{}, errors.New(fmt.Sprintf("Could not find maintainer with name '%s'", name))
+	return bundle.Maintainer{}, fmt.Errorf("Could not find maintainer with name '%s'", name)
 }

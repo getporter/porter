@@ -18,7 +18,7 @@ For optional parameters, bundles set a default value that is used when the user 
 Let's look at a bundle with parameters:
 
 ```console
-$ porter explain --reference getporter/hello-llama:v0.1.1
+$ porter explain getporter/hello-llama:v0.1.1
 Name: hello-llama
 Description: An example Porter bundle with parameters
 Version: 0.1.0

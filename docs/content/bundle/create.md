@@ -165,8 +165,8 @@ version: 0.3.0
 Once you have figured out the reference to your published bundle, the best way to verify that it was published successfully is with the [porter explain] command:
 
 ```console
-# porter explain --reference|-r REFERENCE
-$ porter explain -r ghcr.io/getporter/porter-hello:v0.2.0
+# porter explain REFERENCE
+$ porter explain ghcr.io/getporter/porter-hello:v0.2.0
 ```
 
 ## Next Steps

@@ -182,7 +182,7 @@ func (p *TestPorter) ReadBundle(path string) cnab.ExtendedBundle {
 	bun, err := bundle.Unmarshal(bunD)
 	require.NoError(p.T(), err, "Unmarshal failed for bundle at %s", path)
 
-	return cnab.ExtendedBundle{*bun}
+	return cnab.NewBundle(*bun)
 }
 
 func (p *TestPorter) RandomString(len int) string {
@@ -235,7 +235,6 @@ func (p *TestPorter) CompareGoldenFile(goldenFile string, got string) {
 // CreateInstallation saves an installation record into claim store and store
 // sensitive parameters into secret store.
 func (p *TestPorter) SanitizeParameters(raw []secrets.Strategy, recordID string, bun cnab.ExtendedBundle) []secrets.Strategy {
-	strategies := make([]secrets.Strategy, 0, len(raw))
 	strategies, err := p.Sanitizer.CleanParameters(context.Background(), raw, bun, recordID)
 	require.NoError(p.T(), err)
 

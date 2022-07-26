@@ -1,11 +1,11 @@
 package pkgmgmt
 
 import (
+	"errors"
+	"fmt"
 	"net/url"
 	"path"
 	"strings"
-
-	"github.com/pkg/errors"
 )
 
 type InstallOptions struct {
@@ -46,7 +46,7 @@ func (o *InstallOptions) defaultFeedURL() url.URL {
 
 func (o *InstallOptions) Validate(args []string) error {
 	if o.PackageType != "mixin" && o.PackageType != "plugin" {
-		return errors.Errorf("invalid package type %q. Please report this as a bug to Porter!", o.PackageType)
+		return fmt.Errorf("invalid package type %q. Please report this as a bug to Porter!", o.PackageType)
 	}
 
 	err := o.validateName(args)
@@ -81,7 +81,7 @@ func (o *InstallOptions) validateURL() error {
 
 	parsedURL, err := url.Parse(o.URL)
 	if err != nil {
-		return errors.Wrapf(err, "invalid --url %s", o.URL)
+		return fmt.Errorf("invalid --url %s: %w", o.URL, err)
 	}
 
 	o.parsedURL = parsedURL
@@ -97,7 +97,7 @@ func (o *InstallOptions) validateFeedURL() error {
 	if o.FeedURL != "" {
 		parsedFeedURL, err := url.Parse(o.FeedURL)
 		if err != nil {
-			return errors.Wrapf(err, "invalid --feed-url %s", o.FeedURL)
+			return fmt.Errorf("invalid --feed-url %s: %w", o.FeedURL, err)
 		}
 
 		o.parsedFeedURL = parsedFeedURL
@@ -116,12 +116,12 @@ func (o *InstallOptions) defaultVersion() {
 func (o *InstallOptions) validateName(args []string) error {
 	switch len(args) {
 	case 0:
-		return errors.Errorf("no name was specified")
+		return errors.New("no name was specified")
 	case 1:
 		o.Name = strings.ToLower(args[0])
 		return nil
 	default:
-		return errors.Errorf("only one positional argument may be specified, the name, but multiple were received: %s", args)
+		return fmt.Errorf("only one positional argument may be specified, the name, but multiple were received: %s", args)
 
 	}
 }

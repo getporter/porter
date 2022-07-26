@@ -1,13 +1,15 @@
 package examples_test
 
 import (
+	"context"
 	"fmt"
 	"log"
 
 	"get.porter.sh/porter/pkg/porter"
 )
 
-func ExamplePullBundle() {
+func ExamplePorter_pullBundle() {
+	ctx := context.Background()
 	// Create an instance of the Porter application
 	p := porter.New()
 
@@ -18,7 +20,7 @@ func ExamplePullBundle() {
 
 	// Pull a bundle to Porter's cache, ~/.porter/cache
 	// This isn't exposed as a command in Porter's CLI
-	cachedBundle, err := p.PullBundle(pullOpts)
+	cachedBundle, err := p.PullBundle(ctx, pullOpts)
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -21,7 +21,7 @@ func NewTestRegistry() *TestRegistry {
 	return &TestRegistry{}
 }
 
-func (t TestRegistry) PullBundle(ref cnab.OCIReference, insecureRegistry bool) (cnab.BundleReference, error) {
+func (t TestRegistry) PullBundle(ctx context.Context, ref cnab.OCIReference, insecureRegistry bool) (cnab.BundleReference, error) {
 	if t.MockPullBundle != nil {
 		return t.MockPullBundle(ref, insecureRegistry)
 	}

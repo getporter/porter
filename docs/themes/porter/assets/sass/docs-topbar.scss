@@ -25,7 +25,7 @@
         padding: 1em;
         color: $blue4;
         font-size: 1.125rem;
-        @include klinicBold;
+        @include CBold;
 
         img {
           padding-right: 0.333em;
@@ -57,7 +57,7 @@
       font-size: 1.5rem;
       color: $blue3;
       letter-spacing: -0.125rem;
-      @include klinicReg;
+      @include CMedium;
       @include transition;
 
       &:hover {

@@ -4072,18 +4072,20 @@ th.hide-for-touch {
 
 /* Helm.sh Styles */
 @font-face {
-  font-family: 'klinic-reg';
-  src: url("/fonts/klinicslabbook-webfont.eot");
-  src: url("/fonts/klinicslabbook-webfont.eot?#iefix") format("embedded-opentype"), url("/fonts/klinicslabbook-webfont.woff2") format("woff2"), url("/fonts/klinicslabbook-webfont.woff") format("woff"), url("/fonts/klinicslabbook-webfont.ttf") format("truetype"), url("/fonts/klinicslabbook-webfont.svg#klinic_slabbook") format("svg");
-  font-weight: 400;
-  font-style: normal; }
+  font-family: 'CBlack';
+  src: url("/fonts/CBlack.otf") format("opentype"); }
 
 @font-face {
-  font-family: 'klinic-bold';
-  src: url("/fonts/klinicslabmedium-webfont.eot");
-  src: url("/fonts/klinicslabmedium-webfont.eot?#iefix") format("embedded-opentype"), url("/fonts/klinicslabmedium-webfont.woff2") format("woff2"), url("/fonts/klinicslabmedium-webfont.woff") format("woff"), url("/fonts/klinicslabmedium-webfont.ttf") format("truetype"), url("/fonts/klinicslabmedium-webfont.svg#klinic_slabmedium") format("svg");
-  font-weight: 500;
-  font-style: normal; }
+  font-family: 'CLight';
+  src: url("/fonts/CLight.otf") format("opentype"); }
+
+@font-face {
+  font-family: 'CMedium';
+  src: url("/fonts/CMedium.otf") format("opentype"); }
+
+@font-face {
+  font-family: 'CBold';
+  src: url("/fonts/CBold.otf") format("opentype"); }
 
 /**
  * Media query breakpoints
@@ -4092,10 +4094,7 @@ th.hide-for-touch {
   -webkit-border-radius: 0.15em 0.15em 0.15em 0.15em;
   -moz-border-radius: 0.15em 0.15em 0.15em 0.15em;
   border-radius: 0.15em 0.15em 0.15em 0.15em;
-  font-family: "klinic-bold", "klinic bold", "Helvetica Neue", Helvetica, Arial, sans-serif;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  -webkit-font-smoothing: antialiased;
+  font-family: 'CBold';
   line-height: 1.636;
   background-color: #2DAFE9; }
 
@@ -4141,10 +4140,7 @@ body {
   -moz-osx-font-smoothing: grayscale; }
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: "klinic-reg", "klinic", "Helvetica Neue", Helvetica, Arial, sans-serif;
-  font-weight: 400;
-  letter-spacing: 0.0075em;
-  -webkit-font-smoothing: antialiased;
+  font-family: 'CMedium';
   margin-top: 0.83333333rem;
   margin-bottom: 0.83333333rem; }
 
@@ -4153,10 +4149,7 @@ h1 {
   font-size: 47.2px;
   text-transform: uppercase;
   letter-spacing: 0.25em;
-  font-family: "klinic-bold", "klinic bold", "Helvetica Neue", Helvetica, Arial, sans-serif;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  -webkit-font-smoothing: antialiased; }
+  font-family: 'CBold'; }
 
 h2 {
   font-size: 36px; }
@@ -4164,10 +4157,7 @@ h2 {
   h2 .onboard-welcome {
     color: #277A9F;
     font-size: 47.2px;
-    font-family: "klinic-bold", "klinic bold", "Helvetica Neue", Helvetica, Arial, sans-serif;
-    font-weight: 600;
-    letter-spacing: 0.05em;
-    -webkit-font-smoothing: antialiased; }
+    font-family: 'CBold'; }
   h2.onboard-tasks,
   h2 .onboard-tasks {
     color: #2090CD; }
@@ -4178,10 +4168,7 @@ h2 {
   h2 .welcome-text {
     color: #277A9F;
     font-size: 28px;
-    font-family: "klinic-reg", "klinic", "Helvetica Neue", Helvetica, Arial, sans-serif;
-    font-weight: 400;
-    letter-spacing: 0.0075em;
-    -webkit-font-smoothing: antialiased; }
+    font-family: 'CMedium'; }
 
 h3 {
   font-size: 24px; }
@@ -4189,19 +4176,13 @@ h3 {
 .content h3 {
   text-transform: uppercase;
   letter-spacing: 0.25em;
-  font-family: "klinic-bold", "klinic bold", "Helvetica Neue", Helvetica, Arial, sans-serif;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  -webkit-font-smoothing: antialiased;
+  font-family: 'CBold';
   font-size: 13px;
   color: #999; }
 
 h4 {
   font-size: 12px;
-  font-family: "klinic-bold", "klinic bold", "Helvetica Neue", Helvetica, Arial, sans-serif;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  -webkit-font-smoothing: antialiased; }
+  font-family: 'CBold'; }
   h4.day,
   h4 .day {
     color: #999; }
@@ -4211,10 +4192,7 @@ h5 {
 
 .content h5,
 .line-chart-wrap h5 {
-  font-family: "klinic-reg", "klinic", "Helvetica Neue", Helvetica, Arial, sans-serif;
-  font-weight: 400;
-  letter-spacing: 0.0075em;
-  -webkit-font-smoothing: antialiased;
+  font-family: 'CMedium';
   text-transform: uppercase;
   letter-spacing: 0.25em;
   font-size: 12px; }
@@ -4222,7 +4200,7 @@ h5 {
 p, ol, ul, dl, blockquote, table {
   font-size: 14px;
   padding-right: 5%;
-  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+  font-family: #AAAAAA; }
 
 p {
   line-height: 2.15;
@@ -4240,16 +4218,10 @@ a {
   letter-spacing: 0.25em; }
 
 .regular-text {
-  font-family: "klinic-reg", "klinic", "Helvetica Neue", Helvetica, Arial, sans-serif;
-  font-weight: 400;
-  letter-spacing: 0.0075em;
-  -webkit-font-smoothing: antialiased; }
+  font-family: 'CMedium'; }
 
 .prefix, .postfix {
-  font-family: "klinic-bold", "klinic bold", "Helvetica Neue", Helvetica, Arial, sans-serif;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  -webkit-font-smoothing: antialiased;
+  font-family: 'CBold';
   -webkit-border-radius: 3px 3px 3px 3px;
   -moz-border-radius: 3px 3px 3px 3px;
   border-radius: 3px 3px 3px 3px;
@@ -6373,23 +6345,16 @@ a {
   content: ""; }
 
 body.home {
-  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-  letter-spacing: 0;
-  overflow-x: hidden; }
+  overflow-x: hidden;
+  font-family: 'CLight'; }
   body.home .row {
-    max-width: 72rem; }
+    max-width: 100%; }
   body.home .row.fullwidth {
     max-width: 100%; }
   body.home h1 {
-    font-family: "klinic-bold", "klinic bold", "Helvetica Neue", Helvetica, Arial, sans-serif;
-    font-weight: 600;
-    letter-spacing: 0.05em;
-    -webkit-font-smoothing: antialiased; }
+    font-family: 'CBold'; }
   body.home h2, body.home h3, body.home h4, body.home h5 {
-    font-family: "klinic-reg", "klinic", "Helvetica Neue", Helvetica, Arial, sans-serif;
-    font-weight: 400;
-    letter-spacing: 0.0075em;
-    -webkit-font-smoothing: antialiased; }
+    font-family: 'CMedium'; }
   body.home #footer {
     max-width: 100%; }
     body.home #footer .row {
@@ -6400,7 +6365,6 @@ html, body {
 
 nav.home-nav {
   position: absolute;
-  min-height: 300px;
   left: 0;
   right: 0;
   top: 0;
@@ -6419,17 +6383,15 @@ nav.home-nav {
       display: inline-block; }
       nav.home-nav ul li a {
         display: inline-block;
-        margin: 0 1.333rem;
+        margin: 0 1rem;
         font-size: 1.25rem;
         line-height: 2;
         position: relative;
         letter-spacing: 0.0125em;
         color: #464646;
         text-decoration: none;
-        font-family: "klinic-bold", "klinic bold", "Helvetica Neue", Helvetica, Arial, sans-serif;
-        font-weight: 600;
-        letter-spacing: 0.05em;
-        -webkit-font-smoothing: antialiased;
+        font-family: 'CBlack';
+        font-weight: 900;
         position: relative;
         display: inline-block;
         text-align: center;
@@ -6437,8 +6399,8 @@ nav.home-nav {
         nav.home-nav ul li a::after {
           display: inline-block;
           content: "";
-          background: #F99EAC;
-          height: 3px;
+          background: #cc0046;
+          height: 5px;
           position: absolute;
           bottom: 0;
           left: 50%;
@@ -6452,16 +6414,16 @@ nav.home-nav {
           margin-left: 0;
           opacity: 1; }
         nav.home-nav ul li a img {
-          max-height: 2rem;
+          max-height: 3rem;
           color: #464646;
           line-height: 2.5;
           padding-top: 0.5rem;
-          margin: -0.5rem -1rem 0 1rem; }
+          margin: -.8rem 0rem 1rem 0rem; }
           nav.home-nav ul li a img:hover {
             opacity: 0.7; }
 
 #helm.home {
-  background: #3FB1E5; }
+  background: #183d54; }
   #helm.home .billboard {
     background-color: white;
     background-size: 376px;
@@ -6470,23 +6432,27 @@ nav.home-nav {
     padding-top: 250px;
     position: relative;
     text-align: center; }
+    #helm.home .billboard .txt-github {
+      color: white;
+      font-size: 1.5rem; }
+      @media only screen and (max-width: 60em) {
+        #helm.home .billboard .txt-github {
+          margin: 0 !important;
+          padding: 0 !important; } }
+    #helm.home .billboard .btn-github {
+      background: #d00052; }
     #helm.home .billboard h1 {
-      font-family: "klinic-bold", "klinic bold", "Helvetica Neue", Helvetica, Arial, sans-serif;
-      font-weight: 600;
-      letter-spacing: 0.05em;
-      -webkit-font-smoothing: antialiased;
+      font-family: 'CBold';
       color: #3FB1E5;
       font-size: 2.925rem; }
     #helm.home .billboard h2 {
-      font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-      letter-spacing: 0;
       color: #27759A;
       font-size: 1.25rem;
       margin-bottom: 30px; }
     #helm.home .billboard:after {
-      background: url("/img/pattern-waves.png") left top repeat-x;
       background-size: 20px;
       bottom: 0;
+      left: 0;
       content: '';
       display: block;
       height: 6px;
@@ -6525,60 +6491,103 @@ nav.home-nav {
       line-height: 1.2; }
       #helm.home #blog p.author small {
         font-size: 1rem; }
+  #helm.home .card {
+    background: none;
+    border: 5px solid #3bbdc4;
+    box-shadow: none;
+    border-radius: 20px; }
+    @media only screen and (max-width: 60em) {
+      #helm.home .card {
+        width: 63rem !important; } }
+    #helm.home .card .card-img-top {
+      color: #a5d6d0; }
+    #helm.home .card:hover {
+      cursor: pointer;
+      box-shadow: 0 5px 15px #39bec5;
+      transition: all 0.2s ease-in-out; }
+  #helm.home .card-body .card-title {
+    font-family: 'CBlack';
+    font-weight: 900;
+    font-size: 1.7rem;
+    text-transform: capitalize;
+    text-align: center;
+    letter-spacing: 0; }
+  #helm.home .card-body .card-text {
+    font-family: 'CLight';
+    line-height: 1.1;
+    font-weight: 400;
+    opacity: .7;
+    font-size: 1.4rem;
+    padding: 0; }
   #helm.home .content h1, #helm.home .content h2, #helm.home .content h3, #helm.home .content h5 {
     color: white;
-    font-family: "klinic-bold", "klinic bold", "Helvetica Neue", Helvetica, Arial, sans-serif;
-    font-weight: 600;
-    letter-spacing: 0.05em;
-    -webkit-font-smoothing: antialiased; }
+    font-family: 'CBlack';
+    font-weight: 900; }
   #helm.home .content h2 {
-    font-size: 2.5rem;
+    font-size: 2.7rem;
     margin: 2rem 0;
     padding-top: 1em; }
+  @media only screen and (max-width: 60em) {
+    #helm.home .content h2 {
+      font-size: 2rem !important; }
+    #helm.home .content p, #helm.home .content .why-porter, #helm.home .content .why-porter li {
+      font-size: 1.2rem !important; } }
   #helm.home .content p, #helm.home .content ul, #helm.home .content li {
     color: white;
     font-size: 1.5rem;
     line-height: 1.4;
-    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-    letter-spacing: 0;
+    font-family: 'CLight';
     -webkit-font-smoothing: antialiased; }
   #helm.home .content p {
     margin-bottom: 1.4rem; }
   #helm.home .content .github-stats {
     padding-top: 1em; }
   #helm.home .content a {
-    color: #464646; }
+    color: white;
+    text-decoration: none; }
+  #helm.home .content #underline, #helm.home .content #underline1 {
+    position: relative; }
+  #helm.home .content #underline {
+    z-index: -2;
+    background-image: linear-gradient(to right, #4b84a3 0%, #4b84a3 100%);
+    background-repeat: no-repeat;
+    background-size: 70% 0.7em;
+    background-position: -5px 170%; }
+  #helm.home .content #underline1 {
+    background-image: linear-gradient(to right, #4b84a3 0%, #4b84a3 100%);
+    background-repeat: no-repeat;
+    background-size: 97% 0.7em;
+    background-position: -5px 170%;
+    z-index: -2; }
   #helm.home .content .helm-overview-img {
     margin: 3.5rem 0 3rem; }
   #helm.home .helm-features {
-    background: url("/img/features-bg.png") no-repeat center 0;
-    background-size: cover;
     text-align: center;
     margin-top: 5em;
-    margin-bottom: 2em;
+    padding: 0;
+    margin-bottom: 4em;
     padding-bottom: 4rem; }
     #helm.home .helm-features .large-3 {
       min-height: 280px; }
-    #helm.home .helm-features h2 {
-      font-family: "klinic-bold", "klinic bold", "Helvetica Neue", Helvetica, Arial, sans-serif;
-      font-weight: 600;
-      letter-spacing: 0.05em;
-      -webkit-font-smoothing: antialiased;
-      color: #27759A;
-      border-bottom: 4px solid #afdff4;
+    #helm.home .helm-features h1 {
+      font-family: 'CBlack';
+      font-weight: 900;
+      text-transform: none;
+      letter-spacing: 0.015em;
+      color: #183d54;
+      font-size: 3rem;
+      letter-spacing: 0em;
       margin: 1.5rem 0 2.5rem;
       display: inline-block; }
-      #helm.home .helm-features h2 .fa {
+      #helm.home .helm-features h1 .fa {
         color: #FF2A53; }
     #helm.home .helm-features h3 {
       color: #27759A;
-      margin: 0.25em 0 0.5em;
-      font-size: 1.5rem;
+      margin: 0.25em 0 0;
+      font-size: 2rem;
+      letter-spacing: -1px;
       position: relative;
-      font-family: "klinic-bold", "klinic bold", "Helvetica Neue", Helvetica, Arial, sans-serif;
-      font-weight: 600;
-      letter-spacing: 0.05em;
-      -webkit-font-smoothing: antialiased; }
+      font-family: 'CBold'; }
       #helm.home .helm-features h3 small {
         position: absolute;
         top: 8.667em;
@@ -6587,18 +6596,37 @@ nav.home-nav {
         left: 50%;
         font-size: 0.6em;
         margin-left: -5em; }
+      @media only screen and (max-width: 60em) {
+        #helm.home .helm-features h3 {
+          font-size: 1.7rem; }
+          #helm.home .helm-features h3 img {
+            width: 65px; } }
     #helm.home .helm-features h3:not(:first-child) {
       padding-top: 2em; }
     #helm.home .helm-features .columns {
-      position: relative; }
+      position: relative;
+      padding: 30px; }
+      @media only screen and (max-width: 60em) {
+        #helm.home .helm-features .columns {
+          padding: 10px; }
+          #helm.home .helm-features .columns figcaption + img {
+            padding: 10px;
+            border-radius: 2em; } }
     #helm.home .helm-features img {
       top: 0;
-      left: 50%; }
+      left: 50%;
+      border-radius: 1em; }
     #helm.home .helm-features p {
       font-size: 1.5em;
+      color: black;
+      line-height: 1.5;
+      margin: 10px 0 1.5rem 0;
       padding: 0 5%; }
       #helm.home .helm-features p code {
         border: none; }
+      @media only screen and (max-width: 60em) {
+        #helm.home .helm-features p {
+          font-size: 1.2rem; } }
     #helm.home .helm-features .row {
       background-color: white; }
       #helm.home .helm-features .row:first-child {
@@ -6606,97 +6634,111 @@ nav.home-nav {
       #helm.home .helm-features .row:last-child {
         padding-bottom: 0.5em;
         border-radius: 0 0 0.5em 0.5em; }
+    #helm.home .helm-features #underline, #helm.home .helm-features #underline1 {
+      position: relative; }
+    #helm.home .helm-features #underline::before {
+      content: "";
+      position: absolute;
+      left: 50%;
+      bottom: 5px;
+      width: 360px;
+      height: 10px;
+      transform: skew(-12deg) translateX(-50%);
+      background: rgba(57, 190, 197, 0.5); }
+  @media only screen and (max-width: 60em) {
+    #helm.home .helm-features + .container {
+      padding-bottom: 75px; } }
   #helm.home .get-helm {
     padding-bottom: 50px;
-    border: 2px dashed #7FCCF0;
+    border: 5px solid wheat;
     padding: 2em;
     margin-bottom: 4em;
     position: relative;
+    border-radius: 0.5em;
     z-index: 100; }
-    #helm.home .get-helm:after {
-      position: absolute;
-      display: block;
-      content: " ";
-      top: 0.667em;
-      left: -0.25em;
-      width: 100%;
-      height: 375px;
-      z-index: -5;
-      background-color: #27759A;
-      transform: rotateX(12deg);
-      opacity: 0.425; }
     #helm.home .get-helm h2 {
       margin: 0 0 0.5em;
       padding: 0; }
     #helm.home .get-helm img {
       margin: 0.333em 0; }
   #helm.home .get-charts {
-    padding-left: 3.5rem; }
+    border-radius: 0.5em;
+    margin-left: 20px;
+    padding: 2em 0em 0 0em; }
     #helm.home .get-charts h2 {
-      margin: 2.5rem 0 1rem;
+      margin: 1.5rem 0 1rem;
       padding: 0; }
   #helm.home .helm-community {
     background-color: white;
-    padding-top: 50px;
     padding-bottom: 100px;
+    border-radius: 25px;
     color: #27759A;
     background: linear-gradient(0deg, #fff, #F7F7F7); }
     #helm.home .helm-community h2, #helm.home .helm-community p {
       color: #27759A; }
     #helm.home .helm-community h2 {
-      margin-bottom: 0.5em; }
-      #helm.home .helm-community h2 + p {
-        margin-bottom: 4.5rem; }
-    #helm.home .helm-community .helm-community-links ul {
-      background-color: white;
-      padding: 1.5em 2.25em;
-      border-radius: 1em; }
-      #helm.home .helm-community .helm-community-links ul li {
-        font-size: 1.5rem;
-        list-style: none;
-        color: #27759A;
-        line-height: 2.5;
-        padding-left: 2.25em;
-        position: relative;
-        font-family: "klinic-reg", "klinic", "Helvetica Neue", Helvetica, Arial, sans-serif;
-        font-weight: 400;
-        letter-spacing: 0.0075em;
-        -webkit-font-smoothing: antialiased; }
-        #helm.home .helm-community .helm-community-links ul li a {
-          color: #464646;
-          border-bottom: 3px solid #3FB1E5;
-          text-decoration: none; }
-          #helm.home .helm-community .helm-community-links ul li a:hover {
-            color: #3FB1E5;
-            border-color: #7FCCF0; }
-        #helm.home .helm-community .helm-community-links ul li .fa {
-          color: #3FB1E5;
-          font-size: 2rem;
-          width: 1.25em;
-          padding-right: 0em;
-          position: absolute;
-          left: 0;
-          top: 0.525em; }
+      margin-bottom: 0.3em;
+      font-size: 3rem; }
+    @media only screen and (max-width: 60em) {
+      #helm.home .helm-community .helm-community-links ul {
+        padding: 0 !important;
+        margin: 0 !important;
+        text-align: left !important; } }
+    #helm.home .helm-community .helm-community-links ul .btn-section {
+      display: inline-block;
+      padding: 10px 20px 10px 20px;
+      border-radius: 20px; }
+    #helm.home .helm-community .helm-community-links ul li {
+      font-size: 1.5rem;
+      list-style: none;
+      color: #27759A;
+      line-height: 2.5;
+      padding-left: 2.25em;
+      position: relative;
+      font-family: 'CMedium'; }
+      #helm.home .helm-community .helm-community-links ul li a {
+        color: #464646;
+        text-decoration: none;
+        background-image: linear-gradient(to right, #A7BFE8 0%, #6190E8 100%);
+        background-repeat: no-repeat;
+        background-size: 100% 0.3em;
+        padding: 15px 10px;
+        background-position: 0 88%;
+        transition: background-size 0.1s ease-in-out; }
+        #helm.home .helm-community .helm-community-links ul li a:hover {
+          background-size: 100% 80%;
+          color: white; }
+      #helm.home .helm-community .helm-community-links ul li .fa-solid, #helm.home .helm-community .helm-community-links ul li .fa-brands {
+        font-size: 1.5rem; }
+    #helm.home .helm-community .topbar {
+      height: 20px;
+      background-color: #f8cc88; }
+    #helm.home .helm-community .topbar--1 {
+      height: 20px;
+      background-color: #bc0047; }
+    #helm.home .helm-community .text-content {
+      padding: 2rem; }
     #helm.home .helm-community .helm-community-blocks section {
-      border: 1px solid #27759A;
-      border-radius: 1rem;
+      border: 25px solid white;
+      border-bottom: none;
+      border-top: none;
       margin: 0 0 2em;
-      padding: 1.25rem 1.5rem;
       min-height: 125px;
+      background-color: ghostwhite;
       position: relative; }
       #helm.home .helm-community .helm-community-blocks section h4 {
         color: #27759A;
         font-size: 1.5em;
-        font-family: "klinic-bold", "klinic bold", "Helvetica Neue", Helvetica, Arial, sans-serif;
-        font-weight: 600;
-        letter-spacing: 0.05em;
-        -webkit-font-smoothing: antialiased;
+        font-family: 'CBlack';
+        font-weight: 900;
         margin: -0.25em 0 0.667em; }
       #helm.home .helm-community .helm-community-blocks section p {
         color: #27759A;
         font-size: 1.4rem; }
       #helm.home .helm-community .helm-community-blocks section a {
-        color: #464646; }
+        color: #bc0047;
+        text-decoration: underline;
+        font-weight: 600; }
       #helm.home .helm-community .helm-community-blocks section iframe {
         width: 35%;
         display: inline-block;
@@ -6775,33 +6817,34 @@ nav.home-nav {
   min-width: 100%; }
 
 .cncf {
-  background: RGBA(246, 246, 246, 1);
+  background: white;
   min-height: 5rem;
   margin-top: 4rem;
   text-align: center;
   padding-left: 0 !important; }
   .cncf img {
-    float: left;
     display: inline-block;
     max-width: 14rem;
     margin: 3rem 5%; }
   .cncf p {
-    float: right;
     margin: 3.5rem 5%;
     display: inline-block;
-    font-family: helvetica;
     color: #777; }
     .cncf p:hover {
       color: #7FCCF0; }
 
 .copyright {
-  background: #3FB1E5;
+  background: #193d54;
   color: white;
   font-size: 1.3rem;
   padding: 1rem; }
   .copyright a, .copyright a:focus, .copyright a:visited {
-    color: #464646; }
-
+    color: #2BA0D3;
+    text-decoration: none !important; }
+  @media only screen and (max-width: 60em) {
+    .copyright {
+      padding: 20px 20px 30px !important;
+      font-size: 1rem; } }
 @media only screen and (min-device-width: 415px) {
   @keyframes animatedBoat {
     0% {
@@ -6970,7 +7013,8 @@ nav.home-nav {
     .cncf img,
     .cncf p {
       float: none;
-      margin: 1.5rem auto; }
+      padding: 0;
+      margin: 1.5rem 0 !important; }
     .cncf img {
       max-width: 51%; } }
 
@@ -6979,7 +7023,7 @@ nav.home-nav {
   padding: 13.33333333px 0;
   width: 100%;
   position: relative; }
-  @media only screen and (max-width: 40em) {
+  @media only screen and (max-width: 60em) {
     #helm .panel {
       padding: 10px 0; } }
   #helm .panel.-blue {
@@ -7004,10 +7048,7 @@ nav.home-nav {
     line-height: 1;
     padding: 0 1em;
     margin: 0 0 1.5em;
-    font-family: "klinic-bold", "klinic bold", "Helvetica Neue", Helvetica, Arial, sans-serif;
-    font-weight: 600;
-    letter-spacing: 0.05em;
-    -webkit-font-smoothing: antialiased; }
+    font-family: 'CBold'; }
     #helm .geo-shapes-title h2 hr.border {
       border-color: #DDF5F2;
       border-width: 0 0 5px;
@@ -7048,8 +7089,8 @@ nav.home-nav {
       #helm .panel.panel--signoff .text-center h4 a::after {
         display: inline-block;
         content: "";
-        background: #F99EAC;
-        height: 3px;
+        background: #cc0046;
+        height: 5px;
         position: absolute;
         bottom: 0;
         left: 50%;
@@ -7094,10 +7135,7 @@ nav.home-nav {
     #helm .content p:last-child {
       margin-bottom: 1em; } }
   #helm .content p.lead {
-    font-family: "klinic-reg", "klinic", "Helvetica Neue", Helvetica, Arial, sans-serif;
-    font-weight: 400;
-    letter-spacing: 0.0075em;
-    -webkit-font-smoothing: antialiased;
+    font-family: 'CMedium';
     padding: 0;
     font-size: 0.925em; }
 
@@ -7119,10 +7157,7 @@ nav.home-nav {
     padding: 0.825em 1.5em 1.25em 0.75em;
     line-height: 1.333; }
   #helm .content table th {
-    font-family: "klinic-bold", "klinic bold", "Helvetica Neue", Helvetica, Arial, sans-serif;
-    font-weight: 600;
-    letter-spacing: 0.05em;
-    -webkit-font-smoothing: antialiased;
+    font-family: 'CBold';
     color: white;
     font-size: 1em;
     background: #4E4E4E;
@@ -7138,15 +7173,9 @@ nav.home-nav {
   line-height: 1.5; }
   #helm .content dl dt,
   #helm .content dl dd {
-    font-family: "klinic-reg", "klinic", "Helvetica Neue", Helvetica, Arial, sans-serif;
-    font-weight: 400;
-    letter-spacing: 0.0075em;
-    -webkit-font-smoothing: antialiased; }
+    font-family: 'CMedium'; }
   #helm .content dl dt {
-    font-family: "klinic-bold", "klinic bold", "Helvetica Neue", Helvetica, Arial, sans-serif;
-    font-weight: 600;
-    letter-spacing: 0.05em;
-    -webkit-font-smoothing: antialiased;
+    font-family: 'CBold';
     color: #c4c4c4; }
   #helm .content dl.inline-list dt,
   #helm .content dl.inline-list dd {
@@ -7157,18 +7186,12 @@ nav.home-nav {
     clear: left; }
 
 #helm .content address {
-  font-family: "klinic-reg", "klinic", "Helvetica Neue", Helvetica, Arial, sans-serif;
-  font-weight: 400;
-  letter-spacing: 0.0075em;
-  -webkit-font-smoothing: antialiased;
+  font-family: 'CMedium';
   font-size: 1.25rem;
   margin: 2em 0 1em;
   line-height: 1.333; }
   #helm .content address em {
-    font-family: "klinic-bold", "klinic bold", "Helvetica Neue", Helvetica, Arial, sans-serif;
-    font-weight: 600;
-    letter-spacing: 0.05em;
-    -webkit-font-smoothing: antialiased;
+    font-family: 'CBold';
     font-style: normal;
     color: #c4c4c4; }
 
@@ -7185,8 +7208,8 @@ nav.home-nav {
   #helm .content a.ripple::after {
     display: inline-block;
     content: "";
-    background: #F99EAC;
-    height: 3px;
+    background: #cc0046;
+    height: 5px;
     position: absolute;
     bottom: 0;
     left: 50%;
@@ -7214,7 +7237,7 @@ nav.home-nav {
     padding: 0.5em 0;
     margin: 0;
     color: #787878; }
-  @media only screen and (max-width: 40em) {
+  @media only screen and (max-width: 60em) {
     #helm .content .breakout-cta-row p.left,
     #helm .content .breakout-cta-row button {
       float: none;
@@ -7235,13 +7258,13 @@ nav.home-nav {
 #helm .off-canvas-wrap.move-left {
   position: fixed; }
 
-@media only screen and (max-width: 40em) {
+@media only screen and (max-width: 60em) {
   #helm .navbar.top-bar {
     top: 0; } }
 
 #helm #tos {
   padding-top: 100px; }
-  @media only screen and (max-width: 40em) {
+  @media only screen and (max-width: 60em) {
     #helm #tos {
       padding: 80px 20px 20px 20px; } }
 .blog-layout .main {
@@ -7432,10 +7455,7 @@ body {
         color: #2090CD;
         left: 6.5rem;
         letter-spacing: -0.125rem;
-        font-family: "klinic-reg", "klinic", "Helvetica Neue", Helvetica, Arial, sans-serif;
-        font-weight: 400;
-        letter-spacing: 0.0075em;
-        -webkit-font-smoothing: antialiased; }
+        font-family: 'CMedium'; }
       .sidebar h1 a:hover {
         background: #E4E4E4; }
         .sidebar h1 a:hover svg {
@@ -7451,10 +7471,7 @@ body {
       line-height: 1.4;
       text-transform: capitalize;
       font-size: 1.5em;
-      font-family: "klinic-bold", "klinic bold", "Helvetica Neue", Helvetica, Arial, sans-serif;
-      font-weight: 600;
-      letter-spacing: 0.05em;
-      -webkit-font-smoothing: antialiased;
+      font-family: 'CBold';
       letter-spacing: 0.02em;
       transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1); }
       .sidebar ul li a:hover {
@@ -7498,7 +7515,7 @@ body {
           font-size: 14px;
           border-right: 4px solid transparent;
           transition: all 0.3s ease-in-out;
-          font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+          font-family: #AAAAAA;
           font-weight: bold; }
           .sidebar ul li ul li a:hover {
             color: #277A9F;
@@ -7555,10 +7572,7 @@ body {
         padding: 1em;
         color: #277A9F;
         font-size: 1.125rem;
-        font-family: "klinic-bold", "klinic bold", "Helvetica Neue", Helvetica, Arial, sans-serif;
-        font-weight: 600;
-        letter-spacing: 0.05em;
-        -webkit-font-smoothing: antialiased; }
+        font-family: 'CBold'; }
         .top-bar ul li a img {
           padding-right: 0.333em;
           max-height: 1.2rem; }
@@ -7580,10 +7594,7 @@ body {
       font-size: 1.5rem;
       color: #2090CD;
       letter-spacing: -0.125rem;
-      font-family: "klinic-reg", "klinic", "Helvetica Neue", Helvetica, Arial, sans-serif;
-      font-weight: 400;
-      letter-spacing: 0.0075em;
-      -webkit-font-smoothing: antialiased;
+      font-family: 'CMedium';
       transition: all 0.3s ease-in-out; }
       .top-bar .breadcrumb a:hover {
         color: #2DAFE9; }
@@ -7635,10 +7646,7 @@ body {
     color: #999;
     line-height: 1.7;
     font-size: 0.667rem;
-    font-family: "klinic-reg", "klinic", "Helvetica Neue", Helvetica, Arial, sans-serif;
-    font-weight: 400;
-    letter-spacing: 0.0075em;
-    -webkit-font-smoothing: antialiased; }
+    font-family: 'CMedium'; }
   .styleguide-footer li a {
     font-size: 0.75rem; }
   .styleguide-footer strong {
@@ -7765,21 +7773,20 @@ body {
   max-width: 100%; }
 
 .cncf {
-  background: #e4e4e4;
+  background: #193d54;
   min-height: 2rem;
   text-align: center;
   padding-left: 300px; }
   .cncf img {
-    float: left;
     display: inline-block;
     max-width: 10rem;
+    transform: scale(2);
     margin: 1.5rem 0 1.5rem 7.5%; }
   .cncf p {
-    float: right;
     margin: 1.5rem 2.5% 0 0;
     display: inline-block;
-    font-family: helvetica;
-    color: #222; }
+    color: white;
+    font-size: 22px; }
     .cncf p:hover {
       color: #2BA0D3; }
 
@@ -7797,10 +7804,7 @@ body {
   .home h3 {
     color: #f6fbfe;
     font-size: 1.125rem;
-    font-family: "klinic-bold", "klinic bold", "Helvetica Neue", Helvetica, Arial, sans-serif;
-    font-weight: 600;
-    letter-spacing: 0.05em;
-    -webkit-font-smoothing: antialiased; }
+    font-family: 'CBold'; }
   .home #helm {
     max-width: 100%;
     position: relative;
@@ -7812,27 +7816,65 @@ body {
       width: 100%;
       bottom: 0;
       position: fixed; }
+    @media only screen and (max-width: 60em) {
+      .home #helm .content .emoji-list {
+        margin: 0 0 35px 0 !important; } }
     .home #helm .billboard {
       background-color: white;
       background-size: 376px;
-      padding-top: 230px;
+      padding: 165px 60px 100px 60px;
       position: relative;
-      text-align: center; }
+      text-align: left; }
+      @media only screen and (max-width: 60em) {
+        .home #helm .billboard {
+          padding: 200px 23px 100px 20px; } }
       .home #helm .billboard .helm-logo {
         max-width: 120px; }
+      .home #helm .billboard #underline1 {
+        position: relative; }
+        @media only screen and (max-width: 60em) {
+          .home #helm .billboard #underline1 {
+            background-image: linear-gradient(to right, #f6b6aa 0%, #f6b6aa 100%) !important;
+            background-repeat: no-repeat !important;
+            background-size: 100% 0.3em !important;
+            background-position: 0px 85% !important; } }
+      .home #helm .billboard #underline1::before {
+        content: "";
+        position: absolute;
+        left: 115px;
+        bottom: 10px;
+        width: 235px;
+        height: 14px;
+        transform: skew(-12deg) translateX(-50%);
+        background: rgba(238, 111, 87, 0.5); }
+        @media only screen and (max-width: 60em) {
+          .home #helm .billboard #underline1::before {
+            content: none; } }
       .home #helm .billboard h1 {
-        font-family: "klinic-bold", "klinic bold", "Helvetica Neue", Helvetica, Arial, sans-serif;
-        font-weight: 600;
-        letter-spacing: 0.05em;
-        -webkit-font-smoothing: antialiased;
+        font-family: 'CBlack';
+        font-weight: 900;
         color: #2DAFE9;
-        font-size: 2.57rem;
+        line-height: 1.2;
+        letter-spacing: -2px;
+        font-size: 3.57rem;
+        position: relative;
         text-transform: none !important; }
+        @media only screen and (max-width: 60em) {
+          .home #helm .billboard h1 {
+            font-size: 11.755vw !important;
+            margin: 3rem 0 0 0 !important; } }
       .home #helm .billboard h2 {
-        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+        font-family: 'CMedium';
         color: #277A9F;
-        font-size: 1.6rem;
+        font-size: 1.4rem;
+        line-height: 1.3;
         margin-bottom: 30px; }
+        @media only screen and (max-width: 60em) {
+          .home #helm .billboard h2 {
+            font-size: 1.3rem !important;
+            line-height: 1.3 !important;
+            margin: 2rem 0 0 !important;
+            padding-bottom: 0rem !important; } }
       .home #helm .billboard .helm-logo {
         position: absolute;
         left: 5rem;
@@ -7851,7 +7893,6 @@ body {
         .home #helm .billboard .fa:hover {
           opacity: 0.7; }
       .home #helm .billboard:after {
-        background: url("/img/pattern-waves.png") left top repeat-x;
         background-size: 20px;
         bottom: 0;
         content: '';
@@ -8031,10 +8072,7 @@ body {
         margin: 0 auto 1rem;
         font-size: 1rem;
         color: #2090CD;
-        font-family: "klinic-bold", "klinic bold", "Helvetica Neue", Helvetica, Arial, sans-serif;
-        font-weight: 600;
-        letter-spacing: 0.05em;
-        -webkit-font-smoothing: antialiased;
+        font-family: 'CBold';
         letter-spacing: 0.02em; }
       .home .home-featured .panel p {
         line-height: 1.4;
@@ -8050,10 +8088,7 @@ body {
   line-height: 1.5;
   z-index: 500;
   position: relative;
-  font-family: "klinic-reg", "klinic", "Helvetica Neue", Helvetica, Arial, sans-serif;
-  font-weight: 400;
-  letter-spacing: 0.0075em;
-  -webkit-font-smoothing: antialiased; }
+  font-family: 'CMedium'; }
   .main .list-wrap h1 {
     text-transform: none;
     letter-spacing: 0.03em;
@@ -8062,10 +8097,7 @@ body {
     color: #595959;
     font-size: 24px;
     letter-spacing: 0.05em;
-    font-family: "klinic-bold", "klinic bold", "Helvetica Neue", Helvetica, Arial, sans-serif;
-    font-weight: 600;
-    letter-spacing: 0.05em;
-    -webkit-font-smoothing: antialiased;
+    font-family: 'CBold';
     text-transform: uppercase;
     letter-spacing: 0.25em;
     letter-spacing: 0.125em;
@@ -8073,10 +8105,7 @@ body {
     padding-top: 1em; }
   .main .list-wrap h3 {
     color: #333333;
-    font-family: "klinic-bold", "klinic bold", "Helvetica Neue", Helvetica, Arial, sans-serif;
-    font-weight: 600;
-    letter-spacing: 0.05em;
-    -webkit-font-smoothing: antialiased;
+    font-family: 'CBold';
     margin: 1.825em 0 1.825em; }
   .main .list-wrap h4 {
     font-size: 17.92px; }
@@ -8129,10 +8158,7 @@ body {
   line-height: 1.5;
   z-index: 500;
   position: relative;
-  font-family: "klinic-reg", "klinic", "Helvetica Neue", Helvetica, Arial, sans-serif;
-  font-weight: 400;
-  letter-spacing: 0.0075em;
-  -webkit-font-smoothing: antialiased; }
+  font-family: 'CMedium'; }
   .main .content-wrap h1 {
     text-transform: none;
     letter-spacing: 0.03em;
@@ -8149,10 +8175,7 @@ body {
     color: #595959;
     font-size: 24px;
     letter-spacing: 0.05em;
-    font-family: "klinic-bold", "klinic bold", "Helvetica Neue", Helvetica, Arial, sans-serif;
-    font-weight: 600;
-    letter-spacing: 0.05em;
-    -webkit-font-smoothing: antialiased;
+    font-family: 'CBold';
     text-transform: uppercase;
     letter-spacing: 0.25em;
     letter-spacing: 0.125em;
@@ -8161,10 +8184,7 @@ body {
     scroll-margin-top: 2.5em; }
   .main .content-wrap h3 {
     color: #333333;
-    font-family: "klinic-bold", "klinic bold", "Helvetica Neue", Helvetica, Arial, sans-serif;
-    font-weight: 600;
-    letter-spacing: 0.05em;
-    -webkit-font-smoothing: antialiased;
+    font-family: 'CBold';
     margin: 1.825em 0 1.825em; }
   .main .content-wrap h4 {
     font-size: 17.92px; }
@@ -8380,10 +8400,7 @@ body {
     aside.left-off-canvas-menu ul {
       background: #2BA0D3 !important; }
       aside.left-off-canvas-menu ul li {
-        font-family: "klinic-bold", "klinic bold", "Helvetica Neue", Helvetica, Arial, sans-serif;
-        font-weight: 600;
-        letter-spacing: 0.05em;
-        -webkit-font-smoothing: antialiased;
+        font-family: 'CBold';
         font-size: 1.25rem; }
         aside.left-off-canvas-menu ul li a {
           color: white !important;
@@ -8399,8 +8416,6 @@ body {
           margin-left: 0;
           padding: 0.5em 0 1em 1.5em; }
           aside.left-off-canvas-menu ul li a + ul li {
-            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-            letter-spacing: 0;
             font-size: 1rem;
             list-style: none; }
             aside.left-off-canvas-menu ul li a + ul li a {

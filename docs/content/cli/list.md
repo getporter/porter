@@ -50,7 +50,7 @@ porter list [flags]
 ```
       --debug                  Enable debug logging
       --debug-plugins          Enable plugin debug logging
-      --experimental strings   Comma separated list of experimental features to enable. See https://porter.sh/configuration/#experimental-feature-flags for available feature flags.
+      --experimental strings   Comma separated list of experimental features to enable. See https://getporter.org/configuration/#experimental-feature-flags for available feature flags.
 ```
 
 ### SEE ALSO
@@ -59,6 +59,6 @@ porter list [flags]
 
 Most commands require a Docker daemon, either local or remote.
 
-Try our QuickStart https://porter.sh/quickstart to learn how to use Porter.
+Try our QuickStart https://getporter.org/quickstart to learn how to use Porter.
 
 

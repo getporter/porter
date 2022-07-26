@@ -61,7 +61,7 @@ func (p *TestInstallationProvider) SetMutableInstallationValues(i *Installation)
 	i.Status.Modified = now
 }
 
-// CreateRun creates a new claim and saves it.
+// CreateRun creates a new test run and saves it.
 func (p *TestInstallationProvider) CreateRun(r Run, transformations ...func(r *Run)) Run {
 	for _, transform := range transformations {
 		transform(&r)
@@ -78,7 +78,7 @@ func (p *TestInstallationProvider) SetMutableRunValues(r *Run) {
 	r.Created = now
 }
 
-// CreateResult creates a new result from the specified claim and saves it.
+// CreateResult creates a new test result and saves it.
 func (p *TestInstallationProvider) CreateResult(r Result, transformations ...func(r *Result)) Result {
 	for _, transform := range transformations {
 		transform(&r)
@@ -95,7 +95,7 @@ func (p *TestInstallationProvider) SetMutableResultValues(r *Result) {
 	r.Created = now
 }
 
-// CreateOutput creates a new output from the specified claim and result and saves it.
+// CreateOutput creates a new test output and saves it.
 func (p *TestInstallationProvider) CreateOutput(o Output, transformations ...func(o *Output)) Output {
 	for _, transform := range transformations {
 		transform(&o)

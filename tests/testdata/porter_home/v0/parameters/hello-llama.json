@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "1.0.0-DRAFT+TODO",
+  "name": "hello-llama",
+  "created": "2022-06-06T16:06:21.635528-05:00",
+  "modified": "2022-06-06T17:06:21.635528-05:00",
+  "parameters": [
+    {
+      "name": "name",
+      "source": {
+        "env": "USER"
+      }
+    }
+  ]
+}

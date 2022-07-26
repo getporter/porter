@@ -25,7 +25,7 @@ bin/
     ├── mymixin-linux-amd64
     └── mymixin-windows-amd64.exe
 
-See https://porter.sh/mixin-dev-guide/distribution more details.
+See https://getporter.org/mixin-dev-guide/distribution more details.
 
 
 ```
@@ -53,7 +53,7 @@ porter mixins feed generate [flags]
 ```
       --debug                  Enable debug logging
       --debug-plugins          Enable plugin debug logging
-      --experimental strings   Comma separated list of experimental features to enable. See https://porter.sh/configuration/#experimental-feature-flags for available feature flags.
+      --experimental strings   Comma separated list of experimental features to enable. See https://getporter.org/configuration/#experimental-feature-flags for available feature flags.
 ```
 
 ### SEE ALSO

@@ -19,14 +19,14 @@ It can take a while for things to download and install over the workshop wifi,
 so please go to the workshop materials directory and follow the setup instructions
 to get all the materials ready.
 
-.center[👩🏽‍✈️ https://porter.sh/pack-your-bags/#setup 👩🏽‍✈️ ]
+.center[👩🏽‍✈️ https://getporter.org/pack-your-bags/#setup 👩🏽‍✈️ ]
 
 * Clone the workshop repository
   ```console
   git clone https://github.com/getporter/porter.git
   cd porter/workshop
   ```
-* [Install Porter](https://porter.sh/install)
+* [Install Porter](/install)
 * Create a [Docker Hub](https://hub.docker.com/signup) account if you don't have one
 * Create a Kubernetes Cluster on [macOS](https://docs.docker.com/docker-for-mac/kubernetes/) or [Windows](https://docs.docker.com/docker-for-windows/kubernetes/)
 
@@ -461,7 +461,7 @@ class: center, middle
 .center[
   🚨 Not Setup Yet? 🚨
 
-  https://porter.sh/pack-your-bags/#setup
+  https://getporter.org/pack-your-bags/#setup
   
   ]
 ---
@@ -1182,7 +1182,7 @@ _They adapt between CNAB and existing tools. Porter is just glue."_
 * azure
 * terraform
 
-.center[ https://porter.sh/mixins ]
+.center[ https://getporter.org/mixins ]
 
 ---
 name: helm
@@ -1347,7 +1347,7 @@ your invocation image to pick up your changes.
 * Don't forget to copy your images into your invocation image to /cnab/app/.
 * The command to run is `goasciiart -p=gopher.png -w=100`.
 
-[asciiart]: https://porter.sh/src/workshop/asciiart
+[asciiart]: /src/workshop/asciiart
 
 ---
 name: break-glass

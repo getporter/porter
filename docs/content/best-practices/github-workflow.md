@@ -64,7 +64,7 @@ You can also specify the version of the mixin by adding the version flag. For ex
 ````yaml
 run: porter mixins install az --version v0.4.2
 ````
-Take a look at the [documentation](https://porter.sh/mixins) to see all available mixins and how to know what command to run to install them. The documentation provides install commands for each mixin. The command `porter mixin search` lists all the mixins created by the community. Depending on if the URL is an atom feed or a github url you can install the mixin using
+Take a look at the [documentation](/mixins) to see all available mixins and how to know what command to run to install them. The documentation provides install commands for each mixin. The command `porter mixin search` lists all the mixins created by the community. Depending on if the URL is an atom feed or a github url you can install the mixin using
 ```yaml
 porter mixins install NAME --feed-url ATOM_URL
 ```

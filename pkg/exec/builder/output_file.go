@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"get.porter.sh/porter/pkg/portercontext"
-	"github.com/pkg/errors"
 )
 
 type OutputFile interface {
@@ -38,12 +37,12 @@ func ProcessFileOutputs(cxt *portercontext.Context, step StepWithOutputs) error 
 
 		valueB, err := cxt.FileSystem.ReadFile(outputPath)
 		if err != nil {
-			return errors.Wrapf(err, "error evaluating filepath %q for output %q", outputPath, outputName)
+			return fmt.Errorf("error evaluating filepath %q for output %q: %w", outputPath, outputName, err)
 		}
 
 		err = cxt.WriteMixinOutputToFile(outputName, valueB)
 		if err != nil {
-			return errors.Wrapf(err, "error writing mixin output for %q", outputName)
+			return fmt.Errorf("error writing mixin output for %q: %w", outputName, err)
 		}
 	}
 

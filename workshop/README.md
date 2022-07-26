@@ -2,8 +2,8 @@
 
 These are the workshop materials for the workshop at 
 
-https://porter.sh/pack-your-bags
+https://getporter.org/pack-your-bags
 
 ## Setup
 
-See https://porter.sh/pack-your-bags/#setup
+See https://getporter.org/pack-your-bags/#setup

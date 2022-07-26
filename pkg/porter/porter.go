@@ -2,7 +2,7 @@ package porter
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"strings"
 
 	"get.porter.sh/porter/pkg/build"
@@ -21,7 +21,6 @@ import (
 	"get.porter.sh/porter/pkg/templates"
 	"get.porter.sh/porter/pkg/tracing"
 	"github.com/hashicorp/go-multierror"
-	"github.com/pkg/errors"
 )
 
 // Porter is the logic behind the porter client.
@@ -63,6 +62,8 @@ func NewFor(c *config.Config, store storage.Store, secretStorage secrets.Store) 
 	credStorage := storage.NewCredentialStore(storageManager, secretStorage)
 	paramStorage := storage.NewParameterStore(storageManager, secretStorage)
 	sanitizerService := storage.NewSanitizer(paramStorage, secretStorage)
+	storageManager.Initialize(sanitizerService) // we have a bit of a dependency problem here that it would be great to figure out eventually
+
 	return &Porter{
 		Config:        c,
 		Cache:         cache,
@@ -98,10 +99,6 @@ func (p *Porter) Connect(ctx context.Context) error {
 
 // Close releases resources used by Porter before terminating the application.
 func (p *Porter) Close() error {
-	if p.Debug {
-		fmt.Fprintln(p.Err, "Closing plugins")
-	}
-
 	// Shutdown our plugins
 	var bigErr *multierror.Error
 

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	depsv1 "get.porter.sh/porter/pkg/cnab/dependencies/v1"
 	"github.com/stretchr/testify/require"
 )
 
@@ -19,14 +20,14 @@ func TestProcessRequiredExtensions(t *testing.T) {
 
 		expected := ProcessedExtensions{
 			"sh.porter.file-parameters": nil,
-			"io.cnab.dependencies": Dependencies{
-				Requires: map[string]Dependency{
-					"storage": Dependency{
+			"io.cnab.dependencies": depsv1.Dependencies{
+				Requires: map[string]depsv1.Dependency{
+					"storage": depsv1.Dependency{
 						Bundle: "somecloud/blob-storage",
 					},
-					"mysql": Dependency{
+					"mysql": depsv1.Dependency{
 						Bundle: "somecloud/mysql",
-						Version: &DependencyVersion{
+						Version: &depsv1.DependencyVersion{
 							AllowPrereleases: true,
 							Ranges:           []string{"5.7.x"},
 						},

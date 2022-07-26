@@ -1,10 +1,11 @@
 package query
 
 import (
+	"fmt"
+
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/yaml"
-	"github.com/pkg/errors"
 )
 
 // ManifestGenerator generates mixin input from the manifest contents associated with each mixin.
@@ -31,7 +32,11 @@ func (g ManifestGenerator) ListMixins() []string {
 func (g ManifestGenerator) BuildInput(mixinName string) ([]byte, error) {
 	input := g.buildInputForMixin(mixinName)
 	inputB, err := yaml.Marshal(input)
-	return inputB, errors.Wrapf(err, "could not marshal mixin build input for %s", mixinName)
+	if err != nil {
+		return nil, fmt.Errorf("could not marshal mixin build input for %s: %w", mixinName, err)
+	}
+
+	return inputB, nil
 }
 
 func (g ManifestGenerator) buildInputForMixin(mixinName string) BuildInput {

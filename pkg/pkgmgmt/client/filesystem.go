@@ -11,7 +11,9 @@ import (
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/pkgmgmt"
 	"get.porter.sh/porter/pkg/portercontext"
-	"github.com/pkg/errors"
+	"get.porter.sh/porter/pkg/tracing"
+	"go.opentelemetry.io/otel/attribute"
+	"go.uber.org/zap/zapcore"
 )
 
 var _ pkgmgmt.PackageManager = &FileSystem{}
@@ -45,10 +47,13 @@ type FileSystem struct {
 
 func (fs *FileSystem) List() ([]string, error) {
 	parentDir, err := fs.GetPackagesDir()
+	if err != nil {
+		return nil, fmt.Errorf("could not get package directory:%w", err)
+	}
 
 	files, err := fs.FileSystem.ReadDir(parentDir)
 	if err != nil {
-		return nil, errors.Wrapf(err, "could not list the contents of the %s directory %q", fs.PackageType, parentDir)
+		return nil, fmt.Errorf("could not list the contents of the %s directory %q: %w", fs.PackageType, parentDir, err)
 	}
 
 	names := make([]string, 0, len(files))
@@ -64,18 +69,20 @@ func (fs *FileSystem) List() ([]string, error) {
 }
 
 func (fs *FileSystem) GetMetadata(ctx context.Context, name string) (pkgmgmt.PackageMetadata, error) {
+	ctx, span := tracing.StartSpan(ctx, attribute.String("package.type", fs.PackageType), attribute.String("package.name", name))
+	defer span.EndSpan()
+
 	pkgDir, err := fs.GetPackageDir(name)
 	if err != nil {
-		return nil, err
+		return nil, span.Error(err)
 	}
 	r := NewRunner(name, pkgDir, false)
 
 	// Copy the existing context and tweak to pipe the output differently
 	jsonB := &bytes.Buffer{}
-	var pkgContext portercontext.Context
-	pkgContext = *fs.Context
+	pkgContext := *fs.Context
 	pkgContext.Out = jsonB
-	if !fs.Debug {
+	if span.ShouldLog(zapcore.DebugLevel) {
 		pkgContext.Err = ioutil.Discard
 	}
 	r.Context = &pkgContext
@@ -83,13 +90,13 @@ func (fs *FileSystem) GetMetadata(ctx context.Context, name string) (pkgmgmt.Pac
 	cmd := pkgmgmt.CommandOptions{Command: "version --output json", PreRun: fs.PreRun}
 	err = r.Run(ctx, cmd)
 	if err != nil {
-		return nil, err
+		return nil, span.Error(err)
 	}
 
 	result := fs.BuildMetadata()
 	err = json.Unmarshal(jsonB.Bytes(), &result)
 	if err != nil {
-		return nil, err
+		return nil, span.Error(err)
 	}
 
 	return result, nil
@@ -131,7 +138,7 @@ func (fs *FileSystem) GetPackageDir(name string) (string, error) {
 	pkgDir := filepath.Join(parentDir, name)
 	dirExists, err := fs.FileSystem.DirExists(pkgDir)
 	if err != nil {
-		return "", errors.Wrapf(err, "%s %s not accessible at %s", fs.PackageType, name, pkgDir)
+		return "", fmt.Errorf("%s %s not accessible at %s: %w", fs.PackageType, name, pkgDir, err)
 	}
 	if !dirExists {
 		return "", fmt.Errorf("%s %s not installed in %s", fs.PackageType, name, pkgDir)

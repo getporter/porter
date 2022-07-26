@@ -11,7 +11,6 @@ import (
 
 	"get.porter.sh/porter/pkg/cli"
 	"get.porter.sh/porter/pkg/porter"
-	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"go.opentelemetry.io/otel/attribute"
@@ -72,7 +71,7 @@ func main() {
 		defer func() {
 			// Capture panics and trace them
 			if panicErr := recover(); panicErr != nil {
-				log.Error(errors.New(fmt.Sprintf("%s", panicErr)),
+				log.Error(fmt.Errorf("%s", panicErr),
 					attribute.Bool("panic", true),
 					attribute.String("stackTrace", string(debug.Stack())))
 				log.EndSpan()
@@ -88,9 +87,9 @@ func main() {
 			// Ideally we log all errors in the span that generated it,
 			// but as a failsafe, always log the error at the root span as well
 			log.Error(err)
-			return 1
+			return exitCodeErr
 		}
-		return 0
+		return exitCodeSuccess
 	}
 
 	// Wrapping the main run logic in a function because os.Exit will not
@@ -174,7 +173,7 @@ func buildRootCommandFrom(p *porter.Porter) *cobra.Command {
 
 Most commands require a Docker daemon, either local or remote.
 
-Try our QuickStart https://porter.sh/quickstart to learn how to use Porter.
+Try our QuickStart https://getporter.org/quickstart to learn how to use Porter.
 `,
 		Example: `  porter create
   porter build
@@ -221,7 +220,7 @@ Try our QuickStart https://porter.sh/quickstart to learn how to use Porter.
 	globalFlags := cmd.PersistentFlags()
 	globalFlags.BoolVar(&p.Debug, "debug", false, "Enable debug logging")
 	globalFlags.BoolVar(&p.DebugPlugins, "debug-plugins", false, "Enable plugin debug logging")
-	globalFlags.StringSliceVar(&p.Data.ExperimentalFlags, "experimental", nil, "Comma separated list of experimental features to enable. See https://porter.sh/configuration/#experimental-feature-flags for available feature flags.")
+	globalFlags.StringSliceVar(&p.Data.ExperimentalFlags, "experimental", nil, "Comma separated list of experimental features to enable. See https://getporter.org/configuration/#experimental-feature-flags for available feature flags.")
 
 	// Flags for just the porter command only, does not apply to sub-commands
 	cmd.Flags().BoolVarP(&printVersion, "version", "v", false, "Print the application version")
@@ -265,10 +264,7 @@ func ShouldShowGroupCommands(cmd *cobra.Command, group string) bool {
 }
 
 func ShouldShowGroupCommand(cmd *cobra.Command, group string) bool {
-	if cmd.Annotations["group"] == group {
-		return true
-	}
-	return false
+	return cmd.Annotations["group"] == group
 }
 
 func ShouldShowUngroupedCommands(cmd *cobra.Command) bool {

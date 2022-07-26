@@ -69,8 +69,8 @@ func TestFindOptions_ToPluginOptions(t *testing.T) {
 	}
 	po := so.ToPluginOptions("mythings")
 	wantSortDoc := bson.D{
-		{"_id", -1},
-		{"name", 1}}
+		{Key: "_id", Value: -1},
+		{Key: "name", Value: 1}}
 	require.Equal(t, wantSortDoc, po.Sort)
 }
 

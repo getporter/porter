@@ -3,6 +3,7 @@ package tester
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -13,7 +14,6 @@ import (
 	"get.porter.sh/porter/pkg/storage/plugins/mongodb_docker"
 	"get.porter.sh/porter/tests"
 	"github.com/carolynvs/magex/shx"
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 )
 
@@ -63,7 +63,7 @@ func NewTestWithConfig(t *testing.T, configFilePath string) (Tester, error) {
 
 	test.TestDir, err = ioutil.TempDir("", "porter-test")
 	if err != nil {
-		return *test, errors.Wrap(err, "could not create temp test directory")
+		return *test, fmt.Errorf("could not create temp test directory: %w", err)
 	}
 
 	test.dbName = tests.GenerateDatabaseName(t.Name())
@@ -104,26 +104,38 @@ func (t Tester) startMongo(ctx context.Context) error {
 }
 
 // Run a porter command and fail the test if the command returns an error.
-func (t Tester) RequirePorter(args ...string) (string, string) {
+func (t Tester) RequirePorter(args ...string) (stdout string, combinedoutput string) {
 	t.T.Helper()
-	stdout, output, err := t.RunPorter(args...)
+	stdout, combinedoutput, err := t.RunPorter(args...)
 	require.NoError(t.T, err)
-	return stdout, output
+	return stdout, combinedoutput
 }
 
-// Run a porter command returning stderr when it fails
+// RunPorter executes a porter command returning stderr when it fails.
 func (t Tester) RunPorter(args ...string) (stdout string, combinedoutput string, err error) {
 	t.T.Helper()
+	return t.RunPorterWith(func(cmd *shx.PreparedCommand) {
+		cmd.Args(args...)
+	})
+}
+
+// RunPorterWith works like RunPorter, but you can customize the command before it's run.
+func (t Tester) RunPorterWith(opts ...func(*shx.PreparedCommand)) (stdout string, combinedoutput string, err error) {
+	t.T.Helper()
+
+	cmd := t.buildPorterCommand(opts...)
+
 	// Copy stderr to stdout so we can return the "full" output printed to the console
 	stdoutBuf := &bytes.Buffer{}
 	stderrBuf := &bytes.Buffer{}
 	output := &bytes.Buffer{}
-	cmd := t.buildPorterCommand(args...)
+	cmd.Stdout(io.MultiWriter(stdoutBuf, output)).Stderr(io.MultiWriter(stderrBuf, output))
+
 	t.T.Log(cmd.String())
-	ran, _, err := cmd.Stdout(io.MultiWriter(stdoutBuf, output)).Stderr(io.MultiWriter(stderrBuf, output)).Exec()
+	ran, _, err := cmd.Exec()
 	if err != nil {
 		if ran {
-			err = errors.Wrap(err, stderrBuf.String())
+			err = fmt.Errorf("%s: %w", stderrBuf.String(), err)
 		}
 		return stdoutBuf.String(), output.String(), err
 	}
@@ -131,10 +143,13 @@ func (t Tester) RunPorter(args ...string) (stdout string, combinedoutput string,
 }
 
 // Build a porter command, ready to be executed or further customized.
-func (t Tester) buildPorterCommand(args ...string) shx.PreparedCommand {
-	args = append(args, "--debug")
-	return shx.Command("porter", args...).
+func (t Tester) buildPorterCommand(opts ...func(*shx.PreparedCommand)) shx.PreparedCommand {
+	cmd := shx.Command("porter", "--debug").
 		Env("PORTER_HOME="+t.PorterHomeDir, "PORTER_TEST_DB_NAME="+t.dbName)
+	for _, opt := range opts {
+		opt(&cmd)
+	}
+	return cmd
 }
 
 func (t Tester) Close() {
@@ -162,7 +177,7 @@ func (t *Tester) createPorterHome(configFilePath string) error {
 	binDir := filepath.Join(t.RepoRoot, "bin")
 	t.PorterHomeDir, err = ioutil.TempDir("", "porter")
 	if err != nil {
-		return errors.Wrap(err, "could not create temp PORTER_HOME directory")
+		return fmt.Errorf("could not create temp PORTER_HOME directory: %w", err)
 	}
 
 	require.NoError(t.T, shx.Copy(filepath.Join(binDir, "porter*"), t.PorterHomeDir),
@@ -179,5 +194,5 @@ func (t *Tester) createPorterHome(configFilePath string) error {
 
 func (t Tester) Chdir(dir string) {
 	t.TestContext.Chdir(dir)
-	os.Chdir(dir)
+	require.NoError(t.T, os.Chdir(dir))
 }

@@ -74,7 +74,7 @@ Bundle tag jrrporter.azurecr.io/do-porter-from-archive:1.0.0 pushed successfully
 This command will expand the bundle archive and copy each image up to the new registry. Once complete, you can use the bundle like any other published bundle:
 
 ```
-porter explain --reference jrrporter.azurecr.io/do-porter-from-archive:1.0.0
+porter explain jrrporter.azurecr.io/do-porter-from-archive:1.0.0
 Name: spring-music
 Description: Run the Spring Music Service on Kubernetes and Digital Ocean PostgreSQL
 Version: 0.5.0
