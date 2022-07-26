@@ -6,11 +6,12 @@ import (
 	"sort"
 	"testing"
 
+	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/portercontext"
-	"get.porter.sh/porter/pkg/yaml"
+	"get.porter.sh/porter/tests"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/cnabio/cnab-to-oci/relocation"
@@ -18,92 +19,75 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func runtimeManifestFromStepYaml(t *testing.T, pCtx *portercontext.TestContext, stepYaml string) *RuntimeManifest {
+	mContent := []byte(stepYaml)
+	require.NoError(t, pCtx.FileSystem.WriteFile("/cnab/app/porter.yaml", mContent, pkg.FileModeWritable))
+	m, err := manifest.ReadManifest(pCtx.Context, "/cnab/app/porter.yaml")
+	require.NoError(t, err, "ReadManifest failed")
+	return NewRuntimeManifest(pCtx.Context, cnab.ActionInstall, m)
+}
+
 func TestResolveMapParam(t *testing.T) {
-	cxt := portercontext.NewTestContext(t)
-	cxt.Setenv("PERSON", "Ralpha")
+	pCtx := portercontext.NewTestContext(t)
+	pCtx.Setenv("PERSON", "Ralpha")
 
-	m := &manifest.Manifest{
-		Parameters: manifest.ParameterDefinitions{
-			"person": {
-				Name: "person",
-			},
-			"place": {
-				Name:    "place",
-				ApplyTo: []string{cnab.ActionInstall},
-			},
-		},
-	}
-	rm := NewRuntimeManifest(cxt.Context, cnab.ActionInstall, m)
-	s := &manifest.Step{
-		Data: map[string]interface{}{
-			"description": "a test step",
-			"Parameters": map[string]interface{}{
-				"Thing": "{{bundle.parameters.person}}",
-			},
-		},
-	}
+	mContent := `name: mybuns
+parameters:
+- name: person
+- name: place
+  applyTo: [install]
 
-	before, _ := yaml.Marshal(s)
-	t.Logf("Before:\n %s", before)
-	err := rm.ResolveStep(s)
+install:
+- mymixin:
+    Parameters:
+      Thing: "{{ bundle.parameters.person }}"
+`
+	rm := runtimeManifestFromStepYaml(t, pCtx, mContent)
+	s := rm.Install[0]
+
+	err := rm.ResolveStep(0, s)
 	require.NoError(t, err)
-	after, _ := yaml.Marshal(s)
-	t.Logf("After:\n %s", after)
-	assert.NotNil(t, s.Data)
-	t.Logf("Length of data:%d", len(s.Data))
-	assert.NotEmpty(t, s.Data["Parameters"])
-	for k, v := range s.Data {
-		t.Logf("Key %s, value: %s, type: %T", k, v, v)
-	}
-	pms, ok := s.Data["Parameters"].(map[string]interface{})
-	assert.True(t, ok)
-	val, ok := pms["Thing"].(string)
-	assert.True(t, ok)
+
+	require.IsType(t, map[string]interface{}{}, s.Data["mymixin"], "Data.mymixin has incorrect type")
+	mixin := s.Data["mymixin"].(map[string]interface{})
+	require.IsType(t, mixin["Parameters"], map[string]interface{}{}, "Data.mymixin.Parameters has incorrect type")
+	pms := mixin["Parameters"].(map[string]interface{})
+	require.IsType(t, "string", pms["Thing"], "Data.mymixin.Parameters.Thing has incorrect type")
+	val := pms["Thing"].(string)
+
 	assert.Equal(t, "Ralpha", val)
 	assert.NotContains(t, "place", pms, "parameters that don't apply to the current action should not be resolved")
 
 	err = rm.Initialize()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 }
 
 func TestResolvePathParam(t *testing.T) {
-	cxt := portercontext.NewTestContext(t)
-	m := &manifest.Manifest{
-		Parameters: manifest.ParameterDefinitions{
-			"person": {
-				Name: "person",
-				Destination: manifest.Location{
-					Path: "person.txt",
-				},
-			},
-		},
-	}
-	rm := NewRuntimeManifest(cxt.Context, cnab.ActionInstall, m)
-	s := &manifest.Step{
-		Data: map[string]interface{}{
-			"description": "a test step",
-			"Parameters": map[string]interface{}{
-				"Thing": "{{bundle.parameters.person}}",
-			},
-		},
-	}
+	pCtx := portercontext.NewTestContext(t)
 
-	before, _ := yaml.Marshal(s)
-	t.Logf("Before:\n %s", before)
-	err := rm.ResolveStep(s)
+	mContent := `name: mybuns
+parameters:
+- name: person
+  path: person.txt
+
+install:
+- mymixin:
+    Parameters:
+      Thing: "{{ bundle.parameters.person }}"
+`
+	rm := runtimeManifestFromStepYaml(t, pCtx, mContent)
+	s := rm.Install[0]
+
+	err := rm.ResolveStep(0, s)
 	require.NoError(t, err)
-	after, _ := yaml.Marshal(s)
-	t.Logf("After:\n %s", after)
-	assert.NotNil(t, s.Data)
-	t.Logf("Length of data:%d", len(s.Data))
-	assert.NotEmpty(t, s.Data["Parameters"])
-	for k, v := range s.Data {
-		t.Logf("Key %s, value: %s, type: %T", k, v, v)
-	}
-	pms, ok := s.Data["Parameters"].(map[string]interface{})
-	assert.True(t, ok)
-	val, ok := pms["Thing"].(string)
-	assert.True(t, ok)
+
+	require.IsType(t, map[string]interface{}{}, s.Data["mymixin"], "Data.mymixin has incorrect type")
+	mixin := s.Data["mymixin"].(map[string]interface{})
+	require.IsType(t, mixin["Parameters"], map[string]interface{}{}, "Data.mymixin.Parameters has incorrect type")
+	pms := mixin["Parameters"].(map[string]interface{})
+	require.IsType(t, "string", pms["Thing"], "Data.mymixin.Parameters.Thing has incorrect type")
+	val := pms["Thing"].(string)
+
 	assert.Equal(t, "person.txt", val)
 }
 
@@ -115,19 +99,12 @@ func TestMetadataAvailableForTemplating(t *testing.T) {
 	require.NoError(t, err, "LoadManifestFrom")
 	rm := NewRuntimeManifest(c.Context, cnab.ActionInstall, m)
 
-	before, _ := yaml.Marshal(m.Install[0])
-	t.Logf("Before:\n %s", before)
-	for _, step := range rm.Install {
-		err := rm.ResolveStep(step)
-		require.NoError(t, err)
-	}
-
 	s := rm.Install[0]
-	after, _ := yaml.Marshal(s)
-	t.Logf("After:\n %s", after)
+	err = rm.ResolveStep(0, s)
+	require.NoError(t, err)
 
 	pms, ok := s.Data["exec"].(map[string]interface{})
-	assert.True(t, ok)
+	require.True(t, ok)
 	cmd := pms["command"].(string)
 	assert.Equal(t, "echo \"name:porter-hello version:0.1.0 description:An example Porter configuration image:jeremyrickard/porter-hello:39a022ca907e26c3d8fffabd4bb8dbbc\"", cmd)
 }
@@ -137,7 +114,7 @@ func TestDependencyMetadataAvailableForTemplating(t *testing.T) {
 	c.TestContext.AddTestFile("testdata/dep-metadata-substitution.yaml", config.Name)
 
 	m, err := manifest.LoadManifestFrom(context.Background(), c.Config, config.Name)
-	require.NoError(t, err, "LoadManifestFrom failed")
+	require.NoError(t, err, "LoadManifestFrom")
 	rm := NewRuntimeManifest(c.Context, cnab.ActionInstall, m)
 	rm.bundles = map[string]cnab.ExtendedBundle{
 		"mysql": cnab.NewBundle(bundle.Bundle{
@@ -147,132 +124,112 @@ func TestDependencyMetadataAvailableForTemplating(t *testing.T) {
 		}),
 	}
 
-	before, _ := yaml.Marshal(m.Install[0])
-	t.Logf("Before:\n %s", before)
-	for _, step := range rm.Install {
-		rm.ResolveStep(step)
-	}
-
 	s := rm.Install[0]
-	after, _ := yaml.Marshal(s)
-	t.Logf("After:\n %s", after)
+	err = rm.ResolveStep(0, s)
+	require.NoError(t, err)
 
 	pms, ok := s.Data["exec"].(map[string]interface{})
-	assert.True(t, ok)
+	require.True(t, ok)
 	cmd := pms["command"].(string)
 	assert.Equal(t, "echo \"dep name: Azure MySQL dep version: v1.0.0 dep description: Azure MySQL database as a service\"", cmd)
 }
 
 func TestResolveMapParamUnknown(t *testing.T) {
-	cxt := portercontext.NewTestContext(t)
-	m := &manifest.Manifest{
-		Parameters: manifest.ParameterDefinitions{},
-	}
-	rm := NewRuntimeManifest(cxt.Context, cnab.ActionInstall, m)
+	pCtx := portercontext.NewTestContext(t)
 
-	s := &manifest.Step{
-		Data: map[string]interface{}{
-			"description": "a test step",
-			"Parameters": map[string]interface{}{
-				"Thing": "{{bundle.parameters.person}}",
-			},
-		},
-	}
+	mContent := `name: mybuns
+install:
+- mymixin:
+    Parameters:
+      Thing: "{{bundle.parameters.person}}"
+`
+	rm := runtimeManifestFromStepYaml(t, pCtx, mContent)
+	s := rm.Install[0]
 
-	err := rm.ResolveStep(s)
+	err := rm.ResolveStep(0, s)
 	require.Error(t, err)
-	assert.Equal(t, "unable to render step template Parameters:\n  Thing: '{{bundle.parameters.person}}'\ndescription: a test step\n: Missing variable \"person\"", err.Error())
+	tests.RequireErrorContains(t, err, "Missing variable \"person\"")
 }
 
 func TestResolveArrayUnknown(t *testing.T) {
-	cxt := portercontext.NewTestContext(t)
-	m := &manifest.Manifest{
-		Parameters: manifest.ParameterDefinitions{
-			"name": {
-				Name: "name",
-			},
-		},
-	}
-	rm := NewRuntimeManifest(cxt.Context, cnab.ActionInstall, m)
+	pCtx := portercontext.NewTestContext(t)
 
-	s := &manifest.Step{
-		Data: map[string]interface{}{
-			"description": "a test step",
-			"Arguments": []string{
-				"{{ bundle.parameters.person }}",
-			},
-		},
-	}
+	mContent := `name: mybuns
+parameters:
+- name: name
 
-	err := rm.ResolveStep(s)
+install:
+- exec:
+    Arguments:
+      - "{{bundle.parameters.person}}"
+`
+	rm := runtimeManifestFromStepYaml(t, pCtx, mContent)
+	s := rm.Install[0]
+
+	err := rm.ResolveStep(0, s)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), `Missing variable "person"`)
 }
 
 func TestResolveArray(t *testing.T) {
-	cxt := portercontext.NewTestContext(t)
-	cxt.Setenv("PERSON", "Ralpha")
-	m := &manifest.Manifest{
-		Parameters: manifest.ParameterDefinitions{
-			"person": {
-				Name: "person",
-			},
-		},
-	}
-	rm := NewRuntimeManifest(cxt.Context, cnab.ActionInstall, m)
+	pCtx := portercontext.NewTestContext(t)
+	pCtx.Setenv("PERSON", "Ralpha")
 
-	s := &manifest.Step{
-		Data: map[string]interface{}{
-			"description": "a test step",
-			"Arguments": []string{
-				"{{ bundle.parameters.person }}",
-			},
-		},
-	}
+	mContent := `name: mybuns
+parameters:
+- name: person
 
-	err := rm.ResolveStep(s)
+install:
+- mymixin:
+    Arguments:
+    - "{{ bundle.parameters.person }}"
+`
+	rm := runtimeManifestFromStepYaml(t, pCtx, mContent)
+	s := rm.Install[0]
+
+	err := rm.ResolveStep(0, s)
 	require.NoError(t, err)
-	args, ok := s.Data["Arguments"].([]interface{})
-	assert.True(t, ok)
+
+	require.IsType(t, map[string]interface{}{}, s.Data["mymixin"], "Data.mymixin has incorrect type")
+	mixin := s.Data["mymixin"].(map[string]interface{})
+	require.IsType(t, mixin["Arguments"], []interface{}{}, "Data.mymixin.Arguments has incorrect type")
+	args := mixin["Arguments"].([]interface{})
+
 	assert.Equal(t, "Ralpha", args[0].(string))
 }
 
 func TestResolveSensitiveParameter(t *testing.T) {
-	cxt := portercontext.NewTestContext(t)
-	cxt.Setenv("SENSITIVE_PARAM", "deliciou$dubonnet")
-	cxt.Setenv("REGULAR_PARAM", "regular param value")
+	pCtx := portercontext.NewTestContext(t)
+	pCtx.Setenv("SENSITIVE_PARAM", "deliciou$dubonnet")
+	pCtx.Setenv("REGULAR_PARAM", "regular param value")
 
-	m := &manifest.Manifest{
-		Parameters: manifest.ParameterDefinitions{
-			"sensitive_param": {
-				Name:      "sensitive_param",
-				Sensitive: true,
-			},
-			"regular_param": {
-				Name: "regular_param",
-			},
-		},
-	}
-	rm := NewRuntimeManifest(cxt.Context, cnab.ActionInstall, m)
+	mContent := `name: mybuns
+parameters:
+- name: sensitive_param
+  sensitive: true
+- name: regular_param
 
-	s := &manifest.Step{
-		Data: map[string]interface{}{
-			"description": "a test step",
-			"Arguments": []string{
-				"{{ bundle.parameters.sensitive_param }}",
-				"{{ bundle.parameters.regular_param }}",
-			},
-		},
-	}
+install:
+- mymixin:
+    Arguments:
+    - "{{ bundle.parameters.sensitive_param }}"
+    - "{{ bundle.parameters.regular_param }}"
+`
+	rm := runtimeManifestFromStepYaml(t, pCtx, mContent)
+	s := rm.Install[0]
 
 	// Prior to resolving step values, this method should return an empty string array
 	assert.Equal(t, rm.GetSensitiveValues(), []string{})
 
-	err := rm.ResolveStep(s)
+	err := rm.ResolveStep(0, s)
 	require.NoError(t, err)
-	args, ok := s.Data["Arguments"].([]interface{})
-	assert.True(t, ok)
-	assert.Equal(t, 2, len(args))
+
+	require.IsType(t, map[string]interface{}{}, s.Data["mymixin"], "Data.mymixin has incorrect type")
+	mixin := s.Data["mymixin"].(map[string]interface{})
+	require.IsType(t, mixin["Arguments"], []interface{}{}, "Data.mymixin.Arguments has incorrect type")
+	args := mixin["Arguments"].([]interface{})
+
+	require.Len(t, args, 2)
 	assert.Equal(t, "deliciou$dubonnet", args[0])
 	assert.Equal(t, "regular param value", args[1])
 
@@ -281,62 +238,57 @@ func TestResolveSensitiveParameter(t *testing.T) {
 }
 
 func TestResolveCredential(t *testing.T) {
-	cxt := portercontext.NewTestContext(t)
-	cxt.Setenv("PASSWORD", "deliciou$dubonnet")
+	pCtx := portercontext.NewTestContext(t)
+	pCtx.Setenv("PASSWORD", "deliciou$dubonnet")
 
-	m := &manifest.Manifest{
-		Credentials: manifest.CredentialDefinitions{
-			"password": {
-				Name:     "password",
-				Location: manifest.Location{EnvironmentVariable: "PASSWORD"},
-			},
-		},
-	}
-	rm := NewRuntimeManifest(cxt.Context, cnab.ActionInstall, m)
+	mContent := `name: mybuns
+credentials:
+- name: password
+  env: PASSWORD
 
-	s := &manifest.Step{
-		Data: map[string]interface{}{
-			"description": "a test step",
-			"Arguments": []string{
-				"{{ bundle.credentials.password }}",
-			},
-		},
-	}
+install:
+- mymixin:
+    Arguments:
+    - "{{ bundle.credentials.password }}"
+`
+	rm := runtimeManifestFromStepYaml(t, pCtx, mContent)
+	s := rm.Install[0]
 
 	// Prior to resolving step values, this method should return an empty string array
 	assert.Equal(t, rm.GetSensitiveValues(), []string{})
 
-	err := rm.ResolveStep(s)
+	err := rm.ResolveStep(0, s)
 	require.NoError(t, err)
-	args, ok := s.Data["Arguments"].([]interface{})
-	assert.True(t, ok)
-	assert.Equal(t, "deliciou$dubonnet", args[0])
 
+	require.IsType(t, map[string]interface{}{}, s.Data["mymixin"], "Data.mymixin has incorrect type")
+	mixin := s.Data["mymixin"].(map[string]interface{})
+	require.IsType(t, mixin["Arguments"], []interface{}{}, "Data.mymixin.Arguments has incorrect type")
+	args := mixin["Arguments"].([]interface{})
+
+	assert.Equal(t, "deliciou$dubonnet", args[0])
 	// There should now be a sensitive value tracked under the manifest
 	assert.Equal(t, []string{"deliciou$dubonnet"}, rm.GetSensitiveValues())
 }
 
 func TestResolveStep_DependencyOutput(t *testing.T) {
-	cxt := portercontext.NewTestContext(t)
-	cxt.Setenv("PORTER_MYSQL_PASSWORD_DEP_OUTPUT", "password")
-	cxt.Setenv("PORTER_MYSQL_ROOT_PASSWORD_DEP_OUTPUT", "mysql-password")
+	pCtx := portercontext.NewTestContext(t)
+	pCtx.Setenv("PORTER_MYSQL_PASSWORD_DEP_OUTPUT", "password")
+	pCtx.Setenv("PORTER_MYSQL_ROOT_PASSWORD_DEP_OUTPUT", "mysql-password")
 
-	m := &manifest.Manifest{
-		Dependencies: manifest.Dependencies{
-			RequiredDependencies: []*manifest.RequiredDependency{
-				{
-					Name:   "mysql",
-					Bundle: manifest.BundleCriteria{Reference: "getporter/porter-mysql"},
-				},
-			},
-		},
-		TemplateVariables: []string{
-			"bundle.dependencies.mysql.outputs.password",
-			"bundle.dependencies.mysql.outputs.root-password",
-		},
-	}
+	mContent := `name: mybuns
+dependencies:
+  requires: 
+  - name: mysql
+    bundle:
+      reference: "getporter/porter-mysql"
 
-	rm := NewRuntimeManifest(cxt.Context, cnab.ActionInstall, m)
+install:
+- mymixin:
+    Arguments:
+    - "{{ bundle.dependencies.mysql.outputs.password }}"
+    - "{{ bundle.dependencies.mysql.outputs.root-password }}"
+`
+	rm := runtimeManifestFromStepYaml(t, pCtx, mContent)
 	ps := cnab.ParameterSources{}
 	ps.SetParameterFromDependencyOutput("porter-mysql-password", "mysql", "password")
 	ps.SetParameterFromDependencyOutput("porter-mysql-root-password", "mysql", "root-password")
@@ -364,23 +316,15 @@ func TestResolveStep_DependencyOutput(t *testing.T) {
 		}),
 	}
 
-	s := &manifest.Step{
-		Data: map[string]interface{}{
-			"description": "a test step",
-			"Arguments": []string{
-				"{{ bundle.dependencies.mysql.outputs.password }}",
-				"{{ bundle.dependencies.mysql.outputs.root-password }}",
-			},
-		},
-	}
-
-	// Prior to resolving step values, this method should return an empty string array
-	assert.Equal(t, rm.GetSensitiveValues(), []string{})
-
-	err := rm.ResolveStep(s)
+	s := rm.Install[0]
+	err := rm.ResolveStep(0, s)
 	require.NoError(t, err)
-	args, ok := s.Data["Arguments"].([]interface{})
-	require.True(t, ok)
+
+	require.IsType(t, map[string]interface{}{}, s.Data["mymixin"], "Data.mymixin has incorrect type")
+	mixin := s.Data["mymixin"].(map[string]interface{})
+	require.IsType(t, mixin["Arguments"], []interface{}{}, "Data.mymixin.Arguments has incorrect type")
+	args := mixin["Arguments"].([]interface{})
+
 	assert.Equal(t, []interface{}{"password", "mysql-password"}, args, "Incorrect template args passed to the mixin step")
 
 	// There should now be a sensitive value tracked under the manifest
@@ -402,17 +346,15 @@ func TestResolveInMainDict(t *testing.T) {
 	installStep := rm.Install[0]
 
 	rm.Setenv("COMMAND", "echo hello world")
-	err = rm.ResolveStep(installStep)
-	assert.NoError(t, err)
+	err = rm.ResolveStep(0, installStep)
+	require.NoError(t, err)
 
-	assert.NotNil(t, installStep.Data)
-	t.Logf("install data %v", installStep.Data)
+	require.IsType(t, map[string]interface{}{}, installStep.Data["exec"], "Data.exec has the wrong type")
 	exec := installStep.Data["exec"].(map[string]interface{})
-	assert.NotNil(t, exec)
 	command := exec["command"]
-	assert.NotNil(t, command)
-	cmdVal, ok := command.(string)
-	assert.True(t, ok)
+	require.IsType(t, "string", command, "Data.exec.command has the wrong type")
+	cmdVal := command.(string)
+
 	assert.Equal(t, "echo hello world", cmdVal)
 }
 
@@ -429,81 +371,63 @@ func TestResolveSliceWithAMap(t *testing.T) {
 	installStep := rm.Install[0]
 
 	rm.Setenv("COMMAND", "echo hello world")
-	err = rm.ResolveStep(installStep)
-	assert.NoError(t, err)
+	err = rm.ResolveStep(0, installStep)
+	require.NoError(t, err)
 
-	assert.NotNil(t, installStep.Data)
-	t.Logf("install data %v", installStep.Data)
+	require.NotNil(t, installStep.Data)
 	exec := installStep.Data["exec"].(map[string]interface{})
-	assert.NotNil(t, exec)
+	require.NotNil(t, exec)
 	flags := exec["flags"].(map[string]interface{})
-	assert.Len(t, flags, 1)
+	require.Len(t, flags, 1)
 	assert.Equal(t, "echo hello world", flags["c"].(string))
-	assert.NotNil(t, flags)
 }
 
 func TestResolveMissingStepOutputs(t *testing.T) {
+	pCtx := portercontext.NewTestContext(t)
 
-	s := &manifest.Step{
-		Data: map[string]interface{}{
-			"helm": map[string]interface{}{
-				"description": "install wordpress",
-				"Arguments": []string{
-					"jdbc://{{bundle.outputs.database_url}}:{{bundle.outputs.database_port}}",
-				},
-			},
-		},
-	}
+	mContent := `name: mybuns
+install:
+- mymixin:
+    Arguments:
+    - "jdbc://{{bundle.outputs.database_url}}:{{bundle.outputs.database_port}}"
+`
+	rm := runtimeManifestFromStepYaml(t, pCtx, mContent)
+	s := rm.Install[0]
 
-	cxt := portercontext.NewTestContext(t)
-	m := &manifest.Manifest{
-		Mixins: []manifest.MixinDeclaration{{Name: "helm"}},
-		Install: manifest.Steps{
-			s,
-		},
-	}
-	rm := NewRuntimeManifest(cxt.Context, cnab.ActionInstall, m)
-
-	err := rm.ResolveStep(s)
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), `Missing variable "database_url"`)
+	err := rm.ResolveStep(0, s)
+	tests.RequireErrorContains(t, err, `Missing variable "database_url"`)
 }
 
 func TestResolveSensitiveOutputs(t *testing.T) {
-	cxt := portercontext.NewTestContext(t)
-	m := &manifest.Manifest{
-		Outputs: manifest.OutputDefinitions{
-			"username": {
-				Name: "username",
-			},
-			"password": {
-				Name:      "password",
-				Sensitive: true,
-			},
-		},
-	}
-	rm := NewRuntimeManifest(cxt.Context, cnab.ActionInstall, m)
+	pCtx := portercontext.NewTestContext(t)
+	mContent := `name: mybuns
+outputs:
+- name: username
+- name: password
+  sensitive: true
+
+install:
+- mymixin:
+    Arguments:
+    - "{{ bundle.outputs.username }}"
+    - "{{ bundle.outputs.password }}"
+`
+	rm := runtimeManifestFromStepYaml(t, pCtx, mContent)
 	rm.outputs = map[string]string{
 		"username": "sally",
 		"password": "top$ecret!",
 	}
+	s := rm.Install[0]
 
-	s := &manifest.Step{
-		Data: map[string]interface{}{
-			"description": "a test step",
-			"Arguments": []string{
-				"{{ bundle.outputs.username }}",
-				"{{ bundle.outputs.password }}",
-			},
-		},
-	}
-
-	err := rm.ResolveStep(s)
+	err := rm.ResolveStep(0, s)
 	require.NoError(t, err)
 
-	args, ok := s.Data["Arguments"].([]interface{})
-	require.True(t, ok)
-	require.Equal(t, 2, len(args))
+	require.IsType(t, s.Data["mymixin"], map[string]interface{}{}, "Data.mymixin has the wrong type")
+	mixin := s.Data["mymixin"].(map[string]interface{})
+	require.IsType(t, []interface{}{}, mixin["Arguments"], "Data.mymixin.Arguments has the wrong type")
+	args := mixin["Arguments"].([]interface{})
+
+	require.Len(t, args, 2)
 	require.Equal(t, "sally", args[0])
 	require.Equal(t, "top$ecret!", args[1])
 
@@ -512,26 +436,25 @@ func TestResolveSensitiveOutputs(t *testing.T) {
 }
 
 func TestManifest_ResolveBundleName(t *testing.T) {
-	cxt := portercontext.NewTestContext(t)
-	m := &manifest.Manifest{
-		Name: "mybundle",
-	}
-	rm := NewRuntimeManifest(cxt.Context, cnab.ActionInstall, m)
+	pCtx := portercontext.NewTestContext(t)
+	mContent := `name: mybuns
+install:
+- mymixin:
+    Arguments:
+    - "{{ bundle.name }}"
+`
+	rm := runtimeManifestFromStepYaml(t, pCtx, mContent)
+	s := rm.Install[0]
 
-	s := &manifest.Step{
-		Data: map[string]interface{}{
-			"description": "a test step exercising bundle name interpolation",
-			"Arguments": []string{
-				"{{ bundle.name }}",
-			},
-		},
-	}
-
-	err := rm.ResolveStep(s)
+	err := rm.ResolveStep(0, s)
 	require.NoError(t, err)
-	args, ok := s.Data["Arguments"].([]interface{})
-	assert.True(t, ok)
-	assert.Equal(t, "mybundle", args[0].(string))
+
+	require.IsType(t, s.Data["mymixin"], map[string]interface{}{}, "Data.mymixin has the wrong type")
+	mixin := s.Data["mymixin"].(map[string]interface{})
+	require.IsType(t, []interface{}{}, mixin["Arguments"], "Data.mymixin.Arguments has the wrong type")
+	args := mixin["Arguments"].([]interface{})
+
+	assert.Equal(t, "mybuns", args[0].(string))
 }
 
 func TestReadManifest_Validate_BundleOutput(t *testing.T) {
@@ -606,9 +529,9 @@ func TestDependencyV1_Validate(t *testing.T) {
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			cxt := portercontext.NewTestContext(t)
+			pCtx := portercontext.NewTestContext(t)
 
-			err := tc.dep.Validate(cxt.Context)
+			err := tc.dep.Validate(pCtx.Context)
 
 			if tc.wantError == "" {
 				require.NoError(t, err)
@@ -616,7 +539,7 @@ func TestDependencyV1_Validate(t *testing.T) {
 				require.Equal(t, tc.wantError, err.Error())
 			}
 
-			gotOutput := cxt.GetOutput()
+			gotOutput := pCtx.GetOutput()
 			if gotOutput != "" {
 				require.Equal(t, tc.wantOutput, gotOutput)
 			}
@@ -657,7 +580,7 @@ func TestManifest_ResolveImageMap(t *testing.T) {
 	require.True(t, ok, "couldn't get expected image")
 	expectedRef := fmt.Sprintf("%s@%s", expectedImage.Repository, expectedImage.Digest)
 	step := rm.Install[0]
-	err = rm.ResolveStep(step)
+	err = rm.ResolveStep(0, step)
 	assert.NoError(t, err, "Should have successfully resolved step")
 	s := step.Data["searcher"].(map[string]interface{})
 	assert.NotNil(t, s)
@@ -683,53 +606,24 @@ func TestManifest_ResolveImageMap(t *testing.T) {
 }
 
 func TestManifest_ResolveImageMapMissingKey(t *testing.T) {
+	// Try to access an images entry that doesn't exist
+	pCtx := portercontext.NewTestContext(t)
+	mContent := `name: mybuns
+images:
+  something:
+    repository: "blah/blah"
+    digest: "sha1234:cafebab"
 
-	cxt := portercontext.NewTestContext(t)
-	m := &manifest.Manifest{
-		Name: "mybundle",
-		ImageMap: map[string]manifest.MappedImage{
-			"something": manifest.MappedImage{
-				Repository: "blah/blah",
-				Digest:     "sha1234:cafebab",
-			},
-		},
-	}
-	rm := NewRuntimeManifest(cxt.Context, cnab.ActionInstall, m)
-	s := &manifest.Step{
-		Data: map[string]interface{}{
-			"description": "a test step exercising bundle image interpolation",
-			"Arguments": []string{
-				"{{ bundle.images.something.Fake }}",
-			},
-		},
-	}
-	err := rm.ResolveStep(s)
-	assert.Error(t, err)
-}
+install:
+- mymixin:
+    Arguments:
+      "{{ bundle.images.notsomething.digest }}"
+`
+	rm := runtimeManifestFromStepYaml(t, pCtx, mContent)
+	s := rm.Install[0]
 
-func TestManifest_ResolveImageMapMissingImage(t *testing.T) {
-
-	cxt := portercontext.NewTestContext(t)
-	m := &manifest.Manifest{
-		Name: "mybundle",
-		ImageMap: map[string]manifest.MappedImage{
-			"notsomething": manifest.MappedImage{
-				Repository: "blah/blah",
-				Digest:     "sha1234:cafebab",
-			},
-		},
-	}
-	rm := NewRuntimeManifest(cxt.Context, cnab.ActionInstall, m)
-	s := &manifest.Step{
-		Data: map[string]interface{}{
-			"description": "a test step exercising bundle image interpolation",
-			"Arguments": []string{
-				"{{ bundle.images.something.Fake }}",
-			},
-		},
-	}
-	err := rm.ResolveStep(s)
-	assert.Error(t, err)
+	err := rm.ResolveStep(0, s)
+	tests.RequireErrorContains(t, err, `Missing variable "notsomething"`)
 }
 
 func TestResolveImage(t *testing.T) {
@@ -793,7 +687,7 @@ func TestResolveImage(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			got := &manifest.MappedImage{}
 			err := resolveImage(got, test.reference)
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			assert.Equal(t, test.want.Repository, got.Repository)
 			assert.Equal(t, test.want.Tag, got.Tag)
 			assert.Equal(t, test.want.Digest, got.Digest)
@@ -844,7 +738,7 @@ func TestResolveImageErrors(t *testing.T) {
 }
 
 func TestResolveImageWithUpdatedBundle(t *testing.T) {
-	cxt := portercontext.NewTestContext(t)
+	pCtx := portercontext.NewTestContext(t)
 	m := &manifest.Manifest{
 		ImageMap: map[string]manifest.MappedImage{
 			"machine": manifest.MappedImage{
@@ -866,15 +760,15 @@ func TestResolveImageWithUpdatedBundle(t *testing.T) {
 
 	reloMap := relocation.ImageRelocationMap{}
 
-	rm := NewRuntimeManifest(cxt.Context, cnab.ActionInstall, m)
+	rm := NewRuntimeManifest(pCtx.Context, cnab.ActionInstall, m)
 	err := rm.ResolveImages(bun, reloMap)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	mi := rm.ImageMap["machine"]
 	assert.Equal(t, "blah/ghost", mi.Repository)
 }
 
 func TestResolveImageWithUpdatedMismatchedBundle(t *testing.T) {
-	cxt := portercontext.NewTestContext(t)
+	pCtx := portercontext.NewTestContext(t)
 	m := &manifest.Manifest{
 		ImageMap: map[string]manifest.MappedImage{
 			"machine": manifest.MappedImage{
@@ -896,7 +790,7 @@ func TestResolveImageWithUpdatedMismatchedBundle(t *testing.T) {
 
 	reloMap := relocation.ImageRelocationMap{}
 
-	rm := NewRuntimeManifest(cxt.Context, cnab.ActionInstall, m)
+	rm := NewRuntimeManifest(pCtx.Context, cnab.ActionInstall, m)
 	err := rm.ResolveImages(bun, reloMap)
 	assert.Error(t, err)
 	assert.EqualError(t, err, fmt.Sprintf("unable to find image in porter manifest: %s", "ghost"))
@@ -904,7 +798,7 @@ func TestResolveImageWithUpdatedMismatchedBundle(t *testing.T) {
 }
 
 func TestResolveImageWithRelo(t *testing.T) {
-	cxt := portercontext.NewTestContext(t)
+	pCtx := portercontext.NewTestContext(t)
 	m := &manifest.Manifest{
 		ImageMap: map[string]manifest.MappedImage{
 			"machine": manifest.MappedImage{
@@ -928,15 +822,15 @@ func TestResolveImageWithRelo(t *testing.T) {
 		"gabrtv/microservice@sha256:cca460afa270d4c527981ef9ca4989346c56cf9b20217dcea37df1ece8120687": "my.registry/microservice@sha256:cca460afa270d4c527981ef9ca4989346c56cf9b20217dcea37df1ece8120687",
 	}
 
-	rm := NewRuntimeManifest(cxt.Context, cnab.ActionInstall, m)
+	rm := NewRuntimeManifest(pCtx.Context, cnab.ActionInstall, m)
 	err := rm.ResolveImages(bun, reloMap)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	mi := rm.ImageMap["machine"]
 	assert.Equal(t, "my.registry/microservice", mi.Repository)
 }
 
 func TestResolveImageRelocationNoMatch(t *testing.T) {
-	cxt := portercontext.NewTestContext(t)
+	pCtx := portercontext.NewTestContext(t)
 	m := &manifest.Manifest{
 		ImageMap: map[string]manifest.MappedImage{
 			"machine": manifest.MappedImage{
@@ -960,109 +854,117 @@ func TestResolveImageRelocationNoMatch(t *testing.T) {
 		"deislabs/nogood:latest": "cnabio/ghost:latest",
 	}
 
-	rm := NewRuntimeManifest(cxt.Context, cnab.ActionInstall, m)
+	rm := NewRuntimeManifest(pCtx.Context, cnab.ActionInstall, m)
 	err := rm.ResolveImages(bun, reloMap)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, "deislabs/ghost", rm.ImageMap["machine"].Repository)
 }
 
 func TestResolveStepEncoding(t *testing.T) {
-	cxt := portercontext.NewTestContext(t)
+	pCtx := portercontext.NewTestContext(t)
 
 	wantValue := `{"test":"value"}`
-	cxt.Setenv("TEST", wantValue)
+	pCtx.Setenv("TEST", wantValue)
 
-	m := &manifest.Manifest{
-		Parameters: manifest.ParameterDefinitions{
-			"test": {Name: "test"},
-		},
-	}
-	rm := NewRuntimeManifest(cxt.Context, cnab.ActionInstall, m)
-	s := &manifest.Step{
-		Data: map[string]interface{}{
-			"description": "a test step",
-			"Flags": map[string]string{
-				"c": "{{bundle.parameters.test}}",
-			},
-		},
-	}
+	mContent := `name: mybuns
+parameters:
+- name: test
+  env: TEST
 
-	err := rm.ResolveStep(s)
+install:
+- mymixin:
+    Flags:
+      c: '{{bundle.parameters.test}}'
+`
+	rm := runtimeManifestFromStepYaml(t, pCtx, mContent)
+	s := rm.Install[0]
+
+	err := rm.ResolveStep(0, s)
 	require.NoError(t, err)
-	flags := s.Data["Flags"].(map[string]interface{})
+
+	require.IsType(t, s.Data["mymixin"], map[string]interface{}{}, "Data.mymixin has the wrong type")
+	mixin := s.Data["mymixin"].(map[string]interface{})
+	require.IsType(t, map[string]interface{}{}, mixin["Flags"], "Data.mymixin.Flags has the wrong type")
+	flags := mixin["Flags"].(map[string]interface{})
+
 	assert.Equal(t, flags["c"], wantValue)
 }
 
 func TestResolveInstallation(t *testing.T) {
-	cxt := portercontext.NewTestContext(t)
-	cxt.Setenv(config.EnvPorterInstallationNamespace, "mynamespace")
-	cxt.Setenv(config.EnvPorterInstallationName, "mybun")
+	pCtx := portercontext.NewTestContext(t)
+	pCtx.Setenv(config.EnvPorterInstallationNamespace, "mynamespace")
+	pCtx.Setenv(config.EnvPorterInstallationName, "mybun")
 
-	m := &manifest.Manifest{}
-	rm := NewRuntimeManifest(cxt.Context, cnab.ActionInstall, m)
+	mContent := `name: mybuns
+install:
+- mymixin:
+    ns: "{{ installation.namespace }}"
+    release: "{{ installation.name }}"
+`
+	rm := runtimeManifestFromStepYaml(t, pCtx, mContent)
+	s := rm.Install[0]
 
-	s := &manifest.Step{
-		Data: map[string]interface{}{
-			"description": "Do a helm release",
-			"ns":          "{{ installation.namespace }}",
-			"release":     "{{ installation.name }}",
-		},
-	}
+	err := rm.ResolveStep(0, s)
+	require.NoError(t, err)
 
-	err := rm.ResolveStep(s)
-	require.NoError(t, err, "ResolveStep failed")
+	require.IsType(t, map[string]interface{}{}, s.Data["mymixin"], "Data.mymixin has the wrong type")
+	mixin := s.Data["mymixin"].(map[string]interface{})
 
-	assert.Equal(t, "mynamespace", s.Data["ns"], "installation.namespace was not rendered")
-	assert.Equal(t, "mybun", s.Data["release"], "installation.name was not rendered")
+	assert.Equal(t, "mynamespace", mixin["ns"], "installation.namespace was not rendered")
+	assert.Equal(t, "mybun", mixin["release"], "installation.name was not rendered")
 }
 
 func TestResolveCustomMetadata(t *testing.T) {
-	cxt := portercontext.NewTestContext(t)
-	m := &manifest.Manifest{
-		Custom: map[string]interface{}{
-			"foo": "foobar",
-			"myApp": map[string]interface{}{
-				"featureFlags": map[string]bool{
-					"featureA": true,
-				},
-			},
-		},
-	}
-	rm := NewRuntimeManifest(cxt.Context, cnab.ActionInstall, m)
+	pCtx := portercontext.NewTestContext(t)
 
-	s := &manifest.Step{
-		Data: map[string]interface{}{
-			"description": "Do a helm release",
-			"release":     "{{ bundle.custom.foo }}",
-			"featureA":    "{{ bundle.custom.myApp.featureFlags.featureA }}",
-		},
-	}
+	mContent := `name: mybuns
+custom:
+  foo: foobar
+  myApp:
+    featureFlags:
+      featureA: true
 
-	err := rm.ResolveStep(s)
+install:
+- mymixin:
+    release: "{{ bundle.custom.foo }}"
+    featureA: "{{ bundle.custom.myApp.featureFlags.featureA }}"
+`
+	rm := runtimeManifestFromStepYaml(t, pCtx, mContent)
+	s := rm.Install[0]
+
+	err := rm.ResolveStep(0, s)
+	require.NoError(t, err)
+
+	require.IsType(t, map[string]interface{}{}, s.Data["mymixin"], "Data.mymixin has the wrong type")
+	mixin := s.Data["mymixin"].(map[string]interface{})
+
+	err = rm.ResolveStep(0, s)
 	require.NoError(t, err, "ResolveStep failed")
 
-	assert.Equal(t, "foobar", s.Data["release"], "custom metadata was not rendered")
-	assert.Equal(t, "true", s.Data["featureA"], "nested custom metadata was not rendered")
+	assert.Equal(t, "foobar", mixin["release"], "custom metadata was not rendered")
+	assert.Equal(t, "true", mixin["featureA"], "nested custom metadata was not rendered")
 }
 
 func TestResolveEnvironmentVariable(t *testing.T) {
-	cxt := portercontext.NewTestContext(t)
-	m := &manifest.Manifest{}
-	rm := NewRuntimeManifest(cxt.Context, cnab.ActionInstall, m)
+	pCtx := portercontext.NewTestContext(t)
+	pCtx.Setenv("foo", "foo-value")
+	pCtx.Setenv("BAR", "bar-value")
 
-	s := &manifest.Step{
-		Data: map[string]interface{}{
-			"description": "Read an environment variable",
-			"someInput":   "{{ env.foo }}",
-			"moreInput":   "{{ env.BAR }}",
-		},
-	}
+	mContent := `name: mybuns
+install:
+- mymixin:
+    someInput: "{{ env.foo }}"
+    moreInput: "{{ env.BAR }}"
+`
+	rm := runtimeManifestFromStepYaml(t, pCtx, mContent)
+	s := rm.Install[0]
 
-	cxt.Setenv("foo", "foo-value")
-	cxt.Setenv("BAR", "bar-value")
-	err := rm.ResolveStep(s)
-	require.NoError(t, err, "ResolveStep failed")
+	err := rm.ResolveStep(0, s)
+	require.NoError(t, err)
 
-	assert.Equal(t, "foo-value", s.Data["someInput"], "expected lower-case foo env var was resolved")
-	assert.Equal(t, "bar-value", s.Data["moreInput"], "expected upper-case BAR env var was resolved")
+	require.IsType(t, map[string]interface{}{}, s.Data["mymixin"], "Data.mymixin has the wrong type")
+	mixin := s.Data["mymixin"].(map[string]interface{})
+
+	assert.Equal(t, "foo-value", mixin["someInput"], "expected lower-case foo env var was resolved")
+	assert.Equal(t, "bar-value", mixin["moreInput"], "expected upper-case BAR env var was resolved")
 }

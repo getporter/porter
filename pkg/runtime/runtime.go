@@ -68,8 +68,8 @@ func (r *PorterRuntime) Execute(ctx context.Context, rm *RuntimeManifest) error 
 	}
 
 	var bigErr *multierror.Error
-	for _, step := range r.RuntimeManifest.GetSteps() {
-		err = r.executeStep(ctx, step)
+	for stepIndex, step := range r.RuntimeManifest.GetSteps() {
+		err = r.executeStep(ctx, stepIndex, step)
 		if err != nil {
 			bigErr = multierror.Append(bigErr, err)
 			break
@@ -84,11 +84,11 @@ func (r *PorterRuntime) Execute(ctx context.Context, rm *RuntimeManifest) error 
 	return bigErr.ErrorOrNil()
 }
 
-func (r *PorterRuntime) executeStep(ctx context.Context, step *manifest.Step) error {
+func (r *PorterRuntime) executeStep(ctx context.Context, stepIndex int, step *manifest.Step) error {
 	if step == nil {
 		return nil
 	}
-	err := r.RuntimeManifest.ResolveStep(step)
+	err := r.RuntimeManifest.ResolveStep(stepIndex, step)
 	if err != nil {
 		return fmt.Errorf("unable to resolve step: %w", err)
 	}
