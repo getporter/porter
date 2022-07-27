@@ -29,15 +29,15 @@ porter installations uninstall [INSTALLATION] [flags]
 ### Examples
 
 ```
-  porter bundle uninstall
-  porter bundle uninstall --reference ghcr.io/getporter/examples/kubernetes:v0.2.0
-  porter bundle uninstall --reference localhost:5000/ghcr.io/getporter/examples/kubernetes:v0.2.0 --insecure-registry --force
-  porter bundle uninstall MyAppInDev --file myapp/bundle.json
-  porter bundle uninstall --parameter-set azure --param test-mode=true --param header-color=blue
-  porter bundle uninstall --cred azure --cred kubernetes
-  porter bundle uninstall --driver debug
-  porter bundle uninstall --delete
-  porter bundle uninstall --force-delete
+  porter installation uninstall
+  porter installation uninstall --reference ghcr.io/getporter/examples/kubernetes:v0.2.0
+  porter installation uninstall --reference localhost:5000/ghcr.io/getporter/examples/kubernetes:v0.2.0 --insecure-registry --force
+  porter installation uninstall MyAppInDev --file myapp/bundle.json
+  porter installation uninstall --parameter-set azure --param test-mode=true --param header-color=blue
+  porter installation uninstall --cred azure --cred kubernetes
+  porter installation uninstall --driver debug
+  porter installation uninstall --delete
+  porter installation uninstall --force-delete
 
 ```
 

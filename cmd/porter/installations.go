@@ -231,14 +231,14 @@ The docker driver runs the bundle container using the local Docker host. To use 
   DOCKER_TLS_VERIFY (optional)
   DOCKER_CERT_PATH (optional)
 `,
-		Example: `  porter bundle install
-  porter bundle install MyAppFromReference --reference ghcr.io/getporter/examples/kubernetes:v0.2.0 --namespace dev
-  porter bundle install --reference localhost:5000/ghcr.io/getporter/examples/kubernetes:v0.2.0 --insecure-registry --force
-  porter bundle install MyAppInDev --file myapp/bundle.json
-  porter bundle install --parameter-set azure --param test-mode=true --param header-color=blue
-  porter bundle install --cred azure --cred kubernetes
-  porter bundle install --driver debug
-  porter bundle install --label env=dev --label owner=myuser
+		Example: `  porter installation install
+  porter installation install MyAppFromReference --reference ghcr.io/getporter/examples/kubernetes:v0.2.0 --namespace dev
+  porter installation install --reference localhost:5000/ghcr.io/getporter/examples/kubernetes:v0.2.0 --insecure-registry --force
+  porter installation install MyAppInDev --file myapp/bundle.json
+  porter installation install --parameter-set azure --param test-mode=true --param header-color=blue
+  porter installation install --cred azure --cred kubernetes
+  porter installation install --driver debug
+  porter installation install --label env=dev --label owner=myuser
 `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate(cmd.Context(), args, p)
@@ -291,13 +291,13 @@ The docker driver runs the bundle container using the local Docker host. To use 
   DOCKER_TLS_VERIFY (optional)
   DOCKER_CERT_PATH (optional)
 `,
-		Example: `  porter bundle upgrade --version 0.2.0
-  porter bundle upgrade --reference ghcr.io/getporter/examples/kubernetes:v0.2.0
-  porter bundle upgrade --reference localhost:5000/ghcr.io/getporter/examples/kubernetes:v0.2.0 --insecure-registry --force
-  porter bundle upgrade MyAppInDev --file myapp/bundle.json
-  porter bundle upgrade --parameter-set azure --param test-mode=true --param header-color=blue
-  porter bundle upgrade --cred azure --cred kubernetes
-  porter bundle upgrade --driver debug
+		Example: `  porter installation upgrade --version 0.2.0
+  porter installation upgrade --reference ghcr.io/getporter/examples/kubernetes:v0.2.0
+  porter installation upgrade --reference localhost:5000/ghcr.io/getporter/examples/kubernetes:v0.2.0 --insecure-registry --force
+  porter installation upgrade MyAppInDev --file myapp/bundle.json
+  porter installation upgrade --parameter-set azure --param test-mode=true --param header-color=blue
+  porter installation upgrade --cred azure --cred kubernetes
+  porter installation upgrade --driver debug
 `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate(cmd.Context(), args, p)
@@ -350,13 +350,13 @@ The docker driver runs the bundle container using the local Docker host. To use 
   DOCKER_TLS_VERIFY (optional)
   DOCKER_CERT_PATH (optional)
 `,
-		Example: `  porter bundle invoke --action ACTION
-  porter bundle invoke --reference ghcr.io/getporter/examples/kubernetes:v0.2.0
-  porter bundle invoke --reference localhost:5000/ghcr.io/getporter/examples/kubernetes:v0.2.0 --insecure-registry --force
-  porter bundle invoke --action ACTION MyAppInDev --file myapp/bundle.json
-  porter bundle invoke --action ACTION  --parameter-set azure --param test-mode=true --param header-color=blue
-  porter bundle invoke --action ACTION --cred azure --cred kubernetes
-  porter bundle invoke --action ACTION --driver debug
+		Example: `  porter installation invoke --action ACTION
+  porter installation invoke --reference ghcr.io/getporter/examples/kubernetes:v0.2.0
+  porter installation invoke --reference localhost:5000/ghcr.io/getporter/examples/kubernetes:v0.2.0 --insecure-registry --force
+  porter installation invoke --action ACTION MyAppInDev --file myapp/bundle.json
+  porter installation invoke --action ACTION  --parameter-set azure --param test-mode=true --param header-color=blue
+  porter installation invoke --action ACTION --cred azure --cred kubernetes
+  porter installation invoke --action ACTION --driver debug
 `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate(cmd.Context(), args, p)
@@ -409,15 +409,15 @@ The docker driver runs the bundle container using the local Docker host. To use 
   DOCKER_TLS_VERIFY (optional)
   DOCKER_CERT_PATH (optional)
 `,
-		Example: `  porter bundle uninstall
-  porter bundle uninstall --reference ghcr.io/getporter/examples/kubernetes:v0.2.0
-  porter bundle uninstall --reference localhost:5000/ghcr.io/getporter/examples/kubernetes:v0.2.0 --insecure-registry --force
-  porter bundle uninstall MyAppInDev --file myapp/bundle.json
-  porter bundle uninstall --parameter-set azure --param test-mode=true --param header-color=blue
-  porter bundle uninstall --cred azure --cred kubernetes
-  porter bundle uninstall --driver debug
-  porter bundle uninstall --delete
-  porter bundle uninstall --force-delete
+		Example: `  porter installation uninstall
+  porter installation uninstall --reference ghcr.io/getporter/examples/kubernetes:v0.2.0
+  porter installation uninstall --reference localhost:5000/ghcr.io/getporter/examples/kubernetes:v0.2.0 --insecure-registry --force
+  porter installation uninstall MyAppInDev --file myapp/bundle.json
+  porter installation uninstall --parameter-set azure --param test-mode=true --param header-color=blue
+  porter installation uninstall --cred azure --cred kubernetes
+  porter installation uninstall --driver debug
+  porter installation uninstall --delete
+  porter installation uninstall --force-delete
 `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate(cmd.Context(), args, p)

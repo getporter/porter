@@ -13,7 +13,7 @@ func buildBundleCommands(p *porter.Porter) *cobra.Command {
 		Use:     "bundles",
 		Aliases: []string{"bundle"},
 		Short:   "Bundle commands",
-		Long:    "Commands for working with bundles. These all have shortcuts so that you can call these commands without the bundle resource prefix. For example, porter bundle install is available as porter install as well.",
+		Long:    "Commands for working with bundles. These all have shortcuts so that you can call these commands without the bundle resource prefix. For example, porter bundle build is available as porter build as well.",
 	}
 	cmd.Annotations = map[string]string{
 		"group": "resource",

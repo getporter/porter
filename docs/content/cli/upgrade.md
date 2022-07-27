@@ -29,13 +29,13 @@ porter upgrade [INSTALLATION] [flags]
 ### Examples
 
 ```
-  porter bundle upgrade --version 0.2.0
-  porter bundle upgrade --reference ghcr.io/getporter/examples/kubernetes:v0.2.0
-  porter bundle upgrade --reference localhost:5000/ghcr.io/getporter/examples/kubernetes:v0.2.0 --insecure-registry --force
-  porter bundle upgrade MyAppInDev --file myapp/bundle.json
-  porter bundle upgrade --parameter-set azure --param test-mode=true --param header-color=blue
-  porter bundle upgrade --cred azure --cred kubernetes
-  porter bundle upgrade --driver debug
+  porter upgrade --version 0.2.0
+  porter upgrade --reference ghcr.io/getporter/examples/kubernetes:v0.2.0
+  porter upgrade --reference localhost:5000/ghcr.io/getporter/examples/kubernetes:v0.2.0 --insecure-registry --force
+  porter upgrade MyAppInDev --file myapp/bundle.json
+  porter upgrade --parameter-set azure --param test-mode=true --param header-color=blue
+  porter upgrade --cred azure --cred kubernetes
+  porter upgrade --driver debug
 
 ```
 
