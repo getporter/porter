@@ -22,7 +22,7 @@ A clear and concise description of what you expected to happen.
 
 ## Porter Command and Output
 ```
-$ porter [e.g. install --param foo=bar --cred azure]
+$ porter [e.g. install --param foo=bar --credential-set azure]
 lots of output
 ```
 

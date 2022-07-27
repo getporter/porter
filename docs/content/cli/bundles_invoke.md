@@ -34,7 +34,7 @@ porter bundles invoke [INSTALLATION] --action ACTION [flags]
   porter bundle invoke --reference localhost:5000/ghcr.io/getporter/examples/kubernetes:v0.2.0 --insecure-registry --force
   porter bundle invoke --action ACTION MyAppInDev --file myapp/bundle.json
   porter bundle invoke --action ACTION  --parameter-set azure --param test-mode=true --param header-color=blue
-  porter bundle invoke --action ACTION --cred azure --cred kubernetes
+  porter bundle invoke --action ACTION --credential-set azure --credential-set kubernetes
   porter bundle invoke --action ACTION --driver debug
 
 ```
@@ -42,20 +42,20 @@ porter bundles invoke [INSTALLATION] --action ACTION [flags]
 ### Options
 
 ```
-      --action string               Custom action name to invoke.
-      --allow-docker-host-access    Controls if the bundle should have access to the host's Docker daemon with elevated privileges. See https://getporter.org/configuration/#allow-docker-host-access for the full implications of this flag.
-      --cnab-file string            Path to the CNAB bundle.json file.
-  -c, --cred stringArray            Credential to use when installing the bundle. May be either a named set of credentials or a filepath, and specified multiple times.
-  -d, --driver string               Specify a driver to use. Allowed values: docker, debug (default "docker")
-  -f, --file string                 Path to the porter manifest file. Defaults to the bundle in the current directory.
-      --force                       Force a fresh pull of the bundle
-  -h, --help                        help for invoke
-      --insecure-registry           Don't require TLS for the registry
-  -n, --namespace string            Namespace of the specified installation. Defaults to the global namespace.
-      --no-logs                     Do not persist the bundle execution logs
-      --param stringArray           Define an individual parameter in the form NAME=VALUE. Overrides parameters otherwise set via --parameter-set. May be specified multiple times.
-  -p, --parameter-set stringArray   Name of a parameter set file for the bundle. May be either a named set of parameters or a filepath, and specified multiple times.
-  -r, --reference string            Use a bundle in an OCI registry specified by the given reference.
+      --action string                Custom action name to invoke.
+      --allow-docker-host-access     Controls if the bundle should have access to the host's Docker daemon with elevated privileges. See https://getporter.org/configuration/#allow-docker-host-access for the full implications of this flag.
+      --cnab-file string             Path to the CNAB bundle.json file.
+  -c, --credential-set stringArray   Credential sets to use when running the bundle. It should be a named set of credentials and may be specified multiple times.
+  -d, --driver string                Specify a driver to use. Allowed values: docker, debug (default "docker")
+  -f, --file string                  Path to the porter manifest file. Defaults to the bundle in the current directory.
+      --force                        Force a fresh pull of the bundle
+  -h, --help                         help for invoke
+      --insecure-registry            Don't require TLS for the registry
+  -n, --namespace string             Namespace of the specified installation. Defaults to the global namespace.
+      --no-logs                      Do not persist the bundle execution logs
+      --param stringArray            Define an individual parameter in the form NAME=VALUE. Overrides parameters otherwise set via --parameter-set. May be specified multiple times.
+  -p, --parameter-set stringArray    Parameter sets to use when running the bundle. It should be a named set of parameters and may be specified multiple times.
+  -r, --reference string             Use a bundle in an OCI registry specified by the given reference.
 ```
 
 ### Options inherited from parent commands

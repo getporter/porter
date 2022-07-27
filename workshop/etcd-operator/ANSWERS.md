@@ -18,5 +18,5 @@ Make a new bundle and install the Helm chart for etcd-operator
     See [etcd-operator.yaml](etcd-operator.yaml) for what it should look like in **~/.porter/credentials/etcd-operator.yaml**.
 1. Install your bundle.
     ```console
-    $ porter install --cred etcd-operator
+    $ porter install --credential-set etcd-operator
     ```

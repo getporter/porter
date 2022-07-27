@@ -160,7 +160,7 @@ The docker driver runs the bundle container using the local Docker host. To use 
   porter bundle install --reference localhost:5000/ghcr.io/getporter/examples/kubernetes:v0.2.0 --insecure-registry --force
   porter bundle install MyAppInDev --file myapp/bundle.json
   porter bundle install --parameter-set azure --param test-mode=true --param header-color=blue
-  porter bundle install --cred azure --cred kubernetes
+  porter bundle install --credential-set azure --credential-set kubernetes
   porter bundle install --driver debug
   porter bundle install --label env=dev --label owner=myuser
 `,
@@ -177,14 +177,6 @@ The docker driver runs the bundle container using the local Docker host. To use 
 		"Path to the porter manifest file. Defaults to the bundle in the current directory.")
 	f.StringVar(&opts.CNABFile, "cnab-file", "",
 		"Path to the CNAB bundle.json file.")
-	f.StringArrayVarP(&opts.ParameterSets, "parameter-set", "p", nil,
-		"Name of a parameter set for the bundle. It should be a named set of parameters and may be specified multiple times.")
-	f.StringArrayVar(&opts.Params, "param", nil,
-		"Define an individual parameter in the form NAME=VALUE. Overrides parameters otherwise set via --parameter-set. May be specified multiple times.")
-	f.StringArrayVarP(&opts.CredentialIdentifiers, "cred", "c", nil,
-		"Credential to use when installing the bundle. It should be a named set of credentials and may be specified multiple times.")
-	f.StringVarP(&opts.Driver, "driver", "d", porter.DefaultDriver,
-		"Specify a driver to use. Allowed values: docker, debug")
 	f.StringVarP(&opts.Namespace, "namespace", "n", "",
 		"Create the installation in the specified namespace. Defaults to the global namespace.")
 	f.StringSliceVarP(&opts.Labels, "label", "l", nil,
@@ -220,7 +212,7 @@ The docker driver runs the bundle container using the local Docker host. To use 
   porter bundle upgrade --reference localhost:5000/ghcr.io/getporter/examples/kubernetes:v0.2.0 --insecure-registry --force
   porter bundle upgrade MyAppInDev --file myapp/bundle.json
   porter bundle upgrade --parameter-set azure --param test-mode=true --param header-color=blue
-  porter bundle upgrade --cred azure --cred kubernetes
+  porter bundle upgrade --credential-set azure --credential-set kubernetes
   porter bundle upgrade --driver debug
 `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
@@ -236,14 +228,6 @@ The docker driver runs the bundle container using the local Docker host. To use 
 		"Path to the porter manifest file. Defaults to the bundle in the current directory.")
 	f.StringVar(&opts.CNABFile, "cnab-file", "",
 		"Path to the CNAB bundle.json file.")
-	f.StringArrayVarP(&opts.ParameterSets, "parameter-set", "p", nil,
-		"Name of a parameter set file for the bundle. May be either a named set of parameters or a filepath, and specified multiple times.")
-	f.StringArrayVar(&opts.Params, "param", nil,
-		"Define an individual parameter in the form NAME=VALUE. Overrides parameters otherwise set via --parameter-set. May be specified multiple times.")
-	f.StringArrayVarP(&opts.CredentialIdentifiers, "cred", "c", nil,
-		"Credential to use when installing the bundle. It should be a named set of credentials and may be specified multiple times.")
-	f.StringVarP(&opts.Driver, "driver", "d", porter.DefaultDriver,
-		"Specify a driver to use. Allowed values: docker, debug")
 	f.StringVarP(&opts.Namespace, "namespace", "n", "",
 		"Namespace of the specified installation. Defaults to the global namespace.")
 	f.StringVar(&opts.Version, "version", "",
@@ -279,7 +263,7 @@ The docker driver runs the bundle container using the local Docker host. To use 
   porter bundle invoke --reference localhost:5000/ghcr.io/getporter/examples/kubernetes:v0.2.0 --insecure-registry --force
   porter bundle invoke --action ACTION MyAppInDev --file myapp/bundle.json
   porter bundle invoke --action ACTION  --parameter-set azure --param test-mode=true --param header-color=blue
-  porter bundle invoke --action ACTION --cred azure --cred kubernetes
+  porter bundle invoke --action ACTION --credential-set azure --credential-set kubernetes
   porter bundle invoke --action ACTION --driver debug
 `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
@@ -297,14 +281,6 @@ The docker driver runs the bundle container using the local Docker host. To use 
 		"Path to the porter manifest file. Defaults to the bundle in the current directory.")
 	f.StringVar(&opts.CNABFile, "cnab-file", "",
 		"Path to the CNAB bundle.json file.")
-	f.StringArrayVarP(&opts.ParameterSets, "parameter-set", "p", nil,
-		"Name of a parameter set file for the bundle. May be either a named set of parameters or a filepath, and specified multiple times.")
-	f.StringArrayVar(&opts.Params, "param", nil,
-		"Define an individual parameter in the form NAME=VALUE. Overrides parameters otherwise set via --parameter-set. May be specified multiple times.")
-	f.StringArrayVarP(&opts.CredentialIdentifiers, "cred", "c", nil,
-		"Credential to use when installing the bundle. May be either a named set of credentials or a filepath, and specified multiple times.")
-	f.StringVarP(&opts.Driver, "driver", "d", porter.DefaultDriver,
-		"Specify a driver to use. Allowed values: docker, debug")
 	f.StringVarP(&opts.Namespace, "namespace", "n", "",
 		"Namespace of the specified installation. Defaults to the global namespace.")
 	addBundleActionFlags(f, opts)
@@ -338,7 +314,7 @@ The docker driver runs the bundle container using the local Docker host. To use 
   porter bundle uninstall --reference localhost:5000/ghcr.io/getporter/examples/kubernetes:v0.2.0 --insecure-registry --force
   porter bundle uninstall MyAppInDev --file myapp/bundle.json
   porter bundle uninstall --parameter-set azure --param test-mode=true --param header-color=blue
-  porter bundle uninstall --cred azure --cred kubernetes
+  porter bundle uninstall --credential-set azure --credential-set kubernetes
   porter bundle uninstall --driver debug
   porter bundle uninstall --delete
   porter bundle uninstall --force-delete
@@ -356,14 +332,6 @@ The docker driver runs the bundle container using the local Docker host. To use 
 		"Path to the porter manifest file. Defaults to the bundle in the current directory. Optional unless a newer version of the bundle should be used to uninstall the bundle.")
 	f.StringVar(&opts.CNABFile, "cnab-file", "",
 		"Path to the CNAB bundle.json file.")
-	f.StringArrayVarP(&opts.ParameterSets, "parameter-set", "p", nil,
-		"Name of a parameter set file for the bundle. May be either a named set of parameters or a filepath, and specified multiple times.")
-	f.StringArrayVar(&opts.Params, "param", nil,
-		"Define an individual parameter in the form NAME=VALUE. Overrides parameters otherwise set via --parameter-set. May be specified multiple times.")
-	f.StringArrayVarP(&opts.CredentialIdentifiers, "cred", "c", nil,
-		"Credential to use when uninstalling the bundle. May be either a named set of credentials or a filepath, and specified multiple times.")
-	f.StringVarP(&opts.Driver, "driver", "d", porter.DefaultDriver,
-		"Specify a driver to use. Allowed values: docker, debug")
 	f.BoolVar(&opts.Delete, "delete", false,
 		"Delete all records associated with the installation, assuming the uninstall action succeeds")
 	f.BoolVar(&opts.ForceDelete, "force-delete", false,
@@ -448,4 +416,16 @@ func addBundleActionFlags(f *pflag.FlagSet, actionOpts porter.BundleAction) {
 		"Controls if the bundle should have access to the host's Docker daemon with elevated privileges. See https://getporter.org/configuration/#allow-docker-host-access for the full implications of this flag.")
 	f.BoolVar(&opts.NoLogs, "no-logs", false,
 		"Do not persist the bundle execution logs")
+	f.StringArrayVarP(&opts.ParameterSets, "parameter-set", "p", nil,
+		"Parameter sets to use when running the bundle. It should be a named set of parameters and may be specified multiple times.")
+	f.StringArrayVar(&opts.Params, "param", nil,
+		"Define an individual parameter in the form NAME=VALUE. Overrides parameters otherwise set via --parameter-set. May be specified multiple times.")
+	f.StringArrayVarP(&opts.CredentialIdentifiers, "credential-set", "c", nil,
+		"Credential sets to use when running the bundle. It should be a named set of credentials and may be specified multiple times.")
+	f.StringVarP(&opts.Driver, "driver", "d", porter.DefaultDriver,
+		"Specify a driver to use. Allowed values: docker, debug")
+
+	// Gracefully support any renamed flags
+	f.StringArrayVar(&opts.CredentialIdentifiers, "cred", nil, "DEPRECATED")
+	f.MarkDeprecated("cred", "please use credential-set instead.")
 }
