@@ -9,7 +9,7 @@ This guide will walk you through upgrading your data and documents.
 
 1. [Make a new PORTER_HOME](#1-make-a-new-porter_home)
 2. [Install Porter v1](#2-install-porter-v1)
-3. [Configure a Storage Plugin](#3-configure-a-secrets-plugin)
+3. [Configure a Secrets Plugin](#3-configure-a-secrets-plugin)
 4. [Configure a Storage Plugin](#4-configure-a-storage-plugin)
 5. [Validate Your Porter Configuration](#5-validate-your-porter-configuration)
 6. [Migrate Your Data](#6-migrate-your-data)
@@ -47,7 +47,7 @@ Here are secret plugins that we recommend for production use:
 - [Kubernetes Secrets](/plugins/kubernetes/#secrets)
 - [Hashicorp Vault](/plugins/hashicorp/)
 
-For more information on why a secrets plugin is required, and step-by-step instructions to configure one, see [Upgrade your plugins to securely store sensitive data](/blog/persist-sensitive-data-safely.md).
+For more information on why a secrets plugin is required, and step-by-step instructions to configure one, see [Upgrade your plugins to securely store sensitive data](/blog/persist-sensitive-data-safely).
 
 ## 4. Configure a Storage Plugin
 
