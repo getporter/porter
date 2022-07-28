@@ -17,6 +17,7 @@ var SupportedExtensions = []RequiredExtension{
 	DockerExtension,
 	FileParameterExtension,
 	ParameterSourcesExtension,
+	DirectoryParameterExtension,
 }
 
 // ProcessedExtensions represents a map of the extension name to the

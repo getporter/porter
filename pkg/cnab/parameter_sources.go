@@ -2,7 +2,7 @@ package cnab
 
 import (
 	"encoding/json"
-	"errors"
+	"github.com/pkg/errors"
 	"fmt"
 )
 
@@ -20,6 +20,9 @@ const (
 	// ParameterSourceTypeDependencyOutput defines a type of parameter source that is provided by a bundle's dependency
 	// output.
 	ParameterSourceTypeDependencyOutput = "dependencies.output"
+
+	// ParameterSouceTypeMount defines a type of parameter source that is provided by a docker mount
+	ParameterSourceTypeMount = "docker.mount"
 )
 
 // ParameterSourcesExtension represents a required extension that specifies how
@@ -127,6 +130,14 @@ func (m *ParameterSourceMap) UnmarshalJSON(data []byte) error {
 				return fmt.Errorf("invalid parameter source definition for key %s: %w", sourceKey, err)
 			}
 			(*m)[ParameterSourceTypeDependencyOutput] = depOutput
+		case ParameterSourceTypeMount:
+			var src MountParameterSourceDefn
+			err := json.Unmarshal(rawDef, &src)
+			if err != nil {
+				return errors.Wrapf(err, "invalid parameter source definition for key %s", sourceKey)
+			}
+			(*m)[ParameterSourceTypeMount] = src
+
 		default:
 			return fmt.Errorf("unsupported parameter source key %s", sourceKey)
 		}
@@ -221,6 +232,12 @@ func (e ProcessedExtensions) GetParameterSources() (ParameterSources, bool, erro
 // HasParameterSources returns whether or not the bundle has parameter sources defined.
 func (b ExtendedBundle) HasParameterSources() bool {
 	_, ok := b.Custom[ParameterSourcesExtensionKey]
+	return ok
+}
+
+// HasDirectoryParameters returns whether or not the bundle has directory parameters defined.
+func (b ExtendedBundle) HasDirectoryParameters() bool {
+	_, ok := b.Custom[DirectoryParameterExtensionKey]
 	return ok
 }
 
