@@ -4,6 +4,9 @@ debug-plugins: true
 default-storage: testdb
 default-secrets-plugin: filesystem
 
+# The test bundle, mybuns, requires docker
+allow-docker-host-access: true
+
 logs:
   enabled: true
   level: debug

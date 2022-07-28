@@ -197,15 +197,25 @@ func (o *BundleExecutionOptions) combineParameters(c *portercontext.Context) map
 
 // defaultDriver supplies the default driver if none is specified
 func (o *BundleExecutionOptions) defaultDriver(p *Porter) {
+	//
 	// When you run porter installation apply, there are some settings from porter install
-	// that aren't exposed as flags. This allows the user to set them in the config file
-	// and we will use them before running the bundle.
+	// that aren't exposed as flags (like driver and allow-docker-host-access).
+	// This allows the user to set them in the config file and we will use them before running the bundle.
+	//
+
+	// Apply global config to the --driver flag
 	if o.Driver == "" {
 		// We have both porter build --driver, and porter install --driver
 		// So in the config file it's named build-driver and runtime-driver
 		// This is why we check first before applying the value. Only apply the config
 		// file setting if they didn't specify a flag.
 		o.Driver = p.Data.RuntimeDriver
+	}
+
+	// Apply global config to the --allow-docker-host-access flag
+	if !o.AllowDockerHostAccess {
+		// Only apply the config setting if they didn't specify the flag (i.e. it's porter installation apply which doesn't have that flag)
+		o.AllowDockerHostAccess = p.Config.Data.AllowDockerHostAccess
 	}
 }
 

@@ -7,6 +7,9 @@ description: "A very thorough test bundle"
 registry: localhost:5000
 dockerfile: Dockerfile.tmpl
 
+required:
+  - docker
+
 credentials:
   - name: username
     description: "The name you want on the audit log"
@@ -50,7 +53,7 @@ state:
     path: magic.txt
 
 dependencies:
-  required:
+  requires:
     - name: db
       bundle:
         reference: "localhost:5000/mydb:v0.1.0"
@@ -71,6 +74,11 @@ customActions:
     modifies: false
 
 install:
+  - exec:
+      description: "Check the docker socket"
+      command: stat
+      arguments:
+        - /var/run/docker.sock
   - exec:
       description: "Let's make some magic"
       command: ./helpers.sh
