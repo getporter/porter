@@ -215,5 +215,5 @@ func (r *PorterRuntime) getImageMappingFiles() (cnab.ExtendedBundle, relocation.
 }
 
 func (r *PorterRuntime) NewRuntimeManifest(action string, m *manifest.Manifest) *RuntimeManifest {
-	return NewRuntimeManifest(r.config.Context, action, m)
+	return NewRuntimeManifest(r.config, action, m)
 }

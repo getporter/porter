@@ -259,7 +259,8 @@ func TestRuntimeManifest_ApplyUnboundBundleOutputs_File(t *testing.T) {
 					tc.def.Name: tc.def,
 				},
 			}
-			rm := NewRuntimeManifest(c.Context, cnab.ActionInstall, m)
+			cfg := NewConfigFor(c.Context)
+			rm := NewRuntimeManifest(cfg, cnab.ActionInstall, m)
 			rm.bundle = cnab.NewBundle(bundle.Bundle{
 				Definitions: map[string]*definition.Schema{
 					tc.def.Name: &tc.def.Schema,
@@ -272,13 +273,13 @@ func TestRuntimeManifest_ApplyUnboundBundleOutputs_File(t *testing.T) {
 				},
 			})
 
-			_, err := rm.FileSystem.Create(srcPath)
+			_, err := rm.config.FileSystem.Create(srcPath)
 			require.NoError(t, err)
 
 			err = rm.applyUnboundBundleOutputs(ctx)
 			require.NoError(t, err)
 
-			exists, _ := rm.FileSystem.Exists("/cnab/app/outputs/" + outputName)
+			exists, _ := rm.config.FileSystem.Exists("/cnab/app/outputs/" + outputName)
 			assert.Equal(t, exists, tc.shouldBind)
 		})
 	}

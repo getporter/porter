@@ -16,7 +16,7 @@ type RunOptions struct {
 	config *config.Config
 
 	// Debug specifies if the bundle should be run in debug mode
-	Debug bool
+	DebugMode bool
 
 	// File is the path to the porter manifest.
 	File string
@@ -55,7 +55,7 @@ func (o *RunOptions) validateAction() error {
 
 func (o *RunOptions) defaultDebug() error {
 	// if debug was manually set, leave it
-	if o.Debug {
+	if o.DebugMode {
 		return nil
 	}
 
@@ -70,7 +70,7 @@ func (o *RunOptions) defaultDebug() error {
 	}
 
 	if debug {
-		o.Debug = debug
+		o.DebugMode = debug
 	}
 
 	return nil
@@ -91,6 +91,7 @@ func (p *Porter) Run(ctx context.Context, opts RunOptions) error {
 	}
 
 	runtimeCfg := runtime.NewConfigFor(p.Context)
+	runtimeCfg.DebugMode = opts.DebugMode
 	r := runtime.NewPorterRuntime(runtimeCfg, p.Mixins)
 	runtimeManifest := r.NewRuntimeManifest(opts.Action, m)
 	err = r.Execute(ctx, runtimeManifest)

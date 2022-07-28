@@ -24,7 +24,8 @@ func runtimeManifestFromStepYaml(t *testing.T, pCtx *portercontext.TestContext, 
 	require.NoError(t, pCtx.FileSystem.WriteFile("/cnab/app/porter.yaml", mContent, pkg.FileModeWritable))
 	m, err := manifest.ReadManifest(pCtx.Context, "/cnab/app/porter.yaml")
 	require.NoError(t, err, "ReadManifest failed")
-	return NewRuntimeManifest(pCtx.Context, cnab.ActionInstall, m)
+	cfg := NewConfigFor(pCtx.Context)
+	return NewRuntimeManifest(cfg, cnab.ActionInstall, m)
 }
 
 func TestResolveMapParam(t *testing.T) {
@@ -100,7 +101,8 @@ func TestMetadataAvailableForTemplating(t *testing.T) {
 	c.TestContext.AddTestFile("testdata/metadata-substitution.yaml", config.Name)
 	m, err := manifest.LoadManifestFrom(context.Background(), c.Config, config.Name)
 	require.NoError(t, err, "LoadManifestFrom")
-	rm := NewRuntimeManifest(c.Context, cnab.ActionInstall, m)
+	cfg := NewConfigFor(c.Context)
+	rm := NewRuntimeManifest(cfg, cnab.ActionInstall, m)
 
 	s := rm.Install[0]
 	err = rm.ResolveStep(ctx, 0, s)
@@ -119,7 +121,8 @@ func TestDependencyMetadataAvailableForTemplating(t *testing.T) {
 
 	m, err := manifest.LoadManifestFrom(context.Background(), c.Config, config.Name)
 	require.NoError(t, err, "LoadManifestFrom")
-	rm := NewRuntimeManifest(c.Context, cnab.ActionInstall, m)
+	cfg := NewConfigFor(c.Context)
+	rm := NewRuntimeManifest(cfg, cnab.ActionInstall, m)
 	rm.bundles = map[string]cnab.ExtendedBundle{
 		"mysql": cnab.NewBundle(bundle.Bundle{
 			Name:        "Azure MySQL",
@@ -352,11 +355,12 @@ func TestResolveInMainDict(t *testing.T) {
 	m, err := manifest.LoadManifestFrom(context.Background(), c.Config, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
-	rm := NewRuntimeManifest(c.Context, cnab.ActionInstall, m)
+	cfg := NewConfigFor(c.Context)
+	rm := NewRuntimeManifest(cfg, cnab.ActionInstall, m)
 
 	installStep := rm.Install[0]
 
-	rm.Setenv("COMMAND", "echo hello world")
+	rm.config.Setenv("COMMAND", "echo hello world")
 	err = rm.ResolveStep(ctx, 0, installStep)
 	require.NoError(t, err)
 
@@ -378,11 +382,12 @@ func TestResolveSliceWithAMap(t *testing.T) {
 	m, err := manifest.LoadManifestFrom(context.Background(), c.Config, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
-	rm := NewRuntimeManifest(c.Context, cnab.ActionInstall, m)
+	cfg := NewConfigFor(c.Context)
+	rm := NewRuntimeManifest(cfg, cnab.ActionInstall, m)
 
 	installStep := rm.Install[0]
 
-	rm.Setenv("COMMAND", "echo hello world")
+	rm.config.Setenv("COMMAND", "echo hello world")
 	err = rm.ResolveStep(ctx, 0, installStep)
 	require.NoError(t, err)
 
@@ -570,7 +575,8 @@ func TestManifest_ApplyStepOutputs(t *testing.T) {
 	m, err := manifest.LoadManifestFrom(context.Background(), c.Config, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
-	rm := NewRuntimeManifest(c.Context, cnab.ActionInstall, m)
+	cfg := NewConfigFor(c.Context)
+	rm := NewRuntimeManifest(cfg, cnab.ActionInstall, m)
 
 	err = rm.ApplyStepOutputs(map[string]string{"name": "world"})
 	require.NoError(t, err)
@@ -591,7 +597,8 @@ func TestManifest_ResolveImageMap(t *testing.T) {
 	m, err := manifest.LoadManifestFrom(context.Background(), c.Config, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
-	rm := NewRuntimeManifest(c.Context, cnab.ActionInstall, m)
+	cfg := NewConfigFor(c.Context)
+	rm := NewRuntimeManifest(cfg, cnab.ActionInstall, m)
 	expectedImage, ok := m.ImageMap["something"]
 	require.True(t, ok, "couldn't get expected image")
 	expectedRef := fmt.Sprintf("%s@%s", expectedImage.Repository, expectedImage.Digest)
@@ -777,7 +784,8 @@ func TestResolveImageWithUpdatedBundle(t *testing.T) {
 
 	reloMap := relocation.ImageRelocationMap{}
 
-	rm := NewRuntimeManifest(pCtx.Context, cnab.ActionInstall, m)
+	cfg := NewConfigFor(pCtx.Context)
+	rm := NewRuntimeManifest(cfg, cnab.ActionInstall, m)
 	err := rm.ResolveImages(bun, reloMap)
 	require.NoError(t, err)
 	mi := rm.ImageMap["machine"]
@@ -807,7 +815,8 @@ func TestResolveImageWithUpdatedMismatchedBundle(t *testing.T) {
 
 	reloMap := relocation.ImageRelocationMap{}
 
-	rm := NewRuntimeManifest(pCtx.Context, cnab.ActionInstall, m)
+	cfg := NewConfigFor(pCtx.Context)
+	rm := NewRuntimeManifest(cfg, cnab.ActionInstall, m)
 	err := rm.ResolveImages(bun, reloMap)
 	assert.Error(t, err)
 	assert.EqualError(t, err, fmt.Sprintf("unable to find image in porter manifest: %s", "ghost"))
@@ -839,7 +848,8 @@ func TestResolveImageWithRelo(t *testing.T) {
 		"gabrtv/microservice@sha256:cca460afa270d4c527981ef9ca4989346c56cf9b20217dcea37df1ece8120687": "my.registry/microservice@sha256:cca460afa270d4c527981ef9ca4989346c56cf9b20217dcea37df1ece8120687",
 	}
 
-	rm := NewRuntimeManifest(pCtx.Context, cnab.ActionInstall, m)
+	cfg := NewConfigFor(pCtx.Context)
+	rm := NewRuntimeManifest(cfg, cnab.ActionInstall, m)
 	err := rm.ResolveImages(bun, reloMap)
 	require.NoError(t, err)
 	mi := rm.ImageMap["machine"]
@@ -871,7 +881,8 @@ func TestResolveImageRelocationNoMatch(t *testing.T) {
 		"deislabs/nogood:latest": "cnabio/ghost:latest",
 	}
 
-	rm := NewRuntimeManifest(pCtx.Context, cnab.ActionInstall, m)
+	cfg := NewConfigFor(pCtx.Context)
+	rm := NewRuntimeManifest(cfg, cnab.ActionInstall, m)
 	err := rm.ResolveImages(bun, reloMap)
 	require.NoError(t, err)
 	assert.Equal(t, "deislabs/ghost", rm.ImageMap["machine"].Repository)

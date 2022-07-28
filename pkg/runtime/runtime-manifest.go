@@ -17,7 +17,6 @@ import (
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/manifest"
-	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/tracing"
 	"get.porter.sh/porter/pkg/yaml"
 	"github.com/cbroglie/mustache"
@@ -33,7 +32,7 @@ const (
 )
 
 type RuntimeManifest struct {
-	*portercontext.Context
+	config RuntimeConfig
 	*manifest.Manifest
 
 	Action string
@@ -53,11 +52,18 @@ type RuntimeManifest struct {
 	sensitiveValues []string
 }
 
-func NewRuntimeManifest(cxt *portercontext.Context, action string, manifest *manifest.Manifest) *RuntimeManifest {
+func NewRuntimeManifest(cfg RuntimeConfig, action string, manifest *manifest.Manifest) *RuntimeManifest {
 	return &RuntimeManifest{
-		Context:  cxt,
+		config:   cfg,
 		Action:   action,
 		Manifest: manifest,
+	}
+}
+
+// this is a temporary function to help write debug logs until we have PORTER_VERBOSITY passed into the bundle properly
+func (m *RuntimeManifest) debugf(log tracing.TraceLogger, msg string, args ...interface{}) {
+	if m.config.DebugMode {
+		log.Infof(msg, args...)
 	}
 }
 
@@ -92,7 +98,7 @@ func (m *RuntimeManifest) Validate() error {
 
 func (m *RuntimeManifest) loadBundle() error {
 	// Load the CNAB representation of the bundle
-	b, err := cnab.LoadBundle(m.Context, "/cnab/bundle.json")
+	b, err := cnab.LoadBundle(m.config.Context, "/cnab/bundle.json")
 	if err != nil {
 		return err
 	}
@@ -107,7 +113,7 @@ func (m *RuntimeManifest) loadManifest() error {
 	}
 
 	// Get the original porter.yaml with additional yaml metadata so that we can look at just the current step's yaml
-	yq := yaml.NewEditor(m.Context)
+	yq := yaml.NewEditor(m.config.Context)
 	if err := yq.ReadFile(m.ManifestPath); err != nil {
 		return fmt.Errorf("error loading yaml editor for %s", m.ManifestPath)
 	}
@@ -117,17 +123,17 @@ func (m *RuntimeManifest) loadManifest() error {
 }
 
 func (m *RuntimeManifest) GetInstallationNamespace() string {
-	return m.Getenv(config.EnvPorterInstallationNamespace)
+	return m.config.Getenv(config.EnvPorterInstallationNamespace)
 }
 
 func (m *RuntimeManifest) GetInstallationName() string {
-	return m.Getenv(config.EnvPorterInstallationName)
+	return m.config.Getenv(config.EnvPorterInstallationName)
 }
 
 func (m *RuntimeManifest) loadDependencyDefinitions() error {
 	m.bundles = make(map[string]cnab.ExtendedBundle, len(m.Dependencies.RequiredDependencies))
 	for _, dep := range m.Dependencies.RequiredDependencies {
-		bunD, err := GetDependencyDefinition(m.Context, dep.Name)
+		bunD, err := GetDependencyDefinition(m.config.Context, dep.Name)
 		if err != nil {
 			return err
 		}
@@ -145,18 +151,18 @@ func (m *RuntimeManifest) loadDependencyDefinitions() error {
 
 func (m *RuntimeManifest) resolveParameter(pd manifest.ParameterDefinition) string {
 	if pd.Destination.EnvironmentVariable != "" {
-		return m.Getenv(pd.Destination.EnvironmentVariable)
+		return m.config.Getenv(pd.Destination.EnvironmentVariable)
 	}
 	if pd.Destination.Path != "" {
 		return pd.Destination.Path
 	}
 	envVar := manifest.ParamToEnvVar(pd.Name)
-	return m.Getenv(envVar)
+	return m.config.Getenv(envVar)
 }
 
 func (m *RuntimeManifest) resolveCredential(cd manifest.CredentialDefinition) (string, error) {
 	if cd.EnvironmentVariable != "" {
-		return m.Getenv(cd.EnvironmentVariable), nil
+		return m.config.Getenv(cd.EnvironmentVariable), nil
 	} else if cd.Path != "" {
 		return cd.Path, nil
 	} else {
@@ -168,7 +174,7 @@ func (m *RuntimeManifest) resolveBundleOutput(outputName string) (string, error)
 	// Get the output's value from the injected parameter source
 	ps := manifest.GetParameterSourceForOutput(outputName)
 	psParamEnv := manifest.ParamToEnvVar(ps)
-	outputValue, ok := m.LookupEnv(psParamEnv)
+	outputValue, ok := m.config.LookupEnv(psParamEnv)
 	if !ok {
 		return "", fmt.Errorf("no parameter source was injected for output %s", outputName)
 	}
@@ -272,7 +278,7 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 	bun["custom"] = m.Custom
 
 	// Make environment variable accessible
-	env := m.EnvironMap()
+	env := m.config.EnvironMap()
 	data["env"] = env
 
 	params := make(map[string]interface{})
@@ -460,7 +466,7 @@ func (m *RuntimeManifest) ResolveStep(ctx context.Context, stepIndex int, step *
 
 	// TODO: add back logging step data after we have a solid way to censor it in https://github.com/getporter/porter/issues/2256
 	//fmt.Fprintf(m.Err, "=== Step Data ===\n%v\n", sourceData)
-	log.Debugf("=== Step Template ===\n%v\n", stepTemplate.String())
+	m.debugf(log, "=== Step Template ===\n%v\n", stepTemplate.String())
 
 	// Render the step template, returning an error if undefined variables are used
 	mustache.AllowMissingVariables = false
@@ -505,7 +511,7 @@ func (m *RuntimeManifest) Initialize(ctx context.Context) error {
 			}
 
 			// Porter by default places parameter value into file determined by Destination.Path
-			bytes, err := m.FileSystem.ReadFile(param.Destination.Path)
+			bytes, err := m.config.FileSystem.ReadFile(param.Destination.Path)
 			if err != nil {
 				if os.IsNotExist(err) {
 					continue
@@ -519,7 +525,7 @@ func (m *RuntimeManifest) Initialize(ctx context.Context) error {
 			// that's a cnab change somewhere probably
 			// the problem is in injectParameters in cnab-go
 			if string(bytes) == "null" {
-				m.FileSystem.Remove(param.Destination.Path)
+				m.config.FileSystem.Remove(param.Destination.Path)
 				continue
 			}
 			decoded, err := base64.StdEncoding.DecodeString(string(bytes))
@@ -527,7 +533,7 @@ func (m *RuntimeManifest) Initialize(ctx context.Context) error {
 				return fmt.Errorf("unable to decode parameter %s: %w", paramName, err)
 			}
 
-			err = m.FileSystem.WriteFile(param.Destination.Path, decoded, pkg.FileModeWritable)
+			err = m.config.FileSystem.WriteFile(param.Destination.Path, decoded, pkg.FileModeWritable)
 			if err != nil {
 				return fmt.Errorf("unable to write decoded parameter %s: %w", paramName, err)
 			}
@@ -539,7 +545,7 @@ func (m *RuntimeManifest) Initialize(ctx context.Context) error {
 
 func (m *RuntimeManifest) createOutputsDir() error {
 	// Ensure outputs directory exists
-	if err := m.FileSystem.MkdirAll(config.BundleOutputsDir, pkg.FileModeDirectory); err != nil {
+	if err := m.config.FileSystem.MkdirAll(config.BundleOutputsDir, pkg.FileModeDirectory); err != nil {
 		return fmt.Errorf("unable to ensure CNAB outputs directory exists: %w", err)
 	}
 	return nil
@@ -550,9 +556,9 @@ func (m *RuntimeManifest) createOutputsDir() error {
 func (m *RuntimeManifest) unpackStateBag(ctx context.Context) error {
 	log := tracing.LoggerFromContext(ctx)
 
-	_, err := m.FileSystem.Open(statePath)
+	_, err := m.config.FileSystem.Open(statePath)
 	if os.IsNotExist(err) || len(m.StateBag) == 0 {
-		log.Debugf("No existing bundle state to unpack")
+		m.debugf(log, "No existing bundle state to unpack")
 		return nil
 	}
 
@@ -567,7 +573,7 @@ func (m *RuntimeManifest) unpackStateBag(ctx context.Context) error {
 	unpackStateFile := func(tr *tar.Reader, header *tar.Header) error {
 		name := strings.TrimPrefix(header.Name, "porter-state/")
 		dest := stateFiles[name]
-		log.Debugf("  - %s -> %s", name, dest)
+		m.debugf(log, "  - %s -> %s", name, dest)
 
 		f, err := os.OpenFile(dest, os.O_CREATE|os.O_RDWR, os.FileMode(header.Mode))
 		if err != nil {
@@ -583,7 +589,7 @@ func (m *RuntimeManifest) unpackStateBag(ctx context.Context) error {
 		return nil
 	}
 
-	stateArchive, err := m.FileSystem.Open(statePath)
+	stateArchive, err := m.config.FileSystem.Open(statePath)
 	if err != nil {
 		return log.Error(fmt.Errorf("could not open statefile at %s: %w", statePath, err))
 	}
@@ -631,14 +637,14 @@ func (m *RuntimeManifest) Finalize(ctx context.Context) error {
 func (m *RuntimeManifest) packStateBag(ctx context.Context) error {
 	log := tracing.LoggerFromContext(ctx)
 
-	log.Debugf("Packing bundle state...")
+	m.debugf(log, "Packing bundle state...")
 	packStateFile := func(tw *tar.Writer, s manifest.StateVariable) error {
-		fi, err := m.FileSystem.Stat(s.Path)
+		fi, err := m.config.FileSystem.Stat(s.Path)
 		if os.IsNotExist(err) {
 			return nil
 		}
 
-		log.Debugf("  - %s", s.Path)
+		m.debugf(log, "  - %s", s.Path)
 		header, err := tar.FileInfoHeader(fi, fi.Name())
 		if err != nil {
 			return log.Error(fmt.Errorf("error creating tar header for state variable %s from path %s: %w", s.Name, s.Path, err))
@@ -663,7 +669,7 @@ func (m *RuntimeManifest) packStateBag(ctx context.Context) error {
 	}
 
 	// Save directly to the final output location since we've already collected outputs at this point
-	stateArchive, err := m.FileSystem.Create("/cnab/app/outputs/porter-state")
+	stateArchive, err := m.config.FileSystem.Create("/cnab/app/outputs/porter-state")
 	if err != nil {
 		return log.Error(fmt.Errorf("error creating porter statefile: %w", err))
 	}
@@ -712,7 +718,7 @@ func (m *RuntimeManifest) applyUnboundBundleOutputs(ctx context.Context) error {
 		}
 
 		// Print the output that we've collected
-		log.Debugf("  - %s", name)
+		m.debugf(log, "  - %s", name)
 		if _, hasOutput := outputs[name]; !hasOutput {
 			// Use the path as originally defined in the manifest
 			// TODO(carolynvs): When we switch to driving everything completely
@@ -720,15 +726,15 @@ func (m *RuntimeManifest) applyUnboundBundleOutputs(ctx context.Context) error {
 			// We don't force people to output files immediately to /cnab/app/outputs and so that original location should
 			// be persisted somewhere in the bundle.json (probably in custom)
 			srcPath := manifest.ResolvePath(outputSrcPath)
-			if _, err := m.FileSystem.Stat(srcPath); err != nil {
+			if _, err := m.config.FileSystem.Stat(srcPath); err != nil {
 				continue
 			}
 			dstPath := filepath.Join(config.BundleOutputsDir, name)
-			if dstExists, _ := m.FileSystem.Exists(dstPath); dstExists {
+			if dstExists, _ := m.config.FileSystem.Exists(dstPath); dstExists {
 				continue
 			}
 
-			err := m.CopyFile(srcPath, dstPath)
+			err := m.config.CopyFile(srcPath, dstPath)
 			if err != nil {
 				bigErr = multierror.Append(bigErr, fmt.Errorf("unable to copy output file from %s to %s: %w", srcPath, dstPath, err))
 				continue
