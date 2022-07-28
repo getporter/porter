@@ -25,7 +25,6 @@ func TestDependenciesLifecycle(t *testing.T) {
 	p := porter.NewTestPorter(t)
 	defer p.Close()
 	ctx := p.SetupIntegrationTest()
-	p.Debug = true
 
 	namespace := installWordpressBundle(ctx, p)
 	defer cleanupWordpressBundle(ctx, p, namespace)

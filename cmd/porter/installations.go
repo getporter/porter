@@ -439,6 +439,8 @@ func addBundleActionFlags(f *pflag.FlagSet, actionOpts porter.BundleAction) {
 		"Credential sets to use when running the bundle. It should be a named set of credentials and may be specified multiple times.")
 	f.StringVarP(&opts.Driver, "driver", "d", porter.DefaultDriver,
 		"Specify a driver to use. Allowed values: docker, debug")
+	f.BoolVar(&opts.DebugMode, "debug", false,
+		"Run the bundle in debug mode.")
 
 	// Gracefully support any renamed flags
 	f.StringArrayVar(&opts.CredentialIdentifiers, "cred", nil, "DEPRECATED")

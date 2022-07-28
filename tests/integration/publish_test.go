@@ -16,7 +16,6 @@ func TestPublish_BuildWithVersionOverride(t *testing.T) {
 	p := porter.NewTestPorter(t)
 	defer p.Close()
 	ctx := p.SetupIntegrationTest()
-	p.Debug = false
 
 	// Create a bundle
 	err := p.Create()

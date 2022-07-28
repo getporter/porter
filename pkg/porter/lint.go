@@ -12,7 +12,6 @@ import (
 )
 
 type LintOptions struct {
-	contextOptions
 	printer.PrintOptions
 
 	// File path to the porter manifest. Defaults to the bundle in the current directory.
@@ -56,8 +55,6 @@ func (o *LintOptions) validateFile(cxt *portercontext.Context) error {
 // Lint porter.yaml for any problems and report the results.
 // This calls the mixins to analyze their sections of the manifest.
 func (p *Porter) Lint(ctx context.Context, opts LintOptions) (linter.Results, error) {
-	opts.Apply(p.Context)
-
 	manifest, err := manifest.LoadManifestFrom(ctx, p.Config, opts.File)
 	if err != nil {
 		return nil, err

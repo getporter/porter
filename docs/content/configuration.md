@@ -20,8 +20,6 @@ You may set a default value for a configuration value in the config file, overri
   * [Dependencies v2](#dependencies-v2)
 * [Common Configuration Settings](#common-configuration-settings)
   * [Set Current Namespace](#namespace)
-  * [Enable Debug Output](#debug)
-  * [Debug Plugins](#debug-plugins)
   * [Output Formatting](#output)
 * [Allow Docker Host Access](#allow-docker-host-access)
 
@@ -62,11 +60,10 @@ Below is an example configuration file in TOML:
 # Set the default namespace
 namespace = "dev"
 
-# Include debug logs
-debug = true
-
-# Include debug logs from the plugins
-debug-plugins = true
+# Threshold for printing messages to the console
+# Allowed values are: debug, info, warn, error.
+# Does not affect what is written to the log file or traces.
+verbosity = "debug"
 
 # Default command output to JSON
 output = "json"
@@ -275,27 +272,6 @@ It is set with the PORTER_NAMESPACE environment variable.
 
 ```toml
 namespace = "dev"
-```
-
-### Debug
-
-\--debug is a flag that is understood not only by the porter client but also the runtime and most mixins.
-They may use it to print additional information that may be useful when you think you may have found a bug, when you want to know what commands they are executing, or when you need really verbose output to send
-to the developers.
-It is set with the PORTER_DEBUG environment variable.
-
-```toml
-debug = true
-```
-
-### Debug Plugins
-
-\--debug-plugins controls if logs related to communication between porter and its plugins should be printed when debugging.
-This can be _very_ verbose, so it is not turned on by default when debug is true.
-It is set with the PORTER_DEBUG_PLUGINS environment variable.
-
-```toml
-debug-plugins = true
 ```
 
 ### Output

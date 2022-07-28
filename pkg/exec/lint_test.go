@@ -17,7 +17,7 @@ func TestMixin_Lint(t *testing.T) {
 
 	input, err := ioutil.ReadFile("testdata/lint-input.yaml")
 	require.NoError(t, err, "could not read lint testdata")
-	m.In = bytes.NewReader(input)
+	m.Config.In = bytes.NewReader(input)
 
 	results, err := m.Lint(ctx)
 	require.NoError(t, err, "Lint failed")

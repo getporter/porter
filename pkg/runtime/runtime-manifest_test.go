@@ -24,10 +24,12 @@ func runtimeManifestFromStepYaml(t *testing.T, pCtx *portercontext.TestContext, 
 	require.NoError(t, pCtx.FileSystem.WriteFile("/cnab/app/porter.yaml", mContent, pkg.FileModeWritable))
 	m, err := manifest.ReadManifest(pCtx.Context, "/cnab/app/porter.yaml")
 	require.NoError(t, err, "ReadManifest failed")
-	return NewRuntimeManifest(pCtx.Context, cnab.ActionInstall, m)
+	cfg := NewConfigFor(pCtx.Context)
+	return NewRuntimeManifest(cfg, cnab.ActionInstall, m)
 }
 
 func TestResolveMapParam(t *testing.T) {
+	ctx := context.Background()
 	pCtx := portercontext.NewTestContext(t)
 	pCtx.Setenv("PERSON", "Ralpha")
 
@@ -45,7 +47,7 @@ install:
 	rm := runtimeManifestFromStepYaml(t, pCtx, mContent)
 	s := rm.Install[0]
 
-	err := rm.ResolveStep(0, s)
+	err := rm.ResolveStep(ctx, 0, s)
 	require.NoError(t, err)
 
 	require.IsType(t, map[string]interface{}{}, s.Data["mymixin"], "Data.mymixin has incorrect type")
@@ -58,11 +60,12 @@ install:
 	assert.Equal(t, "Ralpha", val)
 	assert.NotContains(t, "place", pms, "parameters that don't apply to the current action should not be resolved")
 
-	err = rm.Initialize()
+	err = rm.Initialize(ctx)
 	require.NoError(t, err)
 }
 
 func TestResolvePathParam(t *testing.T) {
+	ctx := context.Background()
 	pCtx := portercontext.NewTestContext(t)
 
 	mContent := `name: mybuns
@@ -78,7 +81,7 @@ install:
 	rm := runtimeManifestFromStepYaml(t, pCtx, mContent)
 	s := rm.Install[0]
 
-	err := rm.ResolveStep(0, s)
+	err := rm.ResolveStep(ctx, 0, s)
 	require.NoError(t, err)
 
 	require.IsType(t, map[string]interface{}{}, s.Data["mymixin"], "Data.mymixin has incorrect type")
@@ -92,15 +95,17 @@ install:
 }
 
 func TestMetadataAvailableForTemplating(t *testing.T) {
+	ctx := context.Background()
 	c := config.NewTestConfig(t)
 
 	c.TestContext.AddTestFile("testdata/metadata-substitution.yaml", config.Name)
 	m, err := manifest.LoadManifestFrom(context.Background(), c.Config, config.Name)
 	require.NoError(t, err, "LoadManifestFrom")
-	rm := NewRuntimeManifest(c.Context, cnab.ActionInstall, m)
+	cfg := NewConfigFor(c.Context)
+	rm := NewRuntimeManifest(cfg, cnab.ActionInstall, m)
 
 	s := rm.Install[0]
-	err = rm.ResolveStep(0, s)
+	err = rm.ResolveStep(ctx, 0, s)
 	require.NoError(t, err)
 
 	pms, ok := s.Data["exec"].(map[string]interface{})
@@ -110,12 +115,14 @@ func TestMetadataAvailableForTemplating(t *testing.T) {
 }
 
 func TestDependencyMetadataAvailableForTemplating(t *testing.T) {
+	ctx := context.Background()
 	c := config.NewTestConfig(t)
 	c.TestContext.AddTestFile("testdata/dep-metadata-substitution.yaml", config.Name)
 
 	m, err := manifest.LoadManifestFrom(context.Background(), c.Config, config.Name)
 	require.NoError(t, err, "LoadManifestFrom")
-	rm := NewRuntimeManifest(c.Context, cnab.ActionInstall, m)
+	cfg := NewConfigFor(c.Context)
+	rm := NewRuntimeManifest(cfg, cnab.ActionInstall, m)
 	rm.bundles = map[string]cnab.ExtendedBundle{
 		"mysql": cnab.NewBundle(bundle.Bundle{
 			Name:        "Azure MySQL",
@@ -125,7 +132,7 @@ func TestDependencyMetadataAvailableForTemplating(t *testing.T) {
 	}
 
 	s := rm.Install[0]
-	err = rm.ResolveStep(0, s)
+	err = rm.ResolveStep(ctx, 0, s)
 	require.NoError(t, err)
 
 	pms, ok := s.Data["exec"].(map[string]interface{})
@@ -135,6 +142,7 @@ func TestDependencyMetadataAvailableForTemplating(t *testing.T) {
 }
 
 func TestResolveMapParamUnknown(t *testing.T) {
+	ctx := context.Background()
 	pCtx := portercontext.NewTestContext(t)
 
 	mContent := `name: mybuns
@@ -146,12 +154,13 @@ install:
 	rm := runtimeManifestFromStepYaml(t, pCtx, mContent)
 	s := rm.Install[0]
 
-	err := rm.ResolveStep(0, s)
+	err := rm.ResolveStep(ctx, 0, s)
 	require.Error(t, err)
 	tests.RequireErrorContains(t, err, "Missing variable \"person\"")
 }
 
 func TestResolveArrayUnknown(t *testing.T) {
+	ctx := context.Background()
 	pCtx := portercontext.NewTestContext(t)
 
 	mContent := `name: mybuns
@@ -166,12 +175,13 @@ install:
 	rm := runtimeManifestFromStepYaml(t, pCtx, mContent)
 	s := rm.Install[0]
 
-	err := rm.ResolveStep(0, s)
+	err := rm.ResolveStep(ctx, 0, s)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), `Missing variable "person"`)
 }
 
 func TestResolveArray(t *testing.T) {
+	ctx := context.Background()
 	pCtx := portercontext.NewTestContext(t)
 	pCtx.Setenv("PERSON", "Ralpha")
 
@@ -187,7 +197,7 @@ install:
 	rm := runtimeManifestFromStepYaml(t, pCtx, mContent)
 	s := rm.Install[0]
 
-	err := rm.ResolveStep(0, s)
+	err := rm.ResolveStep(ctx, 0, s)
 	require.NoError(t, err)
 
 	require.IsType(t, map[string]interface{}{}, s.Data["mymixin"], "Data.mymixin has incorrect type")
@@ -199,6 +209,7 @@ install:
 }
 
 func TestResolveSensitiveParameter(t *testing.T) {
+	ctx := context.Background()
 	pCtx := portercontext.NewTestContext(t)
 	pCtx.Setenv("SENSITIVE_PARAM", "deliciou$dubonnet")
 	pCtx.Setenv("REGULAR_PARAM", "regular param value")
@@ -221,7 +232,7 @@ install:
 	// Prior to resolving step values, this method should return an empty string array
 	assert.Equal(t, rm.GetSensitiveValues(), []string{})
 
-	err := rm.ResolveStep(0, s)
+	err := rm.ResolveStep(ctx, 0, s)
 	require.NoError(t, err)
 
 	require.IsType(t, map[string]interface{}{}, s.Data["mymixin"], "Data.mymixin has incorrect type")
@@ -238,6 +249,7 @@ install:
 }
 
 func TestResolveCredential(t *testing.T) {
+	ctx := context.Background()
 	pCtx := portercontext.NewTestContext(t)
 	pCtx.Setenv("PASSWORD", "deliciou$dubonnet")
 
@@ -257,7 +269,7 @@ install:
 	// Prior to resolving step values, this method should return an empty string array
 	assert.Equal(t, rm.GetSensitiveValues(), []string{})
 
-	err := rm.ResolveStep(0, s)
+	err := rm.ResolveStep(ctx, 0, s)
 	require.NoError(t, err)
 
 	require.IsType(t, map[string]interface{}{}, s.Data["mymixin"], "Data.mymixin has incorrect type")
@@ -271,6 +283,7 @@ install:
 }
 
 func TestResolveStep_DependencyOutput(t *testing.T) {
+	ctx := context.Background()
 	pCtx := portercontext.NewTestContext(t)
 	pCtx.Setenv("PORTER_MYSQL_PASSWORD_DEP_OUTPUT", "password")
 	pCtx.Setenv("PORTER_MYSQL_ROOT_PASSWORD_DEP_OUTPUT", "mysql-password")
@@ -317,7 +330,7 @@ install:
 	}
 
 	s := rm.Install[0]
-	err := rm.ResolveStep(0, s)
+	err := rm.ResolveStep(ctx, 0, s)
 	require.NoError(t, err)
 
 	require.IsType(t, map[string]interface{}{}, s.Data["mymixin"], "Data.mymixin has incorrect type")
@@ -334,6 +347,7 @@ install:
 }
 
 func TestResolveInMainDict(t *testing.T) {
+	ctx := context.Background()
 	c := config.NewTestConfig(t)
 
 	c.TestContext.AddTestFile("testdata/param-test-in-block.yaml", config.Name)
@@ -341,12 +355,13 @@ func TestResolveInMainDict(t *testing.T) {
 	m, err := manifest.LoadManifestFrom(context.Background(), c.Config, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
-	rm := NewRuntimeManifest(c.Context, cnab.ActionInstall, m)
+	cfg := NewConfigFor(c.Context)
+	rm := NewRuntimeManifest(cfg, cnab.ActionInstall, m)
 
 	installStep := rm.Install[0]
 
-	rm.Setenv("COMMAND", "echo hello world")
-	err = rm.ResolveStep(0, installStep)
+	rm.config.Setenv("COMMAND", "echo hello world")
+	err = rm.ResolveStep(ctx, 0, installStep)
 	require.NoError(t, err)
 
 	require.IsType(t, map[string]interface{}{}, installStep.Data["exec"], "Data.exec has the wrong type")
@@ -359,6 +374,7 @@ func TestResolveInMainDict(t *testing.T) {
 }
 
 func TestResolveSliceWithAMap(t *testing.T) {
+	ctx := context.Background()
 	c := config.NewTestConfig(t)
 
 	c.TestContext.AddTestFile("testdata/slice-test.yaml", config.Name)
@@ -366,12 +382,13 @@ func TestResolveSliceWithAMap(t *testing.T) {
 	m, err := manifest.LoadManifestFrom(context.Background(), c.Config, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
-	rm := NewRuntimeManifest(c.Context, cnab.ActionInstall, m)
+	cfg := NewConfigFor(c.Context)
+	rm := NewRuntimeManifest(cfg, cnab.ActionInstall, m)
 
 	installStep := rm.Install[0]
 
-	rm.Setenv("COMMAND", "echo hello world")
-	err = rm.ResolveStep(0, installStep)
+	rm.config.Setenv("COMMAND", "echo hello world")
+	err = rm.ResolveStep(ctx, 0, installStep)
 	require.NoError(t, err)
 
 	require.NotNil(t, installStep.Data)
@@ -383,6 +400,7 @@ func TestResolveSliceWithAMap(t *testing.T) {
 }
 
 func TestResolveMissingStepOutputs(t *testing.T) {
+	ctx := context.Background()
 	pCtx := portercontext.NewTestContext(t)
 
 	mContent := `name: mybuns
@@ -394,11 +412,12 @@ install:
 	rm := runtimeManifestFromStepYaml(t, pCtx, mContent)
 	s := rm.Install[0]
 
-	err := rm.ResolveStep(0, s)
+	err := rm.ResolveStep(ctx, 0, s)
 	tests.RequireErrorContains(t, err, `Missing variable "database_url"`)
 }
 
 func TestResolveSensitiveOutputs(t *testing.T) {
+	ctx := context.Background()
 	pCtx := portercontext.NewTestContext(t)
 	mContent := `name: mybuns
 outputs:
@@ -419,7 +438,7 @@ install:
 	}
 	s := rm.Install[0]
 
-	err := rm.ResolveStep(0, s)
+	err := rm.ResolveStep(ctx, 0, s)
 	require.NoError(t, err)
 
 	require.IsType(t, s.Data["mymixin"], map[string]interface{}{}, "Data.mymixin has the wrong type")
@@ -436,6 +455,7 @@ install:
 }
 
 func TestManifest_ResolveBundleName(t *testing.T) {
+	ctx := context.Background()
 	pCtx := portercontext.NewTestContext(t)
 	mContent := `name: mybuns
 install:
@@ -446,7 +466,7 @@ install:
 	rm := runtimeManifestFromStepYaml(t, pCtx, mContent)
 	s := rm.Install[0]
 
-	err := rm.ResolveStep(0, s)
+	err := rm.ResolveStep(ctx, 0, s)
 	require.NoError(t, err)
 
 	require.IsType(t, s.Data["mymixin"], map[string]interface{}{}, "Data.mymixin has the wrong type")
@@ -555,7 +575,8 @@ func TestManifest_ApplyStepOutputs(t *testing.T) {
 	m, err := manifest.LoadManifestFrom(context.Background(), c.Config, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
-	rm := NewRuntimeManifest(c.Context, cnab.ActionInstall, m)
+	cfg := NewConfigFor(c.Context)
+	rm := NewRuntimeManifest(cfg, cnab.ActionInstall, m)
 
 	err = rm.ApplyStepOutputs(map[string]string{"name": "world"})
 	require.NoError(t, err)
@@ -569,18 +590,20 @@ func makeBoolPtr(value bool) *bool {
 }
 
 func TestManifest_ResolveImageMap(t *testing.T) {
+	ctx := context.Background()
 	c := config.NewTestConfig(t)
 	c.TestContext.AddTestFile("testdata/porter-images.yaml", config.Name)
 
 	m, err := manifest.LoadManifestFrom(context.Background(), c.Config, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
-	rm := NewRuntimeManifest(c.Context, cnab.ActionInstall, m)
+	cfg := NewConfigFor(c.Context)
+	rm := NewRuntimeManifest(cfg, cnab.ActionInstall, m)
 	expectedImage, ok := m.ImageMap["something"]
 	require.True(t, ok, "couldn't get expected image")
 	expectedRef := fmt.Sprintf("%s@%s", expectedImage.Repository, expectedImage.Digest)
 	step := rm.Install[0]
-	err = rm.ResolveStep(0, step)
+	err = rm.ResolveStep(ctx, 0, step)
 	assert.NoError(t, err, "Should have successfully resolved step")
 	s := step.Data["searcher"].(map[string]interface{})
 	assert.NotNil(t, s)
@@ -607,6 +630,7 @@ func TestManifest_ResolveImageMap(t *testing.T) {
 
 func TestManifest_ResolveImageMapMissingKey(t *testing.T) {
 	// Try to access an images entry that doesn't exist
+	ctx := context.Background()
 	pCtx := portercontext.NewTestContext(t)
 	mContent := `name: mybuns
 images:
@@ -622,7 +646,7 @@ install:
 	rm := runtimeManifestFromStepYaml(t, pCtx, mContent)
 	s := rm.Install[0]
 
-	err := rm.ResolveStep(0, s)
+	err := rm.ResolveStep(ctx, 0, s)
 	tests.RequireErrorContains(t, err, `Missing variable "notsomething"`)
 }
 
@@ -760,7 +784,8 @@ func TestResolveImageWithUpdatedBundle(t *testing.T) {
 
 	reloMap := relocation.ImageRelocationMap{}
 
-	rm := NewRuntimeManifest(pCtx.Context, cnab.ActionInstall, m)
+	cfg := NewConfigFor(pCtx.Context)
+	rm := NewRuntimeManifest(cfg, cnab.ActionInstall, m)
 	err := rm.ResolveImages(bun, reloMap)
 	require.NoError(t, err)
 	mi := rm.ImageMap["machine"]
@@ -790,7 +815,8 @@ func TestResolveImageWithUpdatedMismatchedBundle(t *testing.T) {
 
 	reloMap := relocation.ImageRelocationMap{}
 
-	rm := NewRuntimeManifest(pCtx.Context, cnab.ActionInstall, m)
+	cfg := NewConfigFor(pCtx.Context)
+	rm := NewRuntimeManifest(cfg, cnab.ActionInstall, m)
 	err := rm.ResolveImages(bun, reloMap)
 	assert.Error(t, err)
 	assert.EqualError(t, err, fmt.Sprintf("unable to find image in porter manifest: %s", "ghost"))
@@ -822,7 +848,8 @@ func TestResolveImageWithRelo(t *testing.T) {
 		"gabrtv/microservice@sha256:cca460afa270d4c527981ef9ca4989346c56cf9b20217dcea37df1ece8120687": "my.registry/microservice@sha256:cca460afa270d4c527981ef9ca4989346c56cf9b20217dcea37df1ece8120687",
 	}
 
-	rm := NewRuntimeManifest(pCtx.Context, cnab.ActionInstall, m)
+	cfg := NewConfigFor(pCtx.Context)
+	rm := NewRuntimeManifest(cfg, cnab.ActionInstall, m)
 	err := rm.ResolveImages(bun, reloMap)
 	require.NoError(t, err)
 	mi := rm.ImageMap["machine"]
@@ -854,13 +881,15 @@ func TestResolveImageRelocationNoMatch(t *testing.T) {
 		"deislabs/nogood:latest": "cnabio/ghost:latest",
 	}
 
-	rm := NewRuntimeManifest(pCtx.Context, cnab.ActionInstall, m)
+	cfg := NewConfigFor(pCtx.Context)
+	rm := NewRuntimeManifest(cfg, cnab.ActionInstall, m)
 	err := rm.ResolveImages(bun, reloMap)
 	require.NoError(t, err)
 	assert.Equal(t, "deislabs/ghost", rm.ImageMap["machine"].Repository)
 }
 
 func TestResolveStepEncoding(t *testing.T) {
+	ctx := context.Background()
 	pCtx := portercontext.NewTestContext(t)
 
 	wantValue := `{"test":"value"}`
@@ -879,7 +908,7 @@ install:
 	rm := runtimeManifestFromStepYaml(t, pCtx, mContent)
 	s := rm.Install[0]
 
-	err := rm.ResolveStep(0, s)
+	err := rm.ResolveStep(ctx, 0, s)
 	require.NoError(t, err)
 
 	require.IsType(t, s.Data["mymixin"], map[string]interface{}{}, "Data.mymixin has the wrong type")
@@ -891,6 +920,7 @@ install:
 }
 
 func TestResolveInstallation(t *testing.T) {
+	ctx := context.Background()
 	pCtx := portercontext.NewTestContext(t)
 	pCtx.Setenv(config.EnvPorterInstallationNamespace, "mynamespace")
 	pCtx.Setenv(config.EnvPorterInstallationName, "mybun")
@@ -904,7 +934,7 @@ install:
 	rm := runtimeManifestFromStepYaml(t, pCtx, mContent)
 	s := rm.Install[0]
 
-	err := rm.ResolveStep(0, s)
+	err := rm.ResolveStep(ctx, 0, s)
 	require.NoError(t, err)
 
 	require.IsType(t, map[string]interface{}{}, s.Data["mymixin"], "Data.mymixin has the wrong type")
@@ -915,6 +945,7 @@ install:
 }
 
 func TestResolveCustomMetadata(t *testing.T) {
+	ctx := context.Background()
 	pCtx := portercontext.NewTestContext(t)
 
 	mContent := `name: mybuns
@@ -932,13 +963,13 @@ install:
 	rm := runtimeManifestFromStepYaml(t, pCtx, mContent)
 	s := rm.Install[0]
 
-	err := rm.ResolveStep(0, s)
+	err := rm.ResolveStep(ctx, 0, s)
 	require.NoError(t, err)
 
 	require.IsType(t, map[string]interface{}{}, s.Data["mymixin"], "Data.mymixin has the wrong type")
 	mixin := s.Data["mymixin"].(map[string]interface{})
 
-	err = rm.ResolveStep(0, s)
+	err = rm.ResolveStep(ctx, 0, s)
 	require.NoError(t, err, "ResolveStep failed")
 
 	assert.Equal(t, "foobar", mixin["release"], "custom metadata was not rendered")
@@ -946,6 +977,7 @@ install:
 }
 
 func TestResolveEnvironmentVariable(t *testing.T) {
+	ctx := context.Background()
 	pCtx := portercontext.NewTestContext(t)
 	pCtx.Setenv("foo", "foo-value")
 	pCtx.Setenv("BAR", "bar-value")
@@ -959,7 +991,7 @@ install:
 	rm := runtimeManifestFromStepYaml(t, pCtx, mContent)
 	s := rm.Install[0]
 
-	err := rm.ResolveStep(0, s)
+	err := rm.ResolveStep(ctx, 0, s)
 	require.NoError(t, err)
 
 	require.IsType(t, map[string]interface{}{}, s.Data["mymixin"], "Data.mymixin has the wrong type")

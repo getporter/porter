@@ -1,6 +1,7 @@
 package runtime
 
 import (
+	"context"
 	"fmt"
 	"path/filepath"
 	"testing"
@@ -35,7 +36,7 @@ func TestPorterRuntime_Execute_readMixinOutputs(t *testing.T) {
 	require.NoError(t, err)
 
 	for _, testFile := range testFiles {
-		if exists, _ := r.Context.FileSystem.Exists(testFile); exists {
+		if exists, _ := r.config.FileSystem.Exists(testFile); exists {
 			require.Fail(t, fmt.Sprintf("file %s should not exist after reading outputs", testFile))
 		}
 	}
@@ -63,7 +64,7 @@ BAZ`,
 func TestPorterRuntime_ApplyStepOutputsToBundle_None(t *testing.T) {
 	r := NewTestPorterRuntime(t)
 	m := &manifest.Manifest{Name: "mybun"}
-	r.RuntimeManifest = NewRuntimeManifest(r.Context, cnab.ActionInstall, m)
+	r.RuntimeManifest = r.NewRuntimeManifest(cnab.ActionInstall, m)
 
 	outputs := map[string]string{
 		"foo": "bar",
@@ -95,7 +96,7 @@ func TestPorterRuntime_ApplyStepOutputsToBundle_Some_Match(t *testing.T) {
 			},
 		},
 	}
-	r.RuntimeManifest = NewRuntimeManifest(r.Context, cnab.ActionInstall, m)
+	r.RuntimeManifest = r.NewRuntimeManifest(cnab.ActionInstall, m)
 
 	outputs := map[string]string{
 		"foo": "bar",
@@ -111,7 +112,7 @@ func TestPorterRuntime_ApplyStepOutputsToBundle_Some_Match(t *testing.T) {
 	}
 
 	for _, outputName := range []string{"foo", "123"} {
-		bytes, err := r.FileSystem.ReadFile(filepath.Join(config.BundleOutputsDir, outputName))
+		bytes, err := r.config.FileSystem.ReadFile(filepath.Join(config.BundleOutputsDir, outputName))
 		assert.NoError(t, err)
 
 		assert.Equal(t, want[outputName], string(bytes))
@@ -131,7 +132,7 @@ func TestPorterRuntime_ApplyStepOutputsToBundle_Some_NoMatch(t *testing.T) {
 			},
 		},
 	}
-	r.RuntimeManifest = NewRuntimeManifest(r.Context, cnab.ActionInstall, m)
+	r.RuntimeManifest = r.NewRuntimeManifest(cnab.ActionInstall, m)
 
 	outputs := map[string]string{
 		"foo": "bar",
@@ -144,7 +145,7 @@ func TestPorterRuntime_ApplyStepOutputsToBundle_Some_NoMatch(t *testing.T) {
 	// No outputs declared in the manifest match those in outputs,
 	// so no output file is expected to be written
 	for _, output := range []string{"foo", "bar", "123", "456"} {
-		_, err := r.FileSystem.ReadFile(filepath.Join(config.BundleOutputsDir, output))
+		_, err := r.config.FileSystem.ReadFile(filepath.Join(config.BundleOutputsDir, output))
 		assert.Error(t, err)
 	}
 }
@@ -172,7 +173,7 @@ func TestPorterRuntime_ApplyStepOutputsToBundle_ApplyTo_True(t *testing.T) {
 			},
 		},
 	}
-	r.RuntimeManifest = NewRuntimeManifest(r.Context, cnab.ActionInstall, m)
+	r.RuntimeManifest = r.NewRuntimeManifest(cnab.ActionInstall, m)
 
 	outputs := map[string]string{
 		"foo": "bar",
@@ -183,11 +184,11 @@ func TestPorterRuntime_ApplyStepOutputsToBundle_ApplyTo_True(t *testing.T) {
 	assert.NoError(t, err)
 
 	// foo output should not exist (applyTo doesn't match)
-	_, err = r.FileSystem.ReadFile(filepath.Join(config.BundleOutputsDir, "foo"))
+	_, err = r.config.FileSystem.ReadFile(filepath.Join(config.BundleOutputsDir, "foo"))
 	assert.Error(t, err)
 
 	// 123 output should exist (applyTo matches)
-	bytes, err := r.FileSystem.ReadFile(filepath.Join(config.BundleOutputsDir, "123"))
+	bytes, err := r.config.FileSystem.ReadFile(filepath.Join(config.BundleOutputsDir, "123"))
 	assert.NoError(t, err)
 
 	want := "abc"
@@ -198,6 +199,7 @@ func TestRuntimeManifest_ApplyUnboundBundleOutputs_File(t *testing.T) {
 	const srcPath = "/home/nonroot/.kube/config"
 	const outputName = "kubeconfig"
 
+	ctx := context.Background()
 	testcases := []struct {
 		name       string
 		shouldBind bool
@@ -257,7 +259,8 @@ func TestRuntimeManifest_ApplyUnboundBundleOutputs_File(t *testing.T) {
 					tc.def.Name: tc.def,
 				},
 			}
-			rm := NewRuntimeManifest(c.Context, cnab.ActionInstall, m)
+			cfg := NewConfigFor(c.Context)
+			rm := NewRuntimeManifest(cfg, cnab.ActionInstall, m)
 			rm.bundle = cnab.NewBundle(bundle.Bundle{
 				Definitions: map[string]*definition.Schema{
 					tc.def.Name: &tc.def.Schema,
@@ -270,13 +273,13 @@ func TestRuntimeManifest_ApplyUnboundBundleOutputs_File(t *testing.T) {
 				},
 			})
 
-			_, err := rm.FileSystem.Create(srcPath)
+			_, err := rm.config.FileSystem.Create(srcPath)
 			require.NoError(t, err)
 
-			err = rm.applyUnboundBundleOutputs()
+			err = rm.applyUnboundBundleOutputs(ctx)
 			require.NoError(t, err)
 
-			exists, _ := rm.FileSystem.Exists("/cnab/app/outputs/" + outputName)
+			exists, _ := rm.config.FileSystem.Exists("/cnab/app/outputs/" + outputName)
 			assert.Equal(t, exists, tc.shouldBind)
 		})
 	}

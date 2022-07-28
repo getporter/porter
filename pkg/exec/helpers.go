@@ -3,21 +3,21 @@ package exec
 import (
 	"testing"
 
-	"get.porter.sh/porter/pkg/portercontext"
+	"get.porter.sh/porter/pkg/runtime"
 )
 
 type TestMixin struct {
 	*Mixin
-	TestContext *portercontext.TestContext
+	TestConfig runtime.TestRuntimeConfig
 }
 
 // NewTestMixin initializes an exec mixin, with the output buffered, and an in-memory file system.
 func NewTestMixin(t *testing.T) *TestMixin {
-	tc := portercontext.NewTestContext(t)
+	cfg := runtime.NewTestRuntimeConfig(t)
 	m := New()
-	m.Context = tc.Context
+	m.Config = cfg.RuntimeConfig
 	return &TestMixin{
-		Mixin:       m,
-		TestContext: tc,
+		Mixin:      m,
+		TestConfig: cfg,
 	}
 }

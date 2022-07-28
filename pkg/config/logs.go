@@ -6,6 +6,13 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
+const (
+	LogLevelDebug LogLevel = "debug"
+	LogLevelInfo  LogLevel = "info"
+	LogLevelWarn  LogLevel = "warn"
+	LogLevelError LogLevel = "error"
+)
+
 // LogConfig are settings related to Porter's log files.
 type LogConfig struct {
 	// Structured indicates if the logs sent to the console should include timestamp and log levels
@@ -46,13 +53,26 @@ func (c TelemetryConfig) GetStartTimeout() time.Duration {
 
 type LogLevel string
 
+// ParseLogLevel reads the string representation of a LogLevel and converts it to a LogLevel.
+// Unrecognized values default to info.
+func ParseLogLevel(value string) LogLevel {
+	switch value {
+	case "debug", "info", "warn", "error":
+		return LogLevel(value)
+	case "warning": // be nice to people who can't type
+		return "warn"
+	default:
+		return "info"
+	}
+}
+
 func (l LogLevel) Level() zapcore.Level {
 	switch l {
 	case "debug":
 		return zapcore.DebugLevel
 	case "info":
 		return zapcore.InfoLevel
-	case "warn":
+	case "warn", "warning":
 		return zapcore.WarnLevel
 	case "error":
 		return zapcore.ErrorLevel

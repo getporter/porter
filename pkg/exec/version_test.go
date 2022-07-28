@@ -21,7 +21,7 @@ func TestPrintVersion(t *testing.T) {
 	require.NoError(t, err)
 	m.PrintVersion(opts)
 
-	gotOutput := m.TestContext.GetOutput()
+	gotOutput := m.TestConfig.TestContext.GetOutput()
 	wantOutput := "exec v1.2.3 (abc123) by Porter Authors"
 	if !strings.Contains(gotOutput, wantOutput) {
 		t.Fatalf("invalid output:\nWANT:\t%q\nGOT:\t%q\n", wantOutput, gotOutput)
@@ -40,7 +40,7 @@ func TestPrintJsonVersion(t *testing.T) {
 	require.NoError(t, err)
 	m.PrintVersion(opts)
 
-	gotOutput := m.TestContext.GetOutput()
+	gotOutput := m.TestConfig.TestContext.GetOutput()
 	wantOutput := `{
   "name": "exec",
   "version": "v1.2.3",

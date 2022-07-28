@@ -4,6 +4,7 @@ import (
 	"archive/tar"
 	"bytes"
 	"compress/gzip"
+	"context"
 	"encoding/base64"
 	"fmt"
 	"io"
@@ -16,7 +17,7 @@ import (
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/manifest"
-	"get.porter.sh/porter/pkg/portercontext"
+	"get.porter.sh/porter/pkg/tracing"
 	"get.porter.sh/porter/pkg/yaml"
 	"github.com/cbroglie/mustache"
 	"github.com/cnabio/cnab-go/bundle"
@@ -31,7 +32,7 @@ const (
 )
 
 type RuntimeManifest struct {
-	*portercontext.Context
+	config RuntimeConfig
 	*manifest.Manifest
 
 	Action string
@@ -51,11 +52,18 @@ type RuntimeManifest struct {
 	sensitiveValues []string
 }
 
-func NewRuntimeManifest(cxt *portercontext.Context, action string, manifest *manifest.Manifest) *RuntimeManifest {
+func NewRuntimeManifest(cfg RuntimeConfig, action string, manifest *manifest.Manifest) *RuntimeManifest {
 	return &RuntimeManifest{
-		Context:  cxt,
+		config:   cfg,
 		Action:   action,
 		Manifest: manifest,
+	}
+}
+
+// this is a temporary function to help write debug logs until we have PORTER_VERBOSITY passed into the bundle properly
+func (m *RuntimeManifest) debugf(log tracing.TraceLogger, msg string, args ...interface{}) {
+	if m.config.DebugMode {
+		log.Infof(msg, args...)
 	}
 }
 
@@ -90,7 +98,7 @@ func (m *RuntimeManifest) Validate() error {
 
 func (m *RuntimeManifest) loadBundle() error {
 	// Load the CNAB representation of the bundle
-	b, err := cnab.LoadBundle(m.Context, "/cnab/bundle.json")
+	b, err := cnab.LoadBundle(m.config.Context, "/cnab/bundle.json")
 	if err != nil {
 		return err
 	}
@@ -105,7 +113,7 @@ func (m *RuntimeManifest) loadManifest() error {
 	}
 
 	// Get the original porter.yaml with additional yaml metadata so that we can look at just the current step's yaml
-	yq := yaml.NewEditor(m.Context)
+	yq := yaml.NewEditor(m.config.Context)
 	if err := yq.ReadFile(m.ManifestPath); err != nil {
 		return fmt.Errorf("error loading yaml editor for %s", m.ManifestPath)
 	}
@@ -115,17 +123,17 @@ func (m *RuntimeManifest) loadManifest() error {
 }
 
 func (m *RuntimeManifest) GetInstallationNamespace() string {
-	return m.Getenv(config.EnvPorterInstallationNamespace)
+	return m.config.Getenv(config.EnvPorterInstallationNamespace)
 }
 
 func (m *RuntimeManifest) GetInstallationName() string {
-	return m.Getenv(config.EnvPorterInstallationName)
+	return m.config.Getenv(config.EnvPorterInstallationName)
 }
 
 func (m *RuntimeManifest) loadDependencyDefinitions() error {
 	m.bundles = make(map[string]cnab.ExtendedBundle, len(m.Dependencies.RequiredDependencies))
 	for _, dep := range m.Dependencies.RequiredDependencies {
-		bunD, err := GetDependencyDefinition(m.Context, dep.Name)
+		bunD, err := GetDependencyDefinition(m.config.Context, dep.Name)
 		if err != nil {
 			return err
 		}
@@ -143,18 +151,18 @@ func (m *RuntimeManifest) loadDependencyDefinitions() error {
 
 func (m *RuntimeManifest) resolveParameter(pd manifest.ParameterDefinition) string {
 	if pd.Destination.EnvironmentVariable != "" {
-		return m.Getenv(pd.Destination.EnvironmentVariable)
+		return m.config.Getenv(pd.Destination.EnvironmentVariable)
 	}
 	if pd.Destination.Path != "" {
 		return pd.Destination.Path
 	}
 	envVar := manifest.ParamToEnvVar(pd.Name)
-	return m.Getenv(envVar)
+	return m.config.Getenv(envVar)
 }
 
 func (m *RuntimeManifest) resolveCredential(cd manifest.CredentialDefinition) (string, error) {
 	if cd.EnvironmentVariable != "" {
-		return m.Getenv(cd.EnvironmentVariable), nil
+		return m.config.Getenv(cd.EnvironmentVariable), nil
 	} else if cd.Path != "" {
 		return cd.Path, nil
 	} else {
@@ -166,7 +174,7 @@ func (m *RuntimeManifest) resolveBundleOutput(outputName string) (string, error)
 	// Get the output's value from the injected parameter source
 	ps := manifest.GetParameterSourceForOutput(outputName)
 	psParamEnv := manifest.ParamToEnvVar(ps)
-	outputValue, ok := m.LookupEnv(psParamEnv)
+	outputValue, ok := m.config.LookupEnv(psParamEnv)
 	if !ok {
 		return "", fmt.Errorf("no parameter source was injected for output %s", outputName)
 	}
@@ -270,7 +278,7 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 	bun["custom"] = m.Custom
 
 	// Make environment variable accessible
-	env := m.EnvironMap()
+	env := m.config.EnvironMap()
 	data["env"] = env
 
 	params := make(map[string]interface{})
@@ -430,57 +438,57 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 
 // ResolveStep will walk through the Step's data and resolve any placeholder
 // data using the definitions in the manifest, like parameters or credentials.
-func (m *RuntimeManifest) ResolveStep(stepIndex int, step *manifest.Step) error {
+func (m *RuntimeManifest) ResolveStep(ctx context.Context, stepIndex int, step *manifest.Step) error {
+	log := tracing.LoggerFromContext(ctx)
+
 	if err := m.loadManifest(); err != nil {
-		return err
+		return log.Error(err)
 	}
 
 	// Refresh our template data
 	sourceData, err := m.buildSourceData()
 	if err != nil {
-		return fmt.Errorf("unable to build step template data: %w", err)
+		return log.Error(fmt.Errorf("unable to build step template data: %w", err))
 	}
 
 	// Get the original yaml for the current step
 	stepPath := fmt.Sprintf("%s[%d]", m.Action, stepIndex)
 	stepNode, err := m.manifestYAML.GetNode(stepPath)
 	if err != nil {
-		return fmt.Errorf("unable to retrieve original yaml for step %s: %w", stepPath, err)
+		return log.Error(fmt.Errorf("unable to retrieve original yaml for step %s: %w", stepPath, err))
 	}
 	var stepTemplate bytes.Buffer
 	enc := yaml3.NewEncoder(&stepTemplate)
 	defer enc.Close()
 	if err := enc.Encode(stepNode); err != nil {
-		return fmt.Errorf("error re-encoding porter.yaml for templating: %w", err)
+		return log.Error(fmt.Errorf("error re-encoding porter.yaml for templating: %w", err))
 	}
 
-	if m.Debug {
-		fmt.Fprintf(m.Err, "=== Step Data ===\n%v\n", sourceData)
-		fmt.Fprintf(m.Err, "=== Step Template ===\n%v\n", stepTemplate.String())
-	}
+	// TODO: add back logging step data after we have a solid way to censor it in https://github.com/getporter/porter/issues/2256
+	//fmt.Fprintf(m.Err, "=== Step Data ===\n%v\n", sourceData)
+	m.debugf(log, "=== Step Template ===\n%v\n", stepTemplate.String())
 
 	// Render the step template, returning an error if undefined variables are used
 	mustache.AllowMissingVariables = false
 	rendered, err := mustache.RenderRaw(stepTemplate.String(), true, sourceData)
 	if err != nil {
-		return fmt.Errorf("unable to render step template %s: %w", stepTemplate.String(), err)
+		return log.Error(fmt.Errorf("unable to render step template %s: %w", stepTemplate.String(), err))
 	}
 
-	if m.Debug {
-		fmt.Fprintf(m.Err, "=== Rendered Step ===\n%s\n", rendered)
-	}
+	// TODO: add back logging step data after we have a solid way to censor it in https://github.com/getporter/porter/issues/2256
+	//fmt.Fprintf(m.Err, "=== Rendered Step ===\n%s\n", rendered)
 
 	// Update the step parameter with the result of rendering the template
 	err = yaml.Unmarshal([]byte(rendered), step)
 	if err != nil {
-		return fmt.Errorf("invalid step yaml\n%s: %w", rendered, err)
+		return log.Error(fmt.Errorf("invalid step yaml after rendering template\n%s: %w", stepTemplate.String(), err))
 	}
 
 	return nil
 }
 
-// Init prepares the runtime environment prior to step execution
-func (m *RuntimeManifest) Initialize() error {
+// Initialize prepares the runtime environment prior to step execution
+func (m *RuntimeManifest) Initialize(ctx context.Context) error {
 	if err := m.createOutputsDir(); err != nil {
 		return err
 	}
@@ -503,7 +511,7 @@ func (m *RuntimeManifest) Initialize() error {
 			}
 
 			// Porter by default places parameter value into file determined by Destination.Path
-			bytes, err := m.FileSystem.ReadFile(param.Destination.Path)
+			bytes, err := m.config.FileSystem.ReadFile(param.Destination.Path)
 			if err != nil {
 				if os.IsNotExist(err) {
 					continue
@@ -517,7 +525,7 @@ func (m *RuntimeManifest) Initialize() error {
 			// that's a cnab change somewhere probably
 			// the problem is in injectParameters in cnab-go
 			if string(bytes) == "null" {
-				m.FileSystem.Remove(param.Destination.Path)
+				m.config.FileSystem.Remove(param.Destination.Path)
 				continue
 			}
 			decoded, err := base64.StdEncoding.DecodeString(string(bytes))
@@ -525,19 +533,19 @@ func (m *RuntimeManifest) Initialize() error {
 				return fmt.Errorf("unable to decode parameter %s: %w", paramName, err)
 			}
 
-			err = m.FileSystem.WriteFile(param.Destination.Path, decoded, pkg.FileModeWritable)
+			err = m.config.FileSystem.WriteFile(param.Destination.Path, decoded, pkg.FileModeWritable)
 			if err != nil {
 				return fmt.Errorf("unable to write decoded parameter %s: %w", paramName, err)
 			}
 		}
 	}
 
-	return m.unpackStateBag()
+	return m.unpackStateBag(ctx)
 }
 
 func (m *RuntimeManifest) createOutputsDir() error {
 	// Ensure outputs directory exists
-	if err := m.FileSystem.MkdirAll(config.BundleOutputsDir, pkg.FileModeDirectory); err != nil {
+	if err := m.config.FileSystem.MkdirAll(config.BundleOutputsDir, pkg.FileModeDirectory); err != nil {
 		return fmt.Errorf("unable to ensure CNAB outputs directory exists: %w", err)
 	}
 	return nil
@@ -545,20 +553,18 @@ func (m *RuntimeManifest) createOutputsDir() error {
 
 // Unpack each state variable from /porter/state.tgz and copy it to its
 // declared location in the bundle.
-func (m *RuntimeManifest) unpackStateBag() error {
-	_, err := m.FileSystem.Open(statePath)
+func (m *RuntimeManifest) unpackStateBag(ctx context.Context) error {
+	log := tracing.LoggerFromContext(ctx)
+
+	_, err := m.config.FileSystem.Open(statePath)
 	if os.IsNotExist(err) || len(m.StateBag) == 0 {
-		if m.Debug {
-			fmt.Fprintln(m.Err, "No existing bundle state to unpack")
-		}
+		m.debugf(log, "No existing bundle state to unpack")
 		return nil
 	}
 
-	if m.Debug {
-		fmt.Fprintln(m.Err, "Unpacking bundle state...")
-	}
 	// Unpack the state file and copy its contents to where the bundle expects them
 	// state var name -> path in bundle
+	log.Debug("Unpacking bundle state...")
 	stateFiles := make(map[string]string, len(m.StateBag))
 	for _, s := range m.StateBag {
 		stateFiles[s.Name] = s.Path
@@ -567,32 +573,30 @@ func (m *RuntimeManifest) unpackStateBag() error {
 	unpackStateFile := func(tr *tar.Reader, header *tar.Header) error {
 		name := strings.TrimPrefix(header.Name, "porter-state/")
 		dest := stateFiles[name]
-		if m.Debug {
-			fmt.Fprintln(m.Err, "  -", name, "->", dest)
-		}
+		m.debugf(log, "  - %s -> %s", name, dest)
 
 		f, err := os.OpenFile(dest, os.O_CREATE|os.O_RDWR, os.FileMode(header.Mode))
 		if err != nil {
-			return fmt.Errorf("error creating state file %s: %w", dest, err)
+			return log.Error(fmt.Errorf("error creating state file %s: %w", dest, err))
 		}
 		defer f.Close()
 
 		_, err = io.Copy(f, tr)
 		if err != nil {
-			return fmt.Errorf("error unpacking state file %s: %w", dest, err)
+			return log.Error(fmt.Errorf("error unpacking state file %s: %w", dest, err))
 		}
 
 		return nil
 	}
 
-	stateArchive, err := m.FileSystem.Open(statePath)
+	stateArchive, err := m.config.FileSystem.Open(statePath)
 	if err != nil {
-		return err
+		return log.Error(fmt.Errorf("could not open statefile at %s: %w", statePath, err))
 	}
 
 	gzr, err := gzip.NewReader(stateArchive)
 	if err != nil {
-		return err
+		return log.Error(fmt.Errorf("could not create a new gzip reader for the statefile: %w", err))
 	}
 	defer gzr.Close()
 
@@ -614,15 +618,15 @@ func (m *RuntimeManifest) unpackStateBag() error {
 }
 
 // Finalize cleans up the bundle before its completion.
-func (m *RuntimeManifest) Finalize() error {
+func (m *RuntimeManifest) Finalize(ctx context.Context) error {
 	var bigErr *multierror.Error
 
-	if err := m.applyUnboundBundleOutputs(); err != nil {
+	if err := m.applyUnboundBundleOutputs(ctx); err != nil {
 		bigErr = multierror.Append(bigErr, err)
 	}
 
 	// Always try to persist state, even when errors occur
-	if err := m.packStateBag(); err != nil {
+	if err := m.packStateBag(ctx); err != nil {
 		bigErr = multierror.Append(bigErr, err)
 	}
 
@@ -630,47 +634,44 @@ func (m *RuntimeManifest) Finalize() error {
 }
 
 // Pack each state variable into /porter/state/tgz.
-func (m *RuntimeManifest) packStateBag() error {
-	if m.Debug {
-		fmt.Fprintln(m.Err, "Packing bundle state...")
-	}
+func (m *RuntimeManifest) packStateBag(ctx context.Context) error {
+	log := tracing.LoggerFromContext(ctx)
 
+	m.debugf(log, "Packing bundle state...")
 	packStateFile := func(tw *tar.Writer, s manifest.StateVariable) error {
-		fi, err := m.FileSystem.Stat(s.Path)
+		fi, err := m.config.FileSystem.Stat(s.Path)
 		if os.IsNotExist(err) {
 			return nil
 		}
 
-		if m.Debug {
-			fmt.Fprintln(m.Err, "  -", s.Path)
-		}
+		m.debugf(log, "  - %s", s.Path)
 		header, err := tar.FileInfoHeader(fi, fi.Name())
 		if err != nil {
-			return fmt.Errorf("error creating tar header for state variable %s from path %s: %w", s.Name, s.Path, err)
+			return log.Error(fmt.Errorf("error creating tar header for state variable %s from path %s: %w", s.Name, s.Path, err))
 		}
 		header.Name = filepath.Join("porter-state", s.Name)
 
 		if err := tw.WriteHeader(header); err != nil {
-			return fmt.Errorf("error writing tar header for state variable %s: %w", s.Name, err)
+			return log.Error(fmt.Errorf("error writing tar header for state variable %s: %w", s.Name, err))
 		}
 
 		f, err := os.Open(s.Path)
 		if err != nil {
-			return fmt.Errorf("error reading state file %s for variable %s: %w", s.Path, s.Name, err)
+			return log.Error(fmt.Errorf("error reading state file %s for variable %s: %w", s.Path, s.Name, err))
 		}
 
 		_, err = io.Copy(tw, f)
 		if err != nil {
-			return fmt.Errorf("error archiving state file %s for variable %s: %w", s.Path, s.Name, err)
+			return log.Error(fmt.Errorf("error archiving state file %s for variable %s: %w", s.Path, s.Name, err))
 		}
 
 		return nil
 	}
 
 	// Save directly to the final output location since we've already collected outputs at this point
-	stateArchive, err := m.FileSystem.Create("/cnab/app/outputs/porter-state")
+	stateArchive, err := m.config.FileSystem.Create("/cnab/app/outputs/porter-state")
 	if err != nil {
-		return err
+		return log.Error(fmt.Errorf("error creating porter statefile: %w", err))
 	}
 
 	gzw := gzip.NewWriter(stateArchive)
@@ -688,19 +689,20 @@ func (m *RuntimeManifest) packStateBag() error {
 		}
 	}
 
-	return bigErr.ErrorOrNil()
+	return log.Error(bigErr.ErrorOrNil())
 }
 
 // applyUnboundBundleOutputs finds outputs that haven't been bound yet by a step,
 // and if they can be bound, i.e. they grab a file from the bundle's filesystem,
 // apply the output.
-func (m *RuntimeManifest) applyUnboundBundleOutputs() error {
-	if len(m.bundle.Outputs) > 0 {
-		if m.Debug {
-			fmt.Fprintln(m.Err, "Collecting bundle outputs...")
-		}
+func (m *RuntimeManifest) applyUnboundBundleOutputs(ctx context.Context) error {
+	if len(m.bundle.Outputs) == 0 {
+		return nil
 	}
 
+	log := tracing.LoggerFromContext(ctx)
+
+	log.Debug("Collecting bundle outputs...")
 	var bigErr *multierror.Error
 	outputs := m.GetOutputs()
 	for name, outputDef := range m.bundle.Outputs {
@@ -716,9 +718,7 @@ func (m *RuntimeManifest) applyUnboundBundleOutputs() error {
 		}
 
 		// Print the output that we've collected
-		if m.Debug {
-			fmt.Fprintln(m.Err, "  -", name)
-		}
+		m.debugf(log, "  - %s", name)
 		if _, hasOutput := outputs[name]; !hasOutput {
 			// Use the path as originally defined in the manifest
 			// TODO(carolynvs): When we switch to driving everything completely
@@ -726,15 +726,15 @@ func (m *RuntimeManifest) applyUnboundBundleOutputs() error {
 			// We don't force people to output files immediately to /cnab/app/outputs and so that original location should
 			// be persisted somewhere in the bundle.json (probably in custom)
 			srcPath := manifest.ResolvePath(outputSrcPath)
-			if _, err := m.FileSystem.Stat(srcPath); err != nil {
+			if _, err := m.config.FileSystem.Stat(srcPath); err != nil {
 				continue
 			}
 			dstPath := filepath.Join(config.BundleOutputsDir, name)
-			if dstExists, _ := m.FileSystem.Exists(dstPath); dstExists {
+			if dstExists, _ := m.config.FileSystem.Exists(dstPath); dstExists {
 				continue
 			}
 
-			err := m.CopyFile(srcPath, dstPath)
+			err := m.config.CopyFile(srcPath, dstPath)
 			if err != nil {
 				bigErr = multierror.Append(bigErr, fmt.Errorf("unable to copy output file from %s to %s: %w", srcPath, dstPath, err))
 				continue
@@ -742,7 +742,7 @@ func (m *RuntimeManifest) applyUnboundBundleOutputs() error {
 		}
 	}
 
-	return bigErr.ErrorOrNil()
+	return log.Error(bigErr.ErrorOrNil())
 }
 
 // ResolveImages updates the RuntimeManifest to properly reflect the image map passed to the bundle via the

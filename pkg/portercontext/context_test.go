@@ -32,7 +32,12 @@ func TestContext_EnvironMap(t *testing.T) {
 
 func TestContext_LogToFile(t *testing.T) {
 	c := NewTestContext(t)
-	c.ConfigureLogging(context.Background(), LogConfiguration{LogLevel: zapcore.DebugLevel, LogToFile: true, LogDirectory: "/.porter/logs"})
+	c.ConfigureLogging(context.Background(), LogConfiguration{
+		Verbosity:    zapcore.DebugLevel,
+		LogLevel:     zapcore.DebugLevel,
+		LogToFile:    true,
+		LogDirectory: "/.porter/logs",
+	})
 	c.timestampLogs = false // turn off timestamps so we can compare more easily
 	logfile := c.logFile.Name()
 	_, log := c.StartRootSpan(context.Background(), t.Name())

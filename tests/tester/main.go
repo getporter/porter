@@ -149,8 +149,8 @@ func (t Tester) RunPorterWith(opts ...func(*shx.PreparedCommand)) (stdout string
 
 // Build a porter command, ready to be executed or further customized.
 func (t Tester) buildPorterCommand(opts ...func(*shx.PreparedCommand)) shx.PreparedCommand {
-	cmd := shx.Command("porter", "--debug").
-		Env("PORTER_HOME="+t.PorterHomeDir, "PORTER_TEST_DB_NAME="+t.dbName)
+	cmd := shx.Command("porter").
+		Env("PORTER_HOME="+t.PorterHomeDir, "PORTER_TEST_DB_NAME="+t.dbName, "PORTER_VERBOSITY=debug")
 	for _, opt := range opts {
 		opt(&cmd)
 	}

@@ -20,8 +20,10 @@ func buildRunCommand(p *porter.Porter) *cobra.Command {
 		Hidden: true, // Hide runtime commands from the helptext
 	}
 
-	cmd.Flags().StringVarP(&opts.File, "file", "f", "porter.yaml", "The porter configuration file (Defaults to porter.yaml)")
-	cmd.Flags().StringVar(&opts.Action, "action", "", "The bundle action to execute (Defaults to CNAB_ACTION)")
+	flags := cmd.Flags()
+	flags.StringVarP(&opts.File, "file", "f", "porter.yaml", "The porter configuration file (Defaults to porter.yaml)")
+	flags.StringVar(&opts.Action, "action", "", "The bundle action to execute (Defaults to CNAB_ACTION)")
+	flags.BoolVar(&opts.DebugMode, "debug", false, "Enable debug mode for the bundle")
 
 	cmd.Annotations = map[string]string{
 		"group": "runtime",

@@ -14,7 +14,7 @@ type ExecuteOptions struct {
 
 func (m *Mixin) loadAction(ctx context.Context, commandFile string) (*Action, error) {
 	var action Action
-	err := builder.LoadAction(ctx, m.Context, commandFile, func(contents []byte) (interface{}, error) {
+	err := builder.LoadAction(ctx, m.Config, commandFile, func(contents []byte) (interface{}, error) {
 		err := yaml.Unmarshal(contents, &action)
 		return &action, err
 	})
@@ -27,6 +27,6 @@ func (m *Mixin) Execute(ctx context.Context, opts ExecuteOptions) error {
 		return err
 	}
 
-	_, err = builder.ExecuteSingleStepAction(m.Context, action)
+	_, err = builder.ExecuteSingleStepAction(ctx, m.Config, action)
 	return err
 }

@@ -55,9 +55,9 @@ func TestMixin_ExecuteCommand(t *testing.T) {
 
 	fmt.Println(string(b))
 	m := NewTestMixin(t)
-	m.In = bytes.NewReader(b)
+	m.Config.In = bytes.NewReader(b)
 
-	m.Setenv(test.ExpectedCommandEnv, `bash -c echo Hello World`)
+	m.Config.Setenv(test.ExpectedCommandEnv, `bash -c echo Hello World`)
 
 	err := m.Execute(ctx, ExecuteOptions{})
 
@@ -94,11 +94,11 @@ func TestMixin_ErrorHandling(t *testing.T) {
 			b, _ := yaml.Marshal(action)
 
 			m := NewTestMixin(t)
-			m.In = bytes.NewReader(b)
+			m.Config.In = bytes.NewReader(b)
 
-			m.Setenv(test.ExpectedCommandEnv, `bash -c echo Hello World`)
-			m.Setenv(test.ExpectedCommandExitCodeEnv, "1")
-			m.Setenv(test.ExpectedCommandErrorEnv, "thing already exists")
+			m.Config.Setenv(test.ExpectedCommandEnv, `bash -c echo Hello World`)
+			m.Config.Setenv(test.ExpectedCommandExitCodeEnv, "1")
+			m.Config.Setenv(test.ExpectedCommandErrorEnv, "thing already exists")
 
 			err := m.Execute(ctx, ExecuteOptions{})
 			if tc.wantError == "" {
@@ -114,7 +114,7 @@ func TestMixin_ErrorHandling(t *testing.T) {
 func TestMixin_Install(t *testing.T) {
 	ctx := context.Background()
 	h := NewTestMixin(t)
-	h.TestContext.AddTestDirectory("testdata", "testdata")
+	h.TestConfig.TestContext.AddTestDirectory("testdata", "testdata")
 
 	action, err := h.loadAction(ctx, "testdata/install-input.yaml")
 	require.NoError(t, err)
@@ -129,7 +129,7 @@ func TestMixin_Install(t *testing.T) {
 func TestMixin_Upgrade(t *testing.T) {
 	ctx := context.Background()
 	h := NewTestMixin(t)
-	h.TestContext.AddTestDirectory("testdata", "testdata")
+	h.TestConfig.TestContext.AddTestDirectory("testdata", "testdata")
 
 	action, err := h.loadAction(ctx, "testdata/upgrade-input.yaml")
 	require.NoError(t, err)
@@ -144,7 +144,7 @@ func TestMixin_Upgrade(t *testing.T) {
 func TestMixin_CustomAction(t *testing.T) {
 	ctx := context.Background()
 	h := NewTestMixin(t)
-	h.TestContext.AddTestDirectory("testdata", "testdata")
+	h.TestConfig.TestContext.AddTestDirectory("testdata", "testdata")
 
 	action, err := h.loadAction(ctx, "testdata/invoke-input.yaml")
 	require.NoError(t, err)
@@ -159,7 +159,7 @@ func TestMixin_CustomAction(t *testing.T) {
 func TestMixin_Uninstall(t *testing.T) {
 	ctx := context.Background()
 	h := NewTestMixin(t)
-	h.TestContext.AddTestDirectory("testdata", "testdata")
+	h.TestConfig.TestContext.AddTestDirectory("testdata", "testdata")
 
 	action, err := h.loadAction(ctx, "testdata/uninstall-input.yaml")
 	require.NoError(t, err)
@@ -179,9 +179,9 @@ func TestMixin_SuffixArgs(t *testing.T) {
 	require.NoError(t, err, "Unmarshal failed")
 
 	m := NewTestMixin(t)
-	m.In = bytes.NewReader(b)
+	m.Config.In = bytes.NewReader(b)
 
-	m.Setenv(test.ExpectedCommandEnv, `docker build --tag getporter/porter-hello:latest .`)
+	m.Config.Setenv(test.ExpectedCommandEnv, `docker build --tag getporter/porter-hello:latest .`)
 
 	err = m.Execute(ctx, ExecuteOptions{})
 	require.NoError(t, err)

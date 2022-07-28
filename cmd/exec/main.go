@@ -23,14 +23,14 @@ func buildRootCommand(in io.Reader) *cobra.Command {
 		Long: "exec is a porter 👩🏽‍✈️ mixin that you can you can use to execute arbitrary commands",
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			// Enable swapping out stdout/stderr/stdin for testing
-			m.In = in
-			m.Out = cmd.OutOrStdout()
-			m.Err = cmd.OutOrStderr()
+			m.Config.In = in
+			m.Config.Out = cmd.OutOrStdout()
+			m.Config.Err = cmd.OutOrStderr()
 		},
 		SilenceUsage: true,
 	}
 
-	cmd.PersistentFlags().BoolVar(&m.Debug, "debug", false, "Enable debug logging")
+	cmd.PersistentFlags().BoolVar(&m.Debug, "debug", false, "Enable debug mode")
 
 	cmd.AddCommand(buildVersionCommand(m))
 	cmd.AddCommand(buildSchemaCommand(m))

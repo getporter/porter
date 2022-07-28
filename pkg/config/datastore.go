@@ -30,11 +30,6 @@ type Data struct {
 	// Available values are: docker, kubernetes.
 	RuntimeDriver string `mapstructure:"runtime-driver"`
 
-	// AllowDockerHostAccess grants bundles access to the underlying docker host
-	// upon which it is running so that it can do things like build and run containers.
-	// It's a security risk.
-	AllowDockerHostAccess bool `mapstructure:"allow-docker-host-access"`
-
 	// DefaultStoragePlugin is the storage plugin to use when no named storage is specified.
 	DefaultStoragePlugin string `mapstructure:"default-storage-plugin"`
 
@@ -70,6 +65,11 @@ type Data struct {
 	// schemaVersion field on a resource with the supported schemaVersion.
 	// Supported values are: exact, minor, major, none.
 	SchemaCheck string `mapstructure:"schema-check"`
+
+	// Verbosity controls the level of messages output to the console.
+	// Use Logs.LogLevel if you want to change what is output to the logfile.
+	// Traces sent to an OpenTelemetry collector always include all levels of messages.
+	Verbosity string `mapstructure:"verbosity"`
 }
 
 // DefaultDataStore used when no config file is found.
@@ -80,6 +80,7 @@ func DefaultDataStore() Data {
 		DefaultStoragePlugin: "mongodb-docker",
 		DefaultSecretsPlugin: "host",
 		Logs:                 LogConfig{Level: "info"},
+		Verbosity:            DefaultVerbosity,
 	}
 }
 
