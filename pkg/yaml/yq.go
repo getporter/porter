@@ -110,3 +110,21 @@ func (e *Editor) SetValue(path string, value string) error {
 
 	return nil
 }
+
+// GetNode evaluates the specified yaml path to a single node.
+// Returns an error if a node isn't found, or more than one is found.
+func (e *Editor) GetNode(path string) (*yaml.Node, error) {
+	results, err := e.yq.Get(e.node, path)
+	if err != nil {
+		return nil, err
+	}
+
+	switch len(results) {
+	case 0:
+		return nil, fmt.Errorf("no matching nodes found for %s", path)
+	case 1:
+		return results[0].Node, nil
+	default:
+		return nil, fmt.Errorf("multiple nodes matched the path %s", path)
+	}
+}

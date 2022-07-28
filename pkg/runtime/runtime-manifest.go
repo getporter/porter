@@ -2,6 +2,7 @@ package runtime
 
 import (
 	"archive/tar"
+	"bytes"
 	"compress/gzip"
 	"encoding/base64"
 	"fmt"
@@ -21,6 +22,7 @@ import (
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-to-oci/relocation"
 	"github.com/hashicorp/go-multierror"
+	yaml3 "gopkg.in/yaml.v3"
 )
 
 const (
@@ -36,6 +38,10 @@ type RuntimeManifest struct {
 
 	// bundle is the executing bundle definition
 	bundle cnab.ExtendedBundle
+
+	// manifestYAML is the porter.yaml loaded into YQ so that we can
+	// do advanced stuff with the manifest, like just read out the yaml for a particular step.
+	manifestYAML *yaml.Editor
 
 	// bundles is map of the dependencies bundle definitions, keyed by the alias used in the root manifest
 	bundles map[string]cnab.ExtendedBundle
@@ -59,6 +65,11 @@ func (m *RuntimeManifest) Validate() error {
 		return err
 	}
 
+	err = m.loadManifest()
+	if err != nil {
+		return err
+	}
+
 	err = m.loadDependencyDefinitions()
 	if err != nil {
 		return err
@@ -78,12 +89,28 @@ func (m *RuntimeManifest) Validate() error {
 }
 
 func (m *RuntimeManifest) loadBundle() error {
+	// Load the CNAB representation of the bundle
 	b, err := cnab.LoadBundle(m.Context, "/cnab/bundle.json")
 	if err != nil {
 		return err
 	}
 
 	m.bundle = b
+	return nil
+}
+
+func (m *RuntimeManifest) loadManifest() error {
+	if m.manifestYAML != nil {
+		return nil
+	}
+
+	// Get the original porter.yaml with additional yaml metadata so that we can look at just the current step's yaml
+	yq := yaml.NewEditor(m.Context)
+	if err := yq.ReadFile(m.ManifestPath); err != nil {
+		return fmt.Errorf("error loading yaml editor for %s", m.ManifestPath)
+	}
+
+	m.manifestYAML = yq
 	return nil
 }
 
@@ -403,35 +430,47 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 
 // ResolveStep will walk through the Step's data and resolve any placeholder
 // data using the definitions in the manifest, like parameters or credentials.
-func (m *RuntimeManifest) ResolveStep(step *manifest.Step) error {
-	mustache.AllowMissingVariables = false
+func (m *RuntimeManifest) ResolveStep(stepIndex int, step *manifest.Step) error {
+	if err := m.loadManifest(); err != nil {
+		return err
+	}
+
+	// Refresh our template data
 	sourceData, err := m.buildSourceData()
 	if err != nil {
 		return fmt.Errorf("unable to build step template data: %w", err)
 	}
 
+	// Get the original yaml for the current step
+	stepPath := fmt.Sprintf("%s[%d]", m.Action, stepIndex)
+	stepNode, err := m.manifestYAML.GetNode(stepPath)
+	if err != nil {
+		return fmt.Errorf("unable to retrieve original yaml for step %s: %w", stepPath, err)
+	}
+	var stepTemplate bytes.Buffer
+	enc := yaml3.NewEncoder(&stepTemplate)
+	defer enc.Close()
+	if err := enc.Encode(stepNode); err != nil {
+		return fmt.Errorf("error re-encoding porter.yaml for templating: %w", err)
+	}
+
 	if m.Debug {
 		fmt.Fprintf(m.Err, "=== Step Data ===\n%v\n", sourceData)
+		fmt.Fprintf(m.Err, "=== Step Template ===\n%v\n", stepTemplate.String())
 	}
 
-	payload, err := yaml.Marshal(step)
+	// Render the step template, returning an error if undefined variables are used
+	mustache.AllowMissingVariables = false
+	rendered, err := mustache.RenderRaw(stepTemplate.String(), true, sourceData)
 	if err != nil {
-		return fmt.Errorf("invalid step data %v: %w", step, err)
-	}
-
-	if m.Debug {
-		fmt.Fprintf(m.Err, "=== Step Template ===\n%v\n", string(payload))
-	}
-
-	rendered, err := mustache.RenderRaw(string(payload), true, sourceData)
-	if err != nil {
-		return fmt.Errorf("unable to render step template %s: %w", string(payload), err)
+		return fmt.Errorf("unable to render step template %s: %w", stepTemplate.String(), err)
 	}
 
 	if m.Debug {
 		fmt.Fprintf(m.Err, "=== Rendered Step ===\n%s\n", rendered)
 	}
 
+	// Update the step parameter with the result of rendering the template
 	err = yaml.Unmarshal([]byte(rendered), step)
 	if err != nil {
 		return fmt.Errorf("invalid step yaml\n%s: %w", rendered, err)
