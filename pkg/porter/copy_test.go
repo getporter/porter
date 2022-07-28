@@ -154,7 +154,7 @@ func TestCopyGenerateBundleRef(t *testing.T) {
 				Source:      "deislabs/mybuns:v0.1.0",
 				Destination: "oops/",
 			},
-			WantErr: "invalid reference format oops",
+			WantErr: "invalid reference format",
 		},
 	}
 	for _, test := range tests {

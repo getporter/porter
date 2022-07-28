@@ -9,6 +9,12 @@ custom:
     nestedKey2: editedValue2
 mixins:
   - exec
+images:
+  whalesayd:
+    description: "Whalesay as a service"
+    imageType: "docker"
+    repository: "test/whalesayd"
+    digest: sha256:8b92b7269f59e3ed824e811a1ff1ee64f0d44c0218efefada57a4bebc2d7ef6f
 install:
   - exec:
       description: "Install Hello World"
