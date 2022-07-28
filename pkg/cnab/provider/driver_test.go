@@ -59,21 +59,6 @@ func TestNewDriver_Docker(t *testing.T) {
 		assert.EqualError(t, err, "allow-docker-host-access was enabled, but the driver is custom-driver")
 	})
 
-	t.Run("docker with host access, missing docker daemon", func(t *testing.T) {
-		t.Parallel()
-
-		r := NewTestRuntime(t)
-		r.MockGetDockerGroupId()
-		defer r.Close()
-
-		args := ActionArguments{
-			AllowDockerHostAccess: true,
-		}
-
-		_, err := r.newDriver(DriverNameDocker, args)
-		assert.EqualError(t, err, "allow-docker-host-access was specified but could not detect a local docker daemon running by checking for /var/run/docker.sock")
-	})
-
 	t.Run("docker with host access, default config", func(t *testing.T) {
 		t.Parallel()
 
