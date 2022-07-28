@@ -105,8 +105,8 @@ func (p *Porter) Build(ctx context.Context, opts BuildOptions) error {
 	}
 
 	// Generate Porter's canonical version of the user-provided manifest
-	if err := p.generateInternalManifest(opts); err != nil {
-		return span.Error(fmt.Errorf("unable to generate manifest: %w", err))
+	if err := p.generateInternalManifest(ctx, opts); err != nil {
+		return fmt.Errorf("unable to generate manifest: %w", err)
 	}
 
 	m, err := manifest.LoadManifestFrom(ctx, p.Config, build.LOCAL_MANIFEST)

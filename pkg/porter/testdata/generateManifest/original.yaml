@@ -9,6 +9,11 @@ custom:
     nestedKey2: value2
 mixins:
   - exec
+images:
+  whalesayd:
+    description: "Whalesay as a service"
+    imageType: "docker"
+    repository: "test/whalesayd"
 install:
   - exec:
       description: "Install Hello World"

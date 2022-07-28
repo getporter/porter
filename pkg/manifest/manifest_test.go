@@ -550,6 +550,31 @@ func TestValidateOutputDefinition_defaultFailsValidation(t *testing.T) {
 }
 
 func TestValidateImageMap(t *testing.T) {
+	t.Run("with valid image digest, valid repository format and valid tag", func(t *testing.T) {
+		mi := MappedImage{
+			Repository: "getporter/myserver",
+			Digest:     "sha256:8f1133d81f1b078c865cdb11d17d1ff15f55c449d3eecca50190eed0f5e5e26f",
+			Tag:        "latest",
+		}
+
+		err := mi.Validate()
+		assert.NoError(t, err)
+		ref, err := mi.ToOCIReference()
+		require.NoError(t, err)
+		require.Equal(t, "getporter/myserver@sha256:8f1133d81f1b078c865cdb11d17d1ff15f55c449d3eecca50190eed0f5e5e26f", ref.String(), "failed to convert image map to its OCI reference")
+	})
+	t.Run("with valid repository format and valid tag", func(t *testing.T) {
+		mi := MappedImage{
+			Repository: "getporter/myserver",
+			Tag:        "v0.1.0",
+		}
+
+		err := mi.Validate()
+		assert.NoError(t, err)
+		ref, err := mi.ToOCIReference()
+		require.NoError(t, err)
+		require.Equal(t, "getporter/myserver:v0.1.0", ref.String(), "failed to convert image map to its OCI reference")
+	})
 	t.Run("with both valid image digest and valid repository format", func(t *testing.T) {
 		mi := MappedImage{
 			Repository: "getporter/myserver",
@@ -557,8 +582,10 @@ func TestValidateImageMap(t *testing.T) {
 		}
 
 		err := mi.Validate()
-		// No error should be returned
-		assert.NoError(t, err)
+		require.NoError(t, err)
+		ref, err := mi.ToOCIReference()
+		require.NoError(t, err)
+		require.Equal(t, "getporter/myserver@sha256:8f1133d81f1b078c865cdb11d17d1ff15f55c449d3eecca50190eed0f5e5e26f", ref.String(), "failed to convert image map to its OCI reference")
 	})
 
 	t.Run("with no image digest supplied and valid repository format", func(t *testing.T) {
@@ -567,8 +594,10 @@ func TestValidateImageMap(t *testing.T) {
 		}
 
 		err := mi.Validate()
-		// No error should be returned
 		assert.NoError(t, err)
+		ref, err := mi.ToOCIReference()
+		require.NoError(t, err)
+		require.Equal(t, "getporter/myserver", ref.String(), "failed to convert image map to its OCI reference")
 	})
 
 	t.Run("with valid image digest but invalid repository format", func(t *testing.T) {
@@ -579,6 +608,8 @@ func TestValidateImageMap(t *testing.T) {
 
 		err := mi.Validate()
 		assert.Error(t, err)
+		_, err = mi.ToOCIReference()
+		assert.ErrorContains(t, err, "failed to parse named reference")
 	})
 
 	t.Run("with invalid image digest format", func(t *testing.T) {
@@ -589,6 +620,8 @@ func TestValidateImageMap(t *testing.T) {
 
 		err := mi.Validate()
 		assert.Error(t, err)
+		_, err = mi.ToOCIReference()
+		assert.ErrorContains(t, err, "failed to create a new reference with digest for repository")
 	})
 }
 
