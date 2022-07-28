@@ -34,7 +34,7 @@ porter installations uninstall [INSTALLATION] [flags]
   porter installation uninstall --reference localhost:5000/ghcr.io/getporter/examples/kubernetes:v0.2.0 --insecure-registry --force
   porter installation uninstall MyAppInDev --file myapp/bundle.json
   porter installation uninstall --parameter-set azure --param test-mode=true --param header-color=blue
-  porter installation uninstall --cred azure --cred kubernetes
+  porter installation uninstall --credential-set azure --credential-set kubernetes
   porter installation uninstall --driver debug
   porter installation uninstall --delete
   porter installation uninstall --force-delete

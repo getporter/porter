@@ -34,7 +34,7 @@ porter installations upgrade [INSTALLATION] [flags]
   porter installation upgrade --reference localhost:5000/ghcr.io/getporter/examples/kubernetes:v0.2.0 --insecure-registry --force
   porter installation upgrade MyAppInDev --file myapp/bundle.json
   porter installation upgrade --parameter-set azure --param test-mode=true --param header-color=blue
-  porter installation upgrade --cred azure --cred kubernetes
+  porter installation upgrade --credential-set azure --credential-set kubernetes
   porter installation upgrade --driver debug
 
 ```

@@ -236,7 +236,7 @@ The docker driver runs the bundle container using the local Docker host. To use 
   porter installation install --reference localhost:5000/ghcr.io/getporter/examples/kubernetes:v0.2.0 --insecure-registry --force
   porter installation install MyAppInDev --file myapp/bundle.json
   porter installation install --parameter-set azure --param test-mode=true --param header-color=blue
-  porter installation install --cred azure --cred kubernetes
+  porter installation install --credential-set azure --credential-set kubernetes
   porter installation install --driver debug
   porter installation install --label env=dev --label owner=myuser
 `,
@@ -288,7 +288,7 @@ The docker driver runs the bundle container using the local Docker host. To use 
   porter installation upgrade --reference localhost:5000/ghcr.io/getporter/examples/kubernetes:v0.2.0 --insecure-registry --force
   porter installation upgrade MyAppInDev --file myapp/bundle.json
   porter installation upgrade --parameter-set azure --param test-mode=true --param header-color=blue
-  porter installation upgrade --cred azure --cred kubernetes
+  porter installation upgrade --credential-set azure --credential-set kubernetes
   porter installation upgrade --driver debug
 `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
@@ -339,7 +339,7 @@ The docker driver runs the bundle container using the local Docker host. To use 
   porter installation invoke --reference localhost:5000/ghcr.io/getporter/examples/kubernetes:v0.2.0 --insecure-registry --force
   porter installation invoke --action ACTION MyAppInDev --file myapp/bundle.json
   porter installation invoke --action ACTION  --parameter-set azure --param test-mode=true --param header-color=blue
-  porter installation invoke --action ACTION --cred azure --cred kubernetes
+  porter installation invoke --action ACTION --credential-set azure --credential-set kubernetes
   porter installation invoke --action ACTION --driver debug
 `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
@@ -390,7 +390,7 @@ The docker driver runs the bundle container using the local Docker host. To use 
   porter installation uninstall --reference localhost:5000/ghcr.io/getporter/examples/kubernetes:v0.2.0 --insecure-registry --force
   porter installation uninstall MyAppInDev --file myapp/bundle.json
   porter installation uninstall --parameter-set azure --param test-mode=true --param header-color=blue
-  porter installation uninstall --cred azure --cred kubernetes
+  porter installation uninstall --credential-set azure --credential-set kubernetes
   porter installation uninstall --driver debug
   porter installation uninstall --delete
   porter installation uninstall --force-delete

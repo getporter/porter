@@ -36,7 +36,7 @@ porter installations install [INSTALLATION] [flags]
   porter installation install --reference localhost:5000/ghcr.io/getporter/examples/kubernetes:v0.2.0 --insecure-registry --force
   porter installation install MyAppInDev --file myapp/bundle.json
   porter installation install --parameter-set azure --param test-mode=true --param header-color=blue
-  porter installation install --cred azure --cred kubernetes
+  porter installation install --credential-set azure --credential-set kubernetes
   porter installation install --driver debug
   porter installation install --label env=dev --label owner=myuser
 
