@@ -1,9 +1,9 @@
 ---
-title: "porter upgrade"
-slug: porter_upgrade
-url: /cli/porter_upgrade/
+title: "porter installations upgrade"
+slug: porter_installations_upgrade
+url: /cli/porter_installations_upgrade/
 ---
-## porter upgrade
+## porter installations upgrade
 
 Upgrade an installation
 
@@ -23,19 +23,19 @@ The docker driver runs the bundle container using the local Docker host. To use 
 
 
 ```
-porter upgrade [INSTALLATION] [flags]
+porter installations upgrade [INSTALLATION] [flags]
 ```
 
 ### Examples
 
 ```
-  porter upgrade --version 0.2.0
-  porter upgrade --reference ghcr.io/getporter/examples/kubernetes:v0.2.0
-  porter upgrade --reference localhost:5000/ghcr.io/getporter/examples/kubernetes:v0.2.0 --insecure-registry --force
-  porter upgrade MyAppInDev --file myapp/bundle.json
-  porter upgrade --parameter-set azure --param test-mode=true --param header-color=blue
-  porter upgrade --credential-set azure --credential-set kubernetes
-  porter upgrade --driver debug
+  porter installation upgrade --version 0.2.0
+  porter installation upgrade --reference ghcr.io/getporter/examples/kubernetes:v0.2.0
+  porter installation upgrade --reference localhost:5000/ghcr.io/getporter/examples/kubernetes:v0.2.0 --insecure-registry --force
+  porter installation upgrade MyAppInDev --file myapp/bundle.json
+  porter installation upgrade --parameter-set azure --param test-mode=true --param header-color=blue
+  porter installation upgrade --credential-set azure --credential-set kubernetes
+  porter installation upgrade --driver debug
 
 ```
 
@@ -68,10 +68,5 @@ porter upgrade [INSTALLATION] [flags]
 
 ### SEE ALSO
 
-* [porter](/cli/porter/)	 - With Porter you can package your application artifact, client tools, configuration and deployment logic together as a versioned bundle that you can distribute, and then install with a single command.
-
-Most commands require a Docker daemon, either local or remote.
-
-Try our QuickStart https://getporter.org/quickstart to learn how to use Porter.
-
+* [porter installations](/cli/porter_installations/)	 - Installation commands
 

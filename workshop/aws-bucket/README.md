@@ -30,7 +30,7 @@ credentials:
 
 ## Create a bucket
 ```console
-$ porter install --cred aws
+$ porter install --credential-set aws
 
 installing porter-aws-bucket...
 executing porter install configuration from /cnab/app/porter.yaml
@@ -45,7 +45,7 @@ execution completed successfully!
 
 ## List buckets
 ```console
-$ porter invoke --action list --cred aws
+$ porter invoke --action list --credential-set aws
 
 invoking custom action list on porter-aws-bucket...
 executing porter list configuration from /cnab/app/porter.yaml
@@ -62,7 +62,7 @@ execution completed successfully!
 
 ## Delete a bucket
 ```console
-$ porter uninstall --cred aws
+$ porter uninstall --credential-set aws
 
 uninstalling porter-aws-bucket...
 executing porter uninstall configuration from /cnab/app/porter.yaml

@@ -34,9 +34,13 @@ Try our QuickStart https://getporter.org/quickstart to learn how to use Porter.
 
 * [porter installations apply](/cli/porter_installations_apply/)	 - Apply changes to an installation
 * [porter installations delete](/cli/porter_installations_delete/)	 - Delete an installation
+* [porter installations install](/cli/porter_installations_install/)	 - Create a new installation of a bundle
+* [porter installations invoke](/cli/porter_installations_invoke/)	 - Invoke a custom action on an installation
 * [porter installations list](/cli/porter_installations_list/)	 - List installed bundles
 * [porter installations logs](/cli/porter_installations_logs/)	 - Installation Logs commands
 * [porter installations output](/cli/porter_installations_output/)	 - Output commands
 * [porter installations runs](/cli/porter_installations_runs/)	 - Commands for working with runs of an Installation
 * [porter installations show](/cli/porter_installations_show/)	 - Show an installation of a bundle
+* [porter installations uninstall](/cli/porter_installations_uninstall/)	 - Uninstall an installation
+* [porter installations upgrade](/cli/porter_installations_upgrade/)	 - Upgrade an installation
 
