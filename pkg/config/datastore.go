@@ -33,6 +33,10 @@ type Data struct {
 	// to ensure that the global config value works even for those commands.
 	RuntimeDriver string `mapstructure:"runtime-driver"`
 
+	// ForceOverwrite specifies OCI artifacts can be overwritten when pushed.
+	// By default, Porter requires the --force flag to be specified to overwrite a bundle or image.
+	ForceOverwrite bool `mapstructure:"force-overwrite"`
+
 	// AllowDockerHostAccess grants bundles access to the underlying docker host
 	// upon which it is running so that it can do things like build and run containers.
 	// It's a security risk.

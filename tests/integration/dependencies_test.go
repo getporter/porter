@@ -49,7 +49,7 @@ func publishMySQLBundle(ctx context.Context, p *porter.TestPorter) {
 	defer p.Chdir(pwd)
 
 	publishOpts := porter.PublishOptions{}
-	err = publishOpts.Validate(p.Context)
+	err = publishOpts.Validate(p.Config)
 	require.NoError(p.T(), err, "validation of publish opts for dependent bundle failed")
 
 	err = p.Publish(ctx, publishOpts)

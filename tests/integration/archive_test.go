@@ -63,7 +63,7 @@ func TestArchive_StableDigest(t *testing.T) {
 			Reference: localReference,
 		},
 	}
-	err = publishFromArchiveOpts.Validate(p.Context)
+	err = publishFromArchiveOpts.Validate(p.Config)
 	require.NoError(p.T(), err, "validation of publish opts for bundle failed")
 
 	err = p.Publish(ctx, publishFromArchiveOpts)
