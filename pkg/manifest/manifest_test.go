@@ -178,6 +178,7 @@ func TestManifest_Validate_Name(t *testing.T) {
 }
 
 func TestManifest_Validate_SchemaVersion(t *testing.T) {
+	invalidVersionErr := schema.ErrInvalidSchemaVersion.Error()
 
 	t.Run("schemaVersion matches", func(t *testing.T) {
 		cxt := portercontext.NewTestContext(t)
@@ -188,10 +189,10 @@ func TestManifest_Validate_SchemaVersion(t *testing.T) {
 
 		err = m.Validate(cxt.Context, schema.CheckStrategyExact)
 		require.NoError(t, err)
-		assert.NotContains(t, cxt.GetError(), schema.ErrInvalidSchemaVersion.Error())
+		assert.NotContains(t, cxt.GetError(), invalidVersionErr)
 	})
 
-	t.Run("schemaVersion missing", func(t *testing.T) {
+	t.Run("schemaVersion missing, not required", func(t *testing.T) {
 		cxt := portercontext.NewTestContext(t)
 		cxt.UseFilesystem()
 
@@ -205,8 +206,41 @@ func TestManifest_Validate_SchemaVersion(t *testing.T) {
 
 		// Check that a warning is printed
 		// We aren't returning an error because we want to give it a chance to work first. Later we may turn this into a hard error after people have had time to migrate.
-		assert.Contains(t, cxt.GetError(), schema.ErrInvalidSchemaVersion.Error())
+		assert.Contains(t, cxt.GetError(), invalidVersionErr)
 	})
+}
+
+func TestManifest_ValidateMetadata(t *testing.T) {
+	// Make sure that we allow a range of versions
+	invalidVersionErr := schema.ErrInvalidSchemaVersion.Error()
+	testcases := []struct {
+		schemaVersion string
+		wantErr       string
+	}{
+		{wantErr: invalidVersionErr},
+		{schemaVersion: "1.0.0-alpha.1"},
+		{schemaVersion: "1.0.0-alpha.2", wantErr: invalidVersionErr},
+		{schemaVersion: "1.0.0"},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.schemaVersion, func(t *testing.T) {
+			cxt := portercontext.NewTestContext(t)
+			m := Manifest{
+				SchemaVersion: tc.schemaVersion,
+				Name:          "mybuns",
+				Registry:      "localhost:5000",
+			}
+			err := m.validateMetadata(cxt.Context, schema.CheckStrategyExact)
+
+			if tc.wantErr == "" {
+				require.NoError(t, err)
+				assert.NotContains(t, cxt.GetError(), invalidVersionErr)
+			} else {
+				require.ErrorContains(t, err, invalidVersionErr)
+			}
+		})
+	}
 }
 
 func TestManifest_Validate_Dockerfile(t *testing.T) {
@@ -267,7 +301,7 @@ func TestSetDefaults(t *testing.T) {
 	t.Run("no registry or reference provided", func(t *testing.T) {
 		cxt := portercontext.NewTestContext(t)
 		m := Manifest{
-			SchemaVersion: SupportedSchemaVersion,
+			SchemaVersion: DefaultSchemaVersion.String(),
 			Name:          "mybun",
 			Version:       "1.2.3-beta.1",
 		}
@@ -278,7 +312,7 @@ func TestSetDefaults(t *testing.T) {
 	t.Run("bundle docker tag set on reference", func(t *testing.T) {
 		cxt := portercontext.NewTestContext(t)
 		m := Manifest{
-			SchemaVersion: SupportedSchemaVersion,
+			SchemaVersion: DefaultSchemaVersion.String(),
 			Name:          "mybun",
 			Version:       "1.2.3-beta.1",
 			Reference:     "getporter/mybun:v1.2.3",
@@ -295,7 +329,7 @@ func TestSetDefaults(t *testing.T) {
 	t.Run("bundle docker tag not set on reference", func(t *testing.T) {
 		cxt := portercontext.NewTestContext(t)
 		m := Manifest{
-			SchemaVersion: SupportedSchemaVersion,
+			SchemaVersion: DefaultSchemaVersion.String(),
 			Name:          "mybun",
 			Version:       "1.2.3-beta.1+15",
 			Reference:     "getporter/mybun",
@@ -312,7 +346,7 @@ func TestSetDefaults(t *testing.T) {
 	t.Run("bundle reference includes registry with port", func(t *testing.T) {
 		cxt := portercontext.NewTestContext(t)
 		m := Manifest{
-			SchemaVersion: SupportedSchemaVersion,
+			SchemaVersion: DefaultSchemaVersion.String(),
 			Name:          "mybun",
 			Version:       "0.1.0",
 			Reference:     "localhost:5000/missing-invocation-image",
@@ -329,7 +363,7 @@ func TestSetDefaults(t *testing.T) {
 	t.Run("registry provided, no reference", func(t *testing.T) {
 		cxt := portercontext.NewTestContext(t)
 		m := Manifest{
-			SchemaVersion: SupportedSchemaVersion,
+			SchemaVersion: DefaultSchemaVersion.String(),
 			Name:          "mybun",
 			Version:       "1.2.3-beta.1",
 			Registry:      "getporter",
@@ -346,7 +380,7 @@ func TestSetDefaults(t *testing.T) {
 	t.Run("registry provided with org, no reference", func(t *testing.T) {
 		cxt := portercontext.NewTestContext(t)
 		m := Manifest{
-			SchemaVersion: SupportedSchemaVersion,
+			SchemaVersion: DefaultSchemaVersion.String(),
 			Name:          "mybun",
 			Version:       "1.2.3-beta.1",
 			Registry:      "getporter/myorg",
@@ -363,7 +397,7 @@ func TestSetDefaults(t *testing.T) {
 	t.Run("registry and reference provided", func(t *testing.T) {
 		cxt := portercontext.NewTestContext(t)
 		m := Manifest{
-			SchemaVersion: SupportedSchemaVersion,
+			SchemaVersion: DefaultSchemaVersion.String(),
 			Name:          "mybun",
 			Version:       "1.2.3-beta.1",
 			Registry:      "myregistry/myorg",
@@ -787,6 +821,27 @@ func TestParameterDefinition_UpdateApplyTo(t *testing.T) {
 
 			pd.UpdateApplyTo(m)
 			require.Equal(t, tc.wantApplyTo, pd.ApplyTo)
+		})
+	}
+}
+
+func TestManifest_getTemplatePrefix(t *testing.T) {
+	testcases := []struct {
+		schemaVersion string
+		wantPrefix    string
+	}{
+		{"", ""},
+		{"1.0.0-alpha.1", ""},
+		{"1.0.0-alpha.2", TemplateDelimiterPrefix},
+		{"1.0.0", TemplateDelimiterPrefix},
+		{"1.1.0", TemplateDelimiterPrefix},
+		{"3.0.0", TemplateDelimiterPrefix},
+	}
+	for _, tc := range testcases {
+		t.Run(tc.schemaVersion, func(t *testing.T) {
+			m := Manifest{SchemaVersion: tc.schemaVersion}
+			prefix := m.GetTemplatePrefix()
+			require.Equal(t, tc.wantPrefix, prefix)
 		})
 	}
 }

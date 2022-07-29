@@ -1,4 +1,4 @@
-schemaVersion: 1.0.0-alpha.1
+schemaVersion: 1.0.0
 name: porter-hello
 version: 0.1.0
 description: "An example Porter configuration"
@@ -17,7 +17,7 @@ install:
       description: "Install Hello World"
       command: bash
       flags:
-        c: "{{ bundle.parameters.command }}"
+        c: "${ bundle.parameters.command }"
 
 
 uninstall:

@@ -1,24 +1,33 @@
 # This is the configuration for Porter
 # You must define steps for each action, but the rest is optional
-# See https://getporter.org/author-bundles for documentation on how to configure your bundle
+# See https://getporter.org/bundle/manifest/file-format/ for a description of all the allowed fields in this document.
+# See https://getporter.org/author-bundles for documentation on how to configure your bundle.
 # Uncomment out the sections below to take full advantage of what Porter can do!
 
 # Version of the porter.yaml schema used by this file.
-schemaVersion: 1.0.0-alpha.1
+schemaVersion: 1.0.0
 
+# Name of the bundle
 name: porter-hello
+
+# Version of the bundle. Change this each time you modify a published bundle.
 version: 0.1.0
+
+# Description of the bundle and what it does.
 description: "An example Porter configuration"
-# registry where the bundle is published to by default
+
+# Registry where the bundle is published to by default
 registry: "localhost:5000"
 
 # If you want to customize the Dockerfile in use, uncomment the line below and update the referenced file. 
 # See https://getporter.org/bundle/custom-dockerfile/
 #dockerfile: template.Dockerfile
 
+# Declare and optionally configure the mixins used by the bundle
 mixins:
   - exec
 
+# Define the steps that should execute when the bundle is installed
 install:
   - exec:
       description: "Install Hello World"
@@ -26,6 +35,7 @@ install:
       arguments:
         - install
 
+# Define the steps that should execute when the bundle is upgraded
 upgrade:
   - exec:
       description: "World 2.0"
@@ -33,6 +43,7 @@ upgrade:
       arguments:
         - upgrade
 
+# Define the steps that should execute when the bundle is uninstalled
 uninstall:
   - exec:
       description: "Uninstall Hello World"

@@ -678,7 +678,7 @@ parameters:
 
 ### Use a Parameter
 ```yaml
-- "echo Hello, {{ bundle.parameters.name }}"
+- "echo Hello, ${ bundle.parameters.name }
 ```
 
 * Needs double quotes around the yaml entry
@@ -1254,7 +1254,7 @@ Porter uses a template engine to substitute values into the manifest.
 
 **Example**
 ```yaml
-connectionString: "{{bundle.outputs.host}}:{{bundle.outputs.port}}"
+connectionString: ${bundle.outputs.host}:${bundle.outputs.port}
 ```
 
 ---

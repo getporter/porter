@@ -100,7 +100,8 @@ func TestPorter_Build_ChecksManifestSchemaVersion(t *testing.T) {
 		schemaVersion string
 		wantErr       string
 	}{
-		{name: "valid version", schemaVersion: manifest.SupportedSchemaVersion},
+		{name: "current version", schemaVersion: manifest.DefaultSchemaVersion.String()},
+		{name: "its an older code but it checks out", schemaVersion: "1.0.0-alpha.1"},
 		{name: "invalid version", schemaVersion: "", wantErr: schema.ErrInvalidSchemaVersion.Error()},
 	}
 	for _, tc := range testcases {

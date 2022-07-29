@@ -1,4 +1,4 @@
-schemaVersion: 1.0.0-alpha.1
+schemaVersion: 1.0.0
 name: some-test
 version: 0.3.11
 description: "Test some things"
@@ -17,14 +17,14 @@ mixins:
 install:
   - searcher:
       description: "A Step"
-      image: "{{bundle.images.something.repository}}@{{bundle.images.something.digest}}"
-      repo: "{{bundle.images.something.repository}}"
-      digest: "{{bundle.images.something.digest}}"
-      tag: "{{bundle.images.something.tag}}"
+      image: "${bundle.images.something.repository}@${bundle.images.something.digest}"
+      repo: "${bundle.images.something.repository}"
+      digest: "${bundle.images.something.digest}"
+      tag: "${bundle.images.something.tag}"
 uninstall:
   - searcher:
       description: "A Step"
-      image: "{{bundle.images.something.repository}}@{{bundle.images.something.digest}}"
-      repo: "{{bundle.images.something.repository}}"
-      digest: "{{bundle.images.something.digest}}"
-      tag: "{{bundle.images.something.tag}}"
+      image: "${bundle.images.something.repository}@${bundle.images.something.digest}"
+      repo: "${bundle.images.something.repository}"
+      digest: "${bundle.images.something.digest}"
+      tag: "${bundle.images.something.tag}"

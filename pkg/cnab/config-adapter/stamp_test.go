@@ -15,7 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var simpleManifestDigest = "7b2a4adbd1df55d080c316c97d9080aec2476c50b6fcd3a06f1e2506a439b583"
+var simpleManifestDigest = "4a748b8ac237b4af8f1eb3a327a82dfdd7eb70f3a1126e97a9e5d9b584cd048a"
 
 func TestConfig_GenerateStamp(t *testing.T) {
 	// Do not run this test in parallel

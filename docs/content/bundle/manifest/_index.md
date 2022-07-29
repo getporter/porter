@@ -373,8 +373,8 @@ install:
     chart: bitnami/mysql
     version: 6.14.2
     set:
-      db.name: "{{ bundle.parameters.database-name }}"
-      db.user: "{{ bundle.parameters.mysql-user }}"
+      db.name: ${ bundle.parameters.database-name }
+      db.user: ${ bundle.parameters.mysql-user }
   outputs:
   - name: mysql-root-password
     secret: mydb-creds
@@ -464,7 +464,7 @@ used in [template expressions](/wiring), much like `parameters`, `credentials` a
 the `repository` and `digest` attributes. For example:
 
 ```
-image: "{{bundle.images.websvc.repository}}@{{bundle.images.websvc.digest}}"
+image: ${bundle.images.websvc.repository}@${bundle.images.websvc.digest}
 ```
 
 At runtime, these will be updated appropriately if a bundle has been [copied](/copy-bundles). Note that while `tag` is available, you should prefer the use of `digest`.
@@ -510,7 +510,7 @@ custom:
 ```
 
 You can access custom data at runtime using the `bundle.custom.KEY.SUBKEY` templating.
-For example, `{{ bundle.custom.more-custom-config.enabled}}` allows you to
+For example, `${ bundle.custom.more-custom-config.enabled}` allows you to
 access nested values from the custom section.
 
 Multiple custom values that were defined in the manifest can also be injected with new values during build time using the \--custom values tied to the `porter build` command. Currently only supports string values. You can use dot notation to specify a nested field:

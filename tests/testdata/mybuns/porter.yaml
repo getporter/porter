@@ -1,6 +1,6 @@
 # This is a test bundle that makes no logical sense, but it does exercise lots of different bundle features
 
-schemaVersion: 1.0.0-alpha.1
+schemaVersion: 1.0.0
 name: mybuns
 version: 0.1.2
 description: "A very thorough test bundle"
@@ -76,7 +76,7 @@ install:
       command: ./helpers.sh
       arguments:
         - makeMagic
-        - "'{{ bundle.credentials.username }} is a unicorn with {{ bundle.parameters.password }} secret.'"
+        - "${ bundle.credentials.username } is a unicorn with ${ bundle.parameters.password } secret."
   - exec:
       description: "install"
       command: ./helpers.sh
@@ -90,7 +90,7 @@ install:
       command: ./helpers.sh
       arguments:
         - chaos_monkey
-        - "{{ bundle.parameters.chaos_monkey }}"
+        - ${ bundle.parameters.chaos_monkey }
       outputs:
         - name: result
           regex: "(.*)"
@@ -108,7 +108,7 @@ status:
       description: "Print config"
       command: cat
       arguments:
-        - "{{ bundle.parameters.cfg }}"
+        - ${ bundle.parameters.cfg }
   - exec:
       description: "Print magic"
       command: cat
@@ -141,7 +141,7 @@ upgrade:
       command: ./helpers.sh
       arguments:
         - chaos_monkey
-        - "{{ bundle.parameters.chaos_monkey }}"
+        - ${ bundle.parameters.chaos_monkey }
       outputs:
         - name: result
           regex: "(.*)"
@@ -162,4 +162,4 @@ uninstall:
       command: ./helpers.sh
       arguments:
         - chaos_monkey
-        - "{{ bundle.parameters.chaos_monkey }}"
+        - ${ bundle.parameters.chaos_monkey }

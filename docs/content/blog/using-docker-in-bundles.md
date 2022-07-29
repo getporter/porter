@@ -150,7 +150,7 @@ say:
         rm: true
         arguments:
           - cowsay
-          - - "{{ bundle.parameters.msg }}"
+          - - ${ bundle.parameters.msg }
 
 uninstall:
   - docker:

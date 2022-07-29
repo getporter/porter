@@ -1,4 +1,4 @@
-schemaVersion: 1.0.0-alpha.1
+schemaVersion: 1.0.0
 name: porter-hello
 version: 0.1.0
 description: "An example Porter configuration"
@@ -14,7 +14,7 @@ parameters:
 install:
   - exec:
       description: "Debug"
-      command: "echo \"name:{{bundle.name}} version:{{bundle.version}} description:{{ bundle.description}} image:{{ bundle.invocationImage }}\""
+      command: "echo \"name:${bundle.name} version:${bundle.version} description:${ bundle.description} image:${ bundle.invocationImage }\""
 
 uninstall:
   - exec:

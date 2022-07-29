@@ -1,6 +1,6 @@
 # This is a test bundle that can be used as a dependency
 
-schemaVersion: 1.0.0-alpha.1
+schemaVersion: 1.0.0
 name: mydb
 version: 0.1.0
 description: "A test bundle dependency"
@@ -27,7 +27,7 @@ install:
   - exec:
       command: echo
       arguments:
-        - "database: {{ bundle.parameters.database }}"
+        - "database: ${ bundle.parameters.database }"
 
 upgrade:
   - exec:

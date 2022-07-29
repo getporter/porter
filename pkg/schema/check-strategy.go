@@ -3,7 +3,8 @@ package schema
 import (
 	"errors"
 	"fmt"
-	"strings"
+
+	"github.com/Masterminds/semver/v3"
 )
 
 // CheckStrategy is an enum of values for handling schemaVersion
@@ -31,55 +32,52 @@ var ErrInvalidSchemaVersion = errors.New("invalid schema version")
 // ValidateSchemaVersion checks the specified schema version against the supported version,
 // returning if the result is a warning only. Warnings are returned when the versions are not an exact match.
 // A warning is not returned when CheckStrategyNone is used.
-func ValidateSchemaVersion(strategy CheckStrategy, supported string, specified string) (bool, error) {
+func ValidateSchemaVersion(strategy CheckStrategy, supported *semver.Constraints, specified string, defaultVersion *semver.Version) (bool, error) {
 	if specified == "" {
 		specified = "(none)"
 	}
 	baseMessage := fmt.Errorf("the schema version is %s but the supported schema version is %s. See https://getporter.org/reference/file-formats/#supported-versions for more details: %w",
 		specified, supported, ErrInvalidSchemaVersion)
 
+	specifiedV, err := semver.NewVersion(specified)
+	if err != nil {
+		isWarning := strategy == CheckStrategyNone
+		return isWarning, fmt.Errorf("%s is not a valid semantic version: %w", specified, ErrInvalidSchemaVersion)
+	}
+
+	isSchemaVersionSatisfied := supported.Check(specifiedV)
 	switch strategy {
 	case CheckStrategyNone:
-		// don't return an error ever, but we can still warn down below
+		// this strategy always passes
 	case CheckStrategyExact:
-		if specified != supported {
+		// Check if the schema version satisfies the supported version range
+		if isSchemaVersionSatisfied {
+			return false, nil
+		} else {
 			return false, baseMessage
 		}
 	case CheckStrategyMinor:
-		getMinor := func(version string) string {
-			parts := strings.SplitN(version, ".", 3)
-			if len(parts) < 2 {
-				return version
-			}
-			return strings.Join(parts[:2], ".")
-		}
-
-		specifiedMinor := getMinor(specified)
-		supportedMinor := getMinor(supported)
-
-		if specifiedMinor != supportedMinor {
+		// Check if the schema version matches the MAJOR.MINOR version number of the currently supported (default) schema version
+		supportedMinor, _ := semver.NewConstraint(fmt.Sprintf("~%d.%d.0-0", defaultVersion.Major(), defaultVersion.Minor()))
+		isMinorMatch := supportedMinor.Check(specifiedV)
+		if !isMinorMatch {
 			return false, fmt.Errorf("the schema version MAJOR.MINOR values do not match: %w", baseMessage)
 		}
 	case CheckStrategyMajor:
-		getMajor := func(version string) string {
-			i := strings.Index(version, ".")
-			return version[:i]
-		}
-
-		specifiedMajor := getMajor(specified)
-		supportedMajor := getMajor(supported)
-
-		if specifiedMajor != supportedMajor {
+		// Check if the schema version matches the MAJOR version number of the currently supported (default) schema version
+		supportedMajor, _ := semver.NewConstraint(fmt.Sprintf("^%d.0.0-0", defaultVersion.Major()))
+		isMajorMatch := supportedMajor.Check(specifiedV)
+		if !isMajorMatch {
 			return false, fmt.Errorf("the schema version MAJOR values do not match: %w", baseMessage)
 		}
 	default:
 		return false, fmt.Errorf("unknown schema.CheckStrategy %v", strategy)
 	}
 
-	if specified == supported {
+	if isSchemaVersionSatisfied {
 		return false, nil
+	} else {
+		// Even if the check passed, print a warning if it wasn't strictly supported
+		return true, fmt.Errorf("WARNING: %w", baseMessage)
 	}
-
-	// Even if the check passed, print a warning if it wasn't exactly the same
-	return true, fmt.Errorf("WARNING: %w", baseMessage)
 }

@@ -73,8 +73,8 @@ install:
       chart: ./charts/whalegap
       replace: true
       set:
-        image.repository: "{{ bundle.images.whalesayd.repository }}"
-        image.digest: "{{ bundle.images.whalesayd.digest }}"
+        image.repository: ${ bundle.images.whalesayd.repository }
+        image.digest: ${ bundle.images.whalesayd.digest }
 ```
 
 The helm chart must have been written to allow specifying the location of any images in digested form.
