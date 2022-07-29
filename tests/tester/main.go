@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"get.porter.sh/porter/pkg/portercontext"
@@ -107,6 +108,10 @@ func (t Tester) startMongo(ctx context.Context) error {
 func (t Tester) RequirePorter(args ...string) (stdout string, combinedoutput string) {
 	t.T.Helper()
 	stdout, combinedoutput, err := t.RunPorter(args...)
+	if err != nil {
+		t.T.Logf("failed to run porter %s", strings.Join(args, " "))
+		t.T.Log(combinedoutput)
+	}
 	require.NoError(t.T, err)
 	return stdout, combinedoutput
 }
@@ -144,8 +149,8 @@ func (t Tester) RunPorterWith(opts ...func(*shx.PreparedCommand)) (stdout string
 
 // Build a porter command, ready to be executed or further customized.
 func (t Tester) buildPorterCommand(opts ...func(*shx.PreparedCommand)) shx.PreparedCommand {
-	cmd := shx.Command("porter", "--debug").
-		Env("PORTER_HOME="+t.PorterHomeDir, "PORTER_TEST_DB_NAME="+t.dbName)
+	cmd := shx.Command("porter").
+		Env("PORTER_HOME="+t.PorterHomeDir, "PORTER_TEST_DB_NAME="+t.dbName, "PORTER_VERBOSITY=debug")
 	for _, opt := range opts {
 		opt(&cmd)
 	}

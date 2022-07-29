@@ -1,11 +1,13 @@
 package builder
 
 import (
+	"context"
 	"io/ioutil"
 	"path/filepath"
 	"testing"
 
 	"get.porter.sh/porter/pkg/portercontext"
+	"get.porter.sh/porter/pkg/runtime"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -75,9 +77,9 @@ func TestJsonPathOutputs(t *testing.T) {
 	require.NoError(t, err, "could not read testdata")
 
 	for _, tc := range testcases {
-
 		t.Run(tc.name, func(t *testing.T) {
-			c := portercontext.NewTestContext(t)
+			ctx := context.Background()
+			cfg := runtime.NewTestRuntimeConfig(t)
 
 			step := TestStep{
 				Outputs: []Output{
@@ -85,11 +87,11 @@ func TestJsonPathOutputs(t *testing.T) {
 				},
 			}
 
-			err = ProcessJsonPathOutputs(c.Context, step, string(stdout))
+			err = ProcessJsonPathOutputs(ctx, cfg.RuntimeConfig, step, string(stdout))
 			require.NoError(t, err, "ProcessJsonPathOutputs should not return an error")
 
 			f := filepath.Join(portercontext.MixinOutputsDir, tc.name)
-			gotOutput, err := c.FileSystem.ReadFile(f)
+			gotOutput, err := cfg.FileSystem.ReadFile(f)
 			require.NoError(t, err, "could not read output file %s", f)
 
 			wantOutput := tc.wantOutput
@@ -99,8 +101,9 @@ func TestJsonPathOutputs(t *testing.T) {
 }
 
 func TestJsonPathOutputs_DebugPrintsDocument(t *testing.T) {
-	c := portercontext.NewTestContext(t)
-	c.Debug = true
+	cfg := runtime.NewTestRuntimeConfig(t)
+	ctx := context.Background()
+
 	step := TestStep{
 		Outputs: []Output{
 			TestJsonPathOutput{Name: "ids", JsonPath: "$[*].id"},
@@ -108,16 +111,18 @@ func TestJsonPathOutputs_DebugPrintsDocument(t *testing.T) {
 	}
 
 	document := `[{"id": "abc123"}]`
-	err := ProcessJsonPathOutputs(c.Context, step, document)
+	err := ProcessJsonPathOutputs(ctx, cfg.RuntimeConfig, step, document)
 	require.NoError(t, err)
 	wantDebugLine := `Processing jsonpath output ids using query $[*].id against document
 [{"id": "abc123"}]
 `
-	assert.Contains(t, c.GetError(), wantDebugLine, "Debug mode should print the full document and query being captured")
+	stderr := cfg.TestContext.GetError()
+	assert.Contains(t, stderr, wantDebugLine, "Debug mode should print the full document and query being captured")
 }
 
 func TestJsonPathOutputs_NoOutput(t *testing.T) {
-	c := portercontext.NewTestContext(t)
+	ctx := context.Background()
+	cfg := runtime.NewTestRuntimeConfig(t)
 
 	step := TestStep{
 		Outputs: []Output{
@@ -125,6 +130,6 @@ func TestJsonPathOutputs_NoOutput(t *testing.T) {
 		},
 	}
 
-	err := ProcessJsonPathOutputs(c.Context, step, "")
+	err := ProcessJsonPathOutputs(ctx, cfg.RuntimeConfig, step, "")
 	require.NoError(t, err, "ProcessJsonPathOutputs should not return an error when the output buffer is empty")
 }

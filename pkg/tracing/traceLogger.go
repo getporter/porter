@@ -54,6 +54,7 @@ type TraceLogger interface {
 	// Only log it in the function that generated the error, not when bubbling
 	// it up the call stack.
 	Error(err error, attrs ...attribute.KeyValue) error
+	Errorf(format string, arg ...interface{}) error
 
 	// ShouldLog returns if the current log level includes the specified level.
 	ShouldLog(level zapcore.Level) bool
@@ -87,7 +88,7 @@ func (l traceLogger) Close() {
 	l.span.End()
 
 	if err := l.tracer.Close(context.Background()); err != nil {
-		l.Error(fmt.Errorf("error closing the Tracer: %w", err))
+		l.Errorf("error closing the Tracer: %w", err)
 	}
 }
 
@@ -122,7 +123,7 @@ func (l traceLogger) EndSpan(opts ...trace.SpanEndOption) {
 
 	// If there was a panic, mark the span
 	if p := recover(); p != nil {
-		l.Error(fmt.Errorf("panic: %s", p))
+		l.Errorf("panic: %s", p)
 		panic(p) // retrow
 	}
 }
@@ -180,6 +181,10 @@ func (l traceLogger) Warn(msg string, attrs ...attribute.KeyValue) {
 // Warnf formats a message and prints it at the warning level.
 func (l traceLogger) Warnf(format string, args ...interface{}) {
 	l.Warn(fmt.Sprintf(format, args...))
+}
+
+func (l traceLogger) Errorf(format string, args ...interface{}) error {
+	return l.Error(fmt.Errorf(format, args...))
 }
 
 // Error logs a message at the error level, when the specified error is not nil.

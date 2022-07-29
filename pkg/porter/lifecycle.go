@@ -43,6 +43,9 @@ type BundleExecutionOptions struct {
 	// AllowDockerHostAccess grants the bundle access to the Docker socket.
 	AllowDockerHostAccess bool
 
+	// DebugMode indicates if the bundle should be run in debug mode.
+	DebugMode bool
+
 	// NoLogs runs the bundle without persisting any logs.
 	NoLogs bool
 
@@ -185,7 +188,7 @@ func (o *BundleExecutionOptions) combineParameters(c *portercontext.Context) map
 	//
 	// Default the porter-debug param to --debug
 	//
-	if c.Debug {
+	if o.DebugMode {
 		final["porter-debug"] = "true"
 	}
 
@@ -359,12 +362,6 @@ func (p *Porter) BuildActionArgs(ctx context.Context, installation storage.Insta
 			continue
 		}
 		params[k] = v
-	}
-	//
-	// Default the porter-debug param from the --debug flag
-	//
-	if p.Debug {
-		params["porter-debug"] = "true"
 	}
 
 	resolvedParams, err := p.resolveParameters(ctx, installation, bundleRef.Definition, action.GetAction(), params)

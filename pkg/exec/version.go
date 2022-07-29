@@ -16,5 +16,5 @@ func (m *Mixin) PrintVersion(opts version.Options) error {
 			Author:  "Porter Authors",
 		},
 	}
-	return version.PrintVersion(m.Context, opts, metadata)
+	return version.PrintVersion(m.Config.Context, opts, metadata)
 }

@@ -3,7 +3,7 @@ title: Porter Agent Docker Image
 description: The Porter Operator agent image
 ---
 
-The [getporter/porter-agent][porter-agent] Docker image is intended for use by the [Porter Operator] which runs on Kubernetes.
+The [ghcr.io/getporter/porter-agent][porter-agent] Docker image is intended for use by the [Porter Operator] which runs on Kubernetes.
 If you need to run Porter in a local container, not on Kubernetes, you should use the [porter client] image.
 
 It has tags that match what is available from our [install](/install/) page: latest, canary and specific versions such as v0.38.1.
@@ -30,6 +30,6 @@ kubectl apply -f https://raw.githubusercontent.com/getporter/porter/a059a9668934
 <script src="https://gist-it.appspot.com/https://github.com/getporter/porter/blob/main/examples/porter-agent-manifest.yaml"></script>
 
 [configuration]: /configuration
-[porter-agent]: https://hub.docker.com/r/getporter/porter-agent/tags
+[porter-agent]: https://github.com/getporter/porter/pkgs/container/porter-agent
 [porter client]: /docker-images/client/
 [Porter Operator]: https://github.com/getporter/operator

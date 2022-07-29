@@ -598,6 +598,33 @@ func (mi *MappedImage) Validate() error {
 	return nil
 }
 
+func (mi *MappedImage) ToOCIReference() (cnab.OCIReference, error) {
+	ref, err := cnab.ParseOCIReference(mi.Repository)
+	if err != nil {
+		return cnab.OCIReference{}, err
+	}
+
+	if mi.Digest != "" {
+		refWithDigest, err := ref.WithDigest(digest.Digest(mi.Digest))
+		if err != nil {
+			return cnab.OCIReference{}, fmt.Errorf("failed to create a new reference with digest for repository %s: %w", mi.Repository, err)
+		}
+
+		return refWithDigest, nil
+	}
+
+	if mi.Tag != "" {
+		refWithTag, err := ref.WithTag(mi.Tag)
+		if err != nil {
+			return cnab.OCIReference{}, fmt.Errorf("failed to create a new reference with tag for repository %s: %w", mi.Repository, err)
+		}
+
+		return refWithTag, nil
+	}
+
+	return ref, nil
+}
+
 type Dependencies struct {
 	RequiredDependencies []*RequiredDependency `yaml:"requires,omitempty"`
 }

@@ -213,6 +213,11 @@ install:
         image: ${bundle.images.mysql.repository}@${bundle.images.mysql.digest}
 ```
 
+When an image tag is provided instead of a digest, Porter gets the latest
+image digest for the specified tag and then update the bundle to reference the image
+by digest instead of the provided tag. This helps to ensure deterministic and
+repeatable bundle execution.
+
 [referenced images]: /author-bundles/#images
 
 ### env

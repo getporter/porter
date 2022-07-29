@@ -607,7 +607,7 @@ The first argument is the name of the claim to create for the installation.
 The claim name defaults to the name of the bundle.
 
 Flags:
-  -c, --cred strings         Credential to use when installing the bundle. 
+  -c, --credential-set strings         Credential to use when installing the bundle. 
   -f, --file string          Path to the bundle file to install.
       --param strings        Define an individual parameter in the form NAME=VALUE.
       --param-file strings   Path to a parameters definition file for the bundle
@@ -914,12 +914,12 @@ we all do this together
 
 ---
 exclude: true
-## Try it out: porter install --cred
+## Try it out: porter install --credential-set
 
 Install the wordpress bundle and pass it the named set of credentials that you generated.
 
 ```
-$ porter install --cred wordpress
+$ porter install --credential-set wordpress
 ```
 
 ---
@@ -928,11 +928,11 @@ exclude: true
 ## Cleanup Wordpress
 
 ```
-$ porter uninstall --cred wordpress
+$ porter uninstall --credential-set wordpress
 ```
 
 ???
-Explain why --cred is required again for uninstall 
+Explain why --credential-set is required again for uninstall 
 
 ---
 name: author

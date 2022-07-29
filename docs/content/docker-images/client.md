@@ -1,9 +1,9 @@
 ---
 title: Porter Client Docker Image
-description: How to use the getporter/porter Docker image
+description: How to use the ghcr.io/getporter/porter Docker image
 ---
 
-The [getporter/porter][porter] Docker image provides the Porter client installed in a
+The [ghcr.io/getporter/porter][porter] Docker image provides the Porter client installed in a
 container. Mixins and plugins are **not** installed by default and must be mounted into /app/.porter.
 
 It has tags that match what is available from our [install](/install/) page:
@@ -29,7 +29,7 @@ docker run -it --rm \
     -v /var/run/docker.sock:/var/run/docker.sock \
     -v `pwd`/hello:/tmp/hello \
     -w /tmp/hello \
-    getporter/porter create
+    ghcr.io/getporter/porter create
 ```
 
 Breaking down the command, here's what it just did:
@@ -54,7 +54,7 @@ docker run -it --rm \
     -v /var/run/docker.sock:/var/run/docker.sock \
     -v `pwd`/hello:/tmp/hello \
     -w /tmp/hello \
-    getporter/porter publish
+    ghcr.io/getporter/porter publish
 ```
 
 ### Install
@@ -90,4 +90,4 @@ NAME      CREATED         MODIFIED        LAST ACTION   LAST STATUS
 hello     2 minutes ago   2 minutes ago   install       success
 ```
 
-[porter]: https://hub.docker.com/r/getporter/porter/tags
+[porter]: https://github.com/getporter/porter/pkgs/container/porter

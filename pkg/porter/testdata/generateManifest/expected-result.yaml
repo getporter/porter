@@ -1,0 +1,36 @@
+schemaVersion: 1.0.0-alpha.1
+name: porter-hello
+version: 0.1.0
+description: "An example Porter configuration"
+registry: "localhost:5000"
+custom:
+  key1: value1
+  key2:
+    nestedKey2: value2
+mixins:
+  - exec
+images:
+  whalesayd:
+    description: "Whalesay as a service"
+    imageType: "docker"
+    repository: "test/whalesayd"
+    digest: sha256:8b92b7269f59e3ed824e811a1ff1ee64f0d44c0218efefada57a4bebc2d7ef6f
+install:
+  - exec:
+      description: "Install Hello World"
+      command: ./helpers.sh
+      arguments:
+        - install
+status:
+  - exec:
+      description: "World Status"
+      command: ./helpers.sh
+      arguments:
+        - status
+uninstall:
+  - exec:
+      description: "Uninstall Hello World"
+      command: ./helpers.sh
+      arguments:
+        - uninstall
+# comments n stuff

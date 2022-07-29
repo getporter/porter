@@ -32,15 +32,13 @@ porter lint [flags]
   -f, --file string     Path to the porter manifest file. Defaults to the bundle in the current directory.
   -h, --help            help for lint
   -o, --output string   Specify an output format.  Allowed values: plaintext, json (default "plaintext")
-  -v, --verbose         Enable verbose logging
 ```
 
 ### Options inherited from parent commands
 
 ```
-      --debug                  Enable debug logging
-      --debug-plugins          Enable plugin debug logging
       --experimental strings   Comma separated list of experimental features to enable. See https://getporter.org/configuration/#experimental-feature-flags for available feature flags.
+      --verbosity string       Threshold for printing messages to the console. Available values are: debug, info, warning, error. (default "info")
 ```
 
 ### SEE ALSO

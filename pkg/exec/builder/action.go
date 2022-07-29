@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"get.porter.sh/porter/pkg/portercontext"
+	"get.porter.sh/porter/pkg/runtime"
 	"get.porter.sh/porter/pkg/tracing"
 	"get.porter.sh/porter/pkg/yaml"
 )
@@ -75,12 +75,12 @@ func unmarshalActionMap(actionMap map[string][]interface{}, builder BuildableAct
 //		 err := yaml.Unmarshal(contents, &action)
 //		 return &action, err
 //	 })
-func LoadAction(ctx context.Context, porterCtx *portercontext.Context, commandFile string, unmarshal func([]byte) (interface{}, error)) error {
+func LoadAction(ctx context.Context, cfg runtime.RuntimeConfig, commandFile string, unmarshal func([]byte) (interface{}, error)) error {
 	//lint:ignore SA4006 ignore unused ctx for now
 	ctx, span := tracing.StartSpan(ctx)
 	defer span.EndSpan()
 
-	contents, err := readInputFromStdinOrFile(porterCtx, commandFile)
+	contents, err := readInputFromStdinOrFile(cfg, commandFile)
 	if err != nil {
 		return span.Error(err)
 	}
@@ -93,14 +93,14 @@ func LoadAction(ctx context.Context, porterCtx *portercontext.Context, commandFi
 	return nil
 }
 
-func readInputFromStdinOrFile(cxt *portercontext.Context, commandFile string) ([]byte, error) {
+func readInputFromStdinOrFile(cfg runtime.RuntimeConfig, commandFile string) ([]byte, error) {
 	var b []byte
 	var err error
 	if commandFile == "" {
-		reader := bufio.NewReader(cxt.In)
+		reader := bufio.NewReader(cfg.In)
 		b, err = ioutil.ReadAll(reader)
 	} else {
-		b, err = cxt.FileSystem.ReadFile(commandFile)
+		b, err = cfg.FileSystem.ReadFile(commandFile)
 	}
 
 	if err != nil {

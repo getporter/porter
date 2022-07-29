@@ -1,9 +1,12 @@
 package main
 
 import (
+	"bytes"
 	"os"
 	"strings"
 	"testing"
+
+	"get.porter.sh/porter/tests"
 
 	"get.porter.sh/porter/pkg/porter"
 	"github.com/spf13/cobra"
@@ -16,14 +19,20 @@ func TestValidateInstallCommand(t *testing.T) {
 		name      string
 		args      string
 		wantError string
+		wantOut   string
 	}{
-		{"no args", "install -r ghcr.io/getporter/examples/porter-hello:v0.2.0", ""},
-		{"invalid param", "install --param A:B -r ghcr.io/getporter/examples/porter-hello:v0.2.0", "invalid parameter (A:B), must be in name=value format"},
+		{"no args", "install -r ghcr.io/getporter/examples/porter-hello:v0.2.0", "", ""},
+		{"invalid param", "install --param A:B -r ghcr.io/getporter/examples/porter-hello:v0.2.0", "invalid parameter (A:B), must be in name=value format", ""},
+		// --cred should still work, but print a message
+		{"old cred flag", "install --cred mycreds -r ghcr.io/getporter/examples/porter-hello:v0.2.0", "", "Flag --cred has been deprecated, please use credential-set instead"},
 	}
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
+			var outBuf bytes.Buffer
 			p := buildRootCommand()
+			p.SetOut(&outBuf)
+			p.SetErr(&outBuf)
 			osargs := strings.Split(tc.args, " ")
 			cmd, args, err := p.Find(osargs)
 			require.NoError(t, err)
@@ -36,6 +45,10 @@ func TestValidateInstallCommand(t *testing.T) {
 				require.NoError(t, err)
 			} else {
 				require.EqualError(t, err, tc.wantError)
+			}
+
+			if tc.wantOut != "" {
+				tests.RequireOutputContains(t, outBuf.String(), tc.wantOut)
 			}
 		})
 	}

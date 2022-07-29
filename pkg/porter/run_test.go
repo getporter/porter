@@ -56,7 +56,7 @@ func TestPorter_defaultDebugToOff(t *testing.T) {
 
 	err := opts.defaultDebug()
 	require.NoError(t, err)
-	assert.False(t, p.Config.Debug)
+	assert.False(t, opts.DebugMode)
 }
 
 func TestPorter_defaultDebugUsesEnvVar(t *testing.T) {
@@ -70,5 +70,5 @@ func TestPorter_defaultDebugUsesEnvVar(t *testing.T) {
 	err := opts.defaultDebug()
 	require.NoError(t, err)
 
-	assert.True(t, p.Config.Debug)
+	assert.True(t, opts.DebugMode)
 }

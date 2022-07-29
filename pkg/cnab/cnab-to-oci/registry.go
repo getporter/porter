@@ -15,7 +15,6 @@ import (
 	"github.com/docker/cli/cli/command"
 	dockerconfig "github.com/docker/cli/cli/config"
 	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/google/go-containerregistry/pkg/crane"
 	"github.com/moby/term"
@@ -177,6 +176,42 @@ func (r *Registry) PushInvocationImage(ctx context.Context, invocationImage stri
 	return dist.Descriptor.Digest, nil
 }
 
+// PullImage pulls an image from an OCI registry.
+func (r *Registry) PullImage(ctx context.Context, imgRef string) error {
+	ctx, log := tracing.StartSpan(ctx)
+	defer log.EndSpan()
+
+	cli, err := docker.GetDockerClient()
+	if err != nil {
+		return log.Error(err)
+	}
+
+	ref, err := cnab.ParseOCIReference(imgRef)
+	if err != nil {
+		return log.Error(err)
+	}
+	// Resolve the Repository name from fqn to RepositoryInfo
+	repoInfo, err := ref.ParseRepositoryInfo()
+	if err != nil {
+		return log.Error(err)
+	}
+	authConfig := command.ResolveAuthConfig(ctx, cli, repoInfo.Index)
+	encodedAuth, err := command.EncodeAuthToBase64(authConfig)
+	if err != nil {
+		return log.Error(fmt.Errorf("failed to serialize docker auth config: %w", err))
+	}
+	options := types.ImagePullOptions{
+		RegistryAuth: encodedAuth,
+	}
+
+	_, err = cli.Client().ImagePull(ctx, imgRef, options)
+	if err != nil {
+		return log.Error(fmt.Errorf("docker pull for image %s failed: %w", imgRef, err))
+	}
+
+	return nil
+}
+
 func (r *Registry) createResolver(insecureRegistries []string) containerdRemotes.Resolver {
 	return remotes.CreateResolver(dockerconfig.LoadDefaultConfigFile(r.Out), insecureRegistries...)
 }
@@ -194,24 +229,27 @@ func (r *Registry) displayEvent(ev remotes.FixupEvent) {
 	}
 }
 
-func (r *Registry) IsImageCached(ctx context.Context, invocationImage string) (bool, error) {
+// GetCachedImage returns information about an image from local docker cache.
+func (r *Registry) GetCachedImage(ctx context.Context, image string) (ImageSummary, error) {
+	ctx, log := tracing.StartSpan(ctx)
+	defer log.EndSpan()
+
 	cli, err := docker.GetDockerClient()
 	if err != nil {
-		return false, err
+		return ImageSummary{}, log.Error(err)
 	}
 
-	imageListOpts := types.ImageListOptions{All: true, Filters: filters.NewArgs(filters.KeyValuePair{Key: "reference", Value: invocationImage})}
-
-	imageSummaries, err := cli.Client().ImageList(ctx, imageListOpts)
+	result, _, err := cli.Client().ImageInspectWithRaw(ctx, image)
 	if err != nil {
-		return false, fmt.Errorf("could not list images: %w", err)
+		return ImageSummary{}, log.Error(fmt.Errorf("failed to find image %s in docker cache: %w", image, err))
 	}
 
-	if len(imageSummaries) == 0 {
-		return false, nil
+	summary, err := NewImageSummary(image, result)
+	if err != nil {
+		return ImageSummary{}, log.Error(fmt.Errorf("failed to extract image %s in docker cache: %w", image, err))
 	}
 
-	return true, nil
+	return summary, nil
 }
 
 func (r *Registry) ListTags(ctx context.Context, repository string) ([]string, error) {
@@ -221,4 +259,69 @@ func (r *Registry) ListTags(ctx context.Context, repository string) ([]string, e
 	}
 
 	return tags, nil
+}
+
+//ImageSummary contains information about an OCI image.
+type ImageSummary struct {
+	types.ImageInspect
+	imageRef cnab.OCIReference
+}
+
+func NewImageSummary(imageRef string, sum types.ImageInspect) (ImageSummary, error) {
+	ref, err := cnab.ParseOCIReference(imageRef)
+	if err != nil {
+		return ImageSummary{}, err
+	}
+
+	img := ImageSummary{
+		imageRef:     ref,
+		ImageInspect: sum,
+	}
+	if img.IsZero() {
+		return ImageSummary{}, fmt.Errorf("invalid image summary for image reference %s", imageRef)
+	}
+
+	return img, nil
+}
+
+func (i ImageSummary) GetImageReference() cnab.OCIReference {
+	return i.imageRef
+}
+
+func (i ImageSummary) IsZero() bool {
+	return i.ID == ""
+}
+
+// Digest returns the image digest for the image reference.
+func (i ImageSummary) Digest() (digest.Digest, error) {
+	if len(i.RepoDigests) == 0 {
+		return "", fmt.Errorf("failed to get digest for image: %s", i.imageRef.String())
+	}
+	var imgDigest digest.Digest
+	for _, rd := range i.RepoDigests {
+		imgRef, err := cnab.ParseOCIReference(rd)
+		if err != nil {
+			return "", err
+		}
+		if imgRef.Repository() != i.imageRef.Repository() {
+			continue
+		}
+
+		if !imgRef.HasDigest() {
+			return "", fmt.Errorf("image summary does not contain digest for image: %s", imgRef.String())
+		}
+
+		imgDigest = imgRef.Digest()
+		break
+	}
+
+	if imgDigest == "" {
+		return "", fmt.Errorf("cannot find image digest for desired repo %s", i.imageRef.String())
+	}
+
+	if err := imgDigest.Validate(); err != nil {
+		return "", err
+	}
+
+	return imgDigest, nil
 }

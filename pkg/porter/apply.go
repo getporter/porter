@@ -11,6 +11,7 @@ import (
 	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/tracing"
 	"go.opentelemetry.io/otel/attribute"
+	"go.uber.org/zap/zapcore"
 )
 
 type ApplyOptions struct {
@@ -60,7 +61,7 @@ func (p *Porter) InstallationApply(ctx context.Context, opts ApplyOptions) error
 		return err
 	}
 
-	if p.Debug {
+	if log.ShouldLog(zapcore.DebugLevel) {
 		// ignoring any error here, printing debug info isn't critical
 		contents, _ := p.FileSystem.ReadFile(opts.File)
 		log.Debug("read input file", attribute.String("contents", string(contents)))

@@ -509,7 +509,7 @@ func (p *Porter) printInstallationInstructionBlock(bun *PrintableBundle, bundleR
 
 	var credentialFlags string
 	if len(bun.Credentials) > 0 {
-		credentialFlags += " --cred mycreds"
+		credentialFlags += " --credential-set mycreds"
 	}
 
 	porterInstallCommand := fmt.Sprintf("porter install%s%s%s", bundleReferenceFlag, requiredParameterFlags, credentialFlags)

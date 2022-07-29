@@ -49,7 +49,7 @@ to validate that you have created it properly.
 ## Runtime
 
 Now when you execute the bundle you can pass the credential set to the command
-with `--cred` or `-c` flags. For example, `porter install --cred github`. Before the
+with `--credential-set` or `-c` flags. For example, `porter install --credential-set github`. Before the
 bundle is executed, Porter users the credential set's mappings to retrieve the
 credential values, and then injects them into the bundle's execution environment 
 as either environment variables or files.

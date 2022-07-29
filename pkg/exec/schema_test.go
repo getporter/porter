@@ -15,7 +15,7 @@ func TestMixin_PrintSchema(t *testing.T) {
 	m := NewTestMixin(t)
 
 	m.PrintSchema()
-	gotSchema := m.TestContext.GetOutput()
+	gotSchema := m.TestConfig.TestContext.GetOutput()
 
 	wantSchema, err := ioutil.ReadFile("schema/exec.json")
 	require.NoError(t, err)

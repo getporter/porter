@@ -1,11 +1,9 @@
-debug = true
-debug-plugins = true
+verbosity = "warn"
 
 default-storage-plugin = "mongodb-docker"
 default-storage = "dev"
 default-secrets-plugin = "azure.keyvault"
 default-secrets = "red-team"
-
 
 # Keep this line because while there is only one build driver now, we may add more in the future
 build-driver = "buildkit"

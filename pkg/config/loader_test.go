@@ -24,7 +24,7 @@ func TestConfig_OverrideWithEnvironmentVariable(t *testing.T) {
 	err := c.Load(context.Background(), nil)
 
 	require.NoError(t, err, "dataloader failed")
-	assert.True(t, c.Debug, "config.Debug was not set correctly")
+	assert.Equal(t, "warn", c.Data.Verbosity, "config.Verbosity was not set correctly")
 	assert.Empty(t, c.Data.DefaultStorage, "The config file value should be overridden by an empty env var")
 }
 

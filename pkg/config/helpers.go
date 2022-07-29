@@ -26,6 +26,7 @@ func NewTestConfig(t *testing.T) *TestConfig {
 	cxt := portercontext.NewTestContext(t)
 	cfg := New()
 	cfg.Context = cxt.Context
+	cfg.Data.Verbosity = "debug"
 	cfg.DataLoader = NoopDataLoader
 	tc := &TestConfig{
 		Config:      cfg,

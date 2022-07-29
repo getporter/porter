@@ -143,7 +143,7 @@ Next, run the following line and select environment variable for where the crede
 ```console
 $ porter credentials generate docker
 ```
-Your credentials are now set up. When you run install or upgrade or uninstall, you need to pass in your credentials using the `-c` or `--cred` flag. 
+Your credentials are now set up. When you run install or upgrade or uninstall, you need to pass in your credentials using the `-c` or `--credential-set` flag. 
 
 When you are ready to install your bundle, run the command below to identify the credentials and give access to the Docker daemon. 
 

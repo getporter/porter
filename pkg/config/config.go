@@ -54,6 +54,9 @@ const (
 	// EnvPorterInstallationName is the name of the environment variable which is injected into the
 	// invocation image, containing the name of the installation.
 	EnvPorterInstallationName = "PORTER_INSTALLATION_NAME"
+
+	// DefaultVerbosity is the default value for the --verbosity flag.
+	DefaultVerbosity = "info"
 )
 
 // These are functions that afero doesn't support, so this lets us stub them out for tests to set the
@@ -101,6 +104,7 @@ func New() *Config {
 
 func (c *Config) NewLogConfiguration() portercontext.LogConfiguration {
 	return portercontext.LogConfiguration{
+		Verbosity:               c.GetVerbosity().Level(),
 		StructuredLogs:          c.Data.Logs.Structured,
 		LogToFile:               c.Data.Logs.LogToFile,
 		LogDirectory:            filepath.Join(c.porterHome, "logs"),
@@ -307,6 +311,11 @@ func (c *Config) GetBuildDriver() string {
 	return BuildDriverBuildkit
 }
 
+// GetVerbosity converts the user-specified verbosity flag into a LogLevel enum.
+func (c *Config) GetVerbosity() LogLevel {
+	return ParseLogLevel(c.Data.Verbosity)
+}
+
 // Load loads the configuration file, rendering any templating used in the config file
 // such as ${secret.NAME} or ${env.NAME}.
 // Pass nil for resolveSecret to skip resolving secrets.
@@ -394,8 +403,8 @@ func (c *Config) loadFinalPass(ctx context.Context, resolveSecret func(ctx conte
 // as environment variables suitable for a remote Porter actor, such as a mixin
 // or plugin. Only a subset of values are exported, such as tracing and logging,
 // and not plugin configuration (since it's not relevant when running a plugin
-// and may contain sensitive data). For example, if Config.Debug is true, it
-// would return PORTER_DEBUG=true in the resulting set of environment variables.
+// and may contain sensitive data). For example, if Config.Data.Logs is set to warn, it
+// would return PORTER_LOGS_LEVEL=warn in the resulting set of environment variables.
 // This is used to pass config from porter to a mixin or plugin.
 func (c *Config) ExportRemoteConfigAsEnvironmentVariables() []string {
 	if c.viper == nil {
@@ -403,7 +412,7 @@ func (c *Config) ExportRemoteConfigAsEnvironmentVariables() []string {
 	}
 
 	// the set of config that is relevant to remote actors
-	keepPrefixes := []string{"debug", "logs", "telemetry"}
+	keepPrefixes := []string{"verbosity", "logs", "telemetry"}
 
 	var env []string
 	for _, key := range c.viper.AllKeys() {
