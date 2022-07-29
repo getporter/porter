@@ -35,6 +35,11 @@ func (t Tester) ApplyTestBundlePrerequisites() {
 }
 
 func (t Tester) MakeTestBundle(name string, ref string) {
+	// Skip if we've already pushed it for another test
+	if _, _, err := t.RunPorter("explain", ref); err == nil {
+		return
+	}
+
 	pwd, _ := os.Getwd()
 	defer t.Chdir(pwd)
 	t.Chdir(filepath.Join(t.RepoRoot, "tests/testdata/", name))
@@ -46,7 +51,14 @@ func (t Tester) MakeTestBundle(name string, ref string) {
 	}
 
 	// Rely on the auto build functionality to avoid long slow rebuilds when nothing has changed
-	t.RequirePorter("publish", "--reference", ref)
+	_, _, err = t.RunPorter("publish", "--reference", ref)
+	if err != nil {
+		if strings.Contains("Publish stopped", err.Error()) {
+			// Don't worry if another test got in a race with you to push the bundle
+			return
+		}
+		require.NoErrorf(t.T, err, "publish of test bundle %s failed", ref)
+	}
 }
 
 func (t Tester) ShowInstallation(namespace string, name string) (porter.DisplayInstallation, error) {

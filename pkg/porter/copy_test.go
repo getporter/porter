@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg/cnab"
+	"get.porter.sh/porter/pkg/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -44,6 +45,8 @@ func TestCopyReferenceOnly(t *testing.T) {
 }
 
 func TestValidateCopyArgs(t *testing.T) {
+
+	cfg := config.NewTestConfig(t)
 
 	tests := []struct {
 		Name          string
@@ -107,7 +110,7 @@ func TestValidateCopyArgs(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		err := test.Opts.Validate()
+		err := test.Opts.Validate(cfg.Config)
 		if test.ExpectError {
 			require.Error(t, err)
 			assert.Contains(t, err.Error(), test.ExpectedError)

@@ -215,3 +215,31 @@ func (b ExtendedBundle) GetReferencedRegistries() ([]string, error) {
 	sort.Strings(regs)
 	return regs, nil
 }
+
+// GetReferencedImages identifies all OCI images used by the bundle
+// from both the invocation images and the referenced images.
+func (b ExtendedBundle) GetReferencedImages() ([]OCIReference, error) {
+	images := make([]OCIReference, len(b.Images)+len(b.InvocationImages))
+
+	for _, ii := range b.InvocationImages {
+		imgRef, err := ParseOCIReference(ii.Image)
+		if err != nil {
+			return nil, fmt.Errorf("could not parse the bundle image %s as an OCI image reference: %w", ii.Image, err)
+		}
+		images = append(images, imgRef)
+	}
+
+	for key, img := range b.Images {
+		imgRef, err := ParseOCIReference(img.Image)
+		if err != nil {
+			return nil, fmt.Errorf("could not parse the referenced image %s (%s) as an OCI image reference: %w", img.Image, key, err)
+		}
+		images = append(images, imgRef)
+	}
+
+	sort.Slice(images, func(i, j int) bool {
+		return images[i].String() < images[j].String()
+	})
+
+	return images, nil
+}

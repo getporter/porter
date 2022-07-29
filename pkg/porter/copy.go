@@ -4,8 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	cnabtooci "get.porter.sh/porter/pkg/cnab/cnab-to-oci"
 	"strings"
+
+	cnabtooci "get.porter.sh/porter/pkg/cnab/cnab-to-oci"
+	"get.porter.sh/porter/pkg/config"
 
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/tracing"
@@ -17,10 +19,11 @@ type CopyOpts struct {
 	sourceRef        cnab.OCIReference
 	Destination      string
 	InsecureRegistry bool
+	Force            bool
 }
 
 // Validate performs validation logic on the options specified for a bundle copy
-func (c *CopyOpts) Validate() error {
+func (c *CopyOpts) Validate(cfg *config.Config) error {
 	var err error
 	if c.Destination == "" {
 		return errors.New("--destination is required")
@@ -33,6 +36,12 @@ func (c *CopyOpts) Validate() error {
 	if c.sourceRef.HasDigest() && isCopyReferenceOnly(c.Destination) {
 		return errors.New("--destination must be tagged reference when --source is digested reference")
 	}
+
+	// Apply the global config for force overwrite
+	if !c.Force && cfg.Data.ForceOverwrite {
+		c.Force = true
+	}
+
 	return nil
 }
 
@@ -67,7 +76,10 @@ func (p *Porter) CopyBundle(ctx context.Context, c *CopyOpts) error {
 	}
 
 	span.Infof("Beginning bundle copy to %s. This may take some time.", destinationRef)
-	regOpts := cnabtooci.RegistryOptions{InsecureRegistry: c.InsecureRegistry}
+	regOpts := cnabtooci.RegistryOptions{
+		InsecureRegistry: c.InsecureRegistry,
+		ForceOverwrite:   c.Force,
+	}
 	bunRef, err := p.Registry.PullBundle(ctx, c.sourceRef, regOpts)
 	if err != nil {
 		return span.Error(fmt.Errorf("unable to pull bundle before copying: %w", err))

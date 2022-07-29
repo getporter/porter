@@ -146,7 +146,7 @@ Note: if overrides for registry/tag/reference are provided, this command only re
   porter bundle publish --registry myregistry.com/myorg
 		`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			return opts.Validate(p.Context)
+			return opts.Validate(p.Config)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return p.Publish(cmd.Context(), opts)
@@ -162,7 +162,11 @@ Note: if overrides for registry/tag/reference are provided, this command only re
 	f.StringVar(&opts.Registry, "registry", "", "Override the registry portion of the bundle reference, e.g. docker.io, myregistry.com/myorg")
 	addReferenceFlag(f, &opts.BundlePullOptions)
 	addInsecureRegistryFlag(f, &opts.BundlePullOptions)
-	// We aren't using addBundlePullFlags because we don't use --force since we are pushing, and that flag isn't needed
+	f.BoolVar(&opts.Force, "force", false, "Force push the bundle to overwrite the previously published bundle")
+	// Allow configuring the --force flag with "force-overwrite" in the configuration file
+	cmd.Flag("force").Annotations = map[string][]string{
+		"viper-key": {"force-overwrite"},
+	}
 
 	return &cmd
 }
