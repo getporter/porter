@@ -14,6 +14,7 @@ func ExamplePorter_install() {
 
 	// Specify any of the command-line arguments to pass to the install command
 	installOpts := porter.NewInstallOptions()
+	// install a bundle with older cnab bundle schema version. It should succeed
 	installOpts.Reference = "ghcr.io/getporter/examples/porter-hello:v0.2.0"
 
 	// Always call validate on the options before executing. There is defaulting
