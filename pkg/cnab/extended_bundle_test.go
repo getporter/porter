@@ -5,6 +5,7 @@ import (
 
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
+	"github.com/cnabio/cnab-go/schema"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -161,4 +162,35 @@ func TestExtendedBundle_IsSensitiveParameter(t *testing.T) {
 	t.Run("is sensitive", func(t *testing.T) {
 		require.True(t, bun.IsSensitiveParameter("foo"))
 	})
+}
+
+func TestValidate(t *testing.T) {
+	testcases := []struct {
+		name    string
+		version string
+		wantErr string
+	}{
+		{name: "older version", version: "1.0.0"},
+		{name: "current version", version: "1.2.0"},
+		{name: "unsupported version", version: "1.3.0", wantErr: "invalid"},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			b := NewBundle(bundle.Bundle{
+				SchemaVersion: schema.Version(tc.version),
+				InvocationImages: []bundle.InvocationImage{
+					{BaseImage: bundle.BaseImage{}},
+				},
+			})
+
+			err := b.Validate()
+			if tc.wantErr != "" {
+				require.ErrorContains(t, err, tc.wantErr)
+				return
+			}
+			require.NoError(t, err)
+
+		})
+	}
 }

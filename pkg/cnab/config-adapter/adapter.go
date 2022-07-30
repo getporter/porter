@@ -18,7 +18,7 @@ import (
 	"github.com/cnabio/cnab-go/bundle/definition"
 )
 
-const SchemaVersion = "v1.0.0"
+const SchemaVersion = "v1.2.0"
 
 // ManifestConverter converts from a porter manifest to a CNAB bundle definition.
 type ManifestConverter struct {
