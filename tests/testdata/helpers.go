@@ -15,7 +15,4 @@ const (
 
 	// MyBunsWithImgReference is the test bundle that contains image reference.
 	MyBunsWithImgReference = "mybun-with-img-reference"
-
-	// MyBunsWithImgReference is the full reference to the test bundle that contains image reference.
-	MyBunsWithImgReferenceRef = "localhost:5000/mybun-with-img-reference:v0.1.0"
 )

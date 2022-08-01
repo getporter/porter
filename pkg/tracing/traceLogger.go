@@ -54,6 +54,8 @@ type TraceLogger interface {
 	// Only log it in the function that generated the error, not when bubbling
 	// it up the call stack.
 	Error(err error, attrs ...attribute.KeyValue) error
+
+	// Errorf logs a message at the error level and marks the current span as failed.
 	Errorf(format string, arg ...interface{}) error
 
 	// ShouldLog returns if the current log level includes the specified level.

@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"strings"
 
+	cnabtooci "get.porter.sh/porter/pkg/cnab/cnab-to-oci"
+
 	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/build"
 	"get.porter.sh/porter/pkg/cnab"
@@ -126,12 +128,14 @@ func (p *Porter) getImageLatestDigest(ctx context.Context, img cnab.OCIReference
 		img = refWithTag
 	}
 
-	err := p.Registry.PullImage(ctx, img.String())
+	// Right now there isn't a way to specify --insecure-registry for build
+	// because the underlying implementation in PullImage doesn't support it.
+	err := p.Registry.PullImage(ctx, img, cnabtooci.RegistryOptions{})
 	if err != nil {
 		return "", err
 	}
 
-	imgSummary, err := p.Registry.GetCachedImage(ctx, img.String())
+	imgSummary, err := p.Registry.GetCachedImage(ctx, img)
 	if err != nil {
 		return "", err
 	}

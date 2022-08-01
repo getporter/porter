@@ -1,43 +1,33 @@
 //go:build integration
-// +build integration
 
 package integration
 
 import (
+	"fmt"
 	"testing"
 
-	"get.porter.sh/porter/pkg/porter"
+	"get.porter.sh/porter/tests"
+	"get.porter.sh/porter/tests/tester"
 	"github.com/stretchr/testify/require"
 )
 
-func TestPublish_BuildWithVersionOverride(t *testing.T) {
-	t.Parallel()
-
-	p := porter.NewTestPorter(t)
-	defer p.Close()
-	ctx := p.SetupIntegrationTest()
+func TestPublish(t *testing.T) {
+	test, err := tester.NewTest(t)
+	defer test.Close()
+	require.NoError(t, err, "test setup failed")
 
 	// Create a bundle
-	err := p.Create()
-	require.NoError(t, err)
+	test.Chdir(test.TestDir)
+	test.RequirePorter("create")
 
 	// Build with version override
-	buildOpts := porter.BuildOptions{}
-	buildOpts.Version = "0.0.0"
+	test.RequirePorter("build", "--version=0.0.0")
 
-	err = buildOpts.Validate(p.Porter)
-	require.NoError(t, err)
-
-	err = p.Build(ctx, buildOpts)
-	require.NoError(t, err)
-
-	publishOpts := porter.PublishOptions{}
-	publishOpts.Registry = "localhost:5000"
-	err = publishOpts.Validate(p.Context)
-	require.NoError(p.T(), err, "validation of publish opts for bundle failed")
+	// Start up an insecure registry with self-signed TLS certificates
+	reg := test.StartTestRegistry(tester.TestRegistryOptions{UseTLS: true})
 
 	// Confirm that publish picks up the version override
-	// (Otherwise, image tagging and publish will fail)
-	err = p.Publish(ctx, publishOpts)
-	require.NoError(p.T(), err, "publish of bundle failed")
+	// Use an insecure registry to validate that we can publish to one
+	_, output := test.RequirePorter("publish", "--registry", reg.String(), "--insecure-registry")
+	tests.RequireOutputContains(t, output, fmt.Sprintf("Bundle %s/porter-hello:v0.0.0 pushed successfully", reg))
 }

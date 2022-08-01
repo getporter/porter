@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -81,6 +82,7 @@ func (p *Porter) Archive(ctx context.Context, opts ArchiveOptions) error {
 		relocationMap:         bundleRef.RelocationMap,
 		destination:           dest,
 		imageStoreConstructor: ctor,
+		insecureRegistry:      opts.InsecureRegistry,
 	}
 	if err := exp.export(); err != nil {
 		return log.Error(err)
@@ -98,6 +100,7 @@ type exporter struct {
 	destination           io.Writer
 	imageStoreConstructor imagestore.Constructor
 	imageStore            imagestore.Store
+	insecureRegistry      bool
 }
 
 func (ex *exporter) export() error {
@@ -127,7 +130,16 @@ func (ex *exporter) export() error {
 		return fmt.Errorf("unable to write relocation-mapping.json in archive: %w", err)
 	}
 
-	ex.imageStore, err = ex.imageStoreConstructor(imagestore.WithArchiveDir(archiveDir), imagestore.WithLogs(ex.logs))
+	transport := http.DefaultTransport.(*http.Transport)
+	if ex.insecureRegistry {
+		transport = transport.Clone()
+		transport.TLSClientConfig.InsecureSkipVerify = true
+	}
+
+	ex.imageStore, err = ex.imageStoreConstructor(
+		imagestore.WithArchiveDir(archiveDir),
+		imagestore.WithLogs(ex.logs),
+		imagestore.WithTransport(transport))
 	if err != nil {
 		return fmt.Errorf("error creating artifacts: %s", err)
 	}

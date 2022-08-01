@@ -166,6 +166,46 @@ func TestExtendedBundle_IsSensitiveParameter(t *testing.T) {
 	})
 }
 
+func TestExtendedBundle_GetReferencedRegistries(t *testing.T) {
+	t.Run("invocation image in different registry", func(t *testing.T) {
+		// Make sure we are looking at the images and the invocation image
+		b := NewBundle(bundle.Bundle{
+			InvocationImages: []bundle.InvocationImage{
+				{BaseImage: bundle.BaseImage{Image: "docker.io/example/mybuns:abc123"}},
+			},
+			Images: map[string]bundle.Image{
+				"nginx": {BaseImage: bundle.BaseImage{Image: "quay.io/library/nginx:latest"}},
+				"redis": {BaseImage: bundle.BaseImage{Image: "quay.io/library/redis:latest"}},
+				"helm":  {BaseImage: bundle.BaseImage{Image: "ghcr.io/library/helm:latest"}},
+			},
+		})
+
+		regs, err := b.GetReferencedRegistries()
+		require.NoError(t, err, "GetReferencedRegistries failed")
+		wantRegs := []string{"docker.io", "ghcr.io", "quay.io"}
+		require.Equal(t, wantRegs, regs, "unexpected registries identified in the bundle")
+	})
+
+	t.Run("invocation image in same registry", func(t *testing.T) {
+		// Make sure that we don't generate duplicate registry entries
+		b := NewBundle(bundle.Bundle{
+			InvocationImages: []bundle.InvocationImage{
+				{BaseImage: bundle.BaseImage{Image: "ghcr.io/example/mybuns:abc123"}},
+			},
+			Images: map[string]bundle.Image{
+				"nginx": {BaseImage: bundle.BaseImage{Image: "quay.io/library/nginx:latest"}},
+				"redis": {BaseImage: bundle.BaseImage{Image: "quay.io/library/redis:latest"}},
+				"helm":  {BaseImage: bundle.BaseImage{Image: "ghcr.io/library/helm:latest"}},
+			},
+		})
+
+		regs, err := b.GetReferencedRegistries()
+		require.NoError(t, err, "GetReferencedRegistries failed")
+		wantRegs := []string{"ghcr.io", "quay.io"}
+		require.Equal(t, wantRegs, regs, "unexpected registries identified in the bundle")
+	})
+}
+
 func TestValidate(t *testing.T) {
 	testcases := []struct {
 		name       string

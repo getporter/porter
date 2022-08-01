@@ -78,7 +78,12 @@ func (p *Porter) IsBundleUpToDate(ctx context.Context, opts bundleFileOptions) (
 				return false, nil
 			}
 
-			cachedImg, err := p.Registry.GetCachedImage(ctx, invocationImage.Image)
+			imgRef, err := cnab.ParseOCIReference(invocationImage.Image)
+			if err != nil {
+				return false, span.Errorf("error parsing %s as an OCI image reference: %w", invocationImage.Image, err)
+			}
+
+			cachedImg, err := p.Registry.GetCachedImage(ctx, imgRef)
 			if err != nil {
 				return false, err
 			}
