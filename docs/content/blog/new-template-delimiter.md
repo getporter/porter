@@ -15,7 +15,7 @@ Previously, the template delimiter used in porter.yaml was {{ }} and we are chan
 
 ## What does this change?
 
-The new delimiter avoids the problem of using curly braces in YAML, which forced all templates to be wrapped in quotes.
+The problem with the old delimiter is that it forced all templates to be wrapped in quotes because curly braces are special characters in YAML.
 The quotes made it impossible to pass a boolean or numeric value to a mixin because the wrapping quotes always forced the value to be a string.
 
 ```yaml
