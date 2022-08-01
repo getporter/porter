@@ -61,6 +61,7 @@ func TestDesiredState(t *testing.T) {
 	})
 
 	// Import an installation, since the file is missing a namespace, it should use the --namespace flag value
+	// This also tests out that --allow-docker-host-access is being defaulted properly from the Porter config file
 	output, stderr, err := test.RunPorter("installation", "apply", "mybuns.yaml", "--namespace", "operator")
 	require.NoError(t, err)
 	require.Contains(t, stderr, "The installation is out-of-sync, running the install action")

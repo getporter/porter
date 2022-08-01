@@ -28,7 +28,18 @@ type Data struct {
 
 	// RuntimeDriver is the driver to use when executing bundles.
 	// Available values are: docker, kubernetes.
+	// It is both a global variable and a command flag because some of our commands, like porter installation apply,
+	// do not expose all the bundle execution flags. This allows us to later manually use the global config value
+	// to ensure that the global config value works even for those commands.
 	RuntimeDriver string `mapstructure:"runtime-driver"`
+
+	// AllowDockerHostAccess grants bundles access to the underlying docker host
+	// upon which it is running so that it can do things like build and run containers.
+	// It's a security risk.
+	// It is both a global variable and a command flag because some of our commands, like porter installation apply,
+	// do not expose all the bundle execution flags. This allows us to later manually use the global config value
+	// to ensure that the global config value works even for those commands.
+	AllowDockerHostAccess bool `mapstructure:"allow-docker-host-access"`
 
 	// DefaultStoragePlugin is the storage plugin to use when no named storage is specified.
 	DefaultStoragePlugin string `mapstructure:"default-storage-plugin"`

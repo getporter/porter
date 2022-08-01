@@ -185,14 +185,54 @@ func TestBundleActionOptions_Validate(t *testing.T) {
 }
 
 func TestBundleExecutionOptions_defaultDriver(t *testing.T) {
-	p := NewTestPorter(t)
-	defer p.Close()
+	t.Run("no driver specified", func(t *testing.T) {
+		p := NewTestPorter(t)
+		defer p.Close()
 
-	opts := NewBundleExecutionOptions()
+		opts := NewBundleExecutionOptions()
 
-	opts.defaultDriver(p.Porter)
+		opts.defaultDriver(p.Porter)
 
-	assert.Equal(t, "docker", opts.Driver)
+		assert.Equal(t, "docker", opts.Driver, "expected the driver value to default to docker")
+	})
+
+	t.Run("driver flag set", func(t *testing.T) {
+		p := NewTestPorter(t)
+		defer p.Close()
+
+		opts := NewBundleExecutionOptions()
+		opts.Driver = "kubernetes"
+
+		opts.defaultDriver(p.Porter)
+
+		assert.Equal(t, "kubernetes", opts.Driver, "expected the --driver flag value to be used")
+	})
+
+	t.Run("allow docker host access defaults to config", func(t *testing.T) {
+		p := NewTestPorter(t)
+		defer p.Close()
+		p.Config.Data.AllowDockerHostAccess = true
+
+		opts := NewBundleExecutionOptions()
+
+		opts.defaultDriver(p.Porter)
+
+		assert.True(t, opts.AllowDockerHostAccess, "expected allow-docker-host-access to inherit the value from the config file when the flag isn't specified")
+	})
+
+	t.Run("allow docker host access flag set", func(t *testing.T) {
+		p := NewTestPorter(t)
+		defer p.Close()
+		p.Config.Data.AllowDockerHostAccess = false
+
+		opts := NewBundleExecutionOptions()
+		opts.AllowDockerHostAccess = true
+
+		opts.defaultDriver(p.Porter)
+
+		assert.True(t, opts.AllowDockerHostAccess, "expected allow-docker-host-access to use the flag value when specified")
+	})
+
 }
 
 func TestBundleExecutionOptions_ParseParamSets(t *testing.T) {

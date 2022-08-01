@@ -61,12 +61,6 @@ func (r *Runtime) newDriver(driverName string, args ActionArguments) (driver.Dri
 }
 
 func (r *Runtime) dockerDriverWithHostAccess(config cnab.Docker) (driver.Driver, error) {
-	const dockerSock = "/var/run/docker.sock"
-
-	if exists, _ := r.FileSystem.Exists(dockerSock); !exists {
-		return nil, fmt.Errorf("allow-docker-host-access was specified but could not detect a local docker daemon running by checking for %s", dockerSock)
-	}
-
 	d := &docker.Driver{}
 
 	// Run the container with privileged access if necessary

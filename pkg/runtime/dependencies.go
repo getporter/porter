@@ -2,7 +2,7 @@ package runtime
 
 import (
 	"fmt"
-	"path/filepath"
+	"path"
 
 	"get.porter.sh/porter/pkg/portercontext"
 )
@@ -12,7 +12,8 @@ const (
 )
 
 func GetDependencyDefinitionPath(alias string) string {
-	return filepath.Join(BundleDependenciesDir, alias, "bundle.json")
+	// Must be a unix path
+	return path.Join(BundleDependenciesDir, alias, "bundle.json")
 }
 
 func GetDependencyDefinition(c *portercontext.Context, alias string) ([]byte, error) {

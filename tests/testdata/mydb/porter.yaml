@@ -19,6 +19,12 @@ outputs:
 mixins:
   - exec
 
+dry-run:
+  - exec:
+      command: echo
+      arguments:
+        - "ready to install mydb"
+
 install:
   - exec:
       command: echo
@@ -28,6 +34,12 @@ install:
       command: echo
       arguments:
         - "database: ${ bundle.parameters.database }"
+
+status:
+  - exec:
+      command: echo
+      arguments:
+        - "mydb is looking great!"
 
 upgrade:
   - exec:
