@@ -6,7 +6,7 @@ description: Installing the Porter client and mixins
 > Join our [mailing list] for announcements of releases and announcements of new features.
 > Connect with other Porter users and contributors on [Slack].
 
-Porter is about to release v1.0.0 and we strongly recommend that you install that version of Porter if you are just starting out.
+Porter is about to release v1.0.0, and we strongly recommend that you install that version of Porter if you are just starting out.
 
 * [Install Porter v1](#recommended)
 
@@ -32,7 +32,7 @@ bundles.
 
 We recommend installing v1 of Porter if you are trying out Porter for the first time.
 Keep in mind that prereleases are not suitable for production workloads.
-Data migrations will not be provided or supported for prereleases until v1.0.0-beta.1 (coming soon).
+Data migrations will not be provided or supported for prereleases before v1.0.0-beta.1.
 Prereleases are intended for you to try out new features in Porter and provide feedback about the direction of the feature.
 
 The examples below use a hard-coded version of the prerelease and there may be a newer version available.
@@ -41,21 +41,21 @@ Set VERSION to the most recent [v1 prerelease] version number.
 **MacOS**
 
 ```bash
-export VERSION="v1.0.0-alpha.22"
+export VERSION="v1.0.0-beta.2"
 curl -L https://cdn.porter.sh/$VERSION/install-mac.sh | bash
 ```
 
 **Linux**
 
 ```bash
-export VERSION="v1.0.0-alpha.22"
+export VERSION="v1.0.0-beta.2"
 curl -L https://cdn.porter.sh/$VERSION/install-linux.sh | bash
 ```
 
 **Windows**
 
 ```powershell
-$VERSION="v1.0.0-alpha.22"
+$VERSION="v1.0.0-beta.2"
 (New-Object System.Net.WebClient).DownloadFile("https://cdn.porter.sh/$VERSION/install-windows.ps1", "install-porter.ps1")
 .\install-porter.ps1 -PORTER_HOME $PORTER_HOME
 ```
