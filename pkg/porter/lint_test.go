@@ -93,9 +93,11 @@ exec:
 	testcases := []struct {
 		format         string
 		wantOutputFile string
+		linterResults  *linter.Results
 	}{
-		{"plaintext", "testdata/lint/results.txt"},
-		{"json", "testdata/lint/results.json"},
+		{"plaintext", "testdata/lint/results.txt", &lintResults},
+		{"json", "testdata/lint/results.json", &lintResults},
+		{"plaintext", "testdata/lint/success.txt", &linter.Results{}},
 	}
 	for _, tc := range testcases {
 		t.Run(tc.format, func(t *testing.T) {
@@ -105,7 +107,7 @@ exec:
 			p.TestConfig.TestContext.AddTestFile("testdata/porter.yaml", "porter.yaml")
 
 			mixins := p.Mixins.(*mixin.TestMixinProvider)
-			mixins.LintResults = lintResults
+			mixins.LintResults = tc.linterResults
 
 			var opts LintOptions
 			opts.RawFormat = tc.format
