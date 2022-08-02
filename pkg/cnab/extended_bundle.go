@@ -14,6 +14,8 @@ import (
 
 const SupportedVersion = "1.0.0 || 1.1.0 || 1.2.0"
 
+var DefaultBundleSchemaVersion = semver.MustParse(string(bundle.GetDefaultSchemaVersion()))
+
 // ExtendedBundle is a bundle that has typed access to extensions declared in the bundle,
 // allowing quick type-safe access to custom extensions from the CNAB spec.
 type ExtendedBundle struct {
@@ -40,7 +42,7 @@ func LoadBundle(c *portercontext.Context, bundleFile string) (ExtendedBundle, er
 	return NewBundle(*bun), nil
 }
 
-func (b ExtendedBundle) Validate() error {
+func (b ExtendedBundle) Validate(cxt *portercontext.Context, strategy schema.CheckStrategy) error {
 	err := b.Bundle.Validate()
 	if err != nil {
 		return fmt.Errorf("invalid bundle: %w", err)
@@ -50,12 +52,16 @@ func (b ExtendedBundle) Validate() error {
 	if err != nil {
 		return fmt.Errorf("invalid supported version %s: %w", SupportedVersion, err)
 	}
-	defaultVersion, err := semver.NewVersion(string(bundle.GetDefaultSchemaVersion()))
-	if err != nil {
+	isWarn, err := schema.ValidateSchemaVersion(strategy, supported, string(b.SchemaVersion), DefaultBundleSchemaVersion)
+	if err != nil && !isWarn {
 		return err
 	}
-	_, err = schema.ValidateSchemaVersion(schema.CheckStrategyExact, supported, string(b.SchemaVersion), defaultVersion)
-	return err
+
+	if isWarn {
+		fmt.Fprintln(cxt.Out, err)
+	}
+
+	return nil
 }
 
 // IsPorterBundle determines if the bundle was created by Porter.

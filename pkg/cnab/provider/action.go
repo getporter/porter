@@ -135,7 +135,7 @@ func (r *Runtime) Execute(ctx context.Context, args ActionArguments) error {
 			return log.Error(errors.New("action is required"))
 		}
 
-		b, err := r.ProcessBundle(args.BundleReference.Definition)
+		b, err := r.ProcessBundle(ctx, args.BundleReference.Definition)
 		if err != nil {
 			return log.Error(err)
 		}
