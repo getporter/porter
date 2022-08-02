@@ -198,7 +198,7 @@ func TestValidate(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
-			require.Contains(t, cxt.GetOutput(), tc.wantErr)
+			require.Contains(t, cxt.GetError(), tc.wantErr)
 		})
 	}
 }

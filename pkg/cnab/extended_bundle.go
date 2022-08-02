@@ -58,7 +58,7 @@ func (b ExtendedBundle) Validate(cxt *portercontext.Context, strategy schema.Che
 	}
 
 	if isWarn {
-		fmt.Fprintln(cxt.Out, err)
+		fmt.Fprintln(cxt.Err, err)
 	}
 
 	return nil
