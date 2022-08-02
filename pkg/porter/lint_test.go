@@ -93,11 +93,11 @@ exec:
 	testcases := []struct {
 		format         string
 		wantOutputFile string
-		linterResults  *linter.Results
+		linterResults  linter.Results
 	}{
-		{"plaintext", "testdata/lint/results.txt", &lintResults},
-		{"json", "testdata/lint/results.json", &lintResults},
-		{"plaintext", "testdata/lint/success.txt", &linter.Results{}},
+		{"plaintext", "testdata/lint/results.txt", lintResults},
+		{"json", "testdata/lint/results.json", lintResults},
+		{"plaintext", "testdata/lint/success.txt", linter.Results{}},
 	}
 	for _, tc := range testcases {
 		t.Run(tc.format, func(t *testing.T) {
