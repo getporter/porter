@@ -20,8 +20,6 @@ func TestHelloBundle(t *testing.T) {
 	defer test.Close()
 	require.NoError(t, err, "test setup failed")
 
-	// make sure the referenced image is not in local image cache
-	shx.RunV("docker", "rmi", "carolynvs/whalesayd")
 	test.PrepareTestBundle()
 	require.NoError(t, shx.Copy("testdata/buncfg.json", test.TestDir))
 	test.Chdir(test.TestDir)
