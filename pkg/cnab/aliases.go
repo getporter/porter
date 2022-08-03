@@ -1,6 +1,7 @@
 package cnab
 
 import (
+	"github.com/cnabio/cnab-go/bundle"
 	cnabclaims "github.com/cnabio/cnab-go/claim"
 	"github.com/cnabio/cnab-go/schema"
 )
@@ -34,7 +35,12 @@ type OutputMetadata = cnabclaims.OutputMetadata
 
 var NewULID = cnabclaims.MustNewULID
 
-// CNABSchemaVersion is the schemaVersion value for CNAB documents such as claims.
-func CNABSchemaVersion() schema.Version {
+// BundleSchemaVersion is the schemaVersion value for CNAB bundle documents.
+func BundleSchemaVersion() schema.Version {
+	return bundle.GetDefaultSchemaVersion()
+}
+
+// ClaimSchemaVersion is the schemaVersion value for CNAB claim documents.
+func ClaimSchemaVersion() schema.Version {
 	return cnabclaims.GetDefaultSchemaVersion()
 }

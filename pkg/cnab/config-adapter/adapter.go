@@ -18,8 +18,6 @@ import (
 	"github.com/cnabio/cnab-go/bundle/definition"
 )
 
-const SchemaVersion = "v1.2.0"
-
 // ManifestConverter converts from a porter manifest to a CNAB bundle definition.
 type ManifestConverter struct {
 	config          *config.Config
@@ -52,7 +50,7 @@ func (c *ManifestConverter) ToBundle(ctx context.Context) (cnab.ExtendedBundle, 
 	}
 
 	b := cnab.NewBundle(bundle.Bundle{
-		SchemaVersion: SchemaVersion,
+		SchemaVersion: cnab.BundleSchemaVersion(),
 		Name:          c.Manifest.Name,
 		Description:   c.Manifest.Description,
 		Version:       c.Manifest.Version,
