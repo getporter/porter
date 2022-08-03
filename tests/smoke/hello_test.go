@@ -21,8 +21,8 @@ func TestHelloBundle(t *testing.T) {
 	defer test.Close()
 	require.NoError(t, err, "test setup failed")
 
-	// Set up a fresh docker environment
-	mgx.Must(shx.RunV("docker", "system", "prune", "--all", "-f"))
+	// make sure the referenced image is not in local image cache
+	mgx.Must(shx.RunV("docker", "rmi", "carolynvs/whalesayd"))
 	test.PrepareTestBundle()
 	require.NoError(t, shx.Copy("testdata/buncfg.json", test.TestDir))
 	test.Chdir(test.TestDir)
