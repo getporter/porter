@@ -23,6 +23,7 @@ import (
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-to-oci/relocation"
 	"github.com/hashicorp/go-multierror"
+	"github.com/opencontainers/go-digest"
 	yaml3 "gopkg.in/yaml.v3"
 )
 
@@ -254,7 +255,7 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 	bun["name"] = m.Name
 	bun["version"] = m.Version
 	bun["description"] = m.Description
-	bun["invocationImage"] = m.Image
+	bun["installerImage"] = m.Image
 	bun["custom"] = m.Custom
 
 	// Make environment variable accessible
@@ -712,6 +713,33 @@ func (m *RuntimeManifest) applyUnboundBundleOutputs(ctx context.Context) error {
 	}
 
 	return log.Error(bigErr.ErrorOrNil())
+}
+
+// ResolveInvocationImage updates the RuntimeManifest to properly reflect the invocation image passed to the bundle via the
+// mounted bundle.json and relocation mapping
+func (m *RuntimeManifest) ResolveInvocationImage(bun cnab.ExtendedBundle, reloMap relocation.ImageRelocationMap) error {
+	for _, image := range bun.InvocationImages {
+		if image.Digest == "" || image.ImageType != "docker" {
+			continue
+		}
+
+		ref, err := cnab.ParseOCIReference(image.Image)
+		if err != nil {
+			return fmt.Errorf("unable to parse invocation image reference: %w", err)
+		}
+		refWithDigest, err := ref.WithDigest(digest.Digest(image.Digest))
+		if err != nil {
+			return fmt.Errorf("unable to get invocation image reference with digest: %w", err)
+		}
+
+		m.Image = refWithDigest.String()
+		break
+	}
+	relocated, ok := reloMap[m.Image]
+	if ok {
+		m.Image = relocated
+	}
+	return nil
 }
 
 // ResolveImages updates the RuntimeManifest to properly reflect the image map passed to the bundle via the

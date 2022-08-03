@@ -34,6 +34,11 @@ install:
       command: echo
       arguments:
         - "database: ${ bundle.parameters.database }"
+  - exec:
+      description: "Debug"
+      command: echo
+      arguments:
+        - "image:${ bundle.installerImage }"
 
 status:
   - exec:
