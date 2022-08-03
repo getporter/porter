@@ -110,7 +110,7 @@ func TestPorter_Build_ChecksManifestSchemaVersion(t *testing.T) {
 			defer p.Close()
 
 			// Make a bundle with the specified schemaVersion
-			p.TestConfig.TestContext.AddTestDirectoryFromRoot("tests/testdata/mybuns", "/")
+			p.TestConfig.TestContext.AddTestDirectoryFromRoot("tests/testdata/mydb", "/")
 			e := yaml.NewEditor(p.Context)
 			require.NoError(t, e.ReadFile("porter.yaml"))
 			require.NoError(t, e.SetValue("schemaVersion", tc.schemaVersion))
