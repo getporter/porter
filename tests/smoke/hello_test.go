@@ -8,7 +8,6 @@ import (
 	"get.porter.sh/porter/tests"
 	"get.porter.sh/porter/tests/testdata"
 	"get.porter.sh/porter/tests/tester"
-	"github.com/carolynvs/magex/mgx"
 	"github.com/carolynvs/magex/shx"
 	"github.com/stretchr/testify/require"
 )
@@ -22,7 +21,7 @@ func TestHelloBundle(t *testing.T) {
 	require.NoError(t, err, "test setup failed")
 
 	// make sure the referenced image is not in local image cache
-	mgx.Must(shx.RunV("docker", "rmi", "carolynvs/whalesayd"))
+	shx.RunV("docker", "rmi", "carolynvs/whalesayd")
 	test.PrepareTestBundle()
 	require.NoError(t, shx.Copy("testdata/buncfg.json", test.TestDir))
 	test.Chdir(test.TestDir)
