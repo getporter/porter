@@ -77,10 +77,10 @@ func TestPorter_Build(t *testing.T) {
 	bun, err := p.CNAB.LoadBundle(build.LOCAL_BUNDLE)
 	require.NoError(t, err)
 
-	assert.Equal(t, bun.Name, "porter-hello")
-	assert.Equal(t, string(bun.SchemaVersion), "v1.2.0")
-	assert.Equal(t, bun.Version, "0.1.0")
-	assert.Equal(t, bun.Description, "An example Porter configuration")
+	assert.Equal(t, "porter-hello", bun.Name)
+	assert.Equal(t, "1.2.0", string(bun.SchemaVersion))
+	assert.Equal(t, "0.1.0", bun.Version)
+	assert.Equal(t, "An example Porter configuration", bun.Description)
 
 	stamp, err := configadapter.LoadStamp(bun)
 	require.NoError(t, err)
