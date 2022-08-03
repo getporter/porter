@@ -8,6 +8,7 @@ import (
 	"get.porter.sh/porter/tests"
 	"get.porter.sh/porter/tests/testdata"
 	"get.porter.sh/porter/tests/tester"
+	"github.com/carolynvs/magex/mgx"
 	"github.com/carolynvs/magex/shx"
 	"github.com/stretchr/testify/require"
 )
@@ -20,6 +21,8 @@ func TestHelloBundle(t *testing.T) {
 	defer test.Close()
 	require.NoError(t, err, "test setup failed")
 
+	// Set up a fresh docker environment
+	mgx.Must(shx.RunV("docker", "system", "prune", "--all", "-f"))
 	test.PrepareTestBundle()
 	require.NoError(t, shx.Copy("testdata/buncfg.json", test.TestDir))
 	test.Chdir(test.TestDir)

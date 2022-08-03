@@ -3,6 +3,7 @@ package cnabtooci
 import (
 	"context"
 	"fmt"
+	"io"
 	"strings"
 
 	"get.porter.sh/porter/pkg/cnab"
@@ -204,9 +205,16 @@ func (r *Registry) PullImage(ctx context.Context, imgRef string) error {
 		RegistryAuth: encodedAuth,
 	}
 
-	_, err = cli.Client().ImagePull(ctx, imgRef, options)
+	rd, err := cli.Client().ImagePull(ctx, imgRef, options)
 	if err != nil {
 		return log.Error(fmt.Errorf("docker pull for image %s failed: %w", imgRef, err))
+	}
+	defer rd.Close()
+
+	// save the image to docker cache
+	_, err = io.ReadAll(rd)
+	if err != nil {
+		return fmt.Errorf("failed to save image %s into local cache: %w", imgRef, err)
 	}
 
 	return nil

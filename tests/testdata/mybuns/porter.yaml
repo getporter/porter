@@ -60,6 +60,12 @@ dependencies:
       parameters:
         database: bigdb
 
+images:
+  whalesayd:
+      description: "Whalesay as a service"
+      imageType: "docker"
+      repository: "carolynvs/whalesayd"
+
 mixins:
   - exec
 
