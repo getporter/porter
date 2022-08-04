@@ -145,7 +145,7 @@ func (r Run) ShouldRecord() bool {
 func (r Run) ToCNAB() cnab.Claim {
 	return cnab.Claim{
 		// CNAB doesn't have the concept of namespace, so we smoosh them together to make a unique name
-		SchemaVersion:   cnab.CNABSchemaVersion(),
+		SchemaVersion:   cnab.ClaimSchemaVersion(),
 		ID:              r.ID,
 		Installation:    r.Namespace + "/" + r.Installation,
 		Revision:        r.Revision,

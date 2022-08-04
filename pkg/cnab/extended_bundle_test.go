@@ -3,8 +3,11 @@ package cnab
 import (
 	"testing"
 
+	"get.porter.sh/porter/pkg/portercontext"
+	porterschema "get.porter.sh/porter/pkg/schema"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
+	"github.com/cnabio/cnab-go/schema"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -161,4 +164,41 @@ func TestExtendedBundle_IsSensitiveParameter(t *testing.T) {
 	t.Run("is sensitive", func(t *testing.T) {
 		require.True(t, bun.IsSensitiveParameter("foo"))
 	})
+}
+
+func TestValidate(t *testing.T) {
+	testcases := []struct {
+		name       string
+		version    string
+		strategy   porterschema.CheckStrategy
+		hasWarning bool
+		wantErr    string
+	}{
+		{name: "older version", strategy: porterschema.CheckStrategyExact, version: "1.0.0"},
+		{name: "current version", strategy: porterschema.CheckStrategyExact, version: "1.2.0"},
+		{name: "unsupported version", strategy: porterschema.CheckStrategyExact, version: "1.3.0", wantErr: "invalid"},
+		{name: "custom version check strategy", strategy: porterschema.CheckStrategyMajor, version: "1.1.1", hasWarning: true, wantErr: "WARNING"},
+	}
+
+	cxt := portercontext.NewTestContext(t)
+	defer cxt.Close()
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			b := NewBundle(bundle.Bundle{
+				SchemaVersion: schema.Version(tc.version),
+				InvocationImages: []bundle.InvocationImage{
+					{BaseImage: bundle.BaseImage{}},
+				},
+			})
+
+			err := b.Validate(cxt.Context, tc.strategy)
+			if tc.wantErr != "" && !tc.hasWarning {
+				require.ErrorContains(t, err, tc.wantErr)
+				return
+			}
+			require.NoError(t, err)
+			require.Contains(t, cxt.GetError(), tc.wantErr)
+		})
+	}
 }

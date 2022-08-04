@@ -195,7 +195,8 @@ func (e *dependencyExecutioner) prepareDependency(ctx context.Context, dep *queu
 	}
 	dep.BundleReference = cachedDep.BundleReference
 
-	err = cachedDep.Definition.Validate()
+	strategy := e.GetSchemaCheckStrategy(ctx)
+	err = cachedDep.Definition.Validate(e.Context, strategy)
 	if err != nil {
 		return span.Error(fmt.Errorf("invalid bundle %s: %w", dep.Alias, err))
 	}
