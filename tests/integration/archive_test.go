@@ -58,6 +58,8 @@ func TestArchive_AirgappedEnvironment(t *testing.T) {
 	localRefWithDigest := fmt.Sprintf("%s@%s", localRegRepo, digest)
 
 	// publish a test bundle that reference the image from the temp registry
+	// make sure the referenced image is not in local image cache
+	shx.RunV("docker", "rmi", localRegRef)
 	originTestBun := filepath.Join(test.RepoRoot, fmt.Sprintf("tests/testdata/%s/porter.yaml", testdata.MyBunsWithImgReference))
 	testBun := filepath.Join(test.TestDir, "mybuns-img-reference.yaml")
 	mgx.Must(shx.Copy(originTestBun, testBun))
