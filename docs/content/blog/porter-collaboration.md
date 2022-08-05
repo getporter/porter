@@ -59,10 +59,10 @@ quickstart and then check out our [learning][learning] page for a high level
 overview of CNAB, demos of bundles in action and more.
 
 [release]: https://github.com/deislabs/porter/releases/tag/v0.23.0-beta.1
-[plugins]: https://porter.sh/plugins/
+[plugins]: /plugins/
 [cnabgo]: https://github.com/cnabio/cnab-go/
-[azure-plugin]: https://porter.sh/plugins/azure/
-[slack]: https://porter.sh/community/#slack
-[install]: https://porter.sh/install/
-[tutorial]: https://porter.sh//plugins/tutorial/
-[learning]: https://porter.sh/learning/
+[azure-plugin]: /plugins/azure/
+[slack]: /community/#slack
+[install]: /install/
+[tutorial]: /plugins/tutorial/
+[learning]: /learning/

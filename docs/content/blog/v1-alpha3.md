@@ -14,7 +14,7 @@ Check out the new features introduced in Porter v1.0.0-alpha.3 such as MongoDB, 
 
 This is a big release for our v1 alpha with LOTS of major changes that we hope make Porter easier to use such as [MongoDB](#mongodb-support), [namespaces](#namespaces), [labels](#labels), [bundle state](#bundle-state), and [credential import](#import-credentials-and-parameter-sets). Our [release notes] have a full accounting of all **fifty-eight** pull requests that were included in this release.
 
-A v1 version of our documentation is available at https://release-v1.porter.sh.
+A v1 version of our documentation is available at https://getporter.org.
 
 [release notes]: https://github.com/getporter/porter/releases/tag/v1.0.0-alpha.3
 
@@ -51,7 +51,7 @@ Resources that are not defined in a namespace are considered global.
 When an installation is defined in a namespace, it can reference a credential or parameter set that is also defined in that namespace or at the global scope.
 Resources defined globally cannot reference other resources that are defined in a namespace.
 
-You can set the current namespace in the [Porter configuration file](https://release-v1.porter.sh/configuration/#config-file) using the namespace setting.
+You can set the current namespace in the [Porter configuration file](https://getporter.org/configuration/#config-file) using the namespace setting.
 
 When an installation references a parameter or credential set, Porter first looks for a resource with that name in the current namespace.
 If one does not exist, Porter then looks for that resource at the global level.

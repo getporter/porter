@@ -3,13 +3,13 @@
 
 [build]
   publish = "docs/public"
-  command = "make docs"
+  command = "make docs BASEURL_FLAG='-b https://v0.getporter.org/'"
 
 [build.environment]
   HUGO_VERSION = "0.78.1"
 
 [context.branch-deploy]
-  command = "make docs BASEURL_FLAG=\"-b $DEPLOY_PRIME_URL\"/"
+  command = "make docs BASEURL_FLAG='-b https://v0.getporter.org/'"
   
 [context.deploy-preview]
   command = "make docs BASEURL_FLAG=\"-b $DEPLOY_PRIME_URL\"/"

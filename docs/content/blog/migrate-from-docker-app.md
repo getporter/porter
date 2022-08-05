@@ -234,7 +234,7 @@ We would love to have you migrate your Docker App to Porter and continue to use 
 Please [let us know][contact] how the migration went (good or bad), and we are happy to help if you have questions, or you would like help with your migration.
 
 [announced]: https://github.com/docker/roadmap/issues/209
-[Install Porter]: https://porter.sh/install/
-[docker-compose mixin]: https://porter.sh/mixins/docker-compose/
-[allow Docker host access]: https://porter.sh/configuration/#allow-docker-host-access
-[contact]: https://porter.sh/community/
+[Install Porter]: /install/
+[docker-compose mixin]: /mixins/docker-compose/
+[allow Docker host access]: /configuration/#allow-docker-host-access
+[contact]: /community/

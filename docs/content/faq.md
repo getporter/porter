@@ -112,7 +112,7 @@ time you want to invest, and what you are starting from.
 
 ## Does Porter have its own registry?
 
-No, Porter does not have a dedicated registry for hosting bundles. You can use any OCI registry, such as DockerHub, with Porter. We have compiled a [list of compatible registries](https://porter.sh/compatible-registries/) that have been tested with Porter.
+No, Porter does not have a dedicated registry for hosting bundles. You can use any OCI registry, such as DockerHub, with Porter. We have compiled a [list of compatible registries](/compatible-registries/) that have been tested with Porter.
 
 ## What do mixins do?
 
