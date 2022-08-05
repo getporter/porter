@@ -5,7 +5,7 @@ description: All the magic of Porter explained
 
 Porter is an open-source project that packages your application, client tools, configuration, and deployment logic into an installer that you can distribute and run with a single command.
 
-> 🚧 This is documentation for the most recent stable Porter release. Go to our [v1 prerelease docs](https://getporter.org/docs/), if you are using a v1 prerelease of Porter.
+> 🛑 This is documentation the v0 Porter release. Go to our [v1 docs](https://getporter.org/docs/), if you are using a v1 release of Porter.
 
 
 ## Explore documentation
