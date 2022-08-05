@@ -10,7 +10,7 @@
 
 # You can control where the mixin's Dockerfile lines are inserted into this file by moving the "# PORTER_*" tokens
 # another location in this file. If you remove a token, its content is appended to the end of the Dockerfile.
-FROM debian:stretch-slim
+FROM --platform=linux/amd64 debian:stretch-slim
 
 # PORTER_INIT
 
