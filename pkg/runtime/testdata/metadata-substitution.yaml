@@ -14,7 +14,7 @@ parameters:
 install:
   - exec:
       description: "Debug"
-      command: "echo \"name:${bundle.name} version:${bundle.version} description:${ bundle.description} image:${ bundle.invocationImage }\""
+      command: "echo \"name:${bundle.name} version:${bundle.version} description:${ bundle.description} image:${ bundle.installerImage }\""
 
 uninstall:
   - exec:

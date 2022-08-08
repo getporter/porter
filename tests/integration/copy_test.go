@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"testing"
 
+	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/tests/testdata"
 	"get.porter.sh/porter/tests/tester"
 	"github.com/carolynvs/magex/shx"
@@ -34,6 +35,11 @@ func TestCopy_UsesRelocationMap(t *testing.T) {
 	origRef := fmt.Sprintf("localhost:%s/orig-mydb:v0.1.1", tempRegistryPort)
 	test.MakeTestBundle(testdata.MyDb, origRef)
 
+	ociRef, err := cnab.ParseOCIReference(origRef)
+	require.NoError(t, err)
+	out, _ := test.RequirePorter("install", "--force", "-r", origRef)
+	require.Contains(t, out, ociRef.Repository())
+
 	// Copy the bundle to the integration test registry
 	copiedRef := "localhost:5000/copy-mydb:v0.1.1"
 	test.RequirePorter("copy", "--source", origRef, "--destination", copiedRef)
@@ -43,6 +49,11 @@ func TestCopy_UsesRelocationMap(t *testing.T) {
 	// Copy the copied bundle to a new location. This will fail if we aren't using the relocation map.
 	finalRef := "localhost:5000/copy-copy-mydb:v0.1.1"
 	test.RequirePorter("copy", "--source", copiedRef, "--destination", finalRef)
+
+	finalOCIRef, err := cnab.ParseOCIReference(finalRef)
+	require.NoError(t, err)
+	finalOut, _ := test.RequirePorter("install", "--force", "-r", finalRef)
+	require.Contains(t, finalOut, finalOCIRef.Repository())
 
 	// Get the original image from the relocation map
 	inspectOutput, _, err := test.RunPorter("inspect", "-r", finalRef, "--output=json")

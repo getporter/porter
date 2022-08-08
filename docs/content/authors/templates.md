@@ -63,7 +63,7 @@ The bundle variable contains data that was declared in the bundle definition (po
 | bundle.name | The bundle name |
 | bundle.description | The bundle description |
 | bundle.version | The bundle version defined in porter.yaml |
-| bundle.invocationImage | (DEPRECATED) The name of the invocation image |
+| bundle.installerImage | The name of the bundle installer image |
 
 #### custom metadata
 

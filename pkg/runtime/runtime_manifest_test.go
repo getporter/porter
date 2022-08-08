@@ -1004,3 +1004,57 @@ install:
 	assert.Equal(t, "foo-value", mixin["someInput"], "expected lower-case foo env var was resolved")
 	assert.Equal(t, "bar-value", mixin["moreInput"], "expected upper-case BAR env var was resolved")
 }
+
+func TestResolveInvocationImage(t *testing.T) {
+	testcases := []struct {
+		name                string
+		bundleInvocationImg bundle.BaseImage
+		relocationMap       relocation.ImageRelocationMap
+		expectedImg         string
+		wantErr             string
+	}{
+		{name: "success with no relocation map",
+			bundleInvocationImg: bundle.BaseImage{Image: "blah/ghost:latest", ImageType: "docker", Digest: "sha256:75c495e5ce9c428d482973d72e3ce9925e1db304a97946c9aa0b540d7537e041"},
+			expectedImg:         "blah/ghost:latest@sha256:75c495e5ce9c428d482973d72e3ce9925e1db304a97946c9aa0b540d7537e041",
+		},
+		{name: "success with relocation map",
+			bundleInvocationImg: bundle.BaseImage{Image: "blah/ghost:latest", ImageType: "docker", Digest: "sha256:75c495e5ce9c428d482973d72e3ce9925e1db304a97946c9aa0b540d7537e041"},
+			relocationMap:       relocation.ImageRelocationMap{"blah/ghost:latest@sha256:75c495e5ce9c428d482973d72e3ce9925e1db304a97946c9aa0b540d7537e041": "relocated-ghost@sha256:75c495e5ce9c428d482973d72e3ce9925e1db304a97946c9aa0b540d7537e041"},
+			expectedImg:         "relocated-ghost@sha256:75c495e5ce9c428d482973d72e3ce9925e1db304a97946c9aa0b540d7537e041",
+		},
+		{name: "success with no update",
+			expectedImg: "test/image:latest",
+		},
+		{name: "failure with invalid digest",
+			bundleInvocationImg: bundle.BaseImage{Image: "blah/ghost:latest", ImageType: "docker", Digest: "123"},
+			wantErr:             "unable to get invocation image reference with digest",
+		},
+	}
+
+	pCtx := portercontext.NewTestContext(t)
+	cfg := NewConfigFor(pCtx.Context)
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+
+			bun := cnab.NewBundle(bundle.Bundle{
+				InvocationImages: []bundle.InvocationImage{
+					{BaseImage: tc.bundleInvocationImg},
+				},
+			})
+			m := &manifest.Manifest{
+				Image: "test/image:latest",
+			}
+			rm := NewRuntimeManifest(cfg, cnab.ActionInstall, m)
+
+			err := rm.ResolveInvocationImage(bun, tc.relocationMap)
+			if tc.wantErr != "" {
+				require.ErrorContains(t, err, tc.wantErr)
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, tc.expectedImg, m.Image)
+		})
+	}
+
+}
