@@ -581,10 +581,15 @@
     },
     "mixins": {
       "items": {
-        "enum": [
-          "exec"
-        ],
-        "type": "string"
+        "oneOf": [
+          {
+            "description": "Declare a mixin without configuration",
+            "enum": [
+              "exec"
+            ],
+            "type": "string"
+          }
+        ]
       },
       "type": "array"
     },

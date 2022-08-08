@@ -321,8 +321,13 @@
     "mixins": {
       "type": "array",
       "items": {
-        "type": "string",
-        "enum": []
+        "oneOf": [
+          {
+            "description": "Declare a mixin without configuration",
+            "type": "string",
+            "enum": []
+          }
+        ]
       }
     },
     "name": {
