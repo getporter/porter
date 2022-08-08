@@ -47,7 +47,7 @@ dockerfile: template.Dockerfile
 It is your responsibility to provide a suitable base image, for example one that has root ssl certificates installed. 
 *You must use a base image that is debian-based, such as debian or ubuntu with apt installed.*
 Mixins assume that apt is available to install packages.
-Porter currently only supports single platform/architecture invocation images, by default it's linux/amd64.
+Porter only supports targeting a single os/architecture when the bundle is built. By default, Porter targets linux/amd64.
 You can change the platform used in the Dockerfile.
 
 # Buildkit
