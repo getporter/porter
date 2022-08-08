@@ -21,23 +21,32 @@ type TestRegistry struct {
 	T           *testing.T
 	ContainerID string
 	Port        string
+
+	// closed tracks if Close has been called so that we only try to close once.
+	closed bool
 }
 
 // String prints the registry URI.
-func (t TestRegistry) String() string {
+func (t *TestRegistry) String() string {
 	return fmt.Sprintf("localhost:%s", t.Port)
 }
 
 // Close stops the registry.
-func (t TestRegistry) Close() {
+func (t *TestRegistry) Close() {
+	// Only call close once
+	if t.closed {
+		return
+	}
+
 	err := shx.RunE("docker", "rm", "-vf", t.ContainerID)
+	t.closed = true
 	assert.NoError(t.T, err)
 }
 
 // StartTestRegistry runs an OCI registry in a container,
 // returning details about the registry.
 // The registry is cleaned up by default when the test completes.
-func (t Tester) StartTestRegistry(opts TestRegistryOptions) TestRegistry {
+func (t Tester) StartTestRegistry(opts TestRegistryOptions) *TestRegistry {
 	cmd := shx.Command("docker", "run", "-d", "--restart=always")
 
 	if opts.Port == nil {
@@ -57,7 +66,7 @@ func (t Tester) StartTestRegistry(opts TestRegistryOptions) TestRegistry {
 	cmd.Args("registry:2")
 
 	var err error
-	reg := TestRegistry{T: t.T}
+	reg := &TestRegistry{T: t.T}
 	reg.ContainerID, err = cmd.OutputE()
 	require.NoError(t.T, err, "Could not start a temporary registry")
 
