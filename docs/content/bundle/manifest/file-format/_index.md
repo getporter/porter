@@ -225,7 +225,7 @@ status:
 | dependencies.requires.parameters | false    | A map of parameter names to their value.                                                                                                                                               |
 | customActions                    | false    | A map of action names to a custom action definition.                                                                                                                                   |
 | customActions.NAME.description   | false    | A description of the action.                                                                                                                                                           |
-| customActions.NAME.modifies      | false    | Specifies if the action will modify resources in any way.                                                                                                                              |
+| customActions.NAME.modifies      | false    | Specifies if the action will modify resources managed by a bundle in any way.                                                                                                          |
 | customActions.NAME.stateless     | false    | Specifies that the action could be run before the bundle is installed and does not require credentials.                                                                                |
 
 ## Next Steps

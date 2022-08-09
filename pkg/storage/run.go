@@ -132,13 +132,21 @@ func (r Run) ShouldRecord() bool {
 	// Assume all actions modify bundle resources, and should be recorded.
 	stateful := true
 	modifies := true
+	hasOutput := false
 
 	if action, err := r.Bundle.GetAction(r.Action); err == nil {
 		modifies = action.Modifies
 		stateful = !action.Stateless
 	}
 
-	return modifies || stateful
+	for _, outputDef := range r.Bundle.Outputs {
+		if outputDef.AppliesTo(r.Action) {
+			hasOutput = true
+			break
+		}
+	}
+
+	return modifies || stateful || hasOutput
 }
 
 // ToCNAB associated with the Run.

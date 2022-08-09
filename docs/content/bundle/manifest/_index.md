@@ -400,21 +400,29 @@ are automatically defaulted, such as `dry-run`, `help`, `log`, and `status`. You
 actions unless you want to change the defaults.
 
 You may want to declare your custom action when the action does not make any changes, and its execution should not 
-be recorded (`stateless: true` and `modifies: false`). The `help` action is supported out-of-the-box by Porter
+be recorded (`stateless: true` and `modifies: false`). An example of usecases is:
+```
+customActions:
+  getLicense:
+    description: "Return the product license information"
+    stateless: true
+    modifies: false
+
+getLicense:
+    exec:
+      command: ./help.sh
+      arguments:
+        - get-license
+      outputs:
+        - name: license
+          regex: 'LICENSE: (.*) \(.*\)'
+```
+The `help` action is supported out-of-the-box by Porter
 and is automatically defaulted to this definition so you do not need to declare it. If you have an action that is 
 similar to `help`, but has a different name, you should declare it in the `customActions` section.
 
-```
-customActions:
-  myhelp:
-    description: "Print a special help message"
-    stateless: true
-    modifies: false
-```
-
 * `description`: Description of the action.
-* `stateless`: Indicates that the action is purely informational, that credentials are not required, 
-   and that Porter should not keep track of when this action was last executed.
+* `stateless`: Indicates that the action is purely informational and can be executed before the install action runs. It also,means that credentials are not required, and that Porter should not keep track of when this action was last executed.
 * `modifies`: Indicates whether this action modifies resources managed by the bundle.
 
 [well-known-actions]: https://github.com/cnabio/cnab-spec/blob/master/804-well-known-custom-actions.md

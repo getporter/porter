@@ -88,6 +88,25 @@ func TestRun_ShouldRecord(t *testing.T) {
 		assert.True(t, r.ShouldRecord())
 	})
 
+	t.Run("has output", func(t *testing.T) {
+		b := bundle.Bundle{
+			Actions: map[string]bundle.Action{
+				"editstuff": {
+					Modifies:  false,
+					Stateless: false,
+				},
+			},
+			Outputs: map[string]bundle.Output{
+				"testdata": {
+					ApplyTo: []string{"editstuff"},
+				},
+			},
+		}
+
+		r := Run{Bundle: b, Action: "editstuff"}
+		assert.True(t, r.ShouldRecord())
+	})
+
 }
 
 func TestRun_TypedParameterValues(t *testing.T) {
