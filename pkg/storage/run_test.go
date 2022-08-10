@@ -88,12 +88,12 @@ func TestRun_ShouldRecord(t *testing.T) {
 		assert.True(t, r.ShouldRecord())
 	})
 
-	t.Run("has output", func(t *testing.T) {
+	t.Run("has user defined output", func(t *testing.T) {
 		b := bundle.Bundle{
 			Actions: map[string]bundle.Action{
 				"editstuff": {
 					Modifies:  false,
-					Stateless: false,
+					Stateless: true,
 				},
 			},
 			Outputs: map[string]bundle.Output{
@@ -105,6 +105,30 @@ func TestRun_ShouldRecord(t *testing.T) {
 
 		r := Run{Bundle: b, Action: "editstuff"}
 		assert.True(t, r.ShouldRecord())
+	})
+
+	t.Run("has only internal bundle level output", func(t *testing.T) {
+		b := bundle.Bundle{
+			Definitions: definition.Definitions{
+				"porter-state": &definition.Schema{
+					Type:            "string",
+					ContentEncoding: "base64",
+					Comment:         cnab.PorterInternal,
+				},
+			},
+			Actions: map[string]bundle.Action{
+				"editstuff": {
+					Modifies:  false,
+					Stateless: true,
+				},
+			},
+			Outputs: map[string]bundle.Output{
+				"porter-state": {Definition: "porter-state"},
+			},
+		}
+
+		r := Run{Bundle: b, Action: "editstuff"}
+		assert.False(t, r.ShouldRecord())
 	})
 
 }

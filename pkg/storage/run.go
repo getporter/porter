@@ -139,8 +139,9 @@ func (r Run) ShouldRecord() bool {
 		stateful = !action.Stateless
 	}
 
+	bun := cnab.ExtendedBundle{Bundle: r.Bundle}
 	for _, outputDef := range r.Bundle.Outputs {
-		if outputDef.AppliesTo(r.Action) {
+		if outputDef.AppliesTo(r.Action) && !bun.IsInternalOutput(outputDef.Definition) {
 			hasOutput = true
 			break
 		}
