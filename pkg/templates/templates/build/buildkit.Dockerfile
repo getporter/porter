@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile-upstream:1.4.0
-FROM debian:stretch-slim
+FROM --platform=linux/amd64 debian:stretch-slim
 
 # PORTER_INIT
 

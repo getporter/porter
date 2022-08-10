@@ -39,7 +39,21 @@ func TestTemplates_GetDockerfile(t *testing.T) {
 	gotTmpl, err := tmpl.GetDockerfile()
 	require.NoError(t, err)
 
-	test.CompareGoldenFile(t, "./templates/build/buildkit.Dockerfile", string(gotTmpl))
+	strTmpl := string(gotTmpl)
+	require.Contains(t, strTmpl, "--platform=linux/amd64", "missing default platform flag")
+	test.CompareGoldenFile(t, "./templates/build/buildkit.Dockerfile", strTmpl)
+}
+
+func TestTemplates_GetDockerfileTemplate(t *testing.T) {
+	c := config.NewTestConfig(t)
+	tmpl := NewTemplates(c.Config)
+
+	gotTmpl, err := tmpl.GetDockerfileTemplate()
+	require.NoError(t, err)
+
+	strTmpl := string(gotTmpl)
+	require.Contains(t, strTmpl, "--platform=linux/amd64", "missing default platform flag")
+	test.CompareGoldenFile(t, "./templates/create/template.buildkit.Dockerfile", strTmpl)
 }
 
 func TestTemplates_GetCredentialSetJSON(t *testing.T) {

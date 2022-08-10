@@ -80,7 +80,7 @@ actions:
       description: World 2.0
 
 /Users/sigje/.porter/mixins/exec/exec build --debug
-FROM debian:stretch
+FROM --platform=linux/amd64 debian:stretch-slim
 
 ARG BUNDLE_DIR
 
@@ -97,7 +97,7 @@ WORKDIR ${BUNDLE_DIR}
 CMD ["/cnab/app/run"]
 
 Writing Dockerfile =======>
-FROM debian:stretch
+FROM --platform=linux/amd64 debian:stretch-slim
 
 ARG BUNDLE_DIR
 
@@ -114,7 +114,7 @@ WORKDIR ${BUNDLE_DIR}
 CMD ["/cnab/app/run"]
 
 Starting Invocation Image Build =======>
-Step 1/9 : FROM debian:stretch
+Step 1/9 : FROM --platform=linux/amd64 debian:stretch-slim
  ---> 5738956efb6b
 Step 2/9 : ARG BUNDLE_DIR
  ---> Using cache
@@ -208,7 +208,7 @@ After copying any mixins to the .cnab directory, a Dockerfile is generated:
 
 ```console
 Generating Dockerfile =======>
-FROM debian:stretch
+FROM --platform=linux/amd64 debian:stretch
 
 ARG BUNDLE_DIR
 
@@ -225,13 +225,13 @@ WORKDIR ${BUNDLE_DIR}
 CMD ["/cnab/app/run"]
 ```
 
-Porter starts the Dockerfile by using a base image. You can customize the base image by specifying a Dockerfile template in the porter.yaml. Next, a set of CA certificates is added.  Next, contents of the current directory are copied into the bundle directory (/cnab/app) in the invocation image. This will include any contributions from the mixin executables. Finally, an entry point that conforms to the CNAB specification is added to the image.
+Porter starts the [Dockerfile](/bundle/custom-dockerfile) by using a base image. You can customize the base image by specifying a Dockerfile template in the porter.yaml. By default, Porter only targets a single os/architecture(linux/amd64) for invocation image. If you want to use other platform, feel free to change the platform flag in the generated Dockerfile template. Next, a set of CA certificates is added.  Next, contents of the current directory are copied into the bundle directory (/cnab/app) in the invocation image. This will include any contributions from the mixin executables. Finally, an entry point that conforms to the CNAB specification is added to the image.
 
 Once this is completed, the image is built:
 
 ```console
 Starting Invocation Image Build =======>
-Step 1/9 : FROM debian:stretch
+Step 1/9 : FROM --platform=linux/amd64 debian:stretch
  ---> 5c43e435cc11
 Step 2/9 : ARG BUNDLE_DIR
  ---> Using cache
@@ -306,7 +306,7 @@ Copying mixins ===>
 Copying mixin helm ===>
 
 Generating Dockerfile =======>
-FROM debian:stretch
+FROM --platform=linux/amd64 debian:stretch-slim
 
 ARG BUNDLE_DIR
 
