@@ -23,7 +23,7 @@ The service is called "Docker Desktop" and is equivalent to double-clicking on t
 There is another service that is "Docker Desktop Service", but that only runs the backend and isn't sufficient for commands like `docker ps` to work.
 Both are needed.
 
-The agent has a custom user defined, porterci, which as been configured with access to the Docker engine.
+The agent has a custom user defined, porterci, which has been configured with access to the Docker engine.
 When the Azure Pipelines agent executes jobs, the jobs run under the porterci user account.
 
 The vm is configured with environment variables and scripts so that Azure Pipelines can manage the virtual machine and start jobs.
