@@ -20,7 +20,6 @@
   * [What is the general code layout?](#what-is-the-general-code-layout)
   * [Logging](#logging)
   * [Breaking Changes](#breaking-changes)
-  * [How to do a release](#how-to-do-a-release)
 * [Infrastructure](#infrastructure)
   * [CDN Setup](#cdn-setup)
   * [Releases](#releases)
@@ -595,19 +594,6 @@ Here are some examples of breaking changes:
 * Flags or behavior of a CLI command changed, such as removing a flag or adding a validation that can result in a hard error, preventing the command from running.
 
 All of Porter's documents have a schemaVersion field and when the schema of the document is changed, the version number should be incremented as well in the default set on new documents, the supported schema version constant in the code, and in the documentation for that document.
-
-## How to do a release
-
-Maintainers should follow the steps below when doing a release for Porterv1:
-
-* Make sure that upstream release/v1 is passing
-* Pull the latest code from the upstream release/v1 branch and check the git logs to make sure the code is up-to-date.
-* Make an annotated tag with git tag -am "" <version> and push it to upstream.
-* Wait for the relelase build in the CI pipeline to finish. The CI pipeline will build and publish binaries for all supported platforms.
-* Go to Porter Github repository and find the newly created release tag. You should see a "auto generate release notes" button to create release notes for the release. For the release note, call out breaking and notable changes and provide installation instructions.
-* Email the mailing list to announce the new release. In your email call out any breaking changes and notable changes in the release. Announcing on Porter slack channel is optional.
-* If there were any issues fixed in the release and someone is waiting for the fix, comment on the issue and tell them it's been fixed in that release and link to the release.
-* If the release has features in it, we would also do a tweet and blog posts but in this case that's not needed
 
 # Infrastructure
 
