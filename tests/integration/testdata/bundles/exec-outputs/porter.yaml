@@ -61,6 +61,12 @@ add-user:
         - add-user
         - "{{ bundle.parameters.username }}"
 
+# normally, test would not persist a run because of how the customActions is configured, but it has a bundle level output so it will be recorded
+customActions:
+  test:
+    stateless: true
+    modifies: false
+
 test:
   - exec:
       description: "Scrape stdout with regex"

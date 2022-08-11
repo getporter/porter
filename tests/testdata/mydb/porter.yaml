@@ -15,6 +15,9 @@ outputs:
   - name: connStr
     type: file
     path: /cnab/app/connection-string.txt
+    applyTo:
+      - install
+      - upgrade
 
 mixins:
   - exec
