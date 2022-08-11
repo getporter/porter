@@ -87,10 +87,18 @@ When you create your first pull request, add your name to the bottom of our
 
 ## Which branch to use
 
-For issues that are in the v1 milestone, your branch should be against the **release/v1** branch.
-When you open the pull request, it should again target the release/v1 branch.
+Unless the issue specifically mentions a branch, please created your feature branch from the release/v1 branch.
 
-For everything else, your branch should be against the **main** branch.
+For example:
+
+```
+# Make sure you have the most recent changes to release/v1
+git checkout release/v1
+git pull
+
+# Create a branch based on release/v1 named MY_FEATURE_BRANCH
+git checkout -b MY_FEATURE_BRANCH
+```
 
 ## When to open a pull request
 
@@ -137,11 +145,9 @@ things, especially refactoring. If you need large refactoring for your change,
 chat with a maintainer first, then do it in a separate PR first without any
 functionality changes.
 
-🎳 Group related changes into commits will help us out a bunch when reviewing!
-For example, when you change dependencies and check in vendor, do that in a
-separate commit.
+🎳 Group related changes into separate commits to make it easier to review. 
 
-😅 Make requested changes in new commits. Please don't ammend or rebase commits
+😅 Make requested changes in new commits. Please don't amend or rebase commits
 that we have already reviewed. When your pull request is ready to merge, you can
 rebase your commits yourself, or we can squash when we merge. Just let us know
 what you are more comfortable with.
