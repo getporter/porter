@@ -110,8 +110,15 @@ of Porter. When you are asked to cut a new release, here is the process:
     ```
 
 1. Generate some release notes and put them into the release on GitHub.
-   Go to Porter Github repository and find the newly created release tag. You should see a
-   "auto generate release notes" button to create release notes for the release. Modify the generated release note to call out any breaking or notable changes in the release.
+   - Go to Porter Github repository and find the newly created release tag. You should see a
+   "auto generate release notes" button to create release notes for the release.
+   - Modify the generated release note to call out any breaking or notable changes in the release.
+   - Include instructions for installing or upgrading to the new release:
+    ```
+      # Install or Upgrade
+      Run (or re-run) the installation from https://getporter.org/install to get the
+    latest version of porter.
+    ```
 1. Announce the new release in the community.
    - Email the [mailing list](https://getporter.org/mailing-list) to announce the release. In your email, call out any breaking or notable changes.
    - Post a message in [Porter's slack channel](https://getporter.org/community/#slack).
