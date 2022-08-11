@@ -22,6 +22,7 @@
   * [Breaking Changes](#breaking-changes)
 * [Infrastructure](#infrastructure)
   * [CDN Setup](#cdn-setup)
+  * [Custom Windows CI Agent](#custom-windows-ci-agent)
   * [Releases](#releases)
 
 ---
@@ -605,6 +606,12 @@ for maintainers.
 See the [CDN Setup Doc][cdn] for details on the services Porter uses to
 host and distribute its release binaries.
 
+## Custom Windows CI Agent
+
+Some of our tests need to run on Windows, like the Smoke Tests - Windows stage of our build pipeline.
+We use a custom Windows agent registered with Azure Pipelines that we build and maintain ourselves.
+See the [Custom Windows CI Agent] documentation for details on how the agent is created and configured.
+
 ## Releases
 
 Our [version strategy] explains how we version the project, when you should expect
@@ -612,3 +619,4 @@ breaking changes in a release, and the process for the v1 release.
 
 [cdn]: https://getporter.org/src/infra/cdn.md
 [version strategy]: https://getporter.org/project/version-strategy/
+[Custom Windows CI Agent]: https://getporter.org/src/infra/custom-windows-ci-agent.md
