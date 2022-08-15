@@ -167,6 +167,19 @@ pygmentsStyle = "friendly"
       identifier = "end-users-configuration"
       weight = 30
       parent = "tasks-end-users"
+    [[menu.main]]
+      name = "Connect to Docker"
+      url = "/end-users/connect-docker/"
+      identifier = "end-users-connect-docker"
+      weight = 31
+      parent = "tasks-end-users"
+    [[menu.main]]
+      name = "Connect to a Registry"
+      url = "/end-users/connect-registry/"
+      identifier = "end-users-connect-registry"
+      weight = 32
+      parent = "tasks-end-users"
+
 
   # Bundle Authors
   [[menu.main]]

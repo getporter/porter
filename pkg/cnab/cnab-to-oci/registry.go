@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net/http"
 	"strings"
 
 	"get.porter.sh/porter/pkg/cnab"
@@ -47,37 +48,38 @@ func NewRegistry(c *portercontext.Context) *Registry {
 }
 
 // PullBundle pulls a bundle from an OCI registry. Returns the bundle, and an optional image relocation mapping, if applicable.
-func (r *Registry) PullBundle(ctx context.Context, ref cnab.OCIReference, insecureRegistry bool) (cnab.BundleReference, error) {
+func (r *Registry) PullBundle(ctx context.Context, ref cnab.OCIReference, opts RegistryOptions) (cnab.BundleReference, error) {
 	ctx, span := tracing.StartSpan(ctx,
 		attribute.String("reference", ref.String()),
-		attribute.Bool("insecure", insecureRegistry),
+		attribute.Bool("insecure", opts.InsecureRegistry),
 	)
 	defer span.EndSpan()
 
 	var insecureRegistries []string
-	if insecureRegistry {
+	if opts.InsecureRegistry {
 		reg := ref.Registry()
 		insecureRegistries = append(insecureRegistries, reg)
 	}
+	resolver := r.createResolver(insecureRegistries)
 
 	if span.ShouldLog(zapcore.DebugLevel) {
 		msg := strings.Builder{}
 		msg.WriteString("Pulling bundle ")
 		msg.WriteString(ref.String())
-		if insecureRegistry {
+		if opts.InsecureRegistry {
 			msg.WriteString(" with --insecure-registry")
 		}
 		span.Debug(msg.String())
 	}
 
-	bun, reloMap, digest, err := remotes.Pull(ctx, ref.Named, r.createResolver(insecureRegistries))
+	bun, reloMap, digest, err := remotes.Pull(ctx, ref.Named, resolver)
 	if err != nil {
-		return cnab.BundleReference{}, fmt.Errorf("unable to pull bundle: %w", err)
+		return cnab.BundleReference{}, span.Errorf("unable to pull bundle: %w", err)
 	}
 
 	invocationImage := bun.InvocationImages[0]
 	if invocationImage.Digest == "" {
-		return cnab.BundleReference{}, NewErrNoContentDigest(invocationImage.Image)
+		return cnab.BundleReference{}, span.Error(NewErrNoContentDigest(invocationImage.Image))
 	}
 
 	bundleRef := cnab.BundleReference{
@@ -90,23 +92,54 @@ func (r *Registry) PullBundle(ctx context.Context, ref cnab.OCIReference, insecu
 	return bundleRef, nil
 }
 
-func (r *Registry) PushBundle(ctx context.Context, bundleRef cnab.BundleReference, insecureRegistry bool) (cnab.BundleReference, error) {
+func (r *Registry) PushBundle(ctx context.Context, bundleRef cnab.BundleReference, opts RegistryOptions) (cnab.BundleReference, error) {
 	ctx, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
 
 	var insecureRegistries []string
-	if insecureRegistry {
-		reg := bundleRef.Reference.Registry()
-		insecureRegistries = append(insecureRegistries, reg)
-	}
+	if opts.InsecureRegistry {
+		// Get all source registries
+		registries, err := bundleRef.Definition.GetReferencedRegistries()
+		if err != nil {
+			return cnab.BundleReference{}, err
+		}
 
+		// Include our destination registry
+		destReg := bundleRef.Reference.Registry()
+		found := false
+		for _, reg := range registries {
+			if destReg == reg {
+				found = true
+			}
+		}
+		if !found {
+			registries = append(registries, destReg)
+		}
+
+		// All registries used should be marked as allowing insecure connections
+		insecureRegistries = registries
+		log.SetAttributes(attribute.String("insecure-registries", strings.Join(registries, ",")))
+	}
 	resolver := r.createResolver(insecureRegistries)
+
+	if log.ShouldLog(zapcore.DebugLevel) {
+		msg := strings.Builder{}
+		msg.WriteString("Pushing bundle ")
+		msg.WriteString(bundleRef.String())
+		if opts.InsecureRegistry {
+			msg.WriteString(" with --insecure-registry")
+		}
+		log.Debug(msg.String())
+	}
 
 	// Initialize the relocation map if necessary
 	if bundleRef.RelocationMap == nil {
 		bundleRef.RelocationMap = make(relocation.ImageRelocationMap)
 	}
-	rm, err := remotes.FixupBundle(context.Background(), &bundleRef.Definition.Bundle, bundleRef.Reference.Named, resolver, remotes.WithEventCallback(r.displayEvent), remotes.WithAutoBundleUpdate(), remotes.WithRelocationMap(bundleRef.RelocationMap))
+	rm, err := remotes.FixupBundle(ctx, &bundleRef.Definition.Bundle, bundleRef.Reference.Named, resolver,
+		remotes.WithEventCallback(r.displayEvent),
+		remotes.WithAutoBundleUpdate(),
+		remotes.WithRelocationMap(bundleRef.RelocationMap))
 	if err != nil {
 		return cnab.BundleReference{}, log.Error(fmt.Errorf("error preparing the bundle with cnab-to-oci before pushing: %w", err))
 	}
@@ -118,44 +151,40 @@ func (r *Registry) PushBundle(ctx context.Context, bundleRef cnab.BundleReferenc
 	}
 	bundleRef.Digest = d.Digest
 
-	fmt.Fprintf(r.Out, "Bundle tag %s pushed successfully, with digest %q\n", bundleRef.Reference, d.Digest)
+	log.Infof("Bundle %s pushed successfully, with digest %q\n", bundleRef.Reference, d.Digest)
 	return bundleRef, nil
 }
 
-// PushInvocationImage pushes the invocation image from the Docker image cache to the specified location
-// the expected format of the invocationImage is REGISTRY/NAME:TAG.
+// PushImage pushes the image from the Docker image cache to the specified location
+// the expected format of the image is REGISTRY/NAME:TAG.
 // Returns the image digest from the registry.
-func (r *Registry) PushInvocationImage(ctx context.Context, invocationImage string) (digest.Digest, error) {
+func (r *Registry) PushImage(ctx context.Context, ref cnab.OCIReference, opts RegistryOptions) (digest.Digest, error) {
 	ctx, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
 
 	cli, err := docker.GetDockerClient()
 	if err != nil {
-		return "", err
+		return "", log.Errorf("error creating a docker client: %w", err)
 	}
 
-	ref, err := cnab.ParseOCIReference(invocationImage)
-	if err != nil {
-		return "", err
-	}
 	// Resolve the Repository name from fqn to RepositoryInfo
 	repoInfo, err := ref.ParseRepositoryInfo()
 	if err != nil {
-		return "", err
+		return "", log.Errorf("error parsing the repository potion of the image reference %s: %w", ref, err)
 	}
 	authConfig := command.ResolveAuthConfig(ctx, cli, repoInfo.Index)
 	encodedAuth, err := command.EncodeAuthToBase64(authConfig)
 	if err != nil {
-		return "", err
+		return "", log.Errorf("error encoding authentication information for the docker client: %w", err)
 	}
 	options := types.ImagePushOptions{
 		RegistryAuth: encodedAuth,
 	}
 
-	fmt.Fprintln(r.Out, "Pushing CNAB invocation image...")
-	pushResponse, err := cli.Client().ImagePush(ctx, invocationImage, options)
+	log.Info("Pushing bundle image...")
+	pushResponse, err := cli.Client().ImagePush(ctx, ref.String(), options)
 	if err != nil {
-		return "", fmt.Errorf("docker push failed: %w", err)
+		return "", log.Errorf("docker push failed: %w", err)
 	}
 	defer pushResponse.Close()
 
@@ -166,19 +195,19 @@ func (r *Registry) PushInvocationImage(ctx context.Context, invocationImage stri
 	err = jsonmessage.DisplayJSONMessagesStream(pushResponse, r.Out, termFd, isTerm, nil)
 	if err != nil {
 		if strings.HasPrefix(err.Error(), "denied") {
-			return "", fmt.Errorf("docker push authentication failed: %w", err)
+			return "", log.Errorf("docker push authentication failed: %w", err)
 		}
-		return "", fmt.Errorf("failed to stream docker push stdout: %w", err)
+		return "", log.Errorf("failed to stream docker push stdout: %w", err)
 	}
-	dist, err := cli.Client().DistributionInspect(ctx, invocationImage, encodedAuth)
+	dist, err := cli.Client().DistributionInspect(ctx, ref.String(), encodedAuth)
 	if err != nil {
-		return "", fmt.Errorf("unable to inspect docker image: %w", err)
+		return "", log.Errorf("unable to inspect docker image: %w", err)
 	}
 	return dist.Descriptor.Digest, nil
 }
 
 // PullImage pulls an image from an OCI registry.
-func (r *Registry) PullImage(ctx context.Context, imgRef string) error {
+func (r *Registry) PullImage(ctx context.Context, ref cnab.OCIReference, opts RegistryOptions) error {
 	ctx, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
 
@@ -187,10 +216,6 @@ func (r *Registry) PullImage(ctx context.Context, imgRef string) error {
 		return log.Error(err)
 	}
 
-	ref, err := cnab.ParseOCIReference(imgRef)
-	if err != nil {
-		return log.Error(err)
-	}
 	// Resolve the Repository name from fqn to RepositoryInfo
 	repoInfo, err := ref.ParseRepositoryInfo()
 	if err != nil {
@@ -205,6 +230,7 @@ func (r *Registry) PullImage(ctx context.Context, imgRef string) error {
 		RegistryAuth: encodedAuth,
 	}
 
+	imgRef := ref.String()
 	rd, err := cli.Client().ImagePull(ctx, imgRef, options)
 	if err != nil {
 		return log.Error(fmt.Errorf("docker pull for image %s failed: %w", imgRef, err))
@@ -238,8 +264,9 @@ func (r *Registry) displayEvent(ev remotes.FixupEvent) {
 }
 
 // GetCachedImage returns information about an image from local docker cache.
-func (r *Registry) GetCachedImage(ctx context.Context, image string) (ImageSummary, error) {
-	ctx, log := tracing.StartSpan(ctx)
+func (r *Registry) GetCachedImage(ctx context.Context, ref cnab.OCIReference) (ImageSummary, error) {
+	image := ref.String()
+	ctx, log := tracing.StartSpan(ctx, attribute.String("reference", image))
 	defer log.EndSpan()
 
 	cli, err := docker.GetDockerClient()
@@ -260,16 +287,29 @@ func (r *Registry) GetCachedImage(ctx context.Context, image string) (ImageSumma
 	return summary, nil
 }
 
-func (r *Registry) ListTags(ctx context.Context, repository string) ([]string, error) {
-	tags, err := crane.ListTags(repository)
+func (r *Registry) ListTags(ctx context.Context, ref cnab.OCIReference, opts RegistryOptions) ([]string, error) {
+	// Get the fully-qualified repository name, including docker.io (required by crane)
+	repository := ref.Named.Name()
+
+	//lint:ignore SA4006 ignore unused context for now
+	ctx, span := tracing.StartSpan(ctx, attribute.String("repository", repository))
+	defer span.EndSpan()
+
+	var listOpts []crane.Option
+	if opts.InsecureRegistry {
+		transport := GetInsecureRegistryTransport()
+		listOpts = append(listOpts, crane.WithTransport(transport))
+	}
+
+	tags, err := crane.ListTags(repository, listOpts...)
 	if err != nil {
-		return nil, fmt.Errorf("error listing tags for %s: %w", repository, err)
+		return nil, span.Errorf("error listing tags for %s: %w", repository, err)
 	}
 
 	return tags, nil
 }
 
-//ImageSummary contains information about an OCI image.
+// ImageSummary contains information about an OCI image.
 type ImageSummary struct {
 	types.ImageInspect
 	imageRef cnab.OCIReference
@@ -332,4 +372,13 @@ func (i ImageSummary) Digest() (digest.Digest, error) {
 	}
 
 	return imgDigest, nil
+}
+
+// GetInsecureRegistryTransport returns a copy of the default http transport
+// with InsecureSkipVerify set so that we can use it with insecure registries.
+func GetInsecureRegistryTransport() *http.Transport {
+	skipTLS := http.DefaultTransport.(*http.Transport)
+	skipTLS = skipTLS.Clone()
+	skipTLS.TLSClientConfig.InsecureSkipVerify = true
+	return skipTLS
 }

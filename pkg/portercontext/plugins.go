@@ -49,5 +49,5 @@ func (z zapToHclog) Write(p []byte) (n int, err error) {
 	default:
 		z.logger.Info(msg)
 	}
-	return len(msg), nil
+	return len(p), nil
 }

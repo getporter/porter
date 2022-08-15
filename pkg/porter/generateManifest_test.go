@@ -3,6 +3,7 @@ package porter
 import (
 	"context"
 	"errors"
+	"fmt"
 	"path/filepath"
 	"testing"
 
@@ -74,7 +75,7 @@ func Test_generateInternalManifest(t *testing.T) {
 			require.NoError(t, err)
 
 			if tc.wantErr != "" {
-				p.TestRegistry.MockPullImage = mockPullImage
+				p.TestRegistry.MockPullImage = mockPullImageFailure
 			}
 
 			err = p.generateInternalManifest(context.Background(), tc.opts)
@@ -93,32 +94,32 @@ func Test_generateInternalManifest(t *testing.T) {
 	}
 }
 
-func mockPullImage(ctx context.Context, image string) error {
-	return errors.New("failed to pull image")
+func mockPullImageFailure(ctx context.Context, ref cnab.OCIReference, opts cnabtooci.RegistryOptions) error {
+	return fmt.Errorf("failed to pull image %s", ref)
 }
 
-func mockGetCachedImage(ctx context.Context, image string) (cnabtooci.ImageSummary, error) {
+func mockGetCachedImage(ctx context.Context, ref cnab.OCIReference) (cnabtooci.ImageSummary, error) {
 	sum := types.ImageInspect{
 		ID:          "test-id",
 		RepoDigests: []string{"test/whalesayd@sha256:8b92b7269f59e3ed824e811a1ff1ee64f0d44c0218efefada57a4bebc2d7ef6f"},
 	}
-	return cnabtooci.NewImageSummary(image, sum)
+	return cnabtooci.NewImageSummary(ref.String(), sum)
 }
 
 func Test_getImageLatestDigest(t *testing.T) {
-	defaultMockGetCachedImage := func(ctx context.Context, image string) (cnabtooci.ImageSummary, error) {
+	defaultMockGetCachedImage := func(ctx context.Context, ref cnab.OCIReference) (cnabtooci.ImageSummary, error) {
 		sum := types.ImageInspect{
 			ID:          "test-id",
 			RepoDigests: []string{"test/repo@sha256:8b92b7269f59e3ed824e811a1ff1ee64f0d44c0218efefada57a4bebc2d7ef6f"},
 		}
-		return cnabtooci.NewImageSummary(image, sum)
+		return cnabtooci.NewImageSummary(ref.String(), sum)
 	}
 
 	testcases := []struct {
 		name               string
 		imgRef             string
-		mockGetCachedImage func(ctx context.Context, image string) (cnabtooci.ImageSummary, error)
-		mockPullImage      func(ctx context.Context, image string) error
+		mockGetCachedImage func(ctx context.Context, ref cnab.OCIReference) (cnabtooci.ImageSummary, error)
+		mockPullImage      func(ctx context.Context, ref cnab.OCIReference, opts cnabtooci.RegistryOptions) error
 		wantErr            string
 		wantDigest         string
 	}{{
@@ -128,9 +129,7 @@ func Test_getImageLatestDigest(t *testing.T) {
 	}, {
 		name:   "non-default image tag",
 		imgRef: "test/repo:v0.1.0",
-		mockPullImage: func(ctx context.Context, image string) error {
-			ref, err := cnab.ParseOCIReference(image)
-			require.NoError(t, err)
+		mockPullImage: func(ctx context.Context, ref cnab.OCIReference, opts cnabtooci.RegistryOptions) error {
 			require.True(t, ref.HasTag())
 			require.Equal(t, "v0.1.0", ref.Tag())
 			return nil
@@ -139,7 +138,7 @@ func Test_getImageLatestDigest(t *testing.T) {
 	}, {
 		name:   "failure",
 		imgRef: "test/repo",
-		mockGetCachedImage: func(ctx context.Context, image string) (cnabtooci.ImageSummary, error) {
+		mockGetCachedImage: func(ctx context.Context, ref cnab.OCIReference) (cnabtooci.ImageSummary, error) {
 			return cnabtooci.ImageSummary{}, errors.New("failed to get cached image")
 		},
 		wantErr: "failed to get cached image",

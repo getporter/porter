@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	cnabtooci "get.porter.sh/porter/pkg/cnab/cnab-to-oci"
 	"strings"
 
 	"get.porter.sh/porter/pkg/cnab"
@@ -66,13 +67,15 @@ func (p *Porter) CopyBundle(ctx context.Context, c *CopyOpts) error {
 	}
 
 	span.Infof("Beginning bundle copy to %s. This may take some time.", destinationRef)
-	bunRef, err := p.Registry.PullBundle(ctx, c.sourceRef, c.InsecureRegistry)
+	regOpts := cnabtooci.RegistryOptions{InsecureRegistry: c.InsecureRegistry}
+	bunRef, err := p.Registry.PullBundle(ctx, c.sourceRef, regOpts)
 	if err != nil {
 		return span.Error(fmt.Errorf("unable to pull bundle before copying: %w", err))
 	}
 
 	bunRef.Reference = destinationRef
-	_, err = p.Registry.PushBundle(context.Background(), bunRef, c.InsecureRegistry)
+
+	_, err = p.Registry.PushBundle(ctx, bunRef, regOpts)
 	if err != nil {
 		return span.Error(fmt.Errorf("unable to copy bundle to new location: %w", err))
 	}

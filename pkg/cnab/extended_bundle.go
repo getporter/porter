@@ -3,6 +3,7 @@ package cnab
 import (
 	"encoding/json"
 	"fmt"
+	"sort"
 
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/schema"
@@ -184,4 +185,33 @@ func WriteParameterToString(paramName string, value interface{}) (string, error)
 	}
 
 	return string(contents), nil
+}
+
+// GetReferencedRegistries identifies all OCI registries used by the bundle
+// from both the invocation image and the referenced images.
+func (b ExtendedBundle) GetReferencedRegistries() ([]string, error) {
+	regMap := make(map[string]struct{})
+	for _, ii := range b.InvocationImages {
+		imgRef, err := ParseOCIReference(ii.Image)
+		if err != nil {
+			return nil, fmt.Errorf("could not parse the bundle image %s as an OCI image reference: %w", ii.Image, err)
+		}
+
+		regMap[imgRef.Registry()] = struct{}{}
+	}
+
+	for key, img := range b.Images {
+		imgRef, err := ParseOCIReference(img.Image)
+		if err != nil {
+			return nil, fmt.Errorf("could not parse the referenced image %s (%s) as an OCI image reference: %w", img.Image, key, err)
+		}
+		regMap[imgRef.Registry()] = struct{}{}
+	}
+
+	regs := make([]string, 0, len(regMap))
+	for reg := range regMap {
+		regs = append(regs, reg)
+	}
+	sort.Strings(regs)
+	return regs, nil
 }

@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -13,6 +14,7 @@ import (
 
 	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/cnab"
+	cnabtooci "get.porter.sh/porter/pkg/cnab/cnab-to-oci"
 	"get.porter.sh/porter/pkg/tracing"
 	"github.com/carolynvs/aferox"
 	"github.com/cnabio/cnab-go/bundle"
@@ -81,6 +83,7 @@ func (p *Porter) Archive(ctx context.Context, opts ArchiveOptions) error {
 		relocationMap:         bundleRef.RelocationMap,
 		destination:           dest,
 		imageStoreConstructor: ctor,
+		insecureRegistry:      opts.InsecureRegistry,
 	}
 	if err := exp.export(); err != nil {
 		return log.Error(err)
@@ -98,6 +101,7 @@ type exporter struct {
 	destination           io.Writer
 	imageStoreConstructor imagestore.Constructor
 	imageStore            imagestore.Store
+	insecureRegistry      bool
 }
 
 func (ex *exporter) export() error {
@@ -127,7 +131,17 @@ func (ex *exporter) export() error {
 		return fmt.Errorf("unable to write relocation-mapping.json in archive: %w", err)
 	}
 
-	ex.imageStore, err = ex.imageStoreConstructor(imagestore.WithArchiveDir(archiveDir), imagestore.WithLogs(ex.logs))
+	var transport *http.Transport
+	if ex.insecureRegistry {
+		transport = cnabtooci.GetInsecureRegistryTransport()
+	} else {
+		transport = http.DefaultTransport.(*http.Transport)
+	}
+
+	ex.imageStore, err = ex.imageStoreConstructor(
+		imagestore.WithArchiveDir(archiveDir),
+		imagestore.WithLogs(ex.logs),
+		imagestore.WithTransport(transport))
 	if err != nil {
 		return fmt.Errorf("error creating artifacts: %s", err)
 	}

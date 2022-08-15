@@ -129,5 +129,5 @@ stages:
               version: "$(GOVERSION)"
           - script: go run mage.go ConfigureAgent UseXBuildBinaries
             displayName: "Configure Agent"
-          - script: mage TestSmoke
+          - script: mage -v TestSmoke
             displayName: "Run Smoke Tests"

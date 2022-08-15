@@ -11,6 +11,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	cnabtooci "get.porter.sh/porter/pkg/cnab/cnab-to-oci"
+
 	"get.porter.sh/porter/pkg/build"
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/manifest"
@@ -108,7 +110,7 @@ func (p *Porter) publishFromFile(ctx context.Context, opts PublishOptions) error
 	canonicalManifest := filepath.Join(opts.Dir, build.LOCAL_MANIFEST)
 	canonicalExists, err := p.FileSystem.Exists(canonicalManifest)
 	if err != nil {
-		return err
+		return log.Errorf("error reading manifest %s: %w", canonicalManifest)
 	}
 
 	var m *manifest.Manifest
@@ -149,7 +151,7 @@ func (p *Porter) publishFromFile(ctx context.Context, opts PublishOptions) error
 	// empty, which is fine - we still may need to pick up tag and/or registry
 	// overrides
 	if err := m.SetInvocationImageAndReference(opts.Reference); err != nil {
-		return fmt.Errorf("unable to set invocation image name and reference: %w", err)
+		return log.Errorf("unable to set invocation image name and reference: %w", err)
 	}
 
 	if origInvImg != m.Image {
@@ -161,18 +163,24 @@ func (p *Porter) publishFromFile(ctx context.Context, opts PublishOptions) error
 	}
 
 	if m.Reference == "" {
-		return errors.New("porter.yaml is missing registry or reference values needed for publishing")
+		return log.Errorf("porter.yaml is missing registry or reference values needed for publishing")
 	}
 
 	var bundleRef cnab.BundleReference
 	bundleRef.Reference, err = cnab.ParseOCIReference(m.Reference)
 	if err != nil {
-		return fmt.Errorf("invalid reference %s: %w", m.Reference, err)
+		return log.Errorf("invalid reference %s: %w", m.Reference, err)
 	}
 
-	bundleRef.Digest, err = p.Registry.PushInvocationImage(ctx, m.Image)
+	imgRef, err := cnab.ParseOCIReference(m.Image)
 	if err != nil {
-		return fmt.Errorf("unable to push CNAB invocation image %q: %w", m.Image, err)
+		return log.Errorf("error parsing %s as an OCI reference: %w", m.Image, err)
+	}
+
+	regOpts := cnabtooci.RegistryOptions{InsecureRegistry: opts.InsecureRegistry}
+	bundleRef.Digest, err = p.Registry.PushImage(ctx, imgRef, regOpts)
+	if err != nil {
+		return log.Errorf("unable to push CNAB invocation image %q: %w", m.Image, err)
 	}
 
 	bundleRef.Definition, err = p.rewriteBundleWithInvocationImageDigest(ctx, m, bundleRef.Digest)
@@ -180,7 +188,7 @@ func (p *Porter) publishFromFile(ctx context.Context, opts PublishOptions) error
 		return err
 	}
 
-	bundleRef, err = p.Registry.PushBundle(ctx, bundleRef, opts.InsecureRegistry)
+	bundleRef, err = p.Registry.PushBundle(ctx, bundleRef, regOpts)
 	if err != nil {
 		return err
 	}
@@ -207,7 +215,7 @@ func (p *Porter) publishFromArchive(ctx context.Context, opts PublishOptions) er
 	source := p.FileSystem.Abs(opts.ArchiveFile)
 	tmpDir, err := p.FileSystem.TempDir("", "porter")
 	if err != nil {
-		return fmt.Errorf("error creating temp directory for archive extraction: %w", err)
+		return log.Errorf("error creating temp directory for archive extraction: %w", err)
 	}
 	defer p.FileSystem.RemoveAll(tmpDir)
 
@@ -218,14 +226,19 @@ func (p *Porter) publishFromArchive(ctx context.Context, opts PublishOptions) er
 
 	bundleRef.Reference = opts.GetReference()
 
-	fmt.Fprintf(p.Out, "Beginning bundle publish to %s. This may take some time.\n", opts.Reference)
+	log.Infof("Beginning bundle publish to %s. This may take some time.", opts.Reference)
 
 	// Use the ggcr client to read the extracted OCI Layout
 	extractedDir := filepath.Join(tmpDir, strings.TrimSuffix(filepath.Base(source), ".tgz"))
-	client := ggcr.NewRegistryClient()
+	var clientOpts []ggcr.Option
+	if opts.InsecureRegistry {
+		skipTLS := cnabtooci.GetInsecureRegistryTransport()
+		clientOpts = append(clientOpts, ggcr.WithTransport(skipTLS))
+	}
+	client := ggcr.NewRegistryClient(clientOpts...)
 	layout, err := client.ReadLayout(filepath.Join(extractedDir, "artifacts/layout"))
 	if err != nil {
-		return fmt.Errorf("failed to parse OCI Layout from archive %s: %w", opts.ArchiveFile, err)
+		return log.Errorf("failed to parse OCI Layout from archive %s: %w", opts.ArchiveFile, err)
 	}
 
 	// Push updated images (renamed based on provided bundle tag) with same digests
@@ -233,7 +246,7 @@ func (p *Porter) publishFromArchive(ctx context.Context, opts PublishOptions) er
 	for _, invImg := range bundleRef.Definition.InvocationImages {
 		relocMap, err := p.relocateImage(bundleRef.RelocationMap, layout, invImg.Image, opts.Reference)
 		if err != nil {
-			return err
+			return log.Error(err)
 		}
 
 		bundleRef.RelocationMap = relocMap
@@ -241,20 +254,22 @@ func (p *Porter) publishFromArchive(ctx context.Context, opts PublishOptions) er
 	for _, img := range bundleRef.Definition.Images {
 		relocMap, err := p.relocateImage(bundleRef.RelocationMap, layout, img.Image, opts.Reference)
 		if err != nil {
-			return err
+			return log.Error(err)
 		}
 
 		bundleRef.RelocationMap = relocMap
 	}
 
-	bundleRef, err = p.Registry.PushBundle(ctx, bundleRef, opts.InsecureRegistry)
+	regOpts := cnabtooci.RegistryOptions{InsecureRegistry: opts.InsecureRegistry}
+	bundleRef, err = p.Registry.PushBundle(ctx, bundleRef, regOpts)
 	if err != nil {
 		return err
 	}
 
 	// Perhaps we have a cached version of a bundle with the same tag, previously pulled
 	// If so, replace it, as it is most likely out-of-date per this publish
-	return p.refreshCachedBundle(bundleRef)
+	err = p.refreshCachedBundle(bundleRef)
+	return log.Error(err)
 }
 
 // extractBundle extracts a bundle using the provided opts and returns the extracted bundle
