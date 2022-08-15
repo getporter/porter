@@ -12,7 +12,6 @@ import (
 
 // TestRegistryOptions controls how a test registry is run.
 type TestRegistryOptions struct {
-	Port   *int
 	UseTLS bool
 }
 
@@ -47,11 +46,7 @@ func (t *TestRegistry) Close() {
 // returning details about the registry.
 // The registry is cleaned up by default when the test completes.
 func (t Tester) StartTestRegistry(opts TestRegistryOptions) *TestRegistry {
-	cmd := shx.Command("docker", "run", "-d", "--restart=always")
-
-	if opts.Port == nil {
-		cmd.Args("-P")
-	}
+	cmd := shx.Command("docker", "run", "-d", "-P", "--restart=always")
 
 	if opts.UseTLS {
 		certDir := filepath.Join(t.RepoRoot, "tests/integration/testdata/certs")
@@ -73,12 +68,9 @@ func (t Tester) StartTestRegistry(opts TestRegistryOptions) *TestRegistry {
 	// Automatically close the registry when the test is done
 	t.T.Cleanup(reg.Close)
 
-	if opts.Port == nil {
-		// Get the port that it is running on
-		reg.Port, err = shx.OutputE("docker", "inspect", reg.ContainerID, "--format", `{{ (index (index .NetworkSettings.Ports "5000/tcp") 0).HostPort }}`)
-		require.NoError(t.T, err, "Could not get the published port of the temporary registry")
-
-	}
+	// Get the port that it is running on
+	reg.Port, err = shx.OutputE("docker", "inspect", reg.ContainerID, "--format", `{{ (index (index .NetworkSettings.Ports "5000/tcp") 0).HostPort }}`)
+	require.NoError(t.T, err, "Could not get the published port of the temporary registry")
 
 	return reg
 }

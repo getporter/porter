@@ -14,6 +14,7 @@ import (
 
 	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/cnab"
+	cnabtooci "get.porter.sh/porter/pkg/cnab/cnab-to-oci"
 	"get.porter.sh/porter/pkg/tracing"
 	"github.com/carolynvs/aferox"
 	"github.com/cnabio/cnab-go/bundle"
@@ -130,10 +131,11 @@ func (ex *exporter) export() error {
 		return fmt.Errorf("unable to write relocation-mapping.json in archive: %w", err)
 	}
 
-	transport := http.DefaultTransport.(*http.Transport)
+	var transport *http.Transport
 	if ex.insecureRegistry {
-		transport = transport.Clone()
-		transport.TLSClientConfig.InsecureSkipVerify = true
+		transport = cnabtooci.GetInsecureRegistryTransport()
+	} else {
+		transport = http.DefaultTransport.(*http.Transport)
 	}
 
 	ex.imageStore, err = ex.imageStoreConstructor(

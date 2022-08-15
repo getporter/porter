@@ -297,8 +297,7 @@ func (r *Registry) ListTags(ctx context.Context, ref cnab.OCIReference, opts Reg
 
 	var listOpts []crane.Option
 	if opts.InsecureRegistry {
-		transport := http.DefaultTransport.(*http.Transport).Clone()
-		transport.TLSClientConfig.InsecureSkipVerify = true
+		transport := GetInsecureRegistryTransport()
 		listOpts = append(listOpts, crane.WithTransport(transport))
 	}
 
@@ -373,4 +372,13 @@ func (i ImageSummary) Digest() (digest.Digest, error) {
 	}
 
 	return imgDigest, nil
+}
+
+// GetInsecureRegistryTransport returns a copy of the default http transport
+// with InsecureSkipVerify set so that we can use it with insecure registries.
+func GetInsecureRegistryTransport() *http.Transport {
+	skipTLS := http.DefaultTransport.(*http.Transport)
+	skipTLS = skipTLS.Clone()
+	skipTLS.TLSClientConfig.InsecureSkipVerify = true
+	return skipTLS
 }

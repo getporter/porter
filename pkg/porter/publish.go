@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"net/http"
 	"path"
 	"path/filepath"
 	"strings"
@@ -233,9 +232,7 @@ func (p *Porter) publishFromArchive(ctx context.Context, opts PublishOptions) er
 	extractedDir := filepath.Join(tmpDir, strings.TrimSuffix(filepath.Base(source), ".tgz"))
 	var clientOpts []ggcr.Option
 	if opts.InsecureRegistry {
-		skipTLS := http.DefaultTransport.(*http.Transport)
-		skipTLS = skipTLS.Clone()
-		skipTLS.TLSClientConfig.InsecureSkipVerify = true
+		skipTLS := cnabtooci.GetInsecureRegistryTransport()
 		clientOpts = append(clientOpts, ggcr.WithTransport(skipTLS))
 	}
 	client := ggcr.NewRegistryClient(clientOpts...)
