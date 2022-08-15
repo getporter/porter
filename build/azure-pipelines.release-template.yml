@@ -107,7 +107,7 @@ stages:
               version: ${{parameters.goVersion}}
           - script: go run mage.go ConfigureAgent SetBinExecutable
             displayName: "Configure Agent"
-          - script: go run mage.go TestIntegration
+          - script: mage -v TestIntegration
             displayName: "Integration Test"
       - job: smoke_test
         displayName: "Run smoke tests on"
@@ -137,7 +137,7 @@ stages:
               version: ${{parameters.goVersion}}
           - script: go run mage.go ConfigureAgent UseXBuildBinaries
             displayName: "Setup Bin"
-          - script: mage TestSmoke
+          - script: mage -v TestSmoke
             displayName: "Run Smoke Tests"
 
   - stage: Publish

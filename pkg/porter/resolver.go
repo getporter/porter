@@ -30,10 +30,15 @@ func (r *BundleResolver) Resolve(ctx context.Context, opts BundlePullOptions) (c
 		}
 	}
 
-	bundleRef, err := r.Registry.PullBundle(ctx, opts.GetReference(), opts.InsecureRegistry)
+	regOpts := cnabtooci.RegistryOptions{InsecureRegistry: opts.InsecureRegistry}
+	bundleRef, err := r.Registry.PullBundle(ctx, opts.GetReference(), regOpts)
 	if err != nil {
 		return cache.CachedBundle{}, err
 	}
 
-	return r.Cache.StoreBundle(bundleRef)
+	cb, err := r.Cache.StoreBundle(bundleRef)
+	if err != nil {
+		return cache.CachedBundle{}, log.Errorf("error storing the bundle %s in the Porter bundle cache: %w", bundleRef, err)
+	}
+	return cb, nil
 }

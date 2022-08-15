@@ -29,7 +29,7 @@ func TestBundleResolver_Resolve_ForcePull(t *testing.T) {
 	}
 
 	pulled := false
-	testReg.MockPullBundle = func(ref cnab.OCIReference, insecureRegistry bool) (cnab.BundleReference, error) {
+	testReg.MockPullBundle = func(ctx context.Context, ref cnab.OCIReference, opts cnabtooci.RegistryOptions) (cnab.BundleReference, error) {
 		pulled = true
 		return cnab.BundleReference{Reference: ref}, nil
 	}
@@ -62,7 +62,7 @@ func TestBundleResolver_Resolve_CacheHit(t *testing.T) {
 	}
 
 	pulled := false
-	testReg.MockPullBundle = func(ref cnab.OCIReference, insecureRegistry bool) (cnab.BundleReference, error) {
+	testReg.MockPullBundle = func(ctx context.Context, ref cnab.OCIReference, opts cnabtooci.RegistryOptions) (cnab.BundleReference, error) {
 		pulled = true
 		return cnab.BundleReference{Reference: ref}, nil
 	}
@@ -91,7 +91,7 @@ func TestBundleResolver_Resolve_CacheMiss(t *testing.T) {
 	}
 
 	pulled := false
-	testReg.MockPullBundle = func(ref cnab.OCIReference, insecureRegistry bool) (cnab.BundleReference, error) {
+	testReg.MockPullBundle = func(ctx context.Context, ref cnab.OCIReference, options cnabtooci.RegistryOptions) (cnab.BundleReference, error) {
 		pulled = true
 		return cnab.BundleReference{Reference: ref}, nil
 	}

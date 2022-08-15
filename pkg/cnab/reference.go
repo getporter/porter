@@ -82,7 +82,7 @@ func (r OCIReference) String() string {
 }
 
 // Repository portion of the reference.
-// Example: ghcr.io/getporter/mybuns:v0.1.1 returns getporter/mybuns
+// Example: docker.io/getporter/mybuns:v0.1.1 returns getporter/mybuns
 func (r OCIReference) Repository() string {
 	if r.Named == nil {
 		return ""

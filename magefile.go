@@ -232,7 +232,7 @@ func TestSmoke() error {
 	}
 
 	// Adding -count to prevent go from caching the test results.
-	return shx.Command("go", "test", "-count=1", "-tags", "smoke", v, "./tests/smoke/...").CollapseArgs().RunV()
+	return shx.Command("go", "test", "-count=1", "-timeout=20m", "-tags", "smoke", v, "./tests/smoke/...").CollapseArgs().RunV()
 }
 
 func getRegistry() string {
