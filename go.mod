@@ -3,6 +3,10 @@ module get.porter.sh/porter
 go 1.18
 
 replace (
+	// insecure-registry
+	// See https://github.com/cnabio/image-relocation/pull/3
+	github.com/cnabio/image-relocation => github.com/carolynvs/image-relocation v0.0.0-20220815195241-0f884dd250f5
+
 	// a dependency of buildx (github.com/tonistiigi/fsutil) relies on an untagged version of Docker on the master branch
 	github.com/docker/cli => github.com/docker/cli v20.10.3-0.20220226190722-8667ccd1124c+incompatible
 	github.com/docker/docker => github.com/docker/docker v20.10.3-0.20220121014307-40bb9831756f+incompatible
@@ -25,8 +29,9 @@ require (
 	github.com/carolynvs/datetime-printer v0.2.0
 	github.com/carolynvs/magex v0.8.0
 	github.com/cbroglie/mustache v1.0.1
-	github.com/cnabio/cnab-go v0.23.5
+	github.com/cnabio/cnab-go v0.24.0
 	github.com/cnabio/cnab-to-oci v0.3.6
+	github.com/cnabio/image-relocation v0.0.0-20220815190842-cd2f11ecad88
 	github.com/containerd/containerd v1.6.6
 	github.com/davecgh/go-spew v1.1.1
 	github.com/docker/buildx v0.8.1
@@ -53,7 +58,6 @@ require (
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/osteele/liquid v1.3.0
 	github.com/pelletier/go-toml v1.9.4
-	github.com/pivotal/image-relocation v0.0.0-20191111101224-e94aff6df06c
 	github.com/spf13/afero v1.5.1
 	github.com/spf13/cobra v1.2.1
 	github.com/spf13/pflag v1.0.5
@@ -214,7 +218,7 @@ require (
 	golang.org/x/crypto v0.0.0-20220214200702-86341886e292 // indirect
 	golang.org/x/net v0.0.0-20220225172249-27dd8689420f // indirect
 	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8 // indirect
-	golang.org/x/sys v0.0.0-20220412211240-33da011f77ad // indirect
+	golang.org/x/sys v0.0.0-20220811171246-fbc7d0a398ab // indirect
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/time v0.0.0-20220210224613-90d013bbcef8 // indirect

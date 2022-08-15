@@ -2,6 +2,7 @@ package tester
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -10,6 +11,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// TestRegistryHostAlias is the environment variable that contains a pre-configured
+// hostname alias that can be used to access localhost. This environment variable
+// is only set in on the linux and macos CI agents so that we can test a variant
+// of communicating with a registry that is unsecured but is not obviously "localhost" or 127.0.0.1.
+const TestRegistryAlias = "PORTER_TEST_REGISTRY_ALIAS"
+
 // TestRegistryOptions controls how a test registry is run.
 type TestRegistryOptions struct {
 	UseTLS bool
@@ -17,17 +24,22 @@ type TestRegistryOptions struct {
 
 // TestRegistry is a temporary registry that is stopped when the test completes.
 type TestRegistry struct {
-	T           *testing.T
-	ContainerID string
-	Port        string
+	t           *testing.T
+	containerID string
+
+	// port that the registry is running on
+	port string
 
 	// closed tracks if Close has been called so that we only try to close once.
 	closed bool
+
+	// hostname is the address or name used to reference the registry
+	hostname string
 }
 
 // String prints the registry URI.
 func (t *TestRegistry) String() string {
-	return fmt.Sprintf("localhost:%s", t.Port)
+	return fmt.Sprintf("%s:%s", t.hostname, t.port)
 }
 
 // Close stops the registry.
@@ -37,9 +49,9 @@ func (t *TestRegistry) Close() {
 		return
 	}
 
-	err := shx.RunE("docker", "rm", "-vf", t.ContainerID)
+	err := shx.RunE("docker", "rm", "-vf", t.containerID)
 	t.closed = true
-	assert.NoError(t.T, err)
+	assert.NoError(t.t, err)
 }
 
 // StartTestRegistry runs an OCI registry in a container,
@@ -61,16 +73,23 @@ func (t Tester) StartTestRegistry(opts TestRegistryOptions) *TestRegistry {
 	cmd.Args("registry:2")
 
 	var err error
-	reg := &TestRegistry{T: t.T}
-	reg.ContainerID, err = cmd.OutputE()
+	reg := &TestRegistry{t: t.T}
+	reg.containerID, err = cmd.OutputE()
 	require.NoError(t.T, err, "Could not start a temporary registry")
 
 	// Automatically close the registry when the test is done
 	t.T.Cleanup(reg.Close)
 
 	// Get the port that it is running on
-	reg.Port, err = shx.OutputE("docker", "inspect", reg.ContainerID, "--format", `{{ (index (index .NetworkSettings.Ports "5000/tcp") 0).HostPort }}`)
+	reg.port, err = shx.OutputE("docker", "inspect", reg.containerID, "--format", `{{ (index (index .NetworkSettings.Ports "5000/tcp") 0).HostPort }}`)
 	require.NoError(t.T, err, "Could not get the published port of the temporary registry")
+
+	// Determine if we have a hostname alias set up for the registry
+	hostname := os.Getenv(TestRegistryAlias)
+	if hostname == "" {
+		hostname = "localhost"
+	}
+	reg.hostname = hostname
 
 	return reg
 }

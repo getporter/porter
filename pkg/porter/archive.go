@@ -147,11 +147,11 @@ func (ex *exporter) export() error {
 	}
 
 	if err := ex.prepareArtifacts(ex.bundle); err != nil {
-		return fmt.Errorf("error preparing artifacts: %s", err)
+		return fmt.Errorf("error preparing bundle artifact: %s", err)
 	}
 
 	if err := ex.chtimes(archiveDir); err != nil {
-		return fmt.Errorf("error preparing artifacts: %s", err)
+		return fmt.Errorf("error clearing timestamps on the bundle artifact: %s", err)
 	}
 
 	tarOptions := &archive.TarOptions{
