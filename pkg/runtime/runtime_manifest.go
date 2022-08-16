@@ -525,7 +525,6 @@ func (m *RuntimeManifest) createOutputsDir() error {
 // declared location in the bundle.
 func (m *RuntimeManifest) unpackStateBag(ctx context.Context) error {
 	log := tracing.LoggerFromContext(ctx)
-
 	_, err := m.config.FileSystem.Open(statePath)
 	if os.IsNotExist(err) || len(m.StateBag) == 0 {
 		m.debugf(log, "No existing bundle state to unpack")
@@ -566,6 +565,10 @@ func (m *RuntimeManifest) unpackStateBag(ctx context.Context) error {
 
 	gzr, err := gzip.NewReader(stateArchive)
 	if err != nil {
+		if err == io.ErrUnexpectedEOF {
+			log.Debug("statefile exists but is empty")
+			return nil
+		}
 		return log.Error(fmt.Errorf("could not create a new gzip reader for the statefile: %w", err))
 	}
 	defer gzr.Close()
