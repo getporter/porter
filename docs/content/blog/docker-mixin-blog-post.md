@@ -139,9 +139,10 @@ credentials:
   - name: DOCKER_PASSWORD
     env: DOCKER_PASSWORD
 ``` 
-Next, run the following line and select environment variable for where the credentials will come from.
+Next, run the following commands and edit the file with where the credentials will come from.
 ```console
-$ porter credentials generate docker
+$ porter credentials create docker.json
+$ porter credentials apply docker.json
 ```
 Your credentials are now set up. When you run install or upgrade or uninstall, you need to pass in your credentials using the `-c` or `--credential-set` flag. 
 

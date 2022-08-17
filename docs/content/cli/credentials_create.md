@@ -18,10 +18,9 @@ porter credentials create [flags]
 ### Examples
 
 ```
-
-		porter credentials create FILE [--output yaml|json]
-		porter credentials create credential-set.json
-		porter credentials create credential-set --output yaml
+  porter credentials create FILE [--output yaml|json]
+  porter credentials create credential-set.json
+  porter credentials create credential-set --output yaml
 ```
 
 ### Options

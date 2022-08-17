@@ -22,7 +22,7 @@
         {
             "name": "parameter-env",
             "source": {
-                "ENV": "PARAMETER_ENV"
+                "env": "PARAMETER_ENV"
             }
         },
         {
