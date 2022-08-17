@@ -3,10 +3,6 @@ module get.porter.sh/porter
 go 1.18
 
 replace (
-	// insecure-registry
-	// See https://github.com/cnabio/image-relocation/pull/3
-	github.com/cnabio/image-relocation => github.com/carolynvs/image-relocation v0.0.0-20220815195241-0f884dd250f5
-
 	// a dependency of buildx (github.com/tonistiigi/fsutil) relies on an untagged version of Docker on the master branch
 	github.com/docker/cli => github.com/docker/cli v20.10.3-0.20220226190722-8667ccd1124c+incompatible
 	github.com/docker/docker => github.com/docker/docker v20.10.3-0.20220121014307-40bb9831756f+incompatible
@@ -31,7 +27,7 @@ require (
 	github.com/cbroglie/mustache v1.0.1
 	github.com/cnabio/cnab-go v0.24.0
 	github.com/cnabio/cnab-to-oci v0.3.6
-	github.com/cnabio/image-relocation v0.0.0-20220815190842-cd2f11ecad88
+	github.com/cnabio/image-relocation v0.9.0
 	github.com/containerd/containerd v1.6.6
 	github.com/davecgh/go-spew v1.1.1
 	github.com/docker/buildx v0.8.1
