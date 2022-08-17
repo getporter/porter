@@ -99,4 +99,30 @@ func TestLinter_Lint(t *testing.T) {
 		require.Equal(t, mixins.LintResults, results, "unexpected lint results")
 	})
 
+	t.Run("linter runs successfully if parameter is not a reserved name", func(t *testing.T) {
+		cxt := portercontext.NewTestContext(t)
+		mixins := mixin.NewTestMixinProvider()
+		l := New(cxt.Context, mixins)
+		param := map[string]manifest.ParameterDefinition {
+			"A": {
+				Name: "successful",
+			},
+		}
+
+		m := &manifest.Manifest{
+			Parameters: param,
+		}
+		mixins.LintResults = Results{
+			{
+				Level: LevelWarning,
+				Code:  "exec-101",
+				Title: "warning stuff isn't working",
+			},
+		}
+
+		results, err := l.Lint(ctx, m)
+		require.NoError(t, err, "Lint failed")
+		require.Len(t, results, 0, "linter should have returned 1 result")
+	})
+
 }
