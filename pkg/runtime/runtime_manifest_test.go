@@ -63,6 +63,62 @@ install:
 	err = rm.Initialize(ctx)
 	require.NoError(t, err)
 }
+func TestStateBagUnpack(t *testing.T) {
+	ctx := context.Background()
+	pCtx := portercontext.NewTestContext(t)
+	pCtx.Setenv("PERSON", "Ralpha")
+
+	mContent := `schemaVersion: 1.0.0-alpha.2
+parameters:
+- name: person
+- name: place
+  applyTo: [install]
+
+install:
+- mymixin:
+    Parameters:
+      Thing: ${ bundle.parameters.person }
+state:
+- name: foo
+  path: foo/state.json
+`
+	tests := []struct {
+		name         string
+		stateContent string
+	}{
+		{
+			name:         "/porter/state.tgz is empty file",
+			stateContent: "",
+		},
+		{
+			name:         "/porter/state.tgz has newline only",
+			stateContent: "\n",
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			rm := runtimeManifestFromStepYaml(t, pCtx, mContent)
+			require.NoError(t, pCtx.FileSystem.WriteFile("/porter/state.tgz", []byte(test.stateContent), pkg.FileModeWritable))
+			s := rm.Install[0]
+
+			err := rm.ResolveStep(ctx, 0, s)
+			require.NoError(t, err)
+
+			require.IsType(t, map[string]interface{}{}, s.Data["mymixin"], "Data.mymixin has incorrect type")
+			mixin := s.Data["mymixin"].(map[string]interface{})
+			require.IsType(t, mixin["Parameters"], map[string]interface{}{}, "Data.mymixin.Parameters has incorrect type")
+			pms := mixin["Parameters"].(map[string]interface{})
+			require.IsType(t, "string", pms["Thing"], "Data.mymixin.Parameters.Thing has incorrect type")
+			val := pms["Thing"].(string)
+
+			assert.Equal(t, "Ralpha", val)
+			assert.NotContains(t, "place", pms, "parameters that don't apply to the current action should not be resolved")
+
+			err = rm.Initialize(ctx)
+			require.NoError(t, err)
+		})
+	}
+}
 
 func TestResolvePathParam(t *testing.T) {
 	ctx := context.Background()

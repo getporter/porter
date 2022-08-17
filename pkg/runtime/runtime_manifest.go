@@ -565,7 +565,7 @@ func (m *RuntimeManifest) unpackStateBag(ctx context.Context) error {
 
 	gzr, err := gzip.NewReader(stateArchive)
 	if err != nil {
-		if err == io.ErrUnexpectedEOF {
+		if err == io.ErrUnexpectedEOF || err == io.EOF {
 			log.Debug("statefile exists but is empty")
 			return nil
 		}
