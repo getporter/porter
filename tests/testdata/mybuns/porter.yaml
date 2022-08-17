@@ -60,6 +60,13 @@ dependencies:
       parameters:
         database: bigdb
 
+images:
+  whalesayd:
+    description: "Whalesay as a service"
+    imageType: "docker"
+    repository: carolynvs/whalesayd
+    tag: "latest"
+
 mixins:
   - exec
 
@@ -102,7 +109,6 @@ install:
       outputs:
         - name: result
           regex: "(.*)"
-
 
 dry-run:
   - exec:

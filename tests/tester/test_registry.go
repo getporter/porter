@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TestRegistryHostAlias is the environment variable that contains a pre-configured
+// TestRegistryAlias is the environment variable that contains a pre-configured
 // hostname alias that can be used to access localhost. This environment variable
 // is only set in on the linux and macos CI agents so that we can test a variant
 // of communicating with a registry that is unsecured but is not obviously "localhost" or 127.0.0.1.
@@ -19,7 +19,12 @@ const TestRegistryAlias = "PORTER_TEST_REGISTRY_ALIAS"
 
 // TestRegistryOptions controls how a test registry is run.
 type TestRegistryOptions struct {
+	// UseTLS indicates the registry should use http, secured with a self-signed certificate.
 	UseTLS bool
+
+	// UseAlias indicates that when the TestRegistryAlias environment variable is set,
+	// the registry address use the hostname alias, and not localhost.
+	UseAlias bool
 }
 
 // TestRegistry is a temporary registry that is stopped when the test completes.
@@ -85,7 +90,10 @@ func (t Tester) StartTestRegistry(opts TestRegistryOptions) *TestRegistry {
 	require.NoError(t.T, err, "Could not get the published port of the temporary registry")
 
 	// Determine if we have a hostname alias set up for the registry
-	hostname := os.Getenv(TestRegistryAlias)
+	var hostname string
+	if opts.UseAlias {
+		hostname = os.Getenv(TestRegistryAlias)
+	}
 	if hostname == "" {
 		hostname = "localhost"
 	}
