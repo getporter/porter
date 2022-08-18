@@ -1,8 +1,11 @@
 package runtime
 
 import (
+	"archive/tar"
+	"compress/gzip"
 	"context"
 	"fmt"
+	"io"
 	"sort"
 	"testing"
 
@@ -12,6 +15,7 @@ import (
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/tests"
+	"github.com/carolynvs/aferox"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/cnabio/cnab-to-oci/relocation"
@@ -26,6 +30,68 @@ func runtimeManifestFromStepYaml(t *testing.T, pCtx *portercontext.TestContext, 
 	require.NoError(t, err, "ReadManifest failed")
 	cfg := NewConfigFor(pCtx.Context)
 	return NewRuntimeManifest(cfg, cnab.ActionInstall, m)
+}
+
+func createArchive(fs aferox.Aferox, files []string, buf io.Writer) error {
+	// Create new Writers for gzip and tar
+	// These writers are chained. Writing to the tar writer will
+	// write to the gzip writer which in turn will write to
+	// the "buf" writer
+	gw := gzip.NewWriter(buf)
+	defer gw.Close()
+	tw := tar.NewWriter(gw)
+	defer tw.Close()
+
+	// Iterate over files and add them to the tar archive
+	for _, file := range files {
+		err := addToArchive(fs, tw, file)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func addToArchive(fs aferox.Aferox, tw *tar.Writer, filename string) error {
+	// Open the file which will be written into the archive
+	file, err := fs.Open(filename)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	// Get FileInfo about our file providing file size, mode, etc.
+	info, err := file.Stat()
+	if err != nil {
+		return err
+	}
+
+	// Create a tar Header from the FileInfo data
+	header, err := tar.FileInfoHeader(info, info.Name())
+	if err != nil {
+		return err
+	}
+
+	// Use full path as name (FileInfoHeader only takes the basename)
+	// If we don't do this the directory strucuture would
+	// not be preserved
+	// https://golang.org/src/archive/tar/common.go?#L626
+	header.Name = filename
+
+	// Write file header to the tar archive
+	err = tw.WriteHeader(header)
+	if err != nil {
+		return err
+	}
+
+	// Copy file content to tar archive
+	_, err = io.Copy(tw, file)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func TestResolveMapParam(t *testing.T) {
@@ -85,14 +151,22 @@ state:
 	tests := []struct {
 		name         string
 		stateContent string
+		expErr       error
 	}{
 		{
 			name:         "/porter/state.tgz is empty file",
 			stateContent: "",
+			expErr:       nil,
 		},
 		{
-			name:         "/porter/state.tgz has newline only",
+			name:         "/porter/state.tgz has null string",
+			stateContent: "null",
+			expErr:       nil,
+		},
+		{
+			name:         "/porter/state.tgz has newline",
 			stateContent: "\n",
+			expErr:       io.ErrUnexpectedEOF,
 		},
 	}
 	for _, test := range tests {
@@ -104,18 +178,13 @@ state:
 			err := rm.ResolveStep(ctx, 0, s)
 			require.NoError(t, err)
 
-			require.IsType(t, map[string]interface{}{}, s.Data["mymixin"], "Data.mymixin has incorrect type")
-			mixin := s.Data["mymixin"].(map[string]interface{})
-			require.IsType(t, mixin["Parameters"], map[string]interface{}{}, "Data.mymixin.Parameters has incorrect type")
-			pms := mixin["Parameters"].(map[string]interface{})
-			require.IsType(t, "string", pms["Thing"], "Data.mymixin.Parameters.Thing has incorrect type")
-			val := pms["Thing"].(string)
-
-			assert.Equal(t, "Ralpha", val)
-			assert.NotContains(t, "place", pms, "parameters that don't apply to the current action should not be resolved")
-
 			err = rm.Initialize(ctx)
-			require.NoError(t, err)
+			if test.expErr == nil {
+				require.NoError(t, err)
+			} else {
+				require.Contains(t, err.Error(), test.expErr.Error())
+			}
+			pCtx.FileSystem.Remove("/porter/state.tgz")
 		})
 	}
 }
