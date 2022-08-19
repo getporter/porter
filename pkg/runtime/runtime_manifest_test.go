@@ -3,6 +3,7 @@ package runtime
 import (
 	"context"
 	"fmt"
+	"io"
 	"sort"
 	"testing"
 
@@ -62,6 +63,65 @@ install:
 
 	err = rm.Initialize(ctx)
 	require.NoError(t, err)
+}
+func TestStateBagUnpack(t *testing.T) {
+	ctx := context.Background()
+	pCtx := portercontext.NewTestContext(t)
+	pCtx.Setenv("PERSON", "Ralpha")
+
+	mContent := `schemaVersion: 1.0.0-alpha.2
+parameters:
+- name: person
+- name: place
+  applyTo: [install]
+
+install:
+- mymixin:
+    Parameters:
+      Thing: ${ bundle.parameters.person }
+state:
+- name: foo
+  path: foo/state.json
+`
+	tests := []struct {
+		name         string
+		stateContent string
+		expErr       error
+	}{
+		{
+			name:         "/porter/state.tgz is empty file",
+			stateContent: "",
+			expErr:       nil,
+		},
+		{
+			name:         "/porter/state.tgz has null string",
+			stateContent: "null",
+			expErr:       nil,
+		},
+		{
+			name:         "/porter/state.tgz has newline",
+			stateContent: "\n",
+			expErr:       io.ErrUnexpectedEOF,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			rm := runtimeManifestFromStepYaml(t, pCtx, mContent)
+			require.NoError(t, pCtx.FileSystem.WriteFile("/porter/state.tgz", []byte(test.stateContent), pkg.FileModeWritable))
+			s := rm.Install[0]
+
+			err := rm.ResolveStep(ctx, 0, s)
+			require.NoError(t, err)
+
+			err = rm.Initialize(ctx)
+			if test.expErr == nil {
+				require.NoError(t, err)
+			} else {
+				require.Contains(t, err.Error(), test.expErr.Error())
+			}
+			pCtx.FileSystem.Remove("/porter/state.tgz")
+		})
+	}
 }
 
 func TestResolvePathParam(t *testing.T) {
