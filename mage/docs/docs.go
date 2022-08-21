@@ -74,7 +74,7 @@ func DocsPreview() {
 		time.Sleep(time.Second)
 	}
 
-	// must.Run("open", "http://localhost:1313/docs/")
+	must.Run("open", "http://localhost:1313/docs/")
 }
 
 // Build a branch preview of the website.

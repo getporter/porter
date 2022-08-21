@@ -142,6 +142,27 @@ credentials:
 Next, run the following commands and edit the file with where the credentials will come from.
 ```console
 $ porter credentials create docker.json
+$ vi docker.json
+# modify docker.json with your editor to the content below
+{
+    "schemaType": "CredentialSet",
+    "schemaVersion": "1.0.1",
+    "name": "docker",
+    "credentials": [
+        {
+            "name": "DOCKER_USERNAME",
+            "source": {
+                "env": "DOCKER_USERNAME"
+            }
+        },
+        {
+            "name": "DOCKER_PASSWORD",
+            "source": {
+                "env": "DOCKER_PASSWORD"
+            }
+        }
+    ]
+}
 $ porter credentials apply docker.json
 ```
 Your credentials are now set up. When you run install or upgrade or uninstall, you need to pass in your credentials using the `-c` or `--credential-set` flag. 

@@ -32,8 +32,8 @@ that is the responsibility of credential sets.
 
 ## Credential Sets
 
-Before running a bundle the user must first create a credential set using the combination of 
-[porter credentials create][create] first and [porter credentials apply][apply] afterwards. A credentials set is a mapping that tells porter
+Before running a bundle the user must first create a credential set using two commands, 
+[porter credentials create][create]and [porter credentials apply][apply]. A credentials set is a mapping that tells porter
 "given a name of a credential such as `github_token`, where can the value be
 found?". Credential values can be resolved from many places, such as environment
 variables or local files, or if you are using a [secrets

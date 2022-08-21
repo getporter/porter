@@ -142,7 +142,8 @@ Parameters
 ```
 $ porter credentials create azure-tron.json
 creating porter credential set in the current directory
-$ vi azure-tron.json
+$ cat azure-tron.json
+# modify azure-tron.json with your editor to the content below
 {
     "schemaType": "CredentialSet",
     "schemaVersion": "1.0.1",

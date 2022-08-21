@@ -230,9 +230,10 @@ Name       Description                                                          
 password   Password for installing the world. We recommend getting this from a secret store.   true
 ```
 
-Since the bundle needs a credential we will generate some for it using the combination of `porter
-credentials create` and `porter credentials apply`. Edit the corresponding properties while
-removing the other credential source other than the `secret` type and use the value of `password`.
+Since the bundle needs a credential, let's generate it using `porter credentials` command. 
+First, run `porter credentials create <file-name>` to generate the template file. 
+Then, edit the file to include required credentials and set the source for its value.
+Lastly, run `porter credentials apply <file-name>` to generate the credential set. 
 
 ```console
 $ porter credentials create plugins-tutorial.json
@@ -244,7 +245,7 @@ $ vi plugins-tutorial.json
     "name": "plugins-tutorial",
     "credentials": [
         {
-            "name": "credential-secret",
+            "name": "password",
             "source": {
                 "secret": "password"
             }
@@ -254,6 +255,8 @@ $ vi plugins-tutorial.json
 $ porter credentials apply plugins-tutorial.json
 Applied /plugins-tutorial credential set
 ```
+
+For more information on how to use `porter credentials` commands, take a look at our [credentials quickstart guide](/quickstart/credentials).
 
 Now we are ready to install the bundle and pass it our generated credentials. 🎉
 Porter is using the Azure plugin to inject the password credential from Azure

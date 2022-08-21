@@ -52,7 +52,7 @@ This means that the github-token credential is required to run porter install or
 
 ## Create a Credential Set
 
-Create a credential set for the credentials-tutorial bundle with the combination of `porter credentials create` and `porter credentials apply` command. Edit the created file to conform to the credential needed for the corresponding bundle, which in this case is 1 credential set with the source of environment variable for GitHub token and then run the `porter credentials apply` command to create the new credential set from the file. 
+Create a credential set for the credentials-tutorial bundle with the combination of `porter credentials create` and `porter credentials apply` command. Edit the generated file to contain the required credentials for the corresponding bundle. In this case, it is the `github-token` that uses `GITHUB_TOKEN` environment variable as its source. Then, run the `porter credentials apply` command to create the new credential set from the modified file.
 
 ```console
 $ porter credentials create github.json

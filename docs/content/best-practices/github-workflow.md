@@ -93,7 +93,7 @@ If you are not the only one contributing to the repository and other contributor
 ### Use credential files
 If you were using credentials in your bundle, you will need to set up a credential file in your repository to use with your workflow. For example, if you run `porter credentials create mybun.json`, a JSON file named mybun.json is created. The resulting credential mapping file (which does not contain any sensitive credentials) is located in the current directory. You can run `porter credentials apply mybun.json` to apply the changes to an existing credential set or create a new one if it does not exist in advance. Then, to install your bundle with credentials that have just created before, you would run the following:
 ```yaml
-porter install -c mybun
+porter install -c <name-of-the-credential-set>
 ```
 
 ## Example Code
