@@ -142,7 +142,7 @@ credentials:
 Next, run the following commands and edit the file with where the credentials will come from.
 ```console
 $ porter credentials create docker.json
-$ vi docker.json
+$ cat docker.json
 # modify docker.json with your editor to the content below
 {
     "schemaType": "CredentialSet",

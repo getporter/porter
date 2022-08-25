@@ -60,7 +60,8 @@ Here we'll create and edit credentials and then install the [MySQL bundle](/src/
 ```console
  $ porter credentials create mysql.json
 creating porter credential set in the current directory
- $ vi mysql.json
+ $ cat mysql.json
+# modify mysql.json with your editor to the content below
 {
     "schemaType": "CredentialSet",
     "schemaVersion": "1.0.1",

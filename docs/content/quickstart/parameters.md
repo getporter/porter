@@ -95,7 +95,8 @@ Create a parameter set for the hello-llama with the combination of `porter param
 ```console
 $ porter parameters create hello-llama.json
 creating porter parameter set in the current directory
-$ vi hello-llama.json
+$ cat hello-llama.json
+# modify hello-llama.json with your editor to the content below
 {
     "schemaType": "ParameterSet",
     "schemaVersion": "1.0.1",

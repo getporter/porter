@@ -238,7 +238,8 @@ Lastly, run `porter credentials apply <file-name>` to generate the credential se
 ```console
 $ porter credentials create plugins-tutorial.json
 creating porter credential set in the current directory
-$ vi plugins-tutorial.json
+$ cat plugins-tutorial.json
+# modify plugins-tutorial.json with your editor to the content below
 {
     "schemaType": "CredentialSet",
     "schemaVersion": "1.0.1",

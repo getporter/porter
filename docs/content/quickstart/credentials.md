@@ -57,7 +57,8 @@ Create a credential set for the credentials-tutorial bundle with the combination
 ```console
 $ porter credentials create github.json
 creating porter credential set in the current directory
-$ vi github.json
+$ cat github.json
+# modify github.json with your editor to the content below
 {
     "schemaType": "CredentialSet",
     "schemaVersion": "1.0.1",
