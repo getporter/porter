@@ -8,7 +8,7 @@ import (
 	"get.porter.sh/porter/tests"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-to-oci/relocation"
-	"github.com/pivotal/image-relocation/pkg/image"
+	"github.com/cnabio/image-relocation/pkg/image"
 	"github.com/stretchr/testify/require"
 )
 

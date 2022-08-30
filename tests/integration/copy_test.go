@@ -22,7 +22,7 @@ func TestCopy_UsesRelocationMap(t *testing.T) {
 	reg1 := test.StartTestRegistry(tester.TestRegistryOptions{UseTLS: false})
 
 	// Publish the bundle to the insecure registry
-	origRef := fmt.Sprintf("localhost:%s/orig-mydb:v0.1.1", reg1.Port)
+	origRef := fmt.Sprintf("%s/orig-mydb:v0.1.1", reg1)
 	test.MakeTestBundle(testdata.MyDb, origRef)
 
 	ociRef, err := cnab.ParseOCIReference(origRef)
@@ -35,13 +35,13 @@ func TestCopy_UsesRelocationMap(t *testing.T) {
 
 	// Copy the bundle to the integration test registry, using --insecure-registry
 	// because the destination uses a self-signed certificate
-	copiedRef := fmt.Sprintf("localhost:%s/copy-mydb:v0.1.1", reg2.Port)
+	copiedRef := fmt.Sprintf("%s/copy-mydb:v0.1.1", reg2)
 	test.RequirePorter("copy", "--source", origRef, "--destination", copiedRef, "--insecure-registry")
 
 	reg1.Close()
 
 	// Copy the copied bundle to a new location. This will fail if we aren't using the relocation map.
-	finalRef := fmt.Sprintf("localhost:%s/copy-copy-mydb:v0.1.1", reg2.Port)
+	finalRef := fmt.Sprintf("%s/copy-copy-mydb:v0.1.1", reg2)
 	test.RequirePorter("copy", "--source", copiedRef, "--destination", finalRef, "--insecure-registry")
 
 	finalOCIRef, err := cnab.ParseOCIReference(finalRef)
@@ -56,5 +56,5 @@ func TestCopy_UsesRelocationMap(t *testing.T) {
 	require.NoError(t, json.Unmarshal([]byte(inspectOutput), &inspectRaw))
 	images := inspectRaw["invocationImages"].([]interface{})
 	invocationImage := images[0].(map[string]interface{})
-	require.Contains(t, invocationImage["originalImage"].(string), fmt.Sprintf("localhost:%s/orig-mydb", reg1.Port))
+	require.Contains(t, invocationImage["originalImage"].(string), fmt.Sprintf("%s/orig-mydb", reg1))
 }

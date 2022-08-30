@@ -12,7 +12,4 @@ const (
 
 	// MyDbRef is the full reference to the mydb test bundle.
 	MyDbRef = "localhost:5000/mydb:v0.1.0"
-
-	// MyBunsWithImgReference is the test bundle that contains image reference.
-	MyBunsWithImgReference = "mybun-with-img-reference"
 )

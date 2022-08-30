@@ -35,10 +35,9 @@ func TestRegistry_ListTags(t *testing.T) {
 		require.NoError(t, err, "tester.NewTest failed")
 		defer testr.Close()
 		reg := testr.StartTestRegistry(tester.TestRegistryOptions{UseTLS: true})
-		registry := fmt.Sprintf("localhost:%s", reg.Port)
 
 		// Copy a test bundle to the registry
-		testRef := fmt.Sprintf("%s/porter-hello-nonroot:v0.1.0", registry)
+		testRef := fmt.Sprintf("%s/porter-hello-nonroot:v0.1.0", reg)
 		testr.RunPorter("copy", "--source=docker.io/carolynvs/porter-hello-nonroot:v0.1.0", "--destination", testRef, "--insecure-registry")
 
 		ref := cnab.MustParseOCIReference(testRef)

@@ -106,7 +106,17 @@ func (e *Editor) SetValue(path string, value string) error {
 	cmd := yqlib.UpdateCommand{Command: "update", Path: path, Value: parsedValue, Overwrite: true}
 	err := e.yq.Update(e.node, cmd, true)
 	if err != nil {
-		return fmt.Errorf("could not update manifest path %q with value %q: %w", path, value, err)
+		return fmt.Errorf("could not update path %q with value %q: %w", path, value, err)
+	}
+
+	return nil
+}
+
+func (e *Editor) DeleteNode(path string) error {
+	cmd := yqlib.UpdateCommand{Command: "delete", Path: path}
+	err := e.yq.Update(e.node, cmd, true)
+	if err != nil {
+		return fmt.Errorf("could not delete path %q: %w", path, err)
 	}
 
 	return nil
