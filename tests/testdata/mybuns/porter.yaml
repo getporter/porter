@@ -69,6 +69,8 @@ images:
 
 mixins:
   - exec
+  - testmixin:
+      clientVersion: 1.2.3
 
 customActions:
   dry-run:

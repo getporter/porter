@@ -1,0 +1,33 @@
+# This is a test bundle that has invalid mixin declarations
+
+schemaVersion: 1.0.0
+name: invalid-mixin-declaration
+version: 0.1.0
+description: "A very broken test bundle"
+registry: localhost:5000
+
+mixins:
+  - exec
+  # This isn't a valid mixin
+  - missingmixin
+  - testmixin:
+      # This isn't a valid property for testmixin
+      missingproperty: stuff
+
+install:
+  - exec:
+      command: echo
+      arguments:
+        - install
+
+upgrade:
+  - exec:
+      command: echo
+      arguments:
+        - upgrade
+
+uninstall:
+  - exec:
+      command: echo
+      arguments:
+        - uninstall

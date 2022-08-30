@@ -1,0 +1,25 @@
+{
+  "version": {
+    "name": "porter",
+    "version": "v1.2.3",
+    "commit": "abc123"
+  },
+  "system": {
+    "OS": "linux",
+    "Arch": "amd64"
+  },
+  "mixins": [
+    {
+      "name": "exec",
+      "version": "v1.0",
+      "commit": "abc123",
+      "author": "Porter Authors"
+    },
+    {
+      "name": "testmixin",
+      "version": "v0.1.0",
+      "commit": "abc123",
+      "author": "Porter Authors"
+    }
+  ]
+}

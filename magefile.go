@@ -221,7 +221,7 @@ func TestUnit() {
 
 // Run smoke tests to quickly check if Porter is broken
 func TestSmoke() error {
-	mg.Deps(copySchema, TryRegisterLocalHostAlias, docker.RestartDockerRegistry)
+	mg.Deps(copySchema, TryRegisterLocalHostAlias, docker.RestartDockerRegistry, BuildTestMixin)
 
 	// Only do verbose output of tests when called with `mage -v TestSmoke`
 	v := ""
@@ -432,7 +432,7 @@ func chmodRecursive(name string, mode os.FileMode) error {
 
 // Run integration tests (slow).
 func TestIntegration() {
-	mg.Deps(tests.EnsureTestCluster, copySchema, BuildTestPlugin, TryRegisterLocalHostAlias)
+	mg.Deps(tests.EnsureTestCluster, copySchema, TryRegisterLocalHostAlias, BuildTestMixin, BuildTestPlugin)
 
 	var run string
 	runTest := os.Getenv("PORTER_RUN_TEST")
@@ -467,6 +467,11 @@ func TryRegisterLocalHostAlias() {
 
 func BuildTestPlugin() {
 	must.RunV("go", "build", "-o", "bin/testplugin", "./cmd/testplugin")
+}
+
+func BuildTestMixin() {
+	os.MkdirAll("bin/mixins/testmixin", 0770)
+	must.RunV("go", "build", "-o", "bin/mixins/testmixin/testmixin"+xplat.FileExt(), "./cmd/testmixin")
 }
 
 // Copy the locally built porter and exec binaries to PORTER_HOME

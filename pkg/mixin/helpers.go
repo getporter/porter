@@ -35,6 +35,14 @@ func NewTestMixinProvider() *TestMixinProvider {
 				Author:  "Porter Authors",
 			},
 		},
+		&Metadata{
+			Name: "testmixin",
+			VersionInfo: pkgmgmt.VersionInfo{
+				Version: "v0.1.0",
+				Commit:  "abc123",
+				Author:  "Porter Authors",
+			},
+		},
 	}
 
 	provider := TestMixinProvider{
@@ -66,6 +74,15 @@ func (p *TestMixinProvider) PrintExecOutput(pkgContext *portercontext.Context, n
 }
 
 func (p *TestMixinProvider) GetSchema(ctx context.Context, name string) (string, error) {
-	b, err := ioutil.ReadFile("../exec/schema/exec.json")
+	var schemaFile string
+	switch name {
+	case "exec":
+		schemaFile = "../exec/schema/exec.json"
+	case "testmixin":
+		schemaFile = "../../cmd/testmixin/schema.json"
+	default:
+		return "", nil
+	}
+	b, err := ioutil.ReadFile(schemaFile)
 	return string(b), err
 }
