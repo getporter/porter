@@ -149,7 +149,7 @@ func (m *Manifest) Validate(cxt *portercontext.Context, strategy schema.CheckStr
 		}
 	}
 
-	for _, dep := range m.Dependencies.RequiredDependencies {
+	for _, dep := range m.Dependencies.Requires {
 		err = dep.Validate(cxt)
 		if err != nil {
 			result = multierror.Append(result, err)
@@ -626,10 +626,10 @@ func (mi *MappedImage) ToOCIReference() (cnab.OCIReference, error) {
 }
 
 type Dependencies struct {
-	RequiredDependencies []*RequiredDependency `yaml:"requires,omitempty"`
+	Requires []*Dependency `yaml:"requires,omitempty"`
 }
 
-type RequiredDependency struct {
+type Dependency struct {
 	Name string `yaml:"name"`
 
 	Bundle BundleCriteria `yaml:"bundle"`
@@ -650,7 +650,7 @@ type BundleCriteria struct {
 	Version string `yaml:"version,omitempty"`
 }
 
-func (d *RequiredDependency) Validate(cxt *portercontext.Context) error {
+func (d *Dependency) Validate(cxt *portercontext.Context) error {
 	if d.Name == "" {
 		return errors.New("dependency name is required")
 	}

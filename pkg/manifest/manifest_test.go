@@ -89,8 +89,8 @@ func TestLoadManifestWithDependencies(t *testing.T) {
 	mixin := installStep.GetMixinName()
 	assert.Equal(t, "exec", mixin)
 
-	require.Len(t, m.Dependencies.RequiredDependencies, 1, "expected one dependency")
-	assert.Equal(t, "getporter/azure-mysql:5.7", m.Dependencies.RequiredDependencies[0].Bundle.Reference, "expected a v1 schema for the dependency delcaration")
+	require.Len(t, m.Dependencies.Requires, 1, "expected one dependency")
+	assert.Equal(t, "getporter/azure-mysql:5.7", m.Dependencies.Requires[0].Bundle.Reference, "expected a v1 schema for the dependency delcaration")
 }
 
 func TestLoadManifestWithDependenciesInOrder(t *testing.T) {
@@ -103,11 +103,11 @@ func TestLoadManifestWithDependenciesInOrder(t *testing.T) {
 	require.NoError(t, err, "could not load manifest")
 	assert.NotNil(t, m)
 
-	nginxDep := m.Dependencies.RequiredDependencies[0]
+	nginxDep := m.Dependencies.Requires[0]
 	assert.Equal(t, "nginx", nginxDep.Name)
 	assert.Equal(t, "localhost:5000/nginx:1.19", nginxDep.Bundle.Reference)
 
-	mysqlDep := m.Dependencies.RequiredDependencies[1]
+	mysqlDep := m.Dependencies.Requires[1]
 	assert.Equal(t, "mysql", mysqlDep.Name)
 	assert.Equal(t, "getporter/azure-mysql:5.7", mysqlDep.Bundle.Reference)
 	assert.Len(t, mysqlDep.Parameters, 1)

@@ -230,7 +230,7 @@ func (e *dependencyExecutioner) prepareDependency(ctx context.Context, dep *queu
 		}
 	}
 
-	for _, manifestDep := range m.Dependencies.RequiredDependencies {
+	for _, manifestDep := range m.Dependencies.Requires {
 		if manifestDep.Name == dep.Alias {
 			for paramName, value := range manifestDep.Parameters {
 				// Make sure the parameter is defined in the bundle
