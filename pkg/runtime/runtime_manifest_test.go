@@ -602,10 +602,15 @@ func TestDependencyV1_Validate(t *testing.T) {
 			wantOutput: "",
 			wantError:  `reference is required for dependency "mysql"`,
 		}, {
-			name:       "version double specified",
+			name:       "version not specified",
+			dep:        manifest.Dependency{Name: "mysql", Bundle: manifest.BundleCriteria{Reference: "deislabs/azure-mysql", Version: ""}},
+			wantOutput: "",
+			wantError:  `reference for dependency "mysql" can specify only a repository, without a digest or tag, when a version constraint is specified`,
+		}, { // When a range is specified, but also a default version, we use the default version when we can't find a matching version from the range
+			name:       "default version and range specified",
 			dep:        manifest.Dependency{Name: "mysql", Bundle: manifest.BundleCriteria{Reference: "deislabs/azure-mysql:5.7", Version: "5.7.x-6"}},
 			wantOutput: "",
-			wantError:  `reference for dependency "mysql" can only specify REGISTRY/NAME when version ranges are specified`,
+			wantError:  "",
 		},
 	}
 
@@ -618,7 +623,7 @@ func TestDependencyV1_Validate(t *testing.T) {
 			if tc.wantError == "" {
 				require.NoError(t, err)
 			} else {
-				require.Equal(t, tc.wantError, err.Error())
+				tests.RequireErrorContains(t, err, tc.wantError)
 			}
 
 			gotOutput := pCtx.GetOutput()

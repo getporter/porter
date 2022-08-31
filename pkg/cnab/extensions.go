@@ -3,11 +3,9 @@ package cnab
 import "fmt"
 
 const (
-	// PorterExtension is the key for all Porter configuration stored the the custom section of bundles.
+	// PorterExtension is the key for all Porter configuration stored in the custom section of bundles.
+	// Since it was defined before we had getporter.org, it uses our legacy domain.
 	PorterExtension = "sh.porter"
-
-	// PorterExtensionsPrefix is the prefix applied to any custom CNAB extensions developed by Porter.
-	PorterExtensionsPrefix = PorterExtension + "."
 
 	// OfficialExtensionsPrefix is the prefix applied to extensions defined in the CNAB spec.
 	OfficialExtensionsPrefix = "io.cnab."
@@ -29,6 +27,7 @@ type RequiredExtension struct {
 // that Porter supports
 var SupportedExtensions = []RequiredExtension{
 	DependenciesV1Extension,
+	DependenciesV2Extension,
 	DockerExtension,
 	FileParameterExtension,
 	ParameterSourcesExtension,

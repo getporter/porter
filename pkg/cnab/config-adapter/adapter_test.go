@@ -9,7 +9,9 @@ import (
 
 	"get.porter.sh/porter/pkg/cnab"
 	depsv1ext "get.porter.sh/porter/pkg/cnab/extensions/dependencies/v1"
+	depsv2ext "get.porter.sh/porter/pkg/cnab/extensions/dependencies/v2"
 	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/experimental"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/mixin"
 	"get.porter.sh/porter/pkg/pkgmgmt"
@@ -22,27 +24,53 @@ import (
 func TestManifestConverter(t *testing.T) {
 	t.Parallel()
 
-	c := config.NewTestConfig(t)
-	c.TestContext.AddTestFileFromRoot("tests/testdata/mybuns/porter.yaml", config.Name)
-
-	ctx := context.Background()
-	m, err := manifest.LoadManifestFrom(ctx, c.Config, config.Name)
-	require.NoError(t, err, "could not load manifest")
-
-	installedMixins := []mixin.Metadata{
-		{Name: "exec", VersionInfo: pkgmgmt.VersionInfo{Version: "v1.2.3"}},
+	testcases := []struct {
+		name          string
+		configHandler func(c *config.Config)
+		manifestPath  string
+		goldenFile    string
+	}{
+		{name: "depsv1",
+			configHandler: func(c *config.Config) {},
+			manifestPath:  "tests/testdata/mybuns/porter.yaml",
+			goldenFile:    "testdata/mybuns-depsv1.bundle.json"},
+		{name: "depsv2",
+			configHandler: func(c *config.Config) {
+				c.SetExperimentalFlags(experimental.FlagDependenciesV2)
+			},
+			manifestPath: "tests/testdata/mybuns/porter.yaml",
+			goldenFile:   "testdata/mybuns-depsv2.bundle.json"},
 	}
 
-	a := NewManifestConverter(c.Config, m, nil, installedMixins)
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
-	bun, err := a.ToBundle(ctx)
-	require.NoError(t, err, "ToBundle failed")
+			c := config.NewTestConfig(t)
+			tc.configHandler(c.Config)
+			c.TestContext.AddTestFileFromRoot(tc.manifestPath, config.Name)
 
-	// Compare the regular json, not the canonical, because that's hard to diff
-	prepBundleForDiff(&bun.Bundle)
-	bunD, err := json.MarshalIndent(bun, "", "  ")
-	require.NoError(t, err)
-	c.TestContext.CompareGoldenFile("testdata/mybuns.bundle.json", string(bunD))
+			ctx := context.Background()
+			m, err := manifest.LoadManifestFrom(ctx, c.Config, config.Name)
+			require.NoError(t, err, "could not load manifest")
+
+			installedMixins := []mixin.Metadata{
+				{Name: "exec", VersionInfo: pkgmgmt.VersionInfo{Version: "v1.2.3"}},
+			}
+
+			a := NewManifestConverter(c.Config, m, nil, installedMixins)
+
+			bun, err := a.ToBundle(ctx)
+			require.NoError(t, err, "ToBundle failed")
+
+			// Compare the regular json, not the canonical, because that's hard to diff
+			prepBundleForDiff(&bun.Bundle)
+			bunD, err := json.MarshalIndent(bun, "", "  ")
+			require.NoError(t, err)
+			c.TestContext.CompareGoldenFile(tc.goldenFile, string(bunD))
+		})
+	}
 }
 
 func prepBundleForDiff(b *bundle.Bundle) {
@@ -571,7 +599,7 @@ func TestManifestConverter_generateDependenciesv1(t *testing.T) {
 			t.Parallel()
 
 			c := config.NewTestConfig(t)
-			c.TestContext.AddTestFile("testdata/porter-with-deps.yaml", config.Name)
+			c.TestContext.AddTestFile("testdata/porter.yaml", config.Name)
 
 			ctx := context.Background()
 			m, err := manifest.LoadManifestFrom(ctx, c.Config, config.Name)
@@ -601,21 +629,72 @@ func TestManifestConverter_generateDependenciesv1(t *testing.T) {
 	}
 }
 
-func TestManifestConverter_generateRequiredExtensions_Dependencies(t *testing.T) {
+func TestManifestConverter_generateDependenciesv2(t *testing.T) {
 	t.Parallel()
 
-	c := config.NewTestConfig(t)
-	c.TestContext.AddTestFile("testdata/porter-with-deps.yaml", config.Name)
+	testcases := []struct {
+		name    string
+		wantDep depsv2ext.Dependency
+	}{
+		{"all fields", depsv2ext.Dependency{
+			Name:    "mysql",
+			Bundle:  "getporter/azure-mysql:5.7",
+			Version: "5.7.x",
+			Interface: &depsv2ext.DependencyInterface{
+				ID:        "https://getporter.org/interfaces/#mysql",
+				Reference: "getporter/mysql-spec:5.7",
+				// TODO(PEP003): Implement with https://github.com/getporter/porter/issues/2548
+				//Document: nil,
+			},
+			Sharing: depsv2ext.SharingCriteria{
+				Mode:  depsv2ext.SharingModeGroup,
+				Group: depsv2ext.SharingGroup{Name: "myapp"},
+			},
+			Parameters: map[string]string{
+				"database":  "wordpress",
+				"collation": "${bundle.parameters.db_collation}",
+			},
+			Credentials: map[string]string{
+				"user": "${bundle.credentials.username}",
+			},
+		}},
+	}
 
-	ctx := context.Background()
-	m, err := manifest.LoadManifestFrom(ctx, c.Config, config.Name)
-	require.NoError(t, err, "could not load manifest")
+	for _, tc := range testcases {
+		tc := tc
 
-	a := NewManifestConverter(c.Config, m, nil, nil)
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
-	bun, err := a.ToBundle(ctx)
-	require.NoError(t, err, "ToBundle failed")
-	assert.Contains(t, bun.RequiredExtensions, "io.cnab.dependencies")
+			c := config.NewTestConfig(t)
+			c.SetExperimentalFlags(experimental.FlagDependenciesV2)
+			c.TestContext.AddTestFile("testdata/porter-with-depsv2.yaml", config.Name)
+
+			ctx := context.Background()
+			m, err := manifest.LoadManifestFrom(ctx, c.Config, config.Name)
+			require.NoError(t, err, "could not load manifest")
+
+			a := NewManifestConverter(c.Config, m, nil, nil)
+
+			depsExt, depsExtKey, err := a.generateDependencies()
+			require.NoError(t, err)
+			require.Equal(t, cnab.DependenciesV2ExtensionKey, depsExtKey, "expected the v2 dependencies extension key")
+			require.IsType(t, &depsv2ext.Dependencies{}, depsExt, "expected a v2 dependencies extension section")
+			deps := depsExt.(*depsv2ext.Dependencies)
+			require.Len(t, deps.Requires, 3, "incorrect number of dependencies were generated")
+
+			var dep *depsv2ext.Dependency
+			for _, d := range deps.Requires {
+				if d.Bundle == tc.wantDep.Bundle {
+					dep = &d
+					break
+				}
+			}
+
+			require.NotNil(t, dep, "could not find bundle %s", tc.wantDep.Bundle)
+			assert.Equal(t, &tc.wantDep, dep)
+		})
+	}
 }
 
 func TestManifestConverter_generateParameterSources(t *testing.T) {
@@ -880,7 +959,7 @@ func TestManifestConverter_generateCustomMetadata(t *testing.T) {
 	_, err = bun.WriteTo(f)
 	require.NoError(t, err, "Failed to write bundle file")
 
-	expectedCustomMetaData := "{\"foo\":{\"test1\":true,\"test2\":1,\"test3\":\"value\",\"test4\":[\"one\",\"two\",\"three\"],\"test5\":{\"1\":\"one\",\"two\":\"two\"}}"
+	expectedCustomMetaData := `"foo":{"test1":true,"test2":1,"test3":"value","test4":["one","two","three"],"test5":{"1":"one","two":"two"}}`
 	bundleData, err := os.ReadFile(f.Name())
 	require.NoError(t, err, "Failed to read bundle file")
 
