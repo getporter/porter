@@ -277,8 +277,8 @@ github.com/caarlos0/ctrlc v1.0.0/go.mod h1:CdXpj4rmq0q/1Eb44M9zi2nKB0QraNKuRGYGr
 github.com/campoy/unique v0.0.0-20180121183637-88950e537e7e/go.mod h1:9IOqJGCPMSc6E5ydlp5NIonxObaeu/Iub/X03EKPVYo=
 github.com/carolynvs/aferox v0.3.0 h1:CMT50zX88amTMbFfFIWSTKRVRaOw6sejUMbbKiCD4zE=
 github.com/carolynvs/aferox v0.3.0/go.mod h1:eb7CHGIO33CCZS//xtnblvPZbuuZMv0p1VbhiSwZnH4=
-github.com/carolynvs/cnab-to-oci v0.3.6-0.20220831192637-065fd1e8315a h1:ADSJICOtawHyyZhqv6Z3YA1BoW+2qAEr5FB4M3KVsX8=
-github.com/carolynvs/cnab-to-oci v0.3.6-0.20220831192637-065fd1e8315a/go.mod h1:AvVNl0Hh3VBk1zqeLdyE5S3bTQ5EsZPPF4mUUJYyy1Y=
+github.com/carolynvs/cnab-to-oci v0.3.6-0.20220831204624-83333fa72277 h1:YrL9f/s4k56RkofHpmRprK8UN8suapzQjz1PWAKbENk=
+github.com/carolynvs/cnab-to-oci v0.3.6-0.20220831204624-83333fa72277/go.mod h1:AvVNl0Hh3VBk1zqeLdyE5S3bTQ5EsZPPF4mUUJYyy1Y=
 github.com/carolynvs/datetime-printer v0.2.0 h1:Td3FU4YGzx0OogCMhCmLBTUTDPQcq0xlgCeMhAKZmMc=
 github.com/carolynvs/datetime-printer v0.2.0/go.mod h1:p9W8ZUhmQUOVD5kiDuGXwRG65/nTkZWlLylY7s+Qw2k=
 github.com/carolynvs/magex v0.8.0 h1:BCY0A6fLs37NZrIFBKuOMXda5wEIrUeTF4sHB601JVM=
