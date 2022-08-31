@@ -6,7 +6,11 @@ import (
 	"strings"
 	"testing"
 
+	depsv2ext "get.porter.sh/porter/pkg/cnab/extensions/dependencies/v2"
+
+	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/experimental"
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/schema"
 	"get.porter.sh/porter/pkg/yaml"
@@ -71,48 +75,60 @@ func TestLoadManifest(t *testing.T) {
 }
 
 func TestLoadManifestWithDependencies(t *testing.T) {
-	c := config.NewTestConfig(t)
+	// Make sure that we can parse the bundle in both v1 dep mode and v2 dep mode
+	testcases := []struct {
+		name          string
+		depsv2enabled bool
+	}{
+		{"deps v1", false},
+		{"deps v2", true},
+	}
 
-	c.TestContext.AddTestFile("testdata/porter.yaml", config.Name)
-	c.TestContext.AddTestDirectory("testdata/bundles", "bundles")
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
 
-	m, err := LoadManifestFrom(context.Background(), c.Config, config.Name)
-	require.NoError(t, err, "could not load manifest")
+			c := config.NewTestConfig(t)
+			if tc.depsv2enabled {
+				c.SetExperimentalFlags(experimental.FlagDependenciesV2)
+			}
 
-	require.NotNil(t, m)
-	assert.Equal(t, []MixinDeclaration{{Name: "exec"}}, m.Mixins)
-	require.Len(t, m.Install, 1)
+			c.TestContext.AddTestFile("testdata/porter.yaml", config.Name)
+			c.TestContext.AddTestDirectory("testdata/bundles", "bundles")
 
-	installStep := m.Install[0]
-	description, _ := installStep.GetDescription()
-	require.NotNil(t, description)
+			m, err := LoadManifestFrom(context.Background(), c.Config, config.Name)
+			require.NoError(t, err, "could not load manifest")
 
-	mixin := installStep.GetMixinName()
-	assert.Equal(t, "exec", mixin)
+			require.NotNil(t, m)
+			assert.Equal(t, []MixinDeclaration{{Name: "exec"}}, m.Mixins)
+			require.Len(t, m.Install, 1)
 
-	require.Len(t, m.Dependencies.Requires, 1, "expected one dependency")
-	assert.Equal(t, "getporter/azure-mysql:5.7", m.Dependencies.Requires[0].Bundle.Reference, "expected a v1 schema for the dependency delcaration")
-}
+			installStep := m.Install[0]
+			description, _ := installStep.GetDescription()
+			require.NotNil(t, description)
 
-func TestLoadManifestWithDependenciesInOrder(t *testing.T) {
-	c := config.NewTestConfig(t)
+			mixin := installStep.GetMixinName()
+			assert.Equal(t, "exec", mixin)
 
-	c.TestContext.AddTestFile("testdata/porter-with-deps.yaml", config.Name)
-	c.TestContext.AddTestDirectory("testdata/bundles", "bundles")
+			require.Len(t, m.Dependencies.Requires, 1, "expected one dependency")
+			dep := m.Dependencies.Requires[0]
+			assert.Equal(t, "getporter/azure-mysql:5.7", dep.Bundle.Reference, "expected the dependency to be set")
+			assert.Equal(t, "5.7.x", dep.Bundle.Version, "expected the version range to be set")
+			assert.Equal(t, map[string]string{"database-name": "wordpress"}, dep.Parameters, "expected the dependency parameters to be set")
 
-	m, err := LoadManifestFrom(context.Background(), c.Config, config.Name)
-	require.NoError(t, err, "could not load manifest")
-	assert.NotNil(t, m)
+			// The remaining fields are only supported in depsv2 but the manifest still parses them. It's only a behavior difference if we act on the information or not.
+			assert.Equal(t, map[string]string{"password": "mcstuffins"}, dep.Credentials, "expected the dependency credentials to be set")
+			assert.Equal(t, "getporter/azure-mysql:5.7-interface", dep.Bundle.Interface.Reference, "expected the bundle interface reference to be set")
 
-	nginxDep := m.Dependencies.Requires[0]
-	assert.Equal(t, "nginx", nginxDep.Name)
-	assert.Equal(t, "localhost:5000/nginx:1.19", nginxDep.Bundle.Reference)
-
-	mysqlDep := m.Dependencies.Requires[1]
-	assert.Equal(t, "mysql", mysqlDep.Name)
-	assert.Equal(t, "getporter/azure-mysql:5.7", mysqlDep.Bundle.Reference)
-	assert.Len(t, mysqlDep.Parameters, 1)
-
+			wantDoc := &BundleInterfaceDocument{
+				Parameters: map[string]ParameterDefinition{
+					"password": {
+						Name:   "password",
+						Schema: definition.Schema{Type: "string"}},
+				},
+			}
+			assert.Equal(t, wantDoc, dep.Bundle.Interface.Document, "expected the bundle interface document to be set")
+		})
+	}
 }
 
 func TestAction_Validate_RequireMixinDeclaration(t *testing.T) {
@@ -182,32 +198,59 @@ func TestManifest_Validate_SchemaVersion(t *testing.T) {
 	invalidVersionErr := schema.ErrInvalidSchemaVersion.Error()
 
 	t.Run("schemaVersion matches", func(t *testing.T) {
-		cxt := portercontext.NewTestContext(t)
-		cxt.UseFilesystem()
+		ctx := context.Background()
+		cfg := config.NewTestConfig(t)
+		cfg.TestContext.UseFilesystem()
+		cfg.Data.SchemaCheck = string(schema.CheckStrategyExact)
 
-		m, err := ReadManifest(cxt.Context, "testdata/porter.yaml")
+		m, err := ReadManifest(cfg.Context, "testdata/porter.yaml")
 		require.NoError(t, err)
 
-		err = m.Validate(cxt.Context, schema.CheckStrategyExact)
+		err = m.Validate(ctx, cfg.Config)
 		require.NoError(t, err)
-		assert.NotContains(t, cxt.GetError(), invalidVersionErr)
+		assert.NotContains(t, cfg.TestContext.GetError(), invalidVersionErr)
+	})
+
+	t.Run("schemaVersion requires experimental feature", func(t *testing.T) {
+		ctx := context.Background()
+		cfg := config.NewTestConfig(t)
+		cfg.TestContext.AddTestFile("testdata/porter.yaml", "porter.yaml")
+		cfg.Data.SchemaCheck = string(schema.CheckStrategyExact)
+
+		// Use a schema version that requires dependencies v2 enabled
+		cfg.TestContext.EditYaml("porter.yaml", func(yq *yaml.Editor) error {
+			return yq.SetValue("schemaVersion", "1.1.0")
+		})
+		m, err := ReadManifest(cfg.Context, "porter.yaml")
+		require.NoError(t, err)
+
+		err = m.Validate(ctx, cfg.Config)
+		require.ErrorContains(t, err, "invalid schema version")
+
+		cfg.SetExperimentalFlags(experimental.FlagDependenciesV2)
+		err = m.Validate(ctx, cfg.Config)
+		require.NoError(t, err)
+		assert.NotContains(t, cfg.TestContext.GetError(), invalidVersionErr)
 	})
 
 	t.Run("schemaVersion missing, not required", func(t *testing.T) {
-		cxt := portercontext.NewTestContext(t)
-		cxt.UseFilesystem()
+		cfg := config.NewTestConfig(t)
+		cfg.TestContext.UseFilesystem()
+		ctx, span := cfg.StartRootSpan(context.Background(), t.Name())
+		defer span.EndSpan()
+		cfg.Data.SchemaCheck = string(schema.CheckStrategyNone)
 
-		m, err := ReadManifest(cxt.Context, "testdata/porter.yaml")
+		m, err := ReadManifest(cfg.Context, "testdata/porter.yaml")
 		require.NoError(t, err)
 
 		m.SchemaVersion = ""
 
-		err = m.Validate(cxt.Context, schema.CheckStrategyNone)
+		err = m.Validate(ctx, cfg.Config)
 		require.NoError(t, err)
 
 		// Check that a warning is printed
 		// We aren't returning an error because we want to give it a chance to work first. Later we may turn this into a hard error after people have had time to migrate.
-		assert.Contains(t, cxt.GetError(), invalidVersionErr)
+		assert.Contains(t, cfg.TestContext.GetError(), invalidVersionErr)
 	})
 }
 
@@ -226,17 +269,19 @@ func TestManifest_ValidateMetadata(t *testing.T) {
 
 	for _, tc := range testcases {
 		t.Run(tc.schemaVersion, func(t *testing.T) {
-			cxt := portercontext.NewTestContext(t)
+			cfg := config.NewTestConfig(t)
+			cfg.Data.SchemaCheck = string(schema.CheckStrategyExact)
+
 			m := Manifest{
 				SchemaVersion: tc.schemaVersion,
 				Name:          "mybuns",
 				Registry:      "localhost:5000",
 			}
-			err := m.validateMetadata(cxt.Context, schema.CheckStrategyExact)
+			err := m.validateMetadata(context.Background(), cfg.Config)
 
 			if tc.wantErr == "" {
 				require.NoError(t, err)
-				assert.NotContains(t, cxt.GetError(), invalidVersionErr)
+				assert.NotContains(t, cfg.TestContext.GetError(), invalidVersionErr)
 			} else {
 				require.ErrorContains(t, err, invalidVersionErr)
 			}
@@ -258,14 +303,16 @@ func TestManifest_ValidateSchemaType(t *testing.T) {
 
 	for _, tc := range testcases {
 		t.Run(tc.schemaType, func(t *testing.T) {
-			cxt := portercontext.NewTestContext(t)
+			cfg := config.NewTestConfig(t)
+			cfg.Data.SchemaCheck = string(schema.CheckStrategyExact)
+
 			m := Manifest{
 				SchemaType:    tc.schemaType,
 				SchemaVersion: DefaultSchemaVersion.String(),
 				Name:          "mybuns",
 				Registry:      "localhost:5000",
 			}
-			err := m.validateMetadata(cxt.Context, schema.CheckStrategyExact)
+			err := m.validateMetadata(context.Background(), cfg.Config)
 
 			if tc.wantErr == "" {
 				require.NoError(t, err)
@@ -278,6 +325,7 @@ func TestManifest_ValidateSchemaType(t *testing.T) {
 
 func TestManifest_Validate_Dockerfile(t *testing.T) {
 	c := config.NewTestConfig(t)
+	c.Data.SchemaCheck = string(schema.CheckStrategyNone)
 
 	c.TestContext.AddTestFile("testdata/simple.porter.yaml", config.Name)
 
@@ -286,7 +334,7 @@ func TestManifest_Validate_Dockerfile(t *testing.T) {
 
 	m.Dockerfile = "Dockerfile"
 
-	err = m.Validate(c.Context, schema.CheckStrategyNone)
+	err = m.Validate(context.Background(), c.Config)
 
 	assert.EqualError(t, err, "Dockerfile template cannot be named 'Dockerfile' because that is the filename generated during porter build")
 }
@@ -332,25 +380,25 @@ func TestReadManifest_File(t *testing.T) {
 
 func TestSetDefaults(t *testing.T) {
 	t.Run("no registry or reference provided", func(t *testing.T) {
-		cxt := portercontext.NewTestContext(t)
+		cfg := config.NewTestConfig(t)
 		m := Manifest{
 			SchemaVersion: DefaultSchemaVersion.String(),
 			Name:          "mybun",
 			Version:       "1.2.3-beta.1",
 		}
-		err := m.validateMetadata(cxt.Context, schema.CheckStrategyNone)
+		err := m.validateMetadata(context.Background(), cfg.Config)
 		require.EqualError(t, err, "a registry or reference value must be provided")
 	})
 
 	t.Run("bundle docker tag set on reference", func(t *testing.T) {
-		cxt := portercontext.NewTestContext(t)
+		cfg := config.NewTestConfig(t)
 		m := Manifest{
 			SchemaVersion: DefaultSchemaVersion.String(),
 			Name:          "mybun",
 			Version:       "1.2.3-beta.1",
 			Reference:     "getporter/mybun:v1.2.3",
 		}
-		err := m.validateMetadata(cxt.Context, schema.CheckStrategyNone)
+		err := m.validateMetadata(context.Background(), cfg.Config)
 		require.NoError(t, err)
 
 		err = m.SetDefaults()
@@ -360,14 +408,14 @@ func TestSetDefaults(t *testing.T) {
 	})
 
 	t.Run("bundle docker tag not set on reference", func(t *testing.T) {
-		cxt := portercontext.NewTestContext(t)
+		cfg := config.NewTestConfig(t)
 		m := Manifest{
 			SchemaVersion: DefaultSchemaVersion.String(),
 			Name:          "mybun",
 			Version:       "1.2.3-beta.1+15",
 			Reference:     "getporter/mybun",
 		}
-		err := m.validateMetadata(cxt.Context, schema.CheckStrategyNone)
+		err := m.validateMetadata(context.Background(), cfg.Config)
 		require.NoError(t, err)
 
 		err = m.SetDefaults()
@@ -377,14 +425,14 @@ func TestSetDefaults(t *testing.T) {
 	})
 
 	t.Run("bundle reference includes registry with port", func(t *testing.T) {
-		cxt := portercontext.NewTestContext(t)
+		cfg := config.NewTestConfig(t)
 		m := Manifest{
 			SchemaVersion: DefaultSchemaVersion.String(),
 			Name:          "mybun",
 			Version:       "0.1.0",
 			Reference:     "localhost:5000/missing-invocation-image",
 		}
-		err := m.validateMetadata(cxt.Context, schema.CheckStrategyNone)
+		err := m.validateMetadata(context.Background(), cfg.Config)
 		require.NoError(t, err)
 
 		err = m.SetDefaults()
@@ -394,14 +442,14 @@ func TestSetDefaults(t *testing.T) {
 	})
 
 	t.Run("registry provided, no reference", func(t *testing.T) {
-		cxt := portercontext.NewTestContext(t)
+		cfg := config.NewTestConfig(t)
 		m := Manifest{
 			SchemaVersion: DefaultSchemaVersion.String(),
 			Name:          "mybun",
 			Version:       "1.2.3-beta.1",
 			Registry:      "getporter",
 		}
-		err := m.validateMetadata(cxt.Context, schema.CheckStrategyNone)
+		err := m.validateMetadata(context.Background(), cfg.Config)
 		require.NoError(t, err)
 
 		err = m.SetDefaults()
@@ -411,14 +459,14 @@ func TestSetDefaults(t *testing.T) {
 	})
 
 	t.Run("registry provided with org, no reference", func(t *testing.T) {
-		cxt := portercontext.NewTestContext(t)
+		cfg := config.NewTestConfig(t)
 		m := Manifest{
 			SchemaVersion: DefaultSchemaVersion.String(),
 			Name:          "mybun",
 			Version:       "1.2.3-beta.1",
 			Registry:      "getporter/myorg",
 		}
-		err := m.validateMetadata(cxt.Context, schema.CheckStrategyNone)
+		err := m.validateMetadata(context.Background(), cfg.Config)
 		require.NoError(t, err)
 
 		err = m.SetDefaults()
@@ -428,7 +476,9 @@ func TestSetDefaults(t *testing.T) {
 	})
 
 	t.Run("registry and reference provided", func(t *testing.T) {
-		cxt := portercontext.NewTestContext(t)
+		cfg := config.NewTestConfig(t)
+		ctx, span := cfg.StartRootSpan(context.Background(), t.Name()) // Start a span so we can capture trace/logs emitted with a WARNING
+		defer span.EndSpan()
 		m := Manifest{
 			SchemaVersion: DefaultSchemaVersion.String(),
 			Name:          "mybun",
@@ -436,11 +486,12 @@ func TestSetDefaults(t *testing.T) {
 			Registry:      "myregistry/myorg",
 			Reference:     "getporter/org/mybun:v1.2.3",
 		}
-		err := m.validateMetadata(cxt.Context, schema.CheckStrategyNone)
+		err := m.validateMetadata(ctx, cfg.Config)
 		require.NoError(t, err)
-		require.Equal(t,
+		require.Contains(t,
+			cfg.TestContext.GetError(),
 			"WARNING: both registry and reference were provided; using the reference value of getporter/org/mybun:v1.2.3 for the bundle reference\n",
-			cxt.GetOutput())
+		)
 
 		err = m.SetDefaults()
 		require.NoError(t, err)
@@ -879,4 +930,139 @@ func TestManifest_getTemplatePrefix(t *testing.T) {
 			require.Equal(t, tc.wantPrefix, prefix)
 		})
 	}
+}
+
+func TestManifest_DetermineDependenciesExtensionUsed(t *testing.T) {
+	t.Run("no dependencies used", func(t *testing.T) {
+		m := Manifest{}
+		depsExt := m.DetermineDependenciesExtensionUsed()
+		assert.Empty(t, depsExt)
+	})
+
+	t.Run("v1 features only", func(t *testing.T) {
+		m := Manifest{
+			Dependencies: Dependencies{Requires: []*Dependency{
+				{
+					Name:       "mysql",
+					Bundle:     BundleCriteria{Reference: "mysql:5.7", Version: "5.7 - 6"},
+					Parameters: map[string]string{"loglevel": "4"},
+				},
+			}},
+		}
+		depsExt := m.DetermineDependenciesExtensionUsed()
+		assert.Equal(t, cnab.DependenciesV1ExtensionKey, depsExt)
+	})
+
+	t.Run("v2 declared but no deps defined", func(t *testing.T) {
+		m := Manifest{
+			Required: []RequiredExtension{
+				{Name: cnab.DependenciesV2ExtensionShortHand},
+			},
+		}
+		depsExt := m.DetermineDependenciesExtensionUsed()
+		assert.Equal(t, cnab.DependenciesV2ExtensionKey, depsExt)
+	})
+
+	t.Run("v2 shorthand declared", func(t *testing.T) {
+		m := Manifest{
+			Required: []RequiredExtension{
+				{Name: cnab.DependenciesV2ExtensionShortHand},
+			},
+		}
+		depsExt := m.DetermineDependenciesExtensionUsed()
+		assert.Equal(t, cnab.DependenciesV2ExtensionKey, depsExt)
+	})
+
+	t.Run("v2 full key declared", func(t *testing.T) {
+		m := Manifest{
+			Required: []RequiredExtension{
+				{Name: cnab.DependenciesV2ExtensionKey},
+			},
+			Dependencies: Dependencies{Requires: []*Dependency{
+				{Name: "mysql", Bundle: BundleCriteria{Reference: "mysql:5.7", Version: "5.7 - 6"}},
+			}},
+		}
+		depsExt := m.DetermineDependenciesExtensionUsed()
+		assert.Equal(t, cnab.DependenciesV2ExtensionKey, depsExt)
+	})
+
+	t.Run("provides interface used", func(t *testing.T) {
+		m := Manifest{
+
+			Dependencies: Dependencies{
+				Provides: &DependencyProvider{Interface: InterfaceDeclaration{ID: "myinterface"}},
+			},
+		}
+		depsExt := m.DetermineDependenciesExtensionUsed()
+		assert.Equal(t, cnab.DependenciesV2ExtensionKey, depsExt)
+	})
+
+	t.Run("provides interface empty", func(t *testing.T) {
+		// Even if they aren't using it, declaring that the bundle provides an (empty) interface is enough that
+		// we should use the v2 dependency
+		m := Manifest{
+			Dependencies: Dependencies{
+				Provides: &DependencyProvider{Interface: InterfaceDeclaration{ID: ""}},
+			},
+		}
+		depsExt := m.DetermineDependenciesExtensionUsed()
+		assert.Equal(t, cnab.DependenciesV2ExtensionKey, depsExt)
+	})
+
+	t.Run("bundle interface criteria used", func(t *testing.T) {
+		m := Manifest{
+			Dependencies: Dependencies{Requires: []*Dependency{
+				{
+					Name: "mysql",
+					Bundle: BundleCriteria{
+						Reference: "mysql:5.7",
+						Version:   "5.7 - 6",
+						Interface: &BundleInterface{}}},
+			}},
+		}
+		depsExt := m.DetermineDependenciesExtensionUsed()
+		assert.Equal(t, cnab.DependenciesV2ExtensionKey, depsExt)
+	})
+
+	t.Run("sharing criteria used", func(t *testing.T) {
+		m := Manifest{
+			Dependencies: Dependencies{Requires: []*Dependency{
+				{
+					Name:    "mysql",
+					Bundle:  BundleCriteria{Reference: "mysql:5.7", Version: "5.7 - 6"},
+					Sharing: SharingCriteria{Mode: depsv2ext.SharingModeGroup, Group: SharingGroup{Name: "myapp"}},
+				},
+			}},
+		}
+		depsExt := m.DetermineDependenciesExtensionUsed()
+		assert.Equal(t, cnab.DependenciesV2ExtensionKey, depsExt)
+	})
+
+	t.Run("credential wiring used", func(t *testing.T) {
+		m := Manifest{
+			Dependencies: Dependencies{Requires: []*Dependency{
+				{
+					Name:        "mysql",
+					Bundle:      BundleCriteria{Reference: "mysql:5.7", Version: "5.7 - 6"},
+					Credentials: map[string]string{"kubeconfig": "${bundle.credentials.kubeconfig}"},
+				},
+			}},
+		}
+		depsExt := m.DetermineDependenciesExtensionUsed()
+		assert.Equal(t, cnab.DependenciesV2ExtensionKey, depsExt)
+	})
+
+	t.Run("output wiring used", func(t *testing.T) {
+		m := Manifest{
+			Dependencies: Dependencies{Requires: []*Dependency{
+				{
+					Name:    "mysql",
+					Bundle:  BundleCriteria{Reference: "mysql:5.7", Version: "5.7 - 6"},
+					Outputs: map[string]string{"endpoint": "https://${outputs.host}:${outputs.port}/myapp"},
+				},
+			}},
+		}
+		depsExt := m.DetermineDependenciesExtensionUsed()
+		assert.Equal(t, cnab.DependenciesV2ExtensionKey, depsExt)
+	})
 }

@@ -1,0 +1,67 @@
+schemaVersion: 1.1.0
+name: myenv
+version: 0.1.0
+description: "A 'meta' bundle that deploys everything it needs by adding dependencies"
+registry: "localhost:5000"
+
+credentials:
+  - name: token
+
+parameters:
+  - name: logLevel
+    type: string
+    default: info
+
+outputs:
+  - name: endpoint
+    type: string
+
+dependencies:
+  requires:
+    - name: infra
+      bundle:
+        id: "https://getporter.org/interfaces/mysql"
+        reference: "localhost:5000/myinfra:v0.1.0"
+        # TODO(PEP003): Implement with https://github.com/getporter/porter/issues/2548
+        #interface:
+        #  document:
+        #    outputs:
+        #      - name: mysql-connstr
+        #        $id: "getporter.org/interfaces/mysql.connection-string"
+      credentials:
+        token: ${bundle.credentials.token}
+      parameters:
+        database: myenvdb
+        logLevel: ${bundle.parameters.logLevel}
+    - name: app
+      bundle:
+        reference: "localhost:5000/myapp:v1.2.3"
+      credentials:
+        db-connstr: ${bundle.dependencies.infra.outputs.mysql-connstr}
+      parameters:
+        logLevel: ${bundle.parameters.logLevel}
+      outputs:
+        endpoint: "https://${bundle.dependencies.infra.outputs.ip}:${outputs.port}/myapp"
+
+# The rest below is boilerplate to make porter happy
+# Since this is a "meta" bundle, it doesn't do anything itself, just references other bundles
+mixins:
+  - exec
+
+install:
+  - exec:
+      command: echo
+      arguments:
+        - "Installing an environment"
+
+upgrade:
+  - exec:
+      command: echo
+      arguments:
+        - "Upgrading an environment"
+
+uninstall:
+  - exec:
+      command: echo
+      arguments:
+        - "Uninstalling an environment"

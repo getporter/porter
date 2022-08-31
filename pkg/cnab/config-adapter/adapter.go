@@ -8,6 +8,7 @@ import (
 
 	"get.porter.sh/porter/pkg/cnab"
 	depsv1ext "get.porter.sh/porter/pkg/cnab/extensions/dependencies/v1"
+	depsv2ext "get.porter.sh/porter/pkg/cnab/extensions/dependencies/v2"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/experimental"
 	"get.porter.sh/porter/pkg/manifest"
@@ -414,9 +415,12 @@ func (c *ManifestConverter) generateDependencies() (interface{}, string, error) 
 
 	// Check if they are using v1 of the dependencies spec or v2
 	if c.config.IsFeatureEnabled(experimental.FlagDependenciesV2) {
-		panic("the dependencies-v2 experimental flag was specified but is not yet implemented")
+		// Ok we are using v2!
+		deps, err := c.generateDependenciesV2()
+		return deps, cnab.DependenciesV2ExtensionKey, err
 	}
 
+	// Default to using v1 of deps
 	deps := c.generateDependenciesV1()
 	return deps, cnab.DependenciesV1ExtensionKey, nil
 }
@@ -452,6 +456,55 @@ func (c *ManifestConverter) generateDependenciesV1() *depsv1ext.Dependencies {
 	}
 
 	return deps
+}
+
+func (c *ManifestConverter) generateDependenciesV2() (*depsv2ext.Dependencies, error) {
+	deps := &depsv2ext.Dependencies{
+		Requires: make(map[string]depsv2ext.Dependency, len(c.Manifest.Dependencies.Requires)),
+	}
+
+	if c.Manifest.Dependencies.Provides != nil {
+		deps.Provides = &depsv2ext.DependencyProvider{
+			Interface: depsv2ext.InterfaceDeclaration{
+				ID: c.Manifest.Dependencies.Provides.Interface.ID},
+		}
+	}
+
+	for _, dep := range c.Manifest.Dependencies.Requires {
+		dependencyRef := depsv2ext.Dependency{
+			Name:    dep.Name,
+			Bundle:  dep.Bundle.Reference,
+			Version: dep.Bundle.Version,
+			Sharing: depsv2ext.SharingCriteria{
+				Mode: dep.Sharing.GetEffectiveMode(),
+				Group: depsv2ext.SharingGroup{
+					Name: dep.Sharing.Group.Name,
+				},
+			},
+			Parameters:  dep.Parameters,
+			Credentials: dep.Credentials,
+			Outputs:     dep.Outputs,
+		}
+
+		if dep.Bundle.Interface != nil {
+			dependencyRef.Interface = &depsv2ext.DependencyInterface{
+				ID:        dep.Bundle.Interface.ID,
+				Reference: dep.Bundle.Interface.Reference,
+			}
+
+			// Porter doesn't let you embed a random bundle.json document into your porter.yaml
+			// While the CNAB spec lets the document be anything, we constrain the interface to a porter representation of the bundle's parameters, credentials and outputs.
+			if dep.Bundle.Interface.Document != nil {
+				// TODO(PEP003): Convert the parameters, credentials and outputs defined on manifest.BundleInterfaceDocument and create an (incomplete) bundle.json from it
+				// See https://github.com/getporter/porter/issues/2548
+				panic("conversion of an embedded bundle interface document for a dependency is not implemented")
+			}
+		}
+
+		deps.Requires[dep.Name] = dependencyRef
+	}
+
+	return deps, nil
 }
 
 func (c *ManifestConverter) generateParameterSources(b *cnab.ExtendedBundle) cnab.ParameterSources {
@@ -640,6 +693,8 @@ func (c *ManifestConverter) generateRequiredExtensions(b cnab.ExtendedBundle) []
 	// Add the appropriate dependencies key if applicable
 	if b.HasDependenciesV1() {
 		requiredExtensions = append(requiredExtensions, cnab.DependenciesV1ExtensionKey)
+	} else if b.HasDependenciesV2() {
+		requiredExtensions = append(requiredExtensions, cnab.DependenciesV2ExtensionKey)
 	}
 
 	// Add the appropriate parameter sources key if applicable
