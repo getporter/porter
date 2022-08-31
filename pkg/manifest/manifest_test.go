@@ -5,7 +5,9 @@ import (
 	"os"
 	"testing"
 
+	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/experimental"
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/schema"
 	"get.porter.sh/porter/pkg/yaml"
@@ -70,48 +72,60 @@ func TestLoadManifest(t *testing.T) {
 }
 
 func TestLoadManifestWithDependencies(t *testing.T) {
-	c := config.NewTestConfig(t)
+	// Make sure that we can parse the bundle in both v1 dep mode and v2 dep mode
+	testcases := []struct {
+		name          string
+		depsv2enabled bool
+	}{
+		{"deps v1", false},
+		{"deps v2", true},
+	}
 
-	c.TestContext.AddTestFile("testdata/porter.yaml", config.Name)
-	c.TestContext.AddTestDirectory("testdata/bundles", "bundles")
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
 
-	m, err := LoadManifestFrom(context.Background(), c.Config, config.Name)
-	require.NoError(t, err, "could not load manifest")
+			c := config.NewTestConfig(t)
+			if tc.depsv2enabled {
+				c.SetExperimentalFlags(experimental.FlagDependenciesV2)
+			}
 
-	require.NotNil(t, m)
-	assert.Equal(t, []MixinDeclaration{{Name: "exec"}}, m.Mixins)
-	require.Len(t, m.Install, 1)
+			c.TestContext.AddTestFile("testdata/porter.yaml", config.Name)
+			c.TestContext.AddTestDirectory("testdata/bundles", "bundles")
 
-	installStep := m.Install[0]
-	description, _ := installStep.GetDescription()
-	require.NotNil(t, description)
+			m, err := LoadManifestFrom(context.Background(), c.Config, config.Name)
+			require.NoError(t, err, "could not load manifest")
 
-	mixin := installStep.GetMixinName()
-	assert.Equal(t, "exec", mixin)
+			require.NotNil(t, m)
+			assert.Equal(t, []MixinDeclaration{{Name: "exec"}}, m.Mixins)
+			require.Len(t, m.Install, 1)
 
-	require.Len(t, m.Dependencies.Requires, 1, "expected one dependency")
-	assert.Equal(t, "getporter/azure-mysql:5.7", m.Dependencies.Requires[0].Bundle.Reference, "expected a v1 schema for the dependency delcaration")
-}
+			installStep := m.Install[0]
+			description, _ := installStep.GetDescription()
+			require.NotNil(t, description)
 
-func TestLoadManifestWithDependenciesInOrder(t *testing.T) {
-	c := config.NewTestConfig(t)
+			mixin := installStep.GetMixinName()
+			assert.Equal(t, "exec", mixin)
 
-	c.TestContext.AddTestFile("testdata/porter-with-deps.yaml", config.Name)
-	c.TestContext.AddTestDirectory("testdata/bundles", "bundles")
+			require.Len(t, m.Dependencies.Requires, 1, "expected one dependency")
+			dep := m.Dependencies.Requires[0]
+			assert.Equal(t, "getporter/azure-mysql:5.7", dep.Bundle.Reference, "expected the dependency to be set")
+			assert.Equal(t, "5.7.x", dep.Bundle.Version, "expected the version range to be set")
+			assert.Equal(t, map[string]string{"database-name": "wordpress"}, dep.Parameters, "expected the dependency parameters to be set")
 
-	m, err := LoadManifestFrom(context.Background(), c.Config, config.Name)
-	require.NoError(t, err, "could not load manifest")
-	assert.NotNil(t, m)
+			// The remaining fields are only supported in depsv2 but the manifest still parses them. It's only a behavior difference if we act on the information or not.
+			assert.Equal(t, map[string]string{"password": "mcstuffins"}, dep.Credentials, "expected the dependency credentials to be set")
+			assert.Equal(t, "getporter/azure-mysql:5.7-interface", dep.Bundle.Interface.Reference, "expected the bundle interface reference to be set")
 
-	nginxDep := m.Dependencies.Requires[0]
-	assert.Equal(t, "nginx", nginxDep.Name)
-	assert.Equal(t, "localhost:5000/nginx:1.19", nginxDep.Bundle.Reference)
-
-	mysqlDep := m.Dependencies.Requires[1]
-	assert.Equal(t, "mysql", mysqlDep.Name)
-	assert.Equal(t, "getporter/azure-mysql:5.7", mysqlDep.Bundle.Reference)
-	assert.Len(t, mysqlDep.Parameters, 1)
-
+			wantDoc := &BundleInterfaceDocument{
+				Parameters: map[string]ParameterDefinition{
+					"password": {
+						Name:   "password",
+						Schema: definition.Schema{Type: "string"}},
+				},
+			}
+			assert.Equal(t, wantDoc, dep.Bundle.Interface.Document, "expected the bundle interface document to be set")
+		})
+	}
 }
 
 func TestAction_Validate_RequireMixinDeclaration(t *testing.T) {
@@ -846,4 +860,105 @@ func TestManifest_getTemplatePrefix(t *testing.T) {
 			require.Equal(t, tc.wantPrefix, prefix)
 		})
 	}
+}
+
+func TestManifest_DetermineDependenciesExtensionUsed(t *testing.T) {
+	t.Run("no dependencies used", func(t *testing.T) {
+		m := Manifest{}
+		depsExt := m.DetermineDependenciesExtensionUsed()
+		assert.Empty(t, depsExt)
+	})
+
+	t.Run("v1 features only", func(t *testing.T) {
+		m := Manifest{
+			Dependencies: Dependencies{Requires: []*Dependency{
+				{
+					Name:       "mysql",
+					Bundle:     BundleCriteria{Reference: "mysql:5.7", Version: "5.7 - 6"},
+					Parameters: map[string]string{"loglevel": "4"},
+				},
+			}},
+		}
+		depsExt := m.DetermineDependenciesExtensionUsed()
+		assert.Equal(t, cnab.DependenciesV1ExtensionKey, depsExt)
+	})
+
+	t.Run("v2 declared but no deps defined", func(t *testing.T) {
+		m := Manifest{
+			Required: []RequiredExtension{
+				{Name: cnab.DependenciesV2ExtensionShortHand},
+			},
+		}
+		depsExt := m.DetermineDependenciesExtensionUsed()
+		assert.Empty(t, depsExt)
+	})
+
+	t.Run("v2 shorthand declared", func(t *testing.T) {
+		m := Manifest{
+			Required: []RequiredExtension{
+				{Name: cnab.DependenciesV2ExtensionShortHand},
+			},
+			Dependencies: Dependencies{Requires: []*Dependency{
+				{Name: "mysql", Bundle: BundleCriteria{Reference: "mysql:5.7", Version: "5.7 - 6"}},
+			}},
+		}
+		depsExt := m.DetermineDependenciesExtensionUsed()
+		assert.Equal(t, cnab.DependenciesV2ExtensionKey, depsExt)
+	})
+
+	t.Run("v2 full key declared", func(t *testing.T) {
+		m := Manifest{
+			Required: []RequiredExtension{
+				{Name: cnab.DependenciesV2ExtensionKey},
+			},
+			Dependencies: Dependencies{Requires: []*Dependency{
+				{Name: "mysql", Bundle: BundleCriteria{Reference: "mysql:5.7", Version: "5.7 - 6"}},
+			}},
+		}
+		depsExt := m.DetermineDependenciesExtensionUsed()
+		assert.Equal(t, cnab.DependenciesV2ExtensionKey, depsExt)
+	})
+
+	t.Run("bundle interface criteria used", func(t *testing.T) {
+		m := Manifest{
+			Dependencies: Dependencies{Requires: []*Dependency{
+				{
+					Name: "mysql",
+					Bundle: BundleCriteria{
+						Reference: "mysql:5.7",
+						Version:   "5.7 - 6",
+						Interface: &BundleInterface{}}},
+			}},
+		}
+		depsExt := m.DetermineDependenciesExtensionUsed()
+		assert.Equal(t, cnab.DependenciesV2ExtensionKey, depsExt)
+	})
+
+	t.Run("installation criteria used", func(t *testing.T) {
+		m := Manifest{
+			Dependencies: Dependencies{Requires: []*Dependency{
+				{
+					Name:         "mysql",
+					Bundle:       BundleCriteria{Reference: "mysql:5.7", Version: "5.7 - 6"},
+					Installation: &DependencyInstallationConfig{},
+				},
+			}},
+		}
+		depsExt := m.DetermineDependenciesExtensionUsed()
+		assert.Equal(t, cnab.DependenciesV2ExtensionKey, depsExt)
+	})
+
+	t.Run("credential wiring used", func(t *testing.T) {
+		m := Manifest{
+			Dependencies: Dependencies{Requires: []*Dependency{
+				{
+					Name:        "mysql",
+					Bundle:      BundleCriteria{Reference: "mysql:5.7", Version: "5.7 - 6"},
+					Credentials: map[string]string{"kubeconfig": "bundle.credentials.kubeconfig"},
+				},
+			}},
+		}
+		depsExt := m.DetermineDependenciesExtensionUsed()
+		assert.Equal(t, cnab.DependenciesV2ExtensionKey, depsExt)
+	})
 }

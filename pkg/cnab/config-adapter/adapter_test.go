@@ -8,8 +8,10 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg/cnab"
-	depsv1 "get.porter.sh/porter/pkg/cnab/dependencies/v1"
+	depsv1ext "get.porter.sh/porter/pkg/cnab/extensions/dependencies/v1"
+	depsv2ext "get.porter.sh/porter/pkg/cnab/extensions/dependencies/v2"
 	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/experimental"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/mixin"
 	"get.porter.sh/porter/pkg/pkgmgmt"
@@ -22,27 +24,53 @@ import (
 func TestManifestConverter(t *testing.T) {
 	t.Parallel()
 
-	c := config.NewTestConfig(t)
-	c.TestContext.AddTestFileFromRoot("tests/testdata/mybuns/porter.yaml", config.Name)
-
-	ctx := context.Background()
-	m, err := manifest.LoadManifestFrom(ctx, c.Config, config.Name)
-	require.NoError(t, err, "could not load manifest")
-
-	installedMixins := []mixin.Metadata{
-		{Name: "exec", VersionInfo: pkgmgmt.VersionInfo{Version: "v1.2.3"}},
+	testcases := []struct {
+		name          string
+		configHandler func(c *config.Config)
+		manifestPath  string
+		goldenFile    string
+	}{
+		{name: "depsv1",
+			configHandler: func(c *config.Config) {},
+			manifestPath:  "tests/testdata/mybuns/porter.yaml",
+			goldenFile:    "testdata/mybuns-depsv1.bundle.json"},
+		{name: "depsv2",
+			configHandler: func(c *config.Config) {
+				c.SetExperimentalFlags(experimental.FlagDependenciesV2)
+			},
+			manifestPath: "tests/testdata/mybuns/porter.yaml",
+			goldenFile:   "testdata/mybuns-depsv2.bundle.json"},
 	}
 
-	a := NewManifestConverter(c.Config, m, nil, installedMixins)
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
-	bun, err := a.ToBundle(ctx)
-	require.NoError(t, err, "ToBundle failed")
+			c := config.NewTestConfig(t)
+			tc.configHandler(c.Config)
+			c.TestContext.AddTestFileFromRoot(tc.manifestPath, config.Name)
 
-	// Compare the regular json, not the canonical, because that's hard to diff
-	prepBundleForDiff(&bun.Bundle)
-	bunD, err := json.MarshalIndent(bun, "", "  ")
-	require.NoError(t, err)
-	c.TestContext.CompareGoldenFile("testdata/mybuns.bundle.json", string(bunD))
+			ctx := context.Background()
+			m, err := manifest.LoadManifestFrom(ctx, c.Config, config.Name)
+			require.NoError(t, err, "could not load manifest")
+
+			installedMixins := []mixin.Metadata{
+				{Name: "exec", VersionInfo: pkgmgmt.VersionInfo{Version: "v1.2.3"}},
+			}
+
+			a := NewManifestConverter(c.Config, m, nil, installedMixins)
+
+			bun, err := a.ToBundle(ctx)
+			require.NoError(t, err, "ToBundle failed")
+
+			// Compare the regular json, not the canonical, because that's hard to diff
+			prepBundleForDiff(&bun.Bundle)
+			bunD, err := json.MarshalIndent(bun, "", "  ")
+			require.NoError(t, err)
+			c.TestContext.CompareGoldenFile(tc.goldenFile, string(bunD))
+		})
+	}
 }
 
 func prepBundleForDiff(b *bundle.Bundle) {
@@ -86,6 +114,7 @@ func TestManifestConverter_ToBundle(t *testing.T) {
 	assert.Contains(t, bun.Definitions, "porter-debug-parameter", "porter-debug definition was not defined")
 
 	assert.True(t, bun.HasDependenciesV1(), "DependenciesV1 was not populated")
+	assert.Contains(t, bun.RequiredExtensions, "io.cnab.dependencies")
 
 	assert.Len(t, bun.Outputs, 1, "expected one output for the bundle state")
 }
@@ -533,29 +562,29 @@ func TestManifestConverter_generateBundleOutputs(t *testing.T) {
 	require.Equal(t, wantDefinitions, defs)
 }
 
-func TestManifestConverter_generateDependencies(t *testing.T) {
+func TestManifestConverter_generateDependenciesv1(t *testing.T) {
 	t.Parallel()
 
 	testcases := []struct {
 		name    string
-		wantDep depsv1.Dependency
+		wantDep depsv1ext.Dependency
 	}{
-		{"no-version", depsv1.Dependency{
+		{"no-version", depsv1ext.Dependency{
 			Name:   "mysql",
 			Bundle: "getporter/azure-mysql:5.7",
 		}},
-		{"no-ranges, uses prerelease", depsv1.Dependency{
+		{"no-ranges, uses prerelease", depsv1ext.Dependency{
 			Name:   "ad",
 			Bundle: "getporter/azure-active-directory",
-			Version: &depsv1.DependencyVersion{
+			Version: &depsv1ext.DependencyVersion{
 				AllowPrereleases: true,
 				Ranges:           []string{"1.0.0-0"},
 			},
 		}},
-		{"with-ranges", depsv1.Dependency{
+		{"with-ranges", depsv1ext.Dependency{
 			Name:   "storage",
 			Bundle: "getporter/azure-blob-storage",
-			Version: &depsv1.DependencyVersion{
+			Version: &depsv1ext.DependencyVersion{
 				Ranges: []string{
 					"1.x - 2,2.1 - 3.x",
 				},
@@ -570,7 +599,7 @@ func TestManifestConverter_generateDependencies(t *testing.T) {
 			t.Parallel()
 
 			c := config.NewTestConfig(t)
-			c.TestContext.AddTestFile("testdata/porter-with-deps.yaml", config.Name)
+			c.TestContext.AddTestFile("testdata/porter.yaml", config.Name)
 
 			ctx := context.Background()
 			m, err := manifest.LoadManifestFrom(ctx, c.Config, config.Name)
@@ -581,12 +610,12 @@ func TestManifestConverter_generateDependencies(t *testing.T) {
 			depsExt, depsExtKey, err := a.generateDependencies()
 			require.NoError(t, err)
 			require.Equal(t, cnab.DependenciesV1ExtensionKey, depsExtKey, "expected the v1 dependencies extension key")
-			require.IsType(t, &depsv1.Dependencies{}, depsExt, "expected a v1 dependencies extension section")
-			deps := depsExt.(*depsv1.Dependencies)
+			require.IsType(t, &depsv1ext.Dependencies{}, depsExt, "expected a v1 dependencies extension section")
+			deps := depsExt.(*depsv1ext.Dependencies)
 			require.Len(t, deps.Requires, 3, "incorrect number of dependencies were generated")
 			require.Equal(t, []string{"mysql", "ad", "storage"}, deps.Sequence, "incorrect sequence was generated")
 
-			var dep *depsv1.Dependency
+			var dep *depsv1ext.Dependency
 			for _, d := range deps.Requires {
 				if d.Bundle == tc.wantDep.Bundle {
 					dep = &d
@@ -600,21 +629,71 @@ func TestManifestConverter_generateDependencies(t *testing.T) {
 	}
 }
 
-func TestManifestConverter_generateRequiredExtensions_Dependencies(t *testing.T) {
+func TestManifestConverter_generateDependenciesv2(t *testing.T) {
 	t.Parallel()
 
-	c := config.NewTestConfig(t)
-	c.TestContext.AddTestFile("testdata/porter-with-deps.yaml", config.Name)
+	testcases := []struct {
+		name    string
+		wantDep depsv2ext.Dependency
+	}{
+		{"no-version", depsv2ext.Dependency{
+			Name:   "mysql",
+			Bundle: "getporter/azure-mysql:5.7",
+			Parameters: map[string]depsv2ext.DependencySource{
+				"database":  {Value: "wordpress"},
+				"collation": {Parameter: "db_collation"},
+			},
+			Credentials: map[string]depsv2ext.DependencySource{
+				"user": {Credential: "username"},
+			},
+		}},
+		{"no-ranges, uses prerelease", depsv2ext.Dependency{
+			Name:    "ad",
+			Bundle:  "getporter/azure-active-directory",
+			Version: "1.0.0-0",
+		}},
+		{"with-ranges", depsv2ext.Dependency{
+			Name:    "storage",
+			Bundle:  "getporter/azure-blob-storage",
+			Version: "1.x - 2,2.1 - 3.x",
+		}},
+	}
 
-	ctx := context.Background()
-	m, err := manifest.LoadManifestFrom(ctx, c.Config, config.Name)
-	require.NoError(t, err, "could not load manifest")
+	for _, tc := range testcases {
+		tc := tc
 
-	a := NewManifestConverter(c.Config, m, nil, nil)
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
-	bun, err := a.ToBundle(ctx)
-	require.NoError(t, err, "ToBundle failed")
-	assert.Contains(t, bun.RequiredExtensions, "io.cnab.dependencies")
+			c := config.NewTestConfig(t)
+			c.SetExperimentalFlags(experimental.FlagDependenciesV2)
+			c.TestContext.AddTestFile("testdata/porter.yaml", config.Name)
+
+			ctx := context.Background()
+			m, err := manifest.LoadManifestFrom(ctx, c.Config, config.Name)
+			require.NoError(t, err, "could not load manifest")
+
+			a := NewManifestConverter(c.Config, m, nil, nil)
+
+			depsExt, depsExtKey, err := a.generateDependencies()
+			require.NoError(t, err)
+			require.Equal(t, cnab.DependenciesV2ExtensionKey, depsExtKey, "expected the v2 dependencies extension key")
+			require.IsType(t, &depsv2ext.Dependencies{}, depsExt, "expected a v2 dependencies extension section")
+			deps := depsExt.(*depsv2ext.Dependencies)
+			require.Len(t, deps.Requires, 3, "incorrect number of dependencies were generated")
+
+			var dep *depsv2ext.Dependency
+			for _, d := range deps.Requires {
+				if d.Bundle == tc.wantDep.Bundle {
+					dep = &d
+					break
+				}
+			}
+
+			require.NotNil(t, dep, "could not find bundle %s", tc.wantDep.Bundle)
+			assert.Equal(t, &tc.wantDep, dep)
+		})
+	}
 }
 
 func TestManifestConverter_generateParameterSources(t *testing.T) {

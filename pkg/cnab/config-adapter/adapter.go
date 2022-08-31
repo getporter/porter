@@ -7,7 +7,8 @@ import (
 	"strings"
 
 	"get.porter.sh/porter/pkg/cnab"
-	depsv1 "get.porter.sh/porter/pkg/cnab/dependencies/v1"
+	depsv1ext "get.porter.sh/porter/pkg/cnab/extensions/dependencies/v1"
+	depsv2ext "get.porter.sh/porter/pkg/cnab/extensions/dependencies/v2"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/experimental"
 	"get.porter.sh/porter/pkg/manifest"
@@ -414,33 +415,33 @@ func (c *ManifestConverter) generateDependencies() (interface{}, string, error) 
 
 	// Check if they are using v1 of the dependencies spec or v2
 	if c.config.IsFeatureEnabled(experimental.FlagDependenciesV2) {
-		panic("the dependencies-v2 experimental flag was specified but is not yet implemented")
+		// Ok we are using v2!
+		deps, err := c.generateDependenciesV2()
+		return deps, cnab.DependenciesV2ExtensionKey, err
 	}
 
-	deps, err := c.generateDependenciesV1()
-	if err != nil {
-		return nil, "", err
-	}
+	// Default to using v1 of deps
+	deps := c.generateDependenciesV1()
 	return deps, cnab.DependenciesV1ExtensionKey, nil
 }
 
-func (c *ManifestConverter) generateDependenciesV1() (*depsv1.Dependencies, error) {
+func (c *ManifestConverter) generateDependenciesV1() *depsv1ext.Dependencies {
 	if len(c.Manifest.Dependencies.Requires) == 0 {
-		return nil, nil
+		return nil
 	}
 
-	deps := &depsv1.Dependencies{
+	deps := &depsv1ext.Dependencies{
 		Sequence: make([]string, 0, len(c.Manifest.Dependencies.Requires)),
-		Requires: make(map[string]depsv1.Dependency, len(c.Manifest.Dependencies.Requires)),
+		Requires: make(map[string]depsv1ext.Dependency, len(c.Manifest.Dependencies.Requires)),
 	}
 
 	for _, dep := range c.Manifest.Dependencies.Requires {
-		dependencyRef := depsv1.Dependency{
+		dependencyRef := depsv1ext.Dependency{
 			Name:   dep.Name,
 			Bundle: dep.Bundle.Reference,
 		}
 		if len(dep.Bundle.Version) > 0 {
-			dependencyRef.Version = &depsv1.DependencyVersion{
+			dependencyRef.Version = &depsv1ext.DependencyVersion{
 				Ranges: []string{dep.Bundle.Version},
 			}
 
@@ -451,6 +452,72 @@ func (c *ManifestConverter) generateDependenciesV1() (*depsv1.Dependencies, erro
 			}
 		}
 		deps.Sequence = append(deps.Sequence, dep.Name)
+		deps.Requires[dep.Name] = dependencyRef
+	}
+
+	return deps
+}
+
+func (c *ManifestConverter) generateDependenciesV2() (*depsv2ext.Dependencies, error) {
+	deps := &depsv2ext.Dependencies{
+		Requires: make(map[string]depsv2ext.Dependency, len(c.Manifest.Dependencies.Requires)),
+	}
+
+	for _, dep := range c.Manifest.Dependencies.Requires {
+		dependencyRef := depsv2ext.Dependency{
+			Name:    dep.Name,
+			Bundle:  dep.Bundle.Reference,
+			Version: dep.Bundle.Version,
+		}
+
+		if dep.Bundle.Interface != nil {
+			if dep.Bundle.Interface.Reference != "" {
+				dependencyRef.Interface.Reference = dep.Bundle.Interface.Reference
+			}
+			// Porter doesn't let you embed a random bundle.json document into your porter.yaml
+			// While the CNAB spec lets the document be anything, we constrain the interface to a porter representation of the bundle's parameters, credentials and outputs.
+			if dep.Bundle.Interface.Document != nil {
+				// TODO(PEP003): Convert the parameters, credentials and outputs defined on manifest.BundleInterfaceDocument and create an (incomplete) bundle.json from it
+				// See https://github.com/getporter/porter/issues/2548
+				panic("conversion of an embedded bundle interface document for a dependency is not implemented")
+			}
+		}
+
+		if dep.Installation != nil {
+			dependencyRef.Installation = &depsv2ext.DependencyInstallation{
+				Labels: dep.Installation.Labels,
+			}
+			if dep.Installation.Criteria != nil {
+				dependencyRef.Installation.Criteria = &depsv2ext.InstallationCriteria{
+					MatchInterface: dep.Installation.Criteria.MatchInterface,
+					MatchNamespace: dep.Installation.Criteria.MatchNamespace,
+					IgnoreLabels:   dep.Installation.Criteria.IgnoreLabels,
+				}
+			}
+		}
+
+		if len(dep.Parameters) > 0 {
+			dependencyRef.Parameters = make(map[string]depsv2ext.DependencySource, len(dep.Parameters))
+			for param, source := range dep.Parameters {
+				ds, err := depsv2ext.ParseDependencySource(source)
+				if err != nil {
+					return nil, fmt.Errorf("invalid parameter wiring specified for dependency %s: %w", dep.Name, err)
+				}
+				dependencyRef.Parameters[param] = ds
+			}
+		}
+
+		if len(dep.Credentials) > 0 {
+			dependencyRef.Credentials = make(map[string]depsv2ext.DependencySource, len(dep.Credentials))
+			for cred, source := range dep.Credentials {
+				ds, err := depsv2ext.ParseDependencySource(source)
+				if err != nil {
+					return nil, fmt.Errorf("invalid credential wiring specified for dependency %s: %w", dep.Name, err)
+				}
+				dependencyRef.Credentials[cred] = ds
+			}
+		}
+
 		deps.Requires[dep.Name] = dependencyRef
 	}
 
@@ -643,6 +710,8 @@ func (c *ManifestConverter) generateRequiredExtensions(b cnab.ExtendedBundle) []
 	// Add the appropriate dependencies key if applicable
 	if b.HasDependenciesV1() {
 		requiredExtensions = append(requiredExtensions, cnab.DependenciesV1ExtensionKey)
+	} else if b.HasDependenciesV2() {
+		requiredExtensions = append(requiredExtensions, cnab.DependenciesV2ExtensionKey)
 	}
 
 	// Add the appropriate parameter sources key if applicable

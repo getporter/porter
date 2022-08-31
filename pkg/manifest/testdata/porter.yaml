@@ -6,13 +6,23 @@ registry: example.com
 mixins:
   - exec
 
+# contains a mix of v1 and v2 supported syntax which lights up depending on what is enabled in config
 dependencies:
   requires:
     - name: mysql
       bundle:
         reference: "getporter/azure-mysql:5.7"
+        version: 5.7.x
+        interface:
+          reference: "getporter/azure-mysql:5.7-interface"
+          document:
+            parameters:
+              - name: password
+                type: string
       parameters:
         database-name: wordpress
+      credentials:
+        password: mcstuffins
 
 install:
   - exec:
@@ -34,4 +44,3 @@ required:
   - requiredExtension1
   - requiredExtension2:
       config: true
-

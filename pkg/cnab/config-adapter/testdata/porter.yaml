@@ -14,11 +14,29 @@ credentials:
     applyTo:
       - uninstall
 
+parameters:
+  - name: db_collation
+    type: string
+    default: Latin1_General_CI_AI
+
 dependencies:
   requires:
     - name: mysql
       bundle:
         reference: "getporter/azure-mysql:5.7"
+      parameters:
+        database: wordpress
+        collation: ${bundle.parameters.db_collation}
+      credentials:
+        user: ${bundle.credentials.username}
+    - name: ad
+      bundle:
+        reference: "getporter/azure-active-directory"
+        version: 1.0.0-0
+    - name: storage
+      bundle:
+        reference: "getporter/azure-blob-storage"
+        version: 1.x - 2,2.1 - 3.x
 
 mixins:
 - exec

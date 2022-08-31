@@ -174,7 +174,18 @@
           "$ref": "#/definitions/bundle"
         },
         "parameters": {
-          "type": "object"
+          "description": "Map of parameter names to a parameter source, such as bundle.parameters.PARAM, bundle.dependencies.DEP.outputs.OUTPUT, or bundle.credentials.CRED",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "credentials": {
+          "description": "Map of parameter names to a parameter source, such as bundle.parameters.PARAM, bundle.dependencies.DEP.outputs.OUTPUT, or bundle.credentials.CRED",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
         }
       },
       "required": [
@@ -182,6 +193,28 @@
         "bundle"
       ],
       "type": "object"
+    },
+    "dependencySource": {
+      "description": "Describes how Porter should set a dependency's parameter or credential",
+      "type": "object",
+      "properties": {
+        "dependency": {
+          "description": "The name of the dependency that defines the output used for the source",
+          "type": "string"
+        },
+        "parameter": {
+          "description": "The parameter name from which the value should be sourced",
+          "type": "string"
+        },
+        "credential": {
+          "description": "The credential name from which the value should be sourced",
+          "type": "string"
+        },
+        "output": {
+          "description": "The output name defined in a dependency from which the value should be sourced",
+          "type": "string"
+        }
+      }
     },
     "bundle": {
       "description": "The defintion of a bundle reference",

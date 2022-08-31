@@ -64,6 +64,10 @@ dependencies:
         reference: "localhost:5000/mydb:v0.1.0"
       parameters:
         database: bigdb
+        collation: bundle.parameters.db-collation
+      credentials:
+        # TODO(PEP003): Update the bundle to have 2 dependencies. Pass an output from one dep to another.
+        username: bundle.credentials.username
 
 images:
   whalesayd:
