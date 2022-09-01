@@ -112,8 +112,8 @@ func (m *RuntimeManifest) GetInstallationName() string {
 }
 
 func (m *RuntimeManifest) loadDependencyDefinitions() error {
-	m.bundles = make(map[string]cnab.ExtendedBundle, len(m.Dependencies.RequiredDependencies))
-	for _, dep := range m.Dependencies.RequiredDependencies {
+	m.bundles = make(map[string]cnab.ExtendedBundle, len(m.Dependencies.Requires))
+	for _, dep := range m.Dependencies.Requires {
 		bunD, err := GetDependencyDefinition(m.config.Context, dep.Name)
 		if err != nil {
 			return err
