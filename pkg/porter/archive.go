@@ -196,7 +196,7 @@ func (ex *exporter) chtimes(path string) error {
 // saves them to a directory called artifacts/ in the bundle directory
 func (ex *exporter) prepareArtifacts(bun cnab.ExtendedBundle) error {
 	var imageKeys []string
-	for imageKey, _ := range bun.Images {
+	for imageKey := range bun.Images {
 		imageKeys = append(imageKeys, imageKey)
 	}
 	sort.Strings(imageKeys)
