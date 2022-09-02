@@ -24,7 +24,7 @@ Depending on the bundle, a credential can apply to all actions (install/upgrade/
 Let's look at a bundle with credentials:
 
 ```console
-$ porter explain ghcr.io/ghcr.io/getporter/examples/credentials-tutorial:v0.3.0
+$ porter explain ghcr.io/getporter/examples/credentials-tutorial:v0.3.0
 Name: examples/credentials-tutorial
 Description: An example Porter bundle with credentials. Uses your GitHub token to retrieve your public user profile from GitHub.
 Version: 0.3.0
@@ -55,7 +55,7 @@ This means that the github-token credential is required to run porter install or
 Create a credential set for the credentials-tutorial bundle with the `porter credentials generate` command. It is an interactive command that walks through setting values for every credential in the specified bundle.
 
 ```console
-$ porter credentials generate github --reference ghcr.io/ghcr.io/getporter/examples/credentials-tutorial:v0.3.0
+$ porter credentials generate github --reference ghcr.io/getporter/examples/credentials-tutorial:v0.3.0
 Generating new credential github from bundle credentials-tutorial
 ==> 1 credentials required for bundle credentials-tutorial
 ? How would you like to set credential "github-token"
