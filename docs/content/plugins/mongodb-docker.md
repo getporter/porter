@@ -36,3 +36,13 @@ default-storage = "mymongo"
 ### port
 
 The port parameter configures which port the MongoDB server listens on. By default, this plugin listens on 27018.
+
+
+## Remove Plugin Data
+
+If you want to do a fresh installation of Porter and start over with a new database, run the following commands to remove the container and volume used by the plugin.
+
+```
+docker rm -f porter-mongodb-docker-plugin
+docker volume rm porter-mongodb-docker-plugin-data
+```
