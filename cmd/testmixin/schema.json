@@ -1,0 +1,112 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "config": {
+      "description": "Configuration that can be set when the mixin is declared",
+      "type": "object",
+      "properties": {
+        "testmixin": {
+          "description": "test mixin configuration",
+          "type": "object",
+          "properties": {
+            "clientVersion": {
+              "description": "Version of the client to install in the bundle",
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "installStep": {
+      "type": "object",
+      "properties": {
+        "testmixin": {
+          "$ref": "#/definitions/testmixin"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "testmixin"
+      ]
+    },
+    "upgradeStep": {
+      "type": "object",
+      "properties": {
+        "testmixin": {
+          "$ref": "#/definitions/testmixin"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "testmixin"
+      ]
+    },
+    "invokeStep": {
+      "type": "object",
+      "properties": {
+        "testmixin": {
+          "$ref": "#/definitions/testmixin"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "testmixin"
+      ]
+    },
+    "uninstallStep": {
+      "type": "object",
+      "properties": {
+        "testmixin": {
+          "$ref": "#/definitions/testmixin"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "testmixin"
+      ]
+    },
+    "testmixin": {
+      "description": "A step that is executed by the test mixin",
+      "type": "object",
+      "properties": {
+        "description": {
+          "description": "A description of the mixin step",
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "description"
+      ]
+    }
+  },
+  "type": "object",
+  "properties": {
+    "install": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/installStep"
+      }
+    },
+    "upgrade": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/upgradeStep"
+      }
+    },
+    "uninstall": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/uninstallStep"
+      }
+    }
+  },
+  "additionalProperties": {
+    "type": "array",
+    "items": {
+      "$ref": "#/definitions/invokeStep"
+    }
+  }
+}

@@ -219,7 +219,6 @@ func (p *Porter) buildBundle(ctx context.Context, m *manifest.Manifest, digest d
 	imageDigests := map[string]string{m.Image: digest.String()}
 
 	mixins, err := p.getUsedMixins(ctx, m)
-
 	if err != nil {
 		return err
 	}

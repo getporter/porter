@@ -2,7 +2,6 @@ package porter
 
 import (
 	"context"
-	"fmt"
 	"runtime"
 	"strings"
 	"testing"
@@ -10,7 +9,6 @@ import (
 	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/printer"
 	"get.porter.sh/porter/pkg/test"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -69,6 +67,11 @@ func TestPrintJsonVersion(t *testing.T) {
 }
 
 func TestPrintDebugInfoJsonVersion(t *testing.T) {
+	// Only run this on linux + amd64 machines to simplify the test (it has different output based on the os/arch)
+	if runtime.GOOS != "linux" || runtime.GOARCH != "amd64" {
+		t.Skip("skipping test because it is only for linux/amd64")
+	}
+
 	pkg.Commit = "abc123"
 	pkg.Version = "v1.2.3"
 	defer func() {
@@ -87,27 +90,7 @@ func TestPrintDebugInfoJsonVersion(t *testing.T) {
 	p.PrintVersion(ctx, opts)
 
 	gotOutput := p.TestConfig.TestContext.GetOutput()
-	wantOutput := fmt.Sprintf(`{
-  "version": {
-    "name": "porter",
-    "version": "v1.2.3",
-    "commit": "abc123"
-  },
-  "system": {
-    "OS": "%s",
-    "Arch": "%s"
-  },
-  "mixins": [
-    {
-      "name": "exec",
-      "version": "v1.0",
-      "commit": "abc123",
-      "author": "Porter Authors"
-    }
-  ]
-}
-`, runtime.GOOS, runtime.GOARCH)
-	assert.Equal(t, wantOutput, gotOutput)
+	test.CompareGoldenFile(t, "testdata/version/version-output.json", gotOutput)
 }
 
 func TestPrintDebugInfoPlainTextVersion(t *testing.T) {

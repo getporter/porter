@@ -17,5 +17,5 @@ func TestFileSystem_List(t *testing.T) {
 	require.Nil(t, err)
 	require.Len(t, mixins, 2)
 	assert.Equal(t, mixins[0], "exec")
-	assert.Equal(t, mixins[1], "helm")
+	assert.Equal(t, mixins[1], "testmixin")
 }
