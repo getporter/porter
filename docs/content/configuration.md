@@ -77,6 +77,10 @@ experimental = ["flagA", "flagB"]
 # Use Docker buildkit to build the bundle
 build-driver = "buildkit"
 
+# Overwrite the existing published bundle when publishing or copying a bundle.
+# By default, Porter detects when a push would overwrite an existing artifact and requires --force to proceed.
+force-overwrite = false
+
 # Use the storage configuration named devdb
 default-storage = "devdb"
 

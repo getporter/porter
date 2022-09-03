@@ -21,7 +21,7 @@ func TestPublish_Validate_PorterYamlExists(t *testing.T) {
 
 	p.TestConfig.TestContext.AddTestFile("testdata/porter.yaml", "porter.yaml")
 	opts := PublishOptions{}
-	err := opts.Validate(p.Context)
+	err := opts.Validate(p.Config)
 	require.NoError(t, err, "validating should not have failed")
 }
 
@@ -30,7 +30,7 @@ func TestPublish_Validate_PorterYamlDoesNotExist(t *testing.T) {
 	defer p.Close()
 
 	opts := PublishOptions{}
-	err := opts.Validate(p.Context)
+	err := opts.Validate(p.Config)
 	require.Error(t, err, "validation should have failed")
 	assert.EqualError(
 		t,
@@ -47,15 +47,15 @@ func TestPublish_Validate_ArchivePath(t *testing.T) {
 	opts := PublishOptions{
 		ArchiveFile: "mybuns.tgz",
 	}
-	err := opts.Validate(p.Context)
+	err := opts.Validate(p.Config)
 	assert.EqualError(t, err, "unable to access --archive mybuns.tgz: open /mybuns.tgz: file does not exist")
 
 	p.FileSystem.WriteFile("mybuns.tgz", []byte("mybuns"), pkg.FileModeWritable)
-	err = opts.Validate(p.Context)
+	err = opts.Validate(p.Config)
 	assert.EqualError(t, err, "must provide a value for --reference of the form REGISTRY/bundle:tag")
 
 	opts.Reference = "myreg/mybuns:v0.1.0"
-	err = opts.Validate(p.Context)
+	err = opts.Validate(p.Config)
 	require.NoError(t, err, "validating should not have failed")
 }
 

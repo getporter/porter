@@ -12,13 +12,14 @@ import (
 var _ RegistryProvider = &TestRegistry{}
 
 type TestRegistry struct {
-	MockPullBundle     func(ctx context.Context, ref cnab.OCIReference, opts RegistryOptions) (cnab.BundleReference, error)
-	MockPushBundle     func(ctx context.Context, ref cnab.BundleReference, opts RegistryOptions) (bundleReference cnab.BundleReference, err error)
-	MockPushImage      func(ctx context.Context, ref cnab.OCIReference, opts RegistryOptions) (imageDigest digest.Digest, err error)
-	MockGetCachedImage func(ctx context.Context, ref cnab.OCIReference) (ImageSummary, error)
-	MockListTags       func(ctx context.Context, ref cnab.OCIReference, opts RegistryOptions) ([]string, error)
-	MockPullImage      func(ctx context.Context, ref cnab.OCIReference, opts RegistryOptions) error
-	cache              map[string]ImageSummary
+	MockPullBundle        func(ctx context.Context, ref cnab.OCIReference, opts RegistryOptions) (cnab.BundleReference, error)
+	MockPushBundle        func(ctx context.Context, ref cnab.BundleReference, opts RegistryOptions) (bundleReference cnab.BundleReference, err error)
+	MockPushImage         func(ctx context.Context, ref cnab.OCIReference, opts RegistryOptions) (imageDigest digest.Digest, err error)
+	MockGetCachedImage    func(ctx context.Context, ref cnab.OCIReference) (ImageSummary, error)
+	MockListTags          func(ctx context.Context, ref cnab.OCIReference, opts RegistryOptions) ([]string, error)
+	MockPullImage         func(ctx context.Context, ref cnab.OCIReference, opts RegistryOptions) error
+	MockGetBundleMetadata func(ctx context.Context, ref cnab.OCIReference, opts RegistryOptions) (BundleMetadata, error)
+	cache                 map[string]ImageSummary
 }
 
 func NewTestRegistry() *TestRegistry {
@@ -88,4 +89,12 @@ func (t *TestRegistry) PullImage(ctx context.Context, ref cnab.OCIReference, opt
 	}
 	t.cache[image] = sum
 	return nil
+}
+
+func (t TestRegistry) GetBundleMetadata(ctx context.Context, ref cnab.OCIReference, opts RegistryOptions) (BundleMetadata, error) {
+	if t.MockGetBundleMetadata != nil {
+		return t.MockGetBundleMetadata(ctx, ref, opts)
+	}
+
+	return BundleMetadata{}, ErrNotFound{Reference: ref}
 }

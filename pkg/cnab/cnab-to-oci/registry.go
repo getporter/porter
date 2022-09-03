@@ -2,6 +2,7 @@ package cnabtooci
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -19,6 +20,9 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/google/go-containerregistry/pkg/crane"
+	"github.com/google/go-containerregistry/pkg/name"
+	"github.com/google/go-containerregistry/pkg/v1/remote"
+	"github.com/google/go-containerregistry/pkg/v1/remote/transport"
 	"github.com/moby/term"
 	"github.com/opencontainers/go-digest"
 	"go.opentelemetry.io/otel/attribute"
@@ -276,7 +280,7 @@ func (r *Registry) GetCachedImage(ctx context.Context, ref cnab.OCIReference) (I
 
 	result, _, err := cli.Client().ImageInspectWithRaw(ctx, image)
 	if err != nil {
-		return ImageSummary{}, log.Error(fmt.Errorf("failed to find image %s in docker cache: %w", image, err))
+		return ImageSummary{}, log.Error(fmt.Errorf("failed to find image in docker cache: %w", ErrNotFound{Reference: ref}))
 	}
 
 	summary, err := NewImageSummary(image, result)
@@ -307,6 +311,48 @@ func (r *Registry) ListTags(ctx context.Context, ref cnab.OCIReference, opts Reg
 	}
 
 	return tags, nil
+}
+
+// GetBundleMetadata returns information about a bundle in a registry
+// Use ErrNotFound to detect if the error is because the bundle is not in the registry.
+func (r *Registry) GetBundleMetadata(ctx context.Context, ref cnab.OCIReference, opts RegistryOptions) (BundleMetadata, error) {
+	//lint:ignore SA4006 ignore unused context for now
+	ctx, span := tracing.StartSpan(ctx, attribute.String("reference", ref.String()))
+	defer span.EndSpan()
+
+	var remoteOpts []remote.Option
+	var nameOpts []name.Option
+	if opts.InsecureRegistry {
+		transport := GetInsecureRegistryTransport()
+		remoteOpts = append(remoteOpts, remote.WithTransport(transport))
+		nameOpts = append(nameOpts, name.Insecure)
+	}
+
+	remoteRef, err := name.ParseReference(ref.String(), nameOpts...)
+	if err != nil {
+		return BundleMetadata{}, span.Errorf("error parsing the remote bundle reference %s: %w", ref, err)
+	}
+
+	bundleIndex, err := remote.Index(remoteRef, remoteOpts...)
+	if err != nil {
+		var httpError *transport.Error
+		if errors.As(err, &httpError) {
+			if httpError.StatusCode == http.StatusNotFound {
+				return BundleMetadata{}, span.Error(ErrNotFound{Reference: ref})
+			}
+		}
+		return BundleMetadata{}, span.Errorf("error retrieving bundle metadata for %s: %w", ref.String(), err)
+	}
+
+	bundleDigest, err := bundleIndex.Digest()
+	if err != nil {
+		return BundleMetadata{}, span.Errorf("error reading the remote bundle digest for %s: %w", ref.String(), err)
+	}
+
+	return BundleMetadata{
+		Reference: ref,
+		Digest:    bundleDigest.String(),
+	}, nil
 }
 
 // ImageSummary contains information about an OCI image.

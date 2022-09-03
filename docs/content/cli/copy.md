@@ -32,6 +32,7 @@ porter copy [flags]
 
 ```
       --destination string   The registry to copy the bundle to. Can be registry name, registry plus a repo prefix, or a new tagged reference. All images and the bundle will be prefixed with registry.
+      --force                Force push the bundle to overwrite the previously published bundle
   -h, --help                 help for copy
       --insecure-registry    Don't require TLS for registries
       --source string         The fully qualified source bundle, including tag or digest.
