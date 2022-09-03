@@ -3,6 +3,9 @@ module get.porter.sh/porter
 go 1.18
 
 replace (
+	// retry-unexpected-size
+	github.com/cnabio/cnab-to-oci => github.com/carolynvs/cnab-to-oci v0.3.6-0.20220902010157-6d95758edeef
+
 	// a dependency of buildx (github.com/tonistiigi/fsutil) relies on an untagged version of Docker on the master branch
 	github.com/docker/cli => github.com/docker/cli v20.10.3-0.20220226190722-8667ccd1124c+incompatible
 	github.com/docker/docker => github.com/docker/docker v20.10.3-0.20220121014307-40bb9831756f+incompatible
