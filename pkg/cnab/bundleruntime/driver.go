@@ -1,4 +1,4 @@
-package cnabprovider
+package bundleruntime
 
 import (
 	"fmt"

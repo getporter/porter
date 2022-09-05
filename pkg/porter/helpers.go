@@ -13,8 +13,8 @@ import (
 	"get.porter.sh/porter/pkg/build"
 	"get.porter.sh/porter/pkg/cache"
 	"get.porter.sh/porter/pkg/cnab"
+	"get.porter.sh/porter/pkg/cnab/bundleruntime"
 	cnabtooci "get.porter.sh/porter/pkg/cnab/cnab-to-oci"
-	cnabprovider "get.porter.sh/porter/pkg/cnab/provider"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/encoding"
 	"get.porter.sh/porter/pkg/manifest"
@@ -78,7 +78,7 @@ func NewTestPorter(t *testing.T) *TestPorter {
 	p.Credentials = testCredentials
 	p.Parameters = testParameters
 	p.Secrets = testSecrets
-	p.CNAB = cnabprovider.NewTestRuntimeFor(tc, testInstallations, testCredentials, testParameters, testSecrets)
+	p.CNAB = bundleruntime.NewTestRuntimeFor(tc, testInstallations, testCredentials, testParameters, testSecrets)
 	p.Registry = testRegistry
 
 	tp := TestPorter{

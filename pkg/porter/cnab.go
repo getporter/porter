@@ -7,17 +7,17 @@ import (
 	"path/filepath"
 
 	"get.porter.sh/porter/pkg/build"
-	cnabprovider "get.porter.sh/porter/pkg/cnab/provider"
+	"get.porter.sh/porter/pkg/cnab/bundleruntime"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/portercontext"
 )
 
 const (
 	// DockerDriver is the name of the Docker driver.
-	DockerDriver = cnabprovider.DriverNameDocker
+	DockerDriver = bundleruntime.DriverNameDocker
 
 	// DebugDriver is the name of the Debug driver.
-	DebugDriver = cnabprovider.DriverNameDebug
+	DebugDriver = bundleruntime.DriverNameDebug
 
 	// DefaultDriver is the name of the default driver (Docker).
 	DefaultDriver = DockerDriver

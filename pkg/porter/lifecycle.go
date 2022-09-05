@@ -8,8 +8,8 @@ import (
 
 	"get.porter.sh/porter/pkg/cache"
 	"get.porter.sh/porter/pkg/cnab"
+	"get.porter.sh/porter/pkg/cnab/bundleruntime"
 	"get.porter.sh/porter/pkg/cnab/drivers"
-	cnabprovider "get.porter.sh/porter/pkg/cnab/provider"
 	"get.porter.sh/porter/pkg/encoding"
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/secrets"
@@ -340,19 +340,19 @@ func (p *Porter) resolveBundleReference(ctx context.Context, opts *BundleReferen
 
 // BuildActionArgs converts an instance of user-provided action options into prepared arguments
 // that can be used to execute the action.
-func (p *Porter) BuildActionArgs(ctx context.Context, installation storage.Installation, action BundleAction) (cnabprovider.ActionArguments, error) {
+func (p *Porter) BuildActionArgs(ctx context.Context, installation storage.Installation, action BundleAction) (bundleruntime.ActionArguments, error) {
 	log := tracing.LoggerFromContext(ctx)
 
 	opts := action.GetOptions()
 	bundleRef, err := p.resolveBundleReference(ctx, opts.BundleReferenceOptions)
 	if err != nil {
-		return cnabprovider.ActionArguments{}, err
+		return bundleruntime.ActionArguments{}, err
 	}
 
 	if opts.RelocationMapping != "" {
 		err := encoding.UnmarshalFile(p.FileSystem, opts.RelocationMapping, &bundleRef.RelocationMap)
 		if err != nil {
-			return cnabprovider.ActionArguments{}, log.Error(fmt.Errorf("could not parse the relocation mapping file at %s: %w", opts.RelocationMapping, err))
+			return bundleruntime.ActionArguments{}, log.Error(fmt.Errorf("could not parse the relocation mapping file at %s: %w", opts.RelocationMapping, err))
 		}
 	}
 
@@ -360,7 +360,7 @@ func (p *Porter) BuildActionArgs(ctx context.Context, installation storage.Insta
 	// and defaults
 	err = opts.LoadParameters(ctx, p, opts.bundleRef.Definition)
 	if err != nil {
-		return cnabprovider.ActionArguments{}, err
+		return bundleruntime.ActionArguments{}, err
 	}
 
 	log.Debugf("resolving parameters for installation %s", installation)
@@ -376,10 +376,10 @@ func (p *Porter) BuildActionArgs(ctx context.Context, installation storage.Insta
 
 	resolvedParams, err := p.resolveParameters(ctx, installation, bundleRef.Definition, action.GetAction(), params)
 	if err != nil {
-		return cnabprovider.ActionArguments{}, log.Error(err)
+		return bundleruntime.ActionArguments{}, log.Error(err)
 	}
 
-	args := cnabprovider.ActionArguments{
+	args := bundleruntime.ActionArguments{
 		Action:                action.GetAction(),
 		Installation:          installation,
 		BundleReference:       bundleRef,

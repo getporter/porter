@@ -7,8 +7,8 @@ import (
 	"strings"
 
 	"get.porter.sh/porter/pkg/cnab"
+	"get.porter.sh/porter/pkg/cnab/bundleruntime"
 	depsv1 "get.porter.sh/porter/pkg/cnab/dependencies/v1"
-	cnabprovider "get.porter.sh/porter/pkg/cnab/provider"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/runtime"
@@ -22,7 +22,7 @@ type dependencyExecutioner struct {
 	porter *Porter
 
 	Resolver      BundleResolver
-	CNAB          cnabprovider.CNABProvider
+	CNAB          bundleruntime.CNABProvider
 	Installations storage.InstallationProvider
 
 	parentInstallation storage.Installation
@@ -30,7 +30,7 @@ type dependencyExecutioner struct {
 	parentOpts         *BundleExecutionOptions
 
 	// These are populated by Prepare, call it or perish in inevitable errors
-	parentArgs cnabprovider.ActionArguments
+	parentArgs bundleruntime.ActionArguments
 	deps       []*queuedDependency
 }
 
@@ -106,10 +106,10 @@ func (e *dependencyExecutioner) Execute(ctx context.Context) error {
 
 // PrepareRootActionArguments uses information about the dependencies of a bundle to prepare
 // the execution of the root operation.
-func (e *dependencyExecutioner) PrepareRootActionArguments(ctx context.Context) (cnabprovider.ActionArguments, error) {
+func (e *dependencyExecutioner) PrepareRootActionArguments(ctx context.Context) (bundleruntime.ActionArguments, error) {
 	args, err := e.porter.BuildActionArgs(ctx, e.parentInstallation, e.parentAction)
 	if err != nil {
-		return cnabprovider.ActionArguments{}, err
+		return bundleruntime.ActionArguments{}, err
 	}
 
 	if args.Files == nil {
@@ -298,7 +298,7 @@ func (e *dependencyExecutioner) executeDependency(ctx context.Context, dep *queu
 		return span.Error(fmt.Errorf("error resolving parameters for dependency %s: %w", dep.Alias, err))
 	}
 
-	depArgs := cnabprovider.ActionArguments{
+	depArgs := bundleruntime.ActionArguments{
 		BundleReference:       dep.BundleReference,
 		Action:                e.parentArgs.Action,
 		Installation:          depInstallation,

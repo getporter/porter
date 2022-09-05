@@ -1,4 +1,4 @@
-package cnabprovider
+package bundleruntime
 
 import (
 	"github.com/docker/docker/api/types/container"
@@ -6,12 +6,10 @@ import (
 )
 
 func (r *Runtime) mountDockerSocket(cfg *container.Config, hostCfg *container.HostConfig) error {
-	// Equivalent of using: -v /var/run/docker.sock:/var/run/docker.sock but in a way
-	// that works around permission problems because we are running as nonroot
-	// See https://github.com/docker/for-mac/issues/4755
+	// Equivalent of using: -v /var/run/docker.sock:/var/run/docker.sock
 	// Required for DooD, or "Docker-out-of-Docker"
 	dockerSockMount := mount.Mount{
-		Source:   "/var/run/docker.sock.raw",
+		Source:   "/var/run/docker.sock",
 		Target:   "/var/run/docker.sock",
 		Type:     "bind",
 		ReadOnly: false,

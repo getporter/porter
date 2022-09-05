@@ -10,8 +10,8 @@ import (
 	"get.porter.sh/porter/pkg/build"
 	"get.porter.sh/porter/pkg/build/buildkit"
 	"get.porter.sh/porter/pkg/cache"
+	"get.porter.sh/porter/pkg/cnab/bundleruntime"
 	cnabtooci "get.porter.sh/porter/pkg/cnab/cnab-to-oci"
-	cnabprovider "get.porter.sh/porter/pkg/cnab/provider"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/mixin"
 	"get.porter.sh/porter/pkg/plugins"
@@ -43,7 +43,7 @@ type Porter struct {
 	Templates     *templates.Templates
 	Mixins        mixin.MixinProvider
 	Plugins       plugins.PluginProvider
-	CNAB          cnabprovider.CNABProvider
+	CNAB          bundleruntime.CNABProvider
 	Secrets       secrets.Store
 	Storage       storage.Provider
 }
@@ -78,7 +78,7 @@ func NewFor(c *config.Config, store storage.Store, secretStorage secrets.Store) 
 		Templates:     templates.NewTemplates(c),
 		Mixins:        mixin.NewPackageManager(c),
 		Plugins:       plugins.NewPackageManager(c),
-		CNAB:          cnabprovider.NewRuntime(c, installationStorage, credStorage, secretStorage, sanitizerService),
+		CNAB:          bundleruntime.NewRuntime(c, installationStorage, credStorage, secretStorage, sanitizerService),
 		Sanitizer:     sanitizerService,
 	}
 }
