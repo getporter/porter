@@ -52,7 +52,7 @@ func newDependencyExecutioner(p *Porter, installation storage.Installation, acti
 }
 
 type queuedDependency struct {
-	cnab.DependencyLock
+	depsv1.DependencyLock
 	BundleReference cnab.BundleReference
 	Parameters      map[string]string
 
@@ -158,7 +158,7 @@ func (e *dependencyExecutioner) identifyDependencies(ctx context.Context) error 
 		return span.Error(errors.New("identifyDependencies failed to load the bundle because no bundle was specified. Please report this bug to https://github.com/getporter/porter/issues/new/choose"))
 	}
 
-	solver := &cnab.DependencySolver{}
+	solver := &depsv1.DependencySolver{}
 	locks, err := solver.ResolveDependencies(bun)
 	if err != nil {
 		return span.Error(err)

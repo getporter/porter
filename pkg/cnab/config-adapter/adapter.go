@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"get.porter.sh/porter/pkg/cnab"
-	depsv1 "get.porter.sh/porter/pkg/cnab/dependencies/v1"
+	depsv1ext "get.porter.sh/porter/pkg/cnab/extensions/dependencies/v1"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/experimental"
 	"get.porter.sh/porter/pkg/manifest"
@@ -424,23 +424,23 @@ func (c *ManifestConverter) generateDependencies() (interface{}, string, error) 
 	return deps, cnab.DependenciesV1ExtensionKey, nil
 }
 
-func (c *ManifestConverter) generateDependenciesV1() (*depsv1.Dependencies, error) {
+func (c *ManifestConverter) generateDependenciesV1() (*depsv1ext.Dependencies, error) {
 	if len(c.Manifest.Dependencies.Requires) == 0 {
 		return nil, nil
 	}
 
-	deps := &depsv1.Dependencies{
+	deps := &depsv1ext.Dependencies{
 		Sequence: make([]string, 0, len(c.Manifest.Dependencies.Requires)),
-		Requires: make(map[string]depsv1.Dependency, len(c.Manifest.Dependencies.Requires)),
+		Requires: make(map[string]depsv1ext.Dependency, len(c.Manifest.Dependencies.Requires)),
 	}
 
 	for _, dep := range c.Manifest.Dependencies.Requires {
-		dependencyRef := depsv1.Dependency{
+		dependencyRef := depsv1ext.Dependency{
 			Name:   dep.Name,
 			Bundle: dep.Bundle.Reference,
 		}
 		if len(dep.Bundle.Version) > 0 {
-			dependencyRef.Version = &depsv1.DependencyVersion{
+			dependencyRef.Version = &depsv1ext.DependencyVersion{
 				Ranges: []string{dep.Bundle.Version},
 			}
 

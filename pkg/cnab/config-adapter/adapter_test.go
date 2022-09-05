@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg/cnab"
-	depsv1 "get.porter.sh/porter/pkg/cnab/dependencies/v1"
+	depsv1ext "get.porter.sh/porter/pkg/cnab/extensions/dependencies/v1"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/mixin"
@@ -538,24 +538,24 @@ func TestManifestConverter_generateDependencies(t *testing.T) {
 
 	testcases := []struct {
 		name    string
-		wantDep depsv1.Dependency
+		wantDep depsv1ext.Dependency
 	}{
-		{"no-version", depsv1.Dependency{
+		{"no-version", depsv1ext.Dependency{
 			Name:   "mysql",
 			Bundle: "getporter/azure-mysql:5.7",
 		}},
-		{"no-ranges, uses prerelease", depsv1.Dependency{
+		{"no-ranges, uses prerelease", depsv1ext.Dependency{
 			Name:   "ad",
 			Bundle: "getporter/azure-active-directory",
-			Version: &depsv1.DependencyVersion{
+			Version: &depsv1ext.DependencyVersion{
 				AllowPrereleases: true,
 				Ranges:           []string{"1.0.0-0"},
 			},
 		}},
-		{"with-ranges", depsv1.Dependency{
+		{"with-ranges", depsv1ext.Dependency{
 			Name:   "storage",
 			Bundle: "getporter/azure-blob-storage",
-			Version: &depsv1.DependencyVersion{
+			Version: &depsv1ext.DependencyVersion{
 				Ranges: []string{
 					"1.x - 2,2.1 - 3.x",
 				},
@@ -581,12 +581,12 @@ func TestManifestConverter_generateDependencies(t *testing.T) {
 			depsExt, depsExtKey, err := a.generateDependencies()
 			require.NoError(t, err)
 			require.Equal(t, cnab.DependenciesV1ExtensionKey, depsExtKey, "expected the v1 dependencies extension key")
-			require.IsType(t, &depsv1.Dependencies{}, depsExt, "expected a v1 dependencies extension section")
-			deps := depsExt.(*depsv1.Dependencies)
+			require.IsType(t, &depsv1ext.Dependencies{}, depsExt, "expected a v1 dependencies extension section")
+			deps := depsExt.(*depsv1ext.Dependencies)
 			require.Len(t, deps.Requires, 3, "incorrect number of dependencies were generated")
 			require.Equal(t, []string{"mysql", "ad", "storage"}, deps.Sequence, "incorrect sequence was generated")
 
-			var dep *depsv1.Dependency
+			var dep *depsv1ext.Dependency
 			for _, d := range deps.Requires {
 				if d.Bundle == tc.wantDep.Bundle {
 					dep = &d
