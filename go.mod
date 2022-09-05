@@ -26,7 +26,7 @@ require (
 	github.com/carolynvs/magex v0.8.0
 	github.com/cbroglie/mustache v1.0.1
 	github.com/cnabio/cnab-go v0.24.0
-	github.com/cnabio/cnab-to-oci v0.3.6
+	github.com/cnabio/cnab-to-oci v0.3.7
 	github.com/cnabio/image-relocation v0.9.0
 	github.com/containerd/containerd v1.6.6
 	github.com/davecgh/go-spew v1.1.1
