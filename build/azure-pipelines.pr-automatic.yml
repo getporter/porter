@@ -173,10 +173,11 @@ stages:
         dependsOn: xbuild
         strategy:
           matrix:
-            windows:
-              poolName: "windows"
-              vmImage: ""
-              GOMODCACHE: "C:/Users/porterci/go/pkg/mod"
+            # Skip windows smoke tests until we fix the windows agent
+            #windows:
+            #  poolName: "windows"
+            #  vmImage: ""
+            #  GOMODCACHE: "C:/Users/porterci/go/pkg/mod"
             linux:
               poolName: "Azure Pipelines"
               vmImage: "ubuntu-latest"

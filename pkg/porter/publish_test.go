@@ -175,7 +175,7 @@ func TestPublish_RelocateImage(t *testing.T) {
 				require.ErrorContains(t, err, tc.wantErr.Error())
 				return
 			}
-			require.Equal(t, tag+":535ae3fd0b6a46c169fd3d38b486a8a2@sha256:6b5a28ccbb76f12ce771a23757880c6083234255c5ba191fca1c5db1f71c1687", newMap[originImg])
+			require.Equal(t, tag+"@sha256:6b5a28ccbb76f12ce771a23757880c6083234255c5ba191fca1c5db1f71c1687", newMap[originImg])
 		})
 	}
 }
@@ -259,4 +259,14 @@ func TestPublish_RefreshCachedBundle_OnlyWarning(t *testing.T) {
 
 	gotStderr := p.TestConfig.TestContext.GetError()
 	require.Equal(t, "warning: unable to update cache for bundle myreg/mybuns: error trying to store bundle\n", gotStderr)
+}
+
+func TestPublish_RewriteImageWithDigest(t *testing.T) {
+	// change from our temporary tag for the invocation image to using ONLY the digest
+	p := NewTestPorter(t)
+	defer p.Close()
+
+	digestedImg, err := p.rewriteImageWithDigest("example/mybuns:temp-tag", "sha256:6b5a28ccbb76f12ce771a23757880c6083234255c5ba191fca1c5db1f71c1687")
+	require.NoError(t, err)
+	assert.Equal(t, "example/mybuns@sha256:6b5a28ccbb76f12ce771a23757880c6083234255c5ba191fca1c5db1f71c1687", digestedImg)
 }
