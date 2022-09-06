@@ -12,7 +12,7 @@ To use the mongodb plugin, add the following config to porter's [config file]. R
 connection string for your MongoDB server.
 
 ```toml
-default-secrets = "mymongo"
+default-storage = "mymongo"
 
 [[storage]]
   name = "mymongo"

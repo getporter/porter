@@ -49,8 +49,8 @@ func (c *TestConfig) SetupUnitTest() {
 	mixinsDir := filepath.Join(home, "mixins")
 	c.FileSystem.Create(filepath.Join(mixinsDir, "exec/exec"))
 	c.FileSystem.Create(filepath.Join(mixinsDir, "exec/runtimes/exec-runtime"))
-	c.FileSystem.Create(filepath.Join(mixinsDir, "helm/helm"))
-	c.FileSystem.Create(filepath.Join(mixinsDir, "helm/runtimes/helm-runtime"))
+	c.FileSystem.Create(filepath.Join(mixinsDir, "testmixin/testmixin"))
+	c.FileSystem.Create(filepath.Join(mixinsDir, "testmixin/runtimes/testmixin-runtime"))
 }
 
 // SetupIntegrationTest initializes the filesystem with the supporting files in

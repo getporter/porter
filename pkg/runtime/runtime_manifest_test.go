@@ -582,28 +582,28 @@ func TestReadManifest_Validate_BundleOutput_Error(t *testing.T) {
 func TestDependencyV1_Validate(t *testing.T) {
 	testcases := []struct {
 		name       string
-		dep        manifest.RequiredDependency
+		dep        manifest.Dependency
 		wantOutput string
 		wantError  string
 	}{
 		{
 			name:       "version in reference",
-			dep:        manifest.RequiredDependency{Name: "mysql", Bundle: manifest.BundleCriteria{Reference: "deislabs/azure-mysql:5.7"}},
+			dep:        manifest.Dependency{Name: "mysql", Bundle: manifest.BundleCriteria{Reference: "deislabs/azure-mysql:5.7"}},
 			wantOutput: "",
 			wantError:  "",
 		}, {
 			name:       "version ranges",
-			dep:        manifest.RequiredDependency{Name: "mysql", Bundle: manifest.BundleCriteria{Reference: "deislabs/azure-mysql", Version: "5.7.x-6"}},
+			dep:        manifest.Dependency{Name: "mysql", Bundle: manifest.BundleCriteria{Reference: "deislabs/azure-mysql", Version: "5.7.x-6"}},
 			wantOutput: "",
 			wantError:  "",
 		}, {
 			name:       "missing reference",
-			dep:        manifest.RequiredDependency{Name: "mysql", Bundle: manifest.BundleCriteria{Reference: ""}},
+			dep:        manifest.Dependency{Name: "mysql", Bundle: manifest.BundleCriteria{Reference: ""}},
 			wantOutput: "",
 			wantError:  `reference is required for dependency "mysql"`,
 		}, {
 			name:       "version double specified",
-			dep:        manifest.RequiredDependency{Name: "mysql", Bundle: manifest.BundleCriteria{Reference: "deislabs/azure-mysql:5.7", Version: "5.7.x-6"}},
+			dep:        manifest.Dependency{Name: "mysql", Bundle: manifest.BundleCriteria{Reference: "deislabs/azure-mysql:5.7", Version: "5.7.x-6"}},
 			wantOutput: "",
 			wantError:  `reference for dependency "mysql" can only specify REGISTRY/NAME when version ranges are specified`,
 		},

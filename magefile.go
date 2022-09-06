@@ -16,26 +16,26 @@ import (
 	"strconv"
 	"strings"
 
-	"get.porter.sh/porter/pkg"
-
-	"get.porter.sh/porter/mage/setup"
-
 	"get.porter.sh/magefiles/ci"
 	"get.porter.sh/magefiles/docker"
 	"get.porter.sh/magefiles/releases"
-
-	// mage:import
-	"get.porter.sh/magefiles/tests"
 	"get.porter.sh/magefiles/tools"
-
-	// mage:import
-	_ "get.porter.sh/porter/mage/docs"
+	"get.porter.sh/porter/mage/setup"
+	"get.porter.sh/porter/pkg"
+	"get.porter.sh/porter/tests/tester"
+	mageci "github.com/carolynvs/magex/ci"
 	"github.com/carolynvs/magex/mgx"
 	"github.com/carolynvs/magex/shx"
 	"github.com/carolynvs/magex/xplat"
 	"github.com/magefile/mage/mg"
 	"github.com/magefile/mage/sh"
 	"golang.org/x/sync/errgroup"
+
+	// mage:import
+	"get.porter.sh/magefiles/tests"
+
+	// mage:import
+	_ "get.porter.sh/porter/mage/docs"
 )
 
 // Default target to run when none is specified
@@ -221,9 +221,7 @@ func TestUnit() {
 
 // Run smoke tests to quickly check if Porter is broken
 func TestSmoke() error {
-	mg.Deps(copySchema)
-
-	mg.Deps(docker.RestartDockerRegistry)
+	mg.Deps(copySchema, TryRegisterLocalHostAlias, docker.RestartDockerRegistry, BuildTestMixin)
 
 	// Only do verbose output of tests when called with `mage -v TestSmoke`
 	v := ""
@@ -434,7 +432,7 @@ func chmodRecursive(name string, mode os.FileMode) error {
 
 // Run integration tests (slow).
 func TestIntegration() {
-	mg.Deps(tests.EnsureTestCluster, copySchema, BuildTestPlugin)
+	mg.Deps(tests.EnsureTestCluster, copySchema, TryRegisterLocalHostAlias, BuildTestMixin, BuildTestPlugin)
 
 	var run string
 	runTest := os.Getenv("PORTER_RUN_TEST")
@@ -450,8 +448,30 @@ func TestIntegration() {
 	must.Command("go", "test", verbose, "-timeout=30m", run, "-tags=integration", "./...").CollapseArgs().RunV()
 }
 
+// TryRegisterLocalHostAlias edits /etc/hosts to use porter-test-registry hostname alias
+// This is not safe to call more than once and is intended for use on the CI server only
+func TryRegisterLocalHostAlias() {
+	if _, isCI := mageci.DetectBuildProvider(); !isCI {
+		return
+	}
+
+	err := shx.RunV("sudo", "bash", "-c", "echo 127.0.0.1 porter-test-registry >> /etc/hosts")
+	if err != nil {
+		fmt.Println("skipping registering the porter-test-registry hostname alias: could not write to /etc/hosts")
+		return
+	}
+
+	fmt.Println("Added host alias porter-test-registry to /etc/hosts")
+	os.Setenv(tester.TestRegistryAlias, "porter-test-registry")
+}
+
 func BuildTestPlugin() {
 	must.RunV("go", "build", "-o", "bin/testplugin", "./cmd/testplugin")
+}
+
+func BuildTestMixin() {
+	os.MkdirAll("bin/mixins/testmixin", 0770)
+	must.RunV("go", "build", "-o", "bin/mixins/testmixin/testmixin"+xplat.FileExt(), "./cmd/testmixin")
 }
 
 // Copy the locally built porter and exec binaries to PORTER_HOME

@@ -24,7 +24,7 @@ Depending on the bundle, a credential can apply to all actions (install/upgrade/
 Let's look at a bundle with credentials:
 
 ```console
-$ porter explain ghcr.io/ghcr.io/getporter/examples/credentials-tutorial:v0.3.0
+$ porter explain ghcr.io/getporter/examples/credentials-tutorial:v0.3.0
 Name: examples/credentials-tutorial
 Description: An example Porter bundle with credentials. Uses your GitHub token to retrieve your public user profile from GitHub.
 Version: 0.3.0

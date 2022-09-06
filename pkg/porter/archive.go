@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
@@ -147,11 +148,11 @@ func (ex *exporter) export() error {
 	}
 
 	if err := ex.prepareArtifacts(ex.bundle); err != nil {
-		return fmt.Errorf("error preparing artifacts: %s", err)
+		return fmt.Errorf("error preparing bundle artifact: %s", err)
 	}
 
 	if err := ex.chtimes(archiveDir); err != nil {
-		return fmt.Errorf("error preparing artifacts: %s", err)
+		return fmt.Errorf("error clearing timestamps on the bundle artifact: %s", err)
 	}
 
 	tarOptions := &archive.TarOptions{
@@ -194,8 +195,13 @@ func (ex *exporter) chtimes(path string) error {
 // prepareArtifacts pulls all images, verifies their digests and
 // saves them to a directory called artifacts/ in the bundle directory
 func (ex *exporter) prepareArtifacts(bun cnab.ExtendedBundle) error {
-	for _, image := range bun.Images {
-		if err := ex.addImage(image.BaseImage); err != nil {
+	var imageKeys []string
+	for imageKey := range bun.Images {
+		imageKeys = append(imageKeys, imageKey)
+	}
+	sort.Strings(imageKeys)
+	for _, k := range imageKeys {
+		if err := ex.addImage(bun.Images[k].BaseImage); err != nil {
 			return err
 		}
 	}

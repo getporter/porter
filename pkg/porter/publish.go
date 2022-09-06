@@ -21,10 +21,10 @@ import (
 	"github.com/cnabio/cnab-go/bundle/loader"
 	"github.com/cnabio/cnab-go/packager"
 	"github.com/cnabio/cnab-to-oci/relocation"
+	"github.com/cnabio/image-relocation/pkg/image"
+	"github.com/cnabio/image-relocation/pkg/registry"
+	"github.com/cnabio/image-relocation/pkg/registry/ggcr"
 	"github.com/opencontainers/go-digest"
-	"github.com/pivotal/image-relocation/pkg/image"
-	"github.com/pivotal/image-relocation/pkg/registry"
-	"github.com/pivotal/image-relocation/pkg/registry/ggcr"
 )
 
 // PublishOptions are options that may be specified when publishing a bundle.
