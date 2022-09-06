@@ -329,6 +329,8 @@ credentials:
 
 ### See Also
 * [porter credentials generate](/cli/porter_credentials_generate/)
+* [porter credentials create](/cli/porter_credentials_create/)
+* [porter credentials apply](/cli/porter_credentials_apply/)
 * [How Credentials Work](/how-credentials-work/)
 * [Wiring Credentials](/wiring/)
 

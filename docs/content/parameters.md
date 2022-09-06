@@ -29,7 +29,8 @@ can have a secret source (`secret`).  See the [secrets
 plugin docs](/plugins/types/#secrets) to learn how to configure Porter to use
 an external secret store.
 
-Parameter Sets are created using [porter parameters generate][generate].
+Parameter Sets are created using the combination of [porter parameters create][create]
+and [porter parameters apply][apply].
 Afterwards a parameter set can be [edited][edit] if changes are required.
 See [porter parameters help](/cli/porter_parameters/) for all available commands.
 
@@ -72,7 +73,8 @@ the [Author Bundles](/author-bundles#parameters/) doc for more info.
 See the helpful explanation in the [credentials](/credentials/) doc, which
 applies to parameter sources as well.
 
-[generate]: /cli/porter_parameters_generate/
+[create]: /cli/porter_parameters_create/
+[apply]: /cli/porter_parameters_apply/
 [edit]: /cli/porter_parameters_edit/
 
 ## Related

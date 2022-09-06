@@ -140,14 +140,25 @@ Parameters
 # Get Set...
 
 ```
-$ porter credentials generate -t deislabs/tron:v1.0
-
-Generating new credential azure from bundle tron
-==> 1 credentials required for bundle tron
-? How would you like to set credential "kubeconfig" file path
-? Enter the path that will be used to set credential "kubeconfig"
-
-Saving credential to /Users/carolynvs/.porter/credentials/azure.yaml
+$ porter credentials create azure-tron.json
+creating porter credential set in the current directory
+$ cat azure-tron.json
+# modify azure-tron.json with your editor to the content below
+{
+    "schemaType": "CredentialSet",
+    "schemaVersion": "1.0.1",
+    "name": "azure",
+    "credentials": [
+        {
+            "name": "kubeconfig",
+            "source": {
+                "path": "/path/to/credential-path-file.txt"
+            }
+        },
+    ]
+}
+$ porter credentials apply azure-tron.json
+Applied /azure credential set
 ```
 
 # Go!

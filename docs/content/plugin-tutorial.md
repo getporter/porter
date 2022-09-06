@@ -230,23 +230,34 @@ Name       Description                                                          
 password   Password for installing the world. We recommend getting this from a secret store.   true
 ```
 
-Since the bundle needs a credential we will generate some for it using `porter
-credentials generate`. When prompted, select **secret** for how you like to set
-the credential "password" and type `password` for the secret that will be used
-to set the credential "password". 
+Since the bundle needs a credential, let's generate it using `porter credentials` command. 
+First, run `porter credentials create <file-name>` to generate the template file. 
+Then, edit the file to include required credentials and set the source for its value.
+Lastly, run `porter credentials apply <file-name>` to generate the credential set. 
 
 ```console
-$ porter credentials generate --reference ghcr.io/getporter/examples/plugins-tutorial:v0.2.0
-Generating new credential plugins-tutorial from bundle plugins-tutorial
-==> 1 credentials required for bundle plugins-tutorial
-? How would you like to set credential "password"  [Use arrows to move, space to select, type to filter]
-> secret
-  specific value
-  environment variable
-  file path
-  shell command
-? Enter the secret that will be used to set credential "password" password
+$ porter credentials create plugins-tutorial.json
+creating porter credential set in the current directory
+$ cat plugins-tutorial.json
+# modify plugins-tutorial.json with your editor to the content below
+{
+    "schemaType": "CredentialSet",
+    "schemaVersion": "1.0.1",
+    "name": "plugins-tutorial",
+    "credentials": [
+        {
+            "name": "password",
+            "source": {
+                "secret": "password"
+            }
+        }
+    ]
+}
+$ porter credentials apply plugins-tutorial.json
+Applied /plugins-tutorial credential set
 ```
+
+For more information on how to use `porter credentials` commands, take a look at our [credentials quickstart guide](/quickstart/credentials).
 
 Now we are ready to install the bundle and pass it our generated credentials. 🎉
 Porter is using the Azure plugin to inject the password credential from Azure

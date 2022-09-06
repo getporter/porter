@@ -34,12 +34,12 @@ porter parameters generate [NAME] [flags]
 ### Examples
 
 ```
-  porter parameter generate
-  porter parameter generate myparamset --reference getporter/hello-llama:v0.1.1 --namespace dev
-  porter parameter generate myparamset --label owner=myname --reference getporter/hello-llama:v0.1.1
-  porter parameter generate myparamset --reference localhost:5000/getporter/hello-llama:v0.1.1 --insecure-registry --force
-  porter parameter generate myparamset --file myapp/porter.yaml
-  porter parameter generate myparamset --cnab-file myapp/bundle.json
+  porter parameters generate
+  porter parameters generate myparamset --reference getporter/hello-llama:v0.1.1 --namespace dev
+  porter parameters generate myparamset --label owner=myname --reference getporter/hello-llama:v0.1.1
+  porter parameters generate myparamset --reference localhost:5000/getporter/hello-llama:v0.1.1 --insecure-registry --force
+  porter parameters generate myparamset --file myapp/porter.yaml
+  porter parameters generate myparamset --cnab-file myapp/bundle.json
 
 ```
 
