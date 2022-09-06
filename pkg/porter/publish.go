@@ -399,11 +399,16 @@ func (p *Porter) relocateImage(relocationMap relocation.ImageRelocationMap, layo
 }
 
 func (p *Porter) rewriteImageWithDigest(InvocationImage string, imgDigest string) (string, error) {
-	ref, err := cnab.ParseOCIReference(InvocationImage)
+	taggedRef, err := cnab.ParseOCIReference(InvocationImage)
 	if err != nil {
 		return "", fmt.Errorf("unable to parse docker image: %s", err)
 	}
-	digestedRef, err := ref.WithDigest(digest.Digest(imgDigest))
+
+	// Change the invocation image from bundlerepo:tag-hash => bundlerepo@sha256:abc123
+	// Do not continue to reference the temporary tag that we used to push, otherwise that will prevent the registry from garbage collecting it later.
+	repo := cnab.MustParseOCIReference(taggedRef.Repository())
+
+	digestedRef, err := repo.WithDigest(digest.Digest(imgDigest))
 	if err != nil {
 		return "", err
 	}
