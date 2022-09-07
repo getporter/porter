@@ -334,6 +334,13 @@ func getNewImageNameFromBundleReference(origImg, bundleTag string) (image.Name, 
 		return image.EmptyName, err
 	}
 
+	// Calculate a unique tag based on the original referenced image. It is safe to
+	// use only the original image, and not a combination of both the destination and
+	// the source to create a unique value, because we rewrite the referenced image
+	// to always use a repository digest. The only time two images will have the same
+	// source value is when they are the same image and have the same content. In
+	// which case it is okay if two bundles both reference the same image and reuse
+	// the same temporary tag because the content is the same.
 	tmpImage, err := cnab.CalculateTemporaryImageTag(origImgRef)
 	if err != nil {
 		return image.EmptyName, err
