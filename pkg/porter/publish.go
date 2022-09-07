@@ -2,12 +2,9 @@ package porter
 
 import (
 	"context"
-	"crypto/md5"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"path"
 	"path/filepath"
 	"strings"
 
@@ -327,29 +324,36 @@ func pushUpdatedImage(layout registry.Layout, origImg string, newImgName image.N
 // getNewImageNameFromBundleReference derives a new image.Name object from the provided original
 // image (string) using the provided bundleTag to clean registry/org/etc.
 func getNewImageNameFromBundleReference(origImg, bundleTag string) (image.Name, error) {
-	origName, err := image.NewName(origImg)
+	origImgRef, err := cnab.ParseOCIReference(origImg)
 	if err != nil {
-		return image.EmptyName, fmt.Errorf("unable to parse image %q into domain/path components: %w", origImg, err)
+		return image.EmptyName, err
 	}
 
-	bundleName, err := image.NewName(bundleTag)
+	bundleRef, err := cnab.ParseOCIReference(bundleTag)
 	if err != nil {
-		return image.EmptyName, fmt.Errorf("unable to parse bundle tag %q into domain/path components: %w", bundleTag, err)
+		return image.EmptyName, err
 	}
 
-	// Use the original image name with the bundle location to generate a randomized tag
-	source := path.Join(path.Dir(bundleName.Name()), origName.Name()) + ":" + bundleName.Tag()
-	nameHash := md5.Sum([]byte(source))
-	imgTag := hex.EncodeToString(nameHash[:])
-
-	// place the new image under the same repo as the bundle
-	imgName := bundleName.Name()
-	newImgName, err := image.NewName(imgName)
+	// Calculate a unique tag based on the original referenced image. It is safe to
+	// use only the original image, and not a combination of both the destination and
+	// the source to create a unique value, because we rewrite the referenced image
+	// to always use a repository digest. The only time two images will have the same
+	// source value is when they are the same image and have the same content. In
+	// which case it is okay if two bundles both reference the same image and reuse
+	// the same temporary tag because the content is the same.
+	tmpImage, err := cnab.CalculateTemporaryImageTag(origImgRef)
 	if err != nil {
-		return image.EmptyName, fmt.Errorf("unable to parse bundle %q into domain/path components: %w", bundleName.Name(), err)
+		return image.EmptyName, err
 	}
 
-	return newImgName.WithTag(imgTag)
+	// Apply the temporary tag to the current bundle to determine the new location for the image
+	newImgRef, err := bundleRef.WithTag(tmpImage.Tag())
+	if err != nil {
+		return image.EmptyName, err
+	}
+
+	// Convert it to the relocation library's representation of an image reference
+	return image.NewName(newImgRef.String())
 }
 
 func (p *Porter) rewriteBundleWithInvocationImageDigest(ctx context.Context, m *manifest.Manifest, digest digest.Digest) (cnab.ExtendedBundle, error) {

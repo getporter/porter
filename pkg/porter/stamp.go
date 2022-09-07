@@ -74,7 +74,7 @@ func (p *Porter) IsBundleUpToDate(ctx context.Context, opts bundleFileOptions) (
 		for _, invocationImage := range bun.InvocationImages {
 			// if the invovationImage is built before using a random string tag,
 			// we should rebuild it with the new format
-			if strings.Contains(invocationImage.Image, "-installer") {
+			if strings.HasSuffix(invocationImage.Image, "-installer") {
 				return false, nil
 			}
 

@@ -171,7 +171,7 @@ func TestMetadataAvailableForTemplating(t *testing.T) {
 	pms, ok := s.Data["exec"].(map[string]interface{})
 	require.True(t, ok)
 	cmd := pms["command"].(string)
-	assert.Equal(t, "echo \"name:porter-hello version:0.1.0 description:An example Porter configuration image:jeremyrickard/porter-hello:39a022ca907e26c3d8fffabd4bb8dbbc\"", cmd)
+	assert.Equal(t, "echo \"name:porter-hello version:0.1.0 description:An example Porter configuration image:jeremyrickard/porter-hello:porter-39a022ca907e26c3d8fffabd4bb8dbbc\"", cmd)
 }
 
 func TestDependencyMetadataAvailableForTemplating(t *testing.T) {
