@@ -35,6 +35,11 @@ func (t Tester) ApplyTestBundlePrerequisites() {
 }
 
 func (t Tester) MakeTestBundle(name string, ref string) {
+	// Skip if we've already pushed it for another test
+	if _, _, err := t.RunPorter("explain", ref); err == nil {
+		return
+	}
+
 	pwd, _ := os.Getwd()
 	defer t.Chdir(pwd)
 	t.Chdir(filepath.Join(t.RepoRoot, "tests/testdata/", name))

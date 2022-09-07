@@ -1,12 +1,15 @@
 package porter
 
 import (
+	"context"
 	"errors"
 	"testing"
 
 	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/cache"
 	"get.porter.sh/porter/pkg/cnab"
+	cnabtooci "get.porter.sh/porter/pkg/cnab/cnab-to-oci"
+	"get.porter.sh/porter/tests"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-to-oci/relocation"
 	"github.com/cnabio/image-relocation/pkg/image"
@@ -21,7 +24,7 @@ func TestPublish_Validate_PorterYamlExists(t *testing.T) {
 
 	p.TestConfig.TestContext.AddTestFile("testdata/porter.yaml", "porter.yaml")
 	opts := PublishOptions{}
-	err := opts.Validate(p.Context)
+	err := opts.Validate(p.Config)
 	require.NoError(t, err, "validating should not have failed")
 }
 
@@ -30,7 +33,7 @@ func TestPublish_Validate_PorterYamlDoesNotExist(t *testing.T) {
 	defer p.Close()
 
 	opts := PublishOptions{}
-	err := opts.Validate(p.Context)
+	err := opts.Validate(p.Config)
 	require.Error(t, err, "validation should have failed")
 	assert.EqualError(
 		t,
@@ -47,15 +50,15 @@ func TestPublish_Validate_ArchivePath(t *testing.T) {
 	opts := PublishOptions{
 		ArchiveFile: "mybuns.tgz",
 	}
-	err := opts.Validate(p.Context)
+	err := opts.Validate(p.Config)
 	assert.EqualError(t, err, "unable to access --archive mybuns.tgz: open /mybuns.tgz: file does not exist")
 
 	p.FileSystem.WriteFile("mybuns.tgz", []byte("mybuns"), pkg.FileModeWritable)
-	err = opts.Validate(p.Context)
+	err = opts.Validate(p.Config)
 	assert.EqualError(t, err, "must provide a value for --reference of the form REGISTRY/bundle:tag")
 
 	opts.Reference = "myreg/mybuns:v0.1.0"
-	err = opts.Validate(p.Context)
+	err = opts.Validate(p.Config)
 	require.NoError(t, err, "validating should not have failed")
 }
 
@@ -269,4 +272,55 @@ func TestPublish_RewriteImageWithDigest(t *testing.T) {
 	digestedImg, err := p.rewriteImageWithDigest("example/mybuns:temp-tag", "sha256:6b5a28ccbb76f12ce771a23757880c6083234255c5ba191fca1c5db1f71c1687")
 	require.NoError(t, err)
 	assert.Equal(t, "example/mybuns@sha256:6b5a28ccbb76f12ce771a23757880c6083234255c5ba191fca1c5db1f71c1687", digestedImg)
+}
+
+func TestPublish_ForceOverwrite(t *testing.T) {
+	t.Parallel()
+
+	testcases := []struct {
+		name    string
+		exists  bool
+		force   bool
+		wantErr string
+	}{
+		{name: "bundle doesn't exist, force not set", exists: false, force: false, wantErr: ""},
+		{name: "bundle exists, force not set", exists: true, force: false, wantErr: "already exists in the destination registry"},
+		{name: "bundle exists, force set", exists: true, force: true},
+	}
+
+	for _, tc := range testcases {
+		tc := tc
+
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			ctx := context.Background()
+			p := NewTestPorter(t)
+			defer p.Close()
+
+			// Set up that the destination already exists
+			p.TestRegistry.MockGetBundleMetadata = func(ctx context.Context, ref cnab.OCIReference, opts cnabtooci.RegistryOptions) (cnabtooci.BundleMetadata, error) {
+				if tc.exists {
+					return cnabtooci.BundleMetadata{}, nil
+				}
+				return cnabtooci.BundleMetadata{}, cnabtooci.ErrNotFound{Reference: ref}
+			}
+
+			p.TestConfig.TestContext.AddTestDirectoryFromRoot("tests/testdata/mybuns", p.BundleDir)
+
+			opts := PublishOptions{}
+			opts.Force = tc.force
+
+			err := opts.Validate(p.Config)
+			require.NoError(t, err)
+
+			err = p.Publish(ctx, opts)
+
+			if tc.wantErr == "" {
+				require.NoError(t, err, "Publish failed")
+			} else {
+				tests.RequireErrorContains(t, err, tc.wantErr)
+			}
+		})
+	}
 }

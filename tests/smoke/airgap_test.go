@@ -103,7 +103,8 @@ func TestAirgappedEnvironment(t *testing.T) {
 			require.Equal(test.T, fmt.Sprintf("%s/mybuns@sha256:499f71eec2e3bd78f26c268bbf5b2a65f73b96216fac4a89b86b5ebf115527b6", reg2), relocMap[localRefWithDigest], "expected the relocation entry for the image to be the new published location")
 
 			// Publish from the archived bundle to a new repository on the second registry
-			test.RequirePorter("publish", "--archive", archiveFilePath, "-r", newRef, insecureFlag)
+			// Specify --force since we are overwriting the tag pushed to during the last copy
+			test.RequirePorter("publish", "--archive", archiveFilePath, "-r", newRef, insecureFlag, "--force")
 			archiveFilePath2 := filepath.Join(test.TestDir, "archive-test2.tgz")
 
 			// Archive from the new location on the second registry

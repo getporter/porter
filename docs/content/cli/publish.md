@@ -35,6 +35,7 @@ porter publish [flags]
   -a, --archive string      Path to the bundle archive in .tgz format
   -d, --dir string          Path to the build context directory where all bundle assets are located.
   -f, --file porter.yaml    Path to the Porter manifest. Defaults to porter.yaml in the current directory.
+      --force               Force push the bundle to overwrite the previously published bundle
   -h, --help                help for publish
       --insecure-registry   Don't require TLS for the registry
   -r, --reference string    Use a bundle in an OCI registry specified by the given reference.

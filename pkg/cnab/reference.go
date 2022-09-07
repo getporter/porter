@@ -24,7 +24,7 @@ func ParseOCIReference(value string) (OCIReference, error) {
 	if ref.HasDigest() {
 		err := ref.Digest().Validate()
 		if err != nil {
-			return OCIReference{}, err
+			return OCIReference{}, fmt.Errorf("invalid digest for reference %s: %w", value, err)
 		}
 	}
 
