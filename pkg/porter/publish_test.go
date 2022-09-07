@@ -317,7 +317,7 @@ func TestPublish_ForceOverwrite(t *testing.T) {
 			err = p.Publish(ctx, opts)
 
 			if tc.wantErr == "" {
-				require.NoError(t, err, "Copy failed")
+				require.NoError(t, err, "Publish failed")
 			} else {
 				tests.RequireErrorContains(t, err, tc.wantErr)
 			}

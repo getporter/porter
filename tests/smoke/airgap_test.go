@@ -91,8 +91,8 @@ func TestAirgappedEnvironment(t *testing.T) {
 			// 1. Copy the bundle from one registry to the other directly
 			//
 			origRef := fmt.Sprintf("%s/%s:%s", reg2, testdata.MyBuns, "v0.1.2")
-			copyRef := fmt.Sprintf("%s/%s-copy:v0.2.0", reg2, testdata.MyBuns)
-			test.RequirePorter("copy", "--source", origRef, "--destination", copyRef, insecureFlag)
+			newRef := fmt.Sprintf("%s/%s-second:%s", reg2, testdata.MyBuns, "v0.2.0")
+			test.RequirePorter("copy", "--source", origRef, "--destination", newRef, insecureFlag)
 
 			//
 			// 2. Use archive + publish to copy the bundle from one registry to the other
@@ -103,21 +103,21 @@ func TestAirgappedEnvironment(t *testing.T) {
 			require.Equal(test.T, fmt.Sprintf("%s/mybuns@sha256:499f71eec2e3bd78f26c268bbf5b2a65f73b96216fac4a89b86b5ebf115527b6", reg2), relocMap[localRefWithDigest], "expected the relocation entry for the image to be the new published location")
 
 			// Publish from the archived bundle to a new repository on the second registry
-			airgapRef := fmt.Sprintf("%s/%s-publish:v0.2.0", reg2, testdata.MyBuns)
-			test.RequirePorter("publish", "--archive", archiveFilePath, "-r", airgapRef, insecureFlag)
+			// Specify --force since we are overwriting the tag pushed to during the last copy
+			test.RequirePorter("publish", "--archive", archiveFilePath, "-r", newRef, insecureFlag, "--force")
 			archiveFilePath2 := filepath.Join(test.TestDir, "archive-test2.tgz")
 
 			// Archive from the new location on the second registry
-			test.RequirePorter("archive", archiveFilePath2, "--reference", airgapRef, insecureFlag)
+			test.RequirePorter("archive", archiveFilePath2, "--reference", newRef, insecureFlag)
 			relocMap2 := getRelocationMap(test, archiveFilePath2)
-			require.Equal(test.T, fmt.Sprintf("%s/mybuns-publish@sha256:499f71eec2e3bd78f26c268bbf5b2a65f73b96216fac4a89b86b5ebf115527b6", reg2), relocMap2[localRefWithDigest], "expected the relocation entry for the image to be the new published location")
+			require.Equal(test.T, fmt.Sprintf("%s/mybuns-second@sha256:499f71eec2e3bd78f26c268bbf5b2a65f73b96216fac4a89b86b5ebf115527b6", reg2), relocMap2[localRefWithDigest], "expected the relocation entry for the image to be the new published location")
 
 			// Validate that we can pull the bundle from the new location
-			test.RequirePorter("explain", airgapRef)
+			test.RequirePorter("explain", newRef)
 
 			// Validate that we can install from the new location
 			test.ApplyTestBundlePrerequisites()
-			test.RequirePorter("install", "-r", airgapRef, insecureFlag, "-c=mybuns", "-p=mybuns")
+			test.RequirePorter("install", "-r", newRef, insecureFlag, "-c=mybuns", "-p=mybuns")
 		})
 	}
 }

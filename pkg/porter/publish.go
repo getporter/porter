@@ -244,10 +244,10 @@ func (p *Porter) publishFromArchive(ctx context.Context, opts PublishOptions) er
 		_, err := p.Registry.GetBundleMetadata(ctx, ref, regOpts)
 		if err != nil {
 			if !errors.Is(err, cnabtooci.ErrNotFound{}) {
-				return log.Errorf("Copy stopped because detection of %s in the destination registry failed. To overwrite it, repeat the command with --force specified: %w", ref, err)
+				return log.Errorf("Publish stopped because detection of %s in the destination registry failed. To overwrite it, repeat the command with --force specified: %w", ref, err)
 			}
 		} else {
-			return log.Errorf("Copy stopped because %s already exists in the destination registry. To overwrite it, repeat the command with --force specified.", ref)
+			return log.Errorf("Publish stopped because %s already exists in the destination registry. To overwrite it, repeat the command with --force specified.", ref)
 		}
 	}
 
