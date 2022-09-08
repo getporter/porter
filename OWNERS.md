@@ -20,3 +20,5 @@ These are the members of the [maintainers team](https://github.com/orgs/getporte
 * [Jennifer Davis](https://github.com/iennae)
     * Documentation and new contributor experience
 * [Yingrong Zhao](https://github.com/vinozzz)
+* [Brian DeGeeter](https://github.com/bdegeeter)
+* [Steven Gettys](https://github.com/sgettys)
