@@ -53,6 +53,9 @@ type Manifest struct {
 	// TemplateVariables are the variables used in the templating, e.g. bundle.parameters.NAME, or bundle.outputs.NAME
 	TemplateVariables []string `yaml:"-"`
 
+	// SchemaType indicates the type of resource contained in an imported file.
+	SchemaType string `yaml:"schemaType,omitempty"`
+
 	// SchemaVersion is a semver value that indicates which version of the porter.yaml schema is used in the file.
 	SchemaVersion string `yaml:"schemaVersion"`
 	Name          string `yaml:"name,omitempty"`
@@ -179,6 +182,10 @@ func (m *Manifest) Validate(cxt *portercontext.Context, strategy schema.CheckStr
 }
 
 func (m *Manifest) validateMetadata(cxt *portercontext.Context, strategy schema.CheckStrategy) error {
+	if m.SchemaType != "" && strings.ToLower(m.SchemaType) != "bundle" {
+		return fmt.Errorf("invalid schemaType %s, expected Bundle", m.SchemaType)
+	}
+
 	if warnOnly, err := schema.ValidateSchemaVersion(strategy, SupportedSchemaVersions, m.SchemaVersion, DefaultSchemaVersion); err != nil {
 		if warnOnly {
 			fmt.Fprintln(cxt.Err, err)

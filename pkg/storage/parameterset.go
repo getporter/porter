@@ -2,6 +2,7 @@ package storage
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"get.porter.sh/porter/pkg/secrets"
@@ -21,6 +22,9 @@ type ParameterSet struct {
 
 // ParameterSetSpec represents the set of user-modifiable fields on a ParameterSet.
 type ParameterSetSpec struct {
+	// SchemaType helps when we export the definition so editors can detect the type of document, it's not used by porter.
+	SchemaType string `json:"schemaType,omitempty" yaml:"schemaType,omitempty"`
+
 	// SchemaVersion is the version of the parameter-set schema.
 	SchemaVersion schema.Version `json:"schemaVersion" yaml:"schemaVersion" toml:"schemaVersion"`
 
@@ -75,6 +79,10 @@ func (s ParameterSet) DefaultDocumentFilter() map[string]interface{} {
 }
 
 func (s ParameterSet) Validate() error {
+	if s.SchemaType != "" && strings.ToLower(s.SchemaType) != "parameterset" {
+		return fmt.Errorf("invalid schemaType %s, expected ParameterSet", s.SchemaType)
+	}
+
 	if ParameterSetSchemaVersion != s.SchemaVersion {
 		if s.SchemaVersion == "" {
 			s.SchemaVersion = "(none)"

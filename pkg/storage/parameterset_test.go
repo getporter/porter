@@ -4,7 +4,10 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg/secrets"
+	"get.porter.sh/porter/tests"
+	"github.com/cnabio/cnab-go/schema"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestNewParameterSet(t *testing.T) {
@@ -37,4 +40,63 @@ func TestParameterSet_String(t *testing.T) {
 		ps := ParameterSet{ParameterSetSpec: ParameterSetSpec{Namespace: "dev", Name: "myparams"}}
 		assert.Equal(t, "dev/myparams", ps.String())
 	})
+}
+
+func TestDisplayParameterSet_Validate(t *testing.T) {
+	t.Parallel()
+
+	testcases := []struct {
+		name          string
+		schemaType    string
+		schemaVersion schema.Version
+		wantError     string
+	}{
+		{
+			name:          "schemaType: none",
+			schemaType:    "",
+			schemaVersion: ParameterSetSchemaVersion,
+			wantError:     ""},
+		{
+			name:          "schemaType: ParameterSet",
+			schemaType:    "ParameterSet",
+			schemaVersion: ParameterSetSchemaVersion,
+			wantError:     ""},
+		{
+			name:          "schemaType: PARAMETERSET",
+			schemaType:    "PARAMETERSET",
+			schemaVersion: ParameterSetSchemaVersion,
+			wantError:     ""},
+		{
+			name:          "schemaType: parameterset",
+			schemaType:    "parameterset",
+			schemaVersion: ParameterSetSchemaVersion,
+			wantError:     ""},
+		{
+			name:          "schemaType: CredentialSet",
+			schemaType:    "CredentialSet",
+			schemaVersion: ParameterSetSchemaVersion,
+			wantError:     "invalid schemaType CredentialSet, expected ParameterSet"},
+		{
+			name:          "validate embedded ps",
+			schemaType:    "ParameterSet",
+			schemaVersion: "", // this is required
+			wantError:     "invalid schemaVersion provided: (none)"},
+	}
+
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			ps := ParameterSet{ParameterSetSpec: ParameterSetSpec{
+				SchemaType:    tc.schemaType,
+				SchemaVersion: tc.schemaVersion,
+			}}
+			err := ps.Validate()
+			if tc.wantError == "" {
+				require.NoError(t, err)
+			} else {
+				tests.RequireErrorContains(t, err, tc.wantError)
+			}
+		})
+	}
 }

@@ -2,6 +2,7 @@ package storage
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"get.porter.sh/porter/pkg/secrets"
@@ -29,6 +30,9 @@ type CredentialSet struct {
 
 // CredentialSetSpec represents the set of user-modifiable fields on a CredentialSet.
 type CredentialSetSpec struct {
+	// SchemaType is the type of resource in the current document.
+	SchemaType string `json:"schemaType,omitempty" yaml:"schemaType,omitempty" toml:"schemaType,omitempty"`
+
 	// SchemaVersion is the version of the credential-set schema.
 	SchemaVersion schema.Version `json:"schemaVersion" yaml:"schemaVersion" toml:"schemaVersion"`
 
@@ -78,6 +82,10 @@ func (s CredentialSet) DefaultDocumentFilter() map[string]interface{} {
 }
 
 func (s CredentialSet) Validate() error {
+	if s.SchemaType != "" && strings.ToLower(s.SchemaType) != "credentialset" {
+		return fmt.Errorf("invalid schemaType %s, expected CredentialSet", s.SchemaType)
+	}
+
 	if CredentialSetSchemaVersion != s.SchemaVersion {
 		if s.SchemaVersion == "" {
 			s.SchemaVersion = "(none)"

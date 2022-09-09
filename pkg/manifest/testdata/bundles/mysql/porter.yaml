@@ -1,3 +1,4 @@
+schemaType: Bundle
 schemaVersion: 1.0.0
 name: mysql
 version: 0.1.3

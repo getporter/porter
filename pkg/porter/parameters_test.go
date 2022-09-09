@@ -11,6 +11,8 @@ import (
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/test"
+	"get.porter.sh/porter/pkg/yaml"
+	"get.porter.sh/porter/tests"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/stretchr/testify/assert"
@@ -813,4 +815,52 @@ func TestParametersCreate(t *testing.T) {
 			assert.Contains(t, err.Error(), tc.wantErr)
 		})
 	}
+}
+
+func TestPorter_ParametersApply(t *testing.T) {
+	t.Run("invalid schemaType", func(t *testing.T) {
+		// Make sure that we are validating the display parameter set values, and not just the underlying stored parameter set
+		ctx := context.Background()
+		p := NewTestPorter(t)
+		defer p.Close()
+
+		p.AddTestFile("testdata/parameters/mypset.yaml", "mypset.yaml")
+		p.TestConfig.TestContext.EditYaml("mypset.yaml", func(yq *yaml.Editor) error {
+			return yq.SetValue("schemaType", "invalidthing")
+		})
+
+		opts := ApplyOptions{
+			Namespace: "altns",
+			File:      "mypset.yaml",
+		}
+		err := p.ParametersApply(ctx, opts)
+		tests.RequireErrorContains(t, err, "invalid schemaType")
+	})
+
+	t.Run("valid parameter set", func(t *testing.T) {
+		ctx := context.Background()
+		p := NewTestPorter(t)
+		defer p.Close()
+
+		p.AddTestFile("testdata/parameters/mypset.yaml", "mypset.yaml")
+		p.TestConfig.TestContext.EditYaml("mypset.yaml", func(yq *yaml.Editor) error {
+			return yq.DeleteNode("namespace")
+		})
+
+		opts := ApplyOptions{
+			Namespace: "altns", // Import into this namespace since one isn't set in the file (we removed it above)
+			File:      "mypset.yaml",
+		}
+		err := p.ParametersApply(ctx, opts)
+		require.NoError(t, err, "ParametersApply failed")
+
+		ps, err := p.Parameters.GetParameterSet(ctx, "altns", "mypset")
+		require.NoError(t, err, "Failed to retrieve applied parameter set")
+
+		assert.Equal(t, "mypset", ps.Name, "unexpected parameter set name")
+		require.Len(t, ps.Parameters, 1, "expected 1 parameter in the set")
+		assert.Equal(t, "foo", ps.Parameters[0].Name, "expected the foo parameter mapping defined")
+		assert.Equal(t, "secret", ps.Parameters[0].Source.Key, "expected the foo parameter mapping to come from a secret")
+		assert.Equal(t, "foo_secret", ps.Parameters[0].Source.Value, "expected the foo parameter mapping to use foo_secret")
+	})
 }

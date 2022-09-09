@@ -41,14 +41,28 @@ type ParameterEditOptions struct {
 }
 
 // ListParameters lists saved parameter sets.
-func (p *Porter) ListParameters(ctx context.Context, opts ListOptions) ([]storage.ParameterSet, error) {
-	return p.Parameters.ListParameterSets(ctx, storage.ListOptions{
+func (p *Porter) ListParameters(ctx context.Context, opts ListOptions) ([]DisplayParameterSet, error) {
+	listOpts := storage.ListOptions{
 		Namespace: opts.GetNamespace(),
 		Name:      opts.Name,
 		Labels:    opts.ParseLabels(),
 		Skip:      opts.Skip,
 		Limit:     opts.Limit,
-	})
+	}
+	results, err := p.Parameters.ListParameterSets(ctx, listOpts)
+	if err != nil {
+		return nil, err
+	}
+
+	displayResults := make([]DisplayParameterSet, len(results))
+	for i, ps := range results {
+		ps.SchemaType = "ParameterSet"
+		displayResults[i] = DisplayParameterSet{
+			ParameterSet: ps,
+		}
+	}
+
+	return displayResults, nil
 }
 
 // PrintParameters prints saved parameter sets.
@@ -72,7 +86,7 @@ func (p *Porter) PrintParameters(ctx context.Context, opts ListOptions) error {
 
 		printParamRow :=
 			func(v interface{}) []string {
-				cr, ok := v.(storage.ParameterSet)
+				cr, ok := v.(DisplayCredentialSet)
 				if !ok {
 					return nil
 				}
@@ -222,8 +236,6 @@ func (p *Porter) EditParameter(ctx context.Context, opts ParameterEditOptions) e
 }
 
 type DisplayParameterSet struct {
-	// SchemaType helps when we export the definition so editors can detect the type of document, it's not used by porter.
-	SchemaType           string `json:"schemaType" yaml:"schemaType"`
 	storage.ParameterSet `yaml:",inline"`
 }
 
@@ -236,9 +248,10 @@ func (p *Porter) ShowParameter(ctx context.Context, opts ParameterShowOptions) e
 	}
 
 	paramSet := DisplayParameterSet{
-		SchemaType:   "ParameterSet",
 		ParameterSet: ps,
 	}
+	paramSet.SchemaType = "ParameterSet"
+
 	switch opts.Format {
 	case printer.FormatJson:
 		return printer.PrintJson(p.Out, paramSet)
@@ -508,7 +521,7 @@ func (p *Porter) ParametersApply(ctx context.Context, o ApplyOptions) error {
 		return span.Error(err)
 	}
 
-	var params storage.ParameterSet
+	var params DisplayParameterSet
 	err = encoding.UnmarshalFile(p.FileSystem, o.File, &params)
 	if err != nil {
 		return span.Error(fmt.Errorf("could not load %s as a parameter set: %w", o.File, err))
@@ -521,12 +534,12 @@ func (p *Porter) ParametersApply(ctx context.Context, o ApplyOptions) error {
 	params.Namespace = namespace
 	params.Status.Modified = time.Now()
 
-	err = p.Parameters.Validate(ctx, params)
+	err = p.Parameters.Validate(ctx, params.ParameterSet)
 	if err != nil {
 		return span.Error(fmt.Errorf("parameter set is invalid: %w", err))
 	}
 
-	err = p.Parameters.UpsertParameterSet(ctx, params)
+	err = p.Parameters.UpsertParameterSet(ctx, params.ParameterSet)
 	if err != nil {
 		return err
 	}

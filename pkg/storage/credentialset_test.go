@@ -6,7 +6,9 @@ import (
 
 	"get.porter.sh/porter/pkg/encoding"
 	"get.porter.sh/porter/pkg/secrets"
+	"get.porter.sh/porter/tests"
 	"github.com/cnabio/cnab-go/bundle"
+	"github.com/cnabio/cnab-go/schema"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -68,6 +70,67 @@ func TestValidate(t *testing.T) {
 		require.Error(t, err, "expected Validate to fail because the credential applies to the specified action and is required")
 		assert.Contains(t, err.Error(), "bundle requires credential")
 	})
+}
+
+func TestDisplayCredentials_Validate(t *testing.T) {
+	t.Parallel()
+
+	testcases := []struct {
+		name          string
+		schemaType    string
+		schemaVersion schema.Version
+		wantError     string
+	}{
+		{
+			name:          "schemaType: none",
+			schemaType:    "",
+			schemaVersion: CredentialSetSchemaVersion,
+			wantError:     ""},
+		{
+			name:          "schemaType: CredentialSet",
+			schemaType:    "CredentialSet",
+			schemaVersion: CredentialSetSchemaVersion,
+			wantError:     ""},
+		{
+			name:          "schemaType: CREDENTIALSET",
+			schemaType:    "CREDENTIALSET",
+			schemaVersion: CredentialSetSchemaVersion,
+			wantError:     ""},
+		{
+			name:          "schemaType: credentialset",
+			schemaType:    "credentialset",
+			schemaVersion: CredentialSetSchemaVersion,
+			wantError:     ""},
+		{
+			name:          "schemaType: ParameterSet",
+			schemaType:    "ParameterSet",
+			schemaVersion: CredentialSetSchemaVersion,
+			wantError:     "invalid schemaType ParameterSet, expected CredentialSet"},
+		{
+			name:          "validate embedded cs",
+			schemaType:    "CredentialSet",
+			schemaVersion: "", // required!
+			wantError:     "invalid schemaVersion provided: (none)"},
+	}
+
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			cs := CredentialSet{
+				CredentialSetSpec: CredentialSetSpec{
+					SchemaType:    tc.schemaType,
+					SchemaVersion: tc.schemaVersion,
+				}}
+
+			err := cs.Validate()
+			if tc.wantError == "" {
+				require.NoError(t, err)
+			} else {
+				tests.RequireErrorContains(t, err, tc.wantError)
+			}
+		})
+	}
 }
 
 func TestMarshal(t *testing.T) {

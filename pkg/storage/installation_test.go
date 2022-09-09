@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"get.porter.sh/porter/pkg/cnab"
+	"get.porter.sh/porter/tests"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -163,4 +164,58 @@ func TestInstallation_ApplyResult(t *testing.T) {
 		assert.NotEmpty(t, inst.Status.Installed, "the installed timestamp should still be be set")
 		assert.Equal(t, &result.Created, inst.Status.Uninstalled, "the uninstalled timestamp should be set to the new uninstall time")
 	})
+}
+
+func TestInstallation_Validate(t *testing.T) {
+	t.Parallel()
+
+	testcases := []struct {
+		name      string
+		input     InstallationSpec
+		wantError string
+	}{
+		{
+			name: "none",
+			input: InstallationSpec{
+				SchemaType:    "",
+				SchemaVersion: InstallationSchemaVersion},
+			wantError: ""},
+		{
+			name: "installation",
+			input: InstallationSpec{
+				SchemaType:    "installation",
+				SchemaVersion: InstallationSchemaVersion},
+			wantError: ""},
+		{
+			name: "Installation",
+			input: InstallationSpec{
+				SchemaType:    "Installation",
+				SchemaVersion: InstallationSchemaVersion},
+			wantError: ""},
+		{
+			name: "INSTALLATION",
+			input: InstallationSpec{
+				SchemaType:    "INSTALLATION",
+				SchemaVersion: InstallationSchemaVersion},
+			wantError: ""},
+		{
+			name: "CredentialSet",
+			input: InstallationSpec{
+				SchemaType:    "CredentialSet",
+				SchemaVersion: InstallationSchemaVersion},
+			wantError: "invalid schemaType CredentialSet, expected Installation"},
+	}
+
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			err := tc.input.Validate()
+			if tc.wantError == "" {
+				require.NoError(t, err)
+			} else {
+				tests.RequireErrorContains(t, err, tc.wantError)
+			}
+		})
+	}
 }

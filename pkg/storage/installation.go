@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"get.porter.sh/porter/pkg/cnab"
@@ -30,6 +31,9 @@ type Installation struct {
 
 // InstallationSpec contains installation fields that represent the desired state of the installation.
 type InstallationSpec struct {
+	// SchemaType indicates the type of resource imported from a file.
+	SchemaType string `json:"schemaType"`
+
 	// SchemaVersion is the version of the installation state schema.
 	SchemaVersion schema.Version `json:"schemaVersion"`
 
@@ -135,7 +139,11 @@ func (i *InstallationSpec) Apply(input InstallationSpec) {
 }
 
 // Validate the installation document and report the first error.
-func (i *Installation) Validate() error {
+func (i *InstallationSpec) Validate() error {
+	if i.SchemaType != "" && strings.ToLower(i.SchemaType) != "installation" {
+		return fmt.Errorf("invalid schemaType %s, expected Installation", i.SchemaType)
+	}
+
 	if InstallationSchemaVersion != i.SchemaVersion {
 		if i.SchemaVersion == "" {
 			i.SchemaVersion = "(none)"

@@ -12,6 +12,8 @@ import (
 	"get.porter.sh/porter/pkg/printer"
 	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/test"
+	"get.porter.sh/porter/pkg/yaml"
+	"get.porter.sh/porter/tests"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -519,4 +521,52 @@ func TestCredentialsCreate(t *testing.T) {
 			assert.Contains(t, err.Error(), tc.wantErr)
 		})
 	}
+}
+
+func TestPorter_CredentialsApply(t *testing.T) {
+	t.Run("invalid schemaType", func(t *testing.T) {
+		// Make sure that we are validating the display credential set values, and not just the underlying stored credential set
+		ctx := context.Background()
+		p := NewTestPorter(t)
+		defer p.Close()
+
+		p.AddTestFile("testdata/credentials/kool-kreds.yaml", "kool-kreds.yaml")
+		p.TestConfig.TestContext.EditYaml("kool-kreds.yaml", func(yq *yaml.Editor) error {
+			return yq.SetValue("schemaType", "invalidthing")
+		})
+
+		opts := ApplyOptions{
+			Namespace: "altns",
+			File:      "kool-kreds.yaml",
+		}
+		err := p.CredentialsApply(ctx, opts)
+		tests.RequireErrorContains(t, err, "invalid schemaType")
+	})
+
+	t.Run("valid credential set", func(t *testing.T) {
+		ctx := context.Background()
+		p := NewTestPorter(t)
+		defer p.Close()
+
+		p.AddTestFile("testdata/credentials/kool-kreds.yaml", "kool-kreds.yaml")
+		p.TestConfig.TestContext.EditYaml("kool-kreds.yaml", func(yq *yaml.Editor) error {
+			return yq.DeleteNode("namespace")
+		})
+
+		opts := ApplyOptions{
+			Namespace: "altns", // Import into this namespace since one isn't set in the file (we removed it above)
+			File:      "kool-kreds.yaml",
+		}
+		err := p.CredentialsApply(ctx, opts)
+		require.NoError(t, err, "CredentialsApply failed")
+
+		cs, err := p.Credentials.GetCredentialSet(ctx, "altns", "kool-kreds")
+		require.NoError(t, err, "Failed to retrieve applied credential set")
+
+		assert.Equal(t, "kool-kreds", cs.Name, "unexpected credential set name")
+		require.Len(t, cs.Credentials, 4, "expected 4 credentials in the set")
+		assert.Equal(t, "kool-config", cs.Credentials[0].Name, "expected the kool-config credential mapping defined")
+		assert.Equal(t, "path", cs.Credentials[0].Source.Key, "unexpected credential source")
+		assert.Equal(t, "/path/to/kool-config", cs.Credentials[0].Source.Value, "unexpected credential mapping value")
+	})
 }

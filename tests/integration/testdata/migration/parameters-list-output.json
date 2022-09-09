@@ -1,5 +1,6 @@
 [
   {
+    "schemaType": "ParameterSet",
     "schemaVersion": "1.0.1",
     "namespace": "migrated",
     "name": "hello-llama",
