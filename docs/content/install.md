@@ -42,23 +42,23 @@ Set VERSION to the most recent [v1 prerelease] version number.
 **MacOS**
 
 ```bash
-export VERSION="v1.0.0-beta.2"
+export VERSION="v1.0.0-rc.1"
 curl -L https://cdn.porter.sh/$VERSION/install-mac.sh | bash
 ```
 
 **Linux**
 
 ```bash
-export VERSION="v1.0.0-beta.2"
+export VERSION="v1.0.0-rc.1"
 curl -L https://cdn.porter.sh/$VERSION/install-linux.sh | bash
 ```
 
 **Windows**
 
 ```powershell
-$VERSION="v1.0.0-beta.2"
+$VERSION="v1.0.0-rc.1"
 (New-Object System.Net.WebClient).DownloadFile("https://cdn.porter.sh/$VERSION/install-windows.ps1", "install-porter.ps1")
-.\install-porter.ps1 -PORTER_HOME $PORTER_HOME
+.\install-porter.ps1
 ```
 
 ## Running multiple versions 
