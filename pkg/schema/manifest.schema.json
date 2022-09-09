@@ -284,11 +284,6 @@
     }
   },
   "properties": {
-    "schemaType": {
-      "description": "The resource type of the current document.",
-      "type": "string",
-      "default": "Bundle"
-    },
     "schemaVersion": {
       "description": "The version of the schema used in this file",
       "type": "string"
