@@ -1,7 +1,6 @@
 package cnab
 
 import (
-	"os"
 	"testing"
 
 	"github.com/cnabio/cnab-go/bundle"
@@ -12,28 +11,22 @@ import (
 func TestReadDependencyV2Properties(t *testing.T) {
 	t.Parallel()
 
-	data, err := os.ReadFile("testdata/bundle-depsv2.json")
-	require.NoError(t, err, "cannot read bundle file")
-
-	b, err := bundle.Unmarshal(data)
-	require.NoError(t, err, "could not unmarshal the bundle")
-
-	bun := ExtendedBundle{*b}
-	assert.True(t, bun.HasDependenciesV2())
+	bun := ReadTestBundle(t, "testdata/bundle-depsv2.json")
+	require.True(t, bun.HasDependenciesV2())
 
 	deps, err := bun.ReadDependenciesV2()
 	require.NoError(t, err)
 
-	assert.NotNil(t, deps, "DependenciesV2 was not populated")
+	require.NotNil(t, deps, "DependenciesV2 was not populated")
 	assert.Len(t, deps.Requires, 2, "DependenciesV2.Requires is the wrong length")
 
 	dep := deps.Requires["storage"]
-	assert.NotNil(t, dep, "expected DependenciesV2.Requires to have an entry for 'storage'")
+	require.NotNil(t, dep, "expected DependenciesV2.Requires to have an entry for 'storage'")
 	assert.Equal(t, "somecloud/blob-storage", dep.Bundle, "DependencyV2.Bundle is incorrect")
 	assert.Empty(t, dep.Version, "DependencyV2.Version should be nil")
 
 	dep = deps.Requires["mysql"]
-	assert.NotNil(t, dep, "expected DependenciesV2.Requires to have an entry for 'mysql'")
+	require.NotNil(t, dep, "expected DependenciesV2.Requires to have an entry for 'mysql'")
 	assert.Equal(t, "somecloud/mysql", dep.Bundle, "DependencyV2.Bundle is incorrect")
 	assert.Equal(t, "5.7.x", dep.Version, "DependencyV2.Bundle.Version is incorrect")
 

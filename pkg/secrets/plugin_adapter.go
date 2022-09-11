@@ -28,6 +28,12 @@ func (a PluginAdapter) Close() error {
 }
 
 func (a PluginAdapter) Resolve(ctx context.Context, keyName string, keyValue string) (string, error) {
+	// Instead of calling out to a plugin, resolve the value from Porter's database
+	// This supports bundle workflows where we are sourcing data from other runs, e.g. passing a connection string from a dependency to another bundle
+	if keyName == "porter" {
+
+	}
+
 	return a.plugin.Resolve(ctx, keyName, keyValue)
 }
 

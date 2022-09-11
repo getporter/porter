@@ -79,9 +79,34 @@ func (p *Porter) UninstallBundle(ctx context.Context, opts UninstallOptions) err
 		return fmt.Errorf("could not find installation %s/%s: %w", opts.Namespace, opts.Name, err)
 	}
 
+	// TODO(PEP003): I think we should flip uninstall flag on the spec?
+	// gotta figure out how that interacts with the operator54r5
 	err = p.applyActionOptionsToInstallation(ctx, opts, &installation)
 	if err != nil {
 		return err
+	}
+
+	if p.useWorkflowEngine(opts.bundleRef.Definition) {
+		puller := NewBundleResolver(p.Cache, opts.Force, p.Registry, opts.GetRegistryOptions())
+		eng := NewWorkflowEngine(installation.Namespace, puller, p.Installations, p)
+		workflowOpts := CreateWorkflowOptions{
+			Installation: installation,
+			Bundle:       opts.bundleRef.Definition,
+			DebugMode:    opts.DebugMode,
+			MaxParallel:  1,
+		}
+		ws, err := eng.CreateWorkflow(ctx, workflowOpts)
+		if err != nil {
+			return err
+		}
+
+		w := storage.Workflow{WorkflowSpec: ws}
+		if err := p.Installations.InsertWorkflow(ctx, w); err != nil {
+			return err
+		}
+
+		// TODO(PEP003): if a dry-run is requested, print out the execution plan and then exit
+		return eng.RunWorkflow(ctx, w)
 	}
 
 	deperator := newDependencyExecutioner(p, installation, opts)

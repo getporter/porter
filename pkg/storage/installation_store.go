@@ -13,24 +13,21 @@ const (
 	CollectionRuns          = "runs"
 	CollectionResults       = "results"
 	CollectionOutputs       = "outputs"
+	CollectionWorkflows     = "workflows"
 )
 
 var _ InstallationProvider = InstallationStore{}
 
 // InstallationStore is a persistent store for installation documents.
 type InstallationStore struct {
-	store   Store
-	encrypt EncryptionHandler
-	decrypt EncryptionHandler
+	store Store
 }
 
 // NewInstallationStore creates a persistent store for installations using the specified
 // backing datastore.
 func NewInstallationStore(datastore Store) InstallationStore {
 	return InstallationStore{
-		store:   datastore,
-		encrypt: noOpEncryptionHandler,
-		decrypt: noOpEncryptionHandler,
+		store: datastore,
 	}
 }
 
@@ -57,6 +54,8 @@ func EnsureInstallationIndices(ctx context.Context, store Store) error {
 			{Collection: CollectionOutputs, Keys: []string{"resultId", "name"}, Unique: true},
 			// query most recent outputs by name for an installation
 			{Collection: CollectionOutputs, Keys: []string{"namespace", "installation", "name", "-resultId"}},
+			// query workflows by id (list)
+			{Collection: CollectionWorkflows, Keys: []string{"id"}, Unique: true},
 		},
 	}
 
@@ -373,10 +372,30 @@ func (s InstallationStore) RemoveInstallation(ctx context.Context, namespace str
 	return nil
 }
 
-// EncryptionHandler is a function that transforms data by encrypting or decrypting it.
-type EncryptionHandler func([]byte) ([]byte, error)
+func (s InstallationStore) GetWorkflow(ctx context.Context, id string) (Workflow, error) {
+	var out Workflow
 
-// noOpEncryptHandler is used when no handler is specified.
-var noOpEncryptionHandler = func(data []byte) ([]byte, error) {
-	return data, nil
+	opts := FindOptions{
+		Filter: bson.M{
+			"id": id,
+		},
+	}
+	err := s.store.FindOne(ctx, CollectionWorkflows, opts, &out)
+	return out, err
+}
+
+func (s InstallationStore) InsertWorkflow(ctx context.Context, workflow Workflow) error {
+	opts := InsertOptions{
+		Documents: []interface{}{workflow},
+	}
+	return s.store.Insert(ctx, CollectionWorkflows, opts)
+}
+
+func (s InstallationStore) UpsertWorkflow(ctx context.Context, workflow Workflow) error {
+	workflow.SchemaVersion = WorkflowSchemaVersion
+	opts := UpdateOptions{
+		Upsert:   true,
+		Document: workflow,
+	}
+	return s.store.Update(ctx, CollectionWorkflows, opts)
 }

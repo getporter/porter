@@ -71,4 +71,9 @@ type InstallationProvider interface {
 
 	// GetLastLogs returns the logs from the last run of an Installation.
 	GetLastLogs(ctx context.Context, namespace string, installation string) (logs string, hasLogs bool, err error)
+
+	// TODO(PEP003): document and make sure we have all standard functions here
+	GetWorkflow(ctx context.Context, id string) (Workflow, error)
+	InsertWorkflow(ctx context.Context, workflow Workflow) error
+	UpsertWorkflow(ctx context.Context, workflow Workflow) error
 }

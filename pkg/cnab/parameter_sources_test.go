@@ -1,7 +1,6 @@
 package cnab
 
 import (
-	"os"
 	"testing"
 
 	"github.com/cnabio/cnab-go/bundle"
@@ -55,13 +54,8 @@ func TestProcessedExtensions_GetParameterSourcesExtension(t *testing.T) {
 func TestReadParameterSourcesProperties(t *testing.T) {
 	t.Parallel()
 
-	data, err := os.ReadFile("testdata/bundle.json")
-	require.NoError(t, err, "cannot read bundle file")
-
-	b, err := bundle.Unmarshal(data)
-	require.NoError(t, err, "could not unmarshal the bundle")
-	bun := NewBundle(*b)
-	assert.True(t, bun.HasParameterSources())
+	bun := ReadTestBundle(t, "testdata/bundle.json")
+	require.True(t, bun.HasParameterSources())
 
 	ps, err := bun.ReadParameterSources()
 	require.NoError(t, err, "could not read parameter sources")

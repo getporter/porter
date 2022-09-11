@@ -71,5 +71,29 @@ func (p *Porter) InvokeBundle(ctx context.Context, opts InvokeOptions) error {
 		return err
 	}
 
-	return p.ExecuteAction(ctx, installation, opts)
+	if p.useWorkflowEngine(opts.bundleRef.Definition) {
+		puller := NewBundleResolver(p.Cache, opts.Force, p.Registry, opts.GetRegistryOptions())
+		eng := NewWorkflowEngine(installation.Namespace, puller, p.Installations, p)
+		workflowOpts := CreateWorkflowOptions{
+			Installation: installation,
+			CustomAction: opts.Action,
+			Bundle:       opts.bundleRef.Definition,
+			DebugMode:    opts.DebugMode,
+			MaxParallel:  1, // TODO(PEP003): make this configurable
+		}
+		ws, err := eng.CreateWorkflow(ctx, workflowOpts)
+		if err != nil {
+			return err
+		}
+
+		w := storage.Workflow{WorkflowSpec: ws}
+		if err := p.Installations.InsertWorkflow(ctx, w); err != nil {
+			return err
+		}
+
+		// TODO(PEP003): if a dry-run is requested, print out the execution plan and then exit
+		return eng.RunWorkflow(ctx, w)
+	}
+
+	return p.ExecuteBundleAndDependencies(ctx, installation, opts)
 }

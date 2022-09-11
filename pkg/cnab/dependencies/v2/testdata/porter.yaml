@@ -1,0 +1,27 @@
+parameters:
+  - name: region
+    type: string
+
+credentials:
+  - name: kubeconfig
+    type: file
+
+outputs:
+  - name: connstr
+    type: string
+    source: bundle.dependencies.mysql.output.admin-connstr
+
+dependencies:
+  requires:
+    - name: load-balancer
+      bundle:
+        reference: example/load-balancer:v1.0.0
+      parameters:
+        region: bundle.parameters.region
+    - name: mysql
+      bundle:
+        reference: example/mysql:v1.0.0
+      parameters:
+        ip: bundle.dependencies.load-balancer.outputs.ipAddress
+      credentials:
+        kubeconfig: bundle.credentials.kubeconfig

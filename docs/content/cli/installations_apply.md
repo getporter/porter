@@ -37,6 +37,7 @@ porter installations apply FILE [flags]
       --force              Force the bundle to be executed when no changes are detected.
   -h, --help               help for apply
   -n, --namespace string   Namespace in which the installation is defined. Defaults to the namespace defined in the file.
+  -o, --output string      Specify an output format.  Allowed values: plaintext, json, yaml (default "plaintext")
 ```
 
 ### Options inherited from parent commands

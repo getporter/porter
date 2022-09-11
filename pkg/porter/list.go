@@ -148,7 +148,7 @@ func NewDisplayInstallation(installation storage.Installation) DisplayInstallati
 	return di
 }
 
-// ConvertToInstallationClaim transforms the data from DisplayInstallation into
+// ConvertToInstallation transforms the data from DisplayInstallation into
 // a Installation record.
 func (d DisplayInstallation) ConvertToInstallation() (storage.Installation, error) {
 	i := storage.Installation{

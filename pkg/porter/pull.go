@@ -6,6 +6,7 @@ import (
 
 	"get.porter.sh/porter/pkg/cache"
 	"get.porter.sh/porter/pkg/cnab"
+	cnabtooci "get.porter.sh/porter/pkg/cnab/cnab-to-oci"
 )
 
 type BundlePullOptions struct {
@@ -39,12 +40,15 @@ func (b *BundlePullOptions) validateReference() error {
 	return nil
 }
 
+func (b *BundlePullOptions) GetRegistryOptions() cnabtooci.RegistryOptions {
+	return cnabtooci.RegistryOptions{
+		InsecureRegistry: b.InsecureRegistry,
+	}
+}
+
 // PullBundle looks for a given bundle tag in the bundle cache. If it is not found, it is
 // pulled and stored in the cache. The path to the cached bundle is returned.
 func (p *Porter) PullBundle(ctx context.Context, opts BundlePullOptions) (cache.CachedBundle, error) {
-	resolver := BundleResolver{
-		Cache:    p.Cache,
-		Registry: p.Registry,
-	}
-	return resolver.Resolve(ctx, opts)
+	resolver := NewBundleResolver(p.Cache, opts.Force, p.Registry, opts.GetRegistryOptions())
+	return resolver.GetBundle(ctx, opts.GetReference())
 }

@@ -1,0 +1,41 @@
+schemaVersion: 1.0.0-alpha.1
+name: "apply mybuns.yaml"
+maxParallel: 1
+debugMode: false
+stages:
+  - jobs:
+      root:
+        action: install
+        installation:
+          schemaVersion: 1.0.2
+          name: mybuns
+          namespace: dev
+          bundle:
+            repository: localhost:5000/mybuns
+            version: v0.1.2
+          labels:
+            generator: porter-operator
+            generatorVersion: v0.2.0
+            thing: "1"
+          credentialSets:
+            - mybuns
+          parameterSets:
+            - mybuns
+          parameters:
+            - name: password
+              source:
+                secret: 01GG5VKAA5VS24CGRGSPY09DDX-password
+      root/db:
+        action: install
+        installation:
+          schemaVersion: 1.0.2
+          name: mybuns/db
+          namespace: dev
+          bundle:
+            repository: localhost:5000/mydb
+            version: 0.1.0
+            tag: v0.1.0
+          parameters:
+            - name: database
+              source:
+                value: bigdb

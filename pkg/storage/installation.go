@@ -55,15 +55,18 @@ type InstallationSpec struct {
 	// CredentialSets that should be included when the bundle is reconciled.
 	CredentialSets []string `json:"credentialSets,omitempty"`
 
+	// Credentials specified by the user through overrides.
+	// Does not include defaults, or values resolved from credential sets.
+	// TODO(PEP003): use this when executing the bundle
+	Credentials CredentialSetSpec `json:"credentials,omitempty"`
+
 	// ParameterSets that should be included when the bundle is reconciled.
 	ParameterSets []string `json:"parameterSets,omitempty"`
 
 	// Parameters specified by the user through overrides.
-	// Does not include defaults, or values resolved from parameter sources.
+	// Does not include defaults, or values resolved from parameter sets.
+	// TODO(PEP003): We should consider if it makes sense to store just the ParameterSetSpec instead, like we do for credentials which was added later
 	Parameters ParameterSet `json:"parameters,omitempty"`
-
-	// Status of the installation.
-	Status InstallationStatus `json:"status,omitempty"`
 }
 
 func (i InstallationSpec) String() string {
@@ -268,6 +271,15 @@ type OCIReferenceParts struct {
 	// Tag is the OCI tag of the bundle.
 	// For example, "latest".
 	Tag string `json:"tag,omitempty" yaml:"tag,omitempty" toml:"tag,omitempty"`
+}
+
+func NewOCIReferenceParts(ref cnab.OCIReference) OCIReferenceParts {
+	return OCIReferenceParts{
+		Repository: ref.Repository(),
+		Version:    ref.Version(),
+		Digest:     ref.Digest().String(),
+		Tag:        ref.Tag(),
+	}
 }
 
 func (r OCIReferenceParts) GetBundleReference() (cnab.OCIReference, bool, error) {

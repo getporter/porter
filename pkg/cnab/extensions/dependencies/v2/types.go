@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+
+	"get.porter.sh/porter/pkg/secrets"
 )
 
 // Dependencies describes the set of custom extension metadata associated with the dependencies spec
@@ -64,11 +66,12 @@ type DependencySource struct {
 	Output     string `json:"output,omitempty" mapstructure:"output,omitempty"`
 }
 
+// ignore template syntax, ${...}, if found
+var dependencySourceWiringRegex = regexp.MustCompile(`(\s*\$\{\s*)?bundle(\.dependencies\.([^.]+))?\.([^.]+)\.([^\s\}]+)(\s*\}\s*)?`)
+
 // ParseDependencySource identifies the components specified in a wiring string.
 func ParseDependencySource(value string) (DependencySource, error) {
-	// ignore template syntax, ${...}, if found
-	regex := regexp.MustCompile(`(\s*\$\{\s*)?bundle(\.dependencies\.([^.]+))?\.([^.]+)\.([^\s\}]+)(\s*\}\s*)?`)
-	matches := regex.FindStringSubmatch(value)
+	matches := dependencySourceWiringRegex.FindStringSubmatch(value)
 
 	// If it doesn't match our wiring syntax, assume that it is a hard coded value
 	if matches == nil || len(matches) < 5 {
@@ -96,9 +99,33 @@ func ParseDependencySource(value string) (DependencySource, error) {
 	return result, nil
 }
 
+func (s DependencySource) AsWorkflowStrategy(name string, parentJob string) secrets.Strategy {
+	strategy := secrets.Strategy{
+		Name: name,
+		Source: secrets.Source{
+			// bundle.dependencies.DEP.outputs.OUTPUT -> workflow.jobs.JOB.outputs.OUTPUT
+			// TODO(PEP003): Figure out if we need a job id, or if we can do okay with just a job key that we resolve to a run later
+			Value: s.AsWorkflowWiring(parentJob),
+		},
+	}
+
+	// TODO(PEP003): Are other strategies valid when talking about dependency wiring? Or can we only pass hard-coded values and data from a previous job?
+	if s.Value != "" {
+		strategy.Source.Key = "value"
+	} else {
+		strategy.Source.Key = "porter"
+	}
+
+	return strategy
+}
+
 // AsBundleWiring is the wiring string representation in the bundle definition.
 // For example, bundle.parameters.PARAM or bundle.dependencies.DEP.outputs.OUTPUT
 func (s DependencySource) AsBundleWiring() string {
+	if s.Value != "" {
+		return s.Value
+	}
+
 	suffix := s.WiringSuffix()
 	if s.Dependency != "" {
 		return fmt.Sprintf("bundle.dependencies.%s.%s", s.Dependency, suffix)
@@ -110,6 +137,10 @@ func (s DependencySource) AsBundleWiring() string {
 // AsWorkflowWiring is the wiring string representation in a workflow definition.
 // For example, workflow.jobs.JOB.outputs.OUTPUT
 func (s DependencySource) AsWorkflowWiring(jobID string) string {
+	if s.Value != "" {
+		return s.Value
+	}
+
 	return fmt.Sprintf("workflow.jobs.%s.%s", jobID, s.WiringSuffix())
 }
 
@@ -129,6 +160,47 @@ func (s DependencySource) WiringSuffix() string {
 	}
 
 	return s.Value
+}
+
+type WorkflowWiring struct {
+	WorkflowID string
+	JobKey     string
+	Parameter  string
+	Credential string
+	Output     string
+}
+
+var workflowWiringRegex = regexp.MustCompile(`workflow\.([^\.]+)\.jobs\.([^\.]+)\.([^\.]+)\.(.+)`)
+
+func ParseWorkflowWiring(value string) (WorkflowWiring, error) {
+	matches := workflowWiringRegex.FindStringSubmatch(value)
+	if len(matches) < 5 {
+		return WorkflowWiring{}, fmt.Errorf("invalid workflow wiring was passed to the porter strategy, %s", value)
+	}
+
+	// the first group is the entire match, we don't care about it
+	workflowID := matches[1]
+	jobKey := matches[2]
+	dataType := matches[3] // e.g. parameters, credentials or outputs
+	dataKey := matches[4]  // e.g. the name of the param/cred/output
+
+	wiring := WorkflowWiring{
+		WorkflowID: workflowID,
+		JobKey:     jobKey,
+	}
+
+	switch dataType {
+	case "parameters":
+		wiring.Parameter = dataKey
+	case "credentials":
+		wiring.Credential = dataKey
+	case "outputs":
+		wiring.Output = dataKey
+	default:
+		return WorkflowWiring{}, fmt.Errorf("invalid workflow wiring was passed to the porter strategy, %s", value)
+	}
+
+	return wiring, nil
 }
 
 type DependencyInstallation struct {

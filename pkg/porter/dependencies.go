@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"strings"
 
+	cnabtooci "get.porter.sh/porter/pkg/cnab/cnab-to-oci"
+
 	"get.porter.sh/porter/pkg/cnab"
 	depsv1 "get.porter.sh/porter/pkg/cnab/dependencies/v1"
 	cnabprovider "get.porter.sh/porter/pkg/cnab/provider"
@@ -21,7 +23,7 @@ type dependencyExecutioner struct {
 	*config.Config
 	porter *Porter
 
-	Resolver      BundleResolver
+	resolver      BundleResolver
 	CNAB          cnabprovider.CNABProvider
 	Installations storage.InstallationProvider
 
@@ -35,17 +37,17 @@ type dependencyExecutioner struct {
 }
 
 func newDependencyExecutioner(p *Porter, installation storage.Installation, action BundleAction) *dependencyExecutioner {
-	resolver := BundleResolver{
-		Cache:    p.Cache,
-		Registry: p.Registry,
-	}
+	parentOpts := action.GetOptions()
+	regOpts := cnabtooci.RegistryOptions{InsecureRegistry: parentOpts.InsecureRegistry}
+	resolver := NewBundleResolver(p.Cache, parentOpts.Force, p.Registry, regOpts)
+
 	return &dependencyExecutioner{
 		porter:             p,
 		parentInstallation: installation,
 		parentAction:       action,
-		parentOpts:         action.GetOptions(),
+		parentOpts:         parentOpts,
+		resolver:           resolver,
 		Config:             p.Config,
-		Resolver:           resolver,
 		CNAB:               p.CNAB,
 		Installations:      p.Installations,
 	}
@@ -140,7 +142,7 @@ func (e *dependencyExecutioner) identifyDependencies(ctx context.Context) error 
 		}
 		bun = bundle
 	} else if e.parentOpts.Reference != "" {
-		cachedBundle, err := e.Resolver.Resolve(ctx, e.parentOpts.BundlePullOptions)
+		cachedBundle, err := e.resolver.GetBundle(ctx, e.parentOpts.GetReference())
 		if err != nil {
 			return span.Error(fmt.Errorf("could not resolve bundle: %w", err))
 		}
@@ -180,16 +182,12 @@ func (e *dependencyExecutioner) prepareDependency(ctx context.Context, dep *queu
 	defer span.EndSpan()
 
 	// Pull the dependency
-	var err error
-	pullOpts := BundlePullOptions{
-		Reference:        dep.Reference,
-		InsecureRegistry: e.parentOpts.InsecureRegistry,
-		Force:            e.parentOpts.Force,
+	depRef, err := cnab.ParseOCIReference(dep.Reference)
+	if err != nil {
+		return err
 	}
-	if err := pullOpts.Validate(); err != nil {
-		return span.Error(fmt.Errorf("error preparing dependency %s: %w", dep.Alias, err))
-	}
-	cachedDep, err := e.Resolver.Resolve(ctx, pullOpts)
+	fmt.Println("DEPREF: ", depRef)
+	cachedDep, err := e.resolver.GetBundle(ctx, depRef)
 	if err != nil {
 		return span.Error(fmt.Errorf("error pulling dependency %s: %w", dep.Alias, err))
 	}

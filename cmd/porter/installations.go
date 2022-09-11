@@ -139,6 +139,9 @@ You can use the show command to create the initial file:
 		"Force the bundle to be executed when no changes are detected.")
 	f.BoolVar(&opts.DryRun, "dry-run", false,
 		"Evaluate if the bundle would be executed based on the changes in the file.")
+	f.StringVarP(&opts.RawFormat, "output", "o", "plaintext",
+		"Specify an output format.  Allowed values: plaintext, json, yaml")
+
 	return &cmd
 }
 
