@@ -14,9 +14,10 @@ type TestPorterRuntime struct {
 
 func NewTestPorterRuntime(t *testing.T) *TestPorterRuntime {
 	cxt := portercontext.NewTestContext(t)
+	cxt.Setenv("PORTER_DEBUG", "true")
+
 	mixins := mixin.NewTestMixinProvider()
 	cfg := NewConfigFor(cxt.Context)
-	cfg.DebugMode = true
 	pr := NewPorterRuntime(cfg, mixins)
 
 	return &TestPorterRuntime{
@@ -32,8 +33,8 @@ type TestRuntimeConfig struct {
 
 func NewTestRuntimeConfig(t *testing.T) TestRuntimeConfig {
 	porterCtx := portercontext.NewTestContext(t)
+	porterCtx.Setenv("PORTER_DEBUG", "true")
 	runtimeCfg := NewConfigFor(porterCtx.Context)
-	runtimeCfg.DebugMode = true
 	return TestRuntimeConfig{
 		RuntimeConfig: runtimeCfg,
 		TestContext:   porterCtx,

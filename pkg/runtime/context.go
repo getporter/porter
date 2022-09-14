@@ -1,6 +1,10 @@
 package runtime
 
 import (
+	"context"
+	"strconv"
+
+	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/portercontext"
 )
 
@@ -14,14 +18,16 @@ type RuntimeConfig struct {
 
 // NewConfig returns an initialized RuntimeConfig
 func NewConfig() RuntimeConfig {
-	return RuntimeConfig{
-		Context: portercontext.New(),
-	}
+	return NewConfigFor(portercontext.New())
 }
 
 // NewConfigFor returns an initialized RuntimeConfig using the specified context.
 func NewConfigFor(porterCtx *portercontext.Context) RuntimeConfig {
+	debug, _ := strconv.ParseBool(porterCtx.Getenv("PORTER_DEBUG"))
 	return RuntimeConfig{
-		Context: porterCtx,
+		Context:   porterCtx,
+		DebugMode: debug,
+	}
+}
 	}
 }
