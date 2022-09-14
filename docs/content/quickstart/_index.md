@@ -121,7 +121,7 @@ Most bundles are written such that a specific version of the bundle corresponds 
 So to upgrade the application to a new version you need to specify a newer version of the bundle.
 
 ```console
-$ porter upgrade porter-hello --reference ghcr.io/getporter/examples/porter-hello:v0.2.0
+$ porter upgrade porter-hello --version 0.2.0
 upgrading porter-hello...
 executing upgrade action from porter-hello (installation: porter-hello)
 Upgrade Hello World
@@ -132,7 +132,7 @@ execution completed successfully!
 ### Upgrade using digest
 
 When working in production environment, we highly recommend you to reference the bundle using its digest instead of tag. We used tags in our docs for simplicity, but tags can be overwritten which results in unexpected outcomes from upgrading an bundle.
-To get deterministic and repeatable deployments, use digests instead of tags. it allows to ensure that you deploy the exact expected bundle.
+For deterministic and repeatable deployments, use digests instead of tags to ensure that you deploy exactly what you intended.
 
 ```console
 $ porter upgrade porter-hello --reference ghcr.io/getporter/examples/porter-hello@sha256:276b44be3f478b4c8d1f99c1925386d45a878a853f22436ece5589f32e9df384
@@ -144,11 +144,13 @@ Upgraded to World 2.0
 execution completed successfully!
 ```
 
-If you ran into below error message:
-```console
-$ unable to pull bundle: invalid media type "application/vnd.docker.distribution.manifest.v2+json" for bundle manifest
+## Troubleshooting
+
+If you received an `invalid media type` error like below, check that you are referencing the digest for the bundle and not the installer image.
+
+```plain
+unable to pull bundle: invalid media type "application/vnd.docker.distribution.manifest.v2+json" for bundle manifest
 ```
-Make sure that you are referencing the digest for bundles and not the digest for invocation images. 
 
 ## Cleanup
 
