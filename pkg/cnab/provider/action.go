@@ -86,9 +86,19 @@ func (r *Runtime) AddFiles(ctx context.Context, args ActionArguments) cnabaction
 }
 
 func (r *Runtime) AddEnvironment(args ActionArguments) cnabaction.OperationConfigFunc {
+	const verbosityEnv = "PORTER_VERBOSITY"
+
 	return func(op *driver.Operation) error {
 		op.Environment[config.EnvPorterInstallationNamespace] = args.Installation.Namespace
 		op.Environment[config.EnvPorterInstallationName] = args.Installation.Name
+
+		// Pass the verbosity from porter's local config into the bundle
+		op.Environment[verbosityEnv] = r.Config.GetVerbosity().Level().String()
+
+		// When a bundle is run in debug mode, the verbosity is automatically set to debug
+		if debugMode, _ := args.Params["porter-debug"].(bool); debugMode {
+			op.Environment[verbosityEnv] = zapcore.DebugLevel.String()
+		}
 		return nil
 	}
 }
