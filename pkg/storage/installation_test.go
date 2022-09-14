@@ -122,21 +122,28 @@ func TestInstallation_ApplyResult(t *testing.T) {
 		assert.Equal(t, &result.Created, inst.Status.Uninstalled, "the uninstalled timestamp should be set")
 	})
 
-	t.Run("install after uninstall succeeded", func(t *testing.T) {
+	t.Run("desired state after re-installation and re-unstallation", func(t *testing.T) {
 		// Make an installed bundle
 		inst := NewInstallation("dev", "mybuns")
-		inst.Status.Created = now.Add(-time.Second * 10)
+		inst.Status.Created = now.Add(-time.Second * 15)
 		inst.Status.Installed = &inst.Status.Created
 
-		// uninstall it
+		// uninstall the bundle
 		run := inst.NewRun(cnab.ActionUninstall)
 		result := run.NewResult(cnab.StatusSucceeded)
-		result.Created = now.Add(-time.Second * 5)
+		result.Created = now.Add(-time.Second * 10)
+
 		inst.ApplyResult(run, result)
 
-		// install it (again)
+		assert.False(t, inst.IsInstalled(), "the installation should no longer be considered installed")
+		assert.True(t, inst.IsUninstalled(), "the installation should be marked as uninstalled")
+		assert.Equal(t, &inst.Status.Created, inst.Status.Installed, "the installed timestamp should still be set")
+		assert.Equal(t, &result.Created, inst.Status.Uninstalled, "the uninstalled timestamp should be set")
+
+		// re-install the bundle
 		run = inst.NewRun(cnab.ActionInstall)
 		result = run.NewResult(cnab.StatusSucceeded)
+		result.Created = now.Add(-time.Second * 5)
 
 		inst.ApplyResult(run, result)
 
@@ -144,27 +151,8 @@ func TestInstallation_ApplyResult(t *testing.T) {
 		assert.False(t, inst.IsUninstalled(), "the installation should not be marked as uninstalled")
 		assert.Equal(t, &result.Created, inst.Status.Installed, "the installed timestamp should be set to the new install time")
 		assert.NotEmpty(t, inst.Status.Uninstalled, "the uninstalled timestamp should still be be set")
-	})
 
-	t.Run("uninstall after install after uninstall succeeded repeat ad nauseum", func(t *testing.T) {
-		// Make an installed bundle
-		inst := NewInstallation("dev", "mybuns")
-		inst.Status.Created = now.Add(-time.Second * 15)
-		inst.Status.Installed = &inst.Status.Created
-
-		// uninstall it
-		run := inst.NewRun(cnab.ActionUninstall)
-		result := run.NewResult(cnab.StatusSucceeded)
-		result.Created = now.Add(-time.Second * 10)
-		inst.ApplyResult(run, result)
-
-		// install it (again)
-		run = inst.NewRun(cnab.ActionInstall)
-		result = run.NewResult(cnab.StatusSucceeded)
-		result.Created = now.Add(-time.Second * 5)
-		inst.ApplyResult(run, result)
-
-		// uninstall it
+		// re-uninstall the bundle
 		run = inst.NewRun(cnab.ActionUninstall)
 		result = run.NewResult(cnab.StatusSucceeded)
 
