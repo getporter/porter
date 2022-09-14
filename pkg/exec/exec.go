@@ -19,3 +19,9 @@ func New() *Mixin {
 		Config: runtime.NewConfig(),
 	}
 }
+
+// Close releases resources held by the mixin, such as our logging and tracing
+// connections.
+func (m *Mixin) Close() {
+	m.Config.Close()
+}
