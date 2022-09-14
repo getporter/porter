@@ -3,6 +3,7 @@ package porter
 import (
 	"path/filepath"
 	"testing"
+	"time"
 
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/portercontext"
@@ -147,10 +148,11 @@ func TestPorter_IsInstallationInSync(t *testing.T) {
 		p := NewTestPorter(t)
 		defer p.Close()
 
+		installTime := now.Add(-time.Second * 5)
 		i := storage.Installation{
 			Uninstalled: false,
 			Status: storage.InstallationStatus{
-				Installed:   &now,
+				Installed:   &installTime,
 				Uninstalled: &now,
 			},
 		}

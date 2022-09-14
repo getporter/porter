@@ -221,11 +221,17 @@ type InstallationStatus struct {
 
 // IsInstalled checks if the installation is currently installed.
 func (i Installation) IsInstalled() bool {
+	if i.Status.Uninstalled != nil && i.Status.Installed != nil {
+		return i.Status.Installed.After(*i.Status.Uninstalled)
+	}
 	return i.Status.Uninstalled == nil && i.Status.Installed != nil
 }
 
 // IsUninstalled checks if the installation has been uninstalled.
 func (i Installation) IsUninstalled() bool {
+	if i.Status.Uninstalled != nil && i.Status.Installed != nil {
+		return i.Status.Uninstalled.After(*i.Status.Installed)
+	}
 	return i.Status.Uninstalled != nil
 }
 
