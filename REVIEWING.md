@@ -108,6 +108,7 @@ of Porter. When you are asked to cut a new release, here is the process:
     git tag VERSION -a -m ""
     git push --tags
     ```
+    If the CI build failed to build for the release, fix the problem first. Then increment the PATCH version, e.g. v0.7.0->v0.7.1, and go through the above steps again to publish the binaries. It's often a good pratice to finish the release first before updating any of our docs that references the latest release.
 
 1. Generate some release notes and put them into the release on GitHub.
    - Go to Porter Github repository and find the newly created release tag. You should see a
