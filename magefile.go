@@ -492,6 +492,11 @@ func Install() {
 	}
 
 	for _, fi := range mixinsDirItems {
+		// do not install the test mixins
+		if fi.Name() == "testmixin" {
+			continue
+		}
+
 		if !fi.IsDir() {
 			continue
 		}
