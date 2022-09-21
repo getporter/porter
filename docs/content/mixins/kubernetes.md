@@ -12,7 +12,7 @@ Source: https://github.com/getporter/kubernetes-mixin
 ### Install or Upgrade
 
 ```shell
-porter mixin install kubernetes
+porter mixin install kubernetes --version v1.0.0-rc.2
 ```
 
 ### Install or Upgrade canary version

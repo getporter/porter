@@ -11,7 +11,7 @@ Source: https://github.com/getporter/az-mixin
 
 ### Install or Upgrade
 ```
-porter mixin install az
+porter mixin install az --version v1.0.0-rc.1
 ```
 
 ## Mixin Configuration

@@ -11,7 +11,7 @@ Source: Source: https://github.com/getporter/docker-mixin
 
 ### Install or Upgrade
 ```
-porter mixin install docker
+porter mixin install docker --version v1.0.0-rc.1
 ```
 
 ## Required Extension
