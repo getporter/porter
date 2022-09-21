@@ -11,8 +11,20 @@ pr:
 pool:
   vmImage: "ubuntu-latest"
 
-variables:
+variables: # these are really constants
   GOVERSION: "1.18"
+  # Cache go modules and the results of go build/test
+  # Increment the version number prefix of the key and restoreKey to clear the cache
+  GOCACHE: $(Pipeline.Workspace)/.cache/go-build/
+  GOCACHE_KEY: 'v3 | go-build | "$(Agent.OS)" | go.sum'
+  GOCACHE_RESTOREKEYS: |
+    v3 | go-build | "$(Agent.OS)"
+    v3 | go-build | "$(Agent.OS)" | go.sum
+  GOMODCACHE: /home/vsts/go/pkg/mod
+  GOMODCACHE_KEY: 'v4 | go-pkg | "$(Agent.OS)" | go.sum'
+  GOMODCACHE_RESTOREKEYS: |
+    v4 | go-pkg | "$(Agent.OS)"
+    v4 | go-pkg | "$(Agent.OS)" | go.sum
 
 stages:
 - stage: Setup
@@ -41,7 +53,19 @@ stages:
       - task: GoTool@0
         displayName: "Set Go Version"
         inputs:
-          version: "$(GOVERSION)"
+          version: $(GOVERSION)
+      - task: Cache@2
+        displayName: Cache Go Packages
+        inputs:
+          key: "$(GOMODCACHE_KEY)"
+          restoreKeys: $(GOMODCACHE_RESTOREKEYS)
+          path: $(GOMODCACHE)
+      - task: Cache@2
+        displayName: Cache Go Build
+        inputs:
+          key: "$(GOCACHE_KEY)"
+          restoreKeys: $(GOCACHE_RESTOREKEYS)
+          path: $(GOCACHE)
       - script: go run mage.go ConfigureAgent
         displayName: "Configure Agent"
       - bash: mage build
