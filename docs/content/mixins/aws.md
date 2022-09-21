@@ -11,7 +11,7 @@ Source: https://github.com/getporter/aws-mixin
 
 ### Install or Upgrade
 ```
-porter mixin install aws
+porter mixin install aws --version v1.0.0-rc.1
 ```
 
 ### Mixin Syntax

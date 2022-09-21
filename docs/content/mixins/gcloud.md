@@ -11,7 +11,7 @@ Source: https://github.com/getporter/gcloud-mixin
 
 ### Install or Upgrade
 ```
-porter mixin install gcloud
+porter mixin install gcloud --version v1.0.0-rc.1
 ```
 
 ## Mixin Syntax
