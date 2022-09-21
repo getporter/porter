@@ -31,6 +31,13 @@ stages:
   - job: integration_test
     displayName: "Integration Test"
     steps:
+      # We log in here because TestRegistry integration test needs a valid docker session
+      # This unfortunately means that this pipeline must be manually triggered for non-maintainers
+      - task: Docker@2
+        displayName: Docker Login
+        inputs:
+          command: login
+          containerRegistry: ghcr.io/getporter
       - task: GoTool@0
         displayName: "Set Go Version"
         inputs:
