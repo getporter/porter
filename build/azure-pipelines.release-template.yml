@@ -184,6 +184,13 @@ stages:
               key: "$(GOCACHE_KEY)"
               restoreKeys: $(GOCACHE_RESTOREKEYS)
               path: $(GOCACHE)
+          # We log in here because TestRegistry integration test needs a valid docker session
+          # This unfortunately means that this pipeline must be manually triggered for non-maintainers
+          - task: Docker@2
+            displayName: Docker Login
+            inputs:
+              command: login
+              containerRegistry: ghcr.io/getporter
           - script: go run mage.go ConfigureAgent SetBinExecutable
             displayName: "Configure Agent"
           - script: mage -v TestIntegration
