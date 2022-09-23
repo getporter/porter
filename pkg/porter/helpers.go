@@ -134,7 +134,12 @@ func (p *TestPorter) SetupIntegrationTest() context.Context {
 	err = encoding.UnmarshalYaml(ciCredsB, &testCreds)
 	require.NoError(t, err, "could not unmarshal test credentials %s", ciCredsPath)
 	err = p.Credentials.UpsertCredentialSet(context.Background(), testCreds)
-	require.NoError(t, err, "could not save test credentials")
+	require.NoError(t, err, "could not save test credentials (ci)")
+
+	// Make a copy of the creds with a different name so that we can test out switching to different credential sets
+	testCreds.Name = "ci2"
+	err = p.Credentials.UpsertCredentialSet(context.Background(), testCreds)
+	require.NoError(t, err, "could not save test credentials (ci2)")
 
 	return ctx
 }
