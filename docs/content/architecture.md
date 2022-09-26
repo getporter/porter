@@ -43,7 +43,8 @@ Learn more about [how Porter works at runtime](/architecture-runtime/).
 
 ## See Also
 
-* [Create a bundle](/bundle/create/)
+* [Security Features](/security-features/)
+* [Create a Bundle](/bundle/create/)
 * [Distribute Bundles](/distribute-bundles/)
 * [Airgapped Deployments](/administrators/airgap/)
 
