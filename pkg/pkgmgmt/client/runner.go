@@ -12,7 +12,6 @@ import (
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/tracing"
 	"go.opentelemetry.io/otel/attribute"
-	"go.uber.org/zap/zapcore"
 )
 
 type Runner struct {
@@ -74,10 +73,6 @@ func (r *Runner) Run(ctx context.Context, commandOpts pkgmgmt.CommandOptions) er
 
 	if commandOpts.File != "" {
 		cmd.Args = append(cmd.Args, "-f", commandOpts.File)
-	}
-
-	if span.ShouldLog(zapcore.DebugLevel) {
-		cmd.Args = append(cmd.Args, "--debug")
 	}
 
 	if commandOpts.Input != "" {
