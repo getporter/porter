@@ -111,29 +111,14 @@ func (p *Porter) applyActionOptionsToInstallation(ctx context.Context, i *storag
 		return err
 	}
 
-	// Record the names of the parameter sets used
-	i.ParameterSets = append(i.ParameterSets, Unique(i.ParameterSets, opts.ParameterSets...)...)
-
-	// Record the names of the credential sets used
-	i.CredentialSets = append(i.CredentialSets, Unique(i.CredentialSets, opts.CredentialIdentifiers...)...)
+	// Record the names of the parameter and credential sets used if specified. Otherwise, reuse the previously specified sets.
+	// This should replace previously specified sets so that only what was just specified is used.
+	if len(opts.ParameterSets) > 0 {
+		i.ParameterSets = opts.ParameterSets
+	}
+	if len(opts.CredentialIdentifiers) > 0 {
+		i.CredentialSets = opts.CredentialIdentifiers
+	}
 
 	return nil
-}
-
-func Unique(existings []string, n ...string) []string {
-	var u []string
-	old := make(map[string]struct{})
-
-	for _, e := range existings {
-		old[e] = struct{}{}
-	}
-
-	for _, cs := range n {
-		if _, ok := old[cs]; ok {
-			continue
-		}
-		u = append(u, cs)
-	}
-
-	return u
 }

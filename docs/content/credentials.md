@@ -44,6 +44,37 @@ where the values can be found.
 If you are creating credential sets manually, you can use the [Credential Set Schema]
 to validate that you have created it properly.
 
+### Remembering Credentials
+Porter remembers the last set of credentials used with an installation, and reuses them when the bundle is executed again.
+
+For example, if Carolyn installs a bundle using her credentials, Porter remembers that Carolyn's credentials are associated with the resulting installation.
+Now when Carolyn upgrades the bundle, if credentials are not specified, Porter will reuse the original credentials that the bundle was installed with.
+Later Yingrong upgrades the bundle, specifying the shared team credentials in the upgrade command, and now those credentials are associated with the installation instead of Carolyn's personal credentials.
+
+```console
+$ porter install tutorial -c carolyn-creds -r ghcr.io/getporter/examples/credentials-tutorial:v0.2.0
+# bundle is installed with Carolyn's credentials
+
+$ porter show tutorial
+Name: tutorial
+Namespace: quickstart
+Created: 3 minutes ago
+Modified: 7 seconds ago
+
+Bundle:
+  Repository: ghcr.io/getporter/examples/credentials-tutorial
+  Version: 0.2.0
+
+Credential Sets:
+  - carolyn-creds
+
+$ porter upgrade --version 0.3.0
+# Carolyn's credentials are used again, since none were specified
+
+$ porter upgrade -c blue-team-creds --version 0.3.1
+# Upgrade is run again but this time with the shared blue team credentials
+```
+
 [Credential Set Schema]: /src/pkg/schema/credential-set.schema.json
 
 ## Runtime
