@@ -64,4 +64,5 @@ require (
 	github.com/fvbommel/sortorder v1.0.2 // indirect
 	github.com/mmcdole/goxpp v0.0.0-20181012175147-0068e33feabf // indirect
 	github.com/moby/buildkit v0.10.0 // indirect
+	github.com/ulikunitz/xz v0.5.10 // indirect
 )

@@ -109,9 +109,10 @@ stages:
         condition: and(succeeded(), not(${{ parameters.skipTests }}))
         strategy:
           matrix:
-            windows:
-              poolName: "windows"
-              vmImage: ""
+            # Skip windows smoke tests until we fix the windows agent
+            #windows:
+            #  poolName: "windows"
+            #  vmImage: ""
             linux:
               poolName: "Azure Pipelines"
               vmImage: "ubuntu-latest"
