@@ -12,8 +12,10 @@ Source: https://github.com/getporter/azure-plugins
 ## Install or Upgrade
 
 ```
-porter plugin install azure
+porter plugin install azure --version v1.0.0-rc.1
 ```
+
+Note that the v1 release of the plugin only works with Porter v1.0.0-alpha.20 and higher.
 
 ## Plugin Configuration
 

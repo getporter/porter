@@ -11,12 +11,14 @@ Source: https://github.com/getporter/kubernetes-plugins
 
 ## Install or Upgrade
 
-The plugin is distributed as a single binary, `kubernetes`. The following snippet will clone this repository, build the binary
-and install it to **~/.porter/plugins/**.
+The plugin is distributed as a single binary, `kubernetes`.
+The following snippet will clone this repository, build the binary and install it to **~/.porter/plugins/**.
 
 ```
-porter plugin install kubernetes
+porter plugin install kubernetes --version v1.0.0-rc.1
 ```
+
+Note that the v1 release of the plugin only works with Porter v1.0.0-alpha.20 and higher.
 
 ## Usage
 
