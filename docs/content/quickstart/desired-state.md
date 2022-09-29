@@ -297,6 +297,7 @@ In this QuickStart you learned how to manage installations using desired state b
 
 * [Understand the difference between imperative commands and desired state](/end-users/installations/)
 * [Automating Porter with the Porter Operator](/operator/)
+* [Create a bundle](/bundle/create/)
 
 [managing installations]: /end-users/installations/
 [porter credentials apply]: /cli/porter_credentials_apply/

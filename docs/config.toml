@@ -88,6 +88,12 @@ pygmentsStyle = "friendly"
       identifier = "quickstart-desired-state"
       weight = 5
       parent = "quickstart"
+    [[menu.main]]
+      name = "Create a bundle"
+      url = "/bundle/create/"
+      identifier = "quickstart-create-a-bundle"
+      weight = 6
+      parent = "quickstart"
   [[menu.main]]
     name = "Examples"
     url = "/examples/"
