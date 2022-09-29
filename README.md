@@ -1,6 +1,8 @@
 <img align="right" src="docs/static/images/porter-docs-header.svg" width="300px" />
 
 [![Build Status](https://dev.azure.com/getporter/porter/_apis/build/status/porter-canary?branchName=main)](https://dev.azure.com/getporter/porter/_build/latest?definitionId=26&branchName=main)
+<a href="https://getporter.org/find-issue" alt="Find an issue to work on">
+<img src="https://img.shields.io/github/issues-search?label=%22help%20wanted%22%20issues&query=org%3Agetporter%20label%3A%22good%20first%20issue%22%2C%22help%20wanted%22%20no%3Aassignee" /></a>
 
 # Porter
 
