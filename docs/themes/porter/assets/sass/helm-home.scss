@@ -448,6 +448,22 @@ nav.home-nav {
     }
   }
 
+  .helm-quotes {
+    background-color: white;
+    border-radius: 25px;
+    color: $dark2;
+    background: linear-gradient( 0deg, #fff, #F7F7F7);
+
+    h2, p {
+      color: $darkblue;
+    }
+
+     a {
+        color: $red;
+        text-decoration: underline;
+      }
+  }
+
   .helm-community {
     background-color: white;
     padding-bottom: 100px;
@@ -518,7 +534,7 @@ nav.home-nav {
     }
     .topbar--1 {
       height: 20px;
-      background-color: #bc0047;
+      background-color: $red;
     }
 
     .text-content {
@@ -548,7 +564,7 @@ nav.home-nav {
         }
 
         a {
-          color: #bc0047;
+          color: $red;
           text-decoration: underline;
           font-weight: 600;
         }
