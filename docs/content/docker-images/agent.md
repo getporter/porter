@@ -5,6 +5,7 @@ description: The Porter Operator agent image
 
 The [ghcr.io/getporter/porter-agent][porter-agent] Docker image is intended for use by the [Porter Operator] which runs on Kubernetes.
 If you need to run Porter in a local container, not on Kubernetes, you should use the [porter client] image.
+The porter agent is also available in the [PlatformOne IronBank registry](https://registry1.dso.mil/harbor/projects/3/repositories/opensource%2Fgetporter%2Fporter-agent/artifacts-tab).
 
 It has tags that match what is available from our [install](/install/) page: latest, canary and specific versions such as v0.38.1.
 
