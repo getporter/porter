@@ -15,8 +15,8 @@ Porter v1.0.0 is finally here! 🎉
 ## What is Porter?
 
 [Porter](/) takes everything you need to do a deployment, the application itself and the entire process to deploy it: command-line tools, configuration files, secrets, and bash scripts to glue it all together.
-Then packages that into a versioned bundle distributed over standard Docker registries or plain tgz files.
-With Porter anyone can install your application without deep knowledge of your deployment process, regardless of the underlying tech stack.
+Then porter packages that into a versioned bundle distributed over standard OCI registries or plain tgz files.
+With Porter anyone can install your application without needing deep knowledge of your deployment process or underlying tech stack.
 
 Learn more about Porter:
 
@@ -27,11 +27,20 @@ Learn more about Porter:
 
 ## What's new in v1?
 
-If you haven't been following Porter's v1 pre-releases, here are some of the new features introduced since v0.38:
+If you haven't been following Porter's v1 pre-releases, below are some of the new features introduced since v0.38.
 
-### Desired State
+### Buildkit Support
 
-You can now define the desired state of an installation: what bundle to install, custom parameters to specify and the credentials to give the bundle.
+Porter now uses Docker Buildkit instead of legacy Docker to build images.
+This dramatically speeds up the build process and allows you to take advantage of features such as build arguments, improved layer caching, new Dockerfile syntax, mounting secrets and ssh connections into the image during build and more.
+
+### Installations
+
+Porter now understands the concept of installations.
+You can see the current definition of an installation, the bundle it's using, its version, the associated parameters and credentials, logs from previous runs, and metadata about the installation's current state.
+Installations can be isolated in namespaces and have labels applied to them to make it easier to manage multiple installations and environments.
+
+Porter also supports specifying the desired state of an installation (or credential set, parameter set).
 Porter will reconcile that against its database and determine the appropriate action to execute, if any, to reach that state.
 This makes it much easier to automate running Porter based on triggers such as a git push, or when a new version of a bundle is released, without having to deal with figuring out if you should call install or upgrade, and other things that Porter can figure out for you.
 
@@ -57,8 +66,19 @@ Your configuration file can now [load sensitive data directly from your configur
 * Bundles no longer run as root.
 * Porter images are now redistributed on the [PlatformOne IronBank registry](https://p1.dso.mil/products/iron-bank).
   These images are built on an isolated network, regularly scanned for CVEs, and new releases are available on average 1-2 days after the official Porter releases on GitHub.
+* Porter publish checks for an existing bundle at the destination location to avoid accidentally overwriting a published bundle.
+  You can still force push a bundle, but it's opt-in now.
 
 Read more about Porter's [security features](/security-features/).
 
 ## What's next?
 
+Our v1 release is not a stopping point, but instead a way point where we can now say "Porter is stable and safe to use in production".
+We have big plans going forward, adding new features on top of v1 incrementally:
+
+* **Advanced Dependencies**: Our initial implementation of dependencies was always limited in scope. More complete and powerful dependency support is already underway. Learn more in [PEP003 Advanced Dependencies](https://github.com/getporter/proposals/blob/main/pep/003-dependency-namespaces-and-labels.md).
+* **Distribute Mixins as Bundles**: After we have advanced dependency support, we are improving how mixins are distributed and executed so that they are BUNDLES! This will significantly improve performance, layer caching, mixin distribution, and bundle execution security. Learn more in [PEEP005 Mixins are Bundles](https://github.com/getporter/proposals/blob/main/pep/005-mixins-are-bundles.md).
+* **Porter Operator v1**: The [Porter Operator] is far enough along for you to try, and we aim to quickly get it ready for a v1 release.
+* **Support for signing bundles**: Porter will support integration with Notary for signing and verifying bundles.
+
+[Porter Operator]: /operator/
