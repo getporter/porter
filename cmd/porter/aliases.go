@@ -55,8 +55,8 @@ func buildLintAlias(p *porter.Porter) *cobra.Command {
 }
 
 func buildInstallAlias(p *porter.Porter) *cobra.Command {
-	cmd := buildBundleInstallCommand(p)
-	cmd.Example = strings.Replace(cmd.Example, "porter bundle install", "porter install", -1)
+	cmd := buildInstallationInstallCommand(p)
+	cmd.Example = strings.Replace(cmd.Example, "porter installation install", "porter install", -1)
 	cmd.Annotations = map[string]string{
 		"group": "alias",
 	}
@@ -64,8 +64,8 @@ func buildInstallAlias(p *porter.Porter) *cobra.Command {
 }
 
 func buildUpgradeAlias(p *porter.Porter) *cobra.Command {
-	cmd := buildBundleUpgradeCommand(p)
-	cmd.Example = strings.Replace(cmd.Example, "porter bundle upgrade", "porter upgrade", -1)
+	cmd := buildInstallationUpgradeCommand(p)
+	cmd.Example = strings.Replace(cmd.Example, "porter installation upgrade", "porter upgrade", -1)
 	cmd.Annotations = map[string]string{
 		"group": "alias",
 	}
@@ -73,8 +73,8 @@ func buildUpgradeAlias(p *porter.Porter) *cobra.Command {
 }
 
 func buildInvokeAlias(p *porter.Porter) *cobra.Command {
-	cmd := buildBundleInvokeCommand(p)
-	cmd.Example = strings.Replace(cmd.Example, "porter bundle invoke", "porter invoke", -1)
+	cmd := buildInstallationInvokeCommand(p)
+	cmd.Example = strings.Replace(cmd.Example, "porter installation invoke", "porter invoke", -1)
 	cmd.Annotations = map[string]string{
 		"group": "alias",
 	}
@@ -82,8 +82,8 @@ func buildInvokeAlias(p *porter.Porter) *cobra.Command {
 }
 
 func buildUninstallAlias(p *porter.Porter) *cobra.Command {
-	cmd := buildBundleUninstallCommand(p)
-	cmd.Example = strings.Replace(cmd.Example, "porter bundle uninstall", "porter uninstall", -1)
+	cmd := buildInstallationUninstallCommand(p)
+	cmd.Example = strings.Replace(cmd.Example, "porter installation uninstall", "porter uninstall", -1)
 	cmd.Annotations = map[string]string{
 		"group": "alias",
 	}

@@ -23,8 +23,8 @@ porter bundles copy [flags]
 
 ```
   porter bundle copy
-  porter bundle copy --source getporter/porter-hello:v0.1.0 --destination portersh
-  porter bundle copy --source getporter/porter-hello:v0.1.0 --destination portersh --insecure-registry
+  porter bundle copy --source ghcr.io/getporter/examples/porter-hello:v0.2.0 --destination portersh
+  porter bundle copy --source ghcr.io/getporter/examples/porter-hello:v0.2.0 --destination portersh --insecure-registry
 		  
 ```
 
@@ -32,6 +32,7 @@ porter bundles copy [flags]
 
 ```
       --destination string   The registry to copy the bundle to. Can be registry name, registry plus a repo prefix, or a new tagged reference. All images and the bundle will be prefixed with registry.
+      --force                Force push the bundle to overwrite the previously published bundle
   -h, --help                 help for copy
       --insecure-registry    Don't require TLS for registries
       --source string         The fully qualified source bundle, including tag or digest.
@@ -40,8 +41,8 @@ porter bundles copy [flags]
 ### Options inherited from parent commands
 
 ```
-      --debug           Enable debug logging
-      --debug-plugins   Enable plugin debug logging
+      --experimental strings   Comma separated list of experimental features to enable. See https://getporter.org/configuration/#experimental-feature-flags for available feature flags.
+      --verbosity string       Threshold for printing messages to the console. Available values are: debug, info, warning, error. (default "info")
 ```
 
 ### SEE ALSO

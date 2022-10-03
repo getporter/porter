@@ -8,6 +8,7 @@ import (
 
 	"get.porter.sh/porter/pkg/pkgmgmt"
 	"get.porter.sh/porter/pkg/printer"
+	"get.porter.sh/porter/pkg/test"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -49,39 +50,28 @@ func TestSearchOptions_Validate_PackageName(t *testing.T) {
 }
 
 func TestPorter_SearchPackages_Mixins(t *testing.T) {
-	// Fetch the full mixin list for comparison in test case(s)
-	fullList, err := fetchFullListBytes("mixin")
-	require.NoError(t, err)
-
 	testcases := []struct {
-		name       string
-		mixin      string
-		format     printer.Format
-		wantOutput string
-		wantErr    string
+		name               string
+		mixin              string
+		format             printer.Format
+		wantOutput         string
+		wantNonEmptyOutput bool
+		wantErr            string
 	}{{
-		name:       "no name provided",
-		mixin:      "",
-		format:     printer.FormatJson,
-		wantOutput: fmt.Sprintf("%s\n", string(fullList)),
+		name:               "no name provided",
+		mixin:              "",
+		format:             printer.FormatJson,
+		wantNonEmptyOutput: true,
 	}, {
-		name:   "mixin name single match",
-		mixin:  "az",
-		format: printer.FormatYaml,
-		wantOutput: `- name: az
-  author: Porter Authors
-  description: A mixin for using the az cli
-  url: https://cdn.porter.sh/mixins/atom.xml
-
-`,
+		name:       "mixin name single match",
+		mixin:      "az",
+		format:     printer.FormatYaml,
+		wantOutput: "testdata/packages/search-single-match.txt",
 	}, {
-		name:   "mixin name multiple match",
-		mixin:  "ku",
-		format: printer.FormatTable,
-		wantOutput: `Name         Description                           Author           URL                                                                 URL Type
-kubernetes   A mixin for using the kubectl cli     Porter Authors   https://cdn.porter.sh/mixins/atom.xml                               Atom Feed
-kustomize    A mixin for using the kustomize cli   Don Stewart      https://github.com/donmstewart/porter-kustomize/releases/download   Download
-`,
+		name:       "mixin name multiple match",
+		mixin:      "ku",
+		format:     printer.FormatPlaintext,
+		wantOutput: "testdata/packages/search-multi-match.txt",
 	}, {
 		name:    "mixin name no match",
 		mixin:   "ottersay",
@@ -92,6 +82,7 @@ kustomize    A mixin for using the kustomize cli   Don Stewart      https://gith
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
 			p := NewTestPorter(t)
+			defer p.Close()
 
 			opts := SearchOptions{
 				PrintOptions: printer.PrintOptions{
@@ -101,15 +92,20 @@ kustomize    A mixin for using the kustomize cli   Don Stewart      https://gith
 				Type: "mixin",
 			}
 
-			err = p.SearchPackages(opts)
+			err := p.SearchPackages(opts)
 			if tc.wantErr != "" {
 				require.EqualError(t, err, tc.wantErr)
 			} else {
 				require.NoError(t, err)
-			}
+				gotOutput := p.TestConfig.TestContext.GetOutput()
 
-			gotOutput := p.TestConfig.TestContext.GetOutput()
-			require.Equal(t, tc.wantOutput, gotOutput)
+				// Only check that the output isn't empty, but don't try to match the exact contents because it changes
+				if tc.wantNonEmptyOutput {
+					assert.NotEmpty(t, gotOutput, "expected the output to not be empty")
+				} else {
+					test.CompareGoldenFile(t, tc.wantOutput, gotOutput)
+				}
+			}
 		})
 	}
 }
@@ -138,7 +134,6 @@ func TestPorter_SearchPackages_Plugins(t *testing.T) {
   author: Porter Authors
   description: Integrate Porter with Azure. Store Porter's data in Azure Cloud and secure your bundle's secrets in Azure Key Vault.
   url: https://cdn.porter.sh/plugins/atom.xml
-
 `,
 	}, {
 		name:    "plugin name no match",
@@ -150,6 +145,7 @@ func TestPorter_SearchPackages_Plugins(t *testing.T) {
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
 			p := NewTestPorter(t)
+			defer p.Close()
 
 			opts := SearchOptions{
 				PrintOptions: printer.PrintOptions{

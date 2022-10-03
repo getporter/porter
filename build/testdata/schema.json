@@ -1,5 +1,5 @@
 {
-  "claims": "cnab-claim-1.0.0-DRAFT+b5ed2f3",
-  "credentials": "cnab-credentialsets-1.0.0-DRAFT+b6c701f",
-  "parameters": "cnab-parametersets-1.0.0-DRAFT+TODO"
+  "installations": "1.0.0",
+  "credentials": "1.0.0",
+  "parameters": "1.0.0"
 }

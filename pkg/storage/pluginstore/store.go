@@ -1,20 +1,29 @@
 package pluginstore
 
 import (
+	"context"
+	"fmt"
+	"io"
+
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/plugins/pluggable"
-	"get.porter.sh/porter/pkg/storage/crudstore"
-	"github.com/cnabio/cnab-go/utils/crud"
-	"github.com/pkg/errors"
+	"get.porter.sh/porter/pkg/storage/plugins"
+	"get.porter.sh/porter/pkg/tracing"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
-var _ crud.Store = &Store{}
+var _ io.Closer = &Store{}
+var _ plugins.StorageProtocol = &Store{}
 
-// Store is a plugin backed source of porter home data.
+// Store is a plugin-backed source of storage. It resolves the appropriate
+// plugin based on Porter's config and implements the plugins.StorageProtocol interface
+// using the backing plugin.
+//
+// Connects just-in-time, but you must call Close to release resources.
 type Store struct {
 	*config.Config
-	*crud.BackingStore
-	cleanup func()
+	plugin plugins.StorageProtocol
+	conn   *pluggable.PluginConnection
 }
 
 func NewStore(c *config.Config) *Store {
@@ -26,50 +35,159 @@ func NewStore(c *config.Config) *Store {
 // NewStoragePluginConfig for porter home storage.
 func NewStoragePluginConfig() pluggable.PluginTypeConfig {
 	return pluggable.PluginTypeConfig{
-		Interface: crudstore.PluginInterface,
-		Plugin:    &crudstore.Plugin{},
-		GetDefaultPluggable: func(datastore *config.Data) string {
-			return datastore.GetDefaultStorage()
+		Interface: plugins.PluginInterface,
+		Plugin:    &Plugin{},
+		GetDefaultPluggable: func(c *config.Config) string {
+			return c.Data.DefaultStorage
 		},
-		GetPluggable: func(datastore *config.Data, name string) (pluggable.Entry, error) {
-			return datastore.GetStorage(name)
+		GetPluggable: func(c *config.Config, name string) (pluggable.Entry, error) {
+			return c.GetStorage(name)
 		},
-		GetDefaultPlugin: func(datastore *config.Data) string {
-			return datastore.GetDefaultStoragePlugin()
+		GetDefaultPlugin: func(c *config.Config) string {
+			return c.Data.DefaultStoragePlugin
 		},
+		ProtocolVersion: plugins.PluginProtocolVersion,
 	}
 }
 
-func (s *Store) Connect() error {
-	if s.BackingStore != nil {
+// Connect initializes the plugin for use.
+// The plugin itself is responsible for ensuring it was called.
+// Close is called automatically when the plugin is used by Porter.
+func (s *Store) Connect(ctx context.Context) error {
+	if s.plugin != nil {
 		return nil
 	}
+
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
 
 	pluginType := NewStoragePluginConfig()
 
 	l := pluggable.NewPluginLoader(s.Config)
-	raw, cleanup, err := l.Load(pluginType)
+	conn, err := l.Load(ctx, pluginType)
 	if err != nil {
-		return errors.Wrapf(err, "could not load %s plugin", pluginType.Interface)
+		return span.Error(fmt.Errorf("could not load %s plugin: %w", pluginType.Interface, err))
 	}
-	s.cleanup = cleanup
+	s.conn = conn
 
-	store, ok := raw.(crud.Store)
+	store, ok := conn.GetClient().(plugins.StorageProtocol)
 	if !ok {
-		cleanup()
-		return errors.Errorf("the interface exposed by the %s plugin was not crud.Store", l.SelectedPluginKey)
+		conn.Close(ctx)
+		return span.Error(fmt.Errorf("the interface (%T) exposed by the %s plugin was not plugins.StorageProtocol", conn.GetClient(), conn))
 	}
 
-	s.BackingStore = crud.NewBackingStore(store)
-	s.BackingStore.AutoClose = false
+	s.plugin = store
 
 	return nil
 }
 
 func (s *Store) Close() error {
-	if s.cleanup != nil {
-		s.cleanup()
+	if s.conn != nil {
+		s.conn.Close(context.Background())
+		s.conn = nil
 	}
-	s.BackingStore = nil
 	return nil
+}
+
+func (s *Store) EnsureIndex(ctx context.Context, opts plugins.EnsureIndexOptions) error {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
+	if err := s.Connect(ctx); err != nil {
+		return err
+	}
+
+	err := s.plugin.EnsureIndex(ctx, opts)
+	return span.Error(err)
+}
+
+func (s *Store) Aggregate(ctx context.Context, opts plugins.AggregateOptions) ([]bson.Raw, error) {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
+	if err := s.Connect(ctx); err != nil {
+		return nil, err
+	}
+
+	results, err := s.plugin.Aggregate(ctx, opts)
+	if err != nil {
+		return nil, span.Error(err)
+	}
+
+	return results, nil
+}
+
+func (s *Store) Count(ctx context.Context, opts plugins.CountOptions) (int64, error) {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
+	if err := s.Connect(ctx); err != nil {
+		return 0, err
+	}
+
+	count, err := s.plugin.Count(ctx, opts)
+	if err != nil {
+		return 0, span.Error(err)
+	}
+	return count, nil
+}
+
+func (s *Store) Find(ctx context.Context, opts plugins.FindOptions) ([]bson.Raw, error) {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
+	if err := s.Connect(ctx); err != nil {
+		return nil, err
+	}
+
+	results, err := s.plugin.Find(ctx, opts)
+	return results, span.Error(err)
+}
+
+func (s *Store) Insert(ctx context.Context, opts plugins.InsertOptions) error {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
+	if err := s.Connect(ctx); err != nil {
+		return err
+	}
+
+	err := s.plugin.Insert(ctx, opts)
+	return span.Error(err)
+}
+
+func (s *Store) Patch(ctx context.Context, opts plugins.PatchOptions) error {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
+	if err := s.Connect(ctx); err != nil {
+		return err
+	}
+
+	err := s.plugin.Patch(ctx, opts)
+	return span.Error(err)
+}
+
+func (s *Store) Remove(ctx context.Context, opts plugins.RemoveOptions) error {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
+	if err := s.Connect(ctx); err != nil {
+		return err
+	}
+
+	err := s.plugin.Remove(ctx, opts)
+	return span.Error(err)
+}
+
+func (s *Store) Update(ctx context.Context, opts plugins.UpdateOptions) error {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
+	if err := s.Connect(ctx); err != nil {
+		return err
+	}
+
+	err := s.plugin.Update(ctx, opts)
+	return span.Error(err)
 }

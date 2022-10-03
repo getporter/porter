@@ -1,10 +1,22 @@
-mixins:
-- exec
-
+schemaVersion: 1.0.0
 name: hello
 description: "An example Porter configuration"
 version: v0.1.0
-registry: getporter
+registry: "localhost:5000"
+
+mixins:
+  - exec
+
+maintainers:
+- name: "John Doe"
+  email: "john.doe@example.com"
+  url: "https://example.com/a"
+- name: "Jane Doe"
+  url: "https://example.com/b"
+- name: "Janine Doe"
+  email: "janine.doe@example.com"
+- email: "mike.doe@example.com"
+  url: "https://example.com/c"
 
 install:
 - exec:

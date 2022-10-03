@@ -19,14 +19,14 @@ It can take a while for things to download and install over the workshop wifi,
 so please go to the workshop materials directory and follow the setup instructions
 to get all the materials ready.
 
-.center[👩🏽‍✈️ https://porter.sh/pack-your-bags/#setup 👩🏽‍✈️ ]
+.center[👩🏽‍✈️ https://getporter.org/pack-your-bags/#setup 👩🏽‍✈️ ]
 
 * Clone the workshop repository
   ```console
   git clone https://github.com/getporter/porter.git
   cd porter/workshop
   ```
-* [Install Porter](https://porter.sh/install)
+* [Install Porter](/install)
 * Create a [Docker Hub](https://hub.docker.com/signup) account if you don't have one
 * Create a Kubernetes Cluster on [macOS](https://docs.docker.com/docker-for-mac/kubernetes/) or [Windows](https://docs.docker.com/docker-for-windows/kubernetes/)
 
@@ -440,7 +440,7 @@ class: center, middle
 # An Example: Azure MySQL + Wordpress
 
 .center[
-  https://porter.sh/src/examples/azure-wordpress
+  https://getporter.org/examples/src/azure-wordpress
 ]
 
 ---
@@ -461,7 +461,7 @@ class: center, middle
 .center[
   🚨 Not Setup Yet? 🚨
 
-  https://porter.sh/pack-your-bags/#setup
+  https://getporter.org/pack-your-bags/#setup
   
   ]
 ---
@@ -647,7 +647,7 @@ The first argument is the name of the claim to create for the installation.
 The claim name defaults to the name of the bundle.
 
 Flags:
-  -c, --cred strings         Credential to use when installing the bundle. 
+  -c, --credential-set strings         Credential to use when installing the bundle. 
   -f, --file string          Path to the bundle file to install.
       --param strings        Define an individual parameter in the form NAME=VALUE.
       --param-file strings   Path to a parameters definition file for the bundle
@@ -707,7 +707,7 @@ parameters:
 
 ### Use a Parameter
 ```yaml
-- "echo Hello, {{ bundle.parameters.name }}"
+- "echo Hello, ${ bundle.parameters.name }
 ```
 
 * Needs double quotes around the yaml entry
@@ -843,7 +843,7 @@ specify a bundle with --file.
 
 Bundles define 1 or more credential(s) that are required to interact with a
 bundle. The bundle definition defines where the credential should be delivered
-to the bundle, i.e. at /root/.kube. A credential set, on the other hand,
+to the bundle, i.e. at /home/nonroot/.kube. A credential set, on the other hand,
 represents the source data that you wish to use when interacting with the
 bundle. These will typically be environment variables or files on your local
 file system.
@@ -869,7 +869,7 @@ credentials:
 ```yaml
 credentials:
 - name: kubeconfig
-  path: /root/.kube/config
+  path: /home/nonroot/.kube/config
 ```
 
 ---
@@ -906,12 +906,12 @@ for the wordpress bundle.
 we all do this together
 
 ---
-## Try it out: porter install --cred
+## Try it out: porter install --credential-set
 
 Install the wordpress bundle and pass it the named set of credentials that you generated.
 
 ```console
-$ porter install --cred wordpress
+$ porter install --credential-set wordpress
 ```
 
 ---
@@ -920,11 +920,11 @@ name: cleanup-wordpress
 ## Cleanup Wordpress
 
 ```console
-$ porter uninstall --cred wordpress
+$ porter uninstall --credential-set wordpress
 ```
 
 ???
-Explain why --cred is required again for uninstall 
+Explain why --credential-set is required again for uninstall 
 
 ---
 name: author
@@ -985,7 +985,7 @@ credentials:
 - name: SUBSCRIPTION_ID
   env: AZURE_SUBSCRIPTION_ID
 - name: kubeconfig
-  path: /root/.kube/config
+  path: /home/nonroot/.kube/config
 ```
 
 ---
@@ -1160,7 +1160,7 @@ Porter uses a template engine to substitute values into the manifest.
 
 **Example**
 ```yaml
-connectionString: "{{bundle.outputs.host}}:{{bundle.outputs.port}}"
+connectionString: ${bundle.outputs.host}:${bundle.outputs.port}
 ```
 
 ---
@@ -1182,7 +1182,7 @@ _They adapt between CNAB and existing tools. Porter is just glue."_
 * azure
 * terraform
 
-.center[ https://porter.sh/mixins ]
+.center[ https://getporter.org/mixins ]
 
 ---
 name: helm
@@ -1347,7 +1347,7 @@ your invocation image to pick up your changes.
 * Don't forget to copy your images into your invocation image to /cnab/app/.
 * The command to run is `goasciiart -p=gopher.png -w=100`.
 
-[asciiart]: https://porter.sh/src/workshop/asciiart
+[asciiart]: /src/workshop/asciiart
 
 ---
 name: break-glass

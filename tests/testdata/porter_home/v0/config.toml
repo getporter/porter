@@ -1,0 +1,7 @@
+[[storage]]
+  name = "src"
+  plugin = "filesystem"
+
+[[storage]]
+  name = "azure"
+  plugin = "azure.blob"

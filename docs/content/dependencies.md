@@ -17,13 +17,15 @@ Here is a [full example][example] of a Porter manifest that uses dependencies.
 
 In the manifest, add entries for each dependency of your bundle. The `name` field takes a short name for the dependent bundle that
 you will use to reference the dependent bundle elsewhere in the bundle. For example you can reference the dependent bundle's
-outputs via `{{ bundle.dependencies.NAME.outputs }}`.  The `reference` field takes the bundle reference of the dependency.
+outputs via `${ bundle.dependencies.NAME.outputs }`.  The `reference` field takes the bundle reference of the dependency.
 Both `name` and `reference` are required fields.
 
 ```yaml
 dependencies:
-  - name: mysql
-    reference: getporter/mysql:v0.1.3
+  requires:
+    - name: mysql
+      bundle:
+        reference: getporter/mysql:v0.1.3
 ```
 
 ## Ordering of dependencies
@@ -33,10 +35,13 @@ If more than one dependency is declared, they will be installed in the order the
 
 ```yaml
 dependencies:
-  - name: mysql
-    reference: getporter/mysql:v0.1.3
-  - name: nginx
-    reference: my/nginx-bundle:v0.1.0
+  requires:
+    - name: mysql
+      bundle:
+        reference: getporter/mysql:v0.1.3
+    - name: nginx
+      bundle:
+        reference: my/nginx-bundle:v0.1.0
 ```
 
 ## Defaulting Parameters
@@ -48,11 +53,13 @@ to specific values, so that the user isn't required to provide values for those 
 
 ```yaml
 dependencies:
-  - name: mysql
-    reference: getporter/mysql:v0.1.3
-    parameters:
-      database_name: wordpress
-      mysql_user: wordpress
+  requires:
+    - name: mysql
+      bundle:
+        reference: getporter/mysql:v0.1.3
+      parameters:
+        database_name: wordpress
+        mysql_user: wordpress
 ```
 
 ## Specifying parameters
@@ -104,10 +111,12 @@ A parameter for a dependency can be set in a few places, here is the order of pr
 1. Parameters set using a dependency default, for example
     ```yaml
     dependencies:
-    - name: mysql
-      reference: getporter/mysql:v0.1.3
-      parameters:
-        database_name: wordpress
+      requires:
+       - name: mysql
+         bundle:
+           reference: getporter/mysql:v0.1.3
+         parameters:
+           database_name: wordpress
     ```
 1. Parameter defaults defined in a bundle, for example
     ```yaml

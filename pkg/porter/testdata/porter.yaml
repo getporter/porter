@@ -1,7 +1,11 @@
+schemaVersion: 1.0.0
 name: porter-hello
 version: 0.1.0
 description: "A bundle with a custom action"
-registry: getporter
+registry: "localhost:5000"
+
+custom:
+  customKey1: "customValue1"
 
 credentials:
   - name: my-first-cred
@@ -15,6 +19,7 @@ images:
       description: "an image"
       imageType: "docker"
       repository: "getporter/boo"
+      digest: "sha256:6b5a28ccbb76f12ce771a23757880c6083234255c5ba191fca1c5db1f71c1687"
 
 parameters:
   - name: my-first-param
@@ -43,17 +48,17 @@ outputs:
     sensitive: false
   - name: kubeconfig
     type: file
-    path: /root/.kube/config
+    path: /home/nonroot/.kube/config
 
 mixins:
   - exec
 
 install:
   - exec:
-      description: "Install Hello World"
-      command: bash
-      flags:
-        c: echo Hello World
+      description: "Install Hello World with custom arguments"
+      command: echo
+      arguments:
+        - ${ bundle.custom.customKey1 }
 
 upgrade:
   - exec:

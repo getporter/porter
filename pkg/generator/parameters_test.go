@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"get.porter.sh/porter/pkg/parameters"
+	"get.porter.sh/porter/pkg/cnab"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/stretchr/testify/assert"
@@ -33,7 +33,7 @@ func TestGoodParametersName(t *testing.T) {
 			Name:   name,
 			Silent: true,
 		},
-		Bundle: bundle.Bundle{
+		Bundle: cnab.NewBundle(bundle.Bundle{
 			Parameters: map[string]bundle.Parameter{
 				"one": {
 					Definition: "one",
@@ -46,7 +46,7 @@ func TestGoodParametersName(t *testing.T) {
 				},
 			},
 		},
-	}
+		)}
 
 	pset, err := opts.GenerateParameters()
 	require.NoError(t, err, "name should NOT have resulted in an error")
@@ -73,7 +73,7 @@ func TestEmptyParameters(t *testing.T) {
 			Name:   name,
 			Silent: true,
 		},
-		Bundle: bundle.Bundle{},
+		Bundle: cnab.ExtendedBundle{},
 	}
 	pset, err := opts.GenerateParameters()
 	require.NoError(t, err, "empty parameters should have generated an empty parameter set")
@@ -98,10 +98,10 @@ func TestSkipParameters(t *testing.T) {
 			Name:   name,
 			Silent: true,
 		},
-		Bundle: bundle.Bundle{
+		Bundle: cnab.NewBundle(bundle.Bundle{
 			Definitions: definition.Definitions{
 				"porter-debug": &definition.Schema{
-					Comment: parameters.PorterInternal,
+					Comment: cnab.PorterInternal,
 				},
 			},
 			Parameters: map[string]bundle.Parameter{
@@ -110,7 +110,7 @@ func TestSkipParameters(t *testing.T) {
 				},
 			},
 		},
-	}
+		)}
 
 	pset, err := opts.GenerateParameters()
 	require.NoError(t, err, "parameters generation should not have resulted in an error")

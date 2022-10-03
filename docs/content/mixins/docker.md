@@ -11,7 +11,7 @@ Source: Source: https://github.com/getporter/docker-mixin
 
 ### Install or Upgrade
 ```
-porter mixin install docker
+porter mixin install docker --version v1.0.0-rc.1
 ```
 
 ## Required Extension
@@ -256,7 +256,7 @@ docker login and securely provide your username and password.
 
 ## Invocation
 
-Use of this mixin requires opting-in to Docker host access via a Porter setting.  See the Porter [documentation](https://porter.sh/configuration/#allow-docker-host-access) for further details.
+Use of this mixin requires opting-in to Docker host access via a Porter setting.  See the Porter [documentation](/configuration/#allow-docker-host-access) for further details.
 
 Here we opt-in via the CLI flag, `--allow-docker-host-access`:
 ```shell

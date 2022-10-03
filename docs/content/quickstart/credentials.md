@@ -13,7 +13,7 @@ Examples of a credential would be: a GitHub Personal Access Token, your cloud pr
 We classify those values as credentials so that when different people execute that bundle, they provide their own personal credentials and execute the bundle with their user permissions.
 In contrast, a database connection string used by your application is considered only to be a sensitive parameter because regardless of who is installing the bundle, the same connection string should be used.
 
-**If you want to use different values depending on the person executing the bundle, use credentials. Otherwise use sensitive parameters.**
+**If you want to use different values depending on the person executing the bundle, use credentials. Otherwise, use sensitive parameters.**
 
 This is a convention recommended by Porter to avoid a situation where Sally installs a bundle with her personal credentials, and then every time another user subsequently upgrades the bundle, her credentials are re-used, making it look like Sally ran the upgrades.
 Ultimately the difference between the parameters and credentials is that credentials are never stored or reused by a bundle.
@@ -24,23 +24,27 @@ Depending on the bundle, a credential can apply to all actions (install/upgrade/
 Let's look at a bundle with credentials:
 
 ```console
-$ porter explain --reference getporter/credentials-tutorial:v0.1.0
-Name: credentials-tutorial
+$ porter explain ghcr.io/getporter/examples/credentials-tutorial:v0.3.0
+Name: examples/credentials-tutorial
 Description: An example Porter bundle with credentials. Uses your GitHub token to retrieve your public user profile from GitHub.
-Version: 0.1.0
-Porter Version: v0.38.1
+Version: 0.3.0
+Porter Version: v1.0.0-alpha.19
 
 Credentials:
-Name           Description                                                                                                   Required   Applies To
-github-token   A GitHub Personal Access Token. Generate one at https://github.com/settings/tokens. No scopes are required.   true       install,upgrade
+--------------------------------------------------------------------------------
+  Name          Description                          Required  Applies To
+--------------------------------------------------------------------------------
+  github-token  A GitHub Personal Access             true      install,upgrade
+                Token. Generate one at
+                https://github.com/settings/tokens.
+                No scopes are required.
 
-No parameters defined
-
-No outputs defined
-
-No custom actions defined
-
-No dependencies defined
+Parameters:
+------------------------------------------------------------------------------------
+  Name  Description                     Type    Default  Required  Applies To
+------------------------------------------------------------------------------------
+  user  A GitHub username. Defaults to  string           false     install,upgrade
+        the current user.
 ```
 
 In the Credentials section of the output returned by explain, there is a single required credential, github-token, that applies to the install and upgrade actions.
@@ -48,25 +52,32 @@ This means that the github-token credential is required to run porter install or
 
 ## Create a Credential Set
 
-Create a credential set for the credentials-tutorial bundle with the `porter credentials generate` command. It is an interactive command that walks through setting values for every credential in the specified bundle.
+Create a credential set for the credentials-tutorial bundle with the combination of `porter credentials create` and `porter credentials apply` command. Edit the generated file to contain the required credentials for the corresponding bundle. In this case, it is the `github-token` that uses `GITHUB_TOKEN` environment variable as its source. Then, run the `porter credentials apply` command to create the new credential set from the modified file.
 
 ```console
-$ porter credentials generate github --reference getporter/credentials-tutorial:v0.1.0
-Generating new credential github from bundle credentials-tutorial
-==> 1 credentials required for bundle credentials-tutorial
-? How would you like to set credential "github-token"
-  [Use arrows to move, space to select, type to filter]
-  secret
-  specific value
-> environment variable
-  file path
-  shell command
-? Enter the environment variable that will be used to set credential "github-token"
-  GITHUB_TOKEN
+$ porter credentials create github.json
+creating porter credential set in the current directory
+$ cat github.json
+# modify github.json with your editor to the content below
+{
+    "schemaType": "CredentialSet",
+    "schemaVersion": "1.0.1",
+    "name": "github",
+    "credentials": [
+        {
+            "name": "github-token",
+            "source": {
+                "env": "GITHUB_TOKEN"
+            }
+        }
+    ]
+}
+$ porter credentials apply github.json
+Applied /github credential set
 ```
 
 This creates a credential set named github.
-View the parameter set with the `porter parameters show` command:
+View the credential set with the `porter credentials show` command:
 
 ```console
 $ porter credentials show github
@@ -82,17 +93,17 @@ Modified: 21 minutes ago
 
 The output shows that the credential set has one credential defined: github-token. The credential's value is not stored in the credential set, instead it only stores a mapping from the credential name to a location where the credential can be resolved, in this case an environment variable named GITHUB_TOKEN.
 
-In production it is a best practice to source sensitive values, either parameters or credentials, from a secret store, such as Hashicorp Vault or Azure Key Vault.
+In production, it is a best practice to source sensitive values, either parameters or credentials, from a secret store, such as Hashicorp Vault or Azure Key Vault.
 Avoid storing sensitive values in files or environment variables on developer and CI machines which could be compromised.
 See the list of available [plugins](/plugins/) for which secret providers are supported.
 
 ## Specify a credential with a Credential Set
 
-Pass credentials to a bundle with the \--cred or -c flag, where the flag value is either the name of a credential set stored in Porter, or a path to a credential set file.
+Pass credentials to a bundle with the \--credential-set or -c flag, where the flag value is either the name of a credential set stored in Porter, or a path to a credential set file.
 For example:
 
 ```
-porter install --cred github --reference getporter/credentials-tutorial:v0.1.0
+porter install --credential-set github --reference getporter/credentials-tutorial:v0.3.0
 ```
 
 The output of this example bundle prints data from your public GitHub user profile.
@@ -136,38 +147,6 @@ Retrieve current user profile from GitHub
 }
 ```
 
-Sometimes it is easier to store the credential set in a file instead of having Porter configured with a storage plugin, for example on a test server.
-In that case, you can save the credential set to a file with the following command:
-
-```
-porter credentials show github --output json > github-creds.json
-```
-
-The contents of the file are shown below:
-
-```json
-{
-  "schemaVersion": "1.0.0-DRAFT+b6c701f",
-  "name": "github",
-  "created": "2021-06-29T09:44:32.16657-05:00",
-  "modified": "2021-06-29T09:44:32.16657-05:00",
-  "credentials": [
-    {
-      "name": "github-token",
-      "source": {
-        "env": "GITHUB_TOKEN"
-      }
-    }
-  ]
-}
-```
-
-Below is an example of specifying the credential set with a filepath:
-
-```
-porter install --cred ./github-creds.json --reference getporter/credentials-tutorial:v0.1.0
-```
-
 ## Cleanup
 
 To clean up the resources installed from this QuickStart, use the `porter uninstall` command. 
@@ -180,4 +159,5 @@ porter uninstall credentials-tutorial
 
 In this QuickStart, you learned how to see the credentials defined on a bundle, generate a credential set telling Porter where to find the credentials values, and pass credentials when executing a bundle.
 
+* [QuickStart: Manage an installation using desired state](/quickstart/desired-state/)
 * [Understanding how credentials are resolved](/credentials/)

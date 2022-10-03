@@ -1,6 +1,8 @@
 package manifest
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -10,19 +12,39 @@ import (
 	"sort"
 	"strings"
 
-	"get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/cnab"
+	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/portercontext"
+	"get.porter.sh/porter/pkg/schema"
+	"get.porter.sh/porter/pkg/tracing"
 	"get.porter.sh/porter/pkg/yaml"
 	"github.com/Masterminds/semver/v3"
 	"github.com/cbroglie/mustache"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
-	"github.com/cnabio/cnab-go/claim"
-	"github.com/docker/distribution/reference"
-	multierror "github.com/hashicorp/go-multierror"
-	"github.com/pkg/errors"
+	"github.com/hashicorp/go-multierror"
+	"github.com/opencontainers/go-digest"
 )
 
-const invalidStepErrorFormat = "validation of action \"%s\" failed"
+const (
+	invalidStepErrorFormat = "validation of action \"%s\" failed: %w"
+
+	// TemplateDelimiterPrefix must be present at the beginning of any porter.yaml
+	// that wants to use ${} as the template delimiter instead of the mustache
+	// default of {{}}.
+	TemplateDelimiterPrefix = "{{=${ }=}}\n"
+)
+
+var (
+	// SupportedSchemaVersions is the Porter manifest (porter.yaml) schema
+	// versions supported by this version of Porter, specified as a semver range.
+	// When the Manifest structure is changed, this field should be incremented.
+	SupportedSchemaVersions, _ = semver.NewConstraint("1.0.0-alpha.1 || 1.0.0")
+
+	// DefaultSchemaVersion is the most recently supported schema version.
+	// When the Manifest structure is changed, this field should be incremented.
+	DefaultSchemaVersion = semver.MustParse("1.0.0")
+)
 
 type Manifest struct {
 	// ManifestPath is location to the original, user-supplied manifest, such as the path on the filesystem or a url
@@ -31,9 +53,13 @@ type Manifest struct {
 	// TemplateVariables are the variables used in the templating, e.g. bundle.parameters.NAME, or bundle.outputs.NAME
 	TemplateVariables []string `yaml:"-"`
 
-	Name        string `yaml:"name,omitempty"`
-	Description string `yaml:"description,omitempty"`
-	Version     string `yaml:"version,omitempty"`
+	// SchemaVersion is a semver value that indicates which version of the porter.yaml schema is used in the file.
+	SchemaVersion string `yaml:"schemaVersion"`
+	Name          string `yaml:"name,omitempty"`
+	Description   string `yaml:"description,omitempty"`
+	Version       string `yaml:"version,omitempty"`
+
+	Maintainers []MaintainerDefinition `yaml:"maintainers,omitempty"`
 
 	// Registry is the OCI registry and org/subdomain for the bundle
 	Registry string `yaml:"registry,omitempty"`
@@ -41,11 +67,6 @@ type Manifest struct {
 	// Reference is the optional, full bundle reference
 	// in the format REGISTRY/NAME or REGISTRY/NAME:TAG
 	Reference string `yaml:"reference,omitempty"`
-
-	// BundleTag is the name of the bundle in the format REGISTRY/NAME:TAG
-	// It doesn't map to any field in the manifest as it has been deprecated
-	// and isn't meant to be user-specified
-	BundleTag string `yaml:"-"`
 
 	// DockerTag is the Docker tag portion of the published invocation
 	// image and bundle.  It will only be set at time of publishing.
@@ -69,9 +90,10 @@ type Manifest struct {
 	CustomActions           map[string]Steps                  `yaml:"-"`
 	CustomActionDefinitions map[string]CustomActionDefinition `yaml:"customActions,omitempty"`
 
+	StateBag     StateBag              `yaml:"state,omitempty"`
 	Parameters   ParameterDefinitions  `yaml:"parameters,omitempty"`
 	Credentials  CredentialDefinitions `yaml:"credentials,omitempty"`
-	Dependencies []*Dependency         `yaml:"dependencies,omitempty"`
+	Dependencies Dependencies          `yaml:"dependencies,omitempty"`
 	Outputs      OutputDefinitions     `yaml:"outputs,omitempty"`
 
 	// ImageMap is a map of images referenced in the bundle. If an image relocation mapping is later provided, that
@@ -81,10 +103,10 @@ type Manifest struct {
 	Required []RequiredExtension `yaml:"required,omitempty"`
 }
 
-func (m *Manifest) Validate(cxt *context.Context) error {
+func (m *Manifest) Validate(cxt *portercontext.Context, strategy schema.CheckStrategy) error {
 	var result error
 
-	err := m.validateMetadata(cxt)
+	err := m.validateMetadata(cxt, strategy)
 	if err != nil {
 		return err
 	}
@@ -107,7 +129,7 @@ func (m *Manifest) Validate(cxt *context.Context) error {
 	}
 	err = m.Install.Validate(m)
 	if err != nil {
-		result = multierror.Append(result, errors.Wrapf(err, fmt.Sprintf(invalidStepErrorFormat, "install")))
+		result = multierror.Append(result, fmt.Errorf(invalidStepErrorFormat, "install", err))
 	}
 
 	if m.Uninstall == nil {
@@ -115,17 +137,17 @@ func (m *Manifest) Validate(cxt *context.Context) error {
 	}
 	err = m.Uninstall.Validate(m)
 	if err != nil {
-		result = multierror.Append(result, errors.Wrapf(err, fmt.Sprintf(invalidStepErrorFormat, "uninstall")))
+		result = multierror.Append(result, fmt.Errorf(invalidStepErrorFormat, "uninstall", err))
 	}
 
 	for actionName, steps := range m.CustomActions {
 		err := steps.Validate(m)
 		if err != nil {
-			result = multierror.Append(result, errors.Wrapf(err, fmt.Sprintf(invalidStepErrorFormat, actionName)))
+			result = multierror.Append(result, fmt.Errorf(invalidStepErrorFormat, actionName, err))
 		}
 	}
 
-	for _, dep := range m.Dependencies {
+	for _, dep := range m.Dependencies.Requires {
 		err = dep.Validate(cxt)
 		if err != nil {
 			result = multierror.Append(result, err)
@@ -156,12 +178,20 @@ func (m *Manifest) Validate(cxt *context.Context) error {
 	return result
 }
 
-func (m *Manifest) validateMetadata(cxt *context.Context) error {
+func (m *Manifest) validateMetadata(cxt *portercontext.Context, strategy schema.CheckStrategy) error {
+	if warnOnly, err := schema.ValidateSchemaVersion(strategy, SupportedSchemaVersions, m.SchemaVersion, DefaultSchemaVersion); err != nil {
+		if warnOnly {
+			fmt.Fprintln(cxt.Err, err)
+		} else {
+			return err
+		}
+	}
+
 	if m.Name == "" {
 		return errors.New("bundle name must be set")
 	}
 
-	if m.BundleTag == "" && m.Registry == "" && m.Reference == "" {
+	if m.Registry == "" && m.Reference == "" {
 		return errors.New("a registry or reference value must be provided")
 	}
 
@@ -170,25 +200,12 @@ func (m *Manifest) validateMetadata(cxt *context.Context) error {
 			"using the reference value of %s for the bundle reference\n", m.Reference)
 	}
 
-	// Check the deprecated tag field (still allowing use for time being)
-	if m.BundleTag != "" {
-		fmt.Fprintln(cxt.Out, "WARNING: the tag field has been deprecated; "+
-			"please replace with a value for the registry field on the Porter manifest instead")
-		fmt.Fprintln(cxt.Out, "===> See https://porter.sh/author-bundles/#bundle-metadata for more details")
-		if m.Reference != "" {
-			fmt.Fprintf(cxt.Out, "WARNING: both tag (deprecated) and reference were provided; "+
-				"using the reference value %s for the bundle reference\n", m.Reference)
-		} else {
-			m.Reference = m.BundleTag
-		}
-	}
-
 	// Allow for the user to have specified the version with a leading v prefix but save it as
 	// proper semver
 	if m.Version != "" {
 		v, err := semver.NewVersion(m.Version)
 		if err != nil {
-			return errors.Wrapf(err, "version %q is not a valid semver value", m.Version)
+			return fmt.Errorf("version %q is not a valid semver value: %w", m.Version, err)
 		}
 		m.Version = v.String()
 	}
@@ -324,6 +341,9 @@ type ParameterDefinition struct {
 	Destination Location `yaml:",inline,omitempty"`
 
 	definition.Schema `yaml:",inline"`
+
+	// IsState identifies if the parameter was generated from a state variable
+	IsState bool `yaml:"-"`
 }
 
 func (pd *ParameterDefinition) GetApplyTo() []string {
@@ -349,10 +369,15 @@ func (pd *ParameterDefinition) Validate() error {
 		pdCopy.ContentEncoding = "base64"
 	}
 
+	// Validate the Parameter Definition schema itself
+	if _, err := pdCopy.Schema.ValidateSchema(); err != nil {
+		return multierror.Append(result, fmt.Errorf("encountered an error while validating definition for parameter %q: %w", pdCopy.Name, err))
+	}
+
 	if pdCopy.Default != nil {
 		schemaValidationErrs, err := pdCopy.Schema.Validate(pdCopy.Default)
 		if err != nil {
-			result = multierror.Append(result, errors.Wrapf(err, "encountered error while validating parameter %s", pdCopy.Name))
+			result = multierror.Append(result, fmt.Errorf("encountered error while validating parameter %s: %w", pdCopy.Name, err))
 		}
 		for _, schemaValidationErr := range schemaValidationErrs {
 			result = multierror.Append(result, fmt.Errorf("encountered an error validating the default value %v for parameter %q: %s", pdCopy.Default, pdCopy.Name, schemaValidationErr.Error))
@@ -364,8 +389,7 @@ func (pd *ParameterDefinition) Validate() error {
 
 // DeepCopy copies a ParameterDefinition and returns the copy
 func (pd *ParameterDefinition) DeepCopy() *ParameterDefinition {
-	var p2 ParameterDefinition
-	p2 = *pd
+	p2 := *pd
 	p2.ApplyTo = make([]string, len(pd.ApplyTo))
 	copy(p2.ApplyTo, pd.ApplyTo)
 	return &p2
@@ -389,11 +413,11 @@ func (pd *ParameterDefinition) exemptFromInstall() bool {
 // based on the provided manifest
 func (pd *ParameterDefinition) UpdateApplyTo(m *Manifest) {
 	if pd.exemptFromInstall() {
-		applyTo := []string{claim.ActionUninstall}
+		applyTo := []string{cnab.ActionUninstall}
 		// The core action "Upgrade" is technically still optional
 		// so only add it if it is declared in the manifest
 		if m.Upgrade != nil {
-			applyTo = append(applyTo, claim.ActionUpgrade)
+			applyTo = append(applyTo, cnab.ActionUpgrade)
 		}
 		// Add all custom actions
 		for action := range m.CustomActions {
@@ -473,7 +497,6 @@ func (cd *CredentialDefinition) UnmarshalYAML(unmarshal func(interface{}) error)
 	return nil
 }
 
-// TODO: use cnab-go's bundle.Location instead, once yaml tags have been added
 // Location represents a Parameter or Credential location in an InvocationImage
 type Location struct {
 	Path                string `yaml:"path,omitempty"`
@@ -512,7 +535,7 @@ func (m *MixinDeclaration) UnmarshalYAML(unmarshal func(interface{}) error) erro
 	mixinWithConfig := map[string]interface{}{}
 	err = unmarshal(&mixinWithConfig)
 	if err != nil {
-		return errors.Wrap(err, "could not unmarshal raw yaml of mixin declarations")
+		return fmt.Errorf("could not unmarshal raw yaml of mixin declarations: %w", err)
 	}
 
 	if len(mixinWithConfig) == 0 {
@@ -561,57 +584,80 @@ type MappedImage struct {
 
 func (mi *MappedImage) Validate() error {
 	if mi.Digest != "" {
-		anchoredDigestRegex := regexp.MustCompile(`^` + reference.DigestRegexp.String() + `$`)
-		if !anchoredDigestRegex.MatchString(mi.Digest) {
-			return reference.ErrDigestInvalidFormat
+		if _, err := digest.Parse(mi.Digest); err != nil {
+			return err
 		}
 	}
 
-	if _, err := reference.Parse(mi.Repository); err != nil {
+	if _, err := cnab.ParseOCIReference(mi.Repository); err != nil {
 		return err
 	}
 
 	return nil
 }
 
+func (mi *MappedImage) ToOCIReference() (cnab.OCIReference, error) {
+	ref, err := cnab.ParseOCIReference(mi.Repository)
+	if err != nil {
+		return cnab.OCIReference{}, err
+	}
+
+	if mi.Digest != "" {
+		refWithDigest, err := ref.WithDigest(digest.Digest(mi.Digest))
+		if err != nil {
+			return cnab.OCIReference{}, fmt.Errorf("failed to create a new reference with digest for repository %s: %w", mi.Repository, err)
+		}
+
+		return refWithDigest, nil
+	}
+
+	if mi.Tag != "" {
+		refWithTag, err := ref.WithTag(mi.Tag)
+		if err != nil {
+			return cnab.OCIReference{}, fmt.Errorf("failed to create a new reference with tag for repository %s: %w", mi.Repository, err)
+		}
+
+		return refWithTag, nil
+	}
+
+	return ref, nil
+}
+
+type Dependencies struct {
+	Requires []*Dependency `yaml:"requires,omitempty"`
+}
+
 type Dependency struct {
 	Name string `yaml:"name"`
 
+	Bundle BundleCriteria `yaml:"bundle"`
+
+	Parameters map[string]string `yaml:"parameters,omitempty"`
+}
+
+type BundleCriteria struct {
 	// Reference is the full bundle reference for the dependency
 	// in the format REGISTRY/NAME:TAG
 	Reference string `yaml:"reference"`
 
-	// Tag is a deprecated field.  It has been replaced by Reference.
-	// This should be removed prior to v1.0.0
-	Tag string `yaml:"tag"`
-
-	Versions         []string          `yaml:"versions"`
-	AllowPrereleases bool              `yaml:"prereleases"`
-	Parameters       map[string]string `yaml:"parameters,omitempty"`
+	// "When constraint checking is used for checks or validation
+	// it will follow a different set of rules that are common for ranges with tools like npm/js and Rust/Cargo.
+	// This includes considering prereleases to be invalid if the ranges does not include one.
+	// If you want to have it include pre-releases a simple solution is to include -0 in your range."
+	// https://github.com/Masterminds/semver/blob/master/README.md#checking-version-constraints
+	Version string `yaml:"version,omitempty"`
 }
 
-func (d *Dependency) Validate(cxt *context.Context) error {
+func (d *Dependency) Validate(cxt *portercontext.Context) error {
 	if d.Name == "" {
 		return errors.New("dependency name is required")
 	}
 
-	if d.Tag != "" {
-		fmt.Fprintf(cxt.Out, "WARNING: the tag field for dependency %q has been deprecated "+
-			"in favor of reference; please update the Porter manifest accordingly\n",
-			d.Name)
-		if d.Reference == "" {
-			d.Reference = d.Tag
-		} else {
-			fmt.Fprintf(cxt.Out, "WARNING: both tag (deprecated) and reference were provided for dependency %q; "+
-				"using the reference value %s\n", d.Name, d.Reference)
-		}
-	}
-
-	if d.Reference == "" {
+	if d.Bundle.Reference == "" {
 		return fmt.Errorf("reference is required for dependency %q", d.Name)
 	}
 
-	if strings.Contains(d.Reference, ":") && len(d.Versions) > 0 {
+	if strings.Contains(d.Bundle.Reference, ":") && len(d.Bundle.Version) > 0 {
 		return fmt.Errorf("reference for dependency %q can only specify REGISTRY/NAME when version ranges are specified", d.Name)
 	}
 
@@ -667,12 +713,14 @@ type OutputDefinition struct {
 	Path string `yaml:"path,omitempty"`
 
 	definition.Schema `yaml:",inline"`
+
+	// IsState identifies if the output was generated from a state variable
+	IsState bool `yaml:"-"`
 }
 
 // DeepCopy copies a ParameterDefinition and returns the copy
 func (od *OutputDefinition) DeepCopy() *OutputDefinition {
-	var o2 OutputDefinition
-	o2 = *od
+	o2 := *od
 	o2.ApplyTo = make([]string, len(od.ApplyTo))
 	copy(o2.ApplyTo, od.ApplyTo)
 	return &o2
@@ -697,10 +745,15 @@ func (od *OutputDefinition) Validate() error {
 		odCopy.ContentEncoding = "base64"
 	}
 
+	// Validate the Output Definition schema itself
+	if _, err := odCopy.Schema.ValidateSchema(); err != nil {
+		return multierror.Append(result, fmt.Errorf("encountered an error while validating definition for output %q: %w", odCopy.Name, err))
+	}
+
 	if odCopy.Default != nil {
 		schemaValidationErrs, err := odCopy.Schema.Validate(odCopy.Default)
 		if err != nil {
-			result = multierror.Append(result, errors.Wrapf(err, "encountered error while validating output %s", odCopy.Name))
+			result = multierror.Append(result, fmt.Errorf("encountered error while validating output %s: %w", odCopy.Name, err))
 		}
 		for _, schemaValidationErr := range schemaValidationErrs {
 			result = multierror.Append(result, fmt.Errorf("encountered an error validating the default value %v for output %q: %s", odCopy.Default, odCopy.Name, schemaValidationErr.Error))
@@ -752,7 +805,7 @@ func (s *Step) Validate(m *Manifest) error {
 		}
 	}
 	if !mixinDeclared {
-		return errors.Errorf("mixin (%s) was not declared", mixinType)
+		return fmt.Errorf("mixin (%s) was not declared", mixinType)
 	}
 
 	if _, err := s.GetDescription(); err != nil {
@@ -777,7 +830,7 @@ func (s *Step) GetDescription() (string, error) {
 	}
 	desc, ok := d.(string)
 	if !ok {
-		return "", errors.Errorf("invalid description type (%T) for mixin step (%s)", desc, mixinName)
+		return "", fmt.Errorf("invalid description type (%T) for mixin step (%s)", desc, mixinName)
 	}
 
 	return desc, nil
@@ -791,12 +844,12 @@ func (s *Step) GetMixinName() string {
 	return mixinName
 }
 
-func UnmarshalManifest(cxt *context.Context, manifestData []byte) (*Manifest, error) {
+func UnmarshalManifest(cxt *portercontext.Context, manifestData []byte) (*Manifest, error) {
 	// Unmarshal the manifest into the normal struct
 	manifest := &Manifest{}
 	err := yaml.Unmarshal(manifestData, &manifest)
 	if err != nil {
-		return nil, errors.Wrap(err, "error unmarshaling the typed manifest")
+		return nil, fmt.Errorf("error unmarshaling the typed manifest: %w", err)
 	}
 
 	// Do a second pass to identify custom actions, which don't have yaml tags since they are dynamic
@@ -808,7 +861,7 @@ func UnmarshalManifest(cxt *context.Context, manifestData []byte) (*Manifest, er
 	unmappedData := make(map[string]interface{})
 	err = yaml.Unmarshal(manifestData, &unmappedData)
 	if err != nil {
-		return nil, errors.Wrap(err, "error unmarshaling the untyped manifest")
+		return nil, fmt.Errorf("error unmarshaling the untyped manifest: %w", err)
 	}
 
 	// Use reflection to figure out which fields are on the manifest and have yaml tags
@@ -824,14 +877,9 @@ func UnmarshalManifest(cxt *context.Context, manifestData []byte) (*Manifest, er
 		if _, found := knownFields[key]; found {
 			delete(unmappedData, key)
 		}
-		// Print deprecation notice for this field
-		if key == "invocationImage" {
-			fmt.Fprintln(cxt.Out, "WARNING: The invocationImage field has been deprecated and can no longer be user-specified; ignoring.")
-			delete(unmappedData, key)
-		}
-		// Print deprecation notice for this field
-		if key == "tag" {
-			manifest.BundleTag = unmappedData[key].(string)
+		// Delete known deprecated fields with no yaml tags
+		if key == "invocationImage" || key == "tag" {
+			fmt.Fprintf(cxt.Out, "WARNING: The %q field has been deprecated and can no longer be user-specified; ignoring.\n", key)
 			delete(unmappedData, key)
 		}
 	}
@@ -841,13 +889,13 @@ func UnmarshalManifest(cxt *context.Context, manifestData []byte) (*Manifest, er
 	for key, chunk := range unmappedData {
 		chunkData, err := yaml.Marshal(chunk)
 		if err != nil {
-			return nil, errors.Wrapf(err, "error remarshaling custom action %s", key)
+			return nil, fmt.Errorf("error remarshaling custom action %s: %w", key, err)
 		}
 
 		steps := Steps{}
 		err = yaml.Unmarshal(chunkData, &steps)
 		if err != nil {
-			return nil, errors.Wrapf(err, "error unmarshaling custom action %s", key)
+			return nil, fmt.Errorf("error unmarshaling custom action %s: %w", key, err)
 		}
 
 		manifest.CustomActions[key] = steps
@@ -870,93 +918,107 @@ func (m *Manifest) SetInvocationImageAndReference(ref string) error {
 	}
 
 	if m.Reference == "" && m.Registry != "" {
-		repo, err := reference.ParseNormalizedNamed(path.Join(m.Registry, m.Name))
+		repo, err := cnab.ParseOCIReference(path.Join(m.Registry, m.Name))
 		if err != nil {
-			return errors.Wrapf(err, "invalid bundle reference %s", path.Join(m.Registry, m.Name))
+			return fmt.Errorf("invalid bundle reference %s: %w", path.Join(m.Registry, m.Name), err)
 		}
-		m.Reference = repo.Name()
+		m.Reference = repo.Repository()
 	}
 
-	bundleRef, err := reference.ParseNormalizedNamed(m.Reference)
+	bundleRef, err := cnab.ParseOCIReference(m.Reference)
 	if err != nil {
-		return errors.Wrapf(err, "invalid bundle reference %s", m.Reference)
+		return fmt.Errorf("invalid bundle reference %s: %w", m.Reference, err)
 	}
 
 	dockerTag, err := m.getDockerTagFromBundleRef(bundleRef)
 	if err != nil {
-		return errors.Wrapf(err, "unable to derive docker tag from bundle reference %q", m.Reference)
+		return fmt.Errorf("unable to derive docker tag from bundle reference %q: %w", m.Reference, err)
 	}
 
 	// If the docker tag is initially missing from bundleTag, update with
 	// returned dockerTag
-	switch v := bundleRef.(type) {
-	case reference.Named:
-		bundleRef, err = reference.WithTag(v, dockerTag)
+	if !bundleRef.HasTag() {
+		bundleRef, err = bundleRef.WithTag(dockerTag)
 		if err != nil {
-			return errors.Wrapf(err, "could not set bundle tag to %q", dockerTag)
+			return fmt.Errorf("could not set bundle tag to %q: %w", dockerTag, err)
 		}
-		m.Reference = reference.FamiliarString(bundleRef)
+		m.Reference = bundleRef.String()
 	}
 
-	imageName, err := reference.ParseNormalizedNamed(bundleRef.Name() + "-installer")
-	if err != err {
-		return errors.Wrapf(err, "could not set invocation image to %q", bundleRef.Name()+"-installer")
-	}
-	imageRef, err := reference.WithTag(imageName, dockerTag)
+	installerImage, err := cnab.CalculateTemporaryImageTag(bundleRef)
 	if err != nil {
-		return errors.Wrapf(err, "could not set invocation image tag to %q", dockerTag)
+		return err
 	}
-	m.Image = reference.FamiliarString(imageRef)
 
+	m.Image = installerImage.String()
 	return nil
 }
 
 // getDockerTagFromBundleRef returns the Docker tag portion of the bundle tag,
 // using the bundle version as a fallback
-func (m *Manifest) getDockerTagFromBundleRef(bundleRef reference.Named) (string, error) {
+func (m *Manifest) getDockerTagFromBundleRef(bundleRef cnab.OCIReference) (string, error) {
 	// If the manifest has a DockerTag override already set (e.g. on publish), use this
 	if m.DockerTag != "" {
 		return m.DockerTag, nil
 	}
 
-	var dockerTag string
-	switch v := bundleRef.(type) {
-	case reference.Tagged:
-		dockerTag = v.Tag()
-	case reference.Named:
-		// Docker tag is missing from the provided bundle tag, so default it
-		// to use the manifest version prefixed with v
-		// Example: bundle version is 1.0.0, so the bundle tag is v1.0.0
-		cleanTag := strings.ReplaceAll(m.Version, "+", "_") // Semver may include a + which is not allowed in a docker tag, e.g. v1.0.0-alpha.1+buildmetadata, change that to v1.0.0-alpha.1_buildmetadata
-		dockerTag = fmt.Sprintf("v%s", cleanTag)
-	case reference.Digested:
+	if bundleRef.HasTag() {
+		return bundleRef.Tag(), nil
+	}
+
+	if bundleRef.HasDigest() {
 		return "", errors.New("invalid bundle tag format, must be an OCI image tag")
 	}
 
-	return dockerTag, nil
+	// Docker tag is missing from the provided bundle tag, so default it
+	// to use the manifest version prefixed with v
+	// Example: bundle version is 1.0.0, so the bundle tag is v1.0.0
+	cleanTag := strings.ReplaceAll(m.Version, "+", "_") // Semver may include a + which is not allowed in a docker tag, e.g. v1.0.0-alpha.1+buildmetadata, change that to v1.0.0-alpha.1_buildmetadata
+	return fmt.Sprintf("v%s", cleanTag), nil
 }
 
-func readFromFile(cxt *context.Context, path string) ([]byte, error) {
+// ResolvePath resolves a path specified in the Porter manifest into
+// an absolute path, assuming the current directory is /cnab/app.
+// Returns an empty string when the specified value is empty.
+func ResolvePath(value string) string {
+	if value == "" {
+		return ""
+	}
+
+	if path.IsAbs(value) {
+		return value
+	}
+
+	return path.Join("/cnab/app", value)
+}
+
+func readFromFile(cxt *portercontext.Context, path string) ([]byte, error) {
 	if exists, _ := cxt.FileSystem.Exists(path); !exists {
-		return nil, errors.Errorf("the specified porter configuration file %s does not exist", path)
+		return nil, fmt.Errorf("the specified porter configuration file %s does not exist", path)
 	}
 
 	data, err := cxt.FileSystem.ReadFile(path)
-	return data, errors.Wrapf(err, "could not read manifest at %q", path)
+	if err != nil {
+		return nil, fmt.Errorf("could not read manifest at %q: %w", path, err)
+	}
+	return data, nil
 }
 
 func readFromURL(path string) ([]byte, error) {
 	resp, err := http.Get(path)
 	if err != nil {
-		return nil, errors.Wrapf(err, "could not reach url %s", path)
+		return nil, fmt.Errorf("could not reach url %s: %w", path, err)
 	}
 
 	defer resp.Body.Close()
 	data, err := ioutil.ReadAll(resp.Body)
-	return data, errors.Wrapf(err, "could not read from url %s", path)
+	if err != nil {
+		return nil, fmt.Errorf("could not read from url %s: %w", path, err)
+	}
+	return data, nil
 }
 
-func ReadManifestData(cxt *context.Context, path string) ([]byte, error) {
+func ReadManifestData(cxt *portercontext.Context, path string) ([]byte, error) {
 	if strings.HasPrefix(path, "http") {
 		return readFromURL(path)
 	} else {
@@ -966,18 +1028,18 @@ func ReadManifestData(cxt *context.Context, path string) ([]byte, error) {
 
 // ReadManifest determines if specified path is a URL or a filepath.
 // After reading the data in the path it returns a Manifest and any errors
-func ReadManifest(cxt *context.Context, path string) (*Manifest, error) {
+func ReadManifest(cxt *portercontext.Context, path string) (*Manifest, error) {
 	data, err := ReadManifestData(cxt, path)
 	if err != nil {
 		return nil, err
 	}
 
-	tmplResult, err := scanManifestTemplating(data)
+	m, err := UnmarshalManifest(cxt, data)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unsupported property set or a custom action is defined incorrectly: %w", err)
 	}
 
-	m, err := UnmarshalManifest(cxt, data)
+	tmplResult, err := m.scanManifestTemplating(data)
 	if err != nil {
 		return nil, err
 	}
@@ -994,11 +1056,31 @@ type templateScanResult struct {
 	Variables []string
 }
 
-func scanManifestTemplating(data []byte) (templateScanResult, error) {
+func (m *Manifest) GetTemplatePrefix() string {
+	if m.SchemaVersion == "" {
+		// Super-old bundles use the mustache default
+		return ""
+	}
+
+	// In 1.0.0-alpha.2+, the prefix is ${}. Beforehand it was {{}}
+	v, err := semver.NewVersion(m.SchemaVersion)
+	if err == nil {
+		if v.GreaterThan(semver.MustParse("v1.0.0-alpha.1")) {
+			// Change the delimiter
+			return TemplateDelimiterPrefix
+		}
+	}
+
+	// Fallback to the mustache default if we can't determine the schema version
+	return ""
+}
+
+func (m *Manifest) scanManifestTemplating(data []byte) (templateScanResult, error) {
 	const disableHtmlEscaping = true
-	tmpl, err := mustache.ParseStringRaw(string(data), disableHtmlEscaping)
+	templateSrc := m.GetTemplatePrefix() + string(data)
+	tmpl, err := mustache.ParseStringRaw(templateSrc, disableHtmlEscaping)
 	if err != nil {
-		return templateScanResult{}, errors.Wrap(err, "error parsing the templating used in the manifest")
+		return templateScanResult{}, fmt.Errorf("error parsing the templating used in the manifest: %w", err)
 	}
 
 	tags := tmpl.Tags()
@@ -1022,14 +1104,19 @@ func scanManifestTemplating(data []byte) (templateScanResult, error) {
 	return result, nil
 }
 
-func LoadManifestFrom(cxt *context.Context, file string) (*Manifest, error) {
-	m, err := ReadManifest(cxt, file)
+// LoadManifestFrom reads and validates the manifest at the specified location,
+// and returns a populated Manifest structure.
+func LoadManifestFrom(ctx context.Context, config *config.Config, file string) (*Manifest, error) {
+	ctx, log := tracing.StartSpan(ctx)
+	defer log.EndSpan()
+
+	m, err := ReadManifest(config.Context, file)
 	if err != nil {
 		return nil, err
 	}
 
-	err = m.Validate(cxt)
-	if err != nil {
+	strategy := config.GetSchemaCheckStrategy(ctx)
+	if err = m.Validate(config.Context, strategy); err != nil {
 		return nil, err
 	}
 
@@ -1063,7 +1150,7 @@ func (r *RequiredExtension) UnmarshalYAML(unmarshal func(interface{}) error) err
 	extWithConfig := map[string]map[string]interface{}{}
 	err = unmarshal(&extWithConfig)
 	if err != nil {
-		return errors.Wrap(err, "could not unmarshal raw yaml of required extensions")
+		return fmt.Errorf("could not unmarshal raw yaml of required extensions: %w", err)
 	}
 
 	if len(extWithConfig) == 0 {
@@ -1098,4 +1185,28 @@ func GetParameterSourceForOutput(outputName string) string {
 // internally for wiring up an dependency's output to a parameter.
 func GetParameterSourceForDependency(ref DependencyOutputReference) string {
 	return fmt.Sprintf("porter-%s-%s-dep-output", ref.Dependency, ref.Output)
+}
+
+type MaintainerDefinition struct {
+	Name  string `yaml:"name,omitempty"`
+	Email string `yaml:"email,omitempty"`
+	Url   string `yaml:"url,omitempty"`
+}
+
+// StateBag is the set of state files and variables that Porter should
+// track between bundle executions.
+type StateBag []StateVariable
+
+type StateVariable struct {
+	// Name of the state variable
+	Name string `yaml:"name"`
+
+	// Description of the state variable and how it's used by the bundle
+	Description string `yaml:"description,omitempty"`
+
+	// Mixin is the name of the mixin that manages the state variable.
+	Mixin string `yaml:"mixin,omitempty"`
+
+	// Location defines where the state variable is located in the bundle.
+	Location `yaml:",inline"`
 }

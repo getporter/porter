@@ -1,0 +1,8 @@
+Name: mypset
+Created: 1983-04-18
+Modified: 1983-04-18
+
+-----------------------------------
+  Name  Local Source  Source Type  
+-----------------------------------
+  foo   foo_secret    secret       

@@ -1,8 +1,7 @@
 package cache
 
 import (
-	"github.com/cnabio/cnab-go/bundle"
-	"github.com/cnabio/cnab-to-oci/relocation"
+	"get.porter.sh/porter/pkg/cnab"
 )
 
 var _ BundleCache = &TestCache{}
@@ -10,8 +9,8 @@ var _ BundleCache = &TestCache{}
 // MockCache helps you test error scenarios, you don't need it for unit testing positive scenarios.
 type TestCache struct {
 	cache           BundleCache
-	FindBundleMock  func(string) (CachedBundle, bool, error)
-	StoreBundleMock func(string, bundle.Bundle, *relocation.ImageRelocationMap) (CachedBundle, error)
+	FindBundleMock  func(ref cnab.OCIReference) (CachedBundle, bool, error)
+	StoreBundleMock func(bundleReference cnab.BundleReference) (CachedBundle, error)
 }
 
 func NewTestCache(cache BundleCache) *TestCache {
@@ -20,18 +19,18 @@ func NewTestCache(cache BundleCache) *TestCache {
 	}
 }
 
-func (c *TestCache) FindBundle(tag string) (CachedBundle, bool, error) {
+func (c *TestCache) FindBundle(ref cnab.OCIReference) (CachedBundle, bool, error) {
 	if c.FindBundleMock != nil {
-		return c.FindBundleMock(tag)
+		return c.FindBundleMock(ref)
 	}
-	return c.cache.FindBundle(tag)
+	return c.cache.FindBundle(ref)
 }
 
-func (c *TestCache) StoreBundle(tag string, bun bundle.Bundle, reloMap *relocation.ImageRelocationMap) (CachedBundle, error) {
+func (c *TestCache) StoreBundle(bundleRef cnab.BundleReference) (CachedBundle, error) {
 	if c.StoreBundleMock != nil {
-		return c.StoreBundleMock(tag, bun, reloMap)
+		return c.StoreBundleMock(bundleRef)
 	}
-	return c.cache.StoreBundle(tag, bun, reloMap)
+	return c.cache.StoreBundle(bundleRef)
 }
 
 func (c *TestCache) GetCacheDir() (string, error) {

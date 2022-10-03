@@ -1,7 +1,10 @@
 package build
 
 import (
+	"context"
 	"path/filepath"
+
+	"get.porter.sh/porter/pkg/manifest"
 )
 
 var (
@@ -30,6 +33,34 @@ var (
 	// BUNDLE_DIR is the directory where the bundle is located in the CNAB execution environment.
 	BUNDLE_DIR = "/cnab/app"
 
-	// INJECT_PORTER_MIXINS_TOKEN can control where mixin instructions will be placed in Dockerfile.
-	INJECT_PORTER_MIXINS_TOKEN = "# PORTER_MIXINS"
+	// PORTER_MIXINS_TOKEN can control where mixin instructions will be placed in
+	// Dockerfile.
+	PORTER_MIXINS_TOKEN = "# PORTER_MIXINS"
+
+	// PORTER_INIT_TOKEN controls where Porter's image initialization
+	// instructions are placed in the Dockerfile.
+	PORTER_INIT_TOKEN = "# PORTER_INIT"
 )
+
+type Builder interface {
+	// BuildInvocationImage using the bundle in the build context directory
+	BuildInvocationImage(ctx context.Context, manifest *manifest.Manifest, opts BuildImageOptions) error
+
+	// TagInvocationImage using the origTag and newTag values supplied
+	TagInvocationImage(ctx context.Context, origTag, newTag string) error
+}
+
+// BuildImageOptions represents some flags exposed by docker.
+type BuildImageOptions struct {
+	// SSH is the set of docker build --ssh flags specified.
+	SSH []string
+
+	// Secrets is the set of docker build --secret flags specified.
+	Secrets []string
+
+	// BuildArgs is the set of docker build --build-arg specified.
+	BuildArgs []string
+
+	// NoCache is the docker build --no-cache flag specified.
+	NoCache bool
+}

@@ -1,0 +1,6 @@
+schemaVersion: 0.38.5
+name: invalid-schema
+namespace: dev
+bundle:
+  repository: ghcrio/getporter/examples/porter-hello
+  version: 0.2.0

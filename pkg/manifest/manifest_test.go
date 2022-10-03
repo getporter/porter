@@ -1,11 +1,13 @@
 package manifest
 
 import (
+	"context"
 	"io/ioutil"
 	"testing"
 
 	"get.porter.sh/porter/pkg/config"
-	"get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/portercontext"
+	"get.porter.sh/porter/pkg/schema"
 	"get.porter.sh/porter/pkg/yaml"
 	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/stretchr/testify/assert"
@@ -13,19 +15,38 @@ import (
 )
 
 func TestLoadManifest(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	c := config.NewTestConfig(t)
 
-	cxt.AddTestFile("testdata/simple.porter.yaml", config.Name)
+	c.TestContext.AddTestFile("testdata/simple.porter.yaml", config.Name)
 
-	m, err := LoadManifestFrom(cxt.Context, config.Name)
+	m, err := LoadManifestFrom(context.Background(), c.Config, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
 	require.NotNil(t, m, "manifest was nil")
 	require.Equal(t, m.Name, "hello", "manifest has incorrect name")
 	require.Equal(t, m.Description, "An example Porter configuration", "manifest has incorrect description")
 	require.Equal(t, m.Version, "0.1.0", "manifest has incorrect version")
-	require.Equal(t, m.Registry, "getporter", "manifest has incorrect registry")
-	require.Equal(t, m.Reference, "getporter/hello:v0.1.0", "manifest has incorrect reference")
+	require.Equal(t, m.Registry, "localhost:5000", "manifest has incorrect registry")
+	require.Equal(t, m.Reference, "localhost:5000/hello:v0.1.0", "manifest has incorrect reference")
+
+	require.Len(t, m.Maintainers, 4, "manifest has incorrect number of maintainers")
+
+	john, jane, janine, mike := m.Maintainers[0], m.Maintainers[1], m.Maintainers[2], m.Maintainers[3]
+	require.Equal(t, "John Doe", john.Name, "manifest: Maintainer name is incorrect")
+	require.Equal(t, "john.doe@example.com", john.Email, "manifest: Maintainer email is incorrect")
+	require.Equal(t, "https://example.com/a", john.Url, "manifest: Maintainer url is incorrect")
+
+	require.Equal(t, "Jane Doe", jane.Name, "manifest: Maintainer name is incorrect")
+	require.Equal(t, "", jane.Email, "manifest: Maintainer email is incorrect")
+	require.Equal(t, "https://example.com/b", jane.Url, "manifest: Maintainer url is incorrect")
+
+	require.Equal(t, "Janine Doe", janine.Name, "manifest: Maintainer name is incorrect")
+	require.Equal(t, "janine.doe@example.com", janine.Email, "manifest: Maintainer email is incorrect")
+	require.Equal(t, "", janine.Url, "manifest: Maintainer url is incorrect")
+
+	require.Equal(t, "", mike.Name, "manifest: Maintainer name is incorrect")
+	require.Equal(t, "mike.doe@example.com", mike.Email, "manifest: Maintainer email is incorrect")
+	require.Equal(t, "https://example.com/c", mike.Url, "manifest: Maintainer url is incorrect")
 
 	assert.Equal(t, []MixinDeclaration{{Name: "exec"}}, m.Mixins, "expected manifest to declare the exec mixin")
 	require.Len(t, m.Install, 1, "expected 1 install step")
@@ -48,72 +69,57 @@ func TestLoadManifest(t *testing.T) {
 	assert.Equal(t, "exec", mixin, "unexpected status step mixin")
 }
 
-func TestLoadManifest_DeprecatedFields(t *testing.T) {
-	cxt := context.NewTestContext(t)
-
-	cxt.AddTestFile("testdata/porter-with-deprecated-fields.yaml", config.Name)
-
-	m, err := LoadManifestFrom(cxt.Context, config.Name)
-	require.NoError(t, err, "expected no error")
-	require.NotNil(t, m, "manifest was nil")
-	require.Equal(t,
-		"WARNING: The invocationImage field has been deprecated and can no longer be user-specified; ignoring.\n"+
-			"WARNING: the tag field has been deprecated; please replace with a value for the registry field on the Porter manifest instead\n"+
-			"===> See https://porter.sh/author-bundles/#bundle-metadata for more details\n",
-		cxt.GetOutput())
-
-	require.Equal(t, "getporter/porter-hello:v0.1.0", m.Reference, "manifest has incorrect bundle tag")
-	require.Equal(t, "getporter/porter-hello-installer:v0.1.0", m.Image, "image has the incorrect value")
-}
-
 func TestLoadManifestWithDependencies(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	c := config.NewTestConfig(t)
 
-	cxt.AddTestFile("testdata/porter.yaml", config.Name)
-	cxt.AddTestDirectory("testdata/bundles", "bundles")
+	c.TestContext.AddTestFile("testdata/porter.yaml", config.Name)
+	c.TestContext.AddTestDirectory("testdata/bundles", "bundles")
 
-	m, err := LoadManifestFrom(cxt.Context, config.Name)
+	m, err := LoadManifestFrom(context.Background(), c.Config, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
-	assert.NotNil(t, m)
+	require.NotNil(t, m)
 	assert.Equal(t, []MixinDeclaration{{Name: "exec"}}, m.Mixins)
-	assert.Len(t, m.Install, 1)
+	require.Len(t, m.Install, 1)
 
 	installStep := m.Install[0]
 	description, _ := installStep.GetDescription()
-	assert.NotNil(t, description)
+	require.NotNil(t, description)
 
 	mixin := installStep.GetMixinName()
 	assert.Equal(t, "exec", mixin)
+
+	require.Len(t, m.Dependencies.Requires, 1, "expected one dependency")
+	assert.Equal(t, "getporter/azure-mysql:5.7", m.Dependencies.Requires[0].Bundle.Reference, "expected a v1 schema for the dependency delcaration")
 }
 
 func TestLoadManifestWithDependenciesInOrder(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	c := config.NewTestConfig(t)
 
-	cxt.AddTestFile("testdata/porter-with-deps.yaml", config.Name)
-	cxt.AddTestDirectory("testdata/bundles", "bundles")
+	c.TestContext.AddTestFile("testdata/porter-with-deps.yaml", config.Name)
+	c.TestContext.AddTestDirectory("testdata/bundles", "bundles")
 
-	m, err := LoadManifestFrom(cxt.Context, config.Name)
+	m, err := LoadManifestFrom(context.Background(), c.Config, config.Name)
 	require.NoError(t, err, "could not load manifest")
 	assert.NotNil(t, m)
 
-	nginxDep := m.Dependencies[0]
+	nginxDep := m.Dependencies.Requires[0]
 	assert.Equal(t, "nginx", nginxDep.Name)
-	assert.Equal(t, "localhost:5000/nginx:1.19", nginxDep.Reference)
+	assert.Equal(t, "localhost:5000/nginx:1.19", nginxDep.Bundle.Reference)
 
-	mysqlDep := m.Dependencies[1]
+	mysqlDep := m.Dependencies.Requires[1]
 	assert.Equal(t, "mysql", mysqlDep.Name)
-	assert.Equal(t, "getporter/azure-mysql:5.7", mysqlDep.Reference)
+	assert.Equal(t, "getporter/azure-mysql:5.7", mysqlDep.Bundle.Reference)
 	assert.Len(t, mysqlDep.Parameters, 1)
 
 }
 
 func TestAction_Validate_RequireMixinDeclaration(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	c := config.NewTestConfig(t)
 
-	cxt.AddTestFile("testdata/simple.porter.yaml", config.Name)
+	c.TestContext.AddTestFile("testdata/simple.porter.yaml", config.Name)
 
-	m, err := LoadManifestFrom(cxt.Context, config.Name)
+	m, err := LoadManifestFrom(context.Background(), c.Config, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
 	// Sabotage!
@@ -124,11 +130,11 @@ func TestAction_Validate_RequireMixinDeclaration(t *testing.T) {
 }
 
 func TestAction_Validate_RequireMixinData(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	c := config.NewTestConfig(t)
 
-	cxt.AddTestFile("testdata/simple.porter.yaml", config.Name)
+	c.TestContext.AddTestFile("testdata/simple.porter.yaml", config.Name)
 
-	m, err := LoadManifestFrom(cxt.Context, config.Name)
+	m, err := LoadManifestFrom(context.Background(), c.Config, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
 	// Sabotage!
@@ -139,11 +145,11 @@ func TestAction_Validate_RequireMixinData(t *testing.T) {
 }
 
 func TestAction_Validate_RequireSingleMixinData(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	c := config.NewTestConfig(t)
 
-	cxt.AddTestFile("testdata/simple.porter.yaml", config.Name)
+	c.TestContext.AddTestFile("testdata/simple.porter.yaml", config.Name)
 
-	m, err := LoadManifestFrom(cxt.Context, config.Name)
+	m, err := LoadManifestFrom(context.Background(), c.Config, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
 	// Sabotage!
@@ -154,40 +160,119 @@ func TestAction_Validate_RequireSingleMixinData(t *testing.T) {
 }
 
 func TestManifest_Empty_Steps(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	c := config.NewTestConfig(t)
 
-	cxt.AddTestFile("testdata/empty-steps.yaml", config.Name)
+	c.TestContext.AddTestFile("testdata/empty-steps.yaml", config.Name)
 
-	_, err := LoadManifestFrom(cxt.Context, config.Name)
+	_, err := LoadManifestFrom(context.Background(), c.Config, config.Name)
 	assert.EqualError(t, err, "3 errors occurred:\n\t* validation of action \"install\" failed: found an empty step\n\t* validation of action \"uninstall\" failed: found an empty step\n\t* validation of action \"status\" failed: found an empty step\n\n")
 }
 
 func TestManifest_Validate_Name(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	c := config.NewTestConfig(t)
 
-	cxt.AddTestFile("testdata/porter-no-name.yaml", config.Name)
+	c.TestContext.AddTestFile("testdata/porter-no-name.yaml", config.Name)
 
-	_, err := LoadManifestFrom(cxt.Context, config.Name)
+	_, err := LoadManifestFrom(context.Background(), c.Config, config.Name)
 	assert.EqualError(t, err, "bundle name must be set")
 }
 
+func TestManifest_Validate_SchemaVersion(t *testing.T) {
+	invalidVersionErr := schema.ErrInvalidSchemaVersion.Error()
+
+	t.Run("schemaVersion matches", func(t *testing.T) {
+		cxt := portercontext.NewTestContext(t)
+		cxt.UseFilesystem()
+
+		m, err := ReadManifest(cxt.Context, "testdata/porter.yaml")
+		require.NoError(t, err)
+
+		err = m.Validate(cxt.Context, schema.CheckStrategyExact)
+		require.NoError(t, err)
+		assert.NotContains(t, cxt.GetError(), invalidVersionErr)
+	})
+
+	t.Run("schemaVersion missing, not required", func(t *testing.T) {
+		cxt := portercontext.NewTestContext(t)
+		cxt.UseFilesystem()
+
+		m, err := ReadManifest(cxt.Context, "testdata/porter.yaml")
+		require.NoError(t, err)
+
+		m.SchemaVersion = ""
+
+		err = m.Validate(cxt.Context, schema.CheckStrategyNone)
+		require.NoError(t, err)
+
+		// Check that a warning is printed
+		// We aren't returning an error because we want to give it a chance to work first. Later we may turn this into a hard error after people have had time to migrate.
+		assert.Contains(t, cxt.GetError(), invalidVersionErr)
+	})
+}
+
+func TestManifest_ValidateMetadata(t *testing.T) {
+	// Make sure that we allow a range of versions
+	invalidVersionErr := schema.ErrInvalidSchemaVersion.Error()
+	testcases := []struct {
+		schemaVersion string
+		wantErr       string
+	}{
+		{wantErr: invalidVersionErr},
+		{schemaVersion: "1.0.0-alpha.1"},
+		{schemaVersion: "1.0.0-alpha.2", wantErr: invalidVersionErr},
+		{schemaVersion: "1.0.0"},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.schemaVersion, func(t *testing.T) {
+			cxt := portercontext.NewTestContext(t)
+			m := Manifest{
+				SchemaVersion: tc.schemaVersion,
+				Name:          "mybuns",
+				Registry:      "localhost:5000",
+			}
+			err := m.validateMetadata(cxt.Context, schema.CheckStrategyExact)
+
+			if tc.wantErr == "" {
+				require.NoError(t, err)
+				assert.NotContains(t, cxt.GetError(), invalidVersionErr)
+			} else {
+				require.ErrorContains(t, err, invalidVersionErr)
+			}
+		})
+	}
+}
+
 func TestManifest_Validate_Dockerfile(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	c := config.NewTestConfig(t)
 
-	cxt.AddTestFile("testdata/simple.porter.yaml", config.Name)
+	c.TestContext.AddTestFile("testdata/simple.porter.yaml", config.Name)
 
-	m, err := LoadManifestFrom(cxt.Context, config.Name)
+	m, err := LoadManifestFrom(context.Background(), c.Config, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
 	m.Dockerfile = "Dockerfile"
 
-	err = m.Validate(cxt.Context)
+	err = m.Validate(c.Context, schema.CheckStrategyNone)
 
 	assert.EqualError(t, err, "Dockerfile template cannot be named 'Dockerfile' because that is the filename generated during porter build")
 }
 
+func TestManifest_Validate_WrongSchema(t *testing.T) {
+	c := config.NewTestConfig(t)
+
+	c.TestContext.AddTestFile("testdata/porter-with-badschema.yaml", config.Name)
+	_, err := LoadManifestFrom(context.Background(), c.Config, config.Name)
+
+	require.Error(t, err)
+	assert.Regexp(t,
+		"unsupported property set or a custom action is defined incorrectly: error unmarshaling custom action baddata",
+		err,
+	)
+}
+
 func TestReadManifest_URL(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 	url := "https://raw.githubusercontent.com/getporter/porter/v0.27.1/pkg/manifest/testdata/simple.porter.yaml"
 	m, err := ReadManifest(cxt.Context, url)
 
@@ -196,7 +281,7 @@ func TestReadManifest_URL(t *testing.T) {
 }
 
 func TestReadManifest_Validate_InvalidURL(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 	_, err := ReadManifest(cxt.Context, "http://fake-example-porter")
 
 	assert.Error(t, err)
@@ -204,7 +289,7 @@ func TestReadManifest_Validate_InvalidURL(t *testing.T) {
 }
 
 func TestReadManifest_File(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 	cxt.AddTestFile("testdata/simple.porter.yaml", config.Name)
 	m, err := ReadManifest(cxt.Context, config.Name)
 
@@ -214,104 +299,111 @@ func TestReadManifest_File(t *testing.T) {
 
 func TestSetDefaults(t *testing.T) {
 	t.Run("no registry or reference provided", func(t *testing.T) {
-		cxt := context.NewTestContext(t)
+		cxt := portercontext.NewTestContext(t)
 		m := Manifest{
-			Name:    "mybun",
-			Version: "1.2.3-beta.1",
+			SchemaVersion: DefaultSchemaVersion.String(),
+			Name:          "mybun",
+			Version:       "1.2.3-beta.1",
 		}
-		err := m.validateMetadata(cxt.Context)
+		err := m.validateMetadata(cxt.Context, schema.CheckStrategyNone)
 		require.EqualError(t, err, "a registry or reference value must be provided")
 	})
 
 	t.Run("bundle docker tag set on reference", func(t *testing.T) {
-		cxt := context.NewTestContext(t)
+		cxt := portercontext.NewTestContext(t)
 		m := Manifest{
-			Name:      "mybun",
-			Version:   "1.2.3-beta.1",
-			Reference: "getporter/mybun:v1.2.3",
+			SchemaVersion: DefaultSchemaVersion.String(),
+			Name:          "mybun",
+			Version:       "1.2.3-beta.1",
+			Reference:     "getporter/mybun:v1.2.3",
 		}
-		err := m.validateMetadata(cxt.Context)
+		err := m.validateMetadata(cxt.Context, schema.CheckStrategyNone)
 		require.NoError(t, err)
 
 		err = m.SetDefaults()
 		require.NoError(t, err)
 		assert.Equal(t, "getporter/mybun:v1.2.3", m.Reference)
-		assert.Equal(t, "getporter/mybun-installer:v1.2.3", m.Image)
+		assert.Equal(t, "getporter/mybun:porter-e7a4fac8f425d76ed9a5baa3a188824b", m.Image)
 	})
 
 	t.Run("bundle docker tag not set on reference", func(t *testing.T) {
-		cxt := context.NewTestContext(t)
+		cxt := portercontext.NewTestContext(t)
 		m := Manifest{
-			Name:      "mybun",
-			Version:   "1.2.3-beta.1+15",
-			Reference: "getporter/mybun",
+			SchemaVersion: DefaultSchemaVersion.String(),
+			Name:          "mybun",
+			Version:       "1.2.3-beta.1+15",
+			Reference:     "getporter/mybun",
 		}
-		err := m.validateMetadata(cxt.Context)
+		err := m.validateMetadata(cxt.Context, schema.CheckStrategyNone)
 		require.NoError(t, err)
 
 		err = m.SetDefaults()
 		require.NoError(t, err)
 		assert.Equal(t, "getporter/mybun:v1.2.3-beta.1_15", m.Reference)
-		assert.Equal(t, "getporter/mybun-installer:v1.2.3-beta.1_15", m.Image)
+		assert.Equal(t, "getporter/mybun:porter-bcd1325906d287fb3b93500c8bfd2947", m.Image)
 	})
 
 	t.Run("bundle reference includes registry with port", func(t *testing.T) {
-		cxt := context.NewTestContext(t)
+		cxt := portercontext.NewTestContext(t)
 		m := Manifest{
-			Name:      "mybun",
-			Version:   "0.1.0",
-			Reference: "localhost:5000/missing-invocation-image",
+			SchemaVersion: DefaultSchemaVersion.String(),
+			Name:          "mybun",
+			Version:       "0.1.0",
+			Reference:     "localhost:5000/missing-invocation-image",
 		}
-		err := m.validateMetadata(cxt.Context)
+		err := m.validateMetadata(cxt.Context, schema.CheckStrategyNone)
 		require.NoError(t, err)
 
 		err = m.SetDefaults()
 		require.NoError(t, err)
 		assert.Equal(t, "localhost:5000/missing-invocation-image:v0.1.0", m.Reference)
-		assert.Equal(t, "localhost:5000/missing-invocation-image-installer:v0.1.0", m.Image)
+		assert.Equal(t, "localhost:5000/missing-invocation-image:porter-fea49a80fb6822ee71f71e2ce4a48a37", m.Image)
 	})
 
 	t.Run("registry provided, no reference", func(t *testing.T) {
-		cxt := context.NewTestContext(t)
+		cxt := portercontext.NewTestContext(t)
 		m := Manifest{
-			Name:     "mybun",
-			Version:  "1.2.3-beta.1",
-			Registry: "getporter",
+			SchemaVersion: DefaultSchemaVersion.String(),
+			Name:          "mybun",
+			Version:       "1.2.3-beta.1",
+			Registry:      "getporter",
 		}
-		err := m.validateMetadata(cxt.Context)
+		err := m.validateMetadata(cxt.Context, schema.CheckStrategyNone)
 		require.NoError(t, err)
 
 		err = m.SetDefaults()
 		require.NoError(t, err)
 		assert.Equal(t, "getporter/mybun:v1.2.3-beta.1", m.Reference)
-		assert.Equal(t, "getporter/mybun-installer:v1.2.3-beta.1", m.Image)
+		assert.Equal(t, "getporter/mybun:porter-b4b9ce8671aacb5a093574b04f9f87e1", m.Image)
 	})
 
 	t.Run("registry provided with org, no reference", func(t *testing.T) {
-		cxt := context.NewTestContext(t)
+		cxt := portercontext.NewTestContext(t)
 		m := Manifest{
-			Name:     "mybun",
-			Version:  "1.2.3-beta.1",
-			Registry: "getporter/myorg",
+			SchemaVersion: DefaultSchemaVersion.String(),
+			Name:          "mybun",
+			Version:       "1.2.3-beta.1",
+			Registry:      "getporter/myorg",
 		}
-		err := m.validateMetadata(cxt.Context)
+		err := m.validateMetadata(cxt.Context, schema.CheckStrategyNone)
 		require.NoError(t, err)
 
 		err = m.SetDefaults()
 		require.NoError(t, err)
 		assert.Equal(t, "getporter/myorg/mybun:v1.2.3-beta.1", m.Reference)
-		assert.Equal(t, "getporter/myorg/mybun-installer:v1.2.3-beta.1", m.Image)
+		assert.Equal(t, "getporter/myorg/mybun:porter-f4f017f099257ee41d0c05d5e3180f88", m.Image)
 	})
 
 	t.Run("registry and reference provided", func(t *testing.T) {
-		cxt := context.NewTestContext(t)
+		cxt := portercontext.NewTestContext(t)
 		m := Manifest{
-			Name:      "mybun",
-			Version:   "1.2.3-beta.1",
-			Registry:  "myregistry/myorg",
-			Reference: "getporter/org/mybun:v1.2.3",
+			SchemaVersion: DefaultSchemaVersion.String(),
+			Name:          "mybun",
+			Version:       "1.2.3-beta.1",
+			Registry:      "myregistry/myorg",
+			Reference:     "getporter/org/mybun:v1.2.3",
 		}
-		err := m.validateMetadata(cxt.Context)
+		err := m.validateMetadata(cxt.Context, schema.CheckStrategyNone)
 		require.NoError(t, err)
 		require.Equal(t,
 			"WARNING: both registry and reference were provided; using the reference value of getporter/org/mybun:v1.2.3 for the bundle reference\n",
@@ -320,62 +412,19 @@ func TestSetDefaults(t *testing.T) {
 		err = m.SetDefaults()
 		require.NoError(t, err)
 		assert.Equal(t, "getporter/org/mybun:v1.2.3", m.Reference)
-		assert.Equal(t, "getporter/org/mybun-installer:v1.2.3", m.Image)
-	})
-
-	t.Run("tag (deprecated) and registry provided", func(t *testing.T) {
-		cxt := context.NewTestContext(t)
-		m := Manifest{
-			Name:      "mybun",
-			Version:   "1.2.3-beta.1",
-			BundleTag: "getporter/mybun:v1.2.3",
-			Registry:  "myregistry/myorg",
-		}
-		err := m.validateMetadata(cxt.Context)
-		require.NoError(t, err)
-		require.Equal(t,
-			"WARNING: the tag field has been deprecated; please replace with a value for the registry field on the Porter manifest instead\n"+
-				"===> See https://porter.sh/author-bundles/#bundle-metadata for more details\n",
-			cxt.GetOutput())
-
-		err = m.SetDefaults()
-		require.NoError(t, err)
-		assert.Equal(t, "getporter/mybun:v1.2.3", m.Reference)
-		assert.Equal(t, "getporter/mybun-installer:v1.2.3", m.Image)
-	})
-
-	t.Run("tag (deprecated) and reference provided", func(t *testing.T) {
-		cxt := context.NewTestContext(t)
-		m := Manifest{
-			Name:      "mybun",
-			Version:   "1.2.3-beta.1",
-			BundleTag: "getporter/mybun:v1.2.3",
-			Reference: "myregistry/myorg/mybun:v1.2.3",
-		}
-		err := m.validateMetadata(cxt.Context)
-		require.NoError(t, err)
-		require.Equal(t,
-			"WARNING: the tag field has been deprecated; please replace with a value for the registry field on the Porter manifest instead\n"+
-				"===> See https://porter.sh/author-bundles/#bundle-metadata for more details\n"+
-				"WARNING: both tag (deprecated) and reference were provided; using the reference value myregistry/myorg/mybun:v1.2.3 for the bundle reference\n",
-			cxt.GetOutput())
-
-		err = m.SetDefaults()
-		require.NoError(t, err)
-		assert.Equal(t, "myregistry/myorg/mybun:v1.2.3", m.Reference)
-		assert.Equal(t, "myregistry/myorg/mybun-installer:v1.2.3", m.Image)
+		assert.Equal(t, "getporter/org/mybun:porter-93d4bfba61358eca91debf6dd4ddc61f", m.Image)
 	})
 }
 
 func TestReadManifest_Validate_MissingFile(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 	_, err := ReadManifest(cxt.Context, "fake-porter.yaml")
 
 	assert.EqualError(t, err, "the specified porter configuration file fake-porter.yaml does not exist")
 }
 
 func TestMixinDeclaration_UnmarshalYAML(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 	cxt.AddTestFile("testdata/mixin-with-config.yaml", config.Name)
 	m, err := ReadManifest(cxt.Context, config.Name)
 
@@ -387,7 +436,7 @@ func TestMixinDeclaration_UnmarshalYAML(t *testing.T) {
 }
 
 func TestMixinDeclaration_UnmarshalYAML_Invalid(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 	cxt.AddTestFile("testdata/mixin-with-bad-config.yaml", config.Name)
 	_, err := ReadManifest(cxt.Context, config.Name)
 
@@ -402,7 +451,7 @@ func TestCredentialsDefinition_UnmarshalYAML(t *testing.T) {
 		}
 	}
 	t.Run("all credentials in the generated manifest file are required", func(t *testing.T) {
-		cxt := context.NewTestContext(t)
+		cxt := portercontext.NewTestContext(t)
 		cxt.AddTestFile("testdata/with-credentials.yaml", config.Name)
 		m, err := ReadManifest(cxt.Context, config.Name)
 		require.NoError(t, err)
@@ -456,6 +505,19 @@ func TestValidateParameterDefinition_missingPath(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+func TestValidateParameterDefinition_invalidSchema(t *testing.T) {
+	pd := ParameterDefinition{
+		Name: "myparam",
+		Schema: definition.Schema{
+			Type: "invalid",
+		},
+	}
+
+	err := pd.Validate()
+	assert.Contains(t, err.Error(), `encountered an error while validating definition for parameter "myparam"`)
+	assert.Contains(t, err.Error(), `schema not valid: error unmarshaling type from json: "invalid" is not a valid type`)
+}
+
 func TestValidateParameterDefinition_defaultFailsValidation(t *testing.T) {
 	pd := ParameterDefinition{
 		Name: "myparam",
@@ -492,6 +554,19 @@ func TestValidateOutputDefinition_missingPath(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+func TestValidateOutputDefinition_invalidSchema(t *testing.T) {
+	od := OutputDefinition{
+		Name: "myoutput",
+		Schema: definition.Schema{
+			Type: "invalid",
+		},
+	}
+
+	err := od.Validate()
+	assert.Contains(t, err.Error(), `encountered an error while validating definition for output "myoutput"`)
+	assert.Contains(t, err.Error(), `schema not valid: error unmarshaling type from json: "invalid" is not a valid type`)
+}
+
 func TestValidateOutputDefinition_defaultFailsValidation(t *testing.T) {
 	od := OutputDefinition{
 		Name: "myoutput",
@@ -509,6 +584,31 @@ func TestValidateOutputDefinition_defaultFailsValidation(t *testing.T) {
 }
 
 func TestValidateImageMap(t *testing.T) {
+	t.Run("with valid image digest, valid repository format and valid tag", func(t *testing.T) {
+		mi := MappedImage{
+			Repository: "getporter/myserver",
+			Digest:     "sha256:8f1133d81f1b078c865cdb11d17d1ff15f55c449d3eecca50190eed0f5e5e26f",
+			Tag:        "latest",
+		}
+
+		err := mi.Validate()
+		assert.NoError(t, err)
+		ref, err := mi.ToOCIReference()
+		require.NoError(t, err)
+		require.Equal(t, "getporter/myserver@sha256:8f1133d81f1b078c865cdb11d17d1ff15f55c449d3eecca50190eed0f5e5e26f", ref.String(), "failed to convert image map to its OCI reference")
+	})
+	t.Run("with valid repository format and valid tag", func(t *testing.T) {
+		mi := MappedImage{
+			Repository: "getporter/myserver",
+			Tag:        "v0.1.0",
+		}
+
+		err := mi.Validate()
+		assert.NoError(t, err)
+		ref, err := mi.ToOCIReference()
+		require.NoError(t, err)
+		require.Equal(t, "getporter/myserver:v0.1.0", ref.String(), "failed to convert image map to its OCI reference")
+	})
 	t.Run("with both valid image digest and valid repository format", func(t *testing.T) {
 		mi := MappedImage{
 			Repository: "getporter/myserver",
@@ -516,8 +616,10 @@ func TestValidateImageMap(t *testing.T) {
 		}
 
 		err := mi.Validate()
-		// No error should be returned
-		assert.NoError(t, err)
+		require.NoError(t, err)
+		ref, err := mi.ToOCIReference()
+		require.NoError(t, err)
+		require.Equal(t, "getporter/myserver@sha256:8f1133d81f1b078c865cdb11d17d1ff15f55c449d3eecca50190eed0f5e5e26f", ref.String(), "failed to convert image map to its OCI reference")
 	})
 
 	t.Run("with no image digest supplied and valid repository format", func(t *testing.T) {
@@ -526,8 +628,10 @@ func TestValidateImageMap(t *testing.T) {
 		}
 
 		err := mi.Validate()
-		// No error should be returned
 		assert.NoError(t, err)
+		ref, err := mi.ToOCIReference()
+		require.NoError(t, err)
+		require.Equal(t, "getporter/myserver", ref.String(), "failed to convert image map to its OCI reference")
 	})
 
 	t.Run("with valid image digest but invalid repository format", func(t *testing.T) {
@@ -538,6 +642,8 @@ func TestValidateImageMap(t *testing.T) {
 
 		err := mi.Validate()
 		assert.Error(t, err)
+		_, err = mi.ToOCIReference()
+		assert.ErrorContains(t, err, "failed to parse named reference")
 	})
 
 	t.Run("with invalid image digest format", func(t *testing.T) {
@@ -548,15 +654,17 @@ func TestValidateImageMap(t *testing.T) {
 
 		err := mi.Validate()
 		assert.Error(t, err)
+		_, err = mi.ToOCIReference()
+		assert.ErrorContains(t, err, "failed to create a new reference with digest for repository")
 	})
 }
 
 func TestLoadManifestWithCustomData(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	c := config.NewTestConfig(t)
 
-	cxt.AddTestFile("testdata/porter-with-custom-metadata.yaml", config.Name)
+	c.TestContext.AddTestFile("testdata/porter-with-custom-metadata.yaml", config.Name)
 
-	m, err := LoadManifestFrom(cxt.Context, config.Name)
+	m, err := LoadManifestFrom(context.Background(), c.Config, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
 	require.NotNil(t, m, "manifest was nil")
@@ -598,11 +706,11 @@ func TestLoadManifestWithCustomData(t *testing.T) {
 }
 
 func TestLoadManifestWithRequiredExtensions(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	c := config.NewTestConfig(t)
 
-	cxt.AddTestFile("testdata/porter.yaml", config.Name)
+	c.TestContext.AddTestFile("testdata/porter.yaml", config.Name)
 
-	m, err := LoadManifestFrom(cxt.Context, config.Name)
+	m, err := LoadManifestFrom(context.Background(), c.Config, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
 	expected := []RequiredExtension{
@@ -622,7 +730,7 @@ func TestLoadManifestWithRequiredExtensions(t *testing.T) {
 }
 
 func TestReadManifest_WithTemplateVariables(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 	cxt.AddTestFile("testdata/porter-with-templating.yaml", config.Name)
 	m, err := ReadManifest(cxt.Context, config.Name)
 	require.NoError(t, err, "ReadManifest failed")
@@ -631,7 +739,7 @@ func TestReadManifest_WithTemplateVariables(t *testing.T) {
 }
 
 func TestManifest_GetTemplatedOutputs(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 	cxt.AddTestFile("testdata/porter-with-templating.yaml", config.Name)
 	m, err := ReadManifest(cxt.Context, config.Name)
 	require.NoError(t, err, "ReadManifest failed")
@@ -643,7 +751,7 @@ func TestManifest_GetTemplatedOutputs(t *testing.T) {
 }
 
 func TestManifest_GetTemplatedDependencyOutputs(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 	cxt.AddTestFile("testdata/porter-with-templating.yaml", config.Name)
 	m, err := ReadManifest(cxt.Context, config.Name)
 	require.NoError(t, err, "ReadManifest failed")
@@ -676,11 +784,11 @@ func TestParamToEnvVar(t *testing.T) {
 }
 
 func TestParameterDefinition_UpdateApplyTo(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	c := config.NewTestConfig(t)
 
-	cxt.AddTestFile("testdata/simple.porter.yaml", config.Name)
+	c.TestContext.AddTestFile("testdata/simple.porter.yaml", config.Name)
 
-	m, err := LoadManifestFrom(cxt.Context, config.Name)
+	m, err := LoadManifestFrom(context.Background(), c.Config, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
 	testcases := []struct {
@@ -713,6 +821,27 @@ func TestParameterDefinition_UpdateApplyTo(t *testing.T) {
 
 			pd.UpdateApplyTo(m)
 			require.Equal(t, tc.wantApplyTo, pd.ApplyTo)
+		})
+	}
+}
+
+func TestManifest_getTemplatePrefix(t *testing.T) {
+	testcases := []struct {
+		schemaVersion string
+		wantPrefix    string
+	}{
+		{"", ""},
+		{"1.0.0-alpha.1", ""},
+		{"1.0.0-alpha.2", TemplateDelimiterPrefix},
+		{"1.0.0", TemplateDelimiterPrefix},
+		{"1.1.0", TemplateDelimiterPrefix},
+		{"3.0.0", TemplateDelimiterPrefix},
+	}
+	for _, tc := range testcases {
+		t.Run(tc.schemaVersion, func(t *testing.T) {
+			m := Manifest{SchemaVersion: tc.schemaVersion}
+			prefix := m.GetTemplatePrefix()
+			require.Equal(t, tc.wantPrefix, prefix)
 		})
 	}
 }

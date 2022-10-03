@@ -1,82 +1,202 @@
 ---
-title: Data Migration
+title: Migrate from Porter v0 to v1
 description: How to prepare for and migrate Porter's data
 ---
 
-Hello friend, if you have found this page then Porter's storage format has
-changed. You need to back up Porter's data and then migrate it to the current
-version. I'm sorry we dumped this on you and we'll try to limit how often this
-happens in the future!
+Porter's data storage backend and format are changing from v0 to v1.0.
+When you upgrade to Porter v1, you need to migrate both your Porter database and any files that you used with Porter, such as saved parameter or credential sets.
+This guide will walk you through upgrading your data and documents.
 
-Until the data is migrated, newer versions of Porter will halt and request a 
-migration. The migration is one-way, you may continue to use an [older version
-of Porter][install-old] to delay migrating your data until a more appropriate time.
+1. [Make a new PORTER_HOME](#1-make-a-new-porter_home)
+2. [Install Porter v1](#2-install-porter-v1)
+3. [Configure a Secrets Plugin](#3-configure-a-secrets-plugin)
+4. [Configure a Storage Plugin](#4-configure-a-storage-plugin)
+5. [Validate Your Porter Configuration](#5-validate-your-porter-configuration)
+6. [Migrate Your Data](#6-migrate-your-data)
+7. [View Your Migrated Data](#7-view-your-migrated-data)
+8. [Migrate Standalone Files](#8-migrate-standalone-files)
+9. [Migrate Your Bundles](#9-migrate-your-bundles)
 
-1. [Backup](#backup)
-2. [Migrate](#migrate)
+## 1. Make a new PORTER_HOME
 
-[install-old]: /install/#older-version
+Porter v1 requires a fresh PORTER_HOME directory.
+Do not install Porter v1 into an existing v0 PORTER_HOME because the v0 cache files, mixins, and plugins that are stored in your existing home directory do not work with Porter v1.
 
-## Backup
+By default, your PORTER_HOME directory is located at **~/.porter**.
+Locate your PORTER_HOME and move the directory to another location, such as **~/.porterv0**
 
-Backup Porter's data before performing the migration. You should always backup
-the Porter home directory, usually **~/.porter**.
-
-You may have data stored in an additional remote location depending on the
-plugin that you are using. Open up your Porter config file located at
-~/.porter/config.toml.
-
-* If you don't have one, congratulations!, you are using the filesystem plugin 
-  and all of your data is in Porter home.
-* If you do have a config file, take a look and determine if you are using a 
-  different storage plugin.
-  
-NOTE: Only storage plugins have data that requires migration, not secret plugins.
-
-### Azure Plugin
-
-The Azure plugin stores files in Azure Blob Storage. You should also backup
-the container named "porter" in the storage account in addition to backing
-up Porter home on your local file system.
-
-Versions v0.9.0+ of the Azure plugin requires that the blob storage account
-has the Blob Index preview enabled on the account. [Only certain regions support
-the Blob Index preview, and you must run a command to enable it on your
-account][blob-preview].
-
-At the time of the v0.28.0 Porter release, only the following Azure regions
-support the Blob Index preview. If your current storage account is
-in another region, you can create a new account in one of the regions 
-below and copy the container to the new account.
-
-* Canada Central
-* Canada East
-* France Central
-* France South
-
-The following az cli command enables the Blob Index preview on your account (it
-can take up to 10 minutes for this command to propagate):
-
-```
-az feature register --namespace Microsoft.Storage --name BlobIndex
-az provider register --namespace 'Microsoft.Storage'
+```bash
+mv ~/.porter ~/.porterv0
 ```
 
-After you have created a new account an appropriate region and enabled the
-Blob Index preview, you can use azcopy to [copy the porter container to a new
-storage account][azcopy-container].
+## 2. Install Porter v1
 
-[blob-preview]: https://docs.microsoft.com/en-us/azure/storage/blobs/storage-manage-find-blobs?tabs=azure-portal#regional-availability-and-storage-account-support
-[azcopy-container]: https://docs.microsoft.com/en-us/azure/storage/common/storage-use-azcopy-blobs#copy-a-container-to-another-storage-account
- 
-## Migrate
+[Install](https://getporter.org/install/#prerelease) the most recent Porter v1 release.
+The first version of Porter v1 that supports migrating old data from v0 is v1.0.0-beta.1.
+You may choose to set the PORTER_HOME environment variable to change the default location, or omit setting that environment variable to install Porter v1 in the default directory **~/.porter**.
+The instructions on the installation page have you set PORTER_HOME to avoid accidentally overwriting your v0 directory but once you have moved your old directory it's safe to use the default installation location for Porter v1.
 
-Once you have completed a backup of Porter's data, you are ready to run the migration
-by running the following command:
+## 3. Configure a Secrets Plugin
+
+Porter v1 requires that you configure a secrets plugin.
+For non-production environments, you may use the [filesystem](/plugins/filesystem/) secrets plugin.
+This stores any sensitive data generated by Porter in your PORTER_HOME directory and is suitable for testing out v1.
+
+Here are secret plugins that we recommend for production use:
+- [Azure Key Vault](/plugins/azure/#secrets)
+- [Kubernetes Secrets](/plugins/kubernetes/#secrets)
+- [Hashicorp Vault](/plugins/hashicorp/)
+
+For more information on why a secrets plugin is required, and step-by-step instructions to configure one, see [Upgrade your plugins to securely store sensitive data](/blog/persist-sensitive-data-safely).
+
+## 4. Configure a Storage Plugin
+
+Porter v1 now uses a Mongo database to store its data.
+The default storage plugin is now the [mongodb-docker] plugin, which runs a Mongodb server in a container.
+This plugin is suitable only for trying out Porter, and local development/testing.
+Production environments should use the [mongodb] plugin, which stores Porter's data in an external Mongo database.
+
+In v0, Porter supported storing data with the filesystem plugin, storing data in flat files in your PORTER_HOME directory, which is now deprecated.
+The Azure Blob and Azure Table storage plugins have been deprecated as well, and instead you should use Azure CosmosDB with the mongodb plugin.
+
+If you would like to use the mongodb-docker plugin (and are not migrating production data), then no further changes are required and you may move to the next step.
+Otherwise, open your Porter config file located in PORTER_HOME, for example ~/.porter/config.yaml, and configure the storage plugin.
+Below is an example of how to configure Porter to use an external Mongo database.
+The example uses an external secret store so that the database connection string is not stored in plain text in the configuration file.
+You may also use an environment variable, such as `${env.MYDB_CONNSTR}`, to provide Porter the connection string.
+
+NOTE: Porter uses the [standard mongodb connection string format](https://www.mongodb.com/docs/drivers/go/current/fundamentals/connection/), which looks like this for a local development server: `mongodb://localhost:27017`.
+
+```yaml
+# ~/.porter/config.yaml
+default-storage: mydb
+
+storage:
+  - name: mydb
+    plugin: mongodb
+    config:
+      # Do not store sensitive data in the Porter config file
+      # Use a secret or environment variable instead
+      url: ${secret.mydb-connstr}
+
+secrets:
+  - name: mysecrets
+    plugin: azure.keyvault
+    config:
+      # Define a secret named "mydb-connstr" in this vault with the mongodb connection string
+      vault: myvault
+```
+
+## 5. Validate Your Porter Configuration
+
+Run `porter version` to verify that you are using v1 of Porter, and then run `porter list` and validate that your configuration file is correct.
+The command should return zero results because you are starting with a new PORTER_HOME and database.
+
+```console
+$ porter version
+porter v1.0.0-beta.1
+
+$ porter list
+-------------------------------------------------------------------------------------
+  NAMESPACE  NAME                  CREATED     MODIFIED    LAST ACTION  LAST STATUS
+-------------------------------------------------------------------------------------
+```
+
+## 6. Migrate Your Data
+
+Finally, you can run the [porter storage migrate] command to migrate your existing v0 data from your old PORTER_HOME into the new v1 installation of Porter.
 
 ```
-porter storage migrate
+porter storage migrate --old-home ~/.porterv0 [--old-account ACCOUNT_NAME] [--namespace DESTINATION_NAMESPACE]
 ```
 
-After the migration completes, Porter records the new storage version in
-~/.porter/schema.json, and you can use all of Porter's commands again.
+The only required flag is \--old-home, which you should set to the location where you moved your v0 PORTER_HOME directory.
+You may also optionally set \--old-account if the data that you want to migrate is not the configured default storage account.
+
+By default, Porter migrates your data into the [current namespace](/configuration/#namespace), which may be configured in your Porter v1 configuration file or the PORTER_NAMESPACE environment variable.
+Porter v0 doesn't have the concept of namespaces, and effectively everything was defined in the global (empty) namespace.
+We recommend using the \--namespace flag and being explicit about where the data should be migrated.
+
+[porter storage migrate]: /cli/porter_storage_migrate/
+
+## 7. View Your Migrated Data
+
+After running the [porter storage migrate] command, use the list commands to view your migrated data:
+
+```console
+porter installations list
+porter credentials list
+porter parameters list
+```
+
+If there are any problems with your migrated data, please [open an issue] and let us know.
+
+[open an issue]: https://github.com/getporter/porter/issues/new
+
+## 8. Migrate Standalone Files
+
+You may also have standalone files representing parameter and credential sets that require migration before they may be used with Porter v1.
+
+Some of Porter's commands accept a file argument, such as `porter install` where you can pass in a file representing a credential or parameter set.
+We have made slight changes to the file format so that we can support adding new features over time.
+All files now have a `schemaVersion` field that declares which schema the document follows.
+The [File Formats] page explains the supported schema for each document and which schemaVersion value is compatible with specific versions of Porter.
+
+To migrate a v0 Parameter or Credential set file to the v1 format, add the following field to the document:
+
+**json**
+
+```json
+{
+  "schemaVersion": "1.0.1",
+  "name": "my-secrets"
+}
+```
+
+**yaml**
+
+```yaml
+schemaVersion: 1.0.1
+name: my-secrets
+```
+
+No other schema changes were made from v0 to v1 for Parameter and Credential Sets.
+
+## 9. Migrate Your Bundles
+
+The schema of the porter.yaml file has changed from v0 to v1 to support new features.
+To upgrade a bundle for use with Porter v1:
+
+1. Open your porter.yaml file
+2. Add a `schemaVersion: 1.0.0-alpha.1` to the top of the file
+3. The `tag` field has been replaced by `reference`. We recommend using `registry` instead of `reference`, but you may continue to use it to completely control where the bundle is published.
+4. The `invocationImage` field has been deprecated and is no longer available.
+   Porter now generates the invocation image name using a hash generated from the bundle's metadata using the following format: BUNDLE_REPOSITORY:porter-HASH.
+   We also no longer push the invocation image to a separate repository, so if you used to rely on the BUNDLE_NAME-installer naming convention, that is not available going forward.
+5. If the bundle defines dependencies, the dependency list has been moved from under `dependences` to under `dependencies.requires`, and the `reference` and `version` fields moved under a new field `bundle`.
+   ```yaml
+   # V0 dependency declaration
+   dependencies:
+   - name: mysql
+     reference: getporter/mysql:v0.1.3
+     parameters:
+       database_name: wordpress
+       mysql_user: wordpress
+
+   # V1 dependency declaration
+   dependencies:
+     requires:
+       - name: mysql
+         bundle:
+           reference: getporter/mysql:v0.1.3
+         parameters:
+           database_name: wordpress
+           mysql_user: wordpress
+   ```
+
+🚨 After you have migrated your bundle to the Porter v1 format, do not forget to bump your bundle version!
+Do not publish a Porter v1 bundle on top of an existing bundle, otherwise older v0 Porter clients will be unable to use the bundle.
+
+[mongodb-docker]: /plugins/mongodb-docker
+[mongodb]: /plugins/mongodb/
+[File Formats]: https://release-v1.porter.sh/reference/file-formats/

@@ -1,15 +1,17 @@
 package runtime
 
 import (
+	"context"
 	"fmt"
 	"path/filepath"
 	"testing"
 
+	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
-	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/manifest"
+	"get.porter.sh/porter/pkg/portercontext"
+	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
-	"github.com/cnabio/cnab-go/claim"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -27,14 +29,14 @@ func TestPorterRuntime_Execute_readMixinOutputs(t *testing.T) {
 	for _, testFile := range testFiles {
 		r.TestContext.AddTestFile(
 			fmt.Sprintf("testdata/outputs/%s.txt", testFile),
-			filepath.Join(context.MixinOutputsDir, testFile))
+			filepath.Join(portercontext.MixinOutputsDir, testFile))
 	}
 
 	gotOutputs, err := r.readMixinOutputs()
 	require.NoError(t, err)
 
 	for _, testFile := range testFiles {
-		if exists, _ := r.Context.FileSystem.Exists(testFile); exists {
+		if exists, _ := r.config.FileSystem.Exists(testFile); exists {
 			require.Fail(t, fmt.Sprintf("file %s should not exist after reading outputs", testFile))
 		}
 	}
@@ -62,7 +64,7 @@ BAZ`,
 func TestPorterRuntime_ApplyStepOutputsToBundle_None(t *testing.T) {
 	r := NewTestPorterRuntime(t)
 	m := &manifest.Manifest{Name: "mybun"}
-	r.RuntimeManifest = NewRuntimeManifest(r.Context, claim.ActionInstall, m)
+	r.RuntimeManifest = r.NewRuntimeManifest(cnab.ActionInstall, m)
 
 	outputs := map[string]string{
 		"foo": "bar",
@@ -94,7 +96,7 @@ func TestPorterRuntime_ApplyStepOutputsToBundle_Some_Match(t *testing.T) {
 			},
 		},
 	}
-	r.RuntimeManifest = NewRuntimeManifest(r.Context, claim.ActionInstall, m)
+	r.RuntimeManifest = r.NewRuntimeManifest(cnab.ActionInstall, m)
 
 	outputs := map[string]string{
 		"foo": "bar",
@@ -110,7 +112,7 @@ func TestPorterRuntime_ApplyStepOutputsToBundle_Some_Match(t *testing.T) {
 	}
 
 	for _, outputName := range []string{"foo", "123"} {
-		bytes, err := r.FileSystem.ReadFile(filepath.Join(config.BundleOutputsDir, outputName))
+		bytes, err := r.config.FileSystem.ReadFile(filepath.Join(config.BundleOutputsDir, outputName))
 		assert.NoError(t, err)
 
 		assert.Equal(t, want[outputName], string(bytes))
@@ -130,7 +132,7 @@ func TestPorterRuntime_ApplyStepOutputsToBundle_Some_NoMatch(t *testing.T) {
 			},
 		},
 	}
-	r.RuntimeManifest = NewRuntimeManifest(r.Context, claim.ActionInstall, m)
+	r.RuntimeManifest = r.NewRuntimeManifest(cnab.ActionInstall, m)
 
 	outputs := map[string]string{
 		"foo": "bar",
@@ -143,7 +145,7 @@ func TestPorterRuntime_ApplyStepOutputsToBundle_Some_NoMatch(t *testing.T) {
 	// No outputs declared in the manifest match those in outputs,
 	// so no output file is expected to be written
 	for _, output := range []string{"foo", "bar", "123", "456"} {
-		_, err := r.FileSystem.ReadFile(filepath.Join(config.BundleOutputsDir, output))
+		_, err := r.config.FileSystem.ReadFile(filepath.Join(config.BundleOutputsDir, output))
 		assert.Error(t, err)
 	}
 }
@@ -171,7 +173,7 @@ func TestPorterRuntime_ApplyStepOutputsToBundle_ApplyTo_True(t *testing.T) {
 			},
 		},
 	}
-	r.RuntimeManifest = NewRuntimeManifest(r.Context, claim.ActionInstall, m)
+	r.RuntimeManifest = r.NewRuntimeManifest(cnab.ActionInstall, m)
 
 	outputs := map[string]string{
 		"foo": "bar",
@@ -182,21 +184,22 @@ func TestPorterRuntime_ApplyStepOutputsToBundle_ApplyTo_True(t *testing.T) {
 	assert.NoError(t, err)
 
 	// foo output should not exist (applyTo doesn't match)
-	_, err = r.FileSystem.ReadFile(filepath.Join(config.BundleOutputsDir, "foo"))
+	_, err = r.config.FileSystem.ReadFile(filepath.Join(config.BundleOutputsDir, "foo"))
 	assert.Error(t, err)
 
 	// 123 output should exist (applyTo matches)
-	bytes, err := r.FileSystem.ReadFile(filepath.Join(config.BundleOutputsDir, "123"))
+	bytes, err := r.config.FileSystem.ReadFile(filepath.Join(config.BundleOutputsDir, "123"))
 	assert.NoError(t, err)
 
 	want := "abc"
 	assert.Equal(t, want, string(bytes))
 }
 
-func TestPorterRuntime_ApplyUnboundBundleOutputs_File(t *testing.T) {
-	const srcPath = "/root/.kube/config"
+func TestRuntimeManifest_ApplyUnboundBundleOutputs_File(t *testing.T) {
+	const srcPath = "/home/nonroot/.kube/config"
 	const outputName = "kubeconfig"
 
+	ctx := context.Background()
 	testcases := []struct {
 		name       string
 		shouldBind bool
@@ -249,22 +252,34 @@ func TestPorterRuntime_ApplyUnboundBundleOutputs_File(t *testing.T) {
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			r := NewTestPorterRuntime(t)
+			c := portercontext.NewTestContext(t)
 			m := &manifest.Manifest{
 				Name: "mybun",
 				Outputs: manifest.OutputDefinitions{
 					tc.def.Name: tc.def,
 				},
 			}
-			r.RuntimeManifest = NewRuntimeManifest(r.Context, claim.ActionInstall, m)
+			cfg := NewConfigFor(c.Context)
+			rm := NewRuntimeManifest(cfg, cnab.ActionInstall, m)
+			rm.bundle = cnab.NewBundle(bundle.Bundle{
+				Definitions: map[string]*definition.Schema{
+					tc.def.Name: &tc.def.Schema,
+				},
+				Outputs: map[string]bundle.Output{
+					tc.def.Name: {
+						Definition: tc.def.Name,
+						Path:       tc.def.Path,
+					},
+				},
+			})
 
-			_, err := r.FileSystem.Create(srcPath)
+			_, err := rm.config.FileSystem.Create(srcPath)
 			require.NoError(t, err)
 
-			err = r.applyUnboundBundleOutputs()
+			err = rm.applyUnboundBundleOutputs(ctx)
 			require.NoError(t, err)
 
-			exists, _ := r.FileSystem.Exists("/cnab/app/outputs/" + outputName)
+			exists, _ := rm.config.FileSystem.Exists("/cnab/app/outputs/" + outputName)
 			assert.Equal(t, exists, tc.shouldBind)
 		})
 	}
@@ -283,15 +298,17 @@ func TestLoadImageMappingFilesNoBundle(t *testing.T) {
 	r := NewTestPorterRuntime(t)
 	r.TestContext.AddTestFile("testdata/relocation-mapping.json", "/cnab/app/relocation-mapping.json")
 	_, _, err := r.getImageMappingFiles()
-	assert.EqualError(t, err, "couldn't read runtime bundle.json: open /cnab/bundle.json: file does not exist")
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "cannot read bundle")
 }
 
 func TestLoadImageMappingFilesBadBundle(t *testing.T) {
 	r := NewTestPorterRuntime(t)
-	r.TestContext.AddTestFile("../porter/testdata/porter.yaml", "/cnab/bundle.json")
+	r.TestContext.AddTestFileFromRoot("pkg/porter/testdata/porter.yaml", "/cnab/bundle.json")
 	r.TestContext.AddTestFile("testdata/relocation-mapping.json", "/cnab/app/relocation-mapping.json")
 	_, _, err := r.getImageMappingFiles()
-	assert.EqualError(t, err, "couldn't load runtime bundle.json: invalid character 'a' in literal null (expecting 'u')")
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "cannot load bundle")
 }
 
 func TestLoadImageMappingFilesGoodFiles(t *testing.T) {

@@ -1,7 +1,8 @@
+schemaVersion: 1.0.0-alpha.1
 name: mybun
 version: 0.1.0
 description: "An example Porter configuration"
-registry: getporter
+registry: "localhost:5000"
 
 mixins:
   - exec
@@ -9,10 +10,10 @@ mixins:
 parameters:
   - name: myfile
     type: file
-    path: /root/myfile
+    path: /cnab/app/myfile
   - name: myotherfile
     type: file
-    path: /root/myotherfile
+    path: /cnab/app/myotherfile
   # This is added to cover bug fix for https://github.com/getporter/porter/issues/835
   # It will be inherently exercised in install_test.go via a default installation
   - name: onlyUpgrade
@@ -27,7 +28,7 @@ outputs:
       - install
   - name: myotherfile
     type: file
-    path: /root/myotherfile
+    path: /cnab/app/myotherfile
     applyTo:
       - install
 
@@ -39,7 +40,7 @@ install:
         - dump-myfile
       outputs:
         - name: myfile
-          path: /root/myfile
+          path: /cnab/app/myfile
 
 upgrade:
   - exec:

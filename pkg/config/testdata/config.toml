@@ -1,0 +1,33 @@
+verbosity = "warn"
+
+default-storage-plugin = "mongodb-docker"
+default-storage = "dev"
+default-secrets-plugin = "azure.keyvault"
+default-secrets = "red-team"
+
+# Keep this line because while there is only one build driver now, we may add more in the future
+build-driver = "buildkit"
+
+[logs]
+  log-to-file = true
+  level = "info"
+  structured = true
+
+[telemetry]
+  enabled = true
+  redirect-to-file = true
+
+[[storage]]
+  name = "dev"
+  plugin = "mongodb"
+
+  [storage.config]
+    url = "${secret.connection-string}"
+
+[[secrets]]
+  name = "red-team"
+  plugin = "azure.keyvault"
+
+  [secrets.config]
+    token = "${env.VAULT_TOKEN}"
+    vault = "teamsekrets"

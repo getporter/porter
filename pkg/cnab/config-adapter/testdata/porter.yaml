@@ -1,7 +1,8 @@
+schemaVersion: 1.0.0-alpha.1
 name: porter-hello
 description: "An example Porter configuration"
 version: 0.1.0
-registry: getporter
+registry: "localhost:5000"
 
 credentials:
   - name: username
@@ -14,9 +15,11 @@ credentials:
       - uninstall
 
 dependencies:
-  - name: mysql
-    reference: "getporter/azure-mysql:5.7"
-    
+  requires:
+    - name: mysql
+      bundle:
+        reference: "getporter/azure-mysql:5.7"
+
 mixins:
 - exec
 

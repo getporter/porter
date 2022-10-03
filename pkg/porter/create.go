@@ -5,8 +5,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/config"
-	"github.com/pkg/errors"
 )
 
 func (p *Porter) Create() error {
@@ -27,7 +27,7 @@ func (p *Porter) Create() error {
 		return err
 	}
 
-	err = p.CopyTemplate(p.Templates.GetDockerfileTemplate, "Dockerfile.tmpl")
+	err = p.CopyTemplate(p.Templates.GetDockerfileTemplate, "template.Dockerfile")
 	if err != nil {
 		return err
 	}
@@ -46,14 +46,14 @@ func (p *Porter) CopyTemplate(getTemplate func() ([]byte, error), dest string) e
 		return err
 	}
 
-	var mode os.FileMode = 0600
+	var mode os.FileMode = pkg.FileModeWritable
 	if filepath.Ext(dest) == ".sh" {
-		mode = 0700
+		mode = pkg.FileModeExecutable
 	}
 
 	err = p.FileSystem.WriteFile(dest, tmpl, mode)
 	if err != nil {
-		return errors.Wrapf(err, "failed to write template to %s", dest)
+		return fmt.Errorf("failed to write template to %s: %w", dest, err)
 	}
 	return nil
 }

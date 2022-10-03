@@ -1,5 +1,7 @@
 # https://help.github.com/en/articles/about-code-owners#codeowners-syntax
+# Add your name to this file if you want to be automatically assign to pull requests
+# See OWNERS.md for a list of all maintainers
 
 /docs/content/  @iennae
 
-*   @carolynvs @jeremyrickard @vdice
+*   @carolynvs @vinozzz @vdice

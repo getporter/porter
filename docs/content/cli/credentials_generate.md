@@ -18,7 +18,7 @@ specify a bundle with --file.
 
 Bundles define 1 or more credential(s) that are required to interact with a
 bundle. The bundle definition defines where the credential should be delivered
-to the bundle, i.e. at /root/.kube. A credential set, on the other hand,
+to the bundle, i.e. at /home/nonroot/.kube. A credential set, on the other hand,
 represents the source data that you wish to use when interacting with the
 bundle. These will typically be environment variables or files on your local
 file system.
@@ -34,11 +34,12 @@ porter credentials generate [NAME] [flags]
 ### Examples
 
 ```
-  porter credential generate
-  porter credential generate kubecred --reference getporter/porter-hello:v0.1.0
-  porter credential generate kubecred --reference localhost:5000/getporter/porter-hello:v0.1.0 --insecure-registry --force
-  porter credential generate kubecred --file myapp/porter.yaml
-  porter credential generate kubecred --cnab-file myapp/bundle.json
+  porter credentials generate
+  porter credentials generate kubecred --reference getporter/mysql:v0.1.4 --namespace test
+  porter credentials generate kubekred --label owner=myname --reference getporter/mysql:v0.1.4
+  porter credentials generate kubecred --reference localhost:5000/getporter/mysql:v0.1.4 --insecure-registry --force
+  porter credentials generate kubecred --file myapp/porter.yaml
+  porter credentials generate kubecred --cnab-file myapp/bundle.json
 
 ```
 
@@ -50,14 +51,16 @@ porter credentials generate [NAME] [flags]
       --force               Force a fresh pull of the bundle
   -h, --help                help for generate
       --insecure-registry   Don't require TLS for the registry
+  -l, --label strings       Associate the specified labels with the credential set. May be specified multiple times.
+  -n, --namespace string    Namespace in which the credential set is defined. Defaults to the global namespace.
   -r, --reference string    Use a bundle in an OCI registry specified by the given reference.
 ```
 
 ### Options inherited from parent commands
 
 ```
-      --debug           Enable debug logging
-      --debug-plugins   Enable plugin debug logging
+      --experimental strings   Comma separated list of experimental features to enable. See https://getporter.org/configuration/#experimental-feature-flags for available feature flags.
+      --verbosity string       Threshold for printing messages to the console. Available values are: debug, info, warning, error. (default "info")
 ```
 
 ### SEE ALSO

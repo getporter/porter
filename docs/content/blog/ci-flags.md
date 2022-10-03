@@ -31,7 +31,7 @@ bundle (the location of a bundle in a registry).
 
 * **Tag**: Tag now _only_ means the OCI artifact tag, which is the last part of
   a bundle or image reference after the colon. For example, with
-  getporter/porter-hello:<strong>v0.1.1</strong> the tag is v0.1.1. Previously this had two
+  ghcr.io/getporter/porter-hello:<strong>v0.2.0</strong> the tag is v0.2.0. Previously this had two
   definitions: bundle tag and OCI artifact tag.
 
 # Build Workflow

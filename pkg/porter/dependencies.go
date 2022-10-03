@@ -1,83 +1,82 @@
 package porter
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"strings"
 
-	"get.porter.sh/porter/pkg/cnab/extensions"
+	"get.porter.sh/porter/pkg/cnab"
+	depsv1 "get.porter.sh/porter/pkg/cnab/dependencies/v1"
 	cnabprovider "get.porter.sh/porter/pkg/cnab/provider"
-	"get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/runtime"
-	"github.com/cnabio/cnab-go/bundle"
-	"github.com/cnabio/cnab-go/claim"
+	"get.porter.sh/porter/pkg/storage"
+	"get.porter.sh/porter/pkg/tracing"
 	"github.com/hashicorp/go-multierror"
-	"github.com/pkg/errors"
 )
 
 type dependencyExecutioner struct {
-	*context.Context
+	*config.Config
 	porter *Porter
 
-	Action   string
-	Manifest *manifest.Manifest
-	Resolver BundleResolver
-	CNAB     cnabprovider.CNABProvider
-	Claims   claim.Provider
+	Resolver      BundleResolver
+	CNAB          cnabprovider.CNABProvider
+	Installations storage.InstallationProvider
+
+	parentInstallation storage.Installation
+	parentAction       BundleAction
+	parentOpts         *BundleExecutionOptions
 
 	// These are populated by Prepare, call it or perish in inevitable errors
-	parentAction BundleAction
-	parentOpts   *BundleActionOptions
-	parentArgs   cnabprovider.ActionArguments
-	deps         []*queuedDependency
+	parentArgs cnabprovider.ActionArguments
+	deps       []*queuedDependency
 }
 
-func newDependencyExecutioner(p *Porter, action string) *dependencyExecutioner {
+func newDependencyExecutioner(p *Porter, installation storage.Installation, action BundleAction) *dependencyExecutioner {
 	resolver := BundleResolver{
 		Cache:    p.Cache,
 		Registry: p.Registry,
 	}
 	return &dependencyExecutioner{
-		porter:   p,
-		Action:   action,
-		Context:  p.Context,
-		Manifest: p.Manifest,
-		Resolver: resolver,
-		CNAB:     p.CNAB,
-		Claims:   p.Claims,
+		porter:             p,
+		parentInstallation: installation,
+		parentAction:       action,
+		parentOpts:         action.GetOptions(),
+		Config:             p.Config,
+		Resolver:           resolver,
+		CNAB:               p.CNAB,
+		Installations:      p.Installations,
 	}
 }
 
 type queuedDependency struct {
-	extensions.DependencyLock
-	CNABFile   string
-	Parameters map[string]string
-
-	outputs claim.Outputs
+	cnab.DependencyLock
+	BundleReference cnab.BundleReference
+	Parameters      map[string]string
 
 	// cache of the CNAB file contents
 	cnabFileContents []byte
-
-	RelocationMapping string
 }
 
-func (e *dependencyExecutioner) Prepare(parentAction BundleAction) error {
-	e.parentAction = parentAction
-	e.parentOpts = parentAction.GetOptions()
+func (e *dependencyExecutioner) Prepare(ctx context.Context) error {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
 
-	parentArgs, err := e.porter.BuildActionArgs(parentAction)
+	parentActionArgs, err := e.porter.BuildActionArgs(ctx, e.parentInstallation, e.parentAction)
 	if err != nil {
 		return err
 	}
-	e.parentArgs = parentArgs
+	e.parentArgs = parentActionArgs
 
-	err = e.identifyDependencies()
+	err = e.identifyDependencies(ctx)
 	if err != nil {
 		return err
 	}
 
 	for _, dep := range e.deps {
-		err := e.prepareDependency(dep)
+		err := e.prepareDependency(ctx, dep)
 		if err != nil {
 			return err
 		}
@@ -86,14 +85,17 @@ func (e *dependencyExecutioner) Prepare(parentAction BundleAction) error {
 	return nil
 }
 
-func (e *dependencyExecutioner) Execute() error {
+func (e *dependencyExecutioner) Execute(ctx context.Context) error {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
 	if e.deps == nil {
-		return errors.New("Prepare must be called before Execute")
+		return span.Error(errors.New("Prepare must be called before Execute"))
 	}
 
-	// executeDependency the requested action against all of the dependencies
+	// executeDependency the requested action against all the dependencies
 	for _, dep := range e.deps {
-		err := e.executeDependency(dep)
+		err := e.executeDependency(ctx, dep)
 		if err != nil {
 			return err
 		}
@@ -104,7 +106,12 @@ func (e *dependencyExecutioner) Execute() error {
 
 // PrepareRootActionArguments uses information about the dependencies of a bundle to prepare
 // the execution of the root operation.
-func (e *dependencyExecutioner) PrepareRootActionArguments(args *cnabprovider.ActionArguments) {
+func (e *dependencyExecutioner) PrepareRootActionArguments(ctx context.Context) (cnabprovider.ActionArguments, error) {
+	args, err := e.porter.BuildActionArgs(ctx, e.parentInstallation, e.parentAction)
+	if err != nil {
+		return cnabprovider.ActionArguments{}, err
+	}
+
 	if args.Files == nil {
 		args.Files = make(map[string]string, 2*len(e.deps))
 	}
@@ -117,53 +124,49 @@ func (e *dependencyExecutioner) PrepareRootActionArguments(args *cnabprovider.Ac
 		args.Files[target] = string(dep.cnabFileContents)
 	}
 
-	// Remove parameters for dependencies
-	for key := range args.Params {
-		if strings.Contains(key, "#") {
-			delete(args.Params, key)
-		}
-	}
+	return args, nil
 }
 
-func (e *dependencyExecutioner) identifyDependencies() error {
+func (e *dependencyExecutioner) identifyDependencies(ctx context.Context) error {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
 	// Load parent CNAB bundle definition
-	var bun bundle.Bundle
+	var bun cnab.ExtendedBundle
 	if e.parentOpts.CNABFile != "" {
 		bundle, err := e.CNAB.LoadBundle(e.parentOpts.CNABFile)
 		if err != nil {
-			return err
+			return span.Error(err)
 		}
 		bun = bundle
 	} else if e.parentOpts.Reference != "" {
-		cachedBundle, err := e.Resolver.Resolve(e.parentOpts.BundlePullOptions)
+		cachedBundle, err := e.Resolver.Resolve(ctx, e.parentOpts.BundlePullOptions)
 		if err != nil {
-			return errors.Wrapf(err, "could not resolve bundle")
+			return span.Error(fmt.Errorf("could not resolve bundle: %w", err))
 		}
 
-		bun = cachedBundle.Bundle
+		bun = cachedBundle.Definition
 	} else if e.parentOpts.Name != "" {
-		c, err := e.Claims.ReadLastClaim(e.parentOpts.Name)
+		c, err := e.Installations.GetLastRun(ctx, e.parentOpts.Namespace, e.parentOpts.Name)
 		if err != nil {
 			return err
 		}
 
-		bun = c.Bundle
+		bun = cnab.NewBundle(c.Bundle)
 	} else {
 		// If we hit here, there is a bug somewhere
-		return errors.New("identifyDependencies failed to load the bundle because no bundle was specified. Please report this bug to https://github.com/getporter/porter/issues/new/choose")
+		return span.Error(errors.New("identifyDependencies failed to load the bundle because no bundle was specified. Please report this bug to https://github.com/getporter/porter/issues/new/choose"))
 	}
 
-	solver := &extensions.DependencySolver{}
+	solver := &cnab.DependencySolver{}
 	locks, err := solver.ResolveDependencies(bun)
 	if err != nil {
-		return err
+		return span.Error(err)
 	}
 
 	e.deps = make([]*queuedDependency, len(locks))
 	for i, lock := range locks {
-		if e.Debug {
-			fmt.Fprintf(e.Out, "Resolved dependency %s to %s\n", lock.Alias, lock.Reference)
-		}
+		span.Debugf("Resolved dependency %s to %s", lock.Alias, lock.Reference)
 		e.deps[i] = &queuedDependency{
 			DependencyLock: lock,
 		}
@@ -172,7 +175,10 @@ func (e *dependencyExecutioner) identifyDependencies() error {
 	return nil
 }
 
-func (e *dependencyExecutioner) prepareDependency(dep *queuedDependency) error {
+func (e *dependencyExecutioner) prepareDependency(ctx context.Context, dep *queuedDependency) error {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
 	// Pull the dependency
 	var err error
 	pullOpts := BundlePullOptions{
@@ -180,41 +186,56 @@ func (e *dependencyExecutioner) prepareDependency(dep *queuedDependency) error {
 		InsecureRegistry: e.parentOpts.InsecureRegistry,
 		Force:            e.parentOpts.Force,
 	}
-	cachedDep, err := e.Resolver.Resolve(pullOpts)
-	if err != nil {
-		return errors.Wrapf(err, "error pulling dependency %s", dep.Alias)
+	if err := pullOpts.Validate(); err != nil {
+		return span.Error(fmt.Errorf("error preparing dependency %s: %w", dep.Alias, err))
 	}
-	dep.CNABFile = cachedDep.BundlePath
-	dep.RelocationMapping = cachedDep.RelocationFilePath
-
-	err = cachedDep.Bundle.Validate()
+	cachedDep, err := e.Resolver.Resolve(ctx, pullOpts)
 	if err != nil {
-		return errors.Wrapf(err, "invalid bundle %s", dep.Alias)
+		return span.Error(fmt.Errorf("error pulling dependency %s: %w", dep.Alias, err))
+	}
+	dep.BundleReference = cachedDep.BundleReference
+
+	strategy := e.GetSchemaCheckStrategy(ctx)
+	err = cachedDep.Definition.Validate(e.Context, strategy)
+	if err != nil {
+		return span.Error(fmt.Errorf("invalid bundle %s: %w", dep.Alias, err))
 	}
 
 	// Cache the bundle.json for later
-	dep.cnabFileContents, err = e.FileSystem.ReadFile(dep.CNABFile)
+	dep.cnabFileContents, err = e.FileSystem.ReadFile(cachedDep.BundlePath)
 	if err != nil {
-		return errors.Wrapf(err, "error reading %s", dep.CNABFile)
+		return span.Error(fmt.Errorf("error reading %s: %w", cachedDep.BundlePath, err))
 	}
 
 	// Make a lookup of which parameters are defined in the dependent bundle
 	depParams := map[string]struct{}{}
-	for paramName := range cachedDep.Bundle.Parameters {
+	for paramName := range cachedDep.Definition.Parameters {
 		depParams[paramName] = struct{}{}
 	}
 
 	// Handle any parameter overrides for the dependency defined in porter.yaml
 	// dependencies:
+	//  requires:
 	//   - name: DEP
 	//     parameters:
 	//       PARAM: VALUE
-	for _, manifestDep := range e.Manifest.Dependencies {
+	// TODO: When we redo dependencies, we need to remove this dependency on the bundle being a porter bundle with a manifest
+	// Yes, right now the way this works means this feature is Porter only
+	m := &manifest.Manifest{}
+	if e.parentOpts.File != "" {
+		var err error
+		m, err = manifest.LoadManifestFrom(ctx, e.Config, e.parentOpts.File)
+		if err != nil {
+			return err
+		}
+	}
+
+	for _, manifestDep := range m.Dependencies.Requires {
 		if manifestDep.Name == dep.Alias {
 			for paramName, value := range manifestDep.Parameters {
 				// Make sure the parameter is defined in the bundle
 				if _, ok := depParams[paramName]; !ok {
-					return errors.Errorf("invalid dependencies.%s.parameters entry, %s is not a parameter defined in that bundle", dep.Alias, paramName)
+					return fmt.Errorf("invalid dependencies.%s.parameters entry, %s is not a parameter defined in that bundle", dep.Alias, paramName)
 				}
 
 				if dep.Parameters == nil {
@@ -227,14 +248,14 @@ func (e *dependencyExecutioner) prepareDependency(dep *queuedDependency) error {
 
 	// Handle any parameter overrides for the dependency defined on the command line
 	// --param DEP#PARAM=VALUE
-	for key, value := range e.parentArgs.Params {
+	for key, value := range e.parentOpts.combinedParameters {
 		parts := strings.Split(key, "#")
 		if len(parts) > 1 && parts[0] == dep.Alias {
 			paramName := parts[1]
 
 			// Make sure the parameter is defined in the bundle
 			if _, ok := depParams[paramName]; !ok {
-				return errors.Errorf("invalid --param %s, %s is not a parameter defined in the bundle %s", key, paramName, dep.Alias)
+				return fmt.Errorf("invalid --param %s, %s is not a parameter defined in the bundle %s", key, paramName, dep.Alias)
 			}
 
 			if dep.Parameters == nil {
@@ -248,17 +269,43 @@ func (e *dependencyExecutioner) prepareDependency(dep *queuedDependency) error {
 	return nil
 }
 
-func (e *dependencyExecutioner) executeDependency(dep *queuedDependency) error {
-	depArgs := cnabprovider.ActionArguments{
-		Action:            e.parentArgs.Action,
-		BundlePath:        dep.CNABFile,
-		Installation:      extensions.BuildPrerequisiteInstallationName(e.parentArgs.Installation, dep.Alias),
-		Driver:            e.parentArgs.Driver,
-		Params:            dep.Parameters,
-		RelocationMapping: dep.RelocationMapping,
+func (e *dependencyExecutioner) executeDependency(ctx context.Context, dep *queuedDependency) error {
+	// TODO(carolynvs): We should really switch up how the deperator works so that
+	// even the root bundle uses the execution engine here. This would set up how
+	// we want dependencies and mixins as bundles to work in the future.
 
-		// For now, assume it's okay to give the dependency the same credentials as the parent
-		CredentialIdentifiers: e.parentArgs.CredentialIdentifiers,
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
+	depName := depsv1.BuildPrerequisiteInstallationName(e.parentOpts.Name, dep.Alias)
+	depInstallation, err := e.Installations.GetInstallation(ctx, e.parentOpts.Namespace, depName)
+	if err != nil {
+		if errors.Is(err, storage.ErrNotFound{}) {
+			depInstallation = storage.NewInstallation(e.parentOpts.Namespace, depName)
+			depInstallation.SetLabel("sh.porter.parentInstallation", e.parentArgs.Installation.String())
+			// For now, assume it's okay to give the dependency the same credentials as the parent
+			depInstallation.CredentialSets = e.parentInstallation.CredentialSets
+			if err = e.Installations.InsertInstallation(ctx, depInstallation); err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
+	}
+
+	resolvedParameters, err := e.porter.resolveParameters(ctx, depInstallation, dep.BundleReference.Definition, e.parentArgs.Action, dep.Parameters)
+	if err != nil {
+		return span.Error(fmt.Errorf("error resolving parameters for dependency %s: %w", dep.Alias, err))
+	}
+
+	depArgs := cnabprovider.ActionArguments{
+		BundleReference:       dep.BundleReference,
+		Action:                e.parentArgs.Action,
+		Installation:          depInstallation,
+		Driver:                e.parentArgs.Driver,
+		AllowDockerHostAccess: e.parentOpts.AllowDockerHostAccess,
+		Params:                resolvedParameters,
+		PersistLogs:           e.parentArgs.PersistLogs,
 	}
 
 	// Determine if we're working with UninstallOptions, to inform deletion and
@@ -269,32 +316,24 @@ func (e *dependencyExecutioner) executeDependency(dep *queuedDependency) error {
 	}
 
 	var executeErrs error
-	fmt.Fprintf(e.Out, "Executing dependency %s...\n", dep.Alias)
-	err := e.CNAB.Execute(depArgs)
+	span.Infof("Executing dependency %s...", dep.Alias)
+	err = e.CNAB.Execute(ctx, depArgs)
 	if err != nil {
-		executeErrs = multierror.Append(executeErrs, errors.Wrapf(err, "error executing dependency %s", dep.Alias))
+		executeErrs = multierror.Append(executeErrs, fmt.Errorf("error executing dependency %s: %w", dep.Alias, err))
 
 		// Handle errors when/if the action is uninstall
 		// If uninstallOpts is an empty struct, executeErrs will pass through
-		executeErrs = uninstallOpts.handleUninstallErrs(e.Out, executeErrs)
+		executeErrs = uninstallOpts.handleUninstallErrs(e.Err, executeErrs)
 		if executeErrs != nil {
-			return executeErrs
+			return span.Error(executeErrs)
 		}
 	}
 
 	// If uninstallOpts is an empty struct (i.e., action not Uninstall), this
 	// will resolve to false and thus be a no-op
 	if uninstallOpts.shouldDelete() {
-		fmt.Fprintf(e.Out, installationDeleteTmpl, depArgs.Installation)
-		return e.Claims.DeleteInstallation(depArgs.Installation)
+		span.Infof(installationDeleteTmpl, depArgs.Installation)
+		return e.Installations.RemoveInstallation(ctx, depArgs.Installation.Namespace, depArgs.Installation.Name)
 	}
-
-	// Collect expected outputs via claim
-	outputs, err := e.Claims.ReadLastOutputs(depArgs.Installation)
-	if err != nil {
-		return err
-	}
-	dep.outputs = outputs
-
 	return nil
 }

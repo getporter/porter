@@ -28,7 +28,7 @@ exec:
   command: bash
   description: Install Hello World
   flags:
-    c: echo '{{ bundle.parameters.test }}'
+    c: echo '${ bundle.parameters.test }'
 
 === Rendered Step ===
 exec:
@@ -66,7 +66,7 @@ install:
       description: "Install Hello World"
       command: bash
       flags:
-        c: "echo {{ bundle.parameters.test}}"
+        c: "echo ${ bundle.parameters.test}
 ```
 
 **after**
@@ -85,7 +85,7 @@ install:
       description: "Install Hello World"
       command: bash
       flags:
-        c: "echo {{ bundle.parameters.test}}"
+        c: "echo ${ bundle.parameters.test}
 ```
 
 ## You see apt errors when you use a custom Dockerfile

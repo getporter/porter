@@ -1,6 +1,8 @@
 package mixin
 
 import (
+	"context"
+
 	"get.porter.sh/porter/pkg/pkgmgmt"
 )
 
@@ -19,5 +21,5 @@ type MixinProvider interface {
 	pkgmgmt.PackageManager
 
 	// GetSchema requests the manifest schema from the mixin.
-	GetSchema(name string) (string, error)
+	GetSchema(ctx context.Context, name string) (string, error)
 }

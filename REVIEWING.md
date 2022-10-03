@@ -108,32 +108,25 @@ of Porter. When you are asked to cut a new release, here is the process:
     git tag VERSION -a -m ""
     git push --tags
     ```
+    If the CI build failed to build for the release, fix the problem first. Then increment the PATCH version, e.g. v0.7.0->v0.7.1, and go through the above steps again to publish the binaries. It's often a good pratice to finish the release first before updating any of our docs that references the latest release.
 
 1. Generate some release notes and put them into the release on GitHub.
-    The following command gives you a list of all the merged pull requests:
-
+   - Go to Porter Github repository and find the newly created release tag. You should see a
+   "auto generate release notes" button to create release notes for the release.
+   - Modify the generated release note to call out any breaking or notable changes in the release.
+   - Include instructions for installing or upgrading to the new release:
     ```
-    git log --oneline OLDVERSION..NEWVERSION
-    ```
-
-    You need to go through that and make a bulleted list of features
-    and fixes with the PR titles and links to the PR. If you come up with an
-    easier way of doing this, please submit a PR to update these instructions. 😅
-
-    ```
-    # Features
-    * PR TITLE (#PR NUMBER)
-
-    # Fixes
-    * PR TITLE (#PR NUMBER)
-
-    # Install or Upgrade
-    Run (or re-run) the installation from https://porter.sh/install to get the 
+      # Install or Upgrade
+      Run (or re-run) the installation from https://getporter.org/install to get the
     latest version of porter.
     ```
-1. Name the release after the version.
+1. Announce the new release in the community.
+   - Email the [mailing list](https://getporter.org/mailing-list) to announce the release. In your email, call out any breaking or notable changes.
+   - Post a message in [Porter's slack channel](https://getporter.org/community/#slack).
+1. If there are any issues fixed in the release and someone is waiting for the fix, comment on the issue to let them know and link to the release.
+1. If the release contains new features, it should be announced through a [blog](https://getporter.org/blog/) post and on Porter's twitter account.
 
 [maintainers]: https://github.com/orgs/getporter/teams/maintainers
 [admins]: https://github.com/orgs/getporter/teams/admins
 [commits]: https://github.com/getporter/porter/commits/main
-[version strategy]: https://porter.sh/project/version-strategy/
+[version strategy]: https://getporter.org/project/version-strategy/

@@ -1,0 +1,7 @@
+schemaVersion: 1.0.1
+name: alt-mybuns
+credentials:
+  - name: username
+    source:
+      env: ALT_USER
+

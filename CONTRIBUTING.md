@@ -14,12 +14,15 @@
   * [Makefile explained](#makefile-explained)
   * [Install mixins](#install-mixins)
   * [Preview documentation](#preview-documentation)
+  * [View a trace of a Porter command](#view-a-trace-of-a-porter-command)
   * [Write a blog post](#write-a-blog-post)
 * [Code structure and practices](#code-structure-and-practices)
   * [What is the general code layout?](#what-is-the-general-code-layout)
   * [Logging](#logging)
+  * [Breaking Changes](#breaking-changes)
 * [Infrastructure](#infrastructure)
   * [CDN Setup](#cdn-setup)
+  * [Custom Windows CI Agent](#custom-windows-ci-agent)
   * [Releases](#releases)
 
 ---
@@ -33,7 +36,7 @@ how things will go.
 If this is your first contribution to Porter, we have a [tutorial] that walks you
 through how to setup your developer environment, make a change and test it.
 
-[tutorial]: https://porter.sh/contribute/tutorial/
+[tutorial]: https://getporter.org/contribute/tutorial/
 
 ## Code of Conduct
 
@@ -41,7 +44,7 @@ The Porter community is governed by our [Code of Conduct][coc].
 This includes but isn't limited to: the porter and related mixin repositories,
 slack, interactions on social media, project meetings, conferences and meetups.
 
-[coc]: https://porter.sh/src/CODE_OF_CONDUCT.md
+[coc]: https://getporter.org/src/CODE_OF_CONDUCT.md
 
 ## Find an issue
 
@@ -73,22 +76,30 @@ When you create your first pull request, add your name to the bottom of our
 [Contributors][contributors] list. Thank you for making Porter better! 🙇‍♀️
 
 [getporter.org/find-issue]: https://getporter.org/find-issue/
-[contributors]: https://porter.sh/src/CONTRIBUTORS.md                                          
+[contributors]: https://getporter.org/src/CONTRIBUTORS.md                                          
 [skeletor]: https://github.com/getporter/skeletor
-[mixin-dev-guide]: https://porter.sh/mixin-dev-guide/
-[good-first-issue]: https://porter.sh/board/good+first+issue
-[help-wanted]: https://porter.sh/board/help+wanted
-[board]: https://porter.sh/board
-[slack]: https://porter.sh/community#slack
-[roadmap]: https://porter.sh/src/README.md#roadmap
-[pep]: https://porter.sh/contribute/proposals/
+[mixin-dev-guide]: https://getporter.org/mixin-dev-guide/
+[good-first-issue]: https://getporter.org/board/good+first+issue
+[help-wanted]: https://getporter.org/board/help+wanted
+[board]: https://getporter.org/board
+[slack]: https://getporter.org/community#slack
+[roadmap]: https://getporter.org/src/README.md#roadmap
+[pep]: https://getporter.org/contribute/proposals/
 
 ## Which branch to use
 
-For issues that are in the v1 milestone, your branch should be against the **release/v1** branch.
-When you open the pull request, it should again target the release/v1 branch.
+Unless the issue specifically mentions a branch, please created your feature branch from the release/v1 branch.
 
-For everything else, your branch should be against the **main** branch.
+For example:
+
+```
+# Make sure you have the most recent changes to release/v1
+git checkout release/v1
+git pull
+
+# Create a branch based on release/v1 named MY_FEATURE_BRANCH
+git checkout -b MY_FEATURE_BRANCH
+```
 
 ## When to open a pull request
 
@@ -113,13 +124,13 @@ example output
 We recommend running the following every time:
 
 ```
-make verify build test-unit
+mage Build TestUnit
 ```
 
 If your test modified anything related to running a bundle, also run:
 
 ```
-make test-integration
+mage TestIntegration
 ```
 
 If you want to know _all_ the targets that the CI runs, look at
@@ -135,11 +146,9 @@ things, especially refactoring. If you need large refactoring for your change,
 chat with a maintainer first, then do it in a separate PR first without any
 functionality changes.
 
-🎳 Group related changes into commits will help us out a bunch when reviewing!
-For example, when you change dependencies and check in vendor, do that in a
-separate commit.
+🎳 Group related changes into separate commits to make it easier to review. 
 
-😅 Make requested changes in new commits. Please don't ammend or rebase commits
+😅 Make requested changes in new commits. Please don't amend or rebase commits
 that we have already reviewed. When your pull request is ready to merge, you can
 rebase your commits yourself, or we can squash when we merge. Just let us know
 what you are more comfortable with.
@@ -217,7 +226,7 @@ Porter! After your first pull request is merged, you will be invited to the
 [Contributors team] which you may choose to accept (or not). Joining the team lets
 you have issues in GitHub assigned to you.
 
-[canary]: https://porter.sh/install/#canary
+[canary]: https://getporter.org/install/#canary
 [Contributors team]: https://github.com/orgs/getporter/teams/contributors
 
 ### Follow-on PR
@@ -242,19 +251,20 @@ Our [contribution ladder][ladder] defines the roles and responsibilities for thi
 project and how to participate with the goal of moving from a user to a
 maintainer.
 
-[ladder]: https://porter.sh/src/CONTRIBUTION_LADDER.md
+[ladder]: https://getporter.org/src/CONTRIBUTION_LADDER.md
 
 # Developer Tasks
 
 ## Initial setup
 
-We have a [tutorial] that walks you through how to setup your developer
+We have a [tutorial] that walks you through how to set up your developer
 environment, make a change and test it.
 
 Here are the key steps, if you run into trouble, the tutorial has more details:
 
+1. Install Go version 1.17 or higher.
 1. Clone this repository with `git clone https://github.com/getporter/porter.git ~/go/src/get.porter.sh/porter`.
-1. Run `make build install` from within the newly cloned repository.
+1. Run `mage Build Install` from within the newly cloned repository.
 
 If you are planning on contributing back to the project, you'll need to
 [fork](https://guides.github.com/activities/forking/) and clone your fork. If
@@ -276,53 +286,45 @@ Mage targets are not case-sensitive, but in our docs we use camel case to make
 it easier to read. You can run either `mage TestSmoke` or `mage testsmoke` for
 example.
 
+* **Build** builds all binaries, porter and internal mixins.
+  * **BuildClient** just builds the porter client for your operating system.
+    It does not build the porter-runtime binary. Useful when you just want to do a
+    build and don't remember the proper way to call `go build` yourself.
+  * **BuildPorter**     builds both the porter client and runtime.
 * **Clean** removes artifacts from previous builds and test runs.
-* **TestSmoke** runs a small suite of tests using the Porter CLI to validate
-  that Porter is (mostly) working.
-* **TestIntegration** runs our integration tests, which run the bundles
-  against a test KIND cluster.
 * **UpdateTestfiles** updates the "golden" test files to match the latest test output.
   This is mostly useful for when you change the schema of porter.yaml which will
   break TestPorter_PrintManifestSchema. Run this target to fix it.
   Learn more about [golden files].
-  
+* **Test** runs all the tests.
+  * **TestUnit** runs the unit tests
+  * **TestSmoke** runs a small suite of tests using the Porter CLI to validate
+    that Porter is (mostly) working.
+  * **TestIntegration** runs our integration tests, which run the bundles
+    against a test KIND cluster.
+* **Install** installs porter _and_ the mixins from source into **$(HOME)/.porter/**.
+* **DocsPreview** hosts the docs site. See [Preview Documentation](#preview-documentation).
+* **DocsGen** generates the CLI documentation for the website. This is run automatically by build.
+
 [golden files]: https://ieftimov.com/post/testing-in-go-golden-files/
 
 ### Make Targets
 
 Below are the most common developer tasks. Run a target with `make TARGET`, e.g.
-`make build`.
+`make setup-dco`.
 
-* `build` builds all binaries, porter and internal mixins.
-* `build-porter-client` just builds the porter client for your operating system.
-  It does not build the porter-runtime binary. Useful when you just want to do a
-  build and don't remember the proper way to call `go build` yourself.
-* `build-porter` builds both the porter client and runtime. It does not clean up
-  generated files created by packr, so you usually want to also run
-  `clean-packr`.
-* `install-porter` installs porter from source into your home directory **$(HOME)/.porter**.
-* `install-mixins` installs the mixins from source into **$(HOME)/.porter/**.
-  This is useful when you are working on the exec or kubernetes mixin.
-* `install` installs porter _and_ the mixins from source into **$(HOME)/.porter/**.
-* `test-unit` runs the unit tests.
-* `docs-preview` hosts the docs site. See [Preview
-  Documentation](#preview-documentation).
-* `test` runs all the tests.
-* `clean-packr` removes extra packr files that were a side-effect of the build.
-  Normally this is run automatically but if you run into issues with packr, 
-  run this command.
 * `setup-dco` installs a git commit hook that automatically signsoff your commit
   messages per the DCO requirement.
 
 ## Test Porter
 
 We have a few different kinds of tests in Porter. You can run all tests types
-with `make test`.
+with `mage test`.
 
 ### Unit Tests
  
 ```
-make test-unit
+mage TestUnit
 ```
 
 Should not rely on Docker, or try to really run bundles without key components
@@ -334,7 +336,7 @@ Fast! 🏎💨 This takes about 15s - 3 minutes, depending on your computer hard
 ### Integration Tests
 
 ```
-make test-integration
+mage TestIntegration
 ```
 
 These tests run parts of Porter, using the Porter structs instead of the cli.
@@ -351,7 +353,7 @@ when you push commits to your pull request instead.
 When I am troubleshooting an integration test, I will run just the single test
 locally by using `go test -run TESTNAME ./...`. If the test needs infrastructure, 
 we have scripts that you can use, like `mage StartDockerRegistry` or 
-`make -f Makefile.kind install-kind create-kind-cluster`.
+`mage EnsureTestCluster`.
 
 Slow! 🐢 This takes between 8-16 minutes, depending on your computer hardware.
 
@@ -368,7 +370,7 @@ Short! We want this to always be something you can run in under 3 minutes.
 
 ## Install mixins
 
-When you run `make build`, the canary\* build of mixins are automatically
+When you run `mage build`, the canary\* build of mixins are automatically
 installed into your bin directory in the root of the repository. You can use
 `porter mixin install NAME` to install the latest released version of a mixin.
 
@@ -376,7 +378,7 @@ installed into your bin directory in the root of the repository. You can use
 
 ## Plugin Debugging
 
-If you are developing a [plugin](https://porter.sh/plugins/) and you want to
+If you are developing a [plugin](https://getporter.org/plugins/) and you want to
 debug it follow these steps:
 
 The plugin to be debugged should be compiled and placed in porters plugin path
@@ -402,7 +404,7 @@ We use [Hugo](https://gohugo.io) to build our documentation site, and it is host
 [Netlify](https://netlify.com). You don't have to install Hugo locally because the
 preview happens inside a docker container.
 
-1. Run `make docs-preview` to start serving the docs. It will watch the file
+1. Run `mage DocsPreview` to start serving the docs. It will watch the file
 system for changes.
 1. Our make rule should open <http://localhost:1313/docs> to preview the
 site/docs.
@@ -418,7 +420,7 @@ a new blog post and then preview it:
 1. Go to /docs/content/blog and create a new file. Whatever you name the file
     will be the last part of the URL. For example a file named
     "porter-collaboration.md" will be located at
-    <https://porter.sh/blog/porter-collaboration/>.
+    <https://getporter.org/blog/porter-collaboration/>.
     
 1. At the top of the file copy and paste the frontmatter template below. The
     frontmatter is YAML that instucts the blogging software, Hugo, how to render the
@@ -447,12 +449,75 @@ a new blog post and then preview it:
 Our pull request preview and the live site will not show posts with a date in
 the future. If you don't see your post, change the date to today's date.
 
+## View a trace of a Porter command
+
+Porter can send trace data about the commands run to an OpenTelemetry backend.
+It can be very helpful when figuring out why a command failed because you can see the values of variables and stack traces.
+
+In development, you can use the [otel-jaeger bundle] to set up a development instance of Jaeger, which gives you a nice website to see each command run.
+
+```
+porter install --reference ghcr.io/getporter/examples/otel-jaeger:v0.1.0 --allow-docker-host-access
+```
+
+Then to turn on tracing in Porter, set the following environment variables.
+This tells Porter to turn on tracing, and connect to OpenTelemetry server that you just installed.
+
+**Posix**
+```bash
+export PORTER_TELEMETRY_ENABLED="true"
+export OTEL_EXPORTER_OTLP_PROTOCOL="grpc"
+export OTEL_EXPORTER_OTLP_INSECURE="true"
+```
+
+**Powershell**
+```powershell
+$env:PORTER_TELEMETRY_ENABLED="true"
+$env:OTEL_EXPORTER_OTLP_PROTOCOL="grpc"
+$env:OTEL_EXPORTER_OTLP_INSECURE="true"
+```
+
+Next run a Porter command to generate some trace data, such as `porter list`.
+Then go to the Jaeger website to see your data: http://localhost:16686.
+On the Jaeger dashboard, select "porter" from the service drop down, and click "Find Traces".
+
+The smoke and integration tests will run with telemetry enabled when the PORTER_TEST_TELEMETRY_ENABLED environment variable is true.
+
+[otel-jaeger bundle]: https://getporter.org/examples/src/otel-jaeger
+
 ## Command Documentation
 
-Our commands are documented at <https://porter.sh/cli> and that documentation is
+Our commands are documented at <https://getporter.org/cli> and that documentation is
 generated by our CLI. You should regenerate that documentation when you change
-any files in **cmd/porter** by running `make docs-gen` which is run every time
-you run `make build`.
+any files in **cmd/porter** by running `mage DocsGen` which is run every time
+you run `mage build`.
+
+## Work on the Porter Operator
+
+Instructions for building the Porter Operator from source are located in its repository: https://github.com/getporter/operator.
+Sometimes you may need to make changes to Porter and work on the Operator at the same time.
+Here's how to build porter so that you can use it locally:
+
+1. You must be on a feature branch. Not release/v1 or main. This matters because it affects the generated
+   docker image tag.
+1. Deploy the operator to a KinD cluster by running `mage deploy` from inside the operator repository.
+   That cluster has a local registry running that you can publish to, and it will pull images from it, 
+   running on localhost:5000.
+1. Run the following command from the porter repository to build the Porter Agent image, and publish it
+   to the test cluster's registry. `mage XBuildAll LocalPorterAgentBuild`.
+1. Edit your AgentConfig in the Porter Operator and set it to use your local build of the porter-agent.
+
+```yaml
+apiVersion: porter.sh/v1
+kind: AgentConfig
+metadata:
+  name: porter
+  namespace: test # You may need to change this depending on what you are testing
+spec:
+  porterRepository: localhost:5000/porter-agent
+  porterVersion: canary-dev
+  serviceAccount: porter-agent
+```
 
 # Code structure and practices
 
@@ -487,11 +552,13 @@ dependency injection and testing strategies.
     * **provider**: handles communicating with mixins
   * **porter**: the implementation of the porter commands. Every command in Porter
     has a corresponding function in here.
-    * **version**: reusable library used by all the mixins for implementing their
+    * **version**: reusable library used by all the mixins for implementing a mixin
+  * **secrets**: used to access porter's secret store through plugins.
+  * **storage**: used to access porter's data store through plugins.
   * **templates**: files that need to be compiled into the porter binary with
       version command.
 * **scripts**:
-  * **install**: Porter [installation](https://porter.sh/install) scripts
+  * **install**: Porter [installation](https://getporter.org/install) scripts
   * **setup-dco**: Set up automatic DCO signoff for the developer environment
 * **tests** have Go-based integration tests.
 
@@ -521,6 +588,20 @@ we send regular command output to `Out` and debug information to `Err`. It
 allows us to then run the command and see the debug output separately, like so
 `porter schema --debug 2> err.log`.
 
+## Breaking Changes
+
+Some changes in Porter break our compatibility with previous versions of Porter.
+When that happens, we need to release that change with a new major version number to indicate to users that it contains breaking changes.
+When you realize that you may need to make a breaking change, discuss it with a maintainer on the issue or pull request and we'll come up with a plan for how it should be released.
+Here are some examples of breaking changes:
+
+* The schema of porter.yaml changed.
+* The schema of Porter's [file formats](https://getporter.org/reference/file-formats) changed.
+* The schema of Porter's [config file](https://getporter.org/configuration/#config-file) changed.
+* Flags or behavior of a CLI command changed, such as removing a flag or adding a validation that can result in a hard error, preventing the command from running.
+
+All of Porter's documents have a schemaVersion field and when the schema of the document is changed, the version number should be incremented as well in the default set on new documents, the supported schema version constant in the code, and in the documentation for that document.
+
 # Infrastructure
 
 This section includes overviews of infrastructure Porter relies on, mostly intended
@@ -531,10 +612,17 @@ for maintainers.
 See the [CDN Setup Doc][cdn] for details on the services Porter uses to
 host and distribute its release binaries.
 
+## Custom Windows CI Agent
+
+Some of our tests need to run on Windows, like the Smoke Tests - Windows stage of our build pipeline.
+We use a custom Windows agent registered with Azure Pipelines that we build and maintain ourselves.
+See the [Custom Windows CI Agent] documentation for details on how the agent is created and configured.
+
 ## Releases
 
 Our [version strategy] explains how we version the project, when you should expect
 breaking changes in a release, and the process for the v1 release.
 
-[cdn]: https://porter.sh/src/infra/cdn.md
-[version strategy]: https://porter.sh/project/version-strategy/
+[cdn]: https://getporter.org/src/infra/cdn.md
+[version strategy]: https://getporter.org/project/version-strategy/
+[Custom Windows CI Agent]: https://getporter.org/src/infra/custom-windows-ci-agent.md

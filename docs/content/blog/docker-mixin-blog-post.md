@@ -139,11 +139,33 @@ credentials:
   - name: DOCKER_PASSWORD
     env: DOCKER_PASSWORD
 ``` 
-Next, run the following line and select environment variable for where the credentials will come from.
+Next, run the following commands and edit the file with where the credentials will come from.
 ```console
-$ porter credentials generate docker
+$ porter credentials create docker.json
+$ cat docker.json
+# modify docker.json with your editor to the content below
+{
+    "schemaType": "CredentialSet",
+    "schemaVersion": "1.0.1",
+    "name": "docker",
+    "credentials": [
+        {
+            "name": "DOCKER_USERNAME",
+            "source": {
+                "env": "DOCKER_USERNAME"
+            }
+        },
+        {
+            "name": "DOCKER_PASSWORD",
+            "source": {
+                "env": "DOCKER_PASSWORD"
+            }
+        }
+    ]
+}
+$ porter credentials apply docker.json
 ```
-Your credentials are now set up. When you run install or upgrade or uninstall, you need to pass in your credentials using the `-c` or `--cred` flag. 
+Your credentials are now set up. When you run install or upgrade or uninstall, you need to pass in your credentials using the `-c` or `--credential-set` flag. 
 
 When you are ready to install your bundle, run the command below to identify the credentials and give access to the Docker daemon. 
 

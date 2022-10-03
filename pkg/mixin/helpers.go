@@ -1,14 +1,15 @@
 package mixin
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
 
-	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/pkgmgmt"
 	"get.porter.sh/porter/pkg/pkgmgmt/client"
+	"get.porter.sh/porter/pkg/portercontext"
 )
 
 type TestMixinProvider struct {
@@ -34,6 +35,14 @@ func NewTestMixinProvider() *TestMixinProvider {
 				Author:  "Porter Authors",
 			},
 		},
+		&Metadata{
+			Name: "testmixin",
+			VersionInfo: pkgmgmt.VersionInfo{
+				Version: "v0.1.0",
+				Commit:  "abc123",
+				Author:  "Porter Authors",
+			},
+		},
 	}
 
 	provider := TestMixinProvider{
@@ -43,14 +52,14 @@ func NewTestMixinProvider() *TestMixinProvider {
 		},
 	}
 
-	provider.RunAssertions = []func(pkgContext *context.Context, name string, commandOpts pkgmgmt.CommandOptions) error{
+	provider.RunAssertions = []func(pkgContext *portercontext.Context, name string, commandOpts pkgmgmt.CommandOptions) error{
 		provider.PrintExecOutput,
 	}
 
 	return &provider
 }
 
-func (p *TestMixinProvider) PrintExecOutput(pkgContext *context.Context, name string, commandOpts pkgmgmt.CommandOptions) error {
+func (p *TestMixinProvider) PrintExecOutput(pkgContext *portercontext.Context, name string, commandOpts pkgmgmt.CommandOptions) error {
 	switch commandOpts.Command {
 	case "build":
 		if p.ReturnBuildError {
@@ -64,7 +73,16 @@ func (p *TestMixinProvider) PrintExecOutput(pkgContext *context.Context, name st
 	return nil
 }
 
-func (p *TestMixinProvider) GetSchema(name string) (string, error) {
-	b, err := ioutil.ReadFile("../exec/schema/exec.json")
+func (p *TestMixinProvider) GetSchema(ctx context.Context, name string) (string, error) {
+	var schemaFile string
+	switch name {
+	case "exec":
+		schemaFile = "../exec/schema/exec.json"
+	case "testmixin":
+		schemaFile = "../../cmd/testmixin/schema.json"
+	default:
+		return "", nil
+	}
+	b, err := ioutil.ReadFile(schemaFile)
 	return string(b), err
 }

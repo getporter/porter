@@ -1,10 +1,11 @@
 package builder
 
 import (
+	"context"
 	"fmt"
 
-	"get.porter.sh/porter/pkg/context"
-	"github.com/pkg/errors"
+	"get.porter.sh/porter/pkg/runtime"
+	"get.porter.sh/porter/pkg/tracing"
 )
 
 type OutputFile interface {
@@ -13,7 +14,11 @@ type OutputFile interface {
 }
 
 // ProcessFileOutputs makes the contents of a file specified by any OutputFile interface available as an output.
-func ProcessFileOutputs(cxt *context.Context, step StepWithOutputs) error {
+func ProcessFileOutputs(ctx context.Context, cfg runtime.RuntimeConfig, step StepWithOutputs) error {
+	//lint:ignore SA4006 ignore unused ctx for now
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
 	outputs := step.GetOutputs()
 
 	if len(outputs) == 0 {
@@ -32,18 +37,16 @@ func ProcessFileOutputs(cxt *context.Context, step StepWithOutputs) error {
 			continue
 		}
 
-		if cxt.Debug {
-			fmt.Fprintf(cxt.Err, "Processing file output %s...", outputName)
+		span.Debugf("Processing file output %s...", outputName)
+
+		valueB, err := cfg.FileSystem.ReadFile(outputPath)
+		if err != nil {
+			return fmt.Errorf("error evaluating filepath %q for output %q: %w", outputPath, outputName, err)
 		}
 
-		valueB, err := cxt.FileSystem.ReadFile(outputPath)
+		err = cfg.WriteMixinOutputToFile(outputName, valueB)
 		if err != nil {
-			return errors.Wrapf(err, "error evaluating filepath %q for output %q", outputPath, outputName)
-		}
-
-		err = cxt.WriteMixinOutputToFile(outputName, valueB)
-		if err != nil {
-			return errors.Wrapf(err, "error writing mixin output for %q", outputName)
+			return fmt.Errorf("error writing mixin output for %q: %w", outputName, err)
 		}
 	}
 

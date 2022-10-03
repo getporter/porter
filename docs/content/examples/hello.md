@@ -4,9 +4,9 @@ description: "Learn how to install a bundle"
 weight: 0
 ---
 
-Source: https://porter.sh/src/examples/hello
+Source: https://getporter.org/examples/src/hello
 
-The hello world bundle, [getporter/porter-hello], is the most simple bundle possible.
+The hello world bundle, [ghcr.io/getporter/examples/porter-hello], is the simplest bundle possible.
 It prints a message to the console when various actions are performed.
 This is the default bundle generated for you when you run `porter create`.
 
@@ -14,12 +14,12 @@ This is the default bundle generated for you when you run `porter create`.
 
 1. Use `porter explain` to see what is included in the bundle and how to use it.
     ```console
-    porter explain --reference getporter/porter-hello:v0.1.1
+    porter explain ghcr.io/getporter/examples/porter-hello:v0.2.0
     ```
 
 1. Install the bundle
     ```
-    porter install hello --reference getporter/porter-hello:v0.1.1
+    porter install hello --reference ghcr.io/getporter/examples/porter-hello:v0.2.0
     ```
 
 1. Upgrade the bundle
@@ -33,4 +33,4 @@ This is the default bundle generated for you when you run `porter create`.
     ```
 
 
-[getporter/porter-hello]: https://hub.docker.com/r/getporter/porter-hello/
+[ghcr.io/getporter/examples/porter-hello]: https://github.com/getporter/examples/pkgs/container/examples%2Fporter-hello

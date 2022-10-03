@@ -3,9 +3,9 @@ package runtime
 import (
 	"testing"
 
+	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/yaml"
-	"github.com/cnabio/cnab-go/claim"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -20,7 +20,7 @@ func TestActionInput_MarshalYAML(t *testing.T) {
 	}
 
 	input := &ActionInput{
-		action: claim.ActionInstall,
+		action: cnab.ActionInstall,
 		Steps:  []*manifest.Step{s},
 	}
 

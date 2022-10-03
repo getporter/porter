@@ -2,116 +2,42 @@ package porter
 
 import (
 	"fmt"
-	"io/ioutil"
 	"testing"
 
-	"get.porter.sh/porter/pkg/cnab/extensions"
+	"get.porter.sh/porter/pkg/cnab"
+	depsv1 "get.porter.sh/porter/pkg/cnab/dependencies/v1"
+	"get.porter.sh/porter/pkg/portercontext"
+	"get.porter.sh/porter/pkg/test"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func TestExplain_generateActionsTableNoActions(t *testing.T) {
-	bun := PrintableBundle{}
+func TestExplain_ValidateReference(t *testing.T) {
+	const ref = "ghcr.io/getporter/examples/porter-hello:v0.2.0"
+	t.Run("--reference specified", func(t *testing.T) {
+		porterCtx := portercontext.NewTestContext(t)
+		opts := ExplainOpts{}
+		opts.Reference = ref
 
-	p := NewTestPorter(t)
+		err := opts.Validate(nil, porterCtx.Context)
+		require.NoError(t, err, "Validate failed")
+		assert.Equal(t, ref, opts.Reference)
+	})
+	t.Run("reference positional argument specified", func(t *testing.T) {
+		porterCtx := portercontext.NewTestContext(t)
+		opts := ExplainOpts{}
 
-	p.printActionsExplainTable(&bun)
-	expected := "Name   Description   Modifies Installation   Stateless\n"
-
-	gotOutput := p.TestConfig.TestContext.GetOutput()
-	assert.Equal(t, expected, gotOutput)
-	t.Log(gotOutput)
-}
-
-func TestExplain_generateActionsBlockNoActions(t *testing.T) {
-	bun := PrintableBundle{}
-
-	p := NewTestPorter(t)
-
-	p.printActionsExplainBlock(&bun)
-	expected := "No custom actions defined\n\n"
-	gotOutput := p.TestConfig.TestContext.GetOutput()
-	assert.Equal(t, expected, gotOutput)
-	t.Log(gotOutput)
-}
-
-func TestExplain_generateCredentialsTableNoCreds(t *testing.T) {
-	bun := PrintableBundle{}
-
-	p := NewTestPorter(t)
-
-	p.printCredentialsExplainTable(&bun)
-	expected := "Name   Description   Required   Applies To\n"
-	gotOutput := p.TestConfig.TestContext.GetOutput()
-	assert.Equal(t, expected, gotOutput)
-	t.Log(gotOutput)
-}
-
-func TestExplain_generateCredentialsBlockNoCreds(t *testing.T) {
-	bun := PrintableBundle{}
-
-	p := NewTestPorter(t)
-
-	p.printCredentialsExplainBlock(&bun)
-	expected := "No credentials defined\n\n"
-	gotOutput := p.TestConfig.TestContext.GetOutput()
-	assert.Equal(t, expected, gotOutput)
-	t.Log(gotOutput)
-}
-
-func TestExplain_generateOutputsTableNoOutputs(t *testing.T) {
-	bun := PrintableBundle{}
-
-	p := NewTestPorter(t)
-
-	p.printOutputsExplainTable(&bun)
-	expected := "Name   Description   Type   Applies To\n"
-	gotOutput := p.TestConfig.TestContext.GetOutput()
-	assert.Equal(t, expected, gotOutput)
-	t.Log(gotOutput)
-}
-
-func TestExplain_generateOutputsBlockNoOutputs(t *testing.T) {
-	bun := PrintableBundle{}
-
-	p := NewTestPorter(t)
-
-	p.printOutputsExplainBlock(&bun)
-	expected := "No outputs defined\n\n"
-	gotOutput := p.TestConfig.TestContext.GetOutput()
-	assert.Equal(t, expected, gotOutput)
-	t.Log(gotOutput)
-}
-
-func TestExplain_generateParametersTableNoParams(t *testing.T) {
-	bun := PrintableBundle{}
-
-	p := NewTestPorter(t)
-
-	p.printParametersExplainTable(&bun)
-	expected := "Name   Description   Type   Default   Required   Applies To\n"
-	gotOutput := p.TestConfig.TestContext.GetOutput()
-	assert.Equal(t, expected, gotOutput)
-	t.Log(gotOutput)
-}
-
-func TestExplain_generateParametersBlockNoParams(t *testing.T) {
-	bun := PrintableBundle{}
-
-	p := NewTestPorter(t)
-
-	p.printParametersExplainBlock(&bun)
-	expected := "No parameters defined\n\n"
-	gotOutput := p.TestConfig.TestContext.GetOutput()
-	assert.Equal(t, expected, gotOutput)
-	t.Log(gotOutput)
+		err := opts.Validate([]string{ref}, porterCtx.Context)
+		require.NoError(t, err, "Validate failed")
+		assert.Equal(t, ref, opts.Reference)
+	})
 }
 
 func TestExplain_validateBadFormat(t *testing.T) {
-
 	p := NewTestPorter(t)
+	defer p.Close()
 
 	opts := ExplainOpts{}
 	opts.RawFormat = "vpml"
@@ -122,29 +48,56 @@ func TestExplain_validateBadFormat(t *testing.T) {
 
 func TestExplain_generateTable(t *testing.T) {
 	p := NewTestPorter(t)
+	defer p.Close()
+
 	p.TestConfig.TestContext.AddTestFile("testdata/explain/params-bundle.json", "params-bundle.json")
 	b, err := p.CNAB.LoadBundle("params-bundle.json")
+	require.NoError(t, err)
 
 	pb, err := generatePrintable(b, "")
 	require.NoError(t, err)
 	opts := ExplainOpts{}
-	opts.RawFormat = "table"
+	opts.RawFormat = "plaintext"
 
 	err = opts.Validate([]string{}, p.Context)
 	require.NoError(t, err)
 
-	err = p.printBundleExplain(opts, pb)
+	err = p.printBundleExplain(opts, pb, b)
+	assert.NoError(t, err)
+
+	gotOutput := p.TestConfig.TestContext.GetOutput()
+	test.CompareGoldenFile(t, "testdata/explain/expected-table-output.txt", gotOutput)
+}
+
+func TestExplain_generateTableRequireDockerHostAccess(t *testing.T) {
+	p := NewTestPorter(t)
+	defer p.Close()
+
+	p.TestConfig.TestContext.AddTestFile("testdata/explain/bundle-docker.json", "bundle-docker.json")
+	b, err := p.CNAB.LoadBundle("bundle-docker.json")
+	require.NoError(t, err)
+
+	pb, err := generatePrintable(b, "")
+	require.NoError(t, err)
+	opts := ExplainOpts{}
+	opts.RawFormat = "plaintext"
+
+	err = opts.Validate([]string{}, p.Context)
+	require.NoError(t, err)
+
+	err = p.printBundleExplain(opts, pb, b)
 	assert.NoError(t, err)
 	gotOutput := p.TestConfig.TestContext.GetOutput()
-	expected, err := ioutil.ReadFile("testdata/explain/expected-table-output.txt")
-	require.NoError(t, err)
-	assert.Equal(t, string(expected), gotOutput)
+	p.CompareGoldenFile("testdata/explain/expected-table-output-docker.txt", gotOutput)
 }
 
 func TestExplain_generateJSON(t *testing.T) {
 	p := NewTestPorter(t)
+	defer p.Close()
+
 	p.TestConfig.TestContext.AddTestFile("testdata/explain/params-bundle.json", "params-bundle.json")
 	b, err := p.CNAB.LoadBundle("params-bundle.json")
+	require.NoError(t, err)
 
 	pb, err := generatePrintable(b, "")
 	require.NoError(t, err)
@@ -154,18 +107,19 @@ func TestExplain_generateJSON(t *testing.T) {
 	err = opts.Validate([]string{}, p.Context)
 	require.NoError(t, err)
 
-	err = p.printBundleExplain(opts, pb)
+	err = p.printBundleExplain(opts, pb, b)
 	assert.NoError(t, err)
 	gotOutput := p.TestConfig.TestContext.GetOutput()
-	expected, err := ioutil.ReadFile("testdata/explain/expected-json-output.json")
-	require.NoError(t, err)
-	assert.Equal(t, string(expected), gotOutput)
+	p.CompareGoldenFile("testdata/explain/expected-json-output.json", gotOutput)
 }
 
 func TestExplain_generateYAML(t *testing.T) {
 	p := NewTestPorter(t)
+	defer p.Close()
+
 	p.TestConfig.TestContext.AddTestFile("testdata/explain/params-bundle.json", "params-bundle.json")
 	b, err := p.CNAB.LoadBundle("params-bundle.json")
+	require.NoError(t, err)
 
 	pb, err := generatePrintable(b, "")
 	require.NoError(t, err)
@@ -176,18 +130,16 @@ func TestExplain_generateYAML(t *testing.T) {
 	err = opts.Validate([]string{}, p.Context)
 	require.NoError(t, err)
 
-	err = p.printBundleExplain(opts, pb)
+	err = p.printBundleExplain(opts, pb, b)
 	assert.NoError(t, err)
 	gotOutput := p.TestConfig.TestContext.GetOutput()
-	expected, err := ioutil.ReadFile("testdata/explain/expected-yaml-output.yaml")
-	require.NoError(t, err)
-	assert.Equal(t, string(expected), gotOutput)
+	p.CompareGoldenFile("testdata/explain/expected-yaml-output.yaml", gotOutput)
 }
 
 func TestExplain_generatePrintableBundleParams(t *testing.T) {
-	bun := bundle.Bundle{
+	bun := cnab.NewBundle(bundle.Bundle{
 		RequiredExtensions: []string{
-			extensions.FileParameterExtensionKey,
+			cnab.FileParameterExtensionKey,
 		},
 		Definitions: definition.Definitions{
 			"string": &definition.Schema{
@@ -215,7 +167,7 @@ func TestExplain_generatePrintableBundleParams(t *testing.T) {
 				"commit":   "3b7c85ba",
 			},
 		},
-	}
+	})
 
 	pb, err := generatePrintable(bun, "")
 	require.NoError(t, err)
@@ -235,9 +187,9 @@ func TestExplain_generatePrintableBundleParams(t *testing.T) {
 }
 
 func TestExplain_generatePrintableBundleParamsWithAction(t *testing.T) {
-	bun := bundle.Bundle{
+	bun := cnab.NewBundle(bundle.Bundle{
 		RequiredExtensions: []string{
-			extensions.FileParameterExtensionKey,
+			cnab.FileParameterExtensionKey,
 		},
 		Definitions: definition.Definitions{
 			"string": &definition.Schema{
@@ -266,7 +218,7 @@ func TestExplain_generatePrintableBundleParamsWithAction(t *testing.T) {
 				"commit":   "3b7c85ba",
 			},
 		},
-	}
+	})
 
 	t.Run("action applies", func(t *testing.T) {
 		pb, err := generatePrintable(bun, "install")
@@ -308,7 +260,7 @@ func TestExplain_generatePrintableBundleParamsWithAction(t *testing.T) {
 }
 
 func TestExplain_generatePrintableBundleOutputs(t *testing.T) {
-	bun := bundle.Bundle{
+	bun := cnab.NewBundle(bundle.Bundle{
 		Definitions: definition.Definitions{
 			"string": &definition.Schema{
 				Type:    "string",
@@ -321,7 +273,7 @@ func TestExplain_generatePrintableBundleOutputs(t *testing.T) {
 			},
 			"someoutput": {
 				Definition: "string",
-				ApplyTo: []string{"install"},
+				ApplyTo:    []string{"install"},
 			},
 		},
 		Custom: map[string]interface{}{
@@ -331,7 +283,7 @@ func TestExplain_generatePrintableBundleOutputs(t *testing.T) {
 				"commit":   "3b7c85ba",
 			},
 		},
-	}
+	})
 
 	pb, err := generatePrintable(bun, "")
 	require.NoError(t, err)
@@ -354,7 +306,7 @@ func TestExplain_generatePrintableBundleOutputs(t *testing.T) {
 	// Check outputs for install action
 	pb, err = generatePrintable(bun, "install")
 	require.NoError(t, err)
-	assert.Equal(t, 2, len(pb.Outputs),"expected someoutput to be included")
+	assert.Equal(t, 2, len(pb.Outputs), "expected someoutput to be included")
 
 	// Check outputs for upgrade action action (someoutput doesn't apply)
 	pb, err = generatePrintable(bun, "upgrade")
@@ -363,7 +315,7 @@ func TestExplain_generatePrintableBundleOutputs(t *testing.T) {
 }
 
 func TestExplain_generatePrintableBundleCreds(t *testing.T) {
-	bun := bundle.Bundle{
+	bun := cnab.NewBundle(bundle.Bundle{
 		Credentials: map[string]bundle.Credential{
 			"kubeconfig": {
 				Required:    true,
@@ -381,7 +333,7 @@ func TestExplain_generatePrintableBundleCreds(t *testing.T) {
 				"commit":   "3b7c85ba",
 			},
 		},
-	}
+	})
 
 	t.Run("action applies", func(t *testing.T) {
 		pb, err := generatePrintable(bun, "install")
@@ -423,7 +375,7 @@ func TestExplain_generatePrintableBundleCreds(t *testing.T) {
 }
 
 func TestExplain_generatePrintableBundlePorterVersion(t *testing.T) {
-	bun := bundle.Bundle{
+	bun := cnab.NewBundle(bundle.Bundle{
 		Definitions: definition.Definitions{
 			"string": &definition.Schema{
 				Type:    "string",
@@ -437,7 +389,7 @@ func TestExplain_generatePrintableBundlePorterVersion(t *testing.T) {
 				"commit":   "3b7c85ba",
 			},
 		},
-	}
+	})
 
 	pb, err := generatePrintable(bun, "")
 	assert.NoError(t, err)
@@ -446,14 +398,14 @@ func TestExplain_generatePrintableBundlePorterVersion(t *testing.T) {
 }
 
 func TestExplain_generatePrintableBundlePorterVersionNonPorterBundle(t *testing.T) {
-	bun := bundle.Bundle{
+	bun := cnab.NewBundle(bundle.Bundle{
 		Definitions: definition.Definitions{
 			"string": &definition.Schema{
 				Type:    "string",
 				Default: "clippy",
 			},
 		},
-	}
+	})
 
 	pb, err := generatePrintable(bun, "")
 	assert.NoError(t, err)
@@ -462,22 +414,21 @@ func TestExplain_generatePrintableBundlePorterVersionNonPorterBundle(t *testing.
 }
 
 func TestExplain_generatePrintableBundleDependencies(t *testing.T) {
-
 	sequenceMock := []string{"nginx", "storage", "mysql"}
-	bun := bundle.Bundle{
+	bun := cnab.NewBundle(bundle.Bundle{
 		Custom: map[string]interface{}{
-			extensions.DependenciesExtensionKey: extensions.Dependencies{
+			cnab.DependenciesV1ExtensionKey: depsv1.Dependencies{
 				Sequence: sequenceMock,
-				Requires: map[string]extensions.Dependency{
-					"mysql": extensions.Dependency{
+				Requires: map[string]depsv1.Dependency{
+					"mysql": {
 						Name:   "mysql",
 						Bundle: "somecloud/mysql:0.1.0",
 					},
-					"storage": extensions.Dependency{
+					"storage": {
 						Name:   "storage",
 						Bundle: "localhost:5000/blob-storage:0.1.0",
 					},
-					"nginx": extensions.Dependency{
+					"nginx": {
 						Name:   "nginx",
 						Bundle: "localhost:5000/nginx:1.19",
 					},
@@ -489,7 +440,7 @@ func TestExplain_generatePrintableBundleDependencies(t *testing.T) {
 				"commit":   "3b7c85ba",
 			},
 		},
-	}
+	})
 
 	pd, err := generatePrintable(bun, "")
 	assert.NoError(t, err)
@@ -503,8 +454,11 @@ func TestExplain_generatePrintableBundleDependencies(t *testing.T) {
 
 func TestExplain_generateJSONForDependencies(t *testing.T) {
 	p := NewTestPorter(t)
+	defer p.Close()
+
 	p.TestConfig.TestContext.AddTestFile("testdata/explain/dependencies-bundle.json", "dependencies-bundle.json")
 	b, err := p.CNAB.LoadBundle("dependencies-bundle.json")
+	require.NoError(t, err)
 
 	pb, err := generatePrintable(b, "")
 	require.NoError(t, err)
@@ -514,10 +468,55 @@ func TestExplain_generateJSONForDependencies(t *testing.T) {
 	err = opts.Validate([]string{}, p.Context)
 	require.NoError(t, err)
 
-	err = p.printBundleExplain(opts, pb)
+	err = p.printBundleExplain(opts, pb, b)
 	assert.NoError(t, err)
 	gotOutput := p.TestConfig.TestContext.GetOutput()
-	expected, err := ioutil.ReadFile("testdata/explain/expected-json-dependencies-output.json")
+
+	p.CompareGoldenFile("testdata/explain/expected-json-dependencies-output.json", gotOutput)
+}
+
+func TestExplain_generateTableNonPorterBundle(t *testing.T) {
+	p := NewTestPorter(t)
+	defer p.Close()
+
+	p.TestConfig.TestContext.AddTestFile("testdata/explain/params-bundle-non-porter.json", "params-bundle.json")
+	b, err := p.CNAB.LoadBundle("params-bundle.json")
 	require.NoError(t, err)
-	assert.Equal(t, string(expected), gotOutput)
+
+	pb, err := generatePrintable(b, "")
+	require.NoError(t, err)
+	opts := ExplainOpts{}
+	opts.RawFormat = "plaintext"
+
+	err = opts.Validate([]string{}, p.Context)
+	require.NoError(t, err)
+
+	err = p.printBundleExplain(opts, pb, b)
+	assert.NoError(t, err)
+
+	gotOutput := p.TestConfig.TestContext.GetOutput()
+	test.CompareGoldenFile(t, "testdata/explain/expected-table-output-non-porter.txt", gotOutput)
+}
+
+func TestExplain_generateTableBundleWithNoMixins(t *testing.T) {
+	p := NewTestPorter(t)
+	defer p.Close()
+
+	p.TestConfig.TestContext.AddTestFile("testdata/explain/params-bundle-no-mixins.json", "params-bundle.json")
+	b, err := p.CNAB.LoadBundle("params-bundle.json")
+	require.NoError(t, err)
+
+	pb, err := generatePrintable(b, "")
+	require.NoError(t, err)
+	opts := ExplainOpts{}
+	opts.RawFormat = "plaintext"
+
+	err = opts.Validate([]string{}, p.Context)
+	require.NoError(t, err)
+
+	err = p.printBundleExplain(opts, pb, b)
+	assert.NoError(t, err)
+
+	gotOutput := p.TestConfig.TestContext.GetOutput()
+	test.CompareGoldenFile(t, "testdata/explain/expected-table-output-no-mixins.txt", gotOutput)
 }

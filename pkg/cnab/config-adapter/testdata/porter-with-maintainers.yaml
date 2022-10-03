@@ -1,0 +1,56 @@
+schemaVersion: 1.0.0-alpha.1
+name: porter-hello
+description: "An example Porter configuration"
+version: 0.1.0
+registry: "localhost:5000"
+
+maintainers:
+- name: "John Doe"
+  email: "john.doe@example.com"
+  url: "https://example.com/a"
+- name: "Jane Doe"
+  url: "https://example.com/b"
+- name: "Janine Doe"
+  email: "janine.doe@example.com"
+- email: "mike.doe@example.com"
+  url: "https://example.com/c"
+
+credentials:
+  - name: username
+    description: Name of the database user
+    required: false
+    env: ROOT_USERNAME
+  - name: password
+    path: /tmp/password
+    applyTo:
+      - uninstall
+
+dependencies:
+  requires:
+    - name: mysql
+      bundle:
+        reference: "getporter/azure-mysql:5.7"
+    
+mixins:
+- exec
+
+install:
+- exec:
+    description: "Say Hello"
+    command: bash
+    flags:
+      c: echo Hello World
+
+status:
+- exec:
+    description: "Get World Status"
+    command: bash
+    flags:
+      c: echo The world is on fire
+
+uninstall:
+- exec:
+    description: "Say Goodbye"
+    command: bash
+    flags:
+      c: echo Goodbye World

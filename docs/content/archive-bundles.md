@@ -5,6 +5,8 @@ description: Archiving Bundles with Porter
 
 Porter allows you to share bundles by [publishing](/distribute-bundles) them to an OCI registry. Porter also allows you to copy a bundle from one registry to another. Using these commands, bundle users have flexibility in how they leverage published bundles. What if you want to use a published bundle on a disconnected or edge network that has limited connectivity? The `porter archive` command and the `porter publish` commands allow you to take the bundle from a registry on one network, move it to the network or location, and republish it into another registry for use within that environment. The generated bundle archive contains the CNAB `bundle.json`, along with an OCI [image layout](https://github.com/opencontainers/image-spec/blob/master/image-layout.md) containing the invocation image and any images declared in the `images` section of the `bundle.json`. This enables the entire bundle to be easily moved into a private data center or across an air-gapped network, and republished within that environment.
 
+For a working example of how to move a bundle across an airgap, read [Example: Airgapped Environments](/examples/airgap/).
+
 ## Generating a Bundle Archive With Porter
 
 In order to generate the archive, all of the images in the bundle **must** have been published to a registry. For this reason, you must first `publish` your bundle to a registry:
@@ -72,7 +74,7 @@ Bundle tag jrrporter.azurecr.io/do-porter-from-archive:1.0.0 pushed successfully
 This command will expand the bundle archive and copy each image up to the new registry. Once complete, you can use the bundle like any other published bundle:
 
 ```
-porter explain --reference jrrporter.azurecr.io/do-porter-from-archive:1.0.0
+porter explain jrrporter.azurecr.io/do-porter-from-archive:1.0.0
 Name: spring-music
 Description: Run the Spring Music Service on Kubernetes and Digital Ocean PostgreSQL
 Version: 0.5.0
@@ -96,6 +98,8 @@ space_name      Name for DO Space                                               
 Outputs:
 Name         Description                                Type     Applies To
 service_ip   IP Address assigned to the Load Balancer   string   All Actions
-
-No custom actions defined
 ```
+
+## Next Steps
+
+* [Example: Airgapped Environments](/examples/airgap/)

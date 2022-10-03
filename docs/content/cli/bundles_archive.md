@@ -18,8 +18,8 @@ porter bundles archive FILENAME --reference PUBLISHED_BUNDLE [flags]
 ### Examples
 
 ```
-  porter bundle archive mybun.tgz --reference getporter/porter-hello:v0.1.0
-  porter bundle archive mybun.tgz --reference localhost:5000/getporter/porter-hello:v0.1.0 --force
+  porter bundle archive mybun.tgz --reference ghcr.io/getporter/examples/porter-hello:v0.2.0
+  porter bundle archive mybun.tgz --reference localhost:5000/ghcr.io/getporter/examples/porter-hello:v0.2.0 --force
 
 ```
 
@@ -35,8 +35,8 @@ porter bundles archive FILENAME --reference PUBLISHED_BUNDLE [flags]
 ### Options inherited from parent commands
 
 ```
-      --debug           Enable debug logging
-      --debug-plugins   Enable plugin debug logging
+      --experimental strings   Comma separated list of experimental features to enable. See https://getporter.org/configuration/#experimental-feature-flags for available feature flags.
+      --verbosity string       Threshold for printing messages to the console. Available values are: debug, info, warning, error. (default "info")
 ```
 
 ### SEE ALSO

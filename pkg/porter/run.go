@@ -1,18 +1,27 @@
 package porter
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 
 	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/runtime"
-	"github.com/pkg/errors"
+	"get.porter.sh/porter/pkg/schema"
+	"get.porter.sh/porter/pkg/tracing"
 )
 
 type RunOptions struct {
 	config *config.Config
 
-	File   string
+	// Debug specifies if the bundle should be run in debug mode
+	DebugMode bool
+
+	// File is the path to the porter manifest.
+	File string
+
+	// Action name to run in the bundle, such as install.
 	Action string
 }
 
@@ -39,9 +48,6 @@ func (o *RunOptions) Validate() error {
 func (o *RunOptions) validateAction() error {
 	if o.Action == "" {
 		o.Action = o.config.Getenv(config.EnvACTION)
-		if o.config.Debug {
-			fmt.Fprintf(o.config.Err, "DEBUG: defaulting action to %s (%s)\n", config.EnvACTION, o.Action)
-		}
 	}
 
 	return nil
@@ -49,7 +55,7 @@ func (o *RunOptions) validateAction() error {
 
 func (o *RunOptions) defaultDebug() error {
 	// if debug was manually set, leave it
-	if o.config.Debug {
+	if o.DebugMode {
 		return nil
 	}
 
@@ -60,24 +66,39 @@ func (o *RunOptions) defaultDebug() error {
 
 	debug, err := strconv.ParseBool(rawDebug)
 	if err != nil {
-		return errors.Wrapf(err, "invalid PORTER_DEBUG, expected a bool (true/false) but got %s", rawDebug)
+		return fmt.Errorf("invalid PORTER_DEBUG, expected a bool (true/false) but got %s: %w", rawDebug, err)
 	}
 
 	if debug {
-		fmt.Fprintf(o.config.Err, "DEBUG: defaulting debug to %s (%t)\n", config.EnvDEBUG, debug)
-		o.config.Debug = debug
+		o.DebugMode = debug
 	}
 
 	return nil
 }
 
-func (p *Porter) Run(opts RunOptions) error {
-	err := p.LoadManifestFrom(opts.File)
+func (p *Porter) Run(ctx context.Context, opts RunOptions) error {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
+	// Once the bundle has been built, we shouldn't check the schemaVersion again when running it.
+	// If the author built it with the rules loosened, then it should execute regardless of the version matching.
+	// A warning is printed if it doesn't match.
+	p.Config.Data.SchemaCheck = string(schema.CheckStrategyNone)
+
+	m, err := manifest.LoadManifestFrom(ctx, p.Config, opts.File)
 	if err != nil {
-		return err
+		return span.Error(err)
 	}
 
-	runtimeManifest := runtime.NewRuntimeManifest(p.Context, opts.Action, p.Manifest)
-	r := runtime.NewPorterRuntime(p.Context, p.Mixins)
-	return r.Execute(runtimeManifest)
+	runtimeCfg := runtime.NewConfigFor(p.Context)
+	runtimeCfg.DebugMode = opts.DebugMode
+	r := runtime.NewPorterRuntime(runtimeCfg, p.Mixins)
+	runtimeManifest := r.NewRuntimeManifest(opts.Action, m)
+	err = r.Execute(ctx, runtimeManifest)
+	if err != nil {
+		return span.Error(err)
+	}
+
+	span.Info("execution completed successfully!")
+	return nil
 }

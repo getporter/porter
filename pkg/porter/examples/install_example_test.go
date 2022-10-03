@@ -1,30 +1,32 @@
 package examples_test
 
 import (
+	"context"
 	"fmt"
 	"log"
 
 	"get.porter.sh/porter/pkg/porter"
 )
 
-func ExampleInstall() {
+func ExamplePorter_install() {
 	// Create an instance of the Porter application
 	p := porter.New()
 
 	// Specify any of the command-line arguments to pass to the install command
 	installOpts := porter.NewInstallOptions()
-	installOpts.Reference = "getporter/porter-hello:v0.1.1"
+	// install a bundle with older cnab bundle schema version. It should succeed
+	installOpts.Reference = "ghcr.io/getporter/examples/porter-hello:v0.2.0"
 
 	// Always call validate on the options before executing. There is defaulting
 	// logic in the Validate calls.
 	const installationName = "porter-hello"
-	err := installOpts.Validate([]string{installationName}, p)
+	err := installOpts.Validate(context.Background(), []string{installationName}, p)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	// porter install porter-hello --reference getporter/porter-hello:v0.1.1
-	err = p.InstallBundle(installOpts)
+	// porter install porter-hello --reference ghcr.io/getporter/examples/porter-hello:v0.2.0
+	err = p.InstallBundle(context.Background(), installOpts)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -36,7 +38,7 @@ func ExampleInstall() {
 		log.Fatal(err)
 	}
 
-	installation, err := p.GetInstallation(showOpts)
+	installation, _, err := p.GetInstallation(context.Background(), showOpts)
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -19,7 +19,7 @@ Now Porter requires users to configure a secret store to hold any data that has 
 
 Let's walk through how to utilize this new feature by updating your Porter configuration file and selecting an appropriate secret plugin. 
 
-First, [install the latest Porter v1 prerelease](https://release-v1.porter.sh/install/#prerelease).
+First, [install the latest Porter v1 prerelease](/install/#prerelease).
 
 Next, let's install a bundle that handles sensitive data using just the default Porter configuration.
 
@@ -36,13 +36,13 @@ The example bundle defines a sensitive parameter named as `password` and a sensi
 
 Porter's default secret plugin does not persist sensitive data. Any bundle that references or produces sensitive data will fail to execute. We do this because there isn't a clear set of safe defaults that are suitable for all users when it comes to storing sensitive data. Instead it is up to the user to select and configure an appropriate secrets plugin. 
 
-Now let's configure Porter to persist sensitive data with the [filesystem](https://release-v1.porter.sh/plugins/filesystem/) plugin.
+Now let's configure Porter to persist sensitive data with the [filesystem](/plugins/filesystem/) plugin.
 
 ```yaml
 default-secrets-plugin: "filesystem"
 ```
 
-The [filesystem plugin](https://release-v1.porter.sh/plugins/filesystem/) resolves and stores sensitive bundle parameters and outpus as plain-text files in your PORTER_HOME directory.
+The [filesystem plugin](/plugins/filesystem/) resolves and stores sensitive bundle parameters and outpus as plain-text files in your PORTER_HOME directory.
 Note: the filesystem plugin is only intended for testing and local development usage. It's not intended to be used in production. The end of this blog post has recommended plugins that are suitable for production use. 
 
 Now you have a secret store set up, we can finally to install the example bundle, this time successfully.
@@ -67,8 +67,8 @@ Instead, we can find our "password" in our filesystem plugin. In your PORTER_HOM
 This is why it's important to choose a secure secret plugin for your production environment so that your sensitive data is protected. As you can see, the filesystem plugin is only acceptable for local development and testing.
 
 Here are some secret plugins that we recommand for production use:
-- [Azure Key Vault](https://release-v1.porter.sh/plugins/azure/#secrets)
-- [Kubernetes Secrets](https://release-v1.porter.sh/plugins/kubernetes/#secrets)
-- [Hashicorp Vault](https://release-v1.porter.sh/plugins/hashicorp/)
+- [Azure Key Vault](/plugins/azure/#secrets)
+- [Kubernetes Secrets](/plugins/kubernetes/#secrets)
+- [Hashicorp Vault](/plugins/hashicorp/)
 
 Give them a try and let us know how it works for you! If there is a secret solution that you would like to use with Porter, let us know, and we can help make that happen more quickly.

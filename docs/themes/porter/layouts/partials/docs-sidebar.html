@@ -11,8 +11,8 @@
       <ul class="current sidebar-main">
         <div id="doc-version-picker">
           Version:
-           <strong>v0.38</strong> |
-           <a href="https://release-v1.porter.sh/docs/">v1.0.0</a>
+          <a href="https://v0.getporter.org/docs/">v0.38</a> |
+          <strong>v1.0.0</strong>
         </div>
         {{ $currentPage := . }}
         {{ range .Site.Menus.main }}
@@ -24,9 +24,25 @@
               </a>
               <ul class="sub-menu current">
                 {{ range .Children.ByWeight }}
-                  <li class="toctree-l2 {{ if eq $currentPage.URL .URL }}active{{ end }}">
-                    <a href="{{ .URL }}" title="{{ .Name }}">{{ .Name }}</a>
-                  </li>
+                  {{ if .HasChildren }}
+                    <li class="sidebar-nav-item toctree-l2 {{ if eq $currentPage.URL .URL }}active{{ end }}">
+                      <a class="reference internal" href="#" state="">
+                        {{ .Pre }}
+                        <span class="ripple">{{ .Name }}</span>
+                      </a>
+                      <ul class="sub-menu current">
+                      {{ range .Children.ByWeight }}
+                        <li class="toctree-l3 {{ if eq $currentPage.URL .URL }}active{{ end }}">
+                          <a href="{{ .URL }}" title="{{ .Name }}">{{ .Name }}</a>
+                        </li>
+                      {{ end }}
+                      </ul>
+                    </li>
+                  {{ else }}
+                    <li class="toctree-l2 {{ if eq $currentPage.URL .URL }}active{{ end }}">
+                      <a href="{{ .URL }}" title="{{ .Name }}">{{ .Name }}</a>
+                    </li>
+                  {{ end }}
                 {{ end }}
               </ul>
             </li>

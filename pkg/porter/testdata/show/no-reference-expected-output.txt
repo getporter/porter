@@ -1,0 +1,26 @@
+Name: mywordpress
+Namespace: dev
+Created: 2020-04-18
+Modified: 2020-04-18
+
+Labels:
+  io.cnab/app: wordpress
+  io.cnab/appVersion: v1.2.3
+
+Parameters:
+-------------------------------------
+  Name          Type     Value       
+-------------------------------------
+  logLevel      integer  3           
+  secretString  string   ******      
+  token         unknown  top-secret  
+
+Parameter Sets:
+  - dev-env
+
+Status:
+  Reference: 
+  Version: 0.1.0
+  Last Action: upgrade
+  Status: succeeded
+  Digest: sha256:88d68ef0bdb9cedc6da3a8e341a33e5d2f8bb19d0cf7ec3f1060d3f9eb73cae9

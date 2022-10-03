@@ -1,22 +1,24 @@
-FROM alpine:3
+FROM alpine:3 as builder
+WORKDIR /app/.porter
 
-RUN mkdir -p /root/.porter/runtimes && \
-    mkdir -p /root/.porter/mixins/exec/runtimes
+RUN mkdir runtimes && \
+    mkdir -p mixins/exec/runtimes
 
-COPY bin/dev/porter-linux-amd64 /root/.porter/porter
-COPY bin/mixins/exec/dev/exec-linux-amd64 /root/.porter/mixins/exec/exec
-RUN ln -s /root/.porter/porter /root/.porter/runtimes/porter-runtime && \
-    ln -s /root/.porter/mixins/exec/exec /root/.porter/mixins/exec/runtimes/exec-runtime && \
-    ln -s /root/.porter/porter /usr/local/bin/porter
+# Only install porter and the exec mixin, everything else
+# must be mounted into the container
+COPY bin/dev/porter-linux-amd64 porter
+COPY bin/mixins/exec/dev/exec-linux-amd64 mixins/exec/exec
+RUN ln -s /app/.porter/porter runtimes/porter-runtime && \
+    ln -s /app/.porter/mixins/exec/exec mixins/exec/runtimes/exec-runtime
 
-RUN porter mixin install kubernetes && \
-    porter mixin install helm && \
-    porter mixin install arm && \
-    porter mixin install terraform && \
-    porter mixin install az && \
-    porter mixin install aws && \
-    porter mixin install gcloud && \
-    porter plugin install azure && \ 
-    porter plugin install kubernetes
+# Copy the porter installation into a distroless container
+# Explicitly not using the nonroot tag because we don't want the user to exist so it is placed in the root group
+# This allows us to run with a random UID, and access a mounted docker socket (which is only accessible via the root group)
+FROM gcr.io/distroless/static
+WORKDIR /app
+COPY --from=builder --chown=65532:0 --chmod=770 /app/.porter /app/.porter
+ENV PATH "$PATH:/app/.porter"
 
-ENTRYPOINT ["porter"]
+# Run as a nonroot user
+USER 65532
+ENTRYPOINT ["/app/.porter/porter"]

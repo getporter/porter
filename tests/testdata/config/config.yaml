@@ -1,0 +1,23 @@
+namespace: dev
+debug: true
+debug-plugins: true
+default-storage: testdb
+default-secrets-plugin: filesystem
+
+# The test bundle, mybuns, requires docker
+allow-docker-host-access: true
+
+logs:
+  enabled: true
+  level: debug
+
+telemetry:
+  enabled: ${env.PORTER_TEST_TELEMETRY_ENABLED}
+  protocol: grpc
+  insecure: true
+
+storage:
+  - name: testdb
+    plugin: mongodb
+    config:
+      url: mongodb://localhost:27017/${env.PORTER_TEST_DB_NAME}?connect=direct

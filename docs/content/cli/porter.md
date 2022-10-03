@@ -5,7 +5,12 @@ url: /cli/porter/
 ---
 ## porter
 
-I am porter 👩🏽‍✈️, the friendly neighborhood CNAB authoring tool
+With Porter you can package your application artifact, client tools, configuration and deployment logic together as a versioned bundle that you can distribute, and then install with a single command.
+
+Most commands require a Docker daemon, either local or remote.
+
+Try our QuickStart https://getporter.org/quickstart to learn how to use Porter.
+
 
 ```
 porter [flags]
@@ -23,10 +28,10 @@ porter [flags]
 ### Options
 
 ```
-      --debug           Enable debug logging
-      --debug-plugins   Enable plugin debug logging
-  -h, --help            help for porter
-  -v, --version         Print the application version
+      --experimental strings   Comma separated list of experimental features to enable. See https://getporter.org/configuration/#experimental-feature-flags for available feature flags.
+  -h, --help                   help for porter
+      --verbosity string       Threshold for printing messages to the console. Available values are: debug, info, warning, error. (default "info")
+  -v, --version                Print the application version
 ```
 
 ### SEE ALSO

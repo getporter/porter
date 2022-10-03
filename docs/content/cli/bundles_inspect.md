@@ -16,15 +16,15 @@ like parameters, credentials, outputs and custom actions available.
 
 
 ```
-porter bundles inspect [flags]
+porter bundles inspect REFERENCE [flags]
 ```
 
 ### Examples
 
 ```
   porter bundle inspect
-  porter bundle inspect --reference getporter/porter-hello:v0.1.0
-  porter bundle inspect --reference localhost:5000/getporter/porter-hello:v0.1.0 --insecure-registry --force
+  porter bundle inspect ghcr.io/getporter/examples/porter-hello:v0.2.0
+  porter bundle inspect localhost:5000/ghcr.io/getporter/examples/porter-hello:v0.2.0 --insecure-registry --force
   porter bundle inspect --file another/porter.yaml
   porter bundle inspect --cnab-file some/bundle.json
 		  
@@ -38,15 +38,15 @@ porter bundles inspect [flags]
       --force               Force a fresh pull of the bundle
   -h, --help                help for inspect
       --insecure-registry   Don't require TLS for the registry
-  -o, --output string       Specify an output format.  Allowed values: table, json, yaml (default "table")
+  -o, --output string       Specify an output format.  Allowed values: plaintext, json, yaml (default "plaintext")
   -r, --reference string    Use a bundle in an OCI registry specified by the given reference.
 ```
 
 ### Options inherited from parent commands
 
 ```
-      --debug           Enable debug logging
-      --debug-plugins   Enable plugin debug logging
+      --experimental strings   Comma separated list of experimental features to enable. See https://getporter.org/configuration/#experimental-feature-flags for available feature flags.
+      --verbosity string       Threshold for printing messages to the console. Available values are: debug, info, warning, error. (default "info")
 ```
 
 ### SEE ALSO

@@ -11,5 +11,5 @@ Source: https://github.com/getporter/arm-mixin
 
 ### Install or Upgrade
 ```
-porter mixin install arm
+porter mixin install arm --version v1.0.0-rc.1
 ```

@@ -1,3 +1,4 @@
+schemaVersion: 1.0.0
 name: mybun
 version: 0.1.0
 registry: example.com
@@ -6,12 +7,16 @@ mixins:
   - exec
 
 dependencies:
-  - name: nginx
-    reference: "localhost:5000/nginx:1.19"
-  - name: mysql
-    reference: "getporter/azure-mysql:5.7"
-    parameters:
-      database-name: wordpress
+  requires:
+    - name: nginx
+      bundle:
+        reference: "localhost:5000/nginx:1.19"
+    - name: mysql
+      bundle:
+        reference: "getporter/azure-mysql:5.7"
+      parameters:
+        database-name: wordpress
+
 install:
   - exec:
       description: "Install Hello World"

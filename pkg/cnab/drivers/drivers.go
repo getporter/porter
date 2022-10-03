@@ -1,20 +1,21 @@
 package drivers
 
 import (
-	"get.porter.sh/porter/pkg/context"
+	"fmt"
+
+	"get.porter.sh/porter/pkg/portercontext"
 	"github.com/cnabio/cnab-go/driver"
 	"github.com/cnabio/cnab-go/driver/command"
 	"github.com/cnabio/cnab-go/driver/debug"
 	"github.com/cnabio/cnab-go/driver/docker"
 	"github.com/cnabio/cnab-go/driver/kubernetes"
-	"github.com/pkg/errors"
 )
 
 // LookupDriver creates a driver by name.
 //
 // This replaces cnab-go's lookup function because cnab-go uses global process
 // values, such as $PATH, instead of our context.
-func LookupDriver(cxt *context.Context, name string) (driver.Driver, error) {
+func LookupDriver(cxt *portercontext.Context, name string) (driver.Driver, error) {
 	switch name {
 	case "docker":
 		return &docker.Driver{}, nil
@@ -30,6 +31,6 @@ func LookupDriver(cxt *context.Context, name string) (driver.Driver, error) {
 			return d, nil
 		}
 
-		return nil, errors.Errorf("unsupported driver or driver not found in PATH: %s", name)
+		return nil, fmt.Errorf("unsupported driver or driver not found in PATH: %s", name)
 	}
 }

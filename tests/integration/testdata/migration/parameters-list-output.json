@@ -1,0 +1,19 @@
+[
+  {
+    "schemaVersion": "1.0.1",
+    "namespace": "migrated",
+    "name": "hello-llama",
+    "parameters": [
+      {
+        "name": "name",
+        "source": {
+          "env": "USER"
+        }
+      }
+    ],
+    "status": {
+      "created": "2022-06-06T16:06:21.635528-05:00",
+      "modified": "2022-06-06T17:06:21.635528-05:00"
+    }
+  }
+]

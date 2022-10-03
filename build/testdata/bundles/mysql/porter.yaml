@@ -1,5 +1,6 @@
+schemaVersion: 1.0.0
 name: mysql
-version: 0.2.0
+version: 0.1.4
 registry: "localhost:5000"
 
 mixins:
@@ -11,7 +12,7 @@ mixins:
 
 credentials:
 - name: kubeconfig
-  path: /root/.kube/config
+  path: /home/nonroot/.kube/config
 
 parameters:
 - name: database-name

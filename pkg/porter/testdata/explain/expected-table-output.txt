@@ -3,15 +3,15 @@ Description: An example Porter configuration
 Version: 0.1.0
 Porter Version: v0.30.0
 
-No credentials defined
-
 Parameters:
-Name     Description   Type     Default   Required   Applies To
-region                 string   mars      false      All Actions
+-------------------------------------------------------------------
+  Name       Description  Type     Default  Required  Applies To   
+-------------------------------------------------------------------
+  namespace               string   <nil>    false     upgrade      
+  region                  string   mars     false     All Actions  
+  seed                    boolean  <nil>    true      All Actions  
 
-No outputs defined
+This bundle uses the following tools: helm, terraform.
 
-No custom actions defined
-
-No dependencies defined
-
+To install this bundle run the following command, passing --param KEY=VALUE for any parameters you want to customize:
+porter install --param seed=TODO 

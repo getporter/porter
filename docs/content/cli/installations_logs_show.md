@@ -20,7 +20,7 @@ porter installations logs show [flags]
 ### Examples
 
 ```
-  porter installation logs show --installation wordpress
+  porter installation logs show --installation wordpress --namespace dev
   porter installations logs show --run 01EZSWJXFATDE24XDHS5D5PWK6
 ```
 
@@ -29,14 +29,15 @@ porter installations logs show [flags]
 ```
   -h, --help                  help for show
   -i, --installation string   The installation that generated the logs.
+  -n, --namespace string      Namespace in which the installation is defined. Defaults to the global namespace.
   -r, --run string            The bundle run that generated the logs.
 ```
 
 ### Options inherited from parent commands
 
 ```
-      --debug           Enable debug logging
-      --debug-plugins   Enable plugin debug logging
+      --experimental strings   Comma separated list of experimental features to enable. See https://getporter.org/configuration/#experimental-feature-flags for available feature flags.
+      --verbosity string       Threshold for printing messages to the console. Available values are: debug, info, warning, error. (default "info")
 ```
 
 ### SEE ALSO

@@ -27,9 +27,9 @@ description: "An example Porter bundle using Kubernetes"
 registry: getporter
 ```
 
-This YAML snippet indicates that the bundle will be built and tagged as `getporter/kubernetes:v0.1.0`. This full bundle reference is constructed from the provided `registry`, `name` and `version` fields. We recommend using [semantic versioning](https://semver.org/) for the bundle version.
+This YAML snippet indicates that the bundle will be built and tagged as `getporter/kubernetes:v0.2.0`. This full bundle reference is constructed from the provided `registry`, `name` and `version` fields. We recommend using [semantic versioning](https://semver.org/) for the bundle version.
 
-The generated invocation image name will be auto-derived from the same combination of `registry`, `name` and `version`.  Using the example above, an invocation image with the name of `getporter/kubernetes-installer:0.1.0` will be built.
+The generated invocation image name will be auto-derived from the same combination of `registry`, `name` and `version`.  Using the example above, an invocation image with the name of `getporter/kubernetes:porter-HASH` will be built.
 
 Once you have provided values for the fields above, run the `porter build` command one last time to verify that your invocation image can be successfully built.
 
@@ -38,7 +38,7 @@ Next, run the `porter publish` command in order to push the invocation image to 
 ```
 $ porter publish
 Pushing CNAB invocation image...
-The push refers to repository [docker.io/getporter/kubernetes-installer]
+The push refers to repository [docker.io/getporter/kubernetes]
 0f4d408243ab: Preparing
 6573f19b0ef5: Preparing
 a6afb08c6a1c: Preparing
@@ -58,9 +58,9 @@ a6afb08c6a1c: Pushed
 0.1.0: digest: sha256:5e49e21be75fa940d74fbadac02af9cb31cf7f9147c336e8ce1b42a0537aa7f7 size: 1793
 
 Rewriting CNAB bundle.json...
-Starting to copy image getporter/kubernetes-installer:0.1.0...
-Completed image getporter/kubernetes-installer:0.1.0 copy
-Bundle tag docker.io/getporter/kubernetes:v0.1.0 pushed successfully, with digest "sha256:10a41e6d5af73f2cebe4bf6d368bdf5ccc39e641117051d30f88cf0c69e4e456"
+Starting to copy image getporter/kubernetes:porter-1a1c944c8540836ccdb475dd5ea3adf5...
+Completed image getporter/kubernetes:porter-1a1c944c8540836ccdb475dd5ea3adf5 copy
+Bundle tag docker.io/getporter/kubernetes:v0.2.0 pushed successfully, with digest "sha256:10a41e6d5af73f2cebe4bf6d368bdf5ccc39e641117051d30f88cf0c69e4e456"
 ```
 
 Note: you can safely ignore the `WARN[0005] reference for unknown type: application/vnd.cnab.config.v1+json` message, if it appears.
@@ -68,7 +68,7 @@ Note: you can safely ignore the `WARN[0005] reference for unknown type: applicat
 When this command is complete, your CNAB bundle manifest and invocation image will have been successfully pushed to the specified OCI registry. It can then be installed with the `porter install` command:
 
 ```
-$ porter install --reference getporter/kubernetes:v0.1.0 -c kool-kred
+$ porter install --reference getporter/kubernetes:v0.2.0 -c kool-kred
 installing kubernetes...
 executing porter install configuration from /cnab/app/porter.yaml
 Install Hello World App
@@ -83,7 +83,7 @@ executing porter install configuration from /cnab/app/porter.yaml
 Install Hello World App
 ```
 
-The latter example ensures immutability for your bundle. After you've initially run `porter publish`, your tagged reference, such as `getporter/kubernetes:v0.1.0` can be updated with subsequent `porter publish` commands. However, the digested version `getporter/kubernetes@sha256:10a41e6d5af73f2cebe4bf6d368bdf5ccc39e641117051d30f88cf0c69e4e456` will not change. If you'd like to publish different version of the bundle, you will need to update minimally the `tag` attribute and optionally the `invocationImage` attribute, before running `porter publish` again.  (Porter will detect the manifest change and automatically run a new bundle and invocation image build prior to publishing.)
+The latter example ensures immutability for your bundle. After you've initially run `porter publish`, your tagged reference, such as `getporter/kubernetes:v0.2.0` can be updated with subsequent `porter publish` commands. However, the digested version `getporter/kubernetes@sha256:10a41e6d5af73f2cebe4bf6d368bdf5ccc39e641117051d30f88cf0c69e4e456` will not change. If you'd like to publish different version of the bundle, you will need to update minimally the `tag` attribute and optionally the `invocationImage` attribute, before running `porter publish` again.  (Porter will detect the manifest change and automatically run a new bundle and invocation image build prior to publishing.)
 
 ## Publish Archived Bundles
 
@@ -105,7 +105,7 @@ are referencing the published location of the image.
   * REGISTRY/ORG/BUNDLE@**REFERENCED_IMAGE_1_DIGEST**
   * REGISTRY/ORG/BUNDLE@**REFERENCED_IMAGE_2_DIGEST**
 
-NOTE: Digest refers to the the [repository digest][digest] (not the image id).
+NOTE: Digest refers to the [repository digest][digest] (not the image id).
 
 Consider the following example:
 

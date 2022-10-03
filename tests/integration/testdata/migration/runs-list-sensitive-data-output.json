@@ -1,0 +1,15 @@
+[
+  {
+    "id": "01G6K8CZ08T78WXTJYHR0NTYBS",
+    "version": "0.0.1",
+    "action": "install",
+    "parameters": {
+      "name": "",
+      "password": "",
+      "porter-debug": ""
+    },
+    "started": "2022-06-23T13:57:20.392681-05:00",
+    "stopped": "2022-06-23T13:57:21.593107-05:00",
+    "status": "succeeded"
+  }
+]

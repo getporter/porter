@@ -1,0 +1,42 @@
+schemaVersion: 1.0.0
+name: hello
+description: "An example Porter configuration"
+version: v0.1.0
+registry: "localhost:5000"
+
+mixins:
+  - exec
+
+maintainers:
+- name: "John Doe"
+  email: "john.doe@example.com"
+  url: "https://example.com/a"
+- name: "Jane Doe"
+  url: "https://example.com/b"
+- name: "Janine Doe"
+  email: "janine.doe@example.com"
+- email: "mike.doe@example.com"
+  url: "https://example.com/c"
+
+install:
+- exec:
+    description: "Say Hello"
+    command: bash
+    flags:
+      c: echo Hello World
+
+status:
+- exec:
+    description: "Get World Status"
+    command: bash
+    flags:
+        c: echo The world is on fire
+
+uninstall:
+- exec:
+    description: "Say Goodbye"
+    command: bash
+    flags:
+        c: echo Goodbye World
+
+baddata: true

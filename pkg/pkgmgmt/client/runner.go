@@ -1,18 +1,21 @@
 package client
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"io"
 	"path/filepath"
 	"strings"
 
-	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/pkgmgmt"
-	"github.com/pkg/errors"
+	"get.porter.sh/porter/pkg/portercontext"
+	"get.porter.sh/porter/pkg/tracing"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 type Runner struct {
-	*context.Context
+	*portercontext.Context
 	// pkgDir is the absolute path to where the package is installed
 	pkgDir string
 
@@ -22,7 +25,7 @@ type Runner struct {
 
 func NewRunner(pkgName, pkgDir string, runtime bool) *Runner {
 	return &Runner{
-		Context: context.New(),
+		Context: portercontext.New(),
 		pkgName: pkgName,
 		pkgDir:  pkgDir,
 		runtime: runtime,
@@ -37,27 +40,28 @@ func (r *Runner) Validate() error {
 	pkgPath := r.getExecutablePath()
 	exists, err := r.FileSystem.Exists(pkgPath)
 	if err != nil {
-		return errors.Wrapf(err, "failed to stat package (%s)", pkgPath)
+		return fmt.Errorf("failed to stat package (%s: %w)", pkgPath, err)
 	}
 	if !exists {
-		return errors.Errorf("package not found (%s)", pkgPath)
+		return fmt.Errorf("package not found (%s)", pkgPath)
 	}
 
 	return nil
 }
 
-func (r *Runner) Run(commandOpts pkgmgmt.CommandOptions) error {
-	if r.Debug {
-		fmt.Fprintf(r.Err, "DEBUG name:    %s\n", r.pkgName)
-		fmt.Fprintf(r.Err, "DEBUG pkgDir: %s\n", r.pkgDir)
-		fmt.Fprintf(r.Err, "DEBUG file:     %s\n", commandOpts.File)
-		fmt.Fprintf(r.Err, "DEBUG stdin:\n%s\n", commandOpts.Input)
-	}
+func (r *Runner) Run(ctx context.Context, commandOpts pkgmgmt.CommandOptions) error {
+	ctx, span := tracing.StartSpan(ctx,
+		attribute.String("name", r.pkgName),
+		attribute.String("pkgDir", r.pkgDir),
+		attribute.String("file", commandOpts.File),
+		attribute.String("stdin", commandOpts.Input),
+	)
+	defer span.EndSpan()
 
 	pkgPath := r.getExecutablePath()
 	cmdArgs := strings.Split(commandOpts.Command, " ")
 	command := cmdArgs[0]
-	cmd := r.NewCommand(pkgPath, cmdArgs...)
+	cmd := r.NewCommand(ctx, pkgPath, cmdArgs...)
 
 	// Pipe the output to porter
 	cmd.Stdout = r.Context.Out
@@ -71,14 +75,10 @@ func (r *Runner) Run(commandOpts pkgmgmt.CommandOptions) error {
 		cmd.Args = append(cmd.Args, "-f", commandOpts.File)
 	}
 
-	if r.Debug {
-		cmd.Args = append(cmd.Args, "--debug")
-	}
-
 	if commandOpts.Input != "" {
 		stdin, err := cmd.StdinPipe()
 		if err != nil {
-			return err
+			return span.Error(err)
 		}
 		go func() {
 			defer stdin.Close()
@@ -87,16 +87,14 @@ func (r *Runner) Run(commandOpts pkgmgmt.CommandOptions) error {
 	}
 
 	prettyCmd := fmt.Sprintf("%s%s", cmd.Dir, strings.Join(cmd.Args, " "))
-	if r.Debug {
-		fmt.Fprintln(r.Err, prettyCmd)
-	}
+	span.SetAttributes(attribute.String("command", prettyCmd))
 
 	err := cmd.Start()
 	if err != nil {
-		return errors.Wrapf(err, "could not run package command %s", prettyCmd)
+		return span.Error(fmt.Errorf("could not run package command %s: %w", prettyCmd, err))
 	}
 
-	return cmd.Wait()
+	return span.Error(cmd.Wait())
 }
 
 func (r *Runner) getExecutablePath() string {

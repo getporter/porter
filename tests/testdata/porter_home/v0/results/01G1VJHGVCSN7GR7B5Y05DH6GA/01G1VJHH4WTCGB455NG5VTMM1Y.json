@@ -1,0 +1,7 @@
+{
+  "id": "01G1VJHH4WTCGB455NG5VTMM1Y",
+  "claimId": "01G1VJHGVCSN7GR7B5Y05DH6GA",
+  "created": "2022-04-29T16:10:02.140731-05:00",
+  "message": "1 error occurred:\n\t* image digest validation failed: content digest mismatch: invocation image getporter/porter-hello-installer:v0.1.1 was defined in the bundle with the digest sha256:1b5a7b823b2243d95d52cc8dc1510fd91b7a1e240bd63d05d828f29ff4f55e13 but no matching repoDigest was found upon inspecting the image\n\n",
+  "status": "failed"
+}

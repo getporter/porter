@@ -1,110 +1,54 @@
-// +build integration
+//go:build integration
 
 package integration
 
 import (
-	"fmt"
 	"testing"
 
-	"get.porter.sh/porter/pkg/porter"
+	"get.porter.sh/porter/tests"
+	"get.porter.sh/porter/tests/testdata"
+	"get.porter.sh/porter/tests/tester"
 	"github.com/stretchr/testify/require"
 )
 
 func TestUninstall_DeleteInstallation(t *testing.T) {
-	t.Parallel()
+	test, err := tester.NewTest(t)
+	defer test.Close()
+	require.NoError(t, err, "test setup failed")
+	test.PrepareTestBundle()
 
-	testcases := []struct {
-		name                string
-		notInstalled        bool
-		uninstallFails      bool
-		delete              bool
-		forceDelete         bool
-		installationRemains bool
-		wantError           string
-	}{
-		{
-			name:         "not yet installed",
-			notInstalled: true,
-			wantError:    "1 error occurred:\n\t* could not load installation porter-hello: Installation does not exist\n\n",
-		}, {
-			name:                "no --delete",
-			installationRemains: true,
-		}, {
-			name:      "--delete",
-			delete:    true,
-			wantError: "",
-		}, {
-			name:                "uninstall fails; --delete",
-			uninstallFails:      true,
-			delete:              true,
-			installationRemains: true,
-			wantError:           fmt.Sprintf("2 errors occurred:\n\t* Command driver (uninstall) failed executing bundle: exit status 1\n\t* %s\n\n", porter.ErrUnsafeInstallationDeleteRetryForceDelete.Error()),
-		}, {
-			name:           "uninstall fails; --force-delete",
-			uninstallFails: true,
-			forceDelete:    true,
-		},
-	}
+	// Check that we can't uninstall a bundle that hasn't been installed already
+	_, _, err = test.RunPorter("uninstall", testdata.MyBuns, "-c=mybuns")
+	test.RequireNotFoundReturned(err)
 
-	for _, tc := range testcases {
-		t.Run(tc.name, func(t *testing.T) {
-			p := porter.NewTestPorter(t)
+	// Install bundle
+	test.RequirePorter("install", testdata.MyBuns, "-r", testdata.MyBunsRef, "-c=mybuns", "--param", "password=supersecret")
 
-			p.SetupIntegrationTest()
-			defer p.CleanupIntegrationTest()
-			p.Debug = false
+	// Uninstall the bundle
+	test.RequirePorter("uninstall", testdata.MyBuns, "-c=mybuns", "--param", "password=supersecret")
 
-			err := p.Create()
-			require.NoError(t, err)
+	// Check that the record remains
+	test.RequireInstallationExists(test.CurrentNamespace(), testdata.MyBuns)
 
-			// Install bundle
-			if !tc.notInstalled {
-				opts := porter.NewInstallOptions()
-				opts.Driver = "debug"
+	// Uninstall and delete
+	test.RequirePorter("uninstall", testdata.MyBuns, "-c=mybuns", "--delete", "--param", "password=supersecret")
 
-				err = opts.Validate(nil, p.Porter)
-				require.NoError(t, err, "Validate install options failed")
+	// The record should be gone
+	test.RequireInstallationNotFound(test.CurrentNamespace(), testdata.MyBuns)
 
-				err = p.InstallBundle(opts)
-				require.NoError(t, err, "InstallBundle failed")
-			}
+	// Re-Install the bundle
+	test.RequirePorter("install", testdata.MyBuns, "-r", testdata.MyBunsRef, "-c=mybuns", "--param", "password=supersecret")
 
-			// Set up command driver
-			driver := porter.TestDriver{
-				Name:     "uninstall",
-				Filepath: "testdata/drivers/exit-driver.sh",
-			}
-			if tc.uninstallFails {
-				driver.Filepath = "testdata/drivers/exit-driver-fail.sh"
-			}
+	// Uninstall the bundle, attempt to delete it, but have the uninstall fail
+	_, _, err = test.RunPorter("uninstall", testdata.MyBuns, "-c=mybuns", "--param", "chaos_monkey=true", "--delete", "--param", "password=supersecret")
+	tests.RequireErrorContains(t, err, "it is unsafe to delete an installation when the last action wasn't a successful uninstall")
 
-			path := p.Getenv("PATH")
-			dir := p.AddTestDriver(driver)
-			defer p.Setenv("PATH", path)
-			defer p.TestConfig.TestContext.FileSystem.RemoveAll(dir)
+	// Check that the record remains
+	test.RequireInstallationExists(test.CurrentNamespace(), testdata.MyBuns)
 
-			// Uninstall bundle with custom command driver
-			opts := porter.NewUninstallOptions()
-			opts.Delete = tc.delete
-			opts.ForceDelete = tc.forceDelete
-			opts.Driver = driver.Name
+	// Uninstall the bundle, even though uninstall is failing, and force delete it
+	test.RequirePorter("uninstall", testdata.MyBuns, "-c=mybuns", "--force-delete", "--param", "password=supersecret")
 
-			err = opts.Validate(nil, p.Porter)
-			require.NoError(t, err, "Validate uninstall options failed")
-
-			err = p.UninstallBundle(opts)
-			if tc.wantError != "" {
-				require.EqualError(t, err, tc.wantError)
-			} else {
-				require.NoError(t, err, "UninstallBundle failed")
-			}
-
-			_, err = p.Claims.ReadInstallation(opts.Name)
-			if tc.installationRemains {
-				require.NoError(t, err, "Installation is expected to exist")
-			} else {
-				require.EqualError(t, err, "Installation does not exist")
-			}
-		})
-	}
+	// The record should be gone
+	test.RequireInstallationNotFound(test.CurrentNamespace(), testdata.MyBuns)
 }

@@ -55,17 +55,28 @@ To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'.
 
 Porter bundles that access a Kubernetes cluster when running can now be installed as normal, once the [Credential Set](../credentials) is generated/edited to use the KinD kubeconfig.
 
-Here we'll generate credentials and install the [MySQL bundle](https://porter.sh/src/build/testdata/bundles/mysql):
+Here we'll create and edit credentials and then install the [MySQL bundle](/src/build/testdata/bundles/mysql):
 
 ```console
- $ porter credentials generate
-Generating new credential mysql from bundle mysql
-==> 1 credentials required for bundle mysql
-? How would you like to set credential "kubeconfig"
-  file path
-? Enter the path that will be used to set credential "kubeconfig"
-  /Users/vdice/.kubes/kind/kubeconfig
-
+ $ porter credentials create mysql.json
+creating porter credential set in the current directory
+ $ cat mysql.json
+# modify mysql.json with your editor to the content below
+{
+    "schemaType": "CredentialSet",
+    "schemaVersion": "1.0.1",
+    "name": "mysql",
+    "credentials": [
+        {
+            "name": "kubeconfig",
+            "source": {
+                "path": "/Users/vdice/.kubes/kind/kubeconfig"
+            }
+        }
+    ]
+}
+ $ porter cdredentials apply mysql.json
+Applied /mysql credential set
  $ porter install -c mysql
 installing mysql...
 executing install action from mysql (bundle instance: mysql)

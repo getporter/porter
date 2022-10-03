@@ -1,27 +1,33 @@
 package porter
 
 import (
-	"fmt"
+	"context"
 	"runtime"
 	"strings"
 	"testing"
 
 	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/printer"
-	"github.com/stretchr/testify/assert"
+	"get.porter.sh/porter/pkg/test"
 	"github.com/stretchr/testify/require"
 )
 
 func TestPrintVersion(t *testing.T) {
 	pkg.Commit = "abc123"
 	pkg.Version = "v1.2.3"
+	defer func() {
+		pkg.Commit = ""
+		pkg.Version = ""
+	}()
 
+	ctx := context.Background()
 	p := NewTestPorter(t)
+	defer p.Close()
 
 	opts := VersionOpts{}
 	err := opts.Validate()
 	require.NoError(t, err)
-	p.PrintVersion(opts)
+	p.PrintVersion(ctx, opts)
 
 	gotOutput := p.TestConfig.TestContext.GetOutput()
 	wantOutput := "porter v1.2.3 (abc123)"
@@ -33,14 +39,20 @@ func TestPrintVersion(t *testing.T) {
 func TestPrintJsonVersion(t *testing.T) {
 	pkg.Commit = "abc123"
 	pkg.Version = "v1.2.3"
+	defer func() {
+		pkg.Commit = ""
+		pkg.Version = ""
+	}()
 
+	ctx := context.Background()
 	p := NewTestPorter(t)
+	defer p.Close()
 
 	opts := VersionOpts{}
 	opts.RawFormat = string(printer.FormatJson)
 	err := opts.Validate()
 	require.NoError(t, err)
-	p.PrintVersion(opts)
+	p.PrintVersion(ctx, opts)
 
 	gotOutput := p.TestConfig.TestContext.GetOutput()
 	wantOutput := `{
@@ -55,58 +67,54 @@ func TestPrintJsonVersion(t *testing.T) {
 }
 
 func TestPrintDebugInfoJsonVersion(t *testing.T) {
+	// Only run this on linux + amd64 machines to simplify the test (it has different output based on the os/arch)
+	if runtime.GOOS != "linux" || runtime.GOARCH != "amd64" {
+		t.Skip("skipping test because it is only for linux/amd64")
+	}
+
 	pkg.Commit = "abc123"
 	pkg.Version = "v1.2.3"
+	defer func() {
+		pkg.Commit = ""
+		pkg.Version = ""
+	}()
 
+	ctx := context.Background()
 	p := NewTestPorter(t)
+	defer p.Close()
 
 	opts := VersionOpts{System: true}
 	opts.RawFormat = string(printer.FormatJson)
 	err := opts.Validate()
 	require.Nil(t, err)
-	p.PrintVersion(opts)
+	p.PrintVersion(ctx, opts)
 
 	gotOutput := p.TestConfig.TestContext.GetOutput()
-	wantOutput := fmt.Sprintf(`{
-  "version": {
-    "name": "porter",
-    "version": "v1.2.3",
-    "commit": "abc123"
-  },
-  "system": {
-    "OS": "%s",
-    "Arch": "%s"
-  },
-  "mixins": [
-    {
-      "name": "exec",
-      "version": "v1.0",
-      "commit": "abc123",
-      "author": "Porter Authors"
-    }
-  ]
-}
-`, runtime.GOOS, runtime.GOARCH)
-	assert.Equal(t, wantOutput, gotOutput)
+	test.CompareGoldenFile(t, "testdata/version/version-output.json", gotOutput)
 }
 
 func TestPrintDebugInfoPlainTextVersion(t *testing.T) {
+	// Only run this on linux + amd64 machines to simplify the test (it has different output based on the os/arch)
+	if runtime.GOOS != "linux" || runtime.GOARCH != "amd64" {
+		t.Skip("skipping test because it is only for linux/amd64")
+	}
+
 	pkg.Commit = "abc123"
 	pkg.Version = "v1.2.3"
+	defer func() {
+		pkg.Commit = ""
+		pkg.Version = ""
+	}()
 
+	ctx := context.Background()
 	p := NewTestPorter(t)
+	defer p.Close()
 
 	opts := VersionOpts{System: true}
 	err := opts.Validate()
 	require.Nil(t, err)
-	p.PrintVersion(opts)
-
-	versionOutput := "porter v1.2.3 (abc123)"
-	mixinsOutput := "exec   v1.0      Porter Authors"
-	systemOutput := fmt.Sprintf("os: %s\narch: %s", runtime.GOOS, runtime.GOARCH)
+	p.PrintVersion(ctx, opts)
 
 	gotOutput := p.TestConfig.TestContext.GetOutput()
-	assert.Contains(t, gotOutput, versionOutput)
-	assert.Contains(t, gotOutput, mixinsOutput)
-	assert.Contains(t, gotOutput, systemOutput)
+	test.CompareGoldenFile(t, "testdata/version/version-output.txt", gotOutput)
 }

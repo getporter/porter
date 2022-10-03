@@ -11,20 +11,64 @@ pr:
 pool:
   vmImage: "ubuntu-latest"
 
-variables:
-  GOVERSION: "1.17.8"
+variables: # these are really constants
+  GOVERSION: "1.18"
+  # Cache go modules and the results of go build/test
+  # Increment the version number prefix of the key and restoreKey to clear the cache
+  GOCACHE: $(Pipeline.Workspace)/.cache/go-build/
+  GOCACHE_KEY: 'v3 | go-build | "$(Agent.OS)" | go.sum'
+  GOCACHE_RESTOREKEYS: |
+    v3 | go-build | "$(Agent.OS)"
+    v3 | go-build | "$(Agent.OS)" | go.sum
+  GOMODCACHE: /home/vsts/go/pkg/mod
+  GOMODCACHE_KEY: 'v4 | go-pkg | "$(Agent.OS)" | go.sum'
+  GOMODCACHE_RESTOREKEYS: |
+    v4 | go-pkg | "$(Agent.OS)"
+    v4 | go-pkg | "$(Agent.OS)" | go.sum
 
-jobs:
+stages:
+- stage: Setup
+  jobs:
+    - job: pr_type
+      displayName: "Determine PR Type"
+      steps:
+        - bash: ./build/doc-only-build.sh
+          name: BUILD
+          displayName: "Is Doc Only?"
+
+- stage: Validate
+  dependsOn: Setup
+  condition: eq(dependencies.Setup.outputs['pr_type.BUILD.DOCS_ONLY'], 'false')
+  jobs:
   - job: integration_test
     displayName: "Integration Test"
     steps:
+      # We log in here because TestRegistry integration test needs a valid docker session
+      # This unfortunately means that this pipeline must be manually triggered for non-maintainers
+      - task: Docker@2
+        displayName: Docker Login
+        inputs:
+          command: login
+          containerRegistry: ghcr.io/getporter
       - task: GoTool@0
         displayName: "Set Go Version"
         inputs:
-          version: "$(GOVERSION)"
+          version: $(GOVERSION)
+      - task: Cache@2
+        displayName: Cache Go Packages
+        inputs:
+          key: "$(GOMODCACHE_KEY)"
+          restoreKeys: $(GOMODCACHE_RESTOREKEYS)
+          path: $(GOMODCACHE)
+      - task: Cache@2
+        displayName: Cache Go Build
+        inputs:
+          key: "$(GOCACHE_KEY)"
+          restoreKeys: $(GOCACHE_RESTOREKEYS)
+          path: $(GOCACHE)
       - script: go run mage.go ConfigureAgent
         displayName: "Configure Agent"
-      - bash: make build
+      - bash: mage build
         displayName: "Native Build"
-      - bash: mage TestIntegration
+      - bash: mage -v TestIntegration
         displayName: "Integration Test"

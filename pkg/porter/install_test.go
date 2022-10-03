@@ -1,44 +1,18 @@
 package porter
 
 import (
+	"context"
 	"testing"
 
-	"get.porter.sh/porter/pkg/context"
-	"get.porter.sh/porter/pkg/manifest"
-
+	"get.porter.sh/porter/pkg/cnab"
+	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/secrets"
-
-	"github.com/cnabio/cnab-go/credentials"
-	"github.com/cnabio/cnab-go/valuesource"
+	"get.porter.sh/porter/pkg/storage"
+	"github.com/cnabio/cnab-go/bundle"
+	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-func TestPorter_applyDefaultOptions(t *testing.T) {
-	p := NewTestPorter(t)
-	err := p.Create()
-	require.NoError(t, err)
-
-	opts := InstallOptions{
-		&BundleActionOptions{
-			sharedOptions: sharedOptions{
-				bundleFileOptions: bundleFileOptions{
-					File: "porter.yaml",
-				},
-			},
-		},
-	}
-	err = opts.Validate([]string{}, p.Porter)
-	require.NoError(t, err)
-
-	p.Debug = true
-	err = p.applyDefaultOptions(&opts.sharedOptions)
-	require.NoError(t, err)
-
-	assert.NotNil(t, p.Manifest, "Manifest should be loaded")
-	assert.NotEqual(t, &manifest.Manifest{}, p.Manifest, "Manifest should not be empty")
-	assert.Equal(t, p.Manifest.Name, opts.Name, "opts.Name should be set using the available manifest")
-}
 
 func TestInstallOptions_validateInstallationName(t *testing.T) {
 	testcases := []struct {
@@ -79,16 +53,11 @@ func TestInstallOptions_validateDriver(t *testing.T) {
 		{"invalid driver provided", "dbeug", "", "unsupported driver or driver not found in PATH: dbeug"},
 	}
 
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			opts := InstallOptions{
-				&BundleActionOptions{
-					sharedOptions: sharedOptions{
-						Driver: tc.driver,
-					},
-				},
-			}
+			opts := NewInstallOptions()
+			opts.Driver = tc.driver
 			err := opts.validateDriver(cxt.Context)
 
 			if tc.wantError == "" {
@@ -101,33 +70,90 @@ func TestInstallOptions_validateDriver(t *testing.T) {
 	}
 }
 
-func TestPorter_InstallBundle_WithDepsFromTag(t *testing.T) {
-	p := NewTestPorter(t)
+func TestPorter_applyActionOptionsToInstallation(t *testing.T) {
+	setup := func() (context.Context, *TestPorter, *storage.Installation) {
+		ctx := context.Background()
+		p := NewTestPorter(t)
 
-	cacheDir, _ := p.Cache.GetCacheDir()
-	p.TestConfig.TestContext.AddTestDirectory("testdata/cache", cacheDir)
-
-	// Make some fake credentials to give to the install operation, they won't be used because it's a dummy driver
-	cs := credentials.NewCredentialSet("wordpress",
-		valuesource.Strategy{
-			Name: "kubeconfig",
-			Source: valuesource.Source{
-				Key:   secrets.SourceSecret,
-				Value: "kubeconfig",
+		p.TestParameters.InsertParameterSet(ctx, storage.ParameterSet{
+			ParameterSetSpec: storage.ParameterSetSpec{
+				Name: "newps1",
+				Parameters: []secrets.Strategy{
+					{Name: "logLevel", Source: secrets.Source{Key: "value", Value: "11"}},
+				},
 			},
 		})
-	p.TestCredentials.TestSecrets.AddSecret("kubeconfig", "abc123")
-	err := p.Credentials.Save(cs)
-	require.NoError(t, err, "Credentials.Save failed")
 
-	opts := NewInstallOptions()
-	opts.Driver = DebugDriver
-	opts.Reference = "localhost:5000/wordpress:v0.1.4" // Using the older version in our testdata bundle cache
-	opts.CredentialIdentifiers = []string{"wordpress"}
-	opts.Params = []string{"wordpress-password=mypassword"}
-	err = opts.Validate(nil, p.Porter)
-	require.NoError(t, err, "Validate install options failed")
+		return ctx, p, &storage.Installation{
+			Bundle: storage.OCIReferenceParts{
+				Repository: "example.com/mybuns",
+				Version:    "1.0.0",
+			},
+			ParameterSets:  []string{"oldps1"},
+			CredentialSets: []string{"oldcs1", "oldcs2"},
+		}
+	}
 
-	err = p.InstallBundle(opts)
-	require.NoError(t, err, "InstallBundle failed")
+	t.Run("replace previous sets", func(t *testing.T) {
+		ctx, p, inst := setup()
+
+		// We should replace the previously used sets since we specified different ones
+		opts := NewBundleExecutionOptions()
+		opts.Reference = kahnlatest.String()
+		opts.bundleRef = &cnab.BundleReference{
+			Reference: kahnlatest,
+			Definition: cnab.NewBundle(bundle.Bundle{
+				Credentials: map[string]bundle.Credential{
+					"userid": {},
+				},
+				Parameters: map[string]bundle.Parameter{
+					"logLevel": {Definition: "logLevel"},
+				},
+				Definitions: map[string]*definition.Schema{
+					"logLevel": {Type: "string"},
+				},
+			}),
+		}
+
+		opts.ParameterSets = []string{"newps1"}
+		opts.CredentialIdentifiers = []string{"newcs1"}
+
+		require.NoError(t, opts.Validate(ctx, nil, p.Porter))
+		err := p.applyActionOptionsToInstallation(ctx, inst, opts)
+		require.NoError(t, err, "applyActionOptionsToInstallation failed")
+
+		require.Equal(t, opts.ParameterSets, inst.ParameterSets, "expected the installation to replace the credential sets with those specified")
+		require.Equal(t, opts.CredentialIdentifiers, inst.CredentialSets, "expected the installation to replace the credential sets with those specified")
+	})
+
+	t.Run("reuse previous sets", func(t *testing.T) {
+		ctx, p, inst := setup()
+
+		// We should reuse the previously used sets since we specified different ones
+		opts := NewBundleExecutionOptions()
+		opts.Reference = kahnlatest.String()
+		opts.bundleRef = &cnab.BundleReference{
+			Reference: kahnlatest,
+			Definition: cnab.NewBundle(bundle.Bundle{
+				Credentials: map[string]bundle.Credential{
+					"userid": {},
+				},
+				Parameters: map[string]bundle.Parameter{
+					"logLevel": {Definition: "logLevel"},
+				},
+				Definitions: map[string]*definition.Schema{
+					"logLevel": {Type: "string"},
+				},
+			}),
+		}
+		opts.ParameterSets = []string{}
+		opts.CredentialIdentifiers = []string{}
+
+		require.NoError(t, opts.Validate(ctx, nil, p.Porter))
+		err := p.applyActionOptionsToInstallation(ctx, inst, opts)
+		require.NoError(t, err, "applyActionOptionsToInstallation failed")
+
+		require.Equal(t, []string{"oldps1"}, inst.ParameterSets, "expected the installation to reuse the previous credential sets")
+		require.Equal(t, []string{"oldcs1", "oldcs2"}, inst.CredentialSets, "expected the installation to reuse the previous credential sets")
+	})
 }

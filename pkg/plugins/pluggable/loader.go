@@ -1,252 +1,144 @@
 package pluggable
 
 import (
-	"bufio"
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
-	"os"
-	"os/exec"
-	"strconv"
-	"strings"
 	"time"
 
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/plugins"
-	hclog "github.com/hashicorp/go-hclog"
-	plugin "github.com/hashicorp/go-plugin"
-	"github.com/pkg/errors"
+	"get.porter.sh/porter/pkg/tracing"
+	"go.opentelemetry.io/otel/attribute"
+)
+
+const (
+	// PluginStartTimeoutDefault is the default amount of time to wait for a plugin
+	// to start. Override with PluginStartTimeoutEnvVar.
+	PluginStartTimeoutDefault = 5 * time.Second
+
+	// PluginStopTimeoutDefault is the default amount of time to wait for a plugin
+	// to stop (kill). Override with PluginStopTimeoutEnvVar.
+	PluginStopTimeoutDefault = 5 * time.Second
+
+	// PluginStartTimeoutEnvVar is the environment variable used to override
+	// PluginStartTimeoutDefault.
+	PluginStartTimeoutEnvVar = "PORTER_PLUGIN_START_TIMEOUT"
+
+	// PluginStopTimeoutEnvVar is the environment variable used to override
+	// PluginStopTimeoutDefault.
+	PluginStopTimeoutEnvVar = "PORTER_PLUGIN_STOP_TIMEOUT"
 )
 
 // PluginLoader handles finding, configuring and loading porter plugins.
 type PluginLoader struct {
-	*config.Config
+	// config is the Porter configuration
+	config *config.Config
 
-	SelectedPluginKey    *plugins.PluginKey
-	SelectedPluginConfig interface{}
+	// selectedPluginKey is the loaded plugin.
+	selectedPluginKey *plugins.PluginKey
+
+	// selectedPluginConfig is the relevant section of the Porter config file containing
+	// the plugin's configuration.
+	selectedPluginConfig interface{}
 }
 
 func NewPluginLoader(c *config.Config) *PluginLoader {
 	return &PluginLoader{
-		Config: c,
+		config: c,
 	}
 }
 
 // Load a plugin, returning the plugin's interface which the caller must then cast to
 // the typed interface, a cleanup function to stop the plugin when finished communicating with it,
 // and an error if the plugin could not be loaded.
-func (l *PluginLoader) Load(pluginType PluginTypeConfig) (interface{}, func(), error) {
-	err := l.selectPlugin(pluginType)
+func (l *PluginLoader) Load(ctx context.Context, pluginType PluginTypeConfig) (*PluginConnection, error) {
+	ctx, span := tracing.StartSpan(ctx,
+		attribute.String("plugin-interface", pluginType.Interface),
+		attribute.String("requested-protocol-version", fmt.Sprintf("%v", pluginType.ProtocolVersion)))
+	defer span.EndSpan()
+
+	err := l.selectPlugin(ctx, pluginType)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	l.SelectedPluginKey.Interface = pluginType.Interface
-
-	var pluginCommand *exec.Cmd
-	if l.SelectedPluginKey.IsInternal {
-		porterPath, err := l.GetPorterPath()
-		if err != nil {
-			return nil, nil, errors.Wrap(err, "could not determine the path to the porter client")
-		}
-
-		pluginCommand = l.NewCommand(porterPath, "plugin", "run", l.SelectedPluginKey.String())
-	} else {
-		pluginPath, err := l.GetPluginPath(l.SelectedPluginKey.Binary)
-		if err != nil {
-			return nil, nil, err
-		}
-
-		pluginCommand = l.NewCommand(pluginPath, "run", l.SelectedPluginKey.String())
+	// quick check to detect that we are running as porter, and not a plugin already
+	if l.config.IsInternalPlugin {
+		err := fmt.Errorf("the internal plugin %s tried to load the %s plugin. Report this error to https://github.com/getporter/porter", l.config.InternalPluginKey, l.selectedPluginKey)
+		return nil, span.Error(err)
 	}
+
+	span.SetAttributes(attribute.String("plugin-key", l.selectedPluginKey.String()))
+
 	configReader, err := l.readPluginConfig()
 	if err != nil {
-		return nil, nil, err
+		return nil, span.Error(err)
 	}
 
-	pluginCommand.Stdin = configReader
-
-	// Explicitly set PORTER_HOME for the plugin
-	pluginCommand.Env = l.Environ()
-
-	if l.DebugPlugins {
-		fmt.Fprintf(l.Err, "Resolved %s plugin to %s\n", pluginType.Interface, l.SelectedPluginKey)
-		if l.SelectedPluginConfig != nil {
-			fmt.Fprintf(l.Err, "Resolved plugin config: \n %#v\n", l.SelectedPluginConfig)
-		}
-		fmt.Fprintln(l.Err, strings.Join(pluginCommand.Args, " "))
+	conn := NewPluginConnection(l.config, pluginType, *l.selectedPluginKey)
+	if err = conn.Start(ctx, configReader); err != nil {
+		return nil, err
 	}
 
-	pluginOutput := bytes.NewBufferString("")
-	logger := hclog.New(&hclog.LoggerOptions{
-		Name:       "porter",
-		Output:     pluginOutput,
-		Level:      hclog.Debug,
-		JSONFormat: true,
-	})
-
-	if l.DebugPlugins {
-		logger.SetLevel(hclog.Info)
-
-		go l.logPluginMessages(pluginOutput)
-	}
-
-	pluginTypes := map[string]plugin.Plugin{
-		pluginType.Interface: pluginType.Plugin,
-	}
-
-	var errbuf bytes.Buffer
-	client := plugin.NewClient(&plugin.ClientConfig{
-		HandshakeConfig: plugins.HandshakeConfig,
-		Plugins:         pluginTypes,
-		Cmd:             pluginCommand,
-		Logger:          logger,
-		Stderr:          &errbuf,
-	})
-	cleanup := func() {
-		client.Kill()
-	}
-
-	// Connect via RPC
-	rpcClient, err := client.Client()
-	if err != nil {
-		cleanup()
-		if stderr := errbuf.String(); stderr != "" {
-			err = errors.Wrap(errors.New(stderr), err.Error())
-		}
-		return nil, nil, errors.Wrapf(err, "could not connect to the %s plugin", l.SelectedPluginKey)
-	}
-
-	cleanup, err = l.setUpDebugger(client, cleanup)
-	if err != nil {
-		return nil, nil, errors.Wrap(err, "could not set up debugger for plugin")
-	}
-
-	// Request the plugin
-	raw, err := rpcClient.Dispense(pluginType.Interface)
-	if err != nil {
-		cleanup()
-		return nil, nil, errors.Wrapf(err, "could not connect to the %s plugin", l.SelectedPluginKey)
-	}
-
-	return raw, cleanup, nil
-}
-
-func (l *PluginLoader) setUpDebugger(client *plugin.Client, cleanup func()) (func(), error) {
-	debugContext := l.Context.PlugInDebugContext
-	if len(debugContext.RunPlugInInDebugger) > 0 && strings.ToLower(l.SelectedPluginKey.String()) == strings.TrimSpace(strings.ToLower(debugContext.RunPlugInInDebugger)) {
-		if !isDelveInstalled() {
-			return cleanup, errors.New("Delve needs to be installed to debug plugins")
-		}
-		listen := fmt.Sprintf("--listen=127.0.0.1:%s", debugContext.DebuggerPort)
-		if len(debugContext.PlugInWorkingDirectory) == 0 {
-			return cleanup, errors.New("Plugin Working Directory is required for debugging")
-		}
-		wd := fmt.Sprintf("--wd=%s", debugContext.PlugInWorkingDirectory)
-		pid := client.ReattachConfig().Pid
-		dlvCmd := exec.Command("dlv", "attach", strconv.Itoa(pid), "--headless=true", "--api-version=2", "--log", listen, "--accept-multiclient", wd)
-		dlvCmd.Stderr = os.Stderr
-		dlvCmd.Stdout = os.Stdout
-
-		err := dlvCmd.Start()
-		if err != nil {
-			return cleanup, errors.Wrap(err, "Error starting dlv")
-		}
-		dlvCmdTerminated := make(chan error)
-		go func() {
-			dlvCmdTerminated <- dlvCmd.Wait()
-		}()
-
-		// dlv attach does not fail immediately but is common (e.g. if plugin is compiled with ldflags that prevent debugging)
-		// so pause here to make sure that it has attached correctly and not failed
-
-		time.Sleep(2 * time.Second)
-
-		select {
-		case err = <-dlvCmdTerminated:
-			return cleanup, errors.Wrap(err, "dlv exited unexpectedly")
-		default:
-		}
-
-		newcleanup := func() {
-			if dlvCmd.Process != nil {
-				select {
-				case err = <-dlvCmdTerminated:
-				default:
-					_ = dlvCmd.Process.Kill()
-				}
-			}
-			cleanup()
-		}
-		return newcleanup, nil
-
-	}
-	return cleanup, nil
-}
-
-func (l *PluginLoader) logPluginMessages(pluginOutput io.Reader) {
-	r := bufio.NewReader(pluginOutput)
-	for {
-		line, err := r.ReadString('\n')
-		if err != nil {
-			continue
-		}
-		if line == "" {
-			return
-		}
-
-		var pluginLog map[string]interface{}
-		err = json.Unmarshal([]byte(line), &pluginLog)
-		if err != nil {
-			// plaintext log
-			fmt.Fprintln(l.Err, line)
-		} else {
-			// print just the message from the json log
-			fmt.Fprintln(l.Err, pluginLog["@message"])
-		}
-	}
+	return conn, nil
 }
 
 // selectPlugin picks the plugin to use and loads its configuration.
-func (l *PluginLoader) selectPlugin(cfg PluginTypeConfig) error {
-	l.SelectedPluginKey = nil
-	l.SelectedPluginConfig = nil
+func (l *PluginLoader) selectPlugin(ctx context.Context, cfg PluginTypeConfig) error {
+	//lint:ignore SA4006 ignore unused ctx for now.
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
+	l.selectedPluginKey = nil
+	l.selectedPluginConfig = nil
 
 	var pluginKey string
 
-	defaultStore := cfg.GetDefaultPluggable(l.Config.Data)
+	defaultStore := cfg.GetDefaultPluggable(l.config)
 	if defaultStore != "" {
-		is, err := cfg.GetPluggable(l.Config.Data, defaultStore)
+		span.SetAttributes(attribute.String("default-plugin", defaultStore))
+
+		is, err := cfg.GetPluggable(l.config, defaultStore)
 		if err != nil {
-			return err
+			return span.Error(err)
 		}
+
 		pluginKey = is.GetPluginSubKey()
-		l.SelectedPluginConfig = is.GetConfig()
+		l.selectedPluginConfig = is.GetConfig()
+		if l.selectedPluginConfig == nil {
+			span.Debug("No plugin config defined")
+		}
 	}
 
 	// If there isn't a specific plugin configured for this plugin type, fall back to the default plugin for this type
 	if pluginKey == "" {
-		pluginKey = cfg.GetDefaultPlugin(l.Config.Data)
+		pluginKey = cfg.GetDefaultPlugin(l.config)
+		span.Debug("Selected default plugin", attribute.String("plugin-key", pluginKey))
+	} else {
+		span.Debug("Selected configured plugin", attribute.String("plugin-key", pluginKey))
 	}
 
 	key, err := plugins.ParsePluginKey(pluginKey)
 	if err != nil {
-		return err
+		return span.Error(err)
 	}
-	l.SelectedPluginKey = &key
+	l.selectedPluginKey = &key
+	l.selectedPluginKey.Interface = cfg.Interface
 
 	return nil
 }
 
 func (l *PluginLoader) readPluginConfig() (io.Reader, error) {
-	if l.SelectedPluginConfig == nil {
+	if l.selectedPluginConfig == nil {
 		return &bytes.Buffer{}, nil
 	}
 
-	b, err := json.Marshal(l.SelectedPluginConfig)
+	b, err := json.Marshal(l.selectedPluginConfig)
 	if err != nil {
-		return nil, errors.Wrapf(err, "could not marshal plugin config %#v", l.SelectedPluginConfig)
+		return nil, fmt.Errorf("could not marshal plugin config for %s: %w", l.selectedPluginKey, err)
 	}
 
 	return bytes.NewBuffer(b), nil

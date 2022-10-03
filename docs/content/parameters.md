@@ -10,8 +10,8 @@ your bundle. These parameters are restricted to a list of [allowable data
 types](/author-bundles/#parameter-types) and are used to define parameters such as
 username and password values for a backing database, or the region that a
 certain resource should be deployed in, etc. Then in your action's steps you can
-reference the parameters using porter's template language `{{
-bundle.parameters.db_name }}`.
+reference the parameters using porter's template language `${
+bundle.parameters.db_name }`.
 
 Parameter values are resolved from a combination of supplied parameter set
 files, user-specified overrides and defaults defined by the bundle itself.
@@ -29,7 +29,8 @@ can have a secret source (`secret`).  See the [secrets
 plugin docs](/plugins/types/#secrets) to learn how to configure Porter to use
 an external secret store.
 
-Parameter Sets are created using [porter parameters generate][generate].
+Parameter Sets are created using the combination of [porter parameters create][create]
+and [porter parameters apply][apply].
 Afterwards a parameter set can be [edited][edit] if changes are required.
 See [porter parameters help](/cli/porter_parameters/) for all available commands.
 
@@ -52,6 +53,12 @@ parameter override is `--param`.
 For example, you may decide to override the `db_name` parameter for a given
 installation via `porter install --param db_name=mydb -p myparamset`.
 
+When a parameter's bundle definition is set to `sensitive=true`, the user-specified
+value will be stored into a secret store to prevent security leakage. See the [secrets
+plugin docs](/plugins/types/#secrets) to learn how porter uses an external secret store 
+to handle sensitive data.
+
+
 ## Bundle defaults
 
 The bundle author may have decided to supply a default value for a given
@@ -66,7 +73,8 @@ the [Author Bundles](/author-bundles#parameters/) doc for more info.
 See the helpful explanation in the [credentials](/credentials/) doc, which
 applies to parameter sources as well.
 
-[generate]: /cli/porter_parameters_generate/
+[create]: /cli/porter_parameters_create/
+[apply]: /cli/porter_parameters_apply/
 [edit]: /cli/porter_parameters_edit/
 
 ## Related

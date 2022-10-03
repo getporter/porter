@@ -1,6 +1,6 @@
 ---
-title: QuickStart Guide
-descriptions: Get started using Porter
+title: "QuickStart: Bundles"
+descriptions: Learn about bundles and how to install them with Porter
 layout: single
 ---
 
@@ -37,7 +37,7 @@ Use this command to see:
 * dependencies of the bundle
 
 ```console
-$ porter explain --reference getporter/wordpress:v0.1.3
+$ porter explain getporter/wordpress:v0.1.3
 Name: wordpress
 Description:
 Version: 0.1.3
@@ -52,8 +52,6 @@ namespace                          string                         false      All
 wordpress-name                     string   porter-ci-wordpress   false      All Actions
 wordpress-password                 string   <nil>                 true       install,upgrade
 
-No outputs defined
-
 Actions:
 Name   Description   Modifies Installation   Stateless
 ping   ping          true                    false
@@ -66,20 +64,10 @@ mysql   getporter/mysql:v0.1.3
 For this quickstart we are going to use the hello world bundle which is a bit simpler:
 
 ```console
-$ porter explain --reference getporter/porter-hello:v0.1.0
+$ porter explain ghcr.io/getporter/examples/porter-hello:v0.2.0
 Name: HELLO
 Description: An example Porter configuration
 Version: 0.1.0
-
-No credentials defined
-
-No parameters defined
-
-No outputs defined
-
-No custom actions defined
-
-No dependencies defined
 ```
 
 ## Install a Bundle
@@ -87,10 +75,10 @@ No dependencies defined
 To install a bundle, you use the `porter install` command. 
 
 ```
-porter install porter-hello --reference getporter/porter-hello:v0.1.0
+porter install porter-hello --reference ghcr.io/getporter/examples/porter-hello:v0.2.0
 ```
 
-In this example, you are installing the v0.1.0 version of the getporter/porter-hello bundle from its location in the default registry (Docker Hub) and setting the installation name to porter-hello.
+In this example, you are installing the v0.1.0 version of the ghcr.io/getporter/examples/porter-hello bundle from its location in the default registry (Docker Hub) and setting the installation name to porter-hello.
 
 ## List Bundle Installations
 
@@ -110,17 +98,11 @@ To see information about an installation, use the `porter show` command with the
 
 ```console
 $ porter show porter-hello
-Name: porter-hello
-Created: 2021-03-27
-Modified: 2021-05-03
-
-Outputs:
--------------------------------------------------------------------------------
-  Name                                 Type    Value
--------------------------------------------------------------------------------
-  io.cnab.outputs.invocationImageLogs  string  DEBUG: defaulting action
-                                               to CNAB_ACTION (install)
-                                               executi...
+Name: hello
+Bundle: ghcr.io/getporter/examples/porter-hello
+Version: 0.2.0
+Created: 2021-05-24
+Modified: 2021-05-24
 
 History:
 ------------------------------------------------------------------------
@@ -134,16 +116,40 @@ History:
 ## Upgrade the Installation
 
 To upgrade the resources managed by the bundle, use `porter upgrade`.
+### Upgrade using a version tag
 Most bundles are written such that a specific version of the bundle corresponds to a specific version of an application.
 So to upgrade the application to a new version you need to specify a newer version of the bundle.
 
 ```console
-$ porter upgrade porter-hello --reference getporter/porter-hello:v0.1.1
+$ porter upgrade porter-hello --version 0.2.0
 upgrading porter-hello...
 executing upgrade action from porter-hello (installation: porter-hello)
 Upgrade Hello World
 Upgraded to World 2.0
 execution completed successfully!
+```
+
+### Upgrade using digest
+
+When working in production environment, we highly recommend you to reference the bundle using its digest instead of tag. We used tags in our docs for simplicity, but tags can be overwritten which results in unexpected outcomes from upgrading an bundle.
+For deterministic and repeatable deployments, use digests instead of tags to ensure that you deploy exactly what you intended.
+
+```console
+$ porter upgrade porter-hello --reference ghcr.io/getporter/examples/porter-hello@sha256:276b44be3f478b4c8d1f99c1925386d45a878a853f22436ece5589f32e9df384
+_
+upgrading porter-hello...
+executing upgrade action from porter-hello (installation: porter-hello)
+Upgrade Hello World
+Upgraded to World 2.0
+execution completed successfully!
+```
+
+## Troubleshooting
+
+If you received an `invalid media type` error like below, check that you are referencing the digest for the bundle and not the installer image.
+
+```plain
+unable to pull bundle: invalid media type "application/vnd.docker.distribution.manifest.v2+json" for bundle manifest
 ```
 
 ## Cleanup

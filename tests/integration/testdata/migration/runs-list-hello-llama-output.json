@@ -1,0 +1,62 @@
+[
+  {
+    "id": "01G4XDMPF2FAV54V4TKQ4382RB",
+    "version": "0.1.1",
+    "action": "upgrade",
+    "parameters": {
+      "name": "",
+      "porter-debug": ""
+    },
+    "started": "2022-06-06T16:09:57.346838-05:00",
+    "stopped": "2022-06-06T16:09:58.633595-05:00",
+    "status": "succeeded"
+  },
+  {
+    "id": "01G4XDM14SBFADM821XFRFMXWE",
+    "version": "0.1.1",
+    "action": "upgrade",
+    "parameters": {
+      "name": "",
+      "porter-debug": ""
+    },
+    "started": "2022-06-06T16:09:35.513794-05:00",
+    "stopped": "2022-06-06T16:09:36.567085-05:00",
+    "status": "failed"
+  },
+  {
+    "id": "01G4XDKP90DHZH85WJT2W89T3K",
+    "version": "0.1.1",
+    "action": "upgrade",
+    "parameters": {
+      "name": "",
+      "porter-debug": ""
+    },
+    "started": "2022-06-06T16:09:24.384266-05:00",
+    "stopped": "2022-06-06T16:09:25.639705-05:00",
+    "status": "succeeded"
+  },
+  {
+    "id": "01G4XDK06E3JNN2K22GF0AZNEY",
+    "version": "0.1.1",
+    "action": "upgrade",
+    "parameters": {
+      "name": "",
+      "porter-debug": ""
+    },
+    "started": "2022-06-06T16:09:01.774187-05:00",
+    "stopped": "2022-06-06T16:09:03.609647-05:00",
+    "status": "succeeded"
+  },
+  {
+    "id": "01G4XDHVAQ6B7ZPMC3WM9S5B8C",
+    "version": "0.1.1",
+    "action": "install",
+    "parameters": {
+      "name": "",
+      "porter-debug": ""
+    },
+    "started": "2022-06-06T16:08:24.024008-05:00",
+    "stopped": "2022-06-06T16:08:32.695559-05:00",
+    "status": "succeeded"
+  }
+]

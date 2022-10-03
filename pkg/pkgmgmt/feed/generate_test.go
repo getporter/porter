@@ -1,20 +1,21 @@
 package feed
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"sort"
 	"testing"
 	"time"
 
+	"get.porter.sh/porter/pkg/portercontext"
 	"github.com/stretchr/testify/assert"
-
-	"get.porter.sh/porter/pkg/context"
 	"github.com/stretchr/testify/require"
 )
 
 func TestGenerate(t *testing.T) {
-	tc := context.NewTestContext(t)
+	ctx := context.Background()
+	tc := portercontext.NewTestContext(t)
 	tc.AddTestFile("testdata/atom-template.xml", "template.xml")
 
 	tc.FileSystem.Create("bin/v1.2.3/helm-darwin-amd64")
@@ -73,7 +74,7 @@ func TestGenerate(t *testing.T) {
 		TemplateFile:    "template.xml",
 	}
 	f := NewMixinFeed(tc.Context)
-	err := f.Generate(opts)
+	err := f.Generate(ctx, opts)
 	require.NoError(t, err)
 	err = f.Save(opts)
 	require.NoError(t, err)
@@ -134,13 +135,14 @@ func TestGenerate_RegexMatch(t *testing.T) {
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			ctx := context.NewTestContext(t)
-			ctx.AddTestFile("testdata/atom-template.xml", "template.xml")
+			ctx := context.Background()
+			porterCtx := portercontext.NewTestContext(t)
+			porterCtx.AddTestFile("testdata/atom-template.xml", "template.xml")
 
 			if tc.mixinName != "" {
-				ctx.FileSystem.Create(fmt.Sprintf("bin/v1.2.3/%s-darwin-amd64", tc.mixinName))
-				ctx.FileSystem.Create(fmt.Sprintf("bin/v1.2.3/%s-linux-amd64", tc.mixinName))
-				ctx.FileSystem.Create(fmt.Sprintf("bin/v1.2.3/%s-windows-amd64.exe", tc.mixinName))
+				porterCtx.FileSystem.Create(fmt.Sprintf("bin/v1.2.3/%s-darwin-amd64", tc.mixinName))
+				porterCtx.FileSystem.Create(fmt.Sprintf("bin/v1.2.3/%s-linux-amd64", tc.mixinName))
+				porterCtx.FileSystem.Create(fmt.Sprintf("bin/v1.2.3/%s-windows-amd64.exe", tc.mixinName))
 			}
 
 			opts := GenerateOptions{
@@ -148,8 +150,8 @@ func TestGenerate_RegexMatch(t *testing.T) {
 				SearchDirectory: "bin",
 				TemplateFile:    "template.xml",
 			}
-			f := NewMixinFeed(ctx.Context)
-			err := f.Generate(opts)
+			f := NewMixinFeed(porterCtx.Context)
+			err := f.Generate(ctx, opts)
 			if tc.wantError != "" {
 				require.EqualError(t, err, tc.wantError)
 			} else {
@@ -160,7 +162,8 @@ func TestGenerate_RegexMatch(t *testing.T) {
 }
 
 func TestGenerate_ExistingFeed(t *testing.T) {
-	tc := context.NewTestContext(t)
+	ctx := context.Background()
+	tc := portercontext.NewTestContext(t)
 	tc.AddTestFile("testdata/atom-template.xml", "template.xml")
 	tc.AddTestFile("testdata/atom-existing.xml", "atom.xml")
 
@@ -188,7 +191,7 @@ func TestGenerate_ExistingFeed(t *testing.T) {
 		TemplateFile:    "template.xml",
 	}
 	f := NewMixinFeed(tc.Context)
-	err := f.Generate(opts)
+	err := f.Generate(ctx, opts)
 	require.NoError(t, err)
 	err = f.Save(opts)
 	require.NoError(t, err)
@@ -205,7 +208,8 @@ func TestGenerate_ExistingFeed(t *testing.T) {
 }
 
 func TestGenerate_RegenerateDoesNotCreateDuplicates(t *testing.T) {
-	tc := context.NewTestContext(t)
+	ctx := context.Background()
+	tc := portercontext.NewTestContext(t)
 	tc.AddTestFile("testdata/atom-template.xml", "template.xml")
 	tc.AddTestFile("testdata/atom-existing.xml", "atom.xml")
 
@@ -234,7 +238,7 @@ func TestGenerate_RegenerateDoesNotCreateDuplicates(t *testing.T) {
 	}
 	f := NewMixinFeed(tc.Context)
 
-	err := f.Generate(opts)
+	err := f.Generate(ctx, opts)
 	require.NoError(t, err)
 	err = f.Save(opts)
 	require.NoError(t, err)
@@ -242,7 +246,7 @@ func TestGenerate_RegenerateDoesNotCreateDuplicates(t *testing.T) {
 	// Run the generation again, against the same versions, and make sure they don't insert duplicate files
 	// This mimics what the CI does when we repeat a build, or have multiple
 	// canary builds on the "main" branch
-	err = f.Generate(opts)
+	err = f.Generate(ctx, opts)
 	require.NoError(t, err)
 	err = f.Save(opts)
 	require.NoError(t, err)

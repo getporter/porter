@@ -91,7 +91,7 @@ standard mechanism defined by the CNAB spec yet.
 
 When you create a new bundle, porter generates Dockerfile.tmpl file for you. In
 the porter.yaml you can specify `dockerfile: dockerfile.tmpl` to tell Porter
-that you want to use the template (see [Custom Dockerfile](/custom-dockerfile/)) and then you can customize
+that you want to use the template (see [Custom Dockerfile](/bundle/custom-dockerfile/)) and then you can customize
 it however you need. You're on the right track, from there you can use the exec
 mixin to call whatever you installed.
 
@@ -112,7 +112,7 @@ time you want to invest, and what you are starting from.
 
 ## Does Porter have its own registry?
 
-No, Porter does not have a dedicated registry for hosting bundles. You can use any OCI registry, such as DockerHub, with Porter. We have compiled a [list of compatible registries](https://porter.sh/compatible-registries/) that have been tested with Porter.
+No, Porter does not have a dedicated registry for hosting bundles. You can use any OCI registry, such as DockerHub, with Porter. We have compiled a [list of compatible registries](/compatible-registries/) that have been tested with Porter.
 
 ## What do mixins do?
 

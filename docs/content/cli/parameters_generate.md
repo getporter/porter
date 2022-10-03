@@ -34,11 +34,12 @@ porter parameters generate [NAME] [flags]
 ### Examples
 
 ```
-  porter parameter generate
-  porter parameter generate myparamset --reference getporter/porter-hello:v0.1.0
-  porter parameter generate myparamset --reference localhost:5000/getporter/porter-hello:v0.1.0 --insecure-registry --force
-  porter parameter generate myparamset --file myapp/porter.yaml
-  porter parameter generate myparamset --cnab-file myapp/bundle.json
+  porter parameters generate
+  porter parameters generate myparamset --reference getporter/hello-llama:v0.1.1 --namespace dev
+  porter parameters generate myparamset --label owner=myname --reference getporter/hello-llama:v0.1.1
+  porter parameters generate myparamset --reference localhost:5000/getporter/hello-llama:v0.1.1 --insecure-registry --force
+  porter parameters generate myparamset --file myapp/porter.yaml
+  porter parameters generate myparamset --cnab-file myapp/bundle.json
 
 ```
 
@@ -50,14 +51,16 @@ porter parameters generate [NAME] [flags]
       --force               Force a fresh pull of the bundle
   -h, --help                help for generate
       --insecure-registry   Don't require TLS for the registry
+  -l, --label strings       Associate the specified labels with the parameter set. May be specified multiple times.
+  -n, --namespace string    Namespace in which the parameter set is defined. Defaults to the global namespace.
   -r, --reference string    Use a bundle in an OCI registry specified by the given reference.
 ```
 
 ### Options inherited from parent commands
 
 ```
-      --debug           Enable debug logging
-      --debug-plugins   Enable plugin debug logging
+      --experimental strings   Comma separated list of experimental features to enable. See https://getporter.org/configuration/#experimental-feature-flags for available feature flags.
+      --verbosity string       Threshold for printing messages to the console. Available values are: debug, info, warning, error. (default "info")
 ```
 
 ### SEE ALSO

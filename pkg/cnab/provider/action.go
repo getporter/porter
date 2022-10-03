@@ -1,21 +1,21 @@
 package cnabprovider
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"sort"
 
-	cnabaction "github.com/cnabio/cnab-go/action"
-	"github.com/cnabio/cnab-go/bundle"
-
+	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
-	"get.porter.sh/porter/pkg/yaml"
-	"github.com/cnabio/cnab-go/action"
-	"github.com/cnabio/cnab-go/claim"
+	"get.porter.sh/porter/pkg/storage"
+	"get.porter.sh/porter/pkg/tracing"
+	cnabaction "github.com/cnabio/cnab-go/action"
 	"github.com/cnabio/cnab-go/driver"
-	"github.com/cnabio/cnab-go/valuesource"
-	"github.com/cnabio/cnab-to-oci/relocation"
 	"github.com/hashicorp/go-multierror"
-	"github.com/pkg/errors"
+	"go.opentelemetry.io/otel/attribute"
+	"go.uber.org/zap/zapcore"
 )
 
 // Shared arguments for all CNAB actions
@@ -24,26 +24,20 @@ type ActionArguments struct {
 	Action string
 
 	// Name of the installation.
-	Installation string
+	Installation storage.Installation
 
-	// Either a filepath to the bundle or the name of the bundle.
-	BundlePath string
+	// BundleReference is the set of information necessary to execute a bundle.
+	BundleReference cnab.BundleReference
 
 	// Additional files to copy into the bundle
 	// Target Path => File Contents
 	Files map[string]string
 
-	// Params is the set of user-specified parameter values to pass to the bundle.
-	Params map[string]string
-
-	// Either a filepath to a credential file or the name of a set of a credentials.
-	CredentialIdentifiers []string
+	// Params is the fully resolved set of parameters.
+	Params map[string]interface{}
 
 	// Driver is the CNAB-compliant driver used to run bundle actions.
 	Driver string
-
-	// Path to an optional relocation mapping file
-	RelocationMapping string
 
 	// Give the bundle privileged access to the docker daemon.
 	AllowDockerHostAccess bool
@@ -52,15 +46,16 @@ type ActionArguments struct {
 	PersistLogs bool
 }
 
-func (r *Runtime) ApplyConfig(args ActionArguments) action.OperationConfigs {
-	return action.OperationConfigs{
+func (r *Runtime) ApplyConfig(ctx context.Context, args ActionArguments) cnabaction.OperationConfigs {
+	return cnabaction.OperationConfigs{
 		r.SetOutput(),
-		r.AddFiles(args),
+		r.AddFiles(ctx, args),
+		r.AddEnvironment(args),
 		r.AddRelocation(args),
 	}
 }
 
-func (r *Runtime) SetOutput() action.OperationConfigFunc {
+func (r *Runtime) SetOutput() cnabaction.OperationConfigFunc {
 	return func(op *driver.Operation) error {
 		op.Out = r.Out
 		op.Err = r.Err
@@ -68,18 +63,18 @@ func (r *Runtime) SetOutput() action.OperationConfigFunc {
 	}
 }
 
-func (r *Runtime) AddFiles(args ActionArguments) action.OperationConfigFunc {
+func (r *Runtime) AddFiles(ctx context.Context, args ActionArguments) cnabaction.OperationConfigFunc {
 	return func(op *driver.Operation) error {
 		for k, v := range args.Files {
 			op.Files[k] = v
 		}
 
 		// Add claim.json to file list as well, if exists
-		claim, err := r.claims.ReadLastClaim(args.Installation)
+		claim, err := r.installations.GetLastRun(ctx, args.Installation.Namespace, args.Installation.Name)
 		if err == nil {
-			claimBytes, err := yaml.Marshal(claim)
+			claimBytes, err := json.Marshal(claim)
 			if err != nil {
-				return errors.Wrapf(err, "could not marshal claim %s for installation %s", claim.ID, args.Installation)
+				return fmt.Errorf("could not marshal claim %s for installation %s: %w", claim.ID, args.Installation, err)
 			}
 			op.Files[config.ClaimFilepath] = string(claimBytes)
 		}
@@ -88,23 +83,41 @@ func (r *Runtime) AddFiles(args ActionArguments) action.OperationConfigFunc {
 	}
 }
 
+func (r *Runtime) AddEnvironment(args ActionArguments) cnabaction.OperationConfigFunc {
+	const verbosityEnv = "PORTER_VERBOSITY"
+
+	return func(op *driver.Operation) error {
+		op.Environment[config.EnvPorterInstallationNamespace] = args.Installation.Namespace
+		op.Environment[config.EnvPorterInstallationName] = args.Installation.Name
+
+		// Pass the verbosity from porter's local config into the bundle
+		op.Environment[verbosityEnv] = r.Config.GetVerbosity().Level().String()
+
+		// When a bundle is run in debug mode, the verbosity is automatically set to debug
+		if debugMode, _ := args.Params["porter-debug"].(bool); debugMode {
+			op.Environment[verbosityEnv] = zapcore.DebugLevel.String()
+		}
+		return nil
+	}
+}
+
 // AddRelocation operates on an ActionArguments and adds any provided relocation mapping
 // to the operation's files.
-func (r *Runtime) AddRelocation(args ActionArguments) action.OperationConfigFunc {
+func (r *Runtime) AddRelocation(args ActionArguments) cnabaction.OperationConfigFunc {
 	return func(op *driver.Operation) error {
-		if args.RelocationMapping != "" {
-			b, err := r.FileSystem.ReadFile(args.RelocationMapping)
+		if len(args.BundleReference.RelocationMap) > 0 {
+			b, err := json.MarshalIndent(args.BundleReference.RelocationMap, "", "    ")
 			if err != nil {
-				return errors.Wrap(err, "unable to add relocation mapping")
+				return fmt.Errorf("error marshaling relocation mapping file: %w", err)
 			}
+
 			op.Files["/cnab/app/relocation-mapping.json"] = string(b)
-			var reloMap relocation.ImageRelocationMap
-			err = json.Unmarshal(b, &reloMap)
+
 			// If the invocation image is present in the relocation mapping, we need
 			// to update the operation and set the new image reference. Unfortunately,
 			// the relocation mapping is just reference => reference, so there isn't a
 			// great way to check for the invocation image.
-			if mappedInvo, ok := reloMap[op.Image.Image]; ok {
+			if mappedInvo, ok := args.BundleReference.RelocationMap[op.Image.Image]; ok {
 				op.Image.Image = mappedInvo
 			}
 		}
@@ -112,145 +125,185 @@ func (r *Runtime) AddRelocation(args ActionArguments) action.OperationConfigFunc
 	}
 }
 
-func (r *Runtime) Execute(args ActionArguments) error {
-	if args.Action == "" {
-		return errors.New("action is required")
-	}
+func (r *Runtime) Execute(ctx context.Context, args ActionArguments) error {
+	// Check if we've been asked to stop before executing long blocking calls
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
+		ctx, log := tracing.StartSpan(ctx,
+			attribute.String("action", args.Action),
+			attribute.Bool("allowDockerHostAccess", args.AllowDockerHostAccess),
+			attribute.String("driver", args.Driver))
+		defer log.EndSpan()
+		args.BundleReference.AddToTrace(ctx)
+		args.Installation.AddToTrace(ctx)
 
-	var b bundle.Bundle
+		if args.Action == "" {
+			return log.Error(errors.New("action is required"))
+		}
+
+		b, err := r.ProcessBundle(ctx, args.BundleReference.Definition)
+		if err != nil {
+			return log.Error(err)
+		}
+
+		currentRun, err := r.CreateRun(ctx, args, b)
+		if err != nil {
+			return log.Error(err)
+		}
+
+		// Validate the action
+		if _, err := b.GetAction(currentRun.Action); err != nil {
+			return log.Error(fmt.Errorf("invalid action '%s' specified for bundle %s: %w", currentRun.Action, b.Name, err))
+		}
+
+		creds, err := r.loadCredentials(ctx, b, args)
+		if err != nil {
+			return log.Error(fmt.Errorf("not load credentials: %w", err))
+		}
+
+		log.Debugf("Using runtime driver %s\n", args.Driver)
+		driver, err := r.newDriver(args.Driver, args)
+		if err != nil {
+			return log.Error(fmt.Errorf("unable to instantiate driver: %w", err))
+		}
+
+		a := cnabaction.New(driver)
+		a.SaveLogs = args.PersistLogs
+
+		if currentRun.ShouldRecord() {
+			err = r.SaveRun(ctx, args.Installation, currentRun, cnab.StatusRunning)
+			if err != nil {
+				return log.Error(fmt.Errorf("could not save the pending action's status, the bundle was not executed: %w", err))
+			}
+		}
+
+		opResult, result, err := a.Run(currentRun.ToCNAB(), creds.ToCNAB(), r.ApplyConfig(ctx, args)...)
+
+		if currentRun.ShouldRecord() {
+			if err != nil {
+				err = r.appendFailedResult(ctx, err, currentRun)
+				return log.Error(fmt.Errorf("failed to record that %s for installation %s failed: %w", args.Action, args.Installation.Name, err))
+			}
+			return r.SaveOperationResult(ctx, opResult, args.Installation, currentRun, currentRun.NewResultFrom(result))
+		}
+
+		if err != nil {
+			return log.Error(fmt.Errorf("execution of %s for installation %s failed: %w", args.Action, args.Installation.Name, err))
+		}
+
+		return nil
+	}
+}
+
+func (r *Runtime) CreateRun(ctx context.Context, args ActionArguments, b cnab.ExtendedBundle) (storage.Run, error) {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
+	// Create a record for the run we are about to execute
+	var currentRun = args.Installation.NewRun(args.Action)
+	currentRun.Bundle = b.Bundle
+	currentRun.BundleReference = args.BundleReference.Reference.String()
+	currentRun.BundleDigest = args.BundleReference.Digest.String()
+
 	var err error
+	extb := cnab.NewBundle(b.Bundle)
+	currentRun.Parameters.Parameters, err = r.sanitizer.CleanRawParameters(ctx, args.Params, extb, currentRun.ID)
+	if err != nil {
+		return storage.Run{}, span.Error(err)
+	}
 
-	if args.BundlePath != "" {
-		b, err = r.ProcessBundleFromFile(args.BundlePath)
+	// TODO: Do not save secrets when the run isn't recorded
+	currentRun.ParameterOverrides = storage.LinkSensitiveParametersToSecrets(currentRun.ParameterOverrides, extb, currentRun.ID)
+	currentRun.CredentialSets = args.Installation.CredentialSets
+	sort.Strings(currentRun.CredentialSets)
+
+	currentRun.ParameterSets = args.Installation.ParameterSets
+	sort.Strings(currentRun.ParameterSets)
+	return currentRun, nil
+}
+
+// SaveRun with the specified status.
+func (r *Runtime) SaveRun(ctx context.Context, installation storage.Installation, run storage.Run, status string) error {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
+	span.Debugf("saving action %s for %s installation with status %s", run.Action, installation, status)
+
+	// update installation record to use run id ecoded parameters instead of
+	// installation id
+	installation.Parameters.Parameters = run.ParameterOverrides.Parameters
+	err := r.installations.UpsertInstallation(ctx, installation)
+	if err != nil {
+		return span.Error(fmt.Errorf("error saving the installation record before executing the bundle: %w", err))
+	}
+
+	result := run.NewResult(status)
+	err = r.installations.InsertRun(ctx, run)
+	if err != nil {
+		return span.Error(fmt.Errorf("error saving the installation run record before executing the bundle: %w", err))
+	}
+
+	err = r.installations.InsertResult(ctx, result)
+	if err != nil {
+		return span.Error(fmt.Errorf("error saving the installation status record before executing the bundle: %w", err))
+	}
+
+	return nil
+}
+
+// SaveOperationResult saves the ClaimResult and Outputs. The caller is
+// responsible for having already persisted the claim itself, for example using
+// SaveRun.
+func (r *Runtime) SaveOperationResult(ctx context.Context, opResult driver.OperationResult, installation storage.Installation, run storage.Run, result storage.Result) error {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
+	// TODO(carolynvs): optimistic locking on updates
+
+	// Keep accumulating errors from any error returned from the operation
+	// We must save the claim even when the op failed, but we want to report
+	// ALL errors back.
+	var bigerr *multierror.Error
+	bigerr = multierror.Append(bigerr, opResult.Error)
+
+	err := r.installations.InsertResult(ctx, result)
+	if err != nil {
+		bigerr = multierror.Append(bigerr, fmt.Errorf("error adding %s result for %s run of installation %s\n%#v: %w", result.Status, run.Action, installation, result, err))
+	}
+
+	installation.ApplyResult(run, result)
+	err = r.installations.UpdateInstallation(ctx, installation)
+	if err != nil {
+		bigerr = multierror.Append(bigerr, fmt.Errorf("error updating installation record for %s\n%#v: %w", installation, installation, err))
+	}
+
+	for outputName, outputValue := range opResult.Outputs {
+		output := result.NewOutput(outputName, []byte(outputValue))
+		output, err = r.sanitizer.CleanOutput(ctx, output, cnab.ExtendedBundle{Bundle: run.Bundle})
 		if err != nil {
-			return err
+			bigerr = multierror.Append(bigerr, fmt.Errorf("error sanitizing sensitive %s output for %s run of installation %s\n%#v: %w", output.Name, run.Action, installation, output, err))
 		}
-	}
-
-	existingClaim, err := r.claims.ReadLastClaim(args.Installation)
-	if err != nil {
-		// Only install and stateless actions can execute without an initial installation
-		if !(args.Action == claim.ActionInstall || b.Actions[args.Action].Stateless) {
-			return errors.Wrapf(err, "could not load installation %s", args.Installation)
-		}
-	}
-
-	// If the user didn't override the bundle definition, use the one
-	// from the existing claim
-	if existingClaim.ID != "" && args.BundlePath == "" {
-		b, err = r.ProcessBundle(existingClaim.Bundle)
+		err = r.installations.InsertOutput(ctx, output)
 		if err != nil {
-			return err
-		}
-	}
-	if r.Debug {
-		b.WriteTo(r.Err)
-		fmt.Fprintln(r.Err)
-	}
-
-	params, err := r.loadParameters(b, args)
-	if err != nil {
-		return errors.Wrap(err, "invalid parameters")
-	}
-
-	var c claim.Claim
-	if existingClaim.ID == "" {
-		c, err = claim.New(args.Installation, args.Action, b, params)
-	} else {
-		c, err = existingClaim.NewClaim(args.Action, b, params)
-	}
-	if err != nil {
-		return err
-	}
-
-	// Validate the action we are about to perform
-	err = c.Validate()
-	if err != nil {
-		return err
-	}
-
-	creds, err := r.loadCredentials(c.Bundle, args)
-	if err != nil {
-		return errors.Wrap(err, "could not load credentials")
-	}
-
-	driver, err := r.newDriver(args.Driver, args.Installation, args)
-	if err != nil {
-		return errors.Wrap(err, "unable to instantiate driver")
-	}
-
-	a := cnabaction.New(driver, r.claims)
-	a.SaveAllOutputs = true
-	a.SaveLogs = args.PersistLogs
-
-	modifies, err := c.IsModifyingAction()
-	if err != nil {
-		return err
-	}
-
-	// Only record runs that modify the bundle, e.g. don't save "logs" or "dry-run"
-	// In theory a custom action shouldn't ever have modifies AND stateless
-	// (which creates a temp claim) but just in case, if it does modify, we must
-	// persist.
-	shouldPersistClaim := func() bool {
-		stateless := false
-		if customAction, ok := c.Bundle.Actions[args.Action]; ok {
-			stateless = customAction.Stateless
-		}
-		return modifies && !stateless
-	}()
-
-	if shouldPersistClaim {
-		err = a.SaveInitialClaim(c, claim.StatusRunning)
-		if err != nil {
-			return err
+			bigerr = multierror.Append(bigerr, fmt.Errorf("error adding %s output for %s run of installation %s\n%#v: %w", output.Name, run.Action, installation, output, err))
 		}
 	}
 
-	r.printDebugInfo(creds, params)
-
-	opResult, result, err := a.Run(c, creds, r.ApplyConfig(args)...)
-
-	if shouldPersistClaim {
-		if err != nil {
-			err = r.appendFailedResult(err, c)
-			return errors.Wrapf(err, "failed to %s the bundle", args.Action)
-		}
-		return a.SaveOperationResult(opResult, c, result)
-	} else {
-		return errors.Wrapf(err, "failed to %s the bundle", args.Action)
-	}
+	return bigerr.ErrorOrNil()
 }
 
 // appendFailedResult creates a failed result from the operation error and accumulates
 // the error(s).
-func (r *Runtime) appendFailedResult(opErr error, c claim.Claim) error {
+func (r *Runtime) appendFailedResult(ctx context.Context, opErr error, run storage.Run) error {
 	saveResult := func() error {
-		result, err := c.NewResult(claim.StatusFailed)
-		if err != nil {
-			return err
-		}
-		return r.claims.SaveResult(result)
+		result := run.NewResult(cnab.StatusFailed)
+		return r.installations.InsertResult(ctx, result)
 	}
 
 	resultErr := saveResult()
 
 	// Accumulate any errors from the operation with the persistence errors
 	return multierror.Append(opErr, resultErr).ErrorOrNil()
-}
-
-func (r *Runtime) printDebugInfo(creds valuesource.Set, params map[string]interface{}) {
-	if r.Debug {
-		// only print out the names of the credentials, not the contents, cuz they big and sekret
-		credKeys := make([]string, 0, len(creds))
-		for k := range creds {
-			credKeys = append(credKeys, k)
-		}
-		// param values may also be sensitive, so just print names
-		paramKeys := make([]string, 0, len(params))
-		for k := range params {
-			paramKeys = append(paramKeys, k)
-		}
-		fmt.Fprintf(r.Err, "params: %v\ncreds: %v\n", paramKeys, credKeys)
-	}
 }

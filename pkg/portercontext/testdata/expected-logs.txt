@@ -1,0 +1,3 @@
+{"level":"info","ts":"","msg":"a thing happened"}
+{"level":"warn","ts":"","msg":"a weird thing happened"}
+{"level":"error","ts":"","msg":"a bad thing happened"}

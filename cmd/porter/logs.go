@@ -30,20 +30,22 @@ func buildInstallationLogShowCommand(p *porter.Porter) *cobra.Command {
 		Long: `Show the logs from an installation.
 
 Either display the logs from a specific run of a bundle with --run, or use --installation to display the logs from its most recent run.`,
-		Example: `  porter installation logs show --installation wordpress
+		Example: `  porter installation logs show --installation wordpress --namespace dev
   porter installations logs show --run 01EZSWJXFATDE24XDHS5D5PWK6`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate(p.Context)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.ShowInstallationLogs(opts)
+			return p.ShowInstallationLogs(cmd.Context(), opts)
 		},
 	}
 
 	f := cmd.Flags()
+	f.StringVarP(&opts.Namespace, "namespace", "n", "",
+		"Namespace in which the installation is defined. Defaults to the global namespace.")
 	f.StringVarP(&opts.Name, "installation", "i", "",
 		"The installation that generated the logs.")
-	f.StringVarP(&opts.ClaimID, "run", "r", "",
+	f.StringVarP(&opts.RunID, "run", "r", "",
 		"The bundle run that generated the logs.")
 
 	return cmd

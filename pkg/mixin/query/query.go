@@ -2,13 +2,14 @@ package query
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io/ioutil"
 
-	portercontext "get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/pkgmgmt"
+	"get.porter.sh/porter/pkg/portercontext"
+	"get.porter.sh/porter/pkg/tracing"
 	"github.com/hashicorp/go-multierror"
-	"github.com/pkg/errors"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -48,7 +49,10 @@ type MixinInputGenerator interface {
 // Execute the specified command using an input generator.
 // For example, the ManifestGenerator will iterate over the mixins in a manifest and send
 // them their config and the steps associated with their mixin.
-func (q *MixinQuery) Execute(cmd string, inputGenerator MixinInputGenerator) (map[string]string, error) {
+func (q *MixinQuery) Execute(ctx context.Context, cmd string, inputGenerator MixinInputGenerator) (map[string]string, error) {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
 	mixinNames := inputGenerator.ListMixins()
 	results := make(map[string]string, len(mixinNames))
 	type queryResponse struct {
@@ -65,8 +69,7 @@ func (q *MixinQuery) Execute(cmd string, inputGenerator MixinInputGenerator) (ma
 		gerr.Go(func() error {
 			// Copy the existing context and tweak to pipe the output differently
 			mixinStdout := &bytes.Buffer{}
-			var mixinContext portercontext.Context
-			mixinContext = *q.Context
+			mixinContext := *q.Context
 			mixinContext.Out = mixinStdout // mixin stdout -> mixin response
 
 			if q.LogMixinErrors {
@@ -84,7 +87,7 @@ func (q *MixinQuery) Execute(cmd string, inputGenerator MixinInputGenerator) (ma
 				Command: cmd,
 				Input:   string(inputB),
 			}
-			runErr := q.Mixins.Run(&mixinContext, mixinName, cmd)
+			runErr := q.Mixins.Run(ctx, &mixinContext, mixinName, cmd)
 
 			// Pack the error from running the command in the response so we can
 			// decide if we care about it, if we returned it normally, the
@@ -111,21 +114,19 @@ func (q *MixinQuery) Execute(cmd string, inputGenerator MixinInputGenerator) (ma
 			results[response.mixinName] = response.output
 		} else {
 			runErr = multierror.Append(runErr,
-				errors.Wrapf(response.runErr, "error encountered from mixin %q", response.mixinName))
+				fmt.Errorf("error encountered from mixin %q: %w", response.mixinName, response.runErr))
 		}
 	}
 
 	if runErr != nil {
 		if q.RequireAllMixinResponses {
-			return nil, runErr
+			return nil, span.Error(runErr)
 		}
 
 		// This is a debug because we expect not all mixins to implement some
 		// optional commands, like lint and don't want to print their error
 		// message when we query them with a command they don't support.
-		if q.Debug {
-			fmt.Fprintln(q.Err, errors.Wrap(runErr, "not all mixins responded successfully"))
-		}
+		span.Debugf(fmt.Errorf("not all mixins responded successfully: %w", runErr).Error())
 	}
 
 	return results, nil

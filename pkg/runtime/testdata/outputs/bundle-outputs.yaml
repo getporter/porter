@@ -1,16 +1,17 @@
-mixins:
-- helm3:
-    repositories:
-      bitnami:
-        url: "https://charts.bitnami.com/bitnami"
-
+schemaVersion: 1.0.0
 name: outputs
 version: 0.1.0
-registry: getporter
+registry: "localhost:5000"
+
+mixins:
+  - helm3:
+      repositories:
+        bitnami:
+          url: "https://charts.bitnami.com/bitnami"
 
 credentials:
 - name: kubeconfig
-  path: /root/.kube/config
+  path: /home/nonroot/.kube/config
 
 install:
 - helm3:

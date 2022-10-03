@@ -1,31 +1,38 @@
 package porter
 
 import (
+	"context"
+
+	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/manifest"
 )
 
 // applyDefaultOptions applies more advanced defaults to the options
 // based on values that beyond just what was supplied by the user
 // such as information in the manifest itself.
-func (p *Porter) applyDefaultOptions(opts *sharedOptions) error {
+func (p *Porter) applyDefaultOptions(ctx context.Context, opts *installationOptions) error {
+	if opts.Name != "" {
+		return nil
+	}
+
 	if opts.File != "" {
-		err := p.LoadManifestFrom(opts.File)
+		m, err := manifest.LoadManifestFrom(ctx, p.Config, opts.File)
 		if err != nil {
 			return err
 		}
+
+		opts.Name = m.Name
+		return nil
 	}
 
-	// Ensure that we have a manifest initialized, even if it's just an empty one
-	// This happens for non-porter bundles using --cnab-file or --reference
-	if p.Manifest == nil {
-		p.Manifest = &manifest.Manifest{}
-	}
+	if opts.CNABFile != "" {
+		bun, err := cnab.LoadBundle(p.Context, opts.CNABFile)
+		if err != nil {
+			return err
+		}
 
-	//
-	// Default the installation name to the bundle name
-	//
-	if opts.Name == "" {
-		opts.Name = p.Manifest.Name
+		opts.Name = bun.Name
+		return nil
 	}
 
 	return nil

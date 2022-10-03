@@ -89,6 +89,46 @@ install:
    command: ./helpers.sh
 ```
 
+If your mixin supports additional configuration when it is declared in porter.yaml,
+you should define that in your schema in the "config" definition. 
+
+Here is an example of how the Kubernetes mixin schema defines its configuration schema:
+
+```yaml
+mixins:
+- kubernetes:
+   clientVersion: 1.2.3
+```
+
+Below is a partial json schema for the Kubernetes mixin that only shows the config section.
+The config section should contain a single property named after the mixin, that contains the mixin's configuration schema.
+
+```json
+{
+  "definitions": {
+    "config": {
+      "description": "Configuration that can be set when the mixin is declared",
+      "type": "object",
+      "properties": {
+        "kubernetes": {
+          "description": "kubernetes mixin configuration",
+          "type": "object",
+          "properties": {
+            "clientVersion": {
+              "description": "Version of kubectl to install in the bundle",
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}
+```
+
+
 The [mixin skeleton template][skeletor] provides an example implementation, unit tests
 and an integration test to validate your implementation. After you have customized
 your schema command, you can test it out with the [Porter extension](https://marketplace.visualstudio.com/items?itemName=ms-kubernetes-tools.porter-vscode)
@@ -188,10 +228,10 @@ install:
     chart: bitnami/mysql
     outputs:
       - name: mysql-root-password
-        secret: "{{ bundle.parameters.mysql-name }}"
+        secret: ${ bundle.parameters.mysql-name }
         key: mysql-root-password
       - name: mysql-password
-        secret: "{{ bundle.parameters.mysql-name }}"
+        secret: ${ bundle.parameters.mysql-name }
         key: mysql-password
 ```
 
@@ -225,7 +265,7 @@ upgrade:
     name: porter-ci-mysql
     replace: true
     set:
-      mysqlPassword: "{{ bundle.parameters.mysql-password }}"
+      mysqlPassword: ${ bundle.parameters.mysql-password }
 ```
 
 **/cnab/app/porter/outputs/mysql-root-password**
@@ -251,7 +291,7 @@ uninstall:
     description: "Uninstall MySQL"
     purge: true
     releases:
-      - "{{ bundle.parameters.mysql-name }}"
+      - ${ bundle.parameters.mysql-name }
 ```
 
 # invoke
@@ -304,5 +344,5 @@ $ ~/.porter/mixins/exec/exec version --output json
 [skeletor]: https://github.com/getporter/skeletor
 [JSON Schema Validator]: https://www.jsonschemavalidator.net/
 [YAML to JSON converter]: https://www.convertjson.com/yaml-to-json.htm
-[exec mixin schema]: https://porter.sh/src/pkg/exec/schema/exec.json
-[helm mixin schema]: https://porter.sh/helm-mixin/src/pkg/helm/schema/schema.json
+[exec mixin schema]: /src/pkg/exec/schema/exec.json
+[helm mixin schema]: /helm-mixin/src/pkg/helm/schema/schema.json

@@ -11,7 +11,7 @@ Source: https://github.com/getporter/terraform-mixin
 
 ### Install or Upgrade
 ```
-porter mixin install terraform
+porter mixin install terraform --version v1.0.0-rc.1
 ```
 
 ### Examples
@@ -22,10 +22,10 @@ install:
       description: "Install Azure Key Vault"
       input: false
       backendConfig:
-        key: "{{ bundle.name }}.tfstate"
-        storage_account_name: "{{ bundle.credentials.backend_storage_account }}"
-        container_name: "{{ bundle.credentials.backend_storage_container }}"
-        access_key: "{{ bundle.credentials.backend_storage_access_key }}"
+        key: ${ bundle.name }.tfstate"
+        storage_account_name: ${ bundle.credentials.backend_storage_account }
+        container_name: ${ bundle.credentials.backend_storage_container }
+        access_key: ${ bundle.credentials.backend_storage_access_key }
       outputs:
 - name: vault_uri
 ```

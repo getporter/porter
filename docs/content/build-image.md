@@ -7,12 +7,11 @@ When you build a Cloud Native Application Bundle (CNAB) with Porter, a bundle.js
 
 ## Starting From Scratch
 
-When you create a new bundle with Porter, your project is bootstrapped with a sample _porter.yaml_ and a new _cnab_ directory. This scaffolding provides almost everything you need to generate your CNAB, including the invocation image. Let's use this to explain how the invocation image is built. 
+When you create a new bundle with Porter, your project is bootstrapped with a sample porter.yaml. This scaffolding provides almost everything you need to generate your CNAB, including the invocation image. Let's use this to explain how the invocation image is built. 
 
-To create a new CNAB with Porter, you first run `porter create`. The generated `porter.yaml` will look like this:
+To create a new CNAB with Porter, you first run `porter create`. The generated porter.yaml will look like this:
 
 ```yaml
-
 name: porter-hello
 version: 0.1.0
 description: "An example Porter configuration"
@@ -43,9 +42,9 @@ uninstall:
         - uninstall
 ```
 
-After the scaffolding is created, you may edit the _porter.yaml_ and modify the `registry: getporter` element representing the Docker registry that you can push to. Note that the bundle is not pushed during the `porter build` workflow.
+After the scaffolding is created, you may edit the porter.yaml and modify the `registry: localhost:5000` element representing the Docker registry that you can push to. Note that the bundle is not pushed during porter build.
 
-Once you have modified the `porter.yaml`, you can run `porter build` to generate your first invocation image.  Here we add the `--debug` flag to see all of the output:
+Once you have modified the porter.yaml, you can run `porter build --debug` to generate your first invocation image.
 
 ```console
 $  porter build --debug
@@ -81,7 +80,7 @@ actions:
       description: World 2.0
 
 /Users/sigje/.porter/mixins/exec/exec build --debug
-FROM debian:stretch
+FROM --platform=linux/amd64 debian:stretch-slim
 
 ARG BUNDLE_DIR
 
@@ -90,15 +89,15 @@ RUN apt-get update && apt-get install -y ca-certificates
 # exec mixin has no buildtime dependencies
 
 
-COPY . $BUNDLE_DIR
-RUN rm -fr $BUNDLE_DIR/.cnab
+COPY . ${BUNDLE_DIR}
+RUN rm -fr ${BUNDLE_DIR}/.cnab
 COPY .cnab /cnab
-COPY porter.yaml $BUNDLE_DIR/porter.yaml
-WORKDIR $BUNDLE_DIR
+COPY porter.yaml ${BUNDLE_DIR}/porter.yaml
+WORKDIR ${BUNDLE_DIR}
 CMD ["/cnab/app/run"]
 
 Writing Dockerfile =======>
-FROM debian:stretch
+FROM --platform=linux/amd64 debian:stretch-slim
 
 ARG BUNDLE_DIR
 
@@ -107,15 +106,15 @@ RUN apt-get update && apt-get install -y ca-certificates
 # exec mixin has no buildtime dependencies
 
 
-COPY . $BUNDLE_DIR
-RUN rm -fr $BUNDLE_DIR/.cnab
+COPY . ${BUNDLE_DIR}
+RUN rm -fr ${BUNDLE_DIR}/.cnab
 COPY .cnab /cnab
-COPY porter.yaml $BUNDLE_DIR/porter.yaml
-WORKDIR $BUNDLE_DIR
+COPY porter.yaml ${BUNDLE_DIR}/porter.yaml
+WORKDIR ${BUNDLE_DIR}
 CMD ["/cnab/app/run"]
 
 Starting Invocation Image Build =======>
-Step 1/9 : FROM debian:stretch
+Step 1/9 : FROM --platform=linux/amd64 debian:stretch-slim
  ---> 5738956efb6b
 Step 2/9 : ARG BUNDLE_DIR
  ---> Using cache
@@ -123,19 +122,19 @@ Step 2/9 : ARG BUNDLE_DIR
 Step 3/9 : RUN apt-get update && apt-get install -y ca-certificates
  ---> Using cache
  ---> afa85b98ed97
-Step 4/9 : COPY . $BUNDLE_DIR
+Step 4/9 : COPY . ${BUNDLE_DIR}
  ---> Using cache
  ---> e4057b41978c
-Step 5/9 : RUN rm -fr $BUNDLE_DIR/.cnab
+Step 5/9 : RUN rm -fr ${BUNDLE_DIR}/.cnab
  ---> Using cache
  ---> ee114d95bc2d
 Step 6/9 : COPY .cnab /cnab
  ---> Using cache
  ---> 1bb73c63ef65
-Step 7/9 : COPY porter.yaml $BUNDLE_DIR/porter.yaml
+Step 7/9 : COPY porter.yaml ${BUNDLE_DIR}/porter.yaml
  ---> Using cache
  ---> 483c6b05a0b7
-Step 8/9 : WORKDIR $BUNDLE_DIR
+Step 8/9 : WORKDIR ${BUNDLE_DIR}
  ---> Using cache
  ---> 9d2497296f3b
 Step 9/9 : CMD ["/cnab/app/run"]
@@ -201,15 +200,15 @@ Copying mixins ===>
 Copying mixin exec ===>
 ```
 
-The first thing that happens after running `porter build`, Porter will copy its runtime plus any mixins into the `.cnab/app` directory of your bundle. 
+First, Porter copies its runtime plus any mixins into the `.cnab/app` directory of your bundle. 
 
-Porter locates available mixins in the `$PORTER_HOME/mixins` directory. By default, the Porter home directory is located in `~/.porter`. In this example, we are using the `exec` mixin, so the `$PORTER_HOME/mixins/exec` directory will be copied into the invocation image. When a mixin is [installed](#tbd) for use with Porter, it contains binaries for multiple operating systems. The correct binary will be copied into the current `.cnab` directory for use in the invocation image.
+Porter locates available mixins in the $PORTER_HOME/mixins directory. By default, the Porter home directory is located in ~/.porter. In this example, we are using the exec mixin, so the $PORTER_HOME/mixins/exec directory will be copied into the invocation image. When a mixin is installed, it contains binaries for multiple operating systems. The correct binary will be copied into the bundle's .cnab directory for use in the invocation image.
 
-After copying any mixins to the `.cnab` directory of the bundle, a Dockerfile is generated:
+After copying any mixins to the .cnab directory, a Dockerfile is generated:
 
 ```console
 Generating Dockerfile =======>
-FROM debian:stretch
+FROM --platform=linux/amd64 debian:stretch
 
 ARG BUNDLE_DIR
 
@@ -218,21 +217,21 @@ RUN apt-get update && apt-get install -y ca-certificates
 # exec mixin has no buildtime dependencies
 
 
-COPY . $BUNDLE_DIR
-RUN rm -fr $BUNDLE_DIR/.cnab
+COPY . ${BUNDLE_DIR}
+RUN rm -fr ${BUNDLE_DIR}/.cnab
 COPY .cnab /cnab
-COPY porter.yaml $BUNDLE_DIR/porter.yaml
-WORKDIR $BUNDLE_DIR
+COPY porter.yaml ${BUNDLE_DIR}/porter.yaml
+WORKDIR ${BUNDLE_DIR}
 CMD ["/cnab/app/run"]
 ```
 
-Porter starts the Dockerfile by using a base image. You can customize the base image by specifying a Dockerfile template in the **porter.yaml**. Next, a set of CA certificates is added.  Next, contents of the current directory are copied into `/cnab/app/` in the invocation image. This will include any contributions from the mixin executables. Finally, an entry point that conforms to the CNAB specification is added to the image.
+Porter starts the [Dockerfile](/bundle/custom-dockerfile) by using a base image. You can customize the base image by specifying a Dockerfile template in the porter.yaml. By default, Porter only targets a single os/architecture(linux/amd64) for invocation image. If you want to use other platform, feel free to change the platform flag in the generated Dockerfile template. Next, a set of CA certificates is added.  Next, contents of the current directory are copied into the bundle directory (/cnab/app) in the invocation image. This will include any contributions from the mixin executables. Finally, an entry point that conforms to the CNAB specification is added to the image.
 
 Once this is completed, the image is built:
 
 ```console
 Starting Invocation Image Build =======>
-Step 1/9 : FROM debian:stretch
+Step 1/9 : FROM --platform=linux/amd64 debian:stretch
  ---> 5c43e435cc11
 Step 2/9 : ARG BUNDLE_DIR
  ---> Using cache
@@ -240,16 +239,16 @@ Step 2/9 : ARG BUNDLE_DIR
 Step 3/9 : RUN apt-get update && apt-get install -y ca-certificates
  ---> Using cache
  ---> d60d94e3f701
-Step 4/9 : COPY . $BUNDLE_DIR
+Step 4/9 : COPY . ${BUNDLE_DIR}
  ---> 79290bcf128f
-Step 5/9 : RUN rm -fr $BUNDLE_DIR/.cnab
+Step 5/9 : RUN rm -fr ${BUNDLE_DIR}/.cnab
  ---> Running in 7f12cd3f447d
  ---> 01b633a31bf8
 Step 6/9 : COPY .cnab /cnab
  ---> 25c0b1e5f70a
-Step 7/9 : COPY porter.yaml $BUNDLE_DIR/porter.yaml
+Step 7/9 : COPY porter.yaml ${BUNDLE_DIR}/porter.yaml
  ---> dbb26cacf8d8
-Step 8/9 : WORKDIR $BUNDLE_DIR
+Step 8/9 : WORKDIR ${BUNDLE_DIR}
  ---> Running in b051cb2b6ddb
  ---> e10d6ab60595
 Step 9/9 : CMD ["/cnab/app/run"]
@@ -261,13 +260,13 @@ Successfully tagged jeremyrickard/porter-hello-installer:0.1.0
 
 ## Mixins Help The Build
 
-In the simple example above, the resulting Dockerfile was built entirely by the default `porter build` functionality. The `porter build` output reported that the `exec` mixin did not have any build time dependencies:
+In the simple example above, the build output reported that the exec mixin did not have any build time dependencies:
 
 ```
 # exec mixin has no buildtime dependencies
 ```
 
-In many cases, however, mixins will have build time requirements. Next let's see what happens when we use the Helm mixin. Here is another example `porter.yaml`:
+In many cases, however, mixins will have build time requirements. Next let's see what happens when we use the Helm mixin. Here is another example porter.yaml:
 
 ```yaml
 mixins:
@@ -282,7 +281,7 @@ registry: jeremyrickard
 
 credentials:
 - name: kubeconfig
-  path: /root/.kube/config
+  path: /home/nonroot/.kube/config
 
 install:
 - helm3:
@@ -298,7 +297,7 @@ uninstall:
     purge: true
 ```
 
-When we run `porter build` on this, the output is different:
+When we run porter build on this, the output is different:
 
 ```console
 $ porter build --verbose
@@ -307,7 +306,7 @@ Copying mixins ===>
 Copying mixin helm ===>
 
 Generating Dockerfile =======>
-FROM debian:stretch
+FROM --platform=linux/amd64 debian:stretch-slim
 
 ARG BUNDLE_DIR
 
@@ -326,15 +325,15 @@ RUN apt-get update && \
  mv kubectl /usr/local/bin && \
  chmod a+x /usr/local/bin/kubectl
 
-COPY . $BUNDLE_DIR
-RUN rm -fr $BUNDLE_DIR/.cnab
+COPY . ${BUNDLE_DIR}
+RUN rm -fr ${BUNDLE_DIR}/.cnab
 COPY .cnab /cnab
-COPY porter.yaml $BUNDLE_DIR/porter.yaml
-WORKDIR $BUNDLE_DIR
+COPY porter.yaml ${BUNDLE_DIR}/porter.yaml
+WORKDIR ${BUNDLE_DIR}
 CMD ["/cnab/app/run"]
 ```
 
-First, the `helm` mixin is copied instead of `exec` mixin. The Dockerfile looks similar in the beginning, but we can then see our next difference. The following lines of our generated Dockerfile were contributed by the `helm` mixin:
+First, the helm mixin is copied instead of exec mixin. The Dockerfile looks similar in the beginning, but we can then see our next difference. The following lines of our generated Dockerfile were contributed by the helm mixin:
 
 ```
 RUN apt-get update && \
@@ -351,11 +350,11 @@ RUN apt-get update && \
  chmod a+x /usr/local/bin/kubectl
 ```
 
-How did that happen? To find out, let's first look at the `helm` mixin:
+How did that happen? To find out, let's first look at the helm mixin:
 
 ```console
 ~/.porter/mixins/helm/helm
-A helm mixin for porter 👩🏽‍✈️
+A helm mixin for porter
 
 Usage:
   helm [command]
@@ -377,6 +376,6 @@ Flags:
 Use "helm [command] --help" for more information about a command.
 ```
 
-The [Porter Mixin Contract](#tbd) specifies that mixins must provide a `build` sub command that generates Dockerfile lines to support the runtime execution of the mixin. In the case of the `helm` mixin, this includes installing Helm and running a `helm init --client-only` to prepare the image. At build time, Porter uses the _porter.yaml_ to determine what mixins are required for the bundle. Porter then invokes the build sub-command for each specified mixin and appends that output to the base Dockerfile.
+Porter mixins must provide a build command that generates Dockerfile lines to support the runtime execution of the mixin. In the case of the helm mixin, this includes installing Helm and running a `helm init --client-only` to prepare the image. At build time, Porter uses the porter.yaml to determine what mixins are required for the bundle. Then Porter invokes the build sub-command for each specified mixin and appends that output to the base Dockerfile.
 
-In the end, the result is a single invocation image with all of the necessary pieces: the porter-runtime, selected mixins and any relevant configuration files, scripts, charts or manifests. That invocation image can then be executed by any tool that supports the CNAB spec, while still taking advantage of the Porter capabilities.
+In the end, the result is a single invocation image with the necessary pieces: the porter-runtime, selected mixins and any relevant configuration files, scripts, charts or manifests. That invocation image can then be executed by any tool that supports the CNAB spec, while still taking advantage of the Porter capabilities.

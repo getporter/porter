@@ -1,46 +1,44 @@
 package porter
 
 import (
+	"context"
+	"errors"
 	"fmt"
+	"sort"
 
-	"get.porter.sh/porter/pkg/cnab/extensions"
-	"github.com/cnabio/cnab-go/bundle"
-	"github.com/cnabio/cnab-go/bundle/definition"
-	"github.com/cnabio/cnab-go/claim"
-
-	"get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/cnab"
+	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/printer"
-	"github.com/olekukonko/tablewriter"
-	"github.com/pkg/errors"
+	"get.porter.sh/porter/pkg/storage"
 )
 
 // OutputShowOptions represent options for a bundle output show command
 type OutputShowOptions struct {
-	sharedOptions
+	installationOptions
 	Output string
 }
 
 // OutputListOptions represent options for a bundle output list command
 type OutputListOptions struct {
-	sharedOptions
+	installationOptions
 	printer.PrintOptions
 }
 
 // Validate validates the provided args, using the provided context,
 // setting attributes of OutputShowOptions as applicable
-func (o *OutputShowOptions) Validate(args []string, cxt *context.Context) error {
+func (o *OutputShowOptions) Validate(args []string, cxt *portercontext.Context) error {
 	switch len(args) {
 	case 0:
 		return errors.New("an output name must be provided")
 	case 1:
 		o.Output = args[0]
 	default:
-		return errors.Errorf("only one positional argument may be specified, the output name, but multiple were received: %s", args)
+		return fmt.Errorf("only one positional argument may be specified, the output name, but multiple were received: %s", args)
 	}
 
 	// If not provided, attempt to derive installation name from context
-	if o.sharedOptions.Name == "" {
-		err := o.sharedOptions.defaultBundleFiles(cxt)
+	if o.installationOptions.Name == "" {
+		err := o.installationOptions.defaultBundleFiles(cxt)
 		if err != nil {
 			return errors.New("installation name must be provided via [--installation|-i INSTALLATION]")
 		}
@@ -51,96 +49,95 @@ func (o *OutputShowOptions) Validate(args []string, cxt *context.Context) error 
 
 // Validate validates the provided args, using the provided context,
 // setting attributes of OutputListOptions as applicable
-func (o *OutputListOptions) Validate(args []string, cxt *context.Context) error {
+func (o *OutputListOptions) Validate(args []string, cxt *portercontext.Context) error {
 	// Ensure only one argument exists (installation name) if args length non-zero
-	err := o.sharedOptions.validateInstallationName(args)
+	err := o.installationOptions.validateInstallationName(args)
 	if err != nil {
 		return err
 	}
 
 	// Attempt to derive installation name from context
-	err = o.sharedOptions.defaultBundleFiles(cxt)
+	err = o.installationOptions.defaultBundleFiles(cxt)
 	if err != nil {
-		return errors.Wrap(err, "installation name must be provided")
+		return fmt.Errorf("installation name must be provided: %w", err)
 	}
 
 	return o.ParseFormat()
 }
 
 // ShowBundleOutput shows a bundle output value, according to the provided options
-func (p *Porter) ShowBundleOutput(opts *OutputShowOptions) error {
-	err := p.applyDefaultOptions(&opts.sharedOptions)
+func (p *Porter) ShowBundleOutput(ctx context.Context, opts *OutputShowOptions) error {
+	err := p.applyDefaultOptions(ctx, &opts.installationOptions)
 	if err != nil {
 		return err
 	}
-	name := opts.sharedOptions.Name
 
-	output, err := p.ReadBundleOutput(opts.Output, name)
+	output, err := p.ReadBundleOutput(ctx, opts.Output, opts.Name, opts.Namespace)
 	if err != nil {
-		return errors.Wrapf(err, "unable to read output '%s' for installation '%s'", opts.Output, name)
+		return fmt.Errorf("unable to read output '%s' for installation '%s/%s': %w", opts.Output, opts.Namespace, opts.Name, err)
 	}
 
 	fmt.Fprintln(p.Out, output)
 	return nil
 }
 
-type DisplayOutput struct {
-	Name  string
-	Value string
-	Type  string
-}
-
-type DisplayOutputs []DisplayOutput
-
-func NewDisplayOutputs(bun bundle.Bundle, outputs claim.Outputs, format printer.Format) DisplayOutputs {
+func NewDisplayValuesFromOutputs(bun cnab.ExtendedBundle, outputs storage.Outputs) DisplayValues {
 	// Iterate through all Bundle Outputs, fetch their metadata
 	// via their corresponding Definitions and add to rows
-	displayOutputs := make(DisplayOutputs, outputs.Len())
+	displayOutputs := make(DisplayValues, 0, outputs.Len())
 	for i := 0; i < outputs.Len(); i++ {
 		output, _ := outputs.GetByIndex(i)
-		do := DisplayOutput{
-			Name:  output.Name,
-			Value: string(output.Value),
+
+		if bun.IsInternalOutput(output.Name) {
+			continue
 		}
 
-		schema, exists := output.GetSchema()
-		if !exists {
-			// Allow for the tooling to inject additional outputs
-			schema = definition.Schema{ID: output.Name, Type: "unknown"}
+		do := &DisplayValue{Name: output.Name}
+		do.SetValue(output.Value)
+		schema, ok := output.GetSchema(bun)
+		if ok {
+			do.Type = bun.GetParameterType(&schema)
+			if schema.WriteOnly != nil && *schema.WriteOnly {
+				do.Sensitive = true
+			}
+		} else {
+			// Skip outputs not defined in the bundle, e.g. io.cnab.outputs.invocationImageLogs
+			continue
 		}
 
-		do.Type = extensions.GetParameterType(bun, &schema)
-
-		// If table output is desired, truncate the value to a reasonable length
-		if format == printer.FormatTable {
-			do.Value = truncateString(do.Value, 60)
-		}
-
-		displayOutputs[i] = do
+		displayOutputs = append(displayOutputs, *do)
 	}
 
+	sort.Sort(displayOutputs)
 	return displayOutputs
 }
 
 // ListBundleOutputs lists the outputs for a given bundle according to the
 // provided display format
-func (p *Porter) ListBundleOutputs(opts *OutputListOptions) (DisplayOutputs, error) {
-	err := p.applyDefaultOptions(&opts.sharedOptions)
+func (p *Porter) ListBundleOutputs(ctx context.Context, opts *OutputListOptions) (DisplayValues, error) {
+	err := p.applyDefaultOptions(ctx, &opts.installationOptions)
 	if err != nil {
 		return nil, err
 	}
 
-	c, err := p.Claims.ReadLastClaim(opts.Name)
+	outputs, err := p.Installations.GetLastOutputs(ctx, opts.Namespace, opts.Name)
 	if err != nil {
 		return nil, err
 	}
 
-	outputs, err := p.Claims.ReadLastOutputs(opts.Name)
+	resolved, err := p.Sanitizer.RestoreOutputs(ctx, outputs)
 	if err != nil {
 		return nil, err
 	}
 
-	displayOutputs := NewDisplayOutputs(c.Bundle, outputs, opts.Format)
+	c, err := p.Installations.GetLastRun(ctx, opts.Namespace, opts.Name)
+	if err != nil {
+		return nil, err
+	}
+
+	bun := cnab.NewBundle(c.Bundle)
+
+	displayOutputs := NewDisplayValuesFromOutputs(bun, resolved)
 	if err != nil {
 		return nil, err
 	}
@@ -148,8 +145,8 @@ func (p *Porter) ListBundleOutputs(opts *OutputListOptions) (DisplayOutputs, err
 	return displayOutputs, nil
 }
 
-func (p *Porter) PrintBundleOutputs(opts OutputListOptions) error {
-	outputs, err := p.ListBundleOutputs(&opts)
+func (p *Porter) PrintBundleOutputs(ctx context.Context, opts OutputListOptions) error {
+	outputs, err := p.ListBundleOutputs(ctx, &opts)
 	if err != nil {
 		return err
 	}
@@ -159,41 +156,26 @@ func (p *Porter) PrintBundleOutputs(opts OutputListOptions) error {
 		return printer.PrintJson(p.Out, outputs)
 	case printer.FormatYaml:
 		return printer.PrintYaml(p.Out, outputs)
-	case printer.FormatTable:
-		return p.printOutputsTable(outputs)
+	case printer.FormatPlaintext:
+		return p.printDisplayValuesTable(outputs)
 	default:
 		return fmt.Errorf("invalid format: %s", opts.Format)
 	}
 }
 
 // ReadBundleOutput reads a bundle output from an installation
-func (p *Porter) ReadBundleOutput(outputName, installation string) (string, error) {
-	o, err := p.Claims.ReadLastOutput(installation, outputName)
+func (p *Porter) ReadBundleOutput(ctx context.Context, outputName, installation, namespace string) (string, error) {
+	o, err := p.Installations.GetLastOutput(ctx, namespace, installation, outputName)
+	if err != nil {
+		return "", err
+	}
+
+	o, err = p.Sanitizer.RestoreOutput(ctx, o)
 	if err != nil {
 		return "", err
 	}
 
 	return fmt.Sprintf("%v", string(o.Value)), nil
-}
-
-func (p *Porter) printOutputsTable(outputs []DisplayOutput) error {
-	// Build and configure our tablewriter for the outputs
-	table := tablewriter.NewWriter(p.Out)
-	table.SetCenterSeparator("")
-	table.SetColumnSeparator("")
-	table.SetAlignment(tablewriter.ALIGN_LEFT)
-	table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
-	table.SetBorders(tablewriter.Border{Left: false, Right: false, Bottom: false, Top: true})
-	table.SetAutoFormatHeaders(false)
-
-	// Print the outputs table
-	table.SetHeader([]string{"Name", "Type", "Value"})
-	for _, output := range outputs {
-		table.Append([]string{output.Name, output.Type, output.Value})
-	}
-	table.Render()
-
-	return nil
 }
 
 func truncateString(str string, num int) string {

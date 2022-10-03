@@ -2,13 +2,15 @@ package builder
 
 import (
 	"bytes"
+	"context"
+	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
+	"os/exec"
 	"strings"
 
-	"get.porter.sh/porter/pkg/context"
-	"github.com/pkg/errors"
+	"get.porter.sh/porter/pkg/runtime"
+	"get.porter.sh/porter/pkg/tracing"
 )
 
 var DefaultFlagDashes = Dashes{
@@ -34,6 +36,10 @@ type ExecutableStep interface {
 	GetWorkingDir() string
 }
 
+type HasEnvironmentVars interface {
+	GetEnvironmentVars() map[string]string
+}
+
 type HasOrderedArguments interface {
 	GetSuffixArguments() []string
 }
@@ -46,17 +52,29 @@ type SuppressesOutput interface {
 	SuppressesOutput() bool
 }
 
+// HasErrorHandling is implemented by mixin commands that want to handle errors
+// themselves, and possibly allow failed commands to either pass, or to improve
+// the displayed error message
+type HasErrorHandling interface {
+	HandleError(ctx context.Context, err ExitError, stdout string, stderr string) error
+}
+
+type ExitError interface {
+	error
+	ExitCode() int
+}
+
 // ExecuteSingleStepAction runs the command represented by an ExecutableAction, where only
 // a single step is allowed to be defined in the Action (which is what happens when Porter
 // executes steps one at a time).
-func ExecuteSingleStepAction(cxt *context.Context, action ExecutableAction) (string, error) {
+func ExecuteSingleStepAction(ctx context.Context, cfg runtime.RuntimeConfig, action ExecutableAction) (string, error) {
 	steps := action.GetSteps()
 	if len(steps) != 1 {
-		return "", errors.Errorf("expected a single step, but got %d", len(steps))
+		return "", fmt.Errorf("expected a single step, but got %d", len(steps))
 	}
 	step := steps[0]
 
-	output, err := ExecuteStep(cxt, step)
+	output, err := ExecuteStep(ctx, cfg, step)
 	if err != nil {
 		return output, err
 	}
@@ -66,23 +84,26 @@ func ExecuteSingleStepAction(cxt *context.Context, action ExecutableAction) (str
 		return output, nil
 	}
 
-	err = ProcessJsonPathOutputs(cxt, swo, output)
+	err = ProcessJsonPathOutputs(ctx, cfg, swo, output)
 	if err != nil {
 		return output, err
 	}
 
-	err = ProcessRegexOutputs(cxt, swo, output)
+	err = ProcessRegexOutputs(ctx, cfg, swo, output)
 	if err != nil {
 		return output, err
 	}
 
-	err = ProcessFileOutputs(cxt, swo)
+	err = ProcessFileOutputs(ctx, cfg, swo)
 	return output, err
 }
 
 // ExecuteStep runs the command represented by an ExecutableStep, piping stdout/stderr
 // back to the context and returns the buffered output for subsequent processing.
-func ExecuteStep(cxt *context.Context, step ExecutableStep) (string, error) {
+func ExecuteStep(ctx context.Context, cfg runtime.RuntimeConfig, step ExecutableStep) (string, error) {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
 	// Identify if any suffix arguments are defined
 	var suffixArgs []string
 	orderedArgs, ok := step.(HasOrderedArguments)
@@ -103,17 +124,25 @@ func ExecuteStep(cxt *context.Context, step ExecutableStep) (string, error) {
 	if dashing, ok := step.(HasCustomDashes); ok {
 		dashes = dashing.GetDashes()
 	}
-	args = append(args, flags.ToSlice(dashes)...)
 
-	// Split up any arguments or flags that have spaces so that we pass them as separate array elements
+	// Split up flags that have spaces so that we pass them as separate array elements
 	// It doesn't show up any differently in the printed command, but it matters to how the command
 	// it executed against the system.
-	args = splitCommand(args)
+	flagsSlice := splitCommand(flags.ToSlice(dashes))
+
+	args = append(args, flagsSlice...)
 
 	// Append any final suffix arguments
 	args = append(args, suffixArgs...)
 
-	cmd := cxt.NewCommand(step.GetCommand(), args...)
+	// Add env vars if defined
+	if stepWithEnvVars, ok := step.(HasEnvironmentVars); ok {
+		for k, v := range stepWithEnvVars.GetEnvironmentVars() {
+			cfg.Setenv(k, v)
+		}
+	}
+
+	cmd := cfg.NewCommand(ctx, step.GetCommand(), args...)
 
 	// ensure command is executed in the correct directory
 	wd := step.GetWorkingDir()
@@ -125,37 +154,46 @@ func ExecuteStep(cxt *context.Context, step ExecutableStep) (string, error) {
 
 	// Setup output streams for command
 	// If Step suppresses output, update streams accordingly
-	output := &bytes.Buffer{}
+	stdout := &bytes.Buffer{}
+	stderr := &bytes.Buffer{}
 	suppressOutput := false
 	if suppressable, ok := step.(SuppressesOutput); ok {
 		suppressOutput = suppressable.SuppressesOutput()
 	}
 
 	if suppressOutput {
-		cmd.Stdout = io.MultiWriter(ioutil.Discard, output)
-		cmd.Stderr = ioutil.Discard
-		if cxt.Debug {
-			fmt.Fprintf(cxt.Err, "DEBUG: output suppressed for command %s\n", prettyCmd)
-		}
+		// We still capture the output, but we won't print it
+		cmd.Stdout = stdout
+		cmd.Stderr = stderr
+		span.Debugf("output suppressed for command %s", prettyCmd)
 	} else {
-		cmd.Stdout = io.MultiWriter(cxt.Out, output)
-		cmd.Stderr = cxt.Err
-		if cxt.Debug {
-			fmt.Fprintln(cxt.Err, prettyCmd)
-		}
+		cmd.Stdout = io.MultiWriter(cfg.Out, stdout)
+		cmd.Stderr = io.MultiWriter(cfg.Err, stderr)
+		span.Debug(prettyCmd)
 	}
 
 	err := cmd.Start()
 	if err != nil {
-		return "", errors.Wrap(err, fmt.Sprintf("couldn't run command %s", prettyCmd))
+		return "", span.Error(fmt.Errorf("couldn't run command %s: %w", prettyCmd, err))
 	}
 
 	err = cmd.Wait()
+
+	// Check if the command knows how to handle and recover from its own errors
 	if err != nil {
-		return "", errors.Wrap(err, fmt.Sprintf("error running command %s", prettyCmd))
+		if exitErr, ok := err.(*exec.ExitError); ok {
+			if handler, ok := step.(HasErrorHandling); ok {
+				err = handler.HandleError(ctx, exitErr, stdout.String(), stderr.String())
+			}
+		}
 	}
 
-	return output.String(), nil
+	// Ok, now check if we still have a problem
+	if err != nil {
+		return "", span.Error(fmt.Errorf("error running command %s: %w", prettyCmd, err))
+	}
+
+	return stdout.String(), nil
 }
 
 var whitespace = string([]rune{space, newline, tab})

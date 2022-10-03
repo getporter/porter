@@ -1,4 +1,4 @@
-baseURL = "https://porter.sh/"
+baseURL = "https://getporter.org/"
 languageCode = "en-us"
 title = "Porter"
 theme = "porter"
@@ -30,7 +30,11 @@ pygmentsStyle = "friendly"
   description = "A Friendly Cloud Installer for Cloud Native Application Bundles"
   image = "images/porter-twitter-card.png"
 
+#
 # Docs Navigation
+#
+
+# Get Started
 [[menu.main]]
   name = "Get Started"
   identifier = "get-started"
@@ -43,80 +47,411 @@ pygmentsStyle = "friendly"
     weight = 11
     parent = "get-started"
   [[menu.main]]
+    name = "Migrate from v0"
+    url = "/storage-migrate/"
+    identifier = "migrate"
+    weight = 12
+    parent = "get-started"
+  [[menu.main]]
     name = "QuickStart"
-    url = "/quickstart/"
     identifier = "quickstart"
+    url = "/quickstart/"
     weight = 30
     parent = "get-started"
-  [[menu.main]]
-    name = "QuickStart - Parameters"
-    url = "/quickstart/parameters/"
-    identifier = "quickstart-parameters"
-    weight = 31
-    parent = "get-started"
-  [[menu.main]]
-    name = "QuickStart - Credentials"
-    url = "/quickstart/credentials/"
-    identifier = "quickstart-credentials"
-    weight = 32
-    parent = "get-started"
+    [[menu.main]]
+      name = "Bundles"
+      url = "/quickstart/"
+      identifier = "quickstart-bundles"
+      weight = 1
+      parent = "quickstart"
+    [[menu.main]]
+      name = "Parameters"
+      url = "/quickstart/parameters/"
+      identifier = "quickstart-parameters"
+      weight = 2
+      parent = "quickstart"
+    [[menu.main]]
+      name = "Credentials"
+      url = "/quickstart/credentials/"
+      identifier = "quickstart-credentials"
+      weight = 3
+      parent = "quickstart"
+    [[menu.main]]
+      name = "Configuration"
+      url = "/quickstart/configuration/"
+      identifier = "quickstart-configuration"
+      weight = 4
+      parent = "quickstart"
+    [[menu.main]]
+      name = "Desired State"
+      url = "/quickstart/desired-state/"
+      identifier = "quickstart-desired-state"
+      weight = 5
+      parent = "quickstart"
+    [[menu.main]]
+      name = "Create a bundle"
+      url = "/bundle/create/"
+      identifier = "quickstart-create-a-bundle"
+      weight = 6
+      parent = "quickstart"
   [[menu.main]]
     name = "Examples"
     url = "/examples/"
     identifier = "examples"
     weight = 50
     parent = "get-started"
-[[menu.main]]
-  name = "Use Porter"
-  identifier = "operators"
-  weight = 20
   [[menu.main]]
-    name = "View logs"
-    url = "/operators/logs/"
-    identifier = "operators-logs"
-    weight = 51
-    parent = "operators"
+    name = "FAQ"
+    identifier = "faq"
+    url = "/faq"
+    weight = 100
+    parent = "get-started"
 
+# Contribute
 [[menu.main]]
   name = "Contribute"
   url = "/contribute/"
   identifier = "contribute"
-  weight = 50
+  weight = 20
   [[menu.main]]
-    name = "New Contributor Guide"
-    url = "/contribute/"
-    identifier = "contribute-overview"
-    weight = 51
-    parent = "contribute"
+  name = "New Contributor Guide"
+  url = "/contribute/"
+  identifier = "contribute-overview"
+  weight = 51
+  parent = "contribute"
   [[menu.main]]
-    name = "Contributing Tutorial"
-    url = "/contribute/tutorial/"
-    identifier = "contributing-tutorial"
-    weight = 52
-    parent = "contribute"
+  name = "Contributing Tutorial"
+  url = "/contribute/tutorial/"
+  identifier = "contributing-tutorial"
+  weight = 52
+  parent = "contribute"
   [[menu.main]]
-    name = "Contributing Guide"
-    url = "/contribute/guide/"
-    identifier = "contributing-guide"
-    weight = 53
-    parent = "contribute"
+  name = "Contributing Guide"
+  url = "/contribute/guide/"
+  identifier = "contributing-guide"
+  weight = 53
+  parent = "contribute"
   [[menu.main]]
-    name = "Make a Proposal"
-    url = "/contribute/proposals/"
-    identifier = "proposals"
-    weight = 54
-    parent = "contribute"
+  name = "Make a Proposal"
+  url = "/contribute/proposals/"
+  identifier = "proposals"
+  weight = 54
+  parent = "contribute"
 
+# Tasks
+[[menu.main]]
+  name = "Tasks"
+  identifier = "tasks"
+  weight = 25
+  # End Users
+  [[menu.main]]
+    name = "End Users"
+    identifier = "tasks-end-users"
+    weight = 1
+    parent = "tasks"
+    [[menu.main]]
+      name = "Manage Installations"
+      url = "/end-users/installations/"
+      identifier = "end-users-installations"
+      weight = 10
+      parent = "tasks-end-users"
+    [[menu.main]]
+      name = "Examine a Bundle"
+      url = "/examine-bundles"
+      identifier = "examine-bundles-overview"
+      weight = 12
+      parent = "tasks-end-users"
+    [[menu.main]]
+      name = "View logs"
+      url = "/end-users/logs/"
+      identifier = "end-users-logs"
+      weight = 20
+      parent = "tasks-end-users"
+    [[menu.main]]
+      name = "Configure Porter"
+      url = "/end-users/configuration/"
+      identifier = "end-users-configuration"
+      weight = 30
+      parent = "tasks-end-users"
+    [[menu.main]]
+      name = "Connect to Docker"
+      url = "/end-users/connect-docker/"
+      identifier = "end-users-connect-docker"
+      weight = 31
+      parent = "tasks-end-users"
+    [[menu.main]]
+      name = "Connect to a Registry"
+      url = "/end-users/connect-registry/"
+      identifier = "end-users-connect-registry"
+      weight = 32
+      parent = "tasks-end-users"
+
+
+  # Bundle Authors
+  [[menu.main]]
+    name = "Bundle Authors"
+    identifier = "tasks-authors"
+    weight = 10
+    parent = "tasks"
+    [[menu.main]]
+      name = "Create a bundle"
+      url = "/bundle/create"
+      identifier = "bundle-create"
+      weight = 301
+      parent = "tasks-authors"
+    [[menu.main]]
+      name = "Custom Dockerfile"
+      url = "/bundle/custom-dockerfile/"
+      identifier = "custom-dockerfile"
+      weight = 302
+      parent = "tasks-authors"
+    [[menu.main]]
+      name = "Dependencies"
+      url = "/dependencies"
+      identifier = "dependencies"
+      weight = 304
+      parent = "tasks-authors"
+    [[menu.main]]
+      name = "Templates"
+      url = "/authors/templates/"
+      identifier = "author-templates"
+      weight = 305
+      parent = "tasks-authors"
+    [[menu.main]]
+      name = "Distribute a Bundle"
+      url = "/distribute-bundles"
+      identifier = "distribute-bundles-overview"
+      weight = 310
+      parent = "tasks-authors"
+    
+  # Administrators
+  [[menu.main]]
+    name = "Administrators"
+    identifier = "tasks-administrators"
+    weight = 15
+    parent = "tasks"
+    [[menu.main]]
+      name = "Administrators"
+      identifier = "tasks-administrators"
+      weight = 15
+      parent = "tasks"
+      [[menu.main]]
+        name = "Inspect the Image in a Bundle"
+        url = "/inspect-bundles/"
+        identifier = "inspect-bundles"
+        weight = 1
+        parent = "tasks-administrators"
+      [[menu.main]]
+        name = "Copy a Bundle"
+        identifier = "copy-bundles"
+        url = "/copy-bundles/"
+        weight = 5
+        parent = "tasks-administrators"
+      [[menu.main]]
+        name = "Move a bundle across an airgap"
+        identifier = "administrators-airgap"
+        url = "/administrators/airgap/"
+        weight = 6
+        parent = "tasks-administrators"
+      [[menu.main]]
+        name = "Collect Diagnostics"
+        identifier = "diagnostics"
+        url = "/administrators/diagnostics/"
+        weight = 100
+        parent = "tasks-administrators"
+
+  # Developers
+  [[menu.main]]
+    name = "Developers"
+    identifier = "tasks-developers"
+    weight = 20
+    parent = "tasks"
+    [[menu.main]]
+      name = "Create a mixin"
+      url = "/mixin-dev-guide/"
+      identifier = "mixin-dev-guide"
+      weight = 202
+      parent = "tasks-developers"
+    [[menu.main]]
+      name = "Distribute your mixin"
+      url = "/mixin-dev-guide/distribution/"
+      identifier = "mixin-distribution"
+      weight = 203
+      parent = "tasks-developers"
+
+# Concepts
+[[menu.main]]
+  name = "Concepts"
+  identifier = "concepts"
+  weight = 400
+  # Mixins
+  [[menu.main]]
+    name = "Mixins"
+    identifier = "mixins"
+    weight = 10
+    parent = "concepts"
+    [[menu.main]]
+      name = "Overview"
+      identifier = "mixins-overview"
+      weight = 10
+      url = "/mixins/"
+      parent = "mixins"
+    [[menu.main]]
+      name = "Mixin Architecture"
+      url = "/mixin-dev-guide/architecture/"
+      identifier = "mixin-architecture"
+      weight = 100
+      parent = "mixins"
+
+  # Plugins
+  [[menu.main]]
+    name = "Plugins"
+    identifier = "concepts-plugins"
+    weight = 20
+    parent = "concepts"
+    [[menu.main]]
+      name = "Overview"
+      identifier = "plugins-overview"
+      weight = 1
+      url = "/plugins"
+      parent = "concepts-plugins"
+    [[menu.main]]
+      name = "Types"
+      identifier = "plugin-types"
+      weight = 2
+      url = "/plugins/types"
+      parent = "concepts-plugins"
+
+  # Architecture
+  [[menu.main]]
+    name = "Porter Architecture"
+    identifier = "porter-architecture"
+    weight = 1
+    parent = "concepts"
+    [[menu.main]]
+      name = "Overview"
+      url = "/architecture"
+      identifier = "architecture"
+      weight = 401
+      parent = "porter-architecture"
+    [[menu.main]]
+      name = "Security"
+      url = "/security-features/"
+      identifier = "porter-security"
+      weight = 402
+      parent = "porter-architecture"
+    [[menu.main]]
+      name = "CNAB"
+      url = "/cnab/"
+      identifier = "architecture-cnab"
+      weight = 412
+      parent = "porter-architecture"
+    [[menu.main]]
+      name = "Buildtime"
+      url = "/architecture-buildtime"
+      identifier = "architecture-buildtime"
+      weight = 413
+      parent = "porter-architecture"
+    [[menu.main]]
+      name = "Runtime"
+      url = "/architecture-runtime"
+      identifier = "architecture-runtime"
+      weight = 414
+      parent = "porter-architecture"
+    [[menu.main]]
+      name = "Invocation Images"
+      url = "/build-image"
+      identifier = "build-image"
+      weight = 415
+      parent = "porter-architecture"
+    [[menu.main]]
+      name = "Credentials"
+      url = "/credentials/"
+      identifier = "credentials"
+      weight = 416
+      parent = "porter-architecture"
+    [[menu.main]]
+      name = "Parameters"
+      url = "/parameters/"
+      identifier = "parameters"
+      weight = 417
+      parent = "porter-architecture"
+
+  # Operator
+  [[menu.main]]
+    name = "Porter Operator"
+    identifier = "porter-operator"
+    weight = 5
+    parent = "concepts"
+    [[menu.main]]
+      name = "Overview"
+      identifier = "operator-overview"
+      url = "/operator/"
+      weight = 1
+      parent = "porter-operator"
+    [[menu.main]]
+      name = "QuickStart"
+      identifier = "operator-quickstart"
+      url = "/operator/quickstart/"
+      weight = 2
+      parent = "porter-operator"
+    [[menu.main]]
+      name = "Install"
+      identifier = "operator-install"
+      url = "/operator/install/"
+      weight = 3
+      parent = "porter-operator"
+    [[menu.main]]
+      name = "File Formats"
+      identifier = "operator-file-formats"
+      url = "/operator/file-formats/"
+      weight = 10
+      parent = "porter-operator"
+
+# Mixins
+[[menu.main]]
+  name = "Mixins"
+  identifier = "mixins-list"
+  weight = 400
+  url = "/mixins/"
+
+# Plugins
+[[menu.main]]
+  name = "Plugins"
+  identifier = "plugins-list"
+  weight = 401
+  url = "/plugins/"
+
+# Troubleshooting
+[[menu.main]]
+  name = "Troubleshooting"
+  identifier = "troubleshooting"
+  url = "/troubleshooting"
+  weight = 501
+
+# Best Practices
+[[menu.main]]
+  name = "Best Practices"
+  url = "/best-practices/"
+  identifier = "best-practices"
+  weight = 600
+
+# References
+[[menu.main]]
+  name = "References"
+  identifier = "references"
+  weight = 1000
 [[menu.main]]
   name = "Porter Commands"
-  url = "/cli"
+  url = "/cli/"
   identifier = "cli"
-  weight = 102
+  weight = 1
+  parent = "references"
   [[menu.main]]
     name = "Overview"
     url = "/cli/porter/#see-also"
     identifier = "cli-overview"
-    weight = 103
+    weight = 1
     parent = "cli"
   [[menu.main]]
     name = "Bundles"
@@ -155,206 +490,20 @@ pygmentsStyle = "friendly"
     weight = 128
     parent = "cli"
 
-[[menu.main]]
-  name = "Mixins"
-  identifier = "mixins"
-  weight = 200
-  [[menu.main]]
-    name = "Overview"
-    identifier = "mixins-overview"
-    weight = 201
-    url = "/mixins"
-    parent = "mixins"
-  [[menu.main]]
-    name = "Develop Mixins"
-    url = "/mixin-dev-guide/"
-    identifier = "mixin-dev-guide"
-    weight = 202
-    parent = "mixins"
-  [[menu.main]]
-    name = "Distribute Mixins"
-    url = "/mixin-dev-guide/distribution/"
-    identifier = "mixin-distribution"
-    weight = 203
-    parent = "mixins"
-  [[menu.main]]
-    name = "Mixin Architecture"
-    url = "/mixin-dev-guide/architecture/"
-    identifier = "mixin-architecture"
-    weight = 204
-    parent = "mixins"
-
-[[menu.main]]
-  name = "Plugins"
-  identifier = "plugins"
-  weight = 250
-  [[menu.main]]
-    name = "Overview"
-    identifier = "plugins-overview"
-    weight = 251
-    url = "/plugins"
-    parent = "plugins"
-  [[menu.main]]
-    name = "Types"
-    identifier = "plugin-types"
-    weight = 252
-    url = "/plugins/types"
-    parent = "plugins"
-
-[[menu.main]]
-  name = "Author Bundles"
-  identifier = "author-bundles"
-  weight = 300
-  [[menu.main]]
-    name = "Overview"
-    url = "/author-bundles"
-    identifier = "author-bundles-overview"
-    weight = 301
-    parent = "author-bundles"
-  [[menu.main]]
-    name = "Custom Dockerfile"
-    url = "/custom-dockerfile/"
-    identifier = "custom-dockerfile"
-    weight = 302
-    parent = "author-bundles"
-  [[menu.main]]
-    name = "Mixins"
-    url = "/use-mixins"
-    identifier = "use-mixins"
-    weight = 303
-    parent = "author-bundles"
-  [[menu.main]]
-    name = "Dependencies"
-    url = "/dependencies"
-    identifier = "dependencies"
-    weight = 304
-    parent = "author-bundles"
-  [[menu.main]]
-    name = "Templates"
-    url = "/authors/templates/"
-    identifier = "author-templates"
-    weight = 305
-    parent = "author-bundles"
-
-[[menu.main]]
-  name = "Distribute Bundles"
-  identifier = "distribute-bundles"
-  weight = 310
-  [[menu.main]]
-    name = "Overview"
-    url = "/distribute-bundles"
-    identifier = "distribute-bundles-overview"
-    weight = 311
-    parent = "distribute-bundles"
-  [[menu.main]]
-    name = "Copy Bundles"
-    identifier = "copy-bundles"
-    url = "/copy-bundles"
-    weight = 312
-    parent = "distribute-bundles"
-  [[menu.main]]
-    name = "Archive Bundles"
-    identifier = "archive-bundles"
-    url = "/archive-bundles"
-    weight = 313
-    parent = "distribute-bundles"
-  [[menu.main]]
-    name = "Compatible Registries"
-    identifier = "compatible-registries"
-    url = "/compatible-registries/"
-    weight = 314
-    parent = "distribute-bundles"
-
-[[menu.main]]
-  name = "Examine Bundles"
-  identifier = "examine-bundles"
-  weight = 325
-  [[menu.main]]
-    name = "Overview"
-    url = "/examine-bundles"
-    identifier = "examine-bundles-overview"
-    weight = 326
-    parent = "examine-bundles"
-  [[menu.main]]
-    name = "Inspect Bundle Images"
-    url = "/inspect-bundles/"
-    identifier = "inspect-bundles"
-    weight = 327
-    parent = "examine-bundles"
-
-[[menu.main]]
-  name = "Porter Architecture"
-  identifier = "porter-architecture"
-  weight = 400
-  [[menu.main]]
-    name = "Overview"
-    url = "/architecture"
-    identifier = "architecture"
-    weight = 401
-    parent = "porter-architecture"
-  [[menu.main]]
-    name = "CNAB"
-    url = "/cnab/"
-    identifier = "architecture-cnab"
-    weight = 402
-    parent = "porter-architecture"
-  [[menu.main]]
-    name = "Buildtime"
-    url = "/architecture-buildtime"
-    identifier = "architecture-buildtime"
-    weight = 403
-    parent = "porter-architecture"
-  [[menu.main]]
-    name = "Runtime"
-    url = "/architecture-runtime"
-    identifier = "architecture-runtime"
-    weight = 404
-    parent = "porter-architecture"
-  [[menu.main]]
-    name = "Invocation Images"
-    url = "/build-image"
-    identifier = "build-image"
-    weight = 405
-    parent = "porter-architecture"
-  [[menu.main]]
-    name = "Credentials"
-    url = "/credentials/"
-    identifier = "credentials"
-    weight = 406
-    parent = "porter-architecture"
-  [[menu.main]]
-    name = "Parameters"
-    url = "/parameters/"
-    identifier = "parameters"
-    weight = 407
-    parent = "porter-architecture"
-
-[[menu.main]]
-  name = "FAQ"
-  identifier = "faq"
-  url = "/faq"
-  weight = 500
-
-[[menu.main]]
-  name = "Troubleshooting"
-  identifier = "troubleshooting"
-  url = "/troubleshooting"
-  weight = 501
-
-[[menu.main]]
-  name = "Best Practices"
-  url = "/best-practices/"
-  identifier = "best-practices"
-  weight = 600
-
-[[menu.main]]
-  name = "References"
-  identifier = "references"
-  weight = 1000
   [[menu.main]]
     name = "Configuration"
     url = "/configuration"
     identifier = "configuration"
+    parent = "references"
+  [[menu.main]]
+    name = "File Formats"
+    url = "/reference/file-formats/"
+    identifier = "file-formats"
+    parent = "references"
+  [[menu.main]]
+    name = "Compatible Registries"
+    identifier = "compatible-registries"
+    url = "/compatible-registries/"
     parent = "references"
   [[menu.main]]
     name = "Docker Images"

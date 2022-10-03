@@ -88,23 +88,30 @@ func (a *Actions) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	return nil
 }
 
-var _ builder.HasOrderedArguments = Step{}
-var _ builder.ExecutableStep = Step{}
-var _ builder.StepWithOutputs = Step{}
+var (
+	_ builder.HasOrderedArguments = Step{}
+	_ builder.ExecutableStep      = Step{}
+	_ builder.StepWithOutputs     = Step{}
+	_ builder.HasEnvironmentVars  = Step{}
+)
 
 type Step struct {
 	Instruction `yaml:"exec"`
 }
 
 type Instruction struct {
-	Description     string        `yaml:"description"`
-	Command         string        `yaml:"command"`
-	WorkingDir      string        `yaml:"dir,omitempty"`
-	Arguments       []string      `yaml:"arguments,omitempty"`
-	SuffixArguments []string      `yaml:"suffix-arguments,omitempty"`
-	Flags           builder.Flags `yaml:"flags,omitempty"`
-	Outputs         []Output      `yaml:"outputs,omitempty"`
-	SuppressOutput  bool          `yaml:"suppress-output,omitempty"`
+	Description     string            `yaml:"description"`
+	Command         string            `yaml:"command"`
+	WorkingDir      string            `yaml:"dir,omitempty"`
+	Arguments       []string          `yaml:"arguments,omitempty"`
+	SuffixArguments []string          `yaml:"suffix-arguments,omitempty"`
+	Flags           builder.Flags     `yaml:"flags,omitempty"`
+	EnvironmentVars map[string]string `yaml:"envs,omitempty"`
+	Outputs         []Output          `yaml:"outputs,omitempty"`
+	SuppressOutput  bool              `yaml:"suppress-output,omitempty"`
+
+	// Allow the user to ignore some errors
+	builder.IgnoreErrorHandler `yaml:"ignoreError,omitempty"`
 }
 
 func (s Step) GetCommand() string {
@@ -121,6 +128,10 @@ func (s Step) GetSuffixArguments() []string {
 
 func (s Step) GetFlags() builder.Flags {
 	return s.Flags
+}
+
+func (s Step) GetEnvironmentVars() map[string]string {
+	return s.EnvironmentVars
 }
 
 func (s Step) SuppressesOutput() bool {

@@ -18,23 +18,16 @@ For optional parameters, bundles set a default value that is used when the user 
 Let's look at a bundle with parameters:
 
 ```console
-$ porter explain --reference getporter/hello-llama:v0.1.1
+$ porter explain getporter/hello-llama:v0.1.1
 Name: hello-llama
 Description: An example Porter bundle with parameters
 Version: 0.1.0
 Porter Version: v0.38.1-32-gb76f5c1c
 
-No credentials defined
-
 Parameters:
 Name   Description                           Type     Default   Required   Applies To
 name   Name of to whom we should say hello   string   llama     false      All Actions
 
-No outputs defined
-
-No custom actions defined
-
-No dependencies defined
 ```
 
 In the Parameters section of the output returned by explain, there is a single optional string parameter, name, with a default of "llama" that applies to "All Actions".
@@ -66,6 +59,9 @@ Some parameters may be sensitive, for example a database connection string or oa
 For improved security, and to limit exposure of sensitive values, it is recommended that you source sensitive parameter values from a secret store such as HashiCorp Vault or Azure Key Vault.
 See the list of available [plugins](/plugins/) for which secret providers are supported.
 
+Porter stores all sensitive parameter values in a secret store, never in Porter's database.
+Sensitive parameter values are resolved from the secret store just-in-time before the bundle run.
+
 ## Use the default parameter values
 
 Install the bundle without specifying any parameters so that you can see the default behavior of the bundle.
@@ -94,23 +90,28 @@ execution completed successfully!
 
 ## Create a Parameter Set
 
-Create a parameter set for the hello-llama with the `porter parameters generate` command. It is an interactive command that walks through setting values for every parameter in the specified bundle.
+Create a parameter set for the hello-llama with the combination of `porter parameters create` and `porter parameters apply` commands. The `create` command will generate a [template file](/reference/file-formats#parameter-set). You need to edit the file to include the corresponding parameters needed for the bundle. After modifying the file, the `apply` command will create the parameter set based on the file. 
 
 ```console
-$ porter parameters generate hello-llama --reference getporter/hello-llama:v0.1.1
-Generating new parameter set hello-llama from bundle hello-llama
-==> 2 parameters declared for bundle hello-llama
-
-? How would you like to set parameter "name"
-   [Use arrows to move, space to select, type to filter]
-  secret
-> specific value
-  environment variable
-  file path
-  shell command
-
-? Enter the value that will be used to set parameter "name"
-  Porter
+$ porter parameters create hello-llama.json
+creating porter parameter set in the current directory
+$ cat hello-llama.json
+# modify hello-llama.json with your editor to the content below
+{
+    "schemaType": "ParameterSet",
+    "schemaVersion": "1.0.1",
+    "name": "hello-llama",
+    "parameters": [
+        {
+            "name": "name",
+            "source": {
+                "value": "Porter"
+            }
+        }
+    ]
+}
+$ porter parameters apply hello-llama.json
+Applied /hello-llama parameter se
 ```
 
 This creates a parameter set named hello-llama.

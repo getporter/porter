@@ -1,0 +1,12 @@
+{
+  "id": "01G4XDGVEAJXPQ8GN7HQX9DH0N",
+  "claimId": "01G4XDGS2DNMT33AGDZ87AC55X",
+  "created": "2022-06-06T16:07:51.370796-05:00",
+  "status": "succeeded",
+  "outputs": {
+    "io.cnab.outputs.invocationImageLogs": {
+      "contentDigest": "sha256:bc10382137583a0a15198cd0a6cfdf544e96fa38032db2638c23374e7ef3daaf",
+      "generatedByBundle": "false"
+    }
+  }
+}

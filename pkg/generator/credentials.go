@@ -6,9 +6,9 @@ import (
 	"sort"
 	"strings"
 
+	"get.porter.sh/porter/pkg/secrets"
+	"get.porter.sh/porter/pkg/storage"
 	"github.com/cnabio/cnab-go/bundle"
-	"github.com/cnabio/cnab-go/credentials"
-	"github.com/cnabio/cnab-go/valuesource"
 )
 
 // GenerateCredentialsOptions are the options to generate a Credential Set
@@ -20,24 +20,26 @@ type GenerateCredentialsOptions struct {
 }
 
 // GenerateCredentials will generate a credential set based on the given options
-func GenerateCredentials(opts GenerateCredentialsOptions) (credentials.CredentialSet, error) {
+func GenerateCredentials(opts GenerateCredentialsOptions) (storage.CredentialSet, error) {
 	if opts.Name == "" {
-		return credentials.CredentialSet{}, errors.New("credentialset name is required")
+		return storage.CredentialSet{}, errors.New("credentialset name is required")
 	}
 	generator := genSurvey
 	if opts.Silent {
 		generator = genEmptySet
 	}
-	credSet, err := genCredentialSet(opts.Name, opts.Credentials, generator)
+	credSet, err := genCredentialSet(opts.Namespace, opts.Name, opts.Credentials, generator)
 	if err != nil {
-		return credentials.CredentialSet{}, err
+		return storage.CredentialSet{}, err
 	}
+
+	credSet.Labels = opts.Labels
 	return credSet, nil
 }
 
-func genCredentialSet(name string, creds map[string]bundle.Credential, fn generator) (credentials.CredentialSet, error) {
-	cs := credentials.NewCredentialSet(name)
-	cs.Credentials = []valuesource.Strategy{}
+func genCredentialSet(namespace string, name string, creds map[string]bundle.Credential, fn generator) (storage.CredentialSet, error) {
+	cs := storage.NewCredentialSet(namespace, name)
+	cs.Credentials = []secrets.Strategy{}
 
 	if strings.ContainsAny(name, "./\\") {
 		return cs, fmt.Errorf("credentialset name '%s' cannot contain the following characters: './\\'", name)

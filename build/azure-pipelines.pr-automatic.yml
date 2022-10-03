@@ -11,12 +11,24 @@ pool:
   vmImage: "ubuntu-latest"
 
 variables:
-  GOVERSION: "1.17.8"
-
-parameters:
-  - name: buildExamples
-    type: boolean
-    default: false
+  GOVERSION: "1.18"
+  # Cache go modules and the results of go build/test
+  # Increment the version number prefix of the key and restoreKey to clear the cache
+  GOCACHE: $(Pipeline.Workspace)/.cache/go-build/
+  GOCACHE_KEY: 'v3 | go-build | "$(Agent.OS)" | go.sum'
+  GOCACHE_RESTOREKEYS: |
+    v3 | go-build | "$(Agent.OS)"
+    v3 | go-build | "$(Agent.OS)" | go.sum
+  # Use separate cache for the xbuild jobs, since they generate different outputs
+  GOXCACHE_KEY: 'v3 | go-xbuild | "$(Agent.OS)" | go.sum'
+  GOXCACHE_RESTOREKEYS: |
+    v3 | go-xbuild | "$(Agent.OS)"
+    v3 | go-xbuild | "$(Agent.OS)" | go.sum
+  GOMODCACHE: /home/vsts/go/pkg/mod
+  GOMODCACHE_KEY: 'v4 | go-pkg | "$(Agent.OS)" | go.sum'
+  GOMODCACHE_RESTOREKEYS: |
+    v4 | go-pkg | "$(Agent.OS)"
+    v4 | go-pkg | "$(Agent.OS)" | go.sum
 
 stages:
   - stage: Setup
@@ -39,9 +51,21 @@ stages:
             displayName: "Set Go Version"
             inputs:
               version: "$(GOVERSION)"
+          - task: Cache@2
+            displayName: Cache Go Packages
+            inputs:
+              key: "$(GOMODCACHE_KEY)"
+              restoreKeys: $(GOMODCACHE_RESTOREKEYS)
+              path: $(GOMODCACHE)
+          - task: Cache@2
+            displayName: Cache Go Build
+            inputs:
+              key: "$(GOCACHE_KEY)"
+              restoreKeys: $(GOCACHE_RESTOREKEYS)
+              path: $(GOCACHE)
           - script: go run mage.go ConfigureAgent
             displayName: "Configure Agent"
-          - bash: make build
+          - bash: mage build
             displayName: "Native Build"
           - task: PublishPipelineArtifact@0
             displayName: "Publish Native Binaries"
@@ -56,9 +80,22 @@ stages:
             displayName: "Set Go Version"
             inputs:
               version: "$(GOVERSION)"
+          - task: Cache@2
+            displayName: Cache Go Packages
+            inputs:
+              key: "$(GOMODCACHE_KEY)"
+              restoreKeys: $(GOMODCACHE_RESTOREKEYS)
+              path: $(GOMODCACHE)
+          - task: Cache@2
+            displayName: Cache Go Build
+            inputs:
+              # Use special cache keys just for cross-compiled binaries
+              key: "$(GOXCACHE_KEY)"
+              restoreKeys: $(GOXCACHE_RESTOREKEYS)
+              path: $(GOCACHE)
           - script: go run mage.go ConfigureAgent
             displayName: "Configure Agent"
-          - bash: make xbuild-all
+          - bash: mage XBuildAll
             displayName: "Cross Compile"
           - task: PublishPipelineArtifact@0
             displayName: "Publish Release Binaries"
@@ -73,33 +110,52 @@ stages:
             displayName: "Set Go Version"
             inputs:
               version: "$(GOVERSION)"
+          - task: Cache@2
+            displayName: Cache Go Packages
+            inputs:
+              key: "$(GOMODCACHE_KEY)"
+              restoreKeys: $(GOMODCACHE_RESTOREKEYS)
+              path: $(GOMODCACHE)
+          - task: Cache@2
+            displayName: Cache Go Build
+            inputs:
+              key: "$(GOCACHE_KEY)"
+              restoreKeys: $(GOCACHE_RESTOREKEYS)
+              path: $(GOCACHE)
           - script: go run mage.go ConfigureAgent
             displayName: "Configure Agent"
-          - bash: make verify
-            displayName: "Verify"
-          - bash: make test-unit
+          - bash: mage TestUnit
             displayName: "Unit Test"
-      - job: validate_examples
-        displayName: "Validate Examples"
-        dependsOn: build
+      - job: VetLint
+        displayName: "Vet and Lint"
         steps:
-          - task: DownloadPipelineArtifact@2
-            displayName: "Download Native Porter Binaries"
+          - task: GoTool@0
+            displayName: "Set Go Version"
             inputs:
-              source: current
-              artifact: build-bin
-              path: bin
-          - script: go run mage.go SetBinExecutable
-            displayName: "Setup Bin"
-          - bash: make lint-examples
-            displayName: "Lint Examples"
-          - bash: make build-examples
-            displayName: "Build Examples"
-            condition: ${{parameters.buildExamples}}
+              version: "$(GOVERSION)"
+          - task: Cache@2
+            displayName: Cache Go Packages
+            inputs:
+              key: "$(GOMODCACHE_KEY)"
+              restoreKeys: $(GOMODCACHE_RESTOREKEYS)
+              path: $(GOMODCACHE)
+          - task: Cache@2
+            displayName: Cache Go Build
+            inputs:
+              key: "$(GOCACHE_KEY)"
+              restoreKeys: $(GOCACHE_RESTOREKEYS)
+              path: $(GOCACHE)
+          - script: go run mage.go ConfigureAgent
+            displayName: "Configure Agent"
+          - bash: mage Vet
+            displayName: "Vet"
+          - bash: mage Lint
+            displayName: "Lint"
       - job: build_docker
         dependsOn: xbuild
         steps:
           - task: GoTool@0
+            displayName: "Set Go Version"
             inputs:
               version: "$(GOVERSION)"
           - task: DownloadPipelineArtifact@2
@@ -108,9 +164,9 @@ stages:
               source: current
               artifact: xbuild-bin
               path: bin
-          - script: go run mage.go UseXBuildBinaries
+          - script: go run mage.go ConfigureAgent UseXBuildBinaries
             displayName: "Setup Bin"
-          - script: make build-images
+          - script: mage BuildImages
             displayName: "Build Docker Images"
       - job: smoke_test
         displayName: "Run smoke tests on"
@@ -121,6 +177,7 @@ stages:
             #windows:
             #  poolName: "windows"
             #  vmImage: ""
+            #  GOMODCACHE: "C:/Users/porterci/go/pkg/mod"
             linux:
               poolName: "Azure Pipelines"
               vmImage: "ubuntu-latest"
@@ -138,7 +195,25 @@ stages:
             displayName: "Set Go Version"
             inputs:
               version: "$(GOVERSION)"
+          # On windows, restoring the cache fails because go wrote the files as readonly, undo that before restoring the cached go mod directory
+          - task: CmdLine@2
+            displayName: Windows Cache Prep
+            condition: eq(variables.poolName, 'windows')
+            inputs:
+              script: "attrib -r $(GOMODCACHE)/*.* /s"
+          - task: Cache@2
+            displayName: Cache Go Packages
+            inputs:
+              key: "$(GOMODCACHE_KEY)"
+              restoreKeys: $(GOMODCACHE_RESTOREKEYS)
+              path: $(GOMODCACHE)
+          - task: Cache@2
+            displayName: Cache Go Build
+            inputs:
+              key: "$(GOCACHE_KEY)"
+              restoreKeys: $(GOCACHE_RESTOREKEYS)
+              path: $(GOCACHE)
           - script: go run mage.go ConfigureAgent UseXBuildBinaries
             displayName: "Configure Agent"
-          - script: mage TestSmoke
+          - script: mage -v TestSmoke
             displayName: "Run Smoke Tests"

@@ -35,6 +35,7 @@ porter publish [flags]
   -a, --archive string      Path to the bundle archive in .tgz format
   -d, --dir string          Path to the build context directory where all bundle assets are located.
   -f, --file porter.yaml    Path to the Porter manifest. Defaults to porter.yaml in the current directory.
+      --force               Force push the bundle to overwrite the previously published bundle
   -h, --help                help for publish
       --insecure-registry   Don't require TLS for the registry
   -r, --reference string    Use a bundle in an OCI registry specified by the given reference.
@@ -45,11 +46,16 @@ porter publish [flags]
 ### Options inherited from parent commands
 
 ```
-      --debug           Enable debug logging
-      --debug-plugins   Enable plugin debug logging
+      --experimental strings   Comma separated list of experimental features to enable. See https://getporter.org/configuration/#experimental-feature-flags for available feature flags.
+      --verbosity string       Threshold for printing messages to the console. Available values are: debug, info, warning, error. (default "info")
 ```
 
 ### SEE ALSO
 
-* [porter](/cli/porter/)	 - I am porter 👩🏽‍✈️, the friendly neighborhood CNAB authoring tool
+* [porter](/cli/porter/)	 - With Porter you can package your application artifact, client tools, configuration and deployment logic together as a versioned bundle that you can distribute, and then install with a single command.
+
+Most commands require a Docker daemon, either local or remote.
+
+Try our QuickStart https://getporter.org/quickstart to learn how to use Porter.
+
 

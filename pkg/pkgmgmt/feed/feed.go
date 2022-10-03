@@ -1,17 +1,19 @@
 package feed
 
 import (
+	"context"
 	"fmt"
 	"net/url"
 	"strings"
 	"time"
 
-	"get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/portercontext"
+	"get.porter.sh/porter/pkg/tracing"
 	"github.com/Masterminds/semver/v3"
 )
 
 type MixinFeed struct {
-	*context.Context
+	*portercontext.Context
 
 	// Index of mixin files
 	Index map[string]map[string]*MixinFileset
@@ -23,7 +25,7 @@ type MixinFeed struct {
 	Updated *time.Time
 }
 
-func NewMixinFeed(cxt *context.Context) *MixinFeed {
+func NewMixinFeed(cxt *portercontext.Context) *MixinFeed {
 	return &MixinFeed{
 		Index:   make(map[string]map[string]*MixinFileset),
 		Context: cxt,
@@ -70,13 +72,22 @@ type MixinFileset struct {
 	Files   []*MixinFile
 }
 
-func (f *MixinFileset) FindDownloadURL(os string, arch string) *url.URL {
+func (f *MixinFileset) FindDownloadURL(ctx context.Context, os string, arch string) *url.URL {
+	log := tracing.LoggerFromContext(ctx)
+
 	match := fmt.Sprintf("%s-%s-%s", f.Mixin, os, arch)
 	for _, file := range f.Files {
 		if strings.Contains(file.URL.Path, match) {
 			return file.URL
 		}
 	}
+
+	// Until we have full support for M1 chipsets, rely on rossetta functionality in macos and use the amd64 binary
+	if os == "darwin" && arch == "arm64" {
+		log.Debugf("%s @ %s did not publish a download for darwin/arm64, falling back to darwin/amd64", f.Mixin, f.Version)
+		return f.FindDownloadURL(ctx, "darwin", "amd64")
+	}
+
 	return nil
 }
 

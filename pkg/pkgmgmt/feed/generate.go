@@ -1,16 +1,18 @@
 package feed
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"regexp"
 	"sort"
 	"time"
 
-	"get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg"
+	"get.porter.sh/porter/pkg/portercontext"
+	"get.porter.sh/porter/pkg/tracing"
 	"github.com/Masterminds/semver/v3"
 	"github.com/cbroglie/mustache"
-	"github.com/pkg/errors"
 )
 
 type GenerateOptions struct {
@@ -19,7 +21,7 @@ type GenerateOptions struct {
 	TemplateFile    string
 }
 
-func (o *GenerateOptions) Validate(c *context.Context) error {
+func (o *GenerateOptions) Validate(c *portercontext.Context) error {
 	err := o.ValidateSearchDirectory(c)
 	if err != nil {
 		return err
@@ -28,33 +30,36 @@ func (o *GenerateOptions) Validate(c *context.Context) error {
 	return o.ValidateTemplateFile(c)
 }
 
-func (o *GenerateOptions) ValidateSearchDirectory(cxt *context.Context) error {
+func (o *GenerateOptions) ValidateSearchDirectory(cxt *portercontext.Context) error {
 	if o.SearchDirectory == "" {
 		o.SearchDirectory = cxt.Getwd()
 	}
 
 	if _, err := cxt.FileSystem.Stat(o.SearchDirectory); err != nil {
-		return errors.Wrapf(err, "invalid --dir %s", o.SearchDirectory)
+		return fmt.Errorf("invalid --dir %s: %w", o.SearchDirectory, err)
 	}
 
 	return nil
 }
 
-func (o *GenerateOptions) ValidateTemplateFile(cxt *context.Context) error {
+func (o *GenerateOptions) ValidateTemplateFile(cxt *portercontext.Context) error {
 	if _, err := cxt.FileSystem.Stat(o.TemplateFile); err != nil {
-		return errors.Wrapf(err, "invalid --template %s", o.TemplateFile)
+		return fmt.Errorf("invalid --template %s: %w", o.TemplateFile, err)
 	}
 
 	return nil
 }
 
-func (feed *MixinFeed) Generate(opts GenerateOptions) error {
+func (feed *MixinFeed) Generate(ctx context.Context, opts GenerateOptions) error {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
 	existingFeed, err := feed.FileSystem.Exists(opts.AtomFile)
 	if err != nil {
 		return err
 	}
 	if existingFeed {
-		err := feed.Load(opts.AtomFile)
+		err := feed.Load(ctx, opts.AtomFile)
 		if err != nil {
 			return err
 		}
@@ -112,11 +117,11 @@ func (feed *MixinFeed) Generate(opts GenerateOptions) error {
 	})
 
 	if err != nil {
-		return errors.Wrapf(err, "failed to traverse the %s directory", opts.SearchDirectory)
+		return span.Error(fmt.Errorf("failed to traverse the %s directory: %w", opts.SearchDirectory, err))
 	}
 
 	if len(feed.Index) == 0 {
-		return fmt.Errorf("no mixin binaries found in %s matching the regex %q", opts.SearchDirectory, mixinRegex)
+		return span.Error(fmt.Errorf("no mixin binaries found in %s matching the regex %q", opts.SearchDirectory, mixinRegex))
 	}
 
 	return nil
@@ -145,7 +150,7 @@ func shouldPublishVersion(version string) bool {
 func (feed *MixinFeed) Save(opts GenerateOptions) error {
 	feedTmpl, err := feed.FileSystem.ReadFile(opts.TemplateFile)
 	if err != nil {
-		return errors.Wrapf(err, "error reading template file at %s", opts.TemplateFile)
+		return fmt.Errorf("error reading template file at %s: %w", opts.TemplateFile, err)
 	}
 
 	tmplData := map[string]interface{}{}
@@ -166,9 +171,12 @@ func (feed *MixinFeed) Save(opts GenerateOptions) error {
 	tmplData["Updated"] = entries[0].Updated()
 
 	atomXml, err := mustache.Render(string(feedTmpl), tmplData)
-	err = feed.FileSystem.WriteFile(opts.AtomFile, []byte(atomXml), 0600)
 	if err != nil {
-		return errors.Wrapf(err, "could not write feed to %s", opts.AtomFile)
+		return fmt.Errorf("error rendering template:%w", err)
+	}
+	err = feed.FileSystem.WriteFile(opts.AtomFile, []byte(atomXml), pkg.FileModeWritable)
+	if err != nil {
+		return fmt.Errorf("could not write feed to %s: %w", opts.AtomFile, err)
 	}
 
 	fmt.Fprintf(feed.Out, "wrote feed to %s\n", opts.AtomFile)

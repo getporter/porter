@@ -1,14 +1,14 @@
 name: etcd-operator
 version: 0.1.0
 description: "An etcd-operator bundle"
-registry: getporter
+registry: "localhost:5000"
 
 mixins:
   - helm3
 
 credentials:
 - name: kubeconfig
-  path: /root/.kube/config
+  path: /home/nonroot/.kube/config
 
 install:
   - helm3:

@@ -3,10 +3,9 @@ package cnabprovider
 import (
 	"testing"
 
-	"get.porter.sh/porter/pkg/cnab/extensions"
-	"github.com/stretchr/testify/assert"
-
+	"get.porter.sh/porter/pkg/cnab"
 	"github.com/cnabio/cnab-go/driver/docker"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -16,8 +15,10 @@ func TestNewDriver_Docker(t *testing.T) {
 	t.Run("vanilla docker", func(t *testing.T) {
 		t.Parallel()
 
-		d := NewTestRuntime(t)
-		driver, err := d.newDriver(DriverNameDocker, "myclaim", ActionArguments{})
+		r := NewTestRuntime(t)
+		defer r.Close()
+
+		driver, err := r.newDriver(DriverNameDocker, ActionArguments{})
 
 		require.NoError(t, err)
 		assert.IsType(t, driver, &docker.Driver{})
@@ -26,13 +27,17 @@ func TestNewDriver_Docker(t *testing.T) {
 	t.Run("docker with host access", func(t *testing.T) {
 		t.Parallel()
 
-		d := NewTestRuntime(t)
-		d.FileSystem.Create("/var/run/docker.sock")
+		r := NewTestRuntime(t)
+		// mock retrieving the docker group id on linux
+		r.MockGetDockerGroupId()
+		defer r.Close()
+
+		r.FileSystem.Create("/var/run/docker.sock")
 		args := ActionArguments{
 			AllowDockerHostAccess: true,
 		}
 
-		driver, err := d.newDriver(DriverNameDocker, "myclaim", args)
+		driver, err := r.newDriver(DriverNameDocker, args)
 
 		require.NoError(t, err)
 		assert.IsType(t, driver, &docker.Driver{})
@@ -41,41 +46,35 @@ func TestNewDriver_Docker(t *testing.T) {
 	t.Run("docker with host access, mismatch driver name", func(t *testing.T) {
 		t.Parallel()
 
-		d := NewTestRuntime(t)
+		r := NewTestRuntime(t)
+		r.MockGetDockerGroupId()
+		defer r.Close()
+
 		args := ActionArguments{
 			AllowDockerHostAccess: true,
 		}
 
-		_, err := d.newDriver("custom-driver", "myclaim", args)
+		_, err := r.newDriver("custom-driver", args)
 
 		assert.EqualError(t, err, "allow-docker-host-access was enabled, but the driver is custom-driver")
-	})
-
-	t.Run("docker with host access, missing docker daemon", func(t *testing.T) {
-		t.Parallel()
-
-		d := NewTestRuntime(t)
-		args := ActionArguments{
-			AllowDockerHostAccess: true,
-		}
-
-		_, err := d.newDriver(DriverNameDocker, "myclaim", args)
-		assert.EqualError(t, err, "allow-docker-host-access was specified but could not detect a local docker daemon running by checking for /var/run/docker.sock")
 	})
 
 	t.Run("docker with host access, default config", func(t *testing.T) {
 		t.Parallel()
 
-		d := NewTestRuntime(t)
+		r := NewTestRuntime(t)
+		r.MockGetDockerGroupId()
+		defer r.Close()
+
 		// Currently, toggling Privileged is the only config exposed to users
 		// Here we supply no override, so expect Privileged to be false
-		d.Extensions[extensions.DockerExtensionKey] = extensions.Docker{}
-		d.FileSystem.Create("/var/run/docker.sock")
+		r.Extensions[cnab.DockerExtensionKey] = cnab.Docker{}
+		r.FileSystem.Create("/var/run/docker.sock")
 		args := ActionArguments{
 			AllowDockerHostAccess: true,
 		}
 
-		driver, err := d.newDriver(DriverNameDocker, "myclaim", args)
+		driver, err := r.newDriver(DriverNameDocker, args)
 		require.NoError(t, err)
 		assert.IsType(t, driver, &docker.Driver{})
 
@@ -93,18 +92,21 @@ func TestNewDriver_Docker(t *testing.T) {
 	t.Run("docker with host access, privileged true", func(t *testing.T) {
 		t.Parallel()
 
-		d := NewTestRuntime(t)
+		r := NewTestRuntime(t)
+		r.MockGetDockerGroupId()
+		defer r.Close()
+
 		// Currently, toggling Privileged is the only config exposed to users
 		// Here we supply an override, so expect Privileged to be set to the override
-		d.Extensions[extensions.DockerExtensionKey] = extensions.Docker{
+		r.Extensions[cnab.DockerExtensionKey] = cnab.Docker{
 			Privileged: true,
 		}
-		d.FileSystem.Create("/var/run/docker.sock")
+		r.FileSystem.Create("/var/run/docker.sock")
 		args := ActionArguments{
 			AllowDockerHostAccess: true,
 		}
 
-		driver, err := d.newDriver(DriverNameDocker, "myclaim", args)
+		driver, err := r.newDriver(DriverNameDocker, args)
 		require.NoError(t, err)
 		assert.IsType(t, driver, &docker.Driver{})
 

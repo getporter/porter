@@ -1,0 +1,20 @@
+[
+  {
+    "name": "bar",
+    "type": "string",
+    "sensitive": false,
+    "value": "bar-output"
+  },
+  {
+    "name": "foo",
+    "type": "string",
+    "sensitive": true,
+    "value": "foo-output"
+  },
+  {
+    "name": "longfoo",
+    "type": "string",
+    "sensitive": false,
+    "value": "DFo6Wc2jDhmA7Yt4PbHyh8RO4vVG7leOzK412gf2TXNPJhuCUs1rB29nkJJd4ICimZGpyWpMGalSvDxf"
+  }
+]

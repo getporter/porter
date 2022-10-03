@@ -3,8 +3,6 @@ package builder
 import (
 	"fmt"
 	"sort"
-
-	"github.com/pkg/errors"
 )
 
 // Flag represents a flag passed to a mixin command.
@@ -80,7 +78,7 @@ func (flags *Flags) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	flagMap := map[string]interface{}{}
 	err := unmarshal(&flagMap)
 	if err != nil {
-		return errors.Wrap(err, "could not unmarshal yaml into Step.Flags")
+		return fmt.Errorf("could not unmarshal yaml into Step.Flags: %w", err)
 	}
 
 	*flags = make(Flags, 0, len(flagMap))
@@ -94,7 +92,7 @@ func (flags *Flags) UnmarshalYAML(unmarshal func(interface{}) error) error {
 			for i := range t {
 				iv, ok := t[i].(string)
 				if !ok {
-					return errors.Errorf("invalid yaml type for flag %s: %T", f.Name, t[i])
+					return fmt.Errorf("invalid yaml type for flag %s: %T", f.Name, t[i])
 				}
 				f.Values[i] = iv
 			}

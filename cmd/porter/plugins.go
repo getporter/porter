@@ -37,12 +37,12 @@ func buildPluginsListCommand(p *porter.Porter) *cobra.Command {
 			return opts.ParseFormat()
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.PrintPlugins(opts)
+			return p.PrintPlugins(cmd.Context(), opts)
 		},
 	}
 
-	cmd.Flags().StringVarP(&opts.RawFormat, "output", "o", "table",
-		"Output format, allowed values are: table, json, yaml")
+	cmd.Flags().StringVarP(&opts.RawFormat, "output", "o", "plaintext",
+		"Output format, allowed values are: plaintext, json, yaml")
 
 	return cmd
 }
@@ -70,8 +70,8 @@ By default the community plugin index at https://cdn.porter.sh/plugins/index.jso
 	}
 
 	flags := cmd.Flags()
-	flags.StringVarP(&opts.RawFormat, "output", "o", "table",
-		"Output format, allowed values are: table, json, yaml")
+	flags.StringVarP(&opts.RawFormat, "output", "o", "plaintext",
+		"Output format, allowed values are: plaintext, json, yaml")
 	flags.StringVar(&opts.Mirror, "mirror", pkgmgmt.DefaultPackageMirror,
 		"Mirror of official Porter assets")
 
@@ -88,12 +88,12 @@ func buildPluginShowCommand(p *porter.Porter) *cobra.Command {
 			return opts.Validate(args)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.ShowPlugin(opts)
+			return p.ShowPlugin(cmd.Context(), opts)
 		},
 	}
 
-	cmd.Flags().StringVarP(&opts.RawFormat, "output", "o", "table",
-		"Output format, allowed values are: table, json, yaml")
+	cmd.Flags().StringVarP(&opts.RawFormat, "output", "o", "plaintext",
+		"Output format, allowed values are: plaintext, json, yaml")
 
 	return cmd
 }
@@ -115,7 +115,7 @@ By default plugins are downloaded from the official Porter plugin feed at https:
 			return opts.Validate(args)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.InstallPlugin(opts)
+			return p.InstallPlugin(cmd.Context(), opts)
 		},
 	}
 
@@ -142,7 +142,7 @@ func BuildPluginUninstallCommand(p *porter.Porter) *cobra.Command {
 			return opts.Validate(args)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.UninstallPlugin(opts)
+			return p.UninstallPlugin(cmd.Context(), opts)
 		},
 	}
 
@@ -150,11 +150,13 @@ func BuildPluginUninstallCommand(p *porter.Porter) *cobra.Command {
 }
 
 func buildPluginRunCommand(p *porter.Porter) *cobra.Command {
+	var opts porter.RunInternalPluginOpts
 	cmd := &cobra.Command{
-		Use:   "run KEY",
+		Use:   "run PLUGIN_KEY",
 		Short: "Serve internal plugins",
-		Run: func(cmd *cobra.Command, args []string) {
-			p.RunInternalPlugins(args)
+		RunE: func(cmd *cobra.Command, args []string) error {
+			opts.ApplyArgs(args)
+			return p.RunInternalPlugins(cmd.Context(), opts)
 		},
 		Hidden: true, // This should ALWAYS be hidden, it is not a user-facing command
 	}

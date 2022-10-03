@@ -1,180 +1,134 @@
 package porter
 
 import (
+	"context"
+	"encoding/json"
+	"io/ioutil"
 	"testing"
-	"time"
 
+	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/printer"
+	"get.porter.sh/porter/pkg/storage"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
-	"github.com/cnabio/cnab-go/claim"
 	"github.com/stretchr/testify/require"
 )
 
 func TestPorter_printOutputsTable(t *testing.T) {
-	p := NewTestPorter(t)
+	t.Parallel()
 
-	want := `------------------------------
-  Name  Type    Value         
-------------------------------
-  bar   string  bar-value     
-  foo   string  /path/to/foo  
+	b, err := ioutil.ReadFile("testdata/show/object-parameter-value.json")
+	require.NoError(t, err)
+	var objVal map[string]interface{}
+	err = json.Unmarshal(b, &objVal)
+	require.NoError(t, err)
+
+	p := NewTestPorter(t)
+	defer p.Close()
+
+	want := `---------------------------------------------------------------------------------
+  Name     Type    Value                                                         
+---------------------------------------------------------------------------------
+  bar      string  ******                                                        
+  foo      string  /path/to/foo                                                  
+  object   object  {"a":{"b":1,"c":2},"d":"yay"}                                 
+  longfoo  string  DFo6Wc2jDhmA7Yt4PbHyh8RO4vVG7leOzK412gf2TXNPJhuCUs1rB29nk...  
 `
 
-	outputs := []DisplayOutput{
-		{Name: "bar", Type: "string", Value: "bar-value"},
+	outputs := DisplayValues{
+		{Name: "bar", Type: "string", Value: "bar-value", Sensitive: true},
 		{Name: "foo", Type: "string", Value: "/path/to/foo"},
+		{Name: "object", Type: "object", Value: objVal},
+		{Name: "longfoo", Type: "string", Value: "DFo6Wc2jDhmA7Yt4PbHyh8RO4vVG7leOzK412gf2TXNPJhuCUs1rB29nkJJd4ICimZGpyWpMGalSvDxf"},
 	}
-	err := p.printOutputsTable(outputs)
+	err = p.printDisplayValuesTable(outputs)
 	require.NoError(t, err)
 
 	got := p.TestConfig.TestContext.GetOutput()
 	require.Equal(t, want, got)
 }
 
-func TestPorter_printDisplayOutput_JSON(t *testing.T) {
-	p := NewTestPorter(t)
-
-	// Create test claim
-	writeOnly := true
-	b := bundle.Bundle{
-		Definitions: definition.Definitions{
-			"foo": &definition.Schema{
-				Type:      "string",
-				WriteOnly: &writeOnly,
-			},
-			"bar": &definition.Schema{
-				Type: "string",
-			},
-		},
-		Outputs: map[string]bundle.Output{
-			"foo": {
-				Definition: "foo",
-				Path:       "/path/to/foo",
-			},
-			"bar": {
-				Definition: "bar",
-			},
-		},
-	}
-
-	c := p.TestClaims.CreateClaim("test", claim.ActionInstall, b, nil)
-	r := p.TestClaims.CreateResult(c, claim.StatusSucceeded)
-	p.TestClaims.CreateOutput(c, r, "foo", []byte("foo-output"))
-	p.TestClaims.CreateOutput(c, r, "bar", []byte("bar-output"))
-
-	// Hard code the date so we can compare the command output easily
-	c.Created = time.Date(1983, time.April, 18, 1, 2, 3, 4, time.UTC)
-	err := p.TestClaims.SaveClaim(c)
-	require.NoError(t, err, "could not store claim")
-
-	opts := OutputListOptions{
-		sharedOptions: sharedOptions{
-			Name: "test",
-		},
-		PrintOptions: printer.PrintOptions{
-			Format: printer.FormatJson,
-		},
-	}
-	err = p.PrintBundleOutputs(opts)
-	require.NoError(t, err, "could not print bundle outputs")
-
-	want := `[
-  {
-    "Name": "bar",
-    "Value": "bar-output",
-    "Type": "string"
-  },
-  {
-    "Name": "foo",
-    "Value": "foo-output",
-    "Type": "string"
-  }
-]
-`
-
-	got := p.TestConfig.TestContext.GetOutput()
-	require.Equal(t, want, got)
-}
-
-func TestPorter_ListOutputs_Truncation(t *testing.T) {
-	p := NewTestPorter(t)
-
-	fullOutputValue := "this-lengthy-output-will-be-truncated-if-the-output-format-is-table"
-
-	b := bundle.Bundle{
-		Definitions: definition.Definitions{
-			"foo": &definition.Schema{
-				Type: "string",
-			},
-		},
-		Outputs: map[string]bundle.Output{
-			"foo": {
-				Definition: "foo",
-			},
-		},
-	}
-
-	c, err := claim.New("test", claim.ActionInstall, b, nil)
-	c.Action = claim.ActionInstall
-	require.NoError(t, err, "NewClaim failed")
-
-	err = p.Claims.SaveClaim(c)
-	require.NoError(t, err, "SaveClaim failed")
-
-	r, err := c.NewResult(claim.StatusSucceeded)
-	require.NoError(t, err, "NewResult failed")
-	err = p.Claims.SaveResult(r)
-	require.NoError(t, err, "SaveResult failed")
-
-	foo := claim.NewOutput(c, r, "foo", []byte(fullOutputValue))
-	err = p.Claims.SaveOutput(foo)
-	require.NoError(t, err, "SaveOutput failed")
+func TestPorter_PrintBundleOutputs(t *testing.T) {
+	t.Parallel()
 
 	testcases := []struct {
-		name          string
-		opts          OutputListOptions
-		expectedValue string
+		name           string
+		format         printer.Format
+		expectedOutput string
 	}{
-		{
-			"format Table",
-			OutputListOptions{
-				sharedOptions: sharedOptions{Name: "test"},
-				PrintOptions:  printer.PrintOptions{Format: printer.FormatTable},
-			},
-			"this-lengthy-output-will-be-truncated-if-the-output-forma...",
-		},
-		{
-			"format YAML",
-			OutputListOptions{
-				sharedOptions: sharedOptions{Name: "test"},
-				PrintOptions:  printer.PrintOptions{Format: printer.FormatYaml},
-			},
-			fullOutputValue,
-		},
-		{
-			"format JSON",
-			OutputListOptions{
-				sharedOptions: sharedOptions{Name: "test"},
-				PrintOptions:  printer.PrintOptions{Format: printer.FormatJson},
-			},
-			fullOutputValue,
-		},
+		{name: "text", format: printer.FormatPlaintext, expectedOutput: "testdata/outputs/show-expected-output.txt"},
+		{name: "json", format: printer.FormatJson, expectedOutput: "testdata/outputs/show-expected-output.json"},
+		{name: "yaml", format: printer.FormatYaml, expectedOutput: "testdata/outputs/show-expected-output.yaml"},
 	}
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			gotOutputs, err := p.ListBundleOutputs(&tc.opts)
-			require.NoError(t, err, "ListBundleOutputs failed")
+			p := NewTestPorter(t)
+			defer p.Close()
 
-			wantOutputs := DisplayOutputs{
-				{
-					Name:  "foo",
-					Type:  "string",
-					Value: tc.expectedValue,
+			// Create test claim
+			writeOnly := true
+			b := bundle.Bundle{
+				Definitions: definition.Definitions{
+					"foo": &definition.Schema{
+						Type:      "string",
+						WriteOnly: &writeOnly,
+					},
+					"bar": &definition.Schema{
+						Type: "string",
+					},
+					"longfoo": &definition.Schema{
+						Type: "string",
+					},
+					"porter-state": &definition.Schema{
+						Type:    "string",
+						Comment: "porter-internal", // This output should be hidden because it's internal
+					},
+				},
+				Outputs: map[string]bundle.Output{
+					"foo": {
+						Definition: "foo",
+						Path:       "/path/to/foo",
+					},
+					"bar": {
+						Definition: "bar",
+					},
+					"longfoo": {
+						Definition: "longfoo",
+					},
+					"porter-state": {
+						Definition: "porter-state",
+						Path:       "/cnab/app/outputs/porter-state.tgz",
+					},
 				},
 			}
-			require.Equal(t, wantOutputs, gotOutputs)
+
+			extB := cnab.NewBundle(b)
+			i := p.TestInstallations.CreateInstallation(storage.NewInstallation("", "test"), func(i *storage.Installation) {
+				i.Parameters.Parameters = p.SanitizeParameters(i.Parameters.Parameters, i.ID, extB)
+			})
+			c := p.TestInstallations.CreateRun(i.NewRun(cnab.ActionInstall), func(r *storage.Run) {
+				r.Bundle = b
+				r.ParameterOverrides.Parameters = p.SanitizeParameters(r.ParameterOverrides.Parameters, r.ID, extB)
+			})
+			r := p.TestInstallations.CreateResult(c.NewResult(cnab.StatusSucceeded))
+			p.CreateOutput(r.NewOutput("foo", []byte("foo-output")), extB)
+			p.CreateOutput(r.NewOutput("bar", []byte("bar-output")), extB)
+			p.CreateOutput(r.NewOutput("longfoo", []byte("DFo6Wc2jDhmA7Yt4PbHyh8RO4vVG7leOzK412gf2TXNPJhuCUs1rB29nkJJd4ICimZGpyWpMGalSvDxf")), extB)
+			p.CreateOutput(r.NewOutput("porter-state", []byte("porter-state.tgz contents")), extB)
+
+			opts := OutputListOptions{
+				installationOptions: installationOptions{
+					Name: "test",
+				},
+				PrintOptions: printer.PrintOptions{
+					Format: tc.format,
+				},
+			}
+			err := p.PrintBundleOutputs(context.Background(), opts)
+			require.NoError(t, err, "could not print bundle outputs")
+
+			p.CompareGoldenFile(tc.expectedOutput, p.TestConfig.TestContext.GetOutput())
 		})
 	}
 }

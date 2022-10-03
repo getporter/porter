@@ -1,6 +1,6 @@
 name: workshop-wordpress
 version: 0.1.0
-registry: getporter
+registry: "localhost:5000"
 
 mixins:
 - helm3:
@@ -10,7 +10,7 @@ mixins:
 
 credentials:
 - name: kubeconfig
-  path: /root/.kube/config
+  path: /home/nonroot/.kube/config
 
 parameters:
 - name: namespace

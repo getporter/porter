@@ -35,13 +35,15 @@ func buildBundleOutputListCommand(p *porter.Porter) *cobra.Command {
 			return opts.Validate(args, p.Context)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.PrintBundleOutputs(opts)
+			return p.PrintBundleOutputs(cmd.Context(), opts)
 		},
 	}
 
 	f := cmd.Flags()
-	f.StringVarP(&opts.RawFormat, "output", "o", "table",
-		"Specify an output format.  Allowed values: table, json, yaml")
+	f.StringVarP(&opts.RawFormat, "output", "o", "plaintext",
+		"Specify an output format.  Allowed values: plaintext, json, yaml")
+	f.StringVarP(&opts.Namespace, "namespace", "n", "",
+		"Namespace in which the installation is defined. Defaults to the global namespace.")
 	f.StringVarP(&opts.Name, "installation", "i", "",
 		"Specify the installation to which the output belongs.")
 
@@ -61,11 +63,13 @@ func buildBundleOutputShowCommand(p *porter.Porter) *cobra.Command {
 			return opts.Validate(args, p.Context)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.ShowBundleOutput(&opts)
+			return p.ShowBundleOutput(cmd.Context(), &opts)
 		},
 	}
 
 	f := cmd.Flags()
+	f.StringVarP(&opts.Namespace, "namespace", "n", "",
+		"Namespace in which the installation is defined. Defaults to the global namespace.")
 	f.StringVarP(&opts.Name, "installation", "i", "",
 		"Specify the installation to which the output belongs.")
 

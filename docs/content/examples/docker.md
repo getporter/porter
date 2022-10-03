@@ -6,9 +6,9 @@ weight: 20
 
 <img src="/images/porter-with-docker.png" width="250px" align="right"/>
 
-Source: https://porter.sh/src/examples/docker
+Source: https://getporter.org/examples/src/docker
 
-The [getporter/whalesay] bundle demonstrates how to use Docker inside a bundle!
+The [ghcr.io/getporter/examples/whalesay] bundle demonstrates how to use Docker inside a bundle!
 
 Sometimes you need a hammer, and that hammer happens to be a whale 🐳. We all
 use containers as part of our pipeline: building images, running a one-off
@@ -48,7 +48,7 @@ Writing a bundle that uses Docker has a few steps:
 Here's the [full working example whalesay bundle][whalesay-bundle] for you to
 follow along with.
 
-[whalesay-bundle]: /src/examples/docker/
+[whalesay-bundle]: /examples/src/docker/
 
 ### Require Docker
 
@@ -56,7 +56,7 @@ The user running the bundle, and Porter, needs to know that this bundle
 requires the local Docker daemon connected to the bundle. We have added a new
 section to porter.yaml for required extensions, and defined a new prototype
 extension that says that the bundle [requires access to a Docker
-daemon](https://porter.sh/author-bundles/#docker):
+daemon](/author-bundles/#docker):
 
 ```yaml
 required:
@@ -97,15 +97,15 @@ install:
 In my porter.yaml, I can use the docker mixin to execute docker commands
 in my bundle:
 
-<script src="https://gist-it.appspot.com/https://github.com/getporter/porter/blob/main/examples/docker/porter.yaml"></script>
+<script src="https://gist-it.appspot.com/https://github.com/getporter/examples/blob/main/docker/porter.yaml"></script>
 
-After I have tested the bundle, I used `porter publish` to push it up to `getporter/whalesay:v0.1.2`.
+After I have tested the bundle, I used `porter publish` to push it up to `ghcr.io/getporter/examples/whalesay:v0.2.0`.
 
 ## Run that bundle
 
 Now that the bundle is ready to use, the user running the bundle needs to
 give the bundle elevated permission with the [Allow Docker Host
-Access](https://porter.sh/configuration/#allow-docker-host-access) setting. This
+Access](/configuration/#allow-docker-host-access) setting. This
 is because giving a container access to the host's Docker socket, or running a
 container with `--privileged`, has security implications for the underlying host,
 and should only be given to trusted containers, or in this case trusted bundles.
@@ -113,7 +113,7 @@ and should only be given to trusted containers, or in this case trusted bundles.
 Let the whales speak!
 
 ```console
-$ porter install --reference getporter/whalesay:v0.1.2 --allow-docker-host-access
+$ porter install --reference ghcr.io/getporter/examples/whalesay:v0.2.0 --allow-docker-host-access
 installing whalesay...
 executing install action from whalesay (bundle instance: whalesay)
 Install Hello World
@@ -165,4 +165,4 @@ execution completed successfully!
 ```
 
 [docker mixin]: /mixins/docker/
-[getporter/whalesay]: https://hub.docker.com/r/getporter/whalesay/
+[ghcr.io/getporter/examples/whalesay]: https://github.com/getporter/examples/tree/main/docker

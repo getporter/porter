@@ -5,14 +5,15 @@ import (
 
 	"get.porter.sh/porter/pkg/secrets"
 	"github.com/cnabio/cnab-go/secrets/host"
-	"github.com/cnabio/cnab-go/valuesource"
 	survey "gopkg.in/AlecAivazis/survey.v1"
 )
 
 // GenerateOptions are the options to generate a parameter or credential set
 type GenerateOptions struct {
 	// Name of the parameter or credential set.
-	Name string
+	Name      string
+	Namespace string
+	Labels    map[string]string
 
 	// Should we survey?
 	Silent bool
@@ -32,18 +33,18 @@ const (
 	questionCommand = "shell command"
 )
 
-type generator func(name string, surveyType SurveyType) (valuesource.Strategy, error)
+type generator func(name string, surveyType SurveyType) (secrets.Strategy, error)
 
-func genEmptySet(name string, surveyType SurveyType) (valuesource.Strategy, error) {
-	return valuesource.Strategy{
+func genEmptySet(name string, surveyType SurveyType) (secrets.Strategy, error) {
+	return secrets.Strategy{
 		Name:   name,
-		Source: valuesource.Source{Value: "TODO"},
+		Source: secrets.Source{Value: "TODO"},
 	}, nil
 }
 
-func genSurvey(name string, surveyType SurveyType) (valuesource.Strategy, error) {
+func genSurvey(name string, surveyType SurveyType) (secrets.Strategy, error) {
 	if surveyType != surveyCredentials && surveyType != surveyParameters {
-		return valuesource.Strategy{}, fmt.Errorf("unsupported survey type: %s", surveyType)
+		return secrets.Strategy{}, fmt.Errorf("unsupported survey type: %s", surveyType)
 	}
 
 	// extra space-suffix to align question and answer. Unfortunately misaligns help text
@@ -56,7 +57,7 @@ func genSurvey(name string, surveyType SurveyType) (valuesource.Strategy, error)
 	// extra space-suffix to align question and answer. Unfortunately misaligns help text
 	sourceValuePromptTemplate := "Enter the %s that will be used to set %s %q\n "
 
-	c := valuesource.Strategy{Name: name}
+	c := secrets.Strategy{Name: name}
 
 	source := ""
 	if err := survey.AskOne(sourceTypePrompt, &source, nil); err != nil {

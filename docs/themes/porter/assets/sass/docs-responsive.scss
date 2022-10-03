@@ -162,7 +162,7 @@
       background: $blue2 !important;
 
       li {
-        @include klinicBold;
+        @include CBold;
         font-size: 1.25rem;
 
         a {
@@ -186,7 +186,6 @@
           padding: 0.5em 0 1em 1.5em;
 
           li {
-            @include helvetica;
             font-size: 1rem;
             list-style: none;
 

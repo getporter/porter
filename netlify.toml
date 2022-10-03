@@ -3,13 +3,14 @@
 
 [build]
   publish = "docs/public"
-  command = "make docs"
+  command = "go run mage.go -v Docs"
 
 [build.environment]
   HUGO_VERSION = "0.78.1"
+  GO_VERSION = "1.18.5"
 
 [context.branch-deploy]
-  command = "make docs BASEURL_FLAG=\"-b $DEPLOY_PRIME_URL\"/"
-  
+  command = "go run mage.go -v DocsBranchPreview"
+
 [context.deploy-preview]
-  command = "make docs BASEURL_FLAG=\"-b $DEPLOY_PRIME_URL\"/"
+  command = "go run mage.go -v DocsPullRequestPreview"

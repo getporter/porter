@@ -2,17 +2,17 @@ package porter
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"runtime"
 	"text/template"
 
 	"get.porter.sh/porter/pkg"
-	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/mixin"
 	"get.porter.sh/porter/pkg/pkgmgmt"
 	"get.porter.sh/porter/pkg/porter/version"
 	"get.porter.sh/porter/pkg/printer"
-	"github.com/pkg/errors"
+	"get.porter.sh/porter/pkg/tracing"
 )
 
 type VersionOpts struct {
@@ -36,12 +36,12 @@ type SystemDebugInfo struct {
 func (mixins Mixins) PrintMixinsTable() string {
 	buffer := &bytes.Buffer{}
 	printMixinRow :=
-		func(v interface{}) []interface{} {
+		func(v interface{}) []string {
 			m, ok := v.(mixin.Metadata)
 			if !ok {
 				return nil
 			}
-			return []interface{}{m.Name, m.VersionInfo.Version, m.VersionInfo.Author}
+			return []string{m.Name, m.VersionInfo.Version, m.VersionInfo.Author}
 		}
 	err := printer.PrintTable(buffer, mixins, printMixinRow, "Name", "Version", "Author")
 	if err != nil {
@@ -50,7 +50,7 @@ func (mixins Mixins) PrintMixinsTable() string {
 	return buffer.String()
 }
 
-func (p *Porter) PrintVersion(opts VersionOpts) error {
+func (p *Porter) PrintVersion(ctx context.Context, opts VersionOpts) error {
 	metadata := pkgmgmt.Metadata{
 		Name: "porter",
 		VersionInfo: pkgmgmt.VersionInfo{
@@ -60,7 +60,7 @@ func (p *Porter) PrintVersion(opts VersionOpts) error {
 	}
 
 	if opts.System {
-		return p.PrintDebugInfo(p.Context, opts, metadata)
+		return p.PrintDebugInfo(ctx, opts, metadata)
 	}
 
 	return version.PrintVersion(p.Context, opts.Options, metadata)
@@ -73,14 +73,14 @@ func getSystemInfo() *SystemInfo {
 	}
 }
 
-func (p *Porter) PrintDebugInfo(ctx *context.Context, opts VersionOpts, metadata pkgmgmt.Metadata) error {
+func (p *Porter) PrintDebugInfo(ctx context.Context, opts VersionOpts, metadata pkgmgmt.Metadata) error {
+	log := tracing.LoggerFromContext(ctx)
+
 	opts.RawFormat = string(printer.FormatPlaintext)
 	sysInfo := getSystemInfo()
-	mixins, err := p.ListMixins()
+	mixins, err := p.ListMixins(ctx)
 	if err != nil {
-		if p.Debug {
-			fmt.Fprint(p.Err, err.Error())
-		}
+		log.Debug(err.Error())
 		return nil
 	}
 
@@ -92,7 +92,7 @@ func (p *Porter) PrintDebugInfo(ctx *context.Context, opts VersionOpts, metadata
 
 	switch opts.Format {
 	case printer.FormatJson:
-		return printer.PrintJson(ctx.Out, sysDebugInfo)
+		return printer.PrintJson(p.Out, sysDebugInfo)
 	case printer.FormatPlaintext:
 		plaintextTmpl := `{{.Version.Name}} {{.Version.VersionInfo.Version}} ({{.Version.VersionInfo.Commit}})
 
@@ -102,16 +102,15 @@ os: {{.SysInfo.OS}}
 arch: {{.SysInfo.Arch}}
 {{if .Mixins}}
 Mixins
--------
 {{.Mixins.PrintMixinsTable}}{{end}}
 `
 		tmpl, err := template.New("systemDebugInfo").Parse(plaintextTmpl)
 		if err != nil {
-			return errors.Wrap(err, "Failed to parse plaintext template")
+			return log.Error(fmt.Errorf("Failed to parse plaintext template: %w", err))
 		}
-		err = tmpl.Execute(ctx.Out, sysDebugInfo)
-		return err
+		err = tmpl.Execute(p.Out, sysDebugInfo)
+		return log.Error(err)
 	default:
-		return fmt.Errorf("unsupported format: %s", opts.Format)
+		return log.Error(fmt.Errorf("unsupported format: %s", opts.Format))
 	}
 }

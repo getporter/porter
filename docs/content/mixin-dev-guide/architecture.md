@@ -9,9 +9,9 @@ Porter provides two major capabilities: a bundle building capability and with a 
 
 A cloud native application bundle built with Porter consists of two main components: the Porter runtime and a declarative manifest file named `porter.yaml`.
 
-The Porter runtime provides the entry point for the bundle and is responsible for executing the desired functionality that has been expressed in the `porter.yaml`. The `porter.yaml` declares what should happen for bundle action. Each bundle action is defined as one or more operations, or steps. Each step definition defines a discrete piece of functionality, such installing a Helm chart or creating a service in a cloud provider. The Porter runtime is responsible for executing each step, but does not implement the desired functionality itself. The functionality declared in each step is actually provided by components called mixins. Porter invokes the mixin by passing the relevant section of the `porter.yaml` to the mixin via standard input. The mixin accepts the YAML document that describes the desired result and performs the desired action. Once finished, the mixin will write any desired outputs to standard out and return control to the Porter runtime.
+The Porter runtime provides the entry point for the bundle and is responsible for executing the desired functionality that has been expressed in the `porter.yaml`. The `porter.yaml` declares what should happen for bundle action. Each bundle action is defined as one or more operations, or steps. Each step definition defines a discrete piece of functionality, such as installing a Helm chart or creating a service in a cloud provider. The Porter runtime is responsible for executing each step, but does not implement the desired functionality itself. The functionality declared in each step is actually provided by components called mixins. Porter invokes the mixin by passing the relevant section of the `porter.yaml` to the mixin via standard input. The mixin accepts the YAML document that describes the desired result and performs the desired action. Once finished, the mixin will write any desired outputs to standard out and return control to the Porter runtime.
 
-For example, a bundle author may wish to execute a bash command. The author would include the `exec` mixin in the mixins section of the porter.yaml and then create a step that defines the desired bash command. For example, the following bundle example would execute `bash -c "echo Hello World"`:
+For example, a bundle author may wish to execute a bash command. The author would include the `exec` mixin in the mixins section of the porter.yaml and then create a step that defines the desired bash command. The following bundle example would execute `bash -c "echo Hello World"`:
 
 ```yaml
 mixins:
@@ -32,6 +32,9 @@ install:
 ## Mixin API
 
 Porter defines a contract that mixins must fulfill in order to be included in the Porter ecosystem. This contract specifies how Porter will execute the mixins, as show above, but also specifies how the mixin is used to build the invocation image for the bundle. Additionally, the contract specifies how a mixin can specify the inputs it can accept and the outputs that it can provide.
+
+Here's a diagram that illustrates how mixins fits into Porter's execution flow:
+<img src="/images/mixins/flow-chart.png" style="max-width: 80%; height: auto;"/>
 
 ### Build Time
 
@@ -91,8 +94,8 @@ helm3:
   version: 6.14.2
   replace: true
   set:
-    db.name: "{{ bundle.parameters.database-name }}"
-    db.user: "{{ bundle.parameters.mysql-user }}"
+    db.name: ${ bundle.parameters.database-name }
+    db.user: ${ bundle.parameters.mysql-user }
   outputs:
   - name: mysql-root-password
     secret: porter-ci-mysql

@@ -1,9 +1,8 @@
 package pkgmgmt
 
 import (
+	"fmt"
 	"net/url"
-
-	"github.com/pkg/errors"
 )
 
 // DefaultPackageMirror is the default location from which to download Porter assets, such as binaries, atom feeds and package indexes.
@@ -28,7 +27,7 @@ func (o *PackageDownloadOptions) Validate() error {
 
 	mirrorURL, err := url.Parse(o.Mirror)
 	if err != nil {
-		return errors.Wrapf(err, "Invalid --mirror %s", o.Mirror)
+		return fmt.Errorf("invalid --mirror %s: %w", o.Mirror, err)
 	}
 	o.parsedMirror = mirrorURL
 

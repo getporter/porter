@@ -1,16 +1,19 @@
 # This is a test bundle that makes no logical sense, but it does exercise lots of different bundle features
 
+schemaVersion: 1.0.0
 name: mybuns
-version: 0.1.0
+version: 0.1.2
 description: "A very thorough test bundle"
 registry: localhost:5000
 dockerfile: Dockerfile.tmpl
+
+required:
+  - docker
 
 credentials:
   - name: username
     description: "The name you want on the audit log"
     env: USERNAME
-    required: false
 
 parameters:
   - name: log_level
@@ -19,35 +22,121 @@ parameters:
     minimum: 1
     maximum: 11
     default: 5
-  - name: magic_file
-    description: "Pay no attention to the generated magic file"
+  - name: password
+    description: "The super secret data"
+    type: string
+    default: "defautl-secret"
+    sensitive: true
+  - name: chaos_monkey
+    description: "Set to true to make the bundle fail"
+    type: boolean
+    default: false
+  - name: cfg
+    description: "A json config file"
     type: file
-    path: /cnab/app/magic
-    source:
-      output: magic_file
+    default: ''
+    path: buncfg.json
 
 outputs:
-  - name: magic_file
-    type: file
-    path: /cnab/app/magic
+  - name: mylogs
     applyTo:
       - install
+      - upgrade
+  - name: result
+    applyTo:
+      - install
+      - upgrade
+    sensitive: true
+
+state:
+  - name: magic_file
+    path: magic.txt
+
+dependencies:
+  requires:
+    - name: db
+      bundle:
+        reference: "localhost:5000/mydb:v0.1.0"
+      parameters:
+        database: bigdb
+
+images:
+  whalesayd:
+    description: "Whalesay as a service"
+    imageType: "docker"
+    repository: carolynvs/whalesayd
+    tag: "latest"
 
 mixins:
   - exec
+  - testmixin:
+      clientVersion: 1.2.3
+
+customActions:
+  dry-run:
+    description: "Make sure it will work before you run it"
+    stateless: true
+    modifies: false
+  status:
+    description: "Print the installation status"
+    stateless: false
+    modifies: false
 
 install:
+  - exec:
+      description: "Check the docker socket"
+      command: stat
+      arguments:
+        - /var/run/docker.sock
   - exec:
       description: "Let's make some magic"
       command: ./helpers.sh
       arguments:
         - makeMagic
-        - "{{ bundle.credentials.username }} is a unicorn"
+        - "${ bundle.credentials.username } is a unicorn with ${ bundle.parameters.password } secret."
   - exec:
       description: "install"
       command: ./helpers.sh
       arguments:
         - install
+      outputs:
+        - name: mylogs
+          regex: "(.*)"
+  - exec:
+      description: "roll the dice with your chaos monkey"
+      command: ./helpers.sh
+      arguments:
+        - chaos_monkey
+        - ${ bundle.parameters.chaos_monkey }
+      outputs:
+        - name: result
+          regex: "(.*)"
+
+dry-run:
+  - exec:
+      description: "Check some things"
+      command: echo
+      arguments:
+        - "All clear!"
+
+status:
+  - exec:
+      description: "Print config"
+      command: cat
+      arguments:
+        - ${ bundle.parameters.cfg }
+  - exec:
+      description: "Print magic"
+      command: cat
+      arguments:
+        - magic.txt
+
+boom:
+  - exec:
+      description: "modify the bundle in unknowable ways"
+      command: echo
+      arguments:
+        - "YOLO"
 
 upgrade:
   - exec:
@@ -60,6 +149,18 @@ upgrade:
       command: ./helpers.sh
       arguments:
         - upgrade
+      outputs:
+        - name: mylogs
+          regex: "(.*)"
+  - exec:
+      description: "roll the dice with your chaos monkey"
+      command: ./helpers.sh
+      arguments:
+        - chaos_monkey
+        - ${ bundle.parameters.chaos_monkey }
+      outputs:
+        - name: result
+          regex: "(.*)"
 
 uninstall:
   - exec:
@@ -72,3 +173,9 @@ uninstall:
       command: ./helpers.sh
       arguments:
         - uninstall
+  - exec:
+      description: "roll the dice with your chaos monkey"
+      command: ./helpers.sh
+      arguments:
+        - chaos_monkey
+        - ${ bundle.parameters.chaos_monkey }

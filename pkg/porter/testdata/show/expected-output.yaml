@@ -1,0 +1,44 @@
+schemaType: Installation
+schemaVersion: 1.0.2
+id: 01FZVC5AVP8Z7A78CSCP1EJ604
+name: mywordpress
+namespace: dev
+bundle:
+  repository: getporter/wordpress
+  version: 0.1.0
+labels:
+  io.cnab/app: wordpress
+  io.cnab/appVersion: v1.2.3
+parameters:
+  logLevel: 3
+  secretString: foo
+parameterSets:
+  - dev-env
+status:
+  runId: "1"
+  action: upgrade
+  resultId: "2"
+  resultStatus: succeeded
+  created: 2020-04-18T01:02:03.000000004Z
+  modified: 2020-04-18T01:02:03.000000004Z
+  installed: 2020-04-18T01:02:03.000000004Z
+  uninstalled: null
+  bundleReference: getporter/wordpress:v0.1.0
+  bundleVersion: 0.1.0
+  bundleDigest: sha256:88d68ef0bdb9cedc6da3a8e341a33e5d2f8bb19d0cf7ec3f1060d3f9eb73cae9
+_calculated:
+  resolvedParameters:
+    - name: logLevel
+      type: integer
+      sensitive: false
+      value: 3
+    - name: secretString
+      type: string
+      sensitive: true
+      value: foo
+    - name: token
+      type: unknown
+      sensitive: false
+      value: top-secret
+  displayInstallationState: installed
+  displayInstallationStatus: succeeded

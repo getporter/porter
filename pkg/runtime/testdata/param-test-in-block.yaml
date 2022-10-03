@@ -1,10 +1,11 @@
-mixins:
-  - exec
-
+schemaVersion: 1.0.0
 name: porter-hello
 version: 0.1.0
 description: "An example Porter configuration"
 registry: jeremyrickard
+
+mixins:
+  - exec
 
 parameters:
   - name: command 
@@ -14,7 +15,7 @@ parameters:
 install:
   - exec:
       description: "Install Hello World"
-      command: "{{ bundle.parameters.command }}"
+      command: "${ bundle.parameters.command }"
 
 uninstall:
   - exec:

@@ -1,11 +1,12 @@
 package porter
 
 import (
+	"context"
 	"testing"
 
-	"get.porter.sh/porter/pkg/context"
-	"github.com/cnabio/cnab-go/bundle"
-	"github.com/cnabio/cnab-go/claim"
+	"get.porter.sh/porter/pkg/cnab"
+	"get.porter.sh/porter/pkg/portercontext"
+	"get.porter.sh/porter/pkg/storage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -13,7 +14,7 @@ import (
 func TestLogsShowOptions_Validate(t *testing.T) {
 
 	t.Run("installation specified", func(t *testing.T) {
-		c := context.NewTestContext(t)
+		c := portercontext.NewTestContext(t)
 		opts := LogsShowOptions{}
 		opts.Name = "mybun"
 
@@ -22,7 +23,7 @@ func TestLogsShowOptions_Validate(t *testing.T) {
 	})
 
 	t.Run("installation defaulted", func(t *testing.T) {
-		c := context.NewTestContext(t)
+		c := portercontext.NewTestContext(t)
 		c.AddTestFile("testdata/porter.yaml", "porter.yaml")
 
 		opts := LogsShowOptions{}
@@ -33,19 +34,19 @@ func TestLogsShowOptions_Validate(t *testing.T) {
 	})
 
 	t.Run("run specified", func(t *testing.T) {
-		c := context.NewTestContext(t)
+		c := portercontext.NewTestContext(t)
 		opts := LogsShowOptions{}
-		opts.ClaimID = "abc123"
+		opts.RunID = "abc123"
 
 		err := opts.Validate(c.Context)
 		require.NoError(t, err)
 	})
 
 	t.Run("both specified", func(t *testing.T) {
-		c := context.NewTestContext(t)
+		c := portercontext.NewTestContext(t)
 		opts := LogsShowOptions{}
 		opts.Name = "mybun"
-		opts.ClaimID = "abc123"
+		opts.RunID = "abc123"
 
 		err := opts.Validate(c.Context)
 		require.Error(t, err)
@@ -53,7 +54,7 @@ func TestLogsShowOptions_Validate(t *testing.T) {
 	})
 
 	t.Run("neither specified", func(t *testing.T) {
-		c := context.NewTestContext(t)
+		c := portercontext.NewTestContext(t)
 		opts := LogsShowOptions{}
 
 		err := opts.Validate(c.Context)
@@ -65,13 +66,15 @@ func TestLogsShowOptions_Validate(t *testing.T) {
 func TestPorter_ShowInstallationLogs(t *testing.T) {
 	t.Run("no logs found", func(t *testing.T) {
 		p := NewTestPorter(t)
-		b := bundle.Bundle{}
-		c := p.TestClaims.CreateClaim("test", claim.ActionInstall, b, nil)
-		p.TestClaims.CreateResult(c, claim.StatusSucceeded)
+		defer p.Close()
+
+		i := p.TestInstallations.CreateInstallation(storage.NewInstallation("", "test"))
+		c := p.TestInstallations.CreateRun(i.NewRun(cnab.ActionInstall))
+		p.TestInstallations.CreateResult(c.NewResult(cnab.StatusSucceeded))
 
 		var opts LogsShowOptions
 		opts.Name = "test"
-		err := p.ShowInstallationLogs(&opts)
+		err := p.ShowInstallationLogs(context.Background(), &opts)
 		require.Error(t, err, "ShowInstallationLogs should have failed")
 		assert.Contains(t, err.Error(), "no logs found")
 	})
@@ -80,16 +83,19 @@ func TestPorter_ShowInstallationLogs(t *testing.T) {
 		const testLogs = "some mighty fine logs"
 
 		p := NewTestPorter(t)
-		b := bundle.Bundle{}
-		c := p.TestClaims.CreateClaim("test", claim.ActionInstall, b, nil)
-		r := p.TestClaims.CreateResult(c, claim.StatusSucceeded)
-		p.TestClaims.CreateOutput(c, r, claim.OutputInvocationImageLogs, []byte(testLogs))
-		r.OutputMetadata.SetGeneratedByBundle(claim.OutputInvocationImageLogs, false)
-		p.TestClaims.SaveResult(r)
+		defer p.Close()
+
+		i := p.TestInstallations.CreateInstallation(storage.NewInstallation("", "test"))
+		c := p.TestInstallations.CreateRun(i.NewRun(cnab.ActionInstall))
+		r := p.TestInstallations.CreateResult(c.NewResult(cnab.StatusSucceeded), func(r *storage.Result) {
+			r.OutputMetadata.SetGeneratedByBundle(cnab.OutputInvocationImageLogs, false)
+		})
+
+		p.TestInstallations.CreateOutput(r.NewOutput(cnab.OutputInvocationImageLogs, []byte(testLogs)))
 
 		var opts LogsShowOptions
 		opts.Name = "test"
-		err := p.ShowInstallationLogs(&opts)
+		err := p.ShowInstallationLogs(context.Background(), &opts)
 		require.NoError(t, err, "ShowInstallationLogs failed")
 
 		assert.Contains(t, p.TestConfig.TestContext.GetOutput(), testLogs)

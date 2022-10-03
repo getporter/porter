@@ -1,13 +1,13 @@
 package cnabprovider
 
 import (
+	"fmt"
+
+	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/cnab/drivers"
-	"get.porter.sh/porter/pkg/cnab/extensions"
 	"github.com/cnabio/cnab-go/driver"
 	"github.com/cnabio/cnab-go/driver/docker"
 	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/mount"
-	"github.com/pkg/errors"
 )
 
 const (
@@ -18,7 +18,7 @@ const (
 	DriverNameDebug = "debug"
 )
 
-func (r *Runtime) newDriver(driverName string, claimName string, args ActionArguments) (driver.Driver, error) {
+func (r *Runtime) newDriver(driverName string, args ActionArguments) (driver.Driver, error) {
 	var driverImpl driver.Driver
 	var err error
 
@@ -30,14 +30,14 @@ func (r *Runtime) newDriver(driverName string, claimName string, args ActionArgu
 
 	if args.AllowDockerHostAccess {
 		if driverName != DriverNameDocker {
-			return nil, errors.Errorf("allow-docker-host-access was enabled, but the driver is %s", driverName)
+			return nil, fmt.Errorf("allow-docker-host-access was enabled, but the driver is %s", driverName)
 		}
 
 		driverImpl, err = r.dockerDriverWithHostAccess(dockerExt)
 	} else {
 		if dockerRequired {
-			return nil, errors.Errorf("extension %q is required but allow-docker-host-access was not enabled",
-				extensions.DockerExtensionKey)
+			return nil, fmt.Errorf("extension %q is required but allow-docker-host-access was not enabled",
+				cnab.DockerExtensionKey)
 		}
 		driverImpl, err = drivers.LookupDriver(r.Context, driverName)
 	}
@@ -60,34 +60,21 @@ func (r *Runtime) newDriver(driverName string, claimName string, args ActionArgu
 	return driverImpl, nil
 }
 
-func (r *Runtime) dockerDriverWithHostAccess(config extensions.Docker) (driver.Driver, error) {
-	const dockerSock = "/var/run/docker.sock"
+func (r *Runtime) dockerDriverWithHostAccess(config cnab.Docker) (driver.Driver, error) {
+	d := &docker.Driver{}
 
-	if exists, _ := r.FileSystem.Exists(dockerSock); !exists {
-		return nil, errors.Errorf("allow-docker-host-access was specified but could not detect a local docker daemon running by checking for %s", dockerSock)
+	// Run the container with privileged access if necessary
+	if config.Privileged {
+		d.AddConfigurationOptions(func(cfg *container.Config, hostCfg *container.HostConfig) error {
+			// Equivalent of using: --privileged
+			// Required for DinD, or "Docker-in-Docker"
+			hostCfg.Privileged = true
+			return nil
+		})
 	}
 
-	d := &docker.Driver{}
-	d.AddConfigurationOptions(func(cfg *container.Config, hostCfg *container.HostConfig) error {
+	// Mount the docker socket
+	d.AddConfigurationOptions(r.mountDockerSocket)
 
-		// Equivalent of using: --privileged
-		// Required for DinD, or "Docker-in-Docker"
-		hostCfg.Privileged = config.Privileged
-
-		// Equivalent of using: -v /var/run/docker.sock:/var/run/docker.sock
-		// Required for DooD, or "Docker-out-of-Docker"
-		dockerSockMount := mount.Mount{
-			Source:   "/var/run/docker.sock",
-			Target:   "/var/run/docker.sock",
-			Type:     "bind",
-			ReadOnly: false,
-		}
-		if hostCfg.Mounts == nil {
-			hostCfg.Mounts = []mount.Mount{}
-		}
-		hostCfg.Mounts = append(hostCfg.Mounts, dockerSockMount)
-
-		return nil
-	})
 	return driver.Driver(d), nil
 }

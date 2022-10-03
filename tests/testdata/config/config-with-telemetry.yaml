@@ -1,0 +1,19 @@
+namespace: dev
+debug: true
+debug-plugins: true
+default-storage: testdb
+default-secrets-plugin: filesystem
+
+logs:
+  enabled: true
+  level: debug
+
+telemetry:
+  enabled: true
+  redirect-to-file: true # Send traces to a file so that we can verify they were exported
+
+storage:
+  - name: testdb
+    plugin: mongodb
+    config:
+      url: mongodb://localhost:27017/${env.PORTER_TEST_DB_NAME}?connect=direct

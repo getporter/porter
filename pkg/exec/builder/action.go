@@ -2,12 +2,13 @@ package builder
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"io/ioutil"
 
-	"get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/runtime"
+	"get.porter.sh/porter/pkg/tracing"
 	"get.porter.sh/porter/pkg/yaml"
-	"github.com/pkg/errors"
 )
 
 // UnmarshalAction handles unmarshaling any action, given a pointer to a slice of Steps.
@@ -26,7 +27,7 @@ func UnmarshalAction(unmarshal func(interface{}) error, builder BuildableAction)
 	actionMap := map[string][]interface{}{}
 	err := unmarshal(&actionMap)
 	if err != nil {
-		return nil, errors.Wrap(err, "could not unmarshal yaml into an action map of exec steps")
+		return nil, fmt.Errorf("could not unmarshal yaml into an action map of exec steps: %w", err)
 	}
 
 	return unmarshalActionMap(actionMap, builder)
@@ -74,27 +75,32 @@ func unmarshalActionMap(actionMap map[string][]interface{}, builder BuildableAct
 //		 err := yaml.Unmarshal(contents, &action)
 //		 return &action, err
 //	 })
-func LoadAction(cxt *context.Context, commandFile string, unmarshal func([]byte) (interface{}, error)) error {
-	contents, err := readInputFromStdinOrFile(cxt, commandFile)
+func LoadAction(ctx context.Context, cfg runtime.RuntimeConfig, commandFile string, unmarshal func([]byte) (interface{}, error)) error {
+	//lint:ignore SA4006 ignore unused ctx for now
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
+	contents, err := readInputFromStdinOrFile(cfg, commandFile)
 	if err != nil {
-		return err
+		return span.Error(err)
 	}
 
-	result, err := unmarshal(contents)
-	if cxt.Debug {
-		fmt.Fprintf(cxt.Err, "DEBUG Parsed Input:\n%#v\n", result)
+	_, err = unmarshal(contents)
+	if err != nil {
+		return span.Error(fmt.Errorf("could not unmarshal input:\n %s: %w", string(contents), err))
 	}
-	return errors.Wrapf(err, "could unmarshal input:\n %s", string(contents))
+
+	return nil
 }
 
-func readInputFromStdinOrFile(cxt *context.Context, commandFile string) ([]byte, error) {
+func readInputFromStdinOrFile(cfg runtime.RuntimeConfig, commandFile string) ([]byte, error) {
 	var b []byte
 	var err error
 	if commandFile == "" {
-		reader := bufio.NewReader(cxt.In)
+		reader := bufio.NewReader(cfg.In)
 		b, err = ioutil.ReadAll(reader)
 	} else {
-		b, err = cxt.FileSystem.ReadFile(commandFile)
+		b, err = cfg.FileSystem.ReadFile(commandFile)
 	}
 
 	if err != nil {
@@ -102,7 +108,7 @@ func readInputFromStdinOrFile(cxt *context.Context, commandFile string) ([]byte,
 		if commandFile == "" {
 			source = commandFile
 		}
-		return nil, errors.Wrapf(err, "could not load input from %s", source)
+		return nil, fmt.Errorf("could not load input from %s: %w", source, err)
 	}
 	return b, nil
 }

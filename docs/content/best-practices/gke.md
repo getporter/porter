@@ -6,9 +6,9 @@ description: How to connect to a GKE cluster inside a Porter bundle.
 GKE cluster authentication requires more than just a kubeconfig, it also needs a
 service account configured.
 
-See the [GKE example][example] for a full working example bundle.
+See [ghcr.io/getporter/examples/gke][example] for a full working example bundle.
 
-[example]: https://porter.sh/src/examples/gke-example
+[example]: /examples/src/gke
 
 1. [Generate a kubeconfig](#generate-a-kubeconfig).
 1. [Create a service account](#create-a-service-account).
@@ -18,23 +18,23 @@ See the [GKE example][example] for a full working example bundle.
     ```yaml
     credentials:
         - name: kubeconfig
-          path: /root/.kube/config
+          path: /home/nonroot/.kube/config
         - name: google-service-account
-          path: /root/google-service-account.json
+          path: /home/nonroot/google-service-account.json
     ```
 
 1. Define an environment variable, `GOOGLE_APPLICATION_CREDENTIALS` that
    contains the path to the service account file,
-   `/root/google-service-account.json`.
+   `/home/nonroot/google-service-account.json`.
 
     This can be accomplished via one of the methods below. The first method is
     recommended over using a parameter. Using parameters to define environment
     variables is a hack provided only for the purpose of this example.
 
-    * Add the following line to your [Custom Dockerfile](/custom-dockerfile):
+    * Add the following line to your [Custom Dockerfile](/bundle/custom-dockerfile):
 
         ```
-        ENV GOOGLE_APPLICATION_CREDENTIALS=/root/google-service-account.json
+        ENV GOOGLE_APPLICATION_CREDENTIALS=/home/nonroot/google-service-account.json
         ```
     * Add a parameter to **porter.yaml**:
 
@@ -42,7 +42,7 @@ See the [GKE example][example] for a full working example bundle.
         parameters:
             - name: google-app-creds
               env: GOOGLE_APPLICATION_CREDENTIALS
-              default: /root/google-service-account.json
+              default: /home/nonroot/google-service-account.json
         ```
 
 ---

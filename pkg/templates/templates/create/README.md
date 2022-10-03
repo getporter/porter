@@ -6,7 +6,7 @@ This is an empty bundle that porter has created to get you started!
 
 ## porter.yaml
 
-This is the porter manifest. See https://porter.sh/author-bundles/ for 
+This is the porter manifest. See https://getporter.org/author-bundles/ for 
 details on every field and how to configure your bundle. This is a required
 file.
 
@@ -20,7 +20,7 @@ from your porter.yaml file.
 This explains the files created by `porter create`. It is not used by porter and
 can be deleted.
 
-## Dockerfile.tmpl
+## template.Dockerfile
 
 This is a template Dockerfile for the bundle's invocation image. You can
 customize it to use different base images, install tools and copy configuration
@@ -31,7 +31,7 @@ need it.
 Add the following line to **porter.yaml** to enable the Dockerfile template:
 
 ```yaml
-dockerfile: Dockerfile.tmpl
+dockerfile: template.Dockerfile
 ```
 
 By default, the Dockerfile template is disabled and Porter automatically copies

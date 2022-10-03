@@ -11,7 +11,7 @@ Source: https://github.com/getporter/docker-compose-mixin
 
 ### Install or Upgrade
 ```
-porter mixin install docker-compose
+porter mixin install docker-compose --version v1.0.0-rc.1
 ```
 
 ## Required Extension
@@ -112,7 +112,7 @@ The `path` output saves the content of the specified file path to an output.
 ```yaml
 outputs:
 - name: kubeconfig
-  path: /root/.kube/config
+  path: /home/nonroot/.kube/config
 ```
 
 ---

@@ -215,51 +215,56 @@ If you had previously installed bundles before, you won't see them anymore
 because porter is using the plugin to list bundles from the storage account. So
 let's install another bundle and have it saved to the cloud.
 
-We will use the `getporter/plugins-tutorial:v0.1.0` bundle, let's use `porter
+We will use the `ghcr.io/getporter/examples/plugins-tutorial:v0.2.0` bundle, let's use `porter
 explain` to see what credentials are necessary.
 
 ```console
-$ porter explain getporter/plugins-tutorial:v0.1.0
+$ porter explain ghcr.io/getporter/examples/plugins-tutorial:v0.2.0
 Name: plugins-tutorial
 Description: Example of porter resolving credentials from a secrets store using a plugin. 
-This bundle is a companion for the plugin tutorial at https://porter.sh/plugins/tutorial/.
+This bundle is a companion for the plugin tutorial at https://getporter.org/plugins/tutorial/.
 Version: 0.1.0
 
 Credentials:
 Name       Description                                                                         Required
 password   Password for installing the world. We recommend getting this from a secret store.   true
-
-No parameters defined
-
-No outputs defined
-
-No custom actions defined
 ```
 
-Since the bundle needs a credential we will generate some for it using `porter
-credentials generate`. When prompted, select **secret** for how you like to set
-the credential "password" and type `password` for the secret that will be used
-to set the credential "password". 
+Since the bundle needs a credential, let's generate it using `porter credentials` command. 
+First, run `porter credentials create <file-name>` to generate the template file. 
+Then, edit the file to include required credentials and set the source for its value.
+Lastly, run `porter credentials apply <file-name>` to generate the credential set. 
 
 ```console
-$ porter credentials generate
-Generating new credential plugins-tutorial from bundle plugins-tutorial
-==> 1 credentials required for bundle plugins-tutorial
-? How would you like to set credential "password"  [Use arrows to move, space to select, type to filter]
-> secret
-  specific value
-  environment variable
-  file path
-  shell command
-? Enter the secret that will be used to set credential "password" password
+$ porter credentials create plugins-tutorial.json
+creating porter credential set in the current directory
+$ cat plugins-tutorial.json
+# modify plugins-tutorial.json with your editor to the content below
+{
+    "schemaType": "CredentialSet",
+    "schemaVersion": "1.0.1",
+    "name": "plugins-tutorial",
+    "credentials": [
+        {
+            "name": "password",
+            "source": {
+                "secret": "password"
+            }
+        }
+    ]
+}
+$ porter credentials apply plugins-tutorial.json
+Applied /plugins-tutorial credential set
 ```
+
+For more information on how to use `porter credentials` commands, take a look at our [credentials quickstart guide](/quickstart/credentials).
 
 Now we are ready to install the bundle and pass it our generated credentials. 🎉
 Porter is using the Azure plugin to inject the password credential from Azure
 Key Vault into the bundle during install.
 
 ```console
-$ porter install -t getporter/plugins-tutorial:v0.1.0 -c plugins-tutorial
+$ porter install --reference ghcr.io/getporter/examples/plugins-tutorial:v0.2.0 -c plugins-tutorial
 installing plugins-tutorial...
 executing install action from plugins-tutorial (installation: plugins-tutorial)
 Install World

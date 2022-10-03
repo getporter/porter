@@ -11,7 +11,7 @@ Source: https://github.com/getporter/az-mixin
 
 ### Install or Upgrade
 ```
-porter mixin install az
+porter mixin install az --version v1.0.0-rc.1
 ```
 
 ## Mixin Configuration
@@ -111,7 +111,7 @@ The `path` output saves the content of the specified file path to an output.
 ```yaml
 outputs:
 - name: kubeconfig
-  path: /root/.kube/config
+  path: /home/nonroot/.kube/config
 ```
 
 ---
@@ -136,9 +136,9 @@ az:
     - login
   flags:
     service-principal:
-    username: "{{ bundle.credentials.AZURE_SP_CLIENT_ID}}"
-    password: "{{ bundle.credentials.AZURE_SP_PASSWORD}}"
-    tenant: "{{ bundle.credentials.AZURE_TENANT}}"
+    username: ${ bundle.credentials.AZURE_SP_CLIENT_ID}
+    password: ${ bundle.credentials.AZURE_SP_PASSWORD}
+    tenant: ${ bundle.credentials.AZURE_TENANT}
 ```
 
 ### Provision a VM
@@ -183,6 +183,6 @@ install:
         - appsettings
         - set
       flags:
-        ids: '{{ bundle.outputs.WEBAPI_ID }}'
-        settings: 'PGHOST={{ bundle.outputs.POSTGRES_HOST }} PGUSER={{ bundle.outputs.POSTGRES_USER }} PGPASSWORD={{ bundle.outputs.POSTGRES_PASSWORD }} PGDB={{ bundle.outputs.POSTGRES_DB }}'
+        ids: '${ bundle.outputs.WEBAPI_ID }'
+        settings: 'PGHOST=${ bundle.outputs.POSTGRES_HOST } PGUSER=${ bundle.outputs.POSTGRES_USER } PGPASSWORD=${ bundle.outputs.POSTGRES_PASSWORD } PGDB=${ bundle.outputs.POSTGRES_DB }'
 ```

@@ -1,23 +1,26 @@
 package porter
 
 import (
-	"bytes"
+	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
-	"path"
 	"path/filepath"
 	"strings"
 
 	"get.porter.sh/porter/pkg/build"
-	portercontext "get.porter.sh/porter/pkg/context"
-	"github.com/cnabio/cnab-go/bundle"
+	"get.porter.sh/porter/pkg/cnab"
+	cnabtooci "get.porter.sh/porter/pkg/cnab/cnab-to-oci"
+	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/manifest"
+	"get.porter.sh/porter/pkg/tracing"
 	"github.com/cnabio/cnab-go/bundle/loader"
 	"github.com/cnabio/cnab-go/packager"
 	"github.com/cnabio/cnab-to-oci/relocation"
-	"github.com/docker/distribution/reference"
-	"github.com/pivotal/image-relocation/pkg/image"
-	"github.com/pivotal/image-relocation/pkg/registry"
-	"github.com/pivotal/image-relocation/pkg/registry/ggcr"
-	"github.com/pkg/errors"
+	"github.com/cnabio/image-relocation/pkg/image"
+	"github.com/cnabio/image-relocation/pkg/registry"
+	"github.com/cnabio/image-relocation/pkg/registry/ggcr"
+	"github.com/opencontainers/go-digest"
 )
 
 // PublishOptions are options that may be specified when publishing a bundle.
@@ -31,11 +34,11 @@ type PublishOptions struct {
 }
 
 // Validate performs validation on the publish options
-func (o *PublishOptions) Validate(cxt *portercontext.Context) error {
+func (o *PublishOptions) Validate(cfg *config.Config) error {
 	if o.ArchiveFile != "" {
 		// Verify the archive file can be accessed
-		if _, err := cxt.FileSystem.Stat(o.ArchiveFile); err != nil {
-			return errors.Wrapf(err, "unable to access --archive %s", o.ArchiveFile)
+		if _, err := cfg.FileSystem.Stat(o.ArchiveFile); err != nil {
+			return fmt.Errorf("unable to access --archive %s: %w", o.ArchiveFile, err)
 		}
 
 		if o.Reference == "" {
@@ -43,22 +46,27 @@ func (o *PublishOptions) Validate(cxt *portercontext.Context) error {
 		}
 	} else {
 		// Proceed with publishing from the resolved build context directory
-		err := o.bundleFileOptions.Validate(cxt)
+		err := o.bundleFileOptions.Validate(cfg.Context)
 		if err != nil {
 			return err
 		}
 
 		if o.File == "" {
-			return errors.New("could not find porter.yaml in the current directory, make sure you are in the right directory or specify the porter manifest with --file")
+			return fmt.Errorf("could not find porter.yaml in the current directory %s, make sure you are in the right directory or specify the porter manifest with --file", o.Dir)
 		}
 	}
 
 	if o.Reference != "" {
-		return o.validateReference()
+		return o.BundlePullOptions.Validate()
 	}
 
 	if o.Tag != "" {
 		return o.validateTag()
+	}
+
+	// Apply the global config for force overwrite
+	if !o.Force && cfg.Data.ForceOverwrite {
+		o.Force = true
 	}
 
 	return nil
@@ -77,21 +85,21 @@ func (o *PublishOptions) validateTag() error {
 
 // Publish is a composite function that publishes an invocation image, rewrites the porter manifest
 // and then regenerates the bundle.json. Finally it publishes the manifest to an OCI registry.
-func (p *Porter) Publish(opts PublishOptions) error {
-	if opts.File != "" {
-		if err := p.LoadManifestFrom(opts.File); err != nil {
-			return err
-		}
-	}
+func (p *Porter) Publish(ctx context.Context, opts PublishOptions) error {
+	ctx, log := tracing.StartSpan(ctx)
+	defer log.EndSpan()
 
 	if opts.ArchiveFile == "" {
-		return p.publishFromFile(opts)
+		return p.publishFromFile(ctx, opts)
 	}
-	return p.publishFromArchive(opts)
+	return p.publishFromArchive(ctx, opts)
 }
 
-func (p *Porter) publishFromFile(opts PublishOptions) error {
-	err := p.ensureLocalBundleIsUpToDate(opts.bundleFileOptions)
+func (p *Porter) publishFromFile(ctx context.Context, opts PublishOptions) error {
+	ctx, log := tracing.StartSpan(ctx)
+	defer log.EndSpan()
+
+	_, err := p.ensureLocalBundleIsUpToDate(ctx, opts.bundleFileOptions)
 	if err != nil {
 		return err
 	}
@@ -103,70 +111,110 @@ func (p *Porter) publishFromFile(opts PublishOptions) error {
 	canonicalManifest := filepath.Join(opts.Dir, build.LOCAL_MANIFEST)
 	canonicalExists, err := p.FileSystem.Exists(canonicalManifest)
 	if err != nil {
-		return err
+		return log.Errorf("error reading manifest %s: %w", canonicalManifest)
 	}
+
+	var m *manifest.Manifest
 	if canonicalExists {
-		err := p.LoadManifestFrom(canonicalManifest)
+		m, err = manifest.LoadManifestFrom(ctx, p.Config, canonicalManifest)
 		if err != nil {
 			return err
 		}
+
 		// We still want the user-provided manifest path to be tracked,
 		// not Porter's canonical manifest path, for digest matching/auto-rebuilds
-		p.Manifest.ManifestPath = opts.File
+		m.ManifestPath = opts.File
+	} else {
+		m, err = manifest.LoadManifestFrom(ctx, p.Config, opts.File)
+		if err != nil {
+			return err
+		}
 	}
 
 	// Capture original invocation image name as it may be updated below
-	origInvImg := p.Manifest.Image
+	origInvImg := m.Image
 
 	// Check for tag and registry overrides optionally supplied on publish
 	if opts.Tag != "" {
-		p.Manifest.DockerTag = opts.Tag
+		m.DockerTag = opts.Tag
 	}
 	if opts.Registry != "" {
-		p.Manifest.Registry = opts.Registry
+		m.Registry = opts.Registry
 	}
+
 	// If either are non-empty, null out the reference on the manifest, as
 	// it needs to be rebuilt with new values
 	if opts.Tag != "" || opts.Registry != "" {
-		p.Manifest.Reference = ""
+		m.Reference = ""
 	}
 
 	// Update invocation image and reference with opts.Reference, which may be
 	// empty, which is fine - we still may need to pick up tag and/or registry
 	// overrides
-	if err := p.Manifest.SetInvocationImageAndReference(opts.Reference); err != nil {
-		return errors.Wrap(err, "unable to set invocation image name and reference")
+	if err := m.SetInvocationImageAndReference(opts.Reference); err != nil {
+		return log.Errorf("unable to set invocation image name and reference: %w", err)
 	}
 
-	if origInvImg != p.Manifest.Image {
+	if origInvImg != m.Image {
 		// Tag it so that it will be known/found by Docker for publishing
-		if err := p.Builder.TagInvocationImage(origInvImg, p.Manifest.Image); err != nil {
+		builder := p.GetBuilder(ctx)
+		if err := builder.TagInvocationImage(ctx, origInvImg, m.Image); err != nil {
 			return err
 		}
 	}
 
-	if p.Manifest.Reference == "" {
-		return errors.New("porter.yaml is missing registry or reference values needed for publishing")
+	if m.Reference == "" {
+		return log.Errorf("porter.yaml is missing registry or reference values needed for publishing")
 	}
 
-	digest, err := p.Registry.PushInvocationImage(p.Manifest.Image)
+	var bundleRef cnab.BundleReference
+	bundleRef.Reference, err = cnab.ParseOCIReference(m.Reference)
 	if err != nil {
-		return errors.Wrapf(err, "unable to push CNAB invocation image %q", p.Manifest.Image)
+		return log.Errorf("invalid reference %s: %w", m.Reference, err)
 	}
 
-	bun, err := p.rewriteBundleWithInvocationImageDigest(digest, opts.File)
+	imgRef, err := cnab.ParseOCIReference(m.Image)
+	if err != nil {
+		return log.Errorf("error parsing %s as an OCI reference: %w", m.Image, err)
+	}
+
+	regOpts := cnabtooci.RegistryOptions{
+		InsecureRegistry: opts.InsecureRegistry,
+	}
+
+	// Before we attempt to push, check if any of the bundle exists already.
+	// If force was not specified, we shouldn't push any of the bundle since
+	// the bundle and images must be pushed as a unit.
+	if !opts.Force {
+		_, err := p.Registry.GetBundleMetadata(ctx, bundleRef.Reference, regOpts)
+		if err != nil {
+			if !errors.Is(err, cnabtooci.ErrNotFound{}) {
+				return log.Errorf("Publish stopped because detection of %s in the destination registry failed. To overwrite it, repeat the command with --force specified: %w", bundleRef, err)
+			}
+		} else {
+			return log.Errorf("Publish stopped because %s already exists in the destination registry. To overwrite it, repeat the command with --force specified.", bundleRef)
+		}
+	}
+
+	bundleRef.Digest, err = p.Registry.PushImage(ctx, imgRef, regOpts)
+	if err != nil {
+		return log.Errorf("unable to push CNAB invocation image %q: %w", m.Image, err)
+	}
+
+	bundleRef.Definition, err = p.rewriteBundleWithInvocationImageDigest(ctx, m, bundleRef.Digest)
 	if err != nil {
 		return err
 	}
 
-	rm, err := p.Registry.PushBundle(bun, p.Manifest.Reference, nil, opts.InsecureRegistry)
+	bundleRef, err = p.Registry.PushBundle(ctx, bundleRef, regOpts)
 	if err != nil {
 		return err
 	}
 
 	// Perhaps we have a cached version of a bundle with the same reference, previously pulled
 	// If so, replace it, as it is most likely out-of-date per this publish
-	return p.refreshCachedBundle(bun, p.Manifest.Reference, rm)
+	err = p.refreshCachedBundle(bundleRef)
+	return log.Error(err)
 }
 
 // publishFromArchive (re-)publishes a bundle, provided by the archive file, using the provided tag.
@@ -176,101 +224,118 @@ func (p *Porter) publishFromFile(opts PublishOptions) error {
 // OCI Layout, rename each based on the registry/org values derived from the provided tag
 // and then push each updated image with the original digests
 //
-// Finally, we generate a new bundle from the old, with all image names and digests updated, based
-// on the newly copied images, and then push this new bundle using the provided tag.
+// Finally, we update the relocation map in the original bundle, based
+// on the newly copied images, and then push the bundle using the provided tag.
 // (Currently we use the docker/cnab-to-oci library for this logic.)
-//
-// In the generation of a new bundle, we therefore don't preserve content digests and can't maintain
-// signature verification throughout the process.  Once we wish to preserve content digest and such verification,
-// this approach will need to be refactored, via preserving the original bundle and employing
-// a relocation mapping approach to associate the bundle's (old) images with the newly copied images.
-func (p *Porter) publishFromArchive(opts PublishOptions) error {
+func (p *Porter) publishFromArchive(ctx context.Context, opts PublishOptions) error {
+	ctx, log := tracing.StartSpan(ctx)
+	defer log.EndSpan()
+
+	regOpts := cnabtooci.RegistryOptions{InsecureRegistry: opts.InsecureRegistry}
+
+	// Before we attempt to push, check if any of the bundle exists already.
+	// If force was not specified, we shouldn't push any of the bundle since
+	// the bundle and images must be pushed as a unit.
+	ref := opts.GetReference()
+	if !opts.Force {
+		_, err := p.Registry.GetBundleMetadata(ctx, ref, regOpts)
+		if err != nil {
+			if !errors.Is(err, cnabtooci.ErrNotFound{}) {
+				return log.Errorf("Publish stopped because detection of %s in the destination registry failed. To overwrite it, repeat the command with --force specified: %w", ref, err)
+			}
+		} else {
+			return log.Errorf("Publish stopped because %s already exists in the destination registry. To overwrite it, repeat the command with --force specified.", ref)
+		}
+	}
+
 	source := p.FileSystem.Abs(opts.ArchiveFile)
 	tmpDir, err := p.FileSystem.TempDir("", "porter")
 	if err != nil {
-		return errors.Wrap(err, "error creating temp directory for archive extraction")
+		return log.Errorf("error creating temp directory for archive extraction: %w", err)
 	}
 	defer p.FileSystem.RemoveAll(tmpDir)
-	extractedDir := filepath.Join(tmpDir, strings.TrimSuffix(filepath.Base(source), ".tgz"))
 
-	bun, err := p.extractBundle(tmpDir, source)
+	bundleRef, err := p.extractBundle(ctx, tmpDir, source)
 	if err != nil {
 		return err
 	}
 
-	fmt.Fprintf(p.Out, "Beginning bundle publish to %s. This may take some time.\n", opts.Reference)
+	bundleRef.Reference = ref
+
+	log.Infof("Beginning bundle publish to %s. This may take some time.", opts.Reference)
 
 	// Use the ggcr client to read the extracted OCI Layout
-	client := ggcr.NewRegistryClient()
+	extractedDir := filepath.Join(tmpDir, strings.TrimSuffix(filepath.Base(source), ".tgz"))
+	var clientOpts []ggcr.Option
+	if opts.InsecureRegistry {
+		skipTLS := cnabtooci.GetInsecureRegistryTransport()
+		clientOpts = append(clientOpts, ggcr.WithTransport(skipTLS))
+	}
+	client := ggcr.NewRegistryClient(clientOpts...)
 	layout, err := client.ReadLayout(filepath.Join(extractedDir, "artifacts/layout"))
 	if err != nil {
-		return errors.Wrapf(err, "failed to parse OCI Layout from archive %s", opts.ArchiveFile)
+		return log.Errorf("failed to parse OCI Layout from archive %s: %w", opts.ArchiveFile, err)
 	}
 
 	// Push updated images (renamed based on provided bundle tag) with same digests
 	// then update the bundle with new values (image name, digest)
-	for i, invImg := range bun.InvocationImages {
-		newImgName, err := getNewImageNameFromBundleReference(invImg.Image, opts.Reference)
+	for _, invImg := range bundleRef.Definition.InvocationImages {
+		relocMap, err := p.relocateImage(bundleRef.RelocationMap, layout, invImg.Image, opts.Reference)
 		if err != nil {
-			return err
+			return log.Error(err)
 		}
 
-		digest, err := pushUpdatedImage(layout, invImg.Image, newImgName)
-		if err != nil {
-			return err
-		}
-
-		err = p.updateBundleWithNewImage(bun, newImgName, digest, i)
-		if err != nil {
-			return err
-		}
+		bundleRef.RelocationMap = relocMap
 	}
-	for name, img := range bun.Images {
-		newImgName, err := getNewImageNameFromBundleReference(img.Image, opts.Reference)
+	for _, img := range bundleRef.Definition.Images {
+		relocMap, err := p.relocateImage(bundleRef.RelocationMap, layout, img.Image, opts.Reference)
 		if err != nil {
-			return err
+			return log.Error(err)
 		}
 
-		digest, err := pushUpdatedImage(layout, img.Image, newImgName)
-		if err != nil {
-			return err
-		}
-
-		err = p.updateBundleWithNewImage(bun, newImgName, digest, name)
-		if err != nil {
-			return err
-		}
+		bundleRef.RelocationMap = relocMap
 	}
 
-	rm, err := p.Registry.PushBundle(bun, opts.Reference, nil, opts.InsecureRegistry)
+	bundleRef, err = p.Registry.PushBundle(ctx, bundleRef, regOpts)
 	if err != nil {
 		return err
 	}
 
 	// Perhaps we have a cached version of a bundle with the same tag, previously pulled
 	// If so, replace it, as it is most likely out-of-date per this publish
-	return p.refreshCachedBundle(bun, opts.Reference, rm)
+	err = p.refreshCachedBundle(bundleRef)
+	return log.Error(err)
 }
 
-// extractBundle extracts a bundle using the provided opts and returnsthe extracted bundle
-func (p *Porter) extractBundle(tmpDir, source string) (bundle.Bundle, error) {
-	if p.Debug {
-		fmt.Fprintf(p.Err, "Extracting bundle from archive %s...\n", source)
-	}
+// extractBundle extracts a bundle using the provided opts and returns the extracted bundle
+func (p *Porter) extractBundle(ctx context.Context, tmpDir, source string) (cnab.BundleReference, error) {
+	//lint:ignore SA4006 ignore unused ctx for now
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
 
+	span.Debugf("Extracting bundle from archive %s...", source)
 	l := loader.NewLoader()
 	imp := packager.NewImporter(source, tmpDir, l)
 	err := imp.Import()
 	if err != nil {
-		return bundle.Bundle{}, errors.Wrapf(err, "failed to extract bundle from archive %s", source)
+		return cnab.BundleReference{}, span.Error(fmt.Errorf("failed to extract bundle from archive %s: %w", source, err))
 	}
 
 	bun, err := l.Load(filepath.Join(tmpDir, strings.TrimSuffix(filepath.Base(source), ".tgz"), "bundle.json"))
 	if err != nil {
-		return bundle.Bundle{}, errors.Wrapf(err, "failed to load bundle from archive %s", source)
+		return cnab.BundleReference{}, span.Error(fmt.Errorf("failed to load bundle from archive %s: %w", source, err))
+	}
+	data, err := p.FileSystem.ReadFile(filepath.Join(tmpDir, strings.TrimSuffix(filepath.Base(source), ".tgz"), "relocation-mapping.json"))
+	if err != nil {
+		return cnab.BundleReference{}, span.Error(fmt.Errorf("failed to load relocation-mapping.json from archive %s: %w", source, err))
+	}
+	var reloMap relocation.ImageRelocationMap
+	err = json.Unmarshal(data, &reloMap)
+	if err != nil {
+		return cnab.BundleReference{}, span.Error(fmt.Errorf("failed to parse relocation-mapping.json from archive %s: %w", source, err))
 	}
 
-	return *bun, nil
+	return cnab.BundleReference{Definition: cnab.ExtendedBundle{Bundle: *bun}, RelocationMap: reloMap}, nil
 }
 
 // pushUpdatedImage uses the provided layout to find the provided origImg,
@@ -278,115 +343,126 @@ func (p *Porter) extractBundle(tmpDir, source string) (bundle.Bundle, error) {
 func pushUpdatedImage(layout registry.Layout, origImg string, newImgName image.Name) (image.Digest, error) {
 	origImgName, err := image.NewName(origImg)
 	if err != nil {
-		return image.EmptyDigest, errors.Wrapf(err, "unable to parse image %q into domain/path components", origImg)
+		return image.EmptyDigest, fmt.Errorf("unable to parse image %q into domain/path components: %w", origImg, err)
 	}
 
 	digest, err := layout.Find(origImgName)
 	if err != nil {
-		return image.EmptyDigest, errors.Wrapf(err, "unable to find image %s in archived OCI Layout", origImgName.String())
+		return image.EmptyDigest, fmt.Errorf("unable to find image %s in archived OCI Layout: %w", origImgName.String(), err)
 	}
 
 	err = layout.Push(digest, newImgName)
 	if err != nil {
-		return image.EmptyDigest, errors.Wrapf(err, "unable to push image %s", newImgName.String())
+		return image.EmptyDigest, fmt.Errorf("unable to push image %s: %w", newImgName.String(), err)
 	}
 
 	return digest, nil
 }
 
-// updateBundleWithNewImage updates a bundle with a new image (with digest) at the provided index
-func (p *Porter) updateBundleWithNewImage(bun bundle.Bundle, newImg image.Name, digest image.Digest, index interface{}) error {
-	taggedImage, err := p.rewriteImageWithDigest(newImg.String(), digest.String())
-	if err != nil {
-		return errors.Wrapf(err, "unable to update image reference for %s", newImg.String())
-	}
-
-	// update bundle with new image
-	switch v := index.(type) {
-	case int: // invocation images is a slice, indexed by an integer
-		i := index.(int)
-		origImg := bun.InvocationImages[i]
-		updatedImg := origImg.DeepCopy()
-		updatedImg.Image = taggedImage
-		updatedImg.Digest = digest.String()
-		bun.InvocationImages[i] = *updatedImg
-	case string: // images is a map, indexed by a string
-		i := index.(string)
-		origImg := bun.Images[i]
-		updatedImg := origImg.DeepCopy()
-		updatedImg.Image = taggedImage
-		updatedImg.Digest = digest.String()
-		bun.Images[i] = *updatedImg
-	default:
-		return fmt.Errorf("unknown image index type: %v", v)
-	}
-
-	return nil
-}
-
 // getNewImageNameFromBundleReference derives a new image.Name object from the provided original
-// image (string) using the provided bundleTag to glean registry/org/etc.
+// image (string) using the provided bundleTag to clean registry/org/etc.
 func getNewImageNameFromBundleReference(origImg, bundleTag string) (image.Name, error) {
-	origName, err := image.NewName(origImg)
+	origImgRef, err := cnab.ParseOCIReference(origImg)
 	if err != nil {
-		return image.EmptyName, errors.Wrapf(err, "unable to parse image %q into domain/path components", origImg)
+		return image.EmptyName, err
 	}
 
-	bundleName, err := image.NewName(bundleTag)
+	bundleRef, err := cnab.ParseOCIReference(bundleTag)
 	if err != nil {
-		return image.EmptyName, errors.Wrapf(err, "unable to parse bundle tag %q into domain/path components", bundleTag)
+		return image.EmptyName, err
 	}
 
-	// Use the image name with the bundle location
-	newImg := path.Join(path.Dir(bundleName.Name()), path.Base(origName.Name()))
-
-	newImgName, err := image.NewName(newImg)
+	// Calculate a unique tag based on the original referenced image. It is safe to
+	// use only the original image, and not a combination of both the destination and
+	// the source to create a unique value, because we rewrite the referenced image
+	// to always use a repository digest. The only time two images will have the same
+	// source value is when they are the same image and have the same content. In
+	// which case it is okay if two bundles both reference the same image and reuse
+	// the same temporary tag because the content is the same.
+	tmpImage, err := cnab.CalculateTemporaryImageTag(origImgRef)
 	if err != nil {
-		return image.EmptyName, errors.Wrapf(err, "unable to parse image %q into domain/path components", newImg)
+		return image.EmptyName, err
 	}
 
-	return newImgName, nil
+	// Apply the temporary tag to the current bundle to determine the new location for the image
+	newImgRef, err := bundleRef.WithTag(tmpImage.Tag())
+	if err != nil {
+		return image.EmptyName, err
+	}
+
+	// Convert it to the relocation library's representation of an image reference
+	return image.NewName(newImgRef.String())
 }
 
-func (p *Porter) rewriteBundleWithInvocationImageDigest(digest string, manifestPath string) (bundle.Bundle, error) {
-	taggedImage, err := p.rewriteImageWithDigest(p.Manifest.Image, digest)
+func (p *Porter) rewriteBundleWithInvocationImageDigest(ctx context.Context, m *manifest.Manifest, digest digest.Digest) (cnab.ExtendedBundle, error) {
+	taggedImage, err := p.rewriteImageWithDigest(m.Image, digest.String())
 	if err != nil {
-		return bundle.Bundle{}, errors.Wrap(err, "unable to update invocation image reference")
+		return cnab.ExtendedBundle{}, fmt.Errorf("unable to update invocation image reference: %w", err)
 	}
+	m.Image = taggedImage
 
 	fmt.Fprintln(p.Out, "\nRewriting CNAB bundle.json...")
-	err = p.buildBundle(taggedImage, digest)
+	err = p.buildBundle(ctx, m, digest)
 	if err != nil {
-		return bundle.Bundle{}, errors.Wrap(err, "unable to rewrite CNAB bundle.json with updated invocation image digest")
+		return cnab.ExtendedBundle{}, fmt.Errorf("unable to rewrite CNAB bundle.json with updated invocation image digest: %w", err)
 	}
 
-	b, err := p.FileSystem.ReadFile(build.LOCAL_BUNDLE)
-	bun, err := bundle.ParseReader(bytes.NewBuffer(b))
+	bun, err := cnab.LoadBundle(p.Context, build.LOCAL_BUNDLE)
 	if err != nil {
-		return bundle.Bundle{}, errors.Wrap(err, "unable to load CNAB bundle")
+		return cnab.ExtendedBundle{}, fmt.Errorf("unable to load CNAB bundle: %w", err)
 	}
 
 	return bun, nil
 }
 
-func (p *Porter) rewriteImageWithDigest(InvocationImage string, digest string) (string, error) {
-	ref, err := reference.Parse(InvocationImage)
+func (p *Porter) relocateImage(relocationMap relocation.ImageRelocationMap, layout registry.Layout, originImg string, newReference string) (relocation.ImageRelocationMap, error) {
+	newImgName, err := getNewImageNameFromBundleReference(originImg, newReference)
+	if err != nil {
+		return nil, err
+	}
+
+	originImgRef := originImg
+	if relocatedImage, ok := relocationMap[originImg]; ok {
+		originImgRef = relocatedImage
+	}
+	digest, err := pushUpdatedImage(layout, originImgRef, newImgName)
+	if err != nil {
+		return nil, fmt.Errorf("unable to push updated image: %w", err)
+	}
+
+	taggedImage, err := p.rewriteImageWithDigest(newImgName.String(), digest.String())
+	if err != nil {
+		return nil, fmt.Errorf("unable to update image reference for %s: %w", newImgName.String(), err)
+	}
+
+	// update relocation map
+	relocationMap[originImg] = taggedImage
+	return relocationMap, nil
+}
+
+func (p *Porter) rewriteImageWithDigest(InvocationImage string, imgDigest string) (string, error) {
+	taggedRef, err := cnab.ParseOCIReference(InvocationImage)
 	if err != nil {
 		return "", fmt.Errorf("unable to parse docker image: %s", err)
 	}
-	named, ok := ref.(reference.Named)
-	if !ok {
-		return "", fmt.Errorf("had an issue with the docker image")
+
+	// Change the invocation image from bundlerepo:tag-hash => bundlerepo@sha256:abc123
+	// Do not continue to reference the temporary tag that we used to push, otherwise that will prevent the registry from garbage collecting it later.
+	repo := cnab.MustParseOCIReference(taggedRef.Repository())
+
+	digestedRef, err := repo.WithDigest(digest.Digest(imgDigest))
+	if err != nil {
+		return "", err
 	}
-	return fmt.Sprintf("%s@%s", named.Name(), digest), nil
+	return digestedRef.String(), nil
 }
 
 // refreshCachedBundle will store a bundle anew, if a bundle with the same tag is found in the cache
-func (p *Porter) refreshCachedBundle(bun bundle.Bundle, tag string, rm *relocation.ImageRelocationMap) error {
-	if _, found, _ := p.Cache.FindBundle(tag); found {
-		_, err := p.Cache.StoreBundle(tag, bun, rm)
+func (p *Porter) refreshCachedBundle(bundleRef cnab.BundleReference) error {
+	if _, found, _ := p.Cache.FindBundle(bundleRef.Reference); found {
+		_, err := p.Cache.StoreBundle(bundleRef)
 		if err != nil {
-			fmt.Fprintf(p.Err, "warning: unable to update cache for bundle %s: %s\n", tag, err)
+			fmt.Fprintf(p.Err, "warning: unable to update cache for bundle %s: %s\n", bundleRef.Reference, err)
 		}
 	}
 	return nil

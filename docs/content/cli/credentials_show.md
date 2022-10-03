@@ -18,21 +18,23 @@ porter credentials show [flags]
 ### Examples
 
 ```
-  porter credential show NAME [-o table|json|yaml]
+  porter credential show github --namespace dev
+  porter credential show prodcluster --output json
 ```
 
 ### Options
 
 ```
-  -h, --help            help for show
-  -o, --output string   Specify an output format.  Allowed values: table, json, yaml (default "table")
+  -h, --help               help for show
+  -n, --namespace string   Namespace in which the credential set is defined. Defaults to the global namespace.
+  -o, --output string      Specify an output format.  Allowed values: plaintext, json, yaml (default "plaintext")
 ```
 
 ### Options inherited from parent commands
 
 ```
-      --debug           Enable debug logging
-      --debug-plugins   Enable plugin debug logging
+      --experimental strings   Comma separated list of experimental features to enable. See https://getporter.org/configuration/#experimental-feature-flags for available feature flags.
+      --verbosity string       Threshold for printing messages to the console. Available values are: debug, info, warning, error. (default "info")
 ```
 
 ### SEE ALSO

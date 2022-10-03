@@ -1,20 +1,15 @@
 package porter
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strings"
 
-	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/pkgmgmt"
 	"get.porter.sh/porter/pkg/plugins"
 	"get.porter.sh/porter/pkg/printer"
-	"get.porter.sh/porter/pkg/secrets/host"
-	"get.porter.sh/porter/pkg/storage/filesystem"
-	"github.com/hashicorp/go-hclog"
-	"github.com/hashicorp/go-plugin"
 	"github.com/olekukonko/tablewriter"
-	"github.com/pkg/errors"
 )
 
 // PrintPluginsOptions represent options for the PrintPlugins function
@@ -41,31 +36,31 @@ func (o *ShowPluginOptions) Validate(args []string) error {
 func (o *ShowPluginOptions) validateName(args []string) error {
 	switch len(args) {
 	case 0:
-		return errors.Errorf("no name was specified")
+		return fmt.Errorf("no name was specified")
 	case 1:
 		o.Name = strings.ToLower(args[0])
 		return nil
 	default:
-		return errors.Errorf("only one positional argument may be specified, the name, but multiple were received: %s", args)
+		return fmt.Errorf("only one positional argument may be specified, the name, but multiple were received: %s", args)
 
 	}
 }
 
-func (p *Porter) PrintPlugins(opts PrintPluginsOptions) error {
-	installedPlugins, err := p.ListPlugins()
+func (p *Porter) PrintPlugins(ctx context.Context, opts PrintPluginsOptions) error {
+	installedPlugins, err := p.ListPlugins(ctx)
 	if err != nil {
 		return err
 	}
 
 	switch opts.Format {
-	case printer.FormatTable:
+	case printer.FormatPlaintext:
 		printRow :=
-			func(v interface{}) []interface{} {
+			func(v interface{}) []string {
 				m, ok := v.(plugins.Metadata)
 				if !ok {
 					return nil
 				}
-				return []interface{}{m.Name, m.VersionInfo.Version, m.VersionInfo.Author}
+				return []string{m.Name, m.VersionInfo.Version, m.VersionInfo.Author}
 			}
 		return printer.PrintTable(p.Out, installedPlugins, printRow, "Name", "Version", "Author")
 	case printer.FormatJson:
@@ -77,7 +72,7 @@ func (p *Porter) PrintPlugins(opts PrintPluginsOptions) error {
 	}
 }
 
-func (p *Porter) ListPlugins() ([]plugins.Metadata, error) {
+func (p *Porter) ListPlugins(ctx context.Context) ([]plugins.Metadata, error) {
 	// List out what is installed on the file system
 	names, err := p.Plugins.List()
 	if err != nil {
@@ -88,7 +83,7 @@ func (p *Porter) ListPlugins() ([]plugins.Metadata, error) {
 	// cast from the PackageMetadata interface to the concrete type
 	installedPlugins := make([]plugins.Metadata, len(names))
 	for i, name := range names {
-		plugin, err := p.Plugins.GetMetadata(name)
+		plugin, err := p.Plugins.GetMetadata(ctx, name)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "could not get version from plugin %s: %s\n ", name, err.Error())
 			continue
@@ -101,14 +96,14 @@ func (p *Porter) ListPlugins() ([]plugins.Metadata, error) {
 	return installedPlugins, nil
 }
 
-func (p *Porter) ShowPlugin(opts ShowPluginOptions) error {
-	plugin, err := p.GetPlugin(opts.Name)
+func (p *Porter) ShowPlugin(ctx context.Context, opts ShowPluginOptions) error {
+	plugin, err := p.GetPlugin(ctx, opts.Name)
 	if err != nil {
 		return err
 	}
 
 	switch opts.Format {
-	case printer.FormatTable:
+	case printer.FormatPlaintext:
 		// Build and configure our tablewriter
 		// TODO: make this a function and reuse it in printer/table.go
 		table := tablewriter.NewWriter(p.Out)
@@ -141,29 +136,29 @@ func (p *Porter) ShowPlugin(opts ShowPluginOptions) error {
 	}
 }
 
-func (p *Porter) GetPlugin(name string) (*plugins.Metadata, error) {
-	meta, err := p.Plugins.GetMetadata(name)
+func (p *Porter) GetPlugin(ctx context.Context, name string) (*plugins.Metadata, error) {
+	meta, err := p.Plugins.GetMetadata(ctx, name)
 	if err != nil {
 		return nil, err
 	}
 
 	plugin, ok := meta.(*plugins.Metadata)
 	if !ok {
-		return nil, errors.Errorf("could not cast plugin %s to plugins.Metadata", name)
+		return nil, fmt.Errorf("could not cast plugin %s to plugins.Metadata", name)
 	}
 
 	return plugin, nil
 }
 
-func (p *Porter) InstallPlugin(opts plugins.InstallOptions) error {
-	err := p.Plugins.Install(opts.InstallOptions)
+func (p *Porter) InstallPlugin(ctx context.Context, opts plugins.InstallOptions) error {
+	err := p.Plugins.Install(ctx, opts.InstallOptions)
 	if err != nil {
 		return err
 	}
 
-	plugin, err := p.Plugins.GetMetadata(opts.Name)
+	plugin, err := p.Plugins.GetMetadata(ctx, opts.Name)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get plugin metadata: %w", err)
 	}
 
 	v := plugin.GetVersionInfo()
@@ -172,8 +167,8 @@ func (p *Porter) InstallPlugin(opts plugins.InstallOptions) error {
 	return nil
 }
 
-func (p *Porter) UninstallPlugin(opts pkgmgmt.UninstallOptions) error {
-	err := p.Plugins.Uninstall(opts)
+func (p *Porter) UninstallPlugin(ctx context.Context, opts pkgmgmt.UninstallOptions) error {
+	err := p.Plugins.Uninstall(ctx, opts)
 	if err != nil {
 		return err
 	}
@@ -181,59 +176,4 @@ func (p *Porter) UninstallPlugin(opts pkgmgmt.UninstallOptions) error {
 	fmt.Fprintf(p.Out, "Uninstalled %s plugin", opts.Name)
 
 	return nil
-}
-
-type RunInternalPluginOpts struct {
-	Key               string
-	selectedPlugin    plugin.Plugin
-	selectedInterface string
-}
-
-func (o *RunInternalPluginOpts) Validate(args []string, cfg *config.Config) error {
-	if len(args) == 0 {
-		return errors.New("The positional argument KEY was not specified")
-	}
-	if len(args) > 1 {
-		return errors.New("Multiple positional arguments were specified but only one, KEY is expected")
-	}
-
-	o.Key = args[0]
-
-	availableImplementations := getInternalPlugins(cfg)
-	selectedPlugin, ok := availableImplementations[o.Key]
-	if !ok {
-		return errors.Errorf("invalid plugin key specified: %q", o.Key)
-	}
-	o.selectedPlugin = selectedPlugin()
-
-	parts := strings.Split(o.Key, ".")
-	o.selectedInterface = parts[0]
-
-	return nil
-}
-
-func (p *Porter) RunInternalPlugins(args []string) {
-	// We are not following the normal CLI pattern here because
-	// if we write to stdout without the hclog, it will cause the plugin framework to blow up
-	var opts RunInternalPluginOpts
-	err := opts.Validate(args, p.Config)
-	if err != nil {
-		logger := hclog.New(&hclog.LoggerOptions{
-			Name:       "porter",
-			Output:     p.Err,
-			Level:      hclog.Error,
-			JSONFormat: true,
-		})
-		logger.Error(err.Error())
-		return
-	}
-
-	plugins.Serve(opts.selectedInterface, opts.selectedPlugin)
-}
-
-func getInternalPlugins(cfg *config.Config) map[string]func() plugin.Plugin {
-	return map[string]func() plugin.Plugin{
-		filesystem.PluginKey: func() plugin.Plugin { return filesystem.NewPlugin(*cfg) },
-		host.PluginKey:       func() plugin.Plugin { return host.NewPlugin() },
-	}
 }

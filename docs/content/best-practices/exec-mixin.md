@@ -76,7 +76,7 @@ install:
     - generate-users
 ```
 
-[exec-outputs]: https://porter.sh/src/examples/exec-outputs/
+[exec-outputs]: /examples/src/exec-outputs/
 
 ## Quoting, Escaping, Bash and YAML
 

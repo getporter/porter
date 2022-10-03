@@ -1,29 +1,40 @@
 variables: # these are really constants
   vmImage: "ubuntu-latest"
+  GOVERSION: "1.18"
+  # Cache go modules and the results of go build/test
+  # Increment the version number prefix of the key and restoreKey to clear the cache
+  GOCACHE: $(Pipeline.Workspace)/.cache/go-build/
+  GOCACHE_KEY: 'v3 | go-build | "$(Agent.OS)" | go.sum'
+  GOCACHE_RESTOREKEYS: |
+    v3 | go-build | "$(Agent.OS)"
+    v3 | go-build | "$(Agent.OS)" | go.sum
+  # Use separate cache for the xbuild jobs, since they generate different outputs
+  GOXCACHE_KEY: 'v3 | go-xbuild | "$(Agent.OS)" | go.sum'
+  GOXCACHE_RESTOREKEYS: |
+    v3 | go-xbuild | "$(Agent.OS)"
+    v3 | go-xbuild | "$(Agent.OS)" | go.sum
+  GOMODCACHE: /home/vsts/go/pkg/mod
+  GOMODCACHE_KEY: 'v4 | go-pkg | "$(Agent.OS)" | go.sum'
+  GOMODCACHE_RESTOREKEYS: |
+    v4 | go-pkg | "$(Agent.OS)"
+    v4 | go-pkg | "$(Agent.OS)" | go.sum
 
 parameters:
   - name: goVersion
     type: string
-    default: "1.17.8"
+    default: "1.18"
   - name: registry
     type: string
-    default: getporterci
+    default: ghcr.io/getporter/test
     values:
-      - docker.io/getporter
-      - docker.io/getporterci
       - ghcr.io/getporter
+      - ghcr.io/getporter/test
   - name: shouldPublish
     type: boolean
     default: false
-  - name: dualPublish # Publish to the registry parameter and to ghcr.io while we migrate to GHCR
-    type: boolean
-    default: true
   - name: skipTests
     type: boolean
     default: false
-  - name: publishExamples
-    type: boolean
-    default: true
 
 stages:
   - stage: Validate
@@ -37,9 +48,21 @@ stages:
             displayName: "Set Go Version"
             inputs:
               version: ${{parameters.goVersion}}
+          - task: Cache@2
+            displayName: Cache Go Packages
+            inputs:
+              key: "$(GOMODCACHE_KEY)"
+              restoreKeys: $(GOMODCACHE_RESTOREKEYS)
+              path: $(GOMODCACHE)
+          - task: Cache@2
+            displayName: Cache Go Build
+            inputs:
+              key: "$(GOCACHE_KEY)"
+              restoreKeys: $(GOCACHE_RESTOREKEYS)
+              path: $(GOCACHE)
           - script: go run mage.go ConfigureAgent
             displayName: "Configure Agent"
-          - bash: make build
+          - bash: mage build
             displayName: "Native Build"
           - task: PublishPipelineArtifact@0
             displayName: "Publish Native Binaries"
@@ -56,9 +79,22 @@ stages:
             displayName: "Set Go Version"
             inputs:
               version: ${{parameters.goVersion}}
+          - task: Cache@2
+            displayName: Cache Go Packages
+            inputs:
+              key: "$(GOMODCACHE_KEY)"
+              restoreKeys: $(GOMODCACHE_RESTOREKEYS)
+              path: $(GOMODCACHE)
+          - task: Cache@2
+            displayName: Cache Go Build
+            inputs:
+              # Use special cache keys just for cross-compiled binaries
+              key: "$(GOXCACHE_KEY)"
+              restoreKeys: $(GOXCACHE_RESTOREKEYS)
+              path: $(GOCACHE)
           - script: go run mage.go ConfigureAgent
             displayName: "Configure Agent"
-          - bash: make xbuild-all
+          - bash: mage XBuildAll
             displayName: "Cross Compile"
           - task: PublishPipelineArtifact@0
             displayName: "Publish Release Binaries"
@@ -66,6 +102,33 @@ stages:
               targetPath: $(System.DefaultWorkingDirectory)/bin
               archiveFilePatterns: "**"
               artifactName: "xbuild-bin"
+      - job: VetLint
+        displayName: "Vet and Lint"
+        pool:
+          vmImage: ${{variables.vmImage}}
+        steps:
+          - task: GoTool@0
+            displayName: "Set Go Version"
+            inputs:
+              version: ${{parameters.goVersion}}
+          - task: Cache@2
+            displayName: Cache Go Packages
+            inputs:
+              key: "$(GOMODCACHE_KEY)"
+              restoreKeys: $(GOMODCACHE_RESTOREKEYS)
+              path: $(GOMODCACHE)
+          - task: Cache@2
+            displayName: Cache Go Build
+            inputs:
+              key: "$(GOCACHE_KEY)"
+              restoreKeys: $(GOCACHE_RESTOREKEYS)
+              path: $(GOCACHE)
+          - script: go run mage.go ConfigureAgent
+            displayName: "Configure Agent"
+          - bash: mage Vet
+            displayName: "Vet"
+          - bash: mage Lint
+            displayName: "Lint"
       - job: unit_test
         displayName: "Unit Test"
         condition: not(${{ parameters.skipTests }})
@@ -76,11 +139,21 @@ stages:
             displayName: "Set Go Version"
             inputs:
               version: ${{parameters.goVersion}}
+          - task: Cache@2
+            displayName: Cache Go Packages
+            inputs:
+              key: "$(GOMODCACHE_KEY)"
+              restoreKeys: $(GOMODCACHE_RESTOREKEYS)
+              path: $(GOMODCACHE)
+          - task: Cache@2
+            displayName: Cache Go Build
+            inputs:
+              key: "$(GOCACHE_KEY)"
+              restoreKeys: $(GOCACHE_RESTOREKEYS)
+              path: $(GOCACHE)
           - script: go run mage.go ConfigureAgent
             displayName: "Configure Agent"
-          - bash: make verify
-            displayName: "Verify"
-          - bash: make test-unit
+          - bash: mage TestUnit
             displayName: "Unit Test"
       - job: integration_test
         displayName: "Integration Test"
@@ -99,9 +172,28 @@ stages:
             displayName: "Set Go Version"
             inputs:
               version: ${{parameters.goVersion}}
+          - task: Cache@2
+            displayName: Cache Go Packages
+            inputs:
+              key: "$(GOMODCACHE_KEY)"
+              restoreKeys: $(GOMODCACHE_RESTOREKEYS)
+              path: $(GOMODCACHE)
+          - task: Cache@2
+            displayName: Cache Go Build
+            inputs:
+              key: "$(GOCACHE_KEY)"
+              restoreKeys: $(GOCACHE_RESTOREKEYS)
+              path: $(GOCACHE)
+          # We log in here because TestRegistry integration test needs a valid docker session
+          # This unfortunately means that this pipeline must be manually triggered for non-maintainers
+          - task: Docker@2
+            displayName: Docker Login
+            inputs:
+              command: login
+              containerRegistry: ghcr.io/getporter
           - script: go run mage.go ConfigureAgent SetBinExecutable
             displayName: "Configure Agent"
-          - script: go run mage.go TestIntegration
+          - script: mage -v TestIntegration
             displayName: "Integration Test"
       - job: smoke_test
         displayName: "Run smoke tests on"
@@ -109,10 +201,11 @@ stages:
         condition: and(succeeded(), not(${{ parameters.skipTests }}))
         strategy:
           matrix:
-            # Skip windows smoke tests until we fix the windows agent
+            # Skip windows smoke tests until we can fix the windows agent
             #windows:
             #  poolName: "windows"
             #  vmImage: ""
+            #  GOMODCACHE: "C:/Users/porterci/go/pkg/mod"
             linux:
               poolName: "Azure Pipelines"
               vmImage: "ubuntu-latest"
@@ -130,9 +223,21 @@ stages:
             displayName: "Set Go Version"
             inputs:
               version: ${{parameters.goVersion}}
+          - task: Cache@2
+            displayName: Cache Go Packages
+            inputs:
+              key: "$(GOMODCACHE_KEY)"
+              restoreKeys: $(GOMODCACHE_RESTOREKEYS)
+              path: $(GOMODCACHE)
+          - task: Cache@2
+            displayName: Cache Go Build
+            inputs:
+              key: "$(GOCACHE_KEY)"
+              restoreKeys: $(GOCACHE_RESTOREKEYS)
+              path: $(GOCACHE)
           - script: go run mage.go ConfigureAgent UseXBuildBinaries
-            displayName: "Configure Agent"
-          - script: mage TestSmoke
+            displayName: "Setup Bin"
+          - script: mage -v TestSmoke
             displayName: "Run Smoke Tests"
 
   - stage: Publish
@@ -145,18 +250,31 @@ stages:
           vmImage: ${{variables.vmImage}}
         steps:
           - task: GoTool@0
+            displayName: "Set Go Version"
             inputs:
               version: ${{parameters.goVersion}}
+          - task: Cache@2
+            displayName: Cache Go Packages
+            inputs:
+              key: "$(GOMODCACHE_KEY)"
+              restoreKeys: $(GOMODCACHE_RESTOREKEYS)
+              path: $(GOMODCACHE)
+          - task: Cache@2
+            displayName: Cache Go Build
+            inputs:
+              key: "$(GOCACHE_KEY)"
+              restoreKeys: $(GOCACHE_RESTOREKEYS)
+              path: $(GOCACHE)
           - task: DownloadPipelineArtifact@2
             displayName: "Download Cross-Compiled Porter Binaries"
             inputs:
               source: current
               artifact: xbuild-bin
               path: bin
-          - script: go run mage.go UseXBuildBinaries
+          - script: go run mage.go ConfigureAgent UseXBuildBinaries
             displayName: "Setup Bin"
           - script: |
-              make publish-bin publish-mixins
+              mage PublishPorter PublishMixins
             env:
               GITHUB_TOKEN: $(GITHUB_TOKEN)
             displayName: "Publish Porter Binaries"
@@ -167,62 +285,34 @@ stages:
           vmImage: ${{variables.vmImage}}
         steps:
           - task: GoTool@0
+            displayName: "Set Go Version"
             inputs:
               version: ${{parameters.goVersion}}
+          - task: Cache@2
+            displayName: Cache Go Packages
+            inputs:
+              key: "$(GOMODCACHE_KEY)"
+              restoreKeys: $(GOMODCACHE_RESTOREKEYS)
+              path: $(GOMODCACHE)
+          - task: Cache@2
+            displayName: Cache Go Build
+            inputs:
+              key: "$(GOCACHE_KEY)"
+              restoreKeys: $(GOCACHE_RESTOREKEYS)
+              path: $(GOCACHE)
           - task: DownloadPipelineArtifact@2
             displayName: "Download Cross-Compiled Porter Binaries"
             inputs:
               source: current
               artifact: xbuild-bin
               path: bin
-          - script: go run mage.go UseXBuildBinaries
+          - script: go run mage.go ConfigureAgent UseXBuildBinaries
             displayName: "Setup Bin"
-          - task: Docker@1
-            displayName: Docker Hub Login
-            inputs:
-              containerRegistryType: Container Registry
-              dockerRegistryEndpoint: ${{parameters.registry}} # Log in with the saved credentials for the destination registry
-              command: login
-          - script: REGISTRY=${{parameters.registry}} make publish-images
-            displayName: "Publish Docker Images to ${{parameters.registry}}"
-          - task: Docker@1 # Support publishing to our old registry on Docker Hub and to our new location on GHCR while we migrate
-            displayName: GHCR Login
-            condition: ${{parameters.dualPublish}}
-            inputs:
-              containerRegistryType: Container Registry
-              dockerRegistryEndpoint: ghcr.io/getporter
-              command: login
-          - script: REGISTRY=ghcr.io/getporter make publish-images
-            displayName: "Publish Docker Images to ghcr.io/getporter"
-            condition: ${{parameters.dualPublish}}
-
-      - job: publish_example_bundles
-        displayName: "Publish Example Bundles"
-        condition: and(succeeded(), ${{ parameters.publishExamples }})
-        pool:
-          vmImage: ${{variables.vmImage}}
-        steps:
-          - task: GoTool@0
-            inputs:
-              version: ${{parameters.goVersion}}
-          - task: DownloadPipelineArtifact@2
-            displayName: "Download Native Porter Binaries"
-            inputs:
-              source: current
-              artifact: build-bin
-              path: bin
-          - script: go run mage.go SetBinExecutable
-            displayName: "Setup Bin"
-          - bash: |
-              set -e
-              sudo make ajv
-              make build-examples validate-examples
-            displayName: "Build Example Bundles"
           - task: Docker@1
             displayName: Docker Login
             inputs:
               containerRegistryType: Container Registry
-              dockerRegistryEndpoint: getporter-registry
+              dockerRegistryEndpoint: ${{parameters.registry}} # Log in with the saved credentials for the destination registry
               command: login
-          - script: REGISTRY=${{parameters.registry}} make publish-examples
-            displayName: "Publish Example Bundles"
+          - script: PORTER_REGISTRY=${{parameters.registry}} mage PublishImages
+            displayName: "Publish Docker Images to ${{parameters.registry}}"

@@ -3,14 +3,14 @@ package generator
 import (
 	"testing"
 
-	"github.com/cnabio/cnab-go/valuesource"
+	"get.porter.sh/porter/pkg/secrets"
 	"github.com/stretchr/testify/require"
 )
 
 func Test_genEmptySet(t *testing.T) {
-	expected := valuesource.Strategy{
+	expected := secrets.Strategy{
 		Name:   "emptyset",
-		Source: valuesource.Source{Value: "TODO"},
+		Source: secrets.Source{Value: "TODO"},
 	}
 
 	got, err := genEmptySet("emptyset", surveyParameters)
@@ -21,5 +21,5 @@ func Test_genEmptySet(t *testing.T) {
 func Test_genSurvey_unsupported(t *testing.T) {
 	got, err := genSurvey("myturtleset", SurveyType("turtles"))
 	require.EqualError(t, err, "unsupported survey type: turtles")
-	require.Equal(t, valuesource.Strategy{}, got)
+	require.Equal(t, secrets.Strategy{}, got)
 }

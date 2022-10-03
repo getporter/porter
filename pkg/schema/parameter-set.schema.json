@@ -1,5 +1,5 @@
 {
-  "$id": "https://cnab.io/v1/parameter-set.schema.json",
+  "$id": "https://getporter.org/schema/v1/parameter-set.schema.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
     "valueMapping": {
@@ -47,6 +47,10 @@
       "description": "The name of the parameter set.",
       "type": "string"
     },
+    "namespace": {
+      "description": "The namespace in which the parameter set is defined.",
+      "type": "string"
+    },
     "created": {
       "description": "The date created, as an ISO-8601 Extended Format date string, as specified in the ECMAScript standard",
       "type": "string"
@@ -54,6 +58,13 @@
     "modified": {
       "description": "The date modified, as an ISO-8601 Extended Format date string, as specified in the ECMAScript standard",
       "type": "string"
+    },
+    "labels": {
+      "description": "Set of labels associated with the parameter set.",
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
     },
     "parameters": {
       "description": "Mappings of parameter names to their source value", 
@@ -67,20 +78,23 @@
       "type": "object",
       "additionalProperties": true
     },
+    "schemaType": {
+      "description": "The resource type of the current document.",
+      "type": "string",
+      "default": "ParameterSet"
+    },
     "schemaVersion": {
       "description": "Version of the parameter set schema to which this document adheres",
       "type": "string",
-      "default": "1.0.0-DRAFT+TODO"
+      "default": "1.0.1"
     }
   },
   "required": [
     "name",
-    "created",
-    "modified",
     "parameters",
     "schemaVersion"
   ],
-  "title": "CNAB Parameter Set json schema",
+  "title": "Parameter Set json schema",
   "type": "object",
   "additionalProperties": false
 }

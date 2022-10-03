@@ -1,5 +1,6 @@
+schemaVersion: 1.0.0
 name: wordpress
-version: 0.2.0
+version: 0.1.4
 registry: "localhost:5000"
 
 mixins:
@@ -10,16 +11,18 @@ mixins:
           url: "https://charts.bitnami.com/bitnami"
 
 dependencies:
-  - name: mysql
-    reference: localhost:5000/mysql:v0.2.0
-    parameters:
-      database-name: wordpress
-      mysql-user: wordpress
-      namespace: wordpress
+  requires:
+    - name: mysql
+      bundle:
+        reference: localhost:5000/mysql:v0.1.4
+      parameters:
+        database-name: wordpress
+        mysql-user: wordpress
+        namespace: wordpress
 
 credentials:
 - name: kubeconfig
-  path: /root/.kube/config
+  path: /home/nonroot/.kube/config
 
 parameters:
 - name: wordpress-name

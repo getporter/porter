@@ -1,11 +1,13 @@
 /docs/public/
-/docs/sources/
+/docs/content/operator
+/docs/sources/operator
 /bin
 /porter
-*-packr.go
 .DS_Store
 /build/git_askpass.sh
 tests/smoke/mybuns/
+.env
+trivy-results.sarif
 
 .cnab
 examples/**/Dockerfile

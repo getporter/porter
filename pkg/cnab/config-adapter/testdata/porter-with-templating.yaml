@@ -1,13 +1,16 @@
+schemaVersion: 1.0.0
 name: hello-with-templating
 version: 0.1.0
-registry: getporterci
+registry: "localhost:5000"
 
 mixins:
   - exec
 
 dependencies:
-  - name: mysql
-    reference: getporter/mysql:v0.1.3
+  requires:
+    - name: mysql
+      bundle:
+        reference: getporter/mysql:v0.1.3
 
 parameters:
   - name: tfstate
@@ -35,7 +38,7 @@ install:
       command: ./helpers.sh
       arguments:
         - install
-        - "{{ bundle.dependencies.mysql.outputs.mysql-password }}"
+        - ${ bundle.dependencies.mysql.outputs.mysql-password }
       outputs:
         - name: name
           regex: Hello (.*)
@@ -46,7 +49,7 @@ install:
       command: ./helpers.sh
       arguments:
         - debug
-        - "{{ bundle.outputs.name }}"
+        - ${ bundle.outputs.name }
 
 upgrade:
   - exec:
@@ -54,7 +57,7 @@ upgrade:
       command: ./helpers.sh
       arguments:
         - upgrade
-        - "{{ bundle.outputs.msg }}"
+        - ${ bundle.outputs.msg }
 
 uninstall:
   - exec:
@@ -62,5 +65,5 @@ uninstall:
       command: ./helpers.sh
       arguments:
         - uninstall
-        - "{{ bundle.outputs.msg }}"
+        - ${ bundle.outputs.msg }
 

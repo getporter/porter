@@ -5,7 +5,7 @@ import (
 	"github.com/hashicorp/go-plugin"
 )
 
-// Entry defines a configuration entry for an item that that can be managed by a plugin.
+// Entry defines a configuration entry for an item that can be managed by a plugin.
 type Entry interface {
 	GetName() string
 	GetPluginSubKey() string
@@ -21,15 +21,18 @@ type PluginTypeConfig struct {
 	// Plugin to communicate with the plugin
 	Plugin plugin.Plugin
 
-	// GetDefaultPluggable is the function on porter's config.Data
+	// GetDefaultPluggable is the function on porter's configuration
 	// to retrieve a pluggable configuration value's named default instance to use, e.g. "default-storage"
-	GetDefaultPluggable func(datastore *config.Data) string
+	GetDefaultPluggable func(c *config.Config) string
 
-	// GetPluggable is the function on porter's config.Data
+	// GetPluggable is the function on porter's configuration
 	// to retrieve a named pluggable instance, e.g. a storage named "azure"
-	GetPluggable func(datastore *config.Data, name string) (Entry, error)
+	GetPluggable func(c *config.Config, name string) (Entry, error)
 
-	// GetDefaultPlugin is the function on porter's config.Data
+	// GetDefaultPlugin is the function on porter's configuration
 	// to retrieve the default plugin to use for a type of plugin, e.g. "storage-plugin"
-	GetDefaultPlugin func(datastore *config.Data) string
+	GetDefaultPlugin func(c *config.Config) string
+
+	// ProtocolVersion is the version of the protocol used by this plugin.
+	ProtocolVersion uint
 }

@@ -2,13 +2,14 @@ package examples_test
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"log"
 
 	"get.porter.sh/porter/pkg/porter"
 )
 
-func ExampleCaptureOutput() {
+func ExamplePorter_captureOutput() {
 	// Create an instance of the Porter application
 	p := porter.New()
 
@@ -17,7 +18,7 @@ func ExampleCaptureOutput() {
 	p.Out = &output
 
 	// porter schema
-	err := p.PrintManifestSchema()
+	err := p.PrintManifestSchema(context.Background())
 	if err != nil {
 		log.Fatal(err)
 	}

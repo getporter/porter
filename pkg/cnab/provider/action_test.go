@@ -1,6 +1,7 @@
 package cnabprovider
 
 import (
+	"encoding/json"
 	"io/ioutil"
 	"testing"
 
@@ -10,19 +11,17 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestAddReloccation(t *testing.T) {
+func TestAddRelocation(t *testing.T) {
 	t.Parallel()
 
 	data, err := ioutil.ReadFile("testdata/relocation-mapping.json")
 	require.NoError(t, err)
 
 	d := NewTestRuntime(t)
+	defer d.Close()
 
-	args := ActionArguments{
-		RelocationMapping: "/cnab/app/relocation-mapping.json",
-	}
-
-	d.TestConfig.TestContext.AddTestFile("testdata/relocation-mapping.json", "/cnab/app/relocation-mapping.json")
+	var args ActionArguments
+	require.NoError(t, json.Unmarshal(data, &args.BundleReference.RelocationMap))
 
 	opConf := d.AddRelocation(args)
 

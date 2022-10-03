@@ -72,6 +72,13 @@
             "type": "string"
           }
         },
+        "envs": {
+          "description": "Environment variables to add to the env of the command",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
         "suffix-arguments": {
           "description": "Positional arguments to pass to the command after any flags",
           "type": "array",
@@ -117,6 +124,45 @@
               { "required": [ "path" ] }
             ]
           }
+        },
+        "ignoreError": {
+          "description": "Ignore the command's errors under certain conditions",
+          "type": "object",
+          "properties": {
+            "all": {
+              "description": "Ignore all errors",
+              "type": "boolean"
+            },
+            "exitCodes": {
+              "description": "Ignore errors when one of the following exit codes are returned",
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            },
+            "output": {
+              "description": "Ignore errors when the command's stderr meets certain conditions",
+              "type": "object",
+              "properties": {
+                "contains": {
+                  "description": "Ignore errors when stderr contains any of the following strings",
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "regex": {
+                  "description": "Ignore errors when stderr matches any of the following regular expressions",
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
         }
       },
       "additionalProperties": false,

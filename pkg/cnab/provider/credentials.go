@@ -1,38 +1,47 @@
 package cnabprovider
 
 import (
-	"encoding/json"
-	"path/filepath"
-	"strings"
+	"context"
 
-	"github.com/cnabio/cnab-go/bundle"
-	"github.com/cnabio/cnab-go/credentials"
-	"github.com/cnabio/cnab-go/valuesource"
-	"github.com/pkg/errors"
+	"get.porter.sh/porter/pkg/cnab"
+	"get.porter.sh/porter/pkg/secrets"
+	"get.porter.sh/porter/pkg/storage"
+	"get.porter.sh/porter/pkg/tracing"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
-func (r *Runtime) loadCredentials(b bundle.Bundle, args ActionArguments) (valuesource.Set, error) {
-	if len(args.CredentialIdentifiers) == 0 {
-		return nil, credentials.Validate(nil, b.Credentials, args.Action)
+func (r *Runtime) loadCredentials(ctx context.Context, b cnab.ExtendedBundle, args ActionArguments) (secrets.Set, error) {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
+	if len(args.Installation.CredentialSets) == 0 {
+		return nil, storage.Validate(nil, b.Credentials, args.Action)
 	}
 
 	// The strategy here is "last one wins". We loop through each credential file and
 	// calculate its credentials. Then we insert them into the creds map in the order
 	// in which they were supplied on the CLI.
-	resolvedCredentials := valuesource.Set{}
-	for _, name := range args.CredentialIdentifiers {
-		var cset credentials.CredentialSet
-		var err error
-		if r.isPathy(name) {
-			cset, err = r.loadCredentialFromFile(name)
-		} else {
-			cset, err = r.credentials.Read(name)
+	resolvedCredentials := secrets.Set{}
+	for _, name := range args.Installation.CredentialSets {
+		var cset storage.CredentialSet
+		// Try to get the creds in the local namespace first, fallback to the global creds
+		query := storage.FindOptions{
+			Sort: []string{"-namespace"},
+			Filter: bson.M{
+				"name": name,
+				"$or": []bson.M{
+					{"namespace": ""},
+					{"namespace": args.Installation.Namespace},
+				},
+			},
 		}
+		store := r.credentials.GetDataStore()
+		err := store.FindOne(ctx, storage.CollectionCredentials, query, &cset)
 		if err != nil {
 			return nil, err
 		}
 
-		rc, err := r.credentials.ResolveAll(cset)
+		rc, err := r.credentials.ResolveAll(ctx, cset)
 		if err != nil {
 			return nil, err
 		}
@@ -41,23 +50,6 @@ func (r *Runtime) loadCredentials(b bundle.Bundle, args ActionArguments) (values
 			resolvedCredentials[k] = v
 		}
 	}
-	return resolvedCredentials, credentials.Validate(resolvedCredentials, b.Credentials, args.Action)
-}
 
-// isPathy checks to see if a name looks like a path.
-func (r *Runtime) isPathy(name string) bool {
-	// TODO: export back outta Compton
-
-	return strings.Contains(name, string(filepath.Separator))
-}
-
-func (r *Runtime) loadCredentialFromFile(path string) (credentials.CredentialSet, error) {
-	data, err := r.FileSystem.ReadFile(path)
-	if err != nil {
-		return credentials.CredentialSet{}, errors.Wrapf(err, "could not read file %s", path)
-	}
-
-	var cs credentials.CredentialSet
-	err = json.Unmarshal(data, &cs)
-	return cs, errors.Wrapf(err, "error loading credential set in %s", path)
+	return resolvedCredentials, storage.Validate(resolvedCredentials, b.Credentials, args.Action)
 }

@@ -1,9 +1,9 @@
 body.home {
-  @include helvetica;
   overflow-x: hidden;
-  
+  font-family: 'CLight';
+
   .row {
-  max-width: 72rem;
+  max-width: 100%;
   }
 
   .row.fullwidth {
@@ -11,13 +11,13 @@ body.home {
   }
 
   h1 {
-    @include klinicBold;
+    @include CBold;
   }
 
   h2, h3, h4, h5 {
-    @include klinicReg;
+    @include CMedium;
   }
-  
+
   #footer {
     max-width: 100%;
 
@@ -31,7 +31,6 @@ html,body {
 }
 nav.home-nav {
   position: absolute;
-  min-height: 300px;
   left: 0;
   right: 0;
   top: 0;
@@ -55,22 +54,22 @@ nav.home-nav {
 
       a {
         display: inline-block;
-        margin: 0 1.333rem;
+        margin: 0 1rem;
         font-size: 1.25rem;
         line-height: 2;
         position: relative;
         letter-spacing: 0.0125em;
         color: $dark2;
         text-decoration: none;
-        @include klinicBold;
+        @include CBlack;
         @include ripple;
 
         img {
-          max-height: 2rem;
+          max-height: 3rem;
           color: $dark2;
           line-height: 2.5;
           padding-top: 0.5rem;
-          margin: -0.5rem -1rem 0 1rem;
+          margin: -.8rem 0rem 1rem 0rem;
 
           &:hover {
             opacity: 0.7;
@@ -82,11 +81,10 @@ nav.home-nav {
 }
 
 #helm.home {
-  background: $blue;
+  background: #183d54;
 
   .billboard {
     background-color: white;
-    //background: url('/img/pattern-topo.png') left top repeat;
     background-size: 376px;
     background-attachment: fixed;
     min-height: 480px;
@@ -94,14 +92,27 @@ nav.home-nav {
     position: relative;
     text-align: center;
 
+    .txt-github {
+      color: white;
+      font-size: 1.5rem;
+
+      @include mobile {
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+    }
+
+    .btn-github {
+      background: #d00052;
+    }
+
     h1 {
-      @include klinicBold;
+      @include CBold;
       color: $blue;
       font-size: 2.925rem;
     }
 
     h2 {
-      @include helvetica;
       color: $darkblue;
       font-size: 1.25rem;
       margin-bottom: 30px;
@@ -109,9 +120,9 @@ nav.home-nav {
 
     &:after {
       $height: 6px;
-      background: url('/img/pattern-waves.png') left top repeat-x;
       background-size: $gutter;
       bottom: 0;
+      left: 0;
       content: '';
       display: block;
       height: $height;
@@ -173,23 +184,74 @@ nav.home-nav {
     }
   }
 
+  .card {
+    background: none;
+    border: 5px solid #3bbdc4;
+    box-shadow: none;
+    border-radius: 20px;
+
+    @include mobile {
+      width: 63rem !important;
+    }
+
+    .card-img-top {
+      color: #a5d6d0;
+    }
+
+    &:hover {
+      cursor: pointer;
+      box-shadow: 0 5px 15px #39bec5;
+      transition: all 0.2s ease-in-out;
+    }
+  }
+
+  .card-body {
+    .card-title {
+      @include CBlack;
+      font-size: 1.7rem;
+      text-transform: capitalize;
+      text-align: center;
+      letter-spacing: 0;
+    }
+
+    .card-text {
+      @include CLight;
+      line-height: 1.1;
+      font-weight: 400;
+      opacity: .7;
+      font-size: 1.4rem;
+      padding: 0;
+    }
+
+  }
+
   .content {
     h1, h2, h3, h5 {
       color: white;
-      @include klinicBold;
+      @include CBlack;
     }
 
     h2 {
-      font-size: 2.5rem;
+      font-size: 2.7rem;
       margin: 2rem 0;
       padding-top: 1em;
     }
+
+
+  @include mobile{
+    h2 {
+      font-size:2rem !important;
+    }
+    p, .why-porter, .why-porter li {
+      font-size: 1.2rem !important;
+    }
+  }
 
     p, ul, li {
       color: white;
       font-size: 1.5rem;
       line-height: 1.4;
-      @include helvetica;
+      @include CLight;
       -webkit-font-smoothing: antialiased;
     }
 
@@ -202,7 +264,28 @@ nav.home-nav {
     }
 
     a {
-      color: $dark2;
+      color: white;
+      text-decoration: none;
+    }
+
+    #underline, #underline1 {
+      position: relative;
+    }
+
+    #underline {
+      z-index: -2;
+      background-image: linear-gradient(to right, #4b84a3 0%, #4b84a3 100%);
+      background-repeat: no-repeat;
+      background-size: 70% 0.7em;
+      background-position: -5px 170%;
+    }
+
+    #underline1 {
+      background-image: linear-gradient(to right, #4b84a3 0%, #4b84a3 100%);
+      background-repeat: no-repeat;
+      background-size: 97% 0.7em;
+      background-position: -5px 170%;
+      z-index: -2;
     }
 
     .helm-overview-img {
@@ -211,21 +294,22 @@ nav.home-nav {
   }
 
   .helm-features {
-    background: url('/img/features-bg.png') no-repeat center 0;
-    background-size: cover;
     text-align: center;
     margin-top: 5em;
-    margin-bottom: 2em;
+    padding: 0;
+    margin-bottom: 4em;
     padding-bottom: 4rem;
 
     .large-3 {
       min-height: 280px;
     }
 
-    h2 {
-      @include klinicBold;
-      color: $darkblue;
-      border-bottom: 4px solid lighten($blue, 25%);
+    h1 {
+      @include CBlack;
+      @include normCase;
+      color: #183d54;
+      font-size: 3rem;
+      letter-spacing: 0em;
       margin: 1.5rem 0 2.5rem;
       display: inline-block;
 
@@ -236,10 +320,11 @@ nav.home-nav {
 
     h3 {
       color: $darkblue;
-      margin: 0.25em 0 0.5em;
-      font-size: 1.5rem;
+      margin: 0.25em 0 0;
+      font-size: 2rem;
+      letter-spacing: -1px;
       position: relative;
-      @include klinicBold;
+      @include CBold;
 
       small {
         position: absolute;
@@ -250,6 +335,13 @@ nav.home-nav {
         font-size: 0.6em;
         margin-left: -5em;
       }
+
+      @include mobile {
+        font-size: 1.7rem;
+        img{
+          width: 65px ;
+        }
+    }
     }
 
     h3:not(:first-child) {
@@ -258,19 +350,37 @@ nav.home-nav {
 
     .columns {
       position: relative;
+      padding: 30px;
+
+      @include mobile {
+        padding: 10px;
+
+        figcaption + img {
+          padding: 10px;
+          border-radius: 2em;
+        }
+      }
     }
 
     img {
       top: 0;
       left: 50%;
+      border-radius: 1em;
     }
 
     p {
       font-size: 1.5em;
+      color: black;
+      line-height: 1.5;
+      margin: 10px 0 1.5rem 0;
       padding: 0 5%;
 
       code {
         border: none;
+      }
+
+      @include mobile {
+        font-size: 1.2rem;
       }
     }
 
@@ -285,29 +395,37 @@ nav.home-nav {
         border-radius: 0 0 0.5em 0.5em;
       }
     }
+
+    #underline, #underline1 {
+      position: relative;
+    }
+
+    #underline::before {
+      content: "";
+      position: absolute;
+      left: 50%;
+      bottom: 5px;
+      width: 360px;
+      height: 10px;
+      transform: skew(-12deg) translateX(-50%);
+      background: rgba(57,190,197,0.5);
+    }
+  }
+
+  .helm-features + .container{
+    @include mobile{
+      padding-bottom: 75px;
+    }
   }
 
   .get-helm {
     padding-bottom: 50px;
-    border: 2px dashed $lightblue;
+    border: 5px solid wheat;
     padding: 2em;
     margin-bottom: 4em;
     position: relative;
+    border-radius: 0.5em;
     z-index: 100;
-
-    &:after {
-      position: absolute;
-      display: block;
-      content: " ";
-      top: 0.667em;
-      left: -0.25em;
-      width: 100%;
-      height: 375px;
-      z-index: -5;
-      background-color: $darkblue;
-      transform: rotateX(12deg);
-      opacity: 0.425;
-    }
 
     h2 {
       margin: 0 0 0.5em;
@@ -320,18 +438,36 @@ nav.home-nav {
   }
 
   .get-charts {
-    padding-left: 3.5rem;
+    border-radius: 0.5em;
+    margin-left: 20px;
+    padding: 2em 0em 0 0em;
 
     h2 {
-      margin: 2.5rem 0 1rem;
+      margin: 1.5rem 0 1rem;
       padding: 0;
     }
   }
 
+  .helm-quotes {
+    background-color: white;
+    border-radius: 25px;
+    color: $dark2;
+    background: linear-gradient( 0deg, #fff, #F7F7F7);
+
+    h2, p {
+      color: $darkblue;
+    }
+
+     a {
+        color: $red;
+        text-decoration: underline;
+      }
+  }
+
   .helm-community {
     background-color: white;
-    padding-top: 50px;
     padding-bottom: 100px;
+    border-radius: 25px;
     color: $darkblue;
     background: linear-gradient( 0deg, #fff, #F7F7F7);
 
@@ -340,18 +476,24 @@ nav.home-nav {
     }
 
     h2 {
-      margin-bottom: 0.5em;
-
-      & + p {
-        margin-bottom: 4.5rem;
-      }
+      margin-bottom: 0.3em;
+      font-size: 3rem;
     }
 
     .helm-community-links {
       ul {
-        background-color: white;
-        padding: 1.5em 2.25em;
-        border-radius: 1em;
+
+        @include mobile {
+          padding: 0 !important;
+          margin: 0 !important;
+          text-align: left !important;
+        }
+
+        .btn-section {
+          display: inline-block;
+          padding: 10px 20px 10px 20px;
+          border-radius: 20px;
+        }
 
         li {
           font-size: 1.5rem;
@@ -360,45 +502,59 @@ nav.home-nav {
           line-height: 2.5;
           padding-left: 2.25em;
           position: relative;
-          @include klinicReg;
+          @include CMedium;
 
           a {
             color: $dark2;
-            border-bottom: 3px solid $blue;
             text-decoration: none;
+            background-image: linear-gradient(to right, #A7BFE8 0%, #6190E8 100%);
+            background-repeat: no-repeat;
+            background-size: 100% 0.3em;
+            padding: 15px 10px;
+            background-position: 0 88%;
+            transition: background-size 0.1s ease-in-out;
 
             &:hover {
-              color: $blue;
-              border-color: $lightblue;
+              // color: $blue;
+              // border-color: $lightblue;
+              background-size: 100% 80%;
+              color: white;
             }
           }
 
-          .fa {
-            color: $blue;
-            font-size: 2rem;
-            width: 1.25em;
-            padding-right: 0em;
-            position: absolute;
-            left: 0;
-            top: 0.525em;
+          .fa-solid, .fa-brands{
+            font-size: 1.5rem;
           }
         }
       }
     }
+    .topbar {
+      height: 20px;
+      background-color: #f8cc88;
+    }
+    .topbar--1 {
+      height: 20px;
+      background-color: $red;
+    }
+
+    .text-content {
+       padding: 2rem;
+    }
 
     .helm-community-blocks {
       section {
-        border: 1px solid $darkblue;
-        border-radius: 1rem;
+        border: 25px solid white;
+        border-bottom: none;
+        border-top: none;
         margin: 0 0 2em;
-        padding: 1.25rem 1.5rem;
         min-height: 125px;
+        background-color: ghostwhite;
         position: relative;
 
         h4 {
           color: $darkblue;
           font-size: 1.5em;
-          @include klinicBold;
+          @include CBlack;
           margin: -0.25em 0 0.667em;
         }
 
@@ -408,7 +564,9 @@ nav.home-nav {
         }
 
         a {
-          color: $dark2;
+          color: $red;
+          text-decoration: underline;
+          font-weight: 600;
         }
 
         iframe {
@@ -518,24 +676,21 @@ nav.home-nav {
 }
 
 .cncf {
-  background: RGBA(246, 246, 246, 1.00);
+  background: white;
   min-height: 5rem;
   margin-top: 4rem;
   text-align: center;
   padding-left: 0 !important;
 
   img {
-    float: left;
     display: inline-block;
     max-width: 14rem;
     margin: 3rem 5%;
   }
 
   p {
-    float: right;
     margin: 3.5rem 5%;
     display: inline-block;
-    font-family: helvetica;
     color: #777;
 
     &:hover {
@@ -545,13 +700,19 @@ nav.home-nav {
 }
 
 .copyright {
-  background: $blue;
+  background: #193d54;
   color: white;
   font-size: 1.3rem;
   padding: 1rem;
 
   a, a:focus, a:visited {
-    color: $dark2;
+    color: $blue2;
+    text-decoration:none !important ;
+  }
+
+  @include mobile {
+    padding: 20px 20px 30px !important;
+    font-size: 1rem;
   }
 }
 
@@ -619,7 +780,8 @@ nav.home-nav {
     img,
     p {
       float: none;
-      margin: 1.5rem auto;
+      padding: 0;
+      margin: 1.5rem 0 !important;
     }
 
     img {
@@ -671,7 +833,7 @@ nav.home-nav {
       line-height: 1;
       padding: 0 1em;
       margin: 0 0 1.5em;
-      @include klinicBold;
+      @include CBold;
 
       hr.border {
         border-color: $green;
@@ -772,7 +934,7 @@ nav.home-nav {
       }
 
       &.lead {
-        @include klinicReg;
+        @include CMedium;
         padding: 0;
         font-size: 0.925em;
       }
@@ -800,7 +962,7 @@ nav.home-nav {
       }
 
       th {
-        @include klinicBold;
+        @include CBold;
         color: white;
         font-size: 1em;
         background: $dark1;
@@ -821,11 +983,11 @@ nav.home-nav {
 
       dt,
       dd {
-        @include klinicReg;
+        @include CMedium;
       }
 
       dt {
-        @include klinicBold;
+        @include CBold;
         color: darken($light2, 12.5%);
       }
 
@@ -844,13 +1006,13 @@ nav.home-nav {
     }
 
     address {
-      @include klinicReg;
+      @include CMedium;
       font-size: 1.25rem;
       margin: 2em 0 1em;
       line-height: 1.333;
 
       em {
-        @include klinicBold;
+        @include CBold;
         font-style: normal;
         color: darken($light2, 12.5%);
       }
