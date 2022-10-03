@@ -88,17 +88,17 @@ When you create your first pull request, add your name to the bottom of our
 
 ## Which branch to use
 
-Unless the issue specifically mentions a branch, please created your feature branch from the release/v1 branch.
+Unless the issue specifically mentions a branch, please create your feature branch from the **main** branch.
 
 For example:
 
 ```
-# Make sure you have the most recent changes to release/v1
-git checkout release/v1
+# Make sure you have the most recent changes to main
+git checkout main
 git pull
 
-# Create a branch based on release/v1 named MY_FEATURE_BRANCH
-git checkout -b MY_FEATURE_BRANCH
+# Create a branch based on main named MY_FEATURE_BRANCH
+git checkout -b MY_FEATURE_BRANCH main
 ```
 
 ## When to open a pull request
@@ -498,7 +498,7 @@ Instructions for building the Porter Operator from source are located in its rep
 Sometimes you may need to make changes to Porter and work on the Operator at the same time.
 Here's how to build porter so that you can use it locally:
 
-1. You must be on a feature branch. Not release/v1 or main. This matters because it affects the generated
+1. You must be on a feature branch. Not main. This matters because it affects the generated
    docker image tag.
 1. Deploy the operator to a KinD cluster by running `mage deploy` from inside the operator repository.
    That cluster has a local registry running that you can publish to, and it will pull images from it, 

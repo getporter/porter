@@ -18,7 +18,7 @@ In production, you should set up a mongodb server and use the mongodb storage pl
 A storage plugin can implement the [plugins.StorageProtocol interface][storage] to store Porter's data to a different service.
 The storage protocol uses the mongodb API so changing the backend to something that doesn't support mongo queries would be difficult.
 
-[storage]: https://github.com/getporter/porter/blob/release/v1/pkg/storage/plugins/storage_protocol.go
+[storage]: https://github.com/getporter/porter/blob/v1.0.0/pkg/storage/plugins/storage_protocol.go
 
 ## Secrets
 
@@ -31,6 +31,6 @@ Credentials are never persisted, either to Porter's database or secret store, an
 A secrets plugin can implement the [plugins.SecretsProtocol interface][secretstore] and resolve credentials from remote and ideally more secure locations.
 For example, the [Azure plugin] resolves secrets from Azure Key Vault.
 
-[secretstore]: https://github.com/getporter/porter/blob/release/v1/pkg/secrets/plugins/secrets_protocol.go
+[secretstore]: https://github.com/getporter/porter/blob/v1.0.0/pkg/secrets/plugins/secrets_protocol.go
 [Azure plugin]: /plugins/azure/
 [Hashicorp plugin]: /plugins/hashicorp/
