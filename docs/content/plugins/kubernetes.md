@@ -77,8 +77,7 @@ kubectl --namespace "<namespace name>" create secret generic password --from-lit
 ```
 
 Porter credentials file `test-credentials.yaml`
-```
----
+```yaml
 schemaType: CredentialSet
 schemaVersion: 1.0.1
 namespace: ''
