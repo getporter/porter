@@ -36,7 +36,7 @@ require (
 	github.com/docker/docker v20.10.17+incompatible
 	github.com/dustin/go-humanize v1.0.0
 	github.com/ghodss/yaml v1.0.0
-	github.com/google/go-cmp v0.5.7
+	github.com/google/go-cmp v0.5.8
 	github.com/google/go-containerregistry v0.5.1
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/hashicorp/go-hclog v0.14.1
@@ -55,20 +55,20 @@ require (
 	github.com/osteele/liquid v1.3.0
 	github.com/pelletier/go-toml v1.9.4
 	github.com/spf13/afero v1.5.1
-	github.com/spf13/cobra v1.3.0
+	github.com/spf13/cobra v1.5.0
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.10.0
 	github.com/stretchr/testify v1.7.1
 	github.com/xeipuuv/gojsonschema v1.2.0
 	go.mongodb.org/mongo-driver v1.7.1
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.29.0
-	go.opentelemetry.io/otel v1.7.0
+	go.opentelemetry.io/otel v1.10.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.4.1
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.4.1
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.4.1
-	go.opentelemetry.io/otel/exporters/stdout/stdouttrace v1.7.0
-	go.opentelemetry.io/otel/sdk v1.7.0
-	go.opentelemetry.io/otel/trace v1.7.0
+	go.opentelemetry.io/otel/exporters/stdout/stdouttrace v1.10.0
+	go.opentelemetry.io/otel/sdk v1.10.0
+	go.opentelemetry.io/otel/trace v1.10.0
 	go.uber.org/zap v1.17.0
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	google.golang.org/grpc v1.45.0
@@ -104,7 +104,7 @@ require (
 	github.com/containerd/stargz-snapshotter/estargz v0.11.2 // indirect
 	github.com/containerd/ttrpc v1.1.0 // indirect
 	github.com/containerd/typeurl v1.0.2 // indirect
-	github.com/cpuguy83/go-md2man/v2 v2.0.1 // indirect
+	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
 	github.com/cyberphone/json-canonicalization v0.0.0-20220216171627-b6721b06b4ef // indirect
 	github.com/docker/docker-credential-helpers v0.6.4 // indirect
 	github.com/docker/go v1.5.1-1.0.20160303222718-d30aec9fd63c // indirect
