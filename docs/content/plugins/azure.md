@@ -34,18 +34,17 @@ vault.
 
 The `azure.keyvault` plugin resolves credentials against secrets in Azure Key Vault.
 
-1. Open, or create, `~/.porter/config.toml`
+1. Open, or create, `~/.porter/config.yaml`
 1. Add the following lines to activate the Azure keyvault secrets plugin:
 
-    ```toml
-    default-secrets = "mysecrets"
+    ```yaml
+    default-secrets: "mysecrets"
     
-    [[secrets]]
-    name = "mysecrets"
-    plugin = "azure.keyvault"
-    
-    [secrets.config]
-    vault = "myvault"
+    secrets:
+      name: "mysecrets"
+      plugin: "azure.keyvault"
+      config:
+        vault: "myvault"
     ```
 1. [Create a key vault][keyvault] and set the vault name in the config with name of the vault.
 1. [Create a service principal][sp] and create an Access Policy on the vault giving Get and List secret permissions.

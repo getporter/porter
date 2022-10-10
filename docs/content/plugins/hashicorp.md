@@ -27,22 +27,21 @@ Note that the v1 release of the plugin only works with Porter v1.0.0-alpha.20 an
 
 ## Plugin Configuration
 
-To use vault plugin, add the following config to porter's config file (default location: `~/.porter/config.toml`). Replace `vault_addr`, `vault_token` and `path_prefix` with proper values.
+To use vault plugin, add the following config to porter's config file (default location: `~/.porter/config.yaml`). Replace `vault_addr`, `vault_token` and `path_prefix` with proper values.
 
 The example below retrieves the vault_token from the VAULT_TOKEN environment variable.
 Do not store sensitive data in the Porter configuration file.
 
-```toml
-default-secrets = "porter-secrets"
+```yaml
+default-secrets: "porter-secrets"
 
-[[secrets]]
-  name = "porter-secrets"
-  plugin = "hashicorp.vault"
-
-  [secrets.config]
-    vault_addr = "http://vault.example.com:7500"
-    path_prefix = "organization/team/project"
-    vault_token = "${env.VAULT_TOKEN}"
+secrets:
+  name: "porter-secrets"
+  plugin: "hashicorp.vault"
+  config:
+    vault_addr: "http://vault.example.com:7500"
+    path_prefix: "organization/team/project"
+    vault_token: "${env.VAULT_TOKEN}"
 ```
 
 ## Config Parameters
