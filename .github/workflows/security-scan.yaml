@@ -28,7 +28,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v1
+        uses: github/codeql-action/init@v2
         with:
           languages: ${{ matrix.language }}
       - name: Configure Agent
@@ -38,7 +38,7 @@ jobs:
       - name: Build PorterAgent Image
         run: mage -v BuildImages
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v1
+        uses: github/codeql-action/analyze@v2
       - name: Scan PorterAgent with Trivy
         uses: aquasecurity/trivy-action@master
         with:
@@ -46,6 +46,6 @@ jobs:
           format: sarif
           output: trivy-results.sarif
       - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v1
+        uses: github/codeql-action/upload-sarif@v2
         with:
           sarif_file: trivy-results.sarif

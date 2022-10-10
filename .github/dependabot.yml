@@ -10,3 +10,5 @@ updates:
   schedule:
     interval: weekly
     day: sunday
+  labels:
+    - "dependabot 🤖"
