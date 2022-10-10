@@ -1,7 +1,11 @@
 name: Security Scan
 on:
   # always do a security scan when a change is merged
-  push: {}
+  push:
+    branches-ignore:
+      # Disable running the push event for dependabot.
+      # Dependabot pushes to branches in our repo, not in a fork. This causes the push event to trigger for dependabot PRs and the CodeQL check fails.
+      - "dependabot/**"
   # Only do a security scan on a PR when there are non-doc changes to save time
   pull_request_target:
     paths-ignore:
