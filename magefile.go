@@ -97,11 +97,13 @@ func XBuildAll() {
 func XBuildPorter() {
 	mg.Deps(copySchema)
 	releases.XBuildAll(PKG, "porter", "bin")
+	releases.PrepareMixinForPublish("porter")
 }
 
 // Cross-compile the exec mixin
 func XBuildMixins() {
 	releases.XBuildAll(PKG, "exec", "bin/mixins/exec")
+	releases.PrepareMixinForPublish("exec")
 }
 
 // Generate cli documentation for the website
