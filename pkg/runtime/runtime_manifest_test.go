@@ -216,7 +216,7 @@ install:
 
 	err := rm.ResolveStep(ctx, 0, s)
 	require.Error(t, err)
-	tests.RequireErrorContains(t, err, "Missing variable \"person\"")
+	tests.RequireErrorContains(t, err, "missing variable \"person\"")
 }
 
 func TestResolveArrayUnknown(t *testing.T) {
@@ -237,7 +237,7 @@ install:
 
 	err := rm.ResolveStep(ctx, 0, s)
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), `Missing variable "person"`)
+	assert.Contains(t, err.Error(), `missing variable "person"`)
 }
 
 func TestResolveArray(t *testing.T) {
@@ -473,7 +473,7 @@ install:
 	s := rm.Install[0]
 
 	err := rm.ResolveStep(ctx, 0, s)
-	tests.RequireErrorContains(t, err, `Missing variable "database_url"`)
+	tests.RequireErrorContains(t, err, `missing variable "database_url"`)
 }
 
 func TestResolveSensitiveOutputs(t *testing.T) {
@@ -709,7 +709,7 @@ install:
 	s := rm.Install[0]
 
 	err := rm.ResolveStep(ctx, 0, s)
-	tests.RequireErrorContains(t, err, `Missing variable "notsomething"`)
+	tests.RequireErrorContains(t, err, `missing variable "notsomething"`)
 }
 
 func TestResolveImage(t *testing.T) {
