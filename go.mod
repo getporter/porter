@@ -28,7 +28,7 @@ require (
 	github.com/cnabio/cnab-go v0.24.0
 	github.com/cnabio/cnab-to-oci v0.3.7
 	github.com/cnabio/image-relocation v0.9.0
-	github.com/containerd/containerd v1.6.6
+	github.com/containerd/containerd v1.6.8
 	github.com/davecgh/go-spew v1.1.1
 	github.com/docker/buildx v0.8.1
 	github.com/docker/cli v20.10.17+incompatible
@@ -44,7 +44,7 @@ require (
 	github.com/hashicorp/go-plugin v1.4.0
 	github.com/magefile/mage v1.13.0
 	github.com/mattn/go-colorable v0.1.7
-	github.com/mattn/go-isatty v0.0.14
+	github.com/mattn/go-isatty v0.0.16
 	github.com/mikefarah/yq/v3 v3.0.0-20201020025845-ccb718cd0f59
 	github.com/mitchellh/mapstructure v1.4.2
 	github.com/mmcdole/gofeed v1.0.0-beta2
