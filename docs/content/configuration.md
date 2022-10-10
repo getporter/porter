@@ -52,134 +52,136 @@ Instead, use templates to inject environment variables or secrets in the configu
 Environment variables are specified with ${env.NAME}, where name is case-sensitive.
 Secrets are specified with ${secret.KEY} and case sensitivity depends upon the secrets plugin used.
 
-Below is an example configuration file in TOML:
+Below is an example configuration file in yaml:
 
-```toml
-# ~/.porter/config.toml
+```yaml
+# ~/.porter/config.yaml
 
 # Set the default namespace
-namespace = "dev"
+namespace: "dev"
 
 # Threshold for printing messages to the console
 # Allowed values are: debug, info, warn, error.
 # Does not affect what is written to the log file or traces.
-verbosity = "debug"
+verbosity: "debug"
 
 # Default command output to JSON
-output = "json"
+output: "json"
 
 # Allow all bundles access to the Docker Host
-allow-docker-host-access = true
+allow-docker-host-access: true
 
 # Enable experimental features
-experimental = ["flagA", "flagB"]
+experimental: 
+  - "flagA"
+  - "flagB"
 
 # Use Docker buildkit to build the bundle
-build-driver = "buildkit"
+build-driver: "buildkit"
 
 # Overwrite the existing published bundle when publishing or copying a bundle.
 # By default, Porter detects when a push would overwrite an existing artifact and requires --force to proceed.
-force-overwrite = false
+force-overwrite: false
 
 # Use the storage configuration named devdb
-default-storage = "devdb"
+default-storage: "devdb"
 
 # When default-storage is not set, use the mongodb-docker plugin.
 # This mode does not support additional configuration for the plugin.
 # If the plugin requires configuration, use default-storage and define
 # the configuration in the storage section.
-default-storage-plugin = "mongodb-docker"
+default-storage-plugin: "mongodb-docker"
 
 # Use the secrets configuration named mysecrets
-default-secrets = "mysecrets"
+default-secrets: "mysecrets"
 
 # When default-secrets is not set, use the kubernetes.secret plugin.
 # This mode does not support additional configuration for the plugin.
 # If the plugin requires configuration, use default-secrets and define
 # the configuration in the secrets section.
-default-secrets-plugin = "kubernetes.secret"
+default-secrets-plugin: "kubernetes.secret"
 
 # Defines storage accounts
-[[storage]]
-  # The storage account name
-  name = "devdb"
-
-  # The plugin used to access the storage account
-  plugin = "mongodb"
-
-  # Additional configuration for storage account
-  # These values vary depending on the plugin used
-  [storage.config]
-    # The mongodb connection string
-    url = "${secret.porter-db-connection-string}"
+storage:
+    # The storage account name
+  - name: "devdb"
     
-    # Timeout for database queries
-    timeout = 300
+    # The plugin used to access the storage account
+    plugin: "mongodb"
+    
+    # Additional configuration for storage account
+    # These values vary depending on the plugin used
+    config:
+      # The mongodb connection string
+      url: "${secret.porter-db-connection-string}"
+      
+      # Timeout for database queries
+      timeout: 300
 
 # Define secret store accounts
-[[secrets]]
-  # The secret store name
-  name = "mysecrets"
-  
-  # The plugin used to access the secret store account
-  plugin = "azure.keyvault"
-
-  # Additional configuration for secret store account
-  # These values vary depending on the plugin used
-  [secrets.config]
-    # The name of the secret vault
-    vault = "topsecret"
+secrets:
+    # The secret store name
+  - name: "mysecrets"
     
-    # The subscription where the vault is defined
-    subscription-id = "${env.AZURE_SUBSCRIPTION_ID}"
+    # The plugin used to access the secret store account
+    plugin: "azure.keyvault"
+    
+    # Additional configuration for secret store account
+    # These values vary depending on the plugin used
+    config:
+      # The name of the secret vault
+      vault: "topsecret"
+      
+      # The subscription where the vault is defined
+      subscription-id: "${env.AZURE_SUBSCRIPTION_ID}"
 
 # Log command output to a file in PORTER_HOME/logs/
-[logs]
+logs:
   # Log command output to a file
-  log-to-file = true
+  log-to-file: true
 
   # When structured is true, the logs printed to the console 
   # include a timestamp and log level
-  structured = false
+  structured: false
 
   # Sets the log level for what is written to the file
   # Allowed values: debug, info, warn, error
-  level = "info"
+  level: "info"
 
 # Send trace and log data to an Open Telemetry collector
-[telemetry]
+telemetry:
   # Enable trace collection
-  enabled = true
+  enabled: true
 
   # Send telemetry via the grpc protocol
   # Allowed values: http/protobuf, grpc
-  protocol = "grpc"
+  protocol: "grpc"
 
   # The Open Telemetry collector endpoint
-  endpoint = "127.0.0.1:4318"
+  endpoint: "127.0.0.1:4318"
 
   # Specify if the collector endpoint is secured with TLS
-  insecure = true
+  insecure: true
 
   # Specify a certificate to connect to the collector endpoint
-  certificate = "/home/me/some-cert.pem"
+  certificate: "/home/me/some-cert.pem"
 
   # The compression type used when communicating with the collector endpoint
-  compression = "gzip"
+  compression: "gzip"
  
   # The timeout enforced when communicating with the collector endpoint
-  timeout = "3s"
+  timeout: "3s"
 
   # The timeout enforced when establishing a connection with the collector endpoint
-  start-timeout = "100ms"
+  start-timeout: "100ms"
 
   # Used for testing that porter is emitting spans without setting up an open telemetry collector
-  redirect-to-file = false
+  redirect-to-file: false
 
   # Additional headers to send to the open telemetry collector
-  [telemetry.headers]
-    environment = "dev"
-    owner = "myusername"
+  headers:
+    environment: "dev"
+    owner: "myusername"
 ```
 
 ## Experimental Feature Flags
@@ -188,11 +190,11 @@ Porter sometimes uses feature flags to release new functionality for users to
 evaluate, without affecting the stability of Porter. You can enable an experimental
 feature by:
 
-* Using the experimental global flag \--experimental flagA,flagB.
+* Using the experimental global flag `--experimental flagA,flagB`.
   The value is a comma-separated list of strings.
-* Setting the PORTER_EXPERIMENTAL environment variable like so PORTER_EXPERIMENTAL=flagA,flagB.
+* Setting the PORTER_EXPERIMENTAL environment variable like so `PORTER_EXPERIMENTAL=flagA,flagB`.
   The value is a comma-separated list of strings.
-* Setting the experimental field in the configuration file like so experimental = ["flagA","flagB"].
+* Setting the experimental field in the configuration file like so `experimental: ["flagA","flagB"]`.
   The value is an array of strings.
 
 ### Build Drivers
@@ -230,33 +232,33 @@ Porter supports the OpenTelemetry specification for exporting trace data.
 
 Porter automatically uses the standard [OpenTelemetry environment variables][otel] to configure the trace exporter.
 
-| Setting | Environment Variable | Description |
-| -------------- | -------------------- | ----------- |
-| telemetry.enabled | PORTER_TELEMETRY_ENABLED | Enables telemetry collection. Defaults to false. |
-| telemetry.protocol | OTEL_EXPORTER_OTLP_PROTOCOL<br/>PORTER_TELEMETRY_PROTOCOL | The protocol used to connect with the telemetry server. Either grpc or http/protobuf. Defaults to http/protobuf. |
-| telemetry.endpoint | OTEL_EXPORTER_OTLP_ENDPOINT<br/>PORTER_TELEMETRY_ENDPOINT | The endpoint where traces should be sent. Defaults 127.0.0.1:4317. |
-| telemetry.insecure | OTEL_EXPORTER_OTLP_INSECURE<br/>PORTER_TELEMETRY_INSECURE | If true, TLS is not used, which is useful for local development and self-signed certificates. |
-| telemetry.certificate | OTEL_EXPORTER_OTLP_CERTIFICATE<br/>PORTER_TELEMETRY_CERTIFICATE | Path to the PEM formatted certificate to use with the endpoint. |
-| telemetry.compression | OTEL_EXPORTER_OTLP_COMPRESSION<br/>PORTER_TELEMETRY_COMPRESSION | Supported values are: gzip. Defaults to no compression. |
-| telemetry.timeout | OTEL_EXPORTER_OTLP_TIMEOUT<br/>PORTER_TELEMETRY_TIMEOUT | A timeout to use with the telemetry server, in Go duration format. For example, 30s or 1m. |
-| telemetry.headers | OTEL_EXPORTER_OTLP_HEADERS<br/>PORTER_TELEMETRY_HEADERS | A map of key/value pairs that should be sent as headers to the telemetry server. |
+| Setting               | Environment Variable                                            | Description                                                                                                      |
+|-----------------------|-----------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------|
+| telemetry.enabled     | PORTER_TELEMETRY_ENABLED                                        | Enables telemetry collection. Defaults to false.                                                                 |
+| telemetry.protocol    | OTEL_EXPORTER_OTLP_PROTOCOL<br/>PORTER_TELEMETRY_PROTOCOL       | The protocol used to connect with the telemetry server. Either grpc or http/protobuf. Defaults to http/protobuf. |
+| telemetry.endpoint    | OTEL_EXPORTER_OTLP_ENDPOINT<br/>PORTER_TELEMETRY_ENDPOINT       | The endpoint where traces should be sent. Defaults 127.0.0.1:4317.                                               |
+| telemetry.insecure    | OTEL_EXPORTER_OTLP_INSECURE<br/>PORTER_TELEMETRY_INSECURE       | If true, TLS is not used, which is useful for local development and self-signed certificates.                    |
+| telemetry.certificate | OTEL_EXPORTER_OTLP_CERTIFICATE<br/>PORTER_TELEMETRY_CERTIFICATE | Path to the PEM formatted certificate to use with the endpoint.                                                  |
+| telemetry.compression | OTEL_EXPORTER_OTLP_COMPRESSION<br/>PORTER_TELEMETRY_COMPRESSION | Supported values are: gzip. Defaults to no compression.                                                          |
+| telemetry.timeout     | OTEL_EXPORTER_OTLP_TIMEOUT<br/>PORTER_TELEMETRY_TIMEOUT         | A timeout to use with the telemetry server, in Go duration format. For example, 30s or 1m.                       |
+| telemetry.headers     | OTEL_EXPORTER_OTLP_HEADERS<br/>PORTER_TELEMETRY_HEADERS         | A map of key/value pairs that should be sent as headers to the telemetry server.                                 |
 
 Below is a sample Porter configuration file that demonstrates how to set each of the telemetry settings:
 
-```toml
-[telemetry]
-  enabled = true
-  protocol = "grpc"
-  endpoint = "127.0.0.1:4318"
-  insecure = true
-  certificate = "/home/me/some-cert.pem"
-  compression = "gzip"
-  timeout = "3s"
-  start-timeout = "100ms"
+```yaml
+telemetry:
+  enabled: true
+  protocol: "grpc"
+  endpoint: "127.0.0.1:4318"
+  insecure: true
+  certificate: "/home/me/some-cert.pem"
+  compression: "gzip"
+  timeout: "3s"
+  start-timeout: "100ms"
 
-  [telemetry.headers]
-    environment = "dev"
-    owner = "me"
+  headers:
+    environment: "dev"
+    owner: "me"
 ```
 
 [otel]: https://github.com/open-telemetry/opentelemetry-specification/blob/v1.8.0/specification/protocol/exporter.md
@@ -274,8 +276,8 @@ Some configuration settings are applicable to many of Porter's commands and to s
 \--namespace specifies the current namespace.
 It is set with the PORTER_NAMESPACE environment variable.
 
-```toml
-namespace = "dev"
+```yaml
+namespace: "dev"
 ```
 
 ### Output
@@ -284,8 +286,8 @@ namespace = "dev"
 It is set with the PORTER_OUTPUT environment variable.
 Each command supports a different set of allowed outputs though usually there is some combination of: plaintext, json, and yaml.
 
-```toml
-output = "json"
+```yaml
+output: "json"
 ```
 
 ### Allow Docker Host Access
