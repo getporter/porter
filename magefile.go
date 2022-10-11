@@ -341,7 +341,14 @@ func PublishPorter() {
 	info := releases.LoadMetadata()
 
 	// Copy install scripts into version directory
-	must.Command("./scripts/prep-install-scripts.sh").Env("VERSION=" + info.Version).RunV()
+	// Rewrites the version number in the script uploaded to the github release
+	// If it's a tagged version, we reference that in the script
+	// Otherwise reference the name of the build, e.g. "canary"
+	scriptVersion := info.Version
+	if !info.IsTaggedRelease {
+		scriptVersion = info.Permalink
+	}
+	must.Command("./scripts/prep-install-scripts.sh").Env("VERSION=" + scriptVersion).RunV()
 
 	porterVersionDir := filepath.Join("bin", info.Version)
 	execVersionDir := filepath.Join("bin/mixins/exec", info.Version)
