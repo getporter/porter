@@ -1,7 +1,7 @@
 package templates
 
 import (
-	"io/ioutil"
+	"os"
 	"testing"
 
 	"get.porter.sh/porter/pkg/config"
@@ -17,7 +17,7 @@ func TestTemplates_GetManifest(t *testing.T) {
 	gotTmpl, err := tmpl.GetManifest()
 	require.NoError(t, err)
 
-	wantTmpl, _ := ioutil.ReadFile("./templates/create/porter.yaml")
+	wantTmpl, _ := os.ReadFile("./templates/create/porter.yaml")
 	assert.Equal(t, string(wantTmpl), string(gotTmpl))
 }
 
@@ -28,7 +28,7 @@ func TestTemplates_GetRunScript(t *testing.T) {
 	gotTmpl, err := tmpl.GetRunScript()
 	require.NoError(t, err)
 
-	wantTmpl, _ := ioutil.ReadFile("./templates/build/cnab/app/run")
+	wantTmpl, _ := os.ReadFile("./templates/build/cnab/app/run")
 	assert.Equal(t, wantTmpl, gotTmpl)
 }
 
@@ -63,7 +63,7 @@ func TestTemplates_GetCredentialSetJSON(t *testing.T) {
 	gotTmpl, err := tmpl.GetCredentialSetJSON()
 	require.NoError(t, err)
 
-	wantTmpl, err := ioutil.ReadFile("./templates/credentials/create/credential-set.json")
+	wantTmpl, err := os.ReadFile("./templates/credentials/create/credential-set.json")
 	require.NoError(t, err)
 	assert.Equal(t, wantTmpl, gotTmpl)
 }
@@ -75,7 +75,7 @@ func TestTemplates_GetCredentialSetYAML(t *testing.T) {
 	gotTmpl, err := tmpl.GetCredentialSetYAML()
 	require.NoError(t, err)
 
-	wantTmpl, err := ioutil.ReadFile("./templates/credentials/create/credential-set.yaml")
+	wantTmpl, err := os.ReadFile("./templates/credentials/create/credential-set.yaml")
 	require.NoError(t, err)
 	assert.Equal(t, wantTmpl, gotTmpl)
 }
@@ -87,7 +87,7 @@ func TestTemplates_GetParameterSetJSON(t *testing.T) {
 	gotTmpl, err := tmpl.GetParameterSetJSON()
 	require.NoError(t, err)
 
-	wantTmpl, err := ioutil.ReadFile("./templates/parameters/create/parameter-set.json")
+	wantTmpl, err := os.ReadFile("./templates/parameters/create/parameter-set.json")
 	require.NoError(t, err)
 	assert.Equal(t, wantTmpl, gotTmpl)
 }
@@ -99,7 +99,7 @@ func TestTemplates_GetParameterSetYAML(t *testing.T) {
 	gotTmpl, err := tmpl.GetParameterSetYAML()
 	require.NoError(t, err)
 
-	wantTmpl, err := ioutil.ReadFile("./templates/parameters/create/parameter-set.yaml")
+	wantTmpl, err := os.ReadFile("./templates/parameters/create/parameter-set.yaml")
 	require.NoError(t, err)
 	assert.Equal(t, wantTmpl, gotTmpl)
 }

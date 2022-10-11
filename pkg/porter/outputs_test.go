@@ -3,7 +3,7 @@ package porter
 import (
 	"context"
 	"encoding/json"
-	"io/ioutil"
+	"os"
 	"testing"
 
 	"get.porter.sh/porter/pkg/cnab"
@@ -17,7 +17,7 @@ import (
 func TestPorter_printOutputsTable(t *testing.T) {
 	t.Parallel()
 
-	b, err := ioutil.ReadFile("testdata/show/object-parameter-value.json")
+	b, err := os.ReadFile("testdata/show/object-parameter-value.json")
 	require.NoError(t, err)
 	var objVal map[string]interface{}
 	err = json.Unmarshal(b, &objVal)

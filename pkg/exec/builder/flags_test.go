@@ -1,7 +1,7 @@
 package builder
 
 import (
-	"io/ioutil"
+	"os"
 	"sort"
 	"testing"
 
@@ -13,7 +13,7 @@ import (
 var testStep = TestStep{}
 
 func TestFlags_UnmarshalYAML(t *testing.T) {
-	b, err := ioutil.ReadFile("testdata/flags-input.yaml")
+	b, err := os.ReadFile("testdata/flags-input.yaml")
 	require.NoError(t, err, "could not read the input file")
 
 	var flags Flags

@@ -2,7 +2,6 @@ package test
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -73,9 +72,9 @@ func CompareGoldenFile(t *testing.T, goldenFile string, got string) {
 	if os.Getenv("PORTER_UPDATE_TEST_FILES") == "true" {
 		os.MkdirAll(filepath.Dir(goldenFile), pkg.FileModeDirectory)
 		t.Logf("Updated test file %s to match latest test output", goldenFile)
-		require.NoError(t, ioutil.WriteFile(goldenFile, []byte(got), pkg.FileModeWritable), "could not update golden file %s", goldenFile)
+		require.NoError(t, os.WriteFile(goldenFile, []byte(got), pkg.FileModeWritable), "could not update golden file %s", goldenFile)
 	} else {
-		wantSchema, err := ioutil.ReadFile(goldenFile)
+		wantSchema, err := os.ReadFile(goldenFile)
 		require.NoError(t, err)
 		assert.Equal(t, string(wantSchema), got, "The test output doesn't match the expected output in %s. If this was intentional, run mage updateTestfiles to fix the tests.", goldenFile)
 	}

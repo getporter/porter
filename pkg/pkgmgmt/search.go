@@ -3,7 +3,7 @@ package pkgmgmt
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"sort"
 	"strings"
@@ -56,7 +56,7 @@ func GetPackageListings(url string) (PackageList, error) {
 	}
 
 	defer resp.Body.Close()
-	data, err := ioutil.ReadAll(resp.Body)
+	data, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return PackageList{}, fmt.Errorf("unable to read package list via %s: %w", url, err)
 	}

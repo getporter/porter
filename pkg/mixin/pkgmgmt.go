@@ -3,7 +3,7 @@ package mixin
 import (
 	"bytes"
 	"context"
-	"io/ioutil"
+	"io"
 	"os/exec"
 
 	"get.porter.sh/porter/pkg/config"
@@ -63,7 +63,7 @@ func (c *PackageManager) GetSchema(ctx context.Context, name string) (string, er
 	mixinContext := *c.Context
 	mixinContext.Out = mixinSchema
 	if !log.ShouldLog(zapcore.DebugLevel) {
-		mixinContext.Err = ioutil.Discard
+		mixinContext.Err = io.Discard
 	}
 	r.Context = &mixinContext
 

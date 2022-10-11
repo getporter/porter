@@ -4,7 +4,6 @@ package integration
 
 import (
 	"context"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -36,7 +35,7 @@ func TestDependenciesLifecycle(t *testing.T) {
 }
 
 func publishMySQLBundle(ctx context.Context, p *porter.TestPorter) {
-	bunDir, err := ioutil.TempDir("", "porter-mysql")
+	bunDir, err := os.MkdirTemp("", "porter-mysql")
 	require.NoError(p.T(), err, "could not create temp directory to publish the mysql bundle")
 	defer os.RemoveAll(bunDir)
 

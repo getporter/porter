@@ -4,9 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"path"
 	"runtime"
 	"strings"
@@ -84,7 +84,7 @@ func TestFileSystem_InstallFromFeedUrl(t *testing.T) {
 	}
 
 	var testURL = ""
-	feed, err := ioutil.ReadFile("../feed/testdata/atom.xml")
+	feed, err := os.ReadFile("../feed/testdata/atom.xml")
 	require.NoError(t, err)
 
 	// serve out a fake feed and package
