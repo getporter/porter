@@ -4,7 +4,6 @@ $env:PATH+=";$env:USERPROFILE\.porter"
 
 & $PSScriptRoot\..\install\install-windows.ps1 -PORTER_VERSION canary
 porter version
-porter list
 
 & $PSScriptRoot\..\install\install-windows.ps1 -PORTER_VERSION v0.23.0-beta.1
 if (-Not (porter version | Select-String -Pattern 'v0.23.0-beta.1' -SimpleMatch))
