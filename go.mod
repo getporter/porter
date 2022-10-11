@@ -42,7 +42,7 @@ require (
 	github.com/hashicorp/go-hclog v0.14.1
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hashicorp/go-plugin v1.4.0
-	github.com/magefile/mage v1.13.0
+	github.com/magefile/mage v1.14.0
 	github.com/mattn/go-colorable v0.1.7
 	github.com/mattn/go-isatty v0.0.16
 	github.com/mikefarah/yq/v3 v3.0.0-20201020025845-ccb718cd0f59
