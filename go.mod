@@ -1,6 +1,6 @@
 module get.porter.sh/porter
 
-go 1.18
+go 1.19
 
 replace (
 	// a dependency of buildx (github.com/tonistiigi/fsutil) relies on an untagged version of Docker on the master branch

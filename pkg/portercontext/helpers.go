@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -111,7 +110,7 @@ func (c *TestContext) GetTestDefinitionDirectory() string {
 // UseFilesystem has porter's context use the OS filesystem instead of an in-memory filesystem
 // Returns the test directory, and the temp porter home directory.
 func (c *TestContext) UseFilesystem() (testDir string, homeDir string) {
-	homeDir, err := ioutil.TempDir("", "porter-test")
+	homeDir, err := os.MkdirTemp("", "porter-test")
 	require.NoError(c.T, err)
 	c.cleanupDirs = append(c.cleanupDirs, homeDir)
 
@@ -146,7 +145,7 @@ func (c *TestContext) AddTestFile(src, dest string, mode ...os.FileMode) []byte 
 		c.T.Fatal(errors.New("use AddTestFileFromRoot when referencing a test file in a different directory than the test"))
 	}
 
-	data, err := ioutil.ReadFile(src)
+	data, err := os.ReadFile(src)
 	if err != nil {
 		c.T.Fatal(fmt.Errorf("error reading file %s from host filesystem: %w", src, err))
 	}
@@ -214,7 +213,7 @@ func (c *TestContext) AddTestDirectory(srcDir, destDir string, mode ...os.FileMo
 }
 
 func (c *TestContext) AddTestDriver(src, name string) string {
-	data, err := ioutil.ReadFile(src)
+	data, err := os.ReadFile(src)
 	if err != nil {
 		c.T.Fatal(err)
 	}
@@ -298,7 +297,7 @@ func (c *TestContext) findRepoFile(wantFile string) string {
 }
 
 func (c *TestContext) hasChild(dir string, childName string) (string, bool) {
-	children, err := ioutil.ReadDir(dir)
+	children, err := os.ReadDir(dir)
 	if err != nil {
 		c.T.Fatal(err)
 	}

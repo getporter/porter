@@ -3,7 +3,7 @@
 package integration
 
 import (
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -78,10 +78,10 @@ func TestMigration(t *testing.T) {
 
 	// Verify that the sensitive-data installation stored sensitive values in the secret store
 	secretsDir := filepath.Join(test.PorterHomeDir, "secrets")
-	secretOutput, err := ioutil.ReadFile(filepath.Join(secretsDir, "01G6K8CZ08T78WXTJYHR0NTYBS-name"))
+	secretOutput, err := os.ReadFile(filepath.Join(secretsDir, "01G6K8CZ08T78WXTJYHR0NTYBS-name"))
 	require.NoError(t, err, "Failed to read the secrets file for the sensitive output: name")
 	testhelpers.CompareGoldenFile(t, filepath.Join(testdata, "secrets/01G6K8CZ08T78WXTJYHR0NTYBS-name"), string(secretOutput))
-	secretParam, err := ioutil.ReadFile(filepath.Join(secretsDir, "01G6K8CZ08T78WXTJYHR0NTYBS-password"))
+	secretParam, err := os.ReadFile(filepath.Join(secretsDir, "01G6K8CZ08T78WXTJYHR0NTYBS-password"))
 	require.NoError(t, err, "Failed to read the secrets file for the sensitive parameter: password")
 	testhelpers.CompareGoldenFile(t, filepath.Join(testdata, "secrets/01G6K8CZ08T78WXTJYHR0NTYBS-password"), string(secretParam))
 

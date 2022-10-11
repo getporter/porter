@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 
 	"get.porter.sh/porter/pkg/pkgmgmt"
 	"get.porter.sh/porter/pkg/portercontext"
@@ -75,7 +75,7 @@ func (q *MixinQuery) Execute(ctx context.Context, cmd string, inputGenerator Mix
 			if q.LogMixinErrors {
 				mixinContext.Err = q.Context.Out // mixin stderr -> porter logs
 			} else {
-				mixinContext.Err = ioutil.Discard
+				mixinContext.Err = io.Discard
 			}
 
 			inputB, err := inputGenerator.BuildInput(mixinName)

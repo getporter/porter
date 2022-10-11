@@ -3,7 +3,7 @@ package storage
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -76,7 +76,7 @@ func (p TestParameterSetProvider) AddTestParameters(path string) {
 }
 
 func (p TestParameterSetProvider) AddTestParametersDirectory(dir string) {
-	files, err := ioutil.ReadDir(dir)
+	files, err := os.ReadDir(dir)
 	if err != nil {
 		p.T.Fatal(fmt.Errorf("could not list test directory %s: %w", dir, err))
 	}

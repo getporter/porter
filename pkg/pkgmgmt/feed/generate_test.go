@@ -3,7 +3,7 @@ package feed
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"sort"
 	"testing"
 	"time"
@@ -83,7 +83,7 @@ func TestGenerate(t *testing.T) {
 	require.NoError(t, err)
 	gotXml := string(b)
 
-	b, err = ioutil.ReadFile("testdata/atom.xml")
+	b, err = os.ReadFile("testdata/atom.xml")
 	require.NoError(t, err)
 	wantXml := string(b)
 
@@ -200,7 +200,7 @@ func TestGenerate_ExistingFeed(t *testing.T) {
 	require.NoError(t, err)
 	gotXml := string(b)
 
-	b, err = ioutil.ReadFile("testdata/atom.xml")
+	b, err = os.ReadFile("testdata/atom.xml")
 	require.NoError(t, err)
 	wantXml := string(b)
 
@@ -255,7 +255,7 @@ func TestGenerate_RegenerateDoesNotCreateDuplicates(t *testing.T) {
 	require.NoError(t, err)
 	gotXml := string(b)
 
-	b, err = ioutil.ReadFile("testdata/atom.xml")
+	b, err = os.ReadFile("testdata/atom.xml")
 	require.NoError(t, err)
 	wantXml := string(b)
 

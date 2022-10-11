@@ -49,7 +49,7 @@ need a few things.
    If you are new to Git or GitHub, we recommend reading the [GitHub Guides].
    They will walk you through installing Git, forking a repository and
    submitting a pull request.
-* [Go](https://golang.org/doc/install) version 1.18 or higher
+* [Go](https://golang.org/doc/install) version 1.19 or higher
 * [Docker]
 * [Mage](#install-mage)
 

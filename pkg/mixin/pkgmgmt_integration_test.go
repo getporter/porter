@@ -5,7 +5,7 @@ package mixin
 
 import (
 	"context"
-	"io/ioutil"
+	"os"
 	"testing"
 
 	"get.porter.sh/porter/pkg/config"
@@ -27,7 +27,7 @@ func TestPackageManager_GetSchema(t *testing.T) {
 	gotSchema, err := p.GetSchema(ctx, "exec")
 	require.NoError(t, err)
 
-	wantSchema, err := ioutil.ReadFile("../exec/schema/exec.json")
+	wantSchema, err := os.ReadFile("../exec/schema/exec.json")
 	require.NoError(t, err)
 	assert.Equal(t, string(wantSchema), gotSchema)
 }

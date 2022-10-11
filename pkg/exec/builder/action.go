@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 
 	"get.porter.sh/porter/pkg/runtime"
 	"get.porter.sh/porter/pkg/tracing"
@@ -13,16 +13,17 @@ import (
 
 // UnmarshalAction handles unmarshaling any action, given a pointer to a slice of Steps.
 // Iterate over the results and cast back to the Steps to use the results.
-//  var steps []Step
-//	results, err := UnmarshalAction(unmarshal, &steps)
-//	if err != nil {
-//		return err
-//	}
 //
-//	for _, result := range results {
-//		step := result.(*[]Step)
-//		a.Steps = append(a.Steps, *step...)
-//	}
+//	 var steps []Step
+//		results, err := UnmarshalAction(unmarshal, &steps)
+//		if err != nil {
+//			return err
+//		}
+//
+//		for _, result := range results {
+//			step := result.(*[]Step)
+//			a.Steps = append(a.Steps, *step...)
+//		}
 func UnmarshalAction(unmarshal func(interface{}) error, builder BuildableAction) (map[string][]interface{}, error) {
 	actionMap := map[string][]interface{}{}
 	err := unmarshal(&actionMap)
@@ -70,11 +71,12 @@ func unmarshalActionMap(actionMap map[string][]interface{}, builder BuildableAct
 // Action instance.
 //
 // Example:
-//   var action Action
-//	 err := builder.LoadAction(m.Context, opts.File, func(contents []byte) (interface{}, error) {
-//		 err := yaml.Unmarshal(contents, &action)
-//		 return &action, err
-//	 })
+//
+//	  var action Action
+//		 err := builder.LoadAction(m.Context, opts.File, func(contents []byte) (interface{}, error) {
+//			 err := yaml.Unmarshal(contents, &action)
+//			 return &action, err
+//		 })
 func LoadAction(ctx context.Context, cfg runtime.RuntimeConfig, commandFile string, unmarshal func([]byte) (interface{}, error)) error {
 	//lint:ignore SA4006 ignore unused ctx for now
 	ctx, span := tracing.StartSpan(ctx)
@@ -98,7 +100,7 @@ func readInputFromStdinOrFile(cfg runtime.RuntimeConfig, commandFile string) ([]
 	var err error
 	if commandFile == "" {
 		reader := bufio.NewReader(cfg.In)
-		b, err = ioutil.ReadAll(reader)
+		b, err = io.ReadAll(reader)
 	} else {
 		b, err = cfg.FileSystem.ReadFile(commandFile)
 	}

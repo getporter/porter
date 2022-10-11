@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -83,7 +83,7 @@ func (p TestCredentialSetProvider) AddTestCredentials(path string) {
 }
 
 func (p TestCredentialSetProvider) AddTestCredentialsDirectory(dir string) {
-	files, err := ioutil.ReadDir(dir)
+	files, err := os.ReadDir(dir)
 	if err != nil {
 		p.T.Fatal(fmt.Errorf("could not list test directory %s: %w", dir, err))
 	}

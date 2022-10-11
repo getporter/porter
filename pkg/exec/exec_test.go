@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"sort"
 	"testing"
 
@@ -16,7 +16,7 @@ import (
 )
 
 func TestAction_UnmarshalYAML(t *testing.T) {
-	b, err := ioutil.ReadFile("testdata/install-input.yaml")
+	b, err := os.ReadFile("testdata/install-input.yaml")
 	require.NoError(t, err)
 
 	action := Action{}
@@ -171,7 +171,7 @@ func TestMixin_Uninstall(t *testing.T) {
 
 func TestMixin_SuffixArgs(t *testing.T) {
 	ctx := context.Background()
-	b, err := ioutil.ReadFile("testdata/suffix-args-input.yaml")
+	b, err := os.ReadFile("testdata/suffix-args-input.yaml")
 	require.NoError(t, err, "ReadFile failed")
 
 	var action Action

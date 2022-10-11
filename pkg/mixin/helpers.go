@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"os"
 
 	"get.porter.sh/porter/pkg/pkgmgmt"
 	"get.porter.sh/porter/pkg/pkgmgmt/client"
@@ -83,6 +83,6 @@ func (p *TestMixinProvider) GetSchema(ctx context.Context, name string) (string,
 	default:
 		return "", nil
 	}
-	b, err := ioutil.ReadFile(schemaFile)
+	b, err := os.ReadFile(schemaFile)
 	return string(b), err
 }

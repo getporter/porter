@@ -8,7 +8,6 @@ package main
 import (
 	"fmt"
 	"go/build"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -495,7 +494,7 @@ func Install() {
 
 	// Copy mixin binaries
 	mixinsDir := filepath.Join("bin", "mixins")
-	mixinsDirItems, err := ioutil.ReadDir(mixinsDir)
+	mixinsDirItems, err := os.ReadDir(mixinsDir)
 	if err != nil {
 		mgx.Must(fmt.Errorf("could not list mixins in bin: %w", err))
 	}

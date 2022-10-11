@@ -3,7 +3,7 @@ package exec
 import (
 	"bytes"
 	"context"
-	"io/ioutil"
+	"os"
 	"testing"
 
 	"get.porter.sh/porter/pkg"
@@ -19,7 +19,7 @@ func TestMixin_Execute(t *testing.T) {
 	err := m.Config.FileSystem.WriteFile("config.txt", []byte("abc123"), pkg.FileModeWritable)
 	require.NoError(t, err)
 
-	stdin, err := ioutil.ReadFile("testdata/outputs.yaml")
+	stdin, err := os.ReadFile("testdata/outputs.yaml")
 	require.NoError(t, err)
 	m.Config.In = bytes.NewBuffer(stdin)
 

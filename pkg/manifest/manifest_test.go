@@ -2,7 +2,7 @@ package manifest
 
 import (
 	"context"
-	"io/ioutil"
+	"os"
 	"testing"
 
 	"get.porter.sh/porter/pkg/config"
@@ -477,7 +477,7 @@ func TestMixinDeclaration_MarshalYAML(t *testing.T) {
 	gotYaml, err := yaml.Marshal(m)
 	require.NoError(t, err, "could not marshal data")
 
-	wantYaml, err := ioutil.ReadFile("testdata/mixin-with-config.yaml")
+	wantYaml, err := os.ReadFile("testdata/mixin-with-config.yaml")
 	require.NoError(t, err, "could not read testdata")
 
 	assert.Equal(t, string(wantYaml), string(gotYaml))

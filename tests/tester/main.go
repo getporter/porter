@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -62,7 +61,7 @@ func NewTestWithConfig(t *testing.T, configFilePath string) (Tester, error) {
 	test.TestContext.UseFilesystem()
 	test.RepoRoot = test.TestContext.FindRepoRoot()
 
-	test.TestDir, err = ioutil.TempDir("", "porter-test")
+	test.TestDir, err = os.MkdirTemp("", "porter-test")
 	if err != nil {
 		return *test, fmt.Errorf("could not create temp test directory: %w", err)
 	}
@@ -180,7 +179,7 @@ func (t *Tester) createPorterHome(configFilePath string) error {
 
 	var err error
 	binDir := filepath.Join(t.RepoRoot, "bin")
-	t.PorterHomeDir, err = ioutil.TempDir("", "porter")
+	t.PorterHomeDir, err = os.MkdirTemp("", "porter")
 	if err != nil {
 		return fmt.Errorf("could not create temp PORTER_HOME directory: %w", err)
 	}

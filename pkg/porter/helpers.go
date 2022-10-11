@@ -3,8 +3,8 @@ package porter
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"math/rand"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -166,7 +166,7 @@ func (p *TestPorter) AddTestDriver(driver TestDriver) string {
 }
 
 func (p *TestPorter) CreateBundleDir() string {
-	bundleDir, err := ioutil.TempDir("", "bundle")
+	bundleDir, err := os.MkdirTemp("", "bundle")
 	require.NoError(p.T(), err)
 
 	p.BundleDir = bundleDir
@@ -181,7 +181,7 @@ func (p *TestPorter) T() *testing.T {
 }
 
 func (p *TestPorter) ReadBundle(path string) cnab.ExtendedBundle {
-	bunD, err := ioutil.ReadFile(path)
+	bunD, err := os.ReadFile(path)
 	require.NoError(p.T(), err, "ReadFile failed for %s", path)
 
 	bun, err := bundle.Unmarshal(bunD)
