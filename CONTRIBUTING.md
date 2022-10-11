@@ -11,7 +11,7 @@
 * [Contribution Ladder](#contribution-ladder)
 * [Developer Tasks](#developer-tasks)
   * [Initial setup](#initial-setup)
-  * [Makefile explained](#makefile-explained)
+  * [Magefile explained](#magefile-explained)
   * [Install mixins](#install-mixins)
   * [Preview documentation](#preview-documentation)
   * [View a trace of a Porter command](#view-a-trace-of-a-porter-command)
@@ -163,7 +163,7 @@ request comment so that we don't collectively forget.
 ## Signing your commits
 
 You can automatically sign your commits to meet the DCO requirement for this
-project by running the following command: `make setup-dco`.
+project by running the following command: `mage SetupDCO`.
 
 Licensing is important to open source projects. It provides some assurances that
 the software will continue to be available based under the terms that the
@@ -264,6 +264,7 @@ Here are the key steps, if you run into trouble, the tutorial has more details:
 
 1. Install Go version 1.17 or higher.
 1. Clone this repository with `git clone https://github.com/getporter/porter.git ~/go/src/get.porter.sh/porter`.
+1. Run `go run mage.go EnsureMage` to install [mage](#magefile-explained).
 1. Run `mage Build Install` from within the newly cloned repository.
 
 If you are planning on contributing back to the project, you'll need to
@@ -273,14 +274,11 @@ clone directly from the project.
 
 You now have canary builds of porter and all the mixins installed.
 
-## Makefile explained
+## Magefile explained
 
-🚧 We are in the process of transitioning from make to [mage](https://magefile.org).
+Porter uses a cross-platform make alternative called [mage](https://magefile.org), where the targets are written in Go.
 
 ### Mage Targets
-
-Below are the targets that have been migrated to mage. Our new contributor
-tutorial explains how to [install mage](/contribute/tutorial/#install-mage).
 
 Mage targets are not case-sensitive, but in our docs we use camel case to make
 it easier to read. You can run either `mage TestSmoke` or `mage testsmoke` for
@@ -305,16 +303,10 @@ example.
 * **Install** installs porter _and_ the mixins from source into **$(HOME)/.porter/**.
 * **DocsPreview** hosts the docs site. See [Preview Documentation](#preview-documentation).
 * **DocsGen** generates the CLI documentation for the website. This is run automatically by build.
+* **SetupDCO** installs a git commit hook that automatically signsoff your commit
+  messages per the DCO requirement.
 
 [golden files]: https://ieftimov.com/post/testing-in-go-golden-files/
-
-### Make Targets
-
-Below are the most common developer tasks. Run a target with `make TARGET`, e.g.
-`make setup-dco`.
-
-* `setup-dco` installs a git commit hook that automatically signsoff your commit
-  messages per the DCO requirement.
 
 ## Test Porter
 
@@ -406,7 +398,7 @@ preview happens inside a docker container.
 
 1. Run `mage DocsPreview` to start serving the docs. It will watch the file
 system for changes.
-1. Our make rule should open <http://localhost:1313/docs> to preview the
+1. Our mage target should open <http://localhost:1313/docs> to preview the
 site/docs.
 
 We welcome your contribution to improve our documentation, and we hope it is an

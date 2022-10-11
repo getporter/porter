@@ -546,3 +546,15 @@ func getPorterHome() string {
 	}
 	return porterHome
 }
+
+// SetupDCO configures your git repository to automatically sign your commits
+// to comply with our DCO
+func SetupDCO() {
+	gotShell := xplat.DetectShell()
+	switch gotShell {
+	case "powershell", "cmd":
+		fmt.Fprintf(os.Stderr, "SetupDCO must be run from a shell that supports bash but %s was detected\n", gotShell)
+	default:
+		must.Command("scripts/setup-dco/setup.sh").Stdin(os.Stdin).RunV()
+	}
+}
