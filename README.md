@@ -1,5 +1,6 @@
 <img align="right" src="docs/static/images/porter-docs-header.svg" width="300px" />
 
+[![CNCF Sandbox Project](docs/static/images/cncf-sandbox-badge.svg)](https://www.cncf.io/projects/porter/)
 [![Build Status](https://dev.azure.com/getporter/porter/_apis/build/status/porter-canary?branchName=main)](https://dev.azure.com/getporter/porter/_build/latest?definitionId=26&branchName=main)
 <a href="https://getporter.org/find-issue" alt="Find an issue to work on">
 <img src="https://img.shields.io/github/issues-search?label=%22help%20wanted%22%20issues&query=org%3Agetporter%20label%3A%22good%20first%20issue%22%2C%22help%20wanted%22%20no%3Aassignee" /></a>
@@ -93,9 +94,6 @@ currently working on and plan to work on over the next few months. We use the
 maintainer who will be working on them.
 
 <p align="center">Check out our <a href="https://getporter.org/roadmap">roadmap</a></p>
-
-Our [version strategy] explains how we version the project, when you should expect
-breaking changes in a release, and the process for the v1 release.
 
 [board]: https://getporter.org/board
 [version strategy]: https://getporter.org/project/version-strategy/
