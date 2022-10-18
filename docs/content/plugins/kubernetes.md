@@ -15,7 +15,7 @@ The plugin is distributed as a single binary, `kubernetes`.
 The following snippet will clone this repository, build the binary and install it to **~/.porter/plugins/**.
 
 ```
-porter plugin install kubernetes --version v1.0.0-rc.1
+porter plugin install kubernetes
 ```
 
 Note that the v1 release of the plugin only works with Porter v1.0.0-alpha.20 and higher.

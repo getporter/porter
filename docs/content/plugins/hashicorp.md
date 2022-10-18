@@ -16,7 +16,7 @@ For older versions of Porter, use version v0.1.0 of the original hashicorp plugi
 We only support the [KV Version 2][kv-v2] secret engine. Please raise an issue if you're looking for support for other secret engines.
 
 ```
-porter plugin install hashicorp --version v1.0.0-rc.1 --url https://github.com/getporter/hashicorp-plugins/releases/download
+porter plugin install hashicorp --version v1.0.0 --url https://github.com/getporter/hashicorp-plugins/releases/download
 ```
 
 Note that the v1 release of the plugin only works with Porter v1.0.0-alpha.20 and higher.
