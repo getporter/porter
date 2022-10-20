@@ -9,8 +9,7 @@ import (
 	"sync"
 
 	"get.porter.sh/porter/pkg"
-	"get.porter.sh/porter/pkg/config"
-	"get.porter.sh/porter/pkg/portercontext"
+	"github.com/carolynvs/aferox"
 	"github.com/mikefarah/yq/v3/pkg/yqlib"
 	"gopkg.in/op/go-logging.v1"
 	"gopkg.in/yaml.v3"
@@ -23,14 +22,14 @@ var (
 
 // Editor can modify the yaml in a Porter manifest.
 type Editor struct {
-	context *portercontext.Context
-	yq      yqlib.YqLib
-	node    *yaml.Node
+	filesystem aferox.Aferox
+	yq         yqlib.YqLib
+	node       *yaml.Node
 }
 
-func NewEditor(cxt *portercontext.Context) *Editor {
+func NewEditor(filesystem aferox.Aferox) *Editor {
 	e := &Editor{
-		context: cxt,
+		filesystem: filesystem,
 	}
 	yqLogInit.Do(e.suppressYqLogging)
 	return e
@@ -68,7 +67,7 @@ func (e *Editor) Read(data []byte) (n int, err error) {
 }
 
 func (e *Editor) ReadFile(src string) error {
-	contents, err := e.context.FileSystem.ReadFile(src)
+	contents, err := e.filesystem.ReadFile(src)
 	if err != nil {
 		return fmt.Errorf("could not read the manifest at %q: %w", src, err)
 	}
@@ -81,9 +80,9 @@ func (e *Editor) ReadFile(src string) error {
 }
 
 func (e *Editor) WriteFile(dest string) error {
-	destFile, err := e.context.FileSystem.OpenFile(dest, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, pkg.FileModeWritable)
+	destFile, err := e.filesystem.OpenFile(dest, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, pkg.FileModeWritable)
 	if err != nil {
-		return fmt.Errorf("could not open destination manifest location %s: %w", config.Name, err)
+		return fmt.Errorf("could not open destination manifest location %s: %w", dest, err)
 	}
 	defer destFile.Close()
 

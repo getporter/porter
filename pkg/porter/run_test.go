@@ -30,7 +30,7 @@ func TestPorter_Run(t *testing.T) {
 	p.TestConfig.TestContext.AddTestFile("testdata/porter.yaml", "porter.yaml")
 
 	// Change the schemaVersion to validate that the runtime ignores this field and runs regardless
-	e := yaml.NewEditor(p.Context)
+	e := yaml.NewEditor(p.FileSystem)
 	require.NoError(t, e.ReadFile("porter.yaml"))
 	require.NoError(t, e.SetValue("schemaVersion", ""))
 	require.NoError(t, e.WriteFile("porter.yaml"))

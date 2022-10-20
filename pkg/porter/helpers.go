@@ -216,7 +216,7 @@ func (p *TestPorter) AddTestBundleDir(bundleDir string, generateUniqueName bool)
 		return m.Name
 	}
 
-	e := yaml.NewEditor(p.Context)
+	e := yaml.NewEditor(p.FileSystem)
 	err = e.ReadFile(testManifest)
 	require.NoError(p.T(), err)
 

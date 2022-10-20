@@ -30,7 +30,7 @@ func TestPorter_Lint_ChecksManifestSchemaVersion(t *testing.T) {
 
 			// Make a bundle with the specified schemaVersion
 			p.TestConfig.TestContext.AddTestFileFromRoot("tests/testdata/mybuns/porter.yaml", "porter.yaml")
-			e := yaml.NewEditor(p.Context)
+			e := yaml.NewEditor(p.FileSystem)
 			require.NoError(t, e.ReadFile("porter.yaml"))
 			require.NoError(t, e.SetValue("schemaVersion", tc.schemaVersion))
 			require.NoError(t, e.WriteFile("porter.yaml"))
