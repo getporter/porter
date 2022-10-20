@@ -11,7 +11,7 @@ Source: https://github.com/getporter/terraform-mixin
 
 ### Install or Upgrade
 ```
-porter mixin install terraform --version v1.0.0-rc.1
+porter mixin install terraform --version v1.0.0-rc.2
 ```
 
 ### Examples

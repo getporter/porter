@@ -19,7 +19,7 @@ Source: https://github.com/MChorfa/porter-helm3
 Currently, we only support the installation via `--feed-url`. Please make sure to install the mixin as follow:
 
 ```shell
-porter mixin install helm3 --version v1.0.0-rc.2 --feed-url https://mchorfa.github.io/porter-helm3/atom.xml
+porter mixin install helm3 --feed-url https://mchorfa.github.io/porter-helm3/atom.xml
 ```
 
 ### Mixin Configuration
