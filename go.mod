@@ -47,7 +47,7 @@ require (
 	github.com/mattn/go-isatty v0.0.16
 	github.com/mikefarah/yq/v3 v3.0.0-20201020025845-ccb718cd0f59
 	github.com/mitchellh/mapstructure v1.4.2
-	github.com/mmcdole/gofeed v1.0.0-beta2
+	github.com/mmcdole/gofeed v1.1.3
 	github.com/moby/buildkit v0.10.0
 	github.com/moby/term v0.0.0-20210619224110-3f7ff695adc6
 	github.com/olekukonko/tablewriter v0.0.4
@@ -90,12 +90,12 @@ require (
 	github.com/Masterminds/semver v1.5.0 // indirect
 	github.com/Microsoft/go-winio v0.5.2 // indirect
 	github.com/PaesslerAG/gval v1.0.0 // indirect
-	github.com/PuerkitoBio/goquery v1.5.0 // indirect
+	github.com/PuerkitoBio/goquery v1.5.1 // indirect
 	github.com/PuerkitoBio/purell v1.1.1 // indirect
 	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 // indirect
 	github.com/agl/ed25519 v0.0.0-20170116200512-5312a6153412 // indirect
 	github.com/andybalholm/brotli v1.0.1 // indirect
-	github.com/andybalholm/cascadia v1.0.0 // indirect
+	github.com/andybalholm/cascadia v1.1.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cenkalti/backoff/v4 v4.1.3 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
