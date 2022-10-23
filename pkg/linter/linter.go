@@ -152,14 +152,6 @@ func New(cxt *portercontext.Context, mixins pkgmgmt.PackageManager) *Linter {
 	}
 }
 
-// Implement this function to check if string is in the slice
-func isIn(param string, reservedNames map[string]bool) bool {
-	if _, ok := reservedNames[param]; ok {
-		return true
-	}
-
-	return false
-}
 
 func (l *Linter) Lint(ctx context.Context, m *manifest.Manifest) (Results, error) {
 	// TODO: perform any porter level linting
@@ -171,7 +163,7 @@ func (l *Linter) Lint(ctx context.Context, m *manifest.Manifest) (Results, error
 	params := m.Parameters
 
 	for _, param := range params {
-		if isIn(param.Name, reservedNames) {
+		if _, ok := reservedNames[param.Name]; ok {
 
 			res := Result {
 				Level: LevelWarning,
