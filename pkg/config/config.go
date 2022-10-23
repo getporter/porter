@@ -95,8 +95,13 @@ type Config struct {
 
 // New Config initializes a default porter configuration.
 func New() *Config {
+	return NewFor(portercontext.New())
+}
+
+// NewFor initializes a porter configuration, using an existing porter context.
+func NewFor(pCtx *portercontext.Context) *Config {
 	return &Config{
-		Context:    portercontext.New(),
+		Context:    pCtx,
 		Data:       DefaultDataStore(),
 		DataLoader: LoadFromEnvironment(),
 	}

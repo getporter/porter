@@ -88,6 +88,12 @@ pygmentsStyle = "friendly"
       identifier = "quickstart-desired-state"
       weight = 5
       parent = "quickstart"
+    [[menu.main]]
+      name = "Create a bundle"
+      url = "/bundle/create/"
+      identifier = "quickstart-create-a-bundle"
+      weight = 6
+      parent = "quickstart"
   [[menu.main]]
     name = "Examples"
     url = "/examples/"
@@ -329,40 +335,46 @@ pygmentsStyle = "friendly"
       weight = 401
       parent = "porter-architecture"
     [[menu.main]]
+      name = "Security"
+      url = "/security-features/"
+      identifier = "porter-security"
+      weight = 402
+      parent = "porter-architecture"
+    [[menu.main]]
       name = "CNAB"
       url = "/cnab/"
       identifier = "architecture-cnab"
-      weight = 402
+      weight = 412
       parent = "porter-architecture"
     [[menu.main]]
       name = "Buildtime"
       url = "/architecture-buildtime"
       identifier = "architecture-buildtime"
-      weight = 403
+      weight = 413
       parent = "porter-architecture"
     [[menu.main]]
       name = "Runtime"
       url = "/architecture-runtime"
       identifier = "architecture-runtime"
-      weight = 404
+      weight = 414
       parent = "porter-architecture"
     [[menu.main]]
       name = "Invocation Images"
       url = "/build-image"
       identifier = "build-image"
-      weight = 405
+      weight = 415
       parent = "porter-architecture"
     [[menu.main]]
       name = "Credentials"
       url = "/credentials/"
       identifier = "credentials"
-      weight = 406
+      weight = 416
       parent = "porter-architecture"
     [[menu.main]]
       name = "Parameters"
       url = "/parameters/"
       identifier = "parameters"
-      weight = 407
+      weight = 417
       parent = "porter-architecture"
 
   # Operator

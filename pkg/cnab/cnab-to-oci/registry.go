@@ -2,6 +2,7 @@ package cnabtooci
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -19,6 +20,7 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/google/go-containerregistry/pkg/crane"
+	"github.com/google/go-containerregistry/pkg/v1/remote/transport"
 	"github.com/moby/term"
 	"github.com/opencontainers/go-digest"
 	"go.opentelemetry.io/otel/attribute"
@@ -276,7 +278,7 @@ func (r *Registry) GetCachedImage(ctx context.Context, ref cnab.OCIReference) (I
 
 	result, _, err := cli.Client().ImageInspectWithRaw(ctx, image)
 	if err != nil {
-		return ImageSummary{}, log.Error(fmt.Errorf("failed to find image %s in docker cache: %w", image, err))
+		return ImageSummary{}, log.Error(fmt.Errorf("failed to find image in docker cache: %w", ErrNotFound{Reference: ref}))
 	}
 
 	summary, err := NewImageSummary(image, result)
@@ -295,18 +297,50 @@ func (r *Registry) ListTags(ctx context.Context, ref cnab.OCIReference, opts Reg
 	ctx, span := tracing.StartSpan(ctx, attribute.String("repository", repository))
 	defer span.EndSpan()
 
-	var listOpts []crane.Option
-	if opts.InsecureRegistry {
-		transport := GetInsecureRegistryTransport()
-		listOpts = append(listOpts, crane.WithTransport(transport))
-	}
-
-	tags, err := crane.ListTags(repository, listOpts...)
+	tags, err := crane.ListTags(repository, opts.toCraneOptions()...)
 	if err != nil {
-		return nil, span.Errorf("error listing tags for %s: %w", repository, err)
+		if notFoundErr := asNotFoundError(err, ref); notFoundErr != nil {
+			return nil, span.Error(notFoundErr)
+		}
+		return nil, span.Errorf("error listing tags for %s: %w", ref.String(), err)
 	}
 
 	return tags, nil
+}
+
+// GetBundleMetadata returns information about a bundle in a registry
+// Use ErrNotFound to detect if the error is because the bundle is not in the registry.
+func (r *Registry) GetBundleMetadata(ctx context.Context, ref cnab.OCIReference, opts RegistryOptions) (BundleMetadata, error) {
+	//lint:ignore SA4006 ignore unused context for now
+	ctx, span := tracing.StartSpan(ctx, attribute.String("reference", ref.String()))
+	defer span.EndSpan()
+
+	bundleDigest, err := crane.Digest(ref.String(), opts.toCraneOptions()...)
+	if err != nil {
+		if notFoundErr := asNotFoundError(err, ref); notFoundErr != nil {
+			return BundleMetadata{}, span.Error(notFoundErr)
+		}
+		return BundleMetadata{}, span.Errorf("error retrieving bundle metadata for %s: %w", ref.String(), err)
+	}
+
+	return BundleMetadata{
+		BundleReference: cnab.BundleReference{
+			Reference: ref,
+			Digest:    digest.Digest(bundleDigest),
+		},
+	}, nil
+}
+
+// asNotFoundError checks if the error is an HTTP 404 not found error, and if so returns a corresponding ErrNotFound instance.
+func asNotFoundError(err error, ref cnab.OCIReference) error {
+	var httpError *transport.Error
+	if errors.As(err, &httpError) {
+		if httpError.StatusCode == http.StatusNotFound {
+			return ErrNotFound{Reference: ref}
+		}
+	}
+
+	return nil
 }
 
 // ImageSummary contains information about an OCI image.

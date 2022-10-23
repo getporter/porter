@@ -89,8 +89,8 @@ func TestLoadManifestWithDependencies(t *testing.T) {
 	mixin := installStep.GetMixinName()
 	assert.Equal(t, "exec", mixin)
 
-	require.Len(t, m.Dependencies.RequiredDependencies, 1, "expected one dependency")
-	assert.Equal(t, "getporter/azure-mysql:5.7", m.Dependencies.RequiredDependencies[0].Bundle.Reference, "expected a v1 schema for the dependency delcaration")
+	require.Len(t, m.Dependencies.Requires, 1, "expected one dependency")
+	assert.Equal(t, "getporter/azure-mysql:5.7", m.Dependencies.Requires[0].Bundle.Reference, "expected a v1 schema for the dependency delcaration")
 }
 
 func TestLoadManifestWithDependenciesInOrder(t *testing.T) {
@@ -103,11 +103,11 @@ func TestLoadManifestWithDependenciesInOrder(t *testing.T) {
 	require.NoError(t, err, "could not load manifest")
 	assert.NotNil(t, m)
 
-	nginxDep := m.Dependencies.RequiredDependencies[0]
+	nginxDep := m.Dependencies.Requires[0]
 	assert.Equal(t, "nginx", nginxDep.Name)
 	assert.Equal(t, "localhost:5000/nginx:1.19", nginxDep.Bundle.Reference)
 
-	mysqlDep := m.Dependencies.RequiredDependencies[1]
+	mysqlDep := m.Dependencies.Requires[1]
 	assert.Equal(t, "mysql", mysqlDep.Name)
 	assert.Equal(t, "getporter/azure-mysql:5.7", mysqlDep.Bundle.Reference)
 	assert.Len(t, mysqlDep.Parameters, 1)
@@ -323,7 +323,7 @@ func TestSetDefaults(t *testing.T) {
 		err = m.SetDefaults()
 		require.NoError(t, err)
 		assert.Equal(t, "getporter/mybun:v1.2.3", m.Reference)
-		assert.Equal(t, "getporter/mybun:e7a4fac8f425d76ed9a5baa3a188824b", m.Image)
+		assert.Equal(t, "getporter/mybun:porter-e7a4fac8f425d76ed9a5baa3a188824b", m.Image)
 	})
 
 	t.Run("bundle docker tag not set on reference", func(t *testing.T) {
@@ -340,7 +340,7 @@ func TestSetDefaults(t *testing.T) {
 		err = m.SetDefaults()
 		require.NoError(t, err)
 		assert.Equal(t, "getporter/mybun:v1.2.3-beta.1_15", m.Reference)
-		assert.Equal(t, "getporter/mybun:bcd1325906d287fb3b93500c8bfd2947", m.Image)
+		assert.Equal(t, "getporter/mybun:porter-bcd1325906d287fb3b93500c8bfd2947", m.Image)
 	})
 
 	t.Run("bundle reference includes registry with port", func(t *testing.T) {
@@ -357,7 +357,7 @@ func TestSetDefaults(t *testing.T) {
 		err = m.SetDefaults()
 		require.NoError(t, err)
 		assert.Equal(t, "localhost:5000/missing-invocation-image:v0.1.0", m.Reference)
-		assert.Equal(t, "localhost:5000/missing-invocation-image:fea49a80fb6822ee71f71e2ce4a48a37", m.Image)
+		assert.Equal(t, "localhost:5000/missing-invocation-image:porter-fea49a80fb6822ee71f71e2ce4a48a37", m.Image)
 	})
 
 	t.Run("registry provided, no reference", func(t *testing.T) {
@@ -374,7 +374,7 @@ func TestSetDefaults(t *testing.T) {
 		err = m.SetDefaults()
 		require.NoError(t, err)
 		assert.Equal(t, "getporter/mybun:v1.2.3-beta.1", m.Reference)
-		assert.Equal(t, "getporter/mybun:b4b9ce8671aacb5a093574b04f9f87e1", m.Image)
+		assert.Equal(t, "getporter/mybun:porter-b4b9ce8671aacb5a093574b04f9f87e1", m.Image)
 	})
 
 	t.Run("registry provided with org, no reference", func(t *testing.T) {
@@ -391,7 +391,7 @@ func TestSetDefaults(t *testing.T) {
 		err = m.SetDefaults()
 		require.NoError(t, err)
 		assert.Equal(t, "getporter/myorg/mybun:v1.2.3-beta.1", m.Reference)
-		assert.Equal(t, "getporter/myorg/mybun:f4f017f099257ee41d0c05d5e3180f88", m.Image)
+		assert.Equal(t, "getporter/myorg/mybun:porter-f4f017f099257ee41d0c05d5e3180f88", m.Image)
 	})
 
 	t.Run("registry and reference provided", func(t *testing.T) {
@@ -412,7 +412,7 @@ func TestSetDefaults(t *testing.T) {
 		err = m.SetDefaults()
 		require.NoError(t, err)
 		assert.Equal(t, "getporter/org/mybun:v1.2.3", m.Reference)
-		assert.Equal(t, "getporter/org/mybun:93d4bfba61358eca91debf6dd4ddc61f", m.Image)
+		assert.Equal(t, "getporter/org/mybun:porter-93d4bfba61358eca91debf6dd4ddc61f", m.Image)
 	})
 }
 

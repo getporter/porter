@@ -5,10 +5,11 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg"
+	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/tests"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-to-oci/relocation"
-	"github.com/pivotal/image-relocation/pkg/image"
+	"github.com/cnabio/image-relocation/pkg/image"
 	"github.com/stretchr/testify/require"
 )
 
@@ -102,6 +103,59 @@ func TestArchive_AddImage(t *testing.T) {
 		})
 	}
 
+}
+
+func TestArchive_PrepareArtifacts_Sorting(t *testing.T) {
+	p := NewTestPorter(t)
+	defer p.Close()
+
+	testcases := []struct {
+		name          string
+		relocationMap relocation.ImageRelocationMap
+		inputImgs     []string
+		expectedImgs  []string
+	}{
+		{"images sorted", relocation.ImageRelocationMap{"c:v0.1.0": "c@sha256:789", "a:v0.1.0": "a@sha256:123", "b:v0.1.0": "b@sha256:456"},
+			[]string{"b:v0.1.0", "c:v0.1.0", "a:v0.1.0"},
+			[]string{"a@sha256:123", "b@sha256:456", "c@sha256:789"}},
+		{"numbers too", relocation.ImageRelocationMap{"a:v0.1.0": "a@sha256:123", "0b:v0.1.0": "0b@sha256:456"},
+			[]string{"0b:v0.1.0", "a:v0.1.0"},
+			[]string{"0b@sha256:456", "a@sha256:123"}},
+	}
+
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			images := make(map[string]bundle.Image)
+			b := cnab.NewBundle(bundle.Bundle{Images: images})
+			for _, inputImg := range tc.inputImgs {
+				images[inputImg] = bundle.Image{BaseImage: bundle.BaseImage{Image: inputImg, Digest: "digest"}}
+			}
+			collectedImages := make([]string, 0)
+			imageStore := mockCollectingImageStore{t: t, addedImages: &collectedImages}
+			ex := exporter{relocationMap: tc.relocationMap, imageStore: imageStore}
+
+			err := ex.prepareArtifacts(b)
+
+			require.Equal(t, tc.expectedImgs, collectedImages)
+			require.NoError(t, err)
+		})
+	}
+
+}
+
+type mockCollectingImageStore struct {
+	t           *testing.T
+	addedImages *[]string
+}
+
+func (m mockCollectingImageStore) Add(img string) (contentDigest string, err error) {
+	*m.addedImages = append(*m.addedImages, img)
+	return "digest", nil
+}
+
+func (m mockCollectingImageStore) Push(dig image.Digest, src image.Name, dst image.Name) error {
+	return nil
 }
 
 type mockImageStore struct {

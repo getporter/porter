@@ -27,15 +27,6 @@ const (
 	// This is used for commands like help and version which should never
 	// fail, even with porter is misconfigured.
 	skipConfig string = "skipConfig"
-
-	// exitCodeSuccess indicates the program ran successfully
-	exitCodeSuccess = 0
-
-	// exitCodeErr indicates the program encountered an error
-	exitCodeErr = 1
-
-	// exitCodeInterrupt indicates the program was cancelled
-	exitCodeInterrupt = 2
 )
 
 func main() {
@@ -64,7 +55,7 @@ func main() {
 		if !shouldSkipConfig(cmd) {
 			if err := p.Connect(ctx); err != nil {
 				fmt.Fprintln(os.Stderr, err.Error())
-				os.Exit(exitCodeErr)
+				os.Exit(cli.ExitCodeErr)
 			}
 		}
 
@@ -77,7 +68,7 @@ func main() {
 					attribute.String("stackTrace", string(debug.Stack())))
 				log.EndSpan()
 				p.Close()
-				os.Exit(exitCodeErr)
+				os.Exit(cli.ExitCodeErr)
 			} else {
 				log.Close()
 				p.Close()
@@ -88,9 +79,9 @@ func main() {
 			// Ideally we log all errors in the span that generated it,
 			// but as a failsafe, always log the error at the root span as well
 			log.Error(err)
-			return exitCodeErr
+			return cli.ExitCodeErr
 		}
-		return exitCodeSuccess
+		return cli.ExitCodeSuccess
 	}
 
 	// Wrapping the main run logic in a function because os.Exit will not
@@ -114,7 +105,7 @@ func handleInterrupt(ctx context.Context, p *porter.Porter) (context.Context, fu
 		}
 		<-signalChan // second signal, hard exit
 		fmt.Println("hard interrupt received, bye!")
-		os.Exit(exitCodeInterrupt)
+		os.Exit(cli.ExitCodeInterrupt)
 	}()
 
 	return ctx, func() {

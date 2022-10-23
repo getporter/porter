@@ -61,14 +61,51 @@ By default, Porter uses the [1.4.0 dockerfile syntax](https://docs.docker.com/en
 [buildkit]: https://docs.docker.com/develop/develop-images/build_enhancements/
 [porter build]: /cli/porter_build/
 
+# Bundles do not run as root
+
+Porter runs the bundle image as a non-root user.
+This means that if you need to initialize the user's home directory, you should use the [BUNDLE_USER](#BUNDLE_USER) build argument to locate the home directory.
+If you need to run some commands as root and others as the non-root user that the bundle image will run under, you can use that same argument to switch the current user in the Dockerfile.
+By default, all commands in the Dockerfile run as root (so that you can install and configure the image), so you will need to carefully use the USER statement to switch to the non-root user.
+
+Here is a truncated and commented example of how the helm3 mixin performs some setup as root and some as the non-root user:
+```Dockerfile
+# Truncated, above we set up the image...
+
+# The helm3 mixin performs system-level configuration, such as installing the helm cli
+ENV HELM_EXPERIMENTAL_OCI=1
+RUN apt-get update && apt-get install -y curl
+RUN curl https://get.helm.sh/helm-v3.8.2-linux-amd64.tar.gz --output helm3.tar.gz
+RUN tar -xvf helm3.tar.gz && rm helm3.tar.gz
+RUN mv linux-amd64/helm /usr/local/bin/helm3
+RUN curl -o kubectl https://storage.googleapis.com/kubernetes-release/release/v1.22.1/bin/linux/amd64/kubectl &&\
+    mv kubectl /usr/local/bin && chmod a+x /usr/local/bin/kubectl
+
+# The helm3 mixin switches temporarily to run a couple commands as the non-root user
+USER ${BUNDLE_USER}
+RUN helm3 repo add stable https://charts.helm.sh/stable
+RUN helm3 repo update
+
+# The helm3 mixin switches back to root so that the rest of the Dockerfile is run with a user with the correct permissions
+USER root
+
+# Truncated, continue setting up the bundle's image...
+```
+
+The non-root user matters both at build time when the image is built and also at runtime when it runs in a container.
+The user that the container runs as is not configurable and any files written by the container are owned by the non-root user.
+This is relevant when running a bundle in a Kubernetes pod (either with the kubernetes driver manually or with the Porter Operator).
+It is important when mounting volumes into the pod that the non-root user has read/write access.
+
 # Special Comments 
 Porter uses comments as placeholders to inject lines into your Dockerfile that all Porter bundles require.
 You can move the comment to another location in the file to optimize your Docker build times and layer caching.
-If you omit the comment entirely, Porter will still inject the contents for that section into your Dockerfile and we recommend keeping the comments in so that you can control where the contents are injected.
+If you omit the comment entirely, Porter will still inject the contents for that section into your Dockerfile, and we recommend keeping the comments in so that you can control where the contents are injected.
 
 ## PORTER_INIT
 
-Porter includes additional Dockerfile lines that standardize all Porter bundles, such as declaring the BUNDLE_DIR argument, and creating a user for the bundle to run as. You can control where these lines are injected by placing a comment in your Dockerfile temlate:
+Porter includes additional Dockerfile lines that standardize all Porter bundles, such as declaring the BUNDLE_DIR argument, and creating a user for the bundle to run as.
+You can control where these lines are injected by placing a comment in your Dockerfile template:
 
 ```Dockerfile
 # PORTER_INIT
@@ -136,6 +173,10 @@ If you do, you are responsible for setting the file permissions so that the bund
 COPY . ${BUNDLE_DIR}
 ```
 
+## See Also
+
+* [Why you do not want to run containers as root](https://medium.com/@mccode/processes-in-containers-should-not-run-as-root-2feae3f0df3b)
+* [Security Features](/security-features/)
 
 [Buildkit]: https://docs.docker.com/develop/develop-images/build_enhancements/
 [experimental]: /configuration/#experimental-feature-flags

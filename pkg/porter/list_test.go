@@ -3,6 +3,7 @@ package porter
 import (
 	"context"
 	"testing"
+	"time"
 
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/printer"
@@ -213,7 +214,8 @@ func TestPorter_getDisplayInstallationState(t *testing.T) {
 	run := p.TestInstallations.CreateRun(installation.NewRun(cnab.ActionInstall), p.TestInstallations.SetMutableRunValues)
 	result := p.TestInstallations.CreateResult(run.NewResult(cnab.StatusSucceeded), p.TestInstallations.SetMutableResultValues)
 	installation.ApplyResult(run, result)
-	installation.Status.Installed = &now
+	installTime := now.Add(-time.Second * 5)
+	installation.Status.Installed = &installTime
 	displayInstallationState = getDisplayInstallationState(installation)
 	require.Equal(t, StateInstalled, displayInstallationState)
 

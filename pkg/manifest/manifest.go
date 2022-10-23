@@ -2,8 +2,6 @@ package manifest
 
 import (
 	"context"
-	"crypto/md5"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -149,7 +147,7 @@ func (m *Manifest) Validate(cxt *portercontext.Context, strategy schema.CheckStr
 		}
 	}
 
-	for _, dep := range m.Dependencies.RequiredDependencies {
+	for _, dep := range m.Dependencies.Requires {
 		err = dep.Validate(cxt)
 		if err != nil {
 			result = multierror.Append(result, err)
@@ -626,10 +624,10 @@ func (mi *MappedImage) ToOCIReference() (cnab.OCIReference, error) {
 }
 
 type Dependencies struct {
-	RequiredDependencies []*RequiredDependency `yaml:"requires,omitempty"`
+	Requires []*Dependency `yaml:"requires,omitempty"`
 }
 
-type RequiredDependency struct {
+type Dependency struct {
 	Name string `yaml:"name"`
 
 	Bundle BundleCriteria `yaml:"bundle"`
@@ -650,7 +648,7 @@ type BundleCriteria struct {
 	Version string `yaml:"version,omitempty"`
 }
 
-func (d *RequiredDependency) Validate(cxt *portercontext.Context) error {
+func (d *Dependency) Validate(cxt *portercontext.Context) error {
 	if d.Name == "" {
 		return errors.New("dependency name is required")
 	}
@@ -947,18 +945,12 @@ func (m *Manifest) SetInvocationImageAndReference(ref string) error {
 		m.Reference = bundleRef.String()
 	}
 
-	imageName, err := cnab.ParseOCIReference(bundleRef.Repository())
+	installerImage, err := cnab.CalculateTemporaryImageTag(bundleRef)
 	if err != nil {
-		return fmt.Errorf("could not set invocation image to %q: %w", bundleRef.Repository(), err)
+		return err
 	}
-	referenceHash := md5.Sum([]byte(bundleRef.String()))
-	imgTag := hex.EncodeToString(referenceHash[:])
-	imageRef, err := imageName.WithTag(imgTag)
-	if err != nil {
-		return fmt.Errorf("could not set invocation image tag to %q: %w", dockerTag, err)
-	}
-	m.Image = imageRef.String()
 
+	m.Image = installerImage.String()
 	return nil
 }
 

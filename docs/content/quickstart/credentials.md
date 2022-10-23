@@ -24,7 +24,7 @@ Depending on the bundle, a credential can apply to all actions (install/upgrade/
 Let's look at a bundle with credentials:
 
 ```console
-$ porter explain ghcr.io/ghcr.io/getporter/examples/credentials-tutorial:v0.3.0
+$ porter explain ghcr.io/getporter/examples/credentials-tutorial:v0.3.0
 Name: examples/credentials-tutorial
 Description: An example Porter bundle with credentials. Uses your GitHub token to retrieve your public user profile from GitHub.
 Version: 0.3.0
@@ -52,21 +52,28 @@ This means that the github-token credential is required to run porter install or
 
 ## Create a Credential Set
 
-Create a credential set for the credentials-tutorial bundle with the `porter credentials generate` command. It is an interactive command that walks through setting values for every credential in the specified bundle.
+Create a credential set for the credentials-tutorial bundle with the combination of `porter credentials create` and `porter credentials apply` command. Edit the generated file to contain the required credentials for the corresponding bundle. In this case, it is the `github-token` that uses `GITHUB_TOKEN` environment variable as its source. Then, run the `porter credentials apply` command to create the new credential set from the modified file.
 
 ```console
-$ porter credentials generate github --reference ghcr.io/ghcr.io/getporter/examples/credentials-tutorial:v0.3.0
-Generating new credential github from bundle credentials-tutorial
-==> 1 credentials required for bundle credentials-tutorial
-? How would you like to set credential "github-token"
-  [Use arrows to move, space to select, type to filter]
-  secret
-  specific value
-> environment variable
-  file path
-  shell command
-? Enter the environment variable that will be used to set credential "github-token"
-  GITHUB_TOKEN
+$ porter credentials create github.json
+creating porter credential set in the current directory
+$ cat github.json
+# modify github.json with your editor to the content below
+{
+    "schemaType": "CredentialSet",
+    "schemaVersion": "1.0.1",
+    "name": "github",
+    "credentials": [
+        {
+            "name": "github-token",
+            "source": {
+                "env": "GITHUB_TOKEN"
+            }
+        }
+    ]
+}
+$ porter credentials apply github.json
+Applied /github credential set
 ```
 
 This creates a credential set named github.

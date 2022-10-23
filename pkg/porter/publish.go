@@ -2,29 +2,25 @@ package porter
 
 import (
 	"context"
-	"crypto/md5"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"path"
 	"path/filepath"
 	"strings"
 
-	cnabtooci "get.porter.sh/porter/pkg/cnab/cnab-to-oci"
-
 	"get.porter.sh/porter/pkg/build"
 	"get.porter.sh/porter/pkg/cnab"
+	cnabtooci "get.porter.sh/porter/pkg/cnab/cnab-to-oci"
+	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/manifest"
-	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/tracing"
 	"github.com/cnabio/cnab-go/bundle/loader"
 	"github.com/cnabio/cnab-go/packager"
 	"github.com/cnabio/cnab-to-oci/relocation"
+	"github.com/cnabio/image-relocation/pkg/image"
+	"github.com/cnabio/image-relocation/pkg/registry"
+	"github.com/cnabio/image-relocation/pkg/registry/ggcr"
 	"github.com/opencontainers/go-digest"
-	"github.com/pivotal/image-relocation/pkg/image"
-	"github.com/pivotal/image-relocation/pkg/registry"
-	"github.com/pivotal/image-relocation/pkg/registry/ggcr"
 )
 
 // PublishOptions are options that may be specified when publishing a bundle.
@@ -38,10 +34,10 @@ type PublishOptions struct {
 }
 
 // Validate performs validation on the publish options
-func (o *PublishOptions) Validate(cxt *portercontext.Context) error {
+func (o *PublishOptions) Validate(cfg *config.Config) error {
 	if o.ArchiveFile != "" {
 		// Verify the archive file can be accessed
-		if _, err := cxt.FileSystem.Stat(o.ArchiveFile); err != nil {
+		if _, err := cfg.FileSystem.Stat(o.ArchiveFile); err != nil {
 			return fmt.Errorf("unable to access --archive %s: %w", o.ArchiveFile, err)
 		}
 
@@ -50,7 +46,7 @@ func (o *PublishOptions) Validate(cxt *portercontext.Context) error {
 		}
 	} else {
 		// Proceed with publishing from the resolved build context directory
-		err := o.bundleFileOptions.Validate(cxt)
+		err := o.bundleFileOptions.Validate(cfg.Context)
 		if err != nil {
 			return err
 		}
@@ -66,6 +62,11 @@ func (o *PublishOptions) Validate(cxt *portercontext.Context) error {
 
 	if o.Tag != "" {
 		return o.validateTag()
+	}
+
+	// Apply the global config for force overwrite
+	if !o.Force && cfg.Data.ForceOverwrite {
+		o.Force = true
 	}
 
 	return nil
@@ -177,7 +178,24 @@ func (p *Porter) publishFromFile(ctx context.Context, opts PublishOptions) error
 		return log.Errorf("error parsing %s as an OCI reference: %w", m.Image, err)
 	}
 
-	regOpts := cnabtooci.RegistryOptions{InsecureRegistry: opts.InsecureRegistry}
+	regOpts := cnabtooci.RegistryOptions{
+		InsecureRegistry: opts.InsecureRegistry,
+	}
+
+	// Before we attempt to push, check if any of the bundle exists already.
+	// If force was not specified, we shouldn't push any of the bundle since
+	// the bundle and images must be pushed as a unit.
+	if !opts.Force {
+		_, err := p.Registry.GetBundleMetadata(ctx, bundleRef.Reference, regOpts)
+		if err != nil {
+			if !errors.Is(err, cnabtooci.ErrNotFound{}) {
+				return log.Errorf("Publish stopped because detection of %s in the destination registry failed. To overwrite it, repeat the command with --force specified: %w", bundleRef, err)
+			}
+		} else {
+			return log.Errorf("Publish stopped because %s already exists in the destination registry. To overwrite it, repeat the command with --force specified.", bundleRef)
+		}
+	}
+
 	bundleRef.Digest, err = p.Registry.PushImage(ctx, imgRef, regOpts)
 	if err != nil {
 		return log.Errorf("unable to push CNAB invocation image %q: %w", m.Image, err)
@@ -195,7 +213,8 @@ func (p *Porter) publishFromFile(ctx context.Context, opts PublishOptions) error
 
 	// Perhaps we have a cached version of a bundle with the same reference, previously pulled
 	// If so, replace it, as it is most likely out-of-date per this publish
-	return p.refreshCachedBundle(bundleRef)
+	err = p.refreshCachedBundle(bundleRef)
+	return log.Error(err)
 }
 
 // publishFromArchive (re-)publishes a bundle, provided by the archive file, using the provided tag.
@@ -212,6 +231,23 @@ func (p *Porter) publishFromArchive(ctx context.Context, opts PublishOptions) er
 	ctx, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
 
+	regOpts := cnabtooci.RegistryOptions{InsecureRegistry: opts.InsecureRegistry}
+
+	// Before we attempt to push, check if any of the bundle exists already.
+	// If force was not specified, we shouldn't push any of the bundle since
+	// the bundle and images must be pushed as a unit.
+	ref := opts.GetReference()
+	if !opts.Force {
+		_, err := p.Registry.GetBundleMetadata(ctx, ref, regOpts)
+		if err != nil {
+			if !errors.Is(err, cnabtooci.ErrNotFound{}) {
+				return log.Errorf("Publish stopped because detection of %s in the destination registry failed. To overwrite it, repeat the command with --force specified: %w", ref, err)
+			}
+		} else {
+			return log.Errorf("Publish stopped because %s already exists in the destination registry. To overwrite it, repeat the command with --force specified.", ref)
+		}
+	}
+
 	source := p.FileSystem.Abs(opts.ArchiveFile)
 	tmpDir, err := p.FileSystem.TempDir("", "porter")
 	if err != nil {
@@ -224,7 +260,7 @@ func (p *Porter) publishFromArchive(ctx context.Context, opts PublishOptions) er
 		return err
 	}
 
-	bundleRef.Reference = opts.GetReference()
+	bundleRef.Reference = ref
 
 	log.Infof("Beginning bundle publish to %s. This may take some time.", opts.Reference)
 
@@ -260,7 +296,6 @@ func (p *Porter) publishFromArchive(ctx context.Context, opts PublishOptions) er
 		bundleRef.RelocationMap = relocMap
 	}
 
-	regOpts := cnabtooci.RegistryOptions{InsecureRegistry: opts.InsecureRegistry}
 	bundleRef, err = p.Registry.PushBundle(ctx, bundleRef, regOpts)
 	if err != nil {
 		return err
@@ -327,29 +362,36 @@ func pushUpdatedImage(layout registry.Layout, origImg string, newImgName image.N
 // getNewImageNameFromBundleReference derives a new image.Name object from the provided original
 // image (string) using the provided bundleTag to clean registry/org/etc.
 func getNewImageNameFromBundleReference(origImg, bundleTag string) (image.Name, error) {
-	origName, err := image.NewName(origImg)
+	origImgRef, err := cnab.ParseOCIReference(origImg)
 	if err != nil {
-		return image.EmptyName, fmt.Errorf("unable to parse image %q into domain/path components: %w", origImg, err)
+		return image.EmptyName, err
 	}
 
-	bundleName, err := image.NewName(bundleTag)
+	bundleRef, err := cnab.ParseOCIReference(bundleTag)
 	if err != nil {
-		return image.EmptyName, fmt.Errorf("unable to parse bundle tag %q into domain/path components: %w", bundleTag, err)
+		return image.EmptyName, err
 	}
 
-	// Use the original image name with the bundle location to generate a randomized tag
-	source := path.Join(path.Dir(bundleName.Name()), origName.Name()) + ":" + bundleName.Tag()
-	nameHash := md5.Sum([]byte(source))
-	imgTag := hex.EncodeToString(nameHash[:])
-
-	// place the new image under the same repo as the bundle
-	imgName := bundleName.Name()
-	newImgName, err := image.NewName(imgName)
+	// Calculate a unique tag based on the original referenced image. It is safe to
+	// use only the original image, and not a combination of both the destination and
+	// the source to create a unique value, because we rewrite the referenced image
+	// to always use a repository digest. The only time two images will have the same
+	// source value is when they are the same image and have the same content. In
+	// which case it is okay if two bundles both reference the same image and reuse
+	// the same temporary tag because the content is the same.
+	tmpImage, err := cnab.CalculateTemporaryImageTag(origImgRef)
 	if err != nil {
-		return image.EmptyName, fmt.Errorf("unable to parse bundle %q into domain/path components: %w", bundleName.Name(), err)
+		return image.EmptyName, err
 	}
 
-	return newImgName.WithTag(imgTag)
+	// Apply the temporary tag to the current bundle to determine the new location for the image
+	newImgRef, err := bundleRef.WithTag(tmpImage.Tag())
+	if err != nil {
+		return image.EmptyName, err
+	}
+
+	// Convert it to the relocation library's representation of an image reference
+	return image.NewName(newImgRef.String())
 }
 
 func (p *Porter) rewriteBundleWithInvocationImageDigest(ctx context.Context, m *manifest.Manifest, digest digest.Digest) (cnab.ExtendedBundle, error) {
@@ -399,11 +441,16 @@ func (p *Porter) relocateImage(relocationMap relocation.ImageRelocationMap, layo
 }
 
 func (p *Porter) rewriteImageWithDigest(InvocationImage string, imgDigest string) (string, error) {
-	ref, err := cnab.ParseOCIReference(InvocationImage)
+	taggedRef, err := cnab.ParseOCIReference(InvocationImage)
 	if err != nil {
 		return "", fmt.Errorf("unable to parse docker image: %s", err)
 	}
-	digestedRef, err := ref.WithDigest(digest.Digest(imgDigest))
+
+	// Change the invocation image from bundlerepo:tag-hash => bundlerepo@sha256:abc123
+	// Do not continue to reference the temporary tag that we used to push, otherwise that will prevent the registry from garbage collecting it later.
+	repo := cnab.MustParseOCIReference(taggedRef.Repository())
+
+	digestedRef, err := repo.WithDigest(digest.Digest(imgDigest))
 	if err != nil {
 		return "", err
 	}

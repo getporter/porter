@@ -9,6 +9,7 @@ description: Installing the Porter client and mixins
 Porter is about to release v1.0.0, and we strongly recommend that you install that version of Porter if you are just starting out.
 
 * [Install Porter v1](#recommended)
+* [Clean Install](#clean-install)
 
 If you are already using Porter, here are links to install an older v0 version of Porter.
 Heads up that v0 will be deprecated a few months after v1.0.0 is released!
@@ -41,23 +42,23 @@ Set VERSION to the most recent [v1 prerelease] version number.
 **MacOS**
 
 ```bash
-export VERSION="v1.0.0-beta.2"
+export VERSION="v1.0.0-rc.3"
 curl -L https://cdn.porter.sh/$VERSION/install-mac.sh | bash
 ```
 
 **Linux**
 
 ```bash
-export VERSION="v1.0.0-beta.2"
+export VERSION="v1.0.0-rc.3"
 curl -L https://cdn.porter.sh/$VERSION/install-linux.sh | bash
 ```
 
 **Windows**
 
 ```powershell
-$VERSION="v1.0.0-beta.2"
+$VERSION="v1.0.0-rc.3"
 (New-Object System.Net.WebClient).DownloadFile("https://cdn.porter.sh/$VERSION/install-windows.ps1", "install-porter.ps1")
-.\install-porter.ps1 -PORTER_HOME $PORTER_HOME
+.\install-porter.ps1
 ```
 
 ## Running multiple versions 
@@ -86,6 +87,21 @@ porter version
 [ps-link]: https://www.howtogeek.com/126469/how-to-create-a-powershell-profile/
 [mailing list]: https://groups.io/g/porter
 [Slack]: /community/#slack
+
+# Clean Install
+
+To perform a clean installation of Porter:
+
+1. Remove the PORTER_HOME directory, which by default is located at `~/.porter`.
+2. Start over with a fresh database. If you were using an external database, update your porter configuration file to use a different database.
+
+   Otherwise, if you had not specified a storage plugin or database in the configuration file, then your database is located in a container in Docker.
+   Remove the mongodb container and volume, so that when Porter is run again, it creates a new database: 
+   ```
+   docker rm -f porter-mongodb-docker-plugin
+   docker volume rm porter-mongodb-docker-plugin-data
+   ```
+3. Install Porter following the instructions on this page.
 
 # Latest
 

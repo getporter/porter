@@ -284,11 +284,6 @@
     }
   },
   "properties": {
-    "schemaType": {
-      "description": "The resource type of the current document.",
-      "type": "string",
-      "default": "Bundle"
-    },
     "schemaVersion": {
       "description": "The version of the schema used in this file",
       "type": "string"
@@ -321,8 +316,13 @@
     "mixins": {
       "type": "array",
       "items": {
-        "type": "string",
-        "enum": []
+        "oneOf": [
+          {
+            "description": "Declare a mixin without configuration",
+            "type": "string",
+            "enum": []
+          }
+        ]
       }
     },
     "name": {

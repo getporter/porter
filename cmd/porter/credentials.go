@@ -99,12 +99,12 @@ file system.
 When you wish to install, upgrade or delete a bundle, Porter will use the
 credential set to determine where to read the necessary information from and
 will then provide it to the bundle in the correct location. `,
-		Example: `  porter credential generate
-  porter credential generate kubecred --reference getporter/mysql:v0.1.4 --namespace test
-  porter credential generate kubekred --label owner=myname --reference getporter/mysql:v0.1.4
-  porter credential generate kubecred --reference localhost:5000/getporter/mysql:v0.1.4 --insecure-registry --force
-  porter credential generate kubecred --file myapp/porter.yaml
-  porter credential generate kubecred --cnab-file myapp/bundle.json
+		Example: `  porter credentials generate
+  porter credentials generate kubecred --reference getporter/mysql:v0.1.4 --namespace test
+  porter credentials generate kubekred --label owner=myname --reference getporter/mysql:v0.1.4
+  porter credentials generate kubecred --reference localhost:5000/getporter/mysql:v0.1.4 --insecure-registry --force
+  porter credentials generate kubecred --file myapp/porter.yaml
+  porter credentials generate kubecred --cnab-file myapp/bundle.json
 `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate(cmd.Context(), args, p)
@@ -228,10 +228,9 @@ func buildCredentialsCreateCommand(p *porter.Porter) *cobra.Command {
 		Use:   "create",
 		Short: "Create a Credential",
 		Long:  "Create a new blank resource for the definition of a Credential Set.",
-		Example: `
-		porter credentials create FILE [--output yaml|json]
-		porter credentials create credential-set.json
-		porter credentials create credential-set --output yaml`,
+		Example: `  porter credentials create FILE [--output yaml|json]
+  porter credentials create credential-set.json
+  porter credentials create credential-set --output yaml`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate(args)
 		},

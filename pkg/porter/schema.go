@@ -86,9 +86,28 @@ func (p *Porter) injectMixinSchemas(ctx context.Context, manifestSchema jsonSche
 		return nil, span.Error(fmt.Errorf("root porter manifest schema has invalid properties.mixins.items type, expected map[string]interface{} but got %T", mixinSchema["items"]))
 	}
 
-	mixinEnumSchema, ok := mixinItemSchema["enum"].([]interface{})
+	// the set of acceptable ways to declare a mixin
+	// e.g.
+	// mixins:
+	// - exec
+	// - helm3:
+	//     clientVersion: 1.2.3
+	mixinDeclSchema, ok := mixinItemSchema["oneOf"].([]interface{})
 	if !ok {
-		return nil, span.Error(fmt.Errorf("root porter manifest schema has invalid properties.mixins.items.enum type, expected []interface{} but got %T", mixinItemSchema["enum"]))
+		return nil, span.Error(fmt.Errorf("root porter manifest schema has invalid properties.mixins.items.oneOf type, expected []interface{} but got %T", mixinItemSchema["oneOf"]))
+	}
+
+	// The first item is an enum of all the mixin names
+	if len(mixinDeclSchema) > 1 {
+		return nil, span.Errorf("root porter manifest schema has invalid properties.mixins.items.oneOf, expected a string type to list the names of all the mixins")
+	}
+	mixinNameDecl, ok := mixinDeclSchema[0].(jsonSchema)
+	if !ok {
+		return nil, span.Error(fmt.Errorf("root porter manifest schema has invalid properties.mixins.items.oneOf[0] type, expected []map[string]interface{} but got %T", mixinNameDecl))
+	}
+	mixinNameEnum, ok := mixinNameDecl["enum"].([]interface{})
+	if !ok {
+		return nil, span.Error(fmt.Errorf("root porter manifest schema has invalid properties.mixins.items.oneOf[0].enum type, expected []interface{} but got %T", mixinNameDecl["enum"]))
 	}
 
 	coreActions := []string{"install", "upgrade", "uninstall"} // custom actions are defined in json schema as additionalProperties
@@ -125,7 +144,15 @@ func (p *Porter) injectMixinSchemas(ctx context.Context, manifestSchema jsonSche
 			continue
 		}
 
-		mixinEnumSchema = append(mixinEnumSchema, mixin)
+		// Support declaring the mixin just by name
+		mixinNameEnum = append(mixinNameEnum, mixin)
+
+		// Support configuring the mixin, if available
+		// We know it's supported if it has a config definition included in its schema
+		if _, err := jsonpath.Get("$.definitions.config", mixinSchemaMap); err == nil {
+			mixinConfigRef := fmt.Sprintf("#/mixin.%s/definitions/config", mixin)
+			mixinDeclSchema = append(mixinDeclSchema, jsonObject{"$ref": mixinConfigRef})
+		}
 
 		// embed the entire mixin schema in the root
 		manifestSchema["mixin."+mixin] = mixinSchemaMap
@@ -171,7 +198,8 @@ func (p *Porter) injectMixinSchemas(ctx context.Context, manifestSchema jsonSche
 	}
 
 	// Save the updated arrays into the json schema document
-	mixinItemSchema["enum"] = mixinEnumSchema
+	mixinNameDecl["enum"] = mixinNameEnum
+	mixinItemSchema["oneOf"] = mixinDeclSchema
 
 	return manifestSchema, span.Error(err)
 }

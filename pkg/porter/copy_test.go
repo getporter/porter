@@ -1,10 +1,14 @@
 package porter
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
 	"get.porter.sh/porter/pkg/cnab"
+	cnabtooci "get.porter.sh/porter/pkg/cnab/cnab-to-oci"
+	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/tests"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -44,6 +48,8 @@ func TestCopyReferenceOnly(t *testing.T) {
 }
 
 func TestValidateCopyArgs(t *testing.T) {
+
+	cfg := config.NewTestConfig(t)
 
 	tests := []struct {
 		Name          string
@@ -107,7 +113,7 @@ func TestValidateCopyArgs(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		err := test.Opts.Validate()
+		err := test.Opts.Validate(cfg.Config)
 		if test.ExpectError {
 			require.Error(t, err)
 			assert.Contains(t, err.Error(), test.ExpectedError)
@@ -166,6 +172,57 @@ func TestCopyGenerateBundleRef(t *testing.T) {
 			} else {
 				require.Error(t, err)
 				assert.Contains(t, err.Error(), test.WantErr)
+			}
+		})
+	}
+}
+
+func TestCopy_ForceOverwrite(t *testing.T) {
+	t.Parallel()
+
+	testcases := []struct {
+		name    string
+		exists  bool
+		force   bool
+		wantErr string
+	}{
+		{name: "bundle doesn't exist, force not set", exists: false, force: false, wantErr: ""},
+		{name: "bundle exists, force not set", exists: true, force: false, wantErr: "already exists in the destination registry"},
+		{name: "bundle exists, force set", exists: true, force: true},
+	}
+
+	for _, tc := range testcases {
+		tc := tc
+
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			ctx := context.Background()
+			p := NewTestPorter(t)
+			defer p.Close()
+
+			// Set up that the destination already exists
+			p.TestRegistry.MockGetBundleMetadata = func(ctx context.Context, ref cnab.OCIReference, opts cnabtooci.RegistryOptions) (cnabtooci.BundleMetadata, error) {
+				if tc.exists {
+					return cnabtooci.BundleMetadata{}, nil
+				}
+				return cnabtooci.BundleMetadata{}, cnabtooci.ErrNotFound{Reference: ref}
+			}
+
+			opts := &CopyOpts{
+				Source:      "example1.com/mybuns:v0.1.0",
+				Destination: "example2.com/mybuns:v0.1.0",
+				Force:       tc.force,
+			}
+			err := opts.Validate(p.Config)
+			require.NoError(t, err)
+
+			err = p.CopyBundle(ctx, opts)
+
+			if tc.wantErr == "" {
+				require.NoError(t, err, "Copy failed")
+			} else {
+				tests.RequireErrorContains(t, err, tc.wantErr)
 			}
 		})
 	}

@@ -3,6 +3,7 @@ package runtime
 import (
 	"context"
 	"fmt"
+	"io"
 	"sort"
 	"testing"
 
@@ -63,6 +64,65 @@ install:
 	err = rm.Initialize(ctx)
 	require.NoError(t, err)
 }
+func TestStateBagUnpack(t *testing.T) {
+	ctx := context.Background()
+	pCtx := portercontext.NewTestContext(t)
+	pCtx.Setenv("PERSON", "Ralpha")
+
+	mContent := `schemaVersion: 1.0.0-alpha.2
+parameters:
+- name: person
+- name: place
+  applyTo: [install]
+
+install:
+- mymixin:
+    Parameters:
+      Thing: ${ bundle.parameters.person }
+state:
+- name: foo
+  path: foo/state.json
+`
+	tests := []struct {
+		name         string
+		stateContent string
+		expErr       error
+	}{
+		{
+			name:         "/porter/state.tgz is empty file",
+			stateContent: "",
+			expErr:       nil,
+		},
+		{
+			name:         "/porter/state.tgz has null string",
+			stateContent: "null",
+			expErr:       nil,
+		},
+		{
+			name:         "/porter/state.tgz has newline",
+			stateContent: "\n",
+			expErr:       io.ErrUnexpectedEOF,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			rm := runtimeManifestFromStepYaml(t, pCtx, mContent)
+			require.NoError(t, pCtx.FileSystem.WriteFile("/porter/state.tgz", []byte(test.stateContent), pkg.FileModeWritable))
+			s := rm.Install[0]
+
+			err := rm.ResolveStep(ctx, 0, s)
+			require.NoError(t, err)
+
+			err = rm.Initialize(ctx)
+			if test.expErr == nil {
+				require.NoError(t, err)
+			} else {
+				require.Contains(t, err.Error(), test.expErr.Error())
+			}
+			pCtx.FileSystem.Remove("/porter/state.tgz")
+		})
+	}
+}
 
 func TestResolvePathParam(t *testing.T) {
 	ctx := context.Background()
@@ -111,7 +171,7 @@ func TestMetadataAvailableForTemplating(t *testing.T) {
 	pms, ok := s.Data["exec"].(map[string]interface{})
 	require.True(t, ok)
 	cmd := pms["command"].(string)
-	assert.Equal(t, "echo \"name:porter-hello version:0.1.0 description:An example Porter configuration image:jeremyrickard/porter-hello:39a022ca907e26c3d8fffabd4bb8dbbc\"", cmd)
+	assert.Equal(t, "echo \"name:porter-hello version:0.1.0 description:An example Porter configuration image:jeremyrickard/porter-hello:porter-39a022ca907e26c3d8fffabd4bb8dbbc\"", cmd)
 }
 
 func TestDependencyMetadataAvailableForTemplating(t *testing.T) {
@@ -522,28 +582,28 @@ func TestReadManifest_Validate_BundleOutput_Error(t *testing.T) {
 func TestDependencyV1_Validate(t *testing.T) {
 	testcases := []struct {
 		name       string
-		dep        manifest.RequiredDependency
+		dep        manifest.Dependency
 		wantOutput string
 		wantError  string
 	}{
 		{
 			name:       "version in reference",
-			dep:        manifest.RequiredDependency{Name: "mysql", Bundle: manifest.BundleCriteria{Reference: "deislabs/azure-mysql:5.7"}},
+			dep:        manifest.Dependency{Name: "mysql", Bundle: manifest.BundleCriteria{Reference: "deislabs/azure-mysql:5.7"}},
 			wantOutput: "",
 			wantError:  "",
 		}, {
 			name:       "version ranges",
-			dep:        manifest.RequiredDependency{Name: "mysql", Bundle: manifest.BundleCriteria{Reference: "deislabs/azure-mysql", Version: "5.7.x-6"}},
+			dep:        manifest.Dependency{Name: "mysql", Bundle: manifest.BundleCriteria{Reference: "deislabs/azure-mysql", Version: "5.7.x-6"}},
 			wantOutput: "",
 			wantError:  "",
 		}, {
 			name:       "missing reference",
-			dep:        manifest.RequiredDependency{Name: "mysql", Bundle: manifest.BundleCriteria{Reference: ""}},
+			dep:        manifest.Dependency{Name: "mysql", Bundle: manifest.BundleCriteria{Reference: ""}},
 			wantOutput: "",
 			wantError:  `reference is required for dependency "mysql"`,
 		}, {
 			name:       "version double specified",
-			dep:        manifest.RequiredDependency{Name: "mysql", Bundle: manifest.BundleCriteria{Reference: "deislabs/azure-mysql:5.7", Version: "5.7.x-6"}},
+			dep:        manifest.Dependency{Name: "mysql", Bundle: manifest.BundleCriteria{Reference: "deislabs/azure-mysql:5.7", Version: "5.7.x-6"}},
 			wantOutput: "",
 			wantError:  `reference for dependency "mysql" can only specify REGISTRY/NAME when version ranges are specified`,
 		},

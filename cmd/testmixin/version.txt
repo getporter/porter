@@ -1,0 +1,6 @@
+{
+  "name": "testmixin",
+  "version": "v0.1.0",
+  "commit": "abc123",
+  "author": "Porter Authors"
+}

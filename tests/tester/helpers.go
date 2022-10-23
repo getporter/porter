@@ -15,22 +15,31 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// PrepareTestBundle ensures that the mybuns test bundle has been built.
+// PrepareTestBundle ensures that the mybuns test bundle is ready to use.
 func (t Tester) PrepareTestBundle() {
-	// These are environment variables referenced by the mybuns credential set
-	os.Setenv("USER", "porterci")
-	os.Setenv("ALT_USER", "porterci2")
-
 	// Build and publish an interesting test bundle and its dependency
 	t.MakeTestBundle(testdata.MyDb, testdata.MyDbRef)
 	t.MakeTestBundle(testdata.MyBuns, testdata.MyBunsRef)
 
-	// Import a parameter and credential set for the bundle into the global namespace
+	t.ApplyTestBundlePrerequisites()
+}
+
+// ApplyTestBundlePrerequisites ensures that anything required by the test bundle, mybuns, is ready to use.
+func (t Tester) ApplyTestBundlePrerequisites() {
+	// These are environment variables referenced by the mybuns credential set
+	os.Setenv("USER", "porterci")
+	os.Setenv("ALT_USER", "porterci2")
+
 	t.RequirePorter("parameters", "apply", filepath.Join(t.RepoRoot, "tests/testdata/params/mybuns.yaml"), "--namespace=")
 	t.RequirePorter("credentials", "apply", filepath.Join(t.RepoRoot, "tests/testdata/creds/mybuns.yaml"), "--namespace=")
 }
 
 func (t Tester) MakeTestBundle(name string, ref string) {
+	// Skip if we've already pushed it for another test
+	if _, _, err := t.RunPorter("explain", ref); err == nil {
+		return
+	}
+
 	pwd, _ := os.Getwd()
 	defer t.Chdir(pwd)
 	t.Chdir(filepath.Join(t.RepoRoot, "tests/testdata/", name))

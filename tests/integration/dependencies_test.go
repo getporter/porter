@@ -1,5 +1,4 @@
 //go:build integration
-// +build integration
 
 package integration
 
@@ -49,7 +48,7 @@ func publishMySQLBundle(ctx context.Context, p *porter.TestPorter) {
 	defer p.Chdir(pwd)
 
 	publishOpts := porter.PublishOptions{}
-	err = publishOpts.Validate(p.Context)
+	err = publishOpts.Validate(p.Config)
 	require.NoError(p.T(), err, "validation of publish opts for dependent bundle failed")
 
 	err = p.Publish(ctx, publishOpts)
@@ -66,7 +65,7 @@ func installWordpressBundle(ctx context.Context, p *porter.TestPorter) (namespac
 	namespace = p.RandomString(10)
 	installOpts := porter.NewInstallOptions()
 	installOpts.Namespace = namespace
-	installOpts.CredentialIdentifiers = []string{"ci"}
+	installOpts.CredentialIdentifiers = []string{"ci"} // Use the ci credential set, porter should remember this for later
 	installOpts.Params = []string{
 		"wordpress-password=mypassword",
 		"namespace=" + namespace,
@@ -137,7 +136,7 @@ func cleanupWordpressBundle(ctx context.Context, p *porter.TestPorter, namespace
 func upgradeWordpressBundle(ctx context.Context, p *porter.TestPorter, namespace string) {
 	upgradeOpts := porter.NewUpgradeOptions()
 	upgradeOpts.Namespace = namespace
-	upgradeOpts.CredentialIdentifiers = []string{"ci"}
+	// do not specify credential sets, porter should reuse what was specified from install
 	upgradeOpts.Params = []string{
 		"wordpress-password=mypassword",
 		"namespace=" + namespace,
@@ -164,13 +163,18 @@ func upgradeWordpressBundle(ctx context.Context, p *porter.TestPorter, namespace
 	require.NoError(p.T(), err, "GetLastClaim failed")
 	assert.Equal(p.T(), cnab.ActionUpgrade, c.Action, "the root bundle wasn't recorded as being upgraded")
 	assert.Equal(p.T(), cnab.StatusSucceeded, i.Status.ResultStatus, "the root bundle wasn't recorded as being upgraded successfully")
+
+	// Check that we are using the original credential set specified during install
+	require.Len(p.T(), i.CredentialSets, 1, "expected only one credential set associated to the installation")
+	assert.Equal(p.T(), "ci", i.CredentialSets[0], "expected to use the alternate credential set")
 }
 
 func invokeWordpressBundle(ctx context.Context, p *porter.TestPorter, namespace string) {
 	invokeOpts := porter.NewInvokeOptions()
 	invokeOpts.Namespace = namespace
 	invokeOpts.Action = "ping"
-	invokeOpts.CredentialIdentifiers = []string{"ci"}
+	// Use a different set of creds to run this rando command
+	invokeOpts.CredentialIdentifiers = []string{"ci2"}
 	invokeOpts.Params = []string{
 		"wordpress-password=mypassword",
 		"namespace=" + namespace,
@@ -196,11 +200,16 @@ func invokeWordpressBundle(ctx context.Context, p *porter.TestPorter, namespace 
 	require.NoError(p.T(), err, "GetLastClaim failed")
 	assert.Equal(p.T(), "ping", c.Action, "the root bundle wasn't recorded as being invoked")
 	assert.Equal(p.T(), cnab.StatusSucceeded, i.Status.ResultStatus, "the root bundle wasn't recorded as being invoked successfully")
+
+	// Check that we are now using the alternate credentials with the bundle
+	require.Len(p.T(), i.CredentialSets, 1, "expected only one credential set associated to the installation")
+	assert.Equal(p.T(), "ci2", i.CredentialSets[0], "expected to use the alternate credential set")
 }
 
 func uninstallWordpressBundle(ctx context.Context, p *porter.TestPorter, namespace string) {
 	uninstallOptions := porter.NewUninstallOptions()
 	uninstallOptions.Namespace = namespace
+	// Now go back to using the original set of credentials
 	uninstallOptions.CredentialIdentifiers = []string{"ci"}
 	uninstallOptions.Params = []string{
 		"namespace=" + namespace,
@@ -227,4 +236,9 @@ func uninstallWordpressBundle(ctx context.Context, p *porter.TestPorter, namespa
 	require.NoError(p.T(), err, "GetLastClaim failed")
 	assert.Equal(p.T(), cnab.ActionUninstall, c.Action, "the root bundle wasn't recorded as being uninstalled")
 	assert.Equal(p.T(), cnab.StatusSucceeded, i.Status.ResultStatus, "the root bundle wasn't recorded as being uninstalled successfully")
+
+	// Check that we are now using the original credentials with the bundle
+	require.Len(p.T(), i.CredentialSets, 1, "expected only one credential set associated to the installation")
+	assert.Equal(p.T(), "ci", i.CredentialSets[0], "expected to use the alternate credential set")
+
 }

@@ -171,7 +171,7 @@ To upgrade a bundle for use with Porter v1:
 2. Add a `schemaVersion: 1.0.0-alpha.1` to the top of the file
 3. The `tag` field has been replaced by `reference`. We recommend using `registry` instead of `reference`, but you may continue to use it to completely control where the bundle is published.
 4. The `invocationImage` field has been deprecated and is no longer available.
-   Porter now generates the invocation image name using a hash generated from the bundle's metadata.
+   Porter now generates the invocation image name using a hash generated from the bundle's metadata using the following format: BUNDLE_REPOSITORY:porter-HASH.
    We also no longer push the invocation image to a separate repository, so if you used to rely on the BUNDLE_NAME-installer naming convention, that is not available going forward.
 5. If the bundle defines dependencies, the dependency list has been moved from under `dependences` to under `dependencies.requires`, and the `reference` and `version` fields moved under a new field `bundle`.
    ```yaml

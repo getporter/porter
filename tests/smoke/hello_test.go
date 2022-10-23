@@ -31,7 +31,9 @@ func TestHelloBundle(t *testing.T) {
 
 	// Install the bundle and verify the correct output is printed
 	_, output = test.RequirePorter("install", testdata.MyBuns, "--reference", testdata.MyBunsRef, "--label", "test=true", "-p=mybuns", "-c=mybuns", "--param", "password=supersecret")
-	require.Contains(t, output, "Hello, *******")
+	require.Contains(t, output, "Hello, *******", "expected to see output printed from the bundle itself")
+	// Make sure that when the mixin uses span.Debug to print the command it is running, that it's being printed
+	require.Contains(t, output, "/cnab/app ./helpers.sh install", "expected to see output printed from the porter runtime libraries")
 
 	// Should not see the mybuns installation in the global namespace
 	test.RequireInstallationNotFound("", testdata.MyBuns)

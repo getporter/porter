@@ -1,5 +1,23 @@
 variables: # these are really constants
   vmImage: "ubuntu-latest"
+  GOVERSION: "1.18"
+  # Cache go modules and the results of go build/test
+  # Increment the version number prefix of the key and restoreKey to clear the cache
+  GOCACHE: $(Pipeline.Workspace)/.cache/go-build/
+  GOCACHE_KEY: 'v3 | go-build | "$(Agent.OS)" | go.sum'
+  GOCACHE_RESTOREKEYS: |
+    v3 | go-build | "$(Agent.OS)"
+    v3 | go-build | "$(Agent.OS)" | go.sum
+  # Use separate cache for the xbuild jobs, since they generate different outputs
+  GOXCACHE_KEY: 'v3 | go-xbuild | "$(Agent.OS)" | go.sum'
+  GOXCACHE_RESTOREKEYS: |
+    v3 | go-xbuild | "$(Agent.OS)"
+    v3 | go-xbuild | "$(Agent.OS)" | go.sum
+  GOMODCACHE: /home/vsts/go/pkg/mod
+  GOMODCACHE_KEY: 'v4 | go-pkg | "$(Agent.OS)" | go.sum'
+  GOMODCACHE_RESTOREKEYS: |
+    v4 | go-pkg | "$(Agent.OS)"
+    v4 | go-pkg | "$(Agent.OS)" | go.sum
 
 parameters:
   - name: goVersion
@@ -30,6 +48,18 @@ stages:
             displayName: "Set Go Version"
             inputs:
               version: ${{parameters.goVersion}}
+          - task: Cache@2
+            displayName: Cache Go Packages
+            inputs:
+              key: "$(GOMODCACHE_KEY)"
+              restoreKeys: $(GOMODCACHE_RESTOREKEYS)
+              path: $(GOMODCACHE)
+          - task: Cache@2
+            displayName: Cache Go Build
+            inputs:
+              key: "$(GOCACHE_KEY)"
+              restoreKeys: $(GOCACHE_RESTOREKEYS)
+              path: $(GOCACHE)
           - script: go run mage.go ConfigureAgent
             displayName: "Configure Agent"
           - bash: mage build
@@ -49,6 +79,19 @@ stages:
             displayName: "Set Go Version"
             inputs:
               version: ${{parameters.goVersion}}
+          - task: Cache@2
+            displayName: Cache Go Packages
+            inputs:
+              key: "$(GOMODCACHE_KEY)"
+              restoreKeys: $(GOMODCACHE_RESTOREKEYS)
+              path: $(GOMODCACHE)
+          - task: Cache@2
+            displayName: Cache Go Build
+            inputs:
+              # Use special cache keys just for cross-compiled binaries
+              key: "$(GOXCACHE_KEY)"
+              restoreKeys: $(GOXCACHE_RESTOREKEYS)
+              path: $(GOCACHE)
           - script: go run mage.go ConfigureAgent
             displayName: "Configure Agent"
           - bash: mage XBuildAll
@@ -68,6 +111,18 @@ stages:
             displayName: "Set Go Version"
             inputs:
               version: ${{parameters.goVersion}}
+          - task: Cache@2
+            displayName: Cache Go Packages
+            inputs:
+              key: "$(GOMODCACHE_KEY)"
+              restoreKeys: $(GOMODCACHE_RESTOREKEYS)
+              path: $(GOMODCACHE)
+          - task: Cache@2
+            displayName: Cache Go Build
+            inputs:
+              key: "$(GOCACHE_KEY)"
+              restoreKeys: $(GOCACHE_RESTOREKEYS)
+              path: $(GOCACHE)
           - script: go run mage.go ConfigureAgent
             displayName: "Configure Agent"
           - bash: mage Vet
@@ -84,6 +139,18 @@ stages:
             displayName: "Set Go Version"
             inputs:
               version: ${{parameters.goVersion}}
+          - task: Cache@2
+            displayName: Cache Go Packages
+            inputs:
+              key: "$(GOMODCACHE_KEY)"
+              restoreKeys: $(GOMODCACHE_RESTOREKEYS)
+              path: $(GOMODCACHE)
+          - task: Cache@2
+            displayName: Cache Go Build
+            inputs:
+              key: "$(GOCACHE_KEY)"
+              restoreKeys: $(GOCACHE_RESTOREKEYS)
+              path: $(GOCACHE)
           - script: go run mage.go ConfigureAgent
             displayName: "Configure Agent"
           - bash: mage TestUnit
@@ -105,6 +172,25 @@ stages:
             displayName: "Set Go Version"
             inputs:
               version: ${{parameters.goVersion}}
+          - task: Cache@2
+            displayName: Cache Go Packages
+            inputs:
+              key: "$(GOMODCACHE_KEY)"
+              restoreKeys: $(GOMODCACHE_RESTOREKEYS)
+              path: $(GOMODCACHE)
+          - task: Cache@2
+            displayName: Cache Go Build
+            inputs:
+              key: "$(GOCACHE_KEY)"
+              restoreKeys: $(GOCACHE_RESTOREKEYS)
+              path: $(GOCACHE)
+          # We log in here because TestRegistry integration test needs a valid docker session
+          # This unfortunately means that this pipeline must be manually triggered for non-maintainers
+          - task: Docker@2
+            displayName: Docker Login
+            inputs:
+              command: login
+              containerRegistry: ghcr.io/getporter
           - script: go run mage.go ConfigureAgent SetBinExecutable
             displayName: "Configure Agent"
           - script: mage -v TestIntegration
@@ -115,9 +201,11 @@ stages:
         condition: and(succeeded(), not(${{ parameters.skipTests }}))
         strategy:
           matrix:
-            windows:
-              poolName: "windows"
-              vmImage: ""
+            # Skip windows smoke tests until we can fix the windows agent
+            #windows:
+            #  poolName: "windows"
+            #  vmImage: ""
+            #  GOMODCACHE: "C:/Users/porterci/go/pkg/mod"
             linux:
               poolName: "Azure Pipelines"
               vmImage: "ubuntu-latest"
@@ -135,6 +223,18 @@ stages:
             displayName: "Set Go Version"
             inputs:
               version: ${{parameters.goVersion}}
+          - task: Cache@2
+            displayName: Cache Go Packages
+            inputs:
+              key: "$(GOMODCACHE_KEY)"
+              restoreKeys: $(GOMODCACHE_RESTOREKEYS)
+              path: $(GOMODCACHE)
+          - task: Cache@2
+            displayName: Cache Go Build
+            inputs:
+              key: "$(GOCACHE_KEY)"
+              restoreKeys: $(GOCACHE_RESTOREKEYS)
+              path: $(GOCACHE)
           - script: go run mage.go ConfigureAgent UseXBuildBinaries
             displayName: "Setup Bin"
           - script: mage -v TestSmoke
@@ -153,6 +253,18 @@ stages:
             displayName: "Set Go Version"
             inputs:
               version: ${{parameters.goVersion}}
+          - task: Cache@2
+            displayName: Cache Go Packages
+            inputs:
+              key: "$(GOMODCACHE_KEY)"
+              restoreKeys: $(GOMODCACHE_RESTOREKEYS)
+              path: $(GOMODCACHE)
+          - task: Cache@2
+            displayName: Cache Go Build
+            inputs:
+              key: "$(GOCACHE_KEY)"
+              restoreKeys: $(GOCACHE_RESTOREKEYS)
+              path: $(GOCACHE)
           - task: DownloadPipelineArtifact@2
             displayName: "Download Cross-Compiled Porter Binaries"
             inputs:
@@ -176,6 +288,18 @@ stages:
             displayName: "Set Go Version"
             inputs:
               version: ${{parameters.goVersion}}
+          - task: Cache@2
+            displayName: Cache Go Packages
+            inputs:
+              key: "$(GOMODCACHE_KEY)"
+              restoreKeys: $(GOMODCACHE_RESTOREKEYS)
+              path: $(GOMODCACHE)
+          - task: Cache@2
+            displayName: Cache Go Build
+            inputs:
+              key: "$(GOCACHE_KEY)"
+              restoreKeys: $(GOCACHE_RESTOREKEYS)
+              path: $(GOCACHE)
           - task: DownloadPipelineArtifact@2
             displayName: "Download Cross-Compiled Porter Binaries"
             inputs:

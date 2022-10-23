@@ -21,6 +21,8 @@ Below are schema versions for the Porter manifest, and the corresponding Porter 
 | Bundle      | [1.0.0-alpha.1](./1.0.0-alpha.1/) | v1.0.0-alpha.14+ |
 | Bundle      | [1.0.0](./1.0.0/)                 | v1.0.0-beta.2+   |
 
+🚨 The schemaType field is not yet supported on porter.yaml files, setting it will cause an error.
+
 Starting with schemaVersion 1.0.0, the template delimiter was changed to `${ }` from `{{ }}` to avoid compatibility and escaping problems with YAML.
 Template delimiters are no longer required to be in quoted strings, and can now be used to inject non-string types, such as booleans or numbers.
 
@@ -32,7 +34,6 @@ The [schema-check] configuration setting allows you to change how Porter behaves
 ## Example 
 
 ```yaml
-schemaType: Bundle
 schemaVersion: 1.0.0
 name: myapp
 version: 1.0.0
@@ -165,7 +166,6 @@ status:
 
 | Field                            | Required | Description                                                                                                                                                                            |
 |----------------------------------|----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| schemaType                       | false    | The type of document. This isn't used by Porter but is included when Porter outputs the file, so that editors can determine the resource type.                                         |
 | schemaVersion                    | true     | The version of the Bundle schema used in this file.                                                                                                                                    |
 | name                             | true     | The name of the bundle.                                                                                                                                                                |
 | version                          | true     | The version of the bundle, must adhere to [semver v2].<br/>The bundle tag defaults to the version with a v prefix, e.g. mybundle:v1.0.0. Use --tag or the reference field to override. |

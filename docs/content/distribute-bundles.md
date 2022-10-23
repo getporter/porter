@@ -29,7 +29,7 @@ registry: getporter
 
 This YAML snippet indicates that the bundle will be built and tagged as `getporter/kubernetes:v0.2.0`. This full bundle reference is constructed from the provided `registry`, `name` and `version` fields. We recommend using [semantic versioning](https://semver.org/) for the bundle version.
 
-The generated invocation image name will be auto-derived from the same combination of `registry`, `name` and `version`.  Using the example above, an invocation image with the name of `getporter/kubernetes-installer:0.1.0` will be built.
+The generated invocation image name will be auto-derived from the same combination of `registry`, `name` and `version`.  Using the example above, an invocation image with the name of `getporter/kubernetes:porter-HASH` will be built.
 
 Once you have provided values for the fields above, run the `porter build` command one last time to verify that your invocation image can be successfully built.
 
@@ -38,7 +38,7 @@ Next, run the `porter publish` command in order to push the invocation image to 
 ```
 $ porter publish
 Pushing CNAB invocation image...
-The push refers to repository [docker.io/getporter/kubernetes-installer]
+The push refers to repository [docker.io/getporter/kubernetes]
 0f4d408243ab: Preparing
 6573f19b0ef5: Preparing
 a6afb08c6a1c: Preparing
@@ -58,8 +58,8 @@ a6afb08c6a1c: Pushed
 0.1.0: digest: sha256:5e49e21be75fa940d74fbadac02af9cb31cf7f9147c336e8ce1b42a0537aa7f7 size: 1793
 
 Rewriting CNAB bundle.json...
-Starting to copy image getporter/kubernetes-installer:0.1.0...
-Completed image getporter/kubernetes-installer:0.1.0 copy
+Starting to copy image getporter/kubernetes:porter-1a1c944c8540836ccdb475dd5ea3adf5...
+Completed image getporter/kubernetes:porter-1a1c944c8540836ccdb475dd5ea3adf5 copy
 Bundle tag docker.io/getporter/kubernetes:v0.2.0 pushed successfully, with digest "sha256:10a41e6d5af73f2cebe4bf6d368bdf5ccc39e641117051d30f88cf0c69e4e456"
 ```
 
@@ -105,7 +105,7 @@ are referencing the published location of the image.
   * REGISTRY/ORG/BUNDLE@**REFERENCED_IMAGE_1_DIGEST**
   * REGISTRY/ORG/BUNDLE@**REFERENCED_IMAGE_2_DIGEST**
 
-NOTE: Digest refers to the the [repository digest][digest] (not the image id).
+NOTE: Digest refers to the [repository digest][digest] (not the image id).
 
 Consider the following example:
 

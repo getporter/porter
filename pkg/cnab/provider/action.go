@@ -6,11 +6,9 @@ import (
 	"errors"
 	"fmt"
 	"sort"
-	"strings"
 
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
-	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/tracing"
 	cnabaction "github.com/cnabio/cnab-go/action"
@@ -86,9 +84,19 @@ func (r *Runtime) AddFiles(ctx context.Context, args ActionArguments) cnabaction
 }
 
 func (r *Runtime) AddEnvironment(args ActionArguments) cnabaction.OperationConfigFunc {
+	const verbosityEnv = "PORTER_VERBOSITY"
+
 	return func(op *driver.Operation) error {
 		op.Environment[config.EnvPorterInstallationNamespace] = args.Installation.Namespace
 		op.Environment[config.EnvPorterInstallationName] = args.Installation.Name
+
+		// Pass the verbosity from porter's local config into the bundle
+		op.Environment[verbosityEnv] = r.Config.GetVerbosity().Level().String()
+
+		// When a bundle is run in debug mode, the verbosity is automatically set to debug
+		if debugMode, _ := args.Params["porter-debug"].(bool); debugMode {
+			op.Environment[verbosityEnv] = zapcore.DebugLevel.String()
+		}
 		return nil
 	}
 }
@@ -170,8 +178,6 @@ func (r *Runtime) Execute(ctx context.Context, args ActionArguments) error {
 				return log.Error(fmt.Errorf("could not save the pending action's status, the bundle was not executed: %w", err))
 			}
 		}
-
-		r.printDebugInfo(ctx, b, creds, args.Params)
 
 		opResult, result, err := a.Run(currentRun.ToCNAB(), creds.ToCNAB(), r.ApplyConfig(ctx, args)...)
 
@@ -300,32 +306,4 @@ func (r *Runtime) appendFailedResult(ctx context.Context, opErr error, run stora
 
 	// Accumulate any errors from the operation with the persistence errors
 	return multierror.Append(opErr, resultErr).ErrorOrNil()
-}
-
-func (r *Runtime) printDebugInfo(ctx context.Context, b cnab.ExtendedBundle, creds secrets.Set, params map[string]interface{}) {
-	log := tracing.LoggerFromContext(ctx)
-
-	if log.ShouldLog(zapcore.DebugLevel) {
-		var dump strings.Builder
-		secrets := make([]string, 0, len(params)+len(creds))
-
-		dump.WriteString("params:\n")
-		for k, v := range params {
-			if b.IsSensitiveParameter(k) {
-				// TODO(carolynvs): When we consolidate our conversion logic of parameters into strings, let's use it here.
-				// https://github.com/cnabio/cnab-go/issues/270
-				secrets = append(secrets, fmt.Sprintf("%v", v))
-			}
-			dump.WriteString(fmt.Sprintf("  - %s: %v\n", k, v))
-		}
-
-		dump.WriteString("creds:\n")
-		for k, v := range creds {
-			secrets = append(secrets, fmt.Sprintf("%v", v))
-			dump.WriteString(fmt.Sprintf("  - %s: %v\n", k, v))
-		}
-
-		r.Context.SetSensitiveValues(secrets)
-		log.Debug(dump.String())
-	}
 }

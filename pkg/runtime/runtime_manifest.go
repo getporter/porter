@@ -112,8 +112,8 @@ func (m *RuntimeManifest) GetInstallationName() string {
 }
 
 func (m *RuntimeManifest) loadDependencyDefinitions() error {
-	m.bundles = make(map[string]cnab.ExtendedBundle, len(m.Dependencies.RequiredDependencies))
-	for _, dep := range m.Dependencies.RequiredDependencies {
+	m.bundles = make(map[string]cnab.ExtendedBundle, len(m.Dependencies.Requires))
+	for _, dep := range m.Dependencies.Requires {
 		bunD, err := GetDependencyDefinition(m.config.Context, dep.Name)
 		if err != nil {
 			return err
@@ -525,13 +525,26 @@ func (m *RuntimeManifest) createOutputsDir() error {
 // declared location in the bundle.
 func (m *RuntimeManifest) unpackStateBag(ctx context.Context) error {
 	log := tracing.LoggerFromContext(ctx)
-
 	_, err := m.config.FileSystem.Open(statePath)
 	if os.IsNotExist(err) || len(m.StateBag) == 0 {
 		m.debugf(log, "No existing bundle state to unpack")
 		return nil
 	}
-
+	bytes, err := m.config.FileSystem.ReadFile(statePath)
+	if err != nil {
+		m.debugf(log, "Unable to read bundle state file")
+		return err
+	}
+	// TODO(sgettys): hack around state.tgz ALWAYS being injected even when empty files mess things up
+	// I'm not sure yet why it's injecting as null instead of "" (as required by the spec)
+	// We want to get the null -> "" fixed, and also not write files into the bundle when unset.
+	// that's a cnab change somewhere probably
+	// the problem is in injectParameters in cnab-go
+	if string(bytes) == "null" {
+		m.debugf(log, "Bundle state file has null content")
+		m.config.FileSystem.Remove(statePath)
+		return nil
+	}
 	// Unpack the state file and copy its contents to where the bundle expects them
 	// state var name -> path in bundle
 	log.Debug("Unpacking bundle state...")
@@ -566,6 +579,10 @@ func (m *RuntimeManifest) unpackStateBag(ctx context.Context) error {
 
 	gzr, err := gzip.NewReader(stateArchive)
 	if err != nil {
+		if err == io.EOF {
+			log.Debug("statefile exists but is empty")
+			return nil
+		}
 		return log.Error(fmt.Errorf("could not create a new gzip reader for the statefile: %w", err))
 	}
 	defer gzr.Close()
