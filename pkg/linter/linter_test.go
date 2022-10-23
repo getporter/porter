@@ -88,8 +88,17 @@ func TestLinter_Lint(t *testing.T) {
 		mixins.LintResults = Results{
 			{
 				Level: LevelWarning,
-				Code:  "exec-101",
-				Title: "warning stuff isn't working",
+				Location: Location {
+					Action: "",
+					Mixin: "",
+					StepNumber: 0,
+					StepDescription: "",
+			
+				},
+				Code: "exec-100",
+				Title: "Reserved name warning",
+				Message: "This is a reserved name",
+				URL: "",
 			},
 		}
 

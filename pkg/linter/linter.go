@@ -153,24 +153,41 @@ func New(cxt *portercontext.Context, mixins pkgmgmt.PackageManager) *Linter {
 }
 
 // Implement this function to check if string is in the slice
-func isIn(param string, reservedNames []string) bool {
-	for _, parameter := range reservedNames {
-		if parameter == param {
-			return true
-		}
+func isIn(param string, reservedNames map[string]bool) bool {
+	if _, ok := reservedNames[param]; ok {
+		return true
 	}
+
 	return false
 }
 
 func (l *Linter) Lint(ctx context.Context, m *manifest.Manifest) (Results, error) {
 	// TODO: perform any porter level linting
 	// e.g. metadata, credentials, properties, outputs, dependencies, etc
-	reservedNames := []string{"debug"}
+	reservedNames := map[string]bool{"debug": true}
+
+	var results Results
 
 	params := m.Parameters
+
 	for _, param := range params {
 		if isIn(param.Name, reservedNames) {
-			panic("This is a reserved name")
+
+			res := Result {
+				Level: LevelWarning,
+				Location: Location {
+					Action: "",
+					Mixin: "",
+					StepNumber: 0,
+					StepDescription: "",
+			
+				},
+				Code: "exec-100",
+				Title: "Reserved name warning",
+				Message: "This is a reserved name",
+				URL: "",
+			}
+			results = append(results, res)
 		}
 	}
 	ctx, span := tracing.StartSpan(ctx)
@@ -183,7 +200,6 @@ func (l *Linter) Lint(ctx context.Context, m *manifest.Manifest) (Results, error
 		return nil, span.Error(err)
 	}
 
-	var results Results
 	for mixin, response := range responses {
 		var r Results
 		err = json.Unmarshal([]byte(response), &r)
