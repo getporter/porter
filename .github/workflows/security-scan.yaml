@@ -31,7 +31,7 @@ jobs:
       - name: Configure Agent
         run: go run mage.go ConfigureAgent
       - name: Build Porter
-        run: mage -v XBuildAll
+        run: go build -o bin/porter ./cmd/porter
       - name: Build PorterAgent Image
         run: mage -v BuildImages
       - name: Perform CodeQL Analysis
