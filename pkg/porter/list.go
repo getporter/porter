@@ -152,17 +152,19 @@ func NewDisplayInstallation(installation storage.Installation) DisplayInstallati
 // a Installation record.
 func (d DisplayInstallation) ConvertToInstallation() (storage.Installation, error) {
 	i := storage.Installation{
-		SchemaVersion:  d.SchemaVersion,
-		ID:             d.ID,
-		Name:           d.Name,
-		Namespace:      d.Namespace,
-		Uninstalled:    d.Uninstalled,
-		Bundle:         d.Bundle,
-		Custom:         d.Custom,
-		Labels:         d.Labels,
-		CredentialSets: d.CredentialSets,
-		ParameterSets:  d.ParameterSets,
-		Status:         d.Status,
+		SchemaVersion: d.SchemaVersion,
+		ID:            d.ID,
+		InstallationSpec: storage.InstallationSpec{
+			Name:           d.Name,
+			Namespace:      d.Namespace,
+			Uninstalled:    d.Uninstalled,
+			Bundle:         d.Bundle,
+			Custom:         d.Custom,
+			Labels:         d.Labels,
+			CredentialSets: d.CredentialSets,
+			ParameterSets:  d.ParameterSets,
+		},
+		Status: d.Status,
 	}
 
 	var err error
