@@ -15,7 +15,7 @@ For additional details see: https://getporter.org/install#command-completion`,
 		Example:               "porter completion bash > /usr/local/etc/bash_completions.d/porter",
 		DisableFlagsInUseLine: true,
 		ValidArgs:             []string{"bash", "zsh", "fish", "powershell"},
-		Args:                  cobra.ExactValidArgs(1),
+		Args:                  cobra.MatchAll(cobra.ExactArgs(1), cobra.OnlyValidArgs),
 		Run: func(cmd *cobra.Command, args []string) {
 			switch args[0] {
 			case "bash":
