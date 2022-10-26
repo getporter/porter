@@ -152,9 +152,9 @@ func NewDisplayInstallation(installation storage.Installation) DisplayInstallati
 // a Installation record.
 func (d DisplayInstallation) ConvertToInstallation() (storage.Installation, error) {
 	i := storage.Installation{
-		SchemaVersion: d.SchemaVersion,
-		ID:            d.ID,
+		ID: d.ID,
 		InstallationSpec: storage.InstallationSpec{
+			SchemaVersion:  d.SchemaVersion,
 			Name:           d.Name,
 			Namespace:      d.Namespace,
 			Uninstalled:    d.Uninstalled,

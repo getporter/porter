@@ -19,9 +19,6 @@ import (
 var _ Document = Installation{}
 
 type Installation struct {
-	// SchemaVersion is the version of the installation state schema.
-	SchemaVersion schema.Version `json:"schemaVersion"`
-
 	// ID is the unique identifier for an installation record.
 	ID string `json:"id"`
 
@@ -33,6 +30,9 @@ type Installation struct {
 
 // InstallationSpec contains installation fields that represent the desired state of the installation.
 type InstallationSpec struct {
+	// SchemaVersion is the version of the installation state schema.
+	SchemaVersion schema.Version `json:"schemaVersion"`
+
 	// Name of the installation. Immutable.
 	Name string `json:"name"`
 
@@ -77,12 +77,12 @@ func (i Installation) DefaultDocumentFilter() map[string]interface{} {
 func NewInstallation(namespace string, name string) Installation {
 	now := time.Now()
 	return Installation{
-		SchemaVersion: InstallationSchemaVersion,
-		ID:            cnab.NewULID(),
+		ID: cnab.NewULID(),
 		InstallationSpec: InstallationSpec{
-			Namespace:  namespace,
-			Name:       name,
-			Parameters: NewInternalParameterSet(namespace, name),
+			SchemaVersion: InstallationSchemaVersion,
+			Namespace:     namespace,
+			Name:          name,
+			Parameters:    NewInternalParameterSet(namespace, name),
 		},
 		Status: InstallationStatus{
 			Created:  now,
