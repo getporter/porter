@@ -90,7 +90,6 @@ type PrintableParameter struct {
 	ApplyTo     string      `json:"applyTo" yaml:"applyTo"`
 	Description string      `json:"description" yaml:"description"`
 	Required    bool        `json:"required" yaml:"required"`
-	Sensitive   bool        `json:"sensitive" yaml:"sensitive"`
 }
 
 type SortPrintableParameter []PrintableParameter
@@ -252,7 +251,6 @@ func generatePrintable(bun cnab.ExtendedBundle, action string) (*PrintableBundle
 		pp.ApplyTo = generateApplyToString(v.ApplyTo)
 		pp.Required = v.Required
 		pp.Description = v.Description
-		pp.Sensitive = bun.IsSensitiveParameter((p))
 
 		if shouldIncludeInExplainOutput(&v, action) {
 			pb.Parameters = append(pb.Parameters, pp)
