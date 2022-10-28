@@ -9,18 +9,21 @@ parameters:
     applyTo: upgrade
     description: ""
     required: false
+    sensitive: false
   - name: region
     type: string
     default: mars
     applyTo: All Actions
     description: ""
     required: false
+    sensitive: false
   - name: seed
     type: boolean
     default: null
     applyTo: All Actions
     description: ""
     required: true
+    sensitive: false
 mixins:
   - helm
   - terraform
