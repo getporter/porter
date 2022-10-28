@@ -10,8 +10,7 @@
       "default": null,
       "applyTo": "upgrade",
       "description": "",
-      "required": false,
-      "sensitive": false
+      "required": false
     },
     {
       "name": "region",
@@ -19,8 +18,7 @@
       "default": "mars",
       "applyTo": "All Actions",
       "description": "",
-      "required": false,
-      "sensitive": false
+      "required": false
     },
     {
       "name": "seed",
@@ -28,8 +26,7 @@
       "default": null,
       "applyTo": "All Actions",
       "description": "",
-      "required": true,
-      "sensitive": false
+      "required": true
     }
   ],
   "mixins": [
