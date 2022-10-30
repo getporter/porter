@@ -50,7 +50,7 @@ require (
 	github.com/mmcdole/gofeed v1.1.3
 	github.com/moby/buildkit v0.10.0
 	github.com/moby/term v0.0.0-20210619224110-3f7ff695adc6
-	github.com/olekukonko/tablewriter v0.0.4
+	github.com/olekukonko/tablewriter v0.0.5
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/osteele/liquid v1.3.0
 	github.com/pelletier/go-toml v1.9.4
