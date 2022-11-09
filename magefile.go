@@ -55,8 +55,12 @@ func CheckGoVersion() {
 
 // Builds all code artifacts in the repository
 func Build() {
-	mg.SerialDeps(setup.EnsureProtobufTools, BuildPorter, DocsGen, BuildExecMixin, BuildAgent)
+	mg.SerialDeps(InstallBuildTools, BuildPorter, BuildExecMixin, BuildAgent, DocsGen)
 	mg.Deps(GetMixins)
+}
+
+func InstallBuildTools() {
+	mg.Deps(setup.EnsureProtobufTools)
 }
 
 // Build the porter client and runtime
