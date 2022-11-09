@@ -15,6 +15,7 @@
   * [Install mixins](#install-mixins)
   * [Preview documentation](#preview-documentation)
   * [View a trace of a Porter command](#view-a-trace-of-a-porter-command)
+  * [Debug Smoke Tests](#debug-smoke-tests)
   * [Write a blog post](#write-a-blog-post)
 * [Code structure and practices](#code-structure-and-practices)
   * [What is the general code layout?](#what-is-the-general-code-layout)
@@ -476,6 +477,26 @@ On the Jaeger dashboard, select "porter" from the service drop down, and click "
 The smoke and integration tests will run with telemetry enabled when the PORTER_TEST_TELEMETRY_ENABLED environment variable is true.
 
 [otel-jaeger bundle]: https://getporter.org/examples/src/otel-jaeger
+
+## Debug Smoke Tests
+
+If you want to attach a debugger to Porter when it is running in a smoke test, first install delve:
+
+```
+go install github.com/go-delve/delve/cmd/dlv@latest
+```
+
+Next, determine the porter command that you want the smoke test to automatically run through delve so that you can attach to it and debug.
+Set `PORTER_RUN_IN_DEBUGGER` to the command(s) to run in delve.
+Use `porter` to target any porter command, or target a specific command for example `porter installation apply`.
+
+When the smoke tests run a porter command that has the prefix contained in PORTER_RUN_IN_DEBUGGER, instead of running porter directly, porter is run in delve.
+Delve will wait for you to attach a debugger, and then proceed to run the porter command so that you can debug into it.
+
+The default debugger port is `55942` which you can override with the `PORTER_DEBUGGER_PORT` environment variable.
+
+Now run the smoke test with `go test -run TESTNAME -tags smoke ./tests/smoke`, then use your Go IDE or delve directly to attach to Porter.
+If you are using GoLand, use the **Go Remote** debug configuration and make sure to specify the same port that you used when running the smoke test (default is 55942).
 
 ## Command Documentation
 
