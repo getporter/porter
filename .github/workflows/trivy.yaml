@@ -1,4 +1,5 @@
-name: Security Scan
+# Scan our docker images for vulnerabilities
+name: Trivy
 on:
   # always do a security scan when a change is merged
   push:
@@ -24,19 +25,13 @@ jobs:
         with:
           go-version-file: go.mod
           cache: true
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v2
-        with:
-          languages: ${{ matrix.language }}
       - name: Configure Agent
         run: go run mage.go ConfigureAgent
-      - name: Build Porter
+      - name: Build Binaries
         run: mage -v XBuildAll
-      - name: Build PorterAgent Image
+      - name: Build Docker Images
         run: mage -v BuildImages
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v2
-      - name: Scan PorterAgent with Trivy
+      - name: Scan Images with Trivy
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: "localhost:5000/porter-agent:${{ env.VERSION }}"

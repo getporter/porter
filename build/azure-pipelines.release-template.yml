@@ -1,6 +1,6 @@
 variables: # these are really constants
   vmImage: "ubuntu-latest"
-  GOVERSION: "1.19.2"
+  GOVERSION: "1.19.3"
   # Cache go modules and the results of go build/test
   # Increment the version number prefix of the key and restoreKey to clear the cache
   GOCACHE: $(Pipeline.Workspace)/.cache/go-build/
@@ -22,7 +22,7 @@ variables: # these are really constants
 parameters:
   - name: goVersion
     type: string
-    default: "1.19.2"
+    default: "1.19.3"
   - name: registry
     type: string
     default: ghcr.io/getporter/test
