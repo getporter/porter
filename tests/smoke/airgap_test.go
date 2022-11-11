@@ -80,44 +80,54 @@ func TestAirgappedEnvironment(t *testing.T) {
 				return yq.SetValue("images.whalesayd.repository", fmt.Sprintf("%s/whalesayd", reg1))
 			})
 
-			// Publish a test bundle that references the image from the temp registry, and push to another insecure registry
-			test.RequirePorter("publish", "--registry", reg2.String(), insecureFlag)
+			t.Run("publish original bundle", func(t *testing.T) {
+				// Publish a test bundle that references the image from the temp registry, and push to another insecure registry
+				test.RequirePorter("publish", "--registry", reg2.String(), insecureFlag)
 
-			// Stop the original registry, this ensures that we are relying 100% on the copy of the bundle in the second registry
-			reg1.Close()
+				// Stop the original registry, this ensures that we are relying 100% on the copy of the bundle in the second registry
+				reg1.Close()
+			})
 
-			//
-			// Try out the two ways to move a bundle between registries:
-			// 1. Copy the bundle from one registry to the other directly
-			//
 			origRef := fmt.Sprintf("%s/%s:%s", reg2, testdata.MyBuns, "v0.1.2")
 			newRef := fmt.Sprintf("%s/%s-second:%s", reg2, testdata.MyBuns, "v0.2.0")
-			test.RequirePorter("copy", "--source", origRef, "--destination", newRef, insecureFlag)
+			t.Run("copy original bundle to second registry", func(t *testing.T) {
+				//
+				// Try out the two ways to move a bundle between registries:
+				// 1. Copy the bundle from one registry to the other directly
+				//
+				test.RequirePorter("copy", "--source", origRef, "--destination", newRef, insecureFlag)
+			})
 
-			//
-			// 2. Use archive + publish to copy the bundle from one registry to the other
-			//
-			archiveFilePath := filepath.Join(test.TestDir, "archive-test.tgz")
-			test.RequirePorter("archive", archiveFilePath, "--reference", origRef, insecureFlag)
-			relocMap := getRelocationMap(test, archiveFilePath)
-			require.Equal(test.T, fmt.Sprintf("%s/mybuns@sha256:499f71eec2e3bd78f26c268bbf5b2a65f73b96216fac4a89b86b5ebf115527b6", reg2), relocMap[localRefWithDigest], "expected the relocation entry for the image to be the new published location")
+			t.Run("archive original bundle and publish to second registry", func(t *testing.T) {
+				//
+				// 2. Use archive + publish to copy the bundle from one registry to the other
+				//
+				archiveFilePath := filepath.Join(test.TestDir, "archive-test.tgz")
+				test.RequirePorter("archive", archiveFilePath, "--reference", origRef, insecureFlag)
+				relocMap := getRelocationMap(test, archiveFilePath)
+				require.Equal(test.T, fmt.Sprintf("%s/mybuns@sha256:499f71eec2e3bd78f26c268bbf5b2a65f73b96216fac4a89b86b5ebf115527b6", reg2), relocMap[localRefWithDigest], "expected the relocation entry for the image to be the new published location")
 
-			// Publish from the archived bundle to a new repository on the second registry
-			// Specify --force since we are overwriting the tag pushed to during the last copy
-			test.RequirePorter("publish", "--archive", archiveFilePath, "-r", newRef, insecureFlag, "--force")
-			archiveFilePath2 := filepath.Join(test.TestDir, "archive-test2.tgz")
+				// Publish from the archived bundle to a new repository on the second registry
+				// Specify --force since we are overwriting the tag pushed to during the last copy
+				test.RequirePorter("publish", "--archive", archiveFilePath, "-r", newRef, insecureFlag, "--force")
+			})
 
-			// Archive from the new location on the second registry
-			test.RequirePorter("archive", archiveFilePath2, "--reference", newRef, insecureFlag)
-			relocMap2 := getRelocationMap(test, archiveFilePath2)
-			require.Equal(test.T, fmt.Sprintf("%s/mybuns-second@sha256:499f71eec2e3bd78f26c268bbf5b2a65f73b96216fac4a89b86b5ebf115527b6", reg2), relocMap2[localRefWithDigest], "expected the relocation entry for the image to be the new published location")
+			t.Run("archive from second registry", func(t *testing.T) {
+				// Archive from the new location on the second registry
+				archiveFilePath2 := filepath.Join(test.TestDir, "archive-test2.tgz")
+				test.RequirePorter("archive", archiveFilePath2, "--reference", newRef, insecureFlag)
+				relocMap2 := getRelocationMap(test, archiveFilePath2)
+				require.Equal(test.T, fmt.Sprintf("%s/mybuns-second@sha256:499f71eec2e3bd78f26c268bbf5b2a65f73b96216fac4a89b86b5ebf115527b6", reg2), relocMap2[localRefWithDigest], "expected the relocation entry for the image to be the new published location")
+			})
 
-			// Validate that we can pull the bundle from the new location
-			test.RequirePorter("explain", newRef)
+			t.Run("validate relocated bundle on second registry", func(t *testing.T) {
+				// Validate that we can pull the bundle from the new location
+				test.RequirePorter("explain", newRef)
 
-			// Validate that we can install from the new location
-			test.ApplyTestBundlePrerequisites()
-			test.RequirePorter("install", "-r", newRef, insecureFlag, "-c=mybuns", "-p=mybuns")
+				// Validate that we can install from the new location
+				test.ApplyTestBundlePrerequisites()
+				test.RequirePorter("install", "-r", newRef, insecureFlag, "-c=mybuns", "-p=mybuns")
+			})
 		})
 	}
 }
