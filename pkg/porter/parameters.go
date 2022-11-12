@@ -342,10 +342,11 @@ func validateParameterName(args []string) error {
 }
 
 // loadParameterSets loads parameter values per their parameter set strategies
-func (p *Porter) loadParameterSets(ctx context.Context, bun cnab.ExtendedBundle, namespace string, params []string) (secrets.Set, error) {
+func (p *Porter) loadParameterSets(ctx context.Context, bun cnab.ExtendedBundle, namespace string, params []string, internalPs storage.ParameterSet) (secrets.Set, error) {
 	resolvedParameters := secrets.Set{}
-	for _, name := range params {
 
+	// First apply all named parameter sets
+	for _, name := range params {
 		// Try to get the params in the local namespace first, fallback to the global creds
 		query := storage.FindOptions{
 			Sort: []string{"-namespace"},
@@ -395,6 +396,15 @@ func (p *Porter) loadParameterSets(ctx context.Context, bun cnab.ExtendedBundle,
 		for k, v := range rc {
 			resolvedParameters[k] = v
 		}
+	}
+
+	// Then resolve the installation's internal parameter set and apply it on top
+	rc, err := p.Parameters.ResolveAll(ctx, internalPs)
+	if err != nil {
+		return nil, err
+	}
+	for k, v := range rc {
+		resolvedParameters[k] = v
 	}
 
 	return resolvedParameters, nil

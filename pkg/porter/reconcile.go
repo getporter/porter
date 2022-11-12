@@ -73,21 +73,11 @@ func (p *Porter) ReconcileInstallation(ctx context.Context, opts ReconcileOption
 	lifecycleOpts.Name = opts.Name
 	lifecycleOpts.Namespace = opts.Namespace
 	lifecycleOpts.CredentialIdentifiers = opts.Installation.CredentialSets
-
 	lifecycleOpts.ParameterSets = opts.Installation.ParameterSets
-	lifecycleOpts.Params = make([]string, 0, len(opts.Installation.Parameters.Parameters))
 
 	// Write out the parameters as string values. Not efficient but reusing ExecuteAction would need more refactoring otherwise
 	_, err = p.resolveBundleReference(ctx, lifecycleOpts.BundleReferenceOptions)
 	if err != nil {
-		return err
-	}
-
-	for _, param := range opts.Installation.Parameters.Parameters {
-		lifecycleOpts.Params = append(lifecycleOpts.Params, fmt.Sprintf("%s=%s", param.Name, param.Value))
-	}
-
-	if err := p.applyActionOptionsToInstallation(ctx, &opts.Installation, lifecycleOpts); err != nil {
 		return err
 	}
 

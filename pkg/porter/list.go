@@ -168,7 +168,7 @@ func (d DisplayInstallation) ConvertToInstallation() (storage.Installation, erro
 	}
 
 	var err error
-	i.Parameters, err = d.ConvertParamToSet(i)
+	i.Parameters, err = d.ConvertParamToSet()
 	if err != nil {
 		return storage.Installation{}, err
 	}
@@ -182,18 +182,15 @@ func (d DisplayInstallation) ConvertToInstallation() (storage.Installation, erro
 }
 
 // ConvertParamToSet converts a Parameters into a internal ParameterSet.
-func (d DisplayInstallation) ConvertParamToSet(i storage.Installation) (storage.ParameterSet, error) {
+func (d DisplayInstallation) ConvertParamToSet() (storage.ParameterSet, error) {
 	strategies := make([]secrets.Strategy, 0, len(d.Parameters))
 	for name, value := range d.Parameters {
 		stringVal, err := cnab.WriteParameterToString(name, value)
 		if err != nil {
 			return storage.ParameterSet{}, err
 		}
-		strategy := secrets.Strategy{
-			Name:  name,
-			Value: stringVal,
-		}
-		strategies = append(strategies, strategy)
+
+		strategies = append(strategies, storage.ValueStrategy(name, stringVal))
 	}
 
 	return storage.NewInternalParameterSet(d.Namespace, d.Name, strategies...), nil

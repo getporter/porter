@@ -101,7 +101,7 @@ func (p *Porter) InstallBundle(ctx context.Context, opts InstallOptions) error {
 // Users are expected to edit the installation record if they don't want that behavior.
 func (p *Porter) applyActionOptionsToInstallation(ctx context.Context, i *storage.Installation, opts *BundleExecutionOptions) error {
 	// Record the parameters specified by the user, with flags taking precedence over parameter set values
-	err := opts.LoadParameters(ctx, p, opts.bundleRef.Definition)
+	err := opts.LoadParameters(ctx, p, opts.bundleRef.Definition, i.Parameters)
 	if err != nil {
 		return err
 	}

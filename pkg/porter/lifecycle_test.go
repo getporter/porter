@@ -252,7 +252,7 @@ func TestBundleExecutionOptions_ParseParamSets(t *testing.T) {
 	err := opts.Validate(ctx, []string{}, p.Porter)
 	assert.NoError(t, err)
 
-	err = opts.parseParamSets(ctx, p.Porter, cnab.ExtendedBundle{})
+	err = opts.parseParamSets(ctx, p.Porter, cnab.ExtendedBundle{}, storage.ParameterSet{})
 	assert.NoError(t, err)
 
 	wantParams := map[string]string{
@@ -282,7 +282,7 @@ func TestBundleExecutionOptions_ParseParamSets_Failed(t *testing.T) {
 	err = opts.Validate(ctx, []string{}, p.Porter)
 	assert.NoError(t, err)
 
-	err = opts.parseParamSets(ctx, p.Porter, bun)
+	err = opts.parseParamSets(ctx, p.Porter, bun, storage.ParameterSet{})
 	assert.Error(t, err)
 
 }
@@ -302,7 +302,7 @@ func TestBundleExecutionOptions_LoadParameters(t *testing.T) {
 	opts := NewBundleExecutionOptions()
 	opts.Params = []string{"my-first-param=1", "my-second-param=2"}
 
-	err = opts.LoadParameters(context.Background(), p.Porter, bun)
+	err = opts.LoadParameters(context.Background(), p.Porter, bun, storage.ParameterSet{})
 	require.NoError(t, err)
 
 	assert.Len(t, opts.Params, 2)
@@ -383,10 +383,10 @@ func TestBundleExecutionOptions_populateInternalParameterSet(t *testing.T) {
 	opts := NewBundleExecutionOptions()
 	opts.Params = []string{nonsensitiveParamName + "=" + nonsensitiveParamValue, sensitiveParamName + "=" + sensitiveParamValue}
 
-	err = opts.LoadParameters(ctx, p.Porter, bun)
-	require.NoError(t, err)
-
 	i := storage.NewInstallation("", bun.Name)
+
+	err = opts.LoadParameters(ctx, p.Porter, bun, i.Parameters)
+	require.NoError(t, err)
 
 	err = opts.populateInternalParameterSet(ctx, p.Porter, bun, &i)
 	require.NoError(t, err)
@@ -408,10 +408,54 @@ func TestBundleExecutionOptions_populateInternalParameterSet(t *testing.T) {
 	// as well
 	opts.combinedParameters = nil
 	opts.Params = make([]string, 0)
-	err = opts.LoadParameters(ctx, p.Porter, bun)
+	err = opts.LoadParameters(ctx, p.Porter, bun, i.Parameters)
 	require.NoError(t, err)
 	err = opts.populateInternalParameterSet(ctx, p.Porter, bun, &i)
 	require.NoError(t, err)
 
-	require.Len(t, i.Parameters.Parameters, 0)
+	// Check that when no parameter overrides are specified, we use the originally specified parameters from the previous run
+	require.Len(t, i.Parameters.Parameters, 2)
+	require.Equal(t, "my-first-param", i.Parameters.Parameters[0].Name)
+	require.Equal(t, "1", i.Parameters.Parameters[0].Source.Value)
+	require.Equal(t, "my-second-param", i.Parameters.Parameters[1].Name)
+	require.Equal(t, "secret", i.Parameters.Parameters[1].Source.Key)
+}
+
+func TestBundleExecutionOptions_populateInternalParameterSet_ExistingParams(t *testing.T) {
+	p := NewTestPorter(t)
+	defer p.Close()
+
+	ctx := context.Background()
+
+	p.TestConfig.TestContext.AddTestFile("testdata/porter.yaml", config.Name)
+	m, err := manifest.LoadManifestFrom(context.Background(), p.Config, config.Name)
+	require.NoError(t, err)
+	bun, err := configadapter.ConvertToTestBundle(ctx, p.Config, m)
+	require.NoError(t, err)
+
+	nonsensitiveParamName := "my-first-param"
+	nonsensitiveParamValue := "3"
+	opts := NewBundleExecutionOptions()
+	opts.Params = []string{nonsensitiveParamName + "=" + nonsensitiveParamValue}
+
+	i := storage.NewInstallation("", bun.Name)
+	i.Parameters = storage.NewParameterSet("", "internal-ps",
+		storage.ValueStrategy("my-first-param", "1"),
+		storage.ValueStrategy("my-second-param", "2"),
+	)
+	err = opts.LoadParameters(ctx, p.Porter, bun, i.Parameters)
+	require.NoError(t, err)
+
+	err = opts.populateInternalParameterSet(ctx, p.Porter, bun, &i)
+	require.NoError(t, err)
+
+	require.Len(t, i.Parameters.Parameters, 2)
+
+	// Check that overrides are applied on top of existing parameters
+	require.Len(t, i.Parameters.Parameters, 2)
+	require.Equal(t, "my-first-param", i.Parameters.Parameters[0].Name)
+	require.Equal(t, "3", i.Parameters.Parameters[0].Source.Value)
+	require.Equal(t, "my-second-param", i.Parameters.Parameters[1].Name)
+	require.Equal(t, "value", i.Parameters.Parameters[1].Source.Key)
+	require.Equal(t, "2", i.Parameters.Parameters[1].Source.Value)
 }

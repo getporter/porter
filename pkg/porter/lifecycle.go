@@ -102,7 +102,7 @@ func (o *BundleExecutionOptions) Validate(ctx context.Context, args []string, p 
 
 // LoadParameters validates and resolves the parameters and sets. It must be
 // called after porter has loaded the bundle definition.
-func (o *BundleExecutionOptions) LoadParameters(ctx context.Context, p *Porter, bun cnab.ExtendedBundle) error {
+func (o *BundleExecutionOptions) LoadParameters(ctx context.Context, p *Porter, bun cnab.ExtendedBundle, internalPs storage.ParameterSet) error {
 	// This is called in multiple code paths, so exit early if
 	// we have already loaded the parameters into combinedParameters
 	if o.combinedParameters != nil {
@@ -114,7 +114,7 @@ func (o *BundleExecutionOptions) LoadParameters(ctx context.Context, p *Porter, 
 		return err
 	}
 
-	err = o.parseParamSets(ctx, p, bun)
+	err = o.parseParamSets(ctx, p, bun, internalPs)
 	if err != nil {
 		return err
 	}
@@ -135,33 +135,39 @@ func (o *BundleExecutionOptions) parseParams() error {
 	return nil
 }
 
-func (o *BundleExecutionOptions) populateInternalParameterSet(ctx context.Context, p *Porter, bun cnab.ExtendedBundle, i *storage.Installation) error {
+func (o *BundleExecutionOptions) populateInternalParameterSet(ctx context.Context, p *Porter, bun cnab.ExtendedBundle, inst *storage.Installation) error {
 	strategies := make([]secrets.Strategy, 0, len(o.parsedParams))
 	for name, value := range o.parsedParams {
 		strategies = append(strategies, storage.ValueStrategy(name, value))
 	}
 
-	strategies, err := p.Sanitizer.CleanParameters(ctx, strategies, bun, i.ID)
+	strategies, err := p.Sanitizer.CleanParameters(ctx, strategies, bun, inst.ID)
 	if err != nil {
 		return err
 	}
 
-	if len(strategies) == 0 {
-		// if no override is specified, clear out the old parameters on the
-		// installation record
-		i.Parameters.Parameters = nil
-		return nil
-	}
+	for _, paramOverride := range strategies {
+		replaced := false
+		for i, existingParam := range inst.Parameters.Parameters {
+			if paramOverride.Name == existingParam.Name {
+				inst.Parameters.Parameters[i] = paramOverride
+				replaced = true
+				break
+			}
+		}
 
-	i.Parameters = i.NewInternalParameterSet(strategies...)
+		if !replaced {
+			inst.Parameters.Parameters = append(inst.Parameters.Parameters, paramOverride)
+		}
+	}
 
 	return nil
 }
 
 // parseParamSets parses the variable assignments in ParameterSets.
-func (o *BundleExecutionOptions) parseParamSets(ctx context.Context, p *Porter, bun cnab.ExtendedBundle) error {
+func (o *BundleExecutionOptions) parseParamSets(ctx context.Context, p *Porter, bun cnab.ExtendedBundle, internalPs storage.ParameterSet) error {
 	if len(o.ParameterSets) > 0 {
-		parsed, err := p.loadParameterSets(ctx, bun, o.Namespace, o.ParameterSets)
+		parsed, err := p.loadParameterSets(ctx, bun, o.Namespace, o.ParameterSets, internalPs)
 		if err != nil {
 			return fmt.Errorf("unable to process provided parameter sets: %w", err)
 		}
@@ -358,7 +364,7 @@ func (p *Porter) BuildActionArgs(ctx context.Context, installation storage.Insta
 
 	// Resolve the final set of typed parameters, taking into account the user overrides, parameter sources
 	// and defaults
-	err = opts.LoadParameters(ctx, p, opts.bundleRef.Definition)
+	err = opts.LoadParameters(ctx, p, opts.bundleRef.Definition, installation.Parameters)
 	if err != nil {
 		return cnabprovider.ActionArguments{}, err
 	}
