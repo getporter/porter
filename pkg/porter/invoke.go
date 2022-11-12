@@ -65,9 +65,16 @@ func (p *Porter) InvokeBundle(ctx context.Context, opts InvokeOptions) error {
 		// Create an ephemeral installation just for this run
 		installation = storage.Installation{InstallationSpec: storage.InstallationSpec{Namespace: opts.Namespace, Name: opts.Name}}
 	}
-	err = p.applyActionOptionsToInstallation(ctx, &installation, opts.BundleExecutionOptions)
+
+	_, err = p.applyActionOptionsToInstallation(ctx, opts, &installation)
 	if err != nil {
 		return err
 	}
+
+	err = p.sanitizeInstallation(ctx, &installation, bundleRef.Definition)
+	if err != nil {
+		return err
+	}
+
 	return p.ExecuteAction(ctx, installation, opts)
 }

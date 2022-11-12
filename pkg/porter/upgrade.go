@@ -75,15 +75,22 @@ func (p *Porter) UpgradeBundle(ctx context.Context, opts *UpgradeOptions) error 
 		i.Bundle.Tag = ""
 	}
 
-	err = p.applyActionOptionsToInstallation(ctx, &i, opts.BundleExecutionOptions)
-	if err != nil {
-		return fmt.Errorf("could not apply options to installation: %w", err)
-	}
 	i.Status.Modified = time.Now()
 	err = i.Validate()
 	if err != nil {
 		return err
 	}
+
+	_, err = p.applyActionOptionsToInstallation(ctx, opts, &i)
+	if err != nil {
+		return err
+	}
+
+	err = p.sanitizeInstallation(ctx, &i, opts.bundleRef.Definition)
+	if err != nil {
+		return err
+	}
+
 	err = p.Installations.UpdateInstallation(ctx, i)
 	if err != nil {
 		return err

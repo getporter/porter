@@ -73,28 +73,14 @@ func (p *Porter) ReconcileInstallation(ctx context.Context, opts ReconcileOption
 	lifecycleOpts.Name = opts.Name
 	lifecycleOpts.Namespace = opts.Namespace
 	lifecycleOpts.CredentialIdentifiers = opts.Installation.CredentialSets
-
 	lifecycleOpts.ParameterSets = opts.Installation.ParameterSets
-	lifecycleOpts.Params = make([]string, 0, len(opts.Installation.Parameters.Parameters))
 
-	// Write out the parameters as string values. Not efficient but reusing ExecuteAction would need more refactoring otherwise
-	_, err = p.resolveBundleReference(ctx, lifecycleOpts.BundleReferenceOptions)
-	if err != nil {
+	if _, err = p.resolveBundleReference(ctx, lifecycleOpts.BundleReferenceOptions); err != nil {
 		return err
 	}
 
-	for _, param := range opts.Installation.Parameters.Parameters {
-		lifecycleOpts.Params = append(lifecycleOpts.Params, fmt.Sprintf("%s=%s", param.Name, param.Value))
-	}
-
-	if err := p.applyActionOptionsToInstallation(ctx, &opts.Installation, lifecycleOpts); err != nil {
+	if _, err = p.applyActionOptionsToInstallation(ctx, actionOpts, &opts.Installation); err != nil {
 		return err
-	}
-
-	if !opts.DryRun {
-		if err = p.Installations.UpsertInstallation(ctx, opts.Installation); err != nil {
-			return err
-		}
 	}
 
 	// Determine if the installation's desired state is out of sync with reality 🤯
@@ -120,6 +106,10 @@ func (p *Porter) ReconcileInstallation(ctx context.Context, opts ReconcileOption
 	if opts.DryRun {
 		log.Info("Skipping bundle execution because --dry-run was specified")
 		return nil
+	} else {
+		if err = p.Installations.UpsertInstallation(ctx, opts.Installation); err != nil {
+			return err
+		}
 	}
 
 	return p.ExecuteAction(ctx, opts.Installation, actionOpts)
@@ -187,8 +177,7 @@ func (p *Porter) IsInstallationInSync(ctx context.Context, i storage.Installatio
 	// to tell if the installation should be executed again. For now I'm just
 	// removing internal parameters (e.g. porter-debug, porter-state) and making
 	// sure that the types are correct, etc.
-	b := newRef.Definition
-	resolvedParams, err := p.resolveParameters(ctx, i, b, action.GetAction(), opts.combinedParameters)
+	resolvedParams, err := p.applyActionOptionsToInstallation(ctx, action, &i)
 	if err != nil {
 		return false, err
 	}
@@ -196,6 +185,7 @@ func (p *Porter) IsInstallationInSync(ctx context.Context, i storage.Installatio
 	// Convert parameters to a string to compare them. This avoids problems comparing
 	// values that may be equal but have different types due to how the parameter
 	// value was loaded.
+	b := newRef.Definition
 	prepParametersForComparison := func(params map[string]interface{}) (map[string]string, error) {
 		compParams := make(map[string]string, len(params))
 		for paramName, rawValue := range params {

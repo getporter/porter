@@ -70,10 +70,19 @@ func TestInstallOptions_validateDriver(t *testing.T) {
 	}
 }
 
-func TestPorter_applyActionOptionsToInstallation(t *testing.T) {
+func TestPorter_ApplyParametersToInstallation(t *testing.T) {
 	setup := func() (context.Context, *TestPorter, *storage.Installation) {
 		ctx := context.Background()
 		p := NewTestPorter(t)
+
+		p.TestParameters.InsertParameterSet(ctx, storage.ParameterSet{
+			ParameterSetSpec: storage.ParameterSetSpec{
+				Name: "oldps1",
+				Parameters: []secrets.Strategy{
+					{Name: "logLevel", Source: secrets.Source{Key: "value", Value: "2"}},
+				},
+			},
+		})
 
 		p.TestParameters.InsertParameterSet(ctx, storage.ParameterSet{
 			ParameterSetSpec: storage.ParameterSetSpec{
@@ -98,7 +107,7 @@ func TestPorter_applyActionOptionsToInstallation(t *testing.T) {
 		ctx, p, inst := setup()
 
 		// We should replace the previously used sets since we specified different ones
-		opts := NewBundleExecutionOptions()
+		opts := NewInstallOptions()
 		opts.Reference = kahnlatest.String()
 		opts.bundleRef = &cnab.BundleReference{
 			Reference: kahnlatest,
@@ -119,7 +128,7 @@ func TestPorter_applyActionOptionsToInstallation(t *testing.T) {
 		opts.CredentialIdentifiers = []string{"newcs1"}
 
 		require.NoError(t, opts.Validate(ctx, nil, p.Porter))
-		err := p.applyActionOptionsToInstallation(ctx, inst, opts)
+		_, err := p.applyActionOptionsToInstallation(ctx, opts, inst)
 		require.NoError(t, err, "applyActionOptionsToInstallation failed")
 
 		require.Equal(t, opts.ParameterSets, inst.ParameterSets, "expected the installation to replace the credential sets with those specified")
@@ -130,7 +139,7 @@ func TestPorter_applyActionOptionsToInstallation(t *testing.T) {
 		ctx, p, inst := setup()
 
 		// We should reuse the previously used sets since we specified different ones
-		opts := NewBundleExecutionOptions()
+		opts := NewInstallOptions()
 		opts.Reference = kahnlatest.String()
 		opts.bundleRef = &cnab.BundleReference{
 			Reference: kahnlatest,
@@ -150,7 +159,7 @@ func TestPorter_applyActionOptionsToInstallation(t *testing.T) {
 		opts.CredentialIdentifiers = []string{}
 
 		require.NoError(t, opts.Validate(ctx, nil, p.Porter))
-		err := p.applyActionOptionsToInstallation(ctx, inst, opts)
+		_, err := p.applyActionOptionsToInstallation(ctx, opts, inst)
 		require.NoError(t, err, "applyActionOptionsToInstallation failed")
 
 		require.Equal(t, []string{"oldps1"}, inst.ParameterSets, "expected the installation to reuse the previous credential sets")

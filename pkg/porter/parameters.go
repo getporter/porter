@@ -344,8 +344,8 @@ func validateParameterName(args []string) error {
 // loadParameterSets loads parameter values per their parameter set strategies
 func (p *Porter) loadParameterSets(ctx context.Context, bun cnab.ExtendedBundle, namespace string, params []string) (secrets.Set, error) {
 	resolvedParameters := secrets.Set{}
-	for _, name := range params {
 
+	for _, name := range params {
 		// Try to get the params in the local namespace first, fallback to the global creds
 		query := storage.FindOptions{
 			Sort: []string{"-namespace"},
@@ -535,10 +535,10 @@ func (p *Porter) ParametersApply(ctx context.Context, o ApplyOptions) error {
 	return nil
 }
 
-// resolveParameters accepts a set of parameter assignments and combines them
+// finalizeParameters accepts a set of resolved parameters and combines them
 // with parameter sources and default parameter values to create a full set
-// of parameters.
-func (p *Porter) resolveParameters(ctx context.Context, installation storage.Installation, bun cnab.ExtendedBundle, action string, params map[string]string) (map[string]interface{}, error) {
+// of parameters that are defined in proper Go types, and not strings.
+func (p *Porter) finalizeParameters(ctx context.Context, installation storage.Installation, bun cnab.ExtendedBundle, action string, params map[string]string) (map[string]interface{}, error) {
 	mergedParams := make(secrets.Set, len(params))
 	paramSources, err := p.resolveParameterSources(ctx, bun, installation)
 	if err != nil {
@@ -606,7 +606,7 @@ func (p *Porter) getUnconvertedValueFromRaw(b cnab.ExtendedBundle, def *definiti
 		if _, err := p.FileSystem.Stat(rawValue); err == nil {
 			bytes, err := p.FileSystem.ReadFile(rawValue)
 			if err != nil {
-				return "", fmt.Errorf("unable to read file parameter %s: %w", key, err)
+				return "", fmt.Errorf("unable to read file parameter %s at %s: %w", key, rawValue, err)
 			}
 			return base64.StdEncoding.EncodeToString(bytes), nil
 		}
@@ -752,4 +752,120 @@ func (p *Porter) CreateParameter(opts ParameterCreateOptions) error {
 	default:
 		return newUnsupportedFormatError(opts.OutputType)
 	}
+}
+
+// applyActionOptionsToInstallation applies the specified action (e.g. install/upgrade) to an installation record.
+// This resolves the parameters to their final form to be passed to the CNAB runtime, and modifies the specified installation record.
+// You must sanitize the parameters before saving the installation so that sensitive values are not saved to the database.
+func (p *Porter) applyActionOptionsToInstallation(ctx context.Context, ba BundleAction, inst *storage.Installation) (map[string]interface{}, error) {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
+	o := ba.GetOptions()
+
+	// Resolve the bundle reference if it hasn't been done yet
+	if _, err := p.resolveBundleReference(ctx, o.BundleReferenceOptions); err != nil {
+		return nil, err
+	}
+	bun := o.bundleRef.Definition
+
+	//
+	// 1. Record the parameter and credential sets used on the installation
+	// if none were specified, reuse the previous sets from the installation
+	//
+	span.SetAttributes(
+		tracing.ObjectAttribute("override-parameter-sets", o.ParameterSets),
+		tracing.ObjectAttribute("override-credential-sets", o.CredentialIdentifiers))
+	if len(o.ParameterSets) > 0 {
+		inst.ParameterSets = o.ParameterSets
+	}
+	if len(o.CredentialIdentifiers) > 0 {
+		inst.CredentialSets = o.CredentialIdentifiers
+	}
+
+	//
+	// 2. Parse parameter flags from the command line and apply to the installation as overrides
+	//
+	// This contains resolved sensitive values, so only trace it in special dev builds (nothing is traced for release builds)
+	span.SetSensitiveAttributes(tracing.ObjectAttribute("override-parameters", o.Params))
+	parsedOverrides, err := storage.ParseVariableAssignments(o.Params)
+	if err != nil {
+		return nil, err
+	}
+
+	// Default the porter-debug param to --debug
+	if o.DebugMode {
+		parsedOverrides["porter-debug"] = "true"
+	}
+
+	// If any overrides are specified, forget previously specified parameter overrides
+	if len(parsedOverrides) > 0 {
+		inst.Parameters.Parameters = make([]secrets.Strategy, 0, len(parsedOverrides))
+		for name, value := range parsedOverrides {
+			// Do not resolve parameters from dependencies
+			if strings.Contains(name, "#") {
+				continue
+			}
+
+			inst.Parameters.Parameters = append(inst.Parameters.Parameters, storage.ValueStrategy(name, value))
+		}
+	}
+	// This contains resolved sensitive values, so only trace it in special dev builds (nothing is traced for release builds)
+	span.SetSensitiveAttributes(tracing.ObjectAttribute("merged-installation-parameters", inst.Parameters.Parameters))
+
+	//
+	// 3. Resolve named parameter sets
+	//
+	resolvedParams, err := p.loadParameterSets(ctx, bun, o.Namespace, inst.ParameterSets)
+	if err != nil {
+		return nil, fmt.Errorf("unable to process provided parameter sets: %w", err)
+	}
+
+	// This contains resolved sensitive values, so only trace it in special dev builds (nothing is traced for release builds)
+	span.SetSensitiveAttributes(tracing.ObjectAttribute("resolved-parameter-sets-keys", resolvedParams))
+
+	//
+	// 4. Resolve the installation's internal parameter set
+	resolvedOverrides, err := p.Parameters.ResolveAll(ctx, inst.Parameters)
+	if err != nil {
+		return nil, err
+	}
+
+	// This contains resolved sensitive values, so only trace it in special dev builds (nothing is traced for release builds)
+	span.SetSensitiveAttributes(tracing.ObjectAttribute("resolved-installation-parameters", inst.Parameters.Parameters))
+
+	//
+	// 5. Apply the overrides on top of the parameter sets
+	//
+	for k, v := range resolvedOverrides {
+		resolvedParams[k] = v
+	}
+
+	//
+	// 6. Separate out params for the root bundle from the ones intended for dependencies
+	//    This only applies to the dep v1 implementation, in dep v2 you can't specify rando params for deps
+	//
+	o.depParams = make(map[string]string)
+	for k, v := range resolvedParams {
+		if strings.Contains(k, "#") {
+			o.depParams[k] = v
+			delete(resolvedParams, k)
+		}
+	}
+
+	// This contains resolved sensitive values, so only trace it in special dev builds (nothing is traced for release builds)
+	span.SetSensitiveAttributes(tracing.ObjectAttribute("user-specified-parameters", resolvedParams))
+
+	//
+	// 7. When a parameter is not specified, fallback to a parameter source or default
+	//
+	finalParams, err := p.finalizeParameters(ctx, *inst, bun, ba.GetAction(), resolvedParams)
+
+	// This contains resolved sensitive values, so only trace it in special dev builds (nothing is traced for release builds)
+	span.SetSensitiveAttributes(tracing.ObjectAttribute("final-parameters", finalParams))
+
+	// Remember the final set of parameters so we don't have to resolve them more than once
+	o.finalParams = finalParams
+
+	return finalParams, err
 }

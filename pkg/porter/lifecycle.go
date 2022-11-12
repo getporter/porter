@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 
 	"get.porter.sh/porter/pkg/cache"
 	"get.porter.sh/porter/pkg/cnab"
@@ -12,7 +11,6 @@ import (
 	cnabprovider "get.porter.sh/porter/pkg/cnab/provider"
 	"get.porter.sh/porter/pkg/encoding"
 	"get.porter.sh/porter/pkg/portercontext"
-	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/tracing"
 	"github.com/opencontainers/go-digest"
@@ -61,14 +59,14 @@ type BundleExecutionOptions struct {
 	// Driver is the CNAB-compliant driver used to run bundle actions.
 	Driver string
 
-	// parsedParams is the parsed set of parameters from Params.
-	parsedParams map[string]string
+	// parameters that are intended for dependencies
+	// This is legacy support for v1 of dependencies where you could pass a parameter to a dependency directly using special formatting
+	// Example: --param mysql#username=admin
+	// This is not used anymore in dependencies v2
+	depParams map[string]string
 
-	// parsedParamSets is the parsed set of parameter from ParameterSets
-	parsedParamSets map[string]string
-
-	// combinedParameters is parsedParams merged on top of parsedParamSets.
-	combinedParameters map[string]string
+	// the final resolved set of parameters that are passed to the bundle
+	finalParams map[string]interface{}
 }
 
 func NewBundleExecutionOptions() *BundleExecutionOptions {
@@ -86,113 +84,12 @@ func (o *BundleExecutionOptions) Validate(ctx context.Context, args []string, p 
 		return err
 	}
 
-	// Only validate the syntax of the --param flags
-	// We will validate the parameter sets later once we have the bundle loaded.
-	if err := o.parseParams(); err != nil {
-		return err
-	}
-
 	o.defaultDriver(p)
 	if err := o.validateDriver(p.Context); err != nil {
 		return err
 	}
 
 	return nil
-}
-
-// LoadParameters validates and resolves the parameters and sets. It must be
-// called after porter has loaded the bundle definition.
-func (o *BundleExecutionOptions) LoadParameters(ctx context.Context, p *Porter, bun cnab.ExtendedBundle) error {
-	// This is called in multiple code paths, so exit early if
-	// we have already loaded the parameters into combinedParameters
-	if o.combinedParameters != nil {
-		return nil
-	}
-
-	err := o.parseParams()
-	if err != nil {
-		return err
-	}
-
-	err = o.parseParamSets(ctx, p, bun)
-	if err != nil {
-		return err
-	}
-
-	o.combinedParameters = o.combineParameters(p.Context)
-
-	return nil
-}
-
-// parsedParams parses the variable assignments in Params.
-func (o *BundleExecutionOptions) parseParams() error {
-	p, err := storage.ParseVariableAssignments(o.Params)
-	if err != nil {
-		return err
-	}
-
-	o.parsedParams = p
-	return nil
-}
-
-func (o *BundleExecutionOptions) populateInternalParameterSet(ctx context.Context, p *Porter, bun cnab.ExtendedBundle, i *storage.Installation) error {
-	strategies := make([]secrets.Strategy, 0, len(o.parsedParams))
-	for name, value := range o.parsedParams {
-		strategies = append(strategies, storage.ValueStrategy(name, value))
-	}
-
-	strategies, err := p.Sanitizer.CleanParameters(ctx, strategies, bun, i.ID)
-	if err != nil {
-		return err
-	}
-
-	if len(strategies) == 0 {
-		// if no override is specified, clear out the old parameters on the
-		// installation record
-		i.Parameters.Parameters = nil
-		return nil
-	}
-
-	i.Parameters = i.NewInternalParameterSet(strategies...)
-
-	return nil
-}
-
-// parseParamSets parses the variable assignments in ParameterSets.
-func (o *BundleExecutionOptions) parseParamSets(ctx context.Context, p *Porter, bun cnab.ExtendedBundle) error {
-	if len(o.ParameterSets) > 0 {
-		parsed, err := p.loadParameterSets(ctx, bun, o.Namespace, o.ParameterSets)
-		if err != nil {
-			return fmt.Errorf("unable to process provided parameter sets: %w", err)
-		}
-		o.parsedParamSets = parsed
-	}
-	return nil
-}
-
-// Combine the parameters into a single map
-// The params set on the command line take precedence over the params set in
-// parameter set files
-// Anything set multiple times, is decided by "last one set wins"
-func (o *BundleExecutionOptions) combineParameters(c *portercontext.Context) map[string]string {
-	final := make(map[string]string)
-
-	for k, v := range o.parsedParamSets {
-		final[k] = v
-	}
-
-	for k, v := range o.parsedParams {
-		final[k] = v
-	}
-
-	//
-	// Default the porter-debug param to --debug
-	//
-	if o.DebugMode {
-		final["porter-debug"] = "true"
-	}
-
-	return final
 }
 
 // defaultDriver supplies the default driver if none is specified
@@ -356,34 +253,15 @@ func (p *Porter) BuildActionArgs(ctx context.Context, installation storage.Insta
 		}
 	}
 
-	// Resolve the final set of typed parameters, taking into account the user overrides, parameter sources
-	// and defaults
-	err = opts.LoadParameters(ctx, p, opts.bundleRef.Definition)
-	if err != nil {
-		return cnabprovider.ActionArguments{}, err
-	}
-
-	log.Debugf("resolving parameters for installation %s", installation)
-
-	// Do not resolve parameters from dependencies
-	params := make(map[string]string, len(opts.combinedParameters))
-	for k, v := range opts.combinedParameters {
-		if strings.Contains(k, "#") {
-			continue
-		}
-		params[k] = v
-	}
-
-	resolvedParams, err := p.resolveParameters(ctx, installation, bundleRef.Definition, action.GetAction(), params)
-	if err != nil {
-		return cnabprovider.ActionArguments{}, log.Error(err)
+	if opts.finalParams == nil {
+		return cnabprovider.ActionArguments{}, log.Error(fmt.Errorf("BuildActionArgs was called before any parameters were resolved"))
 	}
 
 	args := cnabprovider.ActionArguments{
 		Action:                action.GetAction(),
 		Installation:          installation,
 		BundleReference:       bundleRef,
-		Params:                resolvedParams,
+		Params:                opts.finalParams,
 		Driver:                opts.Driver,
 		AllowDockerHostAccess: opts.AllowDockerHostAccess,
 		PersistLogs:           !opts.NoLogs,

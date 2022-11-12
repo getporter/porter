@@ -85,7 +85,12 @@ func (p *Porter) UninstallBundle(ctx context.Context, opts UninstallOptions) err
 		return fmt.Errorf("could not find installation %s/%s: %w", opts.Namespace, opts.Name, err)
 	}
 
-	err = p.applyActionOptionsToInstallation(ctx, &installation, opts.BundleExecutionOptions)
+	_, err = p.applyActionOptionsToInstallation(ctx, opts, &installation)
+	if err != nil {
+		return err
+	}
+
+	err = p.sanitizeInstallation(ctx, &installation, opts.bundleRef.Definition)
 	if err != nil {
 		return err
 	}
