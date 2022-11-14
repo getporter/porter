@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"runtime"
+	"runtime/debug"
 	"strings"
 
 	"go.opentelemetry.io/otel/attribute"
@@ -123,10 +124,12 @@ func newTraceLogger(ctx context.Context, span trace.Span, logger *zap.Logger, tr
 func (l traceLogger) EndSpan(opts ...trace.SpanEndOption) {
 	defer l.span.End(opts...)
 
-	// If there was a panic, mark the span
-	if p := recover(); p != nil {
-		l.Errorf("panic: %s", p)
-		panic(p) // retrow
+	// If there was a panic, mark the span and include the stack trace
+	if panicErr := recover(); panicErr != nil {
+		l.Error(fmt.Errorf("%s", panicErr),
+			attribute.Bool("panic", true),
+			attribute.String("stackTrace", string(debug.Stack())))
+		panic(panicErr) // rethrow
 	}
 }
 
