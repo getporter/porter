@@ -148,11 +148,29 @@ func (t Tester) RunPorterWith(opts ...func(*shx.PreparedCommand)) (stdout string
 
 // Build a porter command, ready to be executed or further customized.
 func (t Tester) buildPorterCommand(opts ...func(*shx.PreparedCommand)) shx.PreparedCommand {
-	cmd := shx.Command("porter").
-		Env("PORTER_HOME="+t.PorterHomeDir, "PORTER_TEST_DB_NAME="+t.dbName, "PORTER_VERBOSITY=debug")
-	for _, opt := range opts {
-		opt(&cmd)
+	debugCmdPrefix := os.Getenv("PORTER_RUN_IN_DEBUGGER")
+
+	configureCommand := func(cmd shx.PreparedCommand) {
+		cmd.Env("PORTER_HOME="+t.PorterHomeDir, "PORTER_TEST_DB_NAME="+t.dbName, "PORTER_VERBOSITY=debug")
+		for _, opt := range opts {
+			opt(&cmd)
+		}
 	}
+
+	cmd := shx.Command("porter")
+	configureCommand(cmd)
+
+	prettyCmd := cmd.String()
+	if debugCmdPrefix != "" && strings.HasPrefix(prettyCmd, debugCmdPrefix) {
+		port := os.Getenv("PORTER_DEBUGGER_PORT")
+		if port == "" {
+			port = "55942"
+		}
+		porterPath := filepath.Join(t.RepoRoot, "bin/porter")
+		cmd = shx.Command("dlv", "exec", porterPath, "--listen=:"+port, "--headless=true", "--api-version=2", "--accept-multiclient", "--")
+		configureCommand(cmd)
+	}
+
 	return cmd
 }
 
