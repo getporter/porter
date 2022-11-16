@@ -197,10 +197,17 @@ func porter(args ...string) shx.PreparedCommand {
 	return p
 }
 
-// Update golden test files to match the new test outputs
+// Update golden test files (unit tests only) to match the new test outputs and re-run the unit tests
 func UpdateTestfiles() {
-	must.Command("go", "test", "./...").Env("PORTER_UPDATE_TEST_FILES=true").RunV()
-	must.RunV("make", "test-unit")
+	os.Setenv("PORTER_UPDATE_TEST_FILES", "true")
+	defer os.Unsetenv("PORTER_UPDATE_TEST_FILES")
+
+	// Run tests and update any golden files
+	TestUnit()
+
+	// Re-run the tests with the golden files locked in to make sure everything passes now
+	os.Unsetenv("PORTER_UPDATE_TEST_FILES")
+	TestUnit()
 }
 
 // Run all tests known to human-kind
