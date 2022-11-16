@@ -23,7 +23,7 @@ parameters:
     applyTo: All Actions
     description: ""
     required: true
-    sensitive: false
+    sensitive: true
 mixins:
   - helm
   - terraform
