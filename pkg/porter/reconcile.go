@@ -75,7 +75,6 @@ func (p *Porter) ReconcileInstallation(ctx context.Context, opts ReconcileOption
 	lifecycleOpts.CredentialIdentifiers = opts.Installation.CredentialSets
 	lifecycleOpts.ParameterSets = opts.Installation.ParameterSets
 
-	// Write out the parameters as string values. Not efficient but reusing ExecuteAction would need more refactoring otherwise
 	_, err = p.resolveBundleReference(ctx, lifecycleOpts.BundleReferenceOptions)
 	if err != nil {
 		return err
