@@ -67,8 +67,6 @@ func (q *MixinQuery) Execute(ctx context.Context, cmd string, inputGenerator Mix
 
 	mixinNames := inputGenerator.ListMixins()
 	results := make([]MixinBuildOutput, len(mixinNames))
-	resultLookup := make(map[string]int, len(mixinNames))
-
 	gerr := errgroup.Group{}
 
 	for i, mn := range mixinNames {
@@ -76,7 +74,6 @@ func (q *MixinQuery) Execute(ctx context.Context, cmd string, inputGenerator Mix
 		i := i
 		mn := mn
 		results[i].Name = mn
-		resultLookup[mn] = i
 
 		gerr.Go(func() error {
 			// Copy the existing context and tweak to pipe the output differently
