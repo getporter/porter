@@ -429,9 +429,10 @@ func TestMixinDeclaration_UnmarshalYAML(t *testing.T) {
 	m, err := ReadManifest(cxt.Context, config.Name)
 
 	require.NoError(t, err)
-	assert.Len(t, m.Mixins, 2, "expected 2 mixins")
+	assert.Len(t, m.Mixins, 3, "expected 3 mixins")
 	assert.Equal(t, "exec", m.Mixins[0].Name)
 	assert.Equal(t, "az", m.Mixins[1].Name)
+	assert.Equal(t, "terraform", m.Mixins[2].Name)
 	assert.Equal(t, map[string]interface{}{"extensions": []interface{}{"iot"}}, m.Mixins[1].Config)
 }
 
@@ -471,6 +472,7 @@ func TestMixinDeclaration_MarshalYAML(t *testing.T) {
 		[]MixinDeclaration{
 			{Name: "exec"},
 			{Name: "az", Config: map[string]interface{}{"extensions": []interface{}{"iot"}}},
+			{Name: "terraform"},
 		},
 	}
 

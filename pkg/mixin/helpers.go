@@ -53,19 +53,19 @@ func NewTestMixinProvider() *TestMixinProvider {
 	}
 
 	provider.RunAssertions = []func(pkgContext *portercontext.Context, name string, commandOpts pkgmgmt.CommandOptions) error{
-		provider.PrintExecOutput,
+		provider.PrintMixinOutput,
 	}
 
 	return &provider
 }
 
-func (p *TestMixinProvider) PrintExecOutput(pkgContext *portercontext.Context, name string, commandOpts pkgmgmt.CommandOptions) error {
+func (p *TestMixinProvider) PrintMixinOutput(pkgContext *portercontext.Context, name string, commandOpts pkgmgmt.CommandOptions) error {
 	switch commandOpts.Command {
 	case "build":
 		if p.ReturnBuildError {
 			return errors.New("encountered build error")
 		}
-		fmt.Fprintln(pkgContext.Out, "# exec mixin has no buildtime dependencies")
+		fmt.Fprintf(pkgContext.Out, "# %s mixin has no buildtime dependencies", name)
 	case "lint":
 		b, _ := json.Marshal(p.LintResults)
 		fmt.Fprintln(pkgContext.Out, string(b))
