@@ -98,12 +98,8 @@ func (q *MixinQuery) Execute(ctx context.Context, cmd string, inputGenerator Mix
 			}
 			runErr := q.Mixins.Run(ctx, &mixinContext, mn, cmd)
 
-			// Pack the error from running the command in the result so we can
-			// decide if we care about it, if we returned it normally, the
-			// waitgroup will short circuit immediately on the first error
 			results[i].Stdout = mixinStdout.String()
 			results[i].Error = runErr
-
 			return nil
 		})
 	}

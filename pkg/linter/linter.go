@@ -170,7 +170,7 @@ func (l *Linter) Lint(ctx context.Context, m *manifest.Manifest) (Results, error
 	for _, response := range responses {
 		if response.Error != nil {
 			// Ignore mixins that do not support the lint command
-			if strings.Contains(response.Stdout, "unknown command") {
+			if strings.Contains(response.Error.Error(), "unknown command") {
 				continue
 			}
 			return nil, span.Error(fmt.Errorf("lint command failed for mixin %s: %s", response.Name, response.Stdout))
