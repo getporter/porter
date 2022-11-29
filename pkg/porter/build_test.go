@@ -34,8 +34,5 @@ func TestPorter_GetUsedMixins(t *testing.T) {
 	results, err := p.getUsedMixins(p.RootContext, m)
 	require.NoError(t, err, "getUsedMixins failed")
 	assert.Len(t, results, 1)
-
-	called := testMixins.GetCalled()
-	execCalls, _ := called.Load("exec")
-	assert.Equal(t, 1, execCalls, "expected the exec mixin to be called once")
+	assert.Equal(t, 1, testMixins.GetCalled("exec"), "expected the exec mixin to be called once")
 }

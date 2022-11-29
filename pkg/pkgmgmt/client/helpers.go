@@ -26,8 +26,9 @@ type TestPackageManager struct {
 }
 
 // GetCalled tracks how many times each package was called
-func (p *TestPackageManager) GetCalled() sync.Map {
-	return p.called
+func (p *TestPackageManager) GetCalled(mixin string) int {
+	calls, _ := p.called.Load(mixin)
+	return calls.(int)
 }
 
 func (p *TestPackageManager) recordCalled(name string) {
