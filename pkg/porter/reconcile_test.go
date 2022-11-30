@@ -1,12 +1,14 @@
 package porter
 
 import (
+	"context"
 	"path/filepath"
 	"testing"
 	"time"
 
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/portercontext"
+	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -42,17 +44,32 @@ func TestPorter_IsInstallationInSync(t *testing.T) {
 	})
 
 	t.Run("installed - no changes", func(t *testing.T) {
+		ctx := context.Background()
 		p := NewTestPorter(t)
 		defer p.Close()
 
+		myps := storage.ParameterSet{
+			ParameterSetSpec: storage.ParameterSetSpec{
+				Name: "myps",
+				Parameters: []secrets.Strategy{
+					storage.ValueStrategy("my-second-param", "override"),
+				},
+			},
+		}
+		err := p.Parameters.InsertParameterSet(ctx, myps)
+		require.NoError(t, err)
+
 		i := storage.Installation{
+			InstallationSpec: storage.InstallationSpec{
+				ParameterSets: []string{"myps"},
+			},
 			Status: storage.InstallationStatus{
 				Installed: &now,
 			},
 		}
 		run := storage.Run{
 			// Use the default values from the bundle.json so that we don't trigger reconciliation
-			Parameters: storage.NewInternalParameterSet(i.Namespace, i.Name, storage.ValueStrategy("my-second-param", "spring-music-demo")),
+			Parameters: storage.NewInternalParameterSet(i.Namespace, i.Name, storage.ValueStrategy("my-second-param", "override")),
 		}
 		upgradeOpts := NewUpgradeOptions()
 		upgradeOpts.bundleRef = &cnab.BundleReference{Definition: bun}

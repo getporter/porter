@@ -80,6 +80,7 @@ func (p *Porter) ReconcileInstallation(ctx context.Context, opts ReconcileOption
 		return err
 	}
 
+	// TODO(carolynvs) call this later
 	if !opts.DryRun {
 		if err = p.Installations.UpsertInstallation(ctx, opts.Installation); err != nil {
 			return err
@@ -177,6 +178,14 @@ func (p *Porter) IsInstallationInSync(ctx context.Context, i storage.Installatio
 	// removing internal parameters (e.g. porter-debug, porter-state) and making
 	// sure that the types are correct, etc.
 	b := newRef.Definition
+
+	opts.ParameterSets = i.ParameterSets
+	opts.CredentialIdentifiers = i.CredentialSets
+	err = opts.LoadParameters(ctx, p, opts.bundleRef.Definition, i.Parameters)
+	if err != nil {
+		return false, err
+	}
+
 	resolvedParams, err := p.resolveParameters(ctx, i, b, action.GetAction(), opts.combinedParameters)
 	if err != nil {
 		return false, err
