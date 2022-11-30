@@ -22,6 +22,10 @@ Before running this command, you should have:
 
 This upgrades the data to the current storage schema, and does not change the data stored in the old account.
 
+This command may be repeated if it fails, is interrupted when first run, or new v0 data has been added.
+Porter will restart the migration from the beginning and overwrite any previously migrated records.
+🚨 After you use Porter v1 with the migrated database, DO NOT RERUN THE MIGRATION because subsequent migrations will overwrite data in the v1 database.
+
 ```
 porter storage migrate --old-home OLD_PORTER_HOME [--old-account STORAGE_NAME] [--namespace NAMESPACE] [flags]
 ```
