@@ -11,6 +11,10 @@ RUN rm -f /etc/apt/apt.conf.d/docker-clean; echo 'Binary::apt::APT::Keep-Downloa
 RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/apt \
     apt-get update && apt-get install -y ca-certificates
 
+# exec mixin has no buildtime dependencies
+
+# testmixin mixin has no buildtime dependencies
+
 
 COPY --link . ${BUNDLE_DIR}
 RUN rm ${BUNDLE_DIR}/porter.yaml

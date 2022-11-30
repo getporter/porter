@@ -1,6 +1,7 @@
 package client
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -63,9 +64,10 @@ func (r *Runner) Run(ctx context.Context, commandOpts pkgmgmt.CommandOptions) er
 	command := cmdArgs[0]
 	cmd := r.NewCommand(ctx, pkgPath, cmdArgs...)
 
-	// Pipe the output to porter
+	// Pipe the output to porter and capture the error in case it fails
+	cmdStderr := &bytes.Buffer{}
 	cmd.Stdout = r.Context.Out
-	cmd.Stderr = r.Context.Err
+	cmd.Stderr = io.MultiWriter(cmdStderr, r.Context.Err)
 
 	if commandOpts.PreRun != nil {
 		commandOpts.PreRun(command, cmd)
@@ -91,10 +93,16 @@ func (r *Runner) Run(ctx context.Context, commandOpts pkgmgmt.CommandOptions) er
 
 	err := cmd.Start()
 	if err != nil {
-		return span.Error(fmt.Errorf("could not run package command %s: %w", prettyCmd, err))
+		return span.Error(fmt.Errorf("could not start package command %s: %w", prettyCmd, err))
 	}
 
-	return span.Error(cmd.Wait())
+	err = cmd.Wait()
+	if err != nil {
+		// Include stderr in the error, otherwise it just includes the exit code
+		return span.Error(fmt.Errorf("package command failed %s\n%s", prettyCmd, cmdStderr))
+	}
+
+	return nil
 }
 
 func (r *Runner) getExecutablePath() string {
