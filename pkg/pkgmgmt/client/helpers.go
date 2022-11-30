@@ -27,7 +27,7 @@ type TestPackageManager struct {
 
 // GetCalled tracks how many times each package was called
 func (p *TestPackageManager) GetCalled(mixin string) int {
-	calls, _ := p.called.Load(mixin)
+	calls, _ := p.called.LoadOrStore(mixin, 0)
 	return calls.(int)
 }
 
@@ -35,8 +35,8 @@ func (p *TestPackageManager) recordCalled(name string) {
 	p.lock.Lock()
 	defer p.lock.Unlock()
 
-	hits, _ := p.called.LoadOrStore(name, 0)
-	hits = hits.(int) + 1
+	hits := p.GetCalled(name)
+	hits = hits + 1
 	p.called.Store(name, hits)
 }
 

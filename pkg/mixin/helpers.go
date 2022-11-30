@@ -65,7 +65,7 @@ func (p *TestMixinProvider) PrintMixinOutput(pkgContext *portercontext.Context, 
 		if p.ReturnBuildError {
 			return errors.New("encountered build error")
 		}
-		fmt.Fprintf(pkgContext.Out, "# %s mixin has no buildtime dependencies", name)
+		fmt.Fprintf(pkgContext.Out, "# %s mixin has no buildtime dependencies\n", name)
 	case "lint":
 		b, _ := json.Marshal(p.LintResults)
 		fmt.Fprintln(pkgContext.Out, string(b))
