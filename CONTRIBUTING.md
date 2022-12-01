@@ -20,6 +20,7 @@
 * [Code structure and practices](#code-structure-and-practices)
   * [What is the general code layout?](#what-is-the-general-code-layout)
   * [Logging](#logging)
+    * [Tracing sensitive data](#tracing-sensitive-data)
   * [Breaking Changes](#breaking-changes)
 * [Infrastructure](#infrastructure)
   * [CDN Setup](#cdn-setup)
@@ -587,7 +588,7 @@ fmt.Fprintln(p.Err, "DEBUG: loading plans from r2d2...")
 ```
 
 Most of the structs in Porter have an embedded
-`get.porter.sh/porter/pkg/context.Context` struct. This has both `Out` and
+`get.porter.sh/porter/pkg/portercontext.Context` struct. This has both `Out` and
 `Err` which represent stdout and stderr respectively. You should log to those
 instead of directly to stdout/stderr because that is how we capture output in
 our unit tests. That means use `fmt.Fprint*` instead of `fmt.Print*` so that you
@@ -600,6 +601,32 @@ stdout as well, then the resulting json schema would be unparsable. This is why
 we send regular command output to `Out` and debug information to `Err`. It
 allows us to then run the command and see the debug output separately, like so
 `porter schema --debug 2> err.log`.
+
+### Tracing Sensitive Data
+
+Sometimes when debugging your code you may need to print out variables that can contain sensitive data, for example printing out the resolved values for parameters and credentials.
+In this case, do not use fmt.Println and instead use the open telemetry trace logger to include the data in attributes.
+
+```go
+func myFunc(ctx context.Context) {
+  ctx, span := tracing.StartSpan(ctx)
+  defer span.EndSpan()
+  
+  // This contains resolved sensitive values, so only trace it in special dev builds (nothing is traced for release builds)
+  span.SetSensitiveAttributes(attribute.String("sensitive-stuff", mysensitiveVar))
+}
+```
+
+In normal builds of Porter, created with `go build`, `mage Build` or `mage XBuildAll`, no sensitive data is ever traced because `SetSensitiveAttributes` is compiled to do nothing by default. 
+Calls to `SetSensitiveAttributes` are only implemented when Porter is built with the `traceSensitiveAttributes` build tag.
+
+Each time you call `SetSensitiveAttributes` include in your comment why the data is sensitive, and that it is only traced in special dev builds since people may not think to read the function documentation.
+
+In order to debug your code and see the sensitive data, you need to:
+
+1. Compile a build of porter with sensitive tracing turned on, `go build -tags traceSensitiveAttributes -o bin/porter ./cmd/porter`.
+2. [Enable tracing with Jaeger](#view-a-trace-of-a-porter-command)
+3. Run a porter command and then view the sensitive attributes in the trace data sent to Jaeger.
 
 ## Breaking Changes
 

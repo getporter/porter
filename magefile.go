@@ -6,6 +6,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"go/build"
 	"log"
@@ -229,6 +230,8 @@ func TestUnit() {
 
 	// Verify integration tests compile since we don't run them automatically on pull requests
 	must.Run("go", "test", "-run=non", "-tags=integration", "./...")
+
+	TestInitWarnings()
 }
 
 // Run smoke tests to quickly check if Porter is broken
@@ -465,6 +468,21 @@ func TestIntegration() {
 	}
 
 	must.Command("go", "test", verbose, "-timeout=30m", run, "-tags=integration", "./...").CollapseArgs().RunV()
+}
+
+func TestInitWarnings() {
+	// This is hard to test in a normal unit test because we need to build porter with custom build tags,
+	// so I'm testing it in the magefile directly in a way that doesn't leave around an unsafe Porter binary.
+
+	// Verify that running Porter with traceSensitiveAttributes set that a warning is printed
+	fmt.Println("Validating traceSensitiveAttributes warning")
+	output := &bytes.Buffer{}
+	must.Command("go", "run", "-tags=traceSensitiveAttributes", "./cmd/porter", "schema").
+		Stderr(output).Stdout(output).Exec()
+	if !strings.Contains(output.String(), "WARNING! This is a custom developer build of Porter with the traceSensitiveAttributes build flag set") {
+		fmt.Printf("Got output: %s\n", output.String())
+		panic("Expected a build of Porter with traceSensitiveAttributes build tag set to warn at startup but it didn't")
+	}
 }
 
 // TryRegisterLocalHostAlias edits /etc/hosts to use porter-test-registry hostname alias

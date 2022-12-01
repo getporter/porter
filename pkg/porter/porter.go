@@ -3,7 +3,9 @@ package porter
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
+	"sync"
 
 	"get.porter.sh/porter/pkg/build"
 	"get.porter.sh/porter/pkg/build/buildkit"
@@ -81,9 +83,23 @@ func NewFor(c *config.Config, store storage.Store, secretStorage secrets.Store) 
 	}
 }
 
+// Used to warn just a single time when Porter starts up.
+// Connect is called more than once, and this helps us validate certain things, like build flags, a single time only.
+var initWarnings sync.Once
+
 // Connect initializes Porter for use and must be called before other Porter methods.
 // It is the responsibility of the caller to also call Close when done with Porter.
 func (p *Porter) Connect(ctx context.Context) error {
+	initWarnings.Do(func() {
+		// Check if this is a special dev build that will trace sensitive data and strongly warn people
+		if tracing.IsTraceSensitiveAttributesEnabled() {
+			fmt.Fprintln(p.Err, "🚨 WARNING! This is a custom developer build of Porter with the traceSensitiveAttributes build flag set. "+
+				"Porter will include sensitive data, such as parameters and credentials, in the telemetry trace data. "+
+				"This build flag should only be used for local development only. "+
+				"If you didn't intend to use a custom build of Porter with this flag enabled, reinstall Porter using the official builds from https://getporter.org/install.")
+		}
+	})
+
 	// Load the config file and replace any referenced secrets
 	return p.Config.Load(ctx, func(innerCtx context.Context, secret string) (string, error) {
 		value, err := p.Secrets.Resolve(innerCtx, "secret", secret)

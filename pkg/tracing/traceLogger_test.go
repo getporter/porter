@@ -20,3 +20,7 @@ func TestTraceLogger_ShouldLog(t *testing.T) {
 	assert.False(t, l.ShouldLog(zap.InfoLevel))
 	assert.False(t, l.ShouldLog(zap.DebugLevel))
 }
+
+func TestTraceSensitiveAttributesBuildFlag(t *testing.T) {
+	assert.False(t, traceSensitiveAttributes, "traceSensitiveAttributes should be disabled by default and require a custom build to enable")
+}
