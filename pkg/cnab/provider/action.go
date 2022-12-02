@@ -179,7 +179,13 @@ func (r *Runtime) Execute(ctx context.Context, args ActionArguments) error {
 			}
 		}
 
-		opResult, result, err := a.Run(currentRun.ToCNAB(), creds.ToCNAB(), r.ApplyConfig(ctx, args)...)
+		cnabClaim := currentRun.ToCNAB()
+		cnabCreds := creds.ToCNAB()
+		// The claim and credentials contain sensitive values. Only trace it in special dev builds (nothing is traced for release builds)
+		log.SetSensitiveAttributes(
+			tracing.ObjectAttribute("cnab-claim", cnabClaim),
+			tracing.ObjectAttribute("cnab-credentials", cnabCreds))
+		opResult, result, err := a.Run(cnabClaim, cnabCreds, r.ApplyConfig(ctx, args)...)
 
 		if currentRun.ShouldRecord() {
 			if err != nil {
