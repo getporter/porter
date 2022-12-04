@@ -2,7 +2,7 @@ package cnabprovider
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"os"
 	"testing"
 
 	"github.com/cnabio/cnab-go/bundle"
@@ -14,7 +14,7 @@ import (
 func TestAddRelocation(t *testing.T) {
 	t.Parallel()
 
-	data, err := ioutil.ReadFile("testdata/relocation-mapping.json")
+	data, err := os.ReadFile("testdata/relocation-mapping.json")
 	require.NoError(t, err)
 
 	d := NewTestRuntime(t)

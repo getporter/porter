@@ -2,7 +2,7 @@ package builder
 
 import (
 	"context"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -73,7 +73,7 @@ func TestJsonPathOutputs(t *testing.T) {
 		{"string", "$[0].cpuPlatform", `Intel Haswell`},
 	}
 
-	stdout, err := ioutil.ReadFile("testdata/install-output.json")
+	stdout, err := os.ReadFile("testdata/install-output.json")
 	require.NoError(t, err, "could not read testdata")
 
 	for _, tc := range testcases {

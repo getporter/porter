@@ -11,7 +11,7 @@ Source: https://getporter.org/src/pkg/exec
 
 ### Install or Upgrade
 ```
-porter mixin install exec --version v1.0.0-rc.3
+porter mixin install exec
 ```
 
 ## Mixin Syntax

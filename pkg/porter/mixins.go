@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -200,12 +199,12 @@ func replaceStringInDir(dir, replaced, replacement string) error {
 			return filepath.SkipDir
 		}
 		if !info.IsDir() && info.Name() != "README.md" {
-			content, err := ioutil.ReadFile(path)
+			content, err := os.ReadFile(path)
 			if err != nil {
 				return err
 			}
 
-			err = ioutil.WriteFile(path, bytes.Replace(content, []byte(replaced), []byte(replacement), -1), info.Mode().Perm())
+			err = os.WriteFile(path, bytes.Replace(content, []byte(replaced), []byte(replacement), -1), info.Mode().Perm())
 			if err != nil {
 				return err
 			}

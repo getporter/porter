@@ -2,7 +2,6 @@ package testhelpers
 
 import (
 	"context"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -16,7 +15,7 @@ import (
 
 // CreateLegacyPorterHome creates a porter v0.38 PORTER_HOME with legacy data
 func CreateLegacyPorterHome(t *testing.T) *config.TestConfig {
-	tmp, err := ioutil.TempDir("", "porter")
+	tmp, err := os.MkdirTemp("", "porter")
 	require.NoError(t, err)
 
 	c := config.NewTestConfig(t)

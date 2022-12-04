@@ -6,57 +6,39 @@ description: Installing the Porter client and mixins
 > Join our [mailing list] for announcements of releases and announcements of new features.
 > Connect with other Porter users and contributors on [Slack].
 
-Porter is about to release v1.0.0, and we strongly recommend that you install that version of Porter if you are just starting out.
-
-* [Install Porter v1](#recommended)
+* [Install or Upgrade Porter](#install-or-upgrade)
 * [Clean Install](#clean-install)
+* [Install Latest Release](#latest)
+* [Install a Canary Build](#canary)
+* [Install a Mixin](#mixins)
+* [Install a Plugin](#plugins)
+* [Install the Porter VS Code Extension][vscode-ext]
+* [Customize the Installation Script](#install-script-parameters)
+* [Configure Command Completion](#command-completion)
 
-If you are already using Porter, here are links to install an older v0 version of Porter.
-Heads up that v0 will be deprecated a few months after v1.0.0 is released!
+# Install or Upgrade
 
-* [Latest](#latest) installs the latest stable version of v0. We recommend new users start with v1 instead.
-* [Canary](#canary) installs the most recent build of v0.
-* [Older Version](#older-version) installs a specific version of Porter.
-
-You can also install and manage [mixins](#mixins) and [plugins](#plugins) using
-Porter, and use the [Porter VS Code Extension][vscode-ext] to help author
-bundles.
-
-## NOTES
-* Learn how to configure [command completion](#command-completion)
-* All the scripts support [customizing the installation through parameters](#install-script-parameters).
-* If you are using the [Porter Operator](/operator/), then you must use the most recent v1 prerelease of Porter.
-
-<a id="prerelease"></a>
-
-# Recommended
-
-We recommend installing v1 of Porter if you are trying out Porter for the first time.
-Keep in mind that prereleases are not suitable for production workloads.
-Data migrations will not be provided or supported for prereleases before v1.0.0-beta.1.
-Prereleases are intended for you to try out new features in Porter and provide feedback about the direction of the feature.
-
-The examples below use a hard-coded version of the prerelease and there may be a newer version available.
-Set VERSION to the most recent [v1 prerelease] version number.
+The examples below use a hard-coded version of Porter. There may be a newer version available which you can check for on our [release] page.
+Set VERSION to the most recent [release] version number.
 
 **MacOS**
 
 ```bash
-export VERSION="v1.0.0-rc.3"
+export VERSION="v1.0.1"
 curl -L https://cdn.porter.sh/$VERSION/install-mac.sh | bash
 ```
 
 **Linux**
 
 ```bash
-export VERSION="v1.0.0-rc.3"
+export VERSION="v1.0.1"
 curl -L https://cdn.porter.sh/$VERSION/install-linux.sh | bash
 ```
 
 **Windows**
 
 ```powershell
-$VERSION="v1.0.0-rc.3"
+$VERSION="v1.0.1"
 (New-Object System.Net.WebClient).DownloadFile("https://cdn.porter.sh/$VERSION/install-windows.ps1", "install-porter.ps1")
 .\install-porter.ps1
 ```
@@ -105,7 +87,7 @@ To perform a clean installation of Porter:
 
 # Latest
 
-Install the most recent stable v0 release of porter and the [exec mixin].
+Install the most recent tagged v1 release of porter and the [exec mixin].
 
 ## Latest MacOS
 ```
@@ -126,10 +108,10 @@ iwr "https://cdn.porter.sh/latest/install-windows.ps1" -UseBasicParsing | iex
 
 # Canary
 
-Install the most recent build of Porter v0 and the [exec mixin].
+Install the most recent build of Porter and the [exec mixin] from the main branch.
 
 This saves you the trouble of cloning and building porter and its mixin
-repositories yourself. The build may not be stable but it will have new features
+repositories yourself. The build may not be stable, but it will have new features
 that we are developing.
 
 ## Canary MacOS
@@ -149,37 +131,6 @@ You will need to create a [PowerShell Profile][ps-link] if you do not have one.
 iwr "https://cdn.porter.sh/canary/install-windows.ps1" -UseBasicParsing | iex
 ```
 
-# Older Version
-
-Install an older version of porter, starting with `v0.38.0`.
-Porter v1.0.0+ only installs porter and the [exec mixin].
-Older versions of Porter installed more mixins by default. 
-
-If you need a specific version of a mixin, use the `--version` flag when [installing the mixin](#mixins).
-
-See the porter [releases][releases] page for a list of older porter versions.
-Set `VERSION` to the version of Porter that you want to install.
-
-## Older Version MacOS
-```
-VERSION="v0.38.10"
-curl -L https://cdn.porter.sh/$VERSION/install-mac.sh | bash
-```
-
-## Older Version Linux
-```
-VERSION="v0.38.10"
-curl -L https://cdn.porter.sh/$VERSION/install-linux.sh | bash
-```
-
-## Older Version Windows
-You will need to create a [PowerShell Profile][ps-link] if you do not have one.
-
-```
-$VERSION="v0.38.10"
-iwr "https://cdn.porter.sh/$VERSION/install-windows.ps1" -UseBasicParsing | iex
-```
-
 # Mixins
 
 We have a number of [mixins](/mixins) to help you get started.
@@ -189,8 +140,8 @@ You can update an existing mixin, or install a new mixin using the `porter mixin
 install` command:
 
 ```console
-$ porter mixin install terraform
-installed terraform mixin v0.3.0-beta.1 (0d24b85)
+$ porter mixin install terraform --version v1.0.0-rc.1
+installed terraform mixin v1.0.0-rc.1 (090064b)
 ```
 
 All the Porter-authored mixins are published to `https://cdn.porter.sh/mixins/atom.xml`.
@@ -203,8 +154,8 @@ You can update an existing plugin, or install a new plugin using the `porter plu
 install` command:
 
 ```console
-$ porter plugin install azure --version canary
-installed azure plugin v0.1.1-10-g7071451 (7071451)
+$ porter plugin install azure --version v1.0.0-rc.1
+installed azure plugin v1.0.0-rc.1 (d0d98f4)
 ```
 
 All the Porter-authored plugins are published to `https://cdn.porter.sh/plugins/atom.xml`.
@@ -319,7 +270,7 @@ $ porter credentials [tab][tab]
 delete    edit    generate    list    show
 ```
 
-> Note: Completion commands are available for Porter's built in commands and flags, future plans include dynamic completion for your project.
+> Note: Completion commands are available for Porter's built-in commands and flags, future plans include dynamic completion for your project.
 
 [exec mixin]: /mixins/exec/
-[v1 prerelease]: https://github.com/getporter/porter/releases?q=v1.0.0&expanded=true
+[release]: https://github.com/getporter/porter/releases

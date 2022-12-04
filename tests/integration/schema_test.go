@@ -3,7 +3,6 @@
 package integration
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -54,7 +53,7 @@ mixins.2.testmixin: Additional property missingproperty is not allowed`},
 		t.Run(tm.name, func(t *testing.T) {
 			// Load the manifest as a go dump
 			testManifestPath := tm.path
-			testManifest, err := ioutil.ReadFile(testManifestPath)
+			testManifest, err := os.ReadFile(testManifestPath)
 			require.NoError(t, err, "failed to read %s", testManifestPath)
 
 			m := make(map[string]interface{})

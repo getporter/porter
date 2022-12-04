@@ -5,7 +5,6 @@ package integration
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -79,14 +78,14 @@ func TestTelemetry_IncludesPluginLogs(t *testing.T) {
 
 	// Validate we have trace data for porter (files are returned in descending order, which is why we know which to read first)
 	porterTraceName := filepath.Join(tracesDir, traces[1].Name())
-	porterTrace, err := ioutil.ReadFile(porterTraceName)
+	porterTrace, err := os.ReadFile(porterTraceName)
 	require.NoError(t, err, "error reading porter's trace file %s", porterTraceName)
 	tests.RequireOutputContains(t, string(porterTrace), `{"Key":"service.name","Value":{"Type":"STRING","Value":"porter"}}`, "no spans for porter were exported")
 
 	// Validate we have trace data for porter
 	pluginTraceName := filepath.Join(tracesDir, traces[0].Name())
 	require.Contains(t, pluginTraceName, "storage.porter.mongodb", "expected the plugin trace to be for the mongodb plugin")
-	pluginTrace, err := ioutil.ReadFile(pluginTraceName)
+	pluginTrace, err := os.ReadFile(pluginTraceName)
 	require.NoError(t, err, "error reading the plugin's trace file %s", pluginTraceName)
 	tests.RequireOutputContains(t, string(pluginTrace), `{"Key":"service.name","Value":{"Type":"STRING","Value":"storage.porter.mongodb"}}`, "no spans for the plugins were exported")
 }

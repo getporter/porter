@@ -38,7 +38,11 @@ Before running this command, you should have:
 3. Created a new PORTER_HOME directory for the new version of Porter, for example: mkdir ~/.porter.
 4. Configured a default storage account for the new version of Porter. The data from the old account will be migrated into the default storage account.
 
-This upgrades the data to the current storage schema, and does not change the data stored in the old account.`,
+This upgrades the data to the current storage schema, and does not change the data stored in the old account.
+
+This command may be repeated if it fails, is interrupted when first run, or new v0 data has been added.
+Porter will restart the migration from the beginning and overwrite any previously migrated records.
+🚨 After you use Porter v1 with the migrated database, DO NOT RERUN THE MIGRATION because subsequent migrations will overwrite data in the v1 database.`,
 		Example: `  porter storage migrate --old-home ~/.porterv0
   porter storage migrate --old-account my-azure --old-home ~/.porterv0
   porter storage migrate --namespace new-namespace --old-home ~/.porterv0

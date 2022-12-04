@@ -176,30 +176,29 @@ Now we will create a service principal and give it access to our key vault.
 ## Configure Porter to use the plugin
 
 Now that we have all the data the plugin would need to connect to our cloud
-resources, the last step is to update Porter's configuration so it uses the
+resources, the last step is to update Porter's configuration, so it uses the
 plugin.
 
-1. Open or create `~/.porter/config.toml`.
+1. Open or create `~/.porter/config.yaml`.
 
 1. Add the following line to activate the Azure blob storage plugin:
 
-    ```toml
-    default-storage-plugin = "azure.blob"
+    ```yaml
+    default-storage-plugin: "azure.blob"
     ```
 
 1. Add the following lines to activate and configure the Azure keyvault secrets
    plugin. Replace `myvault` with the name of the Key Vault that you created
    earlier.
 
-    ```toml
-    default-secrets = "mysecrets"
+    ```yaml
+    default-secrets: "mysecrets"
     
-    [[secrets]]
-    name = "mysecrets"
-    plugin = "azure.keyvault"
-        
-    [secrets.config]
-    vault = "myvault"
+    secrets:
+      name: "mysecrets"
+      plugin: "azure.keyvault"
+      config:
+        vault: "myvault"
     ```
 
 ## Try it out

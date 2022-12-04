@@ -11,10 +11,11 @@
 * [Contribution Ladder](#contribution-ladder)
 * [Developer Tasks](#developer-tasks)
   * [Initial setup](#initial-setup)
-  * [Makefile explained](#makefile-explained)
+  * [Magefile explained](#magefile-explained)
   * [Install mixins](#install-mixins)
   * [Preview documentation](#preview-documentation)
   * [View a trace of a Porter command](#view-a-trace-of-a-porter-command)
+  * [Debug Smoke Tests](#debug-smoke-tests)
   * [Write a blog post](#write-a-blog-post)
 * [Code structure and practices](#code-structure-and-practices)
   * [What is the general code layout?](#what-is-the-general-code-layout)
@@ -88,17 +89,17 @@ When you create your first pull request, add your name to the bottom of our
 
 ## Which branch to use
 
-Unless the issue specifically mentions a branch, please created your feature branch from the release/v1 branch.
+Unless the issue specifically mentions a branch, please create your feature branch from the **main** branch.
 
 For example:
 
 ```
-# Make sure you have the most recent changes to release/v1
-git checkout release/v1
+# Make sure you have the most recent changes to main
+git checkout main
 git pull
 
-# Create a branch based on release/v1 named MY_FEATURE_BRANCH
-git checkout -b MY_FEATURE_BRANCH
+# Create a branch based on main named MY_FEATURE_BRANCH
+git checkout -b MY_FEATURE_BRANCH main
 ```
 
 ## When to open a pull request
@@ -163,7 +164,7 @@ request comment so that we don't collectively forget.
 ## Signing your commits
 
 You can automatically sign your commits to meet the DCO requirement for this
-project by running the following command: `make setup-dco`.
+project by running the following command: `mage SetupDCO`.
 
 Licensing is important to open source projects. It provides some assurances that
 the software will continue to be available based under the terms that the
@@ -264,6 +265,7 @@ Here are the key steps, if you run into trouble, the tutorial has more details:
 
 1. Install Go version 1.17 or higher.
 1. Clone this repository with `git clone https://github.com/getporter/porter.git ~/go/src/get.porter.sh/porter`.
+1. Run `go run mage.go EnsureMage` to install [mage](#magefile-explained).
 1. Run `mage Build Install` from within the newly cloned repository.
 
 If you are planning on contributing back to the project, you'll need to
@@ -273,14 +275,11 @@ clone directly from the project.
 
 You now have canary builds of porter and all the mixins installed.
 
-## Makefile explained
+## Magefile explained
 
-🚧 We are in the process of transitioning from make to [mage](https://magefile.org).
+Porter uses a cross-platform make alternative called [mage](https://magefile.org), where the targets are written in Go.
 
 ### Mage Targets
-
-Below are the targets that have been migrated to mage. Our new contributor
-tutorial explains how to [install mage](/contribute/tutorial/#install-mage).
 
 Mage targets are not case-sensitive, but in our docs we use camel case to make
 it easier to read. You can run either `mage TestSmoke` or `mage testsmoke` for
@@ -305,16 +304,10 @@ example.
 * **Install** installs porter _and_ the mixins from source into **$(HOME)/.porter/**.
 * **DocsPreview** hosts the docs site. See [Preview Documentation](#preview-documentation).
 * **DocsGen** generates the CLI documentation for the website. This is run automatically by build.
+* **SetupDCO** installs a git commit hook that automatically signsoff your commit
+  messages per the DCO requirement.
 
 [golden files]: https://ieftimov.com/post/testing-in-go-golden-files/
-
-### Make Targets
-
-Below are the most common developer tasks. Run a target with `make TARGET`, e.g.
-`make setup-dco`.
-
-* `setup-dco` installs a git commit hook that automatically signsoff your commit
-  messages per the DCO requirement.
 
 ## Test Porter
 
@@ -406,7 +399,7 @@ preview happens inside a docker container.
 
 1. Run `mage DocsPreview` to start serving the docs. It will watch the file
 system for changes.
-1. Our make rule should open <http://localhost:1313/docs> to preview the
+1. Our mage target should open <http://localhost:1313/docs> to preview the
 site/docs.
 
 We welcome your contribution to improve our documentation, and we hope it is an
@@ -485,6 +478,26 @@ The smoke and integration tests will run with telemetry enabled when the PORTER_
 
 [otel-jaeger bundle]: https://getporter.org/examples/src/otel-jaeger
 
+## Debug Smoke Tests
+
+If you want to attach a debugger to Porter when it is running in a smoke test, first install delve:
+
+```
+go install github.com/go-delve/delve/cmd/dlv@latest
+```
+
+Next, determine the porter command that you want the smoke test to automatically run through delve so that you can attach to it and debug.
+Set `PORTER_RUN_IN_DEBUGGER` to the command(s) to run in delve.
+Use `porter` to target any porter command, or target a specific command for example `porter installation apply`.
+
+When the smoke tests run a porter command that has the prefix contained in PORTER_RUN_IN_DEBUGGER, instead of running porter directly, porter is run in delve.
+Delve will wait for you to attach a debugger, and then proceed to run the porter command so that you can debug into it.
+
+The default debugger port is `55942` which you can override with the `PORTER_DEBUGGER_PORT` environment variable.
+
+Now run the smoke test with `go test -run TESTNAME -tags smoke ./tests/smoke`, then use your Go IDE or delve directly to attach to Porter.
+If you are using GoLand, use the **Go Remote** debug configuration and make sure to specify the same port that you used when running the smoke test (default is 55942).
+
 ## Command Documentation
 
 Our commands are documented at <https://getporter.org/cli> and that documentation is
@@ -498,7 +511,7 @@ Instructions for building the Porter Operator from source are located in its rep
 Sometimes you may need to make changes to Porter and work on the Operator at the same time.
 Here's how to build porter so that you can use it locally:
 
-1. You must be on a feature branch. Not release/v1 or main. This matters because it affects the generated
+1. You must be on a feature branch. Not main. This matters because it affects the generated
    docker image tag.
 1. Deploy the operator to a KinD cluster by running `mage deploy` from inside the operator repository.
    That cluster has a local registry running that you can publish to, and it will pull images from it, 

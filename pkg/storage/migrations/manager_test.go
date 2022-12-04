@@ -42,7 +42,10 @@ func TestManager_LoadSchema(t *testing.T) {
 		m := NewTestManager(c)
 		defer m.Close()
 
-		err := m.store.Insert(context.Background(), storage.CollectionInstallations, storage.InsertOptions{Documents: []interface{}{storage.Installation{Name: "abc123"}}})
+		i := storage.Installation{InstallationSpec: storage.InstallationSpec{
+			Name: "abc123",
+		}}
+		err := m.store.Insert(context.Background(), storage.CollectionInstallations, storage.InsertOptions{Documents: []interface{}{i}})
 		require.NoError(t, err)
 
 		err = m.loadSchema(context.Background())

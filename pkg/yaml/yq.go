@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"sync"
 
@@ -49,7 +49,7 @@ func (e *Editor) suppressYqLogging() {
 
 	// The yq lib that we use makes frequent calls to a logger that are by default
 	// printed directly to stderr
-	var backend = logging.AddModuleLevel(logging.NewLogBackend(ioutil.Discard, "", 0))
+	var backend = logging.AddModuleLevel(logging.NewLogBackend(io.Discard, "", 0))
 	backend.SetLevel(logging.ERROR, "yq")
 	logging.SetBackend(backend)
 }

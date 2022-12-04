@@ -105,14 +105,14 @@ Modified: 5 seconds ago
 
 ## Define the installation
 
-Define an installation that uses these parameter and credential sets to install the getporter/credentials-tutorial:0.2.0 bundle.
+Define an installation that uses these parameter and credential sets to install the ghcr.io/getporter/examples/credentials-tutorial:0.3.0 bundle.
 Create a file named installation.yaml, paste the following definition into the file, and then save it.
 
 ```yaml
 schemaVersion: 1.0.2
 name: desired-state
 bundle:
-  repository: getporter/credentials-tutorial
+  repository: ghcr.io/getporter/examples/credentials-tutorial
   version: 0.3.0
 parameterSets:
   - credentials-tutorial
@@ -204,7 +204,7 @@ The installation.yaml file should look like this:
 schemaVersion: 1.0.0
 name: desired-state
 bundle:
-  repository: getporter/credentials-tutorial
+  repository: ghcr.io/getporter/examples/credentials-tutorial
   version: 0.3.0
 parameterSets:
   - credentials-tutorial

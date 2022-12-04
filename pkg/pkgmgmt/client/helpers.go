@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"path"
+	"sync"
 	"testing"
 
 	"get.porter.sh/porter/pkg/pkgmgmt"
@@ -20,20 +21,23 @@ type TestPackageManager struct {
 	RunAssertions []func(pkgContext *portercontext.Context, name string, commandOpts pkgmgmt.CommandOptions) error
 
 	// called keeps track of which mixins/plugins were called
-	called map[string]int
+	called sync.Map
+	lock   sync.Mutex
 }
 
 // GetCalled tracks how many times each package was called
-func (p *TestPackageManager) GetCalled() map[string]int {
-	return p.called
+func (p *TestPackageManager) GetCalled(mixin string) int {
+	calls, _ := p.called.LoadOrStore(mixin, 0)
+	return calls.(int)
 }
 
 func (p *TestPackageManager) recordCalled(name string) {
-	if p.called == nil {
-		p.called = make(map[string]int, 1)
-	}
+	p.lock.Lock()
+	defer p.lock.Unlock()
 
-	p.called[name]++
+	hits := p.GetCalled(name)
+	hits = hits + 1
+	p.called.Store(name, hits)
 }
 
 func (p *TestPackageManager) List() ([]string, error) {

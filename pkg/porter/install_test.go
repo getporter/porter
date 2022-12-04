@@ -84,14 +84,14 @@ func TestPorter_applyActionOptionsToInstallation(t *testing.T) {
 			},
 		})
 
-		return ctx, p, &storage.Installation{
+		return ctx, p, &storage.Installation{InstallationSpec: storage.InstallationSpec{
 			Bundle: storage.OCIReferenceParts{
 				Repository: "example.com/mybuns",
 				Version:    "1.0.0",
 			},
 			ParameterSets:  []string{"oldps1"},
 			CredentialSets: []string{"oldcs1", "oldcs2"},
-		}
+		}}
 	}
 
 	t.Run("replace previous sets", func(t *testing.T) {

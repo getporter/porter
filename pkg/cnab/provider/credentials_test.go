@@ -49,7 +49,12 @@ func TestRuntime_loadCredentials(t *testing.T) {
 		},
 	})
 
-	args := ActionArguments{Installation: storage.Installation{CredentialSets: []string{"mycreds"}}, Action: "install"}
+	args := ActionArguments{
+		Installation: storage.Installation{
+			InstallationSpec: storage.InstallationSpec{
+				CredentialSets: []string{"mycreds"}},
+		},
+		Action: "install"}
 	gotValues, err := r.loadCredentials(context.Background(), b, args)
 	require.NoError(t, err, "loadCredentials failed")
 
@@ -58,7 +63,12 @@ func TestRuntime_loadCredentials(t *testing.T) {
 	}
 	assert.Equal(t, wantValues, gotValues, "resolved unexpected credential values")
 
-	args = ActionArguments{Installation: storage.Installation{CredentialSets: []string{"/db-creds.json"}}, Action: "install"}
+	args = ActionArguments{
+		Installation: storage.Installation{
+			InstallationSpec: storage.InstallationSpec{
+				CredentialSets: []string{"/db-creds.json"}},
+		},
+		Action: "install"}
 	_, err = r.loadCredentials(context.Background(), b, args)
 	require.Error(t, err, "loadCredentials should not load from a file")
 }
@@ -137,7 +147,12 @@ func TestRuntime_loadCredentials_WithApplyTo(t *testing.T) {
 		require.NoError(t, err, "Save credential set failed")
 
 		b := getBundle(true)
-		args := ActionArguments{Installation: storage.Installation{CredentialSets: []string{"mycreds"}}, Action: "install"}
+		args := ActionArguments{
+			Installation: storage.Installation{
+				InstallationSpec: storage.InstallationSpec{
+					CredentialSets: []string{"mycreds"}},
+			},
+			Action: "install"}
 		gotValues, err := r.loadCredentials(context.Background(), b, args)
 		require.NoError(t, err, "loadCredentials failed")
 		assert.Equal(t, secrets.Set{"password": "mypassword"}, gotValues)

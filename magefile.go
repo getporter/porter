@@ -8,7 +8,6 @@ package main
 import (
 	"fmt"
 	"go/build"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -56,8 +55,12 @@ func CheckGoVersion() {
 
 // Builds all code artifacts in the repository
 func Build() {
-	mg.SerialDeps(setup.EnsureProtobufTools, BuildPorter, DocsGen, BuildExecMixin, BuildAgent)
+	mg.SerialDeps(InstallBuildTools, BuildPorter, BuildExecMixin, BuildAgent, DocsGen)
 	mg.Deps(GetMixins)
+}
+
+func InstallBuildTools() {
+	mg.Deps(setup.EnsureProtobufTools)
 }
 
 // Build the porter client and runtime
@@ -97,11 +100,13 @@ func XBuildAll() {
 func XBuildPorter() {
 	mg.Deps(copySchema)
 	releases.XBuildAll(PKG, "porter", "bin")
+	releases.PrepareMixinForPublish("porter")
 }
 
 // Cross-compile the exec mixin
 func XBuildMixins() {
 	releases.XBuildAll(PKG, "exec", "bin/mixins/exec")
+	releases.PrepareMixinForPublish("exec")
 }
 
 // Generate cli documentation for the website
@@ -192,10 +197,17 @@ func porter(args ...string) shx.PreparedCommand {
 	return p
 }
 
-// Update golden test files to match the new test outputs
+// Update golden test files (unit tests only) to match the new test outputs and re-run the unit tests
 func UpdateTestfiles() {
-	must.Command("go", "test", "./...").Env("PORTER_UPDATE_TEST_FILES=true").RunV()
-	must.RunV("make", "test-unit")
+	os.Setenv("PORTER_UPDATE_TEST_FILES", "true")
+	defer os.Unsetenv("PORTER_UPDATE_TEST_FILES")
+
+	// Run tests and update any golden files
+	TestUnit()
+
+	// Re-run the tests with the golden files locked in to make sure everything passes now
+	os.Unsetenv("PORTER_UPDATE_TEST_FILES")
+	TestUnit()
 }
 
 // Run all tests known to human-kind
@@ -339,7 +351,14 @@ func PublishPorter() {
 	info := releases.LoadMetadata()
 
 	// Copy install scripts into version directory
-	must.Command("./scripts/prep-install-scripts.sh").Env("VERSION=" + info.Version).RunV()
+	// Rewrites the version number in the script uploaded to the github release
+	// If it's a tagged version, we reference that in the script
+	// Otherwise reference the name of the build, e.g. "canary"
+	scriptVersion := info.Version
+	if !info.IsTaggedRelease {
+		scriptVersion = info.Permalink
+	}
+	must.Command("./scripts/prep-install-scripts.sh").Env("VERSION=" + scriptVersion).RunV()
 
 	porterVersionDir := filepath.Join("bin", info.Version)
 	execVersionDir := filepath.Join("bin/mixins/exec", info.Version)
@@ -486,7 +505,7 @@ func Install() {
 
 	// Copy mixin binaries
 	mixinsDir := filepath.Join("bin", "mixins")
-	mixinsDirItems, err := ioutil.ReadDir(mixinsDir)
+	mixinsDirItems, err := os.ReadDir(mixinsDir)
 	if err != nil {
 		mgx.Must(fmt.Errorf("could not list mixins in bin: %w", err))
 	}
@@ -536,4 +555,16 @@ func getPorterHome() string {
 		porterHome = filepath.Join(home, ".porter")
 	}
 	return porterHome
+}
+
+// SetupDCO configures your git repository to automatically sign your commits
+// to comply with our DCO
+func SetupDCO() {
+	gotShell := xplat.DetectShell()
+	switch gotShell {
+	case "powershell", "cmd":
+		fmt.Fprintf(os.Stderr, "SetupDCO must be run from a shell that supports bash but %s was detected\n", gotShell)
+	default:
+		must.Command("scripts/setup-dco/setup.sh").Stdin(os.Stdin).RunV()
+	}
 }

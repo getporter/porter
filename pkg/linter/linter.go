@@ -194,11 +194,20 @@ func (l *Linter) Lint(ctx context.Context, m *manifest.Manifest) (Results, error
 		return nil, span.Error(err)
 	}
 
-	for mixin, response := range responses {
+	var results Results
+	for _, response := range responses {
+		if response.Error != nil {
+			// Ignore mixins that do not support the lint command
+			if strings.Contains(response.Error.Error(), "unknown command") {
+				continue
+			}
+			return nil, span.Error(fmt.Errorf("lint command failed for mixin %s: %s", response.Name, response.Stdout))
+		}
+
 		var r Results
-		err = json.Unmarshal([]byte(response), &r)
+		err = json.Unmarshal([]byte(response.Stdout), &r)
 		if err != nil {
-			return nil, span.Error(fmt.Errorf("unable to parse lint response from mixin %q: %w", mixin, err))
+			return nil, span.Error(fmt.Errorf("unable to parse lint response from mixin %s: %w", response.Name, err))
 		}
 
 		results = append(results, r...)
