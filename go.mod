@@ -53,7 +53,7 @@ require (
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/osteele/liquid v1.3.0
-	github.com/pelletier/go-toml v1.9.4
+	github.com/pelletier/go-toml v1.9.5
 	github.com/spf13/afero v1.9.2
 	github.com/spf13/cobra v1.6.0
 	github.com/spf13/pflag v1.0.5
