@@ -156,30 +156,32 @@ func New(cxt *portercontext.Context, mixins pkgmgmt.PackageManager) *Linter {
 func (l *Linter) Lint(ctx context.Context, m *manifest.Manifest) (Results, error) {
 	// TODO: perform any porter level linting
 	// e.g. metadata, credentials, properties, outputs, dependencies, etc
-	reservedNames := map[string]bool{"debug": true}
+	reservedPrefixes := []string{"porter-", "porter_"}
+	params := m.Parameters
 
 	var results Results
 
-	params := m.Parameters
-
 	for _, param := range params {
-		if _, ok := reservedNames[param.Name]; ok {
+		paramName := strings.ToLower(param.Name)
+		for _, reservedPrefix := range reservedPrefixes {
+			if strings.HasPrefix(paramName, reservedPrefix) {
 
-			res := Result {
-				Level: LevelWarning,
-				Location: Location {
-					Action: "",
-					Mixin: "",
-					StepNumber: 0,
-					StepDescription: "",
-			
-				},
-				Code: "exec-100",
-				Title: "Reserved name warning",
-				Message: "This is a reserved name",
-				URL: "",
+				res := Result {
+					Level: LevelWarning,
+					Location: Location {
+						Action: "",
+						Mixin: "",
+						StepNumber: 0,
+						StepDescription: "",
+				
+					},
+					Code: "exec-100",
+					Title: "Reserved name warning",
+					Message: param.Name + " has a reserved prefix",
+					URL: "",
+				}
+				results = append(results, res)
 			}
-			results = append(results, res)
 		}
 	}
 	ctx, span := tracing.StartSpan(ctx)

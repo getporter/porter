@@ -72,13 +72,14 @@ func TestLinter_Lint(t *testing.T) {
 		require.Len(t, results, 0, "linter should ignore mixins that doesn't support the lint command")
 	})
 
-	t.Run("does not use reserved name", func(t *testing.T) {
+	t.Run("does not use reserved prefix", func(t *testing.T) {
 		cxt := portercontext.NewTestContext(t)
 		mixins := mixin.NewTestMixinProvider()
+		parameterName := "porter-debug"
 		l := New(cxt.Context, mixins)
 		param := map[string]manifest.ParameterDefinition {
 			"A": {
-				Name: "debug",
+				Name: parameterName,
 			},
 		}
 
@@ -97,7 +98,7 @@ func TestLinter_Lint(t *testing.T) {
 				},
 				Code: "exec-100",
 				Title: "Reserved name warning",
-				Message: "This is a reserved name",
+				Message: parameterName + " has a reserved prefix",
 				URL: "",
 			},
 		}
@@ -108,7 +109,45 @@ func TestLinter_Lint(t *testing.T) {
 		require.Equal(t, mixins.LintResults, results, "unexpected lint results")
 	})
 
-	t.Run("linter runs successfully if parameter is not a reserved name", func(t *testing.T) {
+	t.Run("is case insensitive and does not use reserved prefix even if mixed case or upper", func(t *testing.T) {
+		cxt := portercontext.NewTestContext(t)
+		mixins := mixin.NewTestMixinProvider()
+		parameterName := "poRteR_lint"
+		l := New(cxt.Context, mixins)
+		param := map[string]manifest.ParameterDefinition {
+			"A": {
+				Name: parameterName,
+			},
+		}
+
+		m := &manifest.Manifest{
+			Parameters: param,
+		}
+		mixins.LintResults = Results{
+			{
+				Level: LevelWarning,
+				Location: Location {
+					Action: "",
+					Mixin: "",
+					StepNumber: 0,
+					StepDescription: "",
+			
+				},
+				Code: "exec-100",
+				Title: "Reserved name warning",
+				Message: parameterName + " has a reserved prefix",
+				URL: "",
+			},
+		}
+
+		results, err := l.Lint(ctx, m)
+		require.NoError(t, err, "Lint failed")
+		require.Len(t, results, 1, "linter should have returned 1 result")
+		require.Equal(t, mixins.LintResults, results, "unexpected lint results")
+	})
+
+
+	t.Run("linter runs successfully if parameter does not use a reserved prefix", func(t *testing.T) {
 		cxt := portercontext.NewTestContext(t)
 		mixins := mixin.NewTestMixinProvider()
 		l := New(cxt.Context, mixins)
