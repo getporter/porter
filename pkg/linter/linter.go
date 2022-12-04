@@ -194,7 +194,6 @@ func (l *Linter) Lint(ctx context.Context, m *manifest.Manifest) (Results, error
 		return nil, span.Error(err)
 	}
 
-	var results Results
 	for _, response := range responses {
 		if response.Error != nil {
 			// Ignore mixins that do not support the lint command
