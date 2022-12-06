@@ -28,7 +28,7 @@ require (
 	github.com/cnabio/cnab-go v0.24.1
 	github.com/cnabio/cnab-to-oci v0.3.7
 	github.com/cnabio/image-relocation v0.9.0
-	github.com/containerd/containerd v1.6.9
+	github.com/containerd/containerd v1.6.10
 	github.com/davecgh/go-spew v1.1.1
 	github.com/docker/buildx v0.8.1
 	github.com/docker/cli v20.10.20+incompatible
