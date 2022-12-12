@@ -75,3 +75,4 @@ and we will add you. **All** contributors belong here. 💯
 * [Epsxy](https://github.com/epsxy)
 * [Jens Arnfast](https://github.com/jarnfast)
 * [Madhu M Pandurangi](https://github.com/MadhuMPandurangi)
+* [Karanjot Singh](https://github.com/0xquark)
