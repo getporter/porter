@@ -501,6 +501,11 @@ pygmentsStyle = "friendly"
     identifier = "file-formats"
     parent = "references"
   [[menu.main]]
+    name = "Porter Lint Messages"
+    url = "/reference/linter/"
+    identifier = "lint-codes"
+    parent = "references"
+  [[menu.main]]
     name = "Compatible Registries"
     identifier = "compatible-registries"
     url = "/compatible-registries/"
