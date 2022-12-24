@@ -1,6 +1,9 @@
 package storage
 
 import (
+	"fmt"
+	"strings"
+
 	"get.porter.sh/porter/pkg/cnab"
 	"github.com/cnabio/cnab-go/schema"
 )
@@ -20,14 +23,28 @@ type Workflow struct {
 type WorkflowSpec struct {
 	SchemaVersion schema.Version `json:"schemaVersion"`
 
-	// Stages are groups of jobs that run in serial.
-	Stages []Stage `json:"stages"`
-
 	// MaxParallel is the maximum number of jobs that can run in parallel.
 	MaxParallel int `json:"maxParallel"`
 
 	// DebugMode tweaks how the workflow is run to make it easier to debug
 	DebugMode bool `json:"debugMode"`
+
+	// Stages are groups of jobs that run in serial.
+	Stages []Stage `json:"stages"`
+}
+
+// GetJob finds the specified job by its key.
+// All job keys within a workflow must be unique.
+func (w *WorkflowSpec) GetJob(jobKey string) (*Job, error) {
+	for _, s := range w.Stages {
+		for k, j := range s.Jobs {
+			if k == jobKey {
+				return j, nil
+			}
+		}
+	}
+
+	return nil, fmt.Errorf("workflow does not contain job key %s", jobKey)
 }
 
 // TODO(PEP003): Figure out what needs to be persisted, and how to persist multiple or continued runs
@@ -36,10 +53,10 @@ type WorkflowStatus struct {
 
 // Prepare updates the internal data representation of the workflow before running it.
 func (w *Workflow) Prepare() {
-	// Assign an id to the workflow
-	w.ID = cnab.NewULID()
-
-	// Update any workflow wiring to use the workflow id?
+	// Assign an id to the workflow if needed
+	if w.ID == "" {
+		w.ID = cnab.NewULID()
+	}
 
 	for _, s := range w.Stages {
 		s.Prepare(w.ID)
@@ -56,9 +73,7 @@ func (s *Stage) Prepare(workflowID string) {
 	// Update the jobs so that they know their job key (since they won't be used within the larger workflow, but as independent jobs)
 	for jobKey, job := range s.Jobs {
 		job.Prepare(workflowID, jobKey)
-		s.Jobs[jobKey] = job
 	}
-
 }
 
 // Job represents the execution of a bundle.
@@ -91,11 +106,14 @@ func (j *Job) GetKey() string {
 
 func (j *Job) Prepare(workflowId string, jobKey string) {
 	j.Key = jobKey
-	for _, param := range j.Installation.Parameters.Parameters {
+	for i, param := range j.Installation.Parameters.Parameters {
 		if param.Source.Key != "porter" {
 			continue
 		}
 
+		// Update the template string with the id of the current workflow
+		param.Source.Value = strings.Replace(param.Source.Value, "workflow.jobs", fmt.Sprintf("workflow.%s.jobs", workflowId), 1)
+		j.Installation.Parameters.Parameters[i] = param
 	}
 }
 

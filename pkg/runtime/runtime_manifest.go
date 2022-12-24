@@ -45,8 +45,9 @@ type RuntimeManifest struct {
 	// do advanced stuff with the manifest, like just read out the yaml for a particular step.
 	editor *yaml.Editor
 
-	// bundles is map of the dependencies bundle definitions, keyed by the alias used in the root manifest
-	bundles map[string]cnab.ExtendedBundle
+	// depsv1_bundles is map of the dependencies bundle definitions, keyed by the alias used in the root manifest
+	// This is only populated for a bundle built for dependencies v1
+	depsv1_bundles map[string]cnab.ExtendedBundle
 
 	steps           manifest.Steps
 	outputs         map[string]string
@@ -74,9 +75,12 @@ func (m *RuntimeManifest) Validate() error {
 		return err
 	}
 
-	err = m.loadDependencyDefinitions()
-	if err != nil {
-		return err
+	fmt.Println("carolyn was here")
+	if m.bundle.HasDependenciesV1() {
+		err = m.loadDependencyDefinitions()
+		if err != nil {
+			return err
+		}
 	}
 
 	err = m.setStepsByAction()
@@ -112,7 +116,11 @@ func (m *RuntimeManifest) GetInstallationName() string {
 }
 
 func (m *RuntimeManifest) loadDependencyDefinitions() error {
-	m.bundles = make(map[string]cnab.ExtendedBundle, len(m.Dependencies.Requires))
+	if !m.bundle.HasDependenciesV1() {
+		return nil
+	}
+
+	m.depsv1_bundles = make(map[string]cnab.ExtendedBundle, len(m.Dependencies.Requires))
 	for _, dep := range m.Dependencies.Requires {
 		bunD, err := GetDependencyDefinition(m.config.Context, dep.Name)
 		if err != nil {
@@ -124,7 +132,7 @@ func (m *RuntimeManifest) loadDependencyDefinitions() error {
 			return fmt.Errorf("error unmarshaling bundle definition for dependency %s: %w", dep.Name, err)
 		}
 
-		m.bundles[dep.Name] = cnab.NewBundle(*bun)
+		m.depsv1_bundles[dep.Name] = cnab.NewBundle(*bun)
 	}
 
 	return nil
@@ -290,15 +298,17 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 	}
 
 	deps := make(map[string]interface{})
-	bun["dependencies"] = deps
-	for alias, depB := range m.bundles {
-		// bundle.dependencies.ALIAS.outputs.NAME
-		depBun := make(map[string]interface{})
-		deps[alias] = depBun
+	if m.bundle.HasDependenciesV1() {
+		bun["dependencies"] = deps
+		for alias, depB := range m.depsv1_bundles {
+			// bundle.dependencies.ALIAS.outputs.NAME
+			depBun := make(map[string]interface{})
+			deps[alias] = depBun
 
-		depBun["name"] = depB.Name
-		depBun["version"] = depB.Version
-		depBun["description"] = depB.Description
+			depBun["name"] = depB.Name
+			depBun["version"] = depB.Version
+			depBun["description"] = depB.Description
+		}
 	}
 
 	bun["outputs"] = m.outputs
@@ -338,6 +348,10 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 		for _, s := range sources.ListSourcesByPriority() {
 			switch ps := s.(type) {
 			case cnab.DependencyOutputParameterSource:
+				if m.bundle.HasDependenciesV1() {
+					return nil, fmt.Errorf("bundle was not built for dependencies v1 but uses a dependency parameter source which is invalid")
+				}
+
 				outRef := manifest.DependencyOutputReference{Dependency: ps.Dependency, Output: ps.OutputName}
 
 				// Ignore anything that isn't templated, because that's what we are building the source data for
@@ -362,7 +376,7 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 				depOutputs[ps.OutputName] = value
 
 				// Determine if the dependency's output is defined as sensitive
-				depB := m.bundles[ps.Dependency]
+				depB := m.depsv1_bundles[ps.Dependency]
 				if ok, _ := depB.IsOutputSensitive(ps.OutputName); ok {
 					m.setSensitiveValue(value)
 				}

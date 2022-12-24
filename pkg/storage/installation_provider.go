@@ -55,6 +55,10 @@ type InstallationProvider interface {
 	// GetLastRun returns the last run of an Installation.
 	GetLastRun(ctx context.Context, namespace string, installation string) (Run, error)
 
+	// FindOutputs applies the find operation against outputs collection
+	// using the specified options.
+	FindOutputs(ctx context.Context, opts FindOptions) ([]Output, error)
+
 	// GetLastOutput returns the most recent value (last) of the specified
 	// Output associated with the installation.
 	GetLastOutput(ctx context.Context, namespace string, installation string, name string) (Output, error)

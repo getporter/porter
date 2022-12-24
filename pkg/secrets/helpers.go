@@ -5,7 +5,7 @@ import inmemory "get.porter.sh/porter/pkg/secrets/plugins/in-memory"
 var _ Store = &TestSecretsProvider{}
 
 type TestSecretsProvider struct {
-	PluginAdapter
+	*PluginAdapter
 
 	secrets *inmemory.Store
 }

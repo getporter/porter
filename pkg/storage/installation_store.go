@@ -142,6 +142,15 @@ func (s InstallationStore) FindInstallations(ctx context.Context, findOpts FindO
 	return out, err
 }
 
+func (s InstallationStore) FindOutputs(ctx context.Context, findOpts FindOptions) ([]Output, error) {
+	_, log := tracing.StartSpan(ctx)
+	defer log.EndSpan()
+
+	var out []Output
+	err := s.store.Find(ctx, CollectionOutputs, findOpts, &out)
+	return out, err
+}
+
 func (s InstallationStore) GetInstallation(ctx context.Context, namespace string, name string) (Installation, error) {
 	var out Installation
 
