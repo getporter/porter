@@ -328,11 +328,11 @@ func (t Engine) executeJob(ctx context.Context, j *storage.Job, jobs chan *stora
 	opts := ReconcileOptions{
 		Installation: j.Installation,
 	}
-	err := t.p.ReconcileInstallationInWorkflow(ctx, opts)
+	run, result, err := t.p.ReconcileInstallationInWorkflow(ctx, opts)
+	j.Status.LastRunID = run.ID
+	j.Status.LastResultID = result.ID
+	j.Status.ResultIDs = append(j.Status.ResultIDs, result.ID)
 	if err != nil {
-		// TODO(PEP003): Let's consider the relationship between jobs, runs and results.
-		// How much should we duplicate on job?
-		// How do we want to link the job to the run (e.g. should job status include runid or something?)
 		j.Status.Status = cnab.StatusFailed
 		j.Status.Message = err.Error()
 	} else {

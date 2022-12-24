@@ -125,11 +125,11 @@ func (r *Runtime) AddRelocation(args ActionArguments) cnabaction.OperationConfig
 	}
 }
 
-func (r *Runtime) Execute(ctx context.Context, args ActionArguments) error {
+func (r *Runtime) Execute(ctx context.Context, args ActionArguments) (storage.Run, storage.Result, error) {
 	// Check if we've been asked to stop before executing long blocking calls
 	select {
 	case <-ctx.Done():
-		return ctx.Err()
+		return storage.Run{}, storage.Result{}, ctx.Err()
 	default:
 		ctx, log := tracing.StartSpan(ctx,
 			attribute.String("action", args.Action),
@@ -140,33 +140,33 @@ func (r *Runtime) Execute(ctx context.Context, args ActionArguments) error {
 		args.Installation.AddToTrace(ctx)
 
 		if args.Action == "" {
-			return log.Error(errors.New("action is required"))
+			return storage.Run{}, storage.Result{}, log.Error(errors.New("action is required"))
 		}
 
 		b, err := r.ProcessBundle(ctx, args.BundleReference.Definition)
 		if err != nil {
-			return log.Error(err)
+			return storage.Run{}, storage.Result{}, log.Error(err)
 		}
 
 		currentRun, err := r.CreateRun(ctx, args, b)
 		if err != nil {
-			return log.Error(err)
+			return storage.Run{}, storage.Result{}, log.Error(err)
 		}
 
 		// Validate the action
 		if _, err := b.GetAction(currentRun.Action); err != nil {
-			return log.Error(fmt.Errorf("invalid action '%s' specified for bundle %s: %w", currentRun.Action, b.Name, err))
+			return storage.Run{}, storage.Result{}, log.Error(fmt.Errorf("invalid action '%s' specified for bundle %s: %w", currentRun.Action, b.Name, err))
 		}
 
 		creds, err := r.loadCredentials(ctx, b, args)
 		if err != nil {
-			return log.Error(fmt.Errorf("not load credentials: %w", err))
+			return storage.Run{}, storage.Result{}, log.Error(fmt.Errorf("not load credentials: %w", err))
 		}
 
 		log.Debugf("Using runtime driver %s\n", args.Driver)
 		driver, err := r.newDriver(args.Driver, args)
 		if err != nil {
-			return log.Error(fmt.Errorf("unable to instantiate driver: %w", err))
+			return storage.Run{}, storage.Result{}, log.Error(fmt.Errorf("unable to instantiate driver: %w", err))
 		}
 
 		a := cnabaction.New(driver)
@@ -175,7 +175,7 @@ func (r *Runtime) Execute(ctx context.Context, args ActionArguments) error {
 		if currentRun.ShouldRecord() {
 			err = r.SaveRun(ctx, args.Installation, currentRun, cnab.StatusRunning)
 			if err != nil {
-				return log.Error(fmt.Errorf("could not save the pending action's status, the bundle was not executed: %w", err))
+				return currentRun, storage.Result{}, log.Error(fmt.Errorf("could not save the pending action's status, the bundle was not executed: %w", err))
 			}
 		}
 
@@ -187,19 +187,20 @@ func (r *Runtime) Execute(ctx context.Context, args ActionArguments) error {
 			tracing.ObjectAttribute("cnab-credentials", cnabCreds))
 		opResult, result, err := a.Run(cnabClaim, cnabCreds, r.ApplyConfig(ctx, args)...)
 
+		currentResult := currentRun.NewResultFrom(result)
 		if currentRun.ShouldRecord() {
 			if err != nil {
 				err = r.appendFailedResult(ctx, err, currentRun)
-				return log.Error(fmt.Errorf("failed to record that %s for installation %s failed: %w", args.Action, args.Installation.Name, err))
+				return currentRun, currentResult, log.Error(fmt.Errorf("failed to record that %s for installation %s failed: %w", args.Action, args.Installation.Name, err))
 			}
-			return r.SaveOperationResult(ctx, opResult, args.Installation, currentRun, currentRun.NewResultFrom(result))
+			return currentRun, currentResult, r.SaveOperationResult(ctx, opResult, args.Installation, currentRun, currentResult)
 		}
 
 		if err != nil {
-			return log.Error(fmt.Errorf("execution of %s for installation %s failed: %w", args.Action, args.Installation.Name, err))
+			return currentRun, currentResult, log.Error(fmt.Errorf("execution of %s for installation %s failed: %w", args.Action, args.Installation.Name, err))
 		}
 
-		return nil
+		return currentRun, currentResult, nil
 	}
 }
 

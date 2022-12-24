@@ -59,18 +59,18 @@ func (p *Porter) ReconcileInstallationAndDependencies(ctx context.Context, opts 
 // This is only used for install/upgrade actions triggered by applying a file
 // to an installation. For uninstall or invoke, you should call those directly.
 // This should only be used with deps-v2 feature workflows.
-func (p *Porter) ReconcileInstallationInWorkflow(ctx context.Context, opts ReconcileOptions) error {
+func (p *Porter) ReconcileInstallationInWorkflow(ctx context.Context, opts ReconcileOptions) (storage.Run, storage.Result, error) {
 	ctx, span := tracing.StartSpan(ctx)
 	defer span.EndSpan()
 
 	installation, actionOpts, err := p.reconcileInstallation(ctx, opts)
 	if err != nil {
-		return err
+		return storage.Run{}, storage.Result{}, err
 	}
 
 	// Nothing to do, the installation is up-to-date
 	if actionOpts == nil {
-		return nil
+		return storage.Run{}, storage.Result{}, nil
 	}
 
 	return p.ExecuteRootBundleOnly(ctx, installation, actionOpts)

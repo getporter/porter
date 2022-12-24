@@ -100,8 +100,11 @@ func (j *Job) Prepare(workflowId string, jobKey string) {
 }
 
 type JobStatus struct {
-	Status  string `json:"status"`
-	Message string `json:"message"`
+	LastRunID    string   `json:lastRunID`
+	LastResultID string   `json:lastResultID`
+	ResultIDs    []string `json:resultIDs`
+	Status       string   `json:"status"`
+	Message      string   `json:"message"`
 }
 
 func (s JobStatus) IsSucceeded() bool {

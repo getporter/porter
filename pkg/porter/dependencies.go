@@ -315,7 +315,7 @@ func (e *dependencyExecutioner) executeDependency(ctx context.Context, dep *queu
 
 	var executeErrs error
 	span.Infof("Executing dependency %s...", dep.Alias)
-	err = e.CNAB.Execute(ctx, depArgs)
+	_, _, err = e.CNAB.Execute(ctx, depArgs)
 	if err != nil {
 		executeErrs = multierror.Append(executeErrs, fmt.Errorf("error executing dependency %s: %w", dep.Alias, err))
 

@@ -95,17 +95,18 @@ func (p *Porter) ExecuteBundleAndDependencies(ctx context.Context, installation 
 			return err
 		}
 
-		return p.CNAB.Execute(ctx, actionArgs)
+		_, _, err = p.CNAB.Execute(ctx, actionArgs)
+		return err
 	}
 }
 
 // ExecuteRootBundleOnly runs a single bundle that has already had its dependencies resolved by a workflow.
 // The workflow is responsible identifying the bundles to run, their order, what to pass between them, etc.
 // It is only intended to be used with the deps-v2 feature.
-func (p *Porter) ExecuteRootBundleOnly(ctx context.Context, installation storage.Installation, action BundleAction) error {
+func (p *Porter) ExecuteRootBundleOnly(ctx context.Context, installation storage.Installation, action BundleAction) (storage.Run, storage.Result, error) {
 	// Callers should check for a noop action (because the installation is up-to-date, but let's check too just in case
 	if action == nil {
-		return nil
+		return storage.Run{}, storage.Result{}, nil
 	}
 
 	opts := action.GetOptions()
@@ -118,7 +119,7 @@ func (p *Porter) ExecuteRootBundleOnly(ctx context.Context, installation storage
 
 	actionArgs, err := p.BuildActionArgs(ctx, installation, action)
 	if err != nil {
-		return err
+		return storage.Run{}, storage.Result{}, err
 	}
 
 	return p.CNAB.Execute(ctx, actionArgs)

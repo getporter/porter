@@ -121,7 +121,7 @@ func (p *Porter) UninstallBundle(ctx context.Context, opts UninstallOptions) err
 	}
 
 	log.Infof("%s bundle", opts.GetActionVerb())
-	err = p.CNAB.Execute(ctx, actionArgs)
+	_, _, err = p.CNAB.Execute(ctx, actionArgs)
 
 	var uninstallErrs error
 	if err != nil {
