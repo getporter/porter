@@ -60,7 +60,7 @@ require (
 	github.com/spf13/viper v1.10.0
 	github.com/stretchr/testify v1.8.1
 	github.com/xeipuuv/gojsonschema v1.2.0
-	go.mongodb.org/mongo-driver v1.11.0
+	go.mongodb.org/mongo-driver v1.11.1
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.36.4
 	go.opentelemetry.io/otel v1.11.2
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.11.2
