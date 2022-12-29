@@ -71,6 +71,7 @@ type Context struct {
 	tracerInitalized bool
 
 	// handles send log data to the console/logfile
+	atom   *zap.AtomicLevel
 	logger *zap.Logger
 
 	// IsInternalPlugin indicates that Porter is running as an internal plugin
@@ -167,9 +168,16 @@ func (c *Context) ConfigureLogging(ctx context.Context, cfg LogConfiguration) {
 		c.logCfg.TelemetryServiceName = c.InternalPluginKey
 		baseLogger = c.makePluginLogger(c.InternalPluginKey, cfg)
 	} else {
-		baseLogger = c.makeConsoleLogger()
+		// currently the root logger is created before flags are being applied
+		// only change the log level when the root logger already initialized
+		if c.atom != nil {
+			c.atom.SetLevel(c.logCfg.Verbosity)
+		} else {
+			atom := zap.NewAtomicLevelAt(c.logCfg.Verbosity)
+			c.atom = &atom
+		}
+		baseLogger = c.makeConsoleLogger(c.atom)
 	}
-
 	c.configureLoggingWith(ctx, baseLogger)
 }
 
@@ -206,7 +214,7 @@ func (c *Context) configureLoggingWith(ctx context.Context, baseLogger zapcore.C
 	c.logger = tmpLog
 }
 
-func (c *Context) makeConsoleLogger() zapcore.Core {
+func (c *Context) makeConsoleLogger(atomLevel *zap.AtomicLevel) zapcore.Core {
 	encoding := c.makeLogEncoding()
 
 	stderr := c.Err
@@ -223,7 +231,7 @@ func (c *Context) makeConsoleLogger() zapcore.Core {
 		encoding.LevelKey = ""
 	}
 	consoleEncoder := zapcore.NewConsoleEncoder(encoding)
-	return zapcore.NewCore(consoleEncoder, zapcore.AddSync(stderr), c.logCfg.Verbosity)
+	return zapcore.NewCore(consoleEncoder, zapcore.AddSync(stderr), atomLevel)
 }
 
 func (c *Context) configureFileLog(dir string) (zapcore.Core, error) {
