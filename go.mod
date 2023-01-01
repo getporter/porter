@@ -48,7 +48,7 @@ require (
 	github.com/mikefarah/yq/v3 v3.0.0-20201020025845-ccb718cd0f59
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/mmcdole/gofeed v1.1.3
-	github.com/moby/buildkit v0.10.5
+	github.com/moby/buildkit v0.10.6
 	github.com/moby/term v0.0.0-20210619224110-3f7ff695adc6
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/opencontainers/go-digest v1.0.0
