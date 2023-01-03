@@ -25,7 +25,7 @@ var usageText string
 const (
 	// Indicates that config should not be loaded for this command.
 	// This is used for commands like help and version which should never
-	// fail, even with porter is misconfigured.
+	// fail, even if porter is misconfigured.
 	skipConfig string = "skipConfig"
 )
 
