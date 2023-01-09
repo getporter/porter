@@ -158,7 +158,7 @@ func (p *Porter) InstallPlugin(ctx context.Context, opts plugins.InstallOptions)
 	ctx, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
 
-	installConfigs, err := p.getInstallConfigs(ctx, opts)
+	installConfigs, err := p.getPluginInstallConfigs(ctx, opts)
 	if err != nil {
 		return err
 	}
@@ -191,7 +191,7 @@ func (p *Porter) UninstallPlugin(ctx context.Context, opts pkgmgmt.UninstallOpti
 	return nil
 }
 
-func (p *Porter) getInstallConfigs(ctx context.Context, opts plugins.InstallOptions) ([]pkgmgmt.InstallOptions, error) {
+func (p *Porter) getPluginInstallConfigs(ctx context.Context, opts plugins.InstallOptions) ([]pkgmgmt.InstallOptions, error) {
 	_, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
 
@@ -207,8 +207,9 @@ func (p *Porter) getInstallConfigs(ctx context.Context, opts plugins.InstallOpti
 		if err := encoding.UnmarshalFile(p.FileSystem, opts.File, &data); err != nil {
 			return nil, fmt.Errorf("unable to parse %s as an installation document: %w", opts.File, err)
 		}
+		sortedCfgs := plugins.NewInstallPluginConfigs(data)
 
-		for _, config := range data.Configs() {
+		for _, config := range sortedCfgs.Configs() {
 			// if user specified a feed url or mirror using the flags, it will become
 			// the default value and apply to empty values parsed from the provided file
 			if config.FeedURL == "" {

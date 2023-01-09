@@ -1,7 +1,6 @@
 package plugins
 
 import (
-	"encoding/json"
 	"fmt"
 	"sort"
 
@@ -41,36 +40,22 @@ func (o *InstallOptions) Validate(args []string, cxt *portercontext.Context) err
 }
 
 // InstallFileOption is the go representation of plugin installation file format.
-type InstallFileOption struct {
-	data map[string]pkgmgmt.InstallOptions
+type InstallFileOption map[string]pkgmgmt.InstallOptions
+
+// InstallPluginsConfig is a sorted list of InstallationFileOption in alphabetical order.
+type InstallPluginsConfig struct {
+	data InstallFileOption
 	keys []string
 }
 
-func (io *InstallFileOption) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	data := map[string]pkgmgmt.InstallOptions{}
-	err := unmarshal(&data)
-	if err != nil {
-		return fmt.Errorf("could not unmarshal into plugins.InstallFileOption: %w", err)
-	}
-	return io.sort(data)
-}
-
-func (io *InstallFileOption) UnmarshalJSON(data []byte) error {
-	configs := map[string]pkgmgmt.InstallOptions{}
-	err := json.Unmarshal(data, &configs)
-	if err != nil {
-		return fmt.Errorf("could not unmarshal into plugins.InstallFileOption: %w", err)
-	}
-
-	return io.sort(configs)
-}
-
-// sort returns InstallOptions in alphabetical order.
-func (io *InstallFileOption) sort(data map[string]pkgmgmt.InstallOptions) error {
-
-	keys := make([]string, 0, len(data))
-	for k, v := range data {
+// NewInstallPluginConfigs returns a new instance of InstallPluginConfigs with plugins sorted in alphabetical order
+// using their names.
+func NewInstallPluginConfigs(opt InstallFileOption) InstallPluginsConfig {
+	keys := make([]string, 0, len(opt))
+	data := make(InstallFileOption, len(opt))
+	for k, v := range opt {
 		keys = append(keys, k)
+
 		v.Name = k
 		v.PackageType = "plugin"
 		data[k] = v
@@ -80,18 +65,17 @@ func (io *InstallFileOption) sort(data map[string]pkgmgmt.InstallOptions) error 
 		return keys[i] < keys[j]
 	})
 
-	io.data = data
-	io.keys = keys
-
-	return nil
-
+	return InstallPluginsConfig{
+		data: data,
+		keys: keys,
+	}
 }
 
 // Configs returns InstallOptions list in alphabetical order.
-func (io InstallFileOption) Configs() []pkgmgmt.InstallOptions {
-	value := make([]pkgmgmt.InstallOptions, 0, len(io.keys))
-	for _, k := range io.keys {
-		value = append(value, io.data[k])
+func (pc InstallPluginsConfig) Configs() []pkgmgmt.InstallOptions {
+	value := make([]pkgmgmt.InstallOptions, 0, len(pc.keys))
+	for _, k := range pc.keys {
+		value = append(value, pc.data[k])
 	}
 	return value
 }
