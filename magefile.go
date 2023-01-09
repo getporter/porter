@@ -558,7 +558,7 @@ func Vet() {
 
 // Run staticcheck on the project
 func Lint() {
-	tools.EnsureStaticCheck()
+	mg.Deps(tools.EnsureStaticCheck)
 	must.RunV("staticcheck", "./...")
 }
 
