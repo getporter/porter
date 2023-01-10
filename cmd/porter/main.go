@@ -226,6 +226,7 @@ Try our QuickStart https://getporter.org/quickstart to learn how to use Porter.
 	cmd.AddCommand(buildCredentialsCommands(p))
 	cmd.AddCommand(buildParametersCommands(p))
 	cmd.AddCommand(buildCompletionCommand(p))
+	cmd.AddCommand(buildServerCommands(p))
 
 	for _, alias := range buildAliasCommands(p) {
 		cmd.AddCommand(alias)
