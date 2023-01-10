@@ -26,13 +26,11 @@ func (s *PorterServer) NewConnectionInterceptor(ctx context.Context, req interfa
 	storage := storage.NewPluginAdapter(storageplugin.NewStore(s.PorterConfig))
 	secretStorage := secrets.NewPluginAdapter(secretsplugin.NewStore(s.PorterConfig))
 	p := porter.NewFor(s.PorterConfig, storage, secretStorage)
-	_, err := p.Connect(ctx)
-	if err != nil {
+	if err := p.Connect(ctx); err != nil {
 		return nil, err
 	}
 	defer p.Close()
 
 	ctx = AddPorterConnectionToContext(p, ctx)
-	h, err := handler(ctx, req)
-	return h, err
+	return handler(ctx, req)
 }

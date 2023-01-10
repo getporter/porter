@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"strconv"
 	"testing"
 
@@ -12,38 +13,16 @@ import (
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/porter"
 	"get.porter.sh/porter/pkg/storage"
+	"get.porter.sh/porter/tests"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/tidwall/gjson"
-	"github.com/tidwall/sjson"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/encoding/protojson"
 )
-
-func grpcInstallationExpectedJSON(inst storage.Installation) ([]byte, error) {
-	expInst := porter.NewDisplayInstallation(inst)
-	bExpInst, err := json.MarshalIndent(expInst, "", "  ")
-	if err != nil {
-		return nil, err
-	}
-	// if no credentialSets or parameterSets add as empty list to
-	// match GRPCInstallation expectations
-	empty := make([]string, 0)
-	emptySets := []string{"credentialSets", "parameterSets"}
-	for _, es := range emptySets {
-		res := gjson.GetBytes(bExpInst, es)
-		if !res.Exists() {
-			bExpInst, err = sjson.SetBytes(bExpInst, es, empty)
-			if err != nil {
-				return nil, err
-			}
-		}
-	}
-	return bExpInst, nil
-}
 
 type testOutputOpt struct {
 	name         string
@@ -88,7 +67,7 @@ func newTestInstallation(t *testing.T, namespace, name string, grpcSvr *TestPort
 		i.Bundle.Repository = "test-bundle"
 		i.Bundle.Version = "v0.1.0"
 	})
-	c := grpcSvr.TestPorter.TestInstallations.CreateRun(storeInst.NewRun(cnab.ActionInstall, cnab.ExtendedBundle{}), func(sRun *storage.Run) {
+	c := grpcSvr.TestPorter.TestInstallations.CreateRun(storeInst.NewRun(cnab.ActionInstall), func(sRun *storage.Run) {
 		sRun.Bundle = b
 		sRun.ParameterOverrides.Parameters = grpcSvr.TestPorter.SanitizeParameters(sRun.ParameterOverrides.Parameters, sRun.ID, extB)
 	})
@@ -107,11 +86,13 @@ func TestInstall_installationMessage(t *testing.T) {
 			"bar": {Type: "string", WriteOnly: &writeOnly},
 		},
 		outputs: &[]testOutputOpt{
-			{name: "foo",
+			{
+				name:         "foo",
 				value:        "foo-data",
 				bundleOutput: bundle.Output{Definition: "foo", Path: "/path/to/foo"},
 			},
-			{name: "bar",
+			{
+				name:         "bar",
 				value:        "bar-data",
 				bundleOutput: bundle.Output{Definition: "bar", Path: "/path/to/bar"},
 			},
@@ -134,9 +115,8 @@ func TestInstall_installationMessage(t *testing.T) {
 			instOpts: basicInstOpts,
 		},
 	}
-	//t.Parallel()
 	for _, test := range tests {
-		t.Run(test.testName, func(t *testing.T) {
+		t.Run(fmt.Sprintf("%s", test.testName), func(t *testing.T) {
 			//Server setup
 			grpcSvr, err := NewTestGRPCServer(t)
 			require.NoError(t, err)
@@ -180,13 +160,13 @@ func TestInstall_installationMessage(t *testing.T) {
 
 func validateInstallations(t *testing.T, expected storage.Installation, actual *iGRPC.Installation) {
 	assert.Equal(t, actual.Name, expected.Name)
-	bExpInst, err := grpcInstallationExpectedJSON(expected)
+	bExpInst, err := json.Marshal(porter.NewDisplayInstallation(expected))
+	bExpInst, err = tests.GRPCDisplayInstallationExpectedJSON(bExpInst)
 	require.NoError(t, err)
 	pjm := protojson.MarshalOptions{EmitUnpopulated: true}
 	bActInst, err := pjm.Marshal(actual)
 	var pJson bytes.Buffer
 	json.Indent(&pJson, bActInst, "", "  ")
-	require.NoError(t, err)
 	assert.JSONEq(t, string(bExpInst), string(bActInst))
 }
 

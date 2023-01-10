@@ -10,9 +10,9 @@ import (
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/porter"
 	"get.porter.sh/porter/pkg/storage"
+	"get.porter.sh/porter/tests"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
-	"github.com/tidwall/sjson"
 	"google.golang.org/protobuf/encoding/protojson"
 	"k8s.io/utils/pointer"
 )
@@ -88,7 +88,7 @@ func TestListInstallationReturnsListOfCorrectPorterInstallations(t *testing.T) {
 				installations := resp.GetInstallation()
 				assert.Nil(t, err)
 				assert.Len(t, installations, test.numExpInsts[i])
-				verifyInstalltions(t, installations, insts)
+				verifyInstallations(t, installations, insts)
 			})
 		}
 	}
@@ -123,20 +123,17 @@ func setupTestPorterWithInstallations(t *testing.T, installations []instInfo) (c
 	return ctx, insts
 }
 
-func verifyInstalltions(t *testing.T, installations []*iGRPC.Installation, allInsts map[string]porter.DisplayInstallation) {
+func verifyInstallations(t *testing.T, installations []*iGRPC.Installation, allInsts map[string]porter.DisplayInstallation) {
 	for _, inst := range installations {
 		i, ok := allInsts[inst.Id]
 		assert.True(t, ok)
 		bExpInst, err := json.Marshal(i)
 		assert.NoError(t, err)
+		grpcExpInst, err := tests.GRPCDisplayInstallationExpectedJSON(bExpInst)
+		assert.NoError(t, err)
 		pjm := protojson.MarshalOptions{EmitUnpopulated: true}
 		bActInst, err := pjm.Marshal(inst)
 		assert.NoError(t, err)
-		// native porter stucts omit credential and parameter set remove for validation
-		bActInst, err = sjson.DeleteBytes(bActInst, "credentialSets")
-		assert.NoError(t, err)
-		bActInst, err = sjson.DeleteBytes(bActInst, "parameterSets")
-		assert.NoError(t, err)
-		assert.JSONEq(t, string(bExpInst), string(bActInst))
+		assert.JSONEq(t, string(grpcExpInst), string(bActInst))
 	}
 }

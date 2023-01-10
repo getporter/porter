@@ -23,9 +23,8 @@ import (
 type TestPorterGRPCServer struct {
 	TestPorter       *porter.TestPorter
 	TestPorterConfig *config.TestConfig
+	t                *testing.T
 }
-
-const bufSize = 1024 * 1024
 
 var lis *bufconn.Listener
 
@@ -44,6 +43,7 @@ func (s *TestPorterGRPCServer) newTestInterceptor(ctx context.Context, req inter
 }
 
 func (s *TestPorterGRPCServer) ListenAndServe() *grpc.Server {
+	bufSize := 1024 * 1024
 	lis = bufconn.Listen(bufSize)
 
 	srv := grpc.NewServer(
@@ -63,8 +63,7 @@ func (s *TestPorterGRPCServer) ListenAndServe() *grpc.Server {
 
 	go func() {
 		if err := srv.Serve(lis); err != nil {
-			fmt.Println("failed to serve")
-			//s.log.Fatal("failed to serve", zap.Error(err))
+			panic(fmt.Errorf("failed to serve: %w", err))
 		}
 	}()
 	return srv

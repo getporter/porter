@@ -8,16 +8,11 @@ import (
 	"net/http"
 	"os"
 
-	//"go.uber.org/zap/zapcore"
-
-	//igrpc "get.porter.sh/porter/gen/proto/go/porterapis/installation/v1alpha1"
-	pGRPC "get.porter.sh/porter/gen/proto/go/porterapis/porter/v1alpha1"
+	pGRPCv1alpha1 "get.porter.sh/porter/gen/proto/go/porterapis/porter/v1alpha1"
 	"get.porter.sh/porter/pkg/config"
 	pserver "get.porter.sh/porter/pkg/grpc/portergrpc"
 	"get.porter.sh/porter/pkg/porter"
 	"get.porter.sh/porter/pkg/tracing"
-
-	//"go.opentelemetry.io/otel/attribute"
 
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
@@ -51,13 +46,6 @@ type PorterGRPCService struct {
 	opts         *porter.ServiceOptions
 }
 
-/*
-type Config struct {
-	Port        int    `mapstructure:"grpc-port"`
-	ServiceName string `mapstructure:"grpc-service-name"`
-}
-*/
-
 func NewServer(ctx context.Context, opts *porter.ServiceOptions) (*PorterGRPCService, error) {
 	pCfg := config.New()
 	srv := &PorterGRPCService{
@@ -68,8 +56,8 @@ func NewServer(ctx context.Context, opts *porter.ServiceOptions) (*PorterGRPCSer
 }
 
 func (s *PorterGRPCService) ListenAndServe() (*grpc.Server, error) {
-	ctx := context.TODO()
-	_, log := tracing.StartSpan(ctx)
+	ctx := context.Background()
+	ctx, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
 	log.Infof("Starting gRPC on %v", s.opts.Port)
 	listener, err := net.Listen("tcp", fmt.Sprintf(":%v", s.opts.Port))
@@ -81,7 +69,7 @@ func (s *PorterGRPCService) ListenAndServe() (*grpc.Server, error) {
 	healthServer := health.NewServer()
 	psrv, err := pserver.NewPorterServer(s.PorterConfig)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	srv := grpc.NewServer(
 		grpc.StreamInterceptor(grpcMetrics.StreamServerInterceptor()),
@@ -92,8 +80,8 @@ func (s *PorterGRPCService) ListenAndServe() (*grpc.Server, error) {
 	)
 	reflection.Register(srv)
 
-	pGRPC.RegisterPorterServer(srv, psrv)
-	grpc_health_v1.RegisterHealthServer(srv, healthServer)
+	pGRPCv1alpha1.RegisterPorterServer(srv, psrv)
+	return nil, err
 	healthServer.SetServingStatus(s.opts.ServiceName, grpc_health_v1.HealthCheckResponse_SERVING)
 	grpc_prometheus.Register(srv)
 	go func() {

@@ -4,6 +4,9 @@ import (
 	"os/exec"
 	"runtime"
 
+	"os/exec"
+	"runtime"
+
 	"github.com/carolynvs/magex/mgx"
 	"github.com/carolynvs/magex/pkg"
 	"github.com/carolynvs/magex/pkg/archive"
@@ -12,6 +15,9 @@ import (
 )
 
 func EnsureProtobufTools() {
+	//TODO: add more tools
+	// https://github.com/bufbuild/buf/releases protoc-gen-buf-breaking, protoc-gen-buf-lint
+	// protoc https://github.com/protocolbuffers/protobuf/releases/download/v21.12/protoc-21.12-linux-x86_64.zip``
 	//TODO: add more tools
 	// https://github.com/bufbuild/buf/releases protoc-gen-buf-breaking, protoc-gen-buf-lint
 	// protoc https://github.com/protocolbuffers/protobuf/releases/download/v21.12/protoc-21.12-linux-x86_64.zip``

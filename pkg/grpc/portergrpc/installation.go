@@ -5,13 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 
-	iGRPC "get.porter.sh/porter/gen/proto/go/porterapis/installation/v1alpha1"
+	iGRPCv1alpha1 "get.porter.sh/porter/gen/proto/go/porterapis/installation/v1alpha1"
 	"get.porter.sh/porter/pkg/porter"
 	"get.porter.sh/porter/pkg/tracing"
 	"google.golang.org/protobuf/encoding/protojson"
 )
 
-func makeInstOptsLabels(labels map[string]string) []string {
+func newInstallationOptsFromLabels(labels map[string]string) []string {
 	var retLabels []string
 	for k, v := range labels {
 		retLabels = append(retLabels, fmt.Sprintf("%s=%s", k, v))
@@ -19,7 +19,36 @@ func makeInstOptsLabels(labels map[string]string) []string {
 	return retLabels
 }
 
-func makeGRPCInstallation(inst porter.DisplayInstallation, gInst *iGRPC.Installation) error {
+// newGRPCPorterValue creates a GRPC PorterValue (generated from protobufs)
+// from native porter DisplayValue
+func newGRPCPorterValue(value porter.DisplayValue) (*iGRPCv1alpha1.PorterValue, error) {
+	b, err := json.Marshal(value)
+	if err != nil {
+		return nil, err
+	}
+	pv := &iGRPCv1alpha1.PorterValue{}
+	err = protojson.Unmarshal(b, pv)
+	if err != nil {
+		return nil, err
+	}
+	return pv, nil
+}
+
+// newGRPCPorterValues creates a slice of GRPC PorterValue from native porter DisplayValues
+// to accommodate differences in generated structs from protobufs
+func newGRPCPorterValues(values porter.DisplayValues) []*iGRPCv1alpha1.PorterValue {
+	var retPVs []*iGRPCv1alpha1.PorterValue
+	for _, dv := range values {
+		//TODO: handle error
+		pv, _ := newGRPCPorterValue(dv)
+		retPVs = append(retPVs, pv)
+	}
+	return retPVs
+}
+
+// populateGRPCInstallation populates a GRPC Installation (generated from protobuf)
+// a native porter DisplayInstallation
+func populateGRPCInstallation(inst porter.DisplayInstallation, gInst *iGRPCv1alpha1.Installation) error {
 	bInst, err := json.Marshal(inst)
 	if err != nil {
 		return fmt.Errorf("porter.DisplayInstallation marshal error: %e", err)
@@ -32,7 +61,9 @@ func makeGRPCInstallation(inst porter.DisplayInstallation, gInst *iGRPC.Installa
 	return nil
 }
 
-func makeGRPCInstallationOutput(dv porter.DisplayValue, gInstOut *iGRPC.PorterValue) error {
+// populateGRPCPorterValue populates a GRPC PorterValue (generated from protobuf)
+// from a native porter DisplayValue
+func populateGRPCPorterValue(dv porter.DisplayValue, gInstOut *iGRPCv1alpha1.PorterValue) error {
 	bInstOut, err := json.Marshal(dv)
 	if err != nil {
 		return fmt.Errorf("PorterValue marshal error: %e", err)
@@ -45,7 +76,7 @@ func makeGRPCInstallationOutput(dv porter.DisplayValue, gInstOut *iGRPC.PorterVa
 	return nil
 }
 
-func (s *PorterServer) ListInstallations(ctx context.Context, req *iGRPC.ListInstallationsRequest) (*iGRPC.ListInstallationsResponse, error) {
+func (s *PorterServer) ListInstallations(ctx context.Context, req *iGRPCv1alpha1.ListInstallationsRequest) (*iGRPCv1alpha1.ListInstallationsResponse, error) {
 	ctx, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
 	p, err := GetPorterConnectionFromContext(ctx)
@@ -56,7 +87,7 @@ func (s *PorterServer) ListInstallations(ctx context.Context, req *iGRPC.ListIns
 	opts := porter.ListOptions{
 		Name:          req.GetName(),
 		Namespace:     req.GetNamespace(),
-		Labels:        makeInstOptsLabels(req.GetLabels()),
+		Labels:        newInstallationOptsFromLabels(req.GetLabels()),
 		AllNamespaces: req.GetAllNamespaces(),
 		Skip:          req.GetSkip(),
 		Limit:         req.GetLimit(),
@@ -65,22 +96,22 @@ func (s *PorterServer) ListInstallations(ctx context.Context, req *iGRPC.ListIns
 	if err != nil {
 		return nil, err
 	}
-	insts := []*iGRPC.Installation{}
+	insts := []*iGRPCv1alpha1.Installation{}
 	for _, pInst := range installations {
-		gInst := &iGRPC.Installation{}
-		err := makeGRPCInstallation(pInst, gInst)
+		gInst := &iGRPCv1alpha1.Installation{}
+		err := populateGRPCInstallation(pInst, gInst)
 		if err != nil {
 			return nil, err
 		}
 		insts = append(insts, gInst)
 	}
-	res := iGRPC.ListInstallationsResponse{
+	res := iGRPCv1alpha1.ListInstallationsResponse{
 		Installation: insts,
 	}
 	return &res, nil
 }
 
-func (s *PorterServer) ListInstallationLatestOutputs(ctx context.Context, req *iGRPC.ListInstallationLatestOutputRequest) (*iGRPC.ListInstallationLatestOutputResponse, error) {
+func (s *PorterServer) ListInstallationLatestOutputs(ctx context.Context, req *iGRPCv1alpha1.ListInstallationLatestOutputRequest) (*iGRPCv1alpha1.ListInstallationLatestOutputResponse, error) {
 	ctx, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
 	p, err := GetPorterConnectionFromContext(ctx)
@@ -97,16 +128,16 @@ func (s *PorterServer) ListInstallationLatestOutputs(ctx context.Context, req *i
 	if err != nil {
 		return nil, err
 	}
-	gInstOuts := []*iGRPC.PorterValue{}
+	gInstOuts := []*iGRPCv1alpha1.PorterValue{}
 	for _, dv := range pdv {
-		gInstOut := &iGRPC.PorterValue{}
-		err = makeGRPCInstallationOutput(dv, gInstOut)
+		gInstOut := &iGRPCv1alpha1.PorterValue{}
+		err = populateGRPCPorterValue(dv, gInstOut)
 		if err != nil {
 			return nil, err
 		}
 		gInstOuts = append(gInstOuts, gInstOut)
 	}
-	res := &iGRPC.ListInstallationLatestOutputResponse{
+	res := &iGRPCv1alpha1.ListInstallationLatestOutputResponse{
 		Outputs: gInstOuts,
 	}
 	return res, nil
