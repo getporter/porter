@@ -1,6 +1,5 @@
 namespace: dev
-debug: true
-debug-plugins: true
+verbosity: debug
 default-storage: testdb
 default-secrets-plugin: filesystem
 

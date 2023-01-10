@@ -69,7 +69,8 @@ func TestConfigExperimentalFlags(t *testing.T) {
 		defer os.Unsetenv("PORTER_EXPERIMENTAL")
 
 		c := New()
-		require.NoError(t, c.Load(context.Background(), nil), "Load failed")
+		_, err := c.Load(context.Background(), nil)
+		require.NoError(t, err, "Load failed")
 		assert.True(t, c.IsFeatureEnabled(experimental.FlagNoopFeature))
 	})
 
@@ -94,7 +95,7 @@ func TestConfig_ExportRemoteConfigAsEnvironmentVariables(t *testing.T) {
 	c.DataLoader = LoadFromEnvironment()
 	c.TestContext.AddTestFile("testdata/config.toml", "/home/myuser/.porter/config.toml")
 
-	err := c.Load(ctx, nil)
+	_, err := c.Load(ctx, nil)
 	require.NoError(t, err, "Config.Load failed")
 
 	gotEnvVars := c.ExportRemoteConfigAsEnvironmentVariables()

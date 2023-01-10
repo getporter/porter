@@ -21,7 +21,7 @@ func TestConfig_OverrideWithEnvironmentVariable(t *testing.T) {
 	c.TestContext.AddTestFile("testdata/config.toml", "/home/myuser/.porter/config.toml")
 
 	c.DataLoader = LoadFromEnvironment()
-	err := c.Load(context.Background(), nil)
+	_, err := c.Load(context.Background(), nil)
 
 	require.NoError(t, err, "dataloader failed")
 	assert.Equal(t, "warn", c.Data.Verbosity, "config.Verbosity was not set correctly")
@@ -42,7 +42,7 @@ func TestData_Marshal(t *testing.T) {
 	resolveTestSecrets := func(ctx context.Context, secretKey string) (string, error) {
 		return "topsecret-connectionstring", nil
 	}
-	err := c.Load(context.Background(), resolveTestSecrets)
+	_, err := c.Load(context.Background(), resolveTestSecrets)
 	require.NoError(t, err, "Load failed")
 
 	// Check Storage Attributes

@@ -45,7 +45,7 @@ func TestPorter_LoadWithSecretResolveError(t *testing.T) {
 	// Configure porter to read the config file
 	p.TestConfig.DataLoader = config.LoadFromEnvironment()
 
-	err := p.Connect(ctx)
+	_, err := p.Connect(ctx)
 
 	// Validate the porter is handling the error
 	tests.RequireErrorContains(t, err, "secret not found")

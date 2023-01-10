@@ -45,8 +45,8 @@ func TestTelemetrySetup(t *testing.T) {
 		os.Unsetenv("PORTER_TELEMETRY_PROTOCOL")
 		os.Unsetenv("PORTER_TELEMETRY_INSECURE")
 	}()
-	err = p.Load(ctx, nil)
-	require.NoError(t, err, "error loading porter configuration")
+	ctx, err = p.Connect(ctx)
+	require.NoError(t, err, "error initializing porter")
 
 	ctx, log := p.StartRootSpan(ctx, t.Name())
 	defer log.Close()
