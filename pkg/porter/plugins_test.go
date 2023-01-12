@@ -2,6 +2,7 @@ package porter
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"get.porter.sh/porter/pkg/pkgmgmt"
@@ -221,20 +222,38 @@ implementations:
 }
 
 func TestPorter_InstallPlugin(t *testing.T) {
-	p := NewTestPorter(t)
-	defer p.Close()
+	testcases := []struct {
+		name           string
+		args           []string
+		config         plugins.InstallOptions
+		expectedOutput string
+	}{
+		{name: "json file", config: plugins.InstallOptions{File: "plugins.json"}, expectedOutput: "installed plugin1 plugin v1.0 (abc123)\ninstalled plugin2 plugin v1.0 (abc123)\n"},
+		{name: "yaml file", config: plugins.InstallOptions{File: "plugins.yaml"}, expectedOutput: "installed plugin1 plugin v1.0 (abc123)\ninstalled plugin2 plugin v1.0 (abc123)\n"},
+		{name: "with feed url default", config: plugins.InstallOptions{File: "plugins.yaml", InstallOptions: pkgmgmt.InstallOptions{FeedURL: "https://example.com/"}}, expectedOutput: "installed plugin1 plugin v1.0 (abc123)\ninstalled plugin2 plugin v1.0 (abc123)\n"},
+		{name: "with feed url default", config: plugins.InstallOptions{File: "plugins.json", InstallOptions: pkgmgmt.InstallOptions{PackageDownloadOptions: pkgmgmt.PackageDownloadOptions{Mirror: "https://example.com/"}}}, expectedOutput: "installed plugin1 plugin v1.0 (abc123)\ninstalled plugin2 plugin v1.0 (abc123)\n"},
+		{name: "through arg", args: []string{"plugin1"}, config: plugins.InstallOptions{InstallOptions: pkgmgmt.InstallOptions{URL: "https://example.com/"}}, expectedOutput: "installed plugin1 plugin v1.0 (abc123)\n"},
+	}
 
-	opts := plugins.InstallOptions{}
-	opts.URL = "https://example.com"
-	err := opts.Validate([]string{"plugin1"})
-	require.NoError(t, err, "Validate failed")
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			p := NewTestPorter(t)
+			defer p.Close()
 
-	err = p.InstallPlugin(context.Background(), opts)
-	require.NoError(t, err, "InstallPlugin failed")
+			if tc.config.File != "" {
+				p.TestConfig.TestContext.AddTestFile(fmt.Sprintf("testdata/%s", tc.config.File), fmt.Sprintf("/%s", tc.config.File))
+			}
+			err := tc.config.Validate(tc.args, p.Context)
+			require.NoError(t, err, "Validate failed")
 
-	wantOutput := "installed plugin1 plugin v1.0 (abc123)\n"
-	gotOutput := p.TestConfig.TestContext.GetOutput()
-	assert.Contains(t, wantOutput, gotOutput)
+			err = p.InstallPlugin(context.Background(), tc.config)
+			require.NoError(t, err, "InstallPlugin failed")
+
+			gotOutput := p.TestConfig.TestContext.GetOutput()
+			assert.NotEmpty(t, gotOutput)
+			assert.Contains(t, tc.expectedOutput, gotOutput)
+		})
+	}
 }
 
 func TestPorter_UninstallPlugin(t *testing.T) {

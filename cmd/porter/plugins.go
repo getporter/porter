@@ -112,7 +112,7 @@ By default plugins are downloaded from the official Porter plugin feed at https:
   porter plugin install azure --version v0.8.2-beta.1
   porter plugin install azure --version canary`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			return opts.Validate(args)
+			return opts.Validate(args, p.Context)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return p.InstallPlugin(cmd.Context(), opts)
@@ -128,6 +128,8 @@ By default plugins are downloaded from the official Porter plugin feed at https:
 		"URL of an atom feed where the plugin can be downloaded. Defaults to the official Porter plugin feed.")
 	flags.StringVar(&opts.Mirror, "mirror", pkgmgmt.DefaultPackageMirror,
 		"Mirror of official Porter assets")
+	flags.StringVarP(&opts.File, "file", "f", "",
+		"Path to porter plugins config file.")
 
 	return cmd
 }

@@ -8,6 +8,7 @@ description: Defines the format of files used by Porter
 * [Credential Sets](#credential-set)
 * [Parameter Sets](#parameter-set)
 * [Installation](#installation)
+* [Plugins](#plugins)
 * [Porter Operator File Formats](/operator/file-formats/)
 
 ## Supported Versions
@@ -152,6 +153,31 @@ parameters:
 
 \* The bundle section requires a repository and one of the following fields: digest, version, or tag.
 
+## Plugins
+
+Plugins can be defined in either json or yaml.
+You can use this [json schema][ps-schema] to validate a parameter set file.
+
+```yaml
+schemaType: Plugins
+schemaVersion: 1.0.0
+azure:
+  version: v1.0.0
+  feedURL: https://cdn.porter.sh/plugins/atom.xml
+  url: https://example.com
+  mirror: https://example.com
+```
+
+| Field                | Required | Description                                                                                                                                    |
+|----------------------|----------|------------------------------------------------------------------------------------------------------------------------------------------------|
+| schemaType           | false    | The type of document. This isn't used by Porter but is included when Porter outputs the file, so that editors can determine the resource type. |
+| schemaVersion        | true     | The version of the Plugins schema used in this file.                                                                                     |
+| <pluginName>.version | false    | The version of the plugin.                                                                                                                 |
+| <pluginName>.feedURL | false    | The url of an atom feed where the plugin can be downloaded.
+| <pluginName>.url     | false    | The url from where the plugin can be downloaded.                                                                                                                 |
+| <pluginName>.mirror  | false    | The mirror of official Porter assets.                                                                                                                 |
+
 [cs-schema]: /schema/v1/credential-set.schema.json
 [ps-schema]: /schema/v1/parameter-set.schema.json
 [inst-schema]: /schema/v1/installation.schema.json
+[plugins-schema]: /schema/v1/plugins.schema.json
