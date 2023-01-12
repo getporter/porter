@@ -1,6 +1,8 @@
 package porter
 
 import (
+	"archive/tar"
+	"compress/gzip"
 	"context"
 	"encoding/json"
 	"errors"
@@ -22,8 +24,8 @@ import (
 	"github.com/cnabio/cnab-go/imagestore"
 	"github.com/cnabio/cnab-go/imagestore/construction"
 	"github.com/cnabio/cnab-to-oci/relocation"
-	"github.com/docker/docker/pkg/archive"
 	"github.com/spf13/afero"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 // ArchiveOptions defines the valid options for performing an archive operation
@@ -71,7 +73,7 @@ func (p *Porter) Archive(ctx context.Context, opts ArchiveOptions) error {
 		return log.Error(err)
 	}
 
-	dest, err := p.Config.FileSystem.OpenFile(opts.ArchiveFile, os.O_RDWR|os.O_CREATE, pkg.FileModeWritable)
+	dest, err := p.Config.FileSystem.OpenFile(opts.ArchiveFile, os.O_RDWR|os.O_CREATE|os.O_TRUNC, pkg.FileModeWritable)
 	if err != nil {
 		return log.Error(err)
 	}
@@ -86,7 +88,7 @@ func (p *Porter) Archive(ctx context.Context, opts ArchiveOptions) error {
 		imageStoreConstructor: ctor,
 		insecureRegistry:      opts.InsecureRegistry,
 	}
-	if err := exp.export(); err != nil {
+	if err := exp.export(ctx); err != nil {
 		return log.Error(err)
 	}
 
@@ -105,7 +107,10 @@ type exporter struct {
 	insecureRegistry      bool
 }
 
-func (ex *exporter) export() error {
+func (ex *exporter) export(ctx context.Context) error {
+	ctx, log := tracing.StartSpan(ctx)
+	defer log.EndSpan()
+
 	name := ex.bundle.Name + "-" + ex.bundle.Version
 	archiveDir, err := ex.createArchiveFolder(name)
 	if err != nil {
@@ -151,18 +156,9 @@ func (ex *exporter) export() error {
 		return fmt.Errorf("error preparing bundle artifact: %s", err)
 	}
 
-	if err := ex.chtimes(archiveDir); err != nil {
-		return fmt.Errorf("error clearing timestamps on the bundle artifact: %s", err)
-	}
-
-	tarOptions := &archive.TarOptions{
-		Compression:      archive.Gzip,
-		IncludeFiles:     []string{"."},
-		IncludeSourceDir: true,
-	}
-	rc, err := archive.TarWithOptions(archiveDir, tarOptions)
+	rc, err := ex.CustomTar(ctx, archiveDir)
 	if err != nil {
-		return err
+		return fmt.Errorf("error creating archive: %w", err)
 	}
 	defer rc.Close()
 
@@ -170,26 +166,130 @@ func (ex *exporter) export() error {
 	return err
 }
 
-// chtimes updates all paths under the provided archive path with a constant
-// atime and mtime (Unix time 0), such that the shasum of the resulting archive
-// will not change between repeated archival executions using the same bundle.
-// See: https://unix.stackexchange.com/questions/346789/compressing-two-identical-folders-give-different-result
-func (ex *exporter) chtimes(path string) error {
-	err := filepath.Walk(path,
-		func(subpath string, info os.FileInfo, err error) error {
-			if err != nil {
-				return err
-			}
-			err = ex.fs.Chtimes(subpath, time.Unix(0, 0), time.Unix(0, 0))
-			if err != nil {
-				return err
-			}
-			return nil
-		})
-	if err != nil {
-		return err
+func (ex *exporter) createTarHeader(ctx context.Context, path string, file string, fileInfo os.FileInfo) (*tar.Header, error) {
+	log := tracing.LoggerFromContext(ctx)
+
+	header := &tar.Header{
+		ModTime:    time.Unix(0, 0),
+		AccessTime: time.Unix(0, 0),
+		ChangeTime: time.Unix(0, 0),
+		Uid:        0,
+		Gid:        0,
 	}
-	return nil
+
+	switch {
+	case fileInfo.Mode().IsDir():
+		header.Typeflag = tar.TypeDir
+		header.Mode = 0755
+	case fileInfo.Mode().IsRegular():
+		header.Typeflag = tar.TypeReg
+		header.Mode = 0644
+		header.Size = fileInfo.Size()
+	default:
+		log.Debug("Skipping header creation. Not a file/dir", attribute.String("createTarHeader.file", file))
+		return nil, nil
+	}
+
+	// ensure header has relative file path prepended with '.'
+	relativeFilePathName := file
+
+	if filepath.IsAbs(path) {
+		relativePath, err := filepath.Rel(path, file)
+
+		if err != nil {
+			return nil, err
+		}
+
+		if relativePath != "." {
+			relativeFilePathName = fmt.Sprintf(".%s%s", string(filepath.Separator), relativePath)
+		} else {
+			relativeFilePathName = relativePath
+		}
+	}
+
+	header.Name = filepath.ToSlash(relativeFilePathName)
+
+	// directories must be suffixed with '/'
+	if fileInfo.Mode().IsDir() && !strings.HasSuffix(header.Name, "/") {
+		header.Name += "/"
+	}
+
+	log.Debug("Created tar header", attribute.String("createTarHeader.headerName", header.Name))
+
+	return header, nil
+}
+
+func (ex *exporter) CustomTar(ctx context.Context, srcPath string) (io.ReadCloser, error) {
+	pipeReader, pipeWriter := io.Pipe()
+
+	gzipWriter := gzip.NewWriter(pipeWriter)
+	tarWriter := tar.NewWriter(gzipWriter)
+
+	cleanSrcPath := filepath.Clean(srcPath)
+
+	go func() {
+		ctx, log := tracing.StartSpanWithName(ctx, "CustomTar.Walk")
+
+		defer func() {
+			if err := tarWriter.Close(); err != nil {
+				log.Warnf("Can't close tar writer: %s", err)
+			}
+			if err := gzipWriter.Close(); err != nil {
+				log.Warnf("Can't close gzip writer: %s\n", err)
+			}
+			if err := pipeWriter.Close(); err != nil {
+				log.Warnf("Can't close pipe writer: %s\n", err)
+			}
+			log.EndSpan()
+		}()
+
+		walker := func(path string, finfo os.FileInfo, err error) error {
+			if err != nil {
+				return fmt.Errorf("walk invoked with error: %w", err)
+			}
+
+			ctx, log := tracing.StartSpanWithName(ctx, "CustomTar.ProcessPath", attribute.String("customTar.path", path))
+			defer log.EndSpan()
+
+			hdr, err := ex.createTarHeader(ctx, srcPath, path, finfo)
+			if err != nil {
+				return fmt.Errorf("failed to create tar header for path %s: %w", path, err)
+			}
+
+			// if header is nil then it's not a regular file nor directory
+			if hdr == nil {
+				return nil
+			}
+
+			if err := tarWriter.WriteHeader(hdr); err != nil {
+				return fmt.Errorf("failed to write header for path %s: %w", path, err)
+			}
+
+			// if path is a dir, nothing more to do
+			if finfo.Mode().IsDir() {
+				return nil
+			}
+
+			// add file to tar
+			sourceFile, err := os.Open(path)
+			if err != nil {
+				return fmt.Errorf("failed to open %s: %w", path, err)
+			}
+
+			defer sourceFile.Close()
+			_, err = io.Copy(tarWriter, sourceFile)
+			if err != nil {
+				return fmt.Errorf("failed to copy %s: %w", path, err)
+			}
+
+			return nil
+		}
+
+		// build tar
+		filepath.Walk(cleanSrcPath, walker)
+	}()
+
+	return pipeReader, nil
 }
 
 // prepareArtifacts pulls all images, verifies their digests and
