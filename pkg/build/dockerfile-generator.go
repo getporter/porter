@@ -182,7 +182,7 @@ func (g *DockerfileGenerator) buildMixinsSection(ctx context.Context) ([]string,
 
 	lines := make([]string, 0)
 	for _, result := range results {
-		l := strings.Split(result, "\n")
+		l := strings.Split(result.Stdout, "\n")
 		lines = append(lines, l...)
 	}
 	return lines, nil

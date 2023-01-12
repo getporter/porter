@@ -6,6 +6,14 @@ import (
 )
 
 func EnsureProtobufTools() {
-	mgx.Must(pkg.EnsurePackage("google.golang.org/protobuf/cmd/protoc-gen-go", "v1.28", "--version"))
-	mgx.Must(pkg.EnsurePackage("google.golang.org/grpc/cmd/protoc-gen-go-grpc", "v1.2", "--version"))
+	mgx.Must(pkg.EnsurePackageWith(pkg.EnsurePackageOptions{
+		Name:           "google.golang.org/protobuf/cmd/protoc-gen-go",
+		DefaultVersion: "v1.28",
+		VersionCommand: "--version",
+	}))
+	mgx.Must(pkg.EnsurePackageWith(pkg.EnsurePackageOptions{
+		Name:           "google.golang.org/grpc/cmd/protoc-gen-go-grpc",
+		DefaultVersion: "v1.2",
+		VersionCommand: "--version",
+	}))
 }

@@ -3,8 +3,8 @@ package porter
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"math/rand"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -134,7 +134,12 @@ func (p *TestPorter) SetupIntegrationTest() context.Context {
 	err = encoding.UnmarshalYaml(ciCredsB, &testCreds)
 	require.NoError(t, err, "could not unmarshal test credentials %s", ciCredsPath)
 	err = p.Credentials.UpsertCredentialSet(context.Background(), testCreds)
-	require.NoError(t, err, "could not save test credentials")
+	require.NoError(t, err, "could not save test credentials (ci)")
+
+	// Make a copy of the creds with a different name so that we can test out switching to different credential sets
+	testCreds.Name = "ci2"
+	err = p.Credentials.UpsertCredentialSet(context.Background(), testCreds)
+	require.NoError(t, err, "could not save test credentials (ci2)")
 
 	return ctx
 }
@@ -161,7 +166,7 @@ func (p *TestPorter) AddTestDriver(driver TestDriver) string {
 }
 
 func (p *TestPorter) CreateBundleDir() string {
-	bundleDir, err := ioutil.TempDir("", "bundle")
+	bundleDir, err := os.MkdirTemp("", "bundle")
 	require.NoError(p.T(), err)
 
 	p.BundleDir = bundleDir
@@ -176,7 +181,7 @@ func (p *TestPorter) T() *testing.T {
 }
 
 func (p *TestPorter) ReadBundle(path string) cnab.ExtendedBundle {
-	bunD, err := ioutil.ReadFile(path)
+	bunD, err := os.ReadFile(path)
 	require.NoError(p.T(), err, "ReadFile failed for %s", path)
 
 	bun, err := bundle.Unmarshal(bunD)

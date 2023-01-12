@@ -1,0 +1,40 @@
+# Scan our binaries for vulnerabilities
+name: CodeQL
+on:
+  # always do a security scan when a change is merged
+  push:
+    branches-ignore:
+      # Disable running the push event for dependabot.
+      # Dependabot pushes to branches in our repo, not in a fork. This causes the push event to trigger for dependabot PRs and the CodeQL check fails.
+      - "dependabot/**"
+  # Only do a security scan on a PR when there are non-doc changes to save time
+  pull_request_target:
+    paths-ignore:
+      - 'docs/**'
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # Get all git history
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version-file: go.mod
+          cache: true
+      # Run anything that isn't compiling Porter before we init codeql replaces the go binary and makes everything exponentially slower
+      - name: Download Dependencies
+        run: go mod download
+      - name: Configure Agent
+        run: go run mage.go -v ConfigureAgent InstallBuildTools
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          languages: go
+      - name: Build Binaries
+        run: mage -v BuildPorter BuildExecMixin BuildAgent
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2

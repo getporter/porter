@@ -494,6 +494,9 @@ func (c *Context) WriteMixinOutputToFile(filename string, bytes []byte) error {
 }
 
 // SetSensitiveValues sets the sensitive values needing masking on output/err streams
+// WARNING: This does not work if you are writing to the TraceLogger.
+// See https://github.com/getporter/porter/issues/2256
+// Only use this when you are calling fmt.Fprintln, not log.Debug, etc.
 func (c *Context) SetSensitiveValues(vals []string) {
 	if len(vals) > 0 {
 		out := NewCensoredWriter(c.Out)

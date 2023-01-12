@@ -1,7 +1,7 @@
 package cnab
 
 import (
-	"io/ioutil"
+	"os"
 	"testing"
 
 	"github.com/cnabio/cnab-go/bundle"
@@ -9,7 +9,7 @@ import (
 )
 
 func ReadTestBundle(t *testing.T, path string) ExtendedBundle {
-	bunD, err := ioutil.ReadFile(path)
+	bunD, err := os.ReadFile(path)
 	require.NoError(t, err, "ReadFile failed for %s", path)
 
 	bun, err := bundle.Unmarshal(bunD)

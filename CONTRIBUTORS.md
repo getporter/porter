@@ -74,3 +74,6 @@ and we will add you. **All** contributors belong here. 💯
 * [Kevin Barbour](https://github.com/kevinbarbour)
 * [Epsxy](https://github.com/epsxy)
 * [Jens Arnfast](https://github.com/jarnfast)
+* [Madhu M Pandurangi](https://github.com/MadhuMPandurangi)
+* [Karanjot Singh](https://github.com/0xquark)
+* [Omar Kohl](https://github.com/omarkohl)

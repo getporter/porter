@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"testing"
 
@@ -873,7 +872,7 @@ func TestManifestConverter_generateCustomMetadata(t *testing.T) {
 	require.NoError(t, err, "ToBundle failed")
 	assert.Len(t, bun.Custom, 4)
 
-	f, err := ioutil.TempFile("", "")
+	f, err := os.CreateTemp("", "")
 	require.NoError(t, err, "Failed to create bundle file")
 	defer os.Remove(f.Name())
 
@@ -881,7 +880,7 @@ func TestManifestConverter_generateCustomMetadata(t *testing.T) {
 	require.NoError(t, err, "Failed to write bundle file")
 
 	expectedCustomMetaData := "{\"foo\":{\"test1\":true,\"test2\":1,\"test3\":\"value\",\"test4\":[\"one\",\"two\",\"three\"],\"test5\":{\"1\":\"one\",\"two\":\"two\"}}"
-	bundleData, err := ioutil.ReadFile(f.Name())
+	bundleData, err := os.ReadFile(f.Name())
 	require.NoError(t, err, "Failed to read bundle file")
 
 	assert.Contains(t, string(bundleData), expectedCustomMetaData, "Created bundle should be equal to expected bundle ")

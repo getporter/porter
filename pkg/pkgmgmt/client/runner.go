@@ -1,6 +1,7 @@
 package client
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -12,7 +13,6 @@ import (
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/tracing"
 	"go.opentelemetry.io/otel/attribute"
-	"go.uber.org/zap/zapcore"
 )
 
 type Runner struct {
@@ -64,9 +64,10 @@ func (r *Runner) Run(ctx context.Context, commandOpts pkgmgmt.CommandOptions) er
 	command := cmdArgs[0]
 	cmd := r.NewCommand(ctx, pkgPath, cmdArgs...)
 
-	// Pipe the output to porter
+	// Pipe the output to porter and capture the error in case it fails
+	cmdStderr := &bytes.Buffer{}
 	cmd.Stdout = r.Context.Out
-	cmd.Stderr = r.Context.Err
+	cmd.Stderr = io.MultiWriter(cmdStderr, r.Context.Err)
 
 	if commandOpts.PreRun != nil {
 		commandOpts.PreRun(command, cmd)
@@ -74,10 +75,6 @@ func (r *Runner) Run(ctx context.Context, commandOpts pkgmgmt.CommandOptions) er
 
 	if commandOpts.File != "" {
 		cmd.Args = append(cmd.Args, "-f", commandOpts.File)
-	}
-
-	if span.ShouldLog(zapcore.DebugLevel) {
-		cmd.Args = append(cmd.Args, "--debug")
 	}
 
 	if commandOpts.Input != "" {
@@ -96,10 +93,20 @@ func (r *Runner) Run(ctx context.Context, commandOpts pkgmgmt.CommandOptions) er
 
 	err := cmd.Start()
 	if err != nil {
-		return span.Error(fmt.Errorf("could not run package command %s: %w", prettyCmd, err))
+		return span.Error(fmt.Errorf("could not start package command %s: %w", prettyCmd, err))
 	}
 
-	return span.Error(cmd.Wait())
+	err = cmd.Wait()
+	if err != nil {
+		// Include stderr in the error, otherwise it just includes the exit code
+		err = fmt.Errorf("package command failed %s\n%s", prettyCmd, cmdStderr)
+		// Do not flag this as an error in the logs because we often call mixins to see if they support a command
+		// and if they don't it's not an error, e.g. not all mixins support lint or schema
+		span.Debugf(err.Error())
+		return err
+	}
+
+	return nil
 }
 
 func (r *Runner) getExecutablePath() string {

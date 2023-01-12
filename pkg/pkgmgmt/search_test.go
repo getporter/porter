@@ -3,9 +3,9 @@ package pkgmgmt
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -63,7 +63,7 @@ func TestSearch(t *testing.T) {
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			data, err := ioutil.ReadFile("testdata/directory/index.json")
+			data, err := os.ReadFile("testdata/directory/index.json")
 			require.NoError(t, err)
 
 			var pkgList PackageList

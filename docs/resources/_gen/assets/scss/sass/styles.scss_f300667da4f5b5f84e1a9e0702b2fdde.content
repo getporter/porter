@@ -6668,6 +6668,16 @@ nav.home-nav {
     #helm.home .get-charts h2 {
       margin: 1.5rem 0 1rem;
       padding: 0; }
+  #helm.home .helm-quotes {
+    background-color: white;
+    border-radius: 25px;
+    color: #464646;
+    background: linear-gradient(0deg, #fff, #F7F7F7); }
+    #helm.home .helm-quotes h2, #helm.home .helm-quotes p {
+      color: #27759A; }
+    #helm.home .helm-quotes a {
+      color: #AB2449;
+      text-decoration: underline; }
   #helm.home .helm-community {
     background-color: white;
     padding-bottom: 100px;
@@ -6715,7 +6725,7 @@ nav.home-nav {
       background-color: #f8cc88; }
     #helm.home .helm-community .topbar--1 {
       height: 20px;
-      background-color: #bc0047; }
+      background-color: #AB2449; }
     #helm.home .helm-community .text-content {
       padding: 2rem; }
     #helm.home .helm-community .helm-community-blocks section {
@@ -6736,7 +6746,7 @@ nav.home-nav {
         color: #27759A;
         font-size: 1.4rem; }
       #helm.home .helm-community .helm-community-blocks section a {
-        color: #bc0047;
+        color: #AB2449;
         text-decoration: underline;
         font-weight: 600; }
       #helm.home .helm-community .helm-community-blocks section iframe {

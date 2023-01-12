@@ -12,7 +12,7 @@ import (
 func TestInstallation_String(t *testing.T) {
 	t.Parallel()
 
-	i := Installation{Name: "mybun"}
+	i := Installation{InstallationSpec: InstallationSpec{Name: "mybun"}}
 	assert.Equal(t, "/mybun", i.String())
 
 	i.Namespace = "dev"

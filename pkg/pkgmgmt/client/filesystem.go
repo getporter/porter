@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"path/filepath"
 
 	"get.porter.sh/porter/pkg/config"
@@ -83,7 +83,7 @@ func (fs *FileSystem) GetMetadata(ctx context.Context, name string) (pkgmgmt.Pac
 	pkgContext := *fs.Context
 	pkgContext.Out = jsonB
 	if span.ShouldLog(zapcore.DebugLevel) {
-		pkgContext.Err = ioutil.Discard
+		pkgContext.Err = io.Discard
 	}
 	r.Context = &pkgContext
 

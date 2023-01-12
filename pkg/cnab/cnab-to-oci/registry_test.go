@@ -1,10 +1,12 @@
-package cnabtooci_test
+package cnabtooci
 
 import (
+	"net/http"
 	"testing"
 
-	cnabtooci "get.porter.sh/porter/pkg/cnab/cnab-to-oci"
+	"get.porter.sh/porter/pkg/cnab"
 	"github.com/docker/docker/api/types"
+	"github.com/google/go-containerregistry/pkg/v1/remote/transport"
 	"github.com/stretchr/testify/require"
 )
 
@@ -59,7 +61,7 @@ func TestImageSummary(t *testing.T) {
 	for _, tt := range testcases {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			sum, err := cnabtooci.NewImageSummary(tt.imgRef, tt.imageSummary)
+			sum, err := NewImageSummary(tt.imgRef, tt.imageSummary)
 			if tt.expected.hasInitErr {
 				require.ErrorContains(t, err, tt.expectedErr)
 				return
@@ -73,4 +75,23 @@ func TestImageSummary(t *testing.T) {
 			require.Equal(t, tt.expected.digest, digest.String())
 		})
 	}
+}
+
+func TestAsNotFoundError(t *testing.T) {
+	ref := cnab.MustParseOCIReference("example.com/mybuns:v1.2.3")
+	t.Run("404", func(t *testing.T) {
+		srcErr := &transport.Error{
+			StatusCode: http.StatusNotFound,
+		}
+		result := asNotFoundError(srcErr, ref)
+		require.NotNil(t, result)
+		require.Equal(t, ErrNotFound{Reference: ref}, result)
+	})
+	t.Run("401", func(t *testing.T) {
+		srcErr := &transport.Error{
+			StatusCode: http.StatusUnauthorized,
+		}
+		result := asNotFoundError(srcErr, ref)
+		require.Nil(t, result)
+	})
 }

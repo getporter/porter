@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"get.porter.sh/porter/pkg/cnab"
+	"github.com/google/go-containerregistry/pkg/crane"
 	"github.com/opencontainers/go-digest"
 )
 
@@ -39,4 +40,13 @@ type RegistryProvider interface {
 type RegistryOptions struct {
 	// InsecureRegistry allows connecting to an unsecured registry or one without verifiable certificates.
 	InsecureRegistry bool
+}
+
+func (o RegistryOptions) toCraneOptions() []crane.Option {
+	var result []crane.Option
+	if o.InsecureRegistry {
+		transport := GetInsecureRegistryTransport()
+		result = []crane.Option{crane.Insecure, crane.WithTransport(transport)}
+	}
+	return result
 }

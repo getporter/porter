@@ -309,7 +309,7 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 		b, err := cnab.LoadBundle(r.Context, "bundle.json")
 		require.NoError(t, err, "ProcessBundle failed")
 
-		i := storage.Installation{Name: "mybun"}
+		i := storage.Installation{InstallationSpec: storage.InstallationSpec{Name: "mybun"}}
 		params, err := r.resolveParameters(context.Background(), i, b, cnab.ActionUpgrade, nil)
 		require.NoError(t, err)
 		assert.Equal(t, "foo_default", params["foo"],
@@ -333,7 +333,7 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 			"foo": "foo_override",
 		}
 
-		i := storage.Installation{Name: "mybun"}
+		i := storage.Installation{InstallationSpec: storage.InstallationSpec{Name: "mybun"}}
 		params, err := r.resolveParameters(context.Background(), i, b, cnab.ActionUpgrade, overrides)
 		require.NoError(t, err)
 		assert.Equal(t, "foo_override", params["foo"],
@@ -571,7 +571,7 @@ func Test_Paramapalooza(t *testing.T) {
 						bun.Parameters["my-param"] = param
 					}
 
-					i := storage.Installation{Name: "test"}
+					i := storage.Installation{InstallationSpec: storage.InstallationSpec{Name: "test"}}
 					overrides := map[string]string{}
 					// If param is provided (via --param/--param-file)
 					// it will be attached to args

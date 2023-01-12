@@ -233,5 +233,5 @@ status:
 * [Create a Bundle](/bundle/create/)
 
 [semver v2]: https://semver.org/spec/v2.0.0.html
-[manifest-schema]: https://raw.githubusercontent.com/getporter/porter/release/v1/pkg/schema/manifest.schema.json
+[manifest-schema]: https://raw.githubusercontent.com/getporter/porter/v1.0.0/pkg/schema/manifest.schema.json
 [vscode]: https://marketplace.visualstudio.com/items?itemName=getporter.porter-vscode

@@ -3,7 +3,7 @@ package migrations
 import (
 	"context"
 	"encoding/json"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -43,7 +43,7 @@ func TestLegacyPluginAdapter(t *testing.T) {
 	require.NoError(t, err, "failed to unmarshal the claim document")
 
 	var wantData map[string]interface{}
-	contents, err := ioutil.ReadFile(filepath.Join(home, "claims/hello1/01G1VJQJV0RN5AW5BSZHNTVYTV.json"))
+	contents, err := os.ReadFile(filepath.Join(home, "claims/hello1/01G1VJQJV0RN5AW5BSZHNTVYTV.json"))
 	require.NoError(t, err, "error reading the test claim to compare results")
 	require.NoError(t, json.Unmarshal(contents, &wantData), "failed to unmarshal the test claim")
 	assert.Equal(t, wantData, gotData, "The claim data read through the plugin doesn't match the original test claim")

@@ -20,8 +20,6 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/google/go-containerregistry/pkg/crane"
-	"github.com/google/go-containerregistry/pkg/name"
-	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/google/go-containerregistry/pkg/v1/remote/transport"
 	"github.com/moby/term"
 	"github.com/opencontainers/go-digest"
@@ -299,15 +297,12 @@ func (r *Registry) ListTags(ctx context.Context, ref cnab.OCIReference, opts Reg
 	ctx, span := tracing.StartSpan(ctx, attribute.String("repository", repository))
 	defer span.EndSpan()
 
-	var listOpts []crane.Option
-	if opts.InsecureRegistry {
-		transport := GetInsecureRegistryTransport()
-		listOpts = append(listOpts, crane.WithTransport(transport))
-	}
-
-	tags, err := crane.ListTags(repository, listOpts...)
+	tags, err := crane.ListTags(repository, opts.toCraneOptions()...)
 	if err != nil {
-		return nil, span.Errorf("error listing tags for %s: %w", repository, err)
+		if notFoundErr := asNotFoundError(err, ref); notFoundErr != nil {
+			return nil, span.Error(notFoundErr)
+		}
+		return nil, span.Errorf("error listing tags for %s: %w", ref.String(), err)
 	}
 
 	return tags, nil
@@ -320,41 +315,32 @@ func (r *Registry) GetBundleMetadata(ctx context.Context, ref cnab.OCIReference,
 	ctx, span := tracing.StartSpan(ctx, attribute.String("reference", ref.String()))
 	defer span.EndSpan()
 
-	var remoteOpts []remote.Option
-	var nameOpts []name.Option
-	if opts.InsecureRegistry {
-		transport := GetInsecureRegistryTransport()
-		remoteOpts = append(remoteOpts, remote.WithTransport(transport))
-		nameOpts = append(nameOpts, name.Insecure)
-	}
-
-	remoteRef, err := name.ParseReference(ref.String(), nameOpts...)
+	bundleDigest, err := crane.Digest(ref.String(), opts.toCraneOptions()...)
 	if err != nil {
-		return BundleMetadata{}, span.Errorf("error parsing the remote bundle reference %s: %w", ref, err)
-	}
-
-	bundleIndex, err := remote.Index(remoteRef, remoteOpts...)
-	if err != nil {
-		var httpError *transport.Error
-		if errors.As(err, &httpError) {
-			if httpError.StatusCode == http.StatusNotFound {
-				return BundleMetadata{}, span.Error(ErrNotFound{Reference: ref})
-			}
+		if notFoundErr := asNotFoundError(err, ref); notFoundErr != nil {
+			return BundleMetadata{}, span.Error(notFoundErr)
 		}
 		return BundleMetadata{}, span.Errorf("error retrieving bundle metadata for %s: %w", ref.String(), err)
-	}
-
-	bundleDigest, err := bundleIndex.Digest()
-	if err != nil {
-		return BundleMetadata{}, span.Errorf("error reading the remote bundle digest for %s: %w", ref.String(), err)
 	}
 
 	return BundleMetadata{
 		BundleReference: cnab.BundleReference{
 			Reference: ref,
-			Digest:    digest.Digest(bundleDigest.String()),
+			Digest:    digest.Digest(bundleDigest),
 		},
 	}, nil
+}
+
+// asNotFoundError checks if the error is an HTTP 404 not found error, and if so returns a corresponding ErrNotFound instance.
+func asNotFoundError(err error, ref cnab.OCIReference) error {
+	var httpError *transport.Error
+	if errors.As(err, &httpError) {
+		if httpError.StatusCode == http.StatusNotFound {
+			return ErrNotFound{Reference: ref}
+		}
+	}
+
+	return nil
 }
 
 // ImageSummary contains information about an OCI image.

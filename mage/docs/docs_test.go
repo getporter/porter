@@ -1,7 +1,6 @@
 package docs
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -13,7 +12,7 @@ import (
 
 func TestEnsureOperatorRepository(t *testing.T) {
 	t.Run("has local repo", func(t *testing.T) {
-		tmp, err := ioutil.TempDir("", "porter-docs-test")
+		tmp, err := os.MkdirTemp("", "porter-docs-test")
 		require.NoError(t, err)
 		defer os.RemoveAll(tmp)
 
@@ -23,7 +22,7 @@ func TestEnsureOperatorRepository(t *testing.T) {
 	})
 
 	t.Run("missing local repo", func(t *testing.T) {
-		tmp, err := ioutil.TempDir("", "porter-docs-test")
+		tmp, err := os.MkdirTemp("", "porter-docs-test")
 		require.NoError(t, err)
 		defer os.RemoveAll(tmp)
 
@@ -33,7 +32,7 @@ func TestEnsureOperatorRepository(t *testing.T) {
 	})
 
 	t.Run("local repo unset", func(t *testing.T) {
-		tmp, err := ioutil.TempDir("", "porter-docs-test")
+		tmp, err := os.MkdirTemp("", "porter-docs-test")
 		require.NoError(t, err)
 		defer os.RemoveAll(tmp)
 
@@ -43,7 +42,7 @@ func TestEnsureOperatorRepository(t *testing.T) {
 	})
 
 	t.Run("empty default path clones repo", func(t *testing.T) {
-		tmp, err := ioutil.TempDir("", "porter-docs-test")
+		tmp, err := os.MkdirTemp("", "porter-docs-test")
 		require.NoError(t, err)
 		defer os.RemoveAll(tmp)
 
@@ -56,7 +55,7 @@ func TestEnsureOperatorRepository(t *testing.T) {
 	})
 
 	t.Run("changes in default path are reset", func(t *testing.T) {
-		tmp, err := ioutil.TempDir("", "porter-docs-test")
+		tmp, err := os.MkdirTemp("", "porter-docs-test")
 		require.NoError(t, err)
 		defer os.RemoveAll(tmp)
 

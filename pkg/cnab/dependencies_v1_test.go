@@ -1,7 +1,7 @@
 package cnab
 
 import (
-	"io/ioutil"
+	"os"
 	"testing"
 
 	"github.com/cnabio/cnab-go/bundle"
@@ -12,7 +12,7 @@ import (
 func TestReadDependencyV1Properties(t *testing.T) {
 	t.Parallel()
 
-	data, err := ioutil.ReadFile("testdata/bundle.json")
+	data, err := os.ReadFile("testdata/bundle.json")
 	require.NoError(t, err, "cannot read bundle file")
 
 	b, err := bundle.Unmarshal(data)

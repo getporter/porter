@@ -3,7 +3,7 @@ package exec
 import (
 	"bytes"
 	"context"
-	"io/ioutil"
+	"os"
 	"testing"
 
 	"get.porter.sh/porter/pkg/linter"
@@ -15,7 +15,7 @@ func TestMixin_Lint(t *testing.T) {
 	ctx := context.Background()
 	m := NewTestMixin(t)
 
-	input, err := ioutil.ReadFile("testdata/lint-input.yaml")
+	input, err := os.ReadFile("testdata/lint-input.yaml")
 	require.NoError(t, err, "could not read lint testdata")
 	m.Config.In = bytes.NewReader(input)
 

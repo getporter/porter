@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 
 	"get.porter.sh/porter/pkg/pkgmgmt"
 	"get.porter.sh/porter/pkg/portercontext"
@@ -46,39 +46,48 @@ type MixinInputGenerator interface {
 	BuildInput(mixinName string) ([]byte, error)
 }
 
+type MixinBuildOutput struct {
+	// Name of the mixin.
+	Name string
+
+	// Stdout is the contents of stdout from calling the mixin.
+	Stdout string
+
+	// Error returned when the mixin was called.
+	Error error
+}
+
 // Execute the specified command using an input generator.
 // For example, the ManifestGenerator will iterate over the mixins in a manifest and send
 // them their config and the steps associated with their mixin.
-func (q *MixinQuery) Execute(ctx context.Context, cmd string, inputGenerator MixinInputGenerator) (map[string]string, error) {
+// The mixins are queried in parallel but the results are sorted in the order that the mixins were defined in the manifest.
+func (q *MixinQuery) Execute(ctx context.Context, cmd string, inputGenerator MixinInputGenerator) ([]MixinBuildOutput, error) {
 	ctx, span := tracing.StartSpan(ctx)
 	defer span.EndSpan()
 
 	mixinNames := inputGenerator.ListMixins()
-	results := make(map[string]string, len(mixinNames))
-	type queryResponse struct {
-		mixinName string
-		output    string
-		runErr    error
-	}
-
-	var responses = make(chan queryResponse, len(mixinNames))
+	results := make([]MixinBuildOutput, len(mixinNames))
 	gerr := errgroup.Group{}
 
-	for _, mn := range mixinNames {
-		mixinName := mn // Force mixinName to be in the go routine's closure below
+	for i, mn := range mixinNames {
+		// Force variables to be in the go routine's closure below
+		i := i
+		mn := mn
+		results[i].Name = mn
+
 		gerr.Go(func() error {
 			// Copy the existing context and tweak to pipe the output differently
 			mixinStdout := &bytes.Buffer{}
 			mixinContext := *q.Context
-			mixinContext.Out = mixinStdout // mixin stdout -> mixin response
+			mixinContext.Out = mixinStdout // mixin stdout -> mixin result
 
 			if q.LogMixinErrors {
 				mixinContext.Err = q.Context.Out // mixin stderr -> porter logs
 			} else {
-				mixinContext.Err = ioutil.Discard
+				mixinContext.Err = io.Discard
 			}
 
-			inputB, err := inputGenerator.BuildInput(mixinName)
+			inputB, err := inputGenerator.BuildInput(mn)
 			if err != nil {
 				return err
 			}
@@ -87,34 +96,25 @@ func (q *MixinQuery) Execute(ctx context.Context, cmd string, inputGenerator Mix
 				Command: cmd,
 				Input:   string(inputB),
 			}
-			runErr := q.Mixins.Run(ctx, &mixinContext, mixinName, cmd)
+			runErr := q.Mixins.Run(ctx, &mixinContext, mn, cmd)
 
-			// Pack the error from running the command in the response so we can
-			// decide if we care about it, if we returned it normally, the
-			// waitgroup will short circuit immediately on the first error
-			responses <- queryResponse{
-				mixinName: mixinName,
-				output:    mixinStdout.String(),
-				runErr:    runErr,
-			}
+			results[i].Stdout = mixinStdout.String()
+			results[i].Error = runErr
 			return nil
 		})
 	}
 
 	err := gerr.Wait()
-	close(responses)
 	if err != nil {
 		return nil, err
 	}
 
 	// Collect responses and errors
 	var runErr error
-	for response := range responses {
-		if response.runErr == nil {
-			results[response.mixinName] = response.output
-		} else {
+	for _, result := range results {
+		if result.Error != nil {
 			runErr = multierror.Append(runErr,
-				fmt.Errorf("error encountered from mixin %q: %w", response.mixinName, response.runErr))
+				fmt.Errorf("error encountered from mixin %q: %w", result.Name, result.Error))
 		}
 	}
 

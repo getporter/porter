@@ -2,7 +2,7 @@ package migrations
 
 import (
 	"context"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"testing"
 	"time"
@@ -32,7 +32,7 @@ func TestConvertClaimToRun(t *testing.T) {
 
 	inst := storage.NewInstallation("", "mybuns")
 
-	claimData, err := ioutil.ReadFile(filepath.Join(c.FindRepoRoot(), "tests/testdata/porter_home/v0/claims/hello1/01G1VJGY43HT3KZN82DS6DDPWK.json"))
+	claimData, err := os.ReadFile(filepath.Join(c.FindRepoRoot(), "tests/testdata/porter_home/v0/claims/hello1/01G1VJGY43HT3KZN82DS6DDPWK.json"))
 	require.NoError(t, err, "could not read testdata")
 
 	run, err := convertClaimToRun(inst, claimData)
@@ -58,7 +58,7 @@ func TestConvertResult(t *testing.T) {
 
 	run := storage.NewRun("myns", "mybuns")
 
-	resultData, err := ioutil.ReadFile(filepath.Join(c.FindRepoRoot(), "tests/testdata/porter_home/v0/results/01G1VJGY43HT3KZN82DS6DDPWK/01G1VJH2HP97B5B0N5S37KYMVG.json"))
+	resultData, err := os.ReadFile(filepath.Join(c.FindRepoRoot(), "tests/testdata/porter_home/v0/results/01G1VJGY43HT3KZN82DS6DDPWK/01G1VJH2HP97B5B0N5S37KYMVG.json"))
 	require.NoError(t, err, "could not read testdata result")
 
 	result, err := convertResult(run, resultData)
@@ -85,7 +85,7 @@ func TestConvertResult(t *testing.T) {
 func TestConvertOutput(t *testing.T) {
 	c := portercontext.NewTestContext(t)
 
-	outputData, err := ioutil.ReadFile(filepath.Join(c.FindRepoRoot(), "tests/testdata/porter_home/v0/outputs/01G1VJH2HP97B5B0N5S37KYMVG/01G1VJH2HP97B5B0N5S37KYMVG-io.cnab.outputs.invocationImageLogs"))
+	outputData, err := os.ReadFile(filepath.Join(c.FindRepoRoot(), "tests/testdata/porter_home/v0/outputs/01G1VJH2HP97B5B0N5S37KYMVG/01G1VJH2HP97B5B0N5S37KYMVG-io.cnab.outputs.invocationImageLogs"))
 	require.NoError(t, err, "error reading testdata output file")
 
 	run := storage.NewRun("myns", "mybuns")

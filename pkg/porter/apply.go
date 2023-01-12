@@ -85,12 +85,12 @@ func (p *Porter) InstallationApply(ctx context.Context, opts ApplyOptions) error
 
 		// Create a new installation
 		installation = storage.NewInstallation(input.Namespace, input.Name)
-		installation.Apply(inputInstallation)
+		installation.Apply(inputInstallation.InstallationSpec)
 
 		log.Info("Creating a new installation", attribute.String("installation", installation.String()))
 	} else {
 		// Apply the specified changes to the installation
-		installation.Apply(inputInstallation)
+		installation.Apply(inputInstallation.InstallationSpec)
 		if err := installation.Validate(); err != nil {
 			return err
 		}

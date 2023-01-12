@@ -118,7 +118,8 @@ func TestPorter_BuildActionArgs(t *testing.T) {
 
 		err := opts.Validate(ctx, nil, p.Porter)
 		require.NoError(t, err, "Validate failed")
-		existingInstall := storage.Installation{Name: opts.Name}
+		existingInstall := storage.Installation{InstallationSpec: storage.InstallationSpec{
+			Name: opts.Name}}
 		args, err := p.BuildActionArgs(ctx, existingInstall, opts)
 		require.NoError(t, err, "BuildActionArgs failed")
 

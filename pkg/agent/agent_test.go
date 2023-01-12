@@ -5,7 +5,6 @@ package agent
 
 import (
 	"bytes"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -55,7 +54,7 @@ func TestExecute(t *testing.T) {
 }
 
 func makeTestPorterHome(t *testing.T) string {
-	home, err := ioutil.TempDir("", "porter-home")
+	home, err := os.MkdirTemp("", "porter-home")
 	require.NoError(t, err)
 	require.NoError(t, shx.Copy("../../bin/porter", home))
 	return home

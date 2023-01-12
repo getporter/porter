@@ -5,7 +5,7 @@ set -xeuo pipefail
 export PATH=$PATH:~/.porter
 
 PORTER_VERSION=canary ./scripts/install/install-mac.sh
-porter list
+porter version
 
 PORTER_VERSION=v0.23.0-beta.1 ./scripts/install/install-mac.sh
 porter version | grep v0.23.0-beta.1

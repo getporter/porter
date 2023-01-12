@@ -25,7 +25,9 @@ func main() {
 		// This is a mixin that helps us test out our schema command
 		fmt.Println(schema)
 	case "lint":
-		fmt.Println("[]")
+		// The test mixin does not implement lint
+		fmt.Fprintln(os.Stderr, `unknown command "lint" for "testmixin"`)
+		os.Exit(1)
 	case "build":
 		fmt.Println("# testmixin")
 	case "run":

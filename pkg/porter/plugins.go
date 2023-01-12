@@ -158,7 +158,7 @@ func (p *Porter) InstallPlugin(ctx context.Context, opts plugins.InstallOptions)
 
 	plugin, err := p.Plugins.GetMetadata(ctx, opts.Name)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get plugin metadata: %w", err)
 	}
 
 	v := plugin.GetVersionInfo()

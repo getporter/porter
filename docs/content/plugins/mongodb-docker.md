@@ -18,15 +18,14 @@ or remove the container. Removing the volume will result in data loss.
 No configuration is required to use the default storage plugin. However, you may
 configure the port if there is a conflict with the default port, 27018.
 
-```toml
-default-storage = "mymongo"
+```yaml
+default-storage: "mymongo"
 
-[[storage]]
-  name = "mymongo"
-  plugin = "mongodb-docker"
-
-  [storage.config]
-    port = "27019"
+storage:
+  name: "mymongo"
+  plugin: "mongodb-docker"
+  config:
+    port: "27019"
 ```
 
 [config file]: /configuration/#config-file

@@ -11,8 +11,7 @@ and test it out.
 If you run into any trouble, please let us know! The best way to ask for help is
 to start a new discussion on our [forum].
 
-ℹ️ Heads up that we are getting ready for our 1.0 release!
-All new development should be against the **release/v1** branch.
+ℹ️ All new development should be against the **main** branch.
 
 {{< toc >}}
 
@@ -50,7 +49,7 @@ need a few things.
    If you are new to Git or GitHub, we recommend reading the [GitHub Guides].
    They will walk you through installing Git, forking a repository and
    submitting a pull request.
-* [Go](https://golang.org/doc/install) version 1.18 or higher
+* [Go](https://golang.org/doc/install) version 1.19 or higher
 * [Docker]
 * [Mage](#install-mage)
 
@@ -141,9 +140,9 @@ the original porter repository and `origin` to refer to your fork:
     upstream    https://github.com/getporter/porter.git (fetch)
     upstream    https://github.com/getporter/porter.git (push)
     ```
-1. Create a branch for your changes. Note that we are working from the **release/v1** branch as we work towards our 1.0 release.
+1. Create a branch for your changes. Note that we are working from the **main** branch.
     ```bash
-    git checkout -b YOURBRANCH release/v1
+    git checkout -b YOURBRANCH main
     ```
 1. Push your branch to your fork (origin):
     ```bash
@@ -152,12 +151,12 @@ the original porter repository and `origin` to refer to your fork:
 
     Afterwards you can use just `git push` to synchronize your
     local branch with your fork on GitHub.
-1. Run `git branch -vv` to verify that the **release/v1** branch is synchronized with
-   **upstream/release/v1** and your branch is synchronized with origin/YOURBRANCH`.
+1. Run `git branch -vv` to verify that the **main** branch is synchronized with
+   **upstream/main** and your branch is synchronized with origin/YOURBRANCH`.
     ```bash
     $ git branch -vv
-    * mybranch      26d8358f [origin/mybranch] Review feedback
-    release/v1      7e120aab [upstream/release/v1]   Bump cnab-go
+    * mybranch    26d8358f [origin/mybranch] Review feedback
+    main          7e120aab [upstream/main]   Bump cnab-go
     ```
 
 

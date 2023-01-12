@@ -117,6 +117,11 @@ By default, Porter migrates your data into the [current namespace](/configuratio
 Porter v0 doesn't have the concept of namespaces, and effectively everything was defined in the global (empty) namespace.
 We recommend using the \--namespace flag and being explicit about where the data should be migrated.
 
+The migrate command may be repeated if it fails, is interrupted when first run, or new v0 data has been added.
+Porter will restart the migration from the beginning and overwrite any previously migrated records.
+
+🚨 **After you start using Porter v1 with the migrated database DO NOT RERUN THE MIGRATION because the migration will overwrite changes made to records in the new v1 database.**
+
 [porter storage migrate]: /cli/porter_storage_migrate/
 
 ## 7. View Your Migrated Data

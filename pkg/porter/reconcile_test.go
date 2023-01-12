@@ -21,9 +21,9 @@ func TestPorter_IsInstallationInSync(t *testing.T) {
 		p := NewTestPorter(t)
 		defer p.Close()
 
-		i := storage.Installation{
+		i := storage.Installation{InstallationSpec: storage.InstallationSpec{
 			Uninstalled: true,
-		}
+		}}
 		insync, err := p.IsInstallationInSync(p.RootContext, i, nil, NewInstallOptions())
 		require.NoError(t, err)
 		assert.True(t, insync)
@@ -109,7 +109,9 @@ func TestPorter_IsInstallationInSync(t *testing.T) {
 		defer p.Close()
 
 		i := storage.Installation{
-			CredentialSets: []string{"newcreds"},
+			InstallationSpec: storage.InstallationSpec{
+				CredentialSets: []string{"newcreds"},
+			},
 			Status: storage.InstallationStatus{
 				Installed: &now,
 			},
@@ -133,7 +135,9 @@ func TestPorter_IsInstallationInSync(t *testing.T) {
 		defer p.Close()
 
 		i := storage.Installation{
-			Uninstalled: true, // trigger uninstall
+			InstallationSpec: storage.InstallationSpec{
+				Uninstalled: true, // trigger uninstall
+			},
 			Status: storage.InstallationStatus{
 				Installed: &now,
 			},
@@ -150,7 +154,9 @@ func TestPorter_IsInstallationInSync(t *testing.T) {
 
 		installTime := now.Add(-time.Second * 5)
 		i := storage.Installation{
-			Uninstalled: false,
+			InstallationSpec: storage.InstallationSpec{
+				Uninstalled: false,
+			},
 			Status: storage.InstallationStatus{
 				Installed:   &installTime,
 				Uninstalled: &now,

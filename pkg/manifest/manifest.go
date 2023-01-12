@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"path"
 	"reflect"
@@ -518,9 +518,9 @@ type MixinDeclaration struct {
 // - exec
 // - helm3
 // or allow some entries to have config data defined
-// - az:
+//   - az:
 //     extensions:
-//       - iot
+//   - iot
 func (m *MixinDeclaration) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	// First try to just read the mixin name
 	var mixinNameOnly string
@@ -557,9 +557,9 @@ func (m *MixinDeclaration) UnmarshalYAML(unmarshal func(interface{}) error) erro
 // - exec
 // - helm3
 // or allow some entries to have config data defined
-// - az:
+//   - az:
 //     extensions:
-//       - iot
+//   - iot
 func (m MixinDeclaration) MarshalYAML() (interface{}, error) {
 	if m.Config == nil {
 		return m.Name, nil
@@ -1011,7 +1011,7 @@ func readFromURL(path string) ([]byte, error) {
 	}
 
 	defer resp.Body.Close()
-	data, err := ioutil.ReadAll(resp.Body)
+	data, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("could not read from url %s: %w", path, err)
 	}
@@ -1134,7 +1134,7 @@ type RequiredExtension struct {
 // required:
 // - docker
 // or allow some entries to have config data defined
-// - vpn:
+//   - vpn:
 //     name: mytrustednetwork
 func (r *RequiredExtension) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	// First try to just read the mixin name

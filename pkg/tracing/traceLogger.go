@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"runtime"
+	"runtime/debug"
 	"strings"
 
 	"go.opentelemetry.io/otel/attribute"
@@ -13,6 +14,18 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
+
+// traceSensitiveAttributes is a build flag that is off for release builds of Porter
+// A Porter developer may decide that they need sensitive data included in traces, and can create a custom build of Porter with this flag enabled.
+// When it is off, calls to SetSensitiveAttributes does nothing.
+// You can enable it with `go build
+var traceSensitiveAttributes = false
+
+// IsTraceSensitiveAttributesEnabled returns if sensitive data traced with TraceLogger.SetSensitiveAttributes
+// will trace the data. Defaults to false, which means that function is a noop and does nothing.
+func IsTraceSensitiveAttributesEnabled() bool {
+	return traceSensitiveAttributes
+}
 
 // TraceLogger how porter emits traces and logs to any configured listeners.
 type TraceLogger interface {
@@ -26,6 +39,9 @@ type TraceLogger interface {
 
 	// SetAttributes applies additional key/value pairs to the current trace span.
 	SetAttributes(attrs ...attribute.KeyValue)
+
+	// SetSensitiveAttributes applies attributes that contain SENSITIVE DATA. It is only enabled on debug builds of Porter with the traceSensitiveAttributes build tag set.
+	SetSensitiveAttributes(attrs ...attribute.KeyValue)
 
 	// EndSpan finishes the span and submits it to the otel endpoint.
 	EndSpan(opts ...trace.SpanEndOption)
@@ -123,10 +139,12 @@ func newTraceLogger(ctx context.Context, span trace.Span, logger *zap.Logger, tr
 func (l traceLogger) EndSpan(opts ...trace.SpanEndOption) {
 	defer l.span.End(opts...)
 
-	// If there was a panic, mark the span
-	if p := recover(); p != nil {
-		l.Errorf("panic: %s", p)
-		panic(p) // retrow
+	// If there was a panic, mark the span and include the stack trace
+	if panicErr := recover(); panicErr != nil {
+		l.Error(fmt.Errorf("%s", panicErr),
+			attribute.Bool("panic", true),
+			attribute.String("stackTrace", string(debug.Stack())))
+		panic(panicErr) // rethrow
 	}
 }
 
@@ -147,6 +165,14 @@ func (l traceLogger) StartSpanWithName(op string, attrs ...attribute.KeyValue) (
 // SetAttributes applies additional key/value pairs to the current trace span.
 func (l traceLogger) SetAttributes(attrs ...attribute.KeyValue) {
 	l.span.SetAttributes(attrs...)
+}
+
+// SetSensitiveAttributes applies attributes that contain SENSITIVE DATA.
+// It is only enabled on debug builds of Porter with the traceSensitiveAttributes build flag set.
+func (l traceLogger) SetSensitiveAttributes(attrs ...attribute.KeyValue) {
+	if traceSensitiveAttributes {
+		l.SetAttributes(attrs...)
+	}
 }
 
 // Debug logs a message at the debug level.

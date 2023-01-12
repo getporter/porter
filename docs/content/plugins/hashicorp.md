@@ -7,40 +7,41 @@ description: Integrate Porter with Hashicorp
 
 Integrate Porter with Hashicorp Vault.
 
-Source: https://github.com/dev-drprasad/porter-hashicorp-plugins
+Source: https://github.com/getporter/hashicorp-plugins
 
 ## Install or Upgrade
 
-Supports Porter version greater or equal to **v1.0.0-alpha.20**.
-Until the upstream plugin is updated to work with Porter v1, this is a [special release] with compatibility fixes.
-For older versions of Porter, use version v0.1.0 of the hashicorp plugin.
+Until the [upstream plugin] is updated to work with Porter v1, this is a [special release] with compatibility fixes.
+For older versions of Porter, use version v0.1.0 of the original hashicorp plugin.
 We only support the [KV Version 2][kv-v2] secret engine. Please raise an issue if you're looking for support for other secret engines.
 
 ```
-porter plugin install hashicorp --version v0.1.0-porter.1 --url https://github.com/getporter/hashicorp-plugins/releases/download
+porter plugin install hashicorp --version v1.0.0 --url https://github.com/getporter/hashicorp-plugins/releases/download
 ```
 
+Note that the v1 release of the plugin only works with Porter v1.0.0-alpha.20 and higher.
+
+[upstream plugin]: https://github.com/dev-drprasad/porter-hashicorp-plugins
 [special release]: https://github.com/getporter/hashicorp-plugins/releases/tag/v0.1.0-porter.1
 [kv-v2]: https://www.vaultproject.io/api-docs/secret/kv/kv-v2
 
 ## Plugin Configuration
 
-To use vault plugin, add the following config to porter's config file (default location: `~/.porter/config.toml`). Replace `vault_addr`, `vault_token` and `path_prefix` with proper values.
+To use vault plugin, add the following config to porter's config file (default location: `~/.porter/config.yaml`). Replace `vault_addr`, `vault_token` and `path_prefix` with proper values.
 
 The example below retrieves the vault_token from the VAULT_TOKEN environment variable.
 Do not store sensitive data in the Porter configuration file.
 
-```toml
-default-secrets = "porter-secrets"
+```yaml
+default-secrets: "porter-secrets"
 
-[[secrets]]
-  name = "porter-secrets"
-  plugin = "hashicorp.vault"
-
-  [secrets.config]
-    vault_addr = "http://vault.example.com:7500"
-    path_prefix = "organization/team/project"
-    vault_token = "${env.VAULT_TOKEN}"
+secrets:
+  name: "porter-secrets"
+  plugin: "hashicorp.vault"
+  config:
+    vault_addr: "http://vault.example.com:7500"
+    path_prefix: "organization/team/project"
+    vault_token: "${env.VAULT_TOKEN}"
 ```
 
 ## Config Parameters

@@ -1,7 +1,7 @@
 package yaml
 
 import (
-	"io/ioutil"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -23,7 +23,7 @@ func (m *mymap) UnmarshalYAML(unmarshal func(interface{}) error) error {
 func TestUnmarshalMap(t *testing.T) {
 	var m mymap
 
-	testYaml, err := ioutil.ReadFile("testdata/custom.yaml")
+	testYaml, err := os.ReadFile("testdata/custom.yaml")
 	require.NoError(t, err, "could not read testdata")
 
 	err = Unmarshal([]byte(testYaml), &m)

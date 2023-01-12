@@ -19,11 +19,19 @@ import (
 var _ Document = Installation{}
 
 type Installation struct {
-	// SchemaVersion is the version of the installation state schema.
-	SchemaVersion schema.Version `json:"schemaVersion"`
-
 	// ID is the unique identifier for an installation record.
 	ID string `json:"id"`
+
+	InstallationSpec
+
+	// Status of the installation.
+	Status InstallationStatus `json:"status,omitempty"`
+}
+
+// InstallationSpec contains installation fields that represent the desired state of the installation.
+type InstallationSpec struct {
+	// SchemaVersion is the version of the installation state schema.
+	SchemaVersion schema.Version `json:"schemaVersion"`
 
 	// Name of the installation. Immutable.
 	Name string `json:"name"`
@@ -58,7 +66,7 @@ type Installation struct {
 	Status InstallationStatus `json:"status,omitempty"`
 }
 
-func (i Installation) String() string {
+func (i InstallationSpec) String() string {
 	return fmt.Sprintf("%s/%s", i.Namespace, i.Name)
 }
 
@@ -69,11 +77,13 @@ func (i Installation) DefaultDocumentFilter() map[string]interface{} {
 func NewInstallation(namespace string, name string) Installation {
 	now := time.Now()
 	return Installation{
-		SchemaVersion: InstallationSchemaVersion,
-		ID:            cnab.NewULID(),
-		Namespace:     namespace,
-		Name:          name,
-		Parameters:    NewInternalParameterSet(namespace, name),
+		ID: cnab.NewULID(),
+		InstallationSpec: InstallationSpec{
+			SchemaVersion: InstallationSchemaVersion,
+			Namespace:     namespace,
+			Name:          name,
+			Parameters:    NewInternalParameterSet(namespace, name),
+		},
 		Status: InstallationStatus{
 			Created:  now,
 			Modified: now,
@@ -115,7 +125,7 @@ func (i *Installation) ApplyResult(run Run, result Result) {
 // Apply user-provided changes to an existing installation.
 // Only updates fields that users are allowed to modify.
 // For example, Name, Namespace and Status cannot be modified.
-func (i *Installation) Apply(input Installation) {
+func (i *InstallationSpec) Apply(input InstallationSpec) {
 	i.Uninstalled = input.Uninstalled
 	i.Bundle = input.Bundle
 	i.Parameters = input.Parameters

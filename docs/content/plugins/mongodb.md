@@ -11,16 +11,15 @@ store its data in a MongoDB server. This plugin is suitable for production use.
 To use the mongodb plugin, add the following config to porter's [config file]. Replace `conn_str` with the
 connection string for your MongoDB server.
 
-```toml
-default-storage = "mymongo"
+```yaml
+default-storage: "mymongo"
 
-[[storage]]
-  name = "mymongo"
-  plugin = "mongodb"
-
-  [storage.config]
-    url = "conn_str"
-    timeout = 10 # time in seconds
+storage:
+  name: "mymongo"
+  plugin: "mongodb"
+  config:
+    url: "conn_str"
+    timeout: 10 # time in seconds
 ```
 
 [config file]: /configuration/#config-file
