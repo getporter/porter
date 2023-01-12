@@ -25,6 +25,7 @@ import (
 	"github.com/cnabio/cnab-go/imagestore/construction"
 	"github.com/cnabio/cnab-to-oci/relocation"
 	"github.com/spf13/afero"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 // ArchiveOptions defines the valid options for performing an archive operation
@@ -157,7 +158,7 @@ func (ex *exporter) export(ctx context.Context) error {
 
 	rc, err := ex.CustomTar(ctx, archiveDir)
 	if err != nil {
-		return err
+		return fmt.Errorf("error creating archive: %w", err)
 	}
 	defer rc.Close()
 
@@ -185,7 +186,7 @@ func (ex *exporter) createTarHeader(ctx context.Context, path string, file strin
 		header.Mode = 0644
 		header.Size = fileInfo.Size()
 	default:
-		log.Debugf("Skipping %s. Not a file/dir", file)
+		log.Debug("Skipping header creation. Not a file/dir", attribute.String("createTarHeader.file", file))
 		return nil, nil
 	}
 
@@ -206,8 +207,6 @@ func (ex *exporter) createTarHeader(ctx context.Context, path string, file strin
 		}
 	}
 
-	log.Debugf("relativeFilePathName: %s\n", relativeFilePathName)
-
 	header.Name = filepath.ToSlash(relativeFilePathName)
 
 	// directories must be suffixed with '/'
@@ -215,7 +214,7 @@ func (ex *exporter) createTarHeader(ctx context.Context, path string, file strin
 		header.Name += "/"
 	}
 
-	log.Debugf("header.Name: %s\n", header.Name)
+	log.Debug("Created tar header", attribute.String("createTarHeader.headerName", header.Name))
 
 	return header, nil
 }
@@ -226,10 +225,10 @@ func (ex *exporter) CustomTar(ctx context.Context, srcPath string) (io.ReadClose
 	gzipWriter := gzip.NewWriter(pipeWriter)
 	tarWriter := tar.NewWriter(gzipWriter)
 
-	path := filepath.Clean(filepath.Join(srcPath, "."))
+	cleanSrcPath := filepath.Clean(srcPath)
 
 	go func() {
-		ctx, log := tracing.StartSpan(ctx)
+		ctx, log := tracing.StartSpanWithName(ctx, "CustomTar.Walk")
 
 		defer func() {
 			if err := tarWriter.Close(); err != nil {
@@ -244,16 +243,17 @@ func (ex *exporter) CustomTar(ctx context.Context, srcPath string) (io.ReadClose
 			log.EndSpan()
 		}()
 
-		walker := func(file string, finfo os.FileInfo, err error) error {
+		walker := func(path string, finfo os.FileInfo, err error) error {
 			if err != nil {
-				return err
+				return fmt.Errorf("walk invoked with error: %w", err)
 			}
 
-			log.Debugf("Packaging directory %s\n", file)
+			ctx, log := tracing.StartSpanWithName(ctx, "CustomTar.ProcessPath", attribute.String("customTar.path", path))
+			defer log.EndSpan()
 
-			hdr, err := ex.createTarHeader(ctx, path, file, finfo)
+			hdr, err := ex.createTarHeader(ctx, srcPath, path, finfo)
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to create tar header for path %s: %w", path, err)
 			}
 
 			// if header is nil then it's not a regular file nor directory
@@ -262,7 +262,7 @@ func (ex *exporter) CustomTar(ctx context.Context, srcPath string) (io.ReadClose
 			}
 
 			if err := tarWriter.WriteHeader(hdr); err != nil {
-				return err
+				return fmt.Errorf("failed to write header for path %s: %w", path, err)
 			}
 
 			// if path is a dir, nothing more to do
@@ -271,22 +271,22 @@ func (ex *exporter) CustomTar(ctx context.Context, srcPath string) (io.ReadClose
 			}
 
 			// add file to tar
-			sourceFile, err := os.Open(file)
+			sourceFile, err := os.Open(path)
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to open %s: %w", path, err)
 			}
 
 			defer sourceFile.Close()
 			_, err = io.Copy(tarWriter, sourceFile)
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to copy %s: %w", path, err)
 			}
 
 			return nil
 		}
 
 		// build tar
-		filepath.Walk(path, walker)
+		filepath.Walk(cleanSrcPath, walker)
 	}()
 
 	return pipeReader, nil
