@@ -154,8 +154,7 @@ func New(cxt *portercontext.Context, mixins pkgmgmt.PackageManager) *Linter {
 
 
 func (l *Linter) Lint(ctx context.Context, m *manifest.Manifest) (Results, error) {
-	// TODO: perform any porter level linting
-	// e.g. metadata, credentials, properties, outputs, dependencies, etc
+	// Check for reserved porter prefix on parameter names
 	reservedPrefixes := []string{"porter-", "porter_"}
 	params := m.Parameters
 
@@ -175,10 +174,10 @@ func (l *Linter) Lint(ctx context.Context, m *manifest.Manifest) (Results, error
 						StepDescription: "",
 				
 					},
-					Code: "exec-100",
+					Code: "porter-100",
 					Title: "Reserved name warning",
-					Message: param.Name + " has a reserved prefix",
-					URL: "",
+					Message: param.Name + " has a reserved prefix. Parameters cannot start with porter- or porter_",
+					URL: "https://getporter.org/reference/linter/#porter-100",
 				}
 				results = append(results, res)
 			}
