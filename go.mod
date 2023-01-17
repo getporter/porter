@@ -18,7 +18,7 @@ replace (
 )
 
 require (
-	get.porter.sh/magefiles v0.3.3
+	get.porter.sh/magefiles v0.3.4
 	github.com/Masterminds/semver/v3 v3.2.0
 	github.com/PaesslerAG/jsonpath v0.1.1
 	github.com/carolynvs/aferox v0.3.0
@@ -34,7 +34,7 @@ require (
 	github.com/docker/cli v20.10.20+incompatible
 	github.com/docker/distribution v2.8.1+incompatible
 	github.com/docker/docker v20.10.20+incompatible
-	github.com/dustin/go-humanize v1.0.0
+	github.com/dustin/go-humanize v1.0.1
 	github.com/ghodss/yaml v1.0.0
 	github.com/google/go-cmp v0.5.9
 	github.com/google/go-containerregistry v0.12.1
