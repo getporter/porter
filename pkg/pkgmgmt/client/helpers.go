@@ -16,9 +16,10 @@ var _ pkgmgmt.PackageManager = &TestPackageManager{}
 // TestPackageManager helps us test mixins/plugins in our unit tests without
 // actually hitting any real executables on the file system.
 type TestPackageManager struct {
-	PkgType       string
-	Packages      []pkgmgmt.PackageMetadata
-	RunAssertions []func(pkgContext *portercontext.Context, name string, commandOpts pkgmgmt.CommandOptions) error
+	PkgType           string
+	Packages          []pkgmgmt.PackageMetadata
+	RunAssertions     []func(pkgContext *portercontext.Context, name string, commandOpts pkgmgmt.CommandOptions) error
+	InstallAssertions []func(installOpts pkgmgmt.InstallOptions) error
 
 	// called keeps track of which mixins/plugins were called
 	called sync.Map
@@ -63,7 +64,12 @@ func (p *TestPackageManager) GetMetadata(ctx context.Context, name string) (pkgm
 }
 
 func (p *TestPackageManager) Install(ctx context.Context, opts pkgmgmt.InstallOptions) error {
-	// do nothing
+	for _, assert := range p.InstallAssertions {
+		err := assert(opts)
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
 

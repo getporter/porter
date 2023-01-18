@@ -28,7 +28,7 @@ Most commands require a Docker daemon, either local or remote.
 
 Try our QuickStart https://getporter.org/quickstart to learn how to use Porter.
 
-* [porter plugins install](/cli/porter_plugins_install/)	 - Install a plugin
+* [porter plugins install](/cli/porter_plugins_install/)	 - Install plugins
 * [porter plugins list](/cli/porter_plugins_list/)	 - List installed plugins
 * [porter plugins search](/cli/porter_plugins_search/)	 - Search available plugins
 * [porter plugins show](/cli/porter_plugins_show/)	 - Show details about an installed plugin

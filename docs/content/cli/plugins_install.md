@@ -9,20 +9,24 @@ Install plugins
 
 ### Synopsis
 
+
 Porter offers two ways to install plugins. Users can install plugins one at a time or multiple plugins through a plugins definition file.
 
 Below command will install one plugin:
-```
-porter plugins install NAME [flags]
-```
 
-To install multiple command, users can pass a file to the install command through `--file` flag:
-```
+porter plugins install NAME [flags]
+
+To install multiple plugins at once, users can pass a file to the install command through --file flag:
+
 porter plugins install --file plugins.yaml
-```
+
+The file format for the plugins.yaml can be found here: https://getporter.org/reference/file-formats/#plugins
 
 By default plugins are downloaded from the official Porter plugin feed at https://cdn.porter.sh/plugins/atom.xml. To download from a mirror, set the environment variable PORTER_MIRROR, or mirror in the Porter config file, with the value to replace https://cdn.porter.sh with.
 
+```
+porter plugins install NAME [flags]
+```
 
 ### Examples
 
@@ -31,8 +35,7 @@ By default plugins are downloaded from the official Porter plugin feed at https:
   porter plugin install azure --url https://cdn.porter.sh/plugins/azure
   porter plugin install azure --feed-url https://cdn.porter.sh/plugins/atom.xml
   porter plugin install azure --version v0.8.2-beta.1
-  porter plugin install azure --version canary
-  porter plugin install --file plugins.yaml
+  porter plugin install azure --version canary 
   porter plugin install --file plugins.yaml --feed-url https://cdn.porter.sh/plugins/atom.xml
   porter plugin install --file plugins.yaml --mirror https://cdn.porter.sh
 ```

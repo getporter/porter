@@ -155,8 +155,9 @@ parameters:
 
 ## Plugins
 
+The plugins file is used when installing multiple plugins at the same time with the [porter plugins install](/cli/porter_plugins_install/) command.
 Plugins can be defined in either json or yaml.
-You can use this [json schema][ps-schema] to validate a parameter set file.
+You can use this [json schema][plugins-schema] to validate a plugins config file.
 
 ```yaml
 schemaType: Plugins

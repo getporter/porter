@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg/pkgmgmt"
+	"get.porter.sh/porter/pkg/pkgmgmt/client"
 	"get.porter.sh/porter/pkg/plugins"
 	"get.porter.sh/porter/pkg/printer"
 	"get.porter.sh/porter/pkg/test"
@@ -222,17 +223,62 @@ implementations:
 }
 
 func TestPorter_InstallPlugin(t *testing.T) {
+	defaultFeedURL := pkgmgmt.DefaultPackageMirror + "/plugins/atom.xml"
+	type expectedResults struct {
+		output  string
+		feedURL string
+		mirror  string
+	}
 	testcases := []struct {
-		name           string
-		args           []string
-		config         plugins.InstallOptions
-		expectedOutput string
+		name     string
+		args     []string
+		config   plugins.InstallOptions
+		expected expectedResults
 	}{
-		{name: "json file", config: plugins.InstallOptions{File: "plugins.json"}, expectedOutput: "installed plugin1 plugin v1.0 (abc123)\ninstalled plugin2 plugin v1.0 (abc123)\n"},
-		{name: "yaml file", config: plugins.InstallOptions{File: "plugins.yaml"}, expectedOutput: "installed plugin1 plugin v1.0 (abc123)\ninstalled plugin2 plugin v1.0 (abc123)\n"},
-		{name: "with feed url default", config: plugins.InstallOptions{File: "plugins.yaml", InstallOptions: pkgmgmt.InstallOptions{FeedURL: "https://example.com/"}}, expectedOutput: "installed plugin1 plugin v1.0 (abc123)\ninstalled plugin2 plugin v1.0 (abc123)\n"},
-		{name: "with feed url default", config: plugins.InstallOptions{File: "plugins.json", InstallOptions: pkgmgmt.InstallOptions{PackageDownloadOptions: pkgmgmt.PackageDownloadOptions{Mirror: "https://example.com/"}}}, expectedOutput: "installed plugin1 plugin v1.0 (abc123)\ninstalled plugin2 plugin v1.0 (abc123)\n"},
-		{name: "through arg", args: []string{"plugin1"}, config: plugins.InstallOptions{InstallOptions: pkgmgmt.InstallOptions{URL: "https://example.com/"}}, expectedOutput: "installed plugin1 plugin v1.0 (abc123)\n"},
+		{
+			name:   "json file",
+			config: plugins.InstallOptions{File: "plugins.json"},
+			expected: expectedResults{
+				output:  "installed plugin1 plugin v1.0 (abc123)\ninstalled plugin2 plugin v1.0 (abc123)\n",
+				feedURL: defaultFeedURL,
+				mirror:  pkgmgmt.DefaultPackageMirror,
+			},
+		},
+		{
+			name:   "yaml file",
+			config: plugins.InstallOptions{File: "plugins.yaml"},
+			expected: expectedResults{
+				output:  "installed plugin1 plugin v1.0 (abc123)\ninstalled plugin2 plugin v1.0 (abc123)\n",
+				feedURL: defaultFeedURL,
+				mirror:  pkgmgmt.DefaultPackageMirror,
+			},
+		},
+		{
+			name:   "with feed url default",
+			config: plugins.InstallOptions{File: "plugins.yaml", InstallOptions: pkgmgmt.InstallOptions{FeedURL: "https://example-feed-url.com/"}},
+			expected: expectedResults{
+				output:  "installed plugin1 plugin v1.0 (abc123)\ninstalled plugin2 plugin v1.0 (abc123)\n",
+				feedURL: "https://example-feed-url.com/",
+				mirror:  pkgmgmt.DefaultPackageMirror,
+			},
+		},
+		{
+			name:   "with mirror default",
+			config: plugins.InstallOptions{File: "plugins.json", InstallOptions: pkgmgmt.InstallOptions{PackageDownloadOptions: pkgmgmt.PackageDownloadOptions{Mirror: "https://example-mirror.com/"}}},
+			expected: expectedResults{
+				output:  "installed plugin1 plugin v1.0 (abc123)\ninstalled plugin2 plugin v1.0 (abc123)\n",
+				feedURL: "https://example-mirror.com/plugins/atom.xml",
+				mirror:  "https://example-mirror.com/",
+			},
+		},
+		{
+			name: "through arg", args: []string{"plugin1"},
+			config: plugins.InstallOptions{InstallOptions: pkgmgmt.InstallOptions{URL: "https://example.com/"}},
+			expected: expectedResults{
+				output: "installed plugin1 plugin v1.0 (abc123)\n",
+				mirror: pkgmgmt.DefaultPackageMirror,
+			},
+		},
 	}
 
 	for _, tc := range testcases {
@@ -246,12 +292,20 @@ func TestPorter_InstallPlugin(t *testing.T) {
 			err := tc.config.Validate(tc.args, p.Context)
 			require.NoError(t, err, "Validate failed")
 
+			pp := p.Plugins.(*client.TestPackageManager)
+			pp.InstallAssertions = append(pp.InstallAssertions, func(installOpt pkgmgmt.InstallOptions) error {
+				assert.Equal(t, tc.expected.feedURL, installOpt.FeedURL)
+				assert.Equal(t, tc.expected.mirror, installOpt.Mirror)
+
+				fmt.Fprint(p.Err, installOpt)
+				return nil
+			})
 			err = p.InstallPlugin(context.Background(), tc.config)
 			require.NoError(t, err, "InstallPlugin failed")
 
 			gotOutput := p.TestConfig.TestContext.GetOutput()
 			assert.NotEmpty(t, gotOutput)
-			assert.Contains(t, tc.expectedOutput, gotOutput)
+			assert.Contains(t, tc.expected.output, gotOutput)
 		})
 	}
 }
