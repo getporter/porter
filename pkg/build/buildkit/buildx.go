@@ -23,6 +23,7 @@ import (
 	"github.com/docker/buildx/util/confutil"
 	"github.com/docker/buildx/util/progress"
 	"github.com/docker/cli/cli/command"
+	dockerconfig "github.com/docker/cli/cli/config"
 	dockercontext "github.com/docker/cli/cli/context/docker"
 	dockerclient "github.com/docker/docker/client"
 	"github.com/moby/buildkit/session"
@@ -92,7 +93,7 @@ func (b *Builder) BuildInvocationImage(ctx context.Context, manifest *manifest.M
 		},
 	}
 
-	session := []session.Attachable{authprovider.NewDockerAuthProvider(b.Err)}
+	session := []session.Attachable{authprovider.NewDockerAuthProvider(dockerconfig.LoadDefaultConfigFile(b.Err))}
 	ssh, err := buildflags.ParseSSHSpecs(opts.SSH)
 	if err != nil {
 		return fmt.Errorf("error parsing the --ssh flags: %w", err)
