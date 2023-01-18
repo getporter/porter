@@ -16,7 +16,7 @@ Below command will install one plugin:
 
 porter plugins install NAME [flags]
 
-To install multiple command, users can pass a file to the install command through --file flag:
+To install multiple plugins at once, users can pass a file to the install command through --file flag:
 
 porter plugins install --file plugins.yaml
 
