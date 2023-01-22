@@ -40,7 +40,7 @@ They must follow our [Code of Conduct](CODE_OF_CONDUCT.md).
 * [Mark issues as duplicates](https://help.github.com/en/articles/about-duplicate-issues-and-pull-requests)
 * Close, reopen, and assign issues and pull requests
 
-They must agree to and follow this Contributing Guide.
+They must agree to and follow this [Contributing Guide](CONTRIBUTING.md).
 
 ### How to become a contributor
 
