@@ -166,7 +166,7 @@ func (l *Linter) Lint(ctx context.Context, m *manifest.Manifest) (Results, error
 			if strings.HasPrefix(paramName, reservedPrefix) {
 
 				res := Result {
-					Level: LevelWarning,
+					Level: LevelError,
 					Location: Location {
 						Action: "",
 						Mixin: "",
