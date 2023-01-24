@@ -11,41 +11,46 @@
       "description": "Version of the plugins schema to which this document adheres",
       "type": "string",
       "default": "1.0.0"
+    },
+    "plugins": {
+      "description": "The definition of plugins to install",
+      "type": "object",
+      "default": "1.0.0",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "value": {
+            "type": "object",
+            "properties": {
+              "version": {
+                "description": "The version for the plugin.",
+                "type": "string"
+              },
+              "feedURL": {
+                "description": "The URL of an atom feed where the plugin can be downloaded.",
+                "type": "string"
+              },
+              "url": {
+                "description": "The URL from where the plugin can be downloaded",
+                "type": "string"
+              },
+              "mirror": {
+                "description": "Mirror of official Porter assets.",
+                "type": "string"
+              },
+              "additionalProperties": false
+            }
+          }
+        }
+      }
     }
   },
   "required": [
     "schemaVersion"
   ],
   "title": "Plugins json schema",
-  "type": "object",
-  "additionalProperties": {
-    "type": "object",
-    "properties": {
-      "key": {
-        "type": "string"
-      },
-      "value": {
-        "type": "object",
-        "properties": {
-          "version": {
-            "description": "The version for the plugins.",
-            "type": "string"
-          },
-          "feedURL": {
-            "description": "The URL of an atom feed where the plugin can be downloaded.",
-            "type": "string"
-          },
-          "url": {
-            "description": "The URL from where the plugin can be downloaded",
-            "type": "string"
-          },
-          "mirror": {
-            "description": "Mirror of official Porter assets.",
-            "type": "string"
-          },
-          "additionalProperties": false
-        }
-      }
-    }
-  }
+  "type": "object"
 }

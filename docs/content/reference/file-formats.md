@@ -162,21 +162,22 @@ You can use this [json schema][plugins-schema] to validate a plugins config file
 ```yaml
 schemaType: Plugins
 schemaVersion: 1.0.0
-azure:
-  version: v1.0.0
-  feedURL: https://cdn.porter.sh/plugins/atom.xml
-  url: https://example.com
-  mirror: https://example.com
+plugins:
+  azure:
+    version: v1.0.0
+    feedURL: https://cdn.porter.sh/plugins/atom.xml
+    url: https://example.com
+    mirror: https://example.com
 ```
 
 | Field                | Required | Description                                                                                                                                    |
 |----------------------|----------|------------------------------------------------------------------------------------------------------------------------------------------------|
 | schemaType           | false    | The type of document. This isn't used by Porter but is included when Porter outputs the file, so that editors can determine the resource type. |
 | schemaVersion        | true     | The version of the Plugins schema used in this file.                                                                                     |
-| <pluginName>.version | false    | The version of the plugin.                                                                                                                 |
-| <pluginName>.feedURL | false    | The url of an atom feed where the plugin can be downloaded.
-| <pluginName>.url     | false    | The url from where the plugin can be downloaded.                                                                                                                 |
-| <pluginName>.mirror  | false    | The mirror of official Porter assets.                                                                                                                 |
+| plugins.<pluginName>.version | false    | The version of the plugin.                                                                                                                 |
+| plugins.<pluginName>.feedURL | false    | The url of an atom feed where the plugin can be downloaded.
+| plugins.<pluginName>.url     | false    | The url from where the plugin can be downloaded.                                                                                                                 |
+| plugins.<pluginName>.mirror  | false    | The mirror of official Porter assets.                                                                                                                 |
 
 [cs-schema]: /schema/v1/credential-set.schema.json
 [ps-schema]: /schema/v1/parameter-set.schema.json

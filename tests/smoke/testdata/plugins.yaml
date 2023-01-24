@@ -1,0 +1,4 @@
+schemaType: Plugins
+schemaVersion: 1.0.0
+plugins:
+  azure: {}
