@@ -3,6 +3,7 @@ package plugins
 import (
 	"fmt"
 	"sort"
+	"strings"
 
 	"get.porter.sh/porter/pkg/pkgmgmt"
 	"get.porter.sh/porter/pkg/portercontext"
@@ -53,6 +54,10 @@ type InstallPluginsSpec struct {
 }
 
 func (spec InstallPluginsSpec) Validate() error {
+	if spec.SchemaType != "" && strings.ToLower(spec.SchemaType) != "plugins" {
+		return fmt.Errorf("invalid schemaType %s, expected Plugins", spec.SchemaType)
+	}
+
 	if InstallPluginsSchemaVersion != schema.Version(spec.SchemaVersion) {
 		if spec.SchemaVersion == "" {
 			spec.SchemaVersion = "(none)"
