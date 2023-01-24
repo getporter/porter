@@ -1,6 +1,30 @@
 {
   "$id": "https://getporter.org/schema/v1/plugins.schema.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "plugins": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "description": "The version for the plugin. Defaults to latest when unspecified.",
+          "type": "string"
+        },
+        "feedURL": {
+          "description": "The URL of an atom feed where the plugin can be downloaded. Defaults to the official Porter plugin feed.",
+          "type": "string"
+        },
+        "url": {
+          "description": "The URL from where the plugin can be downloaded. For example, https://github.com/MChorfa/porter-helm3/releases/download",
+          "type": "string"
+        },
+        "mirror": {
+          "description": "Mirror of official Porter assets.",
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
   "properties": {
     "schemaType": {
       "description": "The resource type of the current document.",
@@ -9,47 +33,20 @@
     },
     "schemaVersion": {
       "description": "Version of the plugins schema to which this document adheres",
-      "type": "string",
-      "default": "1.0.0"
+      "type": "string"
     },
     "plugins": {
-      "description": "The definition of plugins to install",
+      "description": "A map of plugins to install, keyed by the plugin name.",
       "type": "object",
-      "default": "1.0.0",
       "additionalProperties": {
-        "type": "object",
-        "properties": {
-          "key": {
-            "type": "string"
-          },
-          "value": {
-            "type": "object",
-            "properties": {
-              "version": {
-                "description": "The version for the plugin.",
-                "type": "string"
-              },
-              "feedURL": {
-                "description": "The URL of an atom feed where the plugin can be downloaded.",
-                "type": "string"
-              },
-              "url": {
-                "description": "The URL from where the plugin can be downloaded",
-                "type": "string"
-              },
-              "mirror": {
-                "description": "Mirror of official Porter assets.",
-                "type": "string"
-              },
-              "additionalProperties": false
-            }
-          }
-        }
+        "$ref": "#/definitions/plugins"
       }
     }
   },
+  "additionalProperties": false,
   "required": [
-    "schemaVersion"
+    "schemaVersion",
+    "plugins"
   ],
   "title": "Plugins json schema",
   "type": "object"

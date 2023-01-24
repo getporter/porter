@@ -12,12 +12,12 @@ summary: |
     Setting up your Porter environment with your required plugins using the new `--file` flag with `porter plugins install` command.
 ---
 
-The recent porter v1.0.5 release introduced a new flag `--file` on `porter plugins install` command. Its intention is to allow users to install multiple plugins through a plugins definition file with a single porter command.
+### Breaking change
+The recent porter v1.0.5 release introduced a new flag `--file` on `porter plugins install` command. Its intention is to allow users to install multiple plugins through a plugins definition file with a single porter command. However, it did not work as expected due to bad file format.
 
-Shortly after the release, I discovered an issue with the original schema for the plugins definition file. The `schemaVersion` and `schemaType` are not handled correctly resulted in the command fail with errors like:
-`plugin version should not be specified when --file is provided`
+The fix that contains the correct schema has been published with a new v1.0.6 release. If you have an existing plugins file, please update it to work with v1.0.6+.
 
-The fix that contains the correct schema has been published with a new v1.0.6 release.
+### Install multiple plugins with a single command
 Now, you can install multiple plugins using a plugin definition yaml file like below:
 ```yaml
 schemaType: Plugins
