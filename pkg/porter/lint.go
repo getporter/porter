@@ -71,18 +71,20 @@ func (p *Porter) PrintLintResults(ctx context.Context, opts LintOptions) error {
 		return err
 	}
 
-	if !results.HasError() {
-		fmt.Fprintln(p.Out, "✨ Bundle validation was successful!")
-		return nil
+	if results.String() != "" {
+		switch opts.Format {
+		case printer.FormatPlaintext:
+			fmt.Fprintln(p.Out, results.String())
+		case printer.FormatJson:
+			printer.PrintJson(p.Out, results)
+		default:
+			return fmt.Errorf("invalid format: %s", opts.Format)
+		}
 	}
 
-	switch opts.Format {
-	case printer.FormatPlaintext:
-		fmt.Fprintln(p.Out, results.String())
-		return nil
-	case printer.FormatJson:
-		return printer.PrintJson(p.Out, results)
-	default:
-		return fmt.Errorf("invalid format: %s", opts.Format)
+	if !results.HasError() {
+		fmt.Fprintln(p.Out, "✨ Bundle validation was successful!")
 	}
+
+	return nil
 }
