@@ -3,6 +3,9 @@ package porter
 import (
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 
 	"get.porter.sh/porter/pkg/pkgmgmt"
@@ -10,8 +13,11 @@ import (
 	"get.porter.sh/porter/pkg/plugins"
 	"get.porter.sh/porter/pkg/printer"
 	"get.porter.sh/porter/pkg/test"
+	"get.porter.sh/porter/pkg/yaml"
+	"get.porter.sh/porter/tests"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/xeipuuv/gojsonschema"
 )
 
 func TestPorter_PrintPlugins(t *testing.T) {
@@ -306,6 +312,63 @@ func TestPorter_InstallPlugin(t *testing.T) {
 			gotOutput := p.TestConfig.TestContext.GetOutput()
 			assert.NotEmpty(t, gotOutput)
 			assert.Contains(t, tc.expected.output, gotOutput)
+		})
+	}
+}
+
+func TestPorter_InstallPluginsSchema(t *testing.T) {
+	p := NewTestPorter(t)
+	schema, err := os.ReadFile(filepath.Join(p.RepoRoot, "pkg/schema/plugins.schema.json"))
+	require.NoError(t, err, "failed to read plugins.schema.json file")
+	testcases := []struct {
+		name    string
+		path    string
+		wantErr string
+	}{
+		{
+			name:    "valid",
+			path:    "testdata/plugins.json",
+			wantErr: "",
+		},
+		{
+			name:    "invalid",
+			path:    "testdata/invalid-plugins.json",
+			wantErr: "(root): Additional property invalid-field is not allowed\nplugins.plugin1: Additional property random-field is not allowed\n",
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Load manifest as a go dump
+			testManifest, err := os.ReadFile(tc.path)
+			require.NoError(t, err, "failed to read %s", tc.path)
+
+			m := make(map[string]interface{})
+			err = yaml.Unmarshal(testManifest, &m)
+			require.NoError(t, err, "failed to unmarshal %s", tc.path)
+
+			// Load the manifest schema returned from `porter schema`
+			manifestLoader := gojsonschema.NewGoLoader(m)
+			schemaLoader := gojsonschema.NewBytesLoader(schema)
+
+			// Validate the manifest against the schema
+			fails, err := gojsonschema.Validate(schemaLoader, manifestLoader)
+			require.NoError(t, err)
+
+			if tc.wantErr == "" {
+				assert.Empty(t, fails.Errors(), "expected %s to validate against the plugins schema", tc.path)
+				// Print any validation errors returned
+				for _, err := range fails.Errors() {
+					t.Logf("%s", err)
+				}
+			} else {
+				var allFails strings.Builder
+				for _, err := range fails.Errors() {
+					allFails.WriteString(err.String())
+					allFails.WriteString("\n")
+				}
+				tests.RequireOutputContains(t, tc.wantErr, allFails.String())
+			}
 		})
 	}
 }
