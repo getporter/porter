@@ -1,0 +1,13 @@
+{
+  "schemaType": "Plugins",
+  "schemaVersion": "1.0.0",
+  "invalid-field": "123",
+  "plugins": {
+    "plugin1": {
+      "random-field": 1
+    },
+    "plugin2": {
+      "version": "v1.0"
+    }
+  }
+}
