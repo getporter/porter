@@ -1,4 +1,7 @@
-plugin1:
-  version: v1.0
-plugin2:
-  version: v1.0
+schemaType: Plugins
+schemaVersion: 1.0.0
+plugins:
+  plugin1:
+    version: v1.0
+  plugin2:
+    version: v1.0

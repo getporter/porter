@@ -22,10 +22,15 @@ func TestHelloBundle(t *testing.T) {
 
 	test.PrepareTestBundle()
 	require.NoError(t, shx.Copy("testdata/buncfg.json", test.TestDir))
+	require.NoError(t, shx.Copy("testdata/plugins.yaml", test.TestDir))
 	test.Chdir(test.TestDir)
 
+	// Verify plugins installation
+	_, output := test.RequirePorter("plugins", "install", "-f", "plugins.yaml")
+	require.Contains(t, output, "installed azure plugin", "expected to see plugin successfully installed")
+
 	// Run a stateless action before we install and make sure nothing is persisted
-	_, output := test.RequirePorter("invoke", testdata.MyBuns, "--action=dry-run", "--reference", testdata.MyBunsRef, "-c=mybuns")
+	_, output = test.RequirePorter("invoke", testdata.MyBuns, "--action=dry-run", "--reference", testdata.MyBunsRef, "-c=mybuns")
 	t.Log(output)
 	test.RequireInstallationNotFound(test.CurrentNamespace(), testdata.MyBuns)
 
