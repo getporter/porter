@@ -3,10 +3,6 @@ module get.porter.sh/porter
 go 1.19
 
 replace (
-	// See https://github.com/getporter/magefiles/pull/21
-	// setupdco
-	get.porter.sh/magefiles => github.com/carolynvs/magefiles v0.1.3-0.20230125172107-729bea4d75e2
-
 	// a dependency of buildx (github.com/tonistiigi/fsutil) relies on an untagged version of Docker on the master branch
 	github.com/docker/cli => github.com/docker/cli v20.10.3-0.20220226190722-8667ccd1124c+incompatible
 	github.com/docker/docker => github.com/docker/docker v20.10.3-0.20220121014307-40bb9831756f+incompatible
@@ -22,7 +18,7 @@ replace (
 )
 
 require (
-	get.porter.sh/magefiles v0.3.4
+	get.porter.sh/magefiles v0.4.0
 	github.com/Masterminds/semver/v3 v3.2.0
 	github.com/PaesslerAG/jsonpath v0.1.1
 	github.com/carolynvs/aferox v0.3.0
