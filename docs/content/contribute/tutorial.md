@@ -201,11 +201,11 @@ If you use Bash, you can enable tab completion for mage as well, so that you can
 
 ## Configure Signing
 
-Porter requires that [all commits are signed][dco]. Run the following bash script to
+Porter requires that [all commits are signed][dco]. Run the following command to
 tell git to automatically sign your commits in the Porter repository:
 
 ```bash
-./scripts/setup-dco/setup.sh
+mage SetupDCO
 ```
 
 If you are using Powershell, see our Contributing Guide for [how to sign your commits][dco].

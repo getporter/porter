@@ -18,6 +18,7 @@ import (
 
 	"get.porter.sh/magefiles/ci"
 	"get.porter.sh/magefiles/docker"
+	"get.porter.sh/magefiles/git"
 	"get.porter.sh/magefiles/releases"
 	"get.porter.sh/magefiles/tools"
 	"get.porter.sh/porter/mage/setup"
@@ -577,12 +578,6 @@ func getPorterHome() string {
 
 // SetupDCO configures your git repository to automatically sign your commits
 // to comply with our DCO
-func SetupDCO() {
-	gotShell := xplat.DetectShell()
-	switch gotShell {
-	case "powershell", "cmd":
-		fmt.Fprintf(os.Stderr, "SetupDCO must be run from a shell that supports bash but %s was detected\n", gotShell)
-	default:
-		must.Command("scripts/setup-dco/setup.sh").Stdin(os.Stdin).RunV()
-	}
+func SetupDCO() error {
+	return git.SetupDCO()
 }
