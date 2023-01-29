@@ -58,8 +58,8 @@ contrib.go.opencensus.io/exporter/stackdriver v0.12.1/go.mod h1:iwB6wGarfphGGe/e
 contrib.go.opencensus.io/integrations/ocsql v0.1.4/go.mod h1:8DsSdjz3F+APR+0z0WkU1aRorQCFfRxvqjUUPMbF3fE=
 contrib.go.opencensus.io/resource v0.1.1/go.mod h1:F361eGI91LCmW1I/Saf+rX0+OFcigGlFvXwEGEnkRLA=
 dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9/go.mod h1:H6x//7gZCb22OMCxBHrMx7a5I7Hp++hsVxbQ4BYO7hU=
-get.porter.sh/magefiles v0.3.4 h1:w4QmPzcxdv6/ADtXHeT3cDPYR/69YN6Vah8amFfR848=
-get.porter.sh/magefiles v0.3.4/go.mod h1:KzKenKVauKKDhZ5FERVhqSz8m/xVSsRzOPseDA4UDIE=
+get.porter.sh/magefiles v0.4.0 h1:cJixJrbGz4OAsr81a7ggIWI2cS8uMATOVIlRotRkfyU=
+get.porter.sh/magefiles v0.4.0/go.mod h1:KzKenKVauKKDhZ5FERVhqSz8m/xVSsRzOPseDA4UDIE=
 git.apache.org/thrift.git v0.0.0-20180902110319-2566ecd5d999/go.mod h1:fPE2ZNJGynbRyZ4dJvy6G277gSllfV2HJqblrnkyeyg=
 git.apache.org/thrift.git v0.12.0/go.mod h1:fPE2ZNJGynbRyZ4dJvy6G277gSllfV2HJqblrnkyeyg=
 github.com/AdaLogics/go-fuzz-headers v0.0.0-20210715213245-6c3934b029d8/go.mod h1:CzsSbkDixRphAF5hS6wbMKq0eI6ccJRb7/A0M6JBnwg=
@@ -1153,8 +1153,8 @@ github.com/mmcdole/goxpp v0.0.0-20181012175147-0068e33feabf h1:sWGE2v+hO0Nd4yFU/
 github.com/mmcdole/goxpp v0.0.0-20181012175147-0068e33feabf/go.mod h1:pasqhqstspkosTneA62Nc+2p9SOBBYAPbnmRRWPQ0V8=
 github.com/moby/buildkit v0.8.1/go.mod h1:/kyU1hKy/aYCuP39GZA9MaKioovHku57N6cqlKZIaiQ=
 github.com/moby/buildkit v0.10.0-rc2.0.20220308185020-fdecd0ae108b/go.mod h1:WvwAZv8aRScHkqc/+X46cRC2CKMKpqcaX+pRvUTtPes=
-github.com/moby/buildkit v0.11.0 h1:GqBC/ETDqwdu61g4tCxX1GFZuGWg/nuqFxamb2or1dw=
-github.com/moby/buildkit v0.11.0/go.mod h1:v43oa6H2Fx/cdzc7j0UlUu8p6188yy1P3vrujAs99uw=
+github.com/moby/buildkit v0.11.1 h1:D7ghEeXgwq4v6WT+YExVruip4GLqm3UT1+7JBLhNBic=
+github.com/moby/buildkit v0.11.1/go.mod h1:v43oa6H2Fx/cdzc7j0UlUu8p6188yy1P3vrujAs99uw=
 github.com/moby/locker v1.0.1 h1:fOXqR41zeveg4fFODix+1Ch4mj/gT0NE1XJbp/epuBg=
 github.com/moby/locker v1.0.1/go.mod h1:S7SDdo5zpBK84bzzVlKr2V0hz+7x9hWbYC/kq7oQppc=
 github.com/moby/patternmatcher v0.5.0 h1:YCZgJOeULcxLw1Q+sVR636pmS7sPEn1Qo2iAN6M7DBo=

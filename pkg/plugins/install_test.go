@@ -19,9 +19,9 @@ func TestInstallOptions_Validate(t *testing.T) {
 }
 
 func TestInstallPluginsConfig(t *testing.T) {
-	input := InstallFileOption{"kubernetes": pkgmgmt.InstallOptions{URL: "test-kubernetes.com"}, "azure": pkgmgmt.InstallOptions{URL: "test-azure.com"}}
+	input := InstallPluginsConfig{"kubernetes": pkgmgmt.InstallOptions{URL: "test-kubernetes.com"}, "azure": pkgmgmt.InstallOptions{URL: "test-azure.com"}}
 	expected := []pkgmgmt.InstallOptions{{Name: "azure", PackageType: "plugin", URL: "test-azure.com"}, {Name: "kubernetes", PackageType: "plugin", URL: "test-kubernetes.com"}}
 
 	cfg := NewInstallPluginConfigs(input)
-	require.Equal(t, expected, cfg.Configs())
+	require.Equal(t, expected, cfg.Values())
 }
