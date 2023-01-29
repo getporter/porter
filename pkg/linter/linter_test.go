@@ -143,7 +143,7 @@ func TestLinter_Lint(t *testing.T) {
 		}
 		mixins.LintResults = Results{
 			{
-				Level: LevelWarning,
+				Level: LevelError,
 				Code:  "exec-101",
 				Title: "warning stuff isn't working",
 			},
