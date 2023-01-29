@@ -28,7 +28,7 @@ require (
 	github.com/cnabio/cnab-go v0.24.1
 	github.com/cnabio/cnab-to-oci v0.3.7
 	github.com/cnabio/image-relocation v0.9.0
-	github.com/containerd/containerd v1.6.15
+	github.com/containerd/containerd v1.6.16-0.20230124210447-1709cfe273d9
 	github.com/davecgh/go-spew v1.1.1
 	github.com/docker/buildx v0.8.1
 	github.com/docker/cli v23.0.0-rc.1+incompatible
@@ -48,7 +48,7 @@ require (
 	github.com/mikefarah/yq/v3 v3.0.0-20201020025845-ccb718cd0f59
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/mmcdole/gofeed v1.1.3
-	github.com/moby/buildkit v0.11.1
+	github.com/moby/buildkit v0.11.2
 	github.com/moby/term v0.0.0-20210619224110-3f7ff695adc6
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/opencontainers/go-digest v1.0.0
