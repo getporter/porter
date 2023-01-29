@@ -106,7 +106,7 @@ func TestLinter_Lint(t *testing.T) {
 			}
 			mixins.LintResults = Results{
 				{
-					Level: LevelWarning,
+					Level: LevelError,
 					Location: Location {
 						Action: "",
 						Mixin: "",
