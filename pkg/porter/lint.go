@@ -82,7 +82,7 @@ func (p *Porter) PrintLintResults(ctx context.Context, opts LintOptions) error {
 		}
 	}
 
-	if !results.HasError() {
+	if !results.HasError() && opts.Format == printer.FormatPlaintext {
 		fmt.Fprintln(p.Out, "✨ Bundle validation was successful!")
 	}
 
