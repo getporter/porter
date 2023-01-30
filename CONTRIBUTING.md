@@ -573,7 +573,6 @@ dependency injection and testing strategies.
       version command.
 * **scripts**:
   * **install**: Porter [installation](https://getporter.org/install) scripts
-  * **setup-dco**: Set up automatic DCO signoff for the developer environment
 * **tests** have Go-based integration tests.
 
 ## Logging
