@@ -37,7 +37,7 @@ require (
 	github.com/dustin/go-humanize v1.0.1
 	github.com/ghodss/yaml v1.0.0
 	github.com/google/go-cmp v0.5.9
-	github.com/google/go-containerregistry v0.12.1
+	github.com/google/go-containerregistry v0.13.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/hashicorp/go-hclog v1.4.0
 	github.com/hashicorp/go-multierror v1.1.1
