@@ -519,6 +519,16 @@ func Install() {
 
 	// Copy porter binaries
 	mgx.Must(os.MkdirAll(porterHome, pkg.FileModeDirectory))
+
+	// HACK: Works around a codesigning problem on Apple Silicon where overwriting a binary that has already been executed doesn't cause the corresponding codesign entry in the OS cache to update
+	// Mac then prevents the updated binary from running because the signature doesn't match
+	// Removing the file first clears the cache so that we don't run into "zsh: killed porter..."
+	// See https://stackoverflow.com/questions/67378106/mac-m1-cping-binary-over-another-results-in-crash
+	// See https://openradar.appspot.com/FB8914231
+	mgx.Must(os.Remove(filepath.Join(porterHome, "porter"+xplat.FileExt())))
+	mgx.Must(os.RemoveAll(filepath.Join(porterHome, "runtimes")))
+
+	// Okay now it's safe to copy these files over
 	mgx.Must(shx.Copy(filepath.Join("bin", "porter"+xplat.FileExt()), porterHome))
 	mgx.Must(shx.Copy(filepath.Join("bin", "runtimes"), porterHome, shx.CopyRecursive))
 
@@ -543,6 +553,14 @@ func Install() {
 		srcDir := filepath.Join(mixinsDir, mixin)
 		destDir := filepath.Join(porterHome, "mixins", mixin)
 		mgx.Must(os.MkdirAll(destDir, pkg.FileModeDirectory))
+
+		// HACK: Works around a codesigning problem on Apple Silicon where overwriting a binary that has already been executed doesn't cause the corresponding codesign entry in the OS cache to update
+		// Mac then prevents the updated binary from running because the signature doesn't match
+		// Removing the file first clears the cache so that we don't run into "zsh: killed MIXIN..."
+		// See https://stackoverflow.com/questions/67378106/mac-m1-cping-binary-over-another-results-in-crash
+		// See https://openradar.appspot.com/FB8914231
+		mgx.Must(os.Remove(filepath.Join(destDir, mixin+xplat.FileExt())))
+		mgx.Must(os.RemoveAll(filepath.Join(destDir, "runtimes")))
 
 		// Copy the mixin client binary
 		mgx.Must(shx.Copy(filepath.Join(srcDir, mixin+xplat.FileExt()), destDir))
