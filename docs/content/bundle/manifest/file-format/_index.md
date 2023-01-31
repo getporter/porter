@@ -34,6 +34,7 @@ The [schema-check] configuration setting allows you to change how Porter behaves
 ## Example 
 
 ```yaml
+schemaType: Bundle
 schemaVersion: 1.0.0
 name: myapp
 version: 1.0.0
@@ -166,6 +167,7 @@ status:
 
 | Field                            | Required | Description                                                                                                                                                                            |
 |----------------------------------|----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| schemaType                       | false    | The type of document. This isn't used by Porter but is included when Porter outputs the file, so that editors can determine the resource type.                                         |
 | schemaVersion                    | true     | The version of the Bundle schema used in this file.                                                                                                                                    |
 | name                             | true     | The name of the bundle.                                                                                                                                                                |
 | version                          | true     | The version of the bundle, must adhere to [semver v2].<br/>The bundle tag defaults to the version with a v prefix, e.g. mybundle:v1.0.0. Use --tag or the reference field to override. |
