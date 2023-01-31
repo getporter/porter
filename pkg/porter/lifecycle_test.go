@@ -164,23 +164,25 @@ func TestBundleActionOptions_Validate(t *testing.T) {
 		p := NewTestPorter(t)
 		p.DataLoader = config.LoadFromEnvironment()
 		p.FileSystem.WriteFile("/home/myuser/.porter/config.yaml", []byte("runtime-driver: kubernetes"), pkg.FileModeWritable)
-		require.NoError(t, p.Connect(context.Background()))
+		ctx, err := p.Connect(context.Background())
+		require.NoError(t, err)
 
 		opts := NewInstallOptions()
 		opts.Reference = "ghcr.io/getporter/examples/porter-hello:v0.2.0"
-		require.NoError(t, opts.Validate(context.Background(), nil, p.Porter))
+		require.NoError(t, opts.Validate(ctx, nil, p.Porter))
 		assert.Equal(t, "kubernetes", opts.Driver)
 	})
 	t.Run("driver flag set", func(t *testing.T) {
 		p := NewTestPorter(t)
 		p.DataLoader = config.LoadFromEnvironment()
 		p.FileSystem.WriteFile("/home/myuser/.porter/config.yaml", []byte("driver: kubernetes"), pkg.FileModeWritable)
-		require.NoError(t, p.Connect(context.Background()))
+		ctx, err := p.Connect(context.Background())
+		require.NoError(t, err)
 
 		opts := NewInstallOptions()
 		opts.Driver = "docker"
 		opts.Reference = "ghcr.io/getporter/examples/porter-hello:v0.2.0"
-		require.NoError(t, opts.Validate(context.Background(), nil, p.Porter))
+		require.NoError(t, opts.Validate(ctx, nil, p.Porter))
 		assert.Equal(t, "docker", opts.Driver)
 	})
 }

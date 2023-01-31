@@ -23,7 +23,8 @@ func TestLoadHierarchicalConfig(t *testing.T) {
 		}
 
 		cmd.PreRunE = func(cmd *cobra.Command, args []string) error {
-			return c.Load(context.Background(), nil)
+			_, err := c.Load(context.Background(), nil)
+			return err
 		}
 		cmd.RunE = func(cmd *cobra.Command, args []string) error {
 			return nil

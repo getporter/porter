@@ -30,15 +30,8 @@ func NewConfigFor(porterCtx *portercontext.Context) RuntimeConfig {
 	}
 }
 
-func (c RuntimeConfig) ConfigureLogging(ctx context.Context) error {
+func (c RuntimeConfig) ConfigureLogging(ctx context.Context) (context.Context, error) {
 	// Just use porter's config to load up common settings, such as logging
 	pc := config.NewFor(c.Context)
-	if err := pc.Load(ctx, nil); err != nil {
-		return err
-	}
-
-	opts := pc.NewLogConfiguration()
-	c.Context.ConfigureLogging(ctx, opts)
-
-	return nil
+	return pc.Load(ctx, nil)
 }

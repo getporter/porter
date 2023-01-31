@@ -17,7 +17,8 @@ func main() {
 	run := func() int {
 		ctx := context.Background()
 		m := exec.New()
-		if err := m.Config.ConfigureLogging(ctx); err != nil {
+		ctx, err := m.Config.ConfigureLogging(ctx)
+		if err != nil {
 			fmt.Println(err)
 			os.Exit(cli.ExitCodeErr)
 		}

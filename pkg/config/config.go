@@ -131,19 +131,18 @@ func (c *Config) NewLogConfiguration() portercontext.LogConfiguration {
 
 // loadData from the datastore defined in PORTER_HOME, and render the
 // config file using the specified template data.
-func (c *Config) loadData(ctx context.Context, templateData map[string]interface{}) error {
+func (c *Config) loadData(ctx context.Context, templateData map[string]interface{}) (context.Context, error) {
 	if c.DataLoader == nil {
 		c.DataLoader = LoadFromEnvironment()
 	}
 
 	if err := c.DataLoader(ctx, c, templateData); err != nil {
-		return err
+		return ctx, err
 	}
 
 	// Now that we have completely loaded our config, configure our final logging/tracing
-	c.Context.ConfigureLogging(ctx, c.NewLogConfiguration())
-
-	return nil
+	ctx = c.Context.ConfigureLogging(ctx, c.NewLogConfiguration())
+	return ctx, nil
 }
 
 func (c *Config) GetSchemaCheckStrategy(ctx context.Context) schema.CheckStrategy {
@@ -324,16 +323,18 @@ func (c *Config) GetVerbosity() LogLevel {
 // Load loads the configuration file, rendering any templating used in the config file
 // such as ${secret.NAME} or ${env.NAME}.
 // Pass nil for resolveSecret to skip resolving secrets.
-func (c *Config) Load(ctx context.Context, resolveSecret func(ctx context.Context, secretKey string) (string, error)) error {
+func (c *Config) Load(ctx context.Context, resolveSecret func(ctx context.Context, secretKey string) (string, error)) (context.Context, error) {
 	ctx, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
 
-	if err := c.loadFirstPass(ctx); err != nil {
-		return err
+	ctx, err := c.loadFirstPass(ctx)
+	if err != nil {
+		return ctx, err
 	}
 
-	if err := c.loadFinalPass(ctx, resolveSecret); err != nil {
-		return err
+	ctx, err = c.loadFinalPass(ctx, resolveSecret)
+	if err != nil {
+		return ctx, err
 	}
 
 	// Record some global configuration values that are relevant to most commands
@@ -342,14 +343,14 @@ func (c *Config) Load(ctx context.Context, resolveSecret func(ctx context.Contex
 		attribute.String("porter.config.experimental", strings.Join(c.Data.ExperimentalFlags, ",")),
 	)
 
-	return nil
+	return ctx, nil
 }
 
 // our first pass only loads the config file while replacing
 // environment variables. Once we have that we can use the
 // config to connect to a secret store and do a second pass
 // over the config.
-func (c *Config) loadFirstPass(ctx context.Context) error {
+func (c *Config) loadFirstPass(ctx context.Context) (context.Context, error) {
 	ctx, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
 
@@ -359,13 +360,13 @@ func (c *Config) loadFirstPass(ctx context.Context) error {
 	return c.loadData(ctx, templateData)
 }
 
-func (c *Config) loadFinalPass(ctx context.Context, resolveSecret func(ctx context.Context, secretKey string) (string, error)) error {
+func (c *Config) loadFinalPass(ctx context.Context, resolveSecret func(ctx context.Context, secretKey string) (string, error)) (context.Context, error) {
 	ctx, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
 
 	// Don't do extra work if there aren't any secrets
 	if len(c.templateVariables) == 0 || resolveSecret == nil {
-		return nil
+		return ctx, nil
 	}
 
 	secrets := make(map[string]string, len(c.templateVariables))
@@ -391,7 +392,7 @@ func (c *Config) loadFinalPass(ctx context.Context, resolveSecret func(ctx conte
 			return nil
 		}(variable)
 		if err != nil {
-			return err
+			return ctx, err
 		}
 	}
 

@@ -50,7 +50,7 @@ func CreateLegacyPorterHome(t *testing.T) *config.TestConfig {
 	shx.Command(oldPorterPath, "storage", "fix-permissions").
 		Env("PORTER_HOME=" + tmp).Must().RunS()
 
-	err = c.Load(context.Background(), nil)
+	_, err = c.Load(context.Background(), nil)
 	require.NoError(t, err, "Failed to load the test context from the temp PORTER_HOME")
 	return c
 }
