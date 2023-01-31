@@ -3,3 +3,4 @@ mixins:
   - az:
       extensions:
         - iot
+  - terraform

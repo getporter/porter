@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"path"
+	"sync"
 	"testing"
 
 	"get.porter.sh/porter/pkg/pkgmgmt"
@@ -15,25 +16,29 @@ var _ pkgmgmt.PackageManager = &TestPackageManager{}
 // TestPackageManager helps us test mixins/plugins in our unit tests without
 // actually hitting any real executables on the file system.
 type TestPackageManager struct {
-	PkgType       string
-	Packages      []pkgmgmt.PackageMetadata
-	RunAssertions []func(pkgContext *portercontext.Context, name string, commandOpts pkgmgmt.CommandOptions) error
+	PkgType           string
+	Packages          []pkgmgmt.PackageMetadata
+	RunAssertions     []func(pkgContext *portercontext.Context, name string, commandOpts pkgmgmt.CommandOptions) error
+	InstallAssertions []func(installOpts pkgmgmt.InstallOptions) error
 
 	// called keeps track of which mixins/plugins were called
-	called map[string]int
+	called sync.Map
+	lock   sync.Mutex
 }
 
 // GetCalled tracks how many times each package was called
-func (p *TestPackageManager) GetCalled() map[string]int {
-	return p.called
+func (p *TestPackageManager) GetCalled(mixin string) int {
+	calls, _ := p.called.LoadOrStore(mixin, 0)
+	return calls.(int)
 }
 
 func (p *TestPackageManager) recordCalled(name string) {
-	if p.called == nil {
-		p.called = make(map[string]int, 1)
-	}
+	p.lock.Lock()
+	defer p.lock.Unlock()
 
-	p.called[name]++
+	hits := p.GetCalled(name)
+	hits = hits + 1
+	p.called.Store(name, hits)
 }
 
 func (p *TestPackageManager) List() ([]string, error) {
@@ -59,7 +64,12 @@ func (p *TestPackageManager) GetMetadata(ctx context.Context, name string) (pkgm
 }
 
 func (p *TestPackageManager) Install(ctx context.Context, opts pkgmgmt.InstallOptions) error {
-	// do nothing
+	for _, assert := range p.InstallAssertions {
+		err := assert(opts)
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
 

@@ -103,7 +103,7 @@ Pass credentials to a bundle with the \--credential-set or -c flag, where the fl
 For example:
 
 ```
-porter install --credential-set github --reference getporter/credentials-tutorial:v0.3.0
+porter install --credential-set github --reference ghcr.io/getporter/examples/credentials-tutorial:v0.3.0
 ```
 
 The output of this example bundle prints data from your public GitHub user profile.

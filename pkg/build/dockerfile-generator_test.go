@@ -29,8 +29,8 @@ func TestPorter_buildDockerfile(t *testing.T) {
 	m, err := manifest.LoadManifestFrom(context.Background(), c.Config, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
-	// ignore mixins in the unit tests
-	m.Mixins = []manifest.MixinDeclaration{}
+	// Add another mixin to ensure we are consistently sorting the results
+	m.Mixins = append(m.Mixins, manifest.MixinDeclaration{Name: "testmixin"})
 
 	mp := mixin.NewTestMixinProvider()
 	g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
@@ -65,8 +65,6 @@ COPY mybin /cnab/app/
 `
 		c.TestContext.AddTestFileContents([]byte(customFrom), "Dockerfile.template")
 
-		// ignore mixins in the unit tests
-		m.Mixins = []manifest.MixinDeclaration{}
 		mp := mixin.NewTestMixinProvider()
 		g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
 		gotlines, err := g.buildDockerfile(context.Background())
@@ -98,8 +96,6 @@ COPY mybin /cnab/app/
 `
 		c.TestContext.AddTestFileContents([]byte(customFrom), "Dockerfile.template")
 
-		// ignore mixins in the unit tests
-		m.Mixins = []manifest.MixinDeclaration{}
 		mp := mixin.NewTestMixinProvider()
 		g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
 		gotlines, err := g.buildDockerfile(context.Background())
@@ -128,8 +124,8 @@ func TestPorter_generateDockerfile(t *testing.T) {
 	m, err := manifest.LoadManifestFrom(ctx, c.Config, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
-	// ignore mixins in the unit tests
-	m.Mixins = []manifest.MixinDeclaration{}
+	// Add another mixin to ensure we are consistently sorting the results
+	m.Mixins = append(m.Mixins, manifest.MixinDeclaration{Name: "testmixin"})
 
 	mp := mixin.NewTestMixinProvider()
 	g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
@@ -223,8 +219,6 @@ func TestPorter_buildMixinsSection_mixinErr(t *testing.T) {
 
 	m, err := manifest.LoadManifestFrom(ctx, c.Config, config.Name)
 	require.NoError(t, err, "could not load manifest")
-
-	m.Mixins = []manifest.MixinDeclaration{{Name: "exec"}}
 
 	mp := mixin.NewTestMixinProvider()
 	mp.ReturnBuildError = true

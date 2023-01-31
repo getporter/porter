@@ -6,10 +6,14 @@ import (
 	"os"
 	"strings"
 
+	"get.porter.sh/porter/pkg/encoding"
 	"get.porter.sh/porter/pkg/pkgmgmt"
 	"get.porter.sh/porter/pkg/plugins"
 	"get.porter.sh/porter/pkg/printer"
+	"get.porter.sh/porter/pkg/tracing"
 	"github.com/olekukonko/tablewriter"
+	"go.opentelemetry.io/otel/attribute"
+	"go.uber.org/zap/zapcore"
 )
 
 // PrintPluginsOptions represent options for the PrintPlugins function
@@ -151,18 +155,27 @@ func (p *Porter) GetPlugin(ctx context.Context, name string) (*plugins.Metadata,
 }
 
 func (p *Porter) InstallPlugin(ctx context.Context, opts plugins.InstallOptions) error {
-	err := p.Plugins.Install(ctx, opts.InstallOptions)
+	ctx, log := tracing.StartSpan(ctx)
+	defer log.EndSpan()
+
+	installOpts, err := p.getPluginInstallOptions(ctx, opts)
 	if err != nil {
 		return err
 	}
+	for _, opt := range installOpts {
+		err := p.Plugins.Install(ctx, opt)
+		if err != nil {
+			return err
+		}
 
-	plugin, err := p.Plugins.GetMetadata(ctx, opts.Name)
-	if err != nil {
-		return fmt.Errorf("failed to get plugin metadata: %w", err)
+		plugin, err := p.Plugins.GetMetadata(ctx, opt.Name)
+		if err != nil {
+			return fmt.Errorf("failed to get plugin metadata: %w", err)
+		}
+
+		v := plugin.GetVersionInfo()
+		fmt.Fprintf(p.Out, "installed %s plugin %s (%s)\n", opt.Name, v.Version, v.Commit)
 	}
-
-	v := plugin.GetVersionInfo()
-	fmt.Fprintf(p.Out, "installed %s plugin %s (%s)\n", opts.Name, v.Version, v.Commit)
 
 	return nil
 }
@@ -176,4 +189,51 @@ func (p *Porter) UninstallPlugin(ctx context.Context, opts pkgmgmt.UninstallOpti
 	fmt.Fprintf(p.Out, "Uninstalled %s plugin", opts.Name)
 
 	return nil
+}
+
+func (p *Porter) getPluginInstallOptions(ctx context.Context, opts plugins.InstallOptions) ([]pkgmgmt.InstallOptions, error) {
+	_, log := tracing.StartSpan(ctx)
+	defer log.EndSpan()
+
+	var installConfigs []pkgmgmt.InstallOptions
+	if opts.File != "" {
+		var data plugins.InstallPluginsSpec
+		if log.ShouldLog(zapcore.DebugLevel) {
+			// ignoring any error here, printing debug info isn't critical
+			contents, _ := p.FileSystem.ReadFile(opts.File)
+			log.Debug("read input file", attribute.String("contents", string(contents)))
+		}
+
+		if err := encoding.UnmarshalFile(p.FileSystem, opts.File, &data); err != nil {
+			return nil, fmt.Errorf("unable to parse %s as an installation document: %w", opts.File, err)
+		}
+
+		if err := data.Validate(); err != nil {
+			return nil, err
+		}
+
+		sortedCfgs := plugins.NewInstallPluginConfigs(data.Plugins)
+
+		for _, config := range sortedCfgs.Values() {
+			// if user specified a feed url or mirror using the flags, it will become
+			// the default value and apply to empty values parsed from the provided file
+			if config.FeedURL == "" {
+				config.FeedURL = opts.FeedURL
+			}
+			if config.Mirror == "" {
+				config.Mirror = opts.Mirror
+			}
+
+			if err := config.Validate([]string{config.Name}); err != nil {
+				return nil, err
+			}
+			installConfigs = append(installConfigs, config)
+
+		}
+
+		return installConfigs, nil
+	}
+
+	installConfigs = append(installConfigs, opts.InstallOptions)
+	return installConfigs, nil
 }

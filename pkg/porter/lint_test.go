@@ -124,3 +124,61 @@ exec:
 		})
 	}
 }
+
+func TestPorter_PrintLintResults_Warning(t *testing.T) {
+	lintResults := linter.Results{
+		{
+			Level: linter.LevelWarning,
+			Location: linter.Location{
+				Action:          "install",
+				Mixin:           "exec",
+				StepNumber:      2,
+				StepDescription: "Install Hello World",
+			},
+			Code:  "exec-100",
+			Title: "bash -c argument missing wrapping quotes",
+			Message: `The bash -c flag argument must be wrapped in quotes, for example
+exec:
+  description: Say Hello
+  command: bash
+  flags:
+    c: '"echo Hello World"'
+`,
+			URL: "https://getporter.org/best-practices/exec-mixin/#quoting-escaping-bash-and-yaml",
+		},
+	}
+
+	testcases := []struct {
+		format         string
+		wantOutputFile string
+		linterResults  linter.Results
+	}{
+		{"plaintext", "testdata/lint/results_warning.txt", lintResults},
+		{"json", "testdata/lint/results_warning.json", lintResults},
+		{"plaintext", "testdata/lint/success.txt", linter.Results{}},
+	}
+	for _, tc := range testcases {
+		t.Run(tc.format, func(t *testing.T) {
+			p := NewTestPorter(t)
+			defer p.Close()
+
+			p.TestConfig.TestContext.AddTestFile("testdata/porter.yaml", "porter.yaml")
+
+			mixins := p.Mixins.(*mixin.TestMixinProvider)
+			mixins.LintResults = tc.linterResults
+
+			var opts LintOptions
+			opts.RawFormat = tc.format
+			err := opts.Validate(p.Context)
+			require.NoError(t, err, "Validate failed")
+
+			err = p.PrintLintResults(context.Background(), opts)
+			require.NoError(t, err, "PrintLintResults failed")
+
+			wantOutputB, err := os.ReadFile(tc.wantOutputFile)
+			require.NoError(t, err, "Reading output file failed")
+			gotOutput := p.TestConfig.TestContext.GetOutput()
+			assert.Equal(t, string(wantOutputB), gotOutput, "unexpected output printed")
+		})
+	}
+}

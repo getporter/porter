@@ -23,7 +23,8 @@
       "type": "string"
     },
     "seed": {
-      "type": "boolean"
+      "type": "boolean",
+      "writeOnly": true
     },
     "namespace": {
       "type": "string"

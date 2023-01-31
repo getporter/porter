@@ -119,7 +119,7 @@ func (p *Porter) getImageLatestDigest(ctx context.Context, img cnab.OCIReference
 	ctx, span := tracing.StartSpan(ctx)
 	defer span.EndSpan()
 
-	// if no image tag is specified, defautl to use latest
+	// if no image tag is specified, default to use latest
 	if img.Tag() == "" {
 		refWithTag, err := img.WithTag("latest")
 		if err != nil {

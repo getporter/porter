@@ -6,6 +6,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"go/build"
 	"log"
@@ -17,6 +18,7 @@ import (
 
 	"get.porter.sh/magefiles/ci"
 	"get.porter.sh/magefiles/docker"
+	"get.porter.sh/magefiles/git"
 	"get.porter.sh/magefiles/releases"
 	"get.porter.sh/magefiles/tools"
 	"get.porter.sh/porter/mage/setup"
@@ -229,6 +231,8 @@ func TestUnit() {
 
 	// Verify integration tests compile since we don't run them automatically on pull requests
 	must.Run("go", "test", "-run=non", "-tags=integration", "./...")
+
+	TestInitWarnings()
 }
 
 // Run smoke tests to quickly check if Porter is broken
@@ -467,6 +471,21 @@ func TestIntegration() {
 	must.Command("go", "test", verbose, "-timeout=30m", run, "-tags=integration", "./...").CollapseArgs().RunV()
 }
 
+func TestInitWarnings() {
+	// This is hard to test in a normal unit test because we need to build porter with custom build tags,
+	// so I'm testing it in the magefile directly in a way that doesn't leave around an unsafe Porter binary.
+
+	// Verify that running Porter with traceSensitiveAttributes set that a warning is printed
+	fmt.Println("Validating traceSensitiveAttributes warning")
+	output := &bytes.Buffer{}
+	must.Command("go", "run", "-tags=traceSensitiveAttributes", "./cmd/porter", "schema").
+		Stderr(output).Stdout(output).Exec()
+	if !strings.Contains(output.String(), "WARNING! This is a custom developer build of Porter with the traceSensitiveAttributes build flag set") {
+		fmt.Printf("Got output: %s\n", output.String())
+		panic("Expected a build of Porter with traceSensitiveAttributes build tag set to warn at startup but it didn't")
+	}
+}
+
 // TryRegisterLocalHostAlias edits /etc/hosts to use porter-test-registry hostname alias
 // This is not safe to call more than once and is intended for use on the CI server only
 func TryRegisterLocalHostAlias() {
@@ -500,6 +519,16 @@ func Install() {
 
 	// Copy porter binaries
 	mgx.Must(os.MkdirAll(porterHome, pkg.FileModeDirectory))
+
+	// HACK: Works around a codesigning problem on Apple Silicon where overwriting a binary that has already been executed doesn't cause the corresponding codesign entry in the OS cache to update
+	// Mac then prevents the updated binary from running because the signature doesn't match
+	// Removing the file first clears the cache so that we don't run into "zsh: killed porter..."
+	// See https://stackoverflow.com/questions/67378106/mac-m1-cping-binary-over-another-results-in-crash
+	// See https://openradar.appspot.com/FB8914231
+	mgx.Must(os.Remove(filepath.Join(porterHome, "porter"+xplat.FileExt())))
+	mgx.Must(os.RemoveAll(filepath.Join(porterHome, "runtimes")))
+
+	// Okay now it's safe to copy these files over
 	mgx.Must(shx.Copy(filepath.Join("bin", "porter"+xplat.FileExt()), porterHome))
 	mgx.Must(shx.Copy(filepath.Join("bin", "runtimes"), porterHome, shx.CopyRecursive))
 
@@ -525,6 +554,14 @@ func Install() {
 		destDir := filepath.Join(porterHome, "mixins", mixin)
 		mgx.Must(os.MkdirAll(destDir, pkg.FileModeDirectory))
 
+		// HACK: Works around a codesigning problem on Apple Silicon where overwriting a binary that has already been executed doesn't cause the corresponding codesign entry in the OS cache to update
+		// Mac then prevents the updated binary from running because the signature doesn't match
+		// Removing the file first clears the cache so that we don't run into "zsh: killed MIXIN..."
+		// See https://stackoverflow.com/questions/67378106/mac-m1-cping-binary-over-another-results-in-crash
+		// See https://openradar.appspot.com/FB8914231
+		mgx.Must(os.Remove(filepath.Join(destDir, mixin+xplat.FileExt())))
+		mgx.Must(os.RemoveAll(filepath.Join(destDir, "runtimes")))
+
 		// Copy the mixin client binary
 		mgx.Must(shx.Copy(filepath.Join(srcDir, mixin+xplat.FileExt()), destDir))
 
@@ -540,7 +577,7 @@ func Vet() {
 
 // Run staticcheck on the project
 func Lint() {
-	tools.EnsureStaticCheck()
+	mg.Deps(tools.EnsureStaticCheck)
 	must.RunV("staticcheck", "./...")
 }
 
@@ -559,12 +596,6 @@ func getPorterHome() string {
 
 // SetupDCO configures your git repository to automatically sign your commits
 // to comply with our DCO
-func SetupDCO() {
-	gotShell := xplat.DetectShell()
-	switch gotShell {
-	case "powershell", "cmd":
-		fmt.Fprintf(os.Stderr, "SetupDCO must be run from a shell that supports bash but %s was detected\n", gotShell)
-	default:
-		must.Command("scripts/setup-dco/setup.sh").Stdin(os.Stdin).RunV()
-	}
+func SetupDCO() error {
+	return git.SetupDCO()
 }

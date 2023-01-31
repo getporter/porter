@@ -55,6 +55,11 @@ func TestArchive_StableDigest(t *testing.T) {
 	err = p.Archive(ctx, archive2Opts)
 	require.NoError(t, err, "Second archive failed")
 	assert.Equal(p.T(), hash1, getHash(p, archiveFile2), "shasum of archive did not stay the same on the second call to archive")
+
+	// the archive should match the hash below regardless of OS architecture, user and execution time
+	consistentHash := "27c2cf6ef0dfac6f120290a79def2e3417656d0d44adc80991d864d7c8c398ed"
+	assert.Equal(p.T(), consistentHash, hash1, "shasum of archive did not match expected hash")
+
 	// Publish bundle from archive, with new reference
 	localReference := "localhost:5000/archived-whalegap:v0.2.0"
 	publishFromArchiveOpts := porter.PublishOptions{
