@@ -27,7 +27,11 @@ The [Porter Operator](/operator/) is a Kubernetes operator that runs bundles on 
 * Upgrade to new versions of bundles when they are released
 * Integrate bundle deployments into your existing pipelines
 
-Many users, especially adopters with large-scale Porter deployments, are eagerly awaiting managing their installations using a GitOps based workflow with the Porter Operator and Flux. We made great progress on the operator last year and our [v1 milestone](https://github.com/getporter/operator/milestone/1) outlines the remaining work necessary for a stable release.
+Many users, especially adopters with large-scale Porter deployments, are eagerly awaiting managing their installations using a GitOps based workflow with the Porter Operator and Flux.
+We made great progress on the operator last year and our [v1 milestone](https://github.com/getporter/operator/milestone/1) outlines the remaining work necessary for a stable release.
+
+The operator is ready to try out and we would love your feedback!
+We have a [quickstart](/operator/quickstart/) that walks you through installing the operator and running a bundle. Give it a shot and let us know what you think.
 
 ### Advanced Dependencies
 
