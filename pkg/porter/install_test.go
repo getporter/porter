@@ -128,7 +128,7 @@ func TestPorter_ApplyParametersToInstallation(t *testing.T) {
 		opts.CredentialIdentifiers = []string{"newcs1"}
 
 		require.NoError(t, opts.Validate(ctx, nil, p.Porter))
-		_, err := p.applyActionOptionsToInstallation(ctx, opts, inst)
+		err := p.applyActionOptionsToInstallation(ctx, opts, inst)
 		require.NoError(t, err, "applyActionOptionsToInstallation failed")
 
 		require.Equal(t, opts.ParameterSets, inst.ParameterSets, "expected the installation to replace the credential sets with those specified")
@@ -159,7 +159,7 @@ func TestPorter_ApplyParametersToInstallation(t *testing.T) {
 		opts.CredentialIdentifiers = []string{}
 
 		require.NoError(t, opts.Validate(ctx, nil, p.Porter))
-		_, err := p.applyActionOptionsToInstallation(ctx, opts, inst)
+		err := p.applyActionOptionsToInstallation(ctx, opts, inst)
 		require.NoError(t, err, "applyActionOptionsToInstallation failed")
 
 		require.Equal(t, []string{"oldps1"}, inst.ParameterSets, "expected the installation to reuse the previous credential sets")

@@ -75,7 +75,7 @@ func (p *Porter) ReconcileInstallation(ctx context.Context, opts ReconcileOption
 	lifecycleOpts.CredentialIdentifiers = opts.Installation.CredentialSets
 	lifecycleOpts.ParameterSets = opts.Installation.ParameterSets
 
-	if _, err = p.applyActionOptionsToInstallation(ctx, actionOpts, &opts.Installation); err != nil {
+	if err = p.applyActionOptionsToInstallation(ctx, actionOpts, &opts.Installation); err != nil {
 		return err
 	}
 
@@ -173,8 +173,7 @@ func (p *Porter) IsInstallationInSync(ctx context.Context, i storage.Installatio
 	// to tell if the installation should be executed again. For now I'm just
 	// removing internal parameters (e.g. porter-debug, porter-state) and making
 	// sure that the types are correct, etc.
-	resolvedParams, err := p.applyActionOptionsToInstallation(ctx, action, &i)
-	if err != nil {
+	if err = p.applyActionOptionsToInstallation(ctx, action, &i); err != nil {
 		return false, err
 	}
 
@@ -214,7 +213,7 @@ func (p *Porter) IsInstallationInSync(ctx context.Context, i storage.Installatio
 		return false, fmt.Errorf("error prepping old parameters for comparision: %w", err)
 	}
 
-	newParams, err := prepParametersForComparison(resolvedParams)
+	newParams, err := prepParametersForComparison(opts.GetParameters())
 	if err != nil {
 		return false, fmt.Errorf("error prepping current parameters for comparision: %w", err)
 	}

@@ -66,12 +66,7 @@ func (p *Porter) InvokeBundle(ctx context.Context, opts InvokeOptions) error {
 		installation = storage.Installation{InstallationSpec: storage.InstallationSpec{Namespace: opts.Namespace, Name: opts.Name}}
 	}
 
-	_, err = p.applyActionOptionsToInstallation(ctx, opts, &installation)
-	if err != nil {
-		return err
-	}
-
-	err = p.sanitizeInstallation(ctx, &installation, bundleRef.Definition)
+	err = p.applyActionOptionsToInstallation(ctx, opts, &installation)
 	if err != nil {
 		return err
 	}

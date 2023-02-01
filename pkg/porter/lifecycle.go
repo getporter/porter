@@ -65,7 +65,8 @@ type BundleExecutionOptions struct {
 	// This is not used anymore in dependencies v2
 	depParams map[string]string
 
-	// the final resolved set of parameters that are passed to the bundle
+	// A cache of the final resolved set of parameters that are passed to the bundle
+	// Do not use directly, use GetParameters instead.
 	finalParams map[string]interface{}
 }
 
@@ -77,6 +78,16 @@ func NewBundleExecutionOptions() *BundleExecutionOptions {
 
 func (o *BundleExecutionOptions) GetOptions() *BundleExecutionOptions {
 	return o
+}
+
+// GetParameters returns the final resolved set of a parameters to pass to the bundle.
+// You must have already called Porter.applyActionOptionsToInstallation to populate this value as
+// this just returns the cached set of parameters
+func (o *BundleExecutionOptions) GetParameters() map[string]interface{} {
+	if o.finalParams == nil {
+		panic("BundleExecutionOptions.GetParameters was called before the final set of parameters were resolved with Porter.applyActionOptionsToInstallation")
+	}
+	return o.finalParams
 }
 
 func (o *BundleExecutionOptions) Validate(ctx context.Context, args []string, p *Porter) error {
@@ -270,15 +281,11 @@ func (p *Porter) BuildActionArgs(ctx context.Context, installation storage.Insta
 		}
 	}
 
-	if opts.finalParams == nil {
-		return cnabprovider.ActionArguments{}, log.Error(fmt.Errorf("BuildActionArgs was called before any parameters were resolved"))
-	}
-
 	args := cnabprovider.ActionArguments{
 		Action:                action.GetAction(),
 		Installation:          installation,
 		BundleReference:       bundleRef,
-		Params:                opts.finalParams,
+		Params:                opts.GetParameters(),
 		Driver:                opts.Driver,
 		AllowDockerHostAccess: opts.AllowDockerHostAccess,
 		PersistLogs:           !opts.NoLogs,

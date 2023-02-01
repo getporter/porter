@@ -757,7 +757,7 @@ func (p *Porter) CreateParameter(opts ParameterCreateOptions) error {
 // applyActionOptionsToInstallation applies the specified action (e.g. install/upgrade) to an installation record.
 // This resolves the parameters to their final form to be passed to the CNAB runtime, and modifies the specified installation record.
 // You must sanitize the parameters before saving the installation so that sensitive values are not saved to the database.
-func (p *Porter) applyActionOptionsToInstallation(ctx context.Context, ba BundleAction, inst *storage.Installation) (map[string]interface{}, error) {
+func (p *Porter) applyActionOptionsToInstallation(ctx context.Context, ba BundleAction, inst *storage.Installation) error {
 	ctx, span := tracing.StartSpan(ctx)
 	defer span.EndSpan()
 
@@ -765,7 +765,7 @@ func (p *Porter) applyActionOptionsToInstallation(ctx context.Context, ba Bundle
 
 	bundleRef, err := o.GetBundleReference(ctx, p)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	bun := bundleRef.Definition
 
@@ -790,7 +790,7 @@ func (p *Porter) applyActionOptionsToInstallation(ctx context.Context, ba Bundle
 	span.SetSensitiveAttributes(tracing.ObjectAttribute("override-parameters", o.Params))
 	parsedOverrides, err := storage.ParseVariableAssignments(o.Params)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	// Default the porter-debug param to --debug
@@ -818,7 +818,7 @@ func (p *Porter) applyActionOptionsToInstallation(ctx context.Context, ba Bundle
 	//
 	resolvedParams, err := p.loadParameterSets(ctx, bun, o.Namespace, inst.ParameterSets)
 	if err != nil {
-		return nil, fmt.Errorf("unable to process provided parameter sets: %w", err)
+		return fmt.Errorf("unable to process provided parameter sets: %w", err)
 	}
 
 	// This contains resolved sensitive values, so only trace it in special dev builds (nothing is traced for release builds)
@@ -828,7 +828,7 @@ func (p *Porter) applyActionOptionsToInstallation(ctx context.Context, ba Bundle
 	// 4. Resolve the installation's internal parameter set
 	resolvedOverrides, err := p.Parameters.ResolveAll(ctx, inst.Parameters)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	// This contains resolved sensitive values, so only trace it in special dev builds (nothing is traced for release builds)
@@ -860,6 +860,9 @@ func (p *Porter) applyActionOptionsToInstallation(ctx context.Context, ba Bundle
 	// 7. When a parameter is not specified, fallback to a parameter source or default
 	//
 	finalParams, err := p.finalizeParameters(ctx, *inst, bun, ba.GetAction(), resolvedParams)
+	if err != nil {
+		return err
+	}
 
 	// This contains resolved sensitive values, so only trace it in special dev builds (nothing is traced for release builds)
 	span.SetSensitiveAttributes(tracing.ObjectAttribute("final-parameters", finalParams))
@@ -867,5 +870,7 @@ func (p *Porter) applyActionOptionsToInstallation(ctx context.Context, ba Bundle
 	// Remember the final set of parameters so we don't have to resolve them more than once
 	o.finalParams = finalParams
 
-	return finalParams, err
+	// Ensure we aren't storing any secrets on the installation resource
+	err = p.sanitizeInstallation(ctx, inst, bundleRef.Definition)
+	return err
 }

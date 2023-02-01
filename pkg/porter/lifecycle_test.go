@@ -269,7 +269,7 @@ func TestBundleExecutionOptions_ParseParamSets(t *testing.T) {
 	assert.NoError(t, err)
 
 	inst := storage.NewInstallation("", "mybuns")
-	gotParams, err := p.applyActionOptionsToInstallation(ctx, opts, &inst)
+	err = p.applyActionOptionsToInstallation(ctx, opts, &inst)
 	require.NoError(t, err)
 
 	wantParams := map[string]interface{}{
@@ -277,7 +277,7 @@ func TestBundleExecutionOptions_ParseParamSets(t *testing.T) {
 		"porter-debug":    false,
 		"porter-state":    nil,
 	}
-	assert.Equal(t, wantParams, gotParams, "resolved unexpected parameter values")
+	assert.Equal(t, wantParams, opts.GetParameters(), "resolved unexpected parameter values")
 }
 
 func TestBundleExecutionOptions_ParseParamSets_Failed(t *testing.T) {
@@ -304,7 +304,7 @@ func TestBundleExecutionOptions_ParseParamSets_Failed(t *testing.T) {
 
 	inst := storage.NewInstallation("myns", "mybuns")
 
-	_, err = p.applyActionOptionsToInstallation(ctx, opts, &inst)
+	err = p.applyActionOptionsToInstallation(ctx, opts, &inst)
 	tests.RequireErrorContains(t, err, "/paramset.json not found", "Porter no longer supports passing a parameter set file to the -p flag, validate that passing a file doesn't work")
 }
 

@@ -81,12 +81,7 @@ func (p *Porter) InstallBundle(ctx context.Context, opts InstallOptions) error {
 		return log.Error(err)
 	}
 
-	_, err = p.applyActionOptionsToInstallation(ctx, opts, &i)
-	if err != nil {
-		return err
-	}
-
-	err = p.sanitizeInstallation(ctx, &i, bundleRef.Definition)
+	err = p.applyActionOptionsToInstallation(ctx, opts, &i)
 	if err != nil {
 		return err
 	}
