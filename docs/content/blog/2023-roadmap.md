@@ -64,7 +64,7 @@ All these features rely upon the Advanced Dependencies feature, so these will be
 
 ## Signing and SBOMs
 
-There has been huge leaps forward in the world of signing and software bill of materials in the past year that we are ready to jump on and use.
+There have been huge leaps forward in the world of signing and software bills of material (SBOMs) in the past year, and we're ready to take advantage of these new developments.
 New versions of the OCI Distribution spec, alternatives to Notary such as cosign, and a plethora of SBOM generating libraries are available for us to build into Porter.
 
 Our plan is to incrementally add features allowing you to:
