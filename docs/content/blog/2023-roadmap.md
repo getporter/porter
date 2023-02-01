@@ -70,7 +70,7 @@ Our plan is to incrementally add features allowing you to:
 * Validate a bundle signature
 * Generate a software bill of materials for possibly multiple aspects of a bundle: the bundle itself, the mixins and tools used in the bundle, and of course the software deployed by the bundle.
 
-This won't be a big bang feature, and we hope to be able to ship these in minor releases through the year.
+We plan to build support for these features incrementally throughout the year, so you won't see everything get rolled out at once in a big bang release.
 
 ## Contributors Welcome!
 Phew! This is a big chunk of work for a pretty small group of maintainers and contributors.
