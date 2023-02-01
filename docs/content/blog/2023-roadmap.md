@@ -56,7 +56,7 @@ This has a number of advantages such as:
     Credentials applicable to one mixin are not exposed to other unrelated mixins or scripts in the bundle.
   * Achieve significant performance improvements due to improved reuse of cached image layers.
 
-All of this relies upon the Advanced Dependencies feature first, so this will be delivered after that work is completed.
+All these features rely upon the Advanced Dependencies feature, so these will be delivered after that work is completed.
 
 ## Signing and SBOMs
 
