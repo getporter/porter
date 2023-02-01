@@ -121,11 +121,11 @@ func (o *ParameterOptions) validateParamName(args []string) error {
 // a silent build, based on the opts.Silent flag, or interactive using a survey. Returns an
 // error if unable to generate parameters
 func (p *Porter) GenerateParameters(ctx context.Context, opts ParameterOptions) error {
-	bundleRef, err := p.resolveBundleReference(ctx, &opts.BundleReferenceOptions)
-
+	bundleRef, err := opts.GetBundleReference(ctx, p)
 	if err != nil {
 		return err
 	}
+
 	name := opts.Name
 	if name == "" {
 		name = bundleRef.Definition.Name
@@ -763,11 +763,11 @@ func (p *Porter) applyActionOptionsToInstallation(ctx context.Context, ba Bundle
 
 	o := ba.GetOptions()
 
-	// Resolve the bundle reference if it hasn't been done yet
-	if _, err := p.resolveBundleReference(ctx, o.BundleReferenceOptions); err != nil {
+	bundleRef, err := o.GetBundleReference(ctx, p)
+	if err != nil {
 		return nil, err
 	}
-	bun := o.bundleRef.Definition
+	bun := bundleRef.Definition
 
 	//
 	// 1. Record the parameter and credential sets used on the installation

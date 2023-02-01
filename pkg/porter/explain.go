@@ -157,7 +157,7 @@ func (o *ExplainOpts) Validate(args []string, pctx *portercontext.Context) error
 }
 
 func (p *Porter) Explain(ctx context.Context, o ExplainOpts) error {
-	bundleRef, err := p.resolveBundleReference(ctx, &o.BundleReferenceOptions)
+	bundleRef, err := o.GetBundleReference(ctx, p)
 	if err != nil {
 		return err
 	}

@@ -62,7 +62,7 @@ func (p *Porter) Archive(ctx context.Context, opts ArchiveOptions) error {
 		return log.Error(fmt.Errorf("parent directory %q does not exist", dir))
 	}
 
-	bundleRef, err := p.resolveBundleReference(ctx, &opts.BundleReferenceOptions)
+	bundleRef, err := opts.GetBundleReference(ctx, p)
 	if err != nil {
 		return log.Error(err)
 	}

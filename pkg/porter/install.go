@@ -61,7 +61,7 @@ func (p *Porter) InstallBundle(ctx context.Context, opts InstallOptions) error {
 	defer log.EndSpan()
 
 	// Figure out which bundle/installation we are working with
-	bundleRef, err := p.resolveBundleReference(ctx, opts.BundleReferenceOptions)
+	bundleRef, err := opts.GetBundleReference(ctx, p)
 	if err != nil {
 		return log.Error(err)
 	}
@@ -86,7 +86,7 @@ func (p *Porter) InstallBundle(ctx context.Context, opts InstallOptions) error {
 		return err
 	}
 
-	err = p.sanitizeInstallation(ctx, &i, opts.bundleRef.Definition)
+	err = p.sanitizeInstallation(ctx, &i, bundleRef.Definition)
 	if err != nil {
 		return err
 	}

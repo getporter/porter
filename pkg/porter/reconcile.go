@@ -75,10 +75,6 @@ func (p *Porter) ReconcileInstallation(ctx context.Context, opts ReconcileOption
 	lifecycleOpts.CredentialIdentifiers = opts.Installation.CredentialSets
 	lifecycleOpts.ParameterSets = opts.Installation.ParameterSets
 
-	if _, err = p.resolveBundleReference(ctx, lifecycleOpts.BundleReferenceOptions); err != nil {
-		return err
-	}
-
 	if _, err = p.applyActionOptionsToInstallation(ctx, actionOpts, &opts.Installation); err != nil {
 		return err
 	}
@@ -158,7 +154,7 @@ func (p *Porter) IsInstallationInSync(ctx context.Context, i storage.Installatio
 	// Figure out if we need to upgrade
 	opts := action.GetOptions()
 
-	newRef, err := p.resolveBundleReference(ctx, opts.BundleReferenceOptions)
+	newRef, err := opts.GetBundleReference(ctx, p)
 	if err != nil {
 		return false, err
 	}

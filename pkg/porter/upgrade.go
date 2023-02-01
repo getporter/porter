@@ -56,7 +56,7 @@ func (o *UpgradeOptions) GetActionVerb() string {
 // them to upgrade a bundle.
 func (p *Porter) UpgradeBundle(ctx context.Context, opts *UpgradeOptions) error {
 	// Figure out which bundle/installation we are working with
-	_, err := p.resolveBundleReference(ctx, opts.BundleReferenceOptions)
+	bundleRef, err := opts.GetBundleReference(ctx, p)
 	if err != nil {
 		return err
 	}
@@ -86,7 +86,7 @@ func (p *Porter) UpgradeBundle(ctx context.Context, opts *UpgradeOptions) error 
 		return err
 	}
 
-	err = p.sanitizeInstallation(ctx, &i, opts.bundleRef.Definition)
+	err = p.sanitizeInstallation(ctx, &i, bundleRef.Definition)
 	if err != nil {
 		return err
 	}
@@ -97,9 +97,8 @@ func (p *Porter) UpgradeBundle(ctx context.Context, opts *UpgradeOptions) error 
 	}
 
 	// Re-resolve the bundle after we have figured out the version we are upgrading to
-	opts.bundleRef = nil
-	_, err = p.resolveBundleReference(ctx, opts.BundleReferenceOptions)
-	if err != nil {
+	opts.UnsetBundleReference()
+	if _, err := opts.GetBundleReference(ctx, p); err != nil {
 		return err
 	}
 

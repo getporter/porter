@@ -45,7 +45,7 @@ func (o InvokeOptions) Validate(ctx context.Context, args []string, p *Porter) e
 // them to upgrade a bundle.
 func (p *Porter) InvokeBundle(ctx context.Context, opts InvokeOptions) error {
 	// Figure out which bundle/installation we are working with
-	bundleRef, err := p.resolveBundleReference(ctx, opts.BundleReferenceOptions)
+	bundleRef, err := opts.GetBundleReference(ctx, p)
 	if err != nil {
 		return err
 	}

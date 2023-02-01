@@ -119,7 +119,7 @@ func (p *Porter) GenerateCredentials(ctx context.Context, opts CredentialOptions
 		attribute.String("reference", opts.Reference))
 	defer span.EndSpan()
 
-	bundleRef, err := p.resolveBundleReference(ctx, &opts.BundleReferenceOptions)
+	bundleRef, err := opts.GetBundleReference(ctx, p)
 	if err != nil {
 		return err
 	}

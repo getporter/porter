@@ -75,7 +75,7 @@ func (p *Porter) UninstallBundle(ctx context.Context, opts UninstallOptions) err
 	defer log.EndSpan()
 
 	// Figure out which bundle/installation we are working with
-	_, err := p.resolveBundleReference(ctx, opts.BundleReferenceOptions)
+	bundleRef, err := opts.GetBundleReference(ctx, p)
 	if err != nil {
 		return err
 	}
@@ -90,7 +90,7 @@ func (p *Porter) UninstallBundle(ctx context.Context, opts UninstallOptions) err
 		return err
 	}
 
-	err = p.sanitizeInstallation(ctx, &installation, opts.bundleRef.Definition)
+	err = p.sanitizeInstallation(ctx, &installation, bundleRef.Definition)
 	if err != nil {
 		return err
 	}

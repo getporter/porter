@@ -127,7 +127,27 @@ type BundleReferenceOptions struct {
 	installationOptions
 	BundlePullOptions
 
+	// DO NOT ACCESS DIRECTLY, use GetBundleReference to retrieve and cache the value
 	bundleRef *cnab.BundleReference
+}
+
+// GetBundleReference resolves the bundle reference if needed and caches the result so that this is safe to call multiple times in a row.
+func (o *BundleReferenceOptions) GetBundleReference(ctx context.Context, p *Porter) (cnab.BundleReference, error) {
+	if o.bundleRef == nil {
+		ref, err := p.resolveBundleReference(ctx, o)
+		if err != nil {
+			return cnab.BundleReference{}, err
+		}
+
+		o.bundleRef = &ref
+	}
+
+	return *o.bundleRef, nil
+}
+
+// UnsetBundleReference clears the cached bundle reference so that it may be re-resolved the next time GetBundleReference is called.
+func (o *BundleReferenceOptions) UnsetBundleReference() {
+	o.bundleRef = nil
 }
 
 func (o *BundleReferenceOptions) Validate(ctx context.Context, args []string, porter *Porter) error {
@@ -156,12 +176,10 @@ func (o *BundleReferenceOptions) Validate(ctx context.Context, args []string, po
 	return nil
 }
 
+// resolveBundleReference uses the bundle options from the CLI flags to determine which bundle is being referenced.
+// Takes into account the --reference, --file and --cnab-file flags, and also uses the NAME argument and looks up the bundle definition from the installation.
+// Do not call this directly. Call BundleReferenceOptions.GetBundleReference() instead so that it's safe to call multiple times in a row and returns a cached results after being resolved.
 func (p *Porter) resolveBundleReference(ctx context.Context, opts *BundleReferenceOptions) (cnab.BundleReference, error) {
-	// Some actions need to resolve this early
-	if opts.bundleRef != nil {
-		return *opts.bundleRef, nil
-	}
-
 	var bundleRef cnab.BundleReference
 
 	useReference := func(ref cnab.OCIReference) error {
@@ -231,7 +249,6 @@ func (p *Porter) resolveBundleReference(ctx context.Context, opts *BundleReferen
 		opts.Name = bundleRef.Definition.Name
 	}
 
-	opts.bundleRef = &bundleRef
 	return bundleRef, nil
 }
 
@@ -241,7 +258,7 @@ func (p *Porter) BuildActionArgs(ctx context.Context, installation storage.Insta
 	log := tracing.LoggerFromContext(ctx)
 
 	opts := action.GetOptions()
-	bundleRef, err := p.resolveBundleReference(ctx, opts.BundleReferenceOptions)
+	bundleRef, err := opts.GetBundleReference(ctx, p)
 	if err != nil {
 		return cnabprovider.ActionArguments{}, err
 	}
