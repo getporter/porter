@@ -23,7 +23,7 @@ dependencies:
         version: 1.x
         interface: # Porter defaults the interface based on usage
           reference: getporter/generic-mysql-interface:v1.0.0 # point to an interface bundle to be more specific
-          bundle: # add extra interface requirements
+          document: # add extra interface requirements
             outputs:
               - $id: "mysql-5.7-connection-string" # match on something other than name, so that outputs with different names can be reused
       installation:

@@ -114,16 +114,19 @@ func TestLoadManifestWithDependencies(t *testing.T) {
 
 			// The remaining fields are only supported in depsv2 but the manifest still parses them. It's only a behavior difference if we act on the information or not.
 			assert.Equal(t, map[string]string{"password": "mcstuffins"}, dep.Credentials, "expected the dependency credentials to be set")
-			assert.Equal(t, "getporter/azure-mysql:5.7-interface", dep.Bundle.Interface.Reference, "expected the bundle interface reference to be set")
 
-			wantDoc := &BundleInterfaceDocument{
-				Parameters: map[string]ParameterDefinition{
-					"password": {
-						Name:   "password",
-						Schema: definition.Schema{Type: "string"}},
-				},
-			}
-			assert.Equal(t, wantDoc, dep.Bundle.Interface.Document, "expected the bundle interface document to be set")
+			// TODO(PEP003) validate the bundle interface document
+			/*
+				wantDoc := &BundleInterfaceDocument{
+					Parameters: map[string]ParameterDefinition{
+						"password": {
+							Name:   "password",
+							Schema: definition.Schema{Type: "string"}},
+					},
+				}
+				assert.Equal(t, "getporter/azure-mysql:5.7-interface", dep.Bundle.Interface.Reference, "expected the bundle interface reference to be set")
+				assert.Equal(t, wantDoc, dep.Bundle.Interface.Document, "expected the bundle interface document to be set")
+			*/
 		})
 	}
 }

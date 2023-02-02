@@ -99,7 +99,7 @@
           "additionalProperties": {
             "type": "string"
           },
-          "description": "Map of parameter names to a parameter source, such as bundle.parameters.PARAM, bundle.dependencies.DEP.outputs.OUTPUT, or bundle.credentials.CRED",
+          "description": "Map of credential names to a source, such as bundle.credentials.NAME or bundle.dependencies.DEP.outputs.OUTPUT",
           "type": "object"
         },
         "name": {

@@ -1,0 +1,11 @@
+schemaVersion: 1.0.0
+name: myapp
+version: 1.2.3
+description: "Deploys my app"
+registry: localhost:5000
+
+parameters:
+  - name: connstr
+    description: "The database connection string"
+    env: CONNSTR
+    $id: "getporter.org/interfaces/mysql.connection-string"
