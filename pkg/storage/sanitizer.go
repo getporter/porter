@@ -56,17 +56,18 @@ func (s *Sanitizer) CleanRawParameters(ctx context.Context, params map[string]in
 func (s *Sanitizer) CleanParameters(ctx context.Context, dirtyParams []secrets.Strategy, bun cnab.ExtendedBundle, id string) ([]secrets.Strategy, error) {
 	cleanedParams := make([]secrets.Strategy, 0, len(dirtyParams))
 	for _, param := range dirtyParams {
-		// Store sensitive hard-coded values in a secret store, leave all other parameters alone
+		// Store sensitive hard-coded values in a secret store
 		if param.Source.Key == host.SourceValue && bun.IsSensitiveParameter(param.Name) {
 			cleaned := sanitizedParam(param, id)
 			err := s.secrets.Create(ctx, cleaned.Source.Key, cleaned.Source.Value, cleaned.Value)
 			if err != nil {
 				return nil, fmt.Errorf("failed to save sensitive param to secrete store: %w", err)
 			}
-			param = cleaned
-		}
 
-		cleanedParams = append(cleanedParams, param)
+			cleanedParams = append(cleanedParams, cleaned)
+		} else { // All other parameters are safe to use without cleaning
+			cleanedParams = append(cleanedParams, param)
+		}
 	}
 
 	if len(cleanedParams) == 0 {
