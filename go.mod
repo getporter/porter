@@ -3,10 +3,6 @@ module get.porter.sh/porter
 go 1.19
 
 replace (
-	// See https://github.com/cnabio/cnab-go/pull/294
-	// bump-docker
-	github.com/cnabio/cnab-go => github.com/carolynvs/cnab-go v0.23.5-0.20230202041631-200738064871
-
 	// See https://github.com/hashicorp/go-plugin/pull/127 and
 	// https://github.com/hashicorp/go-plugin/pull/163
 	// Also includes branches we haven't PR'd yet: capture-yamux-logs, context-cancellation
@@ -25,7 +21,7 @@ require (
 	github.com/carolynvs/datetime-printer v0.2.0
 	github.com/carolynvs/magex v0.9.0
 	github.com/cbroglie/mustache v1.4.0
-	github.com/cnabio/cnab-go v0.24.1
+	github.com/cnabio/cnab-go v0.25.0
 	github.com/cnabio/cnab-to-oci v0.3.7
 	github.com/cnabio/image-relocation v0.9.0
 	github.com/containerd/containerd v1.6.16

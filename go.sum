@@ -133,8 +133,6 @@ github.com/bugsnag/bugsnag-go/v2 v2.2.0 h1:y4JJ6xNJiK4jbmq/BLXe09MGUNRp/r1Zpye6R
 github.com/bugsnag/panicwrap v1.3.4 h1:A6sXFtDGsgU/4BLf5JT0o5uYg3EeKgGx3Sfs+/uk3pU=
 github.com/carolynvs/aferox v0.3.0 h1:CMT50zX88amTMbFfFIWSTKRVRaOw6sejUMbbKiCD4zE=
 github.com/carolynvs/aferox v0.3.0/go.mod h1:eb7CHGIO33CCZS//xtnblvPZbuuZMv0p1VbhiSwZnH4=
-github.com/carolynvs/cnab-go v0.23.5-0.20230202041631-200738064871 h1:tJ6nB6LlqOTTf/TZHLuXnxNK/XgV4qHVQWNo4ld8wLQ=
-github.com/carolynvs/cnab-go v0.23.5-0.20230202041631-200738064871/go.mod h1:MR8jESucu8EGlBLgGGR4LsYxg9LsNjADrz0z1xS2JO8=
 github.com/carolynvs/datetime-printer v0.2.0 h1:Td3FU4YGzx0OogCMhCmLBTUTDPQcq0xlgCeMhAKZmMc=
 github.com/carolynvs/datetime-printer v0.2.0/go.mod h1:p9W8ZUhmQUOVD5kiDuGXwRG65/nTkZWlLylY7s+Qw2k=
 github.com/carolynvs/magex v0.9.0 h1:fWe7oshGv6zuei5Z6EI95RSlOKjIifBZ26myB9G+m/I=
@@ -159,6 +157,8 @@ github.com/cilium/ebpf v0.7.0/go.mod h1:/oI2+1shJiTGAMgl6/RgJr36Eo1jzrRcAWbcXO2u
 github.com/clbanning/x2j v0.0.0-20191024224557-825249438eec/go.mod h1:jMjuTZXRI4dUb/I5gc9Hdhagfvm9+RyrPryS/auMzxE=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
 github.com/cloudflare/cfssl v1.4.1 h1:vScfU2DrIUI9VPHBVeeAQ0q5A+9yshO1Gz+3QoUQiKw=
+github.com/cnabio/cnab-go v0.25.0 h1:KHXqGymz5nd+GnGRExO3KDjeD/mhtoMmV/2B67IstLA=
+github.com/cnabio/cnab-go v0.25.0/go.mod h1:BAh4iETkiijVTvnix8Uw5VGGBB7/AR2OCAkLurHLeiI=
 github.com/cnabio/cnab-to-oci v0.3.7 h1:wA2AG3HQMaJZhWlr3zsfVoa2m5B1R/SP+YcoFuNfP9o=
 github.com/cnabio/cnab-to-oci v0.3.7/go.mod h1:AvVNl0Hh3VBk1zqeLdyE5S3bTQ5EsZPPF4mUUJYyy1Y=
 github.com/cnabio/image-relocation v0.9.0 h1:sBSchA1sRBesje0uJrPSz1lLtsIjRMxiuIJ20aYpnpI=
