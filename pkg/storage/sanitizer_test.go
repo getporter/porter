@@ -36,6 +36,7 @@ func TestSanitizer_Parameters(t *testing.T) {
 		return expected[i].Name < expected[j].Name
 	})
 
+	// parameters that are hard coded values should be sanitized, while those mapped from secrets or env vars should be left alone by the sanitizer
 	rawParams := map[string]interface{}{
 		"my-first-param":   1,
 		sensitiveParamName: "2",
@@ -56,6 +57,65 @@ func TestSanitizer_Parameters(t *testing.T) {
 	require.Equal(t, len(rawParams), len(resolved))
 	for name, value := range resolved {
 		require.Equal(t, rawParams[name], value)
+	}
+}
+
+func TestSanitizer_CleanParameters(t *testing.T) {
+	testcases := []struct {
+		name       string
+		paramName  string
+		sourceKey  string
+		wantSource secrets.Source
+	}{
+		{ // Should be switched to a secret
+			name:       "hardcoded sensitive value",
+			paramName:  "my-second-param",
+			sourceKey:  host.SourceValue,
+			wantSource: secrets.Source{Key: secrets.SourceSecret, Value: "INSTALLATION_ID-my-second-param"},
+		},
+		{ // Should be left alone
+			name:       "hardcoded insensitive value",
+			paramName:  "my-first-param",
+			sourceKey:  host.SourceValue,
+			wantSource: secrets.Source{Key: host.SourceValue, Value: "myvalue"},
+		},
+		{ // Should be left alone
+			name:       "secret",
+			paramName:  "my-first-param",
+			sourceKey:  secrets.SourceSecret,
+			wantSource: secrets.Source{Key: secrets.SourceSecret, Value: "myvalue"},
+		},
+		{ // Should be left alone
+			name:       "env var",
+			paramName:  "my-second-param",
+			sourceKey:  host.SourceEnv,
+			wantSource: secrets.Source{Key: host.SourceEnv, Value: "myvalue"},
+		},
+	}
+
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+
+			c := portercontext.New()
+			bun, err := cnab.LoadBundle(c, filepath.Join("../porter/testdata/bundle.json"))
+			require.NoError(t, err)
+
+			ctx := context.Background()
+			r := porter.NewTestPorter(t)
+			defer r.Close()
+
+			inst := storage.NewInstallation("", "mybuns")
+			inst.ID = "INSTALLATION_ID" // Standardize for easy comparisons later
+			inst.Parameters.Parameters = []secrets.Strategy{
+				{Name: tc.paramName, Source: secrets.Source{Key: tc.sourceKey, Value: "myvalue"}},
+			}
+			gotParams, err := r.Sanitizer.CleanParameters(ctx, inst.Parameters.Parameters, bun, inst.ID)
+			require.NoError(t, err, "CleanParameters failed")
+
+			wantParms := []secrets.Strategy{{Name: tc.paramName, Source: tc.wantSource}}
+			require.Equal(t, wantParms, gotParams, "unexpected value returned from CleanParameters")
+		})
 	}
 }
 

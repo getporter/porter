@@ -109,7 +109,7 @@ func Test_loadParameters_paramNotDefined(t *testing.T) {
 	}
 
 	i := storage.Installation{}
-	_, err := r.resolveParameters(context.Background(), i, b, "action", overrides)
+	_, err := r.finalizeParameters(context.Background(), i, b, "action", overrides)
 	require.EqualError(t, err, "parameter foo not defined in bundle")
 }
 
@@ -132,7 +132,7 @@ func Test_loadParameters_definitionNotDefined(t *testing.T) {
 	}
 
 	i := storage.Installation{}
-	_, err := r.resolveParameters(context.Background(), i, b, "action", overrides)
+	_, err := r.finalizeParameters(context.Background(), i, b, "action", overrides)
 	require.EqualError(t, err, "definition foo not defined in bundle")
 }
 
@@ -185,7 +185,7 @@ func Test_loadParameters_applyTo(t *testing.T) {
 	}
 
 	i := storage.Installation{}
-	params, err := r.resolveParameters(context.Background(), i, b, "action", overrides)
+	params, err := r.finalizeParameters(context.Background(), i, b, "action", overrides)
 	require.NoError(t, err)
 
 	require.Equal(t, "FOO", params["foo"], "expected param 'foo' to be updated")
@@ -217,7 +217,7 @@ func Test_loadParameters_applyToBundleDefaults(t *testing.T) {
 	})
 
 	i := storage.Installation{}
-	params, err := r.resolveParameters(context.Background(), i, b, "action", nil)
+	params, err := r.finalizeParameters(context.Background(), i, b, "action", nil)
 	require.NoError(t, err)
 
 	require.Equal(t, nil, params["foo"], "expected param 'foo' to be nil, regardless of the bundle default, as it does not apply")
@@ -247,7 +247,7 @@ func Test_loadParameters_requiredButDoesNotApply(t *testing.T) {
 	})
 
 	i := storage.Installation{}
-	params, err := r.resolveParameters(context.Background(), i, b, "action", nil)
+	params, err := r.finalizeParameters(context.Background(), i, b, "action", nil)
 	require.NoError(t, err)
 
 	require.Equal(t, nil, params["foo"], "expected param 'foo' to be nil, regardless of claim value, as it does not apply")
@@ -287,7 +287,7 @@ func Test_loadParameters_fileParameter(t *testing.T) {
 	}
 
 	i := storage.Installation{}
-	params, err := r.resolveParameters(context.Background(), i, b, "action", overrides)
+	params, err := r.finalizeParameters(context.Background(), i, b, "action", overrides)
 	require.NoError(t, err)
 
 	require.Equal(t, "SGVsbG8gV29ybGQh", params["foo"], "expected param 'foo' to be the base64-encoded file contents")
@@ -310,7 +310,7 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 		require.NoError(t, err, "ProcessBundle failed")
 
 		i := storage.Installation{InstallationSpec: storage.InstallationSpec{Name: "mybun"}}
-		params, err := r.resolveParameters(context.Background(), i, b, cnab.ActionUpgrade, nil)
+		params, err := r.finalizeParameters(context.Background(), i, b, cnab.ActionUpgrade, nil)
 		require.NoError(t, err)
 		assert.Equal(t, "foo_default", params["foo"],
 			"expected param 'foo' to have default value")
@@ -334,7 +334,7 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 		}
 
 		i := storage.Installation{InstallationSpec: storage.InstallationSpec{Name: "mybun"}}
-		params, err := r.resolveParameters(context.Background(), i, b, cnab.ActionUpgrade, overrides)
+		params, err := r.finalizeParameters(context.Background(), i, b, cnab.ActionUpgrade, overrides)
 		require.NoError(t, err)
 		assert.Equal(t, "foo_override", params["foo"],
 			"expected param 'foo' to have override value")
@@ -358,7 +358,7 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 		cr := r.TestInstallations.CreateResult(c.NewResult(cnab.StatusSucceeded))
 		r.TestInstallations.CreateOutput(cr.NewOutput("foo", []byte("foo_source")))
 
-		params, err := r.resolveParameters(context.Background(), i, b, cnab.ActionUpgrade, nil)
+		params, err := r.finalizeParameters(context.Background(), i, b, cnab.ActionUpgrade, nil)
 		require.NoError(t, err)
 		assert.Equal(t, "foo_source", params["foo"],
 			"expected param 'foo' to have parameter source value")
@@ -386,7 +386,7 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 		cr := r.TestInstallations.CreateResult(c.NewResult(cnab.StatusSucceeded))
 		r.TestInstallations.CreateOutput(cr.NewOutput("foo", []byte("foo_source")))
 
-		params, err := r.resolveParameters(context.Background(), i, b, cnab.ActionUpgrade, overrides)
+		params, err := r.finalizeParameters(context.Background(), i, b, cnab.ActionUpgrade, overrides)
 		require.NoError(t, err)
 		assert.Equal(t, "foo_override", params["foo"],
 			"expected param 'foo' to have parameter override value")
@@ -410,7 +410,7 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 		cr := r.TestInstallations.CreateResult(c.NewResult(cnab.StatusSucceeded))
 		r.TestInstallations.CreateOutput(cr.NewOutput("connstr", []byte("connstr value")))
 
-		params, err := r.resolveParameters(context.Background(), i, b, cnab.ActionUpgrade, nil)
+		params, err := r.finalizeParameters(context.Background(), i, b, cnab.ActionUpgrade, nil)
 		require.NoError(t, err)
 		assert.Equal(t, "connstr value", params["connstr"],
 			"expected param 'connstr' to have parameter value from the untyped dependency output")
@@ -440,7 +440,7 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 		r.TestInstallations.CreateOutput(cr.NewOutput("baz", []byte("baz_source")))
 
 		overrides := map[string]string{"foo": "foo_override"}
-		params, err := r.resolveParameters(context.Background(), i, b, cnab.ActionUpgrade, overrides)
+		params, err := r.finalizeParameters(context.Background(), i, b, cnab.ActionUpgrade, overrides)
 		require.NoError(t, err)
 		assert.Equal(t, "foo_override", params["foo"],
 			"expected param 'foo' to have parameter override value")
@@ -579,7 +579,7 @@ func Test_Paramapalooza(t *testing.T) {
 						overrides["my-param"] = "my-param-value"
 					}
 
-					resolvedParams, err := r.resolveParameters(context.Background(), i, bun, action, overrides)
+					resolvedParams, err := r.finalizeParameters(context.Background(), i, bun, action, overrides)
 					if tc.ExpectedErr != "" {
 						require.EqualError(t, err, tc.ExpectedErr)
 					} else {

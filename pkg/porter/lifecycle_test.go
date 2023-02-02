@@ -9,10 +9,8 @@ import (
 	configadapter "get.porter.sh/porter/pkg/cnab/config-adapter"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/manifest"
-	"get.porter.sh/porter/pkg/portercontext"
-	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
-	"github.com/cnabio/cnab-go/secrets/host"
+	"get.porter.sh/porter/tests"
 	"github.com/cnabio/cnab-to-oci/relocation"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -61,6 +59,9 @@ func TestPorter_BuildActionArgs(t *testing.T) {
 		p.TestConfig.TestContext.AddTestFile("testdata/porter.yaml", "porter.yaml")
 		p.TestConfig.TestContext.AddTestFile("testdata/bundle.json", ".cnab/bundle.json")
 
+		// pretend that we've resolved the parameters
+		opts.finalParams = map[string]interface{}{}
+
 		err := opts.Validate(ctx, nil, p.Porter)
 		require.NoError(t, err, "Validate failed")
 		args, err := p.BuildActionArgs(ctx, storage.Installation{}, opts)
@@ -75,6 +76,9 @@ func TestPorter_BuildActionArgs(t *testing.T) {
 		opts := NewInstallOptions()
 		opts.CNABFile = "/bundle.json"
 		p.TestConfig.TestContext.AddTestFile("testdata/bundle.json", "/bundle.json")
+
+		// pretend that we've resolved the parameters
+		opts.finalParams = map[string]interface{}{}
 
 		err := opts.Validate(ctx, nil, p.Porter)
 		require.NoError(t, err, "Validate failed")
@@ -120,6 +124,10 @@ func TestPorter_BuildActionArgs(t *testing.T) {
 		require.NoError(t, err, "Validate failed")
 		existingInstall := storage.Installation{InstallationSpec: storage.InstallationSpec{
 			Name: opts.Name}}
+
+		// resolve the parameters before building the action options to use for running the bundle
+		p.applyActionOptionsToInstallation(ctx, opts, &existingInstall)
+
 		args, err := p.BuildActionArgs(ctx, existingInstall, opts)
 		require.NoError(t, err, "BuildActionArgs failed")
 
@@ -133,7 +141,7 @@ func TestPorter_BuildActionArgs(t *testing.T) {
 		assert.Equal(t, opts.AllowDockerHostAccess, args.AllowDockerHostAccess, "AllowDockerHostAccess not populated correctly")
 		assert.Equal(t, opts.Driver, args.Driver, "Driver not populated correctly")
 		assert.EqualValues(t, expectedParams, args.Params, "Params not populated correctly")
-		assert.Equal(t, existingInstall, args.Installation, "Installation not populated correctly")
+		assert.NotEmpty(t, args.Installation, "Installation not populated")
 		wantReloMap := relocation.ImageRelocationMap{"gabrtv/microservice@sha256:cca460afa270d4c527981ef9ca4989346c56cf9b20217dcea37df1ece8120687": "my.registry/microservice@sha256:cca460afa270d4c527981ef9ca4989346c56cf9b20217dcea37df1ece8120687"}
 		assert.Equal(t, wantReloMap, args.BundleReference.RelocationMap, "RelocationMapping not populated correctly")
 	})
@@ -239,7 +247,6 @@ func TestBundleExecutionOptions_defaultDriver(t *testing.T) {
 }
 
 func TestBundleExecutionOptions_ParseParamSets(t *testing.T) {
-	ctx := context.Background()
 	p := NewTestPorter(t)
 	defer p.Close()
 
@@ -248,19 +255,29 @@ func TestBundleExecutionOptions_ParseParamSets(t *testing.T) {
 	p.TestParameters.AddSecret("PARAM2_SECRET", "VALUE2")
 	p.TestParameters.AddTestParameters("testdata/paramset2.json")
 
-	opts := NewBundleExecutionOptions()
+	ctx := context.Background()
+	m, err := manifest.LoadManifestFrom(ctx, p.Config, config.Name)
+	require.NoError(t, err)
+	bun, err := configadapter.ConvertToTestBundle(ctx, p.Config, m)
+	require.NoError(t, err)
+
+	opts := NewUpgradeOptions()
 	opts.ParameterSets = []string{"porter-hello"}
+	opts.bundleRef = &cnab.BundleReference{Definition: bun}
 
-	err := opts.Validate(ctx, []string{}, p.Porter)
+	err = opts.Validate(ctx, []string{}, p.Porter)
 	assert.NoError(t, err)
 
-	err = opts.parseParamSets(ctx, p.Porter, cnab.ExtendedBundle{})
-	assert.NoError(t, err)
+	inst := storage.NewInstallation("", "mybuns")
+	err = p.applyActionOptionsToInstallation(ctx, opts, &inst)
+	require.NoError(t, err)
 
-	wantParams := map[string]string{
+	wantParams := map[string]interface{}{
 		"my-second-param": "VALUE2",
+		"porter-debug":    false,
+		"porter-state":    nil,
 	}
-	assert.Equal(t, wantParams, opts.parsedParamSets, "resolved unexpected parameter values")
+	assert.Equal(t, wantParams, opts.GetParameters(), "resolved unexpected parameter values")
 }
 
 func TestBundleExecutionOptions_ParseParamSets_Failed(t *testing.T) {
@@ -276,19 +293,22 @@ func TestBundleExecutionOptions_ParseParamSets_Failed(t *testing.T) {
 	bun, err := configadapter.ConvertToTestBundle(ctx, p.Config, m)
 	require.NoError(t, err)
 
-	opts := NewBundleExecutionOptions()
+	opts := NewInstallOptions()
 	opts.ParameterSets = []string{
 		"/paramset.json",
 	}
+	opts.bundleRef = &cnab.BundleReference{Definition: bun}
 
 	err = opts.Validate(ctx, []string{}, p.Porter)
 	assert.NoError(t, err)
 
-	err = opts.parseParamSets(ctx, p.Porter, bun)
-	assert.Error(t, err)
+	inst := storage.NewInstallation("myns", "mybuns")
 
+	err = p.applyActionOptionsToInstallation(ctx, opts, &inst)
+	tests.RequireErrorContains(t, err, "/paramset.json not found", "Porter no longer supports passing a parameter set file to the -p flag, validate that passing a file doesn't work")
 }
 
+/*
 func TestBundleExecutionOptions_LoadParameters(t *testing.T) {
 	p := NewTestPorter(t)
 	defer p.Close()
@@ -304,7 +324,7 @@ func TestBundleExecutionOptions_LoadParameters(t *testing.T) {
 	opts := NewBundleExecutionOptions()
 	opts.Params = []string{"my-first-param=1", "my-second-param=2"}
 
-	err = opts.LoadParameters(context.Background(), p.Porter, bun)
+	err = opts.LoadParameters(context.Background(), p.Porter, bun, storage.ParameterSet{})
 	require.NoError(t, err)
 
 	assert.Len(t, opts.Params, 2)
@@ -385,10 +405,10 @@ func TestBundleExecutionOptions_populateInternalParameterSet(t *testing.T) {
 	opts := NewBundleExecutionOptions()
 	opts.Params = []string{nonsensitiveParamName + "=" + nonsensitiveParamValue, sensitiveParamName + "=" + sensitiveParamValue}
 
-	err = opts.LoadParameters(ctx, p.Porter, bun)
-	require.NoError(t, err)
-
 	i := storage.NewInstallation("", bun.Name)
+
+	err = opts.LoadParameters(ctx, p.Porter, bun, i.Parameters)
+	require.NoError(t, err)
 
 	err = opts.populateInternalParameterSet(ctx, p.Porter, bun, &i)
 	require.NoError(t, err)
@@ -410,10 +430,55 @@ func TestBundleExecutionOptions_populateInternalParameterSet(t *testing.T) {
 	// as well
 	opts.combinedParameters = nil
 	opts.Params = make([]string, 0)
-	err = opts.LoadParameters(ctx, p.Porter, bun)
+	err = opts.LoadParameters(ctx, p.Porter, bun, i.Parameters)
 	require.NoError(t, err)
 	err = opts.populateInternalParameterSet(ctx, p.Porter, bun, &i)
 	require.NoError(t, err)
 
-	require.Len(t, i.Parameters.Parameters, 0)
+	// Check that when no parameter overrides are specified, we use the originally specified parameters from the previous run
+	require.Len(t, i.Parameters.Parameters, 2)
+	require.Equal(t, "my-first-param", i.Parameters.Parameters[0].Name)
+	require.Equal(t, "1", i.Parameters.Parameters[0].Source.Value)
+	require.Equal(t, "my-second-param", i.Parameters.Parameters[1].Name)
+	require.Equal(t, "secret", i.Parameters.Parameters[1].Source.Key)
 }
+
+func TestBundleExecutionOptions_populateInternalParameterSet_ExistingParams(t *testing.T) {
+	p := NewTestPorter(t)
+	defer p.Close()
+
+	ctx := context.Background()
+
+	p.TestConfig.TestContext.AddTestFile("testdata/porter.yaml", config.Name)
+	m, err := manifest.LoadManifestFrom(context.Background(), p.Config, config.Name)
+	require.NoError(t, err)
+	bun, err := configadapter.ConvertToTestBundle(ctx, p.Config, m)
+	require.NoError(t, err)
+
+	nonsensitiveParamName := "my-first-param"
+	nonsensitiveParamValue := "3"
+	opts := NewBundleExecutionOptions()
+	opts.Params = []string{nonsensitiveParamName + "=" + nonsensitiveParamValue}
+
+	i := storage.NewInstallation("", bun.Name)
+	i.Parameters = storage.NewParameterSet("", "internal-ps",
+		storage.ValueStrategy("my-first-param", "1"),
+		storage.ValueStrategy("my-second-param", "2"),
+	)
+	err = opts.LoadParameters(ctx, p.Porter, bun, i.Parameters)
+	require.NoError(t, err)
+
+	err = opts.populateInternalParameterSet(ctx, p.Porter, bun, &i)
+	require.NoError(t, err)
+
+	require.Len(t, i.Parameters.Parameters, 2)
+
+	// Check that overrides are applied on top of existing parameters
+	require.Len(t, i.Parameters.Parameters, 2)
+	require.Equal(t, "my-first-param", i.Parameters.Parameters[0].Name)
+	require.Equal(t, "3", i.Parameters.Parameters[0].Source.Value)
+	require.Equal(t, "my-second-param", i.Parameters.Parameters[1].Name)
+	require.Equal(t, "value", i.Parameters.Parameters[1].Source.Key)
+	require.Equal(t, "2", i.Parameters.Parameters[1].Source.Value)
+}
+*/

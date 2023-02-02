@@ -6,6 +6,7 @@ import (
 
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/secrets"
+	"github.com/cnabio/cnab-go/secrets/host"
 )
 
 // Sanitizer identifies sensitive data in a database record, and replaces it with
@@ -24,7 +25,7 @@ func NewSanitizer(parameterstore ParameterSetProvider, secretstore secrets.Store
 	}
 }
 
-// CleanRawParameters clears out sensitive data in raw parameter values before
+// CleanRawParameters clears out sensitive data in raw parameter values (resolved parameter values stored on a Run) before
 // transform the raw value into secret strategies.
 // The id argument is used to associate the reference key with the corresponding
 // run or installation record in porter's database.
@@ -48,35 +49,32 @@ func (s *Sanitizer) CleanRawParameters(ctx context.Context, params map[string]in
 
 }
 
-// CleanParameters clears out sensitive data in strategized parameter data and return
-// sanitized value after saving sensitive datat to secrets store.
+// CleanParameters clears out sensitive data in strategized parameter data (overrides provided by the user on an Installation record) and return
+// Sanitized value after saving sensitive data to secrets store.
 // The id argument is used to associate the reference key with the corresponding
 // run or installation record in porter's database.
-func (s *Sanitizer) CleanParameters(ctx context.Context, params []secrets.Strategy, bun cnab.ExtendedBundle, id string) ([]secrets.Strategy, error) {
-	strategies := make([]secrets.Strategy, 0, len(params))
-	for _, param := range params {
-		if param.Source.Key == secrets.SourceSecret {
-			strategies = append(strategies, param)
-			continue
-		}
-		strategy := ValueStrategy(param.Name, param.Value)
-		if bun.IsSensitiveParameter(param.Name) {
-			cleaned := sanitizedParam(strategy, id)
+func (s *Sanitizer) CleanParameters(ctx context.Context, dirtyParams []secrets.Strategy, bun cnab.ExtendedBundle, id string) ([]secrets.Strategy, error) {
+	cleanedParams := make([]secrets.Strategy, 0, len(dirtyParams))
+	for _, param := range dirtyParams {
+		// Store sensitive hard-coded values in a secret store
+		if param.Source.Key == host.SourceValue && bun.IsSensitiveParameter(param.Name) {
+			cleaned := sanitizedParam(param, id)
 			err := s.secrets.Create(ctx, cleaned.Source.Key, cleaned.Source.Value, cleaned.Value)
 			if err != nil {
 				return nil, fmt.Errorf("failed to save sensitive param to secrete store: %w", err)
 			}
-			strategy = cleaned
-		}
 
-		strategies = append(strategies, strategy)
+			cleanedParams = append(cleanedParams, cleaned)
+		} else { // All other parameters are safe to use without cleaning
+			cleanedParams = append(cleanedParams, param)
+		}
 	}
 
-	if len(strategies) == 0 {
+	if len(cleanedParams) == 0 {
 		return nil, nil
 	}
 
-	return strategies, nil
+	return cleanedParams, nil
 
 }
 
