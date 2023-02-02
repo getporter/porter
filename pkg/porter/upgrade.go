@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	"get.porter.sh/porter/pkg/cnab"
 	"github.com/Masterminds/semver/v3"
@@ -67,12 +66,6 @@ func (p *Porter) UpgradeBundle(ctx context.Context, opts *UpgradeOptions) error 
 		i.Bundle.Version = opts.Version
 		i.Bundle.Digest = ""
 		i.Bundle.Tag = ""
-	}
-
-	i.Status.Modified = time.Now()
-	err = i.Validate()
-	if err != nil {
-		return err
 	}
 
 	err = p.applyActionOptionsToInstallation(ctx, opts, &i)

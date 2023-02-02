@@ -63,7 +63,7 @@ func (p *Porter) InvokeBundle(ctx context.Context, opts InvokeOptions) error {
 		}
 
 		// Create an ephemeral installation just for this run
-		installation = storage.Installation{InstallationSpec: storage.InstallationSpec{Namespace: opts.Namespace, Name: opts.Name}}
+		installation = storage.NewInstallation(opts.Namespace, opts.Name)
 	}
 
 	err = p.applyActionOptionsToInstallation(ctx, opts, &installation)

@@ -60,12 +60,6 @@ func (p *Porter) InstallBundle(ctx context.Context, opts InstallOptions) error {
 	ctx, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
 
-	// Figure out which bundle/installation we are working with
-	bundleRef, err := opts.GetBundleReference(ctx, p)
-	if err != nil {
-		return log.Error(err)
-	}
-
 	i, err := p.Installations.GetInstallation(ctx, opts.Namespace, opts.Name)
 	if err == nil {
 		// Validate that we are not overwriting an existing installation
@@ -81,13 +75,13 @@ func (p *Porter) InstallBundle(ctx context.Context, opts InstallOptions) error {
 		return log.Error(err)
 	}
 
+	// Apply labels that were specified as flags to the installation record
+	i.Labels = opts.ParseLabels()
+
 	err = p.applyActionOptionsToInstallation(ctx, opts, &i)
 	if err != nil {
 		return err
 	}
-
-	i.TrackBundle(bundleRef.Reference)
-	i.Labels = opts.ParseLabels()
 
 	err = p.Installations.UpsertInstallation(ctx, i)
 	if err != nil {

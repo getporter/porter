@@ -769,6 +769,10 @@ func (p *Porter) applyActionOptionsToInstallation(ctx context.Context, ba Bundle
 	}
 	bun := bundleRef.Definition
 
+	// Update the installation with metadata from the options
+	inst.TrackBundle(bundleRef.Reference)
+	inst.Status.Modified = time.Now()
+
 	//
 	// 1. Record the parameter and credential sets used on the installation
 	// if none were specified, reuse the previous sets from the installation
@@ -871,6 +875,10 @@ func (p *Porter) applyActionOptionsToInstallation(ctx context.Context, ba Bundle
 	o.finalParams = finalParams
 
 	// Ensure we aren't storing any secrets on the installation resource
-	err = p.sanitizeInstallation(ctx, inst, bundleRef.Definition)
-	return err
+	if err = p.sanitizeInstallation(ctx, inst, bundleRef.Definition); err != nil {
+		return err
+	}
+
+	// re-validate the installation since we modified it here
+	return inst.Validate()
 }

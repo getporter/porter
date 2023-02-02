@@ -92,15 +92,14 @@ func TestPorter_ApplyParametersToInstallation(t *testing.T) {
 				},
 			},
 		})
-
-		return ctx, p, &storage.Installation{InstallationSpec: storage.InstallationSpec{
-			Bundle: storage.OCIReferenceParts{
-				Repository: "example.com/mybuns",
-				Version:    "1.0.0",
-			},
-			ParameterSets:  []string{"oldps1"},
-			CredentialSets: []string{"oldcs1", "oldcs2"},
-		}}
+		inst := storage.NewInstallation("myns", "mybuns")
+		inst.Bundle = storage.OCIReferenceParts{
+			Repository: "example.com/mybuns",
+			Version:    "1.0.0",
+		}
+		inst.ParameterSets = []string{"oldps1"}
+		inst.CredentialSets = []string{"oldcs1", "oldcs2"}
+		return ctx, p, &inst
 	}
 
 	t.Run("replace previous sets", func(t *testing.T) {

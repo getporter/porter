@@ -169,14 +169,6 @@ func (p *Porter) IsInstallationInSync(ctx context.Context, i storage.Installatio
 		return false, nil
 	}
 
-	// Get a set of parameters ready for comparison to another set of parameters
-	// to tell if the installation should be executed again. For now I'm just
-	// removing internal parameters (e.g. porter-debug, porter-state) and making
-	// sure that the types are correct, etc.
-	if err = p.applyActionOptionsToInstallation(ctx, action, &i); err != nil {
-		return false, err
-	}
-
 	// Convert parameters to a string to compare them. This avoids problems comparing
 	// values that may be equal but have different types due to how the parameter
 	// value was loaded.
