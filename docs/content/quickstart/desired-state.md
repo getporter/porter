@@ -201,7 +201,7 @@ parameters:
 The installation.yaml file should look like this:
 
 ```yaml
-schemaVersion: 1.0.0
+schemaVersion: 1.0.2
 name: desired-state
 bundle:
   repository: ghcr.io/getporter/examples/credentials-tutorial
@@ -275,7 +275,7 @@ uninstalled: true
 The installation.yaml file should look like this:
 
 ```yaml
-schemaVersion: 1.0.0
+schemaVersion: 1.0.2
 name: desired-state
 uninstalled: true
 # remaining fields are not relevant to uninstalling
