@@ -32,7 +32,8 @@ func (d Dependencies) ListBySequence() []Dependency {
 // Dependency describes a dependency on another bundle
 type Dependency struct {
 	// Name of the dependency
-	Name string `json:"name" mapstructure:"name"`
+	// This is used internally but isn't persisted to bundle.json
+	Name string `json:"-" mapstructure:"-"`
 
 	// Bundle is the location of the bundle in a registry, for example REGISTRY/NAME:TAG
 	Bundle string `json:"bundle" mapstructure:"bundle"`
