@@ -196,7 +196,6 @@
     "sh.porter.dependencies.v2": {
       "requires": {
         "db": {
-          "name": "db",
           "bundle": "localhost:5000/mydb:v0.1.0",
           "parameters": {
             "collation": {
