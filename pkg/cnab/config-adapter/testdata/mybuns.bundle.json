@@ -178,7 +178,6 @@
       ],
       "requires": {
         "db": {
-          "name": "db",
           "bundle": "localhost:5000/mydb:v0.1.0"
         }
       }
