@@ -175,7 +175,7 @@ func (l *Linter) Lint(ctx context.Context, m *manifest.Manifest) (Results, error
 				
 					},
 					Code: "porter-100",
-					Title: "Reserved name warning",
+					Title: "Reserved name error",
 					Message: param.Name + " has a reserved prefix. Parameters cannot start with porter- or porter_",
 					URL: "https://getporter.org/reference/linter/#porter-100",
 				}

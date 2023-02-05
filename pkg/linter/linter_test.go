@@ -115,7 +115,7 @@ func TestLinter_Lint(t *testing.T) {
 				
 					},
 					Code: "porter-100",
-					Title: "Reserved name warning",
+					Title: "Reserved name error",
 					Message: tc.ParameterName + " has a reserved prefix. Parameters cannot start with porter- or porter_",
 					URL: "https://getporter.org/reference/linter/#porter-100",
 				},
