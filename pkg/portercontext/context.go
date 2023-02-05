@@ -35,6 +35,7 @@ const (
 
 type CommandBuilder func(ctx context.Context, name string, arg ...string) *exec.Cmd
 
+// Context should not be used in concurrent code, it is single threaded.
 type Context struct {
 	environ            map[string]string
 	FileSystem         aferox.Aferox
@@ -159,7 +160,8 @@ type LogConfiguration struct {
 }
 
 // ConfigureLogging applies different configuration to our logging and tracing.
-func (c *Context) ConfigureLogging(ctx context.Context, cfg LogConfiguration) {
+// Returns an updated context with the configured logger applied
+func (c *Context) ConfigureLogging(ctx context.Context, cfg LogConfiguration) context.Context {
 	c.logCfg = cfg
 
 	var baseLogger zapcore.Core
@@ -171,6 +173,8 @@ func (c *Context) ConfigureLogging(ctx context.Context, cfg LogConfiguration) {
 	}
 
 	c.configureLoggingWith(ctx, baseLogger)
+
+	return tracing.UpdateRootLogger(ctx, c.logger)
 }
 
 // ConfigureLogging applies different configuration to our logging and tracing.

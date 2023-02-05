@@ -60,12 +60,6 @@ func (p *Porter) InstallBundle(ctx context.Context, opts InstallOptions) error {
 	ctx, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
 
-	// Figure out which bundle/installation we are working with
-	bundleRef, err := p.resolveBundleReference(ctx, opts.BundleReferenceOptions)
-	if err != nil {
-		return log.Error(err)
-	}
-
 	i, err := p.Installations.GetInstallation(ctx, opts.Namespace, opts.Name)
 	if err == nil {
 		// Validate that we are not overwriting an existing installation
@@ -81,12 +75,14 @@ func (p *Porter) InstallBundle(ctx context.Context, opts InstallOptions) error {
 		return log.Error(err)
 	}
 
-	err = p.applyActionOptionsToInstallation(ctx, &i, opts.BundleExecutionOptions)
+	// Apply labels that were specified as flags to the installation record
+	i.Labels = opts.ParseLabels()
+
+	err = p.applyActionOptionsToInstallation(ctx, opts, &i)
 	if err != nil {
 		return err
 	}
-	i.TrackBundle(bundleRef.Reference)
-	i.Labels = opts.ParseLabels()
+
 	err = p.Installations.UpsertInstallation(ctx, i)
 	if err != nil {
 		return fmt.Errorf("error saving installation record: %w", err)
@@ -96,29 +92,12 @@ func (p *Porter) InstallBundle(ctx context.Context, opts InstallOptions) error {
 	return p.ExecuteAction(ctx, i, opts)
 }
 
-// Remember the parameters and credentials used with the bundle last.
-// Appends any newly specified parameters, parameter/credential sets to the installation record.
-// Users are expected to edit the installation record if they don't want that behavior.
-func (p *Porter) applyActionOptionsToInstallation(ctx context.Context, i *storage.Installation, opts *BundleExecutionOptions) error {
-	// Record the parameters specified by the user, with flags taking precedence over parameter set values
-	err := opts.LoadParameters(ctx, p, opts.bundleRef.Definition)
-	if err != nil {
-		return err
-	}
-	// Record the user-specified parameter values
-	err = opts.populateInternalParameterSet(ctx, p, opts.bundleRef.Definition, i)
+func (p *Porter) sanitizeInstallation(ctx context.Context, inst *storage.Installation, bun cnab.ExtendedBundle) error {
+	strategies, err := p.Sanitizer.CleanParameters(ctx, inst.Parameters.Parameters, bun, inst.ID)
 	if err != nil {
 		return err
 	}
 
-	// Record the names of the parameter and credential sets used if specified. Otherwise, reuse the previously specified sets.
-	// This should replace previously specified sets so that only what was just specified is used.
-	if len(opts.ParameterSets) > 0 {
-		i.ParameterSets = opts.ParameterSets
-	}
-	if len(opts.CredentialIdentifiers) > 0 {
-		i.CredentialSets = opts.CredentialIdentifiers
-	}
-
+	inst.Parameters = inst.NewInternalParameterSet(strategies...)
 	return nil
 }

@@ -45,7 +45,7 @@ func (o InvokeOptions) Validate(ctx context.Context, args []string, p *Porter) e
 // them to upgrade a bundle.
 func (p *Porter) InvokeBundle(ctx context.Context, opts InvokeOptions) error {
 	// Figure out which bundle/installation we are working with
-	bundleRef, err := p.resolveBundleReference(ctx, opts.BundleReferenceOptions)
+	bundleRef, err := opts.GetBundleReference(ctx, p)
 	if err != nil {
 		return err
 	}
@@ -63,11 +63,13 @@ func (p *Porter) InvokeBundle(ctx context.Context, opts InvokeOptions) error {
 		}
 
 		// Create an ephemeral installation just for this run
-		installation = storage.Installation{InstallationSpec: storage.InstallationSpec{Namespace: opts.Namespace, Name: opts.Name}}
+		installation = storage.NewInstallation(opts.Namespace, opts.Name)
 	}
-	err = p.applyActionOptionsToInstallation(ctx, &installation, opts.BundleExecutionOptions)
+
+	err = p.applyActionOptionsToInstallation(ctx, opts, &installation)
 	if err != nil {
 		return err
 	}
+
 	return p.ExecuteAction(ctx, installation, opts)
 }

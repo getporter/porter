@@ -53,7 +53,9 @@ func main() {
 		// really need it, skip it for commands that should NEVER
 		// fail.
 		if !shouldSkipConfig(cmd) {
-			if err := p.Connect(ctx); err != nil {
+			var err error
+			ctx, err = p.Connect(ctx)
+			if err != nil {
 				fmt.Fprintln(os.Stderr, err.Error())
 				os.Exit(cli.ExitCodeErr)
 			}
@@ -182,12 +184,9 @@ Try our QuickStart https://getporter.org/quickstart to learn how to use Porter.
 
 			// Reload configuration with the now parsed cli flags
 			p.DataLoader = cli.LoadHierarchicalConfig(cmd)
-			err := p.Connect(cmd.Context())
-			if err != nil {
-				return err
-			}
-
-			return nil
+			ctx, err := p.Connect(cmd.Context())
+			cmd.SetContext(ctx)
+			return err
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if printVersion {

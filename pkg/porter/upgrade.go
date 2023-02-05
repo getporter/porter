@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	"get.porter.sh/porter/pkg/cnab"
 	"github.com/Masterminds/semver/v3"
@@ -55,12 +54,6 @@ func (o *UpgradeOptions) GetActionVerb() string {
 // UpgradeBundle accepts a set of pre-validated UpgradeOptions and uses
 // them to upgrade a bundle.
 func (p *Porter) UpgradeBundle(ctx context.Context, opts *UpgradeOptions) error {
-	// Figure out which bundle/installation we are working with
-	_, err := p.resolveBundleReference(ctx, opts.BundleReferenceOptions)
-	if err != nil {
-		return err
-	}
-
 	// Sync any changes specified by the user to the installation before running upgrade
 	i, err := p.Installations.GetInstallation(ctx, opts.Namespace, opts.Name)
 	if err != nil {
@@ -75,24 +68,19 @@ func (p *Porter) UpgradeBundle(ctx context.Context, opts *UpgradeOptions) error 
 		i.Bundle.Tag = ""
 	}
 
-	err = p.applyActionOptionsToInstallation(ctx, &i, opts.BundleExecutionOptions)
-	if err != nil {
-		return fmt.Errorf("could not apply options to installation: %w", err)
-	}
-	i.Status.Modified = time.Now()
-	err = i.Validate()
+	err = p.applyActionOptionsToInstallation(ctx, opts, &i)
 	if err != nil {
 		return err
 	}
+
 	err = p.Installations.UpdateInstallation(ctx, i)
 	if err != nil {
 		return err
 	}
 
 	// Re-resolve the bundle after we have figured out the version we are upgrading to
-	opts.bundleRef = nil
-	_, err = p.resolveBundleReference(ctx, opts.BundleReferenceOptions)
-	if err != nil {
+	opts.UnsetBundleReference()
+	if _, err := opts.GetBundleReference(ctx, p); err != nil {
 		return err
 	}
 

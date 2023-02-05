@@ -89,7 +89,7 @@ var initWarnings sync.Once
 
 // Connect initializes Porter for use and must be called before other Porter methods.
 // It is the responsibility of the caller to also call Close when done with Porter.
-func (p *Porter) Connect(ctx context.Context) error {
+func (p *Porter) Connect(ctx context.Context) (context.Context, error) {
 	initWarnings.Do(func() {
 		// Check if this is a special dev build that will trace sensitive data and strongly warn people
 		if tracing.IsTraceSensitiveAttributesEnabled() {

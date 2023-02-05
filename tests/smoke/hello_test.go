@@ -26,8 +26,10 @@ func TestHelloBundle(t *testing.T) {
 	test.Chdir(test.TestDir)
 
 	// Verify plugins installation
-	_, output := test.RequirePorter("plugins", "install", "-f", "plugins.yaml")
+	// This also does a quick regression test to validate that we can change the verbosity to a different value than what is in the config file and have it respected
+	_, output := test.RequirePorter("plugins", "install", "-f", "plugins.yaml", "--verbosity=info")
 	require.Contains(t, output, "installed azure plugin", "expected to see plugin successfully installed")
+	require.NotContainsf(t, output, "Downloading https://cdn.porter.sh/plugins/atom.xml", "Debug information should not have been printed because verbosity is set to info")
 
 	// Run a stateless action before we install and make sure nothing is persisted
 	_, output = test.RequirePorter("invoke", testdata.MyBuns, "--action=dry-run", "--reference", testdata.MyBunsRef, "-c=mybuns")

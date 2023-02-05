@@ -125,6 +125,16 @@ func NewRootLogger(ctx context.Context, span trace.Span, logger *zap.Logger, tra
 	return childCtx, newTraceLogger(childCtx, span, logger, tracer)
 }
 
+// UpdateRootLogger swaps the logger on the context.
+func UpdateRootLogger(ctx context.Context, logger *zap.Logger) context.Context {
+	if tl, ok := ctx.Value(contextKeyTraceLogger).(traceLoggerContext); ok {
+		tl.logger = logger
+		return context.WithValue(ctx, contextKeyTraceLogger, tl)
+	}
+
+	return ctx
+}
+
 func newTraceLogger(ctx context.Context, span trace.Span, logger *zap.Logger, tracer Tracer) traceLogger {
 	l := traceLogger{
 		ctx:    ctx,

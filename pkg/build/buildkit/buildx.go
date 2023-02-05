@@ -16,16 +16,13 @@ import (
 	"get.porter.sh/porter/pkg/tracing"
 	"github.com/cnabio/cnab-go/driver/docker"
 	buildx "github.com/docker/buildx/build"
-	"github.com/docker/buildx/driver"
+	"github.com/docker/buildx/builder"
 	_ "github.com/docker/buildx/driver/docker" // Register the docker driver with buildkit
-	"github.com/docker/buildx/store/storeutil"
 	"github.com/docker/buildx/util/buildflags"
 	"github.com/docker/buildx/util/confutil"
+	"github.com/docker/buildx/util/dockerutil"
 	"github.com/docker/buildx/util/progress"
-	"github.com/docker/cli/cli/command"
 	dockerconfig "github.com/docker/cli/cli/config"
-	dockercontext "github.com/docker/cli/cli/context/docker"
-	dockerclient "github.com/docker/docker/client"
 	"github.com/moby/buildkit/session"
 	"github.com/moby/buildkit/session/auth/authprovider"
 	"go.opentelemetry.io/otel/attribute"
@@ -72,25 +69,16 @@ func (b *Builder) BuildInvocationImage(ctx context.Context, manifest *manifest.M
 		return log.Error(err)
 	}
 
-	imageopt, err := storeutil.GetImageConfig(cli, nil)
+	bldr, err := builder.New(cli,
+		builder.WithName("default"),
+		builder.WithContextPathHash(b.Getwd()),
+	)
 	if err != nil {
 		return log.Error(err)
 	}
-
-	d, err := driver.GetDriver(ctx, "porter-driver", nil, cli.Client(), imageopt.Auth, nil, nil, nil, nil, nil, b.Getwd())
+	nodes, err := bldr.LoadNodes(ctx, false)
 	if err != nil {
-		return log.Error(fmt.Errorf("error loading buildx driver: %w", err))
-	}
-
-	drivers := []buildx.DriverInfo{
-		{
-			Name:   "default",
-			Driver: d,
-			// Use any proxies specified in the docker config file
-			ProxyConfig: storeutil.GetProxyConfig(cli),
-			// Use stored logins from the docker config to pull from private repositories
-			ImageOpt: imageopt,
-		},
+		return log.Error(err)
 	}
 
 	session := []session.Attachable{authprovider.NewDockerAuthProvider(dockerconfig.LoadDefaultConfigFile(b.Err))}
@@ -135,8 +123,12 @@ func (b *Builder) BuildInvocationImage(ctx context.Context, manifest *manifest.M
 
 	mode := progress.PrinterModeAuto // Auto writes to stderr regardless of what you pass in
 	out := unstructuredLogger{log}
-	printer := progress.NewPrinter(ctx, out, os.Stderr, mode)
-	_, buildErr := buildx.Build(ctx, drivers, buildxOpts, dockerToBuildx{cli}, confutil.ConfigDir(cli), printer)
+	printer, err := progress.NewPrinter(ctx, out, os.Stderr, mode)
+	if err != nil {
+		return log.Error(err)
+	}
+
+	_, buildErr := buildx.Build(ctx, nodes, buildxOpts, dockerutil.NewClient(cli), confutil.ConfigDir(cli), printer)
 	printErr := printer.Wait()
 
 	if buildErr == nil && printErr != nil {
@@ -162,23 +154,6 @@ func parseBuildArgs(unparsed []string, parsed map[string]string) {
 		value := parts[1]
 		parsed[name] = value
 	}
-}
-
-// Adapts between Docker CLI and Buildx
-type dockerToBuildx struct {
-	cli command.Cli
-}
-
-func (d dockerToBuildx) DockerAPI(_ string) (dockerclient.APIClient, error) {
-	endpoint := dockercontext.Endpoint{}
-	endpoint.Host = d.cli.CurrentContext()
-
-	clientOpts, err := endpoint.ClientOpts()
-	if err != nil {
-		return nil, err
-	}
-
-	return dockerclient.NewClientWithOpts(clientOpts...)
 }
 
 func (b *Builder) TagInvocationImage(ctx context.Context, origTag, newTag string) error {
