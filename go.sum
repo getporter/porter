@@ -133,6 +133,8 @@ github.com/bugsnag/bugsnag-go/v2 v2.2.0 h1:y4JJ6xNJiK4jbmq/BLXe09MGUNRp/r1Zpye6R
 github.com/bugsnag/panicwrap v1.3.4 h1:A6sXFtDGsgU/4BLf5JT0o5uYg3EeKgGx3Sfs+/uk3pU=
 github.com/carolynvs/aferox v0.3.0 h1:CMT50zX88amTMbFfFIWSTKRVRaOw6sejUMbbKiCD4zE=
 github.com/carolynvs/aferox v0.3.0/go.mod h1:eb7CHGIO33CCZS//xtnblvPZbuuZMv0p1VbhiSwZnH4=
+github.com/carolynvs/cnab-to-oci v0.3.6-0.20230206150742-7f40404c3c8f h1:23Q6jVuOazlEU0Dt7nSxc5tga15KTBT+iM3iQZ8edqY=
+github.com/carolynvs/cnab-to-oci v0.3.6-0.20230206150742-7f40404c3c8f/go.mod h1:9+1Kq70+P1gEemtSjE+62MQb5hwtVMQSDpmSobTca6U=
 github.com/carolynvs/datetime-printer v0.2.0 h1:Td3FU4YGzx0OogCMhCmLBTUTDPQcq0xlgCeMhAKZmMc=
 github.com/carolynvs/datetime-printer v0.2.0/go.mod h1:p9W8ZUhmQUOVD5kiDuGXwRG65/nTkZWlLylY7s+Qw2k=
 github.com/carolynvs/magex v0.9.0 h1:fWe7oshGv6zuei5Z6EI95RSlOKjIifBZ26myB9G+m/I=
@@ -159,8 +161,6 @@ github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDk
 github.com/cloudflare/cfssl v1.4.1 h1:vScfU2DrIUI9VPHBVeeAQ0q5A+9yshO1Gz+3QoUQiKw=
 github.com/cnabio/cnab-go v0.25.0 h1:KHXqGymz5nd+GnGRExO3KDjeD/mhtoMmV/2B67IstLA=
 github.com/cnabio/cnab-go v0.25.0/go.mod h1:BAh4iETkiijVTvnix8Uw5VGGBB7/AR2OCAkLurHLeiI=
-github.com/cnabio/cnab-to-oci v0.3.7 h1:wA2AG3HQMaJZhWlr3zsfVoa2m5B1R/SP+YcoFuNfP9o=
-github.com/cnabio/cnab-to-oci v0.3.7/go.mod h1:AvVNl0Hh3VBk1zqeLdyE5S3bTQ5EsZPPF4mUUJYyy1Y=
 github.com/cnabio/image-relocation v0.9.0 h1:sBSchA1sRBesje0uJrPSz1lLtsIjRMxiuIJ20aYpnpI=
 github.com/cnabio/image-relocation v0.9.0/go.mod h1:E1bwI4v9AFrspAWqje0clEo31bHHH/YPxk1a4L5O3ZE=
 github.com/cncf/udpa/go v0.0.0-20191209042840-269d4d468f6f/go.mod h1:M8M6+tZqaGXZJjfX53e64911xZQV5JYwmTeXPW+k8Sc=
@@ -205,8 +205,8 @@ github.com/cpuguy83/go-md2man/v2 v2.0.2/go.mod h1:tgQtvFlXSQOSOSIRvRPT7W67SCa46t
 github.com/creack/pty v1.1.7/go.mod h1:lj5s0c3V2DBrqTV7llrYr5NG6My20zk30Fl46Y7DoTY=
 github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
 github.com/creack/pty v1.1.11 h1:07n33Z8lZxZ2qwegKbObQohDhXDQxiMMz1NOUGYlesw=
-github.com/cyberphone/json-canonicalization v0.0.0-20220216171627-b6721b06b4ef h1:blzyKcspSvTxyRUVnpaY69EOIn7OKXmC7Pi5cMleqDQ=
-github.com/cyberphone/json-canonicalization v0.0.0-20220216171627-b6721b06b4ef/go.mod h1:uzvlm1mxhHkdfqitSA92i7Se+S9ksOn3a3qmv/kyOCw=
+github.com/cyberphone/json-canonicalization v0.0.0-20220623050100-57a0ce2678a7 h1:vU+EP9ZuFUCYE0NYLwTSob+3LNEJATzNfP/DC7SWGWI=
+github.com/cyberphone/json-canonicalization v0.0.0-20220623050100-57a0ce2678a7/go.mod h1:uzvlm1mxhHkdfqitSA92i7Se+S9ksOn3a3qmv/kyOCw=
 github.com/cyphar/filepath-securejoin v0.2.3/go.mod h1:aPGpWjXOXUn2NCNjFvBE6aRxGGx79pTxQpKOJNYHHl4=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
