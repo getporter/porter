@@ -43,7 +43,7 @@ require (
 	github.com/mattn/go-isatty v0.0.17
 	github.com/mikefarah/yq/v3 v3.0.0-20201020025845-ccb718cd0f59
 	github.com/mitchellh/mapstructure v1.5.0
-	github.com/mmcdole/gofeed v1.1.3
+	github.com/mmcdole/gofeed v1.2.0
 	github.com/moby/buildkit v0.11.2
 	github.com/moby/term v0.0.0-20221120202655-abb19827d345
 	github.com/olekukonko/tablewriter v0.0.5
@@ -79,11 +79,11 @@ require (
 	github.com/Masterminds/semver v1.5.0 // indirect
 	github.com/Microsoft/go-winio v0.6.0 // indirect
 	github.com/PaesslerAG/gval v1.0.0 // indirect
-	github.com/PuerkitoBio/goquery v1.5.1 // indirect
+	github.com/PuerkitoBio/goquery v1.8.0 // indirect
 	github.com/Shopify/logrus-bugsnag v0.0.0-20230117174420-439a4b8ba167 // indirect
 	github.com/agl/ed25519 v0.0.0-20170116200512-5312a6153412 // indirect
 	github.com/andybalholm/brotli v1.0.1 // indirect
-	github.com/andybalholm/cascadia v1.1.0 // indirect
+	github.com/andybalholm/cascadia v1.3.1 // indirect
 	github.com/aws/aws-sdk-go-v2 v1.16.3 // indirect
 	github.com/aws/aws-sdk-go-v2/config v1.15.5 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.12.0 // indirect
@@ -157,7 +157,7 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/go-testing-interface v1.0.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.0 // indirect
-	github.com/mmcdole/goxpp v0.0.0-20181012175147-0068e33feabf // indirect
+	github.com/mmcdole/goxpp v0.0.0-20200921145534-2f3784f67354 // indirect
 	github.com/moby/locker v1.0.1 // indirect
 	github.com/moby/patternmatcher v0.5.0 // indirect
 	github.com/moby/sys/mountinfo v0.6.2 // indirect
