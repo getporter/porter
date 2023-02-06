@@ -36,6 +36,11 @@ parameters:
     type: file
     default: ''
     path: buncfg.json
+  - name: anumber
+    type: number
+    default: 0.5 # This is a regression test that we can both build and push a bundle that uses numeric types
+    exclusiveMinimum: 0
+    exclusiveMaximum: 1
 
 outputs:
   - name: mylogs
