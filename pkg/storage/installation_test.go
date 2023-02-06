@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"strings"
 	"testing"
 	"time"
 
@@ -9,6 +10,19 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestNewInstallation(t *testing.T) {
+	inst := NewInstallation("dev", "mybuns")
+
+	assert.Equal(t, "mybuns", inst.Name, "Name was not set")
+	assert.Equal(t, "dev", inst.Namespace, "Namespace was not set")
+	assert.NotEmpty(t, inst.Status.Created, "Created was not set")
+	assert.NotEmpty(t, inst.Status.Modified, "Modified was not set")
+	assert.Equal(t, inst.Status.Created, inst.Status.Modified, "Created and Modified should have the same timestamp")
+	assert.Equal(t, SchemaTypeInstallation, inst.SchemaType, "incorrect SchemaType")
+	assert.Equal(t, InstallationSchemaVersion, inst.SchemaVersion, "incorrect SchemaVersion")
+	assert.False(t, inst.Uninstalled, "incorrect Uninstalled")
+}
 
 func TestInstallation_String(t *testing.T) {
 	t.Parallel()
@@ -181,27 +195,27 @@ func TestInstallation_Validate(t *testing.T) {
 				SchemaVersion: InstallationSchemaVersion},
 			wantError: ""},
 		{
-			name: "installation",
+			name: strings.ToLower(SchemaTypeInstallation),
 			input: InstallationSpec{
 				SchemaType:    "installation",
 				SchemaVersion: InstallationSchemaVersion},
 			wantError: ""},
 		{
-			name: "Installation",
+			name: SchemaTypeInstallation,
 			input: InstallationSpec{
-				SchemaType:    "Installation",
+				SchemaType:    SchemaTypeInstallation,
 				SchemaVersion: InstallationSchemaVersion},
 			wantError: ""},
 		{
-			name: "INSTALLATION",
+			name: strings.ToUpper(SchemaTypeInstallation),
 			input: InstallationSpec{
 				SchemaType:    "INSTALLATION",
 				SchemaVersion: InstallationSchemaVersion},
 			wantError: ""},
 		{
-			name: "CredentialSet",
+			name: SchemaTypeCredentialSet,
 			input: InstallationSpec{
-				SchemaType:    "CredentialSet",
+				SchemaType:    SchemaTypeCredentialSet,
 				SchemaVersion: InstallationSchemaVersion},
 			wantError: "invalid schemaType CredentialSet, expected Installation"},
 	}
@@ -218,4 +232,11 @@ func TestInstallation_Validate(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestInstallation_Validate_DefaultSchemaType(t *testing.T) {
+	i := NewInstallation("", "mybuns")
+	i.SchemaType = ""
+	require.NoError(t, i.Validate())
+	assert.Equal(t, SchemaTypeInstallation, i.SchemaType)
 }

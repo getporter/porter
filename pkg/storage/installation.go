@@ -17,6 +17,9 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
+// SchemaTypeInstallation is the default schemaType value for Installation resources
+const SchemaTypeInstallation = "Installation"
+
 var _ Document = Installation{}
 
 type Installation struct {
@@ -83,6 +86,7 @@ func NewInstallation(namespace string, name string) Installation {
 	return Installation{
 		ID: cnab.NewULID(),
 		InstallationSpec: InstallationSpec{
+			SchemaType:    SchemaTypeInstallation,
 			SchemaVersion: InstallationSchemaVersion,
 			Namespace:     namespace,
 			Name:          name,
@@ -140,8 +144,12 @@ func (i *InstallationSpec) Apply(input InstallationSpec) {
 
 // Validate the installation document and report the first error.
 func (i *InstallationSpec) Validate() error {
-	if i.SchemaType != "" && strings.ToLower(i.SchemaType) != "installation" {
-		return fmt.Errorf("invalid schemaType %s, expected Installation", i.SchemaType)
+	if i.SchemaType == "" {
+		// Default the schema type before importing into the database if it's not set already
+		// SchemaType isn't really used by our code, it's a type hint for editors, but this will ensure we are consistent in our persisted documents
+		i.SchemaType = SchemaTypeInstallation
+	} else if !strings.EqualFold(i.SchemaType, SchemaTypeInstallation) {
+		return fmt.Errorf("invalid schemaType %s, expected %s", i.SchemaType, SchemaTypeInstallation)
 	}
 
 	if InstallationSchemaVersion != i.SchemaVersion {

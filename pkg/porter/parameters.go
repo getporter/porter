@@ -56,7 +56,7 @@ func (p *Porter) ListParameters(ctx context.Context, opts ListOptions) ([]Displa
 
 	displayResults := make([]DisplayParameterSet, len(results))
 	for i, ps := range results {
-		ps.SchemaType = "ParameterSet"
+		ps.SchemaType = storage.SchemaTypeParameterSet
 		displayResults[i] = DisplayParameterSet{
 			ParameterSet: ps,
 		}
@@ -250,7 +250,7 @@ func (p *Porter) ShowParameter(ctx context.Context, opts ParameterShowOptions) e
 	paramSet := DisplayParameterSet{
 		ParameterSet: ps,
 	}
-	paramSet.SchemaType = "ParameterSet"
+	paramSet.SchemaType = storage.SchemaTypeParameterSet
 
 	switch opts.Format {
 	case printer.FormatJson:

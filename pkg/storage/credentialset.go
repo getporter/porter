@@ -10,7 +10,10 @@ import (
 	"github.com/cnabio/cnab-go/schema"
 )
 
-var _ Document = &CredentialSet{}
+// SchemaTypeCredentialSet is the default schemaType value for CredentialSet resources
+const SchemaTypeCredentialSet = "CredentialSet"
+
+var _ Document = CredentialSet{}
 
 // CredentialSet defines mappings from a credential needed by a bundle to where
 // to look for it when the bundle is run. For example: Bundle needs Azure
@@ -63,6 +66,7 @@ func NewCredentialSet(namespace string, name string, creds ...secrets.Strategy) 
 	now := time.Now()
 	cs := CredentialSet{
 		CredentialSetSpec: CredentialSetSpec{
+			SchemaType:    SchemaTypeCredentialSet,
 			SchemaVersion: CredentialSetSchemaVersion,
 			Name:          name,
 			Namespace:     namespace,
@@ -81,9 +85,13 @@ func (s CredentialSet) DefaultDocumentFilter() map[string]interface{} {
 	return map[string]interface{}{"namespace": s.Namespace, "name": s.Name}
 }
 
-func (s CredentialSet) Validate() error {
-	if s.SchemaType != "" && strings.ToLower(s.SchemaType) != "credentialset" {
-		return fmt.Errorf("invalid schemaType %s, expected CredentialSet", s.SchemaType)
+func (s *CredentialSet) Validate() error {
+	if s.SchemaType == "" {
+		// Default the schema type before importing into the database if it's not set already
+		// SchemaType isn't really used by our code, it's a type hint for editors, but this will ensure we are consistent in our persisted documents
+		s.SchemaType = SchemaTypeCredentialSet
+	} else if !strings.EqualFold(s.SchemaType, SchemaTypeCredentialSet) {
+		return fmt.Errorf("invalid schemaType %s, expected %s", s.SchemaType, SchemaTypeCredentialSet)
 	}
 
 	if CredentialSetSchemaVersion != s.SchemaVersion {

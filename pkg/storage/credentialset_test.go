@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"strings"
 	"testing"
 	"time"
 
@@ -27,7 +28,8 @@ func TestNewCredentialSet(t *testing.T) {
 	assert.NotEmpty(t, cs.Status.Created, "Created was not set")
 	assert.NotEmpty(t, cs.Status.Modified, "Modified was not set")
 	assert.Equal(t, cs.Status.Created, cs.Status.Modified, "Created and Modified should have the same timestamp")
-	assert.Equal(t, CredentialSetSchemaVersion, cs.SchemaVersion, "CredentialSetSchemaVersion was not set")
+	assert.Equal(t, SchemaTypeCredentialSet, cs.SchemaType, "incorrect SchemaType")
+	assert.Equal(t, CredentialSetSchemaVersion, cs.SchemaVersion, "incorrect SchemaVersion")
 	assert.Len(t, cs.Credentials, 1, "Credentials should be initialized with 1 value")
 }
 
@@ -88,27 +90,27 @@ func TestDisplayCredentials_Validate(t *testing.T) {
 			wantError:     ""},
 		{
 			name:          "schemaType: CredentialSet",
-			schemaType:    "CredentialSet",
+			schemaType:    SchemaTypeCredentialSet,
 			schemaVersion: CredentialSetSchemaVersion,
 			wantError:     ""},
 		{
 			name:          "schemaType: CREDENTIALSET",
-			schemaType:    "CREDENTIALSET",
+			schemaType:    strings.ToUpper(SchemaTypeCredentialSet),
 			schemaVersion: CredentialSetSchemaVersion,
 			wantError:     ""},
 		{
 			name:          "schemaType: credentialset",
-			schemaType:    "credentialset",
+			schemaType:    strings.ToLower(SchemaTypeCredentialSet),
 			schemaVersion: CredentialSetSchemaVersion,
 			wantError:     ""},
 		{
 			name:          "schemaType: ParameterSet",
-			schemaType:    "ParameterSet",
+			schemaType:    SchemaTypeParameterSet,
 			schemaVersion: CredentialSetSchemaVersion,
 			wantError:     "invalid schemaType ParameterSet, expected CredentialSet"},
 		{
 			name:          "validate embedded cs",
-			schemaType:    "CredentialSet",
+			schemaType:    SchemaTypeCredentialSet,
 			schemaVersion: "", // required!
 			wantError:     "invalid schemaVersion provided: (none)"},
 	}
@@ -131,6 +133,13 @@ func TestDisplayCredentials_Validate(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestCredentialSet_Validate_DefaultSchemaType(t *testing.T) {
+	cs := NewCredentialSet("", "mycs")
+	cs.SchemaType = ""
+	require.NoError(t, cs.Validate())
+	assert.Equal(t, SchemaTypeCredentialSet, cs.SchemaType)
 }
 
 func TestMarshal(t *testing.T) {

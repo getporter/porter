@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"strings"
 	"testing"
 
 	"get.porter.sh/porter/pkg/secrets"
@@ -26,7 +27,8 @@ func TestNewParameterSet(t *testing.T) {
 	assert.NotEmpty(t, ps.Status.Created, "Created was not set")
 	assert.NotEmpty(t, ps.Status.Modified, "Modified was not set")
 	assert.Equal(t, ps.Status.Created, ps.Status.Modified, "Created and Modified should have the same timestamp")
-	assert.Equal(t, ParameterSetSchemaVersion, ps.SchemaVersion, "SchemaVersion was not set")
+	assert.Equal(t, SchemaTypeParameterSet, ps.SchemaType, "incorrect SchemaType")
+	assert.Equal(t, ParameterSetSchemaVersion, ps.SchemaVersion, "incorrect SchemaVersion")
 	assert.Len(t, ps.Parameters, 1, "Parameters should be initialized with 1 value")
 }
 
@@ -58,27 +60,27 @@ func TestDisplayParameterSet_Validate(t *testing.T) {
 			wantError:     ""},
 		{
 			name:          "schemaType: ParameterSet",
-			schemaType:    "ParameterSet",
+			schemaType:    SchemaTypeParameterSet,
 			schemaVersion: ParameterSetSchemaVersion,
 			wantError:     ""},
 		{
 			name:          "schemaType: PARAMETERSET",
-			schemaType:    "PARAMETERSET",
+			schemaType:    strings.ToUpper(SchemaTypeParameterSet),
 			schemaVersion: ParameterSetSchemaVersion,
 			wantError:     ""},
 		{
 			name:          "schemaType: parameterset",
-			schemaType:    "parameterset",
+			schemaType:    strings.ToUpper(SchemaTypeParameterSet),
 			schemaVersion: ParameterSetSchemaVersion,
 			wantError:     ""},
 		{
 			name:          "schemaType: CredentialSet",
-			schemaType:    "CredentialSet",
+			schemaType:    SchemaTypeCredentialSet,
 			schemaVersion: ParameterSetSchemaVersion,
 			wantError:     "invalid schemaType CredentialSet, expected ParameterSet"},
 		{
 			name:          "validate embedded ps",
-			schemaType:    "ParameterSet",
+			schemaType:    SchemaTypeParameterSet,
 			schemaVersion: "", // this is required
 			wantError:     "invalid schemaVersion provided: (none)"},
 	}
@@ -99,4 +101,11 @@ func TestDisplayParameterSet_Validate(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestParameterSet_Validate_DefaultSchemaType(t *testing.T) {
+	ps := NewParameterSet("", "myps")
+	ps.SchemaType = ""
+	require.NoError(t, ps.Validate())
+	assert.Equal(t, SchemaTypeParameterSet, ps.SchemaType)
 }

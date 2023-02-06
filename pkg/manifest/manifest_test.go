@@ -3,6 +3,7 @@ package manifest
 import (
 	"context"
 	"os"
+	"strings"
 	"testing"
 
 	"get.porter.sh/porter/pkg/config"
@@ -249,9 +250,9 @@ func TestManifest_ValidateSchemaType(t *testing.T) {
 		wantErr    string
 	}{
 		{schemaType: "", wantErr: ""},
-		{schemaType: "Bundle", wantErr: ""},
-		{schemaType: "bundle", wantErr: ""},
-		{schemaType: "BUNDLE", wantErr: ""},
+		{schemaType: SchemaTypeBundle, wantErr: ""},
+		{schemaType: strings.ToLower(SchemaTypeBundle), wantErr: ""},
+		{schemaType: strings.ToUpper(SchemaTypeBundle), wantErr: ""},
 		{schemaType: "CredentialSet", wantErr: "invalid schemaType CredentialSet, expected Bundle"},
 	}
 

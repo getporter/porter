@@ -47,7 +47,7 @@ func (p *Porter) ListCredentials(ctx context.Context, opts ListOptions) ([]Displ
 
 	displayResults := make([]DisplayCredentialSet, len(results))
 	for i, cs := range results {
-		cs.SchemaType = "CredentialSet"
+		cs.SchemaType = storage.SchemaTypeCredentialSet
 		displayResults[i] = DisplayCredentialSet{
 			CredentialSet: cs,
 		}
@@ -247,7 +247,7 @@ func (p *Porter) ShowCredential(ctx context.Context, opts CredentialShowOptions)
 	credSet := DisplayCredentialSet{
 		CredentialSet: cs,
 	}
-	credSet.SchemaType = "CredentialSet"
+	credSet.SchemaType = storage.SchemaTypeCredentialSet
 
 	switch opts.Format {
 	case printer.FormatJson, printer.FormatYaml:

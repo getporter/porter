@@ -29,6 +29,9 @@ import (
 const (
 	invalidStepErrorFormat = "validation of action \"%s\" failed: %w"
 
+	// SchemaTypeBundle is the default schemaType value for Bundle resources
+	SchemaTypeBundle = "Bundle"
+
 	// TemplateDelimiterPrefix must be present at the beginning of any porter.yaml
 	// that wants to use ${} as the template delimiter instead of the mustache
 	// default of {{}}.
@@ -182,8 +185,12 @@ func (m *Manifest) Validate(cxt *portercontext.Context, strategy schema.CheckStr
 }
 
 func (m *Manifest) validateMetadata(cxt *portercontext.Context, strategy schema.CheckStrategy) error {
-	if m.SchemaType != "" && strings.ToLower(m.SchemaType) != "bundle" {
-		return fmt.Errorf("invalid schemaType %s, expected Bundle", m.SchemaType)
+	if m.SchemaType == "" {
+		// Default the schema type before importing into the database if it's not set already
+		// SchemaType isn't really used by our code, it's a type hint for editors, but this will ensure we are consistent in our persisted documents
+		m.SchemaType = SchemaTypeBundle
+	} else if !strings.EqualFold(m.SchemaType, SchemaTypeBundle) {
+		return fmt.Errorf("invalid schemaType %s, expected %s", m.SchemaType, SchemaTypeBundle)
 	}
 
 	if warnOnly, err := schema.ValidateSchemaVersion(strategy, SupportedSchemaVersions, m.SchemaVersion, DefaultSchemaVersion); err != nil {

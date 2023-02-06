@@ -127,7 +127,7 @@ type DisplayInstallationMetadata struct {
 func NewDisplayInstallation(installation storage.Installation) DisplayInstallation {
 
 	di := DisplayInstallation{
-		SchemaType:     "Installation",
+		SchemaType:     storage.SchemaTypeInstallation,
 		SchemaVersion:  installation.SchemaVersion,
 		ID:             installation.ID,
 		Name:           installation.Name,

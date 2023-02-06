@@ -9,7 +9,12 @@ import (
 	"github.com/cnabio/cnab-go/schema"
 )
 
-const INTERNAL_PARAMETERER_SET = "internal-parameter-set"
+const (
+	// SchemaTypeParameterSet is the default schemaType value for ParameterSet resources
+	SchemaTypeParameterSet = "ParameterSet"
+
+	INTERNAL_PARAMETERER_SET = "internal-parameter-set"
+)
 
 var _ Document = ParameterSet{}
 
@@ -55,6 +60,7 @@ func NewParameterSet(namespace string, name string, params ...secrets.Strategy) 
 	now := time.Now()
 	ps := ParameterSet{
 		ParameterSetSpec: ParameterSetSpec{
+			SchemaType:    SchemaTypeParameterSet,
 			SchemaVersion: ParameterSetSchemaVersion,
 			Namespace:     namespace,
 			Name:          name,
@@ -78,9 +84,13 @@ func (s ParameterSet) DefaultDocumentFilter() map[string]interface{} {
 	return map[string]interface{}{"namespace": s.Namespace, "name": s.Name}
 }
 
-func (s ParameterSet) Validate() error {
-	if s.SchemaType != "" && strings.ToLower(s.SchemaType) != "parameterset" {
-		return fmt.Errorf("invalid schemaType %s, expected ParameterSet", s.SchemaType)
+func (s *ParameterSet) Validate() error {
+	if s.SchemaType == "" {
+		// Default the schema type before importing into the database if it's not set already
+		// SchemaType isn't really used by our code, it's a type hint for editors, but this will ensure we are consistent in our persisted documents
+		s.SchemaType = SchemaTypeParameterSet
+	} else if !strings.EqualFold(s.SchemaType, SchemaTypeParameterSet) {
+		return fmt.Errorf("invalid schemaType %s, expected %s", s.SchemaType, SchemaTypeParameterSet)
 	}
 
 	if ParameterSetSchemaVersion != s.SchemaVersion {

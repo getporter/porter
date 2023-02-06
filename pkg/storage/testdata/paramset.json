@@ -1,4 +1,5 @@
 {
+  "schemaType": "ParameterSet",
   "schemaVersion": "1.0.1",
   "name": "mybun",
   "parameters": [
