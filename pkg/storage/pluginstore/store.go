@@ -10,6 +10,7 @@ import (
 	"get.porter.sh/porter/pkg/storage/plugins"
 	"get.porter.sh/porter/pkg/tracing"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 var _ io.Closer = &Store{}
@@ -90,7 +91,8 @@ func (s *Store) Close() error {
 }
 
 func (s *Store) EnsureIndex(ctx context.Context, opts plugins.EnsureIndexOptions) error {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := tracing.StartSpan(ctx,
+		tracing.ObjectAttribute("options", opts))
 	defer span.EndSpan()
 
 	if err := s.Connect(ctx); err != nil {
@@ -102,7 +104,8 @@ func (s *Store) EnsureIndex(ctx context.Context, opts plugins.EnsureIndexOptions
 }
 
 func (s *Store) Aggregate(ctx context.Context, opts plugins.AggregateOptions) ([]bson.Raw, error) {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := tracing.StartSpan(ctx,
+		tracing.ObjectAttribute("options", opts))
 	defer span.EndSpan()
 
 	if err := s.Connect(ctx); err != nil {
@@ -118,7 +121,8 @@ func (s *Store) Aggregate(ctx context.Context, opts plugins.AggregateOptions) ([
 }
 
 func (s *Store) Count(ctx context.Context, opts plugins.CountOptions) (int64, error) {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := tracing.StartSpan(ctx,
+		tracing.ObjectAttribute("options", opts))
 	defer span.EndSpan()
 
 	if err := s.Connect(ctx); err != nil {
@@ -129,11 +133,13 @@ func (s *Store) Count(ctx context.Context, opts plugins.CountOptions) (int64, er
 	if err != nil {
 		return 0, span.Error(err)
 	}
+	span.SetAttributes(attribute.Int64("result", count))
 	return count, nil
 }
 
 func (s *Store) Find(ctx context.Context, opts plugins.FindOptions) ([]bson.Raw, error) {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := tracing.StartSpan(ctx,
+		tracing.ObjectAttribute("options", opts))
 	defer span.EndSpan()
 
 	if err := s.Connect(ctx); err != nil {
@@ -141,11 +147,13 @@ func (s *Store) Find(ctx context.Context, opts plugins.FindOptions) ([]bson.Raw,
 	}
 
 	results, err := s.plugin.Find(ctx, opts)
+	span.SetAttributes(attribute.Int("results", len(results)))
 	return results, span.Error(err)
 }
 
 func (s *Store) Insert(ctx context.Context, opts plugins.InsertOptions) error {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := tracing.StartSpan(ctx,
+		tracing.ObjectAttribute("options", opts))
 	defer span.EndSpan()
 
 	if err := s.Connect(ctx); err != nil {
@@ -157,7 +165,8 @@ func (s *Store) Insert(ctx context.Context, opts plugins.InsertOptions) error {
 }
 
 func (s *Store) Patch(ctx context.Context, opts plugins.PatchOptions) error {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := tracing.StartSpan(ctx,
+		tracing.ObjectAttribute("options", opts))
 	defer span.EndSpan()
 
 	if err := s.Connect(ctx); err != nil {
@@ -169,7 +178,8 @@ func (s *Store) Patch(ctx context.Context, opts plugins.PatchOptions) error {
 }
 
 func (s *Store) Remove(ctx context.Context, opts plugins.RemoveOptions) error {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := tracing.StartSpan(ctx,
+		tracing.ObjectAttribute("options", opts))
 	defer span.EndSpan()
 
 	if err := s.Connect(ctx); err != nil {
@@ -181,7 +191,8 @@ func (s *Store) Remove(ctx context.Context, opts plugins.RemoveOptions) error {
 }
 
 func (s *Store) Update(ctx context.Context, opts plugins.UpdateOptions) error {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := tracing.StartSpan(ctx,
+		tracing.ObjectAttribute("options", opts))
 	defer span.EndSpan()
 
 	if err := s.Connect(ctx); err != nil {
