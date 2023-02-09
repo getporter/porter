@@ -75,6 +75,7 @@
   }
 
   nav.home-nav {
+    position: relative;
     ul {
       margin-left: auto;
       margin-right: auto;
@@ -90,15 +91,17 @@
           font-size: 1rem;
           border-radius: 0.35em;
           min-width: 15vw;
+
+          img {
+            margin: -0.8rem 0rem 0rem 0rem;
+            max-height: 2rem;
+          }
         }
       }
     }
     
     h1 {
-      position: absolute;
-      left: 7%;
-      top: 0.5rem;
-      margin-left: -3.5%;
+      position: relative;
       min-width: 86%;
       text-align: center;
       
@@ -110,11 +113,11 @@
     }
 
     ul {
-      position: absolute;
-      top: 7.5rem;
-      left: 0%;
+      position: relative;
+      top: 2.25rem;
+      right: 0;
+      padding-right: 2rem;
       width: 100%;
-      right: 0%;
       text-align: center;
     }
   }

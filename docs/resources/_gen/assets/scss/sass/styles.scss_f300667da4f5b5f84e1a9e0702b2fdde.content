@@ -7837,7 +7837,7 @@ body {
       text-align: left; }
       @media only screen and (max-width: 60em) {
         .home #helm .billboard {
-          padding: 200px 23px 100px 20px; } }
+          padding: 0 23px 100px 20px; } }
       .home #helm .billboard .helm-logo {
         max-width: 120px; }
       .home #helm .billboard #underline1 {
@@ -8353,37 +8353,39 @@ body {
       left: 50%;
       margin: 0.25rem auto 0 -25%;
       display: block !important; }
-  nav.home-nav ul {
-    margin-left: auto;
-    margin-right: auto; }
-    nav.home-nav ul li {
-      padding: 0;
-      margin: 0; }
-      nav.home-nav ul li a {
-        background-color: #cfedfa;
-        padding: 0.25rem 1rem;
-        margin: 0 0.333rem 0.75rem;
-        font-size: 1rem;
-        border-radius: 0.35em;
-        min-width: 15vw; }
-  nav.home-nav h1 {
-    position: absolute;
-    left: 7%;
-    top: 0.5rem;
-    margin-left: -3.5%;
-    min-width: 86%;
-    text-align: center; }
-    nav.home-nav h1 img {
-      max-width: 45%;
-      min-height: auto !important;
-      margin: 0 auto; }
-  nav.home-nav ul {
-    position: absolute;
-    top: 7.5rem;
-    left: 0%;
-    width: 100%;
-    right: 0%;
-    text-align: center; }
+  nav.home-nav {
+    position: relative; }
+    nav.home-nav ul {
+      margin-left: auto;
+      margin-right: auto; }
+      nav.home-nav ul li {
+        padding: 0;
+        margin: 0; }
+        nav.home-nav ul li a {
+          background-color: #cfedfa;
+          padding: 0.25rem 1rem;
+          margin: 0 0.333rem 0.75rem;
+          font-size: 1rem;
+          border-radius: 0.35em;
+          min-width: 15vw; }
+          nav.home-nav ul li a img {
+            margin: -0.8rem 0rem 0rem 0rem;
+            max-height: 2rem; }
+    nav.home-nav h1 {
+      position: relative;
+      min-width: 86%;
+      text-align: center; }
+      nav.home-nav h1 img {
+        max-width: 45%;
+        min-height: auto !important;
+        margin: 0 auto; }
+    nav.home-nav ul {
+      position: relative;
+      top: 2.25rem;
+      right: 0;
+      padding-right: 2rem;
+      width: 100%;
+      text-align: center; }
   .home #helm .billboard h1 {
     font-size: 5.755vw;
     margin: 3rem 3.5vw 1.5em;
