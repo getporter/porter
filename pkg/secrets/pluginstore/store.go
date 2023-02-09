@@ -9,6 +9,7 @@ import (
 	"get.porter.sh/porter/pkg/plugins/pluggable"
 	"get.porter.sh/porter/pkg/secrets/plugins"
 	"get.porter.sh/porter/pkg/tracing"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 var _ plugins.SecretsProtocol = &Store{}
@@ -49,7 +50,9 @@ func NewSecretsPluginConfig() pluggable.PluginTypeConfig {
 }
 
 func (s *Store) Resolve(ctx context.Context, keyName string, keyValue string) (string, error) {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := tracing.StartSpan(ctx,
+		attribute.String("keyName", keyName),
+		attribute.String("keyValue", keyValue))
 	defer span.EndSpan()
 
 	if err := s.Connect(ctx); err != nil {
@@ -64,7 +67,9 @@ func (s *Store) Resolve(ctx context.Context, keyName string, keyValue string) (s
 }
 
 func (s *Store) Create(ctx context.Context, keyName string, keyValue string, value string) error {
-	ctx, span := tracing.StartSpan(ctx)
+	ctx, span := tracing.StartSpan(ctx,
+		attribute.String("keyName", keyName),
+		attribute.String("keyValue", keyValue))
 	defer span.EndSpan()
 
 	if err := s.Connect(ctx); err != nil {
@@ -73,10 +78,7 @@ func (s *Store) Create(ctx context.Context, keyName string, keyValue string, val
 
 	err := s.plugin.Create(ctx, keyName, keyValue, value)
 	if errors.Is(err, plugins.ErrNotImplemented) {
-		//TODO: add the doc page link once it exists
-		return span.Error(fmt.Errorf(`the current secrets plugin does not support persisting secrets. You need to edit your porter configuration file and configure a different secrets plugin.
-		
-If you are just testing out Porter, and are not working with production secrets, you can edit your config file and set default-storage-plugin to "filesystem" to use the insecure filesystem plugin. Do not use the filesystem plugin for production data.: %w`, err))
+		return span.Error(fmt.Errorf(`the current secrets plugin does not support persisting secrets. You need to edit your porter configuration file and configure a different secrets plugin. See https://getporter.org/end-users/configuration/#change-the-default-secrets-plugin for details: %w`, err))
 	}
 
 	return span.Error(err)
