@@ -25,7 +25,7 @@ type TestIDGenerator struct {
 	NextID int
 }
 
-func (g TestIDGenerator) NewID() string {
+func (g *TestIDGenerator) NewID() string {
 	id := g.NextID
 	g.NextID++
 	return strconv.Itoa(id)

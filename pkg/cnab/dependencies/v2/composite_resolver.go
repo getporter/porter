@@ -164,7 +164,8 @@ func (r CompositeResolver) resolveDependency(ctx context.Context, parentKey stri
 	}
 
 	if dep.Interface != nil {
-		// TODO: convert the interface document into a BundleInterfaceSelector
+		// TODO(PEP003): convert the interface document into a BundleInterfaceSelector
+		panic("bundle interfaces are not implemented")
 	}
 
 	if dep.Installation != nil {
