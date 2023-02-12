@@ -67,6 +67,12 @@ func (b ExtendedBundle) DependencyV2Reader() (interface{}, error) {
 		return nil, fmt.Errorf("could not unmarshal the dependencies extension %q: %w", string(dataB), err)
 	}
 
+	// Name is not persisted to json, so it needs to be hydrated manually
+	for depName, dep := range deps.Requires {
+		dep.Name = depName
+		deps.Requires[depName] = dep
+	}
+
 	return deps, nil
 }
 
