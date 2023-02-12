@@ -8,8 +8,11 @@ import (
 	"strings"
 	"testing"
 
-	testhelper "get.porter.sh/porter/pkg/test"
 	"get.porter.sh/porter/pkg/yaml"
+
+	"get.porter.sh/porter/pkg/manifest"
+
+	testhelper "get.porter.sh/porter/pkg/test"
 	"get.porter.sh/porter/tests"
 	"get.porter.sh/porter/tests/tester"
 	"github.com/stretchr/testify/assert"
@@ -53,11 +56,13 @@ mixins.2.testmixin: Additional property missingproperty is not allowed`},
 		t.Run(tm.name, func(t *testing.T) {
 			// Load the manifest as a go dump
 			testManifestPath := tm.path
-			testManifest, err := os.ReadFile(testManifestPath)
-			require.NoError(t, err, "failed to read %s", testManifestPath)
+			mani, err := manifest.ReadManifest(test.TestContext.Context, testManifestPath)
+
+			maniYaml, err := yaml.Marshal(mani)
+			require.NoError(t, err, "error marshaling manifest to yaml")
 
 			m := make(map[string]interface{})
-			err = yaml.Unmarshal(testManifest, &m)
+			err = yaml.Unmarshal(maniYaml, &m)
 			require.NoError(t, err, "failed to unmarshal %s", testManifestPath)
 
 			// Load the manifest schema returned from `porter schema`
