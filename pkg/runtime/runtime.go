@@ -6,6 +6,10 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"go.opentelemetry.io/otel/attribute"
+
+	"get.porter.sh/porter/pkg/tracing"
+
 	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
@@ -32,13 +36,18 @@ func NewPorterRuntime(runtimeCfg RuntimeConfig, mixins pkgmgmt.PackageManager) *
 }
 
 func (r *PorterRuntime) Execute(ctx context.Context, rm *RuntimeManifest) error {
-	r.RuntimeManifest = rm
-
 	installationName := r.config.Getenv(config.EnvInstallationName)
 	bundleName := r.config.Getenv(config.EnvBundleName)
-	fmt.Fprintf(r.config.Out, "executing %s action from %s (installation: %s)\n", r.RuntimeManifest.Action, bundleName, installationName)
 
-	err := r.RuntimeManifest.Validate()
+	ctx, span := tracing.StartSpan(ctx,
+		attribute.String("action", rm.Action),
+		attribute.String("bundleName", bundleName),
+		attribute.String("installation", installationName))
+	defer span.EndSpan()
+	r.RuntimeManifest = rm
+	span.Infof("executing %s action from %s (installation: %s)\n", r.RuntimeManifest.Action, bundleName, installationName)
+
+	err := r.RuntimeManifest.Validate(ctx)
 	if err != nil {
 		return err
 	}
@@ -54,21 +63,21 @@ func (r *PorterRuntime) Execute(ctx context.Context, rm *RuntimeManifest) error 
 	// Update the runtimeManifest images with the bundle.json and relocation mapping (if it's there)
 	rtb, reloMap, err := r.getImageMappingFiles()
 	if err != nil {
-		return err
+		return span.Error(err)
 	}
 
 	err = r.RuntimeManifest.ResolveInvocationImage(rtb, reloMap)
 	if err != nil {
-		return fmt.Errorf("unable to resolve bundle invocation images: %w", err)
+		return span.Errorf("unable to resolve bundle invocation images: %w", err)
 	}
 	err = r.RuntimeManifest.ResolveImages(rtb, reloMap)
 	if err != nil {
-		return fmt.Errorf("unable to resolve bundle images: %w", err)
+		return span.Errorf("unable to resolve bundle images: %w", err)
 	}
 
 	err = r.config.FileSystem.MkdirAll(portercontext.MixinOutputsDir, pkg.FileModeDirectory)
 	if err != nil {
-		return fmt.Errorf("could not create outputs directory %s: %w", portercontext.MixinOutputsDir, err)
+		return span.Errorf("could not create outputs directory %s: %w", portercontext.MixinOutputsDir, err)
 	}
 
 	var bigErr *multierror.Error
@@ -85,7 +94,7 @@ func (r *PorterRuntime) Execute(ctx context.Context, rm *RuntimeManifest) error 
 		bigErr = multierror.Append(bigErr, err)
 	}
 
-	return bigErr.ErrorOrNil()
+	return span.Error(bigErr.ErrorOrNil())
 }
 
 func (r *PorterRuntime) executeStep(ctx context.Context, stepIndex int, step *manifest.Step) error {
