@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg/cnab"
-	depsv1 "get.porter.sh/porter/pkg/cnab/dependencies/v1"
+	depsv1ext "get.porter.sh/porter/pkg/cnab/extensions/dependencies/v1"
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/test"
 	"github.com/cnabio/cnab-go/bundle"
@@ -417,9 +417,9 @@ func TestExplain_generatePrintableBundleDependencies(t *testing.T) {
 	sequenceMock := []string{"nginx", "storage", "mysql"}
 	bun := cnab.NewBundle(bundle.Bundle{
 		Custom: map[string]interface{}{
-			cnab.DependenciesV1ExtensionKey: depsv1.Dependencies{
+			cnab.DependenciesV1ExtensionKey: depsv1ext.Dependencies{
 				Sequence: sequenceMock,
-				Requires: map[string]depsv1.Dependency{
+				Requires: map[string]depsv1ext.Dependency{
 					"mysql": {
 						Name:   "mysql",
 						Bundle: "somecloud/mysql:0.1.0",

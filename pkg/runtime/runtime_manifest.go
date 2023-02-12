@@ -68,25 +68,28 @@ func (m *RuntimeManifest) debugf(log tracing.TraceLogger, msg string, args ...in
 	}
 }
 
-func (m *RuntimeManifest) Validate() error {
+func (m *RuntimeManifest) Validate(ctx context.Context) error {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
 	err := m.loadBundle()
 	if err != nil {
-		return err
+		return span.Error(err)
 	}
 
-	err = m.loadDependencyDefinitions()
+	err = m.loadDependencyDefinitions(ctx)
 	if err != nil {
 		return err
 	}
 
 	err = m.setStepsByAction()
 	if err != nil {
-		return err
+		return span.Error(err)
 	}
 
 	err = m.steps.Validate(m.Manifest)
 	if err != nil {
-		return fmt.Errorf("invalid action configuration: %w", err)
+		return span.Errorf("invalid action configuration: %w", err)
 	}
 
 	return nil
@@ -111,17 +114,22 @@ func (m *RuntimeManifest) GetInstallationName() string {
 	return m.config.Getenv(config.EnvPorterInstallationName)
 }
 
-func (m *RuntimeManifest) loadDependencyDefinitions() error {
+func (m *RuntimeManifest) loadDependencyDefinitions(ctx context.Context) error {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
 	m.bundles = make(map[string]cnab.ExtendedBundle, len(m.Dependencies.Requires))
 	for _, dep := range m.Dependencies.Requires {
 		bunD, err := GetDependencyDefinition(m.config.Context, dep.Name)
 		if err != nil {
-			return err
+			// TODO(PEP003): Implement passing bundle.json files for dependencies, or cut feature from v2.
+			span.Warnf(err.Error())
+			continue
 		}
 
 		bun, err := bundle.Unmarshal(bunD)
 		if err != nil {
-			return fmt.Errorf("error unmarshaling bundle definition for dependency %s: %w", dep.Name, err)
+			return span.Errorf("error unmarshaling bundle definition for dependency %s: %w", dep.Name, err)
 		}
 
 		m.bundles[dep.Name] = cnab.NewBundle(*bun)

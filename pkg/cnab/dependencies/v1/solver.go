@@ -1,10 +1,12 @@
-package cnab
+package v1
 
 import (
 	"fmt"
 	"sort"
 
-	depsv1 "get.porter.sh/porter/pkg/cnab/dependencies/v1"
+	"get.porter.sh/porter/pkg/cnab"
+
+	depsv1ext "get.porter.sh/porter/pkg/cnab/extensions/dependencies/v1"
 	"github.com/Masterminds/semver/v3"
 	"github.com/google/go-containerregistry/pkg/crane"
 )
@@ -18,7 +20,7 @@ type DependencyLock struct {
 type DependencySolver struct {
 }
 
-func (s *DependencySolver) ResolveDependencies(bun ExtendedBundle) ([]DependencyLock, error) {
+func (s *DependencySolver) ResolveDependencies(bun cnab.ExtendedBundle) ([]DependencyLock, error) {
 	if !bun.HasDependenciesV1() {
 		return nil, nil
 	}
@@ -49,10 +51,10 @@ func (s *DependencySolver) ResolveDependencies(bun ExtendedBundle) ([]Dependency
 }
 
 // ResolveVersion returns the bundle name, its version and any error.
-func (s *DependencySolver) ResolveVersion(name string, dep depsv1.Dependency) (OCIReference, error) {
-	ref, err := ParseOCIReference(dep.Bundle)
+func (s *DependencySolver) ResolveVersion(name string, dep depsv1ext.Dependency) (cnab.OCIReference, error) {
+	ref, err := cnab.ParseOCIReference(dep.Bundle)
 	if err != nil {
-		return OCIReference{}, fmt.Errorf("error parsing dependency (%s) bundle %q as OCI reference: %w", name, dep.Bundle, err)
+		return cnab.OCIReference{}, fmt.Errorf("error parsing dependency (%s) bundle %q as OCI reference: %w", name, dep.Bundle, err)
 	}
 
 	// Here is where we could split out this logic into multiple strategy funcs / structs if necessary
@@ -64,16 +66,16 @@ func (s *DependencySolver) ResolveVersion(name string, dep depsv1.Dependency) (O
 
 		tag, err := s.determineDefaultTag(dep)
 		if err != nil {
-			return OCIReference{}, err
+			return cnab.OCIReference{}, err
 		}
 
 		return ref.WithTag(tag)
 	}
 
-	return OCIReference{}, fmt.Errorf("not implemented: dependency version range specified for %s: %w", name, err)
+	return cnab.OCIReference{}, fmt.Errorf("not implemented: dependency version range specified for %s: %w", name, err)
 }
 
-func (s *DependencySolver) determineDefaultTag(dep depsv1.Dependency) (string, error) {
+func (s *DependencySolver) determineDefaultTag(dep depsv1ext.Dependency) (string, error) {
 	tags, err := crane.ListTags(dep.Bundle)
 	if err != nil {
 		return "", fmt.Errorf("error listing tags for %s: %w", dep.Bundle, err)

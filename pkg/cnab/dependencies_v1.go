@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	depsv1 "get.porter.sh/porter/pkg/cnab/dependencies/v1"
+	depsv1ext "get.porter.sh/porter/pkg/cnab/extensions/dependencies/v1"
 )
 
 const (
@@ -32,15 +32,15 @@ var DependenciesV1Extension = RequiredExtension{
 // ReadDependenciesV1 is a convenience method for returning a bonafide
 // Dependencies reference after reading from the applicable section from
 // the provided bundle
-func (b ExtendedBundle) ReadDependenciesV1() (depsv1.Dependencies, error) {
+func (b ExtendedBundle) ReadDependenciesV1() (depsv1ext.Dependencies, error) {
 	raw, err := b.DependencyV1Reader()
 	if err != nil {
-		return depsv1.Dependencies{}, err
+		return depsv1ext.Dependencies{}, err
 	}
 
-	deps, ok := raw.(depsv1.Dependencies)
+	deps, ok := raw.(depsv1ext.Dependencies)
 	if !ok {
-		return depsv1.Dependencies{}, errors.New("unable to read dependencies extension data")
+		return depsv1ext.Dependencies{}, errors.New("unable to read dependencies extension data")
 	}
 
 	// Return the dependencies
@@ -61,7 +61,7 @@ func (b ExtendedBundle) DependencyV1Reader() (interface{}, error) {
 		return nil, fmt.Errorf("could not marshal the untyped dependencies extension data %q: %w", string(dataB), err)
 	}
 
-	deps := depsv1.Dependencies{}
+	deps := depsv1ext.Dependencies{}
 	err = json.Unmarshal(dataB, &deps)
 	if err != nil {
 		return nil, fmt.Errorf("could not unmarshal the dependencies extension %q: %w", string(dataB), err)

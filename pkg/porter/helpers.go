@@ -24,7 +24,6 @@ import (
 	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/tracing"
 	"get.porter.sh/porter/pkg/yaml"
-	"github.com/cnabio/cnab-go/bundle"
 	"github.com/stretchr/testify/require"
 )
 
@@ -181,13 +180,7 @@ func (p *TestPorter) T() *testing.T {
 }
 
 func (p *TestPorter) ReadBundle(path string) cnab.ExtendedBundle {
-	bunD, err := os.ReadFile(path)
-	require.NoError(p.T(), err, "ReadFile failed for %s", path)
-
-	bun, err := bundle.Unmarshal(bunD)
-	require.NoError(p.T(), err, "Unmarshal failed for bundle at %s", path)
-
-	return cnab.NewBundle(*bun)
+	return cnab.ReadTestBundle(p.T(), path)
 }
 
 func (p *TestPorter) RandomString(len int) string {

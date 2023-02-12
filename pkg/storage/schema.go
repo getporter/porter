@@ -11,6 +11,10 @@ const (
 	// for all installation documents: installations, runs, results and outputs.
 	InstallationSchemaVersion = schema.Version("1.0.2")
 
+	// WorkflowSchemaVersion represents the version associated with the schema
+	// for all workflow documents: workflow.
+	WorkflowSchemaVersion = schema.Version("1.0.0")
+
 	// CredentialSetSchemaVersion represents the version associated with the schema
 	// credential set documents.
 	CredentialSetSchemaVersion = schema.Version("1.0.1")

@@ -44,6 +44,9 @@ type BundleExecutionOptions struct {
 	// DebugMode indicates if the bundle should be run in debug mode.
 	DebugMode bool
 
+	// DryRun specifies that the bundle should not be executed and the execution plan should be printed instead.
+	DryRun bool
+
 	// NoLogs runs the bundle without persisting any logs.
 	NoLogs bool
 

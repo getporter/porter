@@ -8,8 +8,9 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg/cnab"
-	depsv1 "get.porter.sh/porter/pkg/cnab/dependencies/v1"
+	depsv1ext "get.porter.sh/porter/pkg/cnab/extensions/dependencies/v1"
 	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/experimental"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/mixin"
 	"get.porter.sh/porter/pkg/pkgmgmt"
@@ -22,27 +23,53 @@ import (
 func TestManifestConverter(t *testing.T) {
 	t.Parallel()
 
-	c := config.NewTestConfig(t)
-	c.TestContext.AddTestFileFromRoot("tests/testdata/mybuns/porter.yaml", config.Name)
-
-	ctx := context.Background()
-	m, err := manifest.LoadManifestFrom(ctx, c.Config, config.Name)
-	require.NoError(t, err, "could not load manifest")
-
-	installedMixins := []mixin.Metadata{
-		{Name: "exec", VersionInfo: pkgmgmt.VersionInfo{Version: "v1.2.3"}},
+	testcases := []struct {
+		name          string
+		configHandler func(c *config.Config)
+		manifestPath  string
+		goldenFile    string
+	}{
+		{name: "depsv1",
+			configHandler: func(c *config.Config) {},
+			manifestPath:  "tests/testdata/mybuns/porter.yaml",
+			goldenFile:    "testdata/mybuns-depsv1.bundle.json"},
+		{name: "depsv2",
+			configHandler: func(c *config.Config) {
+				c.SetExperimentalFlags(experimental.FlagDependenciesV2)
+			},
+			manifestPath: "tests/testdata/mybuns/porter.yaml",
+			goldenFile:   "testdata/mybuns-depsv2.bundle.json"},
 	}
 
-	a := NewManifestConverter(c.Config, m, nil, installedMixins)
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
-	bun, err := a.ToBundle(ctx)
-	require.NoError(t, err, "ToBundle failed")
+			c := config.NewTestConfig(t)
+			tc.configHandler(c.Config)
+			c.TestContext.AddTestFileFromRoot(tc.manifestPath, config.Name)
 
-	// Compare the regular json, not the canonical, because that's hard to diff
-	prepBundleForDiff(&bun.Bundle)
-	bunD, err := json.MarshalIndent(bun, "", "  ")
-	require.NoError(t, err)
-	c.TestContext.CompareGoldenFile("testdata/mybuns.bundle.json", string(bunD))
+			ctx := context.Background()
+			m, err := manifest.LoadManifestFrom(ctx, c.Config, config.Name)
+			require.NoError(t, err, "could not load manifest")
+
+			installedMixins := []mixin.Metadata{
+				{Name: "exec", VersionInfo: pkgmgmt.VersionInfo{Version: "v1.2.3"}},
+			}
+
+			a := NewManifestConverter(c.Config, m, nil, installedMixins)
+
+			bun, err := a.ToBundle(ctx)
+			require.NoError(t, err, "ToBundle failed")
+
+			// Compare the regular json, not the canonical, because that's hard to diff
+			prepBundleForDiff(&bun.Bundle)
+			bunD, err := json.MarshalIndent(bun, "", "  ")
+			require.NoError(t, err)
+			c.TestContext.CompareGoldenFile(tc.goldenFile, string(bunD))
+		})
+	}
 }
 
 func prepBundleForDiff(b *bundle.Bundle) {
@@ -59,7 +86,7 @@ func TestManifestConverter_ToBundle(t *testing.T) {
 	t.Parallel()
 
 	c := config.NewTestConfig(t)
-	c.TestContext.AddTestFile("testdata/porter.yaml", config.Name)
+	c.TestContext.AddTestFileFromRoot("tests/testdata/mybuns/porter.yaml", config.Name)
 
 	ctx := context.Background()
 	m, err := manifest.LoadManifestFrom(ctx, c.Config, config.Name)
@@ -71,9 +98,9 @@ func TestManifestConverter_ToBundle(t *testing.T) {
 	require.NoError(t, err, "ToBundle failed")
 
 	assert.Equal(t, cnab.BundleSchemaVersion(), bun.SchemaVersion)
-	assert.Equal(t, "porter-hello", bun.Name)
-	assert.Equal(t, "0.1.0", bun.Version)
-	assert.Equal(t, "An example Porter configuration", bun.Description)
+	assert.Equal(t, "mybuns", bun.Name)
+	assert.Equal(t, "0.1.2", bun.Version)
+	assert.Equal(t, "A very thorough test bundle", bun.Description)
 
 	stamp, err := LoadStamp(bun)
 	require.NoError(t, err, "could not load porter's stamp")
@@ -86,15 +113,16 @@ func TestManifestConverter_ToBundle(t *testing.T) {
 	assert.Contains(t, bun.Definitions, "porter-debug-parameter", "porter-debug definition was not defined")
 
 	assert.True(t, bun.HasDependenciesV1(), "DependenciesV1 was not populated")
+	assert.Contains(t, bun.RequiredExtensions, "io.cnab.dependencies")
 
-	assert.Len(t, bun.Outputs, 1, "expected one output for the bundle state")
+	assert.NotEmpty(t, bun.Outputs, "expected multiple outputs generated")
 }
 
 func TestManifestConverter_generateBundleCredentials(t *testing.T) {
 	t.Parallel()
 
 	c := config.NewTestConfig(t)
-	c.TestContext.AddTestFile("testdata/porter.yaml", config.Name)
+	c.TestContext.AddTestFileFromRoot("tests/testdata/mybuns/porter.yaml", config.Name)
 
 	ctx := context.Background()
 	m, err := manifest.LoadManifestFrom(ctx, c.Config, config.Name)
@@ -107,14 +135,14 @@ func TestManifestConverter_generateBundleCredentials(t *testing.T) {
 
 	assert.Contains(t, bun.Credentials, "username", "credential 'username' was not populated")
 	username := bun.Credentials["username"]
-	assert.Equal(t, "Name of the database user", username.Description, "credential.Description was not populated")
+	assert.Equal(t, "The name you want on the audit log", username.Description, "credential.Description was not populated")
 	assert.False(t, username.Required, "credential.Required was not populated correctly")
 	assert.Equal(t, "ROOT_USERNAME", username.EnvironmentVariable, "credential.EnvironmentVariable was not populated")
 
 	assert.Contains(t, bun.Credentials, "password", "credential 'password' was not populated")
 	password := bun.Credentials["password"]
 	assert.True(t, password.Required, "credential.Required was not populated correctly")
-	assert.Equal(t, []string{"uninstall"}, password.ApplyTo, "credential.ApplyTo was not populated")
+	assert.Equal(t, []string{"boom"}, password.ApplyTo, "credential.ApplyTo was not populated")
 	assert.Equal(t, "/tmp/password", password.Path, "credential.Path was not populated")
 }
 
@@ -533,29 +561,29 @@ func TestManifestConverter_generateBundleOutputs(t *testing.T) {
 	require.Equal(t, wantDefinitions, defs)
 }
 
-func TestManifestConverter_generateDependencies(t *testing.T) {
+func TestManifestConverter_generateDependenciesv1(t *testing.T) {
 	t.Parallel()
 
 	testcases := []struct {
 		name    string
-		wantDep depsv1.Dependency
+		wantDep depsv1ext.Dependency
 	}{
-		{"no-version", depsv1.Dependency{
+		{"no-version", depsv1ext.Dependency{
 			Name:   "mysql",
 			Bundle: "getporter/azure-mysql:5.7",
 		}},
-		{"no-ranges, uses prerelease", depsv1.Dependency{
+		{"no-ranges, uses prerelease", depsv1ext.Dependency{
 			Name:   "ad",
 			Bundle: "getporter/azure-active-directory",
-			Version: &depsv1.DependencyVersion{
+			Version: &depsv1ext.DependencyVersion{
 				AllowPrereleases: true,
 				Ranges:           []string{"1.0.0-0"},
 			},
 		}},
-		{"with-ranges", depsv1.Dependency{
+		{"with-ranges", depsv1ext.Dependency{
 			Name:   "storage",
 			Bundle: "getporter/azure-blob-storage",
-			Version: &depsv1.DependencyVersion{
+			Version: &depsv1ext.DependencyVersion{
 				Ranges: []string{
 					"1.x - 2,2.1 - 3.x",
 				},
@@ -568,7 +596,6 @@ func TestManifestConverter_generateDependencies(t *testing.T) {
 
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-
 			c := config.NewTestConfig(t)
 			c.TestContext.AddTestFile("testdata/porter-with-deps.yaml", config.Name)
 
@@ -581,12 +608,12 @@ func TestManifestConverter_generateDependencies(t *testing.T) {
 			depsExt, depsExtKey, err := a.generateDependencies()
 			require.NoError(t, err)
 			require.Equal(t, cnab.DependenciesV1ExtensionKey, depsExtKey, "expected the v1 dependencies extension key")
-			require.IsType(t, &depsv1.Dependencies{}, depsExt, "expected a v1 dependencies extension section")
-			deps := depsExt.(*depsv1.Dependencies)
+			require.IsType(t, &depsv1ext.Dependencies{}, depsExt, "expected a v1 dependencies extension section")
+			deps := depsExt.(*depsv1ext.Dependencies)
 			require.Len(t, deps.Requires, 3, "incorrect number of dependencies were generated")
 			require.Equal(t, []string{"mysql", "ad", "storage"}, deps.Sequence, "incorrect sequence was generated")
 
-			var dep *depsv1.Dependency
+			var dep *depsv1ext.Dependency
 			for _, d := range deps.Requires {
 				if d.Bundle == tc.wantDep.Bundle {
 					dep = &d
@@ -600,28 +627,77 @@ func TestManifestConverter_generateDependencies(t *testing.T) {
 	}
 }
 
-func TestManifestConverter_generateRequiredExtensions_Dependencies(t *testing.T) {
+func TestManifestConverter_generateDependenciesv2(t *testing.T) {
 	t.Parallel()
 
-	c := config.NewTestConfig(t)
-	c.TestContext.AddTestFile("testdata/porter-with-deps.yaml", config.Name)
+	testcases := []struct {
+		name    string
+		wantDep depsv1ext.Dependency
+	}{
+		{"no-version", depsv1ext.Dependency{
+			Name:   "mysql",
+			Bundle: "getporter/azure-mysql:5.7",
+		}},
+		{"no-ranges, uses prerelease", depsv1ext.Dependency{
+			Name:   "ad",
+			Bundle: "getporter/azure-active-directory",
+			Version: &depsv1ext.DependencyVersion{
+				AllowPrereleases: true,
+				Ranges:           []string{"1.0.0-0"},
+			},
+		}},
+		{"with-ranges", depsv1ext.Dependency{
+			Name:   "storage",
+			Bundle: "getporter/azure-blob-storage",
+			Version: &depsv1ext.DependencyVersion{
+				Ranges: []string{
+					"1.x - 2,2.1 - 3.x",
+				},
+			},
+		}},
+	}
 
-	ctx := context.Background()
-	m, err := manifest.LoadManifestFrom(ctx, c.Config, config.Name)
-	require.NoError(t, err, "could not load manifest")
+	for _, tc := range testcases {
+		tc := tc
 
-	a := NewManifestConverter(c.Config, m, nil, nil)
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			c := config.NewTestConfig(t)
+			c.TestContext.AddTestFile("testdata/porter-with-deps.yaml", config.Name)
 
-	bun, err := a.ToBundle(ctx)
-	require.NoError(t, err, "ToBundle failed")
-	assert.Contains(t, bun.RequiredExtensions, "io.cnab.dependencies")
+			ctx := context.Background()
+			m, err := manifest.LoadManifestFrom(ctx, c.Config, config.Name)
+			require.NoError(t, err, "could not load manifest")
+
+			a := NewManifestConverter(c.Config, m, nil, nil)
+
+			depsExt, depsExtKey, err := a.generateDependencies()
+			require.NoError(t, err)
+			require.Equal(t, cnab.DependenciesV1ExtensionKey, depsExtKey, "expected the v1 dependencies extension key")
+			require.IsType(t, &depsv1ext.Dependencies{}, depsExt, "expected a v1 dependencies extension section")
+			deps := depsExt.(*depsv1ext.Dependencies)
+			require.Len(t, deps.Requires, 3, "incorrect number of dependencies were generated")
+			require.Equal(t, []string{"mysql", "ad", "storage"}, deps.Sequence, "incorrect sequence was generated")
+
+			var dep *depsv1ext.Dependency
+			for _, d := range deps.Requires {
+				if d.Bundle == tc.wantDep.Bundle {
+					dep = &d
+					break
+				}
+			}
+
+			require.NotNil(t, dep, "could not find bundle %s", tc.wantDep.Bundle)
+			assert.Equal(t, &tc.wantDep, dep)
+		})
+	}
 }
 
 func TestManifestConverter_generateParameterSources(t *testing.T) {
 	t.Parallel()
 
 	c := config.NewTestConfig(t)
-	c.TestContext.AddTestFile("testdata/porter-with-templating.yaml", config.Name)
+	c.TestContext.AddTestFileFromRoot("tests/testdata/mybuns/porter.yaml", config.Name)
 
 	ctx := context.Background()
 	m, err := manifest.LoadManifestFrom(ctx, c.Config, config.Name)
@@ -638,8 +714,7 @@ func TestManifestConverter_generateParameterSources(t *testing.T) {
 	want.SetParameterFromOutput("porter-msg-output", "msg")
 	want.SetParameterFromOutput("tfstate", "tfstate")
 	want.SetParameterFromOutput("porter-state", "porter-state")
-	want.SetParameterFromDependencyOutput("porter-mysql-mysql-password-dep-output", "mysql", "mysql-password")
-	want.SetParameterFromDependencyOutput("root-password", "mysql", "mysql-root-password")
+	want.SetParameterFromDependencyOutput("mysql-connstr", "db", "connstr")
 
 	assert.Equal(t, want, sources)
 }
@@ -648,7 +723,7 @@ func TestNewManifestConverter_generateOutputWiringParameter(t *testing.T) {
 	t.Parallel()
 
 	c := config.NewTestConfig(t)
-	c.TestContext.AddTestFile("testdata/porter-with-templating.yaml", config.Name)
+	c.TestContext.AddTestFileFromRoot("tests/testdata/mybuns/porter.yaml", config.Name)
 
 	ctx := context.Background()
 	m, err := manifest.LoadManifestFrom(ctx, c.Config, config.Name)
@@ -704,7 +779,7 @@ func TestNewManifestConverter_generateDependencyOutputWiringParameter(t *testing
 	t.Parallel()
 
 	c := config.NewTestConfig(t)
-	c.TestContext.AddTestFile("testdata/porter-with-templating.yaml", config.Name)
+	c.TestContext.AddTestFileFromRoot("tests/testdata/mybuns/porter.yaml", config.Name)
 
 	ctx := context.Background()
 	m, err := manifest.LoadManifestFrom(ctx, c.Config, config.Name)
@@ -729,7 +804,7 @@ func TestManifestConverter_generateRequiredExtensions_ParameterSources(t *testin
 	t.Parallel()
 
 	c := config.NewTestConfig(t)
-	c.TestContext.AddTestFile("testdata/porter-with-templating.yaml", config.Name)
+	c.TestContext.AddTestFileFromRoot("tests/testdata/mybuns/porter.yaml", config.Name)
 
 	ctx := context.Background()
 	m, err := manifest.LoadManifestFrom(ctx, c.Config, config.Name)
@@ -746,7 +821,7 @@ func TestManifestConverter_generateRequiredExtensions(t *testing.T) {
 	t.Parallel()
 
 	c := config.NewTestConfig(t)
-	c.TestContext.AddTestFile("testdata/porter-with-required-extensions.yaml", config.Name)
+	c.TestContext.AddTestFileFromRoot("tests/testdata/mybuns/porter.yaml", config.Name)
 
 	ctx := context.Background()
 	m, err := manifest.LoadManifestFrom(ctx, c.Config, config.Name)
@@ -757,7 +832,7 @@ func TestManifestConverter_generateRequiredExtensions(t *testing.T) {
 	bun, err := a.ToBundle(ctx)
 	require.NoError(t, err, "ToBundle failed")
 
-	expected := []string{"sh.porter.file-parameters", "io.cnab.parameter-sources", "requiredExtension1", "requiredExtension2"}
+	expected := []string{"sh.porter.file-parameters", "io.cnab.dependencies", "io.cnab.parameter-sources", "io.cnab.docker"}
 	assert.Equal(t, expected, bun.RequiredExtensions)
 }
 
@@ -785,7 +860,7 @@ func TestManifestConverter_GenerateCustomActionDefinitions(t *testing.T) {
 	t.Parallel()
 
 	c := config.NewTestConfig(t)
-	c.TestContext.AddTestFile("testdata/porter-with-custom-action.yaml", config.Name)
+	c.TestContext.AddTestFileFromRoot("tests/testdata/mybuns/porter.yaml", config.Name)
 
 	ctx := context.Background()
 	m, err := manifest.LoadManifestFrom(ctx, c.Config, config.Name)
@@ -794,19 +869,18 @@ func TestManifestConverter_GenerateCustomActionDefinitions(t *testing.T) {
 	a := NewManifestConverter(c.Config, m, nil, nil)
 
 	defs := a.generateCustomActionDefinitions()
-	require.Len(t, defs, 2, "expected 2 custom action definitions to be generated")
+	require.Len(t, defs, 3, "expected 3 custom action definitions to be generated")
 
 	require.Contains(t, defs, "status")
 	statusDef := defs["status"]
-	assert.Equal(t, "Prints out status of world", statusDef.Description)
-	assert.True(t, statusDef.Stateless, "expected the status custom action to be stateless")
+	assert.Equal(t, "Print the installation status", statusDef.Description)
+	assert.False(t, statusDef.Stateless, "expected the status custom action to not be stateless")
 	assert.False(t, statusDef.Modifies, "expected the status custom action to not modify resources")
 
-	require.Contains(t, defs, "zombies")
-	zombieDef := defs["zombies"]
-	assert.Equal(t, "zombies", zombieDef.Description)
-	assert.False(t, zombieDef.Stateless, "expected the zombies custom action to default to not stateless")
-	assert.True(t, zombieDef.Modifies, "expected the zombies custom action to default to modifying resources")
+	require.Contains(t, defs, "boom")
+	boomDef := defs["boom"]
+	assert.False(t, boomDef.Stateless, "expected the dry-run custom action to default to not stateless")
+	assert.True(t, boomDef.Modifies, "expected the dry-run custom action to default to modifying resources")
 }
 
 func TestManifestConverter_generateDefaultAction(t *testing.T) {
@@ -860,7 +934,7 @@ func TestManifestConverter_generateCustomMetadata(t *testing.T) {
 	t.Parallel()
 
 	c := config.NewTestConfig(t)
-	c.TestContext.AddTestFile("./testdata/porter-with-custom-metadata.yaml", config.Name)
+	c.TestContext.AddTestFileFromRoot("tests/testdata/mybuns/porter.yaml", config.Name)
 
 	ctx := context.Background()
 	m, err := manifest.LoadManifestFrom(ctx, c.Config, config.Name)
@@ -870,7 +944,7 @@ func TestManifestConverter_generateCustomMetadata(t *testing.T) {
 
 	bun, err := a.ToBundle(ctx)
 	require.NoError(t, err, "ToBundle failed")
-	assert.Len(t, bun.Custom, 4)
+	assert.Len(t, bun.Custom, 6)
 
 	f, err := os.CreateTemp("", "")
 	require.NoError(t, err, "Failed to create bundle file")
@@ -895,7 +969,7 @@ func TestManifestConverter_generatedMaintainers(t *testing.T) {
 	}
 
 	c := config.NewTestConfig(t)
-	c.TestContext.AddTestFile("./testdata/porter-with-maintainers.yaml", config.Name)
+	c.TestContext.AddTestFileFromRoot("tests/testdata/mybuns/porter.yaml", config.Name)
 
 	ctx := context.Background()
 	m, err := manifest.LoadManifestFrom(ctx, c.Config, config.Name)

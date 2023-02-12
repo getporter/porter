@@ -9,7 +9,15 @@ registry: localhost:5000
 parameters:
   - name: database
     type: string
-    default: "(default)"
+    default: "mydb"
+  - name: collation
+    type: string
+    default: "Latin1_General_100_CS_AS"
+
+credentials:
+  - name: username
+    env: USERNAME
+    required: false
 
 outputs:
   - name: connStr

@@ -273,6 +273,34 @@ func (m *Manifest) GetTemplatedDependencyOutputs() DependencyOutputReferences {
 	return outputs
 }
 
+// DetermineDependenciesExtensionUsed looks for how dependencies are used
+// by the bundle and which version of the dependency extension can be used.
+func (m *Manifest) DetermineDependenciesExtensionUsed() string {
+	if len(m.Dependencies.Requires) == 0 {
+		// dependencies are not used at all
+		return ""
+	}
+
+	// Check if v2 deps are explicitly specified
+	for _, ext := range m.Required {
+		if ext.Name == cnab.DependenciesV2ExtensionShortHand ||
+			ext.Name == cnab.DependenciesV2ExtensionKey {
+			return cnab.DependenciesV2ExtensionKey
+		}
+	}
+
+	// Check each dependency for use of v2 only features
+	for _, dep := range m.Dependencies.Requires {
+		if dep.Installation != nil ||
+			len(dep.Credentials) > 0 ||
+			dep.Bundle.Interface != nil {
+			return cnab.DependenciesV2ExtensionKey
+		}
+	}
+
+	return cnab.DependenciesV1ExtensionKey
+}
+
 type CustomDefinitions map[string]interface{}
 
 func (cd *CustomDefinitions) UnmarshalYAML(unmarshal func(interface{}) error) error {
@@ -623,18 +651,36 @@ func (mi *MappedImage) ToOCIReference() (cnab.OCIReference, error) {
 	return ref, nil
 }
 
+// Dependencies specifies other bundles that the current bundle depends up on to run.
 type Dependencies struct {
+	// Requires specifies bundles required by the current bundle.
 	Requires []*Dependency `yaml:"requires,omitempty"`
 }
 
+// Dependency defines a bundle dependency.
 type Dependency struct {
+	// Name of the dependency, used to reference the dependency from other parts of
+	// the bundle such as the template syntax, bundle.dependencies.NAME
 	Name string `yaml:"name"`
 
+	// Bundle specifies criteria for selecting a bundle to satisfy the dependency.
 	Bundle BundleCriteria `yaml:"bundle"`
 
+	// Installation specifies criteria for selecting an installation to satisfy the dependency.
+	Installation *DependencyInstallationConfig `yaml:"installation,omitempty"`
+
+	// Parameters to pass from the bundle to the dependency.
+	// May either be a hard-coded value, or a template value such as bundle.parameters.NAME
 	Parameters map[string]string `yaml:"parameters,omitempty"`
+
+	// Credentials to pass from the bundle to the dependency.
+	// May either be a hard-coded value, or a template value such as bundle.credentials.NAME
+	Credentials map[string]string `yaml:"credentials,omitempty"`
 }
 
+type DependencySource string
+
+// BundleCriteria criteria for selecting a bundle to satisfy a dependency.
 type BundleCriteria struct {
 	// Reference is the full bundle reference for the dependency
 	// in the format REGISTRY/NAME:TAG
@@ -646,6 +692,48 @@ type BundleCriteria struct {
 	// If you want to have it include pre-releases a simple solution is to include -0 in your range."
 	// https://github.com/Masterminds/semver/blob/master/README.md#checking-version-constraints
 	Version string `yaml:"version,omitempty"`
+
+	// Interface specifies criteria for allowing a bundle to satisfy a dependency.
+	Interface *BundleInterface `yaml:"interface,omitempty"`
+}
+
+// BundleInterface specifies how a bundle can satisfy a dependency.
+type BundleInterface struct {
+	Reference string                   `yaml:"reference,omitempty"`
+	Document  *BundleInterfaceDocument `yaml:"document,omitempty"`
+}
+
+// BundleInterfaceDocument specifies the interface that a bundle must support in
+// order to satisfy a dependency.
+type BundleInterfaceDocument struct {
+	Parameters  ParameterDefinitions  `yaml:"parameters,omitempty"`
+	Credentials CredentialDefinitions `yaml:"credentials,omitempty"`
+	Outputs     OutputDefinitions     `yaml:"outputs,omitempty"`
+}
+
+// DependencyInstallationConfig specifies how an installation is created or
+// reused to satisfy a dependency.
+type DependencyInstallationConfig struct {
+	Labels   map[string]string     `yaml:"labels,omitempty"`
+	Criteria *InstallationCriteria `yaml:"criteria,omitempty"`
+}
+
+// InstallationCriteria specifies criteria for selecting an installation to satisfy the dependency.
+type InstallationCriteria struct {
+	// MatchInterface specifies that the dependency must only match the bundle
+	// interface, and not the bundle repository from the reference. Defaults to
+	// false, so that the bundle must be the same.
+	MatchInterface bool `yaml:"matchInterface,omitempty"`
+
+	// MatchNamespace specifies that the existing installation must be in the same
+	// namespace and cannot be a global installation. Defaults to false, which allows
+	// reusing global installations as dependencies.
+	MatchNamespace bool `yaml:"matchNamespace,omitempty"`
+
+	// IgnoreLabels allows reusing an existing installation that does not
+	// have the labels specified above. By default, the labels must match to reuse an
+	// installation.
+	IgnoreLabels bool `yaml:"ignoreLabels,omitempty"`
 }
 
 func (d *Dependency) Validate(cxt *portercontext.Context) error {
@@ -657,8 +745,13 @@ func (d *Dependency) Validate(cxt *portercontext.Context) error {
 		return fmt.Errorf("reference is required for dependency %q", d.Name)
 	}
 
-	if strings.Contains(d.Bundle.Reference, ":") && len(d.Bundle.Version) > 0 {
-		return fmt.Errorf("reference for dependency %q can only specify REGISTRY/NAME when version ranges are specified", d.Name)
+	ref, err := cnab.ParseOCIReference(d.Bundle.Reference)
+	if err != nil {
+		return fmt.Errorf("invalid reference %s for dependency %s: %w", d.Bundle.Reference, d.Name, err)
+	}
+
+	if ref.IsRepositoryOnly() && d.Bundle.Version == "" {
+		return fmt.Errorf("reference for dependency %q can specify only a repository, without a digest or tag, when a version constraint is specified", d.Name)
 	}
 
 	return nil

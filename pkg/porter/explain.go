@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"strings"
 
+	depsv1 "get.porter.sh/porter/pkg/cnab/dependencies/v1"
+
 	"get.porter.sh/porter/pkg/cnab"
 	configadapter "get.porter.sh/porter/pkg/cnab/config-adapter"
 	"get.porter.sh/porter/pkg/portercontext"
@@ -190,7 +192,7 @@ func generatePrintable(bun cnab.ExtendedBundle, action string) (*PrintableBundle
 		stamp = configadapter.Stamp{}
 	}
 
-	solver := &cnab.DependencySolver{}
+	solver := &depsv1.DependencySolver{}
 	deps, err := solver.ResolveDependencies(bun)
 	if err != nil {
 		return nil, fmt.Errorf("error resolving bundle dependencies: %w", err)

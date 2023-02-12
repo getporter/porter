@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"sort"
 
+	"get.porter.sh/porter/pkg/printer"
+
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/tracing"
@@ -15,33 +17,99 @@ import (
 )
 
 type ReconcileOptions struct {
-	Name         string
-	Namespace    string
-	Installation storage.Installation
+	Installation storage.InstallationSpec
 
 	// Just reapply the installation regardless of what has changed (or not)
 	Force bool
 
 	// DryRun only checks if the changes would trigger a bundle run
 	DryRun bool
+
+	// Format that should be used when printing details about what Porter is (or will) do.
+	Format printer.Format
 }
 
-// ReconcileInstallation compares the desired state of an installation
+// ReconcileInstallationAndDependencies compares the desired state of an installation
 // as stored in the installation record with the current state of the
 // installation. If they are not in sync, the appropriate bundle action
 // is executed to bring them in sync.
 // This is only used for install/upgrade actions triggered by applying a file
 // to an installation. For uninstall or invoke, you should call those directly.
-func (p *Porter) ReconcileInstallation(ctx context.Context, opts ReconcileOptions) error {
-	ctx, log := tracing.StartSpan(ctx)
-	log.Debugf("Reconciling %s/%s installation", opts.Namespace, opts.Name)
+func (p *Porter) ReconcileInstallationAndDependencies(ctx context.Context, opts ReconcileOptions) error {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
+	installation, actionOpts, err := p.reconcileInstallation(ctx, opts)
+	if err != nil {
+		return err
+	}
+
+	// Nothing to do, the installation is up-to-date
+	if actionOpts == nil {
+		return nil
+	}
+
+	return p.ExecuteBundleAndDependencies(ctx, installation, actionOpts)
+}
+
+// ReconcileInstallationInWorkflow compares the desired state of an installation
+// as stored in the installation record with the current state of the
+// installation. If they are not in sync, the appropriate bundle action
+// is executed to bring them in sync.
+// This is only used for install/upgrade actions triggered by applying a file
+// to an installation. For uninstall or invoke, you should call those directly.
+// This should only be used with deps-v2 feature workflows.
+func (p *Porter) ReconcileInstallationInWorkflow(ctx context.Context, opts ReconcileOptions) (storage.Run, storage.Result, error) {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
+	installation, actionOpts, err := p.reconcileInstallation(ctx, opts)
+	if err != nil {
+		return storage.Run{}, storage.Result{}, err
+	}
+
+	// Nothing to do, the installation is up-to-date
+	if actionOpts == nil {
+		return storage.Run{}, storage.Result{}, nil
+	}
+
+	return p.ExecuteRootBundleOnly(ctx, installation, actionOpts)
+}
+
+func (p *Porter) reconcileInstallation(ctx context.Context, opts ReconcileOptions) (storage.Installation, BundleAction, error) {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
+	// Determine if the installation exists
+	inputInstallation := opts.Installation
+	span.Debugf("Reconciling %s/%s installation", inputInstallation.Namespace, inputInstallation.Name)
+	installation, err := p.Installations.GetInstallation(ctx, inputInstallation.Namespace, inputInstallation.Name)
+	if err != nil {
+		if !errors.Is(err, storage.ErrNotFound{}) {
+			return storage.Installation{}, nil, fmt.Errorf("could not query for an existing installation document for %s: %w", inputInstallation, err)
+		}
+
+		// Create a new installation
+		installation = storage.NewInstallation(inputInstallation.Namespace, inputInstallation.Name)
+		installation.Apply(inputInstallation)
+
+		span.Info("Creating a new installation", attribute.String("installation", installation.String()))
+	} else {
+		// Apply the specified changes to the installation
+		installation.Apply(inputInstallation)
+		if err := installation.Validate(); err != nil {
+			return storage.Installation{}, nil, err
+		}
+
+		fmt.Fprintf(p.Err, "Updating %s installation\n", installation)
+	}
 
 	// Get the last run of the installation, if available
 	var lastRun *storage.Run
-	r, err := p.Installations.GetLastRun(ctx, opts.Namespace, opts.Name)
+	r, err := p.Installations.GetLastRun(ctx, inputInstallation.Namespace, inputInstallation.Name)
 	neverRun := errors.Is(err, storage.ErrNotFound{})
 	if err != nil && !neverRun {
-		return err
+		return storage.Installation{}, nil, err
 	}
 	if !neverRun {
 		lastRun = &r
@@ -49,16 +117,16 @@ func (p *Porter) ReconcileInstallation(ctx context.Context, opts ReconcileOption
 
 	ref, ok, err := opts.Installation.Bundle.GetBundleReference()
 	if err != nil {
-		return log.Error(err)
+		return storage.Installation{}, nil, span.Error(err)
 	}
 	if !ok {
 		instYaml, _ := yaml.Marshal(opts.Installation)
-		return log.Error(fmt.Errorf("the installation does not define a valid bundle reference.\n%s", instYaml))
+		return storage.Installation{}, nil, span.Error(fmt.Errorf("the installation does not define a valid bundle reference.\n%s", instYaml))
 	}
 
 	// Configure the bundle action that we should execute IF IT'S OUT OF SYNC
 	var actionOpts BundleAction
-	if opts.Installation.IsInstalled() {
+	if installation.IsInstalled() {
 		if opts.Installation.Uninstalled {
 			actionOpts = NewUninstallOptions()
 		} else {
@@ -69,46 +137,48 @@ func (p *Porter) ReconcileInstallation(ctx context.Context, opts ReconcileOption
 	}
 
 	lifecycleOpts := actionOpts.GetOptions()
+	lifecycleOpts.DryRun = opts.DryRun
 	lifecycleOpts.Reference = ref.String()
-	lifecycleOpts.Name = opts.Name
-	lifecycleOpts.Namespace = opts.Namespace
+	lifecycleOpts.Name = inputInstallation.Name
+	lifecycleOpts.Namespace = inputInstallation.Namespace
+	lifecycleOpts.Driver = p.Data.RuntimeDriver
 	lifecycleOpts.CredentialIdentifiers = opts.Installation.CredentialSets
 	lifecycleOpts.ParameterSets = opts.Installation.ParameterSets
 
-	if err = p.applyActionOptionsToInstallation(ctx, actionOpts, &opts.Installation); err != nil {
-		return err
+	if err = p.applyActionOptionsToInstallation(ctx, actionOpts, &installation); err != nil {
+		return storage.Installation{}, nil, err
 	}
 
 	// Determine if the installation's desired state is out of sync with reality 🤯
-	inSync, err := p.IsInstallationInSync(ctx, opts.Installation, lastRun, actionOpts)
+	inSync, err := p.IsInstallationInSync(ctx, installation, lastRun, actionOpts)
 	if err != nil {
-		return err
+		return storage.Installation{}, nil, err
 	}
 
 	if inSync {
 		if opts.Force {
-			log.Info("The installation is up-to-date but will be re-applied because --force was specified")
+			span.Info("The installation is up-to-date but will be re-applied because --force was specified")
 		} else {
-			log.Info("The installation is already up-to-date.")
-			return nil
+			span.Info("The installation is already up-to-date.")
+			return storage.Installation{}, nil, nil
 		}
 	}
 
-	log.Infof("The installation is out-of-sync, running the %s action...", actionOpts.GetAction())
+	span.Infof("The installation is out-of-sync, running the %s action...", actionOpts.GetAction())
 	if err := actionOpts.Validate(ctx, nil, p); err != nil {
-		return err
+		return storage.Installation{}, nil, err
 	}
 
 	if opts.DryRun {
-		log.Info("Skipping bundle execution because --dry-run was specified")
-		return nil
+		span.Info("Skipping bundle execution because --dry-run was specified")
+		return storage.Installation{}, nil, nil
 	} else {
-		if err = p.Installations.UpsertInstallation(ctx, opts.Installation); err != nil {
-			return err
+		if err = p.Installations.UpsertInstallation(ctx, installation); err != nil {
+			return storage.Installation{}, nil, err
 		}
 	}
 
-	return p.ExecuteAction(ctx, opts.Installation, actionOpts)
+	return installation, actionOpts, nil
 }
 
 // IsInstallationInSync determines if the desired state of the installation matches
@@ -137,6 +207,10 @@ func (p *Porter) IsInstallationInSync(ctx context.Context, i storage.Installatio
 		log.Info("Ignoring because installation.uninstalled is true but the installation doesn't exist yet")
 		return true, nil
 	} else {
+		// TODO(PEP003): we should check the status of the last run and handle in progress/pending by returning an error if the not in sync otherise
+		// i.e. if we run two commands to apply, the first starts, the second succeeds since it asked for what the other is providing?
+		// apply waits, so really it should wait for the pending/inprogress to complete? or stop early and say it's in progress elsewhere.
+
 		// Should we install it?
 		if !i.IsInstalled() {
 			log.Info("Triggering because the installation has not completed successfully yet")

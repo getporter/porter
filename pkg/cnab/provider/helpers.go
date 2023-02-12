@@ -69,7 +69,7 @@ func (t *TestRuntime) LoadTestBundle(bundleFile string) cnab.ExtendedBundle {
 	return bun
 }
 
-func (t *TestRuntime) Execute(ctx context.Context, args ActionArguments) error {
+func (t *TestRuntime) Execute(ctx context.Context, args ActionArguments) (storage.Run, storage.Result, error) {
 	if args.Driver == "" {
 		args.Driver = debugDriver
 	}

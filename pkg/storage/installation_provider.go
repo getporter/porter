@@ -55,6 +55,10 @@ type InstallationProvider interface {
 	// GetLastRun returns the last run of an Installation.
 	GetLastRun(ctx context.Context, namespace string, installation string) (Run, error)
 
+	// FindOutputs applies the find operation against outputs collection
+	// using the specified options.
+	FindOutputs(ctx context.Context, opts FindOptions) ([]Output, error)
+
 	// GetLastOutput returns the most recent value (last) of the specified
 	// Output associated with the installation.
 	GetLastOutput(ctx context.Context, namespace string, installation string, name string) (Output, error)
@@ -71,4 +75,9 @@ type InstallationProvider interface {
 
 	// GetLastLogs returns the logs from the last run of an Installation.
 	GetLastLogs(ctx context.Context, namespace string, installation string) (logs string, hasLogs bool, err error)
+
+	// TODO(PEP003): document and make sure we have all standard functions here
+	GetWorkflow(ctx context.Context, id string) (Workflow, error)
+	InsertWorkflow(ctx context.Context, workflow Workflow) error
+	UpsertWorkflow(ctx context.Context, workflow Workflow) error
 }

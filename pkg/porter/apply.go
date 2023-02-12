@@ -8,13 +8,14 @@ import (
 	"get.porter.sh/porter/pkg/encoding"
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/printer"
-	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/tracing"
 	"go.opentelemetry.io/otel/attribute"
 	"go.uber.org/zap/zapcore"
 )
 
 type ApplyOptions struct {
+	printer.PrintOptions
+
 	Namespace string
 	File      string
 
@@ -47,24 +48,24 @@ func (o *ApplyOptions) Validate(cxt *portercontext.Context, args []string) error
 		return fmt.Errorf("invalid file argument %s, must be a file not a directory", o.File)
 	}
 
-	return nil
+	return o.PrintOptions.Validate(ApplyDefaultFormat, ApplyAllowedFormats)
 }
 
 func (p *Porter) InstallationApply(ctx context.Context, opts ApplyOptions) error {
-	ctx, log := tracing.StartSpan(ctx)
-	defer log.EndSpan()
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
 
-	log.Debugf("Reading input file %s", opts.File)
+	span.Debugf("Reading input file %s", opts.File)
 
 	namespace, err := p.getNamespaceFromFile(opts)
 	if err != nil {
 		return err
 	}
 
-	if log.ShouldLog(zapcore.DebugLevel) {
+	if span.ShouldLog(zapcore.DebugLevel) {
 		// ignoring any error here, printing debug info isn't critical
 		contents, _ := p.FileSystem.ReadFile(opts.File)
-		log.Debug("read input file", attribute.String("contents", string(contents)))
+		span.Debug("read input file", attribute.String("contents", string(contents)))
 	}
 
 	var input DisplayInstallation
@@ -72,38 +73,17 @@ func (p *Porter) InstallationApply(ctx context.Context, opts ApplyOptions) error
 		return fmt.Errorf("unable to parse %s as an installation document: %w", opts.File, err)
 	}
 	input.Namespace = namespace
-	inputInstallation, err := input.ConvertToInstallation()
+	inst, err := input.ConvertToInstallation()
 	if err != nil {
 		return err
 	}
 
-	installation, err := p.Installations.GetInstallation(ctx, inputInstallation.Namespace, inputInstallation.Name)
-	if err != nil {
-		if !errors.Is(err, storage.ErrNotFound{}) {
-			return fmt.Errorf("could not query for an existing installation document for %s: %w", inputInstallation, err)
-		}
-
-		// Create a new installation
-		installation = storage.NewInstallation(input.Namespace, input.Name)
-		installation.Apply(inputInstallation.InstallationSpec)
-
-		log.Info("Creating a new installation", attribute.String("installation", installation.String()))
-	} else {
-		// Apply the specified changes to the installation
-		installation.Apply(inputInstallation.InstallationSpec)
-		if err := installation.Validate(); err != nil {
-			return err
-		}
-
-		fmt.Fprintf(p.Err, "Updating %s installation\n", installation)
-	}
-
+	span.Info("Reconciling installation")
 	reconcileOpts := ReconcileOptions{
-		Namespace:    input.Namespace,
-		Name:         input.Name,
-		Installation: installation,
+		Installation: inst.InstallationSpec,
 		Force:        opts.Force,
 		DryRun:       opts.DryRun,
+		Format:       opts.Format,
 	}
-	return p.ReconcileInstallation(ctx, reconcileOpts)
+	return p.ReconcileInstallationAndDependencies(ctx, reconcileOpts)
 }

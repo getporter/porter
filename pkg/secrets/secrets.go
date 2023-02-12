@@ -27,4 +27,8 @@ type Store interface {
 	// - keyName=key, keyValue=conn-string, value=redis://foo
 	// - keyName=path, keyValue=/tmp/connstring.txt, value=redis://foo
 	Create(ctx context.Context, keyName string, keyValue string, value string) error
+
+	// SetPorterStrategy gives the secret store the ability to resolve the porter secret strategy
+	// using Porter's database.
+	SetPorterStrategy(strategy PorterSecretStrategy)
 }
