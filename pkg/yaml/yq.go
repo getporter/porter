@@ -112,6 +112,15 @@ func (e *Editor) SetValue(path string, value string) error {
 	return nil
 }
 
+func (e *Editor) GetValue(path string) (string, error) {
+	n, err := e.GetNode(path)
+	if err != nil {
+		return "", err
+	}
+
+	return n.Value, nil
+}
+
 func (e *Editor) DeleteNode(path string) error {
 	cmd := yqlib.UpdateCommand{Command: "delete", Path: path}
 	err := e.yq.Update(e.node, cmd, true)

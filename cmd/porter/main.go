@@ -295,3 +295,9 @@ func addForcePullFlag(f *pflag.FlagSet, opts *porter.BundlePullOptions) {
 	f.BoolVar(&opts.Force, "force", false,
 		"Force a fresh pull of the bundle")
 }
+
+func addBundleDefinitionFlags(f *pflag.FlagSet, opts *porter.BundleDefinitionOptions) {
+	f.StringVarP(&opts.File, "file", "f", "", "Path to the Porter manifest. Defaults to `porter.yaml` in the current directory.")
+	f.StringVar(&opts.CNABFile, "cnab-file", "", "Path to the CNAB bundle.json file.")
+	f.BoolVar(&opts.AutoBuildDisabled, "autobuild-disabled", false, "Do not automatically build the bundle from source when the last build is out-of-date.")
+}

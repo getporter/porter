@@ -29,7 +29,7 @@ func Test_generateInternalManifest(t *testing.T) {
 	}, {
 		name: "--file set",
 		opts: BuildOptions{
-			bundleFileOptions: bundleFileOptions{
+			BundleDefinitionOptions: BundleDefinitionOptions{
 				File: "alternate.yaml",
 			},
 		},

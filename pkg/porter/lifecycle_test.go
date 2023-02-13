@@ -108,7 +108,7 @@ func TestPorter_BuildActionArgs(t *testing.T) {
 				Driver: "docker",
 				BundleReferenceOptions: &BundleReferenceOptions{
 					installationOptions: installationOptions{
-						bundleFileOptions: bundleFileOptions{
+						BundleDefinitionOptions: BundleDefinitionOptions{
 							RelocationMapping: "relocation-mapping.json",
 							File:              config.Name,
 						},

@@ -138,7 +138,7 @@ func (o *ExplainOpts) Validate(args []string, pctx *portercontext.Context) error
 		return fmt.Errorf("only one positional argument may be specified, the bundle reference, but multiple were received: %s", args)
 	}
 
-	err := o.bundleFileOptions.Validate(pctx)
+	err := o.BundleDefinitionOptions.Validate(pctx)
 	if err != nil {
 		return err
 	}

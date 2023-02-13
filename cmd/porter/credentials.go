@@ -119,10 +119,7 @@ will then provide it to the bundle in the correct location. `,
 		"Namespace in which the credential set is defined. Defaults to the global namespace.")
 	f.StringSliceVarP(&opts.Labels, "label", "l", nil,
 		"Associate the specified labels with the credential set. May be specified multiple times.")
-	f.StringVarP(&opts.File, "file", "f", "",
-		"Path to the porter manifest file. Defaults to the bundle in the current directory.")
-	f.StringVar(&opts.CNABFile, "cnab-file", "",
-		"Path to the CNAB bundle.json file.")
+	addBundleDefinitionFlags(f, &opts.BundleDefinitionOptions)
 	addBundlePullFlags(f, &opts.BundlePullOptions)
 
 	return cmd
