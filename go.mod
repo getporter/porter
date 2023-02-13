@@ -63,9 +63,9 @@ require (
 	go.mongodb.org/mongo-driver v1.11.1
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.37.0
 	go.opentelemetry.io/otel v1.13.0
-	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.12.0
-	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.12.0
-	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.11.2
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.13.0
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.13.0
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.13.0
 	go.opentelemetry.io/otel/exporters/stdout/stdouttrace v1.13.0
 	go.opentelemetry.io/otel/sdk v1.13.0
 	go.opentelemetry.io/otel/trace v1.13.0
@@ -211,7 +211,7 @@ require (
 	github.com/zmap/zlint v0.0.0-20190806154020-fd021b4cfbeb // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/httptrace/otelhttptrace v0.29.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.33.0 // indirect
-	go.opentelemetry.io/otel/exporters/otlp/internal/retry v1.12.0 // indirect
+	go.opentelemetry.io/otel/exporters/otlp/internal/retry v1.13.0 // indirect
 	go.opentelemetry.io/otel/metric v0.34.0 // indirect
 	go.opentelemetry.io/proto/otlp v0.19.0 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
