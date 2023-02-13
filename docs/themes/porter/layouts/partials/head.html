@@ -21,7 +21,15 @@
     <meta property="og:image" content="{{ .Site.BaseURL }}{{ $card }}" />
 
     <link href="{{ .Site.BaseURL }}blog/index.xml" rel="alternate" type="application/rss+xml" title="{{ .Site.Title }}" />
-    <link rel="icon" href="/img/favicon.png" type="image/x-icon">
+    <link rel="apple-touch-icon" sizes="180x180" href="/img/favicons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/img/favicons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/img/favicons/favicon-16x16.png">
+    <link rel="icon" type="image/png" href="/img/favicons/favicon.png"/>
+    <link rel="shortcut icon" type="image/x-icon" href="/img/favicons/favicon.ico"/>
+    <link rel="manifest" href="/img/favicons/site.webmanifest">
+    <meta name="msapplication-config" content="/img/favicons/browserconfig.xml" />
+    <meta name="msapplication-TileColor" content="#ffffff">
+    <meta name="theme-color" content="#ffffff">
     {{ $style := resources.Get "sass/styles.scss" | resources.ToCSS | resources.Minify }}
     <link rel="stylesheet" href="{{ $style.Permalink }}">
     <link href="/css/custom.css" rel="stylesheet">
