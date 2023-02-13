@@ -34,6 +34,7 @@ type ReconcileOptions struct {
 // to an installation. For uninstall or invoke, you should call those directly.
 func (p *Porter) ReconcileInstallation(ctx context.Context, opts ReconcileOptions) error {
 	ctx, log := tracing.StartSpan(ctx)
+	defer log.EndSpan()
 	log.Debugf("Reconciling %s/%s installation", opts.Namespace, opts.Name)
 
 	// Get the last run of the installation, if available
