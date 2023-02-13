@@ -15,6 +15,8 @@ dependencies:
         #    outputs:
         #      - name: mysql-connstr
         #        $id: "getporter.org/interfaces/mysql.connection-string"
+      parameters:
+        database: myenvdb
     - name: app
       bundle:
         reference: "localhost:5000/myapp:v1.2.3"

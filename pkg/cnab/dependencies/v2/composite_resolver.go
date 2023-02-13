@@ -82,6 +82,8 @@ func (r CompositeResolver) addBundleToGraph(ctx context.Context, g *BundleGraph,
 
 	// Process dependencies, if it has any
 	bun := node.Reference.Definition
+
+	// TODO(PEP003) If the bundle uses depsv1, convert to depsv2. This should be an extension on the ExtendedBundle
 	if !bun.HasDependenciesV2() {
 		// No deps so let's move on
 		g.RegisterNode(node)

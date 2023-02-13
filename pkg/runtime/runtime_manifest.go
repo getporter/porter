@@ -123,7 +123,7 @@ func (m *RuntimeManifest) loadDependencyDefinitions(ctx context.Context) error {
 		bunD, err := GetDependencyDefinition(m.config.Context, dep.Name)
 		if err != nil {
 			// TODO(PEP003): Implement passing bundle.json files for dependencies, or cut feature from v2.
-			span.Warnf(err.Error())
+			span.Warnf("WARNING: %w", err.Error())
 			continue
 		}
 

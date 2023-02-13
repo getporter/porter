@@ -169,10 +169,7 @@ func (p *Porter) reconcileInstallation(ctx context.Context, opts ReconcileOption
 		return storage.Installation{}, nil, err
 	}
 
-	if opts.DryRun {
-		span.Info("Skipping bundle execution because --dry-run was specified")
-		return storage.Installation{}, nil, nil
-	} else {
+	if !opts.DryRun {
 		if err = p.Installations.UpsertInstallation(ctx, installation); err != nil {
 			return storage.Installation{}, nil, err
 		}

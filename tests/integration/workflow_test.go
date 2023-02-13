@@ -11,6 +11,7 @@ import (
 )
 
 func TestWorkflow(t *testing.T) {
+	// Since we are working with depsv2 enabled, don't reuse a bundle that was already built for depsv1 in other tests
 	test, err := tester.NewTestWithConfig(t, "tests/testdata/config/config-with-depsv2.yaml")
 	defer test.Close()
 	require.NoError(t, err, "test setup failed")
@@ -20,9 +21,10 @@ func TestWorkflow(t *testing.T) {
 
 	// First validate the plan for the workflow
 	// TODO(PEP003): Do we want to use different terms/commands for generating a workflow? This pretty much associates --dry-run with "print out your workflow"
-	_, output := test.RequirePorter("installation", "apply", "mybuns.yaml", "--output=yaml", "--dry-run")
+	workflowContents, output := test.RequirePorter("installation", "apply", "mybuns.yaml", "--output=yaml", "--dry-run")
 	fmt.Println(output)
 	// TODO(PEP003): Until we have a display workflow, this comparison doesn't work because of extra status printed out
+	_ = workflowContents
 	//testhelpers.CompareGoldenFile(t, "testdata/workflow/mybuns.yaml", workflowContents)
 
 	// Run the workflow

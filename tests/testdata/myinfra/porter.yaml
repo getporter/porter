@@ -4,11 +4,21 @@ version: 0.1.0
 description: "Deploys my infrastructure"
 registry: "localhost:5000"
 
+parameters:
+  - name: database
+    type: string
+    default: mydb
+
+outputs:
+  - name: mysql-connstr
+    
 dependencies:
   requires:
     - name: db
       bundle:
         reference: "localhost:5000/mydb:v0.1.0"
+      parameters:
+        database: ${bundle.parameters.database}
 
 mixins:
   - exec

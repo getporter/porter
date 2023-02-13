@@ -72,6 +72,10 @@ func BuildPorter() {
 	mgx.Must(releases.BuildAll(PKG, "porter", "bin"))
 }
 
+func RestartRegistry() {
+	mgx.Must(docker.RestartDockerRegistry())
+}
+
 func copySchema() {
 	// Copy the porter manifest schema into our templates directory with the other schema
 	// We can't use symbolic links because that doesn't work on windows

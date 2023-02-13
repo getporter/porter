@@ -4,14 +4,12 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"get.porter.sh/porter/pkg/porter"
 	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/yaml"
 	"get.porter.sh/porter/tests"
 	"get.porter.sh/porter/tests/testdata"
-	"github.com/carolynvs/magex/shx"
 	"github.com/stretchr/testify/require"
 )
 
@@ -43,12 +41,6 @@ func (t Tester) MakeTestBundle(name string, ref string) {
 	pwd, _ := os.Getwd()
 	defer t.Chdir(pwd)
 	t.Chdir(filepath.Join(t.RepoRoot, "tests/testdata/", name))
-
-	// TODO(carolynvs): porter publish detection of needing a build should do this
-	output, err := shx.OutputS("docker", "inspect", strings.Replace(ref, name, name+"-installer", 1))
-	if output == "[]" || err != nil {
-		t.RequirePorter("build")
-	}
 
 	// Rely on the auto build functionality to avoid long slow rebuilds when nothing has changed
 	t.RequirePorter("publish", "--reference", ref)
