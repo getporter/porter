@@ -23,7 +23,7 @@ const (
 	DefaultDriver = DockerDriver
 )
 
-type bundleFileOptions struct {
+type BundleDefinitionOptions struct {
 	// File path to the porter manifest. Defaults to the bundle in the current directory.
 	File string
 
@@ -38,9 +38,14 @@ type bundleFileOptions struct {
 
 	// Dir represents the build context directory containing bundle assets
 	Dir string
+
+	// AutoBuildDisabled indicates that Porter should not check if the bundle
+	// definition has changed since it was last built and automatically build before
+	// executing the requested command.
+	AutoBuildDisabled bool
 }
 
-func (o *bundleFileOptions) Validate(cxt *portercontext.Context) error {
+func (o *BundleDefinitionOptions) Validate(cxt *portercontext.Context) error {
 	var err error
 
 	if o.ReferenceSet {
@@ -85,7 +90,7 @@ func (o *bundleFileOptions) Validate(cxt *portercontext.Context) error {
 
 // installationOptions are common options that apply to commands that use an installation
 type installationOptions struct {
-	bundleFileOptions
+	BundleDefinitionOptions
 
 	// Namespace of the installation.
 	Namespace string
@@ -103,7 +108,7 @@ func (o *installationOptions) Validate(ctx context.Context, args []string, p *Po
 		return err
 	}
 
-	err = o.bundleFileOptions.Validate(p.Context)
+	err = o.BundleDefinitionOptions.Validate(p.Context)
 	if err != nil {
 		return err
 	}
@@ -128,7 +133,7 @@ func (o *installationOptions) validateInstallationName(args []string) error {
 }
 
 // defaultBundleFiles defaults the porter manifest and the bundle.json files.
-func (o *bundleFileOptions) defaultBundleFiles(cxt *portercontext.Context) error {
+func (o *BundleDefinitionOptions) defaultBundleFiles(cxt *portercontext.Context) error {
 	if o.File != "" { // --file
 		o.defaultCNABFile()
 	} else if o.CNABFile != "" { // --cnab-file
@@ -149,11 +154,11 @@ func (o *bundleFileOptions) defaultBundleFiles(cxt *portercontext.Context) error
 	return nil
 }
 
-func (o *bundleFileOptions) defaultCNABFile() {
+func (o *BundleDefinitionOptions) defaultCNABFile() {
 	o.CNABFile = filepath.Join(o.Dir, build.LOCAL_BUNDLE)
 }
 
-func (o *bundleFileOptions) validateBundleFiles(cxt *portercontext.Context) error {
+func (o *BundleDefinitionOptions) validateBundleFiles(cxt *portercontext.Context) error {
 	if o.File != "" && o.CNABFile != "" {
 		return errors.New("cannot specify both --file and --cnab-file")
 	}
@@ -171,7 +176,7 @@ func (o *bundleFileOptions) validateBundleFiles(cxt *portercontext.Context) erro
 	return nil
 }
 
-func (o *bundleFileOptions) validateFile(cxt *portercontext.Context) error {
+func (o *BundleDefinitionOptions) validateFile(cxt *portercontext.Context) error {
 	if o.File == "" {
 		return nil
 	}
@@ -185,7 +190,7 @@ func (o *bundleFileOptions) validateFile(cxt *portercontext.Context) error {
 }
 
 // validateCNABFile converts the bundle file path to an absolute filepath and verifies that it exists.
-func (o *bundleFileOptions) validateCNABFile(cxt *portercontext.Context) error {
+func (o *BundleDefinitionOptions) validateCNABFile(cxt *portercontext.Context) error {
 	if o.CNABFile == "" {
 		return nil
 	}

@@ -30,14 +30,15 @@ porter explain REFERENCE [flags]
 ### Options
 
 ```
-      --action string       Hide parameters and outputs that are not used by the specified action.
-      --cnab-file string    Path to the CNAB bundle.json file.
-  -f, --file porter.yaml    Path to the Porter manifest. Defaults to porter.yaml in the current directory.
-      --force               Force a fresh pull of the bundle
-  -h, --help                help for explain
-      --insecure-registry   Don't require TLS for the registry
-  -o, --output string       Specify an output format.  Allowed values: plaintext, json, yaml (default "plaintext")
-  -r, --reference string    Use a bundle in an OCI registry specified by the given reference.
+      --action string        Hide parameters and outputs that are not used by the specified action.
+      --autobuild-disabled   Do not automatically build the bundle from source when the last build is out-of-date.
+      --cnab-file string     Path to the CNAB bundle.json file.
+  -f, --file porter.yaml     Path to the Porter manifest. Defaults to porter.yaml in the current directory.
+      --force                Force a fresh pull of the bundle
+  -h, --help                 help for explain
+      --insecure-registry    Don't require TLS for the registry
+  -o, --output string        Specify an output format.  Allowed values: plaintext, json, yaml (default "plaintext")
+  -r, --reference string     Use a bundle in an OCI registry specified by the given reference.
 ```
 
 ### Options inherited from parent commands

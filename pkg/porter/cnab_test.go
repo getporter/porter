@@ -30,7 +30,7 @@ func TestSharedOptions_defaultBundleFiles_AltManifest(t *testing.T) {
 	cxt := portercontext.NewTestContext(t)
 
 	opts := installationOptions{
-		bundleFileOptions: bundleFileOptions{
+		BundleDefinitionOptions: BundleDefinitionOptions{
 			File: "mybun/porter.yaml",
 		},
 	}
@@ -79,7 +79,7 @@ func TestSharedOptions_validateBundleJson(t *testing.T) {
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
 			opts := installationOptions{
-				bundleFileOptions: bundleFileOptions{
+				BundleDefinitionOptions: BundleDefinitionOptions{
 					CNABFile: tc.cnabFile,
 				},
 			}
@@ -100,52 +100,52 @@ func TestSharedOptions_validateBundleJson(t *testing.T) {
 func Test_bundleFileOptions(t *testing.T) {
 	testcases := []struct {
 		name         string
-		opts         bundleFileOptions
-		setup        func(*portercontext.Context, bundleFileOptions) error
+		opts         BundleDefinitionOptions
+		setup        func(*portercontext.Context, BundleDefinitionOptions) error
 		wantFile     string
 		wantCNABFile string
 		wantError    string
 	}{
 		{
 			name:         "no opts",
-			opts:         bundleFileOptions{},
-			setup:        func(ctx *portercontext.Context, opts bundleFileOptions) error { return nil },
+			opts:         BundleDefinitionOptions{},
+			setup:        func(ctx *portercontext.Context, opts BundleDefinitionOptions) error { return nil },
 			wantFile:     "/" + config.Name,
 			wantCNABFile: "/" + build.LOCAL_BUNDLE,
 			wantError:    "",
 		}, {
 			name: "reference set",
-			opts: bundleFileOptions{
+			opts: BundleDefinitionOptions{
 				ReferenceSet: true,
 			},
-			setup:        func(ctx *portercontext.Context, opts bundleFileOptions) error { return nil },
+			setup:        func(ctx *portercontext.Context, opts BundleDefinitionOptions) error { return nil },
 			wantFile:     "",
 			wantCNABFile: "",
 			wantError:    "",
 		}, {
 			name: "invalid dir",
-			opts: bundleFileOptions{
+			opts: BundleDefinitionOptions{
 				Dir: "path/to/bundle",
 			},
-			setup:        func(ctx *portercontext.Context, opts bundleFileOptions) error { return nil },
+			setup:        func(ctx *portercontext.Context, opts BundleDefinitionOptions) error { return nil },
 			wantFile:     "",
 			wantCNABFile: "",
 			wantError:    `"path/to/bundle" is not a valid directory: open /path/to/bundle: file does not exist`,
 		}, {
 			name: "invalid file",
-			opts: bundleFileOptions{
+			opts: BundleDefinitionOptions{
 				File: "alternate/porter.yaml",
 			},
-			setup:        func(ctx *portercontext.Context, opts bundleFileOptions) error { return nil },
+			setup:        func(ctx *portercontext.Context, opts BundleDefinitionOptions) error { return nil },
 			wantFile:     "",
 			wantCNABFile: "",
 			wantError:    "unable to access --file /alternate/porter.yaml: open /alternate/porter.yaml: file does not exist",
 		}, {
 			name: "valid dir",
-			opts: bundleFileOptions{
+			opts: BundleDefinitionOptions{
 				Dir: "path/to/bundle",
 			},
-			setup: func(ctx *portercontext.Context, opts bundleFileOptions) error {
+			setup: func(ctx *portercontext.Context, opts BundleDefinitionOptions) error {
 				err := ctx.FileSystem.MkdirAll(filepath.Join(opts.Dir, config.Name), pkg.FileModeDirectory)
 				if err != nil {
 					return err
@@ -157,10 +157,10 @@ func Test_bundleFileOptions(t *testing.T) {
 			wantError:    "",
 		}, {
 			name: "valid file",
-			opts: bundleFileOptions{
+			opts: BundleDefinitionOptions{
 				File: "alternate/porter.yaml",
 			},
-			setup: func(ctx *portercontext.Context, opts bundleFileOptions) error {
+			setup: func(ctx *portercontext.Context, opts BundleDefinitionOptions) error {
 				return ctx.FileSystem.MkdirAll(opts.File, pkg.FileModeDirectory)
 			},
 			wantFile:     "/alternate/porter.yaml",
@@ -168,11 +168,11 @@ func Test_bundleFileOptions(t *testing.T) {
 			wantError:    "",
 		}, {
 			name: "valid dir and file",
-			opts: bundleFileOptions{
+			opts: BundleDefinitionOptions{
 				Dir:  "path/to/bundle",
 				File: "alternate/porter.yaml",
 			},
-			setup: func(ctx *portercontext.Context, opts bundleFileOptions) error {
+			setup: func(ctx *portercontext.Context, opts BundleDefinitionOptions) error {
 				err := ctx.FileSystem.MkdirAll(filepath.Join(opts.Dir, opts.File), pkg.FileModeDirectory)
 				if err != nil {
 					return err

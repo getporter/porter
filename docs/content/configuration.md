@@ -79,6 +79,12 @@ experimental:
 # Use Docker buildkit to build the bundle
 build-driver: "buildkit"
 
+# Do not automatically build a bundle from source
+# before running the requested command when Porter detects that it is out-out-date.
+# Example: Normally running porter explain in a bundle directory should trigger an automatic porter build after you have edited porter.yaml
+# and disabling autobuild would have porter explain use the cached build (which could be stale).
+autobuild-disabled: true
+
 # Overwrite the existing published bundle when publishing or copying a bundle.
 # By default, Porter detects when a push would overwrite an existing artifact and requires --force to proceed.
 force-overwrite: false

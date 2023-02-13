@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"strings"
 
 	"get.porter.sh/porter/pkg/build"
@@ -11,12 +12,14 @@ import (
 	configadapter "get.porter.sh/porter/pkg/cnab/config-adapter"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/tracing"
+	"go.opentelemetry.io/otel/attribute"
 )
 
-// ensureLocalBundleIsUpToDate ensures that the bundle is up to date with the porter manifest,
+// ensureLocalBundleIsUpToDate ensures that the bundle is up-to-date with the porter manifest,
 // if it is out-of-date, performs a build of the bundle.
-func (p *Porter) ensureLocalBundleIsUpToDate(ctx context.Context, opts bundleFileOptions) (cnab.BundleReference, error) {
-	ctx, log := tracing.StartSpan(ctx)
+func (p *Porter) ensureLocalBundleIsUpToDate(ctx context.Context, opts BundleDefinitionOptions) (cnab.BundleReference, error) {
+	ctx, log := tracing.StartSpan(ctx,
+		attribute.Bool("autobuild-disabled", opts.AutoBuildDisabled))
 	defer log.EndSpan()
 
 	if opts.File == "" {
@@ -25,25 +28,32 @@ func (p *Porter) ensureLocalBundleIsUpToDate(ctx context.Context, opts bundleFil
 
 	upToDate, err := p.IsBundleUpToDate(ctx, opts)
 	if err != nil {
-		fmt.Fprintln(p.Err, "warning", err)
+		log.Warnf("WARNING: %w", err)
 	}
 
 	if !upToDate {
-		fmt.Fprintln(p.Out, "Building bundle ===>")
-		// opts.File is non-empty, which overrides opts.CNABFile if set
-		// (which may be if a cached bundle is fetched e.g. when running an action)
-		opts.CNABFile = ""
-		buildOpts := BuildOptions{bundleFileOptions: opts}
-		buildOpts.Validate(p)
-		err := p.Build(ctx, buildOpts)
-		if err != nil {
-			return cnab.BundleReference{}, err
+		if opts.AutoBuildDisabled {
+			log.Warn("WARNING: The bundle is out-of-date. Skipping autobuild because --autobuild-disabled was specified")
+		} else {
+			log.Info("Building bundle ===>")
+			// opts.File is non-empty, which overrides opts.CNABFile if set
+			// (which may be if a cached bundle is fetched e.g. when running an action)
+			opts.CNABFile = ""
+			buildOpts := BuildOptions{BundleDefinitionOptions: opts}
+			buildOpts.Validate(p)
+			err := p.Build(ctx, buildOpts)
+			if err != nil {
+				return cnab.BundleReference{}, err
+			}
 		}
 	}
 
 	bun, err := cnab.LoadBundle(p.Context, build.LOCAL_BUNDLE)
 	if err != nil {
-		return cnab.BundleReference{}, err
+		if errors.Is(err, os.ErrNotExist) && opts.AutoBuildDisabled {
+			return cnab.BundleReference{}, log.Errorf("Attempted to use a bundle from source without building it first when --autobuild-disabled is set. Build the bundle and try again: %w", err)
+		}
+		return cnab.BundleReference{}, log.Error(err)
 	}
 
 	return cnab.BundleReference{
@@ -52,7 +62,7 @@ func (p *Porter) ensureLocalBundleIsUpToDate(ctx context.Context, opts bundleFil
 }
 
 // IsBundleUpToDate checks the hash of the manifest against the hash in cnab/bundle.json.
-func (p *Porter) IsBundleUpToDate(ctx context.Context, opts bundleFileOptions) (bool, error) {
+func (p *Porter) IsBundleUpToDate(ctx context.Context, opts BundleDefinitionOptions) (bool, error) {
 	ctx, span := tracing.StartSpan(ctx)
 	defer span.EndSpan()
 

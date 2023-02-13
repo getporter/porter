@@ -44,11 +44,12 @@ porter installations invoke [INSTALLATION] --action ACTION [flags]
 ```
       --action string                Custom action name to invoke.
       --allow-docker-host-access     Controls if the bundle should have access to the host's Docker daemon with elevated privileges. See https://getporter.org/configuration/#allow-docker-host-access for the full implications of this flag.
+      --autobuild-disabled           Do not automatically build the bundle from source when the last build is out-of-date.
       --cnab-file string             Path to the CNAB bundle.json file.
   -c, --credential-set stringArray   Credential sets to use when running the bundle. It should be a named set of credentials and may be specified multiple times.
       --debug                        Run the bundle in debug mode.
   -d, --driver string                Specify a driver to use. Allowed values: docker, debug (default "docker")
-  -f, --file string                  Path to the porter manifest file. Defaults to the bundle in the current directory.
+  -f, --file porter.yaml             Path to the Porter manifest. Defaults to porter.yaml in the current directory.
       --force                        Force a fresh pull of the bundle
   -h, --help                         help for invoke
       --insecure-registry            Don't require TLS for the registry
