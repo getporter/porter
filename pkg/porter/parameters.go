@@ -56,10 +56,7 @@ func (p *Porter) ListParameters(ctx context.Context, opts ListOptions) ([]Displa
 
 	displayResults := make([]DisplayParameterSet, len(results))
 	for i, ps := range results {
-		ps.SchemaType = storage.SchemaTypeParameterSet
-		displayResults[i] = DisplayParameterSet{
-			ParameterSet: ps,
-		}
+		displayResults[i] = NewDisplayParameterSet(ps)
 	}
 
 	return displayResults, nil
@@ -239,6 +236,12 @@ type DisplayParameterSet struct {
 	storage.ParameterSet `yaml:",inline"`
 }
 
+func NewDisplayParameterSet(ps storage.ParameterSet) DisplayParameterSet {
+	ds := DisplayParameterSet{ParameterSet: ps}
+	ds.SchemaType = storage.SchemaTypeParameterSet
+	return ds
+}
+
 // ShowParameter shows the parameter set corresponding to the provided name, using
 // the provided printer.PrintOptions for display.
 func (p *Porter) ShowParameter(ctx context.Context, opts ParameterShowOptions) error {
@@ -247,10 +250,7 @@ func (p *Porter) ShowParameter(ctx context.Context, opts ParameterShowOptions) e
 		return err
 	}
 
-	paramSet := DisplayParameterSet{
-		ParameterSet: ps,
-	}
-	paramSet.SchemaType = storage.SchemaTypeParameterSet
+	paramSet := NewDisplayParameterSet(ps)
 
 	switch opts.Format {
 	case printer.FormatJson:

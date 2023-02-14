@@ -186,8 +186,6 @@ func (m *Manifest) Validate(cxt *portercontext.Context, strategy schema.CheckStr
 
 func (m *Manifest) validateMetadata(cxt *portercontext.Context, strategy schema.CheckStrategy) error {
 	if m.SchemaType == "" {
-		// Default the schema type before importing into the database if it's not set already
-		// SchemaType isn't really used by our code, it's a type hint for editors, but this will ensure we are consistent in our persisted documents
 		m.SchemaType = SchemaTypeBundle
 	} else if !strings.EqualFold(m.SchemaType, SchemaTypeBundle) {
 		return fmt.Errorf("invalid schemaType %s, expected %s", m.SchemaType, SchemaTypeBundle)

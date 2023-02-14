@@ -47,10 +47,7 @@ func (p *Porter) ListCredentials(ctx context.Context, opts ListOptions) ([]Displ
 
 	displayResults := make([]DisplayCredentialSet, len(results))
 	for i, cs := range results {
-		cs.SchemaType = storage.SchemaTypeCredentialSet
-		displayResults[i] = DisplayCredentialSet{
-			CredentialSet: cs,
-		}
+		displayResults[i] = NewDisplayCredentialSet(cs)
 	}
 
 	return displayResults, nil
@@ -233,6 +230,12 @@ type DisplayCredentialSet struct {
 	storage.CredentialSet `yaml:",inline"`
 }
 
+func NewDisplayCredentialSet(cs storage.CredentialSet) DisplayCredentialSet {
+	ds := DisplayCredentialSet{CredentialSet: cs}
+	ds.SchemaType = storage.SchemaTypeCredentialSet
+	return ds
+}
+
 // ShowCredential shows the credential set corresponding to the provided name, using
 // the provided printer.PrintOptions for display.
 func (p *Porter) ShowCredential(ctx context.Context, opts CredentialShowOptions) error {
@@ -244,10 +247,7 @@ func (p *Porter) ShowCredential(ctx context.Context, opts CredentialShowOptions)
 		return err
 	}
 
-	credSet := DisplayCredentialSet{
-		CredentialSet: cs,
-	}
-	credSet.SchemaType = storage.SchemaTypeCredentialSet
+	credSet := NewDisplayCredentialSet(cs)
 
 	switch opts.Format {
 	case printer.FormatJson, printer.FormatYaml:

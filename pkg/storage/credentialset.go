@@ -109,12 +109,10 @@ func (s *CredentialSet) Validate(ctx context.Context, strategy schema.CheckStrat
 		return span.Errorf("invalid schemaType %s, expected %s", s.SchemaType, SchemaTypeCredentialSet)
 	}
 
+	// Default the schemaType before importing into the database if it's not set already
+	// SchemaType isn't really used by our code, it's a type hint for editors, but this will ensure we are consistent in our persisted documents
 	if s.SchemaType == "" {
-		// Default the schema type before importing into the database if it's not set already
-		// SchemaType isn't really used by our code, it's a type hint for editors, but this will ensure we are consistent in our persisted documents
 		s.SchemaType = SchemaTypeCredentialSet
-	} else if !strings.EqualFold(s.SchemaType, SchemaTypeCredentialSet) {
-		return fmt.Errorf("invalid schemaType %s, expected %s", s.SchemaType, SchemaTypeCredentialSet)
 	}
 
 	// OK! Now we can do resource specific validations

@@ -132,6 +132,8 @@ func (i *Installation) ApplyResult(run Run, result Result) {
 // Only updates fields that users are allowed to modify.
 // For example, Name, Namespace and Status cannot be modified.
 func (i *InstallationSpec) Apply(input InstallationSpec) {
+	i.SchemaType = input.SchemaType
+	i.SchemaVersion = input.SchemaVersion
 	i.Uninstalled = input.Uninstalled
 	i.Bundle = input.Bundle
 	i.Parameters = input.Parameters
@@ -165,6 +167,12 @@ func (i *InstallationSpec) Validate(ctx context.Context, strategy schema.CheckSt
 		return span.Errorf("invalid schemaType %s, expected %s", i.SchemaType, SchemaTypeInstallation)
 	}
 
+	// OK! Now we can do resource specific validations
+
+	// Default the schema type before importing into the database if it's not set already
+	// SchemaType isn't really used by our code, it's a type hint for editors, but this will ensure we are consistent in our persisted documents
+	if i.SchemaType == "" {
+		i.SchemaType = SchemaTypeInstallation
 	}
 
 	// OK! Now we can do resource specific validations
