@@ -248,7 +248,7 @@ func (e *dependencyExecutioner) prepareDependency(ctx context.Context, dep *queu
 
 	// Handle any parameter overrides for the dependency defined on the command line
 	// --param DEP#PARAM=VALUE
-	for key, value := range e.parentOpts.combinedParameters {
+	for key, value := range e.parentOpts.depParams {
 		parts := strings.Split(key, "#")
 		if len(parts) > 1 && parts[0] == dep.Alias {
 			paramName := parts[1]
@@ -293,7 +293,7 @@ func (e *dependencyExecutioner) executeDependency(ctx context.Context, dep *queu
 		}
 	}
 
-	resolvedParameters, err := e.porter.resolveParameters(ctx, depInstallation, dep.BundleReference.Definition, e.parentArgs.Action, dep.Parameters)
+	finalParams, err := e.porter.finalizeParameters(ctx, depInstallation, dep.BundleReference.Definition, e.parentArgs.Action, dep.Parameters)
 	if err != nil {
 		return span.Error(fmt.Errorf("error resolving parameters for dependency %s: %w", dep.Alias, err))
 	}
@@ -304,7 +304,7 @@ func (e *dependencyExecutioner) executeDependency(ctx context.Context, dep *queu
 		Installation:          depInstallation,
 		Driver:                e.parentArgs.Driver,
 		AllowDockerHostAccess: e.parentOpts.AllowDockerHostAccess,
-		Params:                resolvedParameters,
+		Params:                finalParams,
 		PersistLogs:           e.parentArgs.PersistLogs,
 	}
 

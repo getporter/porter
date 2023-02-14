@@ -249,10 +249,7 @@ The docker driver runs the bundle container using the local Docker host. To use 
 	}
 
 	f := cmd.Flags()
-	f.StringVarP(&opts.File, "file", "f", "",
-		"Path to the porter manifest file. Defaults to the bundle in the current directory.")
-	f.StringVar(&opts.CNABFile, "cnab-file", "",
-		"Path to the CNAB bundle.json file.")
+	addBundleDefinitionFlags(f, &opts.BundleDefinitionOptions)
 	f.StringVarP(&opts.Namespace, "namespace", "n", "",
 		"Create the installation in the specified namespace. Defaults to the global namespace.")
 	f.StringSliceVarP(&opts.Labels, "label", "l", nil,
@@ -300,10 +297,7 @@ The docker driver runs the bundle container using the local Docker host. To use 
 	}
 
 	f := cmd.Flags()
-	f.StringVarP(&opts.File, "file", "f", "",
-		"Path to the porter manifest file. Defaults to the bundle in the current directory.")
-	f.StringVar(&opts.CNABFile, "cnab-file", "",
-		"Path to the CNAB bundle.json file.")
+	addBundleDefinitionFlags(f, &opts.BundleDefinitionOptions)
 	f.StringVarP(&opts.Namespace, "namespace", "n", "",
 		"Namespace of the specified installation. Defaults to the global namespace.")
 	f.StringVar(&opts.Version, "version", "",
@@ -353,12 +347,9 @@ The docker driver runs the bundle container using the local Docker host. To use 
 	f := cmd.Flags()
 	f.StringVar(&opts.Action, "action", "",
 		"Custom action name to invoke.")
-	f.StringVarP(&opts.File, "file", "f", "",
-		"Path to the porter manifest file. Defaults to the bundle in the current directory.")
-	f.StringVar(&opts.CNABFile, "cnab-file", "",
-		"Path to the CNAB bundle.json file.")
 	f.StringVarP(&opts.Namespace, "namespace", "n", "",
 		"Namespace of the specified installation. Defaults to the global namespace.")
+	addBundleDefinitionFlags(f, &opts.BundleDefinitionOptions)
 	addBundleActionFlags(f, opts)
 
 	// Allow configuring the --driver flag with runtime-driver, to avoid conflicts with other commands
@@ -404,16 +395,13 @@ The docker driver runs the bundle container using the local Docker host. To use 
 	}
 
 	f := cmd.Flags()
-	f.StringVarP(&opts.File, "file", "f", "",
-		"Path to the porter manifest file. Defaults to the bundle in the current directory. Optional unless a newer version of the bundle should be used to uninstall the bundle.")
-	f.StringVar(&opts.CNABFile, "cnab-file", "",
-		"Path to the CNAB bundle.json file.")
 	f.BoolVar(&opts.Delete, "delete", false,
 		"Delete all records associated with the installation, assuming the uninstall action succeeds")
 	f.BoolVar(&opts.ForceDelete, "force-delete", false,
 		"UNSAFE. Delete all records associated with the installation, even if uninstall fails. This is intended for cleaning up test data and is not recommended for production environments.")
 	f.StringVarP(&opts.Namespace, "namespace", "n", "",
 		"Namespace of the specified installation. Defaults to the global namespace.")
+	addBundleDefinitionFlags(f, &opts.BundleDefinitionOptions)
 	addBundleActionFlags(f, opts)
 
 	// Allow configuring the --driver flag with runtime-driver, to avoid conflicts with other commands

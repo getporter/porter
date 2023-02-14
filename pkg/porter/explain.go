@@ -138,7 +138,7 @@ func (o *ExplainOpts) Validate(args []string, pctx *portercontext.Context) error
 		return fmt.Errorf("only one positional argument may be specified, the bundle reference, but multiple were received: %s", args)
 	}
 
-	err := o.bundleFileOptions.Validate(pctx)
+	err := o.BundleDefinitionOptions.Validate(pctx)
 	if err != nil {
 		return err
 	}
@@ -157,7 +157,7 @@ func (o *ExplainOpts) Validate(args []string, pctx *portercontext.Context) error
 }
 
 func (p *Porter) Explain(ctx context.Context, o ExplainOpts) error {
-	bundleRef, err := p.resolveBundleReference(ctx, &o.BundleReferenceOptions)
+	bundleRef, err := o.GetBundleReference(ctx, p)
 	if err != nil {
 		return err
 	}

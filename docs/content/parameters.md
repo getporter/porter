@@ -13,11 +13,19 @@ certain resource should be deployed in, etc. Then in your action's steps you can
 reference the parameters using porter's template language `${
 bundle.parameters.db_name }`.
 
-Parameter values are resolved from a combination of supplied parameter set
-files, user-specified overrides and defaults defined by the bundle itself.
-The resolved values are added to a claim receipt, which is passed in to
-the bundle execution environment, e.g. the docker container, when the bundle
-action is executed (install/upgrade/uninstall/invoke).
+When a bundle is executed, parameter values are resolved in a hierarchy of (from highest to lowest precedence):
+
+* Overrides specified either with the \--param flag or by setting parameters directly on an installation resource
+* Parameter sets specified with the \--parameter-set flag or by setting the parameter set name directly on an installation resource
+* Parameter values remembered from the last time the bundle was run
+* Defaults defined for the parameter in the bundle definition
+
+Let's use the hello-llama bundle from the [Parameters QuickStart](/quickstart/parameters/) as an example and walk through the various ways that Porter will resolve the name parameter.
+
+1. The bundle has one parameter, name, and it has a default therefore we do not need to specify it when installing the bundle. Running `porter install test -r ghcr.io/getporter/hello-llama:v0.1.1` uses the default value of "llama" for the name parameter.
+2. Now we can override that name using the \--param flag, `porter upgrade test --param name=sparkles`.
+3. When we repeat the upgrade command without specifying the name parameter, the name parameter continues to be "sparkles" as specified the last time the bundle was run. You can see the last used parameter values for an installation with `porter installation show`.
+4. You can also override the name using a parameter set and using it during the upgrade, `porter upgrade test --parameter-set hello-llama`.
 
 ## Parameter Sets
 
@@ -62,7 +70,7 @@ to handle sensitive data.
 ## Bundle defaults
 
 The bundle author may have decided to supply a default value for a given
-parameter as well.  This value would be used when neither a user-specified
+parameter as well. This value would be used when neither a user-specified
 value nor a parameter set value is supplied.  See the `Parameters` section in
 the [Author Bundles](/author-bundles#parameters/) doc for more info.
 

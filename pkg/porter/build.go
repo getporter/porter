@@ -22,7 +22,7 @@ import (
 )
 
 type BuildOptions struct {
-	bundleFileOptions
+	BundleDefinitionOptions
 	metadataOpts
 	build.BuildImageOptions
 
@@ -69,7 +69,7 @@ func (o *BuildOptions) Validate(p *Porter) error {
 		return err
 	}
 
-	return o.bundleFileOptions.Validate(p.Context)
+	return o.BundleDefinitionOptions.Validate(p.Context)
 }
 
 func stringSliceContains(allowedValues []string, value string) bool {

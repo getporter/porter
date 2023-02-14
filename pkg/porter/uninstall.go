@@ -74,18 +74,12 @@ func (p *Porter) UninstallBundle(ctx context.Context, opts UninstallOptions) err
 	ctx, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
 
-	// Figure out which bundle/installation we are working with
-	_, err := p.resolveBundleReference(ctx, opts.BundleReferenceOptions)
-	if err != nil {
-		return err
-	}
-
 	installation, err := p.Installations.GetInstallation(ctx, opts.Namespace, opts.Name)
 	if err != nil {
 		return fmt.Errorf("could not find installation %s/%s: %w", opts.Namespace, opts.Name, err)
 	}
 
-	err = p.applyActionOptionsToInstallation(ctx, &installation, opts.BundleExecutionOptions)
+	err = p.applyActionOptionsToInstallation(ctx, opts, &installation)
 	if err != nil {
 		return err
 	}

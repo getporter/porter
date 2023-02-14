@@ -152,7 +152,7 @@ Retrieve current user profile from GitHub
 To clean up the resources installed from this QuickStart, use the `porter uninstall` command. 
 
 ```
-porter uninstall credentials-tutorial
+porter uninstall examples/credentials-tutorial
 ```
 
 ## Next Steps 

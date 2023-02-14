@@ -152,10 +152,37 @@ func New(cxt *portercontext.Context, mixins pkgmgmt.PackageManager) *Linter {
 	}
 }
 
-func (l *Linter) Lint(ctx context.Context, m *manifest.Manifest) (Results, error) {
-	// TODO: perform any porter level linting
-	// e.g. metadata, credentials, properties, outputs, dependencies, etc
 
+func (l *Linter) Lint(ctx context.Context, m *manifest.Manifest) (Results, error) {
+	// Check for reserved porter prefix on parameter names
+	reservedPrefixes := []string{"porter-", "porter_"}
+	params := m.Parameters
+
+	var results Results
+
+	for _, param := range params {
+		paramName := strings.ToLower(param.Name)
+		for _, reservedPrefix := range reservedPrefixes {
+			if strings.HasPrefix(paramName, reservedPrefix) {
+
+				res := Result {
+					Level: LevelError,
+					Location: Location {
+						Action: "",
+						Mixin: "",
+						StepNumber: 0,
+						StepDescription: "",
+				
+					},
+					Code: "porter-100",
+					Title: "Reserved name error",
+					Message: param.Name + " has a reserved prefix. Parameters cannot start with porter- or porter_",
+					URL: "https://getporter.org/reference/linter/#porter-100",
+				}
+				results = append(results, res)
+			}
+		}
+	}
 	ctx, span := tracing.StartSpan(ctx)
 	defer span.EndSpan()
 
@@ -166,7 +193,6 @@ func (l *Linter) Lint(ctx context.Context, m *manifest.Manifest) (Results, error
 		return nil, span.Error(err)
 	}
 
-	var results Results
 	for _, response := range responses {
 		if response.Error != nil {
 			// Ignore mixins that do not support the lint command

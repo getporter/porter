@@ -4,126 +4,97 @@
 package integration
 
 import (
-	"strings"
+	"encoding/json"
 	"testing"
 
-	"get.porter.sh/porter/pkg"
-	"get.porter.sh/porter/pkg/config"
-	"get.porter.sh/porter/pkg/manifest"
-	"get.porter.sh/porter/pkg/porter"
 	"get.porter.sh/porter/pkg/yaml"
-	"github.com/stretchr/testify/assert"
+	"get.porter.sh/porter/tests"
+	"get.porter.sh/porter/tests/tester"
+	"github.com/Masterminds/semver/v3"
 	"github.com/stretchr/testify/require"
 )
 
-func TestRebuild_InstallNewBundle(t *testing.T) {
-	t.Parallel()
-
-	p := porter.NewTestPorter(t)
-	defer p.Close()
-	ctx := p.SetupIntegrationTest()
+func TestRebuild(t *testing.T) {
+	test, err := tester.NewTest(t)
+	defer test.Close()
+	require.NoError(t, err, "test setup failed")
 
 	// Create a bundle
-	err := p.Create()
-	require.NoError(t, err)
+	test.Chdir(test.TestDir)
+	test.RequirePorter("create")
 
-	// Install a bundle without building first
-	installOpts := porter.NewInstallOptions()
-	err = installOpts.Validate(ctx, []string{}, p.Porter)
-	require.NoError(t, err)
-	err = p.InstallBundle(ctx, installOpts)
-	assert.NoError(t, err, "install should have succeeded")
-}
-
-func TestRebuild_UpgradeModifiedBundle(t *testing.T) {
-	t.Parallel()
-
-	p := porter.NewTestPorter(t)
-	defer p.Close()
-	ctx := p.SetupIntegrationTest()
-
-	// Install a bundle
-	err := p.Create()
-	require.NoError(t, err)
-	installOpts := porter.NewInstallOptions()
-	err = installOpts.Validate(ctx, []string{}, p.Porter)
-	require.NoError(t, err)
-	err = p.InstallBundle(ctx, installOpts)
-	require.NoError(t, err)
+	// Use a unique name with it so that if other tests install a newly created hello
+	// world bundle, they don't conflict
+	installationName := t.Name()
 
 	// Modify the porter.yaml to trigger a rebuild
-	m, err := manifest.ReadManifest(p.Context, config.Name)
-	require.NoError(t, err)
-	m.Version = "0.2.0"
-	data, err := yaml.Marshal(m)
-	require.NoError(t, err)
-	err = p.FileSystem.WriteFile(config.Name, data, pkg.FileModeWritable)
-	require.NoError(t, err)
+	bumpBundle := func() {
+		test.EditYaml("porter.yaml", func(yq *yaml.Editor) error {
+			orig, err := yq.GetValue("version")
+			require.NoError(t, err, "unable to read the bundle version from porter.yaml in order to bump it")
+
+			v, err := semver.NewVersion(orig)
+			require.NoErrorf(t, err, "error reading %s as a semver version", orig)
+
+			return yq.SetValue("version", v.IncPatch().String())
+		})
+	}
+
+	// Try to explain the bundle without building first, it should fail
+	_, output, err := test.RunPorter("explain", "--autobuild-disabled")
+	require.ErrorContains(t, err, "Attempted to use a bundle from source without building it first when --autobuild-disabled is set. Build the bundle and try again")
+	require.NotContains(t, output, "Building bundle ===>")
+
+	// Explain the bundle
+	_, output = test.RequirePorter("explain")
+	tests.RequireOutputContains(t, output, "Building bundle ===>", "expected a build before explain")
+
+	bumpBundle()
+
+	// Explain the bundle, with --autobuild-disabled. It should work since the bundle has been built
+	explainJson, output := test.RequirePorter("explain", "--autobuild-disabled", "-o=json")
+	tests.RequireOutputContains(t, output, "WARNING: The bundle is out-of-date. Skipping autobuild because --autobuild-disabled was specified")
+	require.NotContains(t, output, "Building bundle ===>")
+	var explainResult map[string]interface{}
+	err = json.Unmarshal([]byte(explainJson), &explainResult)
+	require.NoError(t, err, "could not marshal explain output as json")
+	require.Equal(t, "0.1.0", explainResult["version"], "explain should show stale output because we used --autobuild-disabled")
+
+	// Inspect the bundle
+	_, output = test.RequirePorter("inspect")
+	tests.RequireOutputContains(t, output, "Building bundle ===>", "expected a build before inspect")
+
+	bumpBundle()
+
+	// Generate credentials for the bundle
+	_, output = test.RequirePorter("credentials", "generate", installationName)
+	tests.RequireOutputContains(t, output, "Building bundle ===>", "expected a build before credentials generate")
+
+	bumpBundle()
+
+	// Generate parameters for the bundle
+	_, output = test.RequirePorter("parameters", "generate", installationName)
+	tests.RequireOutputContains(t, output, "Building bundle ===>", "expected a build before parameters generate")
+
+	bumpBundle()
+
+	// Install the bundle
+	_, output = test.RequirePorter("install", installationName)
+	tests.RequireOutputContains(t, output, "Building bundle ===>", "expected a build before install")
+
+	bumpBundle()
 
 	// Upgrade the bundle
-	upgradeOpts := porter.NewUpgradeOptions()
-	err = upgradeOpts.Validate(ctx, []string{}, p.Porter)
-	require.NoError(t, err)
-	err = p.UpgradeBundle(ctx, upgradeOpts)
-	require.NoError(t, err, "upgrade should have succeeded")
+	_, output = test.RequirePorter("upgrade", installationName)
+	tests.RequireOutputContains(t, output, "Building bundle ===>", "expected a rebuild before upgrade")
 
-	gotOutput := p.TestConfig.TestContext.GetOutput()
-	buildCount := strings.Count(gotOutput, "Building bundle ===>")
-	assert.Equal(t, 2, buildCount, "expected a rebuild before upgrade")
-}
+	// Upgrade again, should not trigger a rebuild
+	_, output = test.RequirePorter("upgrade", installationName)
+	require.NotContains(t, output, "Building bundle ===>", "the second upgrade should not rebuild because the bundle wasn't changed")
 
-func TestRebuild_GenerateCredentialsNewBundle(t *testing.T) {
-	t.Parallel()
+	bumpBundle()
 
-	p := porter.NewTestPorter(t)
-	defer p.Close()
-	ctx := p.SetupIntegrationTest()
-
-	// Create a bundle that uses credentials
-	p.AddTestBundleDir("testdata/bundles/bundle-with-credentials", true)
-
-	credentialOptions := porter.CredentialOptions{}
-	credentialOptions.Silent = true
-	err := credentialOptions.Validate(ctx, []string{}, p.Porter)
-	require.NoError(t, err)
-	err = p.GenerateCredentials(ctx, credentialOptions)
-	assert.NoError(t, err)
-
-	gotOutput := p.TestConfig.TestContext.GetOutput()
-	assert.Contains(t, gotOutput, "Building bundle ===>", "expected a rebuild before generating credentials")
-}
-
-func TestRebuild_GenerateCredentialsExistingBundle(t *testing.T) {
-	t.Parallel()
-
-	p := porter.NewTestPorter(t)
-	defer p.Close()
-	ctx := p.SetupIntegrationTest()
-
-	// Create a bundle that uses credentials
-	p.AddTestBundleDir("testdata/bundles/bundle-with-credentials", true)
-
-	credentialOptions := porter.CredentialOptions{}
-	credentialOptions.Silent = true
-	err := credentialOptions.Validate(ctx, []string{}, p.Porter)
-	require.NoError(t, err)
-	err = p.GenerateCredentials(ctx, credentialOptions)
-	require.NoError(t, err)
-
-	// Modify the porter.yaml to trigger a rebuild
-	m, err := manifest.ReadManifest(p.Context, config.Name)
-	require.NoError(t, err)
-	m.Version = "0.2.0"
-	data, err := yaml.Marshal(m)
-	require.NoError(t, err)
-	err = p.FileSystem.WriteFile(config.Name, data, pkg.FileModeWritable)
-	require.NoError(t, err)
-
-	// Re-generate the credentials
-	err = p.GenerateCredentials(ctx, credentialOptions)
-	require.NoError(t, err)
-
-	gotOutput := p.TestConfig.TestContext.GetOutput()
-	buildCount := strings.Count(gotOutput, "Building bundle ===>")
-	assert.Equal(t, 2, buildCount, "expected a rebuild before generating credentials")
+	// Uninstall the bundle
+	_, output = test.RequirePorter("uninstall", installationName)
+	tests.RequireOutputContains(t, output, "Building bundle ===>", "expected a rebuild before uninstall")
 }

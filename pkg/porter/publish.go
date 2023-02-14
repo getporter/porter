@@ -27,7 +27,7 @@ import (
 // Porter handles defaulting any missing values.
 type PublishOptions struct {
 	BundlePullOptions
-	bundleFileOptions
+	BundleDefinitionOptions
 	Tag         string
 	Registry    string
 	ArchiveFile string
@@ -46,7 +46,7 @@ func (o *PublishOptions) Validate(cfg *config.Config) error {
 		}
 	} else {
 		// Proceed with publishing from the resolved build context directory
-		err := o.bundleFileOptions.Validate(cfg.Context)
+		err := o.BundleDefinitionOptions.Validate(cfg.Context)
 		if err != nil {
 			return err
 		}
@@ -99,7 +99,7 @@ func (p *Porter) publishFromFile(ctx context.Context, opts PublishOptions) error
 	ctx, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
 
-	_, err := p.ensureLocalBundleIsUpToDate(ctx, opts.bundleFileOptions)
+	_, err := p.ensureLocalBundleIsUpToDate(ctx, opts.BundleDefinitionOptions)
 	if err != nil {
 		return err
 	}
