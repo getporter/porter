@@ -15,16 +15,17 @@ type TestRegistry struct {
 	MockPullBundle        func(ctx context.Context, ref cnab.OCIReference, opts RegistryOptions) (cnab.BundleReference, error)
 	MockPushBundle        func(ctx context.Context, ref cnab.BundleReference, opts RegistryOptions) (bundleReference cnab.BundleReference, err error)
 	MockPushImage         func(ctx context.Context, ref cnab.OCIReference, opts RegistryOptions) (imageDigest digest.Digest, err error)
-	MockGetCachedImage    func(ctx context.Context, ref cnab.OCIReference) (ImageSummary, error)
+	MockGetCachedImage    func(ctx context.Context, ref cnab.OCIReference) (ImageMetadata, error)
 	MockListTags          func(ctx context.Context, ref cnab.OCIReference, opts RegistryOptions) ([]string, error)
 	MockPullImage         func(ctx context.Context, ref cnab.OCIReference, opts RegistryOptions) error
 	MockGetBundleMetadata func(ctx context.Context, ref cnab.OCIReference, opts RegistryOptions) (BundleMetadata, error)
-	cache                 map[string]ImageSummary
+	MockGetImageMetadata  func(ctx context.Context, ref cnab.OCIReference, opts RegistryOptions) (ImageMetadata, error)
+	cache                 map[string]ImageMetadata
 }
 
 func NewTestRegistry() *TestRegistry {
 	return &TestRegistry{
-		cache: make(map[string]ImageSummary),
+		cache: make(map[string]ImageMetadata),
 	}
 }
 
@@ -32,7 +33,7 @@ func (t TestRegistry) PullBundle(ctx context.Context, ref cnab.OCIReference, opt
 	if t.MockPullBundle != nil {
 		return t.MockPullBundle(ctx, ref, opts)
 	}
-	sum, _ := NewImageSummary(ref.String(), types.ImageInspect{ID: cnab.NewULID()})
+	sum, _ := NewImageSummaryFromInspect(ref, types.ImageInspect{ID: cnab.NewULID()})
 	t.cache[ref.String()] = sum
 
 	return cnab.BundleReference{Reference: ref}, nil
@@ -53,7 +54,7 @@ func (t *TestRegistry) PushImage(ctx context.Context, ref cnab.OCIReference, opt
 	return "sha256:75c495e5ce9c428d482973d72e3ce9925e1db304a97946c9aa0b540d7537e041", nil
 }
 
-func (t *TestRegistry) GetCachedImage(ctx context.Context, ref cnab.OCIReference) (ImageSummary, error) {
+func (t *TestRegistry) GetCachedImage(ctx context.Context, ref cnab.OCIReference) (ImageMetadata, error) {
 	if t.MockGetCachedImage != nil {
 		return t.MockGetCachedImage(ctx, ref)
 	}
@@ -61,9 +62,25 @@ func (t *TestRegistry) GetCachedImage(ctx context.Context, ref cnab.OCIReference
 	img := ref.String()
 	sum, ok := t.cache[img]
 	if !ok {
-		return ImageSummary{}, fmt.Errorf("image %s not found in cache", img)
+		return ImageMetadata{}, fmt.Errorf("failed to find image in docker cache: %w", ErrNotFound{Reference: ref})
 	}
 	return sum, nil
+}
+
+func (t TestRegistry) GetImageMetadata(ctx context.Context, ref cnab.OCIReference, opts RegistryOptions) (ImageMetadata, error) {
+	meta, err := t.GetCachedImage(ctx, ref)
+	if err != nil {
+		if t.MockGetImageMetadata != nil {
+			return t.MockGetImageMetadata(ctx, ref, opts)
+		} else {
+			mockImg := ImageMetadata{
+				Reference:   ref,
+				RepoDigests: []string{fmt.Sprintf("%s@sha256:75c495e5ce9c428d482973d72e3ce9925e1db304a97946c9aa0b540d7537e041", ref.Repository())},
+			}
+			return mockImg, nil
+		}
+	}
+	return meta, nil
 }
 
 func (t *TestRegistry) ListTags(ctx context.Context, ref cnab.OCIReference, opts RegistryOptions) ([]string, error) {
@@ -80,7 +97,7 @@ func (t *TestRegistry) PullImage(ctx context.Context, ref cnab.OCIReference, opt
 	}
 
 	image := ref.String()
-	sum, err := NewImageSummary(image, types.ImageInspect{
+	sum, err := NewImageSummaryFromInspect(ref, types.ImageInspect{
 		ID:          cnab.NewULID(),
 		RepoDigests: []string{fmt.Sprintf("%s@sha256:75c495e5ce9c428d482973d72e3ce9925e1db304a97946c9aa0b540d7537e041", image)},
 	})

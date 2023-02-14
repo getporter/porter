@@ -23,13 +23,17 @@ type RegistryProvider interface {
 
 	// GetCachedImage returns a particular image from the local image cache.
 	// Use ErrNotFound to detect if the failure is because the image is not in the local Docker cache.
-	GetCachedImage(ctx context.Context, ref cnab.OCIReference) (ImageSummary, error)
+	GetCachedImage(ctx context.Context, ref cnab.OCIReference) (ImageMetadata, error)
 
 	// ListTags returns all tags defined on the specified repository.
 	ListTags(ctx context.Context, repo cnab.OCIReference, opts RegistryOptions) ([]string, error)
 
 	// PullImage pulls an image from an OCI registry and returns the image's digest
 	PullImage(ctx context.Context, image cnab.OCIReference, opts RegistryOptions) error
+
+	// GetImageMetadata returns information about an image in a registry
+	// Use ErrNotFound to detect if the error is because the image is not in the registry.
+	GetImageMetadata(ctx context.Context, ref cnab.OCIReference, opts RegistryOptions) (ImageMetadata, error)
 
 	// GetBundleMetadata returns information about a bundle in a registry
 	// Use ErrNotFound to detect if the error is because the bundle is not in the registry.

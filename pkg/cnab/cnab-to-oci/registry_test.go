@@ -7,6 +7,8 @@ import (
 	"get.porter.sh/porter/pkg/cnab"
 	"github.com/docker/docker/api/types"
 	"github.com/google/go-containerregistry/pkg/v1/remote/transport"
+	"github.com/opencontainers/go-digest"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -32,13 +34,6 @@ func TestImageSummary(t *testing.T) {
 			expectedErr:  "",
 		},
 		{
-			name:         "invalid image reference",
-			imgRef:       "test-",
-			imageSummary: types.ImageInspect{ID: "test", RepoDigests: []string{"test/image@sha256:6b5a28ccbb76f12ce771a23757880c6083234255c5ba191fca1c5db1f71c1687"}},
-			expected:     expectedOutput{hasInitErr: true},
-			expectedErr:  "invalid reference format",
-		},
-		{
 			name:         "empty repo digests",
 			imgRef:       "test/image:latest",
 			imageSummary: types.ImageInspect{ID: "test", RepoDigests: []string{}},
@@ -61,13 +56,13 @@ func TestImageSummary(t *testing.T) {
 	for _, tt := range testcases {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			sum, err := NewImageSummary(tt.imgRef, tt.imageSummary)
+			sum, err := NewImageSummaryFromInspect(cnab.MustParseOCIReference(tt.imgRef), tt.imageSummary)
 			if tt.expected.hasInitErr {
 				require.ErrorContains(t, err, tt.expectedErr)
 				return
 			}
-			require.Equal(t, sum.GetImageReference().String(), tt.expected.imageRef)
-			digest, err := sum.Digest()
+			require.Equal(t, sum.Reference.String(), tt.expected.imageRef)
+			digest, err := sum.GetRepositoryDigest()
 			if tt.expected.digest == "" {
 				require.ErrorContains(t, err, tt.expectedErr)
 				return
@@ -75,6 +70,19 @@ func TestImageSummary(t *testing.T) {
 			require.Equal(t, tt.expected.digest, digest.String())
 		})
 	}
+}
+
+func TestNewImageSummaryFromDescriptor(t *testing.T) {
+	ref := cnab.MustParseOCIReference("localhost:5000/whalesayd:latest")
+	origRepoDigest := digest.Digest("sha256:499f71eec2e3bd78f26c268bbf5b2a65f73b96216fac4a89b86b5ebf115527b6")
+
+	s, err := NewImageSummaryFromDigest(ref, origRepoDigest)
+	require.NoError(t, err, "NewImageSummaryFromDigest failed")
+
+	// Locate the repository digest associated with the reference and validate that it matches what we input
+	repoDigest, err := s.GetRepositoryDigest()
+	require.NoError(t, err, "failed to get repository digest for image summary")
+	assert.Equal(t, origRepoDigest.String(), repoDigest.String())
 }
 
 func TestAsNotFoundError(t *testing.T) {
