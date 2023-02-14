@@ -88,10 +88,11 @@ func (p *Porter) generateInternalManifest(ctx context.Context, opts BuildOptions
 			return span.Errorf("failed to parse image %s reference: %w", img.Repository, err)
 		}
 
-		digest, err := p.getImageLatestDigest(ctx, ref)
+		digest, err := p.getImageDigest(ctx, ref)
 		if err != nil {
 			return span.Error(err)
 		}
+		span.SetAttributes(attribute.String("digest", digest.Encoded()))
 
 		var path string
 		for _, p := range nc.PathStack {
@@ -115,8 +116,9 @@ func (p *Porter) generateInternalManifest(ctx context.Context, opts BuildOptions
 	return e.WriteFile(build.LOCAL_MANIFEST)
 }
 
-func (p *Porter) getImageLatestDigest(ctx context.Context, img cnab.OCIReference) (digest.Digest, error) {
-	ctx, span := tracing.StartSpan(ctx)
+// getImageDigest retrieves the repository digest associated with the specified image reference.
+func (p *Porter) getImageDigest(ctx context.Context, img cnab.OCIReference) (digest.Digest, error) {
+	ctx, span := tracing.StartSpan(ctx, attribute.String("image", img.String()))
 	defer span.EndSpan()
 
 	// if no image tag is specified, default to use latest
@@ -128,17 +130,17 @@ func (p *Porter) getImageLatestDigest(ctx context.Context, img cnab.OCIReference
 		img = refWithTag
 	}
 
-	// Right now there isn't a way to specify --insecure-registry for build
-	// because the underlying implementation in PullImage doesn't support it.
-	err := p.Registry.PullImage(ctx, img, cnabtooci.RegistryOptions{})
+	regOpts := cnabtooci.RegistryOptions{}
+	imgSummary, err := p.Registry.GetImageMetadata(ctx, img, regOpts)
 	if err != nil {
 		return "", err
 	}
 
-	imgSummary, err := p.Registry.GetCachedImage(ctx, img)
+	imgDigest, err := imgSummary.GetRepositoryDigest()
 	if err != nil {
-		return "", err
+		return "", span.Error(err)
 	}
 
-	return imgSummary.Digest()
+	span.SetAttributes(attribute.String("digest", imgDigest.String()))
+	return imgDigest, nil
 }
