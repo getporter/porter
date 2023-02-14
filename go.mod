@@ -31,9 +31,9 @@ require (
 	github.com/containerd/containerd v1.6.17
 	github.com/davecgh/go-spew v1.1.1
 	github.com/docker/buildx v0.10.2
-	github.com/docker/cli v23.0.0-rc.1+incompatible
+	github.com/docker/cli v23.0.1+incompatible
 	github.com/docker/distribution v2.8.1+incompatible
-	github.com/docker/docker v23.0.0-rc.1+incompatible
+	github.com/docker/docker v23.0.1+incompatible
 	github.com/dustin/go-humanize v1.0.1
 	github.com/ghodss/yaml v1.0.0
 	github.com/google/go-cmp v0.5.9
