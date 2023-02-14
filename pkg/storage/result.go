@@ -4,14 +4,13 @@ import (
 	"time"
 
 	"get.porter.sh/porter/pkg/cnab"
-	"github.com/cnabio/cnab-go/schema"
 )
 
 var _ Document = Result{}
 
 type Result struct {
 	// SchemaVersion of the document.
-	SchemaVersion schema.Version `json:"schemaVersion"`
+	SchemaVersion cnab.SchemaVersion `json:"schemaVersion"`
 
 	// ID of the result.
 	ID string `json:"_id"`

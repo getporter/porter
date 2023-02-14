@@ -3,16 +3,16 @@ package migrations
 import (
 	"time"
 
+	"get.porter.sh/porter/pkg/cnab"
 	"github.com/cnabio/cnab-go/bundle"
-	"github.com/cnabio/cnab-go/schema"
 )
 
 // SourceClaim represents the file format of claim documents from v0.38
 type SourceClaim struct {
 	// SchemaVersion is the version of the claim schema.
-	SchemaVersion schema.Version `json:"schemaVersion"`
+	SchemaVersion cnab.SchemaVersion `json:"schemaVersion"`
 
-	// Id of the claim.
+	// ID of the claim.
 	ID string `json:"id"`
 
 	// Installation name.

@@ -5,9 +5,9 @@ import (
 	"sort"
 	"strings"
 
+	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/pkgmgmt"
 	"get.porter.sh/porter/pkg/portercontext"
-	"github.com/cnabio/cnab-go/schema"
 )
 
 // SchemaTypePlugins is the default schemaType value for InstallPluginsSpec resources
@@ -15,7 +15,7 @@ const SchemaTypePlugins = "Plugins"
 
 // InstallPluginsSchemaVersion represents the version associated with the schema
 // plugins configuration documents.
-var InstallPluginsSchemaVersion = schema.Version("1.0.0")
+var InstallPluginsSchemaVersion = cnab.SchemaVersion("1.0.0")
 
 type InstallOptions struct {
 	pkgmgmt.InstallOptions

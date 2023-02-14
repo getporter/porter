@@ -7,7 +7,6 @@ import (
 
 	"get.porter.sh/porter/pkg/cnab"
 	"github.com/cnabio/cnab-go/bundle"
-	"github.com/cnabio/cnab-go/schema"
 )
 
 var _ Document = Run{}
@@ -17,7 +16,7 @@ var _ json.Unmarshaler = &Run{}
 // Run represents the execution of an installation's bundle.
 type Run struct {
 	// SchemaVersion of the document.
-	SchemaVersion schema.Version `json:"schemaVersion"`
+	SchemaVersion cnab.SchemaVersion `json:"schemaVersion"`
 
 	// ID of the Run.
 	ID string `json:"_id"`

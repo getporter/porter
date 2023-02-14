@@ -4,9 +4,10 @@ import (
 	"strings"
 	"testing"
 
+	"get.porter.sh/porter/pkg/cnab"
+	"get.porter.sh/porter/pkg/schema"
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/tests"
-	"github.com/cnabio/cnab-go/schema"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -50,7 +51,7 @@ func TestDisplayParameterSet_Validate(t *testing.T) {
 	testcases := []struct {
 		name          string
 		schemaType    string
-		schemaVersion schema.Version
+		schemaVersion cnab.SchemaVersion
 		wantError     string
 	}{
 		{

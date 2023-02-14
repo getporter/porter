@@ -5,8 +5,9 @@ import (
 	"strings"
 	"time"
 
+	"get.porter.sh/porter/pkg/cnab"
+	"get.porter.sh/porter/pkg/schema"
 	"get.porter.sh/porter/pkg/secrets"
-	"github.com/cnabio/cnab-go/schema"
 )
 
 const (
@@ -31,7 +32,7 @@ type ParameterSetSpec struct {
 	SchemaType string `json:"schemaType,omitempty" yaml:"schemaType,omitempty"`
 
 	// SchemaVersion is the version of the parameter-set schema.
-	SchemaVersion schema.Version `json:"schemaVersion" yaml:"schemaVersion" toml:"schemaVersion"`
+	SchemaVersion cnab.SchemaVersion `json:"schemaVersion" yaml:"schemaVersion" toml:"schemaVersion"`
 
 	// Namespace to which the credential set is scoped.
 	Namespace string `json:"namespace" yaml:"namespace" toml:"namespace"`

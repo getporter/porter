@@ -13,7 +13,6 @@ import (
 	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/tracing"
 	dtprinter "github.com/carolynvs/datetime-printer"
-	"github.com/cnabio/cnab-go/schema"
 )
 
 const (
@@ -76,7 +75,7 @@ type DisplayInstallation struct {
 	// SchemaType helps when we export the definition so editors can detect the type of document, it's not used by porter.
 	SchemaType string `json:"schemaType" yaml:"schemaType" toml:"schemaType"`
 
-	SchemaVersion schema.Version `json:"schemaVersion" yaml:"schemaVersion" toml:"schemaVersion"`
+	SchemaVersion cnab.SchemaVersion `json:"schemaVersion" yaml:"schemaVersion" toml:"schemaVersion"`
 
 	ID string `json:"id" yaml:"id" toml:"id"`
 	// Name of the installation. Immutable.

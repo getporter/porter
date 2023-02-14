@@ -9,9 +9,9 @@ import (
 	"time"
 
 	"get.porter.sh/porter/pkg/cnab"
+	"get.porter.sh/porter/pkg/schema"
 	"get.porter.sh/porter/pkg/secrets"
 	"github.com/Masterminds/semver/v3"
-	"github.com/cnabio/cnab-go/schema"
 	"github.com/opencontainers/go-digest"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -38,7 +38,7 @@ type InstallationSpec struct {
 	SchemaType string `json:"schemaType"`
 
 	// SchemaVersion is the version of the installation state schema.
-	SchemaVersion schema.Version `json:"schemaVersion"`
+	SchemaVersion cnab.SchemaVersion `json:"schemaVersion"`
 
 	// Name of the installation. Immutable.
 	Name string `json:"name"`

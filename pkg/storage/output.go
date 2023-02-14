@@ -5,18 +5,17 @@ import (
 
 	"get.porter.sh/porter/pkg/cnab"
 	"github.com/cnabio/cnab-go/bundle/definition"
-	"github.com/cnabio/cnab-go/schema"
 )
 
 var _ Document = Output{}
 
 type Output struct {
-	SchemaVersion schema.Version `json:"schemaVersion"`
-	Name          string         `json:"name"`
-	Namespace     string         `json:"namespace"`
-	Installation  string         `json:"installation"`
-	RunID         string         `json:"runId"`
-	ResultID      string         `json:"resultId"`
+	SchemaVersion cnab.SchemaVersion `json:"schemaVersion"`
+	Name          string             `json:"name"`
+	Namespace     string             `json:"namespace"`
+	Installation  string             `json:"installation"`
+	RunID         string             `json:"runId"`
+	ResultID      string             `json:"resultId"`
 
 	// Key holds the secret key to retrieve a sensitive output value
 	Key   string `json:"key"`

@@ -1,7 +1,9 @@
 package storage
 
 import (
-	"github.com/cnabio/cnab-go/schema"
+	"get.porter.sh/porter/pkg/cnab"
+	"get.porter.sh/porter/pkg/schema"
+	"github.com/Masterminds/semver/v3"
 )
 
 var _ Document = Schema{}
@@ -24,13 +26,13 @@ type Schema struct {
 	ID string `json:"_id"`
 
 	// Installations is the schema for the installation documents.
-	Installations schema.Version `json:"installations"`
+	Installations cnab.SchemaVersion `json:"installations"`
 
 	// Credentials is the schema for the credential spec documents.
-	Credentials schema.Version `json:"credentials"`
+	Credentials cnab.SchemaVersion `json:"credentials"`
 
 	// Parameters is the schema for the parameter spec documents.
-	Parameters schema.Version `json:"parameters"`
+	Parameters cnab.SchemaVersion `json:"parameters"`
 }
 
 // NewSchema creates a schema document with the currently supported version for all subsystems.

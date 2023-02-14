@@ -32,15 +32,16 @@ type Result = cnabclaims.Result
 type Output = cnabclaims.Output
 type Outputs = cnabclaims.Outputs
 type OutputMetadata = cnabclaims.OutputMetadata
+type SchemaVersion = schema.Version
 
 var NewULID = cnabclaims.MustNewULID
 
 // BundleSchemaVersion is the schemaVersion value for CNAB bundle documents.
-func BundleSchemaVersion() schema.Version {
+func BundleSchemaVersion() SchemaVersion {
 	return bundle.GetDefaultSchemaVersion()
 }
 
 // ClaimSchemaVersion is the schemaVersion value for CNAB claim documents.
-func ClaimSchemaVersion() schema.Version {
+func ClaimSchemaVersion() SchemaVersion {
 	return cnabclaims.GetDefaultSchemaVersion()
 }
