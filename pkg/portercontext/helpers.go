@@ -15,6 +15,7 @@ import (
 
 	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/test"
+	"get.porter.sh/porter/pkg/yaml"
 	"github.com/carolynvs/aferox"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/require"
@@ -314,4 +315,15 @@ func (c *TestContext) hasChild(dir string, childName string) (string, bool) {
 // the new test output.
 func (c *TestContext) CompareGoldenFile(goldenFile string, got string) {
 	test.CompareGoldenFile(c.T, goldenFile, got)
+}
+
+func (c *TestContext) EditYaml(path string, transformations ...func(yq *yaml.Editor) error) {
+	c.T.Log("Editing", path)
+	yq := yaml.NewEditor(c.FileSystem)
+
+	require.NoError(c.T, yq.ReadFile(path))
+	for _, transform := range transformations {
+		require.NoError(c.T, transform(yq))
+	}
+	require.NoError(c.T, yq.WriteFile(path))
 }

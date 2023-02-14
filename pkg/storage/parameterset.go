@@ -1,14 +1,21 @@
 package storage
 
 import (
+	"context"
 	"fmt"
+	"strings"
 	"time"
 
+	"get.porter.sh/porter/pkg/cnab"
+	"get.porter.sh/porter/pkg/schema"
 	"get.porter.sh/porter/pkg/secrets"
-	"github.com/cnabio/cnab-go/schema"
+	"get.porter.sh/porter/pkg/tracing"
+	"go.opentelemetry.io/otel/attribute"
 )
 
-const INTERNAL_PARAMETERER_SET = "internal-parameter-set"
+const (
+	INTERNAL_PARAMETERER_SET = "internal-parameter-set"
+)
 
 var _ Document = ParameterSet{}
 
@@ -21,8 +28,11 @@ type ParameterSet struct {
 
 // ParameterSetSpec represents the set of user-modifiable fields on a ParameterSet.
 type ParameterSetSpec struct {
+	// SchemaType helps when we export the definition so editors can detect the type of document, it's not used by porter.
+	SchemaType string `json:"schemaType,omitempty" yaml:"schemaType,omitempty"`
+
 	// SchemaVersion is the version of the parameter-set schema.
-	SchemaVersion schema.Version `json:"schemaVersion" yaml:"schemaVersion" toml:"schemaVersion"`
+	SchemaVersion cnab.SchemaVersion `json:"schemaVersion" yaml:"schemaVersion" toml:"schemaVersion"`
 
 	// Namespace to which the credential set is scoped.
 	Namespace string `json:"namespace" yaml:"namespace" toml:"namespace"`
@@ -51,7 +61,8 @@ func NewParameterSet(namespace string, name string, params ...secrets.Strategy) 
 	now := time.Now()
 	ps := ParameterSet{
 		ParameterSetSpec: ParameterSetSpec{
-			SchemaVersion: ParameterSetSchemaVersion,
+			SchemaType:    SchemaTypeParameterSet,
+			SchemaVersion: DefaultParameterSetSchemaVersion,
 			Namespace:     namespace,
 			Name:          name,
 			Parameters:    params,
@@ -74,13 +85,36 @@ func (s ParameterSet) DefaultDocumentFilter() map[string]interface{} {
 	return map[string]interface{}{"namespace": s.Namespace, "name": s.Name}
 }
 
-func (s ParameterSet) Validate() error {
-	if ParameterSetSchemaVersion != s.SchemaVersion {
-		if s.SchemaVersion == "" {
-			s.SchemaVersion = "(none)"
+func (s *ParameterSet) Validate(ctx context.Context, strategy schema.CheckStrategy) error {
+	//lint:ignore SA4006 ignore unused context for now
+	ctx, span := tracing.StartSpan(ctx,
+		attribute.String("parameterSet", s.String()),
+		attribute.String("schemaVersion", string(s.SchemaVersion)),
+		attribute.String("defaultSchemaVersion", string(DefaultParameterSetSchemaVersion)))
+	defer span.EndSpan()
+
+	// Before we can validate, get our resource in a consistent state
+	// 1. Check if we know what to do with this version of the resource
+	if warnOnly, err := schema.ValidateSchemaVersion(strategy, SupportedParameterSetSchemaVersions, string(s.SchemaVersion), DefaultParameterSetSemverSchemaVersion); err != nil {
+		if warnOnly {
+			span.Warn(err.Error())
+		} else {
+			return span.Error(err)
 		}
-		return fmt.Errorf("invalid schemaVersion provided: %s. This version of Porter is compatible with %s.", s.SchemaVersion, ParameterSetSchemaVersion)
 	}
+
+	// 2. Check if they passed in the right resource type
+	if s.SchemaType != "" && !strings.EqualFold(s.SchemaType, SchemaTypeParameterSet) {
+		return span.Errorf("invalid schemaType %s, expected %s", s.SchemaType, SchemaTypeParameterSet)
+	}
+
+	// Default the schemaType before importing into the database if it's not set already
+	// SchemaType isn't really used by our code, it's a type hint for editors, but this will ensure we are consistent in our persisted documents
+	if s.SchemaType == "" {
+		s.SchemaType = SchemaTypeParameterSet
+	}
+
+	// OK! Now we can do resource specific validations
 	return nil
 }
 

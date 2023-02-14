@@ -40,7 +40,7 @@ func (p *Porter) generateInternalManifest(ctx context.Context, opts BuildOptions
 		return span.Error(fmt.Errorf("unable to create directory %s: %w", build.LOCAL_APP, err))
 	}
 
-	e := yaml.NewEditor(p.Context)
+	e := yaml.NewEditor(p.FileSystem)
 	err = e.ReadFile(opts.File)
 	if err != nil {
 		return span.Error(fmt.Errorf("unable to read manifest file %s: %w", opts.File, err))

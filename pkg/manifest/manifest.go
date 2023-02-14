@@ -29,6 +29,9 @@ import (
 const (
 	invalidStepErrorFormat = "validation of action \"%s\" failed: %w"
 
+	// SchemaTypeBundle is the default schemaType value for Bundle resources
+	SchemaTypeBundle = "Bundle"
+
 	// TemplateDelimiterPrefix must be present at the beginning of any porter.yaml
 	// that wants to use ${} as the template delimiter instead of the mustache
 	// default of {{}}.
@@ -52,6 +55,9 @@ type Manifest struct {
 
 	// TemplateVariables are the variables used in the templating, e.g. bundle.parameters.NAME, or bundle.outputs.NAME
 	TemplateVariables []string `yaml:"-"`
+
+	// SchemaType indicates the type of resource contained in an imported file.
+	SchemaType string `yaml:"schemaType,omitempty"`
 
 	// SchemaVersion is a semver value that indicates which version of the porter.yaml schema is used in the file.
 	SchemaVersion string `yaml:"schemaVersion"`
@@ -179,6 +185,12 @@ func (m *Manifest) Validate(cxt *portercontext.Context, strategy schema.CheckStr
 }
 
 func (m *Manifest) validateMetadata(cxt *portercontext.Context, strategy schema.CheckStrategy) error {
+	if m.SchemaType == "" {
+		m.SchemaType = SchemaTypeBundle
+	} else if !strings.EqualFold(m.SchemaType, SchemaTypeBundle) {
+		return fmt.Errorf("invalid schemaType %s, expected %s", m.SchemaType, SchemaTypeBundle)
+	}
+
 	if warnOnly, err := schema.ValidateSchemaVersion(strategy, SupportedSchemaVersions, m.SchemaVersion, DefaultSchemaVersion); err != nil {
 		if warnOnly {
 			fmt.Fprintln(cxt.Err, err)

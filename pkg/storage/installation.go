@@ -5,12 +5,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"get.porter.sh/porter/pkg/cnab"
+	"get.porter.sh/porter/pkg/schema"
 	"get.porter.sh/porter/pkg/secrets"
+	"get.porter.sh/porter/pkg/tracing"
 	"github.com/Masterminds/semver/v3"
-	"github.com/cnabio/cnab-go/schema"
 	"github.com/opencontainers/go-digest"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -30,8 +32,11 @@ type Installation struct {
 
 // InstallationSpec contains installation fields that represent the desired state of the installation.
 type InstallationSpec struct {
+	// SchemaType indicates the type of resource imported from a file.
+	SchemaType string `json:"schemaType"`
+
 	// SchemaVersion is the version of the installation state schema.
-	SchemaVersion schema.Version `json:"schemaVersion"`
+	SchemaVersion cnab.SchemaVersion `json:"schemaVersion"`
 
 	// Name of the installation. Immutable.
 	Name string `json:"name"`
@@ -79,7 +84,8 @@ func NewInstallation(namespace string, name string) Installation {
 	return Installation{
 		ID: cnab.NewULID(),
 		InstallationSpec: InstallationSpec{
-			SchemaVersion: InstallationSchemaVersion,
+			SchemaType:    SchemaTypeInstallation,
+			SchemaVersion: DefaultInstallationSchemaVersion,
 			Namespace:     namespace,
 			Name:          name,
 			Parameters:    NewInternalParameterSet(namespace, name),
@@ -126,6 +132,8 @@ func (i *Installation) ApplyResult(run Run, result Result) {
 // Only updates fields that users are allowed to modify.
 // For example, Name, Namespace and Status cannot be modified.
 func (i *InstallationSpec) Apply(input InstallationSpec) {
+	i.SchemaType = input.SchemaType
+	i.SchemaVersion = input.SchemaVersion
 	i.Uninstalled = input.Uninstalled
 	i.Bundle = input.Bundle
 	i.Parameters = input.Parameters
@@ -135,20 +143,46 @@ func (i *InstallationSpec) Apply(input InstallationSpec) {
 }
 
 // Validate the installation document and report the first error.
-func (i *Installation) Validate() error {
-	if InstallationSchemaVersion != i.SchemaVersion {
-		if i.SchemaVersion == "" {
-			i.SchemaVersion = "(none)"
+func (i *InstallationSpec) Validate(ctx context.Context, strategy schema.CheckStrategy) error {
+	//lint:ignore SA4006 ignore unused context for now
+	ctx, span := tracing.StartSpan(ctx,
+		attribute.String("installation", i.String()),
+		attribute.String("schemaVersion", string(i.SchemaVersion)),
+		attribute.String("defaultSchemaVersion", string(DefaultInstallationSchemaVersion)))
+	defer span.EndSpan()
+
+	// Before we can validate, get our resource in a consistent state
+	// 1. Check if we know what to do with this version of the resource
+	defaultSchemaVersion := semver.MustParse(string(DefaultInstallationSchemaVersion))
+	if warnOnly, err := schema.ValidateSchemaVersion(strategy, SupportedInstallationSchemaVersions, string(i.SchemaVersion), defaultSchemaVersion); err != nil {
+		if warnOnly {
+			span.Warn(err.Error())
+		} else {
+			return span.Error(err)
 		}
-		return fmt.Errorf("invalid schemaVersion provided: %s. This version of Porter is compatible with %s.", i.SchemaVersion, InstallationSchemaVersion)
 	}
+
+	// 2. Check if they passed in the right resource type
+	if i.SchemaType != "" && !strings.EqualFold(i.SchemaType, SchemaTypeInstallation) {
+		return span.Errorf("invalid schemaType %s, expected %s", i.SchemaType, SchemaTypeInstallation)
+	}
+
+	// OK! Now we can do resource specific validations
+
+	// Default the schema type before importing into the database if it's not set already
+	// SchemaType isn't really used by our code, it's a type hint for editors, but this will ensure we are consistent in our persisted documents
+	if i.SchemaType == "" {
+		i.SchemaType = SchemaTypeInstallation
+	}
+
+	// OK! Now we can do resource specific validations
 
 	// We can change these to better checks if we consolidate our logic around the various ways we let you
 	// install from a bundle definition https://github.com/getporter/porter/issues/1024#issuecomment-899828081
 	// Until then, these are pretty weak checks
 	_, _, err := i.Bundle.GetBundleReference()
 	if err != nil {
-		return fmt.Errorf("could not determine the fully-qualified bundle reference: %w", err)
+		return span.Errorf("could not determine the fully-qualified bundle reference: %w", err)
 	}
 
 	return nil

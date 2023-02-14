@@ -92,7 +92,7 @@ func (s ParameterStore) Validate(ctx context.Context, params ParameterSet) error
 }
 
 func (s ParameterStore) InsertParameterSet(ctx context.Context, params ParameterSet) error {
-	params.SchemaVersion = ParameterSetSchemaVersion
+	params.SchemaVersion = DefaultParameterSetSchemaVersion
 	opts := InsertOptions{
 		Documents: []interface{}{params},
 	}
@@ -118,7 +118,7 @@ func (s ParameterStore) GetParameterSet(ctx context.Context, namespace string, n
 }
 
 func (s ParameterStore) UpdateParameterSet(ctx context.Context, params ParameterSet) error {
-	params.SchemaVersion = ParameterSetSchemaVersion
+	params.SchemaVersion = DefaultParameterSetSchemaVersion
 	opts := UpdateOptions{
 		Document: params,
 	}
@@ -126,7 +126,7 @@ func (s ParameterStore) UpdateParameterSet(ctx context.Context, params Parameter
 }
 
 func (s ParameterStore) UpsertParameterSet(ctx context.Context, params ParameterSet) error {
-	params.SchemaVersion = ParameterSetSchemaVersion
+	params.SchemaVersion = DefaultParameterSetSchemaVersion
 	opts := UpdateOptions{
 		Document: params,
 		Upsert:   true,

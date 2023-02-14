@@ -800,7 +800,7 @@ func (m *RuntimeManifest) getEditor() (*yaml.Editor, error) {
 	}
 
 	// Get the original porter.yaml with additional yaml metadata so that we can look at just the current step's yaml
-	yq := yaml.NewEditor(m.config.Context)
+	yq := yaml.NewEditor(m.config.FileSystem)
 	if err := yq.ReadFile(m.ManifestPath); err != nil {
 		return nil, fmt.Errorf("error loading yaml editor from %s", m.ManifestPath)
 	}

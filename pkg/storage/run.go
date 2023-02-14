@@ -7,7 +7,6 @@ import (
 
 	"get.porter.sh/porter/pkg/cnab"
 	"github.com/cnabio/cnab-go/bundle"
-	"github.com/cnabio/cnab-go/schema"
 )
 
 var _ Document = Run{}
@@ -17,7 +16,7 @@ var _ json.Unmarshaler = &Run{}
 // Run represents the execution of an installation's bundle.
 type Run struct {
 	// SchemaVersion of the document.
-	SchemaVersion schema.Version `json:"schemaVersion"`
+	SchemaVersion cnab.SchemaVersion `json:"schemaVersion"`
 
 	// ID of the Run.
 	ID string `json:"_id"`
@@ -114,7 +113,7 @@ func (r Run) DefaultDocumentFilter() map[string]interface{} {
 // NewRun creates a run with default values initialized.
 func NewRun(namespace string, installation string) Run {
 	return Run{
-		SchemaVersion: InstallationSchemaVersion,
+		SchemaVersion: DefaultInstallationSchemaVersion,
 		ID:            cnab.NewULID(),
 		Revision:      cnab.NewULID(),
 		Created:       time.Now(),
@@ -208,7 +207,7 @@ func (r Run) NewResult(status string) Result {
 // NewResultFrom creates a result from the output of a CNAB run.
 func (r Run) NewResultFrom(cnabResult cnab.Result) Result {
 	return Result{
-		SchemaVersion:  InstallationSchemaVersion,
+		SchemaVersion:  DefaultInstallationSchemaVersion,
 		ID:             cnabResult.ID,
 		Namespace:      r.Namespace,
 		Installation:   r.Installation,

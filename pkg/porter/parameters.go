@@ -41,14 +41,25 @@ type ParameterEditOptions struct {
 }
 
 // ListParameters lists saved parameter sets.
-func (p *Porter) ListParameters(ctx context.Context, opts ListOptions) ([]storage.ParameterSet, error) {
-	return p.Parameters.ListParameterSets(ctx, storage.ListOptions{
+func (p *Porter) ListParameters(ctx context.Context, opts ListOptions) ([]DisplayParameterSet, error) {
+	listOpts := storage.ListOptions{
 		Namespace: opts.GetNamespace(),
 		Name:      opts.Name,
 		Labels:    opts.ParseLabels(),
 		Skip:      opts.Skip,
 		Limit:     opts.Limit,
-	})
+	}
+	results, err := p.Parameters.ListParameterSets(ctx, listOpts)
+	if err != nil {
+		return nil, err
+	}
+
+	displayResults := make([]DisplayParameterSet, len(results))
+	for i, ps := range results {
+		displayResults[i] = NewDisplayParameterSet(ps)
+	}
+
+	return displayResults, nil
 }
 
 // PrintParameters prints saved parameter sets.
@@ -72,7 +83,7 @@ func (p *Porter) PrintParameters(ctx context.Context, opts ListOptions) error {
 
 		printParamRow :=
 			func(v interface{}) []string {
-				cr, ok := v.(storage.ParameterSet)
+				cr, ok := v.(DisplayCredentialSet)
 				if !ok {
 					return nil
 				}
@@ -222,9 +233,13 @@ func (p *Porter) EditParameter(ctx context.Context, opts ParameterEditOptions) e
 }
 
 type DisplayParameterSet struct {
-	// SchemaType helps when we export the definition so editors can detect the type of document, it's not used by porter.
-	SchemaType           string `json:"schemaType" yaml:"schemaType"`
 	storage.ParameterSet `yaml:",inline"`
+}
+
+func NewDisplayParameterSet(ps storage.ParameterSet) DisplayParameterSet {
+	ds := DisplayParameterSet{ParameterSet: ps}
+	ds.SchemaType = storage.SchemaTypeParameterSet
+	return ds
 }
 
 // ShowParameter shows the parameter set corresponding to the provided name, using
@@ -235,10 +250,8 @@ func (p *Porter) ShowParameter(ctx context.Context, opts ParameterShowOptions) e
 		return err
 	}
 
-	paramSet := DisplayParameterSet{
-		SchemaType:   "ParameterSet",
-		ParameterSet: ps,
-	}
+	paramSet := NewDisplayParameterSet(ps)
+
 	switch opts.Format {
 	case printer.FormatJson:
 		return printer.PrintJson(p.Out, paramSet)
@@ -508,25 +521,26 @@ func (p *Porter) ParametersApply(ctx context.Context, o ApplyOptions) error {
 		return span.Error(err)
 	}
 
-	var params storage.ParameterSet
+	var params DisplayParameterSet
 	err = encoding.UnmarshalFile(p.FileSystem, o.File, &params)
 	if err != nil {
 		return span.Error(fmt.Errorf("could not load %s as a parameter set: %w", o.File, err))
 	}
 
-	if err = params.Validate(); err != nil {
+	checkStrategy := p.GetSchemaCheckStrategy(ctx)
+	if err = params.Validate(ctx, checkStrategy); err != nil {
 		return span.Error(fmt.Errorf("invalid parameter set: %w", err))
 	}
 
 	params.Namespace = namespace
 	params.Status.Modified = time.Now()
 
-	err = p.Parameters.Validate(ctx, params)
+	err = p.Parameters.Validate(ctx, params.ParameterSet)
 	if err != nil {
 		return span.Error(fmt.Errorf("parameter set is invalid: %w", err))
 	}
 
-	err = p.Parameters.UpsertParameterSet(ctx, params)
+	err = p.Parameters.UpsertParameterSet(ctx, params.ParameterSet)
 	if err != nil {
 		return err
 	}
@@ -880,5 +894,5 @@ func (p *Porter) applyActionOptionsToInstallation(ctx context.Context, ba Bundle
 	}
 
 	// re-validate the installation since we modified it here
-	return inst.Validate()
+	return inst.Validate(ctx, p.GetSchemaCheckStrategy(ctx))
 }

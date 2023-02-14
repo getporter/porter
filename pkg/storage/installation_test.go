@@ -1,13 +1,30 @@
 package storage
 
 import (
+	"context"
+	"strings"
 	"testing"
 	"time"
 
 	"get.porter.sh/porter/pkg/cnab"
+	"get.porter.sh/porter/pkg/schema"
+	"get.porter.sh/porter/tests"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestNewInstallation(t *testing.T) {
+	inst := NewInstallation("dev", "mybuns")
+
+	assert.Equal(t, "mybuns", inst.Name, "Name was not set")
+	assert.Equal(t, "dev", inst.Namespace, "Namespace was not set")
+	assert.NotEmpty(t, inst.Status.Created, "Created was not set")
+	assert.NotEmpty(t, inst.Status.Modified, "Modified was not set")
+	assert.Equal(t, inst.Status.Created, inst.Status.Modified, "Created and Modified should have the same timestamp")
+	assert.Equal(t, SchemaTypeInstallation, inst.SchemaType, "incorrect SchemaType")
+	assert.Equal(t, DefaultInstallationSchemaVersion, inst.SchemaVersion, "incorrect SchemaVersion")
+	assert.False(t, inst.Uninstalled, "incorrect Uninstalled")
+}
 
 func TestInstallation_String(t *testing.T) {
 	t.Parallel()
@@ -163,4 +180,67 @@ func TestInstallation_ApplyResult(t *testing.T) {
 		assert.NotEmpty(t, inst.Status.Installed, "the installed timestamp should still be be set")
 		assert.Equal(t, &result.Created, inst.Status.Uninstalled, "the uninstalled timestamp should be set to the new uninstall time")
 	})
+}
+
+func TestInstallation_Validate(t *testing.T) {
+	t.Parallel()
+
+	testcases := []struct {
+		name      string
+		input     InstallationSpec
+		wantError string
+	}{
+		{
+			name: "none",
+			input: InstallationSpec{
+				SchemaType:    "",
+				SchemaVersion: DefaultInstallationSchemaVersion},
+			wantError: ""},
+		{
+			name: strings.ToLower(SchemaTypeInstallation),
+			input: InstallationSpec{
+				SchemaType:    "installation",
+				SchemaVersion: DefaultInstallationSchemaVersion},
+			wantError: ""},
+		{
+			name: SchemaTypeInstallation,
+			input: InstallationSpec{
+				SchemaType:    SchemaTypeInstallation,
+				SchemaVersion: DefaultInstallationSchemaVersion},
+			wantError: ""},
+		{
+			name: strings.ToUpper(SchemaTypeInstallation),
+			input: InstallationSpec{
+				SchemaType:    "INSTALLATION",
+				SchemaVersion: DefaultInstallationSchemaVersion},
+			wantError: ""},
+		{
+			name: SchemaTypeCredentialSet,
+			input: InstallationSpec{
+				SchemaType:    SchemaTypeCredentialSet,
+				SchemaVersion: DefaultInstallationSchemaVersion},
+			wantError: "invalid schemaType CredentialSet, expected Installation"},
+	}
+
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			ctx := context.Background()
+			err := tc.input.Validate(ctx, schema.CheckStrategyExact)
+			if tc.wantError == "" {
+				require.NoError(t, err)
+			} else {
+				tests.RequireErrorContains(t, err, tc.wantError)
+			}
+		})
+	}
+}
+
+func TestInstallation_Validate_DefaultSchemaType(t *testing.T) {
+	i := NewInstallation("", "mybuns")
+	i.SchemaType = ""
+	require.NoError(t, i.Validate(context.Background(), schema.CheckStrategyExact))
+	assert.Equal(t, SchemaTypeInstallation, i.SchemaType)
 }

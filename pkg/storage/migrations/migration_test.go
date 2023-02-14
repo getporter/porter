@@ -24,7 +24,7 @@ func TestConvertInstallation(t *testing.T) {
 	assert.Empty(t, inst.ID, "the installation id should start off unitialized so that later we can set it using the claim")
 	assert.Empty(t, inst.Namespace, "by default installations are migrated into the global namespace")
 	assert.Equal(t, "mybuns", inst.Name, "incorrect name")
-	assert.Equal(t, storage.InstallationSchemaVersion, inst.SchemaVersion, "incorrect schema version")
+	assert.Equal(t, storage.DefaultInstallationSchemaVersion, inst.SchemaVersion, "incorrect schema version")
 }
 
 func TestConvertClaimToRun(t *testing.T) {
@@ -39,7 +39,7 @@ func TestConvertClaimToRun(t *testing.T) {
 	require.NoError(t, err, "error converting claim")
 
 	assert.Equal(t, "01G1VJGY43HT3KZN82DS6DDPWK", run.ID, "incorrect run id")
-	assert.Equal(t, storage.InstallationSchemaVersion, run.SchemaVersion, "incorrect schema version, should be the current schema supported by porter")
+	assert.Equal(t, storage.DefaultInstallationSchemaVersion, run.SchemaVersion, "incorrect schema version, should be the current schema supported by porter")
 	assert.Equal(t, "hello1", run.Installation, "incorrect installation name")
 	assert.Equal(t, "01G1VJGY43HT3KZN82DSJY4NNB", run.Revision, "incorrect revision")
 	assert.Equal(t, "2022-04-29T16:09:42.65907-05:00", run.Created.Format(time.RFC3339Nano), "incorrect created timestamp")
@@ -64,7 +64,7 @@ func TestConvertResult(t *testing.T) {
 	result, err := convertResult(run, resultData)
 	require.NoError(t, err, "failed to convert result")
 
-	assert.Equal(t, storage.InstallationSchemaVersion, result.SchemaVersion, "incorrect schema version")
+	assert.Equal(t, storage.DefaultInstallationSchemaVersion, result.SchemaVersion, "incorrect schema version")
 	assert.Equal(t, run.Namespace, result.Namespace, "incorrect namespace")
 	assert.Equal(t, run.Installation, result.Installation, "incorrect installation name")
 	assert.Equal(t, "yay!", result.Message, "incorrect message")
@@ -94,7 +94,7 @@ func TestConvertOutput(t *testing.T) {
 	output, err := convertOutput(result, "01G1VJH2HP97B5B0N5S37KYMVG-io.cnab.outputs.invocationImageLogs", outputData)
 	require.NoError(t, err, "error converting output")
 
-	require.Equal(t, storage.InstallationSchemaVersion, output.SchemaVersion, "incorrect schema version")
+	require.Equal(t, storage.DefaultInstallationSchemaVersion, output.SchemaVersion, "incorrect schema version")
 	require.Equal(t, result.Namespace, output.Namespace, "incorrect namespace")
 	require.Equal(t, result.Installation, output.Installation, "incorrect installation")
 	require.Equal(t, "io.cnab.outputs.invocationImageLogs", output.Name, "incorrect name")
@@ -145,7 +145,7 @@ func validateMigratedInstallations(ctx context.Context, t *testing.T, c *config.
 	inst, err := is.GetInstallation(ctx, opts.NewNamespace, "hello1")
 	require.NoError(t, err, "could not retrieve the hello1 test installation")
 
-	assert.Equal(t, storage.InstallationSchemaVersion, inst.SchemaVersion, "incorrect installation schema")
+	assert.Equal(t, storage.DefaultInstallationSchemaVersion, inst.SchemaVersion, "incorrect installation schema")
 	assert.Equal(t, "01G1VJGY43HT3KZN82DS6DDPWH", inst.ID, "the installation should set its installation id to the id of the earliest claim so that it's consistently generated")
 	assert.Equal(t, "hello1", inst.Name, "incorrect installation name")
 	assert.Equal(t, opts.NewNamespace, inst.Namespace, "installation namespace should be set to the destination namespace")
@@ -175,7 +175,7 @@ func validateMigratedInstallations(ctx context.Context, t *testing.T, c *config.
 	assert.Len(t, runs, 5, "expected 5 runs") // dry-run, failed install, successful install, upgrade, uninstall
 
 	lastRun := runs[4]
-	assert.Equal(t, storage.InstallationSchemaVersion, lastRun.SchemaVersion, "incorrect run schema version")
+	assert.Equal(t, storage.DefaultInstallationSchemaVersion, lastRun.SchemaVersion, "incorrect run schema version")
 	assert.Equal(t, "01G1VJQJV0RN5AW5BSZHNTVYTV", lastRun.ID, "incorrect run id")
 	assert.Equal(t, "01G1VJQJV0RN5AW5BSZNJ1G6R7", lastRun.Revision, "incorrect run revision")
 	assert.Equal(t, inst.Namespace, lastRun.Namespace, "incorrect run namespace")
@@ -230,7 +230,7 @@ func validateMigratedCredentialSets(ctx context.Context, t *testing.T, destStore
 	creds, err := store.GetCredentialSet(ctx, opts.NewNamespace, "credentials-tutorial")
 	require.NoError(t, err, "could not retrieve the migrated credentials-tutorial credential set")
 
-	assert.Equal(t, storage.CredentialSetSchemaVersion, creds.SchemaVersion, "incorrect schema version")
+	assert.Equal(t, storage.DefaultCredentialSetSchemaVersion, creds.SchemaVersion, "incorrect schema version")
 	assert.Equal(t, "myns", creds.Namespace, "incorrect namespace")
 	assert.Equal(t, "credentials-tutorial", creds.Name, "incorrect name")
 	assert.Equal(t, "2022-06-06T16:06:52.099455-05:00", creds.Status.Created.Format(time.RFC3339Nano), "incorrect created timestamp")
@@ -254,7 +254,7 @@ func validateMigratedParameterSets(ctx context.Context, t *testing.T, destStore 
 	ps, err := store.GetParameterSet(ctx, opts.NewNamespace, "hello-llama")
 	require.NoError(t, err, "could not retrieve the migrated hello-llama parameter set")
 
-	assert.Equal(t, storage.ParameterSetSchemaVersion, ps.SchemaVersion, "incorrect schema version")
+	assert.Equal(t, storage.DefaultParameterSetSchemaVersion, ps.SchemaVersion, "incorrect schema version")
 	assert.Equal(t, "myns", ps.Namespace, "incorrect namespace")
 	assert.Equal(t, "hello-llama", ps.Name, "incorrect name")
 	assert.Equal(t, "2022-06-06T16:06:21.635528-05:00", ps.Status.Created.Format(time.RFC3339Nano), "incorrect created timestamp")

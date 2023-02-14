@@ -13,7 +13,6 @@ import (
 	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/tracing"
 	dtprinter "github.com/carolynvs/datetime-printer"
-	"github.com/cnabio/cnab-go/schema"
 )
 
 const (
@@ -76,7 +75,7 @@ type DisplayInstallation struct {
 	// SchemaType helps when we export the definition so editors can detect the type of document, it's not used by porter.
 	SchemaType string `json:"schemaType" yaml:"schemaType" toml:"schemaType"`
 
-	SchemaVersion schema.Version `json:"schemaVersion" yaml:"schemaVersion" toml:"schemaVersion"`
+	SchemaVersion cnab.SchemaVersion `json:"schemaVersion" yaml:"schemaVersion" toml:"schemaVersion"`
 
 	ID string `json:"id" yaml:"id" toml:"id"`
 	// Name of the installation. Immutable.
@@ -127,7 +126,7 @@ type DisplayInstallationMetadata struct {
 func NewDisplayInstallation(installation storage.Installation) DisplayInstallation {
 
 	di := DisplayInstallation{
-		SchemaType:     "Installation",
+		SchemaType:     storage.SchemaTypeInstallation,
 		SchemaVersion:  installation.SchemaVersion,
 		ID:             installation.ID,
 		Name:           installation.Name,
@@ -173,12 +172,8 @@ func (d DisplayInstallation) ConvertToInstallation() (storage.Installation, erro
 		return storage.Installation{}, err
 	}
 
-	if err := i.Validate(); err != nil {
-		return storage.Installation{}, fmt.Errorf("invalid installation: %w", err)
-	}
-
+	// do not validate here, validate the converted installation right before we save it to the database
 	return i, nil
-
 }
 
 // ConvertParamToSet converts a Parameters into a internal ParameterSet.

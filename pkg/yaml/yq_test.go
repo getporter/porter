@@ -17,7 +17,7 @@ func TestEditor_WalkNodes(t *testing.T) {
 	defer pCtx.Close()
 	pCtx.AddTestFile("testdata/custom.yaml", config.Name)
 
-	e := yaml.NewEditor(pCtx.Context)
+	e := yaml.NewEditor(pCtx.FileSystem)
 	err := e.ReadFile(config.Name)
 	require.NoError(t, err)
 

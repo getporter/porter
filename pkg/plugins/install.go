@@ -5,14 +5,17 @@ import (
 	"sort"
 	"strings"
 
+	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/pkgmgmt"
 	"get.porter.sh/porter/pkg/portercontext"
-	"github.com/cnabio/cnab-go/schema"
 )
+
+// SchemaTypePlugins is the default schemaType value for InstallPluginsSpec resources
+const SchemaTypePlugins = "Plugins"
 
 // InstallPluginsSchemaVersion represents the version associated with the schema
 // plugins configuration documents.
-var InstallPluginsSchemaVersion = schema.Version("1.0.0")
+var InstallPluginsSchemaVersion = cnab.SchemaVersion("1.0.0")
 
 type InstallOptions struct {
 	pkgmgmt.InstallOptions
@@ -54,11 +57,11 @@ type InstallPluginsSpec struct {
 }
 
 func (spec InstallPluginsSpec) Validate() error {
-	if spec.SchemaType != "" && strings.ToLower(spec.SchemaType) != "plugins" {
-		return fmt.Errorf("invalid schemaType %s, expected Plugins", spec.SchemaType)
+	if spec.SchemaType != "" && !strings.EqualFold(spec.SchemaType, SchemaTypePlugins) {
+		return fmt.Errorf("invalid schemaType %s, expected %s", spec.SchemaType, SchemaTypePlugins)
 	}
 
-	if InstallPluginsSchemaVersion != schema.Version(spec.SchemaVersion) {
+	if InstallPluginsSchemaVersion != cnab.SchemaVersion(spec.SchemaVersion) {
 		if spec.SchemaVersion == "" {
 			spec.SchemaVersion = "(none)"
 		}

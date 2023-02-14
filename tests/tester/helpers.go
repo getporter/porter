@@ -124,14 +124,7 @@ func (t Tester) RequireInstallationInList(namespace, name string, list []storage
 
 // EditYaml applies a set of yq transformations to a file.
 func (t Tester) EditYaml(path string, transformations ...func(yq *yaml.Editor) error) {
-	t.T.Log("Editing", path)
-	yq := yaml.NewEditor(t.TestContext.Context)
-
-	require.NoError(t.T, yq.ReadFile(path))
-	for _, transform := range transformations {
-		require.NoError(t.T, transform(yq))
-	}
-	require.NoError(t.T, yq.WriteFile(path))
+	t.TestContext.EditYaml(path, transformations...)
 }
 
 // RequireFileMode checks that all files in the specified path match the specifed

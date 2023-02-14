@@ -1,12 +1,12 @@
 package migrations
 
 import (
-	"github.com/cnabio/cnab-go/schema"
+	"get.porter.sh/porter/pkg/cnab"
 )
 
 // SourceSchema represents the file format of Porter's v0.38 schema document
 type SourceSchema struct {
-	Claims      schema.Version `json:"claims"`
-	Credentials schema.Version `json:"credentials"`
-	Parameters  schema.Version `json:"parameters"`
+	Claims      cnab.SchemaVersion `json:"claims"`
+	Credentials cnab.SchemaVersion `json:"credentials"`
+	Parameters  cnab.SchemaVersion `json:"parameters"`
 }

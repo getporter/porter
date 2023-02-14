@@ -1,11 +1,16 @@
 package storage
 
 import (
+	"context"
+	"strings"
 	"testing"
 	"time"
 
+	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/encoding"
+	"get.porter.sh/porter/pkg/schema"
 	"get.porter.sh/porter/pkg/secrets"
+	"get.porter.sh/porter/tests"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -25,7 +30,8 @@ func TestNewCredentialSet(t *testing.T) {
 	assert.NotEmpty(t, cs.Status.Created, "Created was not set")
 	assert.NotEmpty(t, cs.Status.Modified, "Modified was not set")
 	assert.Equal(t, cs.Status.Created, cs.Status.Modified, "Created and Modified should have the same timestamp")
-	assert.Equal(t, CredentialSetSchemaVersion, cs.SchemaVersion, "CredentialSetSchemaVersion was not set")
+	assert.Equal(t, SchemaTypeCredentialSet, cs.SchemaType, "incorrect SchemaType")
+	assert.Equal(t, DefaultCredentialSetSchemaVersion, cs.SchemaVersion, "incorrect SchemaVersion")
 	assert.Len(t, cs.Credentials, 1, "Credentials should be initialized with 1 value")
 }
 
@@ -68,6 +74,74 @@ func TestValidate(t *testing.T) {
 		require.Error(t, err, "expected Validate to fail because the credential applies to the specified action and is required")
 		assert.Contains(t, err.Error(), "bundle requires credential")
 	})
+}
+
+func TestDisplayCredentials_Validate(t *testing.T) {
+	t.Parallel()
+
+	testcases := []struct {
+		name          string
+		schemaType    string
+		schemaVersion cnab.SchemaVersion
+		wantError     string
+	}{
+		{
+			name:          "schemaType: none",
+			schemaType:    "",
+			schemaVersion: DefaultCredentialSetSchemaVersion,
+			wantError:     ""},
+		{
+			name:          "schemaType: CredentialSet",
+			schemaType:    SchemaTypeCredentialSet,
+			schemaVersion: DefaultCredentialSetSchemaVersion,
+			wantError:     ""},
+		{
+			name:          "schemaType: CREDENTIALSET",
+			schemaType:    strings.ToUpper(SchemaTypeCredentialSet),
+			schemaVersion: DefaultCredentialSetSchemaVersion,
+			wantError:     ""},
+		{
+			name:          "schemaType: credentialset",
+			schemaType:    strings.ToLower(SchemaTypeCredentialSet),
+			schemaVersion: DefaultCredentialSetSchemaVersion,
+			wantError:     ""},
+		{
+			name:          "schemaType: ParameterSet",
+			schemaType:    SchemaTypeParameterSet,
+			schemaVersion: DefaultCredentialSetSchemaVersion,
+			wantError:     "invalid schemaType ParameterSet, expected CredentialSet"},
+		{
+			name:          "validate embedded cs",
+			schemaType:    SchemaTypeCredentialSet,
+			schemaVersion: "", // required!
+			wantError:     "invalid schema version"},
+	}
+
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			cs := CredentialSet{
+				CredentialSetSpec: CredentialSetSpec{
+					SchemaType:    tc.schemaType,
+					SchemaVersion: tc.schemaVersion,
+				}}
+
+			err := cs.Validate(context.Background(), schema.CheckStrategyExact)
+			if tc.wantError == "" {
+				require.NoError(t, err)
+			} else {
+				tests.RequireErrorContains(t, err, tc.wantError)
+			}
+		})
+	}
+}
+
+func TestCredentialSet_Validate_DefaultSchemaType(t *testing.T) {
+	cs := NewCredentialSet("", "mycs")
+	cs.SchemaType = ""
+	require.NoError(t, cs.Validate(context.Background(), schema.CheckStrategyExact))
+	assert.Equal(t, SchemaTypeCredentialSet, cs.SchemaType)
 }
 
 func TestMarshal(t *testing.T) {

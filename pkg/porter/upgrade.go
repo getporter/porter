@@ -3,9 +3,10 @@ package porter
 import (
 	"context"
 	"errors"
-	"fmt"
+	"time"
 
 	"get.porter.sh/porter/pkg/cnab"
+	"get.porter.sh/porter/pkg/tracing"
 	"github.com/Masterminds/semver/v3"
 )
 
@@ -54,10 +55,13 @@ func (o *UpgradeOptions) GetActionVerb() string {
 // UpgradeBundle accepts a set of pre-validated UpgradeOptions and uses
 // them to upgrade a bundle.
 func (p *Porter) UpgradeBundle(ctx context.Context, opts *UpgradeOptions) error {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
 	// Sync any changes specified by the user to the installation before running upgrade
 	i, err := p.Installations.GetInstallation(ctx, opts.Namespace, opts.Name)
 	if err != nil {
-		return fmt.Errorf("could not find installation %s/%s: %w", opts.Namespace, opts.Name, err)
+		return span.Errorf("could not find installation %s/%s: %w", opts.Namespace, opts.Name, err)
 	}
 
 	if opts.Reference != "" {
@@ -69,6 +73,13 @@ func (p *Porter) UpgradeBundle(ctx context.Context, opts *UpgradeOptions) error 
 	}
 
 	err = p.applyActionOptionsToInstallation(ctx, opts, &i)
+	if err != nil {
+		return span.Errorf("could not apply options to installation: %w", err)
+	}
+	i.Status.Modified = time.Now()
+
+	checkStrategy := p.GetSchemaCheckStrategy(ctx)
+	err = i.Validate(ctx, checkStrategy)
 	if err != nil {
 		return err
 	}

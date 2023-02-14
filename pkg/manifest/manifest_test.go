@@ -3,6 +3,7 @@ package manifest
 import (
 	"context"
 	"os"
+	"strings"
 	"testing"
 
 	"get.porter.sh/porter/pkg/config"
@@ -238,6 +239,38 @@ func TestManifest_ValidateMetadata(t *testing.T) {
 				assert.NotContains(t, cxt.GetError(), invalidVersionErr)
 			} else {
 				require.ErrorContains(t, err, invalidVersionErr)
+			}
+		})
+	}
+}
+
+func TestManifest_ValidateSchemaType(t *testing.T) {
+	testcases := []struct {
+		schemaType string
+		wantErr    string
+	}{
+		{schemaType: "", wantErr: ""},
+		{schemaType: SchemaTypeBundle, wantErr: ""},
+		{schemaType: strings.ToLower(SchemaTypeBundle), wantErr: ""},
+		{schemaType: strings.ToUpper(SchemaTypeBundle), wantErr: ""},
+		{schemaType: "CredentialSet", wantErr: "invalid schemaType CredentialSet, expected Bundle"},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.schemaType, func(t *testing.T) {
+			cxt := portercontext.NewTestContext(t)
+			m := Manifest{
+				SchemaType:    tc.schemaType,
+				SchemaVersion: DefaultSchemaVersion.String(),
+				Name:          "mybuns",
+				Registry:      "localhost:5000",
+			}
+			err := m.validateMetadata(cxt.Context, schema.CheckStrategyExact)
+
+			if tc.wantErr == "" {
+				require.NoError(t, err)
+			} else {
+				require.ErrorContains(t, err, tc.wantErr)
 			}
 		})
 	}

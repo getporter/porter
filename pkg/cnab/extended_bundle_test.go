@@ -7,7 +7,6 @@ import (
 	porterschema "get.porter.sh/porter/pkg/schema"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
-	"github.com/cnabio/cnab-go/schema"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -226,7 +225,7 @@ func TestValidate(t *testing.T) {
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
 			b := NewBundle(bundle.Bundle{
-				SchemaVersion: schema.Version(tc.version),
+				SchemaVersion: SchemaVersion(tc.version),
 				InvocationImages: []bundle.InvocationImage{
 					{BaseImage: bundle.BaseImage{}},
 				},

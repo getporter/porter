@@ -4,4 +4,3 @@ credentials:
   - name: username
     source:
       env: ALT_USER
-

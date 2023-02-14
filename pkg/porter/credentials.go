@@ -32,14 +32,25 @@ type CredentialEditOptions struct {
 }
 
 // ListCredentials lists saved credential sets.
-func (p *Porter) ListCredentials(ctx context.Context, opts ListOptions) ([]storage.CredentialSet, error) {
-	return p.Credentials.ListCredentialSets(ctx, storage.ListOptions{
+func (p *Porter) ListCredentials(ctx context.Context, opts ListOptions) ([]DisplayCredentialSet, error) {
+	listOpts := storage.ListOptions{
 		Namespace: opts.GetNamespace(),
 		Name:      opts.Name,
 		Labels:    opts.ParseLabels(),
 		Skip:      opts.Skip,
 		Limit:     opts.Limit,
-	})
+	}
+	results, err := p.Credentials.ListCredentialSets(ctx, listOpts)
+	if err != nil {
+		return nil, err
+	}
+
+	displayResults := make([]DisplayCredentialSet, len(results))
+	for i, cs := range results {
+		displayResults[i] = NewDisplayCredentialSet(cs)
+	}
+
+	return displayResults, nil
 }
 
 // PrintCredentials prints saved credential sets.
@@ -66,7 +77,7 @@ func (p *Porter) PrintCredentials(ctx context.Context, opts ListOptions) error {
 
 		printCredRow :=
 			func(v interface{}) []string {
-				cr, ok := v.(storage.CredentialSet)
+				cr, ok := v.(DisplayCredentialSet)
 				if !ok {
 					return nil
 				}
@@ -216,9 +227,13 @@ func (p *Porter) EditCredential(ctx context.Context, opts CredentialEditOptions)
 }
 
 type DisplayCredentialSet struct {
-	// SchemaType helps when we export the definition so editors can detect the type of document, it's not used by porter.
-	SchemaType            string `json:"schemaType" yaml:"schemaType"`
 	storage.CredentialSet `yaml:",inline"`
+}
+
+func NewDisplayCredentialSet(cs storage.CredentialSet) DisplayCredentialSet {
+	ds := DisplayCredentialSet{CredentialSet: cs}
+	ds.SchemaType = storage.SchemaTypeCredentialSet
+	return ds
 }
 
 // ShowCredential shows the credential set corresponding to the provided name, using
@@ -232,10 +247,7 @@ func (p *Porter) ShowCredential(ctx context.Context, opts CredentialShowOptions)
 		return err
 	}
 
-	credSet := DisplayCredentialSet{
-		SchemaType:    "CredentialSet",
-		CredentialSet: cs,
-	}
+	credSet := NewDisplayCredentialSet(cs)
 
 	switch opts.Format {
 	case printer.FormatJson, printer.FormatYaml:
@@ -359,25 +371,25 @@ func (p *Porter) CredentialsApply(ctx context.Context, o ApplyOptions) error {
 		return span.Error(err)
 	}
 
-	var creds storage.CredentialSet
+	var creds DisplayCredentialSet
 	err = encoding.UnmarshalFile(p.FileSystem, o.File, &creds)
 	if err != nil {
 		return span.Error(fmt.Errorf("could not load %s as a credential set: %w", o.File, err))
 	}
 
-	if err = creds.Validate(); err != nil {
+	if err = creds.Validate(ctx, p.GetSchemaCheckStrategy(ctx)); err != nil {
 		return span.Error(fmt.Errorf("invalid credential set: %w", err))
 	}
 
 	creds.Namespace = namespace
 	creds.Status.Modified = time.Now()
 
-	err = p.Credentials.Validate(ctx, creds)
+	err = p.Credentials.Validate(ctx, creds.CredentialSet)
 	if err != nil {
 		return span.Error(fmt.Errorf("credential set is invalid: %w", err))
 	}
 
-	err = p.Credentials.UpsertCredentialSet(ctx, creds)
+	err = p.Credentials.UpsertCredentialSet(ctx, creds.CredentialSet)
 	if err != nil {
 		return err
 	}
