@@ -113,7 +113,7 @@ func (r Run) DefaultDocumentFilter() map[string]interface{} {
 // NewRun creates a run with default values initialized.
 func NewRun(namespace string, installation string) Run {
 	return Run{
-		SchemaVersion: InstallationSchemaVersion,
+		SchemaVersion: DefaultInstallationSchemaVersion,
 		ID:            cnab.NewULID(),
 		Revision:      cnab.NewULID(),
 		Created:       time.Now(),
@@ -207,7 +207,7 @@ func (r Run) NewResult(status string) Result {
 // NewResultFrom creates a result from the output of a CNAB run.
 func (r Run) NewResultFrom(cnabResult cnab.Result) Result {
 	return Result{
-		SchemaVersion:  InstallationSchemaVersion,
+		SchemaVersion:  DefaultInstallationSchemaVersion,
 		ID:             cnabResult.ID,
 		Namespace:      r.Namespace,
 		Installation:   r.Installation,

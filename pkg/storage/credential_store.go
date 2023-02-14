@@ -102,7 +102,7 @@ func (s CredentialStore) Validate(ctx context.Context, creds CredentialSet) erro
 */
 
 func (s CredentialStore) InsertCredentialSet(ctx context.Context, creds CredentialSet) error {
-	creds.SchemaVersion = CredentialSetSchemaVersion
+	creds.SchemaVersion = DefaultCredentialSetSchemaVersion
 	opts := InsertOptions{
 		Documents: []interface{}{creds},
 	}
@@ -128,7 +128,7 @@ func (s CredentialStore) GetCredentialSet(ctx context.Context, namespace string,
 }
 
 func (s CredentialStore) UpdateCredentialSet(ctx context.Context, creds CredentialSet) error {
-	creds.SchemaVersion = CredentialSetSchemaVersion
+	creds.SchemaVersion = DefaultCredentialSetSchemaVersion
 	opts := UpdateOptions{
 		Document: creds,
 	}
@@ -136,7 +136,7 @@ func (s CredentialStore) UpdateCredentialSet(ctx context.Context, creds Credenti
 }
 
 func (s CredentialStore) UpsertCredentialSet(ctx context.Context, creds CredentialSet) error {
-	creds.SchemaVersion = CredentialSetSchemaVersion
+	creds.SchemaVersion = DefaultCredentialSetSchemaVersion
 	opts := UpdateOptions{
 		Document: creds,
 		Upsert:   true,

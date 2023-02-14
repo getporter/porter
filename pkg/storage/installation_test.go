@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"context"
 	"strings"
 	"testing"
 	"time"
@@ -21,7 +22,7 @@ func TestNewInstallation(t *testing.T) {
 	assert.NotEmpty(t, inst.Status.Modified, "Modified was not set")
 	assert.Equal(t, inst.Status.Created, inst.Status.Modified, "Created and Modified should have the same timestamp")
 	assert.Equal(t, SchemaTypeInstallation, inst.SchemaType, "incorrect SchemaType")
-	assert.Equal(t, InstallationSchemaVersion, inst.SchemaVersion, "incorrect SchemaVersion")
+	assert.Equal(t, DefaultInstallationSchemaVersion, inst.SchemaVersion, "incorrect SchemaVersion")
 	assert.False(t, inst.Uninstalled, "incorrect Uninstalled")
 }
 
@@ -193,31 +194,31 @@ func TestInstallation_Validate(t *testing.T) {
 			name: "none",
 			input: InstallationSpec{
 				SchemaType:    "",
-				SchemaVersion: InstallationSchemaVersion},
+				SchemaVersion: DefaultInstallationSchemaVersion},
 			wantError: ""},
 		{
 			name: strings.ToLower(SchemaTypeInstallation),
 			input: InstallationSpec{
 				SchemaType:    "installation",
-				SchemaVersion: InstallationSchemaVersion},
+				SchemaVersion: DefaultInstallationSchemaVersion},
 			wantError: ""},
 		{
 			name: SchemaTypeInstallation,
 			input: InstallationSpec{
 				SchemaType:    SchemaTypeInstallation,
-				SchemaVersion: InstallationSchemaVersion},
+				SchemaVersion: DefaultInstallationSchemaVersion},
 			wantError: ""},
 		{
 			name: strings.ToUpper(SchemaTypeInstallation),
 			input: InstallationSpec{
 				SchemaType:    "INSTALLATION",
-				SchemaVersion: InstallationSchemaVersion},
+				SchemaVersion: DefaultInstallationSchemaVersion},
 			wantError: ""},
 		{
 			name: SchemaTypeCredentialSet,
 			input: InstallationSpec{
 				SchemaType:    SchemaTypeCredentialSet,
-				SchemaVersion: InstallationSchemaVersion},
+				SchemaVersion: DefaultInstallationSchemaVersion},
 			wantError: "invalid schemaType CredentialSet, expected Installation"},
 	}
 
@@ -225,7 +226,9 @@ func TestInstallation_Validate(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			err := tc.input.Validate()
+
+			ctx := context.Background()
+			err := tc.input.Validate(ctx, schema.CheckStrategyExact)
 			if tc.wantError == "" {
 				require.NoError(t, err)
 			} else {
@@ -238,6 +241,6 @@ func TestInstallation_Validate(t *testing.T) {
 func TestInstallation_Validate_DefaultSchemaType(t *testing.T) {
 	i := NewInstallation("", "mybuns")
 	i.SchemaType = ""
-	require.NoError(t, i.Validate())
+	require.NoError(t, i.Validate(context.Background(), schema.CheckStrategyExact))
 	assert.Equal(t, SchemaTypeInstallation, i.SchemaType)
 }

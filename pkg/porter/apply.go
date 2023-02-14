@@ -58,7 +58,7 @@ func (p *Porter) InstallationApply(ctx context.Context, opts ApplyOptions) error
 
 	namespace, err := p.getNamespaceFromFile(opts)
 	if err != nil {
-		return err
+		return log.Error(err)
 	}
 
 	if log.ShouldLog(zapcore.DebugLevel) {
@@ -69,33 +69,31 @@ func (p *Porter) InstallationApply(ctx context.Context, opts ApplyOptions) error
 
 	var input DisplayInstallation
 	if err := encoding.UnmarshalFile(p.FileSystem, opts.File, &input); err != nil {
-		return fmt.Errorf("unable to parse %s as an installation document: %w", opts.File, err)
+		return log.Errorf("unable to parse %s as an installation document: %w", opts.File, err)
 	}
 	input.Namespace = namespace
 	inputInstallation, err := input.ConvertToInstallation()
 	if err != nil {
-		return err
+		return log.Error(err)
 	}
 
 	installation, err := p.Installations.GetInstallation(ctx, inputInstallation.Namespace, inputInstallation.Name)
 	if err != nil {
 		if !errors.Is(err, storage.ErrNotFound{}) {
-			return fmt.Errorf("could not query for an existing installation document for %s: %w", inputInstallation, err)
+			return log.Errorf("could not query for an existing installation document for %s: %w", inputInstallation, err)
 		}
 
 		// Create a new installation
 		installation = storage.NewInstallation(input.Namespace, input.Name)
-		installation.Apply(inputInstallation.InstallationSpec)
-
 		log.Info("Creating a new installation", attribute.String("installation", installation.String()))
 	} else {
-		// Apply the specified changes to the installation
-		installation.Apply(inputInstallation.InstallationSpec)
-		if err := installation.Validate(); err != nil {
-			return err
-		}
+		log.Infof("Updating %s installation\n", installation)
+	}
 
-		fmt.Fprintf(p.Err, "Updating %s installation\n", installation)
+	installation.Apply(inputInstallation.InstallationSpec)
+	checkStrategy := p.GetSchemaCheckStrategy(ctx)
+	if err := installation.Validate(ctx, checkStrategy); err != nil {
+		return log.Errorf("invalid installation: %w", err)
 	}
 
 	reconcileOpts := ReconcileOptions{

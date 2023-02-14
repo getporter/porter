@@ -11,14 +11,12 @@ import (
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/schema"
 	"get.porter.sh/porter/pkg/secrets"
+	"get.porter.sh/porter/pkg/tracing"
 	"github.com/Masterminds/semver/v3"
 	"github.com/opencontainers/go-digest"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
-
-// SchemaTypeInstallation is the default schemaType value for Installation resources
-const SchemaTypeInstallation = "Installation"
 
 var _ Document = Installation{}
 
@@ -87,7 +85,7 @@ func NewInstallation(namespace string, name string) Installation {
 		ID: cnab.NewULID(),
 		InstallationSpec: InstallationSpec{
 			SchemaType:    SchemaTypeInstallation,
-			SchemaVersion: InstallationSchemaVersion,
+			SchemaVersion: DefaultInstallationSchemaVersion,
 			Namespace:     namespace,
 			Name:          name,
 			Parameters:    NewInternalParameterSet(namespace, name),
@@ -143,28 +141,40 @@ func (i *InstallationSpec) Apply(input InstallationSpec) {
 }
 
 // Validate the installation document and report the first error.
-func (i *InstallationSpec) Validate() error {
-	if i.SchemaType == "" {
-		// Default the schema type before importing into the database if it's not set already
-		// SchemaType isn't really used by our code, it's a type hint for editors, but this will ensure we are consistent in our persisted documents
-		i.SchemaType = SchemaTypeInstallation
-	} else if !strings.EqualFold(i.SchemaType, SchemaTypeInstallation) {
-		return fmt.Errorf("invalid schemaType %s, expected %s", i.SchemaType, SchemaTypeInstallation)
+func (i *InstallationSpec) Validate(ctx context.Context, strategy schema.CheckStrategy) error {
+	//lint:ignore SA4006 ignore unused context for now
+	ctx, span := tracing.StartSpan(ctx,
+		attribute.String("installation", i.String()),
+		attribute.String("schemaVersion", string(i.SchemaVersion)),
+		attribute.String("defaultSchemaVersion", string(DefaultInstallationSchemaVersion)))
+	defer span.EndSpan()
+
+	// Before we can validate, get our resource in a consistent state
+	// 1. Check if we know what to do with this version of the resource
+	defaultSchemaVersion := semver.MustParse(string(DefaultInstallationSchemaVersion))
+	if warnOnly, err := schema.ValidateSchemaVersion(strategy, SupportedInstallationSchemaVersions, string(i.SchemaVersion), defaultSchemaVersion); err != nil {
+		if warnOnly {
+			span.Warn(err.Error())
+		} else {
+			return span.Error(err)
+		}
 	}
 
-	if InstallationSchemaVersion != i.SchemaVersion {
-		if i.SchemaVersion == "" {
-			i.SchemaVersion = "(none)"
-		}
-		return fmt.Errorf("invalid schemaVersion provided: %s. This version of Porter is compatible with %s.", i.SchemaVersion, InstallationSchemaVersion)
+	// 2. Check if they passed in the right resource type
+	if i.SchemaType != "" && !strings.EqualFold(i.SchemaType, SchemaTypeInstallation) {
+		return span.Errorf("invalid schemaType %s, expected %s", i.SchemaType, SchemaTypeInstallation)
 	}
+
+	}
+
+	// OK! Now we can do resource specific validations
 
 	// We can change these to better checks if we consolidate our logic around the various ways we let you
 	// install from a bundle definition https://github.com/getporter/porter/issues/1024#issuecomment-899828081
 	// Until then, these are pretty weak checks
 	_, _, err := i.Bundle.GetBundleReference()
 	if err != nil {
-		return fmt.Errorf("could not determine the fully-qualified bundle reference: %w", err)
+		return span.Errorf("could not determine the fully-qualified bundle reference: %w", err)
 	}
 
 	return nil

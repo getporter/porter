@@ -57,15 +57,11 @@ type InstallPluginsSpec struct {
 }
 
 func (spec InstallPluginsSpec) Validate() error {
-	if spec.SchemaType == "" {
-		// Default the schema type before importing into the database if it's not set already
-		// SchemaType isn't really used by our code, it's a type hint for editors, but this will ensure we are consistent in our persisted documents
-		spec.SchemaType = SchemaTypePlugins
-	} else if !strings.EqualFold(spec.SchemaType, SchemaTypePlugins) {
+	if spec.SchemaType != "" && !strings.EqualFold(spec.SchemaType, SchemaTypePlugins) {
 		return fmt.Errorf("invalid schemaType %s, expected %s", spec.SchemaType, SchemaTypePlugins)
 	}
 
-	if InstallPluginsSchemaVersion != schema.Version(spec.SchemaVersion) {
+	if InstallPluginsSchemaVersion != cnab.SchemaVersion(spec.SchemaVersion) {
 		if spec.SchemaVersion == "" {
 			spec.SchemaVersion = "(none)"
 		}

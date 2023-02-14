@@ -527,7 +527,8 @@ func (p *Porter) ParametersApply(ctx context.Context, o ApplyOptions) error {
 		return span.Error(fmt.Errorf("could not load %s as a parameter set: %w", o.File, err))
 	}
 
-	if err = params.Validate(); err != nil {
+	checkStrategy := p.GetSchemaCheckStrategy(ctx)
+	if err = params.Validate(ctx, checkStrategy); err != nil {
 		return span.Error(fmt.Errorf("invalid parameter set: %w", err))
 	}
 

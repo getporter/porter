@@ -377,7 +377,7 @@ func (p *Porter) CredentialsApply(ctx context.Context, o ApplyOptions) error {
 		return span.Error(fmt.Errorf("could not load %s as a credential set: %w", o.File, err))
 	}
 
-	if err = creds.Validate(); err != nil {
+	if err = creds.Validate(ctx, p.GetSchemaCheckStrategy(ctx)); err != nil {
 		return span.Error(fmt.Errorf("invalid credential set: %w", err))
 	}
 

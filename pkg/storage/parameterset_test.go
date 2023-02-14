@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"context"
 	"strings"
 	"testing"
 
@@ -22,14 +23,14 @@ func TestNewParameterSet(t *testing.T) {
 			},
 		})
 
-	assert.Equal(t, ParameterSetSchemaVersion, ps.SchemaVersion, "SchemaVersion was not set")
+	assert.Equal(t, DefaultParameterSetSchemaVersion, ps.SchemaVersion, "SchemaVersion was not set")
 	assert.Equal(t, "myparams", ps.Name, "Name was not set")
 	assert.Equal(t, "dev", ps.Namespace, "Namespace was not set")
 	assert.NotEmpty(t, ps.Status.Created, "Created was not set")
 	assert.NotEmpty(t, ps.Status.Modified, "Modified was not set")
 	assert.Equal(t, ps.Status.Created, ps.Status.Modified, "Created and Modified should have the same timestamp")
 	assert.Equal(t, SchemaTypeParameterSet, ps.SchemaType, "incorrect SchemaType")
-	assert.Equal(t, ParameterSetSchemaVersion, ps.SchemaVersion, "incorrect SchemaVersion")
+	assert.Equal(t, DefaultParameterSetSchemaVersion, ps.SchemaVersion, "incorrect SchemaVersion")
 	assert.Len(t, ps.Parameters, 1, "Parameters should be initialized with 1 value")
 }
 
@@ -57,33 +58,33 @@ func TestDisplayParameterSet_Validate(t *testing.T) {
 		{
 			name:          "schemaType: none",
 			schemaType:    "",
-			schemaVersion: ParameterSetSchemaVersion,
+			schemaVersion: DefaultParameterSetSchemaVersion,
 			wantError:     ""},
 		{
 			name:          "schemaType: ParameterSet",
 			schemaType:    SchemaTypeParameterSet,
-			schemaVersion: ParameterSetSchemaVersion,
+			schemaVersion: DefaultParameterSetSchemaVersion,
 			wantError:     ""},
 		{
 			name:          "schemaType: PARAMETERSET",
 			schemaType:    strings.ToUpper(SchemaTypeParameterSet),
-			schemaVersion: ParameterSetSchemaVersion,
+			schemaVersion: DefaultParameterSetSchemaVersion,
 			wantError:     ""},
 		{
 			name:          "schemaType: parameterset",
 			schemaType:    strings.ToUpper(SchemaTypeParameterSet),
-			schemaVersion: ParameterSetSchemaVersion,
+			schemaVersion: DefaultParameterSetSchemaVersion,
 			wantError:     ""},
 		{
 			name:          "schemaType: CredentialSet",
 			schemaType:    SchemaTypeCredentialSet,
-			schemaVersion: ParameterSetSchemaVersion,
+			schemaVersion: DefaultParameterSetSchemaVersion,
 			wantError:     "invalid schemaType CredentialSet, expected ParameterSet"},
 		{
 			name:          "validate embedded ps",
 			schemaType:    SchemaTypeParameterSet,
 			schemaVersion: "", // this is required
-			wantError:     "invalid schemaVersion provided: (none)"},
+			wantError:     "invalid schema version"},
 	}
 
 	for _, tc := range testcases {
@@ -94,7 +95,7 @@ func TestDisplayParameterSet_Validate(t *testing.T) {
 				SchemaType:    tc.schemaType,
 				SchemaVersion: tc.schemaVersion,
 			}}
-			err := ps.Validate()
+			err := ps.Validate(context.Background(), schema.CheckStrategyExact)
 			if tc.wantError == "" {
 				require.NoError(t, err)
 			} else {
@@ -107,6 +108,6 @@ func TestDisplayParameterSet_Validate(t *testing.T) {
 func TestParameterSet_Validate_DefaultSchemaType(t *testing.T) {
 	ps := NewParameterSet("", "myps")
 	ps.SchemaType = ""
-	require.NoError(t, ps.Validate())
+	require.NoError(t, ps.Validate(context.Background(), schema.CheckStrategyExact))
 	assert.Equal(t, SchemaTypeParameterSet, ps.SchemaType)
 }

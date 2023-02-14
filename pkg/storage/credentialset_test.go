@@ -1,12 +1,14 @@
 package storage
 
 import (
+	"context"
 	"strings"
 	"testing"
 	"time"
 
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/encoding"
+	"get.porter.sh/porter/pkg/schema"
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/tests"
 	"github.com/cnabio/cnab-go/bundle"
@@ -29,7 +31,7 @@ func TestNewCredentialSet(t *testing.T) {
 	assert.NotEmpty(t, cs.Status.Modified, "Modified was not set")
 	assert.Equal(t, cs.Status.Created, cs.Status.Modified, "Created and Modified should have the same timestamp")
 	assert.Equal(t, SchemaTypeCredentialSet, cs.SchemaType, "incorrect SchemaType")
-	assert.Equal(t, CredentialSetSchemaVersion, cs.SchemaVersion, "incorrect SchemaVersion")
+	assert.Equal(t, DefaultCredentialSetSchemaVersion, cs.SchemaVersion, "incorrect SchemaVersion")
 	assert.Len(t, cs.Credentials, 1, "Credentials should be initialized with 1 value")
 }
 
@@ -86,33 +88,33 @@ func TestDisplayCredentials_Validate(t *testing.T) {
 		{
 			name:          "schemaType: none",
 			schemaType:    "",
-			schemaVersion: CredentialSetSchemaVersion,
+			schemaVersion: DefaultCredentialSetSchemaVersion,
 			wantError:     ""},
 		{
 			name:          "schemaType: CredentialSet",
 			schemaType:    SchemaTypeCredentialSet,
-			schemaVersion: CredentialSetSchemaVersion,
+			schemaVersion: DefaultCredentialSetSchemaVersion,
 			wantError:     ""},
 		{
 			name:          "schemaType: CREDENTIALSET",
 			schemaType:    strings.ToUpper(SchemaTypeCredentialSet),
-			schemaVersion: CredentialSetSchemaVersion,
+			schemaVersion: DefaultCredentialSetSchemaVersion,
 			wantError:     ""},
 		{
 			name:          "schemaType: credentialset",
 			schemaType:    strings.ToLower(SchemaTypeCredentialSet),
-			schemaVersion: CredentialSetSchemaVersion,
+			schemaVersion: DefaultCredentialSetSchemaVersion,
 			wantError:     ""},
 		{
 			name:          "schemaType: ParameterSet",
 			schemaType:    SchemaTypeParameterSet,
-			schemaVersion: CredentialSetSchemaVersion,
+			schemaVersion: DefaultCredentialSetSchemaVersion,
 			wantError:     "invalid schemaType ParameterSet, expected CredentialSet"},
 		{
 			name:          "validate embedded cs",
 			schemaType:    SchemaTypeCredentialSet,
 			schemaVersion: "", // required!
-			wantError:     "invalid schemaVersion provided: (none)"},
+			wantError:     "invalid schema version"},
 	}
 
 	for _, tc := range testcases {
@@ -125,7 +127,7 @@ func TestDisplayCredentials_Validate(t *testing.T) {
 					SchemaVersion: tc.schemaVersion,
 				}}
 
-			err := cs.Validate()
+			err := cs.Validate(context.Background(), schema.CheckStrategyExact)
 			if tc.wantError == "" {
 				require.NoError(t, err)
 			} else {
@@ -138,7 +140,7 @@ func TestDisplayCredentials_Validate(t *testing.T) {
 func TestCredentialSet_Validate_DefaultSchemaType(t *testing.T) {
 	cs := NewCredentialSet("", "mycs")
 	cs.SchemaType = ""
-	require.NoError(t, cs.Validate())
+	require.NoError(t, cs.Validate(context.Background(), schema.CheckStrategyExact))
 	assert.Equal(t, SchemaTypeCredentialSet, cs.SchemaType)
 }
 

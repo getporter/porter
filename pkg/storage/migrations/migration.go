@@ -320,7 +320,7 @@ func convertClaimToRun(inst storage.Installation, data []byte) (storage.Run, err
 	}
 
 	dest := storage.Run{
-		SchemaVersion:   storage.InstallationSchemaVersion,
+		SchemaVersion:   storage.DefaultInstallationSchemaVersion,
 		ID:              src.ID,
 		Created:         src.Created,
 		Namespace:       inst.Namespace,
@@ -502,7 +502,7 @@ func convertCredentialSet(namespace string, data []byte) (storage.CredentialSet,
 
 	dest := storage.CredentialSet{
 		CredentialSetSpec: storage.CredentialSetSpec{
-			SchemaVersion: storage.CredentialSetSchemaVersion,
+			SchemaVersion: storage.DefaultCredentialSetSchemaVersion,
 			Namespace:     namespace,
 			Name:          src.Name,
 			Credentials:   make([]secrets.Strategy, len(src.Credentials)),
@@ -580,7 +580,7 @@ func convertParameterSet(namespace string, data []byte) (storage.ParameterSet, e
 
 	dest := storage.ParameterSet{
 		ParameterSetSpec: storage.ParameterSetSpec{
-			SchemaVersion: storage.ParameterSetSchemaVersion,
+			SchemaVersion: storage.DefaultParameterSetSchemaVersion,
 			Namespace:     namespace,
 			Name:          src.Name,
 			Parameters:    make([]secrets.Strategy, len(src.Parameters)),

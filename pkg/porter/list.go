@@ -172,12 +172,8 @@ func (d DisplayInstallation) ConvertToInstallation() (storage.Installation, erro
 		return storage.Installation{}, err
 	}
 
-	if err := i.Validate(); err != nil {
-		return storage.Installation{}, fmt.Errorf("invalid installation: %w", err)
-	}
-
+	// do not validate here, validate the converted installation right before we save it to the database
 	return i, nil
-
 }
 
 // ConvertParamToSet converts a Parameters into a internal ParameterSet.

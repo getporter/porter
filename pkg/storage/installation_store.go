@@ -277,7 +277,7 @@ func (s InstallationStore) GetLastLogs(ctx context.Context, namespace string, in
 }
 
 func (s InstallationStore) InsertInstallation(ctx context.Context, installation Installation) error {
-	installation.SchemaVersion = InstallationSchemaVersion
+	installation.SchemaVersion = DefaultInstallationSchemaVersion
 	opts := InsertOptions{
 		Documents: []interface{}{installation},
 	}
@@ -306,7 +306,7 @@ func (s InstallationStore) InsertOutput(ctx context.Context, output Output) erro
 }
 
 func (s InstallationStore) UpdateInstallation(ctx context.Context, installation Installation) error {
-	installation.SchemaVersion = InstallationSchemaVersion
+	installation.SchemaVersion = DefaultInstallationSchemaVersion
 	opts := UpdateOptions{
 		Document: installation,
 	}
@@ -322,7 +322,7 @@ func (s InstallationStore) UpsertRun(ctx context.Context, run Run) error {
 }
 
 func (s InstallationStore) UpsertInstallation(ctx context.Context, installation Installation) error {
-	installation.SchemaVersion = InstallationSchemaVersion
+	installation.SchemaVersion = DefaultInstallationSchemaVersion
 	opts := UpdateOptions{
 		Upsert:   true,
 		Document: installation,

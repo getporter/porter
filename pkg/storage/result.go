@@ -47,7 +47,7 @@ func (r Result) DefaultDocumentFilter() map[string]interface{} {
 
 func NewResult() Result {
 	return Result{
-		SchemaVersion: InstallationSchemaVersion,
+		SchemaVersion: DefaultInstallationSchemaVersion,
 		ID:            cnab.NewULID(),
 		Created:       time.Now(),
 	}
@@ -55,7 +55,7 @@ func NewResult() Result {
 
 func (r Result) NewOutput(name string, data []byte) Output {
 	return Output{
-		SchemaVersion: InstallationSchemaVersion,
+		SchemaVersion: DefaultInstallationSchemaVersion,
 		Name:          name,
 		Namespace:     r.Namespace,
 		Installation:  r.Installation,

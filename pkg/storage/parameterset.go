@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -8,12 +9,11 @@ import (
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/schema"
 	"get.porter.sh/porter/pkg/secrets"
+	"get.porter.sh/porter/pkg/tracing"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 const (
-	// SchemaTypeParameterSet is the default schemaType value for ParameterSet resources
-	SchemaTypeParameterSet = "ParameterSet"
-
 	INTERNAL_PARAMETERER_SET = "internal-parameter-set"
 )
 
@@ -62,7 +62,7 @@ func NewParameterSet(namespace string, name string, params ...secrets.Strategy) 
 	ps := ParameterSet{
 		ParameterSetSpec: ParameterSetSpec{
 			SchemaType:    SchemaTypeParameterSet,
-			SchemaVersion: ParameterSetSchemaVersion,
+			SchemaVersion: DefaultParameterSetSchemaVersion,
 			Namespace:     namespace,
 			Name:          name,
 			Parameters:    params,
@@ -85,7 +85,29 @@ func (s ParameterSet) DefaultDocumentFilter() map[string]interface{} {
 	return map[string]interface{}{"namespace": s.Namespace, "name": s.Name}
 }
 
-func (s *ParameterSet) Validate() error {
+func (s *ParameterSet) Validate(ctx context.Context, strategy schema.CheckStrategy) error {
+	//lint:ignore SA4006 ignore unused context for now
+	ctx, span := tracing.StartSpan(ctx,
+		attribute.String("parameterSet", s.String()),
+		attribute.String("schemaVersion", string(s.SchemaVersion)),
+		attribute.String("defaultSchemaVersion", string(DefaultParameterSetSchemaVersion)))
+	defer span.EndSpan()
+
+	// Before we can validate, get our resource in a consistent state
+	// 1. Check if we know what to do with this version of the resource
+	if warnOnly, err := schema.ValidateSchemaVersion(strategy, SupportedParameterSetSchemaVersions, string(s.SchemaVersion), DefaultParameterSetSemverSchemaVersion); err != nil {
+		if warnOnly {
+			span.Warn(err.Error())
+		} else {
+			return span.Error(err)
+		}
+	}
+
+	// 2. Check if they passed in the right resource type
+	if s.SchemaType != "" && !strings.EqualFold(s.SchemaType, SchemaTypeParameterSet) {
+		return span.Errorf("invalid schemaType %s, expected %s", s.SchemaType, SchemaTypeParameterSet)
+	}
+
 	if s.SchemaType == "" {
 		// Default the schema type before importing into the database if it's not set already
 		// SchemaType isn't really used by our code, it's a type hint for editors, but this will ensure we are consistent in our persisted documents
@@ -94,12 +116,7 @@ func (s *ParameterSet) Validate() error {
 		return fmt.Errorf("invalid schemaType %s, expected %s", s.SchemaType, SchemaTypeParameterSet)
 	}
 
-	if ParameterSetSchemaVersion != s.SchemaVersion {
-		if s.SchemaVersion == "" {
-			s.SchemaVersion = "(none)"
-		}
-		return fmt.Errorf("invalid schemaVersion provided: %s. This version of Porter is compatible with %s.", s.SchemaVersion, ParameterSetSchemaVersion)
-	}
+	// OK! Now we can do resource specific validations
 	return nil
 }
 
