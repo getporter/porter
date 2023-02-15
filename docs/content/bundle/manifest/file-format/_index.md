@@ -2,8 +2,6 @@
 title: Porter Manifest File Format 1.0.1
 description: The 1.0.1 file format for the Porter manifest, porter.yaml
 layout: single
-alias:
-- /bundle/manifest/file-format/1.0.1/
 ---
 
 The manifest is the porter.yaml file used to build a bundle.
@@ -20,16 +18,12 @@ Below are schema versions for the Porter manifest, and the corresponding Porter 
 | Bundle      | (none)                            | v0.38.*          |
 | Bundle      | [1.0.0-alpha.1](./1.0.0-alpha.1/) | v1.0.0-alpha.14+ |
 | Bundle      | [1.0.0](./1.0.0/)                 | v1.0.0-beta.2+   |
-| Bundle      | [1.0.1](./1.0.1/)                 | v1.1.0           |
+| Bundle      | [1.0.1](./1.0.1/)                 | v1.0.8+          |
 
 Sometimes you may want to work with a different version of a resource than what is supported by Porter, especially when migrating from one version of Porter to another.
 The [schema-check] configuration setting allows you to change how Porter behaves when the schemaVersion of a resource doesn't match Porter's supported version.
 
 [schema-check]: /configuration/#schema-check
-
-## Changes
-
-The schemaType field is now fully supported on porter.yaml files.
 
 ## Example 
 
