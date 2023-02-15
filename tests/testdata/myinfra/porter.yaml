@@ -8,17 +8,25 @@ parameters:
   - name: database
     type: string
     default: mydb
+  - name: logLevel
+    type: string
+
+credentials:
+  - name: token
 
 outputs:
   - name: mysql-connstr
-    
+
 dependencies:
   requires:
     - name: db
       bundle:
         reference: "localhost:5000/mydb:v0.1.0"
+      credentials:
+        username: ${bundle.credentials.token}
       parameters:
         database: ${bundle.parameters.database}
+        logLevel: ${bundle.parameters.logLevel}
 
 mixins:
   - exec

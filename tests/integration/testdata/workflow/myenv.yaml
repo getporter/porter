@@ -1,0 +1,84 @@
+schemaType: Workflow
+schemaVersion: "1.0.0-alpha.1"
+stages:
+  - jobs:
+      root:
+        action: install
+        installation:
+          name: myenv
+          namespace: dev
+          bundle:
+            repository: localhost:5000/myenv
+            version: 0.1.0
+          credentialSets:
+            - myenv
+          parameterSets:
+            - myenv
+        depends:
+          - root/app
+          - root/infra
+      root/app:
+        action: install
+        installation:
+          name: myenv/app
+          namespace: dev
+          bundle:
+            repository: localhost:5000/myapp
+            version: 1.2.3
+          credentials:
+            credentials:
+              - name: db-connstr
+                source:
+                  porter: workflow.jobs.root.outputs.mysql-connstr
+          parameters:
+            parameters:
+              - name: logLevel
+                source:
+                  porter: workflow.jobs.root.parameters.logLevel
+        depends:
+          - root/infra
+      root/infra:
+        action: install
+        installation:
+          name: myenv/infra
+          namespace: dev
+          bundle:
+            repository: localhost:5000/myinfra
+            version: 0.1.0
+          credentials:
+            credentials:
+              - name: token
+                source:
+                  porter: workflow.jobs.root.credentials.token
+          parameters:
+            parameters:
+              - name: database
+                source:
+                  value: myenvdb
+              - name: logLevel
+                source:
+                  porter: workflow.jobs.root.parameters.logLevel
+        depends:
+          - root/infra/db
+      root/infra/db:
+        action: install
+        installation:
+          name: myenv/infra/db
+          namespace: dev
+          bundle:
+            repository: localhost:5000/mydb
+            version: 0.1.0
+          credentials:
+            credentials:
+              - name: username
+                source:
+                  porter: workflow.jobs.root/infra.credentials.token
+          parameters:
+            parameters:
+              - name: database
+                source:
+                  porter: workflow.jobs.root/infra.parameters.database
+              - name: logLevel
+                source:
+                  porter: workflow.jobs.root/infra.parameters.logLevel
+        depends: []

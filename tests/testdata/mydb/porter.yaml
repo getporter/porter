@@ -1,5 +1,5 @@
 # This is a test bundle that can be used as a dependency
-
+# TODO(PEP003): Do not depend on this bundle from mybuns, and move testcases like installerImage out of here
 schemaVersion: 1.0.0
 name: mydb
 version: 0.1.0
@@ -13,11 +13,12 @@ parameters:
   - name: collation
     type: string
     default: "Latin1_General_100_CS_AS"
+  - name: logLevel
+    type: string
 
 credentials:
-  - name: username
-    env: USERNAME
-    required: false
+  - name: token
+    env: CLOUD_TOKEN
 
 outputs:
   - name: connStr
@@ -49,7 +50,7 @@ install:
       description: "Debug"
       command: echo
       arguments:
-        - "image:${ bundle.installerImage }"
+        - "image: ${ bundle.installerImage }"
 
 status:
   - exec:

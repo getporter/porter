@@ -11,26 +11,26 @@ import (
 // Workflow represents how a bundle and its dependencies should be run by Porter.
 type Workflow struct {
 	// ID of the workflow.
-	ID string `json:"id"`
+	ID string `json:"id,omitempty" yaml:"id,omitempty"`
 
-	WorkflowSpec `json:"spec"`
+	WorkflowSpec
 
 	// TODO(PEP003): When we wrap this in a DisplayWorkflow, override marshal so that we don't marshal an ID or status when empty
 	// i.e. if we do a dry run, we shouldn't get out an empty id or status
-	Status WorkflowStatus `json:"status"`
+	Status WorkflowStatus `json:"status,omitempty" yaml:"status,omitempty"`
 }
 
 type WorkflowSpec struct {
-	SchemaVersion schema.Version `json:"schemaVersion"`
+	SchemaVersion schema.Version `json:"schemaVersion" yaml:"schemaVersion"`
 
 	// MaxParallel is the maximum number of jobs that can run in parallel.
-	MaxParallel int `json:"maxParallel"`
+	MaxParallel int `json:"maxParallel,omitempty" yaml:"maxParallel,omitempty"`
 
 	// DebugMode tweaks how the workflow is run to make it easier to debug
-	DebugMode bool `json:"debugMode"`
+	DebugMode bool `json:"debugMode,omitempty" yaml:"debugMode,omitempty"`
 
 	// Stages are groups of jobs that run in serial.
-	Stages []Stage `json:"stages"`
+	Stages []Stage `json:"stages" yaml:"stages"`
 }
 
 // GetJob finds the specified job by its key.
@@ -66,7 +66,7 @@ func (w *Workflow) Prepare() {
 // Stage represents a set of jobs that should run, possibly in parallel.
 type Stage struct {
 	// Jobs is the set of bundles to execute, keyed by the job name.
-	Jobs map[string]*Job `json:"jobs"`
+	Jobs map[string]*Job `json:"jobs", yaml:"jobs"`
 }
 
 func (s *Stage) Prepare(workflowID string) {
@@ -81,17 +81,17 @@ type Job struct {
 	// TODO(PEP003): no job can have the same name as the parent installation (which is keyed from the installation). Or we need to stick to root and reserve that?
 	// Key is the unique name of the job within a stage.
 	// We handle copying this value so that it's easier to work with a single job when not in a map
-	Key string `json:"-"`
+	Key string `json:"-" yaml:"-"`
 
 	// Action name to execute on the bundle, when empty default to applying the installation.
-	Action string `json:"action"`
+	Action string `json:"action,omitempty" yaml:"action,omitempty"`
 
 	// TODO(PEP003): workflows should have DisplayWorkflow and use DisplayInstallation
 	// Installation defines the installation upon which Porter should act.
-	Installation InstallationSpec `json:"installation"`
+	Installation InstallationSpec `json:"installation" yaml:"installation"`
 
 	// Depends is a list of job keys that the Job depends upon.
-	Depends []string `json:"depends"`
+	Depends []string `json:"depends,omitempty" yaml:"depends,omitempty"`
 
 	Status JobStatus `json:"status,omitempty"`
 }
