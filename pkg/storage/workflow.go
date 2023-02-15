@@ -8,6 +8,11 @@ import (
 	"github.com/cnabio/cnab-go/schema"
 )
 
+const (
+	SchemaTypeWorkflow    = "Workflow"
+	SchemaVersionWorkflow = "1.0.0-alpha.1"
+)
+
 // Workflow represents how a bundle and its dependencies should be run by Porter.
 type Workflow struct {
 	// ID of the workflow.
@@ -20,7 +25,19 @@ type Workflow struct {
 	Status WorkflowStatus `json:"status,omitempty" yaml:"status,omitempty"`
 }
 
+func NewWorkflow() Workflow {
+	return Workflow{
+		ID: cnab.NewULID(),
+		WorkflowSpec: WorkflowSpec{
+			SchemaType:    SchemaTypeWorkflow,
+			SchemaVersion: SchemaVersionWorkflow,
+		},
+	}
+}
+
 type WorkflowSpec struct {
+	SchemaType string
+
 	SchemaVersion schema.Version `json:"schemaVersion" yaml:"schemaVersion"`
 
 	// MaxParallel is the maximum number of jobs that can run in parallel.
@@ -86,9 +103,7 @@ type Job struct {
 	// Action name to execute on the bundle, when empty default to applying the installation.
 	Action string `json:"action,omitempty" yaml:"action,omitempty"`
 
-	// TODO(PEP003): workflows should have DisplayWorkflow and use DisplayInstallation
-	// Installation defines the installation upon which Porter should act.
-	Installation InstallationSpec `json:"installation" yaml:"installation"`
+	Installation Installation `json:"installation" yaml:"installation"`
 
 	// Depends is a list of job keys that the Job depends upon.
 	Depends []string `json:"depends,omitempty" yaml:"depends,omitempty"`

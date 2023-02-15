@@ -99,12 +99,11 @@ func (p *Porter) InstallBundle(ctx context.Context, opts InstallOptions) error {
 			DebugMode:    opts.DebugMode,
 			MaxParallel:  1,
 		}
-		ws, err := eng.CreateWorkflow(ctx, workflowOpts)
+		w, err := eng.CreateWorkflow(ctx, workflowOpts)
 		if err != nil {
 			return err
 		}
 
-		w := storage.Workflow{WorkflowSpec: ws}
 		if err := p.Installations.InsertWorkflow(ctx, w); err != nil {
 			return err
 		}

@@ -74,11 +74,11 @@ func parseLabels(raw []string) map[string]string {
 // originating from its runs, results and outputs records
 type DisplayInstallation struct {
 	// SchemaType helps when we export the definition so editors can detect the type of document, it's not used by porter.
-	SchemaType string `json:"schemaType" yaml:"schemaType" toml:"schemaType"`
+	SchemaType string `json:"schemaType,omitempty" yaml:"schemaType,omitempty" toml:"schemaType,omitempty"`
 
-	SchemaVersion schema.Version `json:"schemaVersion" yaml:"schemaVersion" toml:"schemaVersion"`
+	SchemaVersion schema.Version `json:"schemaVersion,omitempty" yaml:"schemaVersion,omitempty" toml:"schemaVersion,omitempty"`
 
-	ID string `json:"id" yaml:"id" toml:"id"`
+	ID string `json:"id,omitempty" yaml:"id,omitempty" toml:"id,omitempty"`
 	// Name of the installation. Immutable.
 	Name string `json:"name" yaml:"name" toml:"name"`
 
@@ -110,11 +110,11 @@ type DisplayInstallation struct {
 
 	// Status of the installation.
 	Status                      storage.InstallationStatus `json:"status,omitempty" yaml:"status,omitempty" toml:"status,omitempty"`
-	DisplayInstallationMetadata `json:"_calculated" yaml:"_calculated"`
+	DisplayInstallationMetadata `json:"_calculated,omitempty" yaml:"_calculated,omitempty"`
 }
 
 type DisplayInstallationMetadata struct {
-	ResolvedParameters DisplayValues `json:"resolvedParameters" yaml:"resolvedParameters"`
+	ResolvedParameters DisplayValues `json:"resolvedParameters,omitempty" yaml:"resolvedParameters,omitempty"`
 
 	// DisplayInstallationState is the latest state of the installation.
 	// It is either "installed", "uninstalled", or "defined".
@@ -194,6 +194,16 @@ func (d DisplayInstallation) ConvertParamToSet() (storage.ParameterSet, error) {
 	}
 
 	return storage.NewInternalParameterSet(d.Namespace, d.Name, strategies...), nil
+}
+
+func (d DisplayInstallation) AsSpecOnly() DisplayInstallation {
+	out := d
+	out.SchemaVersion = ""
+	out.SchemaType = ""
+	out.ID = ""
+	out.Status = storage.InstallationStatus{}
+	out.DisplayInstallationMetadata = DisplayInstallationMetadata{}
+	return out
 }
 
 // TODO(carolynvs): be consistent with sorting results from list, either keep the default sort by name

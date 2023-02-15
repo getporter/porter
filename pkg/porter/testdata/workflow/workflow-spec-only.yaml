@@ -1,0 +1,25 @@
+schemaType: Workflow
+schemaVersion: 1.0.0
+maxParallel: 1
+stages:
+  - jobs:
+      root:
+        action: apply
+        installation:
+          name: mybuns
+          namespace: myns
+          bundle:
+            repository: example.com
+            version: 1.0.0
+            digest: sha256:992f38e1a81cbdf2903fab2603f6076f3bef54262b4b2aa5b196515bac953688
+            tag: v1.0.0
+          custom:
+            color: blue
+          labels:
+            team: red
+          credentialSets:
+            - mycs
+          parameterSets:
+            - myps
+        depends:
+          - other-thing

@@ -57,18 +57,18 @@ type CreateWorkflowOptions struct {
 	CustomAction string
 }
 
-func (t Engine) CreateWorkflow(ctx context.Context, opts CreateWorkflowOptions) (storage.WorkflowSpec, error) {
+func (t Engine) CreateWorkflow(ctx context.Context, opts CreateWorkflowOptions) (storage.Workflow, error) {
 	ctx, span := tracing.StartSpan(ctx)
 	defer span.EndSpan()
 
 	g, err := t.resolver.ResolveDependencyGraph(ctx, opts.Bundle)
 	if err != nil {
-		return storage.WorkflowSpec{}, err
+		return storage.Workflow{}, err
 	}
 
 	nodes, ok := g.Sort()
 	if !ok {
-		return storage.WorkflowSpec{}, fmt.Errorf("could not generate a workflow for the bundle: the bundle graph has a cyle")
+		return storage.Workflow{}, fmt.Errorf("could not generate a workflow for the bundle: the bundle graph has a cyle")
 	}
 
 	// Now build job definitions for each node in the graph
@@ -76,19 +76,17 @@ func (t Engine) CreateWorkflow(ctx context.Context, opts CreateWorkflowOptions) 
 	for _, node := range nodes {
 		switch tn := node.(type) {
 		case depsv2.BundleNode:
-			var inst storage.InstallationSpec
+			var inst storage.Installation
 			if tn.IsRoot() {
-				inst = opts.Installation.InstallationSpec
+				inst = opts.Installation
 			} else {
 				// TODO(PEP003?): generate a unique installation name, e.g. ROOTINSTALLATION-DEPKEY-SUFFIX
 				// I think we discussed this in a meeting? go look for notes or suggestions
-				inst = storage.InstallationSpec{
-					Namespace: t.namespace,
-					// TODO(PEP003): can we fix the key so that it uses something real from the installation and not root for the root key name?
-					Name:   strings.Replace(tn.Key, "root/", opts.Installation.Name+"/", 1),
-					Bundle: storage.NewOCIReferenceParts(tn.Reference.Reference),
-					// PEP(003): Add labels so that we know who is the parent installation
-				}
+				// TODO(PEP003): can we fix the key so that it uses something real from the installation and not root for the root key name?
+				instName := strings.Replace(tn.Key, "root/", opts.Installation.Name+"/", 1)
+				inst = storage.NewInstallation(t.namespace, instName)
+				inst.Bundle = storage.NewOCIReferenceParts(tn.Reference.Reference)
+				// TODO(PEP003): Add labels so that we know who is the parent installation
 
 				// Populate the dependency's credentials from the wiring
 				inst.Credentials.SchemaVersion = storage.CredentialSetSchemaVersion
@@ -127,18 +125,16 @@ func (t Engine) CreateWorkflow(ctx context.Context, opts CreateWorkflowOptions) 
 			// TODO(PEP003): Do we need to do anything for this part? Check the status of the installation?
 
 		default:
-			return storage.WorkflowSpec{}, fmt.Errorf("invalid node type: %T", tn)
+			return storage.Workflow{}, fmt.Errorf("invalid node type: %T", tn)
 		}
 
 	}
 
-	w := storage.WorkflowSpec{
-		Stages: []storage.Stage{
-			{Jobs: jobs},
-		},
-		MaxParallel: opts.MaxParallel,
-		DebugMode:   opts.DebugMode,
-	}
+	w := storage.NewWorkflow()
+	w.Stages = []storage.Stage{{Jobs: jobs}}
+	w.MaxParallel = opts.MaxParallel
+	w.DebugMode = opts.DebugMode
+
 	return w, nil
 }
 
@@ -326,7 +322,7 @@ func (t Engine) executeJob(ctx context.Context, j *storage.Job, jobs chan *stora
 	defer span.EndSpan()
 
 	opts := ReconcileOptions{
-		Installation: j.Installation,
+		Installation: j.Installation.InstallationSpec,
 	}
 	run, result, err := t.p.ReconcileInstallationInWorkflow(ctx, opts)
 	j.Status.LastRunID = run.ID

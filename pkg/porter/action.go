@@ -48,7 +48,7 @@ func (p *Porter) ExecuteBundleAndDependencies(ctx context.Context, installation 
 			DebugMode:    opts.DebugMode,
 			MaxParallel:  1,
 		}
-		ws, err := eng.CreateWorkflow(ctx, workflowOpts)
+		w, err := eng.CreateWorkflow(ctx, workflowOpts)
 		if err != nil {
 			return err
 		}
@@ -58,7 +58,8 @@ func (p *Porter) ExecuteBundleAndDependencies(ctx context.Context, installation 
 
 			// TODO(PEP003): It would be better to have a way to always emit something to stdout, and capture it in the trace at the same time
 			var buf bytes.Buffer
-			err = printer.PrintYaml(&buf, ws)
+			dw := NewDisplayWorkflow(w).AsSpecOnly()
+			err = printer.PrintYaml(&buf, dw)
 			fmt.Fprintln(p.Out, buf.String())
 			span.SetAttributes(attribute.String("workflow", buf.String()))
 
@@ -67,7 +68,6 @@ func (p *Porter) ExecuteBundleAndDependencies(ctx context.Context, installation 
 			return err
 		}
 
-		w := storage.Workflow{WorkflowSpec: ws}
 		if err := p.Installations.InsertWorkflow(ctx, w); err != nil {
 			return err
 		}

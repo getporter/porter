@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"get.porter.sh/porter/pkg/cnab"
-	"get.porter.sh/porter/pkg/storage"
 	"github.com/Masterminds/semver/v3"
 )
 
@@ -74,7 +73,6 @@ func (p *Porter) UpgradeBundle(ctx context.Context, opts *UpgradeOptions) error 
 		return err
 	}
 
-
 	if p.useWorkflowEngine(opts.bundleRef.Definition) {
 		puller := NewBundleResolver(p.Cache, opts.Force, p.Registry, opts.GetRegistryOptions())
 		eng := NewWorkflowEngine(i.Namespace, puller, p.Installations, p)
@@ -84,12 +82,11 @@ func (p *Porter) UpgradeBundle(ctx context.Context, opts *UpgradeOptions) error 
 			DebugMode:    opts.DebugMode,
 			MaxParallel:  1,
 		}
-		ws, err := eng.CreateWorkflow(ctx, workflowOpts)
+		w, err := eng.CreateWorkflow(ctx, workflowOpts)
 		if err != nil {
 			return err
 		}
 
-		w := storage.Workflow{WorkflowSpec: ws}
 		if err := p.Installations.InsertWorkflow(ctx, w); err != nil {
 			return err
 		}
@@ -97,12 +94,12 @@ func (p *Porter) UpgradeBundle(ctx context.Context, opts *UpgradeOptions) error 
 		// TODO(PEP003): if a dry-run is requested, print out the execution plan and then exit
 		return eng.RunWorkflow(ctx, w)
 	}
-	
+
 	// Re-resolve the bundle after we have figured out the version we are upgrading to
 	opts.UnsetBundleReference()
 	if _, err := opts.GetBundleReference(ctx, p); err != nil {
 
-	err = p.Installations.UpdateInstallation(ctx, i)
+		err = p.Installations.UpdateInstallation(ctx, i)
 		return err
 	}
 

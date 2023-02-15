@@ -95,12 +95,11 @@ func (p *Porter) UninstallBundle(ctx context.Context, opts UninstallOptions) err
 			DebugMode:    opts.DebugMode,
 			MaxParallel:  1,
 		}
-		ws, err := eng.CreateWorkflow(ctx, workflowOpts)
+		w, err := eng.CreateWorkflow(ctx, workflowOpts)
 		if err != nil {
 			return err
 		}
 
-		w := storage.Workflow{WorkflowSpec: ws}
 		if err := p.Installations.InsertWorkflow(ctx, w); err != nil {
 			return err
 		}

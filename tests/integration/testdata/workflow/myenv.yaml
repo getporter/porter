@@ -1,5 +1,6 @@
 schemaType: Workflow
-schemaVersion: "1.0.0-alpha.1"
+schemaVersion: 1.0.0-alpha.1
+maxParallel: 1
 stages:
   - jobs:
       root:
@@ -25,16 +26,7 @@ stages:
           bundle:
             repository: localhost:5000/myapp
             version: 1.2.3
-          credentials:
-            credentials:
-              - name: db-connstr
-                source:
-                  porter: workflow.jobs.root.outputs.mysql-connstr
-          parameters:
-            parameters:
-              - name: logLevel
-                source:
-                  porter: workflow.jobs.root.parameters.logLevel
+            tag: v1.2.3
         depends:
           - root/infra
       root/infra:
@@ -45,19 +37,7 @@ stages:
           bundle:
             repository: localhost:5000/myinfra
             version: 0.1.0
-          credentials:
-            credentials:
-              - name: token
-                source:
-                  porter: workflow.jobs.root.credentials.token
-          parameters:
-            parameters:
-              - name: database
-                source:
-                  value: myenvdb
-              - name: logLevel
-                source:
-                  porter: workflow.jobs.root.parameters.logLevel
+            tag: v0.1.0
         depends:
           - root/infra/db
       root/infra/db:
@@ -68,17 +48,5 @@ stages:
           bundle:
             repository: localhost:5000/mydb
             version: 0.1.0
-          credentials:
-            credentials:
-              - name: username
-                source:
-                  porter: workflow.jobs.root/infra.credentials.token
-          parameters:
-            parameters:
-              - name: database
-                source:
-                  porter: workflow.jobs.root/infra.parameters.database
-              - name: logLevel
-                source:
-                  porter: workflow.jobs.root/infra.parameters.logLevel
-        depends: []
+            tag: v0.1.0
+

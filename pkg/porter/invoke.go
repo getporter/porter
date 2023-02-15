@@ -81,12 +81,11 @@ func (p *Porter) InvokeBundle(ctx context.Context, opts InvokeOptions) error {
 			DebugMode:    opts.DebugMode,
 			MaxParallel:  1, // TODO(PEP003): make this configurable
 		}
-		ws, err := eng.CreateWorkflow(ctx, workflowOpts)
+		w, err := eng.CreateWorkflow(ctx, workflowOpts)
 		if err != nil {
 			return err
 		}
 
-		w := storage.Workflow{WorkflowSpec: ws}
 		if err := p.Installations.InsertWorkflow(ctx, w); err != nil {
 			return err
 		}
