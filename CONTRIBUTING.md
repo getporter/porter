@@ -403,6 +403,12 @@ system for changes.
 1. Our mage target should open <http://localhost:1313/docs> to preview the
 site/docs.
 
+or use only Hugo
+
+1. Download and install [Hugo 0.78.1](https://github.com/gohugoio/hugo/releases/tag/v0.78.1) extended version. 
+2. `cd docs`
+3. `hugo server --watch`
+
 We welcome your contribution to improve our documentation, and we hope it is an
 easy process! ❤️
 
