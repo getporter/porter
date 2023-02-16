@@ -18,10 +18,10 @@ import (
 // prepareDependenciesBundle ensures that the myenv set of dependencies bundles are ready to use.
 func prepareDependenciesBundle(t tester.Tester) {
 	// Build and publish an interesting test bundle and its dependency
-	t.MakeTestBundle(testdata.MyEnv, testdata.MyEnvRef)
-	t.MakeTestBundle(testdata.MyInfra, testdata.MyInfraRef)
-	t.MakeTestBundle(testdata.MyApp, testdata.MyAppRef)
-	t.MakeTestBundle(testdata.MyDb, testdata.MyDbRef)
+	t.MakeTestBundle(testdata.MyEnv, testdata.MyEnvRef, true)
+	t.MakeTestBundle(testdata.MyInfra, testdata.MyInfraRef, true)
+	t.MakeTestBundle(testdata.MyApp, testdata.MyAppRef, true)
+	t.MakeTestBundle(testdata.MyDb, testdata.MyDbRef, true)
 
 	t.RequirePorter("parameters", "apply", filepath.Join(t.RepoRoot, "tests/testdata/params/myenv.yaml"), "--namespace=")
 	t.RequirePorter("credentials", "apply", filepath.Join(t.RepoRoot, "tests/testdata/creds/myenv.yaml"), "--namespace=")

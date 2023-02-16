@@ -27,6 +27,10 @@ stages:
             repository: localhost:5000/myapp
             version: 1.2.3
             tag: v1.2.3
+          credentials:
+            - name: db-connstr
+              source:
+                porter: workflow.jobs.root.outputs.mysql-connstr
         depends:
           - root/infra
       root/infra:
@@ -38,6 +42,10 @@ stages:
             repository: localhost:5000/myinfra
             version: 0.1.0
             tag: v0.1.0
+          credentials:
+            - name: token
+              source:
+                porter: workflow.jobs.root.credentials.token
         depends:
           - root/infra/db
       root/infra/db:
@@ -49,4 +57,8 @@ stages:
             repository: localhost:5000/mydb
             version: 0.1.0
             tag: v0.1.0
+          credentials:
+            - name: token
+              source:
+                porter: workflow.jobs.root/infra.credentials.token
 

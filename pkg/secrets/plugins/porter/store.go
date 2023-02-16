@@ -38,7 +38,7 @@ func (s *Store) Resolve(ctx context.Context, keyName string, keyValue string) (s
 		}
 
 		// Lookup the result and run associated with the job run in that workflow
-
+		panic("porter secret store is not implemented")
 	}
 
 	// Fallback to the host secret plugin

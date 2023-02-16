@@ -167,7 +167,7 @@ func (t Tester) buildPorterCommand(opts ...func(*shx.PreparedCommand)) shx.Prepa
 			port = "55942"
 		}
 		porterPath := filepath.Join(t.RepoRoot, "bin/porter")
-		cmd = shx.Command("dlv", "exec", porterPath, "--listen=:"+port, "--headless=true", "--api-version=2", "--accept-multiclient", "--")
+		cmd = shx.Command("dlv", "exec", porterPath, "--listen=:"+port, "--headless=true", "--api-version=2", "--accept-multiclient", "--log-dest=/tmp/porter-dlv", "--")
 		configureCommand(cmd)
 	}
 

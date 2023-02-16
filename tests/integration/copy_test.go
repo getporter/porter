@@ -23,7 +23,7 @@ func TestCopy_UsesRelocationMap(t *testing.T) {
 
 	// Publish the bundle to the insecure registry
 	origRef := fmt.Sprintf("%s/orig-mydb:v0.1.1", reg1)
-	test.MakeTestBundle(testdata.MyDb, origRef)
+	test.MakeTestBundle(testdata.MyDb, origRef, false)
 
 	ociRef, err := cnab.ParseOCIReference(origRef)
 	require.NoError(t, err)

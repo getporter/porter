@@ -16,8 +16,8 @@ import (
 // PrepareTestBundle ensures that the mybuns test bundle is ready to use.
 func (t Tester) PrepareTestBundle() {
 	// Build and publish an interesting test bundle and its dependency
-	t.MakeTestBundle(testdata.MyDb, testdata.MyDbRef)
-	t.MakeTestBundle(testdata.MyBuns, testdata.MyBunsRef)
+	t.MakeTestBundle(testdata.MyDb, testdata.MyDbRef, false)
+	t.MakeTestBundle(testdata.MyBuns, testdata.MyBunsRef, false)
 
 	t.ApplyTestBundlePrerequisites()
 }
@@ -32,10 +32,12 @@ func (t Tester) ApplyTestBundlePrerequisites() {
 	t.RequirePorter("credentials", "apply", filepath.Join(t.RepoRoot, "tests/testdata/creds/mybuns.yaml"), "--namespace=")
 }
 
-func (t Tester) MakeTestBundle(name string, ref string) {
-	// Skip if we've already pushed it for another test
-	if _, _, err := t.RunPorter("explain", ref); err == nil {
-		return
+func (t Tester) MakeTestBundle(name string, ref string, force bool) {
+	if !force {
+		// Skip if we've already pushed it for another test
+		if _, _, err := t.RunPorter("explain", ref); err == nil {
+			return
+		}
 	}
 
 	pwd, _ := os.Getwd()
@@ -43,7 +45,11 @@ func (t Tester) MakeTestBundle(name string, ref string) {
 	t.Chdir(filepath.Join(t.RepoRoot, "tests/testdata/", name))
 
 	// Rely on the auto build functionality to avoid long slow rebuilds when nothing has changed
-	t.RequirePorter("publish", "--reference", ref)
+	if force {
+		t.RequirePorter("publish", "--reference", ref, "--force")
+	} else {
+		t.RequirePorter("publish", "--reference", ref)
+	}
 }
 
 func (t Tester) ShowInstallation(namespace string, name string) (porter.DisplayInstallation, error) {
