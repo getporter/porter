@@ -160,7 +160,7 @@ func (r *Runtime) Execute(ctx context.Context, args ActionArguments) (storage.Ru
 
 		creds, err := r.loadCredentials(ctx, b, args)
 		if err != nil {
-			return storage.Run{}, storage.Result{}, log.Error(fmt.Errorf("not load credentials: %w", err))
+			return storage.Run{}, storage.Result{}, log.Error(fmt.Errorf("could not load credentials: %w", err))
 		}
 
 		log.Debugf("Using runtime driver %s\n", args.Driver)

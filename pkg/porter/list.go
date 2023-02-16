@@ -98,11 +98,15 @@ type DisplayInstallation struct {
 	// Labels applied to the installation.
 	Labels map[string]string `json:"labels,omitempty" yaml:"labels,omitempty" toml:"labels,omitempty"`
 
+	Credentials []secrets.Strategy `json:"credentials,omitempty" yaml:"credentials,omitempty" toml:"credentials,omitempty"`
+
 	// CredentialSets that should be included when the bundle is reconciled.
 	CredentialSets []string `json:"credentialSets,omitempty" yaml:"credentialSets,omitempty" toml:"credentialSets,omitempty"`
 
 	// Parameters specified by the user through overrides.
 	// Does not include defaults, or values resolved from parameter sources.
+	// TODO(PEP003): we can check if the interface is a secrets.Strategy so that it can store either key value pairs of user specified value parameters
+	// or it can store strategies specified by a workflow
 	Parameters map[string]interface{} `json:"parameters,omitempty" yaml:"parameters,omitempty" toml:"parameters,omitempty"`
 
 	// ParameterSets that should be included when the bundle is reconciled.
@@ -136,9 +140,13 @@ func NewDisplayInstallation(installation storage.Installation) DisplayInstallati
 		Bundle:         installation.Bundle,
 		Custom:         installation.Custom,
 		Labels:         installation.Labels,
+		Credentials:    installation.Credentials.Credentials,
 		CredentialSets: installation.CredentialSets,
-		ParameterSets:  installation.ParameterSets,
-		Status:         installation.Status,
+		// TODO(PEP003): I think this should be in main but was missed?
+		// populate parameters from the installation
+		//Parameters:     installation.Parameters.Parameters,
+		ParameterSets: installation.ParameterSets,
+		Status:        installation.Status,
 		DisplayInstallationMetadata: DisplayInstallationMetadata{
 			DisplayInstallationState:  getDisplayInstallationState(installation),
 			DisplayInstallationStatus: getDisplayInstallationStatus(installation),

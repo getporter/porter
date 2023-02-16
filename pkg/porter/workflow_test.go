@@ -2,7 +2,10 @@ package porter
 
 import (
 	"testing"
-	"time"
+
+	"get.porter.sh/porter/pkg/encoding"
+	"github.com/carolynvs/aferox"
+	"github.com/spf13/afero"
 
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
@@ -13,8 +16,15 @@ import (
 
 // Check that AsSpecOnly results in a workflow that doesn't print anything for non-user settable fields
 func TestDisplayWorkflow_AsSpecOnly(t *testing.T) {
-	now := time.Now()
-	w := storage.Workflow{
+	w := buildTestWorkflow()
+	dw := NewDisplayWorkflow(w).AsSpecOnly()
+	result, err := yaml.Marshal(dw)
+	require.NoError(t, err, "Marshall failed")
+	test.CompareGoldenFile(t, "testdata/workflow/workflow-spec-only.yaml", string(result))
+}
+
+func buildTestWorkflow() storage.Workflow {
+	return storage.Workflow{
 		ID: "abc123",
 		WorkflowSpec: storage.WorkflowSpec{
 			SchemaType:    storage.SchemaTypeWorkflow,
@@ -105,8 +115,24 @@ func TestDisplayWorkflow_AsSpecOnly(t *testing.T) {
 		},
 		Status: storage.WorkflowStatus{},
 	}
-	dw := NewDisplayWorkflow(w).AsSpecOnly()
-	result, err := yaml.Marshal(dw)
+}
+
+func TestNewWorkflowFromDisplayWorkflow(t *testing.T) {
+	fs := aferox.NewAferox(".", afero.NewOsFs())
+
+	var dw DisplayWorkflow
+	err := encoding.UnmarshalFile(fs, "testdata/workflow/workflow-spec-only.yaml", &dw)
+	require.NoError(t, err, "failed to read testdata")
+
+	w, err := dw.ToWorkflow()
+	require.NoError(t, err, "ToWorkflow failed")
+
+	// Prepare the workflow for a golden file comparison, setting unstable values to well-known values for easier comparison
+	w.ID = "01GSC42NYVWGXCFAWWNTSHX2N3"
+	w.Stages[0].Jobs["root"].Installation.Status.Created = now
+	w.Stages[0].Jobs["root"].Installation.Status.Modified = now
+
+	result, err := yaml.Marshal(w)
 	require.NoError(t, err, "Marshall failed")
-	test.CompareGoldenFile(t, "testdata/workflow/workflow-spec-only.yaml", string(result))
+	test.CompareGoldenFile(t, "testdata/workflow/imported-workflow.yaml", string(result))
 }

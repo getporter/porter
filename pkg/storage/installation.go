@@ -22,7 +22,7 @@ type Installation struct {
 	// ID is the unique identifier for an installation record.
 	ID string `json:"id,omitempty" yaml:"id,omitempty"`
 
-	InstallationSpec
+	InstallationSpec `yaml:",inline"`
 
 	// Status of the installation.
 	Status InstallationStatus `json:"status,omitempty" yaml:"status,omitempty"`
@@ -52,21 +52,21 @@ type InstallationSpec struct {
 	// Labels applied to the installation.
 	Labels map[string]string `json:"labels,omitempty" yaml:"labels,omitempty"`
 
-	// CredentialSets that should be included when the bundle is reconciled.
-	CredentialSets []string `json:"credentialSets,omitempty" yaml:"credentialSets,omitempty"`
-
 	// Credentials specified by the user through overrides.
 	// Does not include defaults, or values resolved from credential sets.
 	// TODO(PEP003): use this when executing the bundle
 	Credentials CredentialSetSpec `json:"credentials,omitempty" yaml:"credentials,omitempty"`
 
-	// ParameterSets that should be included when the bundle is reconciled.
-	ParameterSets []string `json:"parameterSets,omitempty" yaml:"parameterSets,omitempty"`
+	// CredentialSets that should be included when the bundle is reconciled.
+	CredentialSets []string `json:"credentialSets,omitempty" yaml:"credentialSets,omitempty"`
 
 	// Parameters specified by the user through overrides.
 	// Does not include defaults, or values resolved from parameter sets.
 	// TODO(PEP003): We should consider if it makes sense to store just the ParameterSetSpec instead, like we do for credentials which was added later
 	Parameters ParameterSet `json:"parameters,omitempty" yaml:"parameters,omitempty"`
+
+	// ParameterSets that should be included when the bundle is reconciled.
+	ParameterSets []string `json:"parameterSets,omitempty" yaml:"parameterSets,omitempty"`
 }
 
 func (i InstallationSpec) String() string {

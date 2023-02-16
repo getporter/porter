@@ -1,6 +1,9 @@
 package porter
 
 import (
+	"fmt"
+
+	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/storage"
 	"github.com/cnabio/cnab-go/schema"
 )
@@ -45,7 +48,7 @@ func NewDisplayWorkflow(in storage.Workflow) DisplayWorkflow {
 	return out
 }
 
-// GetSpecsRepresentation extracts just the specs
+// AsSpecOnly creates a subset of user-facing spec fields for exporting to the user
 func (w DisplayWorkflow) AsSpecOnly() DisplayWorkflow {
 	out := w
 	out.ID = ""
@@ -61,8 +64,46 @@ func (w DisplayWorkflow) AsSpecOnly() DisplayWorkflow {
 	return out
 }
 
+func (w DisplayWorkflow) ToWorkflow() (storage.Workflow, error) {
+	out := storage.Workflow{
+		ID: cnab.NewULID(),
+		WorkflowSpec: storage.WorkflowSpec{
+			SchemaType:    storage.SchemaTypeWorkflow,
+			SchemaVersion: storage.WorkflowSchemaVersion,
+			MaxParallel:   w.MaxParallel,
+			DebugMode:     w.DebugMode,
+			Stages:        make([]storage.Stage, len(w.Stages)),
+		},
+	}
+
+	for i, inStage := range w.Stages {
+		outStage, err := inStage.ToStage()
+		if err != nil {
+			return storage.Workflow{}, err
+		}
+		out.Stages[i] = outStage
+	}
+
+	return out, nil
+}
+
 type DisplayStage struct {
 	Jobs map[string]DisplayJob `json:"jobs" yaml:"jobs"`
+}
+
+func (s DisplayStage) ToStage() (storage.Stage, error) {
+	out := storage.Stage{
+		Jobs: make(map[string]*storage.Job, len(s.Jobs)),
+	}
+
+	for jobKey, inJob := range s.Jobs {
+		outJob, err := inJob.ToJob(jobKey)
+		if err != nil {
+			return storage.Stage{}, err
+		}
+		out.Jobs[jobKey] = outJob
+	}
+	return out, nil
 }
 
 func NewDisplayStage(in storage.Stage) DisplayStage {
@@ -89,6 +130,27 @@ func (j DisplayJob) AsSpecOnly() DisplayJob {
 	out.Installation = out.Installation.AsSpecOnly()
 	out.Status = DisplayJobStatus{}
 	return out
+}
+
+func (j DisplayJob) ToJob(key string) (*storage.Job, error) {
+
+	// We only set the schemaVersion on the workflow and that implies that the schemaVersion for nested types also matches the schema version of related fields.
+	// TODO(PEP003): Verify this won't bit us in the 🍑 later
+	j.Installation.SchemaVersion = storage.InstallationSchemaVersion
+
+	inst, err := j.Installation.ConvertToInstallation()
+	if err != nil {
+		return nil, fmt.Errorf("Error converting DisplayInstallation to a storage.Installation: %w", err)
+	}
+
+	out := &storage.Job{
+		Key:          key,
+		Action:       j.Action,
+		Installation: inst,
+		Depends:      j.Depends,
+	}
+
+	return out, nil
 }
 
 func NewDisplayJob(in storage.Job) DisplayJob {

@@ -17,6 +17,10 @@ stages:
             color: blue
           labels:
             team: red
+          credentials:
+            - name: password
+              source:
+                secret: mypassword
           credentialSets:
             - mycs
           parameterSets:

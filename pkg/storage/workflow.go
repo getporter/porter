@@ -8,17 +8,12 @@ import (
 	"github.com/cnabio/cnab-go/schema"
 )
 
-const (
-	SchemaTypeWorkflow    = "Workflow"
-	SchemaVersionWorkflow = "1.0.0-alpha.1"
-)
-
 // Workflow represents how a bundle and its dependencies should be run by Porter.
 type Workflow struct {
 	// ID of the workflow.
 	ID string `json:"id,omitempty" yaml:"id,omitempty"`
 
-	WorkflowSpec
+	WorkflowSpec `yaml:",inline"`
 
 	// TODO(PEP003): When we wrap this in a DisplayWorkflow, override marshal so that we don't marshal an ID or status when empty
 	// i.e. if we do a dry run, we shouldn't get out an empty id or status
@@ -30,13 +25,13 @@ func NewWorkflow() Workflow {
 		ID: cnab.NewULID(),
 		WorkflowSpec: WorkflowSpec{
 			SchemaType:    SchemaTypeWorkflow,
-			SchemaVersion: SchemaVersionWorkflow,
+			SchemaVersion: WorkflowSchemaVersion,
 		},
 	}
 }
 
 type WorkflowSpec struct {
-	SchemaType string
+	SchemaType string `json:"schemaType" yaml:"schemaType"`
 
 	SchemaVersion schema.Version `json:"schemaVersion" yaml:"schemaVersion"`
 
