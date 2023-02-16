@@ -4,8 +4,11 @@
 # See https://getporter.org/author-bundles for documentation on how to configure your bundle.
 # Uncomment out the sections below to take full advantage of what Porter can do!
 
+# Optional indicator of the resource type of this file
+schemaType: Bundle
+
 # Version of the porter.yaml schema used by this file.
-schemaVersion: 1.0.0
+schemaVersion: 1.0.1
 
 # Name of the bundle
 name: porter-hello

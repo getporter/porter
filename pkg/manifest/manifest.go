@@ -42,11 +42,11 @@ var (
 	// SupportedSchemaVersions is the Porter manifest (porter.yaml) schema
 	// versions supported by this version of Porter, specified as a semver range.
 	// When the Manifest structure is changed, this field should be incremented.
-	SupportedSchemaVersions, _ = semver.NewConstraint("1.0.0-alpha.1 || 1.0.0")
+	SupportedSchemaVersions, _ = semver.NewConstraint("1.0.0-alpha.1 || 1.0.0 - 1.0.1")
 
 	// DefaultSchemaVersion is the most recently supported schema version.
 	// When the Manifest structure is changed, this field should be incremented.
-	DefaultSchemaVersion = semver.MustParse("1.0.0")
+	DefaultSchemaVersion = semver.MustParse("1.0.1")
 )
 
 type Manifest struct {
