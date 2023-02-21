@@ -1,6 +1,7 @@
 /docs/public/
 /docs/content/operator
 /docs/sources/operator
+/docs/.hugo_build.lock
 /bin
 /porter
 .DS_Store
