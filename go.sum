@@ -162,6 +162,8 @@ github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDk
 github.com/cloudflare/cfssl v1.4.1 h1:vScfU2DrIUI9VPHBVeeAQ0q5A+9yshO1Gz+3QoUQiKw=
 github.com/cnabio/cnab-go v0.25.0 h1:KHXqGymz5nd+GnGRExO3KDjeD/mhtoMmV/2B67IstLA=
 github.com/cnabio/cnab-go v0.25.0/go.mod h1:BAh4iETkiijVTvnix8Uw5VGGBB7/AR2OCAkLurHLeiI=
+github.com/cnabio/cnab-go v0.25.1 h1:dsaJi2bM17unFUECJbyW3cV9MRmzajjhv9K9rihRhGU=
+github.com/cnabio/cnab-go v0.25.1/go.mod h1:aM87s3eXGX8K1UuJOC7G5RrCtqkXx5O1rMDqgyMd70E=
 github.com/cnabio/image-relocation v0.9.0 h1:sBSchA1sRBesje0uJrPSz1lLtsIjRMxiuIJ20aYpnpI=
 github.com/cnabio/image-relocation v0.9.0/go.mod h1:E1bwI4v9AFrspAWqje0clEo31bHHH/YPxk1a4L5O3ZE=
 github.com/cncf/udpa/go v0.0.0-20191209042840-269d4d468f6f/go.mod h1:M8M6+tZqaGXZJjfX53e64911xZQV5JYwmTeXPW+k8Sc=
