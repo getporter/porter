@@ -1,6 +1,6 @@
 # This is a test bundle that makes no logical sense, but it does exercise lots of different bundle features
 schemaType: Bundle
-schemaVersion: 1.0.0
+schemaVersion: 1.0.1
 name: mybuns
 version: 0.1.2
 description: "A very thorough test bundle"
