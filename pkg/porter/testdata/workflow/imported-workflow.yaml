@@ -1,0 +1,53 @@
+id: 01GSC42NYVWGXCFAWWNTSHX2N3
+schemaType: Workflow
+schemaVersion: 1.0.0-alpha.1
+maxParallel: 1
+stages:
+  - jobs:
+      root:
+        action: apply
+        installation:
+          schemaVersion: 1.0.2
+          name: mybuns
+          namespace: myns
+          bundle:
+            repository: example.com
+            version: 1.0.0
+            digest: sha256:992f38e1a81cbdf2903fab2603f6076f3bef54262b4b2aa5b196515bac953688
+            tag: v1.0.0
+          custom:
+            color: blue
+          labels:
+            team: red
+          credentialSets:
+            - mycs
+          parameters:
+            schemaVersion: 1.0.1
+            namespace: myns
+            name: internal-parameter-set-mybuns
+            parameters: []
+            status:
+              created: 2023-02-15T21:38:08.72424-06:00
+              modified: 2023-02-15T21:38:08.72424-06:00
+          parameterSets:
+            - myps
+          status:
+            runId: ""
+            action: ""
+            resultId: ""
+            resultStatus: ""
+            created: 2020-04-18T01:02:03.000000004Z
+            modified: 2020-04-18T01:02:03.000000004Z
+            installed: null
+            uninstalled: null
+            bundleReference: ""
+            bundleVersion: ""
+            bundleDigest: ""
+        depends:
+          - other-thing
+        status:
+          lastrunid: ""
+          lastresultid: ""
+          resultids: []
+          status: ""
+          message: ""
