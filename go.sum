@@ -133,8 +133,6 @@ github.com/bugsnag/bugsnag-go/v2 v2.2.0 h1:y4JJ6xNJiK4jbmq/BLXe09MGUNRp/r1Zpye6R
 github.com/bugsnag/panicwrap v1.3.4 h1:A6sXFtDGsgU/4BLf5JT0o5uYg3EeKgGx3Sfs+/uk3pU=
 github.com/carolynvs/aferox v0.3.0 h1:CMT50zX88amTMbFfFIWSTKRVRaOw6sejUMbbKiCD4zE=
 github.com/carolynvs/aferox v0.3.0/go.mod h1:eb7CHGIO33CCZS//xtnblvPZbuuZMv0p1VbhiSwZnH4=
-github.com/carolynvs/cnab-to-oci v0.3.6-0.20230206150742-7f40404c3c8f h1:23Q6jVuOazlEU0Dt7nSxc5tga15KTBT+iM3iQZ8edqY=
-github.com/carolynvs/cnab-to-oci v0.3.6-0.20230206150742-7f40404c3c8f/go.mod h1:9+1Kq70+P1gEemtSjE+62MQb5hwtVMQSDpmSobTca6U=
 github.com/carolynvs/datetime-printer v0.2.0 h1:Td3FU4YGzx0OogCMhCmLBTUTDPQcq0xlgCeMhAKZmMc=
 github.com/carolynvs/datetime-printer v0.2.0/go.mod h1:p9W8ZUhmQUOVD5kiDuGXwRG65/nTkZWlLylY7s+Qw2k=
 github.com/carolynvs/magex v0.9.0 h1:fWe7oshGv6zuei5Z6EI95RSlOKjIifBZ26myB9G+m/I=
@@ -160,8 +158,10 @@ github.com/cilium/ebpf v0.7.0/go.mod h1:/oI2+1shJiTGAMgl6/RgJr36Eo1jzrRcAWbcXO2u
 github.com/clbanning/x2j v0.0.0-20191024224557-825249438eec/go.mod h1:jMjuTZXRI4dUb/I5gc9Hdhagfvm9+RyrPryS/auMzxE=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
 github.com/cloudflare/cfssl v1.4.1 h1:vScfU2DrIUI9VPHBVeeAQ0q5A+9yshO1Gz+3QoUQiKw=
-github.com/cnabio/cnab-go v0.25.0 h1:KHXqGymz5nd+GnGRExO3KDjeD/mhtoMmV/2B67IstLA=
-github.com/cnabio/cnab-go v0.25.0/go.mod h1:BAh4iETkiijVTvnix8Uw5VGGBB7/AR2OCAkLurHLeiI=
+github.com/cnabio/cnab-go v0.25.1 h1:dsaJi2bM17unFUECJbyW3cV9MRmzajjhv9K9rihRhGU=
+github.com/cnabio/cnab-go v0.25.1/go.mod h1:aM87s3eXGX8K1UuJOC7G5RrCtqkXx5O1rMDqgyMd70E=
+github.com/cnabio/cnab-to-oci v0.4.0 h1:ofQQwkN4lRpiccCyI0AUEuSgq8nuxpTsCOScrSBMThI=
+github.com/cnabio/cnab-to-oci v0.4.0/go.mod h1:uUBN42cR/ExiESX9yk4ZO60CHxx9zdqyt1pmiIUJW7Q=
 github.com/cnabio/image-relocation v0.9.0 h1:sBSchA1sRBesje0uJrPSz1lLtsIjRMxiuIJ20aYpnpI=
 github.com/cnabio/image-relocation v0.9.0/go.mod h1:E1bwI4v9AFrspAWqje0clEo31bHHH/YPxk1a4L5O3ZE=
 github.com/cncf/udpa/go v0.0.0-20191209042840-269d4d468f6f/go.mod h1:M8M6+tZqaGXZJjfX53e64911xZQV5JYwmTeXPW+k8Sc=
