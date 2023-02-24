@@ -3,12 +3,10 @@ package porter
 import (
 	"context"
 
-	"go.mongodb.org/mongo-driver/bson"
-
-	"get.porter.sh/porter/pkg/storage"
-
 	v2 "get.porter.sh/porter/pkg/cnab/extensions/dependencies/v2"
+	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/tracing"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 // PorterSecretStrategy knows how to resolve specially formatted wiring strings
