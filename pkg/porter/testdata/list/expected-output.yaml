@@ -17,6 +17,5 @@
     bundleVersion: v1.2.3
     bundleDigest: ""
   _calculated:
-    resolvedParameters: []
     displayInstallationState: defined
     displayInstallationStatus: succeeded

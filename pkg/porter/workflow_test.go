@@ -129,8 +129,11 @@ func TestNewWorkflowFromDisplayWorkflow(t *testing.T) {
 
 	// Prepare the workflow for a golden file comparison, setting unstable values to well-known values for easier comparison
 	w.ID = "01GSC42NYVWGXCFAWWNTSHX2N3"
-	w.Stages[0].Jobs["root"].Installation.Status.Created = now
-	w.Stages[0].Jobs["root"].Installation.Status.Modified = now
+	rootJob := w.Stages[0].Jobs["root"]
+	rootJob.Installation.Status.Created = now
+	rootJob.Installation.Status.Modified = now
+	rootJob.Installation.Parameters.Status.Created = now
+	rootJob.Installation.Parameters.Status.Modified = now
 
 	result, err := yaml.Marshal(w)
 	require.NoError(t, err, "Marshall failed")

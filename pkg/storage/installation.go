@@ -37,7 +37,7 @@ type InstallationSpec struct {
 	Name string `json:"name" yaml:"name"`
 
 	// Namespace in which the installation is defined.
-	Namespace string `json:"namespace,omitempty" yaml:"namespace,omitempty"`
+	Namespace string `json:"namespace" yaml:"namespace"`
 
 	// Uninstalled specifies if the installation isn't used anymore and should be uninstalled.
 	Uninstalled bool `json:"uninstalled,omitempty" yaml:"uninstalled,omitempty"`

@@ -1,5 +1,5 @@
 schemaType: Workflow
-schemaVersion: 1.0.0
+schemaVersion: 1.0.0-alpha.1
 maxParallel: 1
 stages:
   - jobs:
