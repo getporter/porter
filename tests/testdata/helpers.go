@@ -25,6 +25,12 @@ const (
 	// MyInfraRef is the full reference to the myinfra test bundle.
 	MyInfraRef = "localhost:5000/myinfra:v0.1.0"
 
+	// MySQLDb is the test bundle that is a dependency of the myinfra test bundle.
+	MySQLDb = "mysqldb"
+
+	// MySQLDbRef is the full reference to the mysqldb test bundle.
+	MySQLDbRef = "localhost:5000/mysqldb:v0.1.0"
+
 	// MyApp is the root test bundle that exercises dependencies.
 	MyApp = "myapp"
 

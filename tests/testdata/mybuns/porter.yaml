@@ -1,5 +1,5 @@
 # This is a test bundle that makes no logical sense, but it does exercise lots of different bundle features
-
+#schemaType: Bundle
 schemaVersion: 1.0.0
 name: mybuns
 version: 0.1.2
@@ -173,17 +173,8 @@ dependencies:
     - name: db
       bundle:
         reference: "localhost:5000/mydb:v0.1.0"
-        # TODO(PEP003): Implement in https://github.com/getporter/porter/issues/2548
-        #interface:
-        #  document:
-        #    outputs:
-        #      - name: connstr
-        #        $id: "getporter.org/interfaces/mysql.connection-string"
       parameters:
         database: bigdb
-        collation: ${bundle.parameters.db-collation}
-      credentials:
-        username: ${bundle.credentials.username}
 
 images:
   whalesayd:

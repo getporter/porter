@@ -1,7 +1,7 @@
 # This is a test bundle that can be used as a dependency
-
+# TODO(PEP003): Do not depend on this bundle from mybuns, and move testcases like installerImage out of here
 schemaVersion: 1.0.0
-name: mydb
+name: mysqldb
 version: 0.1.0
 description: "A test bundle dependency"
 registry: localhost:5000
@@ -9,7 +9,17 @@ registry: localhost:5000
 parameters:
   - name: database
     type: string
-    default: "(default)"
+    default: "mysqldb"
+  - name: collation
+    type: string
+    default: "Latin1_General_100_CS_AS"
+  - name: logLevel
+    type: string
+    default: error
+
+credentials:
+  - name: token
+    env: CLOUD_TOKEN
 
 outputs:
   - name: connStr
@@ -26,13 +36,13 @@ dry-run:
   - exec:
       command: echo
       arguments:
-        - "ready to install mydb"
+        - "ready to install mysqldb"
 
 install:
   - exec:
       command: echo
       arguments:
-        - "installing mydb"
+        - "installing mysqldb"
   - exec:
       command: echo
       arguments:
@@ -41,22 +51,22 @@ install:
       description: "Debug"
       command: echo
       arguments:
-        - "image:${ bundle.installerImage }"
+        - "image: ${ bundle.installerImage }"
 
 status:
   - exec:
       command: echo
       arguments:
-        - "mydb is looking great!"
+        - "mysqldb is looking great!"
 
 upgrade:
   - exec:
       command: echo
       arguments:
-        - "upgrading mydb"
+        - "upgrading mysqldb"
 
 uninstall:
   - exec:
       command: echo
       arguments:
-        - "uninstalling mydb"
+        - "uninstalling mysqldb"
