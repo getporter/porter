@@ -7283,7 +7283,8 @@ nav.home-nav {
     margin-top: 0;
     color: #3C2E53; }
   .blog-layout .main.blog .content-wrap article {
-    padding: 0; }
+    padding: 0;
+    overflow: inherit; }
     .blog-layout .main.blog .content-wrap article h2 {
       text-transform: capitalize;
       letter-spacing: 0.05em;
