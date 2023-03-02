@@ -54,7 +54,7 @@ stages:
           name: myenv/infra/db
           namespace: dev
           bundle:
-            repository: localhost:5000/mydb
+            repository: localhost:5000/mysqldb
             version: 0.1.0
             tag: v0.1.0
           credentials:

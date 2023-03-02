@@ -59,8 +59,24 @@ func (w *WorkflowSpec) GetJob(jobKey string) (*Job, error) {
 	return nil, fmt.Errorf("workflow does not contain job key %s", jobKey)
 }
 
+// WorkflowExecutionPlan is Porter's plan for executing a workflow after resolving all dependencies.
+type WorkflowExecutionPlan struct {
+	// Runs maps from the job key to the Run that will be executed on behalf of the job.
+	Runs map[string]WorkflowRun `json:"runs" yaml:"runs"`
+}
+
+// WorkflowRun associates a run to a Workflow.
+type WorkflowRun struct {
+	// RunID is the Run that will be executed on behalf of this job.
+	RunID string `json:"runID" yaml:"runID"`
+
+	// Depends is a list of other job keys that this run depends upon.
+	Depends []string `json:"depends" yaml:"depends"`
+}
+
 // TODO(PEP003): Figure out what needs to be persisted, and how to persist multiple or continued runs
 type WorkflowStatus struct {
+	Plan WorkflowExecutionPlan `json:"plan,omitempty" yaml:"plan,omitempty"`
 }
 
 // Prepare updates the internal data representation of the workflow before running it.

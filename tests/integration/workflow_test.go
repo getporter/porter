@@ -21,7 +21,7 @@ func prepareDependenciesBundle(t tester.Tester) {
 	t.MakeTestBundle(testdata.MyEnv, testdata.MyEnvRef, true)
 	t.MakeTestBundle(testdata.MyInfra, testdata.MyInfraRef, true)
 	t.MakeTestBundle(testdata.MyApp, testdata.MyAppRef, true)
-	t.MakeTestBundle(testdata.MyDb, testdata.MyDbRef, true)
+	t.MakeTestBundle(testdata.MySQLDb, testdata.MySQLDbRef, true)
 
 	t.RequirePorter("parameters", "apply", filepath.Join(t.RepoRoot, "tests/testdata/params/myenv.yaml"), "--namespace=")
 	t.RequirePorter("credentials", "apply", filepath.Join(t.RepoRoot, "tests/testdata/creds/myenv.yaml"), "--namespace=")
