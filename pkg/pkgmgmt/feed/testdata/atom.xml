@@ -36,8 +36,11 @@
         <category term="helm"/>
         <content>v1.2.3</content>
         <link rel="download" href="https://cdn.porter.sh/mixins/v1.2.3/helm-darwin-amd64" />
+        <link rel="download" href="https://cdn.porter.sh/mixins/v1.2.3/helm-darwin-arm64" />
         <link rel="download" href="https://cdn.porter.sh/mixins/v1.2.3/helm-linux-amd64" />
+        <link rel="download" href="https://cdn.porter.sh/mixins/v1.2.3/helm-linux-arm64" />
         <link rel="download" href="https://cdn.porter.sh/mixins/v1.2.3/helm-windows-amd64.exe" />
+        <link rel="download" href="https://cdn.porter.sh/mixins/v1.2.3/helm-windows-arm64.exe" />
     </entry>
     <entry>
         <id>https://cdn.porter.sh/mixins/v1.2.3/exec</id>
