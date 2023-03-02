@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"get.porter.sh/porter/pkg/portercontext"
+	"get.porter.sh/porter/pkg/test"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -19,14 +20,20 @@ func TestGenerate(t *testing.T) {
 	tc.AddTestFile("testdata/atom-template.xml", "template.xml")
 
 	tc.FileSystem.Create("bin/v1.2.3/helm-darwin-amd64")
+	tc.FileSystem.Create("bin/v1.2.3/helm-darwin-arm64")
 	tc.FileSystem.Create("bin/v1.2.3/helm-linux-amd64")
+	tc.FileSystem.Create("bin/v1.2.3/helm-linux-arm64")
 	tc.FileSystem.Create("bin/v1.2.3/helm-windows-amd64.exe")
+	tc.FileSystem.Create("bin/v1.2.3/helm-windows-arm64.exe")
 
 	// Force the up3 timestamps to stay the same for each test run
 	up3, _ := time.Parse("2006-Jan-02", "2013-Feb-03")
 	tc.FileSystem.Chtimes("bin/v1.2.3/helm-darwin-amd64", up3, up3)
+	tc.FileSystem.Chtimes("bin/v1.2.3/helm-darwin-arm64", up3, up3)
 	tc.FileSystem.Chtimes("bin/v1.2.3/helm-linux-amd64", up3, up3)
+	tc.FileSystem.Chtimes("bin/v1.2.3/helm-linux-arm64", up3, up3)
 	tc.FileSystem.Chtimes("bin/v1.2.3/helm-windows-amd64.exe", up3, up3)
+	tc.FileSystem.Chtimes("bin/v1.2.3/helm-windows-arm64.exe", up3, up3)
 
 	tc.FileSystem.Create("bin/v1.2.4/helm-darwin-amd64")
 	tc.FileSystem.Create("bin/v1.2.4/helm-linux-amd64")
@@ -82,12 +89,7 @@ func TestGenerate(t *testing.T) {
 	b, err := tc.FileSystem.ReadFile("atom.xml")
 	require.NoError(t, err)
 	gotXml := string(b)
-
-	b, err = os.ReadFile("testdata/atom.xml")
-	require.NoError(t, err)
-	wantXml := string(b)
-
-	assert.Equal(t, wantXml, gotXml)
+	test.CompareGoldenFile(t, "testdata/atom.xml", gotXml)
 }
 
 func TestShouldPublishVersion(t *testing.T) {
@@ -130,7 +132,7 @@ func TestGenerate_RegexMatch(t *testing.T) {
 	}, {
 		name:      "invalid mixin name",
 		mixinName: "my-42nd-mixin!",
-		wantError: `no mixin binaries found in bin matching the regex "(.*/)?(.+)/([a-z0-9-]+)-(linux|windows|darwin)-(amd64)(\\.exe)?"`,
+		wantError: `no mixin binaries found in bin matching the regex`,
 	}}
 
 	for _, tc := range testcases {
@@ -153,7 +155,7 @@ func TestGenerate_RegexMatch(t *testing.T) {
 			f := NewMixinFeed(porterCtx.Context)
 			err := f.Generate(ctx, opts)
 			if tc.wantError != "" {
-				require.EqualError(t, err, tc.wantError)
+				require.ErrorContains(t, err, tc.wantError)
 			} else {
 				require.NoError(t, err)
 			}
