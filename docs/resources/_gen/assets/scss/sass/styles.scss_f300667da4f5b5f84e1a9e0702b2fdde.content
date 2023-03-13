@@ -6435,12 +6435,16 @@ nav.home-nav {
     #helm.home .billboard .txt-github {
       color: white;
       font-size: 1.5rem; }
-      @media only screen and (max-width: 60em) {
-        #helm.home .billboard .txt-github {
-          margin: 0 !important;
-          padding: 0 !important; } }
     #helm.home .billboard .btn-github {
-      background: #d00052; }
+      background: #d00052;
+      text-decoration: none;
+      padding: .8rem 1.6rem; }
+      #helm.home .billboard .btn-github:hover {
+        border-color: transparent; }
+      @media only screen and (max-width: 60em) {
+        #helm.home .billboard .btn-github {
+          padding: .4rem 1.1rem;
+          font-size: 1.3rem; } }
     #helm.home .billboard h1 {
       font-family: 'CBold';
       color: #3FB1E5;
