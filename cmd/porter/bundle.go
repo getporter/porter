@@ -82,15 +82,15 @@ The docker driver builds the bundle image using the local Docker host. To use a 
 		fmt.Sprintf("Driver for building the invocation image. Allowed values are: %s", strings.Join(porter.BuildDriverAllowedValues, ", ")))
 	f.MarkHidden("driver") // Hide the driver flag since there aren't any choices to make right now
 	f.StringArrayVar(&opts.BuildArgs, "build-arg", nil,
-		"Set build arguments in the template Dockerfile (format: NAME=VALUE). May be specified multiple times.")
+		"Set build arguments in the template Dockerfile (format: NAME=VALUE). May be specified multiple times. Max length is 5,000 characters.")
 	f.StringArrayVar(&opts.SSH, "ssh", nil,
 		"SSH agent socket or keys to expose to the build (format: default|<id>[=<socket>|<key>[,<key>]]). May be specified multiple times.")
 	f.StringArrayVar(&opts.Secrets, "secret", nil,
-		"Secret file to expose to the build (format: id=mysecret,src=/local/secret). Custom values are assessible as build arguments in the template Dockerfile and in the manifest using template variables. May be specified multiple times.")
+		"Secret file to expose to the build (format: id=mysecret,src=/local/secret). Custom values are accessible as build arguments in the template Dockerfile and in the manifest using template variables. May be specified multiple times.")
 	f.BoolVar(&opts.NoCache, "no-cache", false,
 		"Do not use the Docker cache when building the bundle's invocation image.")
 	f.StringArrayVar(&opts.Customs, "custom", nil,
-		"Define an individual key-value pair for the custom section in the form of NAME=VALUE. Use dot notation to specify a nested custom field. May be specified multiple times.")
+		"Define an individual key-value pair for the custom section in the form of NAME=VALUE. Use dot notation to specify a nested custom field. May be specified multiple times. Max length is 5,000 characters when used as a build argument.")
 
 	// Allow configuring the --driver flag with build-driver, to avoid conflicts with other commands
 	cmd.Flag("driver").Annotations = map[string][]string{

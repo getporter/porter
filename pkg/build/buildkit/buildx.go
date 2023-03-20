@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"get.porter.sh/porter/pkg/build"
@@ -27,6 +28,11 @@ import (
 	"github.com/moby/buildkit/session/auth/authprovider"
 	"go.opentelemetry.io/otel/attribute"
 )
+
+// MaxArgLength is the maximum length of a build argument that can be passed to Docker
+// Each system has its own max (see https://stackoverflow.com/questions/70737793/max-size-of-string-cmd-that-can-be-passed-to-docker)
+// I am choosing 5,000 characters because that's lower than all supported OS/ARCH combinations
+const MaxArgLength = 5000
 
 type Builder struct {
 	*config.Config
@@ -59,14 +65,14 @@ func (l unstructuredLogger) Write(p []byte) (n int, err error) {
 }
 
 func (b *Builder) BuildInvocationImage(ctx context.Context, manifest *manifest.Manifest, opts build.BuildImageOptions) error {
-	ctx, log := tracing.StartSpan(ctx, attribute.String("image", manifest.Image))
-	defer log.EndSpan()
+	ctx, span := tracing.StartSpan(ctx, attribute.String("image", manifest.Image))
+	defer span.EndSpan()
 
-	log.Info("Building invocation image")
+	span.Info("Building invocation image")
 
 	cli, err := docker.GetDockerClient()
 	if err != nil {
-		return log.Error(err)
+		return span.Error(err)
 	}
 
 	bldr, err := builder.New(cli,
@@ -74,72 +80,137 @@ func (b *Builder) BuildInvocationImage(ctx context.Context, manifest *manifest.M
 		builder.WithContextPathHash(b.Getwd()),
 	)
 	if err != nil {
-		return log.Error(err)
+		return span.Error(err)
 	}
 	nodes, err := bldr.LoadNodes(ctx, false)
 	if err != nil {
-		return log.Error(err)
+		return span.Error(err)
 	}
 
-	session := []session.Attachable{authprovider.NewDockerAuthProvider(dockerconfig.LoadDefaultConfigFile(b.Err))}
+	currentSession := []session.Attachable{authprovider.NewDockerAuthProvider(dockerconfig.LoadDefaultConfigFile(b.Err))}
 	ssh, err := buildflags.ParseSSHSpecs(opts.SSH)
 	if err != nil {
-		return fmt.Errorf("error parsing the --ssh flags: %w", err)
+		return span.Errorf("error parsing the --ssh flags: %w", err)
 	}
-	session = append(session, ssh)
+	currentSession = append(currentSession, ssh)
 
 	secrets, err := buildflags.ParseSecretSpecs(opts.Secrets)
 	if err != nil {
-		return fmt.Errorf("error parsing the --secret flags: %w", err)
+		return span.Errorf("error parsing the --secret flags: %w", err)
 	}
-	session = append(session, secrets)
+	currentSession = append(currentSession, secrets)
 
-	args := make(map[string]string, len(opts.BuildArgs)+1)
-	parseBuildArgs(opts.BuildArgs, args)
-	args["BUNDLE_DIR"] = build.BUNDLE_DIR
-
-	convertedCustomInput, err := flattenMap(manifest.Custom)
+	args, err := b.determineBuildArgs(ctx, manifest, opts)
 	if err != nil {
-		return log.Error(err)
+		return err
 	}
-
-	for k, v := range convertedCustomInput {
-		args[strings.ToUpper(strings.Replace(k, ".", "_", -1))] = v
-	}
+	span.SetAttributes(tracing.ObjectAttribute("build-args", args))
 
 	buildxOpts := map[string]buildx.Options{
 		"default": {
 			Tags: []string{manifest.Image},
 			Inputs: buildx.Inputs{
 				ContextPath:    b.Getwd(),
-				DockerfilePath: filepath.Join(b.Getwd(), build.DOCKER_FILE),
+				DockerfilePath: b.getDockerfilePath(),
 				InStream:       b.In,
 			},
 			BuildArgs: args,
-			Session:   session,
+			Session:   currentSession,
 			NoCache:   opts.NoCache,
 		},
 	}
 
 	mode := progress.PrinterModeAuto // Auto writes to stderr regardless of what you pass in
-	out := unstructuredLogger{log}
+	out := unstructuredLogger{span}
 	printer, err := progress.NewPrinter(ctx, out, os.Stderr, mode)
 	if err != nil {
-		return log.Error(err)
+		return span.Error(err)
 	}
 
 	_, buildErr := buildx.Build(ctx, nodes, buildxOpts, dockerutil.NewClient(cli), confutil.ConfigDir(cli), printer)
 	printErr := printer.Wait()
 
 	if buildErr == nil && printErr != nil {
-		return log.Error(fmt.Errorf("error with docker printer: %w", printErr))
+		return span.Errorf("error with docker printer: %w", printErr)
 	}
 
 	if buildErr != nil {
-		return log.Error(fmt.Errorf("error building docker image: %w", buildErr))
+		return span.Errorf("error building docker image: %w", buildErr)
 	}
 
 	return nil
+}
+
+func (b *Builder) getDockerfilePath() string {
+	return filepath.Join(b.Getwd(), build.DOCKER_FILE)
+}
+
+func (b *Builder) determineBuildArgs(ctx context.Context, manifest *manifest.Manifest, opts build.BuildImageOptions) (map[string]string, error) {
+	//lint:ignore SA4006 ignore unused context for now
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
+	// This will grow later when we add custom build args from the porter.yaml
+	args := make(map[string]string, len(opts.BuildArgs)+1)
+
+	// Create a map of key/values from the custom field in porter.yaml
+	convertedCustomInput, err := flattenMap(manifest.Custom)
+	if err != nil {
+		return nil, span.Error(err)
+	}
+
+	// Determine which (if any) custom fields from porter.yaml are used in the Dockerfile
+	dockerfilePath := b.getDockerfilePath()
+	dockerfileContents, err := b.FileSystem.ReadFile(dockerfilePath)
+	if err != nil {
+		return nil, span.Errorf("Error reading Dockerfile at %s: %w", dockerfilePath, err)
+	}
+	customBuildArgs, err := detectCustomBuildArgsUsed(string(dockerfileContents))
+	if err != nil {
+		return nil, span.Errorf("Error parsing custom build arguments from the Dockerfile at %s: %w", dockerfilePath, err)
+	}
+
+	// Pass custom values as build args when building the invocation image
+	argNameRegex := regexp.MustCompile(`[^A-Z0-9_]`)
+	for k, v := range convertedCustomInput {
+		// Make all arg names upper-case
+		argName := fmt.Sprintf("CUSTOM_%s", strings.ToUpper(k))
+
+		// replace characters that can't be in an argument name with _
+		argName = argNameRegex.ReplaceAllString(argName, "_")
+
+		// Only add build args for custom values used in the Dockerfile
+		if _, ok := customBuildArgs[argName]; ok {
+			args[argName] = v
+		}
+	}
+
+	// Add explicit build arguments next they should override what was determined from the porter.yaml to allow the user to fix anything unexpected
+	parseBuildArgs(opts.BuildArgs, args)
+
+	// Add porter defined build arguments last
+	args["BUNDLE_DIR"] = build.BUNDLE_DIR
+
+	// Check if any arguments are too long
+	for k, v := range args {
+		if len(v) > MaxArgLength {
+			return nil, span.Errorf("The length of the build argument %s is longer than the max (%d characters). Save the value to a file in the bundle directory, and then read the file contents out in a custom dockerfile or in the bundle at runtime to work around this limitation.", k, MaxArgLength)
+		}
+	}
+
+	return args, nil
+}
+
+func detectCustomBuildArgsUsed(dockerFileContents string) (map[string]struct{}, error) {
+	customBuildArgRegex := regexp.MustCompile(`ARG (CUSTOM_([a-zA-Z0-9_]+))`)
+
+	matches := customBuildArgRegex.FindAllStringSubmatch(dockerFileContents, -1)
+	argNames := make(map[string]struct{}, len(matches))
+	for _, match := range matches {
+		argNames[match[1]] = struct{}{}
+	}
+
+	return argNames, nil
 }
 
 func parseBuildArgs(unparsed []string, parsed map[string]string) {
@@ -166,7 +237,7 @@ func (b *Builder) TagInvocationImage(ctx context.Context, origTag, newTag string
 	}
 
 	if err := cli.Client().ImageTag(ctx, origTag, newTag); err != nil {
-		return log.Error(fmt.Errorf("could not tag image %s with value %s: %w", origTag, newTag, err))
+		return log.Errorf("could not tag image %s with value %s: %w", origTag, newTag, err)
 	}
 	return nil
 }
