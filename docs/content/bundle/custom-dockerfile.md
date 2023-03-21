@@ -52,9 +52,9 @@ You can change the platform used in the Dockerfile.
 
 # Custom Build Arguments
 
-You can pass custom build arguments (similar to \--build-arg when using docker build) in two ways:
+You can pass custom build arguments (similar to `docker build --build-arg`) in two ways:
 
-1. Use the \--build-arg flag on porter build
+1. Use the `porter build --build-arg`
 2. Define a custom value in porter.yaml, and use it in your custom Dockerfile.
    The name of the argument must be `CUSTOM_NAME`, and NAME is the path of the value in the custom map.
    Any character that isn't alphanumeric or an underscore is replaced with an underscore.
@@ -77,7 +77,7 @@ custom:
 ARG CUSTOM_APP_VERSION
 ```
 
-Use the \--custom flag on porter build to set the custom value dynamically at build time.
+Use `porter build --custom` to set the custom value dynamically at build time.
 In the example above, `--custom app.version=1.3.0` overrides the default value set in the porter.yaml.
 
 # Buildkit
