@@ -12,10 +12,11 @@
 * [Developer Tasks](#developer-tasks)
   * [Initial setup](#initial-setup)
   * [Magefile explained](#magefile-explained)
+  * [Test Porter](#test-porter)
   * [Install mixins](#install-mixins)
   * [Preview documentation](#preview-documentation)
   * [View a trace of a Porter command](#view-a-trace-of-a-porter-command)
-  * [Debug Smoke Tests](#debug-smoke-tests)
+  * [Debug smoke tests](#debug-smoke-tests)
   * [Write a blog post](#write-a-blog-post)
 * [Code structure and practices](#code-structure-and-practices)
   * [What is the general code layout?](#what-is-the-general-code-layout)
@@ -351,6 +352,15 @@ we have scripts that you can use, like `mage StartDockerRegistry` or
 
 Slow! 🐢 This takes between 8-16 minutes, depending on your computer hardware.
 
+🚧 We are in the process of updating our integration tests to reduce total test time by combining test cases into larger tests so that we aren't running expensive set up operations like building bundles as often.
+The goal is to make the integration tests use the same test framework [tests/tester] which tests porter using the CLI instead of by calling porter's code directly.
+Follow the example of the [hello smoke test] for a good test to copy and make new tests from.
+We use `require` instead of `assert` in these long tests because we want the test to stop on the first failure instead of having the rest of the test output a bunch of failures too.
+The first failure is the relevant one, and stopping immediately makes it easier to see the root problem.
+
+[hello smoke test]: https://github.com/getporter/porter/blob/main/tests/smoke/hello_test.go
+[tests/tester]: https://github.com/getporter/porter/blob/main/tests/tester/main.go#L46
+
 ### Smoke Tests
 
 ```
@@ -359,6 +369,7 @@ mage testSmoke
 
 Smoke tests test Porter using the CLI and quickly identify big problems with a
 build that would make it unusable.
+We recommend always running the smoke tests locally before submitting a pull request that changed Porter's code (not docs), to validate that core functionality wasn't broken.
 
 Short! We want this to always be something you can run in under 3 minutes.
 
