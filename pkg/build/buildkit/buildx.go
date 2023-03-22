@@ -149,7 +149,7 @@ func (b *Builder) determineBuildArgs(
 	ctx context.Context,
 	manifest *manifest.Manifest,
 	opts build.BuildImageOptions) (map[string]string, error) {
-	
+
 	//lint:ignore SA4006 ignore unused context for now
 	ctx, span := tracing.StartSpan(ctx)
 	defer span.EndSpan()

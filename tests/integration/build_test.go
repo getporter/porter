@@ -4,10 +4,8 @@ package integration
 
 import (
 	"encoding/json"
-	"fmt"
 	"path/filepath"
 	"testing"
-	"time"
 
 	"get.porter.sh/porter/pkg/build"
 	"get.porter.sh/porter/pkg/cnab"
@@ -28,13 +26,10 @@ func TestBuild(t *testing.T) {
 	require.NoError(t, shx.Copy(bunPath, test.TestDir, shx.CopyRecursive))
 	test.Chdir(test.TestDir)
 
-	// Use a unique version for appversion so that docker doesn't cache the result and not print the value used in the Dockerfile
-	appversion := fmt.Sprintf("app.versio=%d", time.Now().Unix())
-
 	// build the bundle
-	_, output := test.RequirePorter("build", "--custom", "customKey1=editedCustomValue1", "--custom", appversion, "--no-lint", "--name=porter-test-build")
+	_, output := test.RequirePorter("build", "--custom", "customKey1=editedCustomValue1", "--no-lint", "--name=porter-test-build")
 
-	// Validate that the custom value defined in porter.yaml was injected into the build with --build-arg
+	// Validate that the custom value defined in porter.yaml was injected into the build as a build argument
 	tests.RequireOutputContains(t, output, "CUSTOM_APP_VERSION=1.2.3")
 
 	// Validate that the bundle metadata contains the custom key specified by the user with --custom
