@@ -11,8 +11,9 @@ import (
 	"strings"
 	"time"
 
-	"get.porter.sh/porter/pkg/cnab"
 	depsv1 "get.porter.sh/porter/pkg/cnab/dependencies/v1"
+
+	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/editor"
 	"get.porter.sh/porter/pkg/encoding"
 	"get.porter.sh/porter/pkg/generator"
