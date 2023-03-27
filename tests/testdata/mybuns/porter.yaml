@@ -7,6 +7,10 @@ description: "A very thorough test bundle"
 registry: localhost:5000
 dockerfile: Dockerfile.tmpl
 
+custom:
+  app:
+    version: 1.2.3
+
 required:
   - docker
 

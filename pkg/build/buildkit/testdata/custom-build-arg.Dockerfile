@@ -1,21 +1,16 @@
 # syntax=docker/dockerfile-upstream:1.4.0
-FROM debian:stretch-slim
+FROM --platform=linux/amd64 debian:stretch-slim
 
-ARG BUNDLE_DIR
+# PORTER_INIT
 
 RUN rm -f /etc/apt/apt.conf.d/docker-clean; echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
 RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/apt \
     apt-get update && apt-get install -y ca-certificates
 
-ENV CUSTOM_VAR=boop
-ENV USERNAME=root
-
 # PORTER_MIXINS
 
-# Use the BUNDLE_DIR build argument to copy files into the bundle
+# Use the BUNDLE_DIR build argument to copy files into the bundle's working directory
 COPY --link . ${BUNDLE_DIR}
 
-ARG CACHEBUST
-ARG CUSTOM_APP_VERSION
-RUN echo Printing custom build arguments...
-RUN echo CUSTOM_APP_VERSION=${CUSTOM_APP_VERSION}
+ARG CUSTOM_BIG_LABEL
+

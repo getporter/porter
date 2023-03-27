@@ -1,18 +1,43 @@
 //go:build integration
-// +build integration
 
 package integration
 
 import (
 	"encoding/json"
+	"path/filepath"
 	"testing"
 
+	"get.porter.sh/porter/pkg/build"
+	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/yaml"
 	"get.porter.sh/porter/tests"
 	"get.porter.sh/porter/tests/tester"
 	"github.com/Masterminds/semver/v3"
+	"github.com/carolynvs/magex/shx"
 	"github.com/stretchr/testify/require"
 )
+
+func TestBuild(t *testing.T) {
+	test, err := tester.NewTest(t)
+	defer test.Close()
+	require.NoError(t, err, "test setup failed")
+
+	bunPath := filepath.Join(test.RepoRoot, "tests/testdata/mybuns/*")
+	require.NoError(t, shx.Copy(bunPath, test.TestDir, shx.CopyRecursive))
+	test.Chdir(test.TestDir)
+
+	// build the bundle
+	_, output := test.RequirePorter("build", "--custom", "customKey1=editedCustomValue1", "--no-lint", "--name=porter-test-build")
+
+	// Validate that the custom value defined in porter.yaml was injected into the build as a build argument
+	tests.RequireOutputContains(t, output, "CUSTOM_APP_VERSION=1.2.3")
+
+	// Validate that the bundle metadata contains the custom key specified by the user with --custom
+	bun, err := cnab.LoadBundle(test.TestContext.Context, build.LOCAL_BUNDLE)
+	require.NoError(t, err)
+	require.Equal(t, bun.Custom["customKey1"], "editedCustomValue1")
+
+}
 
 func TestRebuild(t *testing.T) {
 	test, err := tester.NewTest(t)
