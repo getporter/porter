@@ -174,7 +174,11 @@
           "$ref": "#/definitions/bundle"
         },
         "parameters": {
-          "type": "object"
+          "description": "Map of parameter names to a parameter source, such as bundle.parameters.PARAM, bundle.dependencies.DEP.outputs.OUTPUT, or bundle.credentials.CRED",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
         }
       },
       "required": [
@@ -184,7 +188,7 @@
       "type": "object"
     },
     "bundle": {
-      "description": "The defintion of a bundle reference",
+      "description": "The definition of a bundle reference",
       "properties": {
         "reference": {
           "description": "The full bundle reference for the dependency in the format REGISTRY/NAME:TAG",
@@ -291,7 +295,8 @@
     },
     "schemaVersion": {
       "description": "The version of the schema used in this file",
-      "type": "string"
+      "type": "string",
+      "default": "1.0.1"
     },
     "credentials": {
       "type": "array",
