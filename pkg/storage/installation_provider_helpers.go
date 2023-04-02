@@ -75,6 +75,7 @@ func (p *TestInstallationProvider) CreateRun(r Run, transformations ...func(r *R
 func (p *TestInstallationProvider) SetMutableRunValues(r *Run) {
 	p.idCounter += 1
 	r.ID = fmt.Sprintf("%d", p.idCounter)
+	r.Revision = r.ID
 	r.Created = now
 }
 
