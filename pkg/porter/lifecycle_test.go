@@ -4,6 +4,9 @@ import (
 	"context"
 	"testing"
 
+	"get.porter.sh/porter/pkg/secrets"
+	"github.com/cnabio/cnab-go/secrets/host"
+
 	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/cnab"
 	configadapter "get.porter.sh/porter/pkg/cnab/config-adapter"
@@ -122,11 +125,11 @@ func TestPorter_BuildActionArgs(t *testing.T) {
 
 		err := opts.Validate(ctx, nil, p.Porter)
 		require.NoError(t, err, "Validate failed")
-		existingInstall := storage.Installation{InstallationSpec: storage.InstallationSpec{
-			Name: opts.Name}}
+		existingInstall := storage.NewInstallation(opts.Namespace, opts.Name)
 
 		// resolve the parameters before building the action options to use for running the bundle
-		p.applyActionOptionsToInstallation(ctx, opts, &existingInstall)
+		err = p.applyActionOptionsToInstallation(ctx, opts, &existingInstall)
+		require.NoError(t, err)
 
 		args, err := p.BuildActionArgs(ctx, existingInstall, opts)
 		require.NoError(t, err, "BuildActionArgs failed")
@@ -308,85 +311,115 @@ func TestBundleExecutionOptions_ParseParamSets_Failed(t *testing.T) {
 	tests.RequireErrorContains(t, err, "/paramset.json not found", "Porter no longer supports passing a parameter set file to the -p flag, validate that passing a file doesn't work")
 }
 
-/*
-func TestBundleExecutionOptions_LoadParameters(t *testing.T) {
+// Validate that when an installation is run with a mix of overrides and parameter sets
+// that it follows the rules for the paramter hierarchy
+// highest -> lowest preceence
+// - user override
+// - previous value from last run
+// - value resolved from a named parameter set
+// - default value of the parameter
+func TestPorter_applyActionOptionsToInstallation_FollowsParameterHierarchy(t *testing.T) {
+	t.Parallel()
+
 	p := NewTestPorter(t)
-	defer p.Close()
+	ctx := context.Background()
 
 	p.TestConfig.TestContext.AddTestFile("testdata/porter.yaml", config.Name)
-
-	ctx := context.Background()
-	m, err := manifest.LoadManifestFrom(ctx, p.Config, config.Name)
+	m, err := manifest.LoadManifestFrom(context.Background(), p.Config, config.Name)
 	require.NoError(t, err)
 	bun, err := configadapter.ConvertToTestBundle(ctx, p.Config, m)
 	require.NoError(t, err)
 
-	opts := NewBundleExecutionOptions()
-	opts.Params = []string{"my-first-param=1", "my-second-param=2"}
+	err = p.TestParameters.InsertParameterSet(ctx, storage.NewParameterSet("", "myps",
+		storage.ValueStrategy("my-second-param", "via_paramset")))
+	require.NoError(t, err, "Create my-second-param parameter set failed")
 
-	err = opts.LoadParameters(context.Background(), p.Porter, bun, storage.ParameterSet{})
-	require.NoError(t, err)
-
-	assert.Len(t, opts.Params, 2)
-}
-
-func TestBundleExecutionOptions_CombineParameters(t *testing.T) {
-	c := portercontext.NewTestContext(t)
+	makeOpts := func() InstallOptions {
+		opts := NewInstallOptions()
+		opts.BundleReferenceOptions.bundleRef = &cnab.BundleReference{
+			Reference:  kahnlatest,
+			Definition: bun,
+		}
+		return opts
+	}
 
 	t.Run("no override present, no parameter set present", func(t *testing.T) {
-		opts := NewBundleExecutionOptions()
+		i := storage.NewInstallation("", bun.Name)
+		opts := makeOpts()
+		err = p.applyActionOptionsToInstallation(ctx, opts, &i)
+		require.NoError(t, err)
 
-		params := opts.combineParameters(c.Context)
-		require.Equal(t, map[string]string{}, params,
-			"expected combined params to be empty")
+		finalParams := opts.GetParameters()
+		wantParams := map[string]interface{}{
+			"my-first-param":  9,
+			"my-second-param": "spring-music-demo",
+			"porter-debug":    false,
+			"porter-state":    nil,
+		}
+		assert.Equal(t, wantParams, finalParams,
+			"expected combined params to have the default parameter values from the bundle")
 	})
 
 	t.Run("override present, no parameter set present", func(t *testing.T) {
-		opts := NewBundleExecutionOptions()
-		opts.parsedParams = map[string]string{
-			"foo": "foo_cli_override",
-		}
+		i := storage.NewInstallation("", bun.Name)
+		opts := makeOpts()
+		opts.Params = []string{"my-second-param=cli_override"}
+		err = p.applyActionOptionsToInstallation(ctx, opts, &i)
+		require.NoError(t, err)
 
-		params := opts.combineParameters(c.Context)
-		require.Equal(t, "foo_cli_override", params["foo"],
-			"expected param 'foo' to have override value")
+		finalParams := opts.GetParameters()
+		require.Contains(t, finalParams, "my-second-param",
+			"expected my-second-param to be a parameter")
+		require.Equal(t, "cli_override", finalParams["my-second-param"],
+			"expected param 'my-second-param' to be set with the override specified by the user")
 	})
 
 	t.Run("no override present, parameter set present", func(t *testing.T) {
-		opts := NewBundleExecutionOptions()
-		opts.parsedParamSets = map[string]string{
-			"foo": "foo_via_paramset",
-		}
+		i := storage.NewInstallation("", bun.Name)
+		opts := makeOpts()
+		opts.ParameterSets = []string{"myps"}
+		err = p.applyActionOptionsToInstallation(ctx, opts, &i)
+		require.NoError(t, err)
 
-		params := opts.combineParameters(c.Context)
-		require.Equal(t, "foo_via_paramset", params["foo"],
-			"expected param 'foo' to have parameter set value")
+		finalParams := opts.GetParameters()
+		require.Contains(t, finalParams, "my-second-param",
+			"expected my-second-param to be a parameter")
+		require.Equal(t, finalParams["my-second-param"], "via_paramset",
+			"expected param 'my-second-param' to be set with the value from the parameter set")
 	})
 
 	t.Run("override present, parameter set present", func(t *testing.T) {
-		opts := NewBundleExecutionOptions()
-		opts.parsedParams = map[string]string{
-			"foo": "foo_cli_override",
-		}
-		opts.parsedParamSets = map[string]string{
-			"foo": "foo_via_paramset",
-		}
+		i := storage.NewInstallation("", bun.Name)
+		opts := makeOpts()
+		opts.Params = []string{"my-second-param=cli_override"}
+		opts.ParameterSets = []string{"myps"}
+		err = p.applyActionOptionsToInstallation(ctx, opts, &i)
+		require.NoError(t, err)
 
-		params := opts.combineParameters(c.Context)
-		require.Equal(t, "foo_cli_override", params["foo"],
-			"expected param 'foo' to have override value, which has precedence over the parameter set value")
+		finalParams := opts.GetParameters()
+		require.Contains(t, finalParams, "my-second-param",
+			"expected my-second-param to be a parameter")
+		require.Equal(t, finalParams["my-second-param"], "cli_override",
+			"expected param 'my-second-param' to be set with the value of the user override, which has precedence over the parameter set value")
 	})
 
 	t.Run("debug mode on", func(t *testing.T) {
-		var opts BundleExecutionOptions
+		i := storage.NewInstallation("", bun.Name)
+		opts := makeOpts()
 		opts.DebugMode = true
-		debugContext := portercontext.NewTestContext(t)
-		params := opts.combineParameters(debugContext.Context)
-		require.Equal(t, "true", params["porter-debug"], "porter-debug should be set to true when p.Debug is true")
+		err = p.applyActionOptionsToInstallation(ctx, opts, &i)
+		require.NoError(t, err)
+
+		finalParams := opts.GetParameters()
+		debugParam, ok := finalParams["porter-debug"]
+		require.True(t, ok, "expected porter-debug to be set")
+		require.Equal(t, true, debugParam, "expected porter-debug to be true")
 	})
 }
 
-func TestBundleExecutionOptions_populateInternalParameterSet(t *testing.T) {
+// Validate that when we resolve parameters on an installation that sensitive parameters are
+// not persisted on the installation record and instead are referenced by a secret
+func TestPorter_applyActionOptionsToInstallation_sanitizesParameters(t *testing.T) {
 	p := NewTestPorter(t)
 	defer p.Close()
 
@@ -402,17 +435,17 @@ func TestBundleExecutionOptions_populateInternalParameterSet(t *testing.T) {
 	sensitiveParamValue := "2"
 	nonsensitiveParamName := "my-first-param"
 	nonsensitiveParamValue := "1"
-	opts := NewBundleExecutionOptions()
+	opts := NewInstallOptions()
+	opts.BundleReferenceOptions.bundleRef = &cnab.BundleReference{
+		Reference:  kahnlatest,
+		Definition: bun,
+	}
 	opts.Params = []string{nonsensitiveParamName + "=" + nonsensitiveParamValue, sensitiveParamName + "=" + sensitiveParamValue}
 
 	i := storage.NewInstallation("", bun.Name)
 
-	err = opts.LoadParameters(ctx, p.Porter, bun, i.Parameters)
+	err = p.applyActionOptionsToInstallation(ctx, opts, &i)
 	require.NoError(t, err)
-
-	err = opts.populateInternalParameterSet(ctx, p.Porter, bun, &i)
-	require.NoError(t, err)
-
 	require.Len(t, i.Parameters.Parameters, 2)
 
 	// there should be no sensitive value on installation record
@@ -426,13 +459,14 @@ func TestBundleExecutionOptions_populateInternalParameterSet(t *testing.T) {
 		require.Equal(t, param.Source.Value, nonsensitiveParamValue)
 	}
 
-	// if no parameter override specified, installation record should be updated
+	// When no parameter override specified, installation record should be updated
 	// as well
-	opts.combinedParameters = nil
-	opts.Params = make([]string, 0)
-	err = opts.LoadParameters(ctx, p.Porter, bun, i.Parameters)
-	require.NoError(t, err)
-	err = opts.populateInternalParameterSet(ctx, p.Porter, bun, &i)
+	opts = NewInstallOptions()
+	opts.BundleReferenceOptions.bundleRef = &cnab.BundleReference{
+		Reference:  kahnlatest,
+		Definition: bun,
+	}
+	err = p.applyActionOptionsToInstallation(ctx, opts, &i)
 	require.NoError(t, err)
 
 	// Check that when no parameter overrides are specified, we use the originally specified parameters from the previous run
@@ -443,7 +477,14 @@ func TestBundleExecutionOptions_populateInternalParameterSet(t *testing.T) {
 	require.Equal(t, "secret", i.Parameters.Parameters[1].Source.Key)
 }
 
-func TestBundleExecutionOptions_populateInternalParameterSet_ExistingParams(t *testing.T) {
+// When the installation has been used before with a parameter value
+// the previous param value should be updated and the other previous values
+// that were not set this time around should be re-used.
+// i.e. you should be able to run
+// porter install --param logLevel=debug --param featureA=enabled
+// porter upgrade --param logLevel=info
+// and when upgrade is run, the old value for featureA is kept
+func TestPorter_applyActionOptionsToInstallation_PreservesExistingParams(t *testing.T) {
 	p := NewTestPorter(t)
 	defer p.Close()
 
@@ -457,7 +498,11 @@ func TestBundleExecutionOptions_populateInternalParameterSet_ExistingParams(t *t
 
 	nonsensitiveParamName := "my-first-param"
 	nonsensitiveParamValue := "3"
-	opts := NewBundleExecutionOptions()
+	opts := NewUpgradeOptions()
+	opts.BundleReferenceOptions.bundleRef = &cnab.BundleReference{
+		Reference:  kahnlatest,
+		Definition: bun,
+	}
 	opts.Params = []string{nonsensitiveParamName + "=" + nonsensitiveParamValue}
 
 	i := storage.NewInstallation("", bun.Name)
@@ -465,20 +510,23 @@ func TestBundleExecutionOptions_populateInternalParameterSet_ExistingParams(t *t
 		storage.ValueStrategy("my-first-param", "1"),
 		storage.ValueStrategy("my-second-param", "2"),
 	)
-	err = opts.LoadParameters(ctx, p.Porter, bun, i.Parameters)
-	require.NoError(t, err)
 
-	err = opts.populateInternalParameterSet(ctx, p.Porter, bun, &i)
+	err = p.applyActionOptionsToInstallation(ctx, opts, &i)
 	require.NoError(t, err)
-
 	require.Len(t, i.Parameters.Parameters, 2)
 
 	// Check that overrides are applied on top of existing parameters
 	require.Len(t, i.Parameters.Parameters, 2)
 	require.Equal(t, "my-first-param", i.Parameters.Parameters[0].Name)
-	require.Equal(t, "3", i.Parameters.Parameters[0].Source.Value)
+	require.Equal(t, "value", i.Parameters.Parameters[0].Source.Key, "my-first-param isn't sensitive and can be stored in a hard-coded value")
 	require.Equal(t, "my-second-param", i.Parameters.Parameters[1].Name)
-	require.Equal(t, "value", i.Parameters.Parameters[1].Source.Key)
-	require.Equal(t, "2", i.Parameters.Parameters[1].Source.Value)
+	require.Equal(t, "secret", i.Parameters.Parameters[1].Source.Key, "my-second-param should be stored on the installation using a secret since it's sensitive")
+
+	// Check the values stored are correct
+	params, err := p.Parameters.ResolveAll(ctx, i.Parameters)
+	require.NoError(t, err, "Failed to resolve the installation parameters")
+	require.Equal(t, secrets.Set{
+		"my-first-param":  "3", // Should have used the override
+		"my-second-param": "2", // Should have kept the existing value from the last run
+	}, params, "Incorrect parameter values were persisted on the installationß")
 }
-*/

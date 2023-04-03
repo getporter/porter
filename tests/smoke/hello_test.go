@@ -97,15 +97,21 @@ func TestHelloBundle(t *testing.T) {
 	// We should be able to repeat install with --force
 	test.RequirePorter("install", testdata.MyBuns, "--reference", testdata.MyBunsRef, "--namespace=test", "-c=mybuns", "--force", "--param", "password=supersecret")
 
-	// Upgrade our installation
-	test.RequirePorter("upgrade", testdata.MyBuns, "--namespace", test.CurrentNamespace(), "-p=mybuns", "-c=mybuns")
-	test.RequirePorter("upgrade", testdata.MyBuns, "--namespace", test.CurrentNamespace(), "-p=mybuns", "-c=mybuns")
+	// Upgrade our installation, passing the same cred/param set that is already specified, it shouldn't create duplicates
+	// We are also overridding a different parameter, the old value for password should be remembered even though we didn't explicitly set it
+	test.RequirePorter("upgrade", testdata.MyBuns, "--namespace", test.CurrentNamespace(), "-p=mybuns", "-c=mybuns", "--param", "log_level=1")
 	// no duplicate in credential set or parameter set on the installation
 	// record
 	displayInstallation, err = test.ShowInstallation(test.CurrentNamespace(), testdata.MyBuns)
 	require.NoError(t, err)
 	require.Len(t, displayInstallation.ParameterSets, 1)
 	require.Len(t, displayInstallation.CredentialSets, 1)
+	param, ok := displayInstallation.ResolvedParameters.Get("password")
+	require.True(t, ok, "Could not find resolved parameter 'password'")
+	require.Equal(t, "supersecret", param.Value, "Expected that the previous override provided during install should be remembered and reused during upgrade")
+	param, ok = displayInstallation.ResolvedParameters.Get("log_level")
+	require.True(t, ok, "Could not find resolved parameter 'log_level'")
+	require.Equal(t, float64(1), param.Value, "Expected the new override for log_level to be used")
 
 	// Uninstall and remove the installation
 	test.RequirePorter("uninstall", testdata.MyBuns, "--namespace", test.CurrentNamespace(), "-c=mybuns")
