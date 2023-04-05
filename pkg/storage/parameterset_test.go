@@ -9,6 +9,7 @@ import (
 	"get.porter.sh/porter/pkg/schema"
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/tests"
+	"github.com/cnabio/cnab-go/bundle"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -34,6 +35,49 @@ func TestNewParameterSet(t *testing.T) {
 	assert.Len(t, ps.Parameters, 1, "Parameters should be initialized with 1 value")
 }
 
+func TestParameterSetValidateBundle(t *testing.T) {
+	t.Run("valid - parameter specified", func(t *testing.T) {
+		spec := map[string]bundle.Parameter{
+			"kubeconfig": {},
+		}
+		ps := ParameterSet{ParameterSetSpec: ParameterSetSpec{
+			Parameters: []secrets.Strategy{
+				{Name: "kubeconfig", Value: "top secret param"},
+			}}}
+
+		err := ps.ValidateBundle(spec, "install")
+		require.NoError(t, err, "expected Validate to pass because the parameter was specified")
+	})
+
+	t.Run("valid - parameter not required or specified", func(t *testing.T) {
+		spec := map[string]bundle.Parameter{
+			"kubeconfig": {ApplyTo: []string{"install"}, Required: false},
+		}
+		ps := ParameterSet{}
+		err := ps.ValidateBundle(spec, "install")
+		require.NoError(t, err, "expected Validate to pass because the parameter isn't required")
+	})
+
+	t.Run("valid - missing inapplicable parameter", func(t *testing.T) {
+		spec := map[string]bundle.Parameter{
+			"kubeconfig": {ApplyTo: []string{"install"}, Required: true},
+		}
+		ps := ParameterSet{}
+		err := ps.ValidateBundle(spec, "custom")
+		require.NoError(t, err, "expected Validate to pass because the parameter isn't applicable to the custom action")
+	})
+
+	t.Run("invalid - missing required parameter", func(t *testing.T) {
+		spec := map[string]bundle.Parameter{
+			"kubeconfig": {ApplyTo: []string{"install"}, Required: true},
+		}
+		ps := ParameterSet{}
+		err := ps.ValidateBundle(spec, "install")
+		require.Error(t, err, "expected Validate to fail because the parameter applies to the specified action and is required")
+		assert.Contains(t, err.Error(), `parameter "kubeconfig" is required`)
+	})
+}
+
 func TestParameterSet_String(t *testing.T) {
 	t.Run("global namespace", func(t *testing.T) {
 		ps := ParameterSet{ParameterSetSpec: ParameterSetSpec{Name: "myparams"}}
@@ -46,7 +90,7 @@ func TestParameterSet_String(t *testing.T) {
 	})
 }
 
-func TestDisplayParameterSet_Validate(t *testing.T) {
+func TestParameterSet_Validate(t *testing.T) {
 	t.Parallel()
 
 	testcases := []struct {

@@ -11,9 +11,8 @@ import (
 	"strings"
 	"time"
 
-	depsv1 "get.porter.sh/porter/pkg/cnab/dependencies/v1"
-
 	"get.porter.sh/porter/pkg/cnab"
+	depsv1 "get.porter.sh/porter/pkg/cnab/dependencies/v1"
 	"get.porter.sh/porter/pkg/editor"
 	"get.porter.sh/porter/pkg/encoding"
 	"get.porter.sh/porter/pkg/generator"
@@ -35,7 +34,7 @@ type ParameterShowOptions struct {
 	Namespace string
 }
 
-// ParameterEditOptions represent iptions for Porter's parameter edit command
+// ParameterEditOptions represent options for Porter's parameter edit command
 type ParameterEditOptions struct {
 	Name      string
 	Namespace string
@@ -779,9 +778,15 @@ func (p *Porter) CreateParameter(opts ParameterCreateOptions) error {
 	}
 }
 
-// applyActionOptionsToInstallation applies the specified action (e.g. install/upgrade) to an installation record.
-// This resolves the parameters to their final form to be passed to the CNAB runtime, and modifies the specified installation record.
-// You must sanitize the parameters before saving the installation so that sensitive values are not saved to the database.
+// applyActionOptionsToInstallation applies the specified action (e.g.
+// install/upgrade) to an installation record. This consolidates parameters and
+// credentials into a single parameter set or credential set, ready to be resolved
+// immediately before the bundle is run, and modifies the specified installation
+// record.
+//
+// This does not resolve the parameters, that only occurs before the bundle is run.
+// You must sanitize the parameters before saving the installation so
+// that sensitive values are not saved to the database.
 func (p *Porter) applyActionOptionsToInstallation(ctx context.Context, ba BundleAction, inst *storage.Installation) error {
 	ctx, span := tracing.StartSpan(ctx)
 	defer span.EndSpan()

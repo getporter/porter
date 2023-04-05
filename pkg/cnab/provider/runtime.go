@@ -13,8 +13,7 @@ var _ CNABProvider = &Runtime{}
 
 type Runtime struct {
 	*config.Config
-	credentials storage.CredentialSetProvider
-	//lint:ignore U1000 unused at the moment, will be used in the future
+	credentials   storage.CredentialSetProvider
 	parameters    storage.ParameterSetProvider
 	secrets       secrets.Store
 	installations storage.InstallationProvider
@@ -22,11 +21,12 @@ type Runtime struct {
 	Extensions    cnab.ProcessedExtensions
 }
 
-func NewRuntime(c *config.Config, installations storage.InstallationProvider, credentials storage.CredentialSetProvider, secrets secrets.Store, sanitizer *storage.Sanitizer) *Runtime {
+func NewRuntime(c *config.Config, installations storage.InstallationProvider, credentials storage.CredentialSetProvider, parameters storage.ParameterSetProvider, secrets secrets.Store, sanitizer *storage.Sanitizer) *Runtime {
 	return &Runtime{
 		Config:        c,
 		installations: installations,
 		credentials:   credentials,
+		parameters:    parameters,
 		secrets:       secrets,
 		sanitizer:     sanitizer,
 		Extensions:    cnab.ProcessedExtensions{},

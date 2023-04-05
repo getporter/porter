@@ -8,6 +8,7 @@ import (
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
 	"github.com/cnabio/cnab-go/bundle"
+	"github.com/cnabio/cnab-go/valuesource"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -20,19 +21,6 @@ func TestRuntime_loadCredentials(t *testing.T) {
 
 	r.TestCredentials.AddSecret("password", "mypassword")
 	r.TestCredentials.AddSecret("db-password", "topsecret")
-
-	r.TestConfig.TestContext.AddTestFile("testdata/db-creds.json", "/db-creds.json")
-
-	cs1 := storage.NewCredentialSet("", "mycreds", secrets.Strategy{
-		Name: "password",
-		Source: secrets.Source{
-			Key:   secrets.SourceSecret,
-			Value: "password",
-		},
-	})
-
-	err := r.credentials.InsertCredentialSet(context.Background(), cs1)
-	require.NoError(t, err, "Save credential set failed")
 
 	b := cnab.NewBundle(bundle.Bundle{
 		Credentials: map[string]bundle.Credential{
@@ -49,28 +37,27 @@ func TestRuntime_loadCredentials(t *testing.T) {
 		},
 	})
 
-	args := ActionArguments{
-		Installation: storage.Installation{
-			InstallationSpec: storage.InstallationSpec{
-				CredentialSets: []string{"mycreds"}},
-		},
-		Action: "install"}
-	gotValues, err := r.loadCredentials(context.Background(), b, args)
+	run := storage.Run{
+		Action: cnab.ActionInstall,
+		Credentials: storage.NewInternalCredentialSet(secrets.Strategy{
+			Name: "password",
+			Source: secrets.Source{
+				Key:   secrets.SourceSecret,
+				Value: "password",
+			},
+		}),
+	}
+	err := r.loadCredentials(context.Background(), b, &run)
 	require.NoError(t, err, "loadCredentials failed")
+	require.Equal(t, "sha256:2d6d3c91ef272afeef2bb29b2fb4b1670c756c623195e71916b8ee138fba60cb",
+		run.CredentialsDigest, "expected loadCredentials to set the digest of resolved credentials")
+	require.NotEmpty(t, run.Credentials.Credentials[0].Value, "expected loadCredentials to set the resolved value of the credentials on the Run")
 
-	wantValues := secrets.Set{
+	gotValues := run.Credentials.ToCNAB()
+	wantValues := valuesource.Set{
 		"password": "mypassword",
 	}
 	assert.Equal(t, wantValues, gotValues, "resolved unexpected credential values")
-
-	args = ActionArguments{
-		Installation: storage.Installation{
-			InstallationSpec: storage.InstallationSpec{
-				CredentialSets: []string{"/db-creds.json"}},
-		},
-		Action: "install"}
-	_, err = r.loadCredentials(context.Background(), b, args)
-	require.Error(t, err, "loadCredentials should not load from a file")
 }
 
 func TestRuntime_loadCredentials_WithApplyTo(t *testing.T) {
@@ -94,13 +81,13 @@ func TestRuntime_loadCredentials_WithApplyTo(t *testing.T) {
 		r := NewTestRuntime(t)
 		defer r.Close()
 
-		args := ActionArguments{Action: "status"}
+		run := &storage.Run{Action: "status"}
 		b := getBundle(true)
-		gotValues, err := r.loadCredentials(context.Background(), b, args)
+		err := r.loadCredentials(context.Background(), b, run)
 		require.NoError(t, err, "loadCredentials failed")
 
-		var wantValues secrets.Set
-		assert.Equal(t, wantValues, gotValues)
+		gotValues := run.Credentials.ToCNAB()
+		assert.Empty(t, gotValues)
 	})
 
 	t.Run("optional credential missing", func(t *testing.T) {
@@ -108,13 +95,13 @@ func TestRuntime_loadCredentials_WithApplyTo(t *testing.T) {
 		r := NewTestRuntime(t)
 		defer r.Close()
 
-		args := ActionArguments{Action: "install"}
+		run := &storage.Run{Action: cnab.ActionInstall}
 		b := getBundle(false)
-		gotValues, err := r.loadCredentials(context.Background(), b, args)
+		err := r.loadCredentials(context.Background(), b, run)
 		require.NoError(t, err, "loadCredentials failed")
 
-		var wantValues secrets.Set
-		assert.Equal(t, wantValues, gotValues)
+		gotValues := run.Credentials.ToCNAB()
+		assert.Empty(t, gotValues)
 	})
 
 	t.Run("required credential missing", func(t *testing.T) {
@@ -122,9 +109,9 @@ func TestRuntime_loadCredentials_WithApplyTo(t *testing.T) {
 		r := NewTestRuntime(t)
 		defer r.Close()
 
-		args := ActionArguments{Action: "install"}
+		run := &storage.Run{Action: cnab.ActionInstall, CredentialsDigest: "old digest"}
 		b := getBundle(true)
-		_, err := r.loadCredentials(context.Background(), b, args)
+		err := r.loadCredentials(context.Background(), b, run)
 		require.Error(t, err, "expected the credential to be required")
 	})
 
@@ -135,27 +122,26 @@ func TestRuntime_loadCredentials_WithApplyTo(t *testing.T) {
 
 		r.TestCredentials.AddSecret("password", "mypassword")
 
-		cs1 := storage.NewCredentialSet("", "mycreds", secrets.Strategy{
-			Name: "password",
-			Source: secrets.Source{
-				Key:   secrets.SourceSecret,
-				Value: "password",
-			},
-		})
-
-		err := r.credentials.InsertCredentialSet(context.Background(), cs1)
-		require.NoError(t, err, "Save credential set failed")
-
 		b := getBundle(true)
-		args := ActionArguments{
-			Installation: storage.Installation{
-				InstallationSpec: storage.InstallationSpec{
-					CredentialSets: []string{"mycreds"}},
-			},
-			Action: "install"}
-		gotValues, err := r.loadCredentials(context.Background(), b, args)
+		run := &storage.Run{
+			Action:         cnab.ActionInstall,
+			CredentialSets: []string{"mycreds"},
+			Credentials: storage.NewInternalCredentialSet(secrets.Strategy{
+				Name: "password",
+				Source: secrets.Source{
+					Key:   secrets.SourceSecret,
+					Value: "password",
+				},
+			}),
+		}
+		err := r.loadCredentials(context.Background(), b, run)
 		require.NoError(t, err, "loadCredentials failed")
-		assert.Equal(t, secrets.Set{"password": "mypassword"}, gotValues)
+		require.Equal(t, "sha256:2d6d3c91ef272afeef2bb29b2fb4b1670c756c623195e71916b8ee138fba60cb",
+			run.CredentialsDigest, "expected loadCredentials to set the digest of resolved credentials")
+		require.NotEmpty(t, run.Credentials.Credentials[0].Value, "expected loadCredentials to set the resolved value of the credentials on the Run")
+
+		gotValues := run.Credentials.ToCNAB()
+		assert.Equal(t, valuesource.Set{"password": "mypassword"}, gotValues, "incorrect resolved credentials")
 	})
 
 }
