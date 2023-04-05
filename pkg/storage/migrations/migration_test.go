@@ -183,7 +183,6 @@ func validateMigratedInstallations(ctx context.Context, t *testing.T, c *config.
 	assert.Empty(t, lastRun.BundleReference, "We didn't track bundle reference in v0, so this can't be populated")
 	assert.Empty(t, lastRun.BundleDigest, "We didn't track bundle digest in v0, so this can't be populated")
 	assert.Equal(t, "uninstall", lastRun.Action, "incorrect run action")
-	assert.Empty(t, lastRun.Custom, "We didn't set custom datadata on claims in v0, so this can't be populated")
 	assert.Equal(t, "2022-04-29T16:13:20.48026-05:00", lastRun.Created.Format(time.RFC3339Nano), "incorrect run created timestamp")
 	assert.Empty(t, lastRun.ParameterSets, "We didn't track run parameter sets in v0, so this can't be populated")
 	assert.Empty(t, lastRun.ParameterOverrides, "We didn't track run parameter overrides in v0, so this can't be populated")

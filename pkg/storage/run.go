@@ -63,9 +63,6 @@ type Run struct {
 	// Any sensitive data will be sannitized before saving to the database.
 	Parameters ParameterSet `json:"parameters,omitempty"`
 
-	// Custom extension data applicable to a given runtime.
-	// TODO(carolynvs): remove custom and populate it in ToCNAB
-	Custom interface{} `json:"custom"`
 }
 
 // rawRun is an alias for Run that does not have a json marshal functions defined,

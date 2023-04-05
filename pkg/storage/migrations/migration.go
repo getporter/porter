@@ -331,7 +331,6 @@ func convertClaimToRun(inst storage.Installation, data []byte) (storage.Run, err
 		BundleReference: src.BundleReference,
 		BundleDigest:    "", // We didn't track digest before v1
 		Parameters:      storage.NewInternalParameterSet(inst.Namespace, src.ID, params...),
-		Custom:          src.Custom,
 	}
 
 	return dest, nil
