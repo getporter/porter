@@ -107,7 +107,7 @@ func TestPorter_PrintBundleOutputs(t *testing.T) {
 			i := p.TestInstallations.CreateInstallation(storage.NewInstallation("", "test"), func(i *storage.Installation) {
 				i.Parameters.Parameters = p.SanitizeParameters(i.Parameters.Parameters, i.ID, extB)
 			})
-			c := p.TestInstallations.CreateRun(i.NewRun(cnab.ActionInstall), func(r *storage.Run) {
+			c := p.TestInstallations.CreateRun(i.NewRun(cnab.ActionInstall, extB), func(r *storage.Run) {
 				r.Bundle = b
 				r.ParameterOverrides.Parameters = p.SanitizeParameters(r.ParameterOverrides.Parameters, r.ID, extB)
 			})

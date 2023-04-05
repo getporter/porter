@@ -59,7 +59,7 @@ func TestDeleteInstallation(t *testing.T) {
 			// Create test claim
 			if tc.lastAction != "" {
 				i := p.TestInstallations.CreateInstallation(storage.NewInstallation("", "test"))
-				c := p.TestInstallations.CreateRun(i.NewRun(tc.lastAction))
+				c := p.TestInstallations.CreateRun(i.NewRun(tc.lastAction, cnab.ExtendedBundle{}))
 				_ = p.TestInstallations.CreateResult(c.NewResult(tc.lastActionStatus))
 			}
 
