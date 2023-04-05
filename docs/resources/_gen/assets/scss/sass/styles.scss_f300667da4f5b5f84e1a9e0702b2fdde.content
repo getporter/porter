@@ -6672,6 +6672,9 @@ nav.home-nav {
     #helm.home .get-charts h2 {
       margin: 1.5rem 0 1rem;
       padding: 0; }
+    @media only screen and (max-width: 569px) {
+      #helm.home .get-charts {
+        margin-left: 0; } }
   #helm.home .helm-quotes {
     background-color: white;
     border-radius: 25px;
