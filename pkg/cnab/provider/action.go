@@ -176,7 +176,7 @@ func (r *Runtime) Execute(ctx context.Context, args ActionArguments) error {
 
 		a := cnabaction.New(driver)
 		a.SaveLogs = args.PersistLogs
- 
+
 		if currentRun.ShouldRecord() {
 			err = r.SaveRun(ctx, args.Installation, currentRun, cnab.StatusRunning)
 			if err != nil {
