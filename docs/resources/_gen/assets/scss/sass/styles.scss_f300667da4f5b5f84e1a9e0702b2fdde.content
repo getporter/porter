@@ -7797,6 +7797,9 @@ body {
     max-width: 10rem;
     transform: scale(2);
     margin: 1.5rem 0 1.5rem 7.5%; }
+    @media only screen and (max-width: 569px) {
+      .cncf img {
+        max-width: 8rem; } }
   .cncf p {
     margin: 1.5rem 2.5% 0 0;
     display: inline-block;
@@ -8307,7 +8310,9 @@ body {
   .main .content-wrap iframe,
   .main .content-wrap embed,
   .main .content-wrap .youtube-player {
-    min-height: 320px; }
+    min-height: 320px;
+    width: 100% !important;
+    max-width: 560px; }
 
 .copy-button-container {
   display: flex;

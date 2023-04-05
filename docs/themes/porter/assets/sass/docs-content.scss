@@ -281,6 +281,8 @@
   embed,
   .youtube-player {
     min-height: 320px;
+    width: 100% !important;
+    max-width: 560px;
   }
 }
 

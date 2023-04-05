@@ -65,16 +65,21 @@ func (r *Runtime) SetOutput() cnabaction.OperationConfigFunc {
 
 func (r *Runtime) AddFiles(ctx context.Context, args ActionArguments) cnabaction.OperationConfigFunc {
 	return func(op *driver.Operation) error {
+		if op.Files == nil {
+			op.Files = make(map[string]string, 1)
+		}
+
 		for k, v := range args.Files {
 			op.Files[k] = v
 		}
 
 		// Add claim.json to file list as well, if exists
-		claim, err := r.installations.GetLastRun(ctx, args.Installation.Namespace, args.Installation.Name)
+		run, err := r.installations.GetLastRun(ctx, args.Installation.Namespace, args.Installation.Name)
 		if err == nil {
+			claim := run.ToCNAB()
 			claimBytes, err := json.Marshal(claim)
 			if err != nil {
-				return fmt.Errorf("could not marshal claim %s for installation %s: %w", claim.ID, args.Installation, err)
+				return fmt.Errorf("could not marshal run %s for installation %s: %w", run.ID, args.Installation, err)
 			}
 			op.Files[config.ClaimFilepath] = string(claimBytes)
 		}
