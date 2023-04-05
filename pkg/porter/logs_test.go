@@ -64,12 +64,13 @@ func TestLogsShowOptions_Validate(t *testing.T) {
 }
 
 func TestPorter_ShowInstallationLogs(t *testing.T) {
+	bun := cnab.ExtendedBundle{}
 	t.Run("no logs found", func(t *testing.T) {
 		p := NewTestPorter(t)
 		defer p.Close()
 
 		i := p.TestInstallations.CreateInstallation(storage.NewInstallation("", "test"))
-		c := p.TestInstallations.CreateRun(i.NewRun(cnab.ActionInstall))
+		c := p.TestInstallations.CreateRun(i.NewRun(cnab.ActionInstall, bun))
 		p.TestInstallations.CreateResult(c.NewResult(cnab.StatusSucceeded))
 
 		var opts LogsShowOptions
@@ -86,7 +87,7 @@ func TestPorter_ShowInstallationLogs(t *testing.T) {
 		defer p.Close()
 
 		i := p.TestInstallations.CreateInstallation(storage.NewInstallation("", "test"))
-		c := p.TestInstallations.CreateRun(i.NewRun(cnab.ActionInstall))
+		c := p.TestInstallations.CreateRun(i.NewRun(cnab.ActionInstall, bun))
 		r := p.TestInstallations.CreateResult(c.NewResult(cnab.StatusSucceeded), func(r *storage.Result) {
 			r.OutputMetadata.SetGeneratedByBundle(cnab.OutputInvocationImageLogs, false)
 		})

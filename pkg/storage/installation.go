@@ -98,10 +98,22 @@ func NewInstallation(namespace string, name string) Installation {
 }
 
 // NewRun creates a run of the current bundle.
-func (i Installation) NewRun(action string) Run {
+func (i Installation) NewRun(action string, b cnab.ExtendedBundle) Run {
 	run := NewRun(i.Namespace, i.Name)
 	run.Action = action
-	run.ParameterOverrides = i.Parameters
+
+	// Copy over relevant overrides from the installation to the run
+	// An installation may have an overridden parameter that doesn't apply to this current action
+	run.ParameterOverrides = NewInternalParameterSet(i.Namespace, i.Name)
+	for _, p := range i.Parameters.Parameters {
+		if parmDef, ok := b.Parameters[p.Name]; ok {
+			if !parmDef.AppliesTo(action) {
+				continue
+			}
+			run.ParameterOverrides.Parameters = append(run.ParameterOverrides.Parameters, p)
+		}
+	}
+
 	return run
 }
 

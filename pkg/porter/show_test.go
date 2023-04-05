@@ -103,7 +103,7 @@ func TestPorter_ShowInstallationWithBundle(t *testing.T) {
 				i.Parameters.Parameters = p.SanitizeParameters(i.Parameters.Parameters, i.ID, bun)
 			})
 
-			run := p.TestInstallations.CreateRun(i.NewRun(cnab.ActionUpgrade), p.TestInstallations.SetMutableRunValues, func(r *storage.Run) {
+			run := p.TestInstallations.CreateRun(i.NewRun(cnab.ActionUpgrade, bun), p.TestInstallations.SetMutableRunValues, func(r *storage.Run) {
 				r.Bundle = b
 				r.BundleReference = tc.ref
 				r.BundleDigest = "sha256:88d68ef0bdb9cedc6da3a8e341a33e5d2f8bb19d0cf7ec3f1060d3f9eb73cae9"
