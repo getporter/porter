@@ -4,16 +4,15 @@ import (
 	"context"
 	"testing"
 
-	"get.porter.sh/porter/pkg/secrets"
-	"github.com/cnabio/cnab-go/secrets/host"
-
 	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/cnab"
 	configadapter "get.porter.sh/porter/pkg/cnab/config-adapter"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/manifest"
+	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/tests"
+	"github.com/cnabio/cnab-go/secrets/host"
 	"github.com/cnabio/cnab-to-oci/relocation"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -322,6 +321,7 @@ func TestPorter_applyActionOptionsToInstallation_FollowsParameterHierarchy(t *te
 	t.Parallel()
 
 	p := NewTestPorter(t)
+	defer p.Close()
 	ctx := context.Background()
 
 	p.TestConfig.TestContext.AddTestFile("testdata/porter.yaml", config.Name)
