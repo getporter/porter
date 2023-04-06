@@ -848,6 +848,9 @@ func (p *Porter) applyActionOptionsToInstallation(ctx context.Context, ba Bundle
 				inst.Parameters.Parameters = append(inst.Parameters.Parameters, paramStrategy)
 			}
 		}
+
+		// Keep the parameter overrides sorted, so that comparisons and general troubleshooting is easier
+		sort.Sort(inst.Parameters.Parameters)
 	}
 	// This contains resolved sensitive values, so only trace it in special dev builds (nothing is traced for release builds)
 	span.SetSensitiveAttributes(tracing.ObjectAttribute("merged-installation-parameters", inst.Parameters.Parameters))

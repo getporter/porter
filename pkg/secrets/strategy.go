@@ -124,3 +124,19 @@ func (s *Source) UnmarshalYAML(value *yaml.Node) error {
 func (s Source) MarshalYAML() (interface{}, error) {
 	return s.MarshalRaw(), nil
 }
+
+type StrategyList []Strategy
+
+func (l StrategyList) Less(i, j int) bool {
+	return l[i].Name < l[j].Name
+}
+
+func (l StrategyList) Swap(i, j int) {
+	tmp := l[i]
+	l[i] = l[j]
+	l[j] = tmp
+}
+
+func (l StrategyList) Len() int {
+	return len(l)
+}
