@@ -451,6 +451,10 @@ nav.home-nav {
       margin: 1.5rem 0 1rem;
       padding: 0;
     }
+
+    @media only screen and (max-width: 569px) {
+      margin-left: 0;
+    }
   }
 
   .helm-quotes {
