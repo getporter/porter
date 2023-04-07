@@ -173,7 +173,8 @@ func Test_getImageLatestDigest(t *testing.T) {
 				p.TestRegistry.MockGetImageMetadata = tc.mockGetImageMetadata
 			}
 
-			digest, err := p.getImageDigest(context.Background(), ref)
+			regOpts := cnabtooci.RegistryOptions{}
+			digest, err := p.getImageDigest(context.Background(), ref, regOpts)
 			if tc.wantErr != "" {
 				require.ErrorContains(t, err, tc.wantErr)
 				return

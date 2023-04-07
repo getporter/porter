@@ -35,6 +35,9 @@ type BuildOptions struct {
 	// Custom is the unparsed list of NAME=VALUE custom inputs set on the command line.
 	Customs []string
 
+	// InsecureRegistry allows connecting to an unsecured registry or one without verifiable certificates.
+	InsecureRegistry bool
+
 	// parsedCustoms is the parsed set of custom inputs from Customs.
 	parsedCustoms map[string]string
 }

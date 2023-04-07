@@ -42,6 +42,7 @@ porter build [flags]
   -d, --dir string              Path to the build context directory where all bundle assets are located. Defaults to the current directory.
   -f, --file string             Path to the Porter manifest. The path is relative to the build context directory. Defaults to porter.yaml in the current directory.
   -h, --help                    help for build
+      --insecure-registry       Don't require TLS when pulling referenced images
       --name string             Override the bundle name
       --no-cache                Do not use the Docker cache when building the bundle's invocation image.
       --no-lint                 Do not run the linter
