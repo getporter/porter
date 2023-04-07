@@ -64,6 +64,10 @@ func (p *Porter) generateInternalManifest(ctx context.Context, opts BuildOptions
 		}
 	}
 
+	regOpts := cnabtooci.RegistryOptions{
+		InsecureRegistry: opts.InsecureRegistry,
+	}
+
 	// find all referenced images that does not have digest specified
 	// get the image digest for all of them and update the manifest with the digest
 	err = e.WalkNodes(ctx, "images.*", func(ctx context.Context, nc *yqlib.NodeContext) error {
@@ -88,7 +92,7 @@ func (p *Porter) generateInternalManifest(ctx context.Context, opts BuildOptions
 			return span.Errorf("failed to parse image %s reference: %w", img.Repository, err)
 		}
 
-		digest, err := p.getImageDigest(ctx, ref)
+		digest, err := p.getImageDigest(ctx, ref, regOpts)
 		if err != nil {
 			return span.Error(err)
 		}
@@ -117,7 +121,7 @@ func (p *Porter) generateInternalManifest(ctx context.Context, opts BuildOptions
 }
 
 // getImageDigest retrieves the repository digest associated with the specified image reference.
-func (p *Porter) getImageDigest(ctx context.Context, img cnab.OCIReference) (digest.Digest, error) {
+func (p *Porter) getImageDigest(ctx context.Context, img cnab.OCIReference, regOpts cnabtooci.RegistryOptions) (digest.Digest, error) {
 	ctx, span := tracing.StartSpan(ctx, attribute.String("image", img.String()))
 	defer span.EndSpan()
 
@@ -130,7 +134,6 @@ func (p *Porter) getImageDigest(ctx context.Context, img cnab.OCIReference) (dig
 		img = refWithTag
 	}
 
-	regOpts := cnabtooci.RegistryOptions{}
 	imgSummary, err := p.Registry.GetImageMetadata(ctx, img, regOpts)
 	if err != nil {
 		return "", err

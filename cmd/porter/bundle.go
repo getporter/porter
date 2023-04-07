@@ -91,6 +91,8 @@ The docker driver builds the bundle image using the local Docker host. To use a 
 		"Do not use the Docker cache when building the bundle's invocation image.")
 	f.StringArrayVar(&opts.Customs, "custom", nil,
 		"Define an individual key-value pair for the custom section in the form of NAME=VALUE. Use dot notation to specify a nested custom field. May be specified multiple times. Max length is 5,000 characters when used as a build argument.")
+	f.BoolVar(&opts.InsecureRegistry, "insecure-registry", false,
+		"Don't require TLS when pulling referenced images")
 
 	// Allow configuring the --driver flag with build-driver, to avoid conflicts with other commands
 	cmd.Flag("driver").Annotations = map[string][]string{

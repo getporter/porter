@@ -83,7 +83,7 @@ func TestAirgappedEnvironment(t *testing.T) {
 			})
 
 			// Build the test bundle separate from publish so we best validate that we aren't pulling referenced images during build anymore
-			test.RequirePorter("build")
+			test.RequirePorter("build", insecureFlag)
 
 			// Validate that the referenced bundle is not in the local docker cache and that build did not pull it
 			err = shx.RunE("docker", "image", "inspect", localRefWithDigest)
