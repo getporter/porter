@@ -463,6 +463,16 @@ func (v DisplayValues) Less(i, j int) bool {
 	return v[i].Name < v[j].Name
 }
 
+func (v DisplayValues) Get(name string) (DisplayValue, bool) {
+	for _, entry := range v {
+		if entry.Name == name {
+			return entry, true
+		}
+	}
+
+	return DisplayValue{}, false
+}
+
 func NewDisplayValuesFromParameters(bun cnab.ExtendedBundle, params map[string]interface{}) DisplayValues {
 	// Iterate through all Bundle Outputs, fetch their metadata
 	// via their corresponding Definitions and add to rows
@@ -817,17 +827,30 @@ func (p *Porter) applyActionOptionsToInstallation(ctx context.Context, ba Bundle
 		parsedOverrides["porter-debug"] = "true"
 	}
 
-	// If any overrides are specified, forget previously specified parameter overrides
+	// Apply overrides on to of any pre-existing parameters that were specified previously
 	if len(parsedOverrides) > 0 {
-		inst.Parameters.Parameters = make([]secrets.Strategy, 0, len(parsedOverrides))
 		for name, value := range parsedOverrides {
 			// Do not resolve parameters from dependencies
 			if strings.Contains(name, "#") {
 				continue
 			}
 
-			inst.Parameters.Parameters = append(inst.Parameters.Parameters, storage.ValueStrategy(name, value))
+			// Replace previous value if present
+			replaced := false
+			paramStrategy := storage.ValueStrategy(name, value)
+			for i, existingParam := range inst.Parameters.Parameters {
+				if existingParam.Name == name {
+					inst.Parameters.Parameters[i] = paramStrategy
+					replaced = true
+				}
+			}
+			if !replaced {
+				inst.Parameters.Parameters = append(inst.Parameters.Parameters, paramStrategy)
+			}
 		}
+
+		// Keep the parameter overrides sorted, so that comparisons and general troubleshooting is easier
+		sort.Sort(inst.Parameters.Parameters)
 	}
 	// This contains resolved sensitive values, so only trace it in special dev builds (nothing is traced for release builds)
 	span.SetSensitiveAttributes(tracing.ObjectAttribute("merged-installation-parameters", inst.Parameters.Parameters))

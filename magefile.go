@@ -1,5 +1,4 @@
 //go:build mage
-// +build mage
 
 // This is a magefile, and is a "makefile for go".
 // See https://magefile.org/
@@ -17,7 +16,6 @@ import (
 	"strings"
 
 	"get.porter.sh/magefiles/ci"
-	"get.porter.sh/magefiles/docker"
 	"get.porter.sh/magefiles/git"
 	"get.porter.sh/magefiles/releases"
 	"get.porter.sh/magefiles/tools"
@@ -31,6 +29,9 @@ import (
 	"github.com/magefile/mage/mg"
 	"github.com/magefile/mage/sh"
 	"golang.org/x/sync/errgroup"
+
+	// mage:import
+	"get.porter.sh/magefiles/docker"
 
 	// mage:import
 	"get.porter.sh/magefiles/tests"

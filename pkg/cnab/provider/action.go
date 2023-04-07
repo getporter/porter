@@ -213,7 +213,7 @@ func (r *Runtime) CreateRun(ctx context.Context, args ActionArguments, b cnab.Ex
 	defer span.EndSpan()
 
 	// Create a record for the run we are about to execute
-	var currentRun = args.Installation.NewRun(args.Action)
+	var currentRun = args.Installation.NewRun(args.Action, b)
 	currentRun.Bundle = b.Bundle
 	currentRun.BundleReference = args.BundleReference.Reference.String()
 	currentRun.BundleDigest = args.BundleReference.Digest.String()
@@ -242,7 +242,7 @@ func (r *Runtime) SaveRun(ctx context.Context, installation storage.Installation
 
 	span.Debugf("saving action %s for %s installation with status %s", run.Action, installation, status)
 
-	// update installation record to use run id ecoded parameters instead of
+	// update installation record to use run id encoded parameters instead of
 	// installation id
 	installation.Parameters.Parameters = run.ParameterOverrides.Parameters
 	err := r.installations.UpsertInstallation(ctx, installation)

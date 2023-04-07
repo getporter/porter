@@ -80,10 +80,11 @@ func TestOCIReferenceParts_GetBundleReference(t *testing.T) {
 func TestInstallation_ApplyResult(t *testing.T) {
 	t.Parallel()
 
+	bun := cnab.ExtendedBundle{}
 	t.Run("install failed", func(t *testing.T) {
 		// try to install a bundle and fail
 		inst := NewInstallation("dev", "mybuns")
-		run := inst.NewRun(cnab.ActionInstall)
+		run := inst.NewRun(cnab.ActionInstall, bun)
 		result := run.NewResult(cnab.StatusFailed)
 
 		inst.ApplyResult(run, result)
@@ -95,7 +96,7 @@ func TestInstallation_ApplyResult(t *testing.T) {
 	t.Run("install succeeded", func(t *testing.T) {
 		// install a bundle
 		inst := NewInstallation("dev", "mybuns")
-		run := inst.NewRun(cnab.ActionInstall)
+		run := inst.NewRun(cnab.ActionInstall, bun)
 		result := run.NewResult(cnab.StatusSucceeded)
 
 		inst.ApplyResult(run, result)
@@ -111,7 +112,7 @@ func TestInstallation_ApplyResult(t *testing.T) {
 		inst.Status.Installed = &inst.Status.Created
 
 		// try to uninstall it and fail
-		run := inst.NewRun(cnab.ActionUninstall)
+		run := inst.NewRun(cnab.ActionUninstall, bun)
 		result := run.NewResult(cnab.StatusFailed)
 
 		inst.ApplyResult(run, result)
@@ -128,7 +129,7 @@ func TestInstallation_ApplyResult(t *testing.T) {
 		inst.Status.Installed = &inst.Status.Created
 
 		// uninstall it
-		run := inst.NewRun(cnab.ActionUninstall)
+		run := inst.NewRun(cnab.ActionUninstall, bun)
 		result := run.NewResult(cnab.StatusSucceeded)
 
 		inst.ApplyResult(run, result)
@@ -146,7 +147,7 @@ func TestInstallation_ApplyResult(t *testing.T) {
 		inst.Status.Installed = &inst.Status.Created
 
 		// uninstall the bundle
-		run := inst.NewRun(cnab.ActionUninstall)
+		run := inst.NewRun(cnab.ActionUninstall, bun)
 		result := run.NewResult(cnab.StatusSucceeded)
 		result.Created = now.Add(-time.Second * 10)
 
@@ -158,7 +159,7 @@ func TestInstallation_ApplyResult(t *testing.T) {
 		assert.Equal(t, &result.Created, inst.Status.Uninstalled, "the uninstalled timestamp should be set")
 
 		// re-install the bundle
-		run = inst.NewRun(cnab.ActionInstall)
+		run = inst.NewRun(cnab.ActionInstall, bun)
 		result = run.NewResult(cnab.StatusSucceeded)
 		result.Created = now.Add(-time.Second * 5)
 
@@ -170,7 +171,7 @@ func TestInstallation_ApplyResult(t *testing.T) {
 		assert.NotEmpty(t, inst.Status.Uninstalled, "the uninstalled timestamp should still be be set")
 
 		// re-uninstall the bundle
-		run = inst.NewRun(cnab.ActionUninstall)
+		run = inst.NewRun(cnab.ActionUninstall, bun)
 		result = run.NewResult(cnab.StatusSucceeded)
 
 		inst.ApplyResult(run, result)

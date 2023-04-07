@@ -1,5 +1,4 @@
 //go:build integration
-// +build integration
 
 package porter
 
@@ -78,10 +77,11 @@ func TestResolveBundleReference(t *testing.T) {
 		p := NewTestPorter(t)
 		defer p.Close()
 
+		bun := buildExampleBundle()
 		i := p.TestInstallations.CreateInstallation(storage.NewInstallation("dev", "example"))
-		p.TestInstallations.CreateRun(i.NewRun(cnab.ActionInstall), func(r *storage.Run) {
+		p.TestInstallations.CreateRun(i.NewRun(cnab.ActionInstall, bun), func(r *storage.Run) {
 			r.BundleReference = kahnlatest.String()
-			r.Bundle = buildExampleBundle()
+			r.Bundle = bun.Bundle
 			r.BundleDigest = kahnlatestHash
 		})
 		opts := &BundleReferenceOptions{}
@@ -96,8 +96,8 @@ func TestResolveBundleReference(t *testing.T) {
 	})
 }
 
-func buildExampleBundle() bundle.Bundle {
-	bun := bundle.Bundle{
+func buildExampleBundle() cnab.ExtendedBundle {
+	bun := cnab.ExtendedBundle{Bundle: bundle.Bundle{
 		SchemaVersion:    bundle.GetDefaultSchemaVersion(),
 		InvocationImages: []bundle.InvocationImage{{BaseImage: bundle.BaseImage{Image: "example.com/foo:v1.0.0"}}},
 		Actions: map[string]bundle.Action{
@@ -127,6 +127,6 @@ func buildExampleBundle() bundle.Bundle {
 				},
 			},
 		},
-	}
+	}}
 	return bun
 }
