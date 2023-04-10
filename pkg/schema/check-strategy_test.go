@@ -20,8 +20,8 @@ func TestValidateSchemaVersion(t *testing.T) {
 		WantErr     string
 	}{
 		{Name: "range - in range", Strategy: CheckStrategyExact, Supported: "1.0.0-alpha.1 - 1.0.0-z || 1.0.0 - 1.0.1", Specified: "1.0.0-alpha.2", Default: "1.0.1"},
-		{Name: "range - out of range", Strategy: CheckStrategyExact, Supported: "1.0.0-alpha.1 - 1.0.1", Specified: "1.0.2", Default: "1.0.1",
-			WantErr: "the schema version is 1.0.2 but the supported schema version is >=1.0.0-alpha.1 <=1.0.1"},
+		{Name: "range - out of range", Strategy: CheckStrategyExact, Supported: "1.0.0-alpha.1 - 1.0.1", Specified: "1.1.0", Default: "1.0.1",
+			WantErr: "the schema version is 1.1.0 but the supported schema version is >=1.0.0-alpha.1 <=1.0.1"},
 		{Name: "exact - exact match", Strategy: CheckStrategyExact, Supported: "=1.0.0", Specified: "1.0.0", Default: "1.0.0"},
 		{Name: "exact - patch mismatch", Strategy: CheckStrategyExact, Supported: "=1.0.0", Specified: "1.0.1", Default: "1.0.0",
 			WantErr: "the schema version is 1.0.1 but the supported schema version is =1.0.0"},

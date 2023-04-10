@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/experimental"
 )
 
 //go:embed templates/*
@@ -12,6 +13,7 @@ var fs embed.FS
 
 // Workaround until go:embed can include hidden files
 // https://github.com/golang/go/issues/43854
+//
 //go:embed templates/create/.dockerignore
 var dockerignore []byte
 
@@ -69,6 +71,9 @@ func (t *Templates) GetRunScript() ([]byte, error) {
 // GetSchema returns the template manifest schema for the porter manifest.
 // Note that it is incomplete and does not include the mixins' schemas.
 func (t *Templates) GetSchema() ([]byte, error) {
+	if t.Config.IsFeatureEnabled(experimental.FlagDependenciesV2) {
+		return t.fs.ReadFile("templates/v1.1.0.schema.json")
+	}
 	return t.fs.ReadFile("templates/schema.json")
 }
 

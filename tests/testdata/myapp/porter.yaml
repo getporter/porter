@@ -1,0 +1,40 @@
+schemaVersion: 1.0.1
+name: myapp
+version: 1.2.3
+description: "Deploys my app"
+registry: localhost:5000
+
+parameters:
+  - name: connstr
+    description: "The database connection string"
+    env: CONNSTR
+    $id: "getporter.org/interfaces/mysql.connection-string"
+  - name: logLevel
+    type: string
+
+mixins:
+  - exec
+
+install:
+  - exec:
+      command: echo
+      arguments:
+        - "installing myapp"
+
+status:
+  - exec:
+      command: echo
+      arguments:
+        - "myapp is looking great!"
+
+upgrade:
+  - exec:
+      command: echo
+      arguments:
+        - "upgrading myapp"
+
+uninstall:
+  - exec:
+      command: echo
+      arguments:
+        - "uninstalling myapp"

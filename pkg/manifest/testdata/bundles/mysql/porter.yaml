@@ -1,5 +1,5 @@
 schemaType: Bundle
-schemaVersion: 1.0.0
+schemaVersion: 1.1.0
 name: mysql
 version: 0.1.3
 registry: "localhost:5000"
@@ -13,6 +13,11 @@ mixins:
 credentials:
 - name: kubeconfig
   path: /home/nonroot/.kube/config
+
+dependencies:
+  provides:
+    interface:
+      id: https://example.com/interfaces/mysql
 
 install:
 - helm3:
