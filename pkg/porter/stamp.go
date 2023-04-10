@@ -9,6 +9,7 @@ import (
 
 	"get.porter.sh/porter/pkg/build"
 	"get.porter.sh/porter/pkg/cnab"
+	cnabtooci "get.porter.sh/porter/pkg/cnab/cnab-to-oci"
 	configadapter "get.porter.sh/porter/pkg/cnab/config-adapter"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/tracing"
@@ -82,7 +83,7 @@ func (p *Porter) IsBundleUpToDate(ctx context.Context, opts BundleDefinitionOpti
 
 		// Check whether invocation images exist in host registry.
 		for _, invocationImage := range bun.InvocationImages {
-			// if the invovationImage is built before using a random string tag,
+			// if the invocationImage is built before using a random string tag,
 			// we should rebuild it with the new format
 			if strings.HasSuffix(invocationImage.Image, "-installer") {
 				return false, nil
@@ -93,14 +94,14 @@ func (p *Porter) IsBundleUpToDate(ctx context.Context, opts BundleDefinitionOpti
 				return false, span.Errorf("error parsing %s as an OCI image reference: %w", invocationImage.Image, err)
 			}
 
-			cachedImg, err := p.Registry.GetCachedImage(ctx, imgRef)
+			_, err = p.Registry.GetCachedImage(ctx, imgRef)
 			if err != nil {
+				if errors.Is(err, cnabtooci.ErrNotFound{}) {
+					span.Debugf("Invocation image %s doesn't exist in the local image cache, will need to build first", invocationImage.Image)
+					return false, nil
+				}
 				return false, err
-			}
 
-			if cachedImg.IsZero() {
-				span.Debugf("Invocation image %s doesn't exist in the local image cache, will need to build first", invocationImage.Image)
-				return false, nil
 			}
 		}
 
