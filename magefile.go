@@ -1,5 +1,4 @@
 //go:build mage
-// +build mage
 
 // This is a magefile, and is a "makefile for go".
 // See https://magefile.org/
