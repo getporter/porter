@@ -38,6 +38,7 @@ func TestAirgappedEnvironment(t *testing.T) {
 		{name: "untrusted tls, no alias", useTLS: false, useAlias: true, insecure: true},
 	}
 	for _, tc := range testcases {
+		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			insecureFlag := fmt.Sprintf("--insecure-registry=%t", tc.insecure)
 

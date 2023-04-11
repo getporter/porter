@@ -211,7 +211,11 @@ func (p *Porter) resolveBundleReference(ctx context.Context, opts *BundleReferen
 			return cnab.BundleReference{}, err
 		}
 	} else if opts.File != "" { // load the local bundle source
-		localBundle, err := p.ensureLocalBundleIsUpToDate(ctx, opts.BundleDefinitionOptions)
+		buildOpts := BuildOptions{
+			BundleDefinitionOptions: opts.BundleDefinitionOptions,
+			InsecureRegistry:        opts.InsecureRegistry,
+		}
+		localBundle, err := p.ensureLocalBundleIsUpToDate(ctx, buildOpts)
 		if err != nil {
 			return cnab.BundleReference{}, err
 		}
