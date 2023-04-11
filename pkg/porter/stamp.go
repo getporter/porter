@@ -18,7 +18,7 @@ import (
 
 // ensureLocalBundleIsUpToDate ensures that the bundle is up-to-date with the porter manifest,
 // if it is out-of-date, performs a build of the bundle.
-func (p *Porter) ensureLocalBundleIsUpToDate(ctx context.Context, opts BundleDefinitionOptions) (cnab.BundleReference, error) {
+func (p *Porter) ensureLocalBundleIsUpToDate(ctx context.Context, opts BuildOptions) (cnab.BundleReference, error) {
 	ctx, log := tracing.StartSpan(ctx,
 		attribute.Bool("autobuild-disabled", opts.AutoBuildDisabled))
 	defer log.EndSpan()
@@ -27,7 +27,7 @@ func (p *Porter) ensureLocalBundleIsUpToDate(ctx context.Context, opts BundleDef
 		return cnab.BundleReference{}, nil
 	}
 
-	upToDate, err := p.IsBundleUpToDate(ctx, opts)
+	upToDate, err := p.IsBundleUpToDate(ctx, opts.BundleDefinitionOptions)
 	if err != nil {
 		log.Warnf("WARNING: %w", err)
 	}
@@ -36,12 +36,15 @@ func (p *Porter) ensureLocalBundleIsUpToDate(ctx context.Context, opts BundleDef
 		if opts.AutoBuildDisabled {
 			log.Warn("WARNING: The bundle is out-of-date. Skipping autobuild because --autobuild-disabled was specified")
 		} else {
+			log.Info("Changes have been detected and the previously built bundle is out-of-date, rebuilding the bundle before proceeding...")
 			log.Info("Building bundle ===>")
 			// opts.File is non-empty, which overrides opts.CNABFile if set
 			// (which may be if a cached bundle is fetched e.g. when running an action)
 			opts.CNABFile = ""
-			buildOpts := BuildOptions{BundleDefinitionOptions: opts}
-			buildOpts.Validate(p)
+			buildOpts := opts
+			if err = buildOpts.Validate(p); err != nil {
+				return cnab.BundleReference{}, log.Errorf("Validation of build options when autobuilding the bundle failed: %w", err)
+			}
 			err := p.Build(ctx, buildOpts)
 			if err != nil {
 				return cnab.BundleReference{}, err
