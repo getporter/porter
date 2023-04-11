@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"sort"
 
 	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/cnab"
@@ -69,8 +70,29 @@ func (s Stamp) WriteManifest(cxt *portercontext.Context, path string) error {
 // MixinRecord contains information about a mixin used in a bundle
 // For now it is a placeholder for data that we would like to include in the future.
 type MixinRecord struct {
+	// Name of the mixin used in the bundle. This is used for sorting only, and
+	// should not be written to the Porter's stamp in bundle.json because we are
+	// storing these mixin records in a map, keyed by the mixin name.
+	Name string `json:"-"`
+
 	// Version of the mixin used in the bundle.
 	Version string `json:"version"`
+}
+
+type MixinRecords []MixinRecord
+
+func (m MixinRecords) Len() int {
+	return len(m)
+}
+
+func (m MixinRecords) Less(i, j int) bool {
+	return m[i].Name < m[j].Name
+}
+
+func (m MixinRecords) Swap(i, j int) {
+	tmp := m[i]
+	m[i] = m[j]
+	m[j] = tmp
 }
 
 func (c *ManifestConverter) GenerateStamp(ctx context.Context) (Stamp, error) {
@@ -86,11 +108,9 @@ func (c *ManifestConverter) GenerateStamp(ctx context.Context) (Stamp, error) {
 	stamp.EncodedManifest = base64.StdEncoding.EncodeToString(rawManifest)
 
 	stamp.Mixins = make(map[string]MixinRecord, len(c.Manifest.Mixins))
-	usedMixinsVersion := c.getUsedMixinsVersion()
-	for usedMixinName, usedMixinVersion := range usedMixinsVersion {
-		stamp.Mixins[usedMixinName] = MixinRecord{
-			Version: usedMixinVersion,
-		}
+	usedMixins := c.getUsedMixinRecords()
+	for _, record := range usedMixins {
+		stamp.Mixins[record.Name] = record
 	}
 
 	digest, err := c.DigestManifest()
@@ -122,9 +142,10 @@ func (c *ManifestConverter) DigestManifest() (string, error) {
 	v := pkg.Version
 	data = append(data, v...)
 
-	usedMixinsVersion := c.getUsedMixinsVersion()
-	for usedMixinName, usedMixinVersion := range usedMixinsVersion {
-		data = append(append(data, usedMixinName...), usedMixinVersion...)
+	usedMixins := c.getUsedMixinRecords()
+	sort.Sort(usedMixins) // Ensure that this is sorted so the digest is consistent
+	for _, mixinRecord := range usedMixins {
+		data = append(append(data, mixinRecord.Name...), mixinRecord.Version...)
 	}
 
 	digest := sha256.Sum256(data)
@@ -152,17 +173,21 @@ func LoadStamp(bun cnab.ExtendedBundle) (Stamp, error) {
 	return stamp, nil
 }
 
-// getUsedMixinsVersion compare the mixins defined in the manifest and the ones installed and then retrieve the mixin's version info
-func (c *ManifestConverter) getUsedMixinsVersion() map[string]string {
-	usedMixinsVersion := make(map[string]string)
+// getUsedMixinRecords compare the mixins defined in the manifest and the ones installed and then retrieve the mixin's version info
+func (c *ManifestConverter) getUsedMixinRecords() MixinRecords {
+	usedMixins := make(MixinRecords, 0)
 
 	for _, usedMixin := range c.Manifest.Mixins {
 		for _, installedMixin := range c.InstalledMixins {
 			if usedMixin.Name == installedMixin.Name {
-				usedMixinsVersion[usedMixin.Name] = installedMixin.GetVersionInfo().Version
+				usedMixins = append(usedMixins, MixinRecord{
+					Name:    installedMixin.Name,
+					Version: installedMixin.GetVersionInfo().Version,
+				})
 			}
 		}
 	}
 
-	return usedMixinsVersion
+	sort.Sort(usedMixins)
+	return usedMixins
 }
