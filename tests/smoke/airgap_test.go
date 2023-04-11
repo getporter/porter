@@ -93,7 +93,12 @@ func TestAirgappedEnvironment(t *testing.T) {
 			}
 
 			// Publish a test bundle that references the image from the temp registry, and push to another insecure registry
-			test.RequirePorter("publish", "--registry", reg2.String(), insecureFlag)
+			_, output = test.RequirePorter("publish", "--registry", reg2.String(), insecureFlag, "--verbosity=debug")
+
+			// Validate that we aren't getting a rebuild since we are building immediately before publish
+			// I am using --verbosity=debug above so that we can see the reason why a rebuild was triggered
+			// which helps with troubleshooting if/when a regression occurs.
+			require.NotContains(t, output, "Building bundle", "expected a rebuild to not happen because we built before publishing")
 
 			// Stop the original registry, this ensures that we are relying 100% on the copy of the bundle in the second registry
 			reg1.Close()
