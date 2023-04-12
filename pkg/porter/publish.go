@@ -99,7 +99,11 @@ func (p *Porter) publishFromFile(ctx context.Context, opts PublishOptions) error
 	ctx, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
 
-	_, err := p.ensureLocalBundleIsUpToDate(ctx, opts.BundleDefinitionOptions)
+	buildOpts := BuildOptions{
+		BundleDefinitionOptions: opts.BundleDefinitionOptions,
+		InsecureRegistry:        opts.InsecureRegistry,
+	}
+	_, err := p.ensureLocalBundleIsUpToDate(ctx, buildOpts)
 	if err != nil {
 		return err
 	}
