@@ -113,18 +113,30 @@
 
           .blog-tags {
             position: relative;
-            padding: 1rem 2rem;
+            padding: .5rem 2rem 4rem;
             min-height: 12rem;
+            @media only screen and (max-width: 569px) {
+              padding: .5rem 1rem 4rem;
+            }
             a.tag {
               font-size: 1.25rem;
               border-radius: 2rem;
               background: $blue;
               color: white;
-              padding: 0.5rem 1.5rem;
-              margin: 2.25rem 0.25rem;
+              padding: 0.2rem 1.5rem;
+              margin: 0.25rem;
               font-weight: bold;
               text-transform: uppercase;
               letter-spacing: 0.075em;
+              @media only screen and (max-width: 569px) {
+                font-size: 1rem;
+              }
+            }
+
+            > div {
+              display: flex;
+              align-items: center;
+              flex-wrap: wrap;
             }
           }
 
