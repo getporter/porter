@@ -16,6 +16,7 @@ import (
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/tracing"
+	"github.com/Masterminds/semver/v3"
 )
 
 // Stamp contains Porter specific metadata about a bundle that we can place
@@ -86,7 +87,24 @@ func (m MixinRecords) Len() int {
 }
 
 func (m MixinRecords) Less(i, j int) bool {
-	return m[i].Name < m[j].Name
+	// Currently there can only be a single version of a mixin used in a bundle
+	// I'm considering version as well for sorting in case that changes in the future once mixins are bundles
+	// referenced by a bundle, and not embedded binaries
+	iRecord := m[i]
+	jRecord := m[j]
+	if iRecord.Name == jRecord.Name {
+		// Try to sort by the mixin's semantic version
+		// If it doesn't parse, just fall through and sort as a string instead
+		iVersion, iErr := semver.NewVersion(iRecord.Version)
+		jVersion, jErr := semver.NewVersion(jRecord.Version)
+		if iErr == nil && jErr == nil {
+			return iVersion.LessThan(jVersion)
+		} else {
+			return iRecord.Version < jRecord.Version
+		}
+	}
+
+	return iRecord.Name < jRecord.Name
 }
 
 func (m MixinRecords) Swap(i, j int) {
@@ -173,7 +191,8 @@ func LoadStamp(bun cnab.ExtendedBundle) (Stamp, error) {
 	return stamp, nil
 }
 
-// getUsedMixinRecords compare the mixins defined in the manifest and the ones installed and then retrieve the mixin's version info
+// getUsedMixinRecords returns a list of the mixins used by the bundle, including
+// information about the installed mixin, such as its version.
 func (c *ManifestConverter) getUsedMixinRecords() MixinRecords {
 	usedMixins := make(MixinRecords, 0)
 
