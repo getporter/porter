@@ -185,14 +185,49 @@ func TestConfig_GenerateStamp_IncludeVersion(t *testing.T) {
 
 func TestMixinRecord_Sort(t *testing.T) {
 	records := MixinRecords{
-		{Name: "helm", Version: "0.1.2"},
+		{Name: "helm", Version: "0.1.13"},
+		{Name: "helm", Version: "v0.1.2"},
 		{Name: "testmixin", Version: "1.2.3"},
 		{Name: "exec", Version: "2.1.0"},
+		// These won't parse as valid semver, so just sort them by the string representation instead
+		{
+			Name:    "az",
+			Version: "invalid-version2",
+		},
+		{
+			Name:    "az",
+			Version: "invalid-version1",
+		},
 	}
 
 	sort.Sort(records)
 
-	assert.Equal(t, "exec", records[0].Name)
-	assert.Equal(t, "helm", records[1].Name)
-	assert.Equal(t, "testmixin", records[2].Name)
+	wantRecords := MixinRecords{
+		{
+			Name:    "az",
+			Version: "invalid-version1",
+		},
+		{
+			Name:    "az",
+			Version: "invalid-version2",
+		},
+		{
+			Name:    "exec",
+			Version: "2.1.0",
+		},
+		{
+			Name:    "helm",
+			Version: "v0.1.2",
+		},
+		{
+			Name:    "helm",
+			Version: "0.1.13",
+		},
+		{
+			Name:    "testmixin",
+			Version: "1.2.3",
+		},
+	}
+
+	assert.Equal(t, wantRecords, records)
 }
