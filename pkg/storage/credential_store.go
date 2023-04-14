@@ -62,9 +62,9 @@ func (s CredentialStore) ResolveAll(ctx context.Context, creds CredentialSet) (s
 	var resolveErrors error
 
 	for _, cred := range creds.Credentials {
-		value, err := s.Secrets.Resolve(ctx, cred.Source.Key, cred.Source.Value)
+		value, err := s.Secrets.Resolve(ctx, cred.Source.Strategy, cred.Source.Hint)
 		if err != nil {
-			resolveErrors = multierror.Append(resolveErrors, fmt.Errorf("unable to resolve credential %s.%s from %s %s: %w", creds.Name, cred.Name, cred.Source.Key, cred.Source.Value, err))
+			resolveErrors = multierror.Append(resolveErrors, fmt.Errorf("unable to resolve credential %s.%s from %s %s: %w", creds.Name, cred.Name, cred.Source.Strategy, cred.Source.Hint, err))
 		}
 
 		resolvedCreds[cred.Name] = value
@@ -80,7 +80,7 @@ func (s CredentialStore) Validate(ctx context.Context, creds CredentialSet) erro
 	for _, cs := range creds.Credentials {
 		valid := false
 		for _, validSource := range validSources {
-			if cs.Source.Key == validSource {
+			if cs.Source.Strategy == validSource {
 				valid = true
 				break
 			}
@@ -88,7 +88,7 @@ func (s CredentialStore) Validate(ctx context.Context, creds CredentialSet) erro
 		if !valid {
 			errors = multierror.Append(errors, fmt.Errorf(
 				"%s is not a valid source. Valid sources are: %s",
-				cs.Source.Key,
+				cs.Source.Strategy,
 				strings.Join(validSources, ", "),
 			))
 		}

@@ -451,12 +451,12 @@ func TestPorter_applyActionOptionsToInstallation_sanitizesParameters(t *testing.
 	// there should be no sensitive value on installation record
 	for _, param := range i.Parameters.Parameters {
 		if param.Name == sensitiveParamName {
-			require.Equal(t, param.Source.Key, secrets.SourceSecret)
-			require.NotEqual(t, param.Source.Value, sensitiveParamValue)
+			require.Equal(t, param.Source.Strategy, secrets.SourceSecret)
+			require.NotEqual(t, param.Source.Hint, sensitiveParamValue)
 			continue
 		}
-		require.Equal(t, param.Source.Key, host.SourceValue)
-		require.Equal(t, param.Source.Value, nonsensitiveParamValue)
+		require.Equal(t, param.Source.Strategy, host.SourceValue)
+		require.Equal(t, param.Source.Hint, nonsensitiveParamValue)
 	}
 
 	// When no parameter override specified, installation record should be updated
@@ -472,9 +472,9 @@ func TestPorter_applyActionOptionsToInstallation_sanitizesParameters(t *testing.
 	// Check that when no parameter overrides are specified, we use the originally specified parameters from the previous run
 	require.Len(t, i.Parameters.Parameters, 2)
 	require.Equal(t, "my-first-param", i.Parameters.Parameters[0].Name)
-	require.Equal(t, "1", i.Parameters.Parameters[0].Source.Value)
+	require.Equal(t, "1", i.Parameters.Parameters[0].Source.Hint)
 	require.Equal(t, "my-second-param", i.Parameters.Parameters[1].Name)
-	require.Equal(t, "secret", i.Parameters.Parameters[1].Source.Key)
+	require.Equal(t, "secret", i.Parameters.Parameters[1].Source.Strategy)
 }
 
 // When the installation has been used before with a parameter value
@@ -518,9 +518,9 @@ func TestPorter_applyActionOptionsToInstallation_PreservesExistingParams(t *test
 	// Check that overrides are applied on top of existing parameters
 	require.Len(t, i.Parameters.Parameters, 2)
 	require.Equal(t, "my-first-param", i.Parameters.Parameters[0].Name)
-	require.Equal(t, "value", i.Parameters.Parameters[0].Source.Key, "my-first-param isn't sensitive and can be stored in a hard-coded value")
+	require.Equal(t, "value", i.Parameters.Parameters[0].Source.Strategy, "my-first-param isn't sensitive and can be stored in a hard-coded value")
 	require.Equal(t, "my-second-param", i.Parameters.Parameters[1].Name)
-	require.Equal(t, "secret", i.Parameters.Parameters[1].Source.Key, "my-second-param should be stored on the installation using a secret since it's sensitive")
+	require.Equal(t, "secret", i.Parameters.Parameters[1].Source.Strategy, "my-second-param should be stored on the installation using a secret since it's sensitive")
 
 	// Check the values stored are correct
 	params, err := p.Parameters.ResolveAll(ctx, i.Parameters)
