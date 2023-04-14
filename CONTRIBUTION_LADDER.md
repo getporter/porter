@@ -10,7 +10,6 @@
   * [Stepping Down/Emeritus Process](#stepping-downemeritus-process)
 * [Admin](#admin)
   * [How to become an admin](#admin)
-* [Emeritus Maintainer](#emeritus-maintainer)
 ---
 
 Our ladder defines the roles and responsibilities for this project and how to
