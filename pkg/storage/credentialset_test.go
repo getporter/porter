@@ -17,11 +17,11 @@ import (
 )
 
 func TestNewCredentialSet(t *testing.T) {
-	cs := NewCredentialSet("dev", "mycreds", secrets.Strategy{
+	cs := NewCredentialSet("dev", "mycreds", secrets.SourceMap{
 		Name: "password",
 		Source: secrets.Source{
-			Key:   "env",
-			Value: "MY_PASSWORD",
+			Strategy: "env",
+			Hint:     "MY_PASSWORD",
 		},
 	})
 
@@ -152,12 +152,12 @@ func TestMarshal(t *testing.T) {
 			SchemaVersion: "schemaVersion",
 			Namespace:     "namespace",
 			Name:          "name",
-			Credentials: []secrets.Strategy{
+			Credentials: []secrets.SourceMap{
 				{
 					Name: "cred1",
 					Source: secrets.Source{
-						Key:   "secret",
-						Value: "mysecret",
+						Strategy: "secret",
+						Hint:     "mysecret",
 					},
 				},
 			},

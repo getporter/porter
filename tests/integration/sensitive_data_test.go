@@ -38,18 +38,18 @@ func TestSensitiveData(t *testing.T) {
 
 	for _, param := range i.Parameters.Parameters {
 		if param.Name == sensitiveParamName {
-			assert.NotContains(t, param.Source.Value, sensitiveParamValue)
+			assert.NotContains(t, param.Source.Hint, sensitiveParamValue)
 		}
 	}
 
 	for _, param := range run.ParameterOverrides.Parameters {
 		if param.Name == sensitiveParamName {
-			assert.NotContains(t, param.Source.Value, sensitiveParamValue)
+			assert.NotContains(t, param.Source.Hint, sensitiveParamValue)
 		}
 	}
 	for _, param := range run.Parameters.Parameters {
 		if param.Name == sensitiveParamName {
-			assert.NotContains(t, param.Source.Value, sensitiveParamValue)
+			assert.NotContains(t, param.Source.Hint, sensitiveParamValue)
 		}
 	}
 

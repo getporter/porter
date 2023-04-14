@@ -78,8 +78,8 @@ func TestPorter_ApplyParametersToInstallation(t *testing.T) {
 		p.TestParameters.InsertParameterSet(ctx, storage.ParameterSet{
 			ParameterSetSpec: storage.ParameterSetSpec{
 				Name: "oldps1",
-				Parameters: []secrets.Strategy{
-					{Name: "logLevel", Source: secrets.Source{Key: "value", Value: "2"}},
+				Parameters: []secrets.SourceMap{
+					{Name: "logLevel", Source: secrets.Source{Strategy: "value", Hint: "2"}},
 				},
 			},
 		})
@@ -87,8 +87,8 @@ func TestPorter_ApplyParametersToInstallation(t *testing.T) {
 		p.TestParameters.InsertParameterSet(ctx, storage.ParameterSet{
 			ParameterSetSpec: storage.ParameterSetSpec{
 				Name: "newps1",
-				Parameters: []secrets.Strategy{
-					{Name: "logLevel", Source: secrets.Source{Key: "value", Value: "11"}},
+				Parameters: []secrets.SourceMap{
+					{Name: "logLevel", Source: secrets.Source{Strategy: "value", Hint: "11"}},
 				},
 			},
 		})

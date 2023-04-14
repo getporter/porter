@@ -239,7 +239,7 @@ func (p *TestPorter) CompareGoldenFile(goldenFile string, got string) {
 
 // CreateInstallation saves an installation record into claim store and store
 // sensitive parameters into secret store.
-func (p *TestPorter) SanitizeParameters(raw []secrets.Strategy, recordID string, bun cnab.ExtendedBundle) []secrets.Strategy {
+func (p *TestPorter) SanitizeParameters(raw []secrets.SourceMap, recordID string, bun cnab.ExtendedBundle) []secrets.SourceMap {
 	strategies, err := p.Sanitizer.CleanParameters(context.Background(), raw, bun, recordID)
 	require.NoError(p.T(), err)
 

@@ -273,7 +273,7 @@ func (p *Porter) ShowCredential(ctx context.Context, opts CredentialShowOptions)
 
 		// Iterate through all CredentialStrategies and add to rows
 		for _, cs := range credSet.Credentials {
-			rows = append(rows, []string{cs.Name, cs.Source.Value, cs.Source.Key})
+			rows = append(rows, []string{cs.Name, cs.Source.Hint, cs.Source.Strategy})
 		}
 
 		// Build and configure our tablewriter

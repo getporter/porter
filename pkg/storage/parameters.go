@@ -34,10 +34,10 @@ func ParseVariableAssignments(params []string) (map[string]string, error) {
 }
 
 // ValueStrategy is the strategy used to store non-sensitive parameters
-func ValueStrategy(name string, value string) secrets.Strategy {
-	return secrets.Strategy{
-		Name:   name,
-		Source: secrets.Source{Key: host.SourceValue, Value: value},
-		Value:  value,
+func ValueStrategy(name string, value string) secrets.SourceMap {
+	return secrets.SourceMap{
+		Name:          name,
+		Source:        secrets.Source{Strategy: host.SourceValue, Hint: value},
+		ResolvedValue: value,
 	}
 }
