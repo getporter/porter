@@ -169,6 +169,7 @@ Note: if overrides for registry/tag/reference are provided, this command only re
 	cmd.Flag("force").Annotations = map[string][]string{
 		"viper-key": {"force-overwrite"},
 	}
+	addBundleDefinitionFlags(f, &opts.BundleDefinitionOptions)
 
 	return &cmd
 }
