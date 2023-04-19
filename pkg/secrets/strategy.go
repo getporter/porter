@@ -153,7 +153,7 @@ func (l SourceMapList) GetByName(name string) (SourceMap, bool) {
 }
 
 // GetResolvedValue returns the resolved value of the specified name and a bool indicating if it was found.
-// You must resolve the value before calling, it does to do resolution for you.
+// You must resolve the value before calling, it does not do resolution for you.
 func (l SourceMapList) GetResolvedValue(name string) (interface{}, bool) {
 	item, ok := l.GetByName(name)
 	if ok {
