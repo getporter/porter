@@ -5,9 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"get.porter.sh/porter/pkg/cnab"
 	"github.com/cnabio/cnab-go/valuesource"
-	"github.com/hashicorp/go-multierror"
 	"gopkg.in/yaml.v3"
 )
 
@@ -170,50 +168,6 @@ func (l SourceMapList) GetResolvedValues() map[string]string {
 		values[item.Name] = item.ResolvedValue
 	}
 	return values
-}
-
-// GetTypedResolvedValues converts the items to a map of key/value pairs, where the value is the type defined by the bundle.
-// Validation errors are accumulated, and parameters are always passed back along with a validation error.
-// If you care about valid parameters, check the error, but otherwise you can use this for display purposes and not have it blow up with no results.
-func (l SourceMapList) GetTypedResolvedValues(bun cnab.ExtendedBundle) (map[string]interface{}, error) {
-	var bigErr *multierror.Error
-
-	typedParams := make(map[string]interface{}, len(l))
-	for key, unconverted := range l.GetResolvedValues() {
-		param, ok := bun.Parameters[key]
-		if !ok {
-			bigErr = multierror.Append(bigErr, fmt.Errorf("parameter %s not defined in bundle", key))
-			typedParams[key] = unconverted
-			continue
-		}
-
-		def, ok := bun.Definitions[param.Definition]
-		if !ok {
-			bigErr = multierror.Append(bigErr, fmt.Errorf("definition %s not defined in bundle", param.Definition))
-			typedParams[key] = unconverted
-			continue
-		}
-
-		if def.Type != nil {
-			value, err := def.ConvertValue(unconverted)
-			if err != nil {
-				bigErr = multierror.Append(bigErr, fmt.Errorf("unable to convert parameter's %s value %s to the destination parameter type %s: %w", key, unconverted, def.Type, err))
-				typedParams[key] = unconverted
-				continue
-			}
-
-			// Inject empty files as nil (no file), not an empty file
-			if bun.IsFileType(def) && value == "" {
-				value = nil
-			}
-
-			typedParams[key] = value
-		} else {
-			// bundle dependency parameters can be any type, I'm not sure that we have a solid way to do a typed conversion
-			typedParams[key] = unconverted
-		}
-	}
-	return typedParams, bigErr.ErrorOrNil()
 }
 
 // Merge applies the specified values on top of a base set of values. When a
