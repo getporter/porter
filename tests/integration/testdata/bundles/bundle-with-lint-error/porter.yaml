@@ -1,0 +1,32 @@
+# This bundle is designed to cause the porter lint/build commands to fail
+schemaType: Bundle
+schemaVersion: 1.0.1
+name: exec-mixin-lint-error
+version: 0.1.0
+description: "This bundle is designed to cause the porter lint/build commands to fail, use --no-lint to use it anyway"
+registry: "localhost:5000"
+
+mixins:
+  - exec
+
+install:
+  - exec:
+      description: trigger a lint error
+      command: bash
+      flags:
+        # This won't work because it's quoted improperly https://getporter.org/best-practices/exec-mixin/
+        c: echo "Hello World"
+
+upgrade:
+  - exec:
+      description: "World 2.0"
+      command: echo
+      arguments:
+        - upgrade
+
+uninstall:
+  - exec:
+      description: "Uninstall Hello World"
+      command: echo
+      arguments:
+        - uninstall
