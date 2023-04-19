@@ -26,21 +26,23 @@ porter publish [flags]
   porter publish --archive /tmp/mybuns.tgz --reference myrepo/my-buns:0.1.0
   porter publish --tag latest
   porter publish --registry myregistry.com/myorg
+  porter publish --autobuild-disabled=true
 		
 ```
 
 ### Options
 
 ```
-  -a, --archive string      Path to the bundle archive in .tgz format
-  -d, --dir string          Path to the build context directory where all bundle assets are located.
-  -f, --file porter.yaml    Path to the Porter manifest. Defaults to porter.yaml in the current directory.
-      --force               Force push the bundle to overwrite the previously published bundle
-  -h, --help                help for publish
-      --insecure-registry   Don't require TLS for the registry
-  -r, --reference string    Use a bundle in an OCI registry specified by the given reference.
-      --registry string     Override the registry portion of the bundle reference, e.g. docker.io, myregistry.com/myorg
-      --tag string          Override the Docker tag portion of the bundle reference, e.g. latest, v0.1.1
+  -a, --archive string       Path to the bundle archive in .tgz format
+      --autobuild-disabled   Do not automatically build the bundle from source when the last build is out-of-date.
+  -d, --dir string           Path to the build context directory where all bundle assets are located.
+  -f, --file porter.yaml     Path to the Porter manifest. Defaults to porter.yaml in the current directory.
+      --force                Force push the bundle to overwrite the previously published bundle
+  -h, --help                 help for publish
+      --insecure-registry    Don't require TLS for the registry
+  -r, --reference string     Use a bundle in an OCI registry specified by the given reference.
+      --registry string      Override the registry portion of the bundle reference, e.g. docker.io, myregistry.com/myorg
+      --tag string           Override the Docker tag portion of the bundle reference, e.g. latest, v0.1.1
 ```
 
 ### Options inherited from parent commands
