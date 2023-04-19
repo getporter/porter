@@ -2,6 +2,7 @@ package porter
 
 import (
 	"context"
+	"sort"
 	"testing"
 
 	"get.porter.sh/porter/pkg"
@@ -94,6 +95,8 @@ func TestPorter_BuildActionArgs(t *testing.T) {
 		p := NewTestPorter(t)
 		p.TestConfig.TestContext.AddTestFile("testdata/porter.yaml", "porter.yaml")
 		p.TestConfig.TestContext.AddTestFileFromRoot("pkg/runtime/testdata/relocation-mapping.json", "relocation-mapping.json")
+		p.TestCredentials.AddTestCredentials("testdata/test-creds/mycreds.yaml")
+
 		opts := InstallOptions{
 			BundleExecutionOptions: &BundleExecutionOptions{
 				AllowDockerHostAccess: true,
@@ -470,6 +473,7 @@ func TestPorter_applyActionOptionsToInstallation_sanitizesParameters(t *testing.
 	require.NoError(t, err)
 
 	// Check that when no parameter overrides are specified, we use the originally specified parameters from the previous run
+	sort.Sort(i.Parameters.Parameters)
 	require.Len(t, i.Parameters.Parameters, 2)
 	require.Equal(t, "my-first-param", i.Parameters.Parameters[0].Name)
 	require.Equal(t, "1", i.Parameters.Parameters[0].Source.Value)

@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/cnabio/cnab-go/valuesource"
 	"gopkg.in/yaml.v3"
 )
 
@@ -25,22 +24,6 @@ func (s Set) Merge(s2 Set) error {
 		s[k] = v
 	}
 	return nil
-}
-
-// IsValid determines if the provided key (designating a name of a parameter
-// or credential) is included in the provided set
-func (s Set) IsValid(key string) bool {
-	for name := range s {
-		if name == key {
-			return true
-		}
-	}
-	return false
-}
-
-// ToCNAB converts this to a type accepted by the cnab-go runtime.
-func (s Set) ToCNAB() valuesource.Set {
-	return valuesource.Set(s)
 }
 
 // Strategy represents a strategy for determining the value of a parameter or credential

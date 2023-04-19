@@ -1,0 +1,8 @@
+name: mycreds
+credentials:
+  - name: my-first-cred
+    source:
+      value: "sekret"
+  - name: my-second-cred
+    source:
+      value: "another sekret"

@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -11,6 +12,7 @@ import (
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/tracing"
 	"github.com/cnabio/cnab-go/bundle"
+	"github.com/cnabio/cnab-go/valuesource"
 	"go.opentelemetry.io/otel/attribute"
 )
 
@@ -29,7 +31,7 @@ var _ Document = CredentialSet{}
 // handles accessing secrets.
 type CredentialSet struct {
 	CredentialSetSpec `yaml:",inline"`
-	Status            CredentialSetStatus `json:"status" yaml:"status" toml:"status"`
+	Status            CredentialSetStatus `json:"status,omitempty" yaml:"status,omitempty" toml:"status,omitempty"`
 }
 
 // CredentialSetSpec represents the set of user-modifiable fields on a CredentialSet.
@@ -50,16 +52,26 @@ type CredentialSetSpec struct {
 	Labels map[string]string `json:"labels,omitempty" yaml:"labels,omitempty" toml:"labels,omitempty"`
 
 	// Credentials is a list of credential resolution strategies.
-	Credentials secrets.StrategyList `json:"credentials" yaml:"credentials" toml:"credentials"`
+	Credentials secrets.StrategyList `json:"credentials,omitempty" yaml:"credentials,omitempty" toml:"credentials,omitempty"`
 }
+
+// We implement a custom json marshal instead of using tags, so that we can omit zero-value timestamps
+var _ json.Marshaler = CredentialSetStatus{}
 
 // CredentialSetStatus contains additional status metadata that has been set by Porter.
 type CredentialSetStatus struct {
 	// Created timestamp.
-	Created time.Time `json:"created" yaml:"created" toml:"created"`
+	Created time.Time `yaml:"created,omitempty" toml:"created,omitempty"`
 
 	// Modified timestamp.
-	Modified time.Time `json:"modified" yaml:"modified" toml:"modified"`
+	Modified time.Time `yaml:"modified,omitempty" toml:"modified,omitempty"`
+}
+
+// NewInternalCredentialSet creates a new internal CredentialSet with the required fields initialized.
+func NewInternalCredentialSet(creds ...secrets.Strategy) CredentialSet {
+	return CredentialSet{
+		CredentialSetSpec: CredentialSetSpec{Credentials: creds},
+	}
 }
 
 // NewCredentialSet creates a new CredentialSet with the required fields initialized.
@@ -82,10 +94,22 @@ func NewCredentialSet(namespace string, name string, creds ...secrets.Strategy) 
 	return cs
 }
 
+func (c CredentialSetStatus) MarshalJSON() ([]byte, error) {
+	raw := make(map[string]interface{}, 2)
+	if !c.Created.IsZero() {
+		raw["created"] = c.Created
+	}
+	if !c.Modified.IsZero() {
+		raw["modified"] = c.Modified
+	}
+	return json.Marshal(raw)
+}
+
 func (s CredentialSet) DefaultDocumentFilter() map[string]interface{} {
 	return map[string]interface{}{"namespace": s.Namespace, "name": s.Name}
 }
 
+// Validate the resource before persisting to the database.
 func (s *CredentialSet) Validate(ctx context.Context, strategy schema.CheckStrategy) error {
 	//lint:ignore SA4006 ignore unused context for now
 	ctx, span := tracing.StartSpan(ctx,
@@ -123,7 +147,27 @@ func (s CredentialSet) String() string {
 	return fmt.Sprintf("%s/%s", s.Namespace, s.Name)
 }
 
-// Validate compares the given credentials with the spec.
+// ToCNAB converts this to a type accepted by the cnab-go runtime.
+func (s CredentialSet) ToCNAB() valuesource.Set {
+	values := make(valuesource.Set, len(s.Credentials))
+	for _, cred := range s.Credentials {
+		values[cred.Name] = cred.Value
+	}
+	return values
+}
+
+// HasCredential determines if the specified credential is defined in the set.
+func (s CredentialSet) HasCredential(name string) bool {
+	for _, cred := range s.Credentials {
+		if cred.Name == name {
+			return true
+		}
+	}
+
+	return false
+}
+
+// ValidateBundle compares the given credentials with the spec in the bundle.
 //
 // This will result in an error only when the following conditions are true:
 // - a credential in the spec is not present in the given set
@@ -132,13 +176,13 @@ func (s CredentialSet) String() string {
 //
 // It is allowed for spec to specify both an env var and a file. In such case, if
 // the given set provides either, it will be considered valid.
-func Validate(given secrets.Set, spec map[string]bundle.Credential, action string) error {
+func (s CredentialSet) ValidateBundle(spec map[string]bundle.Credential, action string) error {
 	for name, cred := range spec {
 		if !cred.AppliesTo(action) {
 			continue
 		}
 
-		if !given.IsValid(name) && cred.Required {
+		if !s.HasCredential(name) && cred.Required {
 			return fmt.Errorf("bundle requires credential for %s", name)
 		}
 	}

@@ -171,13 +171,11 @@ func TestRun_TypedParameterValues(t *testing.T) {
 
 	run := NewRun("dev", "mybuns")
 	run.Bundle = bun
-	run.Parameters = NewParameterSet(run.Namespace, run.Bundle.Name)
-	params := []secrets.Strategy{
+	run.Parameters = NewParameterSet(run.Namespace, run.Bundle.Name,
 		ValueStrategy("baz", "baz-test"),
 		ValueStrategy("name", "porter-test"),
 		ValueStrategy("porter-state", ""),
-		{Name: "foo", Source: secrets.Source{Key: secrets.SourceSecret, Value: "runID"}, Value: "5"},
-	}
+		secrets.Strategy{Name: "foo", Source: secrets.Source{Key: secrets.SourceSecret, Value: "runID"}, Value: "5"})
 
 	expected := map[string]interface{}{
 		"baz":          "baz-test",
@@ -185,10 +183,8 @@ func TestRun_TypedParameterValues(t *testing.T) {
 		"porter-state": nil,
 		"foo":          5,
 	}
-
-	run.Parameters.Parameters = params
 	typed := run.TypedParameterValues()
-	require.Equal(t, len(params), len(typed))
+	require.Equal(t, len(run.Parameters.Parameters), len(typed))
 	require.Equal(t, len(expected), len(typed))
 
 	for name, value := range typed {

@@ -293,15 +293,21 @@ func (e *dependencyExecutioner) executeDependency(ctx context.Context, dep *queu
 		}
 	}
 
-	finalParams, err := e.porter.finalizeParameters(ctx, depInstallation, dep.BundleReference.Definition, e.parentArgs.Action, dep.Parameters)
+	actionName := e.parentArgs.Run.Action
+	finalParams, err := e.porter.finalizeParameters(ctx, depInstallation, dep.BundleReference.Definition, actionName, dep.Parameters)
 	if err != nil {
-		return span.Error(fmt.Errorf("error resolving parameters for dependency %s: %w", dep.Alias, err))
+		return span.Errorf("error resolving parameters for dependency %s: %w", dep.Alias, err)
+	}
+
+	depRun, err := e.porter.createRun(ctx, dep.BundleReference, depInstallation, actionName, finalParams)
+	if err != nil {
+		return span.Errorf("error creating run for dependency %s: %w", dep.Alias, err)
 	}
 
 	depArgs := cnabprovider.ActionArguments{
 		BundleReference:       dep.BundleReference,
-		Action:                e.parentArgs.Action,
 		Installation:          depInstallation,
+		Run:                   depRun,
 		Driver:                e.parentArgs.Driver,
 		AllowDockerHostAccess: e.parentOpts.AllowDockerHostAccess,
 		Params:                finalParams,
