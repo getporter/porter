@@ -26,7 +26,7 @@ porter publish [flags]
   porter publish --archive /tmp/mybuns.tgz --reference myrepo/my-buns:0.1.0
   porter publish --tag latest
   porter publish --registry myregistry.com/myorg
-  porter publish --autobuild-disabled=true
+  porter publish --autobuild-disabled
 		
 ```
 
