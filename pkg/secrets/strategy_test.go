@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestStrategyList_GetResolvedValue(t *testing.T) {
+func TestSourceMapList_GetResolvedValue(t *testing.T) {
 	l := SourceMapList{
 		SourceMap{Name: "bar", ResolvedValue: "2"},
 		SourceMap{Name: "foo", ResolvedValue: "1"},
@@ -22,7 +22,7 @@ func TestStrategyList_GetResolvedValue(t *testing.T) {
 	require.False(t, ok, "GetResolvedValue should have returned that missing key was not found")
 }
 
-func TestStrategyList_GetResolvedValues(t *testing.T) {
+func TestSourceMapList_GetResolvedValues(t *testing.T) {
 	l := SourceMapList{
 		SourceMap{Name: "bar", ResolvedValue: "2"},
 		SourceMap{Name: "foo", ResolvedValue: "1"},
@@ -36,7 +36,7 @@ func TestStrategyList_GetResolvedValues(t *testing.T) {
 	assert.Equal(t, want, got)
 }
 
-func TestStrategyList_HasKey(t *testing.T) {
+func TestSourceMapList_HasKey(t *testing.T) {
 	l := SourceMapList{
 		SourceMap{Name: "bar", ResolvedValue: "2"},
 		SourceMap{Name: "foo", ResolvedValue: "1"},
@@ -46,7 +46,7 @@ func TestStrategyList_HasKey(t *testing.T) {
 	require.False(t, l.HasName("missing"), "HasName returned the wrong value for a missing key")
 }
 
-func TestStrategyList_Sort(t *testing.T) {
+func TestSourceMapList_Sort(t *testing.T) {
 	l := SourceMapList{
 		SourceMap{Name: "c"},
 		SourceMap{Name: "a"},
@@ -65,7 +65,7 @@ func TestStrategyList_Sort(t *testing.T) {
 	require.Equal(t, wantResult, l, "Sort is not implemented correctly")
 }
 
-func TestStrategyList_GetStrategy(t *testing.T) {
+func TestSourceMapList_GetStrategy(t *testing.T) {
 	wantToken := SourceMap{Name: "token", Source: Source{Strategy: "env", Hint: "GITHUB_TOKEN"}}
 	l := SourceMapList{
 		SourceMap{Name: "logLevel", Source: Source{Strategy: "value", Hint: "11"}},
@@ -77,7 +77,7 @@ func TestStrategyList_GetStrategy(t *testing.T) {
 	assert.Equal(t, wantToken, gotToken, "GetByName returned the wrong 'token' strategy")
 }
 
-func TestStrategyList_Merge(t *testing.T) {
+func TestSourceMapList_Merge(t *testing.T) {
 	set := SourceMapList{
 		SourceMap{Name: "first", ResolvedValue: "base first"},
 		SourceMap{Name: "second", ResolvedValue: "base second"},
