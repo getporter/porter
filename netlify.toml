@@ -13,7 +13,7 @@
 
 [build.environment]
   HUGO_VERSION = "0.110.0"
-  GO_VERSION = "1.19.7"
+  GO_VERSION = "1.19.8"
 
 [context.branch-deploy]
   command = "go run mage.go -v DocsBranchPreview"

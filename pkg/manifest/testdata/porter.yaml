@@ -14,12 +14,13 @@ dependencies:
       bundle:
         reference: "getporter/azure-mysql:5.7"
         version: 5.7.x
-        interface:
-          reference: "getporter/azure-mysql:5.7-interface"
-          document:
-            parameters:
-              - name: password
-                type: string
+        # TODO(PEP003): Implement in https://github.com/getporter/porter/issues/2548
+        #interface:
+        #  reference: "getporter/azure-mysql:5.7-interface"
+        #  document:
+        #    parameters:
+        #      - name: password
+        #        type: string
       parameters:
         database-name: wordpress
       credentials:
