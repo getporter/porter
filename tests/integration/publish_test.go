@@ -20,11 +20,16 @@ func TestPublish(t *testing.T) {
 	test.Chdir(test.TestDir)
 	test.RequirePorter("create")
 
+	// Try to publish with autobuild disabled, it should fail
+	_, _, err = test.RunPorter("publish", "--autobuild-disabled")
+	require.ErrorContains(t, err, "Skipping autobuild because --autobuild-disabled was specified")
+
 	// Build with version override
 	test.RequirePorter("build", "--version=0.0.0")
 
 	// Start up an insecure registry with self-signed TLS certificates
 	reg := test.StartTestRegistry(tester.TestRegistryOptions{UseTLS: true})
+	defer reg.Close()
 
 	// Confirm that publish picks up the version override
 	// Use an insecure registry to validate that we can publish to one
