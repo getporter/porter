@@ -43,46 +43,51 @@ func (s Set) ToCNAB() valuesource.Set {
 	return valuesource.Set(s)
 }
 
-// Strategy represents a strategy for determining the value of a parameter or credential
-type Strategy struct {
+// SourceMap maps from a parameter or credential name to a source strategy for resolving its value.
+type SourceMap struct {
 	// Name is the name of the parameter or credential.
 	Name string `json:"name" yaml:"name"`
-	// Source is the location of the value.
-	// During resolution, the source will be loaded, and the result temporarily placed
-	// into Value.
+
+	// Source defines a strategy for resolving a value from the specified source.
 	Source Source `json:"source,omitempty" yaml:"source,omitempty"`
-	// Value holds the parameter or credential value.
-	// When a parameter or credential is loaded, it is loaded into this field. In all
+
+	// ResolvedValue holds the resolved parameter or credential value.
+	// When a parameter or credential is resolved, it is loaded into this field. In all
 	// other cases, it is empty. This field is omitted during serialization.
-	Value string `json:"-" yaml:"-"`
+	ResolvedValue string `json:"-" yaml:"-"`
 }
 
-// Source represents a strategy for loading a value from local host.
+// Source specifies how to resolve a parameter or credential from an external
+// source.
 type Source struct {
-	Key   string
-	Value string
+	// Strategy to resolve the source value, e.g. "secret" or "env".
+	Strategy string
+
+	// Hint to the strategy handler on how to resolve the value.
+	// For example the name of the secret in a secret store or name of an environment variable.
+	Hint string
 }
 
 func (s Source) MarshalRaw() interface{} {
-	if s.Key == "" {
+	if s.Strategy == "" {
 		return nil
 	}
-	return map[string]interface{}{s.Key: s.Value}
+	return map[string]interface{}{s.Strategy: s.Hint}
 }
 
 func (s *Source) UnmarshalRaw(raw map[string]interface{}) error {
 	switch len(raw) {
 	case 0:
-		s.Key = ""
-		s.Value = ""
+		s.Strategy = ""
+		s.Hint = ""
 		return nil
 	case 1:
 		for k, v := range raw {
-			s.Key = k
+			s.Strategy = k
 			if value, ok := v.(string); ok {
-				s.Value = value
+				s.Hint = value
 			} else {
-				s.Value = fmt.Sprintf("%v", s.Value)
+				s.Hint = fmt.Sprintf("%v", s.Hint)
 			}
 		}
 		return nil
@@ -125,7 +130,7 @@ func (s Source) MarshalYAML() (interface{}, error) {
 	return s.MarshalRaw(), nil
 }
 
-type StrategyList []Strategy
+type StrategyList []SourceMap
 
 func (l StrategyList) Less(i, j int) bool {
 	return l[i].Name < l[j].Name

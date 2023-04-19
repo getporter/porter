@@ -74,11 +74,11 @@ func installWordpressBundle(ctx context.Context, p *porter.TestPorter) (namespac
 
 	// Add a supplemental parameter set to vet dep param resolution
 	installOpts.ParameterSets = []string{"myparam"}
-	testParamSets := storage.NewParameterSet(namespace, "myparam", secrets.Strategy{
+	testParamSets := storage.NewParameterSet(namespace, "myparam", secrets.SourceMap{
 		Name: "mysql#probe-timeout",
 		Source: secrets.Source{
-			Key:   host.SourceValue,
-			Value: "2",
+			Strategy: host.SourceValue,
+			Hint:     "2",
 		},
 	})
 

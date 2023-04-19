@@ -92,9 +92,9 @@ func TestPorter_ShowInstallationWithBundle(t *testing.T) {
 					"io.cnab/app":        "wordpress",
 					"io.cnab/appVersion": "v1.2.3",
 				}
-				params := []secrets.Strategy{
-					{Name: "logLevel", Source: secrets.Source{Value: "3"}, Value: "3"},
-					secrets.Strategy{Name: "secretString", Source: secrets.Source{Key: "secretString", Value: "foo"}, Value: "foo"},
+				params := []secrets.SourceMap{
+					{Name: "logLevel", Source: secrets.Source{Hint: "3"}, ResolvedValue: "3"},
+					secrets.SourceMap{Name: "secretString", Source: secrets.Source{Strategy: "secretString", Hint: "foo"}, ResolvedValue: "foo"},
 				}
 				i.Parameters = i.NewInternalParameterSet(params...)
 
@@ -114,7 +114,7 @@ func TestPorter_ShowInstallationWithBundle(t *testing.T) {
 				)
 
 				r.Parameters = i.NewInternalParameterSet(
-					[]secrets.Strategy{
+					[]secrets.SourceMap{
 						storage.ValueStrategy("logLevel", "3"),
 						storage.ValueStrategy("token", "top-secret"),
 						storage.ValueStrategy("secretString", "foo"),
@@ -205,9 +205,9 @@ func TestPorter_ShowInstallationWithoutRecordedRun(t *testing.T) {
 			"io.cnab/app":        "wordpress",
 			"io.cnab/appVersion": "v1.2.3",
 		}
-		params := []secrets.Strategy{
-			{Name: "logLevel", Source: secrets.Source{Value: "3"}, Value: "3"},
-			secrets.Strategy{Name: "secretString", Source: secrets.Source{Key: "secretString", Value: "foo"}, Value: "foo"},
+		params := []secrets.SourceMap{
+			{Name: "logLevel", Source: secrets.Source{Hint: "3"}, ResolvedValue: "3"},
+			secrets.SourceMap{Name: "secretString", Source: secrets.Source{Strategy: "secretString", Hint: "foo"}, ResolvedValue: "foo"},
 		}
 		i.Parameters = i.NewInternalParameterSet(params...)
 

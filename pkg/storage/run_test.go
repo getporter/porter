@@ -172,11 +172,11 @@ func TestRun_TypedParameterValues(t *testing.T) {
 	run := NewRun("dev", "mybuns")
 	run.Bundle = bun
 	run.Parameters = NewParameterSet(run.Namespace, run.Bundle.Name)
-	params := []secrets.Strategy{
+	params := []secrets.SourceMap{
 		ValueStrategy("baz", "baz-test"),
 		ValueStrategy("name", "porter-test"),
 		ValueStrategy("porter-state", ""),
-		{Name: "foo", Source: secrets.Source{Key: secrets.SourceSecret, Value: "runID"}, Value: "5"},
+		{Name: "foo", Source: secrets.Source{Strategy: secrets.SourceSecret, Hint: "runID"}, ResolvedValue: "5"},
 	}
 
 	expected := map[string]interface{}{

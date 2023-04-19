@@ -53,11 +53,11 @@ func TestInstall_fileParam(t *testing.T) {
 	installOpts := porter.NewInstallOptions()
 	installOpts.Params = []string{"myfile=./myfile"}
 	installOpts.ParameterSets = []string{"myparam"}
-	testParamSets := storage.NewParameterSet("", "myparam", secrets.Strategy{
+	testParamSets := storage.NewParameterSet("", "myparam", secrets.SourceMap{
 		Name: "myotherfile",
 		Source: secrets.Source{
-			Key:   host.SourcePath,
-			Value: "./myotherfile",
+			Strategy: host.SourcePath,
+			Hint:     "./myotherfile",
 		},
 	})
 

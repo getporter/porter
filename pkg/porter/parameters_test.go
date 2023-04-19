@@ -860,7 +860,7 @@ func TestPorter_ParametersApply(t *testing.T) {
 		assert.Equal(t, "mypset", ps.Name, "unexpected parameter set name")
 		require.Len(t, ps.Parameters, 1, "expected 1 parameter in the set")
 		assert.Equal(t, "foo", ps.Parameters[0].Name, "expected the foo parameter mapping defined")
-		assert.Equal(t, "secret", ps.Parameters[0].Source.Key, "expected the foo parameter mapping to come from a secret")
-		assert.Equal(t, "foo_secret", ps.Parameters[0].Source.Value, "expected the foo parameter mapping to use foo_secret")
+		assert.Equal(t, "secret", ps.Parameters[0].Source.Strategy, "expected the foo parameter mapping to come from a secret")
+		assert.Equal(t, "foo_secret", ps.Parameters[0].Source.Hint, "expected the foo parameter mapping to use foo_secret")
 	})
 }

@@ -28,9 +28,9 @@ func TestSanitizer_Parameters(t *testing.T) {
 	recordID := "01FZVC5AVP8Z7A78CSCP1EJ604"
 	sensitiveParamName := "my-second-param"
 	sensitiveParamKey := recordID + "-" + sensitiveParamName
-	expected := []secrets.Strategy{
-		{Name: "my-first-param", Source: secrets.Source{Key: host.SourceValue, Value: "1"}, Value: "1"},
-		{Name: sensitiveParamName, Source: secrets.Source{Key: secrets.SourceSecret, Value: sensitiveParamKey}, Value: "2"},
+	expected := []secrets.SourceMap{
+		{Name: "my-first-param", Source: secrets.Source{Strategy: host.SourceValue, Hint: "1"}, ResolvedValue: "1"},
+		{Name: sensitiveParamName, Source: secrets.Source{Strategy: secrets.SourceSecret, Hint: sensitiveParamKey}, ResolvedValue: "2"},
 	}
 	sort.SliceStable(expected, func(i, j int) bool {
 		return expected[i].Name < expected[j].Name
@@ -71,25 +71,25 @@ func TestSanitizer_CleanParameters(t *testing.T) {
 			name:       "hardcoded sensitive value",
 			paramName:  "my-second-param",
 			sourceKey:  host.SourceValue,
-			wantSource: secrets.Source{Key: secrets.SourceSecret, Value: "INSTALLATION_ID-my-second-param"},
+			wantSource: secrets.Source{Strategy: secrets.SourceSecret, Hint: "INSTALLATION_ID-my-second-param"},
 		},
 		{ // Should be left alone
 			name:       "hardcoded insensitive value",
 			paramName:  "my-first-param",
 			sourceKey:  host.SourceValue,
-			wantSource: secrets.Source{Key: host.SourceValue, Value: "myvalue"},
+			wantSource: secrets.Source{Strategy: host.SourceValue, Hint: "myvalue"},
 		},
 		{ // Should be left alone
 			name:       "secret",
 			paramName:  "my-first-param",
 			sourceKey:  secrets.SourceSecret,
-			wantSource: secrets.Source{Key: secrets.SourceSecret, Value: "myvalue"},
+			wantSource: secrets.Source{Strategy: secrets.SourceSecret, Hint: "myvalue"},
 		},
 		{ // Should be left alone
 			name:       "env var",
 			paramName:  "my-second-param",
 			sourceKey:  host.SourceEnv,
-			wantSource: secrets.Source{Key: host.SourceEnv, Value: "myvalue"},
+			wantSource: secrets.Source{Strategy: host.SourceEnv, Hint: "myvalue"},
 		},
 	}
 
@@ -107,13 +107,13 @@ func TestSanitizer_CleanParameters(t *testing.T) {
 
 			inst := storage.NewInstallation("", "mybuns")
 			inst.ID = "INSTALLATION_ID" // Standardize for easy comparisons later
-			inst.Parameters.Parameters = []secrets.Strategy{
-				{Name: tc.paramName, Source: secrets.Source{Key: tc.sourceKey, Value: "myvalue"}},
+			inst.Parameters.Parameters = []secrets.SourceMap{
+				{Name: tc.paramName, Source: secrets.Source{Strategy: tc.sourceKey, Hint: "myvalue"}},
 			}
 			gotParams, err := r.Sanitizer.CleanParameters(ctx, inst.Parameters.Parameters, bun, inst.ID)
 			require.NoError(t, err, "CleanParameters failed")
 
-			wantParms := []secrets.Strategy{{Name: tc.paramName, Source: tc.wantSource}}
+			wantParms := []secrets.SourceMap{{Name: tc.paramName, Source: tc.wantSource}}
 			require.Equal(t, wantParms, gotParams, "unexpected value returned from CleanParameters")
 		})
 	}

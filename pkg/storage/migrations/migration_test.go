@@ -49,8 +49,8 @@ func TestConvertClaimToRun(t *testing.T) {
 
 	param := run.Parameters.Parameters[0]
 	assert.Equal(t, param.Name, "porter-debug", "incorrect parameter name")
-	assert.Equal(t, param.Source.Key, "value", "incorrect parameter source key")
-	assert.Equal(t, param.Source.Value, "false", "incorrect parameter source value")
+	assert.Equal(t, param.Source.Strategy, "value", "incorrect parameter source key")
+	assert.Equal(t, param.Source.Hint, "false", "incorrect parameter source value")
 }
 
 func TestConvertResult(t *testing.T) {
@@ -191,8 +191,8 @@ func validateMigratedInstallations(ctx context.Context, t *testing.T, c *config.
 	assert.Len(t, lastRun.Parameters.Parameters, 1, "expected one parameter set on the run")
 	params := lastRun.Parameters.Parameters
 	assert.Equal(t, "porter-debug", params[0].Name, "expected the porter-debug parameter to be set on the run")
-	assert.Equal(t, "value", params[0].Source.Key, "expected the porter-debug parameter to be a hard-coded value")
-	assert.Equal(t, "true", params[0].Source.Value, "expected the porter-debug parameter to be false")
+	assert.Equal(t, "value", params[0].Source.Strategy, "expected the porter-debug parameter to be a hard-coded value")
+	assert.Equal(t, "true", params[0].Source.Hint, "expected the porter-debug parameter to be false")
 
 	runResults := results[lastRun.ID]
 	assert.Len(t, runResults, 2, "expected 2 results for the last run")
@@ -240,8 +240,8 @@ func validateMigratedCredentialSets(ctx context.Context, t *testing.T, destStore
 
 	cred := creds.Credentials[0]
 	assert.Equal(t, "github-token", cred.Name, "incorrect credential name")
-	assert.Equal(t, "env", cred.Source.Key, "incorrect credential source key")
-	assert.Equal(t, "GITHUB_TOKEN", cred.Source.Value, "incorrect credential source value")
+	assert.Equal(t, "env", cred.Source.Strategy, "incorrect credential source key")
+	assert.Equal(t, "GITHUB_TOKEN", cred.Source.Hint, "incorrect credential source value")
 }
 
 func validateMigratedParameterSets(ctx context.Context, t *testing.T, destStore storage.TestStore, opts storage.MigrateOptions) {
@@ -264,6 +264,6 @@ func validateMigratedParameterSets(ctx context.Context, t *testing.T, destStore 
 
 	param := ps.Parameters[0]
 	assert.Equal(t, "name", param.Name, "incorrect parameter name")
-	assert.Equal(t, "env", param.Source.Key, "incorrect parameter source key")
-	assert.Equal(t, "USER", param.Source.Value, "incorrect parameter source value")
+	assert.Equal(t, "env", param.Source.Strategy, "incorrect parameter source key")
+	assert.Equal(t, "USER", param.Source.Hint, "incorrect parameter source value")
 }
