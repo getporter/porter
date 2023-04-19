@@ -5,27 +5,15 @@ import (
 	"errors"
 	"fmt"
 
+	"get.porter.sh/porter/pkg/cnab"
 	"github.com/cnabio/cnab-go/valuesource"
+	"github.com/hashicorp/go-multierror"
 	"gopkg.in/yaml.v3"
 )
 
 // Set is an actual set of resolved values.
 // This is the output of resolving a parameter or credential set file.
 type Set map[string]string
-
-// Merge merges a second Set into the base.
-//
-// Duplicate names are not allow and will result in an
-// error, this is the case even if the values are identical.
-func (s Set) Merge(s2 Set) error {
-	for k, v := range s2 {
-		if _, ok := s[k]; ok {
-			return fmt.Errorf("ambiguous value resolution: %q is already present in base sets, cannot merge", k)
-		}
-		s[k] = v
-	}
-	return nil
-}
 
 // IsValid determines if the provided key (designating a name of a parameter
 // or credential) is included in the provided set
@@ -130,18 +118,128 @@ func (s Source) MarshalYAML() (interface{}, error) {
 	return s.MarshalRaw(), nil
 }
 
-type StrategyList []SourceMap
+// SourceMapList is a list of mappings that can be access via index or the item name.
+type SourceMapList []SourceMap
 
-func (l StrategyList) Less(i, j int) bool {
+func (l SourceMapList) Less(i, j int) bool {
 	return l[i].Name < l[j].Name
 }
 
-func (l StrategyList) Swap(i, j int) {
+func (l SourceMapList) Swap(i, j int) {
 	tmp := l[i]
 	l[i] = l[j]
 	l[j] = tmp
 }
 
-func (l StrategyList) Len() int {
+func (l SourceMapList) Len() int {
 	return len(l)
+}
+
+// HasName determines if the specified name is defined in the set.
+func (l SourceMapList) HasName(name string) bool {
+	_, ok := l.GetByName(name)
+	return ok
+}
+
+// GetByName returns the resolution strategy for the specified name and a bool indicating if it was found.
+func (l SourceMapList) GetByName(name string) (SourceMap, bool) {
+	for _, item := range l {
+		if item.Name == name {
+			return item, true
+		}
+	}
+
+	return SourceMap{}, false
+}
+
+// GetResolvedValue returns the resolved value of the specified name and a bool indicating if it was found.
+// You must resolve the value before calling, it does to do resolution for you.
+func (l SourceMapList) GetResolvedValue(name string) (interface{}, bool) {
+	item, ok := l.GetByName(name)
+	if ok {
+		return item.ResolvedValue, true
+	}
+
+	return nil, false
+}
+
+// GetResolvedValues converts the items to a map of key/value pairs, with the values represented as CNAB-compatible strings
+func (l SourceMapList) GetResolvedValues() map[string]string {
+	values := make(map[string]string, len(l))
+	for _, item := range l {
+		values[item.Name] = item.ResolvedValue
+	}
+	return values
+}
+
+// GetTypedResolvedValues converts the items to a map of key/value pairs, where the value is the type defined by the bundle.
+// Validation errors are accumulated, and parameters are always passed back along with a validation error.
+// If you care about valid parameters, check the error, but otherwise you can use this for display purposes and not have it blow up with no results.
+func (l SourceMapList) GetTypedResolvedValues(bun cnab.ExtendedBundle) (map[string]interface{}, error) {
+	var bigErr *multierror.Error
+
+	typedParams := make(map[string]interface{}, len(l))
+	for key, unconverted := range l.GetResolvedValues() {
+		param, ok := bun.Parameters[key]
+		if !ok {
+			bigErr = multierror.Append(bigErr, fmt.Errorf("parameter %s not defined in bundle", key))
+			typedParams[key] = unconverted
+			continue
+		}
+
+		def, ok := bun.Definitions[param.Definition]
+		if !ok {
+			bigErr = multierror.Append(bigErr, fmt.Errorf("definition %s not defined in bundle", param.Definition))
+			typedParams[key] = unconverted
+			continue
+		}
+
+		if def.Type != nil {
+			value, err := def.ConvertValue(unconverted)
+			if err != nil {
+				bigErr = multierror.Append(bigErr, fmt.Errorf("unable to convert parameter's %s value %s to the destination parameter type %s: %w", key, unconverted, def.Type, err))
+				typedParams[key] = unconverted
+				continue
+			}
+
+			// Inject empty files as nil (no file), not an empty file
+			if bun.IsFileType(def) && value == "" {
+				value = nil
+			}
+
+			typedParams[key] = value
+		} else {
+			// bundle dependency parameters can be any type, I'm not sure that we have a solid way to do a typed conversion
+			typedParams[key] = unconverted
+		}
+	}
+	return typedParams, bigErr.ErrorOrNil()
+}
+
+// Merge applies the specified values on top of a base set of values. When a
+// name exists in both sets, use the value from the overrides
+func (l SourceMapList) Merge(overrides SourceMapList) SourceMapList {
+	result := l
+
+	// Make a lookup from the name to its index in result so that we can quickly find a
+	// named item while merging
+	lookup := make(map[string]int, len(result))
+	for i, item := range result {
+		lookup[item.Name] = i
+	}
+
+	for _, item := range overrides {
+		// If the name is in the base, overwrite its value with the override provided
+		if i, ok := lookup[item.Name]; ok {
+			result[i].Source = item.Source
+
+			// Just in case the value was resolved, include in the merge results
+			result[i].ResolvedValue = item.ResolvedValue
+		} else {
+			// Append the override to the list of results if it's not in the base set of values
+			result = append(result, item)
+		}
+	}
+
+	return result
 }

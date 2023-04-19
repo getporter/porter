@@ -50,7 +50,7 @@ type CredentialSetSpec struct {
 	Labels map[string]string `json:"labels,omitempty" yaml:"labels,omitempty" toml:"labels,omitempty"`
 
 	// Credentials is a list of credential resolution strategies.
-	Credentials secrets.StrategyList `json:"credentials" yaml:"credentials" toml:"credentials"`
+	Credentials secrets.SourceMapList `json:"credentials" yaml:"credentials" toml:"credentials"`
 }
 
 // CredentialSetStatus contains additional status metadata that has been set by Porter.

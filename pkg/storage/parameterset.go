@@ -44,7 +44,7 @@ type ParameterSetSpec struct {
 	Labels map[string]string `json:"labels,omitempty" yaml:"labels,omitempty" toml:"labels,omitempty"`
 
 	// Parameters is a list of parameter specs.
-	Parameters secrets.StrategyList `json:"parameters" yaml:"parameters" toml:"parameters"`
+	Parameters secrets.SourceMapList `json:"parameters" yaml:"parameters" toml:"parameters"`
 }
 
 // ParameterSetStatus contains additional status metadata that has been set by Porter.
