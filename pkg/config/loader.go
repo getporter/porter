@@ -26,21 +26,23 @@ func NoopDataLoader(_ context.Context, _ *Config, _ map[string]interface{}) erro
 // * Config file
 // * Flag default (lowest)
 func LoadFromEnvironment() DataStoreLoaderFunc {
-	return LoadFromViper(func(v *viper.Viper) {
-		v.SetEnvPrefix("PORTER")
-		v.SetEnvKeyReplacer(strings.NewReplacer("-", "_", ".", "_"))
-		v.AutomaticEnv()
+	return LoadFromViper(BindViperToEnvironmentVariables, nil)
+}
 
-		// Bind open telemetry environment variables
-		// See https://github.com/open-telemetry/opentelemetry-go/tree/main/exporters/otlp/otlptrace
-		v.BindEnv("telemetry.endpoint", "OTEL_EXPORTER_OTLP_ENDPOINT", "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT")
-		v.BindEnv("telemetry.protocol", "OTEL_EXPORTER_OTLP_PROTOCOL", "OTEL_EXPORTER_OTLP_TRACES_PROTOCOL")
-		v.BindEnv("telemetry.insecure", "OTEL_EXPORTER_OTLP_INSECURE", "OTEL_EXPORTER_OTLP_TRACES_INSECURE")
-		v.BindEnv("telemetry.certificate", "OTEL_EXPORTER_OTLP_CERTIFICATE", "OTEL_EXPORTER_OTLP_TRACES_CERTIFICATE")
-		v.BindEnv("telemetry.headers", "OTEL_EXPORTER_OTLP_HEADERS", "OTEL_EXPORTER_OTLP_TRACES_HEADERS")
-		v.BindEnv("telemetry.compression", "OTEL_EXPORTER_OTLP_COMPRESSION", "OTEL_EXPORTER_OTLP_TRACES_COMPRESSION")
-		v.BindEnv("telemetry.timeout", "OTEL_EXPORTER_OTLP_TIMEOUT", "OTEL_EXPORTER_OTLP_TRACES_TIMEOUT")
-	})
+func BindViperToEnvironmentVariables(v *viper.Viper) {
+	v.SetEnvPrefix("PORTER")
+	v.SetEnvKeyReplacer(strings.NewReplacer("-", "_", ".", "_"))
+	v.AutomaticEnv()
+
+	// Bind open telemetry environment variables
+	// See https://github.com/open-telemetry/opentelemetry-go/tree/main/exporters/otlp/otlptrace
+	v.BindEnv("telemetry.endpoint", "OTEL_EXPORTER_OTLP_ENDPOINT", "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT")
+	v.BindEnv("telemetry.protocol", "OTEL_EXPORTER_OTLP_PROTOCOL", "OTEL_EXPORTER_OTLP_TRACES_PROTOCOL")
+	v.BindEnv("telemetry.insecure", "OTEL_EXPORTER_OTLP_INSECURE", "OTEL_EXPORTER_OTLP_TRACES_INSECURE")
+	v.BindEnv("telemetry.certificate", "OTEL_EXPORTER_OTLP_CERTIFICATE", "OTEL_EXPORTER_OTLP_TRACES_CERTIFICATE")
+	v.BindEnv("telemetry.headers", "OTEL_EXPORTER_OTLP_HEADERS", "OTEL_EXPORTER_OTLP_TRACES_HEADERS")
+	v.BindEnv("telemetry.compression", "OTEL_EXPORTER_OTLP_COMPRESSION", "OTEL_EXPORTER_OTLP_TRACES_COMPRESSION")
+	v.BindEnv("telemetry.timeout", "OTEL_EXPORTER_OTLP_TIMEOUT", "OTEL_EXPORTER_OTLP_TRACES_TIMEOUT")
 }
 
 // LoadFromFilesystem loads data with the following precedence:
@@ -48,11 +50,11 @@ func LoadFromEnvironment() DataStoreLoaderFunc {
 // * Flag default (lowest)
 // This is used for testing only.
 func LoadFromFilesystem() DataStoreLoaderFunc {
-	return LoadFromViper(func(v *viper.Viper) {})
+	return LoadFromViper(nil, nil)
 }
 
 // LoadFromViper loads data from a configurable viper instance.
-func LoadFromViper(viperCfg func(v *viper.Viper)) DataStoreLoaderFunc {
+func LoadFromViper(viperCfg func(v *viper.Viper), cobraCfg func(v *viper.Viper)) DataStoreLoaderFunc {
 	return func(ctx context.Context, cfg *Config, templateData map[string]interface{}) error {
 		home, _ := cfg.GetHomeDir()
 
@@ -125,8 +127,14 @@ func LoadFromViper(viperCfg func(v *viper.Viper)) DataStoreLoaderFunc {
 			}
 		}
 
-		if err = v.Unmarshal(&cfg.Data); err != nil {
-			log.Error(fmt.Errorf("error unmarshaling viper config as porter config: %w", err))
+		// Porter can be used through the CLI, in which case give it a chance to hook up cobra command flags to viper
+		if cobraCfg != nil {
+			cobraCfg(v)
+		}
+
+		// Bind viper back to the configuration data only after all viper and cobra setup is completed
+		if err := v.Unmarshal(&cfg.Data); err != nil {
+			return fmt.Errorf("error unmarshaling viper config as porter config: %w", err)
 		}
 
 		cfg.viper = v
