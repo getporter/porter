@@ -37,6 +37,9 @@ type Data struct {
 	// By default, Porter requires the --force flag to be specified to overwrite a bundle or image.
 	ForceOverwrite bool `mapstructure:"force-overwrite"`
 
+	// Force skip rebuild invocation image even if out-of-date detected
+	AutoBuildDisabled bool `mapstructure:"autobuild-disabled"`
+
 	// AllowDockerHostAccess grants bundles access to the underlying docker host
 	// upon which it is running so that it can do things like build and run containers.
 	// It's a security risk.

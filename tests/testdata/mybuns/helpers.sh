@@ -2,13 +2,14 @@
 set -euo pipefail
 
 install() {
+  touch /cnab/app/outputs/tfstate
   if [[ "$LOG_LEVEL" == "11" ]]; then
-    echo Hello, $USERNAME
+    echo Hello, "$ROOT_USERNAME"!
   fi
 }
 
 makeMagic() {
-  echo $1 > /cnab/app/magic.txt
+  echo "$1" > /cnab/app/magic.txt
 }
 
 ensureMagic() {

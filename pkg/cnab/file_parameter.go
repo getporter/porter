@@ -5,7 +5,9 @@ const (
 	FileParameterExtensionShortHand = "file-parameters"
 
 	// FileParameterExtensionKey represents the full key for the File Parameter extension.
-	FileParameterExtensionKey = PorterExtensionsPrefix + FileParameterExtensionShortHand
+	// This uses the legacy porter domain and cannot be changed to use our new domain.
+	// Going forward extensions should use org.getporter instead.
+	FileParameterExtensionKey = "sh.porter." + FileParameterExtensionShortHand
 )
 
 // FileParameterExtension represents a required extension that indicates that the bundle

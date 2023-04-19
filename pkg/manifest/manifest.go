@@ -12,8 +12,11 @@ import (
 	"sort"
 	"strings"
 
+	depsv2ext "get.porter.sh/porter/pkg/cnab/extensions/dependencies/v2"
+
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/experimental"
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/schema"
 	"get.porter.sh/porter/pkg/tracing"
@@ -24,6 +27,7 @@ import (
 	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/hashicorp/go-multierror"
 	"github.com/opencontainers/go-digest"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 const (
@@ -39,6 +43,11 @@ const (
 )
 
 var (
+	// TODO(PEP003): Version 1.1.0 is behind the DependenciesV2 feature flag. We update the supported versions later
+	// when validating a bundle and only allow that version when it is enabled.
+	// The default version remains on the last stable version 1.0.1.
+	// When the schema version is stable and not behind a feature flag, we can update the supported versions and default version.
+
 	// SupportedSchemaVersions is the Porter manifest (porter.yaml) schema
 	// versions supported by this version of Porter, specified as a semver range.
 	// When the Manifest structure is changed, this field should be incremented.
@@ -109,21 +118,24 @@ type Manifest struct {
 	Required []RequiredExtension `yaml:"required,omitempty"`
 }
 
-func (m *Manifest) Validate(cxt *portercontext.Context, strategy schema.CheckStrategy) error {
+func (m *Manifest) Validate(ctx context.Context, cfg *config.Config) error {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
 	var result error
 
-	err := m.validateMetadata(cxt, strategy)
+	err := m.validateMetadata(ctx, cfg)
 	if err != nil {
 		return err
 	}
 
 	err = m.SetDefaults()
 	if err != nil {
-		return err
+		return span.Error(err)
 	}
 
 	if strings.ToLower(m.Dockerfile) == "dockerfile" {
-		return errors.New("Dockerfile template cannot be named 'Dockerfile' because that is the filename generated during porter build")
+		return span.Error(errors.New("Dockerfile template cannot be named 'Dockerfile' because that is the filename generated during porter build"))
 	}
 
 	if len(m.Mixins) == 0 {
@@ -154,7 +166,7 @@ func (m *Manifest) Validate(cxt *portercontext.Context, strategy schema.CheckStr
 	}
 
 	for _, dep := range m.Dependencies.Requires {
-		err = dep.Validate(cxt)
+		err = dep.Validate(cfg.Context)
 		if err != nil {
 			result = multierror.Append(result, err)
 		}
@@ -181,34 +193,46 @@ func (m *Manifest) Validate(cxt *portercontext.Context, strategy schema.CheckStr
 		}
 	}
 
-	return result
+	return span.Error(result)
 }
 
-func (m *Manifest) validateMetadata(cxt *portercontext.Context, strategy schema.CheckStrategy) error {
+func (m *Manifest) validateMetadata(ctx context.Context, cfg *config.Config) error {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
+	strategy := cfg.GetSchemaCheckStrategy(ctx)
+	span.SetAttributes(attribute.String("schemaCheckStrategy", string(strategy)))
+
 	if m.SchemaType == "" {
 		m.SchemaType = SchemaTypeBundle
 	} else if !strings.EqualFold(m.SchemaType, SchemaTypeBundle) {
-		return fmt.Errorf("invalid schemaType %s, expected %s", m.SchemaType, SchemaTypeBundle)
+		return span.Errorf("invalid schemaType %s, expected %s", m.SchemaType, SchemaTypeBundle)
 	}
 
-	if warnOnly, err := schema.ValidateSchemaVersion(strategy, SupportedSchemaVersions, m.SchemaVersion, DefaultSchemaVersion); err != nil {
+	// Check what the supported schema version is based on if depsv2 is enabled
+	supportedVersions := SupportedSchemaVersions
+	if cfg.IsFeatureEnabled(experimental.FlagDependenciesV2) {
+		supportedVersions, _ = semver.NewConstraint("1.0.0-alpha.1 || 1.0.0 - 1.0.1 || 1.1.0")
+	}
+
+	if warnOnly, err := schema.ValidateSchemaVersion(strategy, supportedVersions, m.SchemaVersion, DefaultSchemaVersion); err != nil {
 		if warnOnly {
-			fmt.Fprintln(cxt.Err, err)
+			span.Warn(err.Error())
 		} else {
-			return err
+			return span.Error(err)
 		}
 	}
 
 	if m.Name == "" {
-		return errors.New("bundle name must be set")
+		return span.Error(errors.New("bundle name must be set"))
 	}
 
 	if m.Registry == "" && m.Reference == "" {
-		return errors.New("a registry or reference value must be provided")
+		return span.Error(errors.New("a registry or reference value must be provided"))
 	}
 
 	if m.Reference != "" && m.Registry != "" {
-		fmt.Fprintf(cxt.Out, "WARNING: both registry and reference were provided; "+
+		span.Warnf("WARNING: both registry and reference were provided; "+
 			"using the reference value of %s for the bundle reference\n", m.Reference)
 	}
 
@@ -217,7 +241,7 @@ func (m *Manifest) validateMetadata(cxt *portercontext.Context, strategy schema.
 	if m.Version != "" {
 		v, err := semver.NewVersion(m.Version)
 		if err != nil {
-			return fmt.Errorf("version %q is not a valid semver value: %w", m.Version, err)
+			return span.Errorf("version %q is not a valid semver value: %w", m.Version, err)
 		}
 		m.Version = v.String()
 	}
@@ -285,6 +309,38 @@ func (m *Manifest) GetTemplatedDependencyOutputs() DependencyOutputReferences {
 	return outputs
 }
 
+// DetermineDependenciesExtensionUsed looks for how dependencies are used
+// by the bundle and which version of the dependency extension can be used.
+func (m *Manifest) DetermineDependenciesExtensionUsed() string {
+	// Check if v2 deps are explicitly specified
+	for _, ext := range m.Required {
+		if ext.Name == cnab.DependenciesV2ExtensionShortHand ||
+			ext.Name == cnab.DependenciesV2ExtensionKey {
+			return cnab.DependenciesV2ExtensionKey
+		}
+	}
+
+	// Check each dependency for use of v2 only features
+	for _, dep := range m.Dependencies.Requires {
+		if dep.UsesV2Features() {
+			return cnab.DependenciesV2ExtensionKey
+		}
+	}
+
+	// Check if the bundle declares that it can satisfy a v2 dependency
+	if m.Dependencies.Provides != nil {
+		return cnab.DependenciesV2ExtensionKey
+	}
+
+	if len(m.Dependencies.Requires) > 0 {
+		// Dependencies are declared but only use v1 features
+		return cnab.DependenciesV1ExtensionKey
+	}
+
+	// No dependencies are used at all
+	return ""
+}
+
 type CustomDefinitions map[string]interface{}
 
 func (cd *CustomDefinitions) UnmarshalYAML(unmarshal func(interface{}) error) error {
@@ -306,6 +362,19 @@ func (r DependencyOutputReference) String() string {
 }
 
 type DependencyOutputReferences map[string]DependencyOutputReference
+
+// DependencyProvider specifies how the current bundle can be used to satisfy a dependency.
+type DependencyProvider struct {
+	// Interface declares the bundle interface that the current bundle provides.
+	Interface InterfaceDeclaration `yaml:"interface,omitempty"`
+}
+
+// InterfaceDeclaration declares that the current bundle supports the specified bundle interface
+// Reserved for future use. Right now we only use an interface id, but could support other fields later.
+type InterfaceDeclaration struct {
+	// ID is the URI of the interface that this bundle provides. Usually a well-known name defined by Porter or CNAB.
+	ID string `yaml:"id,omitempty"`
+}
 
 // ParameterDefinitions allows us to represent parameters as a list in the YAML
 // and work with them as a map internally
@@ -635,21 +704,60 @@ func (mi *MappedImage) ToOCIReference() (cnab.OCIReference, error) {
 	return ref, nil
 }
 
+// Dependencies defies both v2 and v1 dependencies.
+// Dependencies v1 is a subset of Dependencies v2.
 type Dependencies struct {
+	// Requires specifies bundles required by the current bundle.
 	Requires []*Dependency `yaml:"requires,omitempty"`
+
+	// Provides specifies how the bundle can satisfy a dependency.
+	// This declares that the bundle can provide a dependency that another bundle requires.
+	Provides *DependencyProvider `yaml:"provides,omitempty"`
 }
 
+// Dependency defines a parent child relationship between this bundle (parent) and the specified bundle (child).
 type Dependency struct {
+	// Name of the dependency, used to reference the dependency from other parts of
+	// the bundle such as the template syntax, bundle.dependencies.NAME
 	Name string `yaml:"name"`
 
+	// Bundle specifies criteria for selecting a bundle to satisfy the dependency.
 	Bundle BundleCriteria `yaml:"bundle"`
 
+	// Sharing is a set of rules for sharing a dependency with other bundles.
+	Sharing SharingCriteria `yaml:"sharing,omitempty"`
+
+	// Parameters is a map of values, keyed by the destination where the value is the
+	// source, to pass from the bundle to the dependency. May either be a hard-coded
+	// value, or a template value such as ${bundle.parameters.NAME}. The key is the
+	// dependency's parameter name, and the value is the data being passed to the
+	// dependency parameter.
 	Parameters map[string]string `yaml:"parameters,omitempty"`
+
+	// Credentials is a map of values, keyed by the destination where the value is
+	// the source, to pass from the bundle to the dependency. May either be a
+	// hard-coded value, or a template value such as ${bundle.credentials.NAME}. The
+	// key is the dependency's credential name, and the value is the data being
+	// passed to the dependency credential.
+	Credentials map[string]string `yaml:"credentials,omitempty"`
+
+	// Outputs is a map of values, keyed by the destination where the value is the
+	// source, to pass from the dependency and promote to a bundle-level outputs of
+	// the parent bundle. May either be the name of an output from the dependency, or
+	// a template value such as ${outputs.NAME} where the outputs variable holds the
+	// current dependency's outputs. The long form of the template syntax,
+	// ${bundle.dependencies.DEP.outputs.NAME}, is also supported. The key is the
+	// parent bundle's output name, and the value is the data being passed to the
+	// dependency parameter.
+	Outputs map[string]string `yaml:"outputs,omitempty"`
 }
 
+type DependencySource string
+
+// BundleCriteria criteria for selecting a bundle to satisfy a dependency.
 type BundleCriteria struct {
-	// Reference is the full bundle reference for the dependency
-	// in the format REGISTRY/NAME:TAG
+	// Reference is an OCI reference to a bundle for use as the default implementation of the bundle.
+	// It should be in the format REGISTRY/NAME:TAG
 	Reference string `yaml:"reference"`
 
 	// "When constraint checking is used for checks or validation
@@ -658,6 +766,71 @@ type BundleCriteria struct {
 	// If you want to have it include pre-releases a simple solution is to include -0 in your range."
 	// https://github.com/Masterminds/semver/blob/master/README.md#checking-version-constraints
 	Version string `yaml:"version,omitempty"`
+
+	// Interface specifies criteria for allowing a bundle to satisfy a dependency.
+	Interface *BundleInterface `yaml:"interface,omitempty"`
+}
+
+// BundleInterface specifies how a bundle can satisfy a dependency.
+// Porter always infers a base interface based on how the dependency is used in porter.yaml
+// but this allows the bundle author to extend it and add additional restrictions.
+// Either bundle or reference may be specified but not both.
+type BundleInterface struct {
+	// ID is the identifier or name of the bundle interface. It should be matched
+	// against the Dependencies.Provides.Interface.ID to determine if two interfaces
+	// are equivalent.
+	ID string `yaml:"id,omitempty"`
+
+	// Reference specifies an OCI reference to a bundle to use as the interface on top of how the bundle is used.
+	Reference string `yaml:"reference,omitempty"`
+
+	// Document specifies additional constraints that should be added to the bundle interface.
+	// By default, Porter only requires the name and the type to match, additional jsonschema values can be specified to restrict matching bundles even further.
+	// The value should be a jsonschema document containing relevant sub-documents from a bundle.json that should be applied to the base bundle interface.
+	Document *BundleInterfaceDocument `yaml:"document,omitempty"`
+}
+
+// BundleInterfaceDocument specifies the interface that a bundle must support in
+// order to satisfy a dependency.
+type BundleInterfaceDocument struct {
+	// Parameters that are defined on the interface.
+	Parameters ParameterDefinitions `yaml:"parameters,omitempty"`
+
+	// Credentials that are defined on the interface.
+	Credentials CredentialDefinitions `yaml:"credentials,omitempty"`
+
+	// Outputs that are defined on the interface.
+	Outputs OutputDefinitions `yaml:"outputs,omitempty"`
+}
+
+// SharingCriteria is a set of rules for sharing a dependency with other bundles.
+type SharingCriteria struct {
+	// Mode defines how a dependency can be shared.
+	//  - none: The dependency cannot be shared, even within the same dependency graph.
+	//  - group: The dependency is shared with other bundles who defined the dependency
+	//    with the same sharing group. This is the default mode.
+	Mode string `yaml:"mode"`
+
+	// Group defines matching criteria for determining if two dependencies are in the same sharing group.
+	Group SharingGroup `yaml:"group,omitempty"`
+}
+
+// GetEffectiveMode returns the mode, taking into account the default value when
+// no mode is specified.
+func (s SharingCriteria) GetEffectiveMode() string {
+	if s.Mode == "" {
+		return depsv2ext.SharingModeGroup
+	}
+
+	return s.Mode
+}
+
+// SharingGroup defines a set of characteristics for sharing a dependency with
+// other bundles.
+// Reserved for future use: We can add more characteristics later to expands how we share if needed
+type SharingGroup struct {
+	// Name of the sharing group. The name of the group must match for two bundles to share the same dependency.
+	Name string `yaml:"name"`
 }
 
 func (d *Dependency) Validate(cxt *portercontext.Context) error {
@@ -669,11 +842,39 @@ func (d *Dependency) Validate(cxt *portercontext.Context) error {
 		return fmt.Errorf("reference is required for dependency %q", d.Name)
 	}
 
-	if strings.Contains(d.Bundle.Reference, ":") && len(d.Bundle.Version) > 0 {
-		return fmt.Errorf("reference for dependency %q can only specify REGISTRY/NAME when version ranges are specified", d.Name)
+	ref, err := cnab.ParseOCIReference(d.Bundle.Reference)
+	if err != nil {
+		return fmt.Errorf("invalid reference %s for dependency %s: %w", d.Bundle.Reference, d.Name, err)
+	}
+
+	if ref.IsRepositoryOnly() && d.Bundle.Version == "" {
+		return fmt.Errorf("reference for dependency %q can specify only a repository, without a digest or tag, when a version constraint is specified", d.Name)
 	}
 
 	return nil
+}
+
+// UsesV2Features returns true if the dependency uses features from v2 of
+// Porter's implementation of dependencies, and returns false if the v1
+// implementation of dependencies would suffice.
+func (d *Dependency) UsesV2Features() bool {
+	// Sharing was added in v2
+	if d.Sharing != (SharingCriteria{}) {
+		return true
+	}
+
+	// Credentials and output mapping was added in v2
+	if len(d.Credentials) > 0 || len(d.Outputs) > 0 {
+		return true
+	}
+
+	// Bundle interfaces was added in v2
+	if d.Bundle.Interface != nil {
+		return true
+	}
+
+	// Anything else can be handled with v1
+	return false
 }
 
 type CustomActionDefinition struct {
@@ -1127,8 +1328,7 @@ func LoadManifestFrom(ctx context.Context, config *config.Config, file string) (
 		return nil, err
 	}
 
-	strategy := config.GetSchemaCheckStrategy(ctx)
-	if err = m.Validate(config.Context, strategy); err != nil {
+	if err = m.Validate(ctx, config); err != nil {
 		return nil, err
 	}
 

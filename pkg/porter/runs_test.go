@@ -79,8 +79,9 @@ func TestPorter_PrintInstallationRunsOutput(t *testing.T) {
 
 			installation := p.TestInstallations.CreateInstallation(storage.NewInstallation("staging", "shared-k8s"), p.TestInstallations.SetMutableInstallationValues)
 
-			installRun := p.TestInstallations.CreateRun(installation.NewRun(cnab.ActionInstall), p.TestInstallations.SetMutableRunValues)
-			uninstallRun := p.TestInstallations.CreateRun(installation.NewRun(cnab.ActionUninstall), p.TestInstallations.SetMutableRunValues)
+			bun := cnab.ExtendedBundle{}
+			installRun := p.TestInstallations.CreateRun(installation.NewRun(cnab.ActionInstall, bun), p.TestInstallations.SetMutableRunValues)
+			uninstallRun := p.TestInstallations.CreateRun(installation.NewRun(cnab.ActionUninstall, bun), p.TestInstallations.SetMutableRunValues)
 			result := p.TestInstallations.CreateResult(installRun.NewResult(cnab.StatusSucceeded), p.TestInstallations.SetMutableResultValues)
 			result2 := p.TestInstallations.CreateResult(uninstallRun.NewResult(cnab.StatusSucceeded), p.TestInstallations.SetMutableResultValues)
 

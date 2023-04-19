@@ -14,3 +14,8 @@ ENV USERNAME=root
 
 # Use the BUNDLE_DIR build argument to copy files into the bundle
 COPY --link . ${BUNDLE_DIR}
+
+ARG CACHEBUST
+ARG CUSTOM_APP_VERSION
+RUN echo Printing custom build arguments...
+RUN echo CUSTOM_APP_VERSION=${CUSTOM_APP_VERSION}

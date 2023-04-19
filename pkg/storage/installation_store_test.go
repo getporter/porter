@@ -65,7 +65,7 @@ var exampleBundle = bundle.Bundle{
 func generateInstallationData(t *testing.T) *TestInstallationProvider {
 	cp := NewTestInstallationProvider(t)
 
-	bun := bundle.Bundle{
+	bun := cnab.ExtendedBundle{Bundle: bundle.Bundle{
 		Definitions: map[string]*definition.Schema{
 			"output1": {
 				Type: "string",
@@ -83,9 +83,9 @@ func generateInstallationData(t *testing.T) *TestInstallationProvider {
 				ApplyTo:    []string{"upgrade"},
 			},
 		},
-	}
+	}}
 
-	setBun := func(r *Run) { r.Bundle = bun }
+	setBun := func(r *Run) { r.Bundle = bun.Bundle }
 
 	// Create the foo installation data
 	foo := cp.CreateInstallation(NewInstallation("dev", "foo"), func(i *Installation) {
@@ -95,12 +95,12 @@ func generateInstallationData(t *testing.T) *TestInstallationProvider {
 			"owner": "marie",
 		}
 	})
-	run := cp.CreateRun(foo.NewRun(cnab.ActionInstall), setBun)
+	run := cp.CreateRun(foo.NewRun(cnab.ActionInstall, bun), setBun)
 	result := cp.CreateResult(run.NewResult(cnab.StatusSucceeded))
 	cp.CreateOutput(result.NewOutput(cnab.OutputInvocationImageLogs, []byte("install logs")))
 	cp.CreateOutput(result.NewOutput("output1", []byte("install output1")))
 
-	run = cp.CreateRun(foo.NewRun(cnab.ActionUpgrade), setBun)
+	run = cp.CreateRun(foo.NewRun(cnab.ActionUpgrade, bun), setBun)
 	result = cp.CreateResult(run.NewResult(cnab.StatusSucceeded))
 	cp.CreateOutput(result.NewOutput(cnab.OutputInvocationImageLogs, []byte("upgrade logs")))
 	cp.CreateOutput(result.NewOutput("output1", []byte("upgrade output1")))
@@ -108,10 +108,10 @@ func generateInstallationData(t *testing.T) *TestInstallationProvider {
 	// Test bug in how we read output names by having the name include characters from the result id
 	cp.CreateOutput(result.NewOutput(result.ID+"-output3", []byte("upgrade output3")))
 
-	run = cp.CreateRun(foo.NewRun("test"), setBun)
+	run = cp.CreateRun(foo.NewRun("test", bun), setBun)
 	result = cp.CreateResult(run.NewResult(cnab.StatusFailed))
 
-	run = cp.CreateRun(foo.NewRun(cnab.ActionUninstall), setBun)
+	run = cp.CreateRun(foo.NewRun(cnab.ActionUninstall, bun), setBun)
 	result = cp.CreateResult(run.NewResult(cnab.StatusSucceeded))
 
 	// Record the status of the foo installation
@@ -125,7 +125,7 @@ func generateInstallationData(t *testing.T) *TestInstallationProvider {
 			"team": "red",
 		}
 	})
-	run = cp.CreateRun(bar.NewRun(cnab.ActionInstall), setBun)
+	run = cp.CreateRun(bar.NewRun(cnab.ActionInstall, bun), setBun)
 	cp.CreateResult(run.NewResult(cnab.StatusRunning))
 	result = cp.CreateResult(run.NewResult(cnab.StatusSucceeded))
 
@@ -135,9 +135,9 @@ func generateInstallationData(t *testing.T) *TestInstallationProvider {
 
 	// Create the baz installation data
 	baz := cp.CreateInstallation(NewInstallation("dev", "baz"))
-	run = cp.CreateRun(baz.NewRun(cnab.ActionInstall), setBun)
+	run = cp.CreateRun(baz.NewRun(cnab.ActionInstall, bun), setBun)
 	cp.CreateResult(run.NewResult(cnab.StatusFailed))
-	run = cp.CreateRun(baz.NewRun(cnab.ActionInstall), setBun)
+	run = cp.CreateRun(baz.NewRun(cnab.ActionInstall, bun), setBun)
 	result = cp.CreateResult(run.NewResult(cnab.StatusRunning))
 
 	// Record the status of the baz installation

@@ -69,7 +69,13 @@ func TestDesiredState(t *testing.T) {
 	installation := test.RequireInstallationExists("operator", "mybuns")
 	require.Equal(t, "succeeded", installation.Status.ResultStatus)
 
-	// Repeat the apply command, there should be no changes detected. Using dry run because we just want to know if it _would_ be re-executed.
+	// Repeat the apply command, this should result in an upgrade because mybuns has different parameters for install and upgrade
+	// so porter will detect different params and run again.
+	_, stderr = test.RequirePorter("installation", "apply", "mybuns.yaml", "--namespace", "operator")
+	tests.RequireOutputContains(t, stderr, "The installation is out-of-sync, running the upgrade action...")
+
+	// Repeat the apply command, there should be no changes detected now that it's two upgrades in a row.
+	// Using dry run because we just want to know if it _would_ be re-executed.
 	_, output, err = test.RunPorter("installation", "apply", "mybuns.yaml", "--namespace", "operator", "--dry-run")
 	require.NoError(t, err)
 	tests.RequireOutputContains(t, output, "The installation is already up-to-date")

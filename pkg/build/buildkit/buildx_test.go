@@ -1,8 +1,13 @@
 package buildkit
 
 import (
+	"context"
+	_ "embed"
 	"testing"
 
+	"get.porter.sh/porter/pkg/build"
+	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/manifest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -143,4 +148,72 @@ func Test_flattenMap(t *testing.T) {
 			assert.Equal(t, tc.out, out)
 		})
 	}
+}
+
+func Test_detectCustomBuildArgsUsed(t *testing.T) {
+	contents := `FROM scratch
+ARG BAR=1
+ARG CUSTOM_FOO=2
+ARG CUSTOM_FOO1_BAR=nope
+ARG CUSTOM_STUFF_THINGS
+ARG NOT_CUSTOM_ARG
+
+CMD ["echo", "stuff"]
+`
+	argNames, err := detectCustomBuildArgsUsed(contents)
+	require.NoError(t, err, "detectCustomBuildArgsUsed failed")
+
+	wantArgs := map[string]struct{}{
+		"CUSTOM_FOO":          {},
+		"CUSTOM_FOO1_BAR":     {},
+		"CUSTOM_STUFF_THINGS": {},
+	}
+	require.Equal(t, wantArgs, argNames)
+}
+
+// This value is exactly the max sized argument allowed
+//
+//go:embed testdata/max-arg.txt
+var maxArg string
+
+func TestBuilder_determineBuildArgs(t *testing.T) {
+	// This value goes over the limit of arg size
+	oversizedArg := maxArg + "oopstoobig"
+
+	ctx := context.Background()
+	c := config.NewTestConfig(t)
+	b := NewBuilder(c.Config)
+	m := &manifest.Manifest{
+		Custom: map[string]interface{}{
+			// these can cause a problem when used as a build arg in the Dockerfile
+			"BIG_LABEL":         oversizedArg,
+			"ANOTHER_BIG_LABEL": oversizedArg,
+		},
+	}
+	// First we use the standard template, that does not use any custom build arguments
+	c.TestContext.AddTestFileFromRoot("pkg/templates/templates/create/template.buildkit.Dockerfile", "/.cnab/Dockerfile")
+
+	// Try manually passing too big of a --build-arg, this should fail
+	opts := build.BuildImageOptions{
+		BuildArgs: []string{"BIG_BUILD_ARG=" + oversizedArg},
+	}
+	_, err := b.determineBuildArgs(ctx, m, opts)
+	assert.ErrorContains(t, err, "BIG_BUILD_ARG is longer than the max")
+
+	// Make the --build-arg the max length, so it passes
+	// Try making a too big custom value in porter.yaml and using it in the Dockerfile so that it still fails
+	opts.BuildArgs = []string{"BIG_BUILD_ARG=" + maxArg}
+	c.TestContext.AddTestFile("testdata/custom-build-arg.Dockerfile", "/.cnab/Dockerfile")
+	_, err = b.determineBuildArgs(ctx, m, opts)
+	require.ErrorContains(t, err, "CUSTOM_BIG_LABEL is longer than the max")
+
+	// Get everything to pass by making all big args the max length
+	m.Custom["BIG_LABEL"] = maxArg
+	args, err := b.determineBuildArgs(ctx, m, opts)
+	require.NoError(t, err, "determineBuildArgs should pass now that all args are at the max length")
+	wantArgs := map[string]string{
+		"BUNDLE_DIR":       "/cnab/app",
+		"BIG_BUILD_ARG":    maxArg,
+		"CUSTOM_BIG_LABEL": maxArg}
+	require.Equal(t, wantArgs, args, "incorrect arguments returned")
 }

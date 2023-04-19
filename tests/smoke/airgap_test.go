@@ -38,6 +38,7 @@ func TestAirgappedEnvironment(t *testing.T) {
 		{name: "untrusted tls, no alias", useTLS: false, useAlias: true, insecure: true},
 	}
 	for _, tc := range testcases {
+		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			insecureFlag := fmt.Sprintf("--insecure-registry=%t", tc.insecure)
 
@@ -48,6 +49,7 @@ func TestAirgappedEnvironment(t *testing.T) {
 
 			// Start a temporary insecure test registry
 			reg1 := test.StartTestRegistry(tester.TestRegistryOptions{UseTLS: tc.useTLS, UseAlias: tc.useAlias})
+			t.Cleanup(reg1.Close)
 
 			// Publish referenced image to the insecure registry
 			// This helps test that we can publish a bundle that references images from multiple registries
@@ -55,15 +57,16 @@ func TestAirgappedEnvironment(t *testing.T) {
 			referencedImg := "carolynvs/whalesayd@sha256:8b92b7269f59e3ed824e811a1ff1ee64f0d44c0218efefada57a4bebc2d7ef6f"
 			localRegRepo := fmt.Sprintf("%s/whalesayd", reg1)
 			localRegRef := localRegRepo + ":latest"
-			require.NoError(t, shx.RunE("docker", "pull", referencedImg))
-			require.NoError(t, shx.RunE("docker", "tag", referencedImg, localRegRef))
-			output, err := shx.OutputE("docker", "push", localRegRef)
+			require.NoError(t, shx.RunV("docker", "pull", referencedImg))
+			require.NoError(t, shx.RunV("docker", "tag", referencedImg, localRegRef))
+			output, err := shx.OutputV("docker", "push", localRegRef)
 			require.NoError(t, err)
 			digest := getDigestFromDockerOutput(test.T, output)
 			localRefWithDigest := fmt.Sprintf("%s@%s", localRegRepo, digest)
 
 			// Start a second insecure test registry
 			reg2 := test.StartTestRegistry(tester.TestRegistryOptions{UseTLS: tc.useTLS, UseAlias: tc.useAlias})
+			t.Cleanup(reg2.Close)
 
 			// Edit the bundle so that it's referencing the image on the temporary registry
 			// make sure the referenced image is not in local image cache
@@ -80,8 +83,22 @@ func TestAirgappedEnvironment(t *testing.T) {
 				return yq.SetValue("images.whalesayd.repository", fmt.Sprintf("%s/whalesayd", reg1))
 			})
 
+			// Build the test bundle separate from publish so we best validate that we aren't pulling referenced images during build anymore
+			test.RequirePorter("build", insecureFlag)
+
+			// Validate that the referenced bundle is not in the local docker cache and that build did not pull it
+			err = shx.RunE("docker", "image", "inspect", localRefWithDigest)
+			if err == nil {
+				t.Fatalf("expected %s to not be in the local docker cache after building the bundle. Build should no longer pull referenced images.", localRefWithDigest)
+			}
+
 			// Publish a test bundle that references the image from the temp registry, and push to another insecure registry
-			test.RequirePorter("publish", "--registry", reg2.String(), insecureFlag)
+			_, output = test.RequirePorter("publish", "--registry", reg2.String(), insecureFlag, "--verbosity=debug")
+
+			// Validate that we aren't getting a rebuild since we are building immediately before publish
+			// I am using --verbosity=debug above so that we can see the reason why a rebuild was triggered
+			// which helps with troubleshooting if/when a regression occurs.
+			require.NotContains(t, output, "Building bundle", "expected a rebuild to not happen because we built before publishing")
 
 			// Stop the original registry, this ensures that we are relying 100% on the copy of the bundle in the second registry
 			reg1.Close()

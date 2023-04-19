@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/experimental"
 	"get.porter.sh/porter/pkg/test"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -102,4 +103,31 @@ func TestTemplates_GetParameterSetYAML(t *testing.T) {
 	wantTmpl, err := os.ReadFile("./templates/parameters/create/parameter-set.yaml")
 	require.NoError(t, err)
 	assert.Equal(t, wantTmpl, gotTmpl)
+}
+
+func TestTemplates_GetSchema(t *testing.T) {
+	t.Run("stable schema", func(t *testing.T) {
+		c := config.NewTestConfig(t)
+		tmpl := NewTemplates(c.Config)
+
+		gotTmpl, err := tmpl.GetSchema()
+		require.NoError(t, err)
+
+		wantTmpl, err := os.ReadFile("./templates/schema.json")
+		require.NoError(t, err)
+		require.Equal(t, string(wantTmpl), string(gotTmpl))
+	})
+
+	t.Run("experimental schema", func(t *testing.T) {
+		c := config.NewTestConfig(t)
+		c.SetExperimentalFlags(experimental.FlagDependenciesV2)
+		tmpl := NewTemplates(c.Config)
+
+		gotTmpl, err := tmpl.GetSchema()
+		require.NoError(t, err)
+
+		wantTmpl, err := os.ReadFile("./templates/v1.1.0.schema.json")
+		require.NoError(t, err)
+		require.Equal(t, string(wantTmpl), string(gotTmpl))
+	})
 }

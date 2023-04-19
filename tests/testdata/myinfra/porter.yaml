@@ -1,0 +1,52 @@
+schemaVersion: 1.1.0
+name: myinfra
+version: 0.1.0
+description: "Deploys my infrastructure"
+registry: "localhost:5000"
+
+parameters:
+  - name: database
+    type: string
+    default: mydb
+  - name: logLevel
+    type: string
+
+credentials:
+  - name: token
+
+outputs:
+  - name: mysql-connstr
+
+dependencies:
+  requires:
+    - name: db
+      bundle:
+        reference: "localhost:5000/mysqldb:v0.1.0"
+        interface:
+          id: "https://getporter.org/interfaces/#mysql"
+      credentials:
+        token: ${bundle.credentials.token}
+      parameters:
+        database: ${bundle.parameters.database}
+        logLevel: ${bundle.parameters.logLevel}
+
+mixins:
+  - exec
+
+install:
+  - exec:
+      command: echo
+      arguments:
+        - "Installing some infrastructure"
+
+upgrade:
+  - exec:
+      command: echo
+      arguments:
+        - "Upgrading some infrastructure"
+
+uninstall:
+  - exec:
+      command: echo
+      arguments:
+        - "Uninstalling some infrastructure"

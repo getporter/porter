@@ -65,16 +65,21 @@ func (r *Runtime) SetOutput() cnabaction.OperationConfigFunc {
 
 func (r *Runtime) AddFiles(ctx context.Context, args ActionArguments) cnabaction.OperationConfigFunc {
 	return func(op *driver.Operation) error {
+		if op.Files == nil {
+			op.Files = make(map[string]string, 1)
+		}
+
 		for k, v := range args.Files {
 			op.Files[k] = v
 		}
 
 		// Add claim.json to file list as well, if exists
-		claim, err := r.installations.GetLastRun(ctx, args.Installation.Namespace, args.Installation.Name)
+		run, err := r.installations.GetLastRun(ctx, args.Installation.Namespace, args.Installation.Name)
 		if err == nil {
+			claim := run.ToCNAB()
 			claimBytes, err := json.Marshal(claim)
 			if err != nil {
-				return fmt.Errorf("could not marshal claim %s for installation %s: %w", claim.ID, args.Installation, err)
+				return fmt.Errorf("could not marshal run %s for installation %s: %w", run.ID, args.Installation, err)
 			}
 			op.Files[config.ClaimFilepath] = string(claimBytes)
 		}
@@ -208,7 +213,7 @@ func (r *Runtime) CreateRun(ctx context.Context, args ActionArguments, b cnab.Ex
 	defer span.EndSpan()
 
 	// Create a record for the run we are about to execute
-	var currentRun = args.Installation.NewRun(args.Action)
+	var currentRun = args.Installation.NewRun(args.Action, b)
 	currentRun.Bundle = b.Bundle
 	currentRun.BundleReference = args.BundleReference.Reference.String()
 	currentRun.BundleDigest = args.BundleReference.Digest.String()
@@ -237,7 +242,7 @@ func (r *Runtime) SaveRun(ctx context.Context, installation storage.Installation
 
 	span.Debugf("saving action %s for %s installation with status %s", run.Action, installation, status)
 
-	// update installation record to use run id ecoded parameters instead of
+	// update installation record to use run id encoded parameters instead of
 	// installation id
 	installation.Parameters.Parameters = run.ParameterOverrides.Parameters
 	err := r.installations.UpsertInstallation(ctx, installation)

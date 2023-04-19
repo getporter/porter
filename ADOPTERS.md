@@ -7,7 +7,10 @@ to stay private, email [porter-maintainers@lists.cncf.io](mailto:porter-maintain
 #### [Microsoft](https://microsoft.com)
 Status: Production ✅  
 Country: United States 🇺🇸    
-Usage: Microsoft uses bundles to share best practices and quickstarts for running workloads on Azure.
+Usage: Microsoft uses bundles in a number of areas:
+* Azure Marketplace, vendors package their solutions in bundles.
+* [Azure Trusted Research Environments](https://microsoft.github.io/AzureTRE), customers use bundles to create secure research environments for working with sensitive data sets.
+* Share best practices and quickstarts for running workloads on Azure using bundles.
 
 #### [Thinktecture AG](https://thinktecture.com)
 Status: Production ✅  

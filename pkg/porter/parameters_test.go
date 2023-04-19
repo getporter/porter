@@ -356,7 +356,7 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 		require.NoError(t, err, "ProcessBundle failed")
 
 		i := r.TestInstallations.CreateInstallation(storage.NewInstallation("", "mybun"))
-		c := r.TestInstallations.CreateRun(i.NewRun(cnab.ActionInstall), func(r *storage.Run) { r.Bundle = b.Bundle })
+		c := r.TestInstallations.CreateRun(i.NewRun(cnab.ActionInstall, b), func(r *storage.Run) { r.Bundle = b.Bundle })
 		cr := r.TestInstallations.CreateResult(c.NewResult(cnab.StatusSucceeded))
 		r.TestInstallations.CreateOutput(cr.NewOutput("foo", []byte("foo_source")))
 
@@ -384,7 +384,7 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 		}
 
 		i := r.TestInstallations.CreateInstallation(storage.NewInstallation("", "mybun"))
-		c := r.TestInstallations.CreateRun(i.NewRun(cnab.ActionInstall))
+		c := r.TestInstallations.CreateRun(i.NewRun(cnab.ActionInstall, b))
 		cr := r.TestInstallations.CreateResult(c.NewResult(cnab.StatusSucceeded))
 		r.TestInstallations.CreateOutput(cr.NewOutput("foo", []byte("foo_source")))
 
@@ -408,7 +408,7 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 		require.NoError(t, err, "ProcessBundle failed")
 
 		i := r.TestInstallations.CreateInstallation(storage.NewInstallation("", "mybun-mysql"))
-		c := r.TestInstallations.CreateRun(i.NewRun(cnab.ActionInstall), func(r *storage.Run) { r.Bundle = b.Bundle })
+		c := r.TestInstallations.CreateRun(i.NewRun(cnab.ActionInstall, b), func(r *storage.Run) { r.Bundle = b.Bundle })
 		cr := r.TestInstallations.CreateResult(c.NewResult(cnab.StatusSucceeded))
 		r.TestInstallations.CreateOutput(cr.NewOutput("connstr", []byte("connstr value")))
 
@@ -435,7 +435,7 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 		// bar is set by a parameter source
 		// baz is set by the bundle default
 		i := r.TestInstallations.CreateInstallation(storage.NewInstallation("", "mybun"))
-		c := r.TestInstallations.CreateRun(i.NewRun(cnab.ActionInstall))
+		c := r.TestInstallations.CreateRun(i.NewRun(cnab.ActionInstall, b))
 		cr := r.TestInstallations.CreateResult(c.NewResult(cnab.StatusSucceeded))
 		r.TestInstallations.CreateOutput(cr.NewOutput("foo", []byte("foo_source")))
 		r.TestInstallations.CreateOutput(cr.NewOutput("bar", []byte("bar_source")))
@@ -605,12 +605,12 @@ func TestRuntime_ResolveParameterSources(t *testing.T) {
 	require.NoError(t, err, "ProcessBundle failed")
 
 	i := r.TestInstallations.CreateInstallation(storage.NewInstallation("", "mybun-mysql"))
-	c := r.TestInstallations.CreateRun(i.NewRun(cnab.ActionInstall), func(r *storage.Run) { r.Bundle = bun.Bundle })
+	c := r.TestInstallations.CreateRun(i.NewRun(cnab.ActionInstall, bun), func(r *storage.Run) { r.Bundle = bun.Bundle })
 	cr := r.TestInstallations.CreateResult(c.NewResult(cnab.StatusSucceeded))
 	r.TestInstallations.CreateOutput(cr.NewOutput("connstr", []byte("connstr value")))
 
 	i = r.TestInstallations.CreateInstallation(storage.NewInstallation("", "mybun"))
-	c = r.TestInstallations.CreateRun(i.NewRun(cnab.ActionInstall), func(r *storage.Run) { r.Bundle = bun.Bundle })
+	c = r.TestInstallations.CreateRun(i.NewRun(cnab.ActionInstall, bun), func(r *storage.Run) { r.Bundle = bun.Bundle })
 	cr = r.TestInstallations.CreateResult(c.NewResult(cnab.StatusSucceeded))
 	r.TestInstallations.CreateOutput(cr.NewOutput("bar", []byte("bar value")))
 

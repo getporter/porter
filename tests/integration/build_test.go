@@ -1,18 +1,43 @@
 //go:build integration
-// +build integration
 
 package integration
 
 import (
 	"encoding/json"
+	"path/filepath"
 	"testing"
 
+	"get.porter.sh/porter/pkg/build"
+	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/yaml"
 	"get.porter.sh/porter/tests"
 	"get.porter.sh/porter/tests/tester"
 	"github.com/Masterminds/semver/v3"
+	"github.com/carolynvs/magex/shx"
 	"github.com/stretchr/testify/require"
 )
+
+func TestBuild(t *testing.T) {
+	test, err := tester.NewTest(t)
+	defer test.Close()
+	require.NoError(t, err, "test setup failed")
+
+	bunPath := filepath.Join(test.RepoRoot, "tests/testdata/mybuns/*")
+	require.NoError(t, shx.Copy(bunPath, test.TestDir, shx.CopyRecursive))
+	test.Chdir(test.TestDir)
+
+	// build the bundle
+	_, output := test.RequirePorter("build", "--custom", "customKey1=editedCustomValue1", "--no-lint", "--name=porter-test-build")
+
+	// Validate that the custom value defined in porter.yaml was injected into the build as a build argument
+	tests.RequireOutputContains(t, output, "CUSTOM_APP_VERSION=1.2.3")
+
+	// Validate that the bundle metadata contains the custom key specified by the user with --custom
+	bun, err := cnab.LoadBundle(test.TestContext.Context, build.LOCAL_BUNDLE)
+	require.NoError(t, err)
+	require.Equal(t, bun.Custom["customKey1"], "editedCustomValue1")
+
+}
 
 func TestRebuild(t *testing.T) {
 	test, err := tester.NewTest(t)
@@ -22,6 +47,17 @@ func TestRebuild(t *testing.T) {
 	// Create a bundle
 	test.Chdir(test.TestDir)
 	test.RequirePorter("create")
+
+	// Edit the bundle to use more than one mixin
+	// This helps us test that when we calculate the manifestDigest that it consistently sorts used mixins
+	test.EditYaml("porter.yaml", func(yq *yaml.Editor) error {
+		n, err := yq.GetNode("mixins")
+		require.NoError(t, err, "could not get mixins node for porter.yaml")
+		testMixin := *n.Content[0]
+		testMixin.Value = "testmixin"
+		n.Content = append(n.Content, &testMixin)
+		return nil
+	})
 
 	// Use a unique name with it so that if other tests install a newly created hello
 	// world bundle, they don't conflict
@@ -48,6 +84,14 @@ func TestRebuild(t *testing.T) {
 	// Explain the bundle
 	_, output = test.RequirePorter("explain")
 	tests.RequireOutputContains(t, output, "Building bundle ===>", "expected a build before explain")
+
+	// Explain the bundle a bunch more times, it should not rebuild again.
+	// This is a regression test for a bug where the manifest would be considered out-of-date when nothing had changed
+	// caused by us using a go map when comparing the mixins used in the bundle, which has inconsistent sort order...
+	for i := 0; i < 10; i++ {
+		_, output = test.RequirePorter("explain")
+		tests.RequireOutputContains(t, output, "Bundle is up-to-date!", "expected the previous build to be reused")
+	}
 
 	bumpBundle()
 

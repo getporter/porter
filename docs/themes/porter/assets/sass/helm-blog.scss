@@ -87,6 +87,9 @@
                 min-height: 12rem;
                 border-radius: 0.67em;
                 padding-left: 12rem;
+                @media only screen and (max-width: 569px) {
+                  padding-left: 8rem;
+                }
 
                 img {
                   position: absolute;
@@ -94,6 +97,9 @@
                   top: 1rem;
                   border-radius: 50%;
                   max-width: 10rem;
+                  @media only screen and (max-width: 569px) {
+                    max-width: 6rem;
+                  }
                 }
 
                 figcaption {

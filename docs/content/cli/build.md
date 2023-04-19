@@ -37,15 +37,16 @@ porter build [flags]
 ### Options
 
 ```
-      --build-arg stringArray   Set build arguments in the template Dockerfile (format: NAME=VALUE). May be specified multiple times.
-      --custom stringArray      Define an individual key-value pair for the custom section in the form of NAME=VALUE. Use dot notation to specify a nested custom field. May be specified multiple times.
+      --build-arg stringArray   Set build arguments in the template Dockerfile (format: NAME=VALUE). May be specified multiple times. Max length is 5,000 characters.
+      --custom stringArray      Define an individual key-value pair for the custom section in the form of NAME=VALUE. Use dot notation to specify a nested custom field. May be specified multiple times. Max length is 5,000 characters when used as a build argument.
   -d, --dir string              Path to the build context directory where all bundle assets are located. Defaults to the current directory.
   -f, --file string             Path to the Porter manifest. The path is relative to the build context directory. Defaults to porter.yaml in the current directory.
   -h, --help                    help for build
+      --insecure-registry       Don't require TLS when pulling referenced images
       --name string             Override the bundle name
       --no-cache                Do not use the Docker cache when building the bundle's invocation image.
       --no-lint                 Do not run the linter
-      --secret stringArray      Secret file to expose to the build (format: id=mysecret,src=/local/secret). Custom values are assessible as build arguments in the template Dockerfile and in the manifest using template variables. May be specified multiple times.
+      --secret stringArray      Secret file to expose to the build (format: id=mysecret,src=/local/secret). Custom values are accessible as build arguments in the template Dockerfile and in the manifest using template variables. May be specified multiple times.
       --ssh stringArray         SSH agent socket or keys to expose to the build (format: default|<id>[=<socket>|<key>[,<key>]]). May be specified multiple times.
       --version string          Override the bundle version
 ```

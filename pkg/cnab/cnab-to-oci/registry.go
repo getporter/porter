@@ -266,24 +266,27 @@ func (r *Registry) displayEvent(ev remotes.FixupEvent) {
 }
 
 // GetCachedImage returns information about an image from local docker cache.
-func (r *Registry) GetCachedImage(ctx context.Context, ref cnab.OCIReference) (ImageSummary, error) {
+func (r *Registry) GetCachedImage(ctx context.Context, ref cnab.OCIReference) (ImageMetadata, error) {
 	image := ref.String()
 	ctx, log := tracing.StartSpan(ctx, attribute.String("reference", image))
 	defer log.EndSpan()
 
 	cli, err := docker.GetDockerClient()
 	if err != nil {
-		return ImageSummary{}, log.Error(err)
+		return ImageMetadata{}, log.Error(err)
 	}
 
 	result, _, err := cli.Client().ImageInspectWithRaw(ctx, image)
 	if err != nil {
-		return ImageSummary{}, log.Error(fmt.Errorf("failed to find image in docker cache: %w", ErrNotFound{Reference: ref}))
+		err = fmt.Errorf("failed to find image in docker cache: %w", ErrNotFound{Reference: ref})
+		// log as debug because this isn't a terminal error
+		log.Debugf(err.Error())
+		return ImageMetadata{}, err
 	}
 
-	summary, err := NewImageSummary(image, result)
+	summary, err := NewImageSummaryFromInspect(ref, result)
 	if err != nil {
-		return ImageSummary{}, log.Error(fmt.Errorf("failed to extract image %s in docker cache: %w", image, err))
+		return ImageMetadata{}, log.Error(fmt.Errorf("failed to extract image %s in docker cache: %w", image, err))
 	}
 
 	return summary, nil
@@ -331,6 +334,41 @@ func (r *Registry) GetBundleMetadata(ctx context.Context, ref cnab.OCIReference,
 	}, nil
 }
 
+// GetImageMetadata returns information about an image in a registry
+// Use ErrNotFound to detect if the error is because the image is not in the registry.
+func (r *Registry) GetImageMetadata(ctx context.Context, ref cnab.OCIReference, opts RegistryOptions) (ImageMetadata, error) {
+	ctx, span := tracing.StartSpan(ctx, attribute.String("reference", ref.String()))
+	defer span.EndSpan()
+
+	// Check if we already have the image in the Docker cache
+	cachedResult, err := r.GetCachedImage(ctx, ref)
+	if err != nil {
+		if !errors.Is(err, ErrNotFound{}) {
+			return ImageMetadata{}, err
+		}
+	}
+
+	// Check if we have the repository digest cached for the referenced image
+	if cachedDigest, err := cachedResult.GetRepositoryDigest(); err == nil {
+		span.SetAttributes(attribute.String("cached-digest", cachedDigest.String()))
+		return cachedResult, nil
+	}
+
+	// Do a HEAD against the registry to retrieve image metadata without pulling the entire image contents
+	desc, err := crane.Head(ref.String(), opts.toCraneOptions()...)
+	if err != nil {
+		if notFoundErr := asNotFoundError(err, ref); notFoundErr != nil {
+			return ImageMetadata{}, span.Error(notFoundErr)
+		}
+		return ImageMetadata{}, span.Errorf("error fetching image metadata for %s: %w", ref, err)
+	}
+
+	repoDigest := digest.NewDigestFromHex(desc.Digest.Algorithm, desc.Digest.Hex)
+	span.SetAttributes(attribute.String("fetched-digest", repoDigest.String()))
+
+	return NewImageSummaryFromDigest(ref, repoDigest)
+}
+
 // asNotFoundError checks if the error is an HTTP 404 not found error, and if so returns a corresponding ErrNotFound instance.
 func asNotFoundError(err error, ref cnab.OCIReference) error {
 	var httpError *transport.Error
@@ -343,41 +381,49 @@ func asNotFoundError(err error, ref cnab.OCIReference) error {
 	return nil
 }
 
-// ImageSummary contains information about an OCI image.
-type ImageSummary struct {
-	types.ImageInspect
-	imageRef cnab.OCIReference
+// ImageMetadata contains information about an OCI image.
+type ImageMetadata struct {
+	Reference   cnab.OCIReference
+	RepoDigests []string
 }
 
-func NewImageSummary(imageRef string, sum types.ImageInspect) (ImageSummary, error) {
-	ref, err := cnab.ParseOCIReference(imageRef)
-	if err != nil {
-		return ImageSummary{}, err
-	}
-
-	img := ImageSummary{
-		imageRef:     ref,
-		ImageInspect: sum,
+func NewImageSummaryFromInspect(ref cnab.OCIReference, sum types.ImageInspect) (ImageMetadata, error) {
+	img := ImageMetadata{
+		Reference:   ref,
+		RepoDigests: sum.RepoDigests,
 	}
 	if img.IsZero() {
-		return ImageSummary{}, fmt.Errorf("invalid image summary for image reference %s", imageRef)
+		return ImageMetadata{}, fmt.Errorf("invalid image summary for image reference %s", ref)
 	}
 
 	return img, nil
 }
 
-func (i ImageSummary) GetImageReference() cnab.OCIReference {
-	return i.imageRef
+func NewImageSummaryFromDigest(ref cnab.OCIReference, repoDigest digest.Digest) (ImageMetadata, error) {
+	digestedRef, err := ref.WithDigest(repoDigest)
+	if err != nil {
+		return ImageMetadata{}, fmt.Errorf("error building an OCI reference from image %s and digest %s", ref.Repository(), ref.Digest())
+	}
+
+	return ImageMetadata{
+		Reference:   ref,
+		RepoDigests: []string{digestedRef.String()},
+	}, nil
 }
 
-func (i ImageSummary) IsZero() bool {
-	return i.ID == ""
+func (i ImageMetadata) String() string {
+	return i.Reference.String()
 }
 
-// Digest returns the image digest for the image reference.
-func (i ImageSummary) Digest() (digest.Digest, error) {
+func (i ImageMetadata) IsZero() bool {
+	return i.String() == ""
+}
+
+// GetRepositoryDigest finds the repository digest associated with the original
+// image reference used to create this ImageMetadata.
+func (i ImageMetadata) GetRepositoryDigest() (digest.Digest, error) {
 	if len(i.RepoDigests) == 0 {
-		return "", fmt.Errorf("failed to get digest for image: %s", i.imageRef.String())
+		return "", fmt.Errorf("failed to get digest for image: %s", i)
 	}
 	var imgDigest digest.Digest
 	for _, rd := range i.RepoDigests {
@@ -385,7 +431,7 @@ func (i ImageSummary) Digest() (digest.Digest, error) {
 		if err != nil {
 			return "", err
 		}
-		if imgRef.Repository() != i.imageRef.Repository() {
+		if imgRef.Repository() != i.Reference.Repository() {
 			continue
 		}
 
@@ -398,7 +444,7 @@ func (i ImageSummary) Digest() (digest.Digest, error) {
 	}
 
 	if imgDigest == "" {
-		return "", fmt.Errorf("cannot find image digest for desired repo %s", i.imageRef.String())
+		return "", fmt.Errorf("cannot find image digest for desired repo %s", i)
 	}
 
 	if err := imgDigest.Validate(); err != nil {

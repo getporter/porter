@@ -211,7 +211,8 @@ func TestPorter_getDisplayInstallationState(t *testing.T) {
 	displayInstallationState := getDisplayInstallationState(installation)
 	require.Equal(t, StateDefined, displayInstallationState)
 
-	run := p.TestInstallations.CreateRun(installation.NewRun(cnab.ActionInstall), p.TestInstallations.SetMutableRunValues)
+	bun := cnab.ExtendedBundle{}
+	run := p.TestInstallations.CreateRun(installation.NewRun(cnab.ActionInstall, bun), p.TestInstallations.SetMutableRunValues)
 	result := p.TestInstallations.CreateResult(run.NewResult(cnab.StatusSucceeded), p.TestInstallations.SetMutableResultValues)
 	installation.ApplyResult(run, result)
 	installTime := now.Add(-time.Second * 5)
@@ -219,7 +220,7 @@ func TestPorter_getDisplayInstallationState(t *testing.T) {
 	displayInstallationState = getDisplayInstallationState(installation)
 	require.Equal(t, StateInstalled, displayInstallationState)
 
-	run = p.TestInstallations.CreateRun(installation.NewRun(cnab.ActionUninstall), p.TestInstallations.SetMutableRunValues)
+	run = p.TestInstallations.CreateRun(installation.NewRun(cnab.ActionUninstall, bun), p.TestInstallations.SetMutableRunValues)
 	result = p.TestInstallations.CreateResult(run.NewResult(cnab.StatusSucceeded), p.TestInstallations.SetMutableResultValues)
 	installation.ApplyResult(run, result)
 	installation.Status.Uninstalled = &now
@@ -232,7 +233,8 @@ func TestPorter_getDisplayInstallationStatus(t *testing.T) {
 	defer p.Close()
 
 	installation := p.TestInstallations.CreateInstallation(storage.NewInstallation("dev", "mywordpress"), p.TestInstallations.SetMutableInstallationValues)
-	run := p.TestInstallations.CreateRun(installation.NewRun(cnab.ActionInstall), p.TestInstallations.SetMutableRunValues)
+	bun := cnab.ExtendedBundle{}
+	run := p.TestInstallations.CreateRun(installation.NewRun(cnab.ActionInstall, bun), p.TestInstallations.SetMutableRunValues)
 	result := p.TestInstallations.CreateResult(run.NewResult(cnab.StatusSucceeded), p.TestInstallations.SetMutableResultValues)
 	installation.ApplyResult(run, result)
 	displayInstallationStatus := getDisplayInstallationStatus(installation)
@@ -243,25 +245,25 @@ func TestPorter_getDisplayInstallationStatus(t *testing.T) {
 	displayInstallationStatus = getDisplayInstallationStatus(installation)
 	require.Equal(t, cnab.StatusFailed, displayInstallationStatus)
 
-	run = p.TestInstallations.CreateRun(installation.NewRun(cnab.ActionInstall), p.TestInstallations.SetMutableRunValues)
+	run = p.TestInstallations.CreateRun(installation.NewRun(cnab.ActionInstall, bun), p.TestInstallations.SetMutableRunValues)
 	result = p.TestInstallations.CreateResult(run.NewResult(cnab.StatusRunning), p.TestInstallations.SetMutableResultValues)
 	installation.ApplyResult(run, result)
 	displayInstallationStatus = getDisplayInstallationStatus(installation)
 	require.Equal(t, StatusInstalling, displayInstallationStatus)
 
-	run = p.TestInstallations.CreateRun(installation.NewRun(cnab.ActionUninstall), p.TestInstallations.SetMutableRunValues)
+	run = p.TestInstallations.CreateRun(installation.NewRun(cnab.ActionUninstall, bun), p.TestInstallations.SetMutableRunValues)
 	result = p.TestInstallations.CreateResult(run.NewResult(cnab.StatusRunning), p.TestInstallations.SetMutableResultValues)
 	installation.ApplyResult(run, result)
 	displayInstallationStatus = getDisplayInstallationStatus(installation)
 	require.Equal(t, StatusUninstalling, displayInstallationStatus)
 
-	run = p.TestInstallations.CreateRun(installation.NewRun(cnab.ActionUpgrade), p.TestInstallations.SetMutableRunValues)
+	run = p.TestInstallations.CreateRun(installation.NewRun(cnab.ActionUpgrade, bun), p.TestInstallations.SetMutableRunValues)
 	result = p.TestInstallations.CreateResult(run.NewResult(cnab.StatusRunning), p.TestInstallations.SetMutableResultValues)
 	installation.ApplyResult(run, result)
 	displayInstallationStatus = getDisplayInstallationStatus(installation)
 	require.Equal(t, StatusUpgrading, displayInstallationStatus)
 
-	run = p.TestInstallations.CreateRun(installation.NewRun("customaction"), p.TestInstallations.SetMutableRunValues)
+	run = p.TestInstallations.CreateRun(installation.NewRun("customaction", bun), p.TestInstallations.SetMutableRunValues)
 	result = p.TestInstallations.CreateResult(run.NewResult(cnab.StatusRunning), p.TestInstallations.SetMutableResultValues)
 	installation.ApplyResult(run, result)
 	installation.Status.Action = "customaction"

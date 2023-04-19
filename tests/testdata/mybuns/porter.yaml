@@ -7,13 +7,44 @@ description: "A very thorough test bundle"
 registry: localhost:5000
 dockerfile: Dockerfile.tmpl
 
+maintainers:
+- name: "John Doe"
+  email: "john.doe@example.com"
+  url: "https://example.com/a"
+- name: "Jane Doe"
+  url: "https://example.com/b"
+- name: "Janine Doe"
+  email: "janine.doe@example.com"
+- email: "mike.doe@example.com"
+  url: "https://example.com/c"
+
+custom:
+  app:
+    version: 1.2.3
+  foo:
+    test1: true
+    test2: 1
+    test3: value
+    test4:
+      - one
+      - two
+      - three
+    test5:
+      1: one
+      two: two
+
 required:
   - docker
 
 credentials:
   - name: username
     description: "The name you want on the audit log"
-    env: USERNAME
+    env: ROOT_USERNAME
+    required: false
+  - name: password
+    path: /tmp/password
+    applyTo:
+      - boom
 
 parameters:
   - name: log_level
@@ -27,22 +58,97 @@ parameters:
     type: string
     default: "default-secret"
     sensitive: true
+  - name: mysql-connstr
+    type: string
+    default: "" # Setting a default so that this isn't required for install
+    source:
+      dependency: db
+      output: connstr
   - name: chaos_monkey
     description: "Set to true to make the bundle fail"
     type: boolean
     default: false
+  - name: tfstate
+    type: file
+    path: /cnab/app/tfstate
+    source:
+      output: tfstate
+    applyTo:
+      - upgrade
+      - uninstall
   - name: cfg
     description: "A json config file"
     type: file
     default: ''
     path: buncfg.json
+  - name: ainteger
+    type: integer
+    default: 1
+    minimum: 0
+    maximum: 10
   - name: anumber
     type: number
     default: 0.5 # This is a regression test that we can both build and push a bundle that uses numeric types
     exclusiveMinimum: 0
     exclusiveMaximum: 1
+  - name: astringenum
+    type: string
+    default: blue
+    enum:
+      - blue
+      - red
+      - purple
+      - pink
+  - name: astring
+    type: string
+    minLength: 1
+    maxLength: 10
+    default: 'boop!'
+  - name: aboolean
+    type: boolean
+    default: true
+  - name: installonly
+    type: boolean
+    default: false
+    applyTo:
+      - install
+  - name: sensitive
+    type: string
+    sensitive: true
+    default: "passw0rd123"
+  - name: jsonobject
+    type: string
+    default: '"myobject": {
+        "foo": "true",
+        "bar": [
+          1,
+          2,
+          3
+        ]
+      }'
+  - name: afile
+    type: file
+    default: ''
+    path: /home/nonroot/.kube/config
+  - name: notype-file
+    default: ''
+    path: /cnab/app/config.toml
+  - name: notype-string
+    default: ''
 
 outputs:
+  - name: msg
+    type: string
+    default: ""
+    applyTo:
+      - install
+      - upgrade
+      - uninstall
+  - name: connStr
+    $id: "getporter.org/interfaces/mysql.connection-string"
+    default: ""
+    applyTo:
+      - install
   - name: mylogs
     applyTo:
       - install
@@ -52,6 +158,13 @@ outputs:
       - install
       - upgrade
     sensitive: true
+  - name: tfstate
+    type: file
+    path: /cnab/app/tfstate
+    applyTo:
+      - install
+      - upgrade
+      - uninstall
 
 state:
   - name: magic_file
@@ -154,6 +267,7 @@ upgrade:
       command: ./helpers.sh
       arguments:
         - upgrade
+        - ${ bundle.outputs.msg }
       outputs:
         - name: mylogs
           regex: "(.*)"
@@ -178,6 +292,7 @@ uninstall:
       command: ./helpers.sh
       arguments:
         - uninstall
+        - ${ bundle.outputs.msg }
   - exec:
       description: "roll the dice with your chaos monkey"
       command: ./helpers.sh
