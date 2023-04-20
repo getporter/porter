@@ -606,8 +606,9 @@ func TestManifestConverter_generateDependenciesv1(t *testing.T) {
 			require.NoError(t, err, "could not load manifest")
 
 			a := NewManifestConverter(c.Config, m, nil, nil)
+			defs := make(definition.Definitions, len(m.Parameters))
 
-			depsExt, depsExtKey, err := a.generateDependencies()
+			depsExt, depsExtKey, err := a.generateDependencies(ctx, &defs)
 			require.NoError(t, err)
 			require.Equal(t, cnab.DependenciesV1ExtensionKey, depsExtKey, "expected the v1 dependencies extension key")
 			require.IsType(t, &depsv1ext.Dependencies{}, depsExt, "expected a v1 dependencies extension section")
@@ -643,8 +644,30 @@ func TestManifestConverter_generateDependenciesv2(t *testing.T) {
 			Interface: &depsv2ext.DependencyInterface{
 				ID:        "https://getporter.org/interfaces/#mysql",
 				Reference: "getporter/mysql-spec:5.7",
-				// TODO(PEP003): Implement with https://github.com/getporter/porter/issues/2548
-				//Document: nil,
+				Document: depsv2ext.DependencyInterfaceDocument{
+					Outputs: map[string]bundle.Output{
+						"output": {
+							Definition:  "myoutput",
+							ApplyTo:     []string{"everything"},
+							Description: "worlds smallest output",
+							Path:        "/usr/local/",
+						},
+					},
+					Parameters: map[string]bundle.Parameter{
+						"param": {
+							Definition:  "myparam",
+							ApplyTo:     []string{"everything"},
+							Description: "worlds biggest param",
+							Required:    false,
+						},
+					},
+					Credentials: map[string]bundle.Credential{
+						"creds": {
+							Description: "credential",
+							Required:    false,
+						},
+					},
+				},
 			},
 			Sharing: depsv2ext.SharingCriteria{
 				Mode:  depsv2ext.SharingModeGroup,
@@ -675,8 +698,9 @@ func TestManifestConverter_generateDependenciesv2(t *testing.T) {
 			require.NoError(t, err, "could not load manifest")
 
 			a := NewManifestConverter(c.Config, m, nil, nil)
+			defs := make(definition.Definitions, len(m.Parameters))
 
-			depsExt, depsExtKey, err := a.generateDependencies()
+			depsExt, depsExtKey, err := a.generateDependencies(ctx, &defs)
 			require.NoError(t, err)
 			require.Equal(t, cnab.DependenciesV2ExtensionKey, depsExtKey, "expected the v2 dependencies extension key")
 			require.IsType(t, &depsv2ext.Dependencies{}, depsExt, "expected a v2 dependencies extension section")
