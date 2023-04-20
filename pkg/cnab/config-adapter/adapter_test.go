@@ -634,10 +634,11 @@ func TestManifestConverter_generateDependenciesv2(t *testing.T) {
 	t.Parallel()
 
 	testcases := []struct {
-		name    string
-		wantDep depsv2ext.Dependency
+		name     string
+		wantDep  depsv2ext.Dependency
+		wantDefs map[string]*definition.Schema
 	}{
-		{"all fields", depsv2ext.Dependency{
+		{name: "all fields", wantDep: depsv2ext.Dependency{
 			Name:    "mysql",
 			Bundle:  "getporter/azure-mysql:5.7",
 			Version: "5.7.x",
@@ -646,23 +647,23 @@ func TestManifestConverter_generateDependenciesv2(t *testing.T) {
 				Reference: "getporter/mysql-spec:5.7",
 				Document: depsv2ext.DependencyInterfaceDocument{
 					Outputs: map[string]bundle.Output{
-						"output": {
-							Definition:  "myoutput",
+						"myoutput": {
+							Definition:  "myoutput-output",
 							ApplyTo:     []string{"everything"},
 							Description: "worlds smallest output",
 							Path:        "/usr/local/",
 						},
 					},
 					Parameters: map[string]bundle.Parameter{
-						"param": {
-							Definition:  "myparam",
+						"myparam": {
+							Definition:  "myparam-parameter",
 							ApplyTo:     []string{"everything"},
 							Description: "worlds biggest param",
 							Required:    false,
 						},
 					},
 					Credentials: map[string]bundle.Credential{
-						"creds": {
+						"mycred": {
 							Description: "credential",
 							Required:    false,
 						},
@@ -680,7 +681,17 @@ func TestManifestConverter_generateDependenciesv2(t *testing.T) {
 			Credentials: map[string]string{
 				"user": "${bundle.credentials.username}",
 			},
-		}},
+		},
+			wantDefs: map[string]*definition.Schema{
+				"myoutput-output": &definition.Schema{
+					Type: "integer",
+				},
+				"myparam-parameter": &definition.Schema{
+					Type:    "string",
+					Default: "huuge",
+				},
+			},
+		},
 	}
 
 	for _, tc := range testcases {
@@ -717,6 +728,7 @@ func TestManifestConverter_generateDependenciesv2(t *testing.T) {
 
 			require.NotNil(t, dep, "could not find bundle %s", tc.wantDep.Bundle)
 			assert.Equal(t, &tc.wantDep, dep)
+			assert.Equal(t, tc.wantDefs, defs)
 		})
 	}
 }

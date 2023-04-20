@@ -523,6 +523,7 @@ func (c *ManifestConverter) generateDependenciesV2(ctx context.Context, defs *de
 					Parameters:  make(map[string]bundle.Parameter, len(dep.Bundle.Interface.Document.Parameters)),
 					Credentials: make(map[string]bundle.Credential, len(dep.Bundle.Interface.Document.Credentials)),
 				}
+				dependencyRef.Interface.Document = depsMaps
 
 				for _, o := range dep.Bundle.Interface.Document.Outputs {
 					depsMaps.Outputs[o.Name] = c.generateOutputDefinition(ctx, defs, o)
