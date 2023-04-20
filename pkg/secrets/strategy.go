@@ -161,8 +161,8 @@ func (l SourceMapList) GetResolvedValue(name string) (interface{}, bool) {
 	return nil, false
 }
 
-// GetResolvedValues converts the items to a map of key/value pairs, with the values represented as CNAB-compatible strings
-func (l SourceMapList) GetResolvedValues() map[string]string {
+// ToResolvedValues converts the items to a map of key/value pairs, with the resolved values represented as CNAB-compatible strings
+func (l SourceMapList) ToResolvedValues() map[string]string {
 	values := make(map[string]string, len(l))
 	for _, item := range l {
 		values[item.Name] = item.ResolvedValue

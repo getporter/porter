@@ -32,7 +32,7 @@ func TestSourceMapList_GetResolvedValues(t *testing.T) {
 		"bar": "2",
 		"foo": "1",
 	}
-	got := l.GetResolvedValues()
+	got := l.ToResolvedValues()
 	assert.Equal(t, want, got)
 }
 
