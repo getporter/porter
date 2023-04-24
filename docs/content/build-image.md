@@ -80,7 +80,7 @@ actions:
       description: World 2.0
 
 /Users/sigje/.porter/mixins/exec/exec build --debug
-FROM --platform=linux/amd64 debian:stretch-slim
+FROM --platform=linux/amd64 debian:stable-slim
 
 ARG BUNDLE_DIR
 
@@ -97,7 +97,7 @@ WORKDIR ${BUNDLE_DIR}
 CMD ["/cnab/app/run"]
 
 Writing Dockerfile =======>
-FROM --platform=linux/amd64 debian:stretch-slim
+FROM --platform=linux/amd64 debian:stable-slim
 
 ARG BUNDLE_DIR
 
@@ -114,7 +114,7 @@ WORKDIR ${BUNDLE_DIR}
 CMD ["/cnab/app/run"]
 
 Starting Invocation Image Build =======>
-Step 1/9 : FROM --platform=linux/amd64 debian:stretch-slim
+Step 1/9 : FROM --platform=linux/amd64 debian:stable-slim
  ---> 5738956efb6b
 Step 2/9 : ARG BUNDLE_DIR
  ---> Using cache
@@ -208,7 +208,7 @@ After copying any mixins to the .cnab directory, a Dockerfile is generated:
 
 ```console
 Generating Dockerfile =======>
-FROM --platform=linux/amd64 debian:stretch
+FROM --platform=linux/amd64 debian:stable-slim
 
 ARG BUNDLE_DIR
 
@@ -231,7 +231,7 @@ Once this is completed, the image is built:
 
 ```console
 Starting Invocation Image Build =======>
-Step 1/9 : FROM --platform=linux/amd64 debian:stretch
+Step 1/9 : FROM --platform=linux/amd64 debian:stable-slim
  ---> 5c43e435cc11
 Step 2/9 : ARG BUNDLE_DIR
  ---> Using cache
@@ -306,7 +306,7 @@ Copying mixins ===>
 Copying mixin helm ===>
 
 Generating Dockerfile =======>
-FROM --platform=linux/amd64 debian:stretch-slim
+FROM --platform=linux/amd64 debian:stable-slim
 
 ARG BUNDLE_DIR
 

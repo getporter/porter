@@ -12,7 +12,7 @@
 # another location in this file. If you remove a token, its content is appended to the end of the Dockerfile.
 
 # Porter targets linux/amd64 by default. Change the --platform flag to target a different platform
-FROM --platform=linux/amd64 debian:stretch-slim
+FROM --platform=linux/amd64 debian:stable-slim
 
 # PORTER_INIT
 

@@ -570,7 +570,7 @@ Generating parameter definition porter-debug ====>
 ### Dockerfile
 ```Dockerfile
 FROM quay.io/deis/lightweight-docker-go:v0.2.0
-FROM debian:stretch-slim
+FROM debian:stable-slim
 COPY --from=0 /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 
 COPY . /cnab/app
@@ -1011,7 +1011,7 @@ dockerfile: Dockerfile.tmpl
 ### Dockerfile.tmpl
 
 ```Dockerfile
-FROM debian:stretch-slim
+FROM debian:stable-slim
 
 RUN apt-get install -y curl
 
@@ -1341,7 +1341,7 @@ convert cute pictures of gophers into ASCII art when you install the bundle.
 Here are some hints so that you can try to solve it in your own way. 
 For the full solution, see the [asciiart][asciiart] directory in the workshop materials.
 
-* A good base image for go is `golang:1.11-stretch`.
+* A good base image for go is `golang:1.19`.
 * You need to run `porter build` after modifying the Dockerfile.tmpl to rebuild
 your invocation image to pick up your changes.
 * Don't forget to copy your images into your invocation image to /cnab/app/.
