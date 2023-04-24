@@ -650,14 +650,13 @@ func TestManifestConverter_generateDependenciesv2(t *testing.T) {
 						"myoutput": {
 							Definition:  "myoutput-output",
 							Description: "worlds smallest output",
-							Path:        "/cnab/app/outputs/myoutput",
 						},
 					},
 					Parameters: map[string]bundle.Parameter{
 						"myparam": {
 							Definition:  "myparam-parameter",
 							Description: "worlds biggest param",
-							Required:    true,
+							Required:    false,
 						},
 					},
 					Credentials: map[string]bundle.Credential{
