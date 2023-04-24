@@ -146,6 +146,7 @@ Note: if overrides for registry/tag/reference are provided, this command only re
   porter bundle publish --archive /tmp/mybuns.tgz --reference myrepo/my-buns:0.1.0
   porter bundle publish --tag latest
   porter bundle publish --registry myregistry.com/myorg
+  porter bundle publish --autobuild-disabled
 		`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate(p.Config)
@@ -169,6 +170,7 @@ Note: if overrides for registry/tag/reference are provided, this command only re
 	cmd.Flag("force").Annotations = map[string][]string{
 		"viper-key": {"force-overwrite"},
 	}
+	f.BoolVar(&opts.AutoBuildDisabled, "autobuild-disabled", false, "Do not automatically build the bundle from source when the last build is out-of-date.")
 
 	return &cmd
 }
