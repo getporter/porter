@@ -310,7 +310,7 @@ func (c *ManifestConverter) generateCredentialDefinition(sourceCred manifest.Cre
 
 func (c *ManifestConverter) addDefinition(name string, kind string, def definition.Schema, defs *definition.Definitions) string {
 	defName := name
-	if !strings.HasSuffix(name, kind) {
+	if !strings.HasSuffix(name, "-"+kind) {
 		defName = name + "-" + kind
 	}
 

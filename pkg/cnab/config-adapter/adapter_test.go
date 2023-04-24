@@ -636,7 +636,7 @@ func TestManifestConverter_generateDependenciesv2(t *testing.T) {
 	testcases := []struct {
 		name     string
 		wantDep  depsv2ext.Dependency
-		wantDefs map[string]*definition.Schema
+		wantDefs definition.Definitions
 	}{
 		{name: "all fields", wantDep: depsv2ext.Dependency{
 			Name:    "mysql",
@@ -649,23 +649,21 @@ func TestManifestConverter_generateDependenciesv2(t *testing.T) {
 					Outputs: map[string]bundle.Output{
 						"myoutput": {
 							Definition:  "myoutput-output",
-							ApplyTo:     []string{"everything"},
 							Description: "worlds smallest output",
-							Path:        "/usr/local/",
+							Path:        "/cnab/app/outputs/myoutput",
 						},
 					},
 					Parameters: map[string]bundle.Parameter{
 						"myparam": {
 							Definition:  "myparam-parameter",
-							ApplyTo:     []string{"everything"},
 							Description: "worlds biggest param",
-							Required:    false,
+							Required:    true,
 						},
 					},
 					Credentials: map[string]bundle.Credential{
 						"mycred": {
 							Description: "credential",
-							Required:    false,
+							Required:    true,
 						},
 					},
 				},
@@ -683,10 +681,10 @@ func TestManifestConverter_generateDependenciesv2(t *testing.T) {
 			},
 		},
 			wantDefs: map[string]*definition.Schema{
-				"myoutput-output": &definition.Schema{
+				"myoutput-output": {
 					Type: "integer",
 				},
-				"myparam-parameter": &definition.Schema{
+				"myparam-parameter": {
 					Type:    "string",
 					Default: "huuge",
 				},

@@ -17,15 +17,8 @@ dependencies:
             outputs:
               - name: myoutput
                 description: "worlds smallest output"
-                type: integer
-            credentials:
-              - name: mycred
-                description: credential
-                required: false
-            parameters:
-              - name: myparam
-                description: worlds biggest param
-                type: boolean
+                applyTo: [everything]
+                Path: "/usr/local"
       sharing:
         mode: group
         group:
