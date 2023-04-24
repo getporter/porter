@@ -13,8 +13,6 @@ These are the members of the [maintainers team](https://github.com/orgs/getporte
     * I am happy to help with most things
 * [Jeremy Rickard](https://github.com/jeremyrickard)
     * Runtime and CNAB spec nerd
-* [Vaughn Dice](https://github.com/vdice)
-    * chore: fix important bug
 * [Reddy Prasad](https://github.com/dev-drprasad)
     * Plugin and mixin execution
 * [Jennifer Davis](https://github.com/iennae)
@@ -22,3 +20,10 @@ These are the members of the [maintainers team](https://github.com/orgs/getporte
 * [Yingrong Zhao](https://github.com/vinozzz)
 * [Brian DeGeeter](https://github.com/bdegeeter)
 * [Steven Gettys](https://github.com/sgettys)
+
+## Emeritus Maintainers
+
+Emeritus maintainers are former maintainers of the Porter project.
+We appreciate their commitment to the project and want to recognize their work after they have moved on to other things.
+
+* [Vaughn Dice](https://github.com/vdice)

@@ -24,7 +24,7 @@ When you run porter create, a template Dockerfile is created for you in the curr
 
 # You can control where the mixin's Dockerfile lines are inserted into this file by moving the "# PORTER_*" tokens
 # another location in this file. If you remove a token, its content is appended to the end of the Dockerfile.
-FROM --platform=linux/amd64 debian:stretch-slim
+FROM --platform=linux/amd64 debian:stable-slim
 
 # PORTER_INIT
 

@@ -62,7 +62,7 @@ func TestPorter_IsInstallationInSync(t *testing.T) {
 		myps := storage.ParameterSet{
 			ParameterSetSpec: storage.ParameterSetSpec{
 				Name: "myps",
-				Parameters: []secrets.Strategy{
+				Parameters: []secrets.SourceMap{
 					storage.ValueStrategy("my-second-param", "override"),
 				},
 			},

@@ -1,0 +1,9 @@
+schemaVersion: 1.0.2
+name: myenv
+bundle:
+  repository: localhost:5000/myenv
+  version: v0.1.0
+credentialSets:
+  - myenv
+parameterSets:
+  - myenv

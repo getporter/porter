@@ -4,9 +4,11 @@ package integration
 
 import (
 	"encoding/json"
+	"os"
 	"path/filepath"
 	"testing"
 
+	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/build"
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/yaml"
@@ -37,6 +39,40 @@ func TestBuild(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, bun.Custom["customKey1"], "editedCustomValue1")
 
+}
+
+// This test uses build and the --no-lint flag, which is not a global flag defined on config.DataStore,
+// to validate that when a flag value is set via the configuration file, environment variable or directly with the flag
+// that the value binds properly to the variable.
+// It is a regression test for our cobra+viper configuration setup and was created in response to this regression
+// https://github.com/getporter/porter/issues/2735
+func TestBuild_ConfigureNoLintThreeWays(t *testing.T) {
+	test, err := tester.NewTest(t)
+	defer test.Close()
+	require.NoError(t, err, "test setup failed")
+
+	// Use a bundle that will trigger a lint error, it can only be successfully built when --no-lint is set
+	require.NoError(t, shx.Copy("testdata/bundles/bundle-with-lint-error/porter.yaml", test.TestDir))
+	test.Chdir(test.TestDir)
+
+	// Attempt to build the bundle, it should fail with a lint error
+	_, _, err = test.RunPorter("build")
+	require.ErrorContains(t, err, "lint errors were detected")
+
+	// Build the bundle and disable the linter with --no-lint
+	test.RequirePorter("build", "--no-lint")
+
+	// Build the bundle and disable the linter with PORTER_NO_LINT
+	_, _, err = test.RunPorterWith(func(cmd *shx.PreparedCommand) {
+		cmd.Args("build").Env("PORTER_NO_LINT=true")
+	})
+	require.NoError(t, err, "expected the build to pass when PORTER_NO_LINT=true is specified")
+
+	// Build the bundle and disable the linter with the configuration file
+	disableAutoBuildCfg := []byte(`no-lint: true`)
+	err = os.WriteFile(filepath.Join(test.PorterHomeDir, "config.yaml"), disableAutoBuildCfg, pkg.FileModeWritable)
+	require.NoError(t, err, "Failed to write out the porter configuration file")
+	test.RequirePorter("build")
 }
 
 func TestRebuild(t *testing.T) {

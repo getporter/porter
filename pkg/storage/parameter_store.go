@@ -56,9 +56,9 @@ func (s ParameterStore) ResolveAll(ctx context.Context, params ParameterSet) (se
 	var resolveErrors error
 
 	for _, param := range params.Parameters {
-		value, err := s.Secrets.Resolve(ctx, param.Source.Key, param.Source.Value)
+		value, err := s.Secrets.Resolve(ctx, param.Source.Strategy, param.Source.Hint)
 		if err != nil {
-			resolveErrors = multierror.Append(resolveErrors, fmt.Errorf("unable to resolve parameter %s.%s from %s %s: %w", params.Name, param.Name, param.Source.Key, param.Source.Value, err))
+			resolveErrors = multierror.Append(resolveErrors, fmt.Errorf("unable to resolve parameter %s.%s from %s %s: %w", params.Name, param.Name, param.Source.Strategy, param.Source.Hint, err))
 		}
 
 		resolvedParams[param.Name] = value
@@ -74,7 +74,7 @@ func (s ParameterStore) Validate(ctx context.Context, params ParameterSet) error
 	for _, cs := range params.Parameters {
 		valid := false
 		for _, validSource := range validSources {
-			if cs.Source.Key == validSource {
+			if cs.Source.Strategy == validSource {
 				valid = true
 				break
 			}
@@ -82,7 +82,7 @@ func (s ParameterStore) Validate(ctx context.Context, params ParameterSet) error
 		if !valid {
 			errors = multierror.Append(errors, fmt.Errorf(
 				"%s is not a valid source. Valid sources are: %s",
-				cs.Source.Key,
+				cs.Source.Strategy,
 				strings.Join(validSources, ", "),
 			))
 		}

@@ -8,9 +8,9 @@ import (
 )
 
 func Test_genEmptySet(t *testing.T) {
-	expected := secrets.Strategy{
+	expected := secrets.SourceMap{
 		Name:   "emptyset",
-		Source: secrets.Source{Value: "TODO"},
+		Source: secrets.Source{Hint: "TODO"},
 	}
 
 	got, err := genEmptySet("emptyset", surveyParameters)
@@ -21,5 +21,5 @@ func Test_genEmptySet(t *testing.T) {
 func Test_genSurvey_unsupported(t *testing.T) {
 	got, err := genSurvey("myturtleset", SurveyType("turtles"))
 	require.EqualError(t, err, "unsupported survey type: turtles")
-	require.Equal(t, secrets.Strategy{}, got)
+	require.Equal(t, secrets.SourceMap{}, got)
 }

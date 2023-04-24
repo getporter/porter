@@ -1,0 +1,6 @@
+schemaVersion: 1.0.1
+name: myenv
+parameters:
+  - name: logLevel
+    source:
+      value: "debug"
