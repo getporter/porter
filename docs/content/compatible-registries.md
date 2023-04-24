@@ -12,21 +12,21 @@ There is an explicit verification using Porter because we use specific libraries
 such as [cnab-to-oci], and this helps us communicate confidently that we've tested
 out a particular registry and know that it will work for you.
 
-| Registry | Compatible |
-| -------- | --------------- |
-| **Azure Container Registry (ACR)** | **Yes** |
-| Artifactory | No |
-| **Docker Hub** | **Yes** |
-| **DigitalOcean Container Registry** | **Yes** |
+| Registry                                    | Compatible         |
+|---------------------------------------------|--------------------|
+| **Azure Container Registry (ACR)**          | **Yes**            |
+| **Artifactory**                             | **Yes**            |
+| **Docker Hub**                              | **Yes**            |
+| **DigitalOcean Container Registry**         | **Yes**            |
 | **Amazon Elastic Container Registry (ECR)** | **[Yes*](#notes)** |
-| **Google Artifact Registry** | **Yes** | 
-| Google Cloud Registry (GCR) | No | 
-| **GitHub Container Registry (GHCR)** | **Yes** | 
-| GitHub Packages | No |
-| **Harbor 2** | **Yes** |
-| Nexus | No |
-| Quay | No |
-| GitLab | No |
+| **Google Artifact Registry**                | **Yes**            | 
+| Google Cloud Registry (GCR)                 | No                 | 
+| **GitHub Container Registry (GHCR)**        | **Yes**            | 
+| GitHub Packages                             | No                 |
+| **Harbor 2**                                | **Yes**            |
+| Nexus                                       | No                 |
+| Quay                                        | No                 |
+| GitLab                                      | No                 |
 
 If you test a registry with Porter and find that this page is out of date, [please
 let us know](https://github.com/deislabs/porter/issues/new)!
