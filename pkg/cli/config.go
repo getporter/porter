@@ -16,11 +16,7 @@ import (
 // * Config file
 // * Flag default (lowest)
 func LoadHierarchicalConfig(cmd *cobra.Command) config.DataStoreLoaderFunc {
-	return config.LoadFromViper(func(v *viper.Viper) {
-		v.AutomaticEnv()
-		v.SetEnvPrefix("PORTER")
-		v.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
-
+	bindCobraFlagsToViper := func(v *viper.Viper) {
 		// Apply the configuration file value to the flag when the flag is not set
 		flags := cmd.Flags()
 		flags.VisitAll(func(f *pflag.Flag) {
@@ -42,7 +38,8 @@ func LoadHierarchicalConfig(cmd *cobra.Command) config.DataStoreLoaderFunc {
 				flags.Set(f.Name, val)
 			}
 		})
-	})
+	}
+	return config.LoadFromViper(config.BindViperToEnvironmentVariables, bindCobraFlagsToViper)
 }
 
 func getFlagValue(v *viper.Viper, key string) string {

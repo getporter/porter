@@ -60,7 +60,9 @@ func TestConfigExperimentalFlags(t *testing.T) {
 	// Do not run in parallel since we are using os.Setenv
 
 	t.Run("default off", func(t *testing.T) {
-		c := NewTestConfig(t)
+		c := New()
+		defer c.Close()
+
 		assert.False(t, c.IsFeatureEnabled(experimental.FlagNoopFeature))
 	})
 
@@ -69,13 +71,18 @@ func TestConfigExperimentalFlags(t *testing.T) {
 		defer os.Unsetenv("PORTER_EXPERIMENTAL")
 
 		c := New()
+		defer c.Close()
+		c.DataLoader = LoadFromEnvironment()
+
 		_, err := c.Load(context.Background(), nil)
 		require.NoError(t, err, "Load failed")
 		assert.True(t, c.IsFeatureEnabled(experimental.FlagNoopFeature))
 	})
 
 	t.Run("programmatically enabled", func(t *testing.T) {
-		c := NewTestConfig(t)
+		c := New()
+		defer c.Close()
+
 		c.Data.ExperimentalFlags = nil
 		c.SetExperimentalFlags(experimental.FlagNoopFeature)
 		assert.True(t, c.IsFeatureEnabled(experimental.FlagNoopFeature))
