@@ -6,6 +6,8 @@
   * [How to become a contributor](#how-to-become-a-contributor)
 * [Maintainer](#maintainer)
   * [How to become a maintainer](#how-to-become-a-maintainer)
+  * [Involuntary Removal or Demotion](#involuntary-removal-or-demotion)
+  * [Stepping Down/Emeritus Process](#stepping-downemeritus-process)
 * [Admin](#admin)
   * [How to become an admin](#admin)
 ---
@@ -86,6 +88,34 @@ contributor, and show that you can do some of the things maintainers do.
 Maintainers will do their best to regularly discuss promoting contributors. But
 don’t be shy, if you feel that this is you, please reach out to one or more of
 the maintainers.
+
+## Inactivity
+It is important for maintainers to stay active to set an example and show commitment to the project.
+Inactivity is harmful to the project as it may lead to unexpected delays, contributor attrition, and a lost of trust in the project.
+
+* Inactivity is measured by:
+    * Periods of no contributions for longer than 6 months, where contributions must include maintainer-level tasks:
+      reviewing and merging others pull requests, project administration, release management, mentoring, etc.
+      Code contributions are not strictly required to be considered active.
+    * Periods of no communication for longer than 6 months.
+* Consequences of being inactive include:
+    * Involuntary removal or demotion.
+    * Being asked to move to Emeritus status.
+
+## Involuntary Removal or Demotion
+
+Involuntary removal/demotion of a maintainer happens when responsibilities and requirements aren't being met.
+This may include repeated patterns of inactivity, extended period of inactivity, a period of failing to meet the requirements of your role, and/or a violation of the Code of Conduct.
+This process is important because it protects the community and its deliverables while also opens up opportunities for new contributors to step in.
+
+Removal or demotion is handled first by attempting to contact the maintainer in question to suggest stepping down.
+If they cannot be reached, or will not resume their maintainer responsibilities, involuntary removal is initiated through a vote by a majority of the other current Maintainers.
+
+## Stepping Down/Emeritus Process
+If and when contributors' commitment levels change, contributors can consider stepping down (moving down the contributor ladder) instead of moving to emeritus status (completely stepping away from the project).
+
+Contact the Maintainers about changing to Emeritus status, or reducing your contributor level.
+When an Emeritus Maintainer has been an active contributor for 1 month, they can reapply to be considered for the Maintainer role again.
 
 ## Admin
 
