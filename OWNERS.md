@@ -22,3 +22,8 @@ These are the members of the [maintainers team](https://github.com/orgs/getporte
 * [Yingrong Zhao](https://github.com/vinozzz)
 * [Brian DeGeeter](https://github.com/bdegeeter)
 * [Steven Gettys](https://github.com/sgettys)
+
+## Emeritus Maintainers
+
+Emeritus maintainers are former maintainers of the Porter project.
+We appreciate their commitment to the project and want to recognize their work after they have moved on to other things.
