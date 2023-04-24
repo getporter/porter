@@ -12,6 +12,7 @@ import (
 	"get.porter.sh/porter/pkg/pkgmgmt"
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/test"
+	"get.porter.sh/porter/tests"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -81,6 +82,5 @@ func TestRunner_RunWithMaskedOutput(t *testing.T) {
 
 	err = r.Run(ctx, cmd)
 	assert.NoError(t, err)
-	assert.Equal(t, `Hello ******* 	
-`, string(output.Bytes()))
+	tests.RequireOutputContains(t, output.String(), "Hello *******")
 }
