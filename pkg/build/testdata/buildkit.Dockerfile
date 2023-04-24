@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile-upstream:1.4.0
-FROM --platform=linux/amd64 debian:stretch-slim
+FROM --platform=linux/amd64 debian:stable-slim
 
 ARG BUNDLE_DIR
 ARG BUNDLE_UID=65532
