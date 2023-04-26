@@ -512,8 +512,7 @@ func convertCredentialSet(namespace string, data []byte) (storage.CredentialSet,
 		},
 	}
 
-	destCreds := storage.MakeCredentialSourceMap(len(src.Credentials))
-	dest.Credentials = &destCreds
+	dest.Credentials = storage.MakeCredentialSourceMap(len(src.Credentials))
 	for _, srcCred := range src.Credentials {
 		destCred := storage.CredentialSource{
 			Source: secrets.Source{
@@ -521,7 +520,7 @@ func convertCredentialSet(namespace string, data []byte) (storage.CredentialSet,
 				Hint:     srcCred.Source.Value,
 			},
 		}
-		destCreds.Set(srcCred.Name, destCred)
+		dest.Credentials.Set(srcCred.Name, destCred)
 	}
 
 	return dest, nil

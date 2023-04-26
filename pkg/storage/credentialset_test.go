@@ -150,7 +150,7 @@ func TestMarshal(t *testing.T) {
 			SchemaVersion: "schemaVersion",
 			Namespace:     "namespace",
 			Name:          "name",
-			Credentials:   &CredentialSourceMap{},
+			Credentials:   NewCredentialSourceMap(),
 		},
 		Status: CredentialSetStatus{
 			Created:  now,

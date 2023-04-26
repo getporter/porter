@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"get.porter.sh/porter/pkg/cnab"
-	"get.porter.sh/porter/pkg/encoding"
 	"get.porter.sh/porter/pkg/schema"
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/tracing"
@@ -51,14 +50,15 @@ type CredentialSetSpec struct {
 	Labels map[string]string `json:"labels,omitempty" yaml:"labels,omitempty" toml:"labels,omitempty"`
 
 	// Credentials is a list of credential resolution strategies.
-	Credentials *CredentialSourceMap `json:"credentials" yaml:"credentials" toml:"credentials"`
+	Credentials CredentialSourceMap `json:"credentials" yaml:"credentials" toml:"credentials"`
 }
 
-type CredentialSourceMap = encoding.ArrayMap[CredentialSource, NamedCredentialSource]
-
-// TODO(generics)
+type CredentialSourceMap = secrets.Map
 type CredentialSource = secrets.ValueMapping
 type NamedCredentialSource = secrets.NamedValueMapping
+
+var MakeCredentialSourceMap = secrets.MakeMap
+var NewCredentialSourceMap = secrets.NewMap
 
 // CredentialSetStatus contains additional status metadata that has been set by Porter.
 type CredentialSetStatus struct {
@@ -69,8 +69,6 @@ type CredentialSetStatus struct {
 	Modified time.Time `json:"modified" yaml:"modified" toml:"modified"`
 }
 
-var MakeCredentialSourceMap = encoding.MakeArrayMap[CredentialSource, NamedCredentialSource]
-
 // NewCredentialSet creates a new CredentialSet with the required fields initialized.
 func NewCredentialSet(namespace string, name string) CredentialSet {
 	now := time.Now()
@@ -80,7 +78,7 @@ func NewCredentialSet(namespace string, name string) CredentialSet {
 			SchemaVersion: DefaultCredentialSetSchemaVersion,
 			Name:          name,
 			Namespace:     namespace,
-			Credentials:   &CredentialSourceMap{},
+			Credentials:   NewCredentialSourceMap(),
 		},
 		Status: CredentialSetStatus{
 			Created:  now,
@@ -145,14 +143,15 @@ func (s CredentialSet) SetStrategy(key string, source secrets.Source) {
 }
 
 func (s CredentialSet) Set(key string, source CredentialSource) {
-	if s.Credentials == nil {
-		s.Credentials = &CredentialSourceMap{}
-	}
 	s.Credentials.Set(key, source)
 }
 
 func (s CredentialSet) Get(key string) (CredentialSource, bool) {
 	return s.Credentials.Get(key)
+}
+
+func (s CredentialSet) Remove(key string) {
+	s.Credentials.Remove(key)
 }
 
 func (s CredentialSet) Len() int {

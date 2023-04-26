@@ -81,6 +81,8 @@ func (v ValueMapping) ToArrayEntry(key string) encoding.ArrayElement {
 	}
 }
 
+var _ encoding.ArrayElement = NamedValueMapping{}
+
 // NamedValueMapping is the representation of a ValueMapping in an array,
 // We use it to unmarshal the yaml, and then convert it into our internal representation
 // where the ValueMapping is in a Go map instead of an array.

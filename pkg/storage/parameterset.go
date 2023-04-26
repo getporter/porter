@@ -48,13 +48,11 @@ type ParameterSetSpec struct {
 }
 
 type ParameterSourceMap = secrets.Map
+type ParameterSource = secrets.ValueMapping
+type NamedParameterSource = secrets.NamedValueMapping
 
 var MakeParameterSourceMap = secrets.MakeMap
 var NewParameterSourceMap = secrets.NewMap
-
-// TODO(generics)
-type ParameterSource = secrets.ValueMapping
-type NamedParameterSource = secrets.NamedValueMapping
 
 // ParameterSetStatus contains additional status metadata that has been set by Porter.
 type ParameterSetStatus struct {
@@ -133,6 +131,10 @@ func (s ParameterSet) String() string {
 
 func (s ParameterSet) Iterate() map[string]ParameterSource {
 	return s.Parameters.Items()
+}
+
+func (s ParameterSet) IterateSorted() []NamedParameterSource {
+	return s.Parameters.ItemsSorted()
 }
 
 func (s ParameterSet) SetStrategy(key string, source secrets.Source) {
