@@ -591,8 +591,7 @@ func convertParameterSet(namespace string, data []byte) (storage.ParameterSet, e
 		},
 	}
 
-	destParams := storage.MakeParameterSourceMap(len(src.Parameters))
-	dest.Parameters = &destParams
+	dest.Parameters = storage.MakeParameterSourceMap(len(src.Parameters))
 	for _, srcParam := range src.Parameters {
 		destParam := storage.ParameterSource{
 			Source: secrets.Source{
@@ -600,7 +599,7 @@ func convertParameterSet(namespace string, data []byte) (storage.ParameterSet, e
 				Hint:     srcParam.Source.Value,
 			},
 		}
-		destParams.Set(srcParam.Name, destParam)
+		dest.Parameters.Set(srcParam.Name, destParam)
 	}
 
 	return dest, nil

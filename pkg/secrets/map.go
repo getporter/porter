@@ -1,9 +1,27 @@
 package secrets
 
-import "get.porter.sh/porter/pkg/encoding"
+import (
+	"encoding/json"
+
+	"get.porter.sh/porter/pkg/encoding"
+	"gopkg.in/yaml.v3"
+)
 
 type Map struct {
 	*encoding.ArrayMap[ValueMapping, NamedValueMapping]
+}
+
+func NewMap() Map {
+	return Map{
+		ArrayMap: &encoding.ArrayMap[ValueMapping, NamedValueMapping]{},
+	}
+}
+
+func MakeMap(len int) Map {
+	items := encoding.MakeArrayMap[ValueMapping, NamedValueMapping](len)
+	return Map{
+		ArrayMap: &items,
+	}
 }
 
 func (m Map) Merge(overrides Map) Map {
@@ -17,6 +35,30 @@ func (m Map) ToResolvedValues() map[string]string {
 		values[k] = v.ResolvedValue
 	}
 	return values
+}
+
+func (m *Map) UnmarshalJSON(b []byte) error {
+	// Ensure that ArrayMap is not nil before its custom UnmarshalJson is called
+	// Otherwise it causes a panic
+	if m.ArrayMap == nil {
+		m.ArrayMap = &encoding.ArrayMap[ValueMapping, NamedValueMapping]{}
+	}
+
+	// Cheap trick to unmarshal without re-triggering this UnmarshalJson call
+	type RawMap Map
+	return json.Unmarshal(b, (*RawMap)(m))
+}
+
+func (m *Map) UnmarshalYAML(value *yaml.Node) error {
+	// Ensure that ArrayMap is not nil before its custom UnmarshalYAML is called
+	// Otherwise it causes a panic
+	if m.ArrayMap == nil {
+		m.ArrayMap = &encoding.ArrayMap[ValueMapping, NamedValueMapping]{}
+	}
+
+	// Cheap trick to unmarshal without re-triggering this UnmarshalYAML call
+	type RawMap Map
+	return value.Decode((*RawMap)(m))
 }
 
 var _ encoding.MapElement = ValueMapping{}

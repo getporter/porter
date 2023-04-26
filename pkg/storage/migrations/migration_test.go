@@ -153,7 +153,7 @@ func validateMigratedInstallations(ctx context.Context, t *testing.T, c *config.
 	assert.Empty(t, inst.Labels, "We didn't allow setting labels on installations in v0, so this can't be populated")
 	assert.Empty(t, inst.CredentialSets, "We didn't track credential sets used when running a bundle in v0, so this can't be populated")
 	assert.Empty(t, inst.ParameterSets, "We didn't track parameter sets used when running a bundle in v0, so this can't be populated")
-	assert.Empty(t, inst.Parameters.Parameters, "We didn't track manually specified parameters when running a bundle in v0, so this can't be populated")
+	assert.Equal(t, 0, inst.Parameters.Len(), "We didn't track manually specified parameters when running a bundle in v0, so this can't be populated")
 
 	// Validate the installation status, which is calculated based on the runs and their results
 	assert.Equal(t, "2022-04-28T16:09:42.65907-05:00", inst.Status.Created.Format(time.RFC3339Nano), "Created timestamp should be set to the timestamp of the first run")
@@ -185,7 +185,7 @@ func validateMigratedInstallations(ctx context.Context, t *testing.T, c *config.
 	assert.Empty(t, lastRun.Custom, "We didn't set custom datadata on claims in v0, so this can't be populated")
 	assert.Equal(t, "2022-04-29T16:13:20.48026-05:00", lastRun.Created.Format(time.RFC3339Nano), "incorrect run created timestamp")
 	assert.Empty(t, lastRun.ParameterSets, "We didn't track run parameter sets in v0, so this can't be populated")
-	assert.Empty(t, lastRun.ParameterOverrides, "We didn't track run parameter overrides in v0, so this can't be populated")
+	assert.Equal(t, 0, lastRun.ParameterOverrides.Len(), "We didn't track run parameter overrides in v0, so this can't be populated")
 	assert.Empty(t, lastRun.CredentialSets, "We didn't track run credential sets in v0, so this can't be populated")
 	assert.Equal(t, 1, lastRun.Parameters.Len(), "expected one parameter set on the run")
 

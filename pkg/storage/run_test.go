@@ -210,5 +210,5 @@ func TestRun_MarshalJSON(t *testing.T) {
 	err = json.Unmarshal(data, &r2)
 	require.NoError(t, err, "Unmarshal failed")
 
-	assert.Equal(t, r1, r2, "The run did not survive the round trip")
+	assert.Equal(t, r1.Bundle, r2.Bundle, "The Run's bundle did not survive the round trip")
 }

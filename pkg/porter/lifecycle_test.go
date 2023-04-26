@@ -472,7 +472,7 @@ func TestPorter_applyActionOptionsToInstallation_sanitizesParameters(t *testing.
 	require.NoError(t, err)
 
 	// Check that when no parameter overrides are specified, we use the originally specified parameters from the previous run
-	wantParameters := &storage.ParameterSourceMap{}
+	wantParameters := storage.NewParameterSourceMap()
 	wantParameters.Set("my-first-param", storage.ParameterSource{
 		Source: secrets.Source{Strategy: "value", Hint: "1"}})
 	wantParameters.Set("my-second-param", storage.ParameterSource{
@@ -519,7 +519,7 @@ func TestPorter_applyActionOptionsToInstallation_PreservesExistingParams(t *test
 	require.Equal(t, 2, i.Parameters.Len())
 
 	// Check that overrides are applied on top of existing parameters
-	wantParameters := &storage.ParameterSourceMap{}
+	wantParameters := storage.NewParameterSourceMap()
 	wantParameters.Set("my-first-param", storage.ParameterSource{
 		Source: secrets.Source{Strategy: "value", Hint: "3"},
 	})

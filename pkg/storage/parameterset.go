@@ -3,7 +3,6 @@ package storage
 import (
 	"context"
 	"fmt"
-	"get.porter.sh/porter/pkg/encoding"
 	"strings"
 	"time"
 
@@ -45,12 +44,13 @@ type ParameterSetSpec struct {
 	Labels map[string]string `json:"labels,omitempty" yaml:"labels,omitempty" toml:"labels,omitempty"`
 
 	// Parameters is a list of parameter specs.
-	Parameters *ParameterSourceMap `json:"parameters" yaml:"parameters" toml:"parameters"`
+	Parameters ParameterSourceMap `json:"parameters" yaml:"parameters" toml:"parameters"`
 }
 
-type ParameterSourceMap = encoding.ArrayMap[ParameterSource, NamedParameterSource]
+type ParameterSourceMap = secrets.Map
 
-var MakeParameterSourceMap = encoding.MakeArrayMap[ParameterSource, NamedParameterSource]
+var MakeParameterSourceMap = secrets.MakeMap
+var NewParameterSourceMap = secrets.NewMap
 
 // TODO(generics)
 type ParameterSource = secrets.ValueMapping
@@ -74,7 +74,7 @@ func NewParameterSet(namespace string, name string) ParameterSet {
 			SchemaVersion: DefaultParameterSetSchemaVersion,
 			Namespace:     namespace,
 			Name:          name,
-			Parameters:    &ParameterSourceMap{},
+			Parameters:    NewParameterSourceMap(),
 		},
 		Status: ParameterSetStatus{
 			Created:  now,
@@ -132,9 +132,6 @@ func (s ParameterSet) String() string {
 }
 
 func (s ParameterSet) Iterate() map[string]ParameterSource {
-	if s.Parameters == nil {
-		return nil
-	}
 	return s.Parameters.Items()
 }
 
@@ -143,9 +140,6 @@ func (s ParameterSet) SetStrategy(key string, source secrets.Source) {
 }
 
 func (s ParameterSet) Set(key string, source ParameterSource) {
-	if s.Parameters == nil { // TODO(carolyn): do this in all the places
-		s.Parameters = &ParameterSourceMap{}
-	}
 	s.Parameters.Set(key, source)
 }
 

@@ -29,20 +29,20 @@ func NewSanitizer(parameterstore ParameterSetProvider, secretstore secrets.Store
 // transform the raw value into secret strategies.
 // The id argument is used to associate the reference key with the corresponding
 // run or installation record in porter's database.
-func (s *Sanitizer) CleanRawParameters(ctx context.Context, params map[string]interface{}, bun cnab.ExtendedBundle, id string) (*ParameterSourceMap, error) {
+func (s *Sanitizer) CleanRawParameters(ctx context.Context, params map[string]interface{}, bun cnab.ExtendedBundle, id string) (ParameterSourceMap, error) {
 	strategies := MakeParameterSourceMap(len(params))
 	for name, value := range params {
 		stringVal, err := bun.WriteParameterToString(name, value)
 		if err != nil {
-			return nil, err
+			return ParameterSourceMap{}, err
 		}
 
 		strategies.Set(name, secrets.HardCodedValue(stringVal))
 	}
 
-	result, err := s.CleanParameters(ctx, &strategies, bun, id)
+	result, err := s.CleanParameters(ctx, strategies, bun, id)
 	if err != nil {
-		return nil, err
+		return ParameterSourceMap{}, err
 	}
 
 	return result, nil
@@ -53,7 +53,7 @@ func (s *Sanitizer) CleanRawParameters(ctx context.Context, params map[string]in
 // Sanitized value after saving sensitive data to secrets store.
 // The id argument is used to associate the reference key with the corresponding
 // run or installation record in porter's database.
-func (s *Sanitizer) CleanParameters(ctx context.Context, dirtyParams *ParameterSourceMap, bun cnab.ExtendedBundle, id string) (*ParameterSourceMap, error) {
+func (s *Sanitizer) CleanParameters(ctx context.Context, dirtyParams ParameterSourceMap, bun cnab.ExtendedBundle, id string) (ParameterSourceMap, error) {
 	cleanedParams := MakeParameterSourceMap(dirtyParams.Len())
 	for paramName, param := range dirtyParams.Items() {
 		// Store sensitive hard-coded values in a secret store
@@ -61,7 +61,7 @@ func (s *Sanitizer) CleanParameters(ctx context.Context, dirtyParams *ParameterS
 			cleaned := sanitizedParam(paramName, param, id)
 			err := s.secrets.Create(ctx, cleaned.Source.Strategy, cleaned.Source.Hint, cleaned.ResolvedValue)
 			if err != nil {
-				return nil, fmt.Errorf("failed to save sensitive param to secrete store: %w", err)
+				return ParameterSourceMap{}, fmt.Errorf("failed to save sensitive param to secrete store: %w", err)
 			}
 
 			cleanedParams.Set(paramName, cleaned)
@@ -71,10 +71,10 @@ func (s *Sanitizer) CleanParameters(ctx context.Context, dirtyParams *ParameterS
 	}
 
 	if cleanedParams.Len() == 0 {
-		return nil, nil
+		return NewParameterSourceMap(), nil
 	}
 
-	return &cleanedParams, nil
+	return cleanedParams, nil
 
 }
 

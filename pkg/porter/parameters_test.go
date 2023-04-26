@@ -859,7 +859,7 @@ func TestPorter_ParametersApply(t *testing.T) {
 
 		assert.Equal(t, "mypset", ps.Name, "unexpected parameter set name")
 
-		wantParams := &storage.ParameterSourceMap{}
+		wantParams := storage.NewParameterSourceMap()
 		wantParams.Set("foo", storage.ParameterSource{
 			Source: secrets.Source{
 				Strategy: "secret",

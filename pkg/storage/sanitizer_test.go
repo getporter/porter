@@ -28,7 +28,7 @@ func TestSanitizer_Parameters(t *testing.T) {
 	recordID := "01FZVC5AVP8Z7A78CSCP1EJ604"
 	sensitiveParamName := "my-second-param"
 	sensitiveParamKey := recordID + "-" + sensitiveParamName
-	expected := &storage.ParameterSourceMap{}
+	expected := storage.NewParameterSourceMap()
 	expected.Set("my-first-param", secrets.HardCodedValue("1"))
 	expected.Set(sensitiveParamName, storage.ParameterSource{Source: secrets.Source{
 		Strategy: secrets.SourceSecret,
@@ -108,7 +108,7 @@ func TestSanitizer_CleanParameters(t *testing.T) {
 			gotParams, err := r.Sanitizer.CleanParameters(ctx, inst.Parameters.Parameters, bun, inst.ID)
 			require.NoError(t, err, "CleanParameters failed")
 
-			wantParms := &storage.ParameterSourceMap{}
+			wantParms := storage.NewParameterSourceMap()
 			wantParms.Set(tc.paramName, storage.ParameterSource{Source: tc.wantSource})
 			require.Equal(t, wantParms, gotParams, "unexpected value returned from CleanParameters")
 		})

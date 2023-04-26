@@ -24,7 +24,6 @@ type ArrayMap[T MapElement, K ArrayElement] struct {
 	items map[string]T
 }
 
-// TODO(carolyn): Can I make this work without K?
 func MakeArrayMap[T MapElement, K ArrayElement](len int) ArrayMap[T, K] {
 	return ArrayMap[T, K]{
 		items: make(map[string]T, len),
@@ -131,6 +130,10 @@ func (m *ArrayMap[T, K]) UnmarshalRaw(raw []K) error {
 	// This more closely matches how the stdlib encoders work
 	if len(raw) == 0 {
 		return nil
+	}
+
+	if m == nil {
+		*m = ArrayMap[T, K]{}
 	}
 
 	m.items = make(map[string]T, len(raw))
