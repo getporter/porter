@@ -234,12 +234,13 @@ func (p *TestPorter) AddTestBundleDir(bundleDir string, generateUniqueName bool)
 // When they are different and PORTER_UPDATE_TEST_FILES is true, the file is updated to match
 // the new test output.
 func (p *TestPorter) CompareGoldenFile(goldenFile string, got string) {
+	p.T().Helper()
 	p.TestConfig.TestContext.CompareGoldenFile(goldenFile, got)
 }
 
 // CreateInstallation saves an installation record into claim store and store
 // sensitive parameters into secret store.
-func (p *TestPorter) SanitizeParameters(raw []secrets.SourceMap, recordID string, bun cnab.ExtendedBundle) []secrets.SourceMap {
+func (p *TestPorter) SanitizeParameters(raw *storage.ParameterSourceMap, recordID string, bun cnab.ExtendedBundle) *storage.ParameterSourceMap {
 	strategies, err := p.Sanitizer.CleanParameters(context.Background(), raw, bun, recordID)
 	require.NoError(p.T(), err)
 

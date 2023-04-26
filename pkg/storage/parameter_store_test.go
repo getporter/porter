@@ -18,14 +18,11 @@ func TestParameterStore_CRUD(t *testing.T) {
 	require.NoError(t, err)
 	require.Empty(t, params, "Find should return no entries")
 
-	myParamSet := NewParameterSet("dev", "myparams",
-		secrets.SourceMap{
-			Name: "myparam",
-			Source: secrets.Source{
-				Strategy: "value",
-				Hint:     "myparamvalue",
-			},
-		})
+	myParamSet := NewParameterSet("dev", "myparams")
+	myParamSet.SetStrategy("myparam", secrets.Source{
+		Strategy: "value",
+		Hint:     "myparamvalue",
+	})
 	myParamSet.Status.Created = time.Date(2020, 1, 1, 12, 0, 0, 0, time.UTC)
 	myParamSet.Status.Modified = myParamSet.Status.Created
 
@@ -49,14 +46,11 @@ func TestParameterStore_CRUD(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, myParamSet, pset, "Get should return the saved parameter set")
 
-	myParamSet2 := NewParameterSet("dev", "myparams2",
-		secrets.SourceMap{
-			Name: "myparam2",
-			Source: secrets.Source{
-				Strategy: "value2",
-				Hint:     "myparamvalue2",
-			},
-		})
+	myParamSet2 := NewParameterSet("dev", "myparams2")
+	myParamSet2.SetStrategy("myparam2", secrets.Source{
+		Strategy: "value2",
+		Hint:     "myparamvalue2",
+	})
 	myParamSet2.Status.Created = time.Date(2020, 1, 1, 12, 0, 0, 0, time.UTC)
 	myParamSet2.Status.Modified = myParamSet2.Status.Created
 
@@ -93,21 +87,15 @@ func TestParameterStore_CRUD(t *testing.T) {
 func TestParameterStorage_ResolveAll(t *testing.T) {
 	// The inmemory secret store currently only supports secret sources
 	// So all of these have this same source
-	testParameterSet := NewParameterSet("", "myparamset",
-		secrets.SourceMap{
-			Name: "param1",
-			Source: secrets.Source{
-				Strategy: "secret",
-				Hint:     "param1",
-			},
-		},
-		secrets.SourceMap{
-			Name: "param2",
-			Source: secrets.Source{
-				Strategy: "secret",
-				Hint:     "param2",
-			},
-		})
+	testParameterSet := NewParameterSet("", "myparamset")
+	testParameterSet.SetStrategy("param1", secrets.Source{
+		Strategy: "secret",
+		Hint:     "param1",
+	})
+	testParameterSet.SetStrategy("param2", secrets.Source{
+		Strategy: "secret",
+		Hint:     "param2",
+	})
 
 	t.Run("resolve params success", func(t *testing.T) {
 		paramStore := NewTestParameterProvider(t)
@@ -148,37 +136,27 @@ func TestParameterStorage_Validate(t *testing.T) {
 	t.Run("valid sources", func(t *testing.T) {
 		s := ParameterStore{}
 
-		testParameterSet := NewParameterSet("", "myparams",
-			secrets.SourceMap{
-				Source: secrets.Source{
-					Strategy: "env",
-					Hint:     "SOME_ENV",
-				},
-			},
-			secrets.SourceMap{
-				Source: secrets.Source{
-					Strategy: "value",
-					Hint:     "somevalue",
-				},
-			},
-			secrets.SourceMap{
-				Source: secrets.Source{
-					Strategy: "path",
-					Hint:     "/some/path",
-				},
-			},
-			secrets.SourceMap{
-				Source: secrets.Source{
-					Strategy: "command",
-					Hint:     "some command",
-				},
-			},
-			secrets.SourceMap{
-				Source: secrets.Source{
-					Strategy: "secret",
-					Hint:     "secret",
-				},
-			})
+		testParameterSet := NewParameterSet("", "myparams")
+		testParameterSet.SetStrategy("stuff", secrets.Source{
+			Strategy: "env",
+			Hint:     "SOME_ENV",
+		})
+		testParameterSet.SetStrategy("things", secrets.Source{
+			Strategy: "value",
+			Hint:     "somevalue",
+		})
+		testParameterSet.SetStrategy("pathy", secrets.Source{
+			Strategy: "path",
+			Hint:     "/some/path",
+		})
+		testParameterSet.SetStrategy("commandy", secrets.Source{
+			Strategy: "command",
+			Hint:     "some command",
+		})
+		testParameterSet.SetStrategy("secrety", secrets.Source{
+			Strategy: "secret",
+			Hint:     "secret",
+		})
 
 		err := s.Validate(context.Background(), testParameterSet)
 		require.NoError(t, err, "Validate did not return errors")
@@ -186,19 +164,15 @@ func TestParameterStorage_Validate(t *testing.T) {
 
 	t.Run("invalid sources", func(t *testing.T) {
 		s := ParameterStore{}
-		testParameterSet := NewParameterSet("", "myparams",
-			secrets.SourceMap{
-				Source: secrets.Source{
-					Strategy: "wrongthing",
-					Hint:     "SOME_ENV",
-				},
-			},
-			secrets.SourceMap{
-				Source: secrets.Source{
-					Strategy: "anotherwrongthing",
-					Hint:     "somevalue",
-				},
-			})
+		testParameterSet := NewParameterSet("", "myparams")
+		testParameterSet.SetStrategy("badstuff", secrets.Source{
+			Strategy: "wrongthing",
+			Hint:     "SOME_ENV",
+		})
+		testParameterSet.SetStrategy("badthing", secrets.Source{
+			Strategy: "anotherwrongthing",
+			Hint:     "somevalue",
+		})
 
 		err := s.Validate(context.Background(), testParameterSet)
 		require.Error(t, err, "Validate returned errors")

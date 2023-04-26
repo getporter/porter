@@ -69,6 +69,7 @@ func TestMainWithMockedCommandHandlers(m *testing.M) {
 // When they are different and PORTER_UPDATE_TEST_FILES is true, the file is updated to match
 // the new test output.
 func CompareGoldenFile(t *testing.T, goldenFile string, got string) {
+	t.Helper()
 	if os.Getenv("PORTER_UPDATE_TEST_FILES") == "true" {
 		os.MkdirAll(filepath.Dir(goldenFile), pkg.FileModeDirectory)
 		t.Logf("Updated test file %s to match latest test output", goldenFile)

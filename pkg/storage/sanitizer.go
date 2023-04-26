@@ -29,23 +29,23 @@ func NewSanitizer(parameterstore ParameterSetProvider, secretstore secrets.Store
 // transform the raw value into secret strategies.
 // The id argument is used to associate the reference key with the corresponding
 // run or installation record in porter's database.
-func (s *Sanitizer) CleanRawParameters(ctx context.Context, params map[string]interface{}, bun cnab.ExtendedBundle, id string) ([]secrets.SourceMap, error) {
-	strategies := make([]secrets.SourceMap, 0, len(params))
+func (s *Sanitizer) CleanRawParameters(ctx context.Context, params map[string]interface{}, bun cnab.ExtendedBundle, id string) (*ParameterSourceMap, error) {
+	strategies := MakeParameterSourceMap(len(params))
 	for name, value := range params {
 		stringVal, err := bun.WriteParameterToString(name, value)
 		if err != nil {
 			return nil, err
 		}
-		strategy := ValueStrategy(name, stringVal)
-		strategies = append(strategies, strategy)
+
+		strategies.Set(name, secrets.HardCodedValue(stringVal))
 	}
 
-	strategies, err := s.CleanParameters(ctx, strategies, bun, id)
+	result, err := s.CleanParameters(ctx, &strategies, bun, id)
 	if err != nil {
 		return nil, err
 	}
 
-	return strategies, nil
+	return result, nil
 
 }
 
@@ -53,28 +53,28 @@ func (s *Sanitizer) CleanRawParameters(ctx context.Context, params map[string]in
 // Sanitized value after saving sensitive data to secrets store.
 // The id argument is used to associate the reference key with the corresponding
 // run or installation record in porter's database.
-func (s *Sanitizer) CleanParameters(ctx context.Context, dirtyParams []secrets.SourceMap, bun cnab.ExtendedBundle, id string) ([]secrets.SourceMap, error) {
-	cleanedParams := make([]secrets.SourceMap, 0, len(dirtyParams))
-	for _, param := range dirtyParams {
+func (s *Sanitizer) CleanParameters(ctx context.Context, dirtyParams *ParameterSourceMap, bun cnab.ExtendedBundle, id string) (*ParameterSourceMap, error) {
+	cleanedParams := MakeParameterSourceMap(dirtyParams.Len())
+	for paramName, param := range dirtyParams.Items() {
 		// Store sensitive hard-coded values in a secret store
-		if param.Source.Strategy == host.SourceValue && bun.IsSensitiveParameter(param.Name) {
-			cleaned := sanitizedParam(param, id)
+		if param.Source.Strategy == host.SourceValue && bun.IsSensitiveParameter(paramName) {
+			cleaned := sanitizedParam(paramName, param, id)
 			err := s.secrets.Create(ctx, cleaned.Source.Strategy, cleaned.Source.Hint, cleaned.ResolvedValue)
 			if err != nil {
 				return nil, fmt.Errorf("failed to save sensitive param to secrete store: %w", err)
 			}
 
-			cleanedParams = append(cleanedParams, cleaned)
+			cleanedParams.Set(paramName, cleaned)
 		} else { // All other parameters are safe to use without cleaning
-			cleanedParams = append(cleanedParams, param)
+			cleanedParams.Set(paramName, param)
 		}
 	}
 
-	if len(cleanedParams) == 0 {
+	if cleanedParams.Len() == 0 {
 		return nil, nil
 	}
 
-	return cleanedParams, nil
+	return &cleanedParams, nil
 
 }
 
@@ -83,20 +83,24 @@ func (s *Sanitizer) CleanParameters(ctx context.Context, dirtyParams []secrets.S
 // The id argument is used to associate the reference key with the corresponding
 // run or installation record in porter's database.
 func LinkSensitiveParametersToSecrets(pset ParameterSet, bun cnab.ExtendedBundle, id string) ParameterSet {
-	for i, param := range pset.Parameters {
-		if !bun.IsSensitiveParameter(param.Name) {
+	for paramName, param := range pset.Iterate() {
+		if !bun.IsSensitiveParameter(paramName) {
 			continue
 		}
-		pset.Parameters[i] = sanitizedParam(param, id)
+		pset.Set(paramName, sanitizedParam(paramName, param, id))
 	}
 
 	return pset
 }
 
-func sanitizedParam(param secrets.SourceMap, id string) secrets.SourceMap {
-	param.Source.Strategy = secrets.SourceSecret
-	param.Source.Hint = id + "-" + param.Name
-	return param
+func sanitizedParam(paramName string, param ParameterSource, id string) ParameterSource {
+	return ParameterSource{
+		Source: secrets.Source{
+			Strategy: secrets.SourceSecret,
+			Hint:     id + "-" + paramName,
+		},
+		ResolvedValue: param.ResolvedValue,
+	}
 }
 
 // RestoreParameterSet resolves the raw parameter data from a secrets store.

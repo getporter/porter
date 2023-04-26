@@ -11,9 +11,8 @@ import (
 	"strings"
 	"time"
 
-	depsv1 "get.porter.sh/porter/pkg/cnab/dependencies/v1"
-
 	"get.porter.sh/porter/pkg/cnab"
+	depsv1 "get.porter.sh/porter/pkg/cnab/dependencies/v1"
 	"get.porter.sh/porter/pkg/editor"
 	"get.porter.sh/porter/pkg/encoding"
 	"get.porter.sh/porter/pkg/generator"
@@ -271,8 +270,8 @@ func (p *Porter) ShowParameter(ctx context.Context, opts ParameterShowOptions) e
 		var rows [][]string
 
 		// Iterate through all ParameterStrategies and add to rows
-		for _, pset := range paramSet.Parameters {
-			rows = append(rows, []string{pset.Name, pset.Source.Hint, pset.Source.Strategy})
+		for paramName, param := range paramSet.Iterate() {
+			rows = append(rows, []string{paramName, param.Source.Hint, param.Source.Strategy})
 		}
 
 		// Build and configure our tablewriter
@@ -388,15 +387,13 @@ func (p *Porter) loadParameterSets(ctx context.Context, bun cnab.ExtendedBundle,
 			}
 
 			if bun.IsFileType(paramSchema) {
-				for i, param := range pset.Parameters {
-					if param.Name == paramName {
-						// Pass through value (filepath) directly to resolvedParameters
-						resolvedParameters[param.Name] = param.Source.Hint
-						// Eliminate this param from pset to prevent its resolution by
-						// the cnab-go library, which doesn't support this parameter type
-						pset.Parameters[i] = pset.Parameters[len(pset.Parameters)-1]
-						pset.Parameters = pset.Parameters[:len(pset.Parameters)-1]
-					}
+				param, ok := pset.Get(paramName)
+				if ok {
+					// Pass through value (filepath) directly to resolvedParameters
+					resolvedParameters[paramName] = param.Source.Hint
+					// Eliminate this param from pset to prevent its resolution by
+					// the cnab-go library, which doesn't support this parameter type
+					pset.Remove(paramName)
 				}
 			}
 		}
@@ -836,21 +833,8 @@ func (p *Porter) applyActionOptionsToInstallation(ctx context.Context, ba Bundle
 			}
 
 			// Replace previous value if present
-			replaced := false
-			paramStrategy := storage.ValueStrategy(name, value)
-			for i, existingParam := range inst.Parameters.Parameters {
-				if existingParam.Name == name {
-					inst.Parameters.Parameters[i] = paramStrategy
-					replaced = true
-				}
-			}
-			if !replaced {
-				inst.Parameters.Parameters = append(inst.Parameters.Parameters, paramStrategy)
-			}
+			inst.Parameters.SetStrategy(name, secrets.HardCodedValueStrategy(value))
 		}
-
-		// Keep the parameter overrides sorted, so that comparisons and general troubleshooting is easier
-		sort.Sort(inst.Parameters.Parameters)
 	}
 	// This contains resolved sensitive values, so only trace it in special dev builds (nothing is traced for release builds)
 	span.SetSensitiveAttributes(tracing.ObjectAttribute("merged-installation-parameters", inst.Parameters.Parameters))

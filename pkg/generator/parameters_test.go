@@ -50,7 +50,7 @@ func TestGoodParametersName(t *testing.T) {
 
 	pset, err := opts.GenerateParameters()
 	require.NoError(t, err, "name should NOT have resulted in an error")
-	require.Equal(t, 3, len(pset.Parameters), "should have had 3 entries")
+	require.Equal(t, 3, pset.Len(), "should have had 3 entries")
 }
 
 func TestNoParameters(t *testing.T) {

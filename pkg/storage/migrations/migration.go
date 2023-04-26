@@ -310,13 +310,13 @@ func convertClaimToRun(inst storage.Installation, data []byte) (storage.Run, err
 		return storage.Run{}, fmt.Errorf("error parsing claim record: %w", err)
 	}
 
-	params := make([]secrets.SourceMap, 0, len(src.Parameters))
+	pset := storage.NewInternalParameterSet(inst.Namespace, src.ID)
 	for k, v := range src.Parameters {
 		stringVal, err := cnab.WriteParameterToString(k, v)
 		if err != nil {
 			return storage.Run{}, err
 		}
-		params = append(params, storage.ValueStrategy(k, stringVal))
+		pset.SetStrategy(k, secrets.HardCodedValueStrategy(stringVal))
 	}
 
 	dest := storage.Run{
@@ -330,7 +330,7 @@ func convertClaimToRun(inst storage.Installation, data []byte) (storage.Run, err
 		Bundle:          src.Bundle,
 		BundleReference: src.BundleReference,
 		BundleDigest:    "", // We didn't track digest before v1
-		Parameters:      storage.NewInternalParameterSet(inst.Namespace, src.ID, params...),
+		Parameters:      pset,
 		Custom:          src.Custom,
 	}
 
@@ -505,7 +505,6 @@ func convertCredentialSet(namespace string, data []byte) (storage.CredentialSet,
 			SchemaVersion: storage.DefaultCredentialSetSchemaVersion,
 			Namespace:     namespace,
 			Name:          src.Name,
-			Credentials:   make([]secrets.SourceMap, len(src.Credentials)),
 		},
 		Status: storage.CredentialSetStatus{
 			Created:  src.Created,
@@ -513,14 +512,16 @@ func convertCredentialSet(namespace string, data []byte) (storage.CredentialSet,
 		},
 	}
 
-	for i, cred := range src.Credentials {
-		dest.CredentialSetSpec.Credentials[i] = secrets.SourceMap{
-			Name: cred.Name,
+	destCreds := storage.MakeCredentialSourceMap(len(src.Credentials))
+	dest.Credentials = &destCreds
+	for _, srcCred := range src.Credentials {
+		destCred := storage.CredentialSource{
 			Source: secrets.Source{
-				Strategy: cred.Source.Key,
-				Hint:     cred.Source.Value,
+				Strategy: srcCred.Source.Key,
+				Hint:     srcCred.Source.Value,
 			},
 		}
+		destCreds.Set(srcCred.Name, destCred)
 	}
 
 	return dest, nil
@@ -583,7 +584,6 @@ func convertParameterSet(namespace string, data []byte) (storage.ParameterSet, e
 			SchemaVersion: storage.DefaultParameterSetSchemaVersion,
 			Namespace:     namespace,
 			Name:          src.Name,
-			Parameters:    make([]secrets.SourceMap, len(src.Parameters)),
 		},
 		Status: storage.ParameterSetStatus{
 			Created:  src.Created,
@@ -591,14 +591,16 @@ func convertParameterSet(namespace string, data []byte) (storage.ParameterSet, e
 		},
 	}
 
-	for i, cred := range src.Parameters {
-		dest.Parameters[i] = secrets.SourceMap{
-			Name: cred.Name,
+	destParams := storage.MakeParameterSourceMap(len(src.Parameters))
+	dest.Parameters = &destParams
+	for _, srcParam := range src.Parameters {
+		destParam := storage.ParameterSource{
 			Source: secrets.Source{
-				Strategy: cred.Source.Key,
-				Hint:     cred.Source.Value,
+				Strategy: srcParam.Source.Key,
+				Hint:     srcParam.Source.Value,
 			},
 		}
+		destParams.Set(srcParam.Name, destParam)
 	}
 
 	return dest, nil

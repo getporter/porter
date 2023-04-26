@@ -51,7 +51,7 @@ func TestGoodCredentialsName(t *testing.T) {
 
 	cs, err := GenerateCredentials(opts)
 	require.NoError(t, err, "name should NOT have resulted in an error")
-	require.Equal(t, 3, len(cs.Credentials), "should have had 3 entries")
+	require.Equal(t, 3, cs.Len(), "should have had 3 entries")
 }
 
 func TestNoCredentials(t *testing.T) {

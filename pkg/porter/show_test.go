@@ -92,11 +92,10 @@ func TestPorter_ShowInstallationWithBundle(t *testing.T) {
 					"io.cnab/app":        "wordpress",
 					"io.cnab/appVersion": "v1.2.3",
 				}
-				params := []secrets.SourceMap{
-					{Name: "logLevel", Source: secrets.Source{Hint: "3"}, ResolvedValue: "3"},
-					secrets.SourceMap{Name: "secretString", Source: secrets.Source{Strategy: "secretString", Hint: "foo"}, ResolvedValue: "foo"},
-				}
-				i.Parameters = i.NewInternalParameterSet(params...)
+
+				i.Parameters = i.NewInternalParameterSet()
+				i.Parameters.SetStrategy("logLevel", secrets.HardCodedValueStrategy("3"))
+				i.Parameters.SetStrategy("secretString", secrets.Source{Strategy: secrets.SourceSecret, Hint: "foo"})
 
 				i.ParameterSets = []string{"dev-env"}
 
@@ -108,17 +107,14 @@ func TestPorter_ShowInstallationWithBundle(t *testing.T) {
 				r.BundleReference = tc.ref
 				r.BundleDigest = "sha256:88d68ef0bdb9cedc6da3a8e341a33e5d2f8bb19d0cf7ec3f1060d3f9eb73cae9"
 
-				r.ParameterOverrides = i.NewInternalParameterSet(
-					storage.ValueStrategy("logLevel", "3"),
-					storage.ValueStrategy("secretString", "foo"),
-				)
+				r.ParameterOverrides = i.NewInternalParameterSet()
+				r.ParameterOverrides.Set("logLevel", secrets.HardCodedValue("3"))
+				r.ParameterOverrides.Set("secretString", secrets.HardCodedValue("foo"))
 
-				r.Parameters = i.NewInternalParameterSet(
-					[]secrets.SourceMap{
-						storage.ValueStrategy("logLevel", "3"),
-						storage.ValueStrategy("token", "top-secret"),
-						storage.ValueStrategy("secretString", "foo"),
-					}...)
+				r.Parameters = i.NewInternalParameterSet()
+				r.Parameters.Set("logLevel", secrets.HardCodedValue("3"))
+				r.Parameters.Set("token", secrets.HardCodedValue("top-secret"))
+				r.Parameters.Set("secretString", secrets.HardCodedValue("foo"))
 
 				r.ParameterSets = []string{"dev-env"}
 				r.ParameterOverrides.Parameters = p.SanitizeParameters(r.ParameterOverrides.Parameters, r.ID, bun)
@@ -205,11 +201,10 @@ func TestPorter_ShowInstallationWithoutRecordedRun(t *testing.T) {
 			"io.cnab/app":        "wordpress",
 			"io.cnab/appVersion": "v1.2.3",
 		}
-		params := []secrets.SourceMap{
-			{Name: "logLevel", Source: secrets.Source{Hint: "3"}, ResolvedValue: "3"},
-			secrets.SourceMap{Name: "secretString", Source: secrets.Source{Strategy: "secretString", Hint: "foo"}, ResolvedValue: "foo"},
-		}
-		i.Parameters = i.NewInternalParameterSet(params...)
+
+		i.Parameters = i.NewInternalParameterSet()
+		i.Parameters.SetStrategy("logLevel", secrets.HardCodedValueStrategy("3"))
+		i.Parameters.SetStrategy("secretString", secrets.HardCodedValueStrategy("foo"))
 
 		i.ParameterSets = []string{"dev-env"}
 

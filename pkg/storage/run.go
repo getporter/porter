@@ -172,29 +172,29 @@ func (r Run) TypedParameterValues() map[string]interface{} {
 	bun := cnab.NewBundle(r.Bundle)
 	value := make(map[string]interface{})
 
-	for _, param := range r.Parameters.Parameters {
-		v, err := bun.ConvertParameterValue(param.Name, param.ResolvedValue)
+	for paramName, param := range r.Parameters.Iterate() {
+		v, err := bun.ConvertParameterValue(paramName, param.ResolvedValue)
 		if err != nil {
-			value[param.Name] = param.ResolvedValue
+			value[paramName] = param.ResolvedValue
 			continue
 		}
-		def, ok := bun.Definitions[param.Name]
+		def, ok := bun.Definitions[paramName]
 		if !ok {
-			value[param.Name] = v
+			value[paramName] = v
 			continue
 		}
 		if bun.IsFileType(def) && v == "" {
 			v = nil
 		}
 
-		value[param.Name] = v
+		value[paramName] = v
 	}
 
 	return value
 
 }
 
-// NewRun creates a result for the current Run.
+// NewResult creates a result for the current Run.
 func (r Run) NewResult(status string) Result {
 	result := NewResult()
 	result.RunID = r.ID

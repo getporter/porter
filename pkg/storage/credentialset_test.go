@@ -17,12 +17,10 @@ import (
 )
 
 func TestNewCredentialSet(t *testing.T) {
-	cs := NewCredentialSet("dev", "mycreds", secrets.SourceMap{
-		Name: "password",
-		Source: secrets.Source{
-			Strategy: "env",
-			Hint:     "MY_PASSWORD",
-		},
+	cs := NewCredentialSet("dev", "mycreds")
+	cs.SetStrategy("password", secrets.Source{
+		Strategy: "env",
+		Hint:     "MY_PASSWORD",
 	})
 
 	assert.Equal(t, "mycreds", cs.Name, "Name was not set")
@@ -32,7 +30,7 @@ func TestNewCredentialSet(t *testing.T) {
 	assert.Equal(t, cs.Status.Created, cs.Status.Modified, "Created and Modified should have the same timestamp")
 	assert.Equal(t, SchemaTypeCredentialSet, cs.SchemaType, "incorrect SchemaType")
 	assert.Equal(t, DefaultCredentialSetSchemaVersion, cs.SchemaVersion, "incorrect SchemaVersion")
-	assert.Len(t, cs.Credentials, 1, "Credentials should be initialized with 1 value")
+	assert.Equal(t, 1, cs.Len(), "Credentials should be initialized with 1 value")
 }
 
 func TestValidate(t *testing.T) {
@@ -152,21 +150,17 @@ func TestMarshal(t *testing.T) {
 			SchemaVersion: "schemaVersion",
 			Namespace:     "namespace",
 			Name:          "name",
-			Credentials: []secrets.SourceMap{
-				{
-					Name: "cred1",
-					Source: secrets.Source{
-						Strategy: "secret",
-						Hint:     "mysecret",
-					},
-				},
-			},
+			Credentials:   &CredentialSourceMap{},
 		},
 		Status: CredentialSetStatus{
 			Created:  now,
 			Modified: now,
 		},
 	}
+	orig.SetStrategy("cred1", secrets.Source{
+		Strategy: "secret",
+		Hint:     "mysecret",
+	})
 
 	formats := []string{"json", "yaml"}
 	for _, format := range formats {

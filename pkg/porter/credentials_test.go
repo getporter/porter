@@ -564,9 +564,10 @@ func TestPorter_CredentialsApply(t *testing.T) {
 		require.NoError(t, err, "Failed to retrieve applied credential set")
 
 		assert.Equal(t, "kool-kreds", cs.Name, "unexpected credential set name")
-		require.Len(t, cs.Credentials, 4, "expected 4 credentials in the set")
-		assert.Equal(t, "kool-config", cs.Credentials[0].Name, "expected the kool-config credential mapping defined")
-		assert.Equal(t, "path", cs.Credentials[0].Source.Strategy, "unexpected credential source")
-		assert.Equal(t, "/path/to/kool-config", cs.Credentials[0].Source.Hint, "unexpected credential mapping value")
+		require.Equal(t, 4, cs.Len(), "expected 4 credentials in the set")
+		koolCred, ok := cs.Get("kool-config")
+		require.True(t, ok, "expected 'kool-config' to be present")
+		assert.Equal(t, "path", koolCred.Source.Strategy, "unexpected credential source")
+		assert.Equal(t, "/path/to/kool-config", koolCred.Source.Hint, "unexpected credential mapping value")
 	})
 }

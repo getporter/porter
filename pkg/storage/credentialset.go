@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"get.porter.sh/porter/pkg/cnab"
+	"get.porter.sh/porter/pkg/encoding"
 	"get.porter.sh/porter/pkg/schema"
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/tracing"
@@ -50,8 +51,14 @@ type CredentialSetSpec struct {
 	Labels map[string]string `json:"labels,omitempty" yaml:"labels,omitempty" toml:"labels,omitempty"`
 
 	// Credentials is a list of credential resolution strategies.
-	Credentials secrets.StrategyList `json:"credentials" yaml:"credentials" toml:"credentials"`
+	Credentials *CredentialSourceMap `json:"credentials" yaml:"credentials" toml:"credentials"`
 }
+
+type CredentialSourceMap = encoding.ArrayMap[CredentialSource, NamedCredentialSource]
+
+// TODO(generics)
+type CredentialSource = secrets.ValueMapping
+type NamedCredentialSource = secrets.NamedValueMapping
 
 // CredentialSetStatus contains additional status metadata that has been set by Porter.
 type CredentialSetStatus struct {
@@ -62,8 +69,10 @@ type CredentialSetStatus struct {
 	Modified time.Time `json:"modified" yaml:"modified" toml:"modified"`
 }
 
+var MakeCredentialSourceMap = encoding.MakeArrayMap[CredentialSource, NamedCredentialSource]
+
 // NewCredentialSet creates a new CredentialSet with the required fields initialized.
-func NewCredentialSet(namespace string, name string, creds ...secrets.SourceMap) CredentialSet {
+func NewCredentialSet(namespace string, name string) CredentialSet {
 	now := time.Now()
 	cs := CredentialSet{
 		CredentialSetSpec: CredentialSetSpec{
@@ -71,7 +80,7 @@ func NewCredentialSet(namespace string, name string, creds ...secrets.SourceMap)
 			SchemaVersion: DefaultCredentialSetSchemaVersion,
 			Name:          name,
 			Namespace:     namespace,
-			Credentials:   creds,
+			Credentials:   &CredentialSourceMap{},
 		},
 		Status: CredentialSetStatus{
 			Created:  now,
@@ -121,6 +130,33 @@ func (s *CredentialSet) Validate(ctx context.Context, strategy schema.CheckStrat
 
 func (s CredentialSet) String() string {
 	return fmt.Sprintf("%s/%s", s.Namespace, s.Name)
+}
+
+func (s CredentialSet) Iterate() map[string]CredentialSource {
+	return s.Credentials.Items()
+}
+
+func (s CredentialSet) IterateSorted() []NamedCredentialSource {
+	return s.Credentials.ItemsSorted()
+}
+
+func (s CredentialSet) SetStrategy(key string, source secrets.Source) {
+	s.Credentials.Set(key, CredentialSource{Source: source})
+}
+
+func (s CredentialSet) Set(key string, source CredentialSource) {
+	if s.Credentials == nil {
+		s.Credentials = &CredentialSourceMap{}
+	}
+	s.Credentials.Set(key, source)
+}
+
+func (s CredentialSet) Get(key string) (CredentialSource, bool) {
+	return s.Credentials.Get(key)
+}
+
+func (s CredentialSet) Len() int {
+	return s.Credentials.Len()
 }
 
 // Validate compares the given credentials with the spec.

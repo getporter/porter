@@ -230,6 +230,9 @@ func (e *dependencyExecutioner) prepareDependency(ctx context.Context, dep *queu
 		}
 	}
 
+	if dep.Parameters == nil {
+		dep.Parameters = make(map[string]string)
+	}
 	for _, manifestDep := range m.Dependencies.Requires {
 		if manifestDep.Name == dep.Alias {
 			for paramName, value := range manifestDep.Parameters {
@@ -238,9 +241,6 @@ func (e *dependencyExecutioner) prepareDependency(ctx context.Context, dep *queu
 					return fmt.Errorf("invalid dependencies.%s.parameters entry, %s is not a parameter defined in that bundle", dep.Alias, paramName)
 				}
 
-				if dep.Parameters == nil {
-					dep.Parameters = make(map[string]string, 1)
-				}
 				dep.Parameters[paramName] = value
 			}
 		}
@@ -258,9 +258,6 @@ func (e *dependencyExecutioner) prepareDependency(ctx context.Context, dep *queu
 				return fmt.Errorf("invalid --param %s, %s is not a parameter defined in the bundle %s", key, paramName, dep.Alias)
 			}
 
-			if dep.Parameters == nil {
-				dep.Parameters = make(map[string]string, 1)
-			}
 			dep.Parameters[paramName] = value
 			delete(e.parentArgs.Params, key)
 		}

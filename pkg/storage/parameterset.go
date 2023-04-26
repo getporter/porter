@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"fmt"
+	"get.porter.sh/porter/pkg/encoding"
 	"strings"
 	"time"
 
@@ -44,8 +45,16 @@ type ParameterSetSpec struct {
 	Labels map[string]string `json:"labels,omitempty" yaml:"labels,omitempty" toml:"labels,omitempty"`
 
 	// Parameters is a list of parameter specs.
-	Parameters secrets.StrategyList `json:"parameters" yaml:"parameters" toml:"parameters"`
+	Parameters *ParameterSourceMap `json:"parameters" yaml:"parameters" toml:"parameters"`
 }
+
+type ParameterSourceMap = encoding.ArrayMap[ParameterSource, NamedParameterSource]
+
+var MakeParameterSourceMap = encoding.MakeArrayMap[ParameterSource, NamedParameterSource]
+
+// TODO(generics)
+type ParameterSource = secrets.ValueMapping
+type NamedParameterSource = secrets.NamedValueMapping
 
 // ParameterSetStatus contains additional status metadata that has been set by Porter.
 type ParameterSetStatus struct {
@@ -57,7 +66,7 @@ type ParameterSetStatus struct {
 }
 
 // NewParameterSet creates a new ParameterSet with the required fields initialized.
-func NewParameterSet(namespace string, name string, params ...secrets.SourceMap) ParameterSet {
+func NewParameterSet(namespace string, name string) ParameterSet {
 	now := time.Now()
 	ps := ParameterSet{
 		ParameterSetSpec: ParameterSetSpec{
@@ -65,7 +74,7 @@ func NewParameterSet(namespace string, name string, params ...secrets.SourceMap)
 			SchemaVersion: DefaultParameterSetSchemaVersion,
 			Namespace:     namespace,
 			Name:          name,
-			Parameters:    params,
+			Parameters:    &ParameterSourceMap{},
 		},
 		Status: ParameterSetStatus{
 			Created:  now,
@@ -77,8 +86,8 @@ func NewParameterSet(namespace string, name string, params ...secrets.SourceMap)
 }
 
 // NewInternalParameterSet creates a new internal ParameterSet with the required fields initialized.
-func NewInternalParameterSet(namespace string, name string, params ...secrets.SourceMap) ParameterSet {
-	return NewParameterSet(namespace, INTERNAL_PARAMETERER_SET+"-"+name, params...)
+func NewInternalParameterSet(namespace string, name string) ParameterSet {
+	return NewParameterSet(namespace, INTERNAL_PARAMETERER_SET+"-"+name)
 }
 
 func (s ParameterSet) DefaultDocumentFilter() map[string]interface{} {
@@ -120,4 +129,34 @@ func (s *ParameterSet) Validate(ctx context.Context, strategy schema.CheckStrate
 
 func (s ParameterSet) String() string {
 	return fmt.Sprintf("%s/%s", s.Namespace, s.Name)
+}
+
+func (s ParameterSet) Iterate() map[string]ParameterSource {
+	if s.Parameters == nil {
+		return nil
+	}
+	return s.Parameters.Items()
+}
+
+func (s ParameterSet) SetStrategy(key string, source secrets.Source) {
+	s.Parameters.Set(key, ParameterSource{Source: source})
+}
+
+func (s ParameterSet) Set(key string, source ParameterSource) {
+	if s.Parameters == nil { // TODO(carolyn): do this in all the places
+		s.Parameters = &ParameterSourceMap{}
+	}
+	s.Parameters.Set(key, source)
+}
+
+func (s ParameterSet) Get(key string) (ParameterSource, bool) {
+	return s.Parameters.Get(key)
+}
+
+func (s ParameterSet) Remove(key string) {
+	s.Parameters.Remove(key)
+}
+
+func (s ParameterSet) Len() int {
+	return s.Parameters.Len()
 }
