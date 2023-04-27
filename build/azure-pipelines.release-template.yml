@@ -22,7 +22,7 @@ variables: # these are really constants
 parameters:
   - name: goVersion
     type: string
-    default: "1.19.7"
+    default: "1.19.8"
   - name: registry
     type: string
     default: ghcr.io/getporter/test
