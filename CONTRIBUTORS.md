@@ -79,5 +79,5 @@ and we will add you. **All** contributors belong here. 💯
 * [Omar Kohl](https://github.com/omarkohl)
 * [James Blair](https://github.com/jmhbnz)
 * [Chengwei Guo](https://github.com/cw-Guo)
-* [Sarah Christoff](https://github.com/hypernovasunnix)
+* [Sarah Christoff](https://github.com/schristoff)
 * [Aleksey Barabanov](https://github.com/alekseybb197)

@@ -18,6 +18,8 @@ These are the members of the [maintainers team](https://github.com/orgs/getporte
 * [Yingrong Zhao](https://github.com/vinozzz)
 * [Brian DeGeeter](https://github.com/bdegeeter)
 * [Steven Gettys](https://github.com/sgettys)
+* [Sarah Christoff](https://github.com/schristoff)
+* [Aaron Schlesinger](https://github.com/arschles)
 
 ## Emeritus Maintainers
 
