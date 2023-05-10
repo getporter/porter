@@ -29,8 +29,8 @@ func NewSanitizer(parameterstore ParameterSetProvider, secretstore secrets.Store
 // transform the raw value into secret strategies.
 // The id argument is used to associate the reference key with the corresponding
 // run or installation record in porter's database.
-func (s *Sanitizer) CleanRawParameters(ctx context.Context, params map[string]interface{}, bun cnab.ExtendedBundle, id string) ([]secrets.Strategy, error) {
-	strategies := make([]secrets.Strategy, 0, len(params))
+func (s *Sanitizer) CleanRawParameters(ctx context.Context, params map[string]interface{}, bun cnab.ExtendedBundle, id string) ([]secrets.SourceMap, error) {
+	strategies := make([]secrets.SourceMap, 0, len(params))
 	for name, value := range params {
 		stringVal, err := bun.WriteParameterToString(name, value)
 		if err != nil {
@@ -53,13 +53,13 @@ func (s *Sanitizer) CleanRawParameters(ctx context.Context, params map[string]in
 // Sanitized value after saving sensitive data to secrets store.
 // The id argument is used to associate the reference key with the corresponding
 // run or installation record in porter's database.
-func (s *Sanitizer) CleanParameters(ctx context.Context, dirtyParams []secrets.Strategy, bun cnab.ExtendedBundle, id string) ([]secrets.Strategy, error) {
-	cleanedParams := make([]secrets.Strategy, 0, len(dirtyParams))
+func (s *Sanitizer) CleanParameters(ctx context.Context, dirtyParams []secrets.SourceMap, bun cnab.ExtendedBundle, id string) ([]secrets.SourceMap, error) {
+	cleanedParams := make([]secrets.SourceMap, 0, len(dirtyParams))
 	for _, param := range dirtyParams {
 		// Store sensitive hard-coded values in a secret store
-		if param.Source.Key == host.SourceValue && bun.IsSensitiveParameter(param.Name) {
+		if param.Source.Strategy == host.SourceValue && bun.IsSensitiveParameter(param.Name) {
 			cleaned := sanitizedParam(param, id)
-			err := s.secrets.Create(ctx, cleaned.Source.Key, cleaned.Source.Value, cleaned.Value)
+			err := s.secrets.Create(ctx, cleaned.Source.Strategy, cleaned.Source.Hint, cleaned.ResolvedValue)
 			if err != nil {
 				return nil, fmt.Errorf("failed to save sensitive param to secrete store: %w", err)
 			}
@@ -93,9 +93,9 @@ func LinkSensitiveParametersToSecrets(pset ParameterSet, bun cnab.ExtendedBundle
 	return pset
 }
 
-func sanitizedParam(param secrets.Strategy, id string) secrets.Strategy {
-	param.Source.Key = secrets.SourceSecret
-	param.Source.Value = id + "-" + param.Name
+func sanitizedParam(param secrets.SourceMap, id string) secrets.SourceMap {
+	param.Source.Strategy = secrets.SourceSecret
+	param.Source.Hint = id + "-" + param.Name
 	return param
 }
 

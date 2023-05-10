@@ -566,7 +566,7 @@ func TestPorter_CredentialsApply(t *testing.T) {
 		assert.Equal(t, "kool-kreds", cs.Name, "unexpected credential set name")
 		require.Len(t, cs.Credentials, 4, "expected 4 credentials in the set")
 		assert.Equal(t, "kool-config", cs.Credentials[0].Name, "expected the kool-config credential mapping defined")
-		assert.Equal(t, "path", cs.Credentials[0].Source.Key, "unexpected credential source")
-		assert.Equal(t, "/path/to/kool-config", cs.Credentials[0].Source.Value, "unexpected credential mapping value")
+		assert.Equal(t, "path", cs.Credentials[0].Source.Strategy, "unexpected credential source")
+		assert.Equal(t, "/path/to/kool-config", cs.Credentials[0].Source.Hint, "unexpected credential mapping value")
 	})
 }

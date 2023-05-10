@@ -15,11 +15,11 @@ import (
 
 func TestNewParameterSet(t *testing.T) {
 	ps := NewParameterSet("dev", "myparams",
-		secrets.Strategy{
+		secrets.SourceMap{
 			Name: "password",
 			Source: secrets.Source{
-				Key:   "env",
-				Value: "DB_PASSWORD",
+				Strategy: "env",
+				Hint:     "DB_PASSWORD",
 			},
 		})
 

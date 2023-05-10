@@ -19,11 +19,11 @@ func TestParameterStore_CRUD(t *testing.T) {
 	require.Empty(t, params, "Find should return no entries")
 
 	myParamSet := NewParameterSet("dev", "myparams",
-		secrets.Strategy{
+		secrets.SourceMap{
 			Name: "myparam",
 			Source: secrets.Source{
-				Key:   "value",
-				Value: "myparamvalue",
+				Strategy: "value",
+				Hint:     "myparamvalue",
 			},
 		})
 	myParamSet.Status.Created = time.Date(2020, 1, 1, 12, 0, 0, 0, time.UTC)
@@ -50,11 +50,11 @@ func TestParameterStore_CRUD(t *testing.T) {
 	require.Equal(t, myParamSet, pset, "Get should return the saved parameter set")
 
 	myParamSet2 := NewParameterSet("dev", "myparams2",
-		secrets.Strategy{
+		secrets.SourceMap{
 			Name: "myparam2",
 			Source: secrets.Source{
-				Key:   "value2",
-				Value: "myparamvalue2",
+				Strategy: "value2",
+				Hint:     "myparamvalue2",
 			},
 		})
 	myParamSet2.Status.Created = time.Date(2020, 1, 1, 12, 0, 0, 0, time.UTC)
@@ -94,18 +94,18 @@ func TestParameterStorage_ResolveAll(t *testing.T) {
 	// The inmemory secret store currently only supports secret sources
 	// So all of these have this same source
 	testParameterSet := NewParameterSet("", "myparamset",
-		secrets.Strategy{
+		secrets.SourceMap{
 			Name: "param1",
 			Source: secrets.Source{
-				Key:   "secret",
-				Value: "param1",
+				Strategy: "secret",
+				Hint:     "param1",
 			},
 		},
-		secrets.Strategy{
+		secrets.SourceMap{
 			Name: "param2",
 			Source: secrets.Source{
-				Key:   "secret",
-				Value: "param2",
+				Strategy: "secret",
+				Hint:     "param2",
 			},
 		})
 
@@ -149,34 +149,34 @@ func TestParameterStorage_Validate(t *testing.T) {
 		s := ParameterStore{}
 
 		testParameterSet := NewParameterSet("", "myparams",
-			secrets.Strategy{
+			secrets.SourceMap{
 				Source: secrets.Source{
-					Key:   "env",
-					Value: "SOME_ENV",
+					Strategy: "env",
+					Hint:     "SOME_ENV",
 				},
 			},
-			secrets.Strategy{
+			secrets.SourceMap{
 				Source: secrets.Source{
-					Key:   "value",
-					Value: "somevalue",
+					Strategy: "value",
+					Hint:     "somevalue",
 				},
 			},
-			secrets.Strategy{
+			secrets.SourceMap{
 				Source: secrets.Source{
-					Key:   "path",
-					Value: "/some/path",
+					Strategy: "path",
+					Hint:     "/some/path",
 				},
 			},
-			secrets.Strategy{
+			secrets.SourceMap{
 				Source: secrets.Source{
-					Key:   "command",
-					Value: "some command",
+					Strategy: "command",
+					Hint:     "some command",
 				},
 			},
-			secrets.Strategy{
+			secrets.SourceMap{
 				Source: secrets.Source{
-					Key:   "secret",
-					Value: "secret",
+					Strategy: "secret",
+					Hint:     "secret",
 				},
 			})
 
@@ -187,16 +187,16 @@ func TestParameterStorage_Validate(t *testing.T) {
 	t.Run("invalid sources", func(t *testing.T) {
 		s := ParameterStore{}
 		testParameterSet := NewParameterSet("", "myparams",
-			secrets.Strategy{
+			secrets.SourceMap{
 				Source: secrets.Source{
-					Key:   "wrongthing",
-					Value: "SOME_ENV",
+					Strategy: "wrongthing",
+					Hint:     "SOME_ENV",
 				},
 			},
-			secrets.Strategy{
+			secrets.SourceMap{
 				Source: secrets.Source{
-					Key:   "anotherwrongthing",
-					Value: "somevalue",
+					Strategy: "anotherwrongthing",
+					Hint:     "somevalue",
 				},
 			})
 

@@ -23,11 +23,11 @@ func TestRuntime_loadCredentials(t *testing.T) {
 
 	r.TestConfig.TestContext.AddTestFile("testdata/db-creds.json", "/db-creds.json")
 
-	cs1 := storage.NewCredentialSet("", "mycreds", secrets.Strategy{
+	cs1 := storage.NewCredentialSet("", "mycreds", secrets.SourceMap{
 		Name: "password",
 		Source: secrets.Source{
-			Key:   secrets.SourceSecret,
-			Value: "password",
+			Strategy: secrets.SourceSecret,
+			Hint:     "password",
 		},
 	})
 
@@ -135,11 +135,11 @@ func TestRuntime_loadCredentials_WithApplyTo(t *testing.T) {
 
 		r.TestCredentials.AddSecret("password", "mypassword")
 
-		cs1 := storage.NewCredentialSet("", "mycreds", secrets.Strategy{
+		cs1 := storage.NewCredentialSet("", "mycreds", secrets.SourceMap{
 			Name: "password",
 			Source: secrets.Source{
-				Key:   secrets.SourceSecret,
-				Value: "password",
+				Strategy: secrets.SourceSecret,
+				Hint:     "password",
 			},
 		})
 

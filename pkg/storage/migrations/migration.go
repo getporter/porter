@@ -310,7 +310,7 @@ func convertClaimToRun(inst storage.Installation, data []byte) (storage.Run, err
 		return storage.Run{}, fmt.Errorf("error parsing claim record: %w", err)
 	}
 
-	params := make([]secrets.Strategy, 0, len(src.Parameters))
+	params := make([]secrets.SourceMap, 0, len(src.Parameters))
 	for k, v := range src.Parameters {
 		stringVal, err := cnab.WriteParameterToString(k, v)
 		if err != nil {
@@ -505,7 +505,7 @@ func convertCredentialSet(namespace string, data []byte) (storage.CredentialSet,
 			SchemaVersion: storage.DefaultCredentialSetSchemaVersion,
 			Namespace:     namespace,
 			Name:          src.Name,
-			Credentials:   make([]secrets.Strategy, len(src.Credentials)),
+			Credentials:   make([]secrets.SourceMap, len(src.Credentials)),
 		},
 		Status: storage.CredentialSetStatus{
 			Created:  src.Created,
@@ -514,11 +514,11 @@ func convertCredentialSet(namespace string, data []byte) (storage.CredentialSet,
 	}
 
 	for i, cred := range src.Credentials {
-		dest.CredentialSetSpec.Credentials[i] = secrets.Strategy{
+		dest.CredentialSetSpec.Credentials[i] = secrets.SourceMap{
 			Name: cred.Name,
 			Source: secrets.Source{
-				Key:   cred.Source.Key,
-				Value: cred.Source.Value,
+				Strategy: cred.Source.Key,
+				Hint:     cred.Source.Value,
 			},
 		}
 	}
@@ -583,7 +583,7 @@ func convertParameterSet(namespace string, data []byte) (storage.ParameterSet, e
 			SchemaVersion: storage.DefaultParameterSetSchemaVersion,
 			Namespace:     namespace,
 			Name:          src.Name,
-			Parameters:    make([]secrets.Strategy, len(src.Parameters)),
+			Parameters:    make([]secrets.SourceMap, len(src.Parameters)),
 		},
 		Status: storage.ParameterSetStatus{
 			Created:  src.Created,
@@ -592,11 +592,11 @@ func convertParameterSet(namespace string, data []byte) (storage.ParameterSet, e
 	}
 
 	for i, cred := range src.Parameters {
-		dest.Parameters[i] = secrets.Strategy{
+		dest.Parameters[i] = secrets.SourceMap{
 			Name: cred.Name,
 			Source: secrets.Source{
-				Key:   cred.Source.Key,
-				Value: cred.Source.Value,
+				Strategy: cred.Source.Key,
+				Hint:     cred.Source.Value,
 			},
 		}
 	}

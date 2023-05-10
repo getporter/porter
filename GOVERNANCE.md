@@ -1,7 +1,7 @@
 # Porter Project Goveranance
 
 This document outlines how the Porter project governs itself. The Porter project
-consists of all of the repositories in the https://github.com/getporter
+consists of the repositories in the https://github.com/getporter
 organization. 
 
 Everyone who interacts with the project must abide by our [Code of Conduct]. 
@@ -18,9 +18,10 @@ requirements necessary to "move up the ladder" and attain each role such as:
 
 * Contributor
 * Maintainer
+* Emeritus Maintainer
 * Admin
 
-The [OWNERS] file defines the current maintainers of the project.
+The [OWNERS.md] file defines the maintainers of the project.
 
 ## Release Process
 
@@ -32,9 +33,9 @@ smaller batches of work more often.
 
 Our [Roadmap] is determined by where our maintainers have decided to volunteer
 their time. We try to keep it up-to-date so that the community can see where the
-project is headed but it is not a committment.
+project is headed but it is not a commitment.
 
 [Contribution Ladder]: /CONTRIBUTION_LADDER.md
 [Code of Conduct]: /CODE_OF_CONDUCT.md
-[OWNERS]: /OWNERS.md
+[OWNERS.md]: /OWNERS.md
 [Roadmap]: /README.md#roadmap

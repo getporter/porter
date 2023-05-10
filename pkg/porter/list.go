@@ -178,7 +178,7 @@ func (d DisplayInstallation) ConvertToInstallation() (storage.Installation, erro
 
 // ConvertParamToSet converts a Parameters into a internal ParameterSet.
 func (d DisplayInstallation) ConvertParamToSet() (storage.ParameterSet, error) {
-	strategies := make([]secrets.Strategy, 0, len(d.Parameters))
+	strategies := make([]secrets.SourceMap, 0, len(d.Parameters))
 	for name, value := range d.Parameters {
 		stringVal, err := cnab.WriteParameterToString(name, value)
 		if err != nil {
