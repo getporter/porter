@@ -69,7 +69,7 @@ func NewServer(ctx context.Context, opts *porter.ServiceOptions) (*PorterGRPCSer
 
 func (s *PorterGRPCService) ListenAndServe() (*grpc.Server, error) {
 	ctx := context.TODO()
-	ctx, log := tracing.StartSpan(ctx)
+	_, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
 	log.Infof("Starting gRPC on %v", s.opts.Port)
 	listener, err := net.Listen("tcp", fmt.Sprintf(":%v", s.opts.Port))

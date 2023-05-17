@@ -23,7 +23,6 @@ import (
 type TestPorterGRPCServer struct {
 	TestPorter       *porter.TestPorter
 	TestPorterConfig *config.TestConfig
-	t                *testing.T
 }
 
 const bufSize = 1024 * 1024

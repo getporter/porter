@@ -19,29 +19,6 @@ func makeInstOptsLabels(labels map[string]string) []string {
 	return retLabels
 }
 
-func displayValueToProtoPorterValue(value porter.DisplayValue) (*iGRPC.PorterValue, error) {
-	b, err := json.Marshal(value)
-	if err != nil {
-		return nil, err
-	}
-	pv := &iGRPC.PorterValue{}
-	err = protojson.Unmarshal(b, pv)
-	if err != nil {
-		return nil, err
-	}
-	return pv, nil
-}
-
-func makePorterValues(values porter.DisplayValues) []*iGRPC.PorterValue {
-	var retPVs []*iGRPC.PorterValue
-	for _, dv := range values {
-		//TODO: handle error
-		pv, _ := displayValueToProtoPorterValue(dv)
-		retPVs = append(retPVs, pv)
-	}
-	return retPVs
-}
-
 func makeGRPCInstallation(inst porter.DisplayInstallation, gInst *iGRPC.Installation) error {
 	bInst, err := json.Marshal(inst)
 	if err != nil {

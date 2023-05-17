@@ -29,7 +29,7 @@ func EnsureProtobufTools() {
 
 // IsCommandInPath determines if a command can be called based on the current PATH.
 func IsCommandInPath(cmd string) (bool, error) {
-	cmd, err := exec.LookPath(cmd)
+	_, err := exec.LookPath(cmd)
 	if err != nil {
 		return false, err
 	}

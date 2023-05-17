@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"strconv"
 	"testing"
 
@@ -137,7 +136,7 @@ func TestInstall_installationMessage(t *testing.T) {
 	}
 	//t.Parallel()
 	for _, test := range tests {
-		t.Run(fmt.Sprintf("%s", test.testName), func(t *testing.T) {
+		t.Run(test.testName, func(t *testing.T) {
 			//Server setup
 			grpcSvr, err := NewTestGRPCServer(t)
 			require.NoError(t, err)
