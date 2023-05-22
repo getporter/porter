@@ -25,16 +25,17 @@ type ExplainOpts struct {
 
 // PrintableBundle holds a subset of pertinent values to be explained from a bundle
 type PrintableBundle struct {
-	Name          string                `json:"name" yaml:"name"`
-	Description   string                `json:"description,omitempty" yaml:"description,omitempty"`
-	Version       string                `json:"version" yaml:"version"`
-	PorterVersion string                `json:"porterVersion,omitempty" yaml:"porterVersion,omitempty"`
-	Parameters    []PrintableParameter  `json:"parameters,omitempty" yaml:"parameters,omitempty"`
-	Credentials   []PrintableCredential `json:"credentials,omitempty" yaml:"credentials,omitempty"`
-	Outputs       []PrintableOutput     `json:"outputs,omitempty" yaml:"outputs,omitempty"`
-	Actions       []PrintableAction     `json:"customActions,omitempty" yaml:"customActions,omitempty"`
-	Dependencies  []PrintableDependency `json:"dependencies,omitempty" yaml:"dependencies,omitempty"`
-	Mixins        []string              `json:"mixins" yaml:"mixins"`
+	Name          string                 `json:"name" yaml:"name"`
+	Description   string                 `json:"description,omitempty" yaml:"description,omitempty"`
+	Version       string                 `json:"version" yaml:"version"`
+	PorterVersion string                 `json:"porterVersion,omitempty" yaml:"porterVersion,omitempty"`
+	Parameters    []PrintableParameter   `json:"parameters,omitempty" yaml:"parameters,omitempty"`
+	Credentials   []PrintableCredential  `json:"credentials,omitempty" yaml:"credentials,omitempty"`
+	Outputs       []PrintableOutput      `json:"outputs,omitempty" yaml:"outputs,omitempty"`
+	Actions       []PrintableAction      `json:"customActions,omitempty" yaml:"customActions,omitempty"`
+	Dependencies  []PrintableDependency  `json:"dependencies,omitempty" yaml:"dependencies,omitempty"`
+	Mixins        []string               `json:"mixins" yaml:"mixins"`
+	Custom        map[string]interface{} `json:"custom,omitempty" yaml:"custom,omitempty"`
 }
 
 type PrintableCredential struct {
@@ -209,6 +210,7 @@ func generatePrintable(bun cnab.ExtendedBundle, action string) (*PrintableBundle
 		Outputs:       make([]PrintableOutput, 0, len(bun.Outputs)),
 		Dependencies:  make([]PrintableDependency, 0, len(deps)),
 		Mixins:        make([]string, 0, len(stamp.Mixins)),
+		Custom:        bun.Custom,
 	}
 
 	for a, v := range bun.Actions {
