@@ -35,5 +35,13 @@
   "mixins": [
     "helm",
     "terraform"
-  ]
+  ],
+  "custom": {
+    "user-defined": {
+      "nested": {
+        "structure": "is okay",
+        "enabled": true
+      }
+    }
+  }
 }
