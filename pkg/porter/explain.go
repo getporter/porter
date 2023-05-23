@@ -307,6 +307,7 @@ func generatePrintable(bun cnab.ExtendedBundle, action string) (*PrintableBundle
 		pb.Custom[key] = value
 	}
 	keysToRemove := []string{
+		"io.cnab.dependencies",
 		"io.cnab.parameter-sources",
 		"sh.porter",
 		"sh.porter.file-parameters",
