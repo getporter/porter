@@ -303,18 +303,22 @@ func generatePrintable(bun cnab.ExtendedBundle, action string) (*PrintableBundle
 	sort.Strings(pb.Mixins)
 
 	// copy custom data to output, but ignore the Porter built-in data
-	for key, value := range bun.Custom {
-		pb.Custom[key] = value
-	}
-	keysToRemove := []string{
-		"io.cnab.dependencies",
-		"io.cnab.parameter-sources",
+	ignoreKeyPrefixes := []string{
+		"io.cnab",
 		"sh.porter",
-		"sh.porter.file-parameters",
 	}
-	for _, key := range keysToRemove {
-		if _, found := bun.Custom[key]; found {
-			delete(pb.Custom, key)
+
+	for key, value := range bun.Custom {
+		var ignore bool = false
+
+		for _, ignoreKeyPrefix := range ignoreKeyPrefixes {
+			if strings.HasPrefix(key, ignoreKeyPrefix) {
+				ignore = true
+			}
+		}
+
+		if !ignore {
+			pb.Custom[key] = value
 		}
 	}
 
