@@ -211,7 +211,6 @@ func generatePrintable(bun cnab.ExtendedBundle, action string) (*PrintableBundle
 		Dependencies:  make([]PrintableDependency, 0, len(deps)),
 		Mixins:        make([]string, 0, len(stamp.Mixins)),
 		Custom:        make(map[string]interface{}),
-		//Custom:        bun.Custom,
 	}
 
 	for a, v := range bun.Actions {
