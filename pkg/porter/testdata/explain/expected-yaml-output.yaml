@@ -30,5 +30,5 @@ mixins:
 custom:
   user-defined:
     nested:
-      structure: is okay
       enabled: true
+      structure: is okay
