@@ -39,8 +39,8 @@
   "custom": {
     "user-defined": {
       "nested": {
-        "structure": "is okay",
-        "enabled": true
+        "enabled": true,
+        "structure": "is okay"
       }
     }
   }
