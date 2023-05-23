@@ -210,7 +210,8 @@ func generatePrintable(bun cnab.ExtendedBundle, action string) (*PrintableBundle
 		Outputs:       make([]PrintableOutput, 0, len(bun.Outputs)),
 		Dependencies:  make([]PrintableDependency, 0, len(deps)),
 		Mixins:        make([]string, 0, len(stamp.Mixins)),
-		Custom:        bun.Custom,
+		Custom:        make(map[string]interface{}),
+		//Custom:        bun.Custom,
 	}
 
 	for a, v := range bun.Actions {
@@ -301,6 +302,21 @@ func generatePrintable(bun cnab.ExtendedBundle, action string) (*PrintableBundle
 		pb.Mixins = append(pb.Mixins, mixin)
 	}
 	sort.Strings(pb.Mixins)
+
+	// copy custom data to output, but ignore the Porter built-in data
+	for key, value := range bun.Custom {
+		pb.Custom[key] = value
+	}
+	keysToRemove := []string{
+		"io.cnab.parameter-sources",
+		"sh.porter",
+		"sh.porter.file-parameters",
+	}
+	for _, key := range keysToRemove {
+		if _, found := bun.Custom[key]; found {
+			delete(pb.Custom, key)
+		}
+	}
 
 	return &pb, nil
 }
