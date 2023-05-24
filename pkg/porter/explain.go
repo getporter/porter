@@ -302,22 +302,8 @@ func generatePrintable(bun cnab.ExtendedBundle, action string) (*PrintableBundle
 	}
 	sort.Strings(pb.Mixins)
 
-	// copy custom data to output, but ignore the Porter built-in data
-	ignoreKeyPrefixes := []string{
-		"io.cnab",
-		"sh.porter",
-	}
-
 	for key, value := range bun.Custom {
-		var ignore bool = false
-
-		for _, ignoreKeyPrefix := range ignoreKeyPrefixes {
-			if strings.HasPrefix(key, ignoreKeyPrefix) {
-				ignore = true
-			}
-		}
-
-		if !ignore {
+		if isUserDefinedCustomSectionKey(key) {
 			pb.Custom[key] = value
 		}
 	}
@@ -333,6 +319,23 @@ func shouldIncludeInExplainOutput(scoped bundle.Scoped, action string) bool {
 	}
 
 	return bundle.AppliesTo(scoped, action)
+}
+
+// isUserDefinedCustomSectionKey returns true if the given key in the custom section data is
+// user-defined and not one that Porter for its own purposes.
+func isUserDefinedCustomSectionKey(key string) bool {
+	porterKeyPrefixes := []string{
+		"io.cnab",
+		"sh.porter",
+	}
+
+	for _, keyPrefix := range porterKeyPrefixes {
+		if strings.HasPrefix(key, keyPrefix) {
+			return false
+		}
+	}
+
+	return true
 }
 
 func generateApplyToString(appliesTo []string) string {
