@@ -322,7 +322,7 @@ func shouldIncludeInExplainOutput(scoped bundle.Scoped, action string) bool {
 }
 
 // isUserDefinedCustomSectionKey returns true if the given key in the custom section data is
-// user-defined and not one that Porter for its own purposes.
+// user-defined and not one that Porter uses for its own purposes.
 func isUserDefinedCustomSectionKey(key string) bool {
 	porterKeyPrefixes := []string{
 		"io.cnab",
