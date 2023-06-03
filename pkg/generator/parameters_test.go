@@ -50,7 +50,7 @@ func TestGoodParametersName(t *testing.T) {
 
 	pset, err := opts.GenerateParameters()
 	require.NoError(t, err, "name should NOT have resulted in an error")
-	require.Equal(t, 3, len(pset.Parameters), "should have had 3 entries")
+	require.Equal(t, 3, pset.Len(), "should have had 3 entries")
 }
 
 func TestNoParameters(t *testing.T) {
@@ -115,5 +115,5 @@ func TestSkipParameters(t *testing.T) {
 	pset, err := opts.GenerateParameters()
 	require.NoError(t, err, "parameters generation should not have resulted in an error")
 	assert.Equal(t, "skip-params", pset.Name, "Name was not set")
-	require.Empty(t, pset.Parameters, "parameter set should have empty parameters section")
+	require.Equal(t, 0, pset.Len(), "parameter set should have empty parameters section")
 }

@@ -14,14 +14,11 @@ import (
 )
 
 func TestNewParameterSet(t *testing.T) {
-	ps := NewParameterSet("dev", "myparams",
-		secrets.SourceMap{
-			Name: "password",
-			Source: secrets.Source{
-				Strategy: "env",
-				Hint:     "DB_PASSWORD",
-			},
-		})
+	ps := NewParameterSet("dev", "myparams")
+	ps.SetStrategy("password", secrets.Source{
+		Strategy: "env",
+		Hint:     "DB_PASSWORD",
+	})
 
 	assert.Equal(t, DefaultParameterSetSchemaVersion, ps.SchemaVersion, "SchemaVersion was not set")
 	assert.Equal(t, "myparams", ps.Name, "Name was not set")
@@ -31,7 +28,7 @@ func TestNewParameterSet(t *testing.T) {
 	assert.Equal(t, ps.Status.Created, ps.Status.Modified, "Created and Modified should have the same timestamp")
 	assert.Equal(t, SchemaTypeParameterSet, ps.SchemaType, "incorrect SchemaType")
 	assert.Equal(t, DefaultParameterSetSchemaVersion, ps.SchemaVersion, "incorrect SchemaVersion")
-	assert.Len(t, ps.Parameters, 1, "Parameters should be initialized with 1 value")
+	assert.Equal(t, 1, ps.Len(), "Parameters should be initialized with 1 value")
 }
 
 func TestParameterSet_String(t *testing.T) {

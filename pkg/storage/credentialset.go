@@ -50,8 +50,15 @@ type CredentialSetSpec struct {
 	Labels map[string]string `json:"labels,omitempty" yaml:"labels,omitempty" toml:"labels,omitempty"`
 
 	// Credentials is a list of credential resolution strategies.
-	Credentials secrets.StrategyList `json:"credentials" yaml:"credentials" toml:"credentials"`
+	Credentials CredentialSourceMap `json:"credentials" yaml:"credentials" toml:"credentials"`
 }
+
+type CredentialSourceMap = secrets.Map
+type CredentialSource = secrets.ValueMapping
+type NamedCredentialSource = secrets.NamedValueMapping
+
+var MakeCredentialSourceMap = secrets.MakeMap
+var NewCredentialSourceMap = secrets.NewMap
 
 // CredentialSetStatus contains additional status metadata that has been set by Porter.
 type CredentialSetStatus struct {
@@ -63,7 +70,7 @@ type CredentialSetStatus struct {
 }
 
 // NewCredentialSet creates a new CredentialSet with the required fields initialized.
-func NewCredentialSet(namespace string, name string, creds ...secrets.SourceMap) CredentialSet {
+func NewCredentialSet(namespace string, name string) CredentialSet {
 	now := time.Now()
 	cs := CredentialSet{
 		CredentialSetSpec: CredentialSetSpec{
@@ -71,7 +78,7 @@ func NewCredentialSet(namespace string, name string, creds ...secrets.SourceMap)
 			SchemaVersion: DefaultCredentialSetSchemaVersion,
 			Name:          name,
 			Namespace:     namespace,
-			Credentials:   creds,
+			Credentials:   NewCredentialSourceMap(),
 		},
 		Status: CredentialSetStatus{
 			Created:  now,
@@ -121,6 +128,34 @@ func (s *CredentialSet) Validate(ctx context.Context, strategy schema.CheckStrat
 
 func (s CredentialSet) String() string {
 	return fmt.Sprintf("%s/%s", s.Namespace, s.Name)
+}
+
+func (s CredentialSet) Iterate() map[string]CredentialSource {
+	return s.Credentials.Items()
+}
+
+func (s CredentialSet) IterateSorted() []NamedCredentialSource {
+	return s.Credentials.ItemsSorted()
+}
+
+func (s CredentialSet) SetStrategy(key string, source secrets.Source) {
+	s.Credentials.Set(key, CredentialSource{Source: source})
+}
+
+func (s CredentialSet) Set(key string, source CredentialSource) {
+	s.Credentials.Set(key, source)
+}
+
+func (s CredentialSet) Get(key string) (CredentialSource, bool) {
+	return s.Credentials.Get(key)
+}
+
+func (s CredentialSet) Remove(key string) {
+	s.Credentials.Remove(key)
+}
+
+func (s CredentialSet) Len() int {
+	return s.Credentials.Len()
 }
 
 // Validate compares the given credentials with the spec.

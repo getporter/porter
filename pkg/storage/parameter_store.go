@@ -55,13 +55,13 @@ func (s ParameterStore) ResolveAll(ctx context.Context, params ParameterSet) (se
 	resolvedParams := make(secrets.Set)
 	var resolveErrors error
 
-	for _, param := range params.Parameters {
+	for paramName, param := range params.Iterate() {
 		value, err := s.Secrets.Resolve(ctx, param.Source.Strategy, param.Source.Hint)
 		if err != nil {
-			resolveErrors = multierror.Append(resolveErrors, fmt.Errorf("unable to resolve parameter %s.%s from %s %s: %w", params.Name, param.Name, param.Source.Strategy, param.Source.Hint, err))
+			resolveErrors = multierror.Append(resolveErrors, fmt.Errorf("unable to resolve parameter %s.%s from %s %s: %w", params.Name, paramName, param.Source.Strategy, param.Source.Hint, err))
 		}
 
-		resolvedParams[param.Name] = value
+		resolvedParams[paramName] = value
 	}
 
 	return resolvedParams, resolveErrors
@@ -71,7 +71,7 @@ func (s ParameterStore) Validate(ctx context.Context, params ParameterSet) error
 	validSources := []string{secrets.SourceSecret, host.SourceValue, host.SourceEnv, host.SourcePath, host.SourceCommand}
 	var errors error
 
-	for _, cs := range params.Parameters {
+	for _, cs := range params.Iterate() {
 		valid := false
 		for _, validSource := range validSources {
 			if cs.Source.Strategy == validSource {

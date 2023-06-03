@@ -62,7 +62,10 @@ func (t Tester) ShowInstallation(namespace string, name string) (porter.DisplayI
 
 	var di porter.DisplayInstallation
 
-	require.NoError(t.T, json.Unmarshal([]byte(stdout), &di))
+	err = json.Unmarshal([]byte(stdout), &di)
+	if err != nil {
+		t.T.Fatalf("porter show returned non-json output to stdout: %s", stdout)
+	}
 
 	return di, nil
 }

@@ -28,13 +28,12 @@ func TestSanitizer_Parameters(t *testing.T) {
 	recordID := "01FZVC5AVP8Z7A78CSCP1EJ604"
 	sensitiveParamName := "my-second-param"
 	sensitiveParamKey := recordID + "-" + sensitiveParamName
-	expected := []secrets.SourceMap{
-		{Name: "my-first-param", Source: secrets.Source{Strategy: host.SourceValue, Hint: "1"}, ResolvedValue: "1"},
-		{Name: sensitiveParamName, Source: secrets.Source{Strategy: secrets.SourceSecret, Hint: sensitiveParamKey}, ResolvedValue: "2"},
-	}
-	sort.SliceStable(expected, func(i, j int) bool {
-		return expected[i].Name < expected[j].Name
-	})
+	expected := storage.NewParameterSourceMap()
+	expected.Set("my-first-param", secrets.HardCodedValue("1"))
+	expected.Set(sensitiveParamName, storage.ParameterSource{Source: secrets.Source{
+		Strategy: secrets.SourceSecret,
+		Hint:     sensitiveParamKey},
+		ResolvedValue: "2"})
 
 	// parameters that are hard coded values should be sanitized, while those mapped from secrets or env vars should be left alone by the sanitizer
 	rawParams := map[string]interface{}{
@@ -43,14 +42,11 @@ func TestSanitizer_Parameters(t *testing.T) {
 	}
 	result, err := r.TestSanitizer.CleanRawParameters(ctx, rawParams, bun, recordID)
 	require.NoError(t, err)
-	require.Equal(t, len(expected), len(result))
-	sort.SliceStable(result, func(i, j int) bool {
-		return result[i].Name < result[j].Name
-	})
+	require.Equal(t, expected.Len(), result.Len())
+	require.Equal(t, expected, result)
 
-	require.Truef(t, reflect.DeepEqual(result, expected), "expected: %v, got: %v", expected, result)
-
-	pset := storage.NewParameterSet("", "dev", result...)
+	pset := storage.NewParameterSet("", "dev")
+	pset.Parameters = result
 	resolved, err := r.TestSanitizer.RestoreParameterSet(ctx, pset, bun)
 	require.NoError(t, err)
 
@@ -107,13 +103,13 @@ func TestSanitizer_CleanParameters(t *testing.T) {
 
 			inst := storage.NewInstallation("", "mybuns")
 			inst.ID = "INSTALLATION_ID" // Standardize for easy comparisons later
-			inst.Parameters.Parameters = []secrets.SourceMap{
-				{Name: tc.paramName, Source: secrets.Source{Strategy: tc.sourceKey, Hint: "myvalue"}},
-			}
+			inst.Parameters.SetStrategy(tc.paramName, secrets.Source{Strategy: tc.sourceKey, Hint: "myvalue"})
+
 			gotParams, err := r.Sanitizer.CleanParameters(ctx, inst.Parameters.Parameters, bun, inst.ID)
 			require.NoError(t, err, "CleanParameters failed")
 
-			wantParms := []secrets.SourceMap{{Name: tc.paramName, Source: tc.wantSource}}
+			wantParms := storage.NewParameterSourceMap()
+			wantParms.Set(tc.paramName, storage.ParameterSource{Source: tc.wantSource})
 			require.Equal(t, wantParms, gotParams, "unexpected value returned from CleanParameters")
 		})
 	}

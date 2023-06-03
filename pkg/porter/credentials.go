@@ -272,7 +272,7 @@ func (p *Porter) ShowCredential(ctx context.Context, opts CredentialShowOptions)
 		var rows [][]string
 
 		// Iterate through all CredentialStrategies and add to rows
-		for _, cs := range credSet.Credentials {
+		for _, cs := range credSet.IterateSorted() {
 			rows = append(rows, []string{cs.Name, cs.Source.Hint, cs.Source.Strategy})
 		}
 

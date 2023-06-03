@@ -7,13 +7,12 @@ import (
 	"testing"
 	"time"
 
+	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/portercontext"
-	testmigrations "get.porter.sh/porter/pkg/storage/migrations/testhelpers"
-
-	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
+	testmigrations "get.porter.sh/porter/pkg/storage/migrations/testhelpers"
 	"get.porter.sh/porter/pkg/test"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -45,10 +44,10 @@ func TestConvertClaimToRun(t *testing.T) {
 	assert.Equal(t, "2022-04-29T16:09:42.65907-05:00", run.Created.Format(time.RFC3339Nano), "incorrect created timestamp")
 	assert.Equal(t, "install", run.Action, "incorrect action")
 	assert.NotEmpty(t, run.Bundle, "bundle was not populated")
-	assert.Len(t, run.Parameters.Parameters, 1, "incorrect parameters")
+	assert.Equal(t, 1, run.Parameters.Len(), "incorrect parameters")
 
-	param := run.Parameters.Parameters[0]
-	assert.Equal(t, param.Name, "porter-debug", "incorrect parameter name")
+	param, ok := run.Parameters.Get("porter-debug")
+	require.True(t, ok, "expected 'porter-debug' to be present")
 	assert.Equal(t, param.Source.Strategy, "value", "incorrect parameter source key")
 	assert.Equal(t, param.Source.Hint, "false", "incorrect parameter source value")
 }
@@ -154,7 +153,7 @@ func validateMigratedInstallations(ctx context.Context, t *testing.T, c *config.
 	assert.Empty(t, inst.Labels, "We didn't allow setting labels on installations in v0, so this can't be populated")
 	assert.Empty(t, inst.CredentialSets, "We didn't track credential sets used when running a bundle in v0, so this can't be populated")
 	assert.Empty(t, inst.ParameterSets, "We didn't track parameter sets used when running a bundle in v0, so this can't be populated")
-	assert.Empty(t, inst.Parameters.Parameters, "We didn't track manually specified parameters when running a bundle in v0, so this can't be populated")
+	assert.Equal(t, 0, inst.Parameters.Len(), "We didn't track manually specified parameters when running a bundle in v0, so this can't be populated")
 
 	// Validate the installation status, which is calculated based on the runs and their results
 	assert.Equal(t, "2022-04-28T16:09:42.65907-05:00", inst.Status.Created.Format(time.RFC3339Nano), "Created timestamp should be set to the timestamp of the first run")
@@ -186,13 +185,14 @@ func validateMigratedInstallations(ctx context.Context, t *testing.T, c *config.
 	assert.Empty(t, lastRun.Custom, "We didn't set custom datadata on claims in v0, so this can't be populated")
 	assert.Equal(t, "2022-04-29T16:13:20.48026-05:00", lastRun.Created.Format(time.RFC3339Nano), "incorrect run created timestamp")
 	assert.Empty(t, lastRun.ParameterSets, "We didn't track run parameter sets in v0, so this can't be populated")
-	assert.Empty(t, lastRun.ParameterOverrides, "We didn't track run parameter overrides in v0, so this can't be populated")
+	assert.Equal(t, 0, lastRun.ParameterOverrides.Len(), "We didn't track run parameter overrides in v0, so this can't be populated")
 	assert.Empty(t, lastRun.CredentialSets, "We didn't track run credential sets in v0, so this can't be populated")
-	assert.Len(t, lastRun.Parameters.Parameters, 1, "expected one parameter set on the run")
-	params := lastRun.Parameters.Parameters
-	assert.Equal(t, "porter-debug", params[0].Name, "expected the porter-debug parameter to be set on the run")
-	assert.Equal(t, "value", params[0].Source.Strategy, "expected the porter-debug parameter to be a hard-coded value")
-	assert.Equal(t, "true", params[0].Source.Hint, "expected the porter-debug parameter to be false")
+	assert.Equal(t, 1, lastRun.Parameters.Len(), "expected one parameter set on the run")
+
+	param, ok := lastRun.Parameters.Get("porter-debug")
+	require.True(t, ok, "expected the porter-debug parameter to be set on the run")
+	assert.Equal(t, "value", param.Source.Strategy, "expected the porter-debug parameter to be a hard-coded value")
+	assert.Equal(t, "true", param.Source.Hint, "expected the porter-debug parameter to be false")
 
 	runResults := results[lastRun.ID]
 	assert.Len(t, runResults, 2, "expected 2 results for the last run")
@@ -236,10 +236,10 @@ func validateMigratedCredentialSets(ctx context.Context, t *testing.T, destStore
 	assert.Equal(t, "2022-06-06T16:06:52.099455-05:00", creds.Status.Created.Format(time.RFC3339Nano), "incorrect created timestamp")
 	assert.Equal(t, "2022-06-06T16:07:52.099455-05:00", creds.Status.Modified.Format(time.RFC3339Nano), "incorrect modified timestamp")
 	assert.Empty(t, creds.Labels, "incorrect labels")
-	require.Len(t, creds.Credentials, 1, "incorrect number of credentials migrated")
+	require.Equal(t, 1, creds.Len(), "incorrect number of credentials migrated")
 
-	cred := creds.Credentials[0]
-	assert.Equal(t, "github-token", cred.Name, "incorrect credential name")
+	cred, ok := creds.Get("github-token")
+	require.True(t, ok, "expected 'github-token' to be present")
 	assert.Equal(t, "env", cred.Source.Strategy, "incorrect credential source key")
 	assert.Equal(t, "GITHUB_TOKEN", cred.Source.Hint, "incorrect credential source value")
 }
@@ -260,10 +260,10 @@ func validateMigratedParameterSets(ctx context.Context, t *testing.T, destStore 
 	assert.Equal(t, "2022-06-06T16:06:21.635528-05:00", ps.Status.Created.Format(time.RFC3339Nano), "incorrect created timestamp")
 	assert.Equal(t, "2022-06-06T17:06:21.635528-05:00", ps.Status.Modified.Format(time.RFC3339Nano), "incorrect modified timestamp")
 	assert.Empty(t, ps.Labels, "incorrect labels")
-	require.Len(t, ps.Parameters, 1, "incorrect number of parameters migrated")
+	require.Equal(t, 1, ps.Len(), "incorrect number of parameters migrated")
 
-	param := ps.Parameters[0]
-	assert.Equal(t, "name", param.Name, "incorrect parameter name")
+	param, ok := ps.Get("name")
+	require.True(t, ok, "expected 'name' parameter to be present")
 	assert.Equal(t, "env", param.Source.Strategy, "incorrect parameter source key")
 	assert.Equal(t, "USER", param.Source.Hint, "incorrect parameter source value")
 }

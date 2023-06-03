@@ -98,6 +98,7 @@ func (p *Porter) sanitizeInstallation(ctx context.Context, inst *storage.Install
 		return err
 	}
 
-	inst.Parameters = inst.NewInternalParameterSet(strategies...)
+	inst.Parameters = inst.NewInternalParameterSet()
+	inst.Parameters.Parameters = strategies
 	return nil
 }

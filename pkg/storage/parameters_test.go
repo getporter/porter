@@ -65,42 +65,27 @@ func TestTestParameterProvider_Load(t *testing.T) {
 	})
 
 	t.Run("successful load, successful unmarshal", func(t *testing.T) {
-		expected := NewParameterSet("", "mybun",
-			secrets.SourceMap{
-				Name: "param_env",
-				Source: secrets.Source{
-					Strategy: "env",
-					Hint:     "PARAM_ENV",
-				},
-			},
-			secrets.SourceMap{
-				Name: "param_value",
-				Source: secrets.Source{
-					Strategy: "value",
-					Hint:     "param_value",
-				},
-			},
-			secrets.SourceMap{
-				Name: "param_command",
-				Source: secrets.Source{
-					Strategy: "command",
-					Hint:     "echo hello world",
-				},
-			},
-			secrets.SourceMap{
-				Name: "param_path",
-				Source: secrets.Source{
-					Strategy: "path",
-					Hint:     "/path/to/param",
-				},
-			},
-			secrets.SourceMap{
-				Name: "param_secret",
-				Source: secrets.Source{
-					Strategy: "secret",
-					Hint:     "param_secret",
-				},
-			})
+		expected := NewParameterSet("", "mybun")
+		expected.SetStrategy("param_env", secrets.Source{
+			Strategy: "env",
+			Hint:     "PARAM_ENV"})
+		expected.SetStrategy("param_value", secrets.Source{
+			Strategy: "value",
+			Hint:     "param_value",
+		})
+		expected.SetStrategy("param_command", secrets.Source{
+			Strategy: "command",
+			Hint:     "echo hello world",
+		})
+		expected.SetStrategy("param_path", secrets.Source{
+			Strategy: "path",
+			Hint:     "/path/to/param",
+		})
+		expected.SetStrategy("param_secret", secrets.Source{
+			Strategy: "secret",
+			Hint:     "param_secret",
+		})
+
 		expected.SchemaVersion = "1.0.1" // It's an older code but it checks out
 		expected.Status.Created = time.Date(1983, time.April, 18, 1, 2, 3, 4, time.UTC)
 		expected.Status.Modified = expected.Status.Created

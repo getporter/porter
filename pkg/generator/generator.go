@@ -5,7 +5,7 @@ import (
 
 	"get.porter.sh/porter/pkg/secrets"
 	"github.com/cnabio/cnab-go/secrets/host"
-	survey "gopkg.in/AlecAivazis/survey.v1"
+	"gopkg.in/AlecAivazis/survey.v1"
 )
 
 // GenerateOptions are the options to generate a parameter or credential set
@@ -33,18 +33,15 @@ const (
 	questionCommand = "shell command"
 )
 
-type generator func(name string, surveyType SurveyType) (secrets.SourceMap, error)
+type generator func(name string, surveyType SurveyType) (secrets.Source, error)
 
-func genEmptySet(name string, surveyType SurveyType) (secrets.SourceMap, error) {
-	return secrets.SourceMap{
-		Name:   name,
-		Source: secrets.Source{Hint: "TODO"},
-	}, nil
+func genEmptySet(name string, surveyType SurveyType) (secrets.Source, error) {
+	return secrets.Source{Hint: "TODO"}, nil
 }
 
-func genSurvey(name string, surveyType SurveyType) (secrets.SourceMap, error) {
+func genSurvey(name string, surveyType SurveyType) (secrets.Source, error) {
 	if surveyType != surveyCredentials && surveyType != surveyParameters {
-		return secrets.SourceMap{}, fmt.Errorf("unsupported survey type: %s", surveyType)
+		return secrets.Source{}, fmt.Errorf("unsupported survey type: %s", surveyType)
 	}
 
 	// extra space-suffix to align question and answer. Unfortunately misaligns help text
@@ -57,11 +54,9 @@ func genSurvey(name string, surveyType SurveyType) (secrets.SourceMap, error) {
 	// extra space-suffix to align question and answer. Unfortunately misaligns help text
 	sourceValuePromptTemplate := "Enter the %s that will be used to set %s %q\n "
 
-	c := secrets.SourceMap{Name: name}
-
 	source := ""
 	if err := survey.AskOne(sourceTypePrompt, &source, nil); err != nil {
-		return c, err
+		return secrets.Source{}, err
 	}
 
 	promptMsg := ""
@@ -84,25 +79,23 @@ func genSurvey(name string, surveyType SurveyType) (secrets.SourceMap, error) {
 
 	value := ""
 	if err := survey.AskOne(sourceValuePrompt, &value, nil); err != nil {
-		return c, err
+		return secrets.Source{}, err
 	}
 
+	result := secrets.Source{Hint: value}
 	switch source {
 	case questionSecret:
-		c.Source.Strategy = secrets.SourceSecret
-		c.Source.Hint = value
+		result.Strategy = secrets.SourceSecret
 	case questionValue:
-		c.Source.Strategy = host.SourceValue
-		c.Source.Hint = value
+		result.Strategy = host.SourceValue
 	case questionEnvVar:
-		c.Source.Strategy = host.SourceEnv
-		c.Source.Hint = value
+		result.Strategy = host.SourceEnv
 	case questionPath:
-		c.Source.Strategy = host.SourcePath
-		c.Source.Hint = value
+		result.Strategy = host.SourcePath
 	case questionCommand:
-		c.Source.Strategy = host.SourceCommand
-		c.Source.Hint = value
+		result.Strategy = host.SourceCommand
+	default:
+		return secrets.Source{}, fmt.Errorf("unrecogized secret source strategy %q", source)
 	}
-	return c, nil
+	return result, nil
 }

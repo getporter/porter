@@ -59,10 +59,11 @@ func TestPorter_ListInstallations(t *testing.T) {
 	p := NewTestPorter(t)
 	defer p.Close()
 
+	// Define a parameter that is stored in a secret, list should not retrieve it
 	i1 := storage.NewInstallation("", "shared-mysql")
-	i1.Parameters.Parameters = []secrets.SourceMap{ // Define a parameter that is stored in a secret, list should not retrieve it
-		{Name: "password", Source: secrets.Source{Strategy: "secret", Hint: "mypassword"}},
-	}
+	i1.Parameters.SetStrategy("password", secrets.Source{
+		Strategy: "secret",
+		Hint:     "mypassword"})
 	i1.Status.RunID = "10" // Add a run but don't populate the data for it, list should not retrieve it
 
 	p.TestInstallations.CreateInstallation(i1)
@@ -138,15 +139,10 @@ func TestDisplayInstallation_ConvertToInstallation(t *testing.T) {
 	require.Equal(t, convertedInstallation.ParameterSets, i.ParameterSets, "invalid parameter set")
 
 	require.Equal(t, i.Parameters.String(), convertedInstallation.Parameters.String(), "invalid parameters name")
-	require.Equal(t, len(i.Parameters.Parameters), len(convertedInstallation.Parameters.Parameters))
+	require.Equal(t, i.Parameters.Len(), convertedInstallation.Parameters.Len())
 
-	parametersMap := make(map[string]secrets.SourceMap, len(i.Parameters.Parameters))
-	for _, param := range i.Parameters.Parameters {
-		parametersMap[param.Name] = param
-	}
-
-	for _, param := range convertedInstallation.Parameters.Parameters {
-		expected := parametersMap[param.Name]
+	for paramName, param := range convertedInstallation.Parameters.Iterate() {
+		expected, _ := i.Parameters.Get(paramName)
 		require.Equal(t, expected.ResolvedValue, param.ResolvedValue)
 		expectedSource, err := expected.Source.MarshalJSON()
 		require.NoError(t, err)

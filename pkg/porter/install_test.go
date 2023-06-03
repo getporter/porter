@@ -75,23 +75,14 @@ func TestPorter_ApplyParametersToInstallation(t *testing.T) {
 		ctx := context.Background()
 		p := NewTestPorter(t)
 
-		p.TestParameters.InsertParameterSet(ctx, storage.ParameterSet{
-			ParameterSetSpec: storage.ParameterSetSpec{
-				Name: "oldps1",
-				Parameters: []secrets.SourceMap{
-					{Name: "logLevel", Source: secrets.Source{Strategy: "value", Hint: "2"}},
-				},
-			},
-		})
+		oldPS := storage.NewParameterSet("", "oldps1")
+		oldPS.SetStrategy("logLevel", secrets.HardCodedValueStrategy("2"))
+		p.TestParameters.InsertParameterSet(ctx, oldPS)
 
-		p.TestParameters.InsertParameterSet(ctx, storage.ParameterSet{
-			ParameterSetSpec: storage.ParameterSetSpec{
-				Name: "newps1",
-				Parameters: []secrets.SourceMap{
-					{Name: "logLevel", Source: secrets.Source{Strategy: "value", Hint: "11"}},
-				},
-			},
-		})
+		newPS := storage.NewParameterSet("", "newps1")
+		newPS.SetStrategy("logLevel", secrets.HardCodedValueStrategy("11"))
+		p.TestParameters.InsertParameterSet(ctx, newPS)
+
 		inst := storage.NewInstallation("myns", "mybuns")
 		inst.Bundle = storage.OCIReferenceParts{
 			Repository: "example.com/mybuns",

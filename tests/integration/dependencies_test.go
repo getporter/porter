@@ -4,15 +4,14 @@ package integration
 
 import (
 	"context"
+	"get.porter.sh/porter/pkg/secrets"
 	"os"
 	"path/filepath"
 	"testing"
 
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/porter"
-	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
-	"github.com/cnabio/cnab-go/secrets/host"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -74,13 +73,8 @@ func installWordpressBundle(ctx context.Context, p *porter.TestPorter) (namespac
 
 	// Add a supplemental parameter set to vet dep param resolution
 	installOpts.ParameterSets = []string{"myparam"}
-	testParamSets := storage.NewParameterSet(namespace, "myparam", secrets.SourceMap{
-		Name: "mysql#probe-timeout",
-		Source: secrets.Source{
-			Strategy: host.SourceValue,
-			Hint:     "2",
-		},
-	})
+	testParamSets := storage.NewParameterSet(namespace, "myparam")
+	testParamSets.SetStrategy("mysql#probe-timeout", secrets.HardCodedValueStrategy("2"))
 
 	p.TestParameters.InsertParameterSet(ctx, testParamSets)
 

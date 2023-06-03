@@ -3,13 +3,13 @@ package porter
 import (
 	"context"
 	"fmt"
+	"get.porter.sh/porter/pkg/secrets"
 	"sort"
 	"strings"
 	"time"
 
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/printer"
-	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/tracing"
 	dtprinter "github.com/carolynvs/datetime-printer"
@@ -176,19 +176,19 @@ func (d DisplayInstallation) ConvertToInstallation() (storage.Installation, erro
 	return i, nil
 }
 
-// ConvertParamToSet converts a Parameters into a internal ParameterSet.
+// ConvertParamToSet converts a Parameters into an internal ParameterSet.
 func (d DisplayInstallation) ConvertParamToSet() (storage.ParameterSet, error) {
-	strategies := make([]secrets.SourceMap, 0, len(d.Parameters))
+	pset := storage.NewInternalParameterSet(d.Namespace, d.Name)
 	for name, value := range d.Parameters {
 		stringVal, err := cnab.WriteParameterToString(name, value)
 		if err != nil {
 			return storage.ParameterSet{}, err
 		}
 
-		strategies = append(strategies, storage.ValueStrategy(name, stringVal))
+		pset.SetStrategy(name, secrets.HardCodedValueStrategy(stringVal))
 	}
 
-	return storage.NewInternalParameterSet(d.Namespace, d.Name, strategies...), nil
+	return pset, nil
 }
 
 // TODO(carolynvs): be consistent with sorting results from list, either keep the default sort by name

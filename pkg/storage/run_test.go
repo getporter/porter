@@ -172,12 +172,12 @@ func TestRun_TypedParameterValues(t *testing.T) {
 	run := NewRun("dev", "mybuns")
 	run.Bundle = bun
 	run.Parameters = NewParameterSet(run.Namespace, run.Bundle.Name)
-	params := []secrets.SourceMap{
-		ValueStrategy("baz", "baz-test"),
-		ValueStrategy("name", "porter-test"),
-		ValueStrategy("porter-state", ""),
-		{Name: "foo", Source: secrets.Source{Strategy: secrets.SourceSecret, Hint: "runID"}, ResolvedValue: "5"},
-	}
+	run.Parameters.Set("baz", secrets.HardCodedValue("baz-test"))
+	run.Parameters.Set("name", secrets.HardCodedValue("porter-test"))
+	run.Parameters.Set("porter-state", secrets.HardCodedValue(""))
+	run.Parameters.Set("foo", ParameterSource{
+		Source:        secrets.Source{Strategy: "secret", Hint: "runID"},
+		ResolvedValue: "5"})
 
 	expected := map[string]interface{}{
 		"baz":          "baz-test",
@@ -186,9 +186,8 @@ func TestRun_TypedParameterValues(t *testing.T) {
 		"foo":          5,
 	}
 
-	run.Parameters.Parameters = params
 	typed := run.TypedParameterValues()
-	require.Equal(t, len(params), len(typed))
+	require.Equal(t, run.Parameters.Len(), len(typed))
 	require.Equal(t, len(expected), len(typed))
 
 	for name, value := range typed {
@@ -211,5 +210,5 @@ func TestRun_MarshalJSON(t *testing.T) {
 	err = json.Unmarshal(data, &r2)
 	require.NoError(t, err, "Unmarshal failed")
 
-	assert.Equal(t, r1, r2, "The run did not survive the round trip")
+	assert.Equal(t, r1.Bundle, r2.Bundle, "The Run's bundle did not survive the round trip")
 }

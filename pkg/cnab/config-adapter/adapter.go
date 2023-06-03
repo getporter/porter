@@ -540,11 +540,11 @@ func (c *ManifestConverter) generateParameterSources(b *cnab.ExtendedBundle) cna
 	ps["porter-state"] = c.generateOutputParameterSource("porter-state")
 
 	// bundle.outputs.OUTPUT
+	if b.Parameters == nil {
+		b.Parameters = make(map[string]bundle.Parameter)
+	}
 	for _, outputDef := range c.Manifest.GetTemplatedOutputs() {
 		wiringName, p, def := c.generateOutputWiringParameter(*b, outputDef.Name)
-		if b.Parameters == nil {
-			b.Parameters = make(map[string]bundle.Parameter, 1)
-		}
 		b.Parameters[wiringName] = p
 		b.Definitions[wiringName] = &def
 
@@ -555,9 +555,6 @@ func (c *ManifestConverter) generateParameterSources(b *cnab.ExtendedBundle) cna
 	// bundle.dependencies.DEP.outputs.OUTPUT
 	for _, ref := range c.Manifest.GetTemplatedDependencyOutputs() {
 		wiringName, p, def := c.generateDependencyOutputWiringParameter(ref)
-		if b.Parameters == nil {
-			b.Parameters = make(map[string]bundle.Parameter, 1)
-		}
 		b.Parameters[wiringName] = p
 		b.Definitions[wiringName] = &def
 

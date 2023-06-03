@@ -36,22 +36,13 @@ func TestSensitiveData(t *testing.T) {
 	run, err := p.Installations.GetRun(ctx, i.Status.RunID)
 	require.NoError(t, err)
 
-	for _, param := range i.Parameters.Parameters {
-		if param.Name == sensitiveParamName {
-			assert.NotContains(t, param.Source.Hint, sensitiveParamValue)
-		}
-	}
-
-	for _, param := range run.ParameterOverrides.Parameters {
-		if param.Name == sensitiveParamName {
-			assert.NotContains(t, param.Source.Hint, sensitiveParamValue)
-		}
-	}
-	for _, param := range run.Parameters.Parameters {
-		if param.Name == sensitiveParamName {
-			assert.NotContains(t, param.Source.Hint, sensitiveParamValue)
-		}
-	}
+	sensitiveParam, ok := i.Parameters.Get(sensitiveParamName)
+	require.True(t, ok)
+	assert.NotContains(t, sensitiveParam.Source.Hint, sensitiveParamValue)
+	assert.NotContains(t, sensitiveParam.Source.Hint, sensitiveParamValue)
+	sensitiveOverride, ok := run.ParameterOverrides.Get(sensitiveParamName)
+	require.True(t, ok)
+	assert.NotContains(t, sensitiveOverride.Source.Hint, sensitiveParamValue)
 
 	outputs, err := p.Installations.GetLastOutputs(ctx, "", bundleName)
 	require.NoError(t, err, "GetLastOutput failed")

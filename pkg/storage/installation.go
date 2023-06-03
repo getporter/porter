@@ -10,7 +10,6 @@ import (
 
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/schema"
-	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/tracing"
 	"github.com/Masterminds/semver/v3"
 	"github.com/opencontainers/go-digest"
@@ -105,12 +104,12 @@ func (i Installation) NewRun(action string, b cnab.ExtendedBundle) Run {
 	// Copy over relevant overrides from the installation to the run
 	// An installation may have an overridden parameter that doesn't apply to this current action
 	run.ParameterOverrides = NewInternalParameterSet(i.Namespace, i.Name)
-	for _, p := range i.Parameters.Parameters {
-		if parmDef, ok := b.Parameters[p.Name]; ok {
+	for paramName, p := range i.Parameters.Iterate() {
+		if parmDef, ok := b.Parameters[paramName]; ok {
 			if !parmDef.AppliesTo(action) {
 				continue
 			}
-			run.ParameterOverrides.Parameters = append(run.ParameterOverrides.Parameters, p)
+			run.ParameterOverrides.Set(paramName, p)
 		}
 	}
 
@@ -223,8 +222,8 @@ func (i *Installation) SetLabel(key string, value string) {
 
 // NewInternalParameterSet creates a new ParameterSet that's used to store
 // parameter overrides with the required fields initialized.
-func (i Installation) NewInternalParameterSet(params ...secrets.SourceMap) ParameterSet {
-	return NewInternalParameterSet(i.Namespace, i.ID, params...)
+func (i Installation) NewInternalParameterSet() ParameterSet {
+	return NewInternalParameterSet(i.Namespace, i.ID)
 }
 
 func (i Installation) AddToTrace(ctx context.Context) {

@@ -314,6 +314,7 @@ func (c *TestContext) hasChild(dir string, childName string) (string, bool) {
 // When they are different and PORTER_UPDATE_TEST_FILES is true, the file is updated to match
 // the new test output.
 func (c *TestContext) CompareGoldenFile(goldenFile string, got string) {
+	c.T.Helper()
 	test.CompareGoldenFile(c.T, goldenFile, got)
 }
 

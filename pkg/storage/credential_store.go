@@ -61,13 +61,13 @@ func (s CredentialStore) ResolveAll(ctx context.Context, creds CredentialSet) (s
 	resolvedCreds := make(secrets.Set)
 	var resolveErrors error
 
-	for _, cred := range creds.Credentials {
+	for credName, cred := range creds.Iterate() {
 		value, err := s.Secrets.Resolve(ctx, cred.Source.Strategy, cred.Source.Hint)
 		if err != nil {
-			resolveErrors = multierror.Append(resolveErrors, fmt.Errorf("unable to resolve credential %s.%s from %s %s: %w", creds.Name, cred.Name, cred.Source.Strategy, cred.Source.Hint, err))
+			resolveErrors = multierror.Append(resolveErrors, fmt.Errorf("unable to resolve credential %s.%s from %s %s: %w", creds.Name, credName, cred.Source.Strategy, cred.Source.Hint, err))
 		}
 
-		resolvedCreds[cred.Name] = value
+		resolvedCreds[credName] = value
 	}
 
 	return resolvedCreds, resolveErrors
@@ -77,10 +77,14 @@ func (s CredentialStore) Validate(ctx context.Context, creds CredentialSet) erro
 	validSources := []string{secrets.SourceSecret, host.SourceValue, host.SourceEnv, host.SourcePath, host.SourceCommand}
 	var errors error
 
-	for _, cs := range creds.Credentials {
+	for credName, cred := range creds.Iterate() {
 		valid := false
+		if credName == "" {
+			errors = multierror.Append(errors, fmt.Errorf("all credential set sources must have a credential name defined"))
+		}
+
 		for _, validSource := range validSources {
-			if cs.Source.Strategy == validSource {
+			if cred.Source.Strategy == validSource {
 				valid = true
 				break
 			}
@@ -88,7 +92,7 @@ func (s CredentialStore) Validate(ctx context.Context, creds CredentialSet) erro
 		if !valid {
 			errors = multierror.Append(errors, fmt.Errorf(
 				"%s is not a valid source. Valid sources are: %s",
-				cs.Source.Strategy,
+				cred.Source.Strategy,
 				strings.Join(validSources, ", "),
 			))
 		}

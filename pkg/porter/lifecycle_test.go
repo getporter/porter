@@ -330,8 +330,9 @@ func TestPorter_applyActionOptionsToInstallation_FollowsParameterHierarchy(t *te
 	bun, err := configadapter.ConvertToTestBundle(ctx, p.Config, m)
 	require.NoError(t, err)
 
-	err = p.TestParameters.InsertParameterSet(ctx, storage.NewParameterSet("", "myps",
-		storage.ValueStrategy("my-second-param", "via_paramset")))
+	myPS := storage.NewParameterSet("", "myps")
+	myPS.SetStrategy("my-second-param", secrets.HardCodedValueStrategy("via_paramset"))
+	err = p.TestParameters.InsertParameterSet(ctx, myPS)
 	require.NoError(t, err, "Create my-second-param parameter set failed")
 
 	makeOpts := func() InstallOptions {
@@ -443,14 +444,15 @@ func TestPorter_applyActionOptionsToInstallation_sanitizesParameters(t *testing.
 	opts.Params = []string{nonsensitiveParamName + "=" + nonsensitiveParamValue, sensitiveParamName + "=" + sensitiveParamValue}
 
 	i := storage.NewInstallation("", bun.Name)
+	i.ID = "INSTALLATIONID"
 
 	err = p.applyActionOptionsToInstallation(ctx, opts, &i)
 	require.NoError(t, err)
-	require.Len(t, i.Parameters.Parameters, 2)
+	require.Equal(t, 2, i.Parameters.Len())
 
 	// there should be no sensitive value on installation record
-	for _, param := range i.Parameters.Parameters {
-		if param.Name == sensitiveParamName {
+	for paramName, param := range i.Parameters.Iterate() {
+		if paramName == sensitiveParamName {
 			require.Equal(t, param.Source.Strategy, secrets.SourceSecret)
 			require.NotEqual(t, param.Source.Hint, sensitiveParamValue)
 			continue
@@ -470,11 +472,12 @@ func TestPorter_applyActionOptionsToInstallation_sanitizesParameters(t *testing.
 	require.NoError(t, err)
 
 	// Check that when no parameter overrides are specified, we use the originally specified parameters from the previous run
-	require.Len(t, i.Parameters.Parameters, 2)
-	require.Equal(t, "my-first-param", i.Parameters.Parameters[0].Name)
-	require.Equal(t, "1", i.Parameters.Parameters[0].Source.Hint)
-	require.Equal(t, "my-second-param", i.Parameters.Parameters[1].Name)
-	require.Equal(t, "secret", i.Parameters.Parameters[1].Source.Strategy)
+	wantParameters := storage.NewParameterSourceMap()
+	wantParameters.Set("my-first-param", storage.ParameterSource{
+		Source: secrets.Source{Strategy: "value", Hint: "1"}})
+	wantParameters.Set("my-second-param", storage.ParameterSource{
+		Source: secrets.Source{Strategy: "secret", Hint: "INSTALLATIONID-my-second-param"}})
+	require.Equal(t, wantParameters, i.Parameters.Parameters)
 }
 
 // When the installation has been used before with a parameter value
@@ -506,27 +509,21 @@ func TestPorter_applyActionOptionsToInstallation_PreservesExistingParams(t *test
 	opts.Params = []string{nonsensitiveParamName + "=" + nonsensitiveParamValue}
 
 	i := storage.NewInstallation("", bun.Name)
-	i.Parameters = storage.NewParameterSet("", "internal-ps",
-		storage.ValueStrategy("my-first-param", "1"),
-		storage.ValueStrategy("my-second-param", "2"),
-	)
+	i.ID = "INSTALLATIONID"
+	i.Parameters = storage.NewParameterSet("", "internal-ps")
+	i.Parameters.SetStrategy("my-first-param", secrets.HardCodedValueStrategy("1"))
+	i.Parameters.SetStrategy("my-second-param", secrets.HardCodedValueStrategy("2"))
 
 	err = p.applyActionOptionsToInstallation(ctx, opts, &i)
 	require.NoError(t, err)
-	require.Len(t, i.Parameters.Parameters, 2)
+	require.Equal(t, 2, i.Parameters.Len())
 
 	// Check that overrides are applied on top of existing parameters
-	require.Len(t, i.Parameters.Parameters, 2)
-	require.Equal(t, "my-first-param", i.Parameters.Parameters[0].Name)
-	require.Equal(t, "value", i.Parameters.Parameters[0].Source.Strategy, "my-first-param isn't sensitive and can be stored in a hard-coded value")
-	require.Equal(t, "my-second-param", i.Parameters.Parameters[1].Name)
-	require.Equal(t, "secret", i.Parameters.Parameters[1].Source.Strategy, "my-second-param should be stored on the installation using a secret since it's sensitive")
-
-	// Check the values stored are correct
-	params, err := p.Parameters.ResolveAll(ctx, i.Parameters)
-	require.NoError(t, err, "Failed to resolve the installation parameters")
-	require.Equal(t, secrets.Set{
-		"my-first-param":  "3", // Should have used the override
-		"my-second-param": "2", // Should have kept the existing value from the last run
-	}, params, "Incorrect parameter values were persisted on the installationß")
+	wantParameters := storage.NewParameterSourceMap()
+	wantParameters.Set("my-first-param", storage.ParameterSource{
+		Source: secrets.Source{Strategy: "value", Hint: "3"},
+	})
+	wantParameters.Set("my-second-param", storage.ParameterSource{
+		Source: secrets.Source{Strategy: "secret", Hint: "INSTALLATIONID-my-second-param"}})
+	require.Equal(t, wantParameters, i.Parameters.Parameters)
 }

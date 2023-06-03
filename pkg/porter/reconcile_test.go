@@ -2,13 +2,13 @@ package porter
 
 import (
 	"context"
+	"get.porter.sh/porter/pkg/secrets"
 	"path/filepath"
 	"testing"
 	"time"
 
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/portercontext"
-	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -59,24 +59,18 @@ func TestPorter_IsInstallationInSync(t *testing.T) {
 		p := NewTestPorter(t)
 		defer p.Close()
 
-		myps := storage.ParameterSet{
-			ParameterSetSpec: storage.ParameterSetSpec{
-				Name: "myps",
-				Parameters: []secrets.SourceMap{
-					storage.ValueStrategy("my-second-param", "override"),
-				},
-			},
-		}
+		myps := storage.NewParameterSet("", "myps")
+		myps.SetStrategy("my-second-param", secrets.HardCodedValueStrategy("override"))
+
 		err := p.Parameters.InsertParameterSet(ctx, myps)
 		require.NoError(t, err)
 
 		i := storage.NewInstallation("", "mybuns")
 		i.ParameterSets = []string{"myps"}
 		i.Status.Installed = &now
-		run := storage.Run{
-			// Use the default values from the bundle.json so that we don't trigger reconciliation
-			Parameters: storage.NewInternalParameterSet(i.Namespace, i.Name, storage.ValueStrategy("my-second-param", "override")),
-		}
+		run := i.NewRun(cnab.ActionInstall, bun)
+		run.Parameters.SetStrategy("my-second-param", secrets.HardCodedValueStrategy("override"))
+
 		upgradeOpts := NewUpgradeOptions()
 		upgradeOpts.bundleRef = &cnab.BundleReference{Definition: bun}
 		require.NoError(t, p.applyActionOptionsToInstallation(ctx, upgradeOpts, &i))
@@ -115,9 +109,9 @@ func TestPorter_IsInstallationInSync(t *testing.T) {
 
 		i := storage.NewInstallation("", "mybuns")
 		i.Status.Installed = &now
-		run := storage.Run{
-			Parameters: storage.NewInternalParameterSet(i.Namespace, i.Name, storage.ValueStrategy("my-second-param", "newvalue")),
-		}
+		run := i.NewRun(cnab.ActionInstall, bun)
+		run.Parameters.SetStrategy("my-second-param", secrets.HardCodedValueStrategy("new value"))
+
 		upgradeOpts := NewUpgradeOptions()
 		upgradeOpts.bundleRef = &cnab.BundleReference{Definition: bun}
 		require.NoError(t, p.applyActionOptionsToInstallation(ctx, upgradeOpts, &i))
@@ -137,11 +131,10 @@ func TestPorter_IsInstallationInSync(t *testing.T) {
 		i := storage.NewInstallation("", "mybuns")
 		i.Status.Installed = &now
 		i.CredentialSets = []string{"newcreds"}
-		run := storage.Run{
-			CredentialSets: []string{"oldcreds"},
-			// Use the default values from the bundle.json so they don't trigger the reconciliation
-			Parameters: storage.NewInternalParameterSet(i.Namespace, i.Name, storage.ValueStrategy("my-second-param", "spring-music-demo")),
-		}
+		run := i.NewRun(cnab.ActionInstall, bun)
+		run.CredentialSets = []string{"oldcreds"}
+		run.Parameters.SetStrategy("my-second-param", secrets.HardCodedValueStrategy("spring-music-demo"))
+
 		upgradeOpts := NewUpgradeOptions()
 		upgradeOpts.bundleRef = &cnab.BundleReference{Definition: bun}
 		require.NoError(t, p.applyActionOptionsToInstallation(ctx, upgradeOpts, &i))
