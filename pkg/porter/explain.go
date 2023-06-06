@@ -25,16 +25,17 @@ type ExplainOpts struct {
 
 // PrintableBundle holds a subset of pertinent values to be explained from a bundle
 type PrintableBundle struct {
-	Name          string                `json:"name" yaml:"name"`
-	Description   string                `json:"description,omitempty" yaml:"description,omitempty"`
-	Version       string                `json:"version" yaml:"version"`
-	PorterVersion string                `json:"porterVersion,omitempty" yaml:"porterVersion,omitempty"`
-	Parameters    []PrintableParameter  `json:"parameters,omitempty" yaml:"parameters,omitempty"`
-	Credentials   []PrintableCredential `json:"credentials,omitempty" yaml:"credentials,omitempty"`
-	Outputs       []PrintableOutput     `json:"outputs,omitempty" yaml:"outputs,omitempty"`
-	Actions       []PrintableAction     `json:"customActions,omitempty" yaml:"customActions,omitempty"`
-	Dependencies  []PrintableDependency `json:"dependencies,omitempty" yaml:"dependencies,omitempty"`
-	Mixins        []string              `json:"mixins" yaml:"mixins"`
+	Name          string                 `json:"name" yaml:"name"`
+	Description   string                 `json:"description,omitempty" yaml:"description,omitempty"`
+	Version       string                 `json:"version" yaml:"version"`
+	PorterVersion string                 `json:"porterVersion,omitempty" yaml:"porterVersion,omitempty"`
+	Parameters    []PrintableParameter   `json:"parameters,omitempty" yaml:"parameters,omitempty"`
+	Credentials   []PrintableCredential  `json:"credentials,omitempty" yaml:"credentials,omitempty"`
+	Outputs       []PrintableOutput      `json:"outputs,omitempty" yaml:"outputs,omitempty"`
+	Actions       []PrintableAction      `json:"customActions,omitempty" yaml:"customActions,omitempty"`
+	Dependencies  []PrintableDependency  `json:"dependencies,omitempty" yaml:"dependencies,omitempty"`
+	Mixins        []string               `json:"mixins" yaml:"mixins"`
+	Custom        map[string]interface{} `json:"custom,omitempty" yaml:"custom,omitempty"`
 }
 
 type PrintableCredential struct {
@@ -209,6 +210,7 @@ func generatePrintable(bun cnab.ExtendedBundle, action string) (*PrintableBundle
 		Outputs:       make([]PrintableOutput, 0, len(bun.Outputs)),
 		Dependencies:  make([]PrintableDependency, 0, len(deps)),
 		Mixins:        make([]string, 0, len(stamp.Mixins)),
+		Custom:        make(map[string]interface{}),
 	}
 
 	for a, v := range bun.Actions {
@@ -300,6 +302,12 @@ func generatePrintable(bun cnab.ExtendedBundle, action string) (*PrintableBundle
 	}
 	sort.Strings(pb.Mixins)
 
+	for key, value := range bun.Custom {
+		if isUserDefinedCustomSectionKey(key) {
+			pb.Custom[key] = value
+		}
+	}
+
 	return &pb, nil
 }
 
@@ -311,6 +319,23 @@ func shouldIncludeInExplainOutput(scoped bundle.Scoped, action string) bool {
 	}
 
 	return bundle.AppliesTo(scoped, action)
+}
+
+// isUserDefinedCustomSectionKey returns true if the given key in the custom section data is
+// user-defined and not one that Porter uses for its own purposes.
+func isUserDefinedCustomSectionKey(key string) bool {
+	porterKeyPrefixes := []string{
+		"io.cnab",
+		"sh.porter",
+	}
+
+	for _, keyPrefix := range porterKeyPrefixes {
+		if strings.HasPrefix(key, keyPrefix) {
+			return false
+		}
+	}
+
+	return true
 }
 
 func generateApplyToString(appliesTo []string) string {
