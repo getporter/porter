@@ -27,7 +27,7 @@ require (
 	github.com/containerd/containerd v1.7.0
 	github.com/davecgh/go-spew v1.1.1
 	github.com/docker/buildx v0.10.4
-	github.com/docker/cli v23.0.3+incompatible
+	github.com/docker/cli v23.0.6+incompatible
 	github.com/docker/distribution v2.8.2+incompatible
 	github.com/docker/docker v23.0.6+incompatible
 	github.com/dustin/go-humanize v1.0.1
