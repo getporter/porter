@@ -67,7 +67,7 @@ func newTestInstallation(t *testing.T, namespace, name string, grpcSvr *TestPort
 		i.Bundle.Repository = "test-bundle"
 		i.Bundle.Version = "v0.1.0"
 	})
-	c := grpcSvr.TestPorter.TestInstallations.CreateRun(storeInst.NewRun(cnab.ActionInstall), func(sRun *storage.Run) {
+	c := grpcSvr.TestPorter.TestInstallations.CreateRun(storeInst.NewRun(cnab.ActionInstall, cnab.ExtendedBundle{}), func(sRun *storage.Run) {
 		sRun.Bundle = b
 		sRun.ParameterOverrides.Parameters = grpcSvr.TestPorter.SanitizeParameters(sRun.ParameterOverrides.Parameters, sRun.ID, extB)
 	})
