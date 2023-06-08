@@ -11,8 +11,6 @@ Explain a bundle
 
 Explain how to use a bundle by printing the parameters, credentials, outputs, actions.
 
-The [Custom](../bundle/manifest/_index.md#custom) section data is only shown when the output format is JSON or YAML. Because the data can have an arbitrary structure, there is no coherent way to display it in a table.
-
 ```
 porter explain REFERENCE [flags]
 ```

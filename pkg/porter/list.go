@@ -29,6 +29,7 @@ const (
 type ListOptions struct {
 	printer.PrintOptions
 	AllNamespaces bool
+	AllStates     bool
 	Namespace     string
 	Name          string
 	Labels        []string
@@ -248,7 +249,13 @@ func (p *Porter) ListInstallations(ctx context.Context, opts ListOptions) (Displ
 	var displayInstallations DisplayInstallations
 	for _, installation := range installations {
 		di := NewDisplayInstallation(installation)
-		displayInstallations = append(displayInstallations, di)
+		if !opts.AllStates {
+			if di.DisplayInstallationMetadata.DisplayInstallationState == StateInstalled {
+				displayInstallations = append(displayInstallations, di)
+			}
+		} else {
+			displayInstallations = append(displayInstallations, di)
+		}
 	}
 	sort.Sort(sort.Reverse(displayInstallations))
 

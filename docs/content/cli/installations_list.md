@@ -26,6 +26,7 @@ porter installations list [flags]
 ```
   porter installations list
   porter installations list -o json
+  porter installations list --all-states
   porter installations list --all-namespaces,
   porter installations list --label owner=myname --namespace dev
   porter installations list --name myapp
@@ -36,6 +37,7 @@ porter installations list [flags]
 
 ```
       --all-namespaces     Include all namespaces in the results.
+      --all-states         Include all installation states in the result.
   -h, --help               help for list
   -l, --label strings      Filter the installations by a label formatted as: KEY=VALUE. May be specified multiple times.
       --limit int          Limit the number of installations by a certain amount. Defaults to 0.
