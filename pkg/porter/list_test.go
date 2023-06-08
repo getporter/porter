@@ -73,7 +73,7 @@ func TestPorter_ListInstallations(t *testing.T) {
 	p.TestInstallations.CreateInstallation(storage.NewInstallation("test", "shared-mysql"))
 
 	t.Run("all-namespaces", func(t *testing.T) {
-		opts := ListOptions{AllNamespaces: true}
+		opts := ListOptions{AllNamespaces: true, AllStates: true}
 		results, err := p.ListInstallations(ctx, opts)
 		require.NoError(t, err)
 		assert.Len(t, results, 6)
@@ -85,19 +85,19 @@ func TestPorter_ListInstallations(t *testing.T) {
 	})
 
 	t.Run("local namespace", func(t *testing.T) {
-		opts := ListOptions{Namespace: "dev"}
+		opts := ListOptions{Namespace: "dev", AllStates: true}
 		results, err := p.ListInstallations(ctx, opts)
 		require.NoError(t, err)
 		assert.Len(t, results, 2)
 
-		opts = ListOptions{Namespace: "test"}
+		opts = ListOptions{Namespace: "test", AllStates: true}
 		results, err = p.ListInstallations(ctx, opts)
 		require.NoError(t, err)
 		assert.Len(t, results, 3)
 	})
 
 	t.Run("global namespace", func(t *testing.T) {
-		opts := ListOptions{Namespace: ""}
+		opts := ListOptions{Namespace: "", AllStates: true}
 		results, err := p.ListInstallations(ctx, opts)
 		require.NoError(t, err)
 		assert.Len(t, results, 1)
@@ -184,6 +184,7 @@ func TestPorter_PrintInstallations(t *testing.T) {
 			opts := ListOptions{
 				Namespace: "dev",
 				Name:      "mywordpress",
+				AllStates: true,
 				PrintOptions: printer.PrintOptions{
 					Format: tc.format,
 				},
