@@ -4,9 +4,6 @@ import (
 	"os/exec"
 	"runtime"
 
-	"os/exec"
-	"runtime"
-
 	"github.com/carolynvs/magex/mgx"
 	"github.com/carolynvs/magex/pkg"
 	"github.com/carolynvs/magex/pkg/archive"
