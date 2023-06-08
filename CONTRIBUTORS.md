@@ -82,4 +82,5 @@ and we will add you. **All** contributors belong here. 💯
 * [Sarah Christoff](https://github.com/schristoff)
 * [Aleksey Barabanov](https://github.com/alekseybb197)
 * [Tomi Paananen](https://github.com/tompaana)
+* [Troy Connor](https://github.com/troy0820)
 * [Harjyot Singh Bagga](https://github.com/harjyotbagga)
