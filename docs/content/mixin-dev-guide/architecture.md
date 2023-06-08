@@ -1,5 +1,5 @@
 ---
-title: Mixin Architecture 
+title: Mixin Architecture
 description: How do mixins work? Hotwiring a porter mixin
 ---
 
@@ -44,14 +44,14 @@ The previous example introduced how mixins are used when a bundle is executed. I
 $ ./bin/mixins/helm/helm build
 RUN apt-get update && \
  apt-get install -y curl && \
- curl -o helm.tgz https://storage.googleapis.com/kubernetes-helm/helm-v2.11.0-linux-amd64.tar.gz && \
+ curl -o helm.tgz https://storage.googleapis.com/kubernetes-helm/helm-v3.8.2-linux-amd64.tar.gz && \
  tar -xzf helm.tgz && \
  mv linux-amd64/helm /usr/local/bin && \
  rm helm.tgz
 RUN helm init --client-only
 ```
 
-In this case, the `helm` mixin will first run apt-get update and then install `curl` in the Docker image. Next, it will use curl to fetch Helm 2.11.0, extract it into the Docker filesystem and finally run `helm init --client-only` to do necessary setup inside the image.
+In this case, the `helm` mixin will first run apt-get update and then install `curl` in the Docker image. Next, it will use curl to fetch Helm 3.8.2, extract it into the Docker filesystem and finally run `helm init --client-only` to do necessary setup inside the image.
 
 ### Run Time
 
@@ -115,5 +115,5 @@ Mixins can expose JSON schema to describe the YAML format that they expect to ac
 
 If you'd like to build a mixin and would like to refer to some existing implementations, please see:
 
-* [helm-mixin](https://github.com/getporter/helm-mixin) - The Porter Helm Mixin
+* [helm-mixin](https://github.com/getporter/helm3-mixin) - The Porter Helm Mixin
 * [az-mixin](https://github.com/getporter/az-mixin) - The Porter Azure (az cli) Mixin
