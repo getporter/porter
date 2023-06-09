@@ -31,14 +31,24 @@ func buildBundleCommands(p *porter.Porter) *cobra.Command {
 }
 
 func buildBundleCreateCommand(p *porter.Porter) *cobra.Command {
-	return &cobra.Command{
-		Use:   "create",
+	cmd := &cobra.Command{
+		Use:   "create [bundle-name]",
 		Short: "Create a bundle",
-		Long:  "Create a bundle. This generates a porter bundle in the current directory.",
+		Long:  "Create a bundle. This generates a porter bundle in the directory with the specified name or in the current directory if no name is provided.",
+		Args:  cobra.MaximumNArgs(1), // Expect at most one argument for the bundle name
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.Create()
+			// By default we create the bundle in the current directory
+			bundleName := ""
+
+			if len(args) > 0 {
+				bundleName = args[0]
+			}
+
+			return p.Create(bundleName)
 		},
 	}
+
+	return cmd
 }
 
 func buildBundleBuildCommand(p *porter.Porter) *cobra.Command {
