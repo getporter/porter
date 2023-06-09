@@ -28,7 +28,7 @@ func TestInstallFromTagIgnoresCurrentBundle(t *testing.T) {
 	p := NewTestPorter(t)
 	defer p.Close()
 
-	err := p.Create()
+	err := p.Create("")
 	require.NoError(t, err)
 
 	installOpts := NewInstallOptions()

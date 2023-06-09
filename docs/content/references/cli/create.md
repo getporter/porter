@@ -9,10 +9,10 @@ Create a bundle
 
 ### Synopsis
 
-Create a bundle. This generates a porter bundle in the current directory.
+Create a bundle. This generates a porter bundle in the directory with the specified name or in the current directory if no name is provided.
 
 ```
-porter create [flags]
+porter create [bundle-name] [flags]
 ```
 
 ### Options
