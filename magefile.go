@@ -97,7 +97,7 @@ func XBuildPorterGRPCServer() {
 		for _, goarch := range supportedClientGOARCH {
 			goarch := goarch
 			g.Go(func() error {
-				cmdName := fmt.Sprintf("%s-grpc-server-%s-%s", srcCmd, goos, goarch)
+				cmdName := fmt.Sprintf("%s-api-server-%s-%s", srcCmd, goos, goarch)
 				if goos == "windows" {
 					cmdName = cmdName + ".exe"
 				}

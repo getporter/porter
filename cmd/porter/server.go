@@ -11,13 +11,13 @@ import (
 
 func buildGRPCServerCommands(p *porter.Porter) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:    "grpc-server",
-		Short:  "gRPC server",
-		Long:   "Launch gRPC server for porter",
+		Use:    "api-server",
+		Short:  "API server",
+		Long:   "Launch API server for porter",
 		Hidden: true, // This is a hidden command and is currently only meant to be used by the porter operator
 	}
 	cmd.Annotations = map[string]string{
-		"group": "grpc-server",
+		"group": "api-server",
 	}
 	cmd.AddCommand(buildServerRunCommand(p))
 	return cmd
@@ -53,6 +53,6 @@ A list of the supported RPCs can be found at <link?>
 	}
 	f := cmd.Flags()
 	f.Int64VarP(&opts.Port, "port", "p", 3001, "Port to run the server on")
-	f.StringVarP(&opts.ServiceName, "service-name", "s", "grpc-server", "Server service name")
+	f.StringVarP(&opts.ServiceName, "service-name", "s", "api-server", "Server service name")
 	return cmd
 }

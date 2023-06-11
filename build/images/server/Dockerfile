@@ -5,8 +5,8 @@ WORKDIR /app/.porter
 RUN mkdir runtimes && \
   mkdir -p mixins/exec/runtimes
 
-# Install porter-grpc-server, agent, and the exec mixin, everything else
-COPY bin/dev/porter-grpc-server-linux-$TARGETARCH porter
+# Install porter-api-server, agent, and the exec mixin, everything else
+COPY bin/dev/porter-api-server-linux-$TARGETARCH porter
 COPY bin/dev/agent-linux-$TARGETARCH agent
 COPY bin/mixins/exec/dev/exec-linux-$TARGETARCH mixins/exec/exec
 RUN ln -s /app/.porter/porter runtimes/porter-runtime && \
