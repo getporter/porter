@@ -13,15 +13,20 @@ import (
 	"google.golang.org/grpc"
 )
 
+// PorterServer defines the struct for managing a porter GRPC server
 type PorterServer struct {
 	PorterConfig *config.Config
 	pGRPC.UnimplementedPorterServer
 }
 
+// NewPorterServer creates a new instance of the PorterServer for a config
 func NewPorterServer(cfg *config.Config) (*PorterServer, error) {
 	return &PorterServer{PorterConfig: cfg}, nil
 }
 
+// NewConnectionInterceptor creates a middleware interceptor for the GRPC server that manages creating a porter connection for each requested RPC stream.
+// If the connection is unable to be created for the RPC then the RPC fails, otherwise the connection is added to the RPC context and the next handler in the
+// chain is called
 func (s *PorterServer) NewConnectionInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 	storage := storage.NewPluginAdapter(storageplugin.NewStore(s.PorterConfig))
 	secretStorage := secrets.NewPluginAdapter(secretsplugin.NewStore(s.PorterConfig))
