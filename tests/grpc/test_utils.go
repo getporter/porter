@@ -23,7 +23,6 @@ import (
 type TestPorterGRPCServer struct {
 	TestPorter       *porter.TestPorter
 	TestPorterConfig *config.TestConfig
-	t                *testing.T
 }
 
 var lis *bufconn.Listener

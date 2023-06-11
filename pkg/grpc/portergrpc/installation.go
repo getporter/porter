@@ -22,7 +22,7 @@ func newInstallationOptsFromLabels(labels map[string]string) []string {
 // populateGRPCInstallation populates a GRPC Installation (generated from protobuf)
 // a native porter DisplayInstallation
 func populateGRPCInstallation(ctx context.Context, inst porter.DisplayInstallation, gInst *iGRPCv1alpha1.Installation) error {
-	ctx, log := tracing.StartSpan(ctx)
+	_, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
 	bInst, err := json.Marshal(inst)
 	if err != nil {
@@ -39,7 +39,7 @@ func populateGRPCInstallation(ctx context.Context, inst porter.DisplayInstallati
 // populateGRPCPorterValue populates a GRPC PorterValue (generated from protobuf)
 // from a native porter DisplayValue
 func populateGRPCPorterValue(ctx context.Context, dv porter.DisplayValue, gInstOut *iGRPCv1alpha1.PorterValue) error {
-	ctx, log := tracing.StartSpan(ctx)
+	_, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
 	bInstOut, err := json.Marshal(dv)
 	if err != nil {

@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"strconv"
 	"testing"
 
@@ -116,7 +115,7 @@ func TestInstall_installationMessage(t *testing.T) {
 		},
 	}
 	for _, test := range tests {
-		t.Run(fmt.Sprintf("%s", test.testName), func(t *testing.T) {
+		t.Run(test.testName, func(t *testing.T) {
 			//Server setup
 			grpcSvr, err := NewTestGRPCServer(t)
 			require.NoError(t, err)
@@ -161,10 +160,12 @@ func TestInstall_installationMessage(t *testing.T) {
 func validateInstallations(t *testing.T, expected storage.Installation, actual *iGRPC.Installation) {
 	assert.Equal(t, actual.Name, expected.Name)
 	bExpInst, err := json.Marshal(porter.NewDisplayInstallation(expected))
+	require.NoError(t, err)
 	bExpInst, err = tests.GRPCDisplayInstallationExpectedJSON(bExpInst)
 	require.NoError(t, err)
 	pjm := protojson.MarshalOptions{EmitUnpopulated: true}
 	bActInst, err := pjm.Marshal(actual)
+	require.NoError(t, err)
 	var pJson bytes.Buffer
 	json.Indent(&pJson, bActInst, "", "  ")
 	assert.JSONEq(t, string(bExpInst), string(bActInst))
