@@ -19,63 +19,42 @@ func newInstallationOptsFromLabels(labels map[string]string) []string {
 	return retLabels
 }
 
-// newGRPCPorterValue creates a GRPC PorterValue (generated from protobufs)
-// from native porter DisplayValue
-func newGRPCPorterValue(value porter.DisplayValue) (*iGRPCv1alpha1.PorterValue, error) {
-	b, err := json.Marshal(value)
-	if err != nil {
-		return nil, err
-	}
-	pv := &iGRPCv1alpha1.PorterValue{}
-	err = protojson.Unmarshal(b, pv)
-	if err != nil {
-		return nil, err
-	}
-	return pv, nil
-}
-
-// newGRPCPorterValues creates a slice of GRPC PorterValue from native porter DisplayValues
-// to accommodate differences in generated structs from protobufs
-func newGRPCPorterValues(values porter.DisplayValues) []*iGRPCv1alpha1.PorterValue {
-	var retPVs []*iGRPCv1alpha1.PorterValue
-	for _, dv := range values {
-		//TODO: handle error
-		pv, _ := newGRPCPorterValue(dv)
-		retPVs = append(retPVs, pv)
-	}
-	return retPVs
-}
-
 // populateGRPCInstallation populates a GRPC Installation (generated from protobuf)
 // a native porter DisplayInstallation
-func populateGRPCInstallation(inst porter.DisplayInstallation, gInst *iGRPCv1alpha1.Installation) error {
+func populateGRPCInstallation(ctx context.Context, inst porter.DisplayInstallation, gInst *iGRPCv1alpha1.Installation) error {
+	ctx, log := tracing.StartSpan(ctx)
+	defer log.EndSpan()
 	bInst, err := json.Marshal(inst)
 	if err != nil {
-		return fmt.Errorf("porter.DisplayInstallation marshal error: %e", err)
+		return log.Errorf("porter.DisplayInstallation marshal error: %e", err)
 	}
 	pjum := protojson.UnmarshalOptions{}
 	err = pjum.Unmarshal(bInst, gInst)
 	if err != nil {
-		return fmt.Errorf("installation GRPC Installation unmarshal error: %e", err)
+		return log.Errorf("installation GRPC Installation unmarshal error: %e", err)
 	}
 	return nil
 }
 
 // populateGRPCPorterValue populates a GRPC PorterValue (generated from protobuf)
 // from a native porter DisplayValue
-func populateGRPCPorterValue(dv porter.DisplayValue, gInstOut *iGRPCv1alpha1.PorterValue) error {
+func populateGRPCPorterValue(ctx context.Context, dv porter.DisplayValue, gInstOut *iGRPCv1alpha1.PorterValue) error {
+	ctx, log := tracing.StartSpan(ctx)
+	defer log.EndSpan()
 	bInstOut, err := json.Marshal(dv)
 	if err != nil {
-		return fmt.Errorf("PorterValue marshal error: %e", err)
+		return log.Errorf("PorterValue marshal error: %e", err)
 	}
 	pjum := protojson.UnmarshalOptions{}
 	err = pjum.Unmarshal(bInstOut, gInstOut)
 	if err != nil {
-		return fmt.Errorf("installation GRPC InstallationOutputs unmarshal error: %e", err)
+		return log.Errorf("installation GRPC InstallationOutputs unmarshal error: %e", err)
 	}
 	return nil
 }
 
+// ListInstallations takes a GRPC ListInstallationsRequest and returns a filtered list of
+// porter installations as a GRPC ListInstallationsResponse
 func (s *PorterServer) ListInstallations(ctx context.Context, req *iGRPCv1alpha1.ListInstallationsRequest) (*iGRPCv1alpha1.ListInstallationsResponse, error) {
 	ctx, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
@@ -99,7 +78,7 @@ func (s *PorterServer) ListInstallations(ctx context.Context, req *iGRPCv1alpha1
 	insts := []*iGRPCv1alpha1.Installation{}
 	for _, pInst := range installations {
 		gInst := &iGRPCv1alpha1.Installation{}
-		err := populateGRPCInstallation(pInst, gInst)
+		err := populateGRPCInstallation(ctx, pInst, gInst)
 		if err != nil {
 			return nil, err
 		}
@@ -111,6 +90,8 @@ func (s *PorterServer) ListInstallations(ctx context.Context, req *iGRPCv1alpha1
 	return &res, nil
 }
 
+// ListInstallationLatestOutputs takes a GRPC ListInstallationLatestOutputRequest and returns
+// the most recent outputs for the porter installation as a GRPC ListInstallationLatestOutputResponse
 func (s *PorterServer) ListInstallationLatestOutputs(ctx context.Context, req *iGRPCv1alpha1.ListInstallationLatestOutputRequest) (*iGRPCv1alpha1.ListInstallationLatestOutputResponse, error) {
 	ctx, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
@@ -131,7 +112,7 @@ func (s *PorterServer) ListInstallationLatestOutputs(ctx context.Context, req *i
 	gInstOuts := []*iGRPCv1alpha1.PorterValue{}
 	for _, dv := range pdv {
 		gInstOut := &iGRPCv1alpha1.PorterValue{}
-		err = populateGRPCPorterValue(dv, gInstOut)
+		err = populateGRPCPorterValue(ctx, dv, gInstOut)
 		if err != nil {
 			return nil, err
 		}

@@ -44,6 +44,7 @@ func init() {
 type PorterGRPCService struct {
 	PorterConfig *config.Config
 	opts         *porter.ServiceOptions
+	ctx          context.Context
 }
 
 func NewServer(ctx context.Context, opts *porter.ServiceOptions) (*PorterGRPCService, error) {
@@ -51,13 +52,13 @@ func NewServer(ctx context.Context, opts *porter.ServiceOptions) (*PorterGRPCSer
 	srv := &PorterGRPCService{
 		PorterConfig: pCfg,
 		opts:         opts,
+		ctx:          ctx,
 	}
 	return srv, nil
 }
 
 func (s *PorterGRPCService) ListenAndServe() (*grpc.Server, error) {
-	ctx := context.Background()
-	ctx, log := tracing.StartSpan(ctx)
+	_, log := tracing.StartSpan(s.ctx)
 	defer log.EndSpan()
 	log.Infof("Starting gRPC on %v", s.opts.Port)
 	listener, err := net.Listen("tcp", fmt.Sprintf(":%v", s.opts.Port))
@@ -81,23 +82,44 @@ func (s *PorterGRPCService) ListenAndServe() (*grpc.Server, error) {
 	reflection.Register(srv)
 
 	pGRPCv1alpha1.RegisterPorterServer(srv, psrv)
-	return nil, err
 	healthServer.SetServingStatus(s.opts.ServiceName, grpc_health_v1.HealthCheckResponse_SERVING)
 	grpc_prometheus.Register(srv)
+
+	srvErrCh := make(chan error, 1)
 	go func() {
 		if err := srv.Serve(listener); err != nil {
-			log.Errorf("failed to serve: %s", err)
-			os.Exit(1)
+			srvErrCh <- err
 		}
 	}()
+
+	select {
+	case err := <-srvErrCh:
+		if err != nil {
+			log.Errorf("failed to serve GRPC listener: %w", err)
+			os.Exit(1)
+		}
+	default:
+		// Continue if no error is received yet
+	}
+
 	http.Handle("/metrics", promhttp.Handler())
+
 	// Start your http server for prometheus.
 	go func() {
 		if err := httpServer.ListenAndServe(); err != nil {
-			log.Errorf("Unable to start a http server.")
-			os.Exit(1)
+			srvErrCh <- err
 		}
 	}()
+	select {
+	case err := <-srvErrCh:
+		if err != nil {
+			log.Errorf("Unable to start a http server. %w", err)
+			os.Exit(1)
+		}
+	default:
+		// Continue if no error is received yet
+	}
+
 	grpcMetrics.InitializeMetrics(srv)
 	return srv, nil
 }

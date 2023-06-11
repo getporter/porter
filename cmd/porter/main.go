@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"runtime/debug"
+	"strconv"
 	"strings"
 
 	"get.porter.sh/porter/pkg/cli"
@@ -18,6 +19,8 @@ import (
 )
 
 var includeDocsCommand = false
+
+var includeGRPCServer string = "false"
 
 //go:embed helptext/usage.txt
 var usageText string
@@ -226,7 +229,11 @@ Try our QuickStart https://getporter.org/quickstart to learn how to use Porter.
 	cmd.AddCommand(buildCredentialsCommands(p))
 	cmd.AddCommand(buildParametersCommands(p))
 	cmd.AddCommand(buildCompletionCommand(p))
-	cmd.AddCommand(buildServerCommands(p))
+	//use -ldflags "-X main.includeGRPCServer=true" during build to include
+	grpcServer, _ := strconv.ParseBool(includeGRPCServer)
+	if grpcServer {
+		cmd.AddCommand(buildGRPCServerCommands(p))
+	}
 
 	for _, alias := range buildAliasCommands(p) {
 		cmd.AddCommand(alias)

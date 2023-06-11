@@ -79,6 +79,38 @@ func BuildPorter() {
 	mgx.Must(releases.BuildAll(PKG, "porter", "bin"))
 }
 
+// TODO: add support to decouple dir and command name to magefile repo
+// TODO: add support for additional ldflags to magefile repo
+// Build the porter client and runtime with gRPC server enabled
+func XBuildPorterGRPCServer() {
+	var g errgroup.Group
+	supportedClientGOOS := []string{"linux", "darwin", "windows"}
+	supportedClientGOARCH := []string{"amd64", "arm64"}
+	srcCmd := "porter"
+	srcPath := "./cmd/" + srcCmd
+	outPath := "bin/dev"
+	info := releases.LoadMetadata()
+	ldflags := fmt.Sprintf("-w -X main.includeGRPCServer=true -X %s/pkg.Version=%s -X %s/pkg.Commit=%s", PKG, info.Version, PKG, info.Commit)
+	os.MkdirAll(filepath.Dir(outPath), 0770)
+	for _, goos := range supportedClientGOOS {
+		goos := goos
+		for _, goarch := range supportedClientGOARCH {
+			goarch := goarch
+			g.Go(func() error {
+				cmdName := fmt.Sprintf("%s-grpc-server-%s-%s", srcCmd, goos, goarch)
+				if goos == "windows" {
+					cmdName = cmdName + ".exe"
+				}
+				out := filepath.Join(outPath, cmdName)
+				return shx.Command("go", "build", "-ldflags", ldflags, "-o", out, srcPath).
+					Env("CGO_ENABLED=0", "GO111MODULE=on", "GOOS="+goos, "GOARCH="+goarch).
+					RunV()
+			})
+		}
+	}
+	mgx.Must(g.Wait())
+}
+
 func copySchema() {
 	// Copy the porter manifest schema into our templates directory with the other schema
 	// We can't use symbolic links because that doesn't work on windows
@@ -110,6 +142,7 @@ func XBuildAgent() {
 // Cross-compile porter and the exec mixin
 func XBuildAll() {
 	mg.Deps(XBuildPorter, XBuildMixins, XBuildAgent)
+	mg.SerialDeps(XBuildPorterGRPCServer)
 }
 
 // Cross-compile porter

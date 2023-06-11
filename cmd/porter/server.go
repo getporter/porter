@@ -9,15 +9,15 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func buildServerCommands(p *porter.Porter) *cobra.Command {
+func buildGRPCServerCommands(p *porter.Porter) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:    "server",
-		Short:  "Server commands",
-		Long:   "Command for working with the gRPC server for porter",
+		Use:    "grpc-server",
+		Short:  "gRPC server",
+		Long:   "Launch gRPC server for porter",
 		Hidden: true, // This is a hidden command and is currently only meant to be used by the porter operator
 	}
 	cmd.Annotations = map[string]string{
-		"group": "server",
+		"group": "grpc-server",
 	}
 	cmd.AddCommand(buildServerRunCommand(p))
 	return cmd

@@ -2,6 +2,8 @@
 
 !bin/dev/porter-linux-amd64
 !bin/dev/porter-linux-arm64
+!bin/dev/porter-grpc-server-linux-amd64
+!bin/dev/porter-grpc-server-linux-arm64
 !bin/dev/agent-linux-amd64
 !bin/dev/agent-linux-arm64
 !bin/mixins/exec/dev/exec-linux-amd64
