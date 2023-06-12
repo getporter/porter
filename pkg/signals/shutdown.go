@@ -6,12 +6,12 @@ import (
 
 	"get.porter.sh/porter/pkg/tracing"
 	"github.com/spf13/viper"
-	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	oteltrace "go.opentelemetry.io/otel/sdk/trace"
 	"google.golang.org/grpc"
 )
 
 type Shutdown struct {
-	tracerProvider        *sdktrace.TracerProvider
+	tracerProvider        *oteltrace.TracerProvider
 	serverShutdownTimeout time.Duration
 }
 
