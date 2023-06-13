@@ -10,6 +10,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/tidwall/gjson"
+	"github.com/tidwall/sjson"
 )
 
 // RequireErrorContains fails the test when the error doesn't contain
@@ -69,4 +71,24 @@ func RequireOutputContains(t *testing.T, output string, substring string, msgAnd
 		t.Errorf("%s\ndoes not contain\n%s", output, substring)
 		t.FailNow()
 	}
+}
+
+// GRPCDisplayInstallationExpectedJSON converts a json byte string from
+// a porter.DisplayInstallation to one expected from a GRPC Installation
+func GRPCDisplayInstallationExpectedJSON(bExpInst []byte) ([]byte, error) {
+	// if no credentialSets or parameterSets add as empty list to
+	// match GRPCInstallation expectations
+	var err error
+	empty := make([]string, 0)
+	emptySets := []string{"credentialSets", "parameterSets"}
+	for _, es := range emptySets {
+		res := gjson.GetBytes(bExpInst, es)
+		if !res.Exists() {
+			bExpInst, err = sjson.SetBytes(bExpInst, es, empty)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+	return bExpInst, nil
 }
