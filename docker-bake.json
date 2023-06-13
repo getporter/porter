@@ -1,0 +1,19 @@
+{
+  "group": {
+    "default": {
+      "targets": [
+        "server"
+      ]
+    }
+  },
+  "target": {
+    "server": {
+      "platforms": [
+        "linux/amd64",
+        "linux/arm64"
+      ],
+      "dockerfile": "build/images/server/Dockerfile",
+      "context": "./"
+    }
+  }
+}

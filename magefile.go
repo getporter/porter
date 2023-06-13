@@ -56,6 +56,12 @@ func CheckGoVersion() {
 	tools.EnforceGoVersion(GoVersion)
 }
 
+func GenerateGRPCProtobufs() {
+	mg.Deps(setup.EnsureBufBuild)
+	must.Command("buf", "build").In("proto").RunV()
+	must.Command("buf", "generate").In("proto").RunV()
+}
+
 // Builds all code artifacts in the repository
 func Build() {
 	mg.SerialDeps(InstallBuildTools, BuildPorter, BuildExecMixin, BuildAgent, DocsGen)
@@ -63,7 +69,7 @@ func Build() {
 }
 
 func InstallBuildTools() {
-	mg.Deps(setup.EnsureProtobufTools)
+	mg.Deps(setup.EnsureProtobufTools, setup.EnsureGRPCurl, setup.EnsureBufBuild)
 }
 
 // Build the porter client and runtime
@@ -71,6 +77,38 @@ func BuildPorter() {
 	mg.Deps(Tidy, copySchema)
 
 	mgx.Must(releases.BuildAll(PKG, "porter", "bin"))
+}
+
+// TODO: add support to decouple dir and command name to magefile repo
+// TODO: add support for additional ldflags to magefile repo
+// Build the porter client and runtime with gRPC server enabled
+func XBuildPorterGRPCServer() {
+	var g errgroup.Group
+	supportedClientGOOS := []string{"linux", "darwin", "windows"}
+	supportedClientGOARCH := []string{"amd64", "arm64"}
+	srcCmd := "porter"
+	srcPath := "./cmd/" + srcCmd
+	outPath := "bin/dev"
+	info := releases.LoadMetadata()
+	ldflags := fmt.Sprintf("-w -X main.includeGRPCServer=true -X %s/pkg.Version=%s -X %s/pkg.Commit=%s", PKG, info.Version, PKG, info.Commit)
+	os.MkdirAll(filepath.Dir(outPath), 0770)
+	for _, goos := range supportedClientGOOS {
+		goos := goos
+		for _, goarch := range supportedClientGOARCH {
+			goarch := goarch
+			g.Go(func() error {
+				cmdName := fmt.Sprintf("%s-api-server-%s-%s", srcCmd, goos, goarch)
+				if goos == "windows" {
+					cmdName = cmdName + ".exe"
+				}
+				out := filepath.Join(outPath, cmdName)
+				return shx.Command("go", "build", "-ldflags", ldflags, "-o", out, srcPath).
+					Env("CGO_ENABLED=0", "GO111MODULE=on", "GOOS="+goos, "GOARCH="+goarch).
+					RunV()
+			})
+		}
+	}
+	mgx.Must(g.Wait())
 }
 
 func copySchema() {
@@ -95,9 +133,16 @@ func BuildAgent() {
 	releases.XBuild(PKG, "agent", "bin", "linux", "amd64")
 }
 
+// Cross compile agent for multiple archs in linux
+func XBuildAgent() {
+	mg.Deps(BuildAgent)
+	releases.XBuild(PKG, "agent", "bin", "linux", "arm64")
+}
+
 // Cross-compile porter and the exec mixin
 func XBuildAll() {
-	mg.Deps(XBuildPorter, XBuildMixins, BuildAgent)
+	mg.Deps(XBuildPorter, XBuildMixins, XBuildAgent)
+	mg.SerialDeps(XBuildPorterGRPCServer)
 }
 
 // Cross-compile porter
@@ -251,6 +296,21 @@ func TestSmoke() error {
 	return shx.Command("go", "test", "-count=1", "-timeout=20m", "-tags", "smoke", v, "./tests/smoke/...").CollapseArgs().RunV()
 }
 
+// Run grpc service tests
+func TestGRPCService() {
+	var run string
+	runTest := os.Getenv("PORTER_RUN_TEST")
+	if runTest != "" {
+		run = "-run=" + runTest
+	}
+
+	verbose := ""
+	if mg.Verbose() {
+		verbose = "-v"
+	}
+	must.Command("go", "test", verbose, "-timeout=5m", run, "./tests/grpc/...").CollapseArgs().RunV()
+}
+
 func getRegistry() string {
 	registry := os.Getenv("PORTER_REGISTRY")
 	if registry == "" {
@@ -264,6 +324,22 @@ func BuildImages() {
 	registry := getRegistry()
 
 	buildImages(registry, info)
+}
+
+func buildGRPCProtocImage() {
+	var g errgroup.Group
+
+	enableBuildKit := "DOCKER_BUILDKIT=1"
+	g.Go(func() error {
+		img := "protoc:local"
+		err := shx.Command("docker", "build", "-t", img, "-f", "build/protoc.Dockerfile", ".").
+			Env(enableBuildKit).RunV()
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+	mgx.Must(g.Wait())
 }
 
 func buildImages(registry string, info releases.GitMetadata) {
@@ -304,7 +380,6 @@ func buildImages(registry string, info releases.GitMetadata) {
 
 		return shx.Run("docker", "tag", img, fmt.Sprintf("%s/workshop:%s", registry, info.Permalink))
 	})
-
 	mgx.Must(g.Wait())
 }
 
@@ -338,6 +413,41 @@ func pushImagesTo(registry string, info releases.GitMetadata) {
 	} else {
 		fmt.Println("Skipping image publish for permalink", info.Permalink)
 	}
+}
+
+func PublishServerMultiArchImages() {
+	registry := getRegistry()
+	info := releases.LoadMetadata()
+	buildAndPushServerMultiArch(registry, info)
+}
+
+func buildAndPushServerMultiArch(registry string, info releases.GitMetadata) {
+	img := fmt.Sprintf("%s/server:%s", registry, info.Version)
+	must.RunV("docker", "buildx", "create", "--use")
+	must.RunV("docker", "buildx", "bake", "-f", "docker-bake.json", "--push", "--set", "server.tags="+img, "server")
+}
+
+// Build a local image for the server based off of local architecture
+func BuildLocalServerImage() {
+	registry := getRegistry()
+	info := releases.LoadMetadata()
+	goarch := runtime.GOARCH
+	buildServerImage(registry, info, goarch)
+}
+
+// Builds an image for the server based off of the goarch
+func buildServerImage(registry string, info releases.GitMetadata, goarch string) {
+	var platform string
+	switch goarch {
+	case "arm64":
+		platform = "linux/arm64"
+	case "amd64":
+		platform = "linux/amd64"
+	default:
+		platform = "linux/amd64"
+	}
+	img := fmt.Sprintf("%s/server:%s", registry, info.Version)
+	must.RunV("docker", "build", "-f", "build/images/server/Dockerfile", "-t", img, "--platform="+platform, ".")
 }
 
 func pushImages(registry string, tag string) {
