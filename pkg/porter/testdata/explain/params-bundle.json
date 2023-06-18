@@ -9,6 +9,12 @@
         "terraform": {},
         "helm": {}
       }
+    },
+    "user-defined": {
+      "nested": {
+        "structure": "is okay",
+        "enabled": true
+      }
     }
   },
   "definitions": {

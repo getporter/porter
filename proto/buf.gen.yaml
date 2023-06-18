@@ -1,0 +1,14 @@
+version: v1
+managed:
+  enabled: true
+  go_package_prefix:
+    default: get.porter.sh/porter/gen/proto/go/porterapis
+    except:
+      - buf.build/googleapis/googleapis
+plugins:
+  - plugin: go
+    out: ../gen/proto/go/porterapis
+    opt: module=get.porter.sh/porter/gen/proto/go/porterapis
+  - plugin: go-grpc
+    out: ../gen/proto/go/porterapis
+    opt: module=get.porter.sh/porter/gen/proto/go/porterapis

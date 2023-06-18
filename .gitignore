@@ -16,5 +16,11 @@ examples/**/Dockerfile
 workshop/**/Dockerfile
 
 .vscode
+*.code-workspace
 .idea
 kind.config
+grpc-porter-tls.crt
+grpc-porter-tls.key
+grpc-porter.csr
+.grpcurl/
+config.yaml
