@@ -171,13 +171,10 @@ Note: if overrides for registry/tag/reference are provided, this command only re
 		"viper-key": {"force-overwrite"},
 	}
 	f.BoolVar(&opts.AutoBuildDisabled, "autobuild-disabled", false, "Do not automatically build the bundle from source when the last build is out-of-date.")
-<<<<<<< HEAD
 	// Allow configuring the --autobuild-disabled flag with "autobuild-disabled" in the configuration file
 	cmd.Flag("autobuild-disabled").Annotations = map[string][]string{
 		"viper-key": {"autobuild-disabled"},
 	}
-=======
->>>>>>> 0e739d88 (Add missing autobuild-disable flag to publish command (#2733))
 
 	return &cmd
 }
