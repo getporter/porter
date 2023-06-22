@@ -7,7 +7,7 @@ Porter is an open-source project that packages your application, client tools, c
 
 ## Get Started
 
-* [Porter Overview](/architecture/)
-* [Install Porter](/install/)
-* [Quick Start](/quickstart/)
-* [Frequently Asked Questions](/faq) 
+- [Porter Overview](/architecture/)
+- [Install Porter](/install/)
+- [Quick Start](/quickstart/)
+- [Frequently Asked Questions](/faq)
