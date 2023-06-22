@@ -1,5 +1,10 @@
 *
 
 !bin/dev/porter-linux-amd64
+!bin/dev/porter-linux-arm64
+!bin/dev/porter-api-server-linux-amd64
+!bin/dev/porter-api-server-linux-arm64
 !bin/dev/agent-linux-amd64
+!bin/dev/agent-linux-arm64
 !bin/mixins/exec/dev/exec-linux-amd64
+!bin/mixins/exec/dev/exec-linux-arm64
