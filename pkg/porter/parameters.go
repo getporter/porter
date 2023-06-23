@@ -84,7 +84,7 @@ func (p *Porter) PrintParameters(ctx context.Context, opts ListOptions) error {
 
 		printParamRow :=
 			func(v interface{}) []string {
-				cr, ok := v.(DisplayCredentialSet)
+				cr, ok := v.(DisplayParameterSet)
 				if !ok {
 					return nil
 				}
