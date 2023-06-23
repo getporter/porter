@@ -81,13 +81,12 @@ func TestDependencySolver_ResolveVersion(t *testing.T) {
 	}
 
 	for _, tc := range testcases {
+		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			tc := tc
 
 			s := DependencySolver{}
 			version, err := s.ResolveVersion("mysql", tc.dep)
-
 			if tc.wantError != "" {
 				require.Error(t, err, "ResolveVersion should have returned an error")
 				assert.Contains(t, err.Error(), tc.wantError)

@@ -520,12 +520,12 @@ func Test_Paramapalooza(t *testing.T) {
 	}
 
 	for _, tc := range testcases {
+		tc := tc
 		t.Run(tc.Name, func(t *testing.T) {
+			t.Parallel()
 			actions := []string{"install", "upgrade", "uninstall", "zombies"}
 			for _, action := range actions {
 				t.Run(action, func(t *testing.T) {
-					t.Parallel()
-					tc := tc
 
 					r := NewTestPorter(t)
 					defer r.Close()
