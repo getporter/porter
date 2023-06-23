@@ -133,7 +133,7 @@ func (c *ManifestConverter) generateDefaultAction(action string) bundle.Action {
 		}
 	case "help", "io.cnab.help":
 		return bundle.Action{
-			Description: "Print an help message to the standard output",
+			Description: "Print a help message to the standard output",
 			Modifies:    false,
 			Stateless:   true,
 		}

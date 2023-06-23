@@ -78,20 +78,21 @@ func TestGetSupportedExtension(t *testing.T) {
 	t.Parallel()
 
 	for _, supported := range SupportedExtensions {
-		t.Run(fmt.Sprintf("%s - shorthand", supported.Shorthand), func(t *testing.T) {
+		supportedExtension := supported
+		t.Run(fmt.Sprintf("%s - shorthand", supportedExtension.Shorthand), func(t *testing.T) {
 			t.Parallel()
 
-			ext, err := GetSupportedExtension(supported.Shorthand)
+			ext, err := GetSupportedExtension(supportedExtension.Shorthand)
 			require.NoError(t, err)
-			require.Equal(t, supported.Key, ext.Key)
+			require.Equal(t, supportedExtension.Key, ext.Key)
 		})
 
 		t.Run(fmt.Sprintf("%s - key", supported.Key), func(t *testing.T) {
 			t.Parallel()
 
-			ext, err := GetSupportedExtension(supported.Key)
+			ext, err := GetSupportedExtension(supportedExtension.Key)
 			require.NoError(t, err)
-			require.Equal(t, supported.Key, ext.Key)
+			require.Equal(t, supportedExtension.Key, ext.Key)
 		})
 	}
 

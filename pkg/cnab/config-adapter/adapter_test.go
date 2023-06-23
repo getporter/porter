@@ -22,7 +22,6 @@ import (
 )
 
 func TestManifestConverter(t *testing.T) {
-	t.Parallel()
 
 	testcases := []struct {
 		name          string
@@ -291,7 +290,7 @@ func TestManifestConverter_generateBundleParametersSchema(t *testing.T) {
 			bundle.Parameter{
 				Definition: "notype-file-parameter",
 				Destination: &bundle.Location{
-					Path: "/home/myuser/.porter/config.toml",
+					Path: "/cnab/app/config.toml",
 				},
 				Required: true,
 			},
@@ -316,10 +315,9 @@ func TestManifestConverter_generateBundleParametersSchema(t *testing.T) {
 	}
 
 	for _, tc := range testcases {
+		tc := tc
 		t.Run(tc.propname, func(t *testing.T) {
 			t.Parallel()
-			tc := tc
-
 			c := config.NewTestConfig(t)
 			c.TestContext.AddTestFile("testdata/porter-with-parameters.yaml", config.Name)
 
@@ -927,9 +925,9 @@ func TestManifestConverter_generateDefaultAction(t *testing.T) {
 	}
 
 	for _, tc := range testcases {
+		tc := tc
 		t.Run(tc.action, func(t *testing.T) {
 			t.Parallel()
-			tc := tc
 
 			a := ManifestConverter{}
 			gotAction := a.generateDefaultAction(tc.action)
