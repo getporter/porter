@@ -13,7 +13,7 @@ List all bundles installed by Porter.
 
 A listing of bundles currently installed by Porter will be provided, along with metadata such as creation time, last action, last status, etc.
 Optionally filters the results name, which returns all results whose name contain the provided query.
-The results may also be filtered by associated labels and the namespace in which the installation is defined. 
+The results may also be filtered by associated labels and the namespace in which the installation is defined.
 
 Optional output formats include json and yaml.
 

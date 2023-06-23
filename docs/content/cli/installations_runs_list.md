@@ -18,9 +18,9 @@ porter installations runs list [flags]
 ### Examples
 
 ```
-  porter installation runs list [NAME] [--namespace NAMESPACE] [--output FORMAT]
+  porter installations runs list [NAME] [--namespace NAMESPACE] [--output FORMAT]
 
-  porter installations runs list --name myapp --namespace dev
+  porter installations runs list myapp --namespace dev
 
 
 ```

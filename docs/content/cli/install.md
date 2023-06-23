@@ -11,7 +11,7 @@ Create a new installation of a bundle
 
 Create a new installation of a bundle.
 
-The first argument is the name of the installation to create. This defaults to the name of the bundle. 
+The first argument is the name of the installation to create. This defaults to the name of the bundle.
 
 Once a bundle has been successfully installed, the install action cannot be repeated. This is a precaution to avoid accidentally overwriting an existing installation. If you need to re-run install, which is common when authoring a bundle, you can use the --force flag to by-pass this check.
 
