@@ -18,39 +18,39 @@ func TestNewDisplayInstallation(t *testing.T) {
 		cp := storage.NewTestInstallationProvider(t)
 		defer cp.Close()
 
-		i := cp.CreateInstallation(storage.NewInstallation("", "wordpress"), func(i *storage.Installation) {
+		install := cp.CreateInstallation(storage.NewInstallation("", "wordpress"), func(i *storage.Installation) {
 			i.Status.Action = cnab.ActionUpgrade
 			i.Status.ResultStatus = cnab.StatusRunning
 		})
 
-		i, err := cp.GetInstallation(context.Background(), "", "wordpress")
+		_, err := cp.GetInstallation(context.Background(), "", "wordpress")
 		require.NoError(t, err, "ReadInstallation failed")
 
-		di := NewDisplayInstallation(i)
+		displayInstall := NewDisplayInstallation(install)
 
-		require.Equal(t, di.Name, i.Name, "invalid installation name")
-		require.Equal(t, di.Status.Created, i.Status.Created, "invalid created time")
-		require.Equal(t, di.Status.Modified, i.Status.Modified, "invalid modified time")
-		require.Equal(t, cnab.ActionUpgrade, di.Status.Action, "invalid last action")
-		require.Equal(t, cnab.StatusRunning, di.Status.ResultStatus, "invalid last status")
+		require.Equal(t, displayInstall.Name, install.Name, "invalid installation name")
+		require.Equal(t, displayInstall.Status.Created, install.Status.Created, "invalid created time")
+		require.Equal(t, displayInstall.Status.Modified, install.Status.Modified, "invalid modified time")
+		require.Equal(t, cnab.ActionUpgrade, displayInstall.Status.Action, "invalid last action")
+		require.Equal(t, cnab.StatusRunning, displayInstall.Status.ResultStatus, "invalid last status")
 	})
 
 	t.Run("installation has not been installed", func(t *testing.T) {
 		cp := storage.NewTestInstallationProvider(t)
 		defer cp.Close()
 
-		i := cp.CreateInstallation(storage.NewInstallation("", "wordpress"))
+		install := cp.CreateInstallation(storage.NewInstallation("", "wordpress"))
 
-		i, err := cp.GetInstallation(context.Background(), "", "wordpress")
+		_, err := cp.GetInstallation(context.Background(), "", "wordpress")
 		require.NoError(t, err, "GetInst failed")
 
-		di := NewDisplayInstallation(i)
+		displayInstall := NewDisplayInstallation(install)
 
-		require.Equal(t, di.Name, i.Name, "invalid installation name")
-		require.Equal(t, i.Status.Created, di.Status.Created, "invalid created time")
-		require.Equal(t, i.Status.Modified, di.Status.Modified, "invalid modified time")
-		require.Empty(t, di.Status.Action, "invalid last action")
-		require.Empty(t, di.Status.ResultStatus, "invalid last status")
+		require.Equal(t, displayInstall.Name, install.Name, "invalid installation name")
+		require.Equal(t, install.Status.Created, displayInstall.Status.Created, "invalid created time")
+		require.Equal(t, install.Status.Modified, displayInstall.Status.Modified, "invalid modified time")
+		require.Empty(t, displayInstall.Status.Action, "invalid last action")
+		require.Empty(t, displayInstall.Status.ResultStatus, "invalid last status")
 	})
 }
 
@@ -108,40 +108,40 @@ func TestDisplayInstallation_ConvertToInstallation(t *testing.T) {
 	cp := storage.NewTestInstallationProvider(t)
 	defer cp.Close()
 
-	i := cp.CreateInstallation(storage.NewInstallation("", "wordpress"), func(i *storage.Installation) {
+	install := cp.CreateInstallation(storage.NewInstallation("", "wordpress"), func(i *storage.Installation) {
 		i.Status.Action = cnab.ActionUpgrade
 		i.Status.ResultStatus = cnab.StatusRunning
 	})
 
-	i, err := cp.GetInstallation(context.Background(), "", "wordpress")
+	_, err := cp.GetInstallation(context.Background(), "", "wordpress")
 	require.NoError(t, err, "ReadInstallation failed")
 
-	di := NewDisplayInstallation(i)
+	displayInstall := NewDisplayInstallation(install)
 
-	convertedInstallation, err := di.ConvertToInstallation()
+	convertedInstallation, err := displayInstall.ConvertToInstallation()
 	require.NoError(t, err, "failed to convert display installation to installation record")
 
-	require.Equal(t, i.SchemaVersion, convertedInstallation.SchemaVersion, "invalid schema version")
-	require.Equal(t, i.Name, convertedInstallation.Name, "invalid installation name")
-	require.Equal(t, i.Namespace, convertedInstallation.Namespace, "invalid installation namespace")
-	require.Equal(t, i.Uninstalled, convertedInstallation.Uninstalled, "invalid installation unstalled status")
-	require.Equal(t, i.Bundle.Digest, convertedInstallation.Bundle.Digest, "invalid installation bundle")
+	require.Equal(t, install.SchemaVersion, convertedInstallation.SchemaVersion, "invalid schema version")
+	require.Equal(t, install.Name, convertedInstallation.Name, "invalid installation name")
+	require.Equal(t, install.Namespace, convertedInstallation.Namespace, "invalid installation namespace")
+	require.Equal(t, install.Uninstalled, convertedInstallation.Uninstalled, "invalid installation unstalled status")
+	require.Equal(t, install.Bundle.Digest, convertedInstallation.Bundle.Digest, "invalid installation bundle")
 
-	require.Equal(t, len(i.Labels), len(convertedInstallation.Labels))
-	for key := range di.Labels {
-		require.Equal(t, i.Labels[key], convertedInstallation.Labels[key], "invalid installation lables")
+	require.Equal(t, len(install.Labels), len(convertedInstallation.Labels))
+	for key := range displayInstall.Labels {
+		require.Equal(t, install.Labels[key], convertedInstallation.Labels[key], "invalid installation lables")
 	}
 
-	require.Equal(t, i.Custom, convertedInstallation.Custom, "invalid installation custom")
+	require.Equal(t, install.Custom, convertedInstallation.Custom, "invalid installation custom")
 
-	require.Equal(t, convertedInstallation.CredentialSets, i.CredentialSets, "invalid credential set")
-	require.Equal(t, convertedInstallation.ParameterSets, i.ParameterSets, "invalid parameter set")
+	require.Equal(t, convertedInstallation.CredentialSets, install.CredentialSets, "invalid credential set")
+	require.Equal(t, convertedInstallation.ParameterSets, install.ParameterSets, "invalid parameter set")
 
-	require.Equal(t, i.Parameters.String(), convertedInstallation.Parameters.String(), "invalid parameters name")
-	require.Equal(t, len(i.Parameters.Parameters), len(convertedInstallation.Parameters.Parameters))
+	require.Equal(t, install.Parameters.String(), convertedInstallation.Parameters.String(), "invalid parameters name")
+	require.Equal(t, len(install.Parameters.Parameters), len(convertedInstallation.Parameters.Parameters))
 
-	parametersMap := make(map[string]secrets.SourceMap, len(i.Parameters.Parameters))
-	for _, param := range i.Parameters.Parameters {
+	parametersMap := make(map[string]secrets.SourceMap, len(install.Parameters.Parameters))
+	for _, param := range install.Parameters.Parameters {
 		parametersMap[param.Name] = param
 	}
 
@@ -155,8 +155,8 @@ func TestDisplayInstallation_ConvertToInstallation(t *testing.T) {
 		require.Equal(t, expectedSource, source)
 	}
 
-	require.Equal(t, i.Status.Created, convertedInstallation.Status.Created, "invalid created time")
-	require.Equal(t, i.Status.Modified, convertedInstallation.Status.Modified, "invalid modified time")
+	require.Equal(t, install.Status.Created, convertedInstallation.Status.Created, "invalid created time")
+	require.Equal(t, install.Status.Modified, convertedInstallation.Status.Modified, "invalid modified time")
 	require.Equal(t, cnab.ActionUpgrade, convertedInstallation.Status.Action, "invalid last action")
 	require.Equal(t, cnab.StatusRunning, convertedInstallation.Status.ResultStatus, "invalid last status")
 

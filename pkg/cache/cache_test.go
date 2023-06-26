@@ -2,6 +2,7 @@ package cache
 
 import (
 	"fmt"
+	"os"
 	"path"
 	"path/filepath"
 	"testing"
@@ -143,7 +144,9 @@ func TestCacheWriteCacheDirExists(t *testing.T) {
 }
 
 func TestStoreRelocationMapping(t *testing.T) {
-	tests := []struct {
+	home, err := os.UserHomeDir()
+	assert.NoError(t, err)
+	tests := map[string]struct {
 		name              string
 		relocationMapping relocation.ImageRelocationMap
 		tag               cnab.OCIReference
@@ -151,31 +154,29 @@ func TestStoreRelocationMapping(t *testing.T) {
 		wantedReloPath    string
 		err               error
 	}{
-		{
-			name:   "relocation file gets a path",
+		"relocation file gets a path": {
 			bundle: cnab.ExtendedBundle{},
 			tag:    kahn1dot01,
 			relocationMapping: relocation.ImageRelocationMap{
 				"asd": "asdf",
 			},
-			wantedReloPath: path.Join("/.porter/cache", kahn1dot0Hash, "cnab", "relocation-mapping.json"),
+			wantedReloPath: path.Join(home+"/.porter/cache", kahn1dot0Hash, "cnab", "relocation-mapping.json"),
 		},
-		{
-			name:           "no relocation file gets no path",
+		"no relocation file gets no path": {
 			tag:            kahnlatest,
 			bundle:         cnab.ExtendedBundle{},
 			wantedReloPath: "",
 		},
 	}
 
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+	for name, tc := range tests {
+		tc := tc
+		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			tc := tc
 
 			cfg := config.NewTestConfig(t)
+			cfg.SetHomeDir(home + "/.porter")
 			c := New(cfg.Config)
-
 			cb, err := c.StoreBundle(cnab.BundleReference{Reference: tc.tag, Definition: tc.bundle, RelocationMap: tc.relocationMapping})
 			assert.NoError(t, err, fmt.Sprintf("didn't expect storage error for test %s", tc.name))
 			assert.Equal(t, tc.wantedReloPath, cb.RelocationFilePath, "didn't get expected path for store")
@@ -228,8 +229,8 @@ func TestStoreManifest(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
 			tc := tc
+			t.Parallel()
 
 			cfg := config.NewTestConfig(t)
 			home, _ := cfg.Config.GetHomeDir()
