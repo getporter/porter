@@ -67,7 +67,7 @@ For this quickstart we are going to use the hello world bundle which is a bit si
 $ porter explain ghcr.io/getporter/examples/porter-hello:v0.2.0
 Name: HELLO
 Description: An example Porter configuration
-Version: 0.1.0
+Version: 0.2.0
 ```
 
 ## Install a Bundle
@@ -78,7 +78,7 @@ To install a bundle, you use the `porter install` command.
 porter install porter-hello --reference ghcr.io/getporter/examples/porter-hello:v0.2.0
 ```
 
-In this example, you are installing the v0.1.0 version of the ghcr.io/getporter/examples/porter-hello bundle from its location in the default registry (Docker Hub) and setting the installation name to porter-hello.
+In this example, you are installing the v0.2.0 version of the ghcr.io/getporter/examples/porter-hello bundle from its location in the default registry (Docker Hub) and setting the installation name to porter-hello.
 
 ## List Bundle Installations
 
