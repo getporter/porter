@@ -28,6 +28,7 @@ import (
 type PublishOptions struct {
 	BundlePullOptions
 	BundleDefinitionOptions
+	build.BuildDefinitionOptions
 	Tag         string
 	Registry    string
 	ArchiveFile string

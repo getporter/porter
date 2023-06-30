@@ -85,6 +85,9 @@ build-driver: "buildkit"
 # and disabling autobuild would have porter explain use the cached build (which could be stale).
 autobuild-disabled: true
 
+# Do not create dockerfile for invocation image, use template dockerfile as is instead
+custom-dockerfile: true
+
 # Overwrite the existing published bundle when publishing or copying a bundle.
 # By default, Porter detects when a push would overwrite an existing artifact and requires --force to proceed.
 force-overwrite: false

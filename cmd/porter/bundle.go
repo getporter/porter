@@ -61,6 +61,8 @@ The docker driver builds the bundle image using the local Docker host. To use a 
   porter build --file path/to/porter.yaml
   porter build --dir path/to/build/context
   porter build --custom version=0.2.0 --custom myapp.version=0.1.2
+  porter build --custom-dockerfile
+
 `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate(p)
@@ -93,6 +95,8 @@ The docker driver builds the bundle image using the local Docker host. To use a 
 		"Define an individual key-value pair for the custom section in the form of NAME=VALUE. Use dot notation to specify a nested custom field. May be specified multiple times. Max length is 5,000 characters when used as a build argument.")
 	f.BoolVar(&opts.InsecureRegistry, "insecure-registry", false,
 		"Don't require TLS when pulling referenced images")
+	// Require dockerfile key in porter manifest!
+	f.BoolVar(&opts.UseCustomDockerfile, "custom-dockerfile", false, "Do not generate dockerfile, use custom template as is.")
 
 	// Allow configuring the --driver flag with build-driver, to avoid conflicts with other commands
 	cmd.Flag("driver").Annotations = map[string][]string{
@@ -171,6 +175,8 @@ Note: if overrides for registry/tag/reference are provided, this command only re
 		"viper-key": {"force-overwrite"},
 	}
 	f.BoolVar(&opts.AutoBuildDisabled, "autobuild-disabled", false, "Do not automatically build the bundle from source when the last build is out-of-date.")
+	// Require dockerfile key in porter manifest!
+	f.BoolVar(&opts.UseCustomDockerfile, "custom-dockerfile", false, "Do not generate dockerfile, use custom template as is.")
 
 	return &cmd
 }

@@ -64,3 +64,8 @@ type BuildImageOptions struct {
 	// NoCache is the docker build --no-cache flag specified.
 	NoCache bool
 }
+
+type BuildDefinitionOptions struct {
+	// UseCustomDockerfile change default behavior - require use custom dockerfile template as is.
+	UseCustomDockerfile bool
+}
