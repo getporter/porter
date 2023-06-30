@@ -34,7 +34,6 @@ type DockerfileGenerator struct {
 	//*porter.BundleDefinitionOptions
 }
 
-// func NewDockerfileGenerator(config *config.Config, m *manifest.Manifest, tmpl *templates.Templates, mp pkgmgmt.PackageManager, opts *porter.BundleDefinitionOptions) *DockerfileGenerator {
 func NewDockerfileGenerator(config *config.Config, m *manifest.Manifest, tmpl *templates.Templates, mp pkgmgmt.PackageManager, opts *BuildDefinitionOptions) *DockerfileGenerator {
 	return &DockerfileGenerator{
 		Config:                 config,

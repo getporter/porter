@@ -139,7 +139,6 @@ func (p *Porter) Build(ctx context.Context, opts BuildOptions) error {
 		return span.Error(fmt.Errorf("unable to build bundle: %w", err))
 	}
 
-	//generator := build.NewDockerfileGenerator(p.Config, m, p.Templates, p.Mixins, &opts.BundleDefinitionOptions)
 	generator := build.NewDockerfileGenerator(p.Config, m, p.Templates, p.Mixins, &opts.BuildDefinitionOptions)
 
 	if err := generator.PrepareFilesystem(); err != nil {
