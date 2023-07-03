@@ -191,7 +191,7 @@ func (p *TestPorter) ReadBundle(path string) cnab.ExtendedBundle {
 }
 
 func (p *TestPorter) RandomString(len int) string {
-	rand.Seed(time.Now().UnixNano())
+	rand.New(rand.NewSource((time.Now().UnixNano())))
 	bytes := make([]byte, len)
 	for i := 0; i < len; i++ {
 		//A=97 and Z = 97+25
