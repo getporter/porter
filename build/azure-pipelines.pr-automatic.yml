@@ -42,7 +42,7 @@ stages:
 
   - stage: Validate
     dependsOn: Setup
-    condition: eq(dependencies.Setup.outputs['pr_type.BUILD.DOCS_ONLY'], 'false')
+    condition: and(succeeded(), eq(dependencies.Setup.outputs['pr_type.BUILD.DOCS_ONLY'], 'false'))
     jobs:
       - job: build
         displayName: "Native Compile"
