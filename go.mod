@@ -1,6 +1,6 @@
 module get.porter.sh/porter
 
-go 1.19
+go 1.20
 
 replace (
 	// See https://github.com/hashicorp/go-plugin/pull/127 and
@@ -30,6 +30,7 @@ require (
 	github.com/docker/cli v23.0.6+incompatible
 	github.com/docker/distribution v2.8.2+incompatible
 	github.com/docker/docker v23.0.6+incompatible
+	github.com/dominikbraun/graph v0.22.3
 	github.com/dustin/go-humanize v1.0.1
 	github.com/ghodss/yaml v1.0.0
 	github.com/google/go-cmp v0.5.9
