@@ -1,5 +1,5 @@
 ---
-title: Building Invocation Images
+title: Invocation Images
 descriptions: How does Porter build an Invocation Image?
 ---
 
@@ -7,7 +7,7 @@ When you build a Cloud Native Application Bundle (CNAB) with Porter, a bundle.js
 
 ## Starting From Scratch
 
-When you create a new bundle with Porter, your project is bootstrapped with a sample porter.yaml. This scaffolding provides almost everything you need to generate your CNAB, including the invocation image. Let's use this to explain how the invocation image is built. 
+When you create a new bundle with Porter, your project is bootstrapped with a sample porter.yaml. This scaffolding provides almost everything you need to generate your CNAB, including the invocation image. Let's use this to explain how the invocation image is built.
 
 To create a new CNAB with Porter, you first run `porter create`. The generated porter.yaml will look like this:
 
@@ -200,7 +200,7 @@ Copying mixins ===>
 Copying mixin exec ===>
 ```
 
-First, Porter copies its runtime plus any mixins into the `.cnab/app` directory of your bundle. 
+First, Porter copies its runtime plus any mixins into the `.cnab/app` directory of your bundle.
 
 Porter locates available mixins in the $PORTER_HOME/mixins directory. By default, the Porter home directory is located in ~/.porter. In this example, we are using the exec mixin, so the $PORTER_HOME/mixins/exec directory will be copied into the invocation image. When a mixin is installed, it contains binaries for multiple operating systems. The correct binary will be copied into the bundle's .cnab directory for use in the invocation image.
 
@@ -225,7 +225,7 @@ WORKDIR ${BUNDLE_DIR}
 CMD ["/cnab/app/run"]
 ```
 
-Porter starts the [Dockerfile](/bundle/custom-dockerfile) by using a base image. You can customize the base image by specifying a Dockerfile template in the porter.yaml. By default, Porter only targets a single os/architecture(linux/amd64) for invocation image. If you want to use other platform, feel free to change the platform flag in the generated Dockerfile template. Next, a set of CA certificates is added.  Next, contents of the current directory are copied into the bundle directory (/cnab/app) in the invocation image. This will include any contributions from the mixin executables. Finally, an entry point that conforms to the CNAB specification is added to the image.
+Porter starts the [Dockerfile](/bundle/custom-dockerfile) by using a base image. You can customize the base image by specifying a Dockerfile template in the porter.yaml. By default, Porter only targets a single os/architecture(linux/amd64) for invocation image. If you want to use other platform, feel free to change the platform flag in the generated Dockerfile template. Next, a set of CA certificates is added. Next, contents of the current directory are copied into the bundle directory (/cnab/app) in the invocation image. This will include any contributions from the mixin executables. Finally, an entry point that conforms to the CNAB specification is added to the image.
 
 Once this is completed, the image is built:
 
@@ -270,31 +270,31 @@ In many cases, however, mixins will have build time requirements. Next let's see
 
 ```yaml
 mixins:
-- helm3:
-    repositories:
-      bitnami:
-        url: "https://charts.bitnami.com/bitnami"
+  - helm3:
+      repositories:
+        bitnami:
+          url: "https://charts.bitnami.com/bitnami"
 
 name: mysql
 version: "0.1.0"
 registry: jeremyrickard
 
 credentials:
-- name: kubeconfig
-  path: /home/nonroot/.kube/config
+  - name: kubeconfig
+    path: /home/nonroot/.kube/config
 
 install:
-- helm3:
-    description: "Install MySQL"
-    name: porter-ci-mysql
-    chart: bitnami/mysql
-    version: "6.14.2"
+  - helm3:
+      description: "Install MySQL"
+      name: porter-ci-mysql
+      chart: bitnami/mysql
+      version: "6.14.2"
 uninstall:
-- helm3:
-    description: "Uninstall MySQL"
-    releases:
-    - porter-ci-mysql
-    purge: true
+  - helm3:
+      description: "Uninstall MySQL"
+      releases:
+        - porter-ci-mysql
+      purge: true
 ```
 
 When we run porter build on this, the output is different:
