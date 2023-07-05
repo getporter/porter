@@ -1,7 +1,6 @@
 ---
 title: Getting Started with Plugins
 description: Learn how to use plugins with Porter
-url: /plugins/tutorial/
 ---
 
 In this tutorial we will use the [Azure plugin][azure] to demonstrate how to
@@ -20,8 +19,8 @@ bundles as a team and resolve credentials from a secure secret store.
 
 ## Prerequisites
 
-* A [Microsoft Azure account](https://azure.microsoft.com/en-us/free/)
-* [Install](/install/) Porter
+- A [Microsoft Azure account](https://azure.microsoft.com/en-us/free/)
+- [Install](/install/) Porter
 
 ## Create a storage account
 
@@ -63,19 +62,21 @@ Next we will save the connection string for the storage account.
 
 1. Find the **Connection String** value under **key1**, and click the **Copy** button to copy the account key.
 
-    ![Storage Access Keys](/images/plugin-tutorial/storage-keys.png)
+   ![Storage Access Keys](/images/plugin-tutorial/storage-keys.png)
 
 1. Define an environment variable `AZURE_STORAGE_CONNECTION_STRING` and set its value with the connection string from the previous step.
 
-    **bash**
-    ```
-    export AZURE_STORAGE_CONNECTION_STRING="DefaultEndpointsProtocol=https;AccountName=***;AccountKey=***;EndpointSuffix=core.windows.net"
-    ```
+   **bash**
 
-    **powershell**
-    ```
-    $env:AZURE_STORAGE_CONNECTION_STRING="DefaultEndpointsProtocol=https;AccountName=***;AccountKey=***;EndpointSuffix=core.windows.net"
-    ```
+   ```
+   export AZURE_STORAGE_CONNECTION_STRING="DefaultEndpointsProtocol=https;AccountName=***;AccountKey=***;EndpointSuffix=core.windows.net"
+   ```
+
+   **powershell**
+
+   ```
+   $env:AZURE_STORAGE_CONNECTION_STRING="DefaultEndpointsProtocol=https;AccountName=***;AccountKey=***;EndpointSuffix=core.windows.net"
+   ```
 
 ## Create a key vault
 
@@ -121,17 +122,19 @@ Now we will create a service principal and give it access to our key vault.
 
 1. On the app registration page, note the **Application (client) ID** and **Directory (tenant) ID**, and then define environment variables for them:
 
-    **bash**
-    ```
-    export AZURE_CLIENT_ID="<APPLICATION_CLIENT_ID>"
-    export AZURE_TENANT_ID="<DIRECTORY_TENANT_ID>"
-    ```
+   **bash**
 
-    **powershell**
-    ```
-    $env:AZURE_CLIENT_ID="<APPLICATION_CLIENT_ID>"
-    $env:AZURE_TENANT_ID="<DIRECTORY_TENANT_ID>"
-    ```
+   ```
+   export AZURE_CLIENT_ID="<APPLICATION_CLIENT_ID>"
+   export AZURE_TENANT_ID="<DIRECTORY_TENANT_ID>"
+   ```
+
+   **powershell**
+
+   ```
+   $env:AZURE_CLIENT_ID="<APPLICATION_CLIENT_ID>"
+   $env:AZURE_TENANT_ID="<DIRECTORY_TENANT_ID>"
+   ```
 
 1. In the left menu for the app registration, scroll to the **Manage** section and select **Certificates & secrets**.
 
@@ -143,15 +146,17 @@ Now we will create a service principal and give it access to our key vault.
 
 1. Copy the generated client secret and define an environment variable for it:
 
-    **bash**
-    ```
-    export AZURE_CLIENT_SECRET="<CLIENT_SECRET>"
-    ```
+   **bash**
 
-    **powershell**
-    ```
-    $env:AZURE_CLIENT_SECRET="<CLIENT_SECRET>"
-    ```
+   ```
+   export AZURE_CLIENT_SECRET="<CLIENT_SECRET>"
+   ```
+
+   **powershell**
+
+   ```
+   $env:AZURE_CLIENT_SECRET="<CLIENT_SECRET>"
+   ```
 
 ## Configure permissions on key vault
 
@@ -183,23 +188,23 @@ plugin.
 
 1. Add the following line to activate the Azure blob storage plugin:
 
-    ```yaml
-    default-storage-plugin: "azure.blob"
-    ```
+   ```yaml
+   default-storage-plugin: "azure.blob"
+   ```
 
 1. Add the following lines to activate and configure the Azure keyvault secrets
    plugin. Replace `myvault` with the name of the Key Vault that you created
    earlier.
 
-    ```yaml
-    default-secrets: "mysecrets"
-    
-    secrets:
-      name: "mysecrets"
-      plugin: "azure.keyvault"
-      config:
-        vault: "myvault"
-    ```
+   ```yaml
+   default-secrets: "mysecrets"
+
+   secrets:
+     name: "mysecrets"
+     plugin: "azure.keyvault"
+     config:
+       vault: "myvault"
+   ```
 
 ## Try it out
 
@@ -220,7 +225,7 @@ explain` to see what credentials are necessary.
 ```console
 $ porter explain ghcr.io/getporter/examples/plugins-tutorial:v0.2.0
 Name: plugins-tutorial
-Description: Example of porter resolving credentials from a secrets store using a plugin. 
+Description: Example of porter resolving credentials from a secrets store using a plugin.
 This bundle is a companion for the plugin tutorial at https://getporter.org/plugins/tutorial/.
 Version: 0.1.0
 
@@ -229,10 +234,10 @@ Name       Description                                                          
 password   Password for installing the world. We recommend getting this from a secret store.   true
 ```
 
-Since the bundle needs a credential, let's generate it using `porter credentials` command. 
-First, run `porter credentials create <file-name>` to generate the template file. 
+Since the bundle needs a credential, let's generate it using `porter credentials` command.
+First, run `porter credentials create <file-name>` to generate the template file.
 Then, edit the file to include required credentials and set the source for its value.
-Lastly, run `porter credentials apply <file-name>` to generate the credential set. 
+Lastly, run `porter credentials apply <file-name>` to generate the credential set.
 
 ```console
 $ porter credentials create plugins-tutorial.json
