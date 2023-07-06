@@ -24,21 +24,21 @@ Set VERSION to the most recent [release] version number.
 **MacOS**
 
 ```bash
-export VERSION="v1.0.1"
+export VERSION="v1.0.14"
 curl -L https://cdn.porter.sh/$VERSION/install-mac.sh | bash
 ```
 
 **Linux**
 
 ```bash
-export VERSION="v1.0.1"
+export VERSION="v1.0.14"
 curl -L https://cdn.porter.sh/$VERSION/install-linux.sh | bash
 ```
 
 **Windows**
 
 ```powershell
-$VERSION="v1.0.1"
+$VERSION="v1.0.14"
 (New-Object System.Net.WebClient).DownloadFile("https://cdn.porter.sh/$VERSION/install-windows.ps1", "install-porter.ps1")
 .\install-porter.ps1
 ```
