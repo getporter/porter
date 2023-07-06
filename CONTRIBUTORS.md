@@ -81,6 +81,7 @@ and we will add you. **All** contributors belong here. 💯
 * [Chengwei Guo](https://github.com/cw-Guo)
 * [Sarah Christoff](https://github.com/schristoff)
 * [Aleksey Barabanov](https://github.com/alekseybb197)
+* [Sanskar Bhushan](https://github.com/sbdtu5498)
 * [Tomi Paananen](https://github.com/tompaana)
 * [Troy Connor](https://github.com/troy0820)
 * [Phill Gibson](https://github.com/phillipgibson)
