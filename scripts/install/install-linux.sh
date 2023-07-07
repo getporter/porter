@@ -13,14 +13,14 @@ PORTER_VERSION=${PORTER_VERSION:-latest}
 
 echo "Installing porter@$PORTER_VERSION to $PORTER_HOME from $PORTER_MIRROR"
 
-mkdir -p $PORTER_HOME/runtimes
+mkdir -p "$PORTER_HOME/runtimes"
 
-curl -fsSLo $PORTER_HOME/porter $PORTER_MIRROR/$PORTER_VERSION/porter-linux-amd64
-chmod +x $PORTER_HOME/porter
-cp $PORTER_HOME/porter $PORTER_HOME/runtimes/porter-runtime
-echo Installed `$PORTER_HOME/porter version`
+curl -fsSLo "$PORTER_HOME/porter" "$PORTER_MIRROR/$PORTER_VERSION/porter-linux-amd64"
+chmod +x "$PORTER_HOME/porter"
+cp "$PORTER_HOME/porter" "$PORTER_HOME/runtimes/porter-runtime"
+echo Installed "$("$PORTER_HOME"/porter version)"
 
-$PORTER_HOME/porter mixin install exec --version $PORTER_VERSION
+"$PORTER_HOME/porter" mixin install exec --version "$PORTER_VERSION"
 
 echo "Installation complete."
 echo "Add porter to your path by adding the following line to your ~/.profile and open a new terminal:"
