@@ -26,7 +26,7 @@ require (
 	github.com/cnabio/image-relocation v0.9.0
 	github.com/containerd/containerd v1.7.2
 	github.com/davecgh/go-spew v1.1.1
-	github.com/docker/buildx v0.10.4
+	github.com/docker/buildx v0.11.1
 	github.com/docker/cli v24.0.2+incompatible
 	github.com/docker/distribution v2.8.2+incompatible
 	github.com/docker/docker v24.0.2+incompatible
