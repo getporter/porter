@@ -416,7 +416,7 @@ site/docs.
 
 or use only Hugo
 
-1. Download and install [Hugo 0.114.1](https://github.com/gohugoio/hugo/releases/tag/v0.114.1) extended version. 
+1. Download and install [Hugo 0.115.2](https://github.com/gohugoio/hugo/releases/tag/v0.115.2) extended version. 
 2. `cd docs`
 3. `hugo server --watch`
 
