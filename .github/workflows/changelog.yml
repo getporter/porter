@@ -1,0 +1,31 @@
+name: Retrieve Porter Changelog
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * *'  # Run daily at midnight UTC
+
+jobs:
+  changelog:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Get latest release
+        id: latest_release
+        run: |
+          echo "::set-output name=tag::$(curl --silent 'https://api.github.com/repos/getporter/porter/releases/latest' | jq -r '.tag_name')"
+
+      - name: Get changelog
+        id: changelog
+        run: |
+          RELEASE_TAG=${{ steps.latest_release.outputs.tag }}
+          curl --silent "https://github.com/getporter/porter/releases/tag/$RELEASE_TAG" | grep -m 1 -A 99999 "## Changelog" | sed '0,/## Changelog/d' | sed -e '/##/,$d' > changelog.md
+
+      - name: Commit and push changelog
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add changelog.md
+          git commit -m "Update changelog"
+          git push
