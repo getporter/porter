@@ -88,7 +88,7 @@ func (p *Porter) PrintParameters(ctx context.Context, opts ListOptions) error {
 			paramsSets = append(paramsSets, list)
 		}
 		return printer.PrintTableParameterSet(p.Out, paramsSets,
-			"NAME", "VALUE", "STRATEGY", "MODIFIED")
+			"NAME", "TYPE", "VALUE", "MODIFIED")
 	default:
 		return fmt.Errorf("invalid format: %s", opts.Format)
 	}
