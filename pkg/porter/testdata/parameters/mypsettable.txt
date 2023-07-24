@@ -1,4 +1,4 @@
 ---------------------------------------------------
-  NAME  NAMESPACE  TYPE    VALUE       MODIFIED    
+  NAMESPACE  NAME  TYPE    VALUE       MODIFIED    
 ---------------------------------------------------
-  foo              secret  foo_secret  1983-04-18  
+             foo   secret  foo_secret  1983-04-18  

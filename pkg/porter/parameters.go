@@ -85,12 +85,12 @@ func (p *Porter) PrintParameters(ctx context.Context, opts ListOptions) error {
 		for _, ps := range params {
 			for _, param := range ps.Parameters {
 				list := []string{}
-				list = append(list, param.Name, ps.Namespace, param.Source.Strategy, param.Source.Hint, tp.Format(ps.Status.Modified))
+				list = append(list, ps.Namespace, param.Name, param.Source.Strategy, param.Source.Hint, tp.Format(ps.Status.Modified))
 				paramsSets = append(paramsSets, list)
 			}
 		}
 		return printer.PrintTableParameterSet(p.Out, paramsSets,
-			"NAME", "NAMESPACE", "TYPE", "VALUE", "MODIFIED")
+			"NAMESPACE", "NAME", "TYPE", "VALUE", "MODIFIED")
 	default:
 		return fmt.Errorf("invalid format: %s", opts.Format)
 	}
