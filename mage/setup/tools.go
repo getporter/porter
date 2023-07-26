@@ -1,6 +1,7 @@
 package setup
 
 import (
+	"fmt"
 	"os/exec"
 	"runtime"
 
@@ -57,6 +58,12 @@ func EnsureBufBuild() {
 			"amd64": "x86_64",
 		},
 	}
+
+	if runtime.GOOS == "windows" {
+		opts.Ext = ".exe"
+		fmt.Print("yes")
+	}
+
 	err := downloads.DownloadToGopathBin(opts)
 	mgx.Must(err)
 }
