@@ -1,7 +1,6 @@
 package setup
 
 import (
-	"fmt"
 	"os/exec"
 	"runtime"
 
@@ -45,26 +44,35 @@ func EnsureBufBuild() {
 	if ok, _ := pkg.IsCommandAvailable("buf", "--version", "1.11.0"); ok {
 		return
 	}
-	opts := downloads.DownloadOptions{
-		UrlTemplate: "https://github.com/bufbuild/buf/releases/download/v{{.VERSION}}/buf-{{.GOOS}}-{{.GOARCH}}{{.EXT}}",
-		Name:        "buf",
-		Version:     "1.11.0",
-		OsReplacement: map[string]string{
-			"darwin":  "Darwin",
-			"linux":   "Linux",
-			"windows": "Windows",
-		},
-		ArchReplacement: map[string]string{
-			"amd64": "x86_64",
-		},
-	}
 
+	target := "buf-{{.GOOS}}-{{.GOARCH}}{{.EXT}}"
 	if runtime.GOOS == "windows" {
-		opts.Ext = ".exe"
-		fmt.Print("yes")
+		target = "buf-{{.GOOS}}-{{.GOARCH}}.exe"
 	}
 
-	err := downloads.DownloadToGopathBin(opts)
+	opts := archive.DownloadArchiveOptions{
+		DownloadOptions: downloads.DownloadOptions{
+			UrlTemplate: "https://github.com/bufbuild/buf/releases/download/v{{.VERSION}}/buf-{{.GOOS}}-{{.GOARCH}}{{.EXT}}",
+			Name:        "buf",
+			Version:     "1.11.0",
+			OsReplacement: map[string]string{
+				"darwin":  "Darwin",
+				"linux":   "Linux",
+				"windows": "Windows",
+			},
+			ArchReplacement: map[string]string{
+				"amd64": "x86_64",
+			},
+			// empty hook to override default archive extraction
+			Hook: func(archivePath string) (string, error) { return archivePath, nil },
+		},
+		ArchiveExtensions: map[string]string{
+			"windows": ".exe",
+		},
+		TargetFileTemplate: target,
+	}
+
+	err := archive.DownloadToGopathBin(opts)
 	mgx.Must(err)
 }
 
