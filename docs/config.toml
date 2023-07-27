@@ -388,7 +388,7 @@ weight = 40
   identifier = "contribute"
   weight = 60
   [[menu.main]]
-  name = "How to Contributor"
+  name = "How to Contribute"
   url = "/contribute/"
   identifier = "contribute-how"
   parent = "contribute"
@@ -531,6 +531,6 @@ weight = 40
   url = "/faq/faq"
   identifier = "faq"
   weight = 65
-  
+
 
 
