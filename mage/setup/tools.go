@@ -57,6 +57,11 @@ func EnsureBufBuild() {
 			"amd64": "x86_64",
 		},
 	}
+
+	if runtime.GOOS == "windows" {
+		opts.Ext = ".exe"
+	}
+
 	err := downloads.DownloadToGopathBin(opts)
 	mgx.Must(err)
 }
