@@ -1,7 +1,7 @@
 .blog-layout {
 
   .main {
-    padding-top: 2rem;
+    padding-top: 9rem;
 
     &.blog {
       .content-wrap {
@@ -153,5 +153,16 @@
         }
       }
     }
+  }
+
+  .top-bar {
+    width: 100%;
+    left: auto;
+  }
+
+  .blog-logo {
+    position: fixed;
+    z-index: 1001;
+    margin-top: 0;
   }
 }
