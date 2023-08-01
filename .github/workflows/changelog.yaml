@@ -22,7 +22,7 @@ jobs:
       - name: Install conventional-changelog-cli
         run: npm install -g conventional-changelog-cli
 
-      - name: Generate changelog for Porter
+      - name: Generate changelog 
         run: conventional-changelog -p angular -i CHANGELOG.md -s -r 0
 
       - name: Commit and push changes
