@@ -686,6 +686,26 @@ func TestShowParameters_Found(t *testing.T) {
 	}
 }
 
+func TestPrintParameters(t *testing.T) {
+	p := NewTestPorter(t)
+	defer p.Close()
+
+	opts := ListOptions{
+		PrintOptions: printer.PrintOptions{
+			Format: printer.FormatPlaintext,
+		},
+		Name: "mypset",
+	}
+
+	p.TestParameters.AddTestParameters("testdata/paramset.json")
+
+	err := p.PrintParameters(context.Background(), opts)
+	require.NoError(t, err, "an error should not have occurred")
+	gotOutput := p.TestConfig.TestContext.GetOutput()
+	test.CompareGoldenFile(t, "testdata/parameters/mypsettable.txt", gotOutput)
+
+}
+
 func TestParametersCreateOptions_Validate(t *testing.T) {
 	testcases := []struct {
 		name       string

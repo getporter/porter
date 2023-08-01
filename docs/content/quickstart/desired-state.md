@@ -295,7 +295,7 @@ The installation is out-of-sync, running the uninstall action...
 
 In this QuickStart you learned how to manage installations using desired state by defining the installation in a file, and then triggering reconciliation of that installation with the apply command.
 
-* [Understand the difference between imperative commands and desired state](/end-users/installations/)
+* [Understand the difference between imperative commands and desired state](/operations/manage-installations/)
 * [Automating Porter with the Porter Operator](/operator/)
 * [Create a bundle](/development/create-a-bundle/)
 
