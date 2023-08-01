@@ -108,7 +108,7 @@ func (b *Builder) BuildInvocationImage(ctx context.Context, manifest *manifest.M
 	}
 	pbsecrets, err := pb.CreateSecrets(secrets)
 	if err != nil {
-		return span.Errorf("error parsing the --secret flags: %w", err)
+		return span.Errorf("error creating secrets %w", err)
 	}
 
 	currentSession = append(currentSession, pbsecrets)
