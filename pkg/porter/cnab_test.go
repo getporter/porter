@@ -23,7 +23,7 @@ func TestSharedOptions_defaultBundleFiles(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, "porter.yaml", opts.File)
-	assert.Equal(t, ".cnab/bundle.json", opts.CNABFile)
+	assert.Equal(t, filepath.FromSlash(".cnab/bundle.json"), opts.CNABFile)
 }
 
 func TestSharedOptions_defaultBundleFiles_AltManifest(t *testing.T) {
@@ -37,7 +37,7 @@ func TestSharedOptions_defaultBundleFiles_AltManifest(t *testing.T) {
 	err := opts.defaultBundleFiles(cxt.Context)
 	require.NoError(t, err)
 
-	assert.Equal(t, ".cnab/bundle.json", opts.CNABFile)
+	assert.Equal(t, filepath.FromSlash(".cnab/bundle.json"), opts.CNABFile)
 }
 
 func TestSharedOptions_defaultBundleFiles_CNABFile(t *testing.T) {
