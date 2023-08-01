@@ -18,6 +18,13 @@ State | Status | Meaning
 defined | failed | Porter knows about your installation, but failed to install it.
 installed | succeeded | Your installation was successfully installed. 
 
+Assuming instead [porter uninstall] was the latest action, here are some combinations and their meanings:
+
+State | Status | Meaning
+--- | --- | --- |
+installed | failed | Porter tried to uninstall your installation, but failed.
+uninstalled | succeeded | Your installation was successfully uninstalled. 
+
 There are two ways to manage installations: [imperative commands](#imperative-commands) or [desired state](#desired-state). 
 They are not mutually exclusive, and you can switch back and forth between them at any time.
 
