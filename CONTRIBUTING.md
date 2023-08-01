@@ -416,7 +416,7 @@ site/docs.
 
 or use only Hugo
 
-1. Download and install [Hugo 0.115.2](https://github.com/gohugoio/hugo/releases/tag/v0.115.2) extended version. 
+1. Download and install [Hugo 0.115.4](https://github.com/gohugoio/hugo/releases/tag/v0.115.4) extended version. 
 2. `cd docs`
 3. `hugo server --watch`
 
@@ -468,7 +468,7 @@ It can be very helpful when figuring out why a command failed because you can se
 In development, you can use the [otel-jaeger bundle] to set up a development instance of Jaeger, which gives you a nice website to see each command run.
 
 ```
-porter install --reference ghcr.io/getporter/examples/otel-jaeger:v0.1.0 --allow-docker-host-access
+porter install OtelJaeger --reference ghcr.io/getporter/examples/otel-jaeger:v0.1.0 --allow-docker-host-access
 ```
 
 Then to turn on tracing in Porter, set the following environment variables.

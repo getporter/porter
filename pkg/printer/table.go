@@ -21,6 +21,18 @@ func NewTableSection(out io.Writer) *tablewriter.Table {
 	return table
 }
 
+func PrintTableParameterSet(out io.Writer, params [][]string, headers ...string) error {
+	table := NewTableSection(out)
+
+	// Print the outputs table
+	table.SetHeader(headers)
+	for _, v := range params {
+		table.Append(v)
+	}
+	table.Render()
+	return nil
+}
+
 // PrintTable outputs a dataset in tabular format
 func PrintTable(out io.Writer, v interface{}, getRow func(row interface{}) []string, headers ...string) error {
 	if reflect.TypeOf(v).Kind() != reflect.Slice {
