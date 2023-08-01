@@ -18,6 +18,7 @@ import (
 	"github.com/cnabio/cnab-go/driver/docker"
 	buildx "github.com/docker/buildx/build"
 	"github.com/docker/buildx/builder"
+	"github.com/docker/buildx/controller/pb"
 	_ "github.com/docker/buildx/driver/docker" // Register the docker driver with buildkit
 	"github.com/docker/buildx/util/buildflags"
 	"github.com/docker/buildx/util/confutil"
@@ -88,17 +89,29 @@ func (b *Builder) BuildInvocationImage(ctx context.Context, manifest *manifest.M
 	}
 
 	currentSession := []session.Attachable{authprovider.NewDockerAuthProvider(dockerconfig.LoadDefaultConfigFile(b.Err))}
+
 	ssh, err := buildflags.ParseSSHSpecs(opts.SSH)
 	if err != nil {
 		return span.Errorf("error parsing the --ssh flags: %w", err)
 	}
-	currentSession = append(currentSession, ssh)
+
+	pbssh, err := pb.CreateSSH(ssh)
+	if err != nil {
+		return span.Errorf("error parsing the --ssh flags: %w", err)
+	}
+
+	currentSession = append(currentSession, pbssh)
 
 	secrets, err := buildflags.ParseSecretSpecs(opts.Secrets)
 	if err != nil {
 		return span.Errorf("error parsing the --secret flags: %w", err)
 	}
-	currentSession = append(currentSession, secrets)
+	pbsecrets, err := pb.CreateSecrets(secrets)
+	if err != nil {
+		return span.Errorf("error parsing the --secret flags: %w", err)
+	}
+
+	currentSession = append(currentSession, pbsecrets)
 
 	args, err := b.determineBuildArgs(ctx, manifest, opts)
 	if err != nil {
