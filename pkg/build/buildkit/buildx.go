@@ -97,7 +97,7 @@ func (b *Builder) BuildInvocationImage(ctx context.Context, manifest *manifest.M
 
 	pbssh, err := pb.CreateSSH(ssh)
 	if err != nil {
-		return span.Errorf("error parsing the --ssh flags: %w", err)
+		return span.Errorf("error creating ssh ", err)
 	}
 
 	currentSession = append(currentSession, pbssh)
