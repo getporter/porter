@@ -42,7 +42,7 @@ func TestFileSystem_SetSecretDir(t *testing.T) {
 	s := filesystem.NewStore(c.Config)
 	secretDir, err := s.SetSecretDir()
 	require.NoError(t, err)
-	require.Equal(t, "/home/myuser/.porter/secrets", secretDir)
+	require.Equal(t, filepath.FromSlash("/home/myuser/.porter/secrets"), secretDir)
 }
 
 func TestFileSystem_DataOperation(t *testing.T) {
