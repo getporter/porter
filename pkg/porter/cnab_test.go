@@ -152,7 +152,7 @@ func Test_bundleFileOptions(t *testing.T) {
 		}, {
 			name: "valid dir",
 			opts: BundleDefinitionOptions{
-				Dir: "path/to/bundle",
+				Dir: tests.AbsOSFilepath("/path/to/bundle"),
 			},
 			setup: func(ctx *portercontext.Context, opts BundleDefinitionOptions) error {
 				err := ctx.FileSystem.MkdirAll(filepath.Join(opts.Dir, config.Name), pkg.FileModeDirectory)
@@ -161,8 +161,8 @@ func Test_bundleFileOptions(t *testing.T) {
 				}
 				return ctx.FileSystem.MkdirAll(opts.Dir, pkg.FileModeDirectory)
 			},
-			wantFile:     "/path/to/bundle/porter.yaml",
-			wantCNABFile: "/path/to/bundle/.cnab/bundle.json",
+			wantFile:     tests.AbsOSFilepath("/path/to/bundle/porter.yaml"),
+			wantCNABFile: tests.AbsOSFilepath("/path/to/bundle/.cnab/bundle.json"),
 			wantError:    "",
 		}, {
 			name: "valid file",
@@ -172,14 +172,14 @@ func Test_bundleFileOptions(t *testing.T) {
 			setup: func(ctx *portercontext.Context, opts BundleDefinitionOptions) error {
 				return ctx.FileSystem.MkdirAll(opts.File, pkg.FileModeDirectory)
 			},
-			wantFile:     "/alternate/porter.yaml",
-			wantCNABFile: "/" + build.LOCAL_BUNDLE,
+			wantFile:     tests.AbsOSFilepath("/alternate/porter.yaml"),
+			wantCNABFile: tests.AbsOSFilepath("/" + build.LOCAL_BUNDLE),
 			wantError:    "",
 		}, {
 			name: "valid dir and file",
 			opts: BundleDefinitionOptions{
-				Dir:  "path/to/bundle",
-				File: "alternate/porter.yaml",
+				Dir:  tests.AbsOSFilepath("/path/to/bundle"),
+				File: filepath.FromSlash("alternate/porter.yaml"),
 			},
 			setup: func(ctx *portercontext.Context, opts BundleDefinitionOptions) error {
 				err := ctx.FileSystem.MkdirAll(filepath.Join(opts.Dir, opts.File), pkg.FileModeDirectory)
@@ -188,8 +188,8 @@ func Test_bundleFileOptions(t *testing.T) {
 				}
 				return ctx.FileSystem.MkdirAll(opts.Dir, pkg.FileModeDirectory)
 			},
-			wantFile:     "/path/to/bundle/alternate/porter.yaml",
-			wantCNABFile: "/path/to/bundle/.cnab/bundle.json",
+			wantFile:     tests.AbsOSFilepath("/path/to/bundle/alternate/porter.yaml"),
+			wantCNABFile: tests.AbsOSFilepath("/path/to/bundle/.cnab/bundle.json"),
 			wantError:    "",
 		}}
 
