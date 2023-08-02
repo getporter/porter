@@ -3,6 +3,7 @@ package feed
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"regexp"
 	"sort"
@@ -65,13 +66,13 @@ func (feed *MixinFeed) Generate(ctx context.Context, opts GenerateOptions) error
 		}
 	}
 
-	mixinRegex := regexp.MustCompile(`(.*/)?(.+)/([a-z0-9-]+)-(linux|windows|darwin)-(amd64|arm64)(\.exe)?`)
+	mixinRegex := regexp.MustCompile(`(.*[/\\])?(.+)[/\\]([a-z0-9-]+)-(linux|windows|darwin)-(amd64|arm64)(\.exe)?`)
 
 	err = feed.FileSystem.Walk(opts.SearchDirectory, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
-
+		log.Printf(path)
 		matches := mixinRegex.FindStringSubmatch(path)
 		if len(matches) > 0 {
 			version := matches[2]

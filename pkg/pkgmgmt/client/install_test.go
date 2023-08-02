@@ -64,6 +64,9 @@ func TestFileSystem_InstallFromUrl(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 				clientPath := "/home/myuser/.porter/packages/mypkg/mypkg"
+				if runtime.GOOS == "windows" {
+					clientPath += ".exe"
+				}
 				clientStats, err := p.FileSystem.Stat(clientPath)
 				require.NoError(t, err)
 				wantMode := pkg.FileModeExecutable
