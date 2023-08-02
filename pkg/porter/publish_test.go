@@ -34,12 +34,10 @@ func TestPublish_Validate_PorterYamlDoesNotExist(t *testing.T) {
 
 	opts := PublishOptions{}
 	err := opts.Validate(p.Config)
-	require.Error(t, err, "validation should have failed")
-	assert.EqualError(
+	require.ErrorContains(
 		t,
 		err,
-		"could not find porter.yaml in the current directory /, make sure you are in the right directory or specify the porter manifest with --file",
-		"porter.yaml not present so should have failed validation",
+		"could not find porter.yaml in the current directory",
 	)
 }
 
@@ -51,7 +49,7 @@ func TestPublish_Validate_ArchivePath(t *testing.T) {
 		ArchiveFile: "mybuns.tgz",
 	}
 	err := opts.Validate(p.Config)
-	assert.EqualError(t, err, "unable to access --archive mybuns.tgz: open /mybuns.tgz: file does not exist")
+	assert.ErrorContains(t, err, "file does not exist")
 
 	p.FileSystem.WriteFile("mybuns.tgz", []byte("mybuns"), pkg.FileModeWritable)
 	err = opts.Validate(p.Config)

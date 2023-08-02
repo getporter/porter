@@ -88,7 +88,10 @@ func TestSharedOptions_validateBundleJson(t *testing.T) {
 
 			if tc.wantError == "" {
 				require.NoError(t, err)
-				assert.Equal(t, opts.CNABFile, tc.wantBundleJson)
+				wantBundleJsonAbs, err := filepath.Abs(tc.wantBundleJson)
+				require.NoError(t, err)
+
+				assert.Equal(t, wantBundleJsonAbs, opts.CNABFile)
 			} else {
 				require.Error(t, err)
 				assert.Contains(t, err.Error(), tc.wantError)
