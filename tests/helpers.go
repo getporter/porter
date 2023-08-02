@@ -92,3 +92,12 @@ func GRPCDisplayInstallationExpectedJSON(bExpInst []byte) ([]byte, error) {
 	}
 	return bExpInst, nil
 }
+
+// AbsOSFilepath converts a "slash filepath" into an os dependent absolute
+// filepath, for example on windows "/porter/hello" returns "C:\\porter\\hello"
+// but on linux it does nothing
+// note: only use for testing, could result in errors
+func AbsOSFilepath(path string) string {
+	result, _ := filepath.Abs(filepath.FromSlash(path))
+	return result
+}

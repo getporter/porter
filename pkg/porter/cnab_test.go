@@ -1,6 +1,8 @@
 package porter
 
 import (
+	"fmt"
+	"get.porter.sh/porter/tests"
 	"path/filepath"
 	"testing"
 
@@ -101,6 +103,10 @@ func TestSharedOptions_validateBundleJson(t *testing.T) {
 }
 
 func Test_bundleFileOptions(t *testing.T) {
+	absWantFile, _ := filepath.Abs(filepath.FromSlash("/" + config.Name))
+	absWantCNABFile, _ := filepath.Abs(filepath.FromSlash("/" + build.LOCAL_BUNDLE))
+	absPathToBundle, _ := filepath.Abs(filepath.FromSlash("/path/to/bundle"))
+
 	testcases := []struct {
 		name         string
 		opts         BundleDefinitionOptions
@@ -113,8 +119,8 @@ func Test_bundleFileOptions(t *testing.T) {
 			name:         "no opts",
 			opts:         BundleDefinitionOptions{},
 			setup:        func(ctx *portercontext.Context, opts BundleDefinitionOptions) error { return nil },
-			wantFile:     "/" + config.Name,
-			wantCNABFile: "/" + build.LOCAL_BUNDLE,
+			wantFile:     absWantFile,
+			wantCNABFile: absWantCNABFile,
 			wantError:    "",
 		}, {
 			name: "reference set",
@@ -128,12 +134,12 @@ func Test_bundleFileOptions(t *testing.T) {
 		}, {
 			name: "invalid dir",
 			opts: BundleDefinitionOptions{
-				Dir: "path/to/bundle",
+				Dir: filepath.FromSlash("path/to/bundle"),
 			},
 			setup:        func(ctx *portercontext.Context, opts BundleDefinitionOptions) error { return nil },
 			wantFile:     "",
 			wantCNABFile: "",
-			wantError:    `"path/to/bundle" is not a valid directory: open /path/to/bundle: file does not exist`,
+			wantError:    fmt.Sprintf("%q is not a valid directory: open %s: file does not exist", filepath.FromSlash("path/to/bundle"), absPathToBundle),
 		}, {
 			name: "invalid file",
 			opts: BundleDefinitionOptions{
@@ -142,7 +148,7 @@ func Test_bundleFileOptions(t *testing.T) {
 			setup:        func(ctx *portercontext.Context, opts BundleDefinitionOptions) error { return nil },
 			wantFile:     "",
 			wantCNABFile: "",
-			wantError:    "unable to access --file /alternate/porter.yaml: open /alternate/porter.yaml: file does not exist",
+			wantError:    fmt.Sprintf("unable to access --file %s: open %s: file does not exist", tests.AbsOSFilepath("/alternate/porter.yaml"), tests.AbsOSFilepath("/alternate/porter.yaml")),
 		}, {
 			name: "valid dir",
 			opts: BundleDefinitionOptions{
@@ -212,7 +218,8 @@ func Test_bundleFileOptions(t *testing.T) {
 				if tc.opts.Dir != "" && tc.wantError == "" {
 					require.Equal(t, tc.opts.Dir, wd)
 				} else {
-					require.Equal(t, "/", wd)
+					path, _ := filepath.Abs("/")
+					require.Equal(t, path, wd)
 				}
 			}
 		})
