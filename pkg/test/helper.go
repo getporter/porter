@@ -31,7 +31,6 @@ func TestMainWithMockedCommandHandlers(m *testing.M) {
 
 			// There may be multiple expected commands, separated by a newline character
 			wantCmds := strings.Split(expectedCmdEnv, "\n")
-
 			commandNotFound := true
 			for _, wantCmd := range wantCmds {
 				if wantCmd == gotCmd {

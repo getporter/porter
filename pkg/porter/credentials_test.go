@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 	"time"
 
@@ -295,6 +296,10 @@ func TestShowCredential_PreserveCase(t *testing.T) {
 }
 
 func TestCredentialsEdit(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip() // bash and vi not available on windows
+	}
+
 	p := NewTestPorter(t)
 	defer p.Close()
 
@@ -315,7 +320,8 @@ func TestCredentialsEditEditorPathWithArgument(t *testing.T) {
 
 	p.Setenv("SHELL", "something")
 	p.Setenv("EDITOR", "C:\\Program Files\\Visual Studio Code\\code.exe --wait")
-	p.Setenv(test.ExpectedCommandEnv, "something -c C:\\Program Files\\Visual Studio Code\\code.exe --wait "+filepath.Join(os.TempDir(), "porter-kool-kreds.yaml"))
+	p.Setenv(test.ExpectedCommandEnv, "something -c C:\\Program Files\\Visual Studio Code\\code.exe --wait "+filepath.Join(os.TempDir(), "porter-kool-kreds.yaml")+
+		"\nsomething /C C:\\Program Files\\Visual Studio Code\\code.exe --wait "+filepath.Join(os.TempDir(), "porter-kool-kreds.yaml"))
 	opts := CredentialEditOptions{Namespace: "dev", Name: "kool-kreds"}
 
 	p.TestCredentials.AddTestCredentialsDirectory("testdata/test-creds")
