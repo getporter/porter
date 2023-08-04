@@ -2,7 +2,6 @@ package porter
 
 import (
 	"fmt"
-	"get.porter.sh/porter/tests"
 	"path/filepath"
 	"testing"
 
@@ -92,7 +91,6 @@ func TestSharedOptions_validateBundleJson(t *testing.T) {
 				require.NoError(t, err)
 				wantBundleJsonAbs, err := filepath.Abs(tc.wantBundleJson)
 				require.NoError(t, err)
-
 				assert.Equal(t, wantBundleJsonAbs, opts.CNABFile)
 			} else {
 				require.Error(t, err)
@@ -103,9 +101,12 @@ func TestSharedOptions_validateBundleJson(t *testing.T) {
 }
 
 func Test_bundleFileOptions(t *testing.T) {
-	absWantFile, _ := filepath.Abs(filepath.FromSlash("/" + config.Name))
-	absWantCNABFile, _ := filepath.Abs(filepath.FromSlash("/" + build.LOCAL_BUNDLE))
-	absPathToBundle, _ := filepath.Abs(filepath.FromSlash("/path/to/bundle"))
+	absWantFile, err := filepath.Abs(filepath.FromSlash("/" + config.Name))
+	require.NoError(t, err)
+	absWantCNABFile, err := filepath.Abs(filepath.FromSlash("/" + build.LOCAL_BUNDLE))
+	require.NoError(t, err)
+	absPathToBundle, err := filepath.Abs(filepath.FromSlash("/path/to/bundle"))
+	require.NoError(t, err)
 
 	testcases := []struct {
 		name         string
@@ -148,11 +149,11 @@ func Test_bundleFileOptions(t *testing.T) {
 			setup:        func(ctx *portercontext.Context, opts BundleDefinitionOptions) error { return nil },
 			wantFile:     "",
 			wantCNABFile: "",
-			wantError:    fmt.Sprintf("unable to access --file %s: open %s: file does not exist", tests.AbsOSFilepath("/alternate/porter.yaml"), tests.AbsOSFilepath("/alternate/porter.yaml")),
+			wantError:    fmt.Sprintf("unable to access --file %s: open %s: file does not exist", absOSFilepath(t, "/alternate/porter.yaml"), absOSFilepath(t, "/alternate/porter.yaml")),
 		}, {
 			name: "valid dir",
 			opts: BundleDefinitionOptions{
-				Dir: tests.AbsOSFilepath("/path/to/bundle"),
+				Dir: absOSFilepath(t, "/path/to/bundle"),
 			},
 			setup: func(ctx *portercontext.Context, opts BundleDefinitionOptions) error {
 				err := ctx.FileSystem.MkdirAll(filepath.Join(opts.Dir, config.Name), pkg.FileModeDirectory)
@@ -161,8 +162,8 @@ func Test_bundleFileOptions(t *testing.T) {
 				}
 				return ctx.FileSystem.MkdirAll(opts.Dir, pkg.FileModeDirectory)
 			},
-			wantFile:     tests.AbsOSFilepath("/path/to/bundle/porter.yaml"),
-			wantCNABFile: tests.AbsOSFilepath("/path/to/bundle/.cnab/bundle.json"),
+			wantFile:     absOSFilepath(t, "/path/to/bundle/porter.yaml"),
+			wantCNABFile: absOSFilepath(t, "/path/to/bundle/.cnab/bundle.json"),
 			wantError:    "",
 		}, {
 			name: "valid file",
@@ -172,13 +173,13 @@ func Test_bundleFileOptions(t *testing.T) {
 			setup: func(ctx *portercontext.Context, opts BundleDefinitionOptions) error {
 				return ctx.FileSystem.MkdirAll(opts.File, pkg.FileModeDirectory)
 			},
-			wantFile:     tests.AbsOSFilepath("/alternate/porter.yaml"),
-			wantCNABFile: tests.AbsOSFilepath("/" + build.LOCAL_BUNDLE),
+			wantFile:     absOSFilepath(t, "/alternate/porter.yaml"),
+			wantCNABFile: absOSFilepath(t, "/"+build.LOCAL_BUNDLE),
 			wantError:    "",
 		}, {
 			name: "valid dir and file",
 			opts: BundleDefinitionOptions{
-				Dir:  tests.AbsOSFilepath("/path/to/bundle"),
+				Dir:  absOSFilepath(t, "/path/to/bundle"),
 				File: filepath.FromSlash("alternate/porter.yaml"),
 			},
 			setup: func(ctx *portercontext.Context, opts BundleDefinitionOptions) error {
@@ -188,8 +189,8 @@ func Test_bundleFileOptions(t *testing.T) {
 				}
 				return ctx.FileSystem.MkdirAll(opts.Dir, pkg.FileModeDirectory)
 			},
-			wantFile:     tests.AbsOSFilepath("/path/to/bundle/alternate/porter.yaml"),
-			wantCNABFile: tests.AbsOSFilepath("/path/to/bundle/.cnab/bundle.json"),
+			wantFile:     absOSFilepath(t, "/path/to/bundle/alternate/porter.yaml"),
+			wantCNABFile: absOSFilepath(t, "/path/to/bundle/.cnab/bundle.json"),
 			wantError:    "",
 		}}
 
@@ -218,10 +219,16 @@ func Test_bundleFileOptions(t *testing.T) {
 				if tc.opts.Dir != "" && tc.wantError == "" {
 					require.Equal(t, tc.opts.Dir, wd)
 				} else {
-					path, _ := filepath.Abs("/")
+					path := absOSFilepath(t, "/")
 					require.Equal(t, path, wd)
 				}
 			}
 		})
 	}
+}
+
+func absOSFilepath(t *testing.T, path string) string {
+	result, err := filepath.Abs(filepath.FromSlash(path))
+	require.NoError(t, err)
+	return result
 }
