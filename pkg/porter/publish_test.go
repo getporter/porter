@@ -3,8 +3,6 @@ package porter
 import (
 	"context"
 	"errors"
-	"testing"
-
 	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/cache"
 	"get.porter.sh/porter/pkg/cnab"
@@ -16,6 +14,9 @@ import (
 	"github.com/cnabio/image-relocation/pkg/registry"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"runtime"
+	"testing"
+	"time"
 )
 
 func TestPublish_Validate_PorterYamlExists(t *testing.T) {
@@ -222,6 +223,11 @@ func TestPublish_RefreshCachedBundle(t *testing.T) {
 	file, err := p.FileSystem.Stat(cachedBundle.BundlePath)
 	require.NoError(t, err)
 	origBunPathTime := file.ModTime()
+
+	if runtime.GOOS == "windows" {
+		// see https://github.com/getporter/porter/issues/2858
+		time.Sleep(5 * time.Millisecond)
+	}
 
 	// Should refresh cache
 	err = p.refreshCachedBundle(bundleRef)
