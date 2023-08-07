@@ -24,3 +24,5 @@ grpc-porter-tls.key
 grpc-porter.csr
 .grpcurl/
 config.yaml
+
+*.swp
