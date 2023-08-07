@@ -21,7 +21,7 @@ systems:
 * GOOS: windows, linux, darwin
 * GOARCH: amd64
 
-If you are creating your mixin in Go, you may find the [Makefile][mk] that we use
+If you are creating your mixin in Go, you may find the [Makefile](TODO) that we use
 for our Porter mixins helpful as a starting point.
 
 ## Publish
