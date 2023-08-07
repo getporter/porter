@@ -2,6 +2,7 @@ package storage
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
@@ -55,7 +56,7 @@ func TestTestParameterProvider_Load(t *testing.T) {
 	t.Run("unsuccessful load", func(t *testing.T) {
 		_, err := p.Load("paramset.json")
 		require.Error(t, err)
-		assert.Contains(t, err.Error(), "no such file or directory")
+		assert.True(t, strings.Contains(err.Error(), "no such file or directory") || strings.Contains(err.Error(), "The system cannot find the file specified"))
 	})
 
 	t.Run("successful load, unsuccessful unmarshal", func(t *testing.T) {

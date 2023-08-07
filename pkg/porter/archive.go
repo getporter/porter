@@ -59,7 +59,7 @@ func (p *Porter) Archive(ctx context.Context, opts ArchiveOptions) error {
 
 	dir := filepath.Dir(opts.ArchiveFile)
 	if _, err := p.Config.FileSystem.Stat(dir); os.IsNotExist(err) {
-		return log.Error(fmt.Errorf("parent directory %q does not exist", dir))
+		return log.Error(fmt.Errorf("parent directory %q does not exist", filepath.ToSlash(dir)))
 	}
 
 	bundleRef, err := opts.GetBundleReference(ctx, p)

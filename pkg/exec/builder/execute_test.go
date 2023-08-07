@@ -2,7 +2,6 @@ package builder
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -159,8 +158,13 @@ func TestExecuteStep_SpecifiesCustomWorkingDirectory(t *testing.T) {
 		SuffixArguments: []string{},
 	}
 
+	if runtime.GOOS == "windows" {
+		step.TestStep.Command = "cmd.exe"
+		step.Arguments = []string{"/c", "cd"}
+	}
+
 	_, err := ExecuteStep(ctx, c.RuntimeConfig, step)
-	assert.Equal(t, fmt.Sprintln(wd), c.TestContext.GetOutput())
+	assert.Equal(t, wd, strings.TrimRight(c.TestContext.GetOutput(), "\r\n"))
 	require.NoError(t, err, "Execute Step failed")
 }
 

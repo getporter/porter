@@ -3,6 +3,7 @@ package portercontext
 import (
 	"context"
 	"errors"
+	"runtime"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -53,5 +54,9 @@ func TestContext_LogToFile(t *testing.T) {
 	c.CompareGoldenFile("testdata/expected-logs.txt", string(logContents))
 
 	// Compare the human readable logs sent to stderr
-	c.CompareGoldenFile("testdata/expected-output.txt", c.GetError())
+	if runtime.GOOS == "windows" {
+		c.CompareGoldenFile("testdata/expected-output-windows.txt", c.GetError())
+	} else {
+		c.CompareGoldenFile("testdata/expected-output.txt", c.GetError())
+	}
 }
