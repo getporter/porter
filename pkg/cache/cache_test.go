@@ -3,7 +3,6 @@ package cache
 import (
 	"fmt"
 	"os"
-	"path"
 	"path/filepath"
 	"testing"
 
@@ -160,7 +159,7 @@ func TestStoreRelocationMapping(t *testing.T) {
 			relocationMapping: relocation.ImageRelocationMap{
 				"asd": "asdf",
 			},
-			wantedReloPath: path.Join(home+"/.porter/cache", kahn1dot0Hash, "cnab", "relocation-mapping.json"),
+			wantedReloPath: filepath.Join(home+"/.porter/cache", kahn1dot0Hash, "cnab", "relocation-mapping.json"),
 		},
 		"no relocation file gets no path": {
 			tag:            kahnlatest,

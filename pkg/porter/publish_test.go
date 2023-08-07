@@ -3,7 +3,9 @@ package porter
 import (
 	"context"
 	"errors"
+	"runtime"
 	"testing"
+	"time"
 
 	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/cache"
@@ -34,12 +36,10 @@ func TestPublish_Validate_PorterYamlDoesNotExist(t *testing.T) {
 
 	opts := PublishOptions{}
 	err := opts.Validate(p.Config)
-	require.Error(t, err, "validation should have failed")
-	assert.EqualError(
+	require.ErrorContains(
 		t,
 		err,
-		"could not find porter.yaml in the current directory /, make sure you are in the right directory or specify the porter manifest with --file",
-		"porter.yaml not present so should have failed validation",
+		"could not find porter.yaml in the current directory",
 	)
 }
 
@@ -51,7 +51,7 @@ func TestPublish_Validate_ArchivePath(t *testing.T) {
 		ArchiveFile: "mybuns.tgz",
 	}
 	err := opts.Validate(p.Config)
-	assert.EqualError(t, err, "unable to access --archive mybuns.tgz: open /mybuns.tgz: file does not exist")
+	assert.ErrorContains(t, err, "file does not exist")
 
 	p.FileSystem.WriteFile("mybuns.tgz", []byte("mybuns"), pkg.FileModeWritable)
 	err = opts.Validate(p.Config)
@@ -224,6 +224,11 @@ func TestPublish_RefreshCachedBundle(t *testing.T) {
 	file, err := p.FileSystem.Stat(cachedBundle.BundlePath)
 	require.NoError(t, err)
 	origBunPathTime := file.ModTime()
+
+	if runtime.GOOS == "windows" {
+		// see https://github.com/getporter/porter/issues/2858
+		time.Sleep(5 * time.Millisecond)
+	}
 
 	// Should refresh cache
 	err = p.refreshCachedBundle(bundleRef)
