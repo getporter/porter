@@ -37,6 +37,11 @@ jobs:
           remove-issue-stale-when-updated: true
           debug-only: true
 
+  rotten:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
     steps:
       - uses: actions/stale@v8
         with:
@@ -62,6 +67,11 @@ jobs:
           labels-to-remove-when-stale: 'lifecycle/stale'
           remove-issue-stale-when-updated: true
 
+  close:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
     steps:
       - uses: actions/stale@v8
         with:
@@ -79,11 +89,10 @@ jobs:
                             Mark this issue as fresh with /remove-lifecycle stale
                             Close this issue with /close
 
-                            /lifecycle closed
+                            /lifecycle close
           days-before-issue-stale: 30
           only-issue-labels: 'lifecycle/rotten'
           days-before-issue-close: 0
           stale-issue-label: 'lifecycle/closed'
           labels-to-remove-when-stale: 'lifecycle/rotten'
 
- 
