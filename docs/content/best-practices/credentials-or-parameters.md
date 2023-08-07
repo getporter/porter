@@ -45,4 +45,4 @@ Read [Upgrade Your Plugins to securely store sensitive data](/blog/persist-sensi
 ## See Also
 
 * [Credentials Overview](/credentials/)
-* [Parameters Overview](/parameters/)
+* [Parameters Overview](/quickstart/parameters/)
