@@ -71,6 +71,7 @@ func (feed *MixinFeed) Generate(ctx context.Context, opts GenerateOptions) error
 		if err != nil {
 			return err
 		}
+
 		matches := mixinRegex.FindStringSubmatch(path)
 		if len(matches) > 0 {
 			version := matches[2]

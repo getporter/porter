@@ -3,6 +3,10 @@ package porter
 import (
 	"context"
 	"errors"
+	"runtime"
+	"testing"
+	"time"
+
 	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/cache"
 	"get.porter.sh/porter/pkg/cnab"
@@ -14,9 +18,6 @@ import (
 	"github.com/cnabio/image-relocation/pkg/registry"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"runtime"
-	"testing"
-	"time"
 )
 
 func TestPublish_Validate_PorterYamlExists(t *testing.T) {
