@@ -296,16 +296,18 @@ func TestShowCredential_PreserveCase(t *testing.T) {
 }
 
 func TestCredentialsEdit(t *testing.T) {
-	if runtime.GOOS == "windows" {
-		t.Skip() // bash and vi not available on windows
-	}
-
 	p := NewTestPorter(t)
 	defer p.Close()
 
 	p.Setenv("SHELL", "bash")
 	p.Setenv("EDITOR", "vi")
 	p.Setenv(test.ExpectedCommandEnv, "bash -c vi "+filepath.Join(os.TempDir(), "porter-kool-kreds.yaml"))
+
+	if runtime.GOOS == "windows" {
+		p.Setenv("SHELL", "cmd")
+		p.Setenv("EDITOR", "notepad")
+		p.Setenv(test.ExpectedCommandEnv, "cmd /C notepad "+filepath.Join(os.TempDir(), "porter-kool-kreds.yaml"))
+	}
 
 	opts := CredentialEditOptions{Namespace: "dev", Name: "kool-kreds"}
 
@@ -320,8 +322,10 @@ func TestCredentialsEditEditorPathWithArgument(t *testing.T) {
 
 	p.Setenv("SHELL", "something")
 	p.Setenv("EDITOR", "C:\\Program Files\\Visual Studio Code\\code.exe --wait")
-	p.Setenv(test.ExpectedCommandEnv, "something -c C:\\Program Files\\Visual Studio Code\\code.exe --wait "+filepath.Join(os.TempDir(), "porter-kool-kreds.yaml")+
-		"\nsomething /C C:\\Program Files\\Visual Studio Code\\code.exe --wait "+filepath.Join(os.TempDir(), "porter-kool-kreds.yaml"))
+	p.Setenv(test.ExpectedCommandEnv, fmt.Sprintf("something -c C:\\Program Files\\Visual Studio Code\\code.exe --wait %s", filepath.Join(os.TempDir(), "porter-kool-kreds.yaml")))
+	if runtime.GOOS == "windows" {
+		p.Setenv(test.ExpectedCommandEnv, fmt.Sprintf("something /C C:\\Program Files\\Visual Studio Code\\code.exe --wait %s", filepath.Join(os.TempDir(), "porter-kool-kreds.yaml")))
+	}
 	opts := CredentialEditOptions{Namespace: "dev", Name: "kool-kreds"}
 
 	p.TestCredentials.AddTestCredentialsDirectory("testdata/test-creds")

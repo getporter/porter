@@ -101,12 +101,9 @@ func TestSharedOptions_validateBundleJson(t *testing.T) {
 }
 
 func Test_bundleFileOptions(t *testing.T) {
-	absWantFile, err := filepath.Abs(filepath.FromSlash("/" + config.Name))
-	require.NoError(t, err)
-	absWantCNABFile, err := filepath.Abs(filepath.FromSlash("/" + build.LOCAL_BUNDLE))
-	require.NoError(t, err)
-	absPathToBundle, err := filepath.Abs(filepath.FromSlash("/path/to/bundle"))
-	require.NoError(t, err)
+	absWantFile := absOSFilepath(t, "/"+config.Name)
+	absWantCNABFile := absOSFilepath(t, "/"+build.LOCAL_BUNDLE)
+	absPathToBundle := absOSFilepath(t, "/path/to/bundle")
 
 	testcases := []struct {
 		name         string

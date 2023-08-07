@@ -144,10 +144,6 @@ func TestExecuteStep_HasOrderedArguments(t *testing.T) {
 }
 
 func TestExecuteStep_SpecifiesCustomWorkingDirectory(t *testing.T) {
-	//if runtime.GOOS == "windows" {
-	//	t.Skip() // pwd not available on windows (for some reason the only command that works is "help" ?!?)
-	//}
-
 	ctx := context.Background()
 	c := porterruntime.NewTestRuntimeConfig(t)
 	c.TestContext.UseFilesystem()
