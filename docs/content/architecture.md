@@ -22,7 +22,7 @@ The bundle author then builds the bundle into an OCI artifact which includes a d
 Once a bundle is built, it can be distributed using Docker / OCI registries.
 This allows you to use existing tools and infrastructure to share your application with other teams, customers, and end-users.
 
-Because the bundle contains everything you need to deploy, included referenced images, you can even [move a bundle into a disconnected or airgapped environment](/references/examples/airgap/).
+Because the bundle contains everything you need to deploy, included referenced images, you can even [move a bundle into a disconnected or airgapped environment](/administration/move-bundles-airgapped/).
 When written with airgap deployments in mind, a bundle can be deployed anywhere without requiring access to the original network or the internet.
 
 Learn more about [how Porter works at buildtime](/architecture-buildtime/).
