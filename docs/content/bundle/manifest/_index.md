@@ -31,7 +31,7 @@ The manifest is made up of multiple components. See the [Manifest File Format] f
 
 We have full [examples](https://github.com/getporter/examples) of Porter manifests in the Porter repository.
 
-[templates]: /authors/templates/
+[templates]: /development/using-templates/
 [Manifest File Format]: /reference/file-formats/#manifest
 
 ## Bundle Metadata
@@ -521,7 +521,7 @@ the `repository` and `digest` attributes. For example:
 image: ${bundle.images.websvc.repository}@${bundle.images.websvc.digest}
 ```
 
-At runtime, these will be updated appropriately if a bundle has been [copied](/copy-bundles). Note that while `tag` is available, you should prefer the use of `digest`.
+At runtime, these will be updated appropriately if a bundle has been [copied](/administration/copy-bundles/). Note that while `tag` is available, you should prefer the use of `digest`.
 
 Here is a breakdown of all the supported fields on an image in this section of the manifest:
 
