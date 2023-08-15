@@ -204,7 +204,7 @@ stages:
             # Skip windows smoke tests until we can fix the windows agent
             windows:
               poolName: "windows"
-              vmImage: ""
+              vmImage: "windows-latest"
               GOMODCACHE: "C:/Users/porterci/go/pkg/mod"
             linux:
               poolName: "Azure Pipelines"
