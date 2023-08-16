@@ -19,13 +19,15 @@ VERSION/MIXIN-GOOS-GOARCH[FILE_EXT]
 
 More than one mixin may be present in the directory, and the directories may be nested a few levels deep, as long as the file path ends with the above naming convention, porter will find and match it. Below is an example directory structure that porter can list to generate a feed:
 
+```
 bin/
 └── v1.2.3/
     ├── mymixin-darwin-amd64
     ├── mymixin-linux-amd64
     └── mymixin-windows-amd64.exe
+```
 
-See https://getporter.org/mixin-dev-guide/distribution more details.
+See https://getporter.org/development/dist-a-mixin/ more details.
 
 
 ```

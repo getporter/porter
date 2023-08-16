@@ -54,4 +54,4 @@ parameters:
 | parameters.name   | true     | The name of the parameter as defined in the bundle.                                                                          |
 | parameters.source | true     | Specifies how the parameter should be resolved. Must have only one child property:<br/> secret, value, env, path, or command |
 
-[ps-schema]: /schema/v1/parameter-set.schema.json
+[ps-schema]: https://raw.githubusercontent.com/getporter/porter/main/pkg/schema/parameter-set.schema.json

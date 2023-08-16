@@ -299,7 +299,7 @@ In this QuickStart you learned how to manage installations using desired state b
 * [Automating Porter with the Porter Operator](/operator/)
 * [Create a bundle](/development/create-a-bundle/)
 
-[managing installations]: /end-users/installations/
+[managing installations]: /operations/manage-installations/
 [porter credentials apply]: /cli/porter_credentials_apply/
 [porter parameters apply]: /cli/porter_parameters_apply/
-[porter installation apply]: /cli/porter_installation_apply/
+[porter installation apply]: /cli/porter_installations_apply/

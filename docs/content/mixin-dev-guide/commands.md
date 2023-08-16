@@ -345,4 +345,4 @@ $ ~/.porter/mixins/exec/exec version --output json
 [JSON Schema Validator]: https://www.jsonschemavalidator.net/
 [YAML to JSON converter]: https://www.convertjson.com/yaml-to-json.htm
 [exec mixin schema]: /src/pkg/exec/schema/exec.json
-[helm mixin schema]: /helm-mixin/src/pkg/helm/schema/schema.json
+[helm mixin schema]: https://github.com/MChorfa/porter-helm3/blob/master/pkg/helm3/schema/schema.json
