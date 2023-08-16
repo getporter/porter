@@ -212,6 +212,11 @@ stages:
             inputs:
               dockerVersion: 24.0.5
               releaseType: stable
+          - task: CmdLine@2
+            displayName: Validate docker
+            condition: eq(variables.poolName, 'windows')
+            inputs:
+              script: docker ps
           - task: Cache@2
             displayName: Cache Go Build
             inputs:
