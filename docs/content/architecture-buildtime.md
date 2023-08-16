@@ -29,7 +29,6 @@ After the image is built, Porter then generates a CNAB-compliant bundle.json fil
 * [Create a bundle](/bundle/create/)
 * [Use a custom Dockerfile](/bundle/custom-dockerfile/)
 * [Mixin Architecture](/how-to-guides/work-with-mixins)
-* [Building the Invocation Image](TODO)
 * [Distribute a bundle](/distribute-bundles/)
 * [Porter Runtime](/architecture-runtime/)
 
