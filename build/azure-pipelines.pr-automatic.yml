@@ -207,6 +207,11 @@ stages:
               key: "$(GOMODCACHE_KEY)"
               restoreKeys: $(GOMODCACHE_RESTOREKEYS)
               path: $(GOMODCACHE)
+          - task: DockerInstaller@0
+            displayName: Docker Installer
+            inputs:
+              dockerVersion: 24.0.5
+              releaseType: stable
           - task: Cache@2
             displayName: Cache Go Build
             inputs:
