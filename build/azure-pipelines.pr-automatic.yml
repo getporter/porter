@@ -216,7 +216,17 @@ stages:
             displayName: Validate docker
             condition: eq(variables.poolName, 'windows')
             inputs:
-              script: docker ps
+              script: |
+                docker -v
+                docker ps
+          - task: PowerShell@2
+            displayName: Validate docker PS
+            condition: eq(variables.poolName, 'windows')
+            inputs:
+              targetType: 'inline'
+              script: |
+                docker -v
+                docker ps
           - task: Cache@2
             displayName: Cache Go Build
             inputs:

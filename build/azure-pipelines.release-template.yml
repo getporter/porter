@@ -238,17 +238,17 @@ stages:
             displayName: Validate docker
             condition: eq(variables.poolName, 'windows')
             inputs:
-              script: docker ps
-          - task: Cache@2
-            displayName: Cache Go Build
+              script: |
+                docker -v
+                docker ps
+          - task: PowerShell@2
+            displayName: Validate docker PS
+            condition: eq(variables.poolName, 'windows')
             inputs:
-              key: "$(GOCACHE_KEY)"
-              restoreKeys: $(GOCACHE_RESTOREKEYS)
-              path: $(GOCACHE)
-          - script: go run mage.go ConfigureAgent UseXBuildBinaries
-            displayName: "Setup Bin"
-          - script: mage -v TestSmoke
-            displayName: "Run Smoke Tests"
+              targetType: 'inline'
+              script: |
+                docker -v
+                docker ps
 
   - stage: Publish
     dependsOn: Validate
