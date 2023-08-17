@@ -234,21 +234,23 @@ stages:
             inputs:
               dockerVersion: 24.0.5
               releaseType: stable
-#          - task: CmdLine@2
-#            displayName: Validate docker
-#            condition: eq(variables.poolName, 'windows')
-#            inputs:
-#              script: |
-#                docker -v
-#                docker ps
-#          - task: PowerShell@2
-#            displayName: Validate docker PS
-#            condition: eq(variables.poolName, 'windows')
-#            inputs:
-#              targetType: 'inline'
-#              script: |
-#                docker -v
-#                docker ps
+          - task: CmdLine@2
+            displayName: Validate docker
+            condition: eq(variables.poolName, 'windows')
+            inputs:
+              script: |
+                docker info
+                docker -v
+                docker ps
+          - task: PowerShell@2
+            displayName: Validate docker PS
+            condition: eq(variables.poolName, 'windows')
+            inputs:
+              targetType: 'inline'
+              script: |
+                docker info
+                docker -v
+                docker ps
 
   - stage: Publish
     dependsOn: Validate
