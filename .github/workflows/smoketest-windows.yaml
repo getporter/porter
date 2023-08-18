@@ -15,6 +15,6 @@ jobs:
         with:
           go-version: '1.20'
       - name: Build
-        run: go run mage.go build
+        run: go run mage.go xbuildall
       - name: SmokeTest
         run: go run mage.go testsmoke
