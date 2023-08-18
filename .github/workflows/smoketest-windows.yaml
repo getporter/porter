@@ -1,5 +1,5 @@
 name: Go package
-
+run-name: windows test
 on: [push]
 
 jobs:
