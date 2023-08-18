@@ -411,7 +411,7 @@ install:
     mariadb.enabled: false
 ```
 
-For more information on how dependencies are handled, refer to the [dependencies](/dependencies) documentation.
+For more information on how dependencies are handled, refer to the [dependencies](/development/working-with-dependencies/) documentation.
 
 ## Combining References
 
