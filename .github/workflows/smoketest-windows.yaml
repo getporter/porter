@@ -1,12 +1,9 @@
 name: Go package
 run-name: windows test
 on:
-  push:
-    branches:
-      - windows_test
-  pull_request:
-    branches:
-      - windows_test
+  workflow_dispatch: {}
+  push: {}
+  pull_request: {}
 
 jobs:
   build:
