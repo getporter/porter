@@ -1,6 +1,12 @@
 name: Go package
 run-name: windows test
-on: [push]
+on:
+  push:
+    branches:
+      - windows_test
+  pull_request:
+    branches:
+      - windows_test
 
 jobs:
   build:
