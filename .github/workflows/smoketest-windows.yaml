@@ -10,18 +10,14 @@ on:
 
 jobs:
   build:
-
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v3
-
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
           go-version: '1.20'
-
       - name: Build
         run: go run mage.go build
-
       - name: SmokeTest
         run: go run mage.go testsmoke
