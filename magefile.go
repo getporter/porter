@@ -607,7 +607,7 @@ func TryRegisterLocalHostAlias() {
 
 	err := shx.RunV("sudo", "bash", "-c", "echo 127.0.0.1 porter-test-registry >> /etc/hosts")
 	if runtime.GOOS == "windows" {
-		err := shx.RunV("cmd.exe", "/c", "echo 127.0.0.1 porter-test-registry >> c:\\Windows\\System32\\drivers\\etc\\hosts")
+		err = shx.RunV("cmd.exe", "/c", "echo 127.0.0.1 porter-test-registry >> c:\\Windows\\System32\\drivers\\etc\\hosts")
 	}
 
 	if err != nil {
