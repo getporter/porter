@@ -39,25 +39,10 @@ jobs:
     steps:
     - name: checkout
       uses: actions/checkout@v3.5.0
-#     # This item has no matching transformer
-#     - task: GoTool@0
-#       displayName: Set Go Version
-#       inputs:
-#         version: "${{ env.GOVERSION }}"
-#     # This item has no matching transformer
-#     - task: Cache@2
-#       displayName: Cache Go Packages
-#       inputs:
-#         key: "${{ env.GOMODCACHE_KEY }}"
-#         restoreKeys: "${{ env.GOMODCACHE_RESTOREKEYS }}"
-#         path: "${{ env.GOMODCACHE }}"
-#     # This item has no matching transformer
-#     - task: Cache@2
-#       displayName: Cache Go Build
-#       inputs:
-#         key: "${{ env.GOCACHE_KEY }}"
-#         restoreKeys: "${{ env.GOCACHE_RESTOREKEYS }}"
-#         path: "${{ env.GOCACHE }}"
+    - uses: actions/setup-go@v4
+      with:
+        go-version: "${{ env.GOVERSION }}" # The Go version to download (if necessary) and use.
+    - run: go version
     - name: Configure Agent
       run: go run mage.go ConfigureAgent
     - name: Native Build
@@ -77,25 +62,10 @@ jobs:
     steps:
     - name: checkout
       uses: actions/checkout@v3.5.0
-#     # This item has no matching transformer
-#     - task: GoTool@0
-#       displayName: Set Go Version
-#       inputs:
-#         version: "${{ env.GOVERSION }}"
-#     # This item has no matching transformer
-#     - task: Cache@2
-#       displayName: Cache Go Packages
-#       inputs:
-#         key: "${{ env.GOMODCACHE_KEY }}"
-#         restoreKeys: "${{ env.GOMODCACHE_RESTOREKEYS }}"
-#         path: "${{ env.GOMODCACHE }}"
-#     # This item has no matching transformer
-#     - task: Cache@2
-#       displayName: Cache Go Build
-#       inputs:
-#         key: "${{ env.GOXCACHE_KEY }}"
-#         restoreKeys: "${{ env.GOXCACHE_RESTOREKEYS }}"
-#         path: "${{ env.GOCACHE }}"
+    - uses: actions/setup-go@v4
+      with:
+        go-version: "${{ env.GOVERSION }}" # The Go version to download (if necessary) and use.
+    - run: go version
     - name: Configure Agent
       run: go run mage.go ConfigureAgent
     - name: Cross Compile
@@ -115,25 +85,10 @@ jobs:
     steps:
     - name: checkout
       uses: actions/checkout@v3.5.0
-#     # This item has no matching transformer
-#     - task: GoTool@0
-#       displayName: Set Go Version
-#       inputs:
-#         version: "${{ env.GOVERSION }}"
-#     # This item has no matching transformer
-#     - task: Cache@2
-#       displayName: Cache Go Packages
-#       inputs:
-#         key: "${{ env.GOMODCACHE_KEY }}"
-#         restoreKeys: "${{ env.GOMODCACHE_RESTOREKEYS }}"
-#         path: "${{ env.GOMODCACHE }}"
-#     # This item has no matching transformer
-#     - task: Cache@2
-#       displayName: Cache Go Build
-#       inputs:
-#         key: "${{ env.GOCACHE_KEY }}"
-#         restoreKeys: "${{ env.GOCACHE_RESTOREKEYS }}"
-#         path: "${{ env.GOCACHE }}"
+    - uses: actions/setup-go@v4
+      with:
+        go-version: "${{ env.GOVERSION }}" # The Go version to download (if necessary) and use.
+    - run: go version
     - name: Configure Agent
       run: go run mage.go ConfigureAgent
     - name: Unit Test
@@ -148,25 +103,10 @@ jobs:
     steps:
     - name: checkout
       uses: actions/checkout@v3.5.0
-#     # This item has no matching transformer
-#     - task: GoTool@0
-#       displayName: Set Go Version
-#       inputs:
-#         version: "${{ env.GOVERSION }}"
-#     # This item has no matching transformer
-#     - task: Cache@2
-#       displayName: Cache Go Packages
-#       inputs:
-#         key: "${{ env.GOMODCACHE_KEY }}"
-#         restoreKeys: "${{ env.GOMODCACHE_RESTOREKEYS }}"
-#         path: "${{ env.GOMODCACHE }}"
-#     # This item has no matching transformer
-#     - task: Cache@2
-#       displayName: Cache Go Build
-#       inputs:
-#         key: "${{ env.GOCACHE_KEY }}"
-#         restoreKeys: "${{ env.GOCACHE_RESTOREKEYS }}"
-#         path: "${{ env.GOCACHE }}"
+    - uses: actions/setup-go@v4
+      with:
+        go-version: "${{ env.GOVERSION }}" # The Go version to download (if necessary) and use.
+    - run: go version
     - name: Configure Agent
       run: go run mage.go ConfigureAgent
     - name: Vet
@@ -184,11 +124,10 @@ jobs:
     steps:
     - name: checkout
       uses: actions/checkout@v3.5.0
-#     # This item has no matching transformer
-#     - task: GoTool@0
-#       displayName: Set Go Version
-#       inputs:
-#         version: "${{ env.GOVERSION }}"
+    - uses: actions/setup-go@v4
+      with:
+        go-version: "${{ env.GOVERSION }}" # The Go version to download (if necessary) and use.
+    - run: go version
     - name: Download Cross-Compiled Porter Binaries
       uses: actions/download-artifact@v3.0.1
       with:
@@ -220,28 +159,13 @@ jobs:
       with:
         name: xbuild-bin
         path: bin
-#     # This item has no matching transformer
-#     - task: GoTool@0
-#       displayName: Set Go Version
-#       inputs:
-#         version: "${{ env.GOVERSION }}"
+    - uses: actions/setup-go@v4
+      with:
+        go-version: "${{ env.GOVERSION }}" # The Go version to download (if necessary) and use.
+    - run: go version
     - name: Windows Cache Prep
       if: env.poolName == 'windows'
       run: attrib -r ${{ env.GOMODCACHE }}/*.* /s
-#     # This item has no matching transformer
-#     - task: Cache@2
-#       displayName: Cache Go Packages
-#       inputs:
-#         key: "${{ env.GOMODCACHE_KEY }}"
-#         restoreKeys: "${{ env.GOMODCACHE_RESTOREKEYS }}"
-#         path: "${{ env.GOMODCACHE }}"
-#     # This item has no matching transformer
-#     - task: Cache@2
-#       displayName: Cache Go Build
-#       inputs:
-#         key: "${{ env.GOCACHE_KEY }}"
-#         restoreKeys: "${{ env.GOCACHE_RESTOREKEYS }}"
-#         path: "${{ env.GOCACHE }}"
     - name: Configure Agent
       run: go run mage.go ConfigureAgent UseXBuildBinaries
     - name: Run Smoke Tests
