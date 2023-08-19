@@ -576,22 +576,20 @@ func (p *Porter) finalizeParameters(ctx context.Context, installation storage.In
 	// Apply user supplied parameter overrides last
 	for key, rawValue := range params {
 		param, ok := bun.Parameters[key]
-		if !ok {
-			return nil, fmt.Errorf("parameter %s not defined in bundle", key)
-		}
+		if ok {
+			def, ok := bun.Definitions[param.Definition]
+			if !ok {
+				return nil, fmt.Errorf("definition %s not defined in bundle", param.Definition)
+			}
 
-		def, ok := bun.Definitions[param.Definition]
-		if !ok {
-			return nil, fmt.Errorf("definition %s not defined in bundle", param.Definition)
-		}
+			// Apply porter specific conversions, like retrieving file contents
+			value, err := p.getUnconvertedValueFromRaw(bun, def, key, rawValue)
+			if err != nil {
+				return nil, err
+			}
 
-		// Apply porter specific conversions, like retrieving file contents
-		value, err := p.getUnconvertedValueFromRaw(bun, def, key, rawValue)
-		if err != nil {
-			return nil, err
+			mergedParams[key] = value
 		}
-
-		mergedParams[key] = value
 	}
 
 	// Now convert all parameters which are currently strings into the
@@ -599,26 +597,23 @@ func (p *Porter) finalizeParameters(ctx context.Context, installation storage.In
 	typedParams := make(map[string]interface{}, len(mergedParams))
 	for key, unconverted := range mergedParams {
 		param, ok := bun.Parameters[key]
-		if !ok {
-			return nil, fmt.Errorf("parameter %s not defined in bundle", key)
-		}
-
-		def, ok := bun.Definitions[param.Definition]
-		if !ok {
-			return nil, fmt.Errorf("definition %s not defined in bundle", param.Definition)
-		}
-
-		if def.Type != nil {
-			value, err := def.ConvertValue(unconverted)
-			if err != nil {
-				return nil, fmt.Errorf("unable to convert parameter's %s value %s to the destination parameter type %s: %w", key, unconverted, def.Type, err)
+		if ok {
+			def, ok := bun.Definitions[param.Definition]
+			if !ok {
+				return nil, fmt.Errorf("definition %s not defined in bundle", param.Definition)
 			}
-			typedParams[key] = value
-		} else {
-			// bundle dependency parameters can be any type, not sure we have a solid way to do a typed conversion
-			typedParams[key] = unconverted
-		}
 
+			if def.Type != nil {
+				value, err := def.ConvertValue(unconverted)
+				if err != nil {
+					return nil, fmt.Errorf("unable to convert parameter's %s value %s to the destination parameter type %s: %w", key, unconverted, def.Type, err)
+				}
+				typedParams[key] = value
+			} else {
+				// bundle dependency parameters can be any type, not sure we have a solid way to do a typed conversion
+				typedParams[key] = unconverted
+			}
+		}
 	}
 
 	return bundle.ValuesOrDefaults(typedParams, &bun.Bundle, action)
