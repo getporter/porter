@@ -54,4 +54,4 @@ credentials:
 | credentials.name   | true     | The name of the credential as defined in the bundle.                                                                          |
 | credentials.source | true     | Specifies how the credential should be resolved. Must have only one child property:<br/> secret, value, env, path, or command |
 
-[cs-schema]: /schema/v1/credential-set.schema.json
+[cs-schema]: https://raw.githubusercontent.com/getporter/porter/main/pkg/schema/credential-set.schema.json

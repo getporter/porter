@@ -46,4 +46,4 @@ plugins:
 | plugins.<pluginName>.mirror  | false    | The mirror of official Porter assets.                       |
 
 
-[plugins-schema]: /schema/v1/plugins.schema.json
+[plugins-schema]: https://raw.githubusercontent.com/getporter/porter/main/pkg/schema/plugins.schema.json

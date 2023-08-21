@@ -181,7 +181,7 @@ Now that you know how to create a bundle, here are some more detailed topics on 
 
 [install Porter]: /install/
 [Porter Visual Studio Code]: https://marketplace.visualstudio.com/items?itemName=getporter.porter-vscode
-[hello example bundle]: /examples/hello/
+[hello example bundle]: /references/examples/hello/
 [manifest]: /bundle/manifest/
 [local-registry]: https://docs.docker.com/registry/deploying/#run-a-local-registry
 [porter create]: /cli/porter_create/
@@ -190,7 +190,7 @@ Now that you know how to create a bundle, here are some more detailed topics on 
 [porter install]: /cli/porter_install/
 [porter mixins search]: /cli/porter_mixins_search/
 [porter explain]: /cli/porter_explain/
-[porter mixin install]: /cli/porter_mixin_install/
+[porter mixin install]: /cli/porter_mixins_install/
 [Mixins]: /mixins/
 [create a custom mixin]: /mixin-dev-guide/
 [terraform mixin]: /mixins/terraform/
