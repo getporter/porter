@@ -11,6 +11,20 @@ Installations may be scoped in a namespace, which allows you to group related in
 Installation names must be unique within a namespace.
 Installations that are not defined in a namespace are considered global, and may be referenced both by other global resources and namespaced resources.
 
+Each installation has an associated **STATE** and **STATUS** field, which can be examined using [porter installation list]. Before an installation is successfully installed, the STATE is initially set to "defined". After successful installation using [porter install], the STATE is changed "installed". Once an installation has been uninstalled using [porter uninstall] the STATUS is set to "uninstalled". The STATUS field reports the result of the latest action, and can be either "succeeded" or "failed". Here are some possible combinations, assuming [porter install] was the latest action:
+
+State | Status | Meaning
+--- | --- | --- |
+defined | failed | Porter knows about your installation, but failed to install it.
+installed | succeeded | Your installation was successfully installed. 
+
+Assuming instead [porter uninstall] was the latest action, here are some combinations and their meanings:
+
+State | Status | Meaning
+--- | --- | --- |
+installed | failed | Porter tried to uninstall your installation, but failed.
+uninstalled | succeeded | Your installation was successfully uninstalled. 
+
 There are two ways to manage installations: [imperative commands](#imperative-commands) or [desired state](#desired-state). 
 They are not mutually exclusive, and you can switch back and forth between them at any time.
 
@@ -56,5 +70,6 @@ With a GitOps workflow, you define the desired state of your applications and in
 [porter installation show]: /cli/porter_installations_show/
 [porter install]: /cli/porter_install/
 [porter upgrade]: /cli/porter_upgrade/
+[porter uninstall]: /cli/porter_uninstall/
 [porter installation apply]: /cli/porter_installations_apply/
 [Porter Operator]: /operator/

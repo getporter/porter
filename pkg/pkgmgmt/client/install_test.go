@@ -64,6 +64,9 @@ func TestFileSystem_InstallFromUrl(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 				clientPath := "/home/myuser/.porter/packages/mypkg/mypkg"
+				if runtime.GOOS == "windows" {
+					clientPath += ".exe"
+				}
 				clientStats, err := p.FileSystem.Stat(clientPath)
 				require.NoError(t, err)
 				wantMode := pkg.FileModeExecutable
@@ -116,6 +119,9 @@ func TestFileSystem_InstallFromFeedUrl(t *testing.T) {
 	require.NoError(t, err)
 
 	clientExists, _ := p.FileSystem.Exists("/home/myuser/.porter/packages/helm/helm")
+	if runtime.GOOS == "windows" {
+		clientExists, _ = p.FileSystem.Exists("/home/myuser/.porter/packages/helm/helm.exe")
+	}
 	assert.True(t, clientExists)
 	runtimeExists, _ := p.FileSystem.Exists("/home/myuser/.porter/packages/helm/runtimes/helm-runtime")
 	assert.True(t, runtimeExists)

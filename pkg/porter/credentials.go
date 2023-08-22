@@ -126,8 +126,7 @@ func (o *CredentialOptions) validateCredName(args []string) error {
 // a silent build, based on the opts.Silent flag, or interactive using a survey. Returns an
 // error if unable to generate credentials
 func (p *Porter) GenerateCredentials(ctx context.Context, opts CredentialOptions) error {
-	ctx, span := tracing.StartSpan(ctx,
-		attribute.String("reference", opts.Reference))
+	ctx, span := tracing.StartSpan(ctx, attribute.String("reference", opts.Reference))
 	defer span.EndSpan()
 
 	bundleRef, err := opts.GetBundleReference(ctx, p)

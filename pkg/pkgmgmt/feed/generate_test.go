@@ -124,7 +124,7 @@ func TestGenerate_RegexMatch(t *testing.T) {
 	}{{
 		name:      "no bins",
 		mixinName: "",
-		wantError: `failed to traverse the bin directory: open /bin: file does not exist`,
+		wantError: `file does not exist`,
 	}, {
 		name:      "valid mixin name",
 		mixinName: "my-42nd-mixin",

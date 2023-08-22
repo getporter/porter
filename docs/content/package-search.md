@@ -6,8 +6,8 @@ description: Find a plugin for Porter and list your own plugin in our search res
 ## Search
 
 Porter maintains lists for mixins and plugins available for users to install.
-These can be searched via [porter mixin search](/cli/porter_mixin_search/) or
-[porter plugin search](/cli/porter_plugin_search/).
+These can be searched via [porter mixins search](/cli/porter_mixins_search/) or
+[porter plugins search](/cli/porter_plugins_search/).
 
 For example, here we search for mixins with the term `az` in the name:
 

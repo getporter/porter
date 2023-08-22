@@ -16,12 +16,12 @@ func TestRunner_BuildCommand(t *testing.T) {
 		runnerCommand string
 		wantCommand   string
 	}{
-		{"build", "build", "/home/myuser/.porter/mixins/exec/exec build"},
-		{"install", "install", "/home/myuser/.porter/mixins/exec/exec install"},
-		{"upgrade", "upgrade", "/home/myuser/.porter/mixins/exec/exec upgrade"},
-		{"uninstall", "uninstall", "/home/myuser/.porter/mixins/exec/exec uninstall"},
-		{"invoke", "status", "/home/myuser/.porter/mixins/exec/exec invoke --action status"},
-		{"version", "version --output json", "/home/myuser/.porter/mixins/exec/exec version --output json"},
+		{"build", "build", "/home/myuser/.porter/mixins/exec/exec build\n\\home\\myuser\\.porter\\mixins\\exec\\exec.exe build"},
+		{"install", "install", "/home/myuser/.porter/mixins/exec/exec install\n\\home\\myuser\\.porter\\mixins\\exec\\exec.exe install"},
+		{"upgrade", "upgrade", "/home/myuser/.porter/mixins/exec/exec upgrade\n\\home\\myuser\\.porter\\mixins\\exec\\exec.exe upgrade"},
+		{"uninstall", "uninstall", "/home/myuser/.porter/mixins/exec/exec uninstall\n\\home\\myuser\\.porter\\mixins\\exec\\exec.exe uninstall"},
+		{"invoke", "status", "/home/myuser/.porter/mixins/exec/exec invoke --action status\n\\home\\myuser\\.porter\\mixins\\exec\\exec.exe invoke --action status"},
+		{"version", "version --output json", "/home/myuser/.porter/mixins/exec/exec version --output json\n\\home\\myuser\\.porter\\mixins\\exec\\exec.exe version --output json"},
 	}
 
 	for _, tc := range testcases {

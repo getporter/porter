@@ -38,7 +38,7 @@ func NewTestConfig(t *testing.T) *TestConfig {
 // SetupUnitTest initializes the unit test filesystem with the supporting files in the PORTER_HOME directory.
 func (c *TestConfig) SetupUnitTest() {
 	// Set up the test porter home directory
-	home := "/home/myuser/.porter"
+	home := filepath.FromSlash("/home/myuser/.porter")
 	c.SetHomeDir(home)
 
 	// Fake out the porter home directory

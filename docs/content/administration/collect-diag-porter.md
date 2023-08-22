@@ -24,7 +24,7 @@ Porter automatically uses the standard [OpenTelemetry environment variables] to 
 
 Below is an example trace from running the porter upgrade command. You can see timings for each part of the command, and relevant variables used.
 
-![Screen shot of the Jaeger UI showing that porter upgrade was run](/administrators/jaeger-trace-example.png)
+![Screen shot of the Jaeger UI showing that porter upgrade was run](../jaeger-trace-example.png)
 
 If you are running a local grpc OpenTelemetry collector, for example with the [otel-jaeger bundle], you can set the following environment variables to have Porter send telemetry data to it. 
 The environment variables below enable telemetry, and use standard OpenTelemetry environment variables to point to an unsecured grpc OpenTelemetry collector.
