@@ -31,9 +31,32 @@ type ListOptions struct {
 	AllNamespaces bool
 	Namespace     string
 	Name          string
+	FieldSelector []string
 	Labels        []string
 	Skip          int64
 	Limit         int64
+}
+
+func (o *ListOptions) ParseSelector() map[string]string {
+	return parseSelector(o.FieldSelector)
+}
+
+func parseSelector(raw []string) map[string]string {
+	if len(raw) == 0 {
+		return nil
+	}
+
+	labelMap := make(map[string]string, len(raw))
+	for _, label := range raw {
+		parts := strings.SplitN(label, "=", 2)
+		k := parts[0]
+		v := ""
+		if len(parts) > 1 {
+			v = parts[1]
+		}
+		labelMap[k] = v
+	}
+	return labelMap
 }
 
 func (o *ListOptions) Validate() error {
@@ -240,6 +263,7 @@ func (p *Porter) ListInstallations(ctx context.Context, opts ListOptions) (Displ
 		Labels:    opts.ParseLabels(),
 		Skip:      opts.Skip,
 		Limit:     opts.Limit,
+		Selector:  opts.ParseSelector(),
 	})
 	if err != nil {
 		return nil, log.Error(fmt.Errorf("could not list installations: %w", err))

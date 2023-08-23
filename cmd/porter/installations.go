@@ -66,6 +66,8 @@ Optional output formats include json and yaml.`,
 		"Include all namespaces in the results.")
 	f.StringVar(&opts.Name, "name", "",
 		"Filter the installations where the name contains the specified substring.")
+	f.StringSliceVar(&opts.FieldSelector, "field-selector", nil,
+		"Selector (field query) to filter on, supports 'version=...', ")
 	f.StringSliceVarP(&opts.Labels, "label", "l", nil,
 		"Filter the installations by a label formatted as: KEY=VALUE. May be specified multiple times.")
 	f.StringVarP(&opts.RawFormat, "output", "o", "plaintext",

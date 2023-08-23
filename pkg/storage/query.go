@@ -305,6 +305,9 @@ type ListOptions struct {
 
 	// Limit is the number of results to return.
 	Limit int64
+
+	// Selector is used to filter results
+	Selector map[string]string
 }
 
 // ToFindOptions builds a query for a list of documents with these conditions:
@@ -312,7 +315,7 @@ type ListOptions struct {
 // * filtered by matching namespace, name contains substring, and labels contain all matches
 // * skipped and limited to a certain number of result
 func (o ListOptions) ToFindOptions() FindOptions {
-	filter := make(map[string]interface{}, 3)
+	filter := make(map[string]interface{})
 	if o.Namespace != "*" {
 		filter["namespace"] = o.Namespace
 	}
@@ -322,6 +325,26 @@ func (o ListOptions) ToFindOptions() FindOptions {
 	for k, v := range o.Labels {
 		filter["labels."+k] = v
 	}
+	for k, v := range o.Selector {
+		switch k {
+		case "version":
+			filter["status.bundleVersion"] = v
+		case "state":
+			if v == "installed" {
+				filter["$or"] = bson.A{
+					bson.M{"status.uninstalled": nil},
+					bson.M{"$expr": bson.M{"$lt": bson.A{"status.uninstalled", "status.installed"}}},
+				}
+			} else if v == "uninstalled" {
+				filter["$or"] = bson.A{
+					bson.M{"status.uninstalled": bson.M{"$ne": nil}},
+					bson.M{"$expr": bson.M{"$gt": bson.A{"status.uninstalled", "status.installed"}}},
+				}
+			}
+		}
+	}
+
+	//bson.M{"$expr": bson.M{"$lt": bson.D{{"$status.uninstalled", "$status.installed"}}}},
 
 	return FindOptions{
 		Sort:   []string{"namespace", "name"},

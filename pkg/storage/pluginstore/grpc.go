@@ -277,6 +277,12 @@ func ConvertBsonToPrimitives(src interface{}) interface{} {
 			raw[k] = ConvertBsonToPrimitives(v)
 		}
 		return raw
+	case bson.A:
+		raw := make([]interface{}, len(t))
+		for i, item := range t {
+			raw[i] = ConvertBsonToPrimitives(item)
+		}
+		return raw
 	default:
 		return src
 	}
