@@ -13,6 +13,8 @@ import (
 	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/tracing"
 	dtprinter "github.com/carolynvs/datetime-printer"
+
+	"reflect"
 )
 
 const (
@@ -27,6 +29,7 @@ const (
 
 // ListOptions represent generic options for use by Porter's list commands
 type ListOptions struct {
+	installationOptions
 	printer.PrintOptions
 	AllNamespaces bool
 	Namespace     string
@@ -34,6 +37,7 @@ type ListOptions struct {
 	Labels        []string
 	Skip          int64
 	Limit         int64
+	FieldSelector string
 }
 
 func (o *ListOptions) Validate() error {
@@ -246,9 +250,24 @@ func (p *Porter) ListInstallations(ctx context.Context, opts ListOptions) (Displ
 	}
 
 	var displayInstallations DisplayInstallations
+	var fieldSelectorMap map[string]string
+
 	for _, installation := range installations {
 		di := NewDisplayInstallation(installation)
+		if opts.FieldSelector != "" {
+			if fieldSelectorMap == nil {
+				fieldSelectorMap, err = parseFieldSelector(opts.FieldSelector)
+				if err != nil {
+					return nil, err
+				}
+			}
+			if !doesInstallationMatchFieldSelectors(di, fieldSelectorMap) {
+				continue
+			}
+		}
+
 		displayInstallations = append(displayInstallations, di)
+
 	}
 	sort.Sort(sort.Reverse(displayInstallations))
 
@@ -321,4 +340,66 @@ func getDisplayInstallationStatus(installation storage.Installation) string {
 	}
 
 	return status
+}
+
+// Split the fieldSelector into a map of fields and values
+// e.g. "bundle.version=0.2.0,status.action=install" => map[string]string{"bundle.version": "0.2.0", "status.action": "install"}
+func parseFieldSelector(fieldSelector string) (map[string]string, error) {
+	fieldSelectorMap := make(map[string]string)
+	for _, field := range strings.Split(fieldSelector, ",") {
+		fieldParts := strings.Split(field, "=")
+		if len(fieldParts) != 2 {
+			return nil, fmt.Errorf("invalid field selector: %s", fieldSelector)
+		}
+		fieldSelectorMap[fieldParts[0]] = fieldParts[1]
+	}
+
+	return fieldSelectorMap, nil
+}
+
+// Check if the installation matches the field selectors
+func doesInstallationMatchFieldSelectors(installation DisplayInstallation, fieldSelectorMap map[string]string) bool {
+	for field, value := range fieldSelectorMap {
+		if !installationHasFieldWithValue(installation, field, value) {
+			return false
+		}
+	}
+	return true
+}
+
+// Check if the installation has the field with the value
+// e.g. installationHasFieldWithValue(installation, "bundle.version", "0.2.0") => true if installation.Bundle.Version (for which json tag is bunde.version) == "0.2.0"
+func installationHasFieldWithValue(installation DisplayInstallation, fieldJsonTagPath string, value interface{}) bool {
+
+	fieldJsonTagPathParts := strings.Split(fieldJsonTagPath, ".")
+	current := reflect.ValueOf(installation)
+
+	for _, fieldJsonTagPart := range fieldJsonTagPathParts {
+		if current.Kind() != reflect.Struct {
+			return false
+		}
+		field := getFieldByJSONTag(current, fieldJsonTagPart)
+		if !field.IsValid() {
+			return false
+		}
+		current = field
+	}
+
+	return reflect.DeepEqual(current.Interface(), value)
+}
+
+// Return the reflect.value based on the field's json tag
+func getFieldByJSONTag(value reflect.Value, fieldJsonTag string) reflect.Value {
+	for i := 0; i < value.NumField(); i++ {
+		field := value.Type().Field(i)
+
+		reflectTag := field.Tag.Get("json")
+		if strings.Contains(reflectTag, ",") {
+			reflectTag = strings.Split(reflectTag, ",")[0]
+		}
+		if reflectTag == fieldJsonTag {
+			return value.Field(i)
+		}
+	}
+	return reflect.Value{}
 }

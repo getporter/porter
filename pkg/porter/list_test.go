@@ -11,6 +11,8 @@ import (
 	"get.porter.sh/porter/pkg/storage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"reflect"
 )
 
 func TestNewDisplayInstallation(t *testing.T) {
@@ -101,6 +103,84 @@ func TestPorter_ListInstallations(t *testing.T) {
 		results, err := p.ListInstallations(ctx, opts)
 		require.NoError(t, err)
 		assert.Len(t, results, 1)
+	})
+}
+
+func TestPorter_ListInstallationsWithFieldSelector(t *testing.T) {
+	ctx := context.Background()
+	p := NewTestPorter(t)
+	defer p.Close()
+
+	i1 := storage.NewInstallation("", "installation1")
+	i1.Bundle.Version = "0.2.0"
+	i1.Status.Action = "install"
+	i1.Status.ResultStatus = "succeeded"
+
+	i2 := storage.NewInstallation("", "installation2")
+	i2.Bundle.Version = "0.2.1"
+	i2.Status.Action = "install"
+	i2.Status.ResultStatus = "succeeded"
+
+	i3 := storage.NewInstallation("", "installation3")
+	i3.Bundle.Version = "0.2.0"
+	i3.Status.Action = "install"
+	i3.Status.ResultStatus = "failed"
+
+	i4 := storage.NewInstallation("", "installation4")
+	i4.Bundle.Version = "0.2.5"
+	i4.Status.Action = "install"
+
+	i5 := storage.NewInstallation("", "installation5")
+	i5.Bundle.Version = "0.1.0"
+	i5.Status.Action = "install"
+	i5.Status.ResultStatus = "succeeded"
+
+	p.TestInstallations.CreateInstallation(i1)
+	p.TestInstallations.CreateInstallation(i2)
+	p.TestInstallations.CreateInstallation(i3)
+	p.TestInstallations.CreateInstallation(i4)
+	p.TestInstallations.CreateInstallation(i5)
+
+	t.Run("blank field selector", func(t *testing.T) {
+		opts := ListOptions{FieldSelector: ""}
+		results, err := p.ListInstallations(ctx, opts)
+		require.NoError(t, err)
+		assert.Len(t, results, 5)
+	})
+
+	t.Run("top level field selectors", func(t *testing.T) {
+		opts := ListOptions{FieldSelector: "name=installation1"}
+		results, err := p.ListInstallations(ctx, opts)
+		require.NoError(t, err)
+		assert.Len(t, results, 1)
+	})
+
+	t.Run("multi level field selectors", func(t *testing.T) {
+		opts := ListOptions{FieldSelector: "name=installation1,bundle.version=0.2.0,status.action=install,status.resultStatus=succeeded"}
+		results, err := p.ListInstallations(ctx, opts)
+		require.NoError(t, err)
+		assert.Len(t, results, 1)
+
+		opts = ListOptions{FieldSelector: "status.action=install,status.resultStatus=succeeded"}
+		results, err = p.ListInstallations(ctx, opts)
+		require.NoError(t, err)
+		assert.Len(t, results, 3)
+
+		opts = ListOptions{FieldSelector: "status.resultStatus=failed"}
+		results, err = p.ListInstallations(ctx, opts)
+		require.NoError(t, err)
+		assert.Len(t, results, 1)
+
+		opts = ListOptions{FieldSelector: "status.resultStatus"}
+		results, err = p.ListInstallations(ctx, opts)
+		require.Error(t, err)
+		assert.Len(t, results, 0)
+
+		opts = ListOptions{FieldSelector: "status.resultStatus=xyz"}
+		results, err = p.ListInstallations(ctx, opts)
+		require.NoError(t, err)
+		assert.Len(t, results, 0)
+
 	})
 }
 
@@ -269,4 +349,225 @@ func TestPorter_getDisplayInstallationStatus(t *testing.T) {
 	installation.Status.Action = "customaction"
 	displayInstallationStatus = getDisplayInstallationStatus(installation)
 	require.Equal(t, "running customaction", displayInstallationStatus)
+}
+
+func Test_parseFieldSelector(t *testing.T) {
+	tests := []struct {
+		name           string
+		fieldSelector  string
+		want           map[string]string
+		wantErr        bool
+		expectedErrMsg string
+	}{
+		{
+			name:          "valid field selector",
+			fieldSelector: "bundle.version=0.2.0,status.action=install",
+			want: map[string]string{
+				"bundle.version": "0.2.0",
+				"status.action":  "install",
+			},
+			wantErr: false,
+		},
+		{
+			name:           "invalid field selector",
+			fieldSelector:  "bundle.version=0.2.0,status.action",
+			want:           nil,
+			wantErr:        true,
+			expectedErrMsg: "invalid field selector: bundle.version=0.2.0,status.action",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := parseFieldSelector(tt.fieldSelector)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("parseFieldSelector() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("parseFieldSelector() = %v, want %v", got, tt.want)
+			}
+			if err != nil && err.Error() != tt.expectedErrMsg {
+				t.Errorf("parseFieldSelector() error message = %v, expected error message %v", err.Error(), tt.expectedErrMsg)
+			}
+		})
+	}
+}
+
+func Test_doesInstallationMatchFieldSelectors(t *testing.T) {
+	type args struct {
+		installation     DisplayInstallation
+		fieldSelectorMap map[string]string
+	}
+	tests := []struct {
+		name string
+		args args
+		want bool
+	}{
+		{
+			name: "installation matches field selectors",
+			args: args{
+				installation: DisplayInstallation{
+					Name: "wordpress",
+					Status: storage.InstallationStatus{
+						Action:       "install",
+						ResultStatus: "succeeded",
+					},
+					Bundle: storage.OCIReferenceParts{
+						Version: "0.2.0",
+					},
+				},
+				fieldSelectorMap: map[string]string{
+					"name":                "wordpress",
+					"status.action":       "install",
+					"status.resultStatus": "succeeded",
+					"bundle.version":      "0.2.0",
+				},
+			},
+			want: true,
+		},
+		{
+			name: "installation matches field selectors",
+			args: args{
+				installation: DisplayInstallation{
+					Name: "wordpress",
+					Status: storage.InstallationStatus{
+						Action:       "install",
+						ResultStatus: "succeeded",
+					},
+					Bundle: storage.OCIReferenceParts{
+						Version: "0.2.1",
+					},
+				},
+				fieldSelectorMap: map[string]string{
+					"name":                "wordpress",
+					"status.action":       "install",
+					"status.resultStatus": "succeeded",
+					"bundle.version":      "0.2.0",
+				},
+			},
+			want: false,
+		},
+		{
+			name: "installation matches field selectors",
+			args: args{
+				installation: DisplayInstallation{
+					Name: "wordpress",
+					Status: storage.InstallationStatus{
+						Action:       "install",
+						ResultStatus: "failed",
+					},
+					Bundle: storage.OCIReferenceParts{
+						Version: "0.2.0",
+					},
+				},
+				fieldSelectorMap: map[string]string{
+					"name":                "wordpress",
+					"status.action":       "install",
+					"status.resultStatus": "succeeded",
+					"bundle.version":      "0.2.0",
+				},
+			},
+			want: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := doesInstallationMatchFieldSelectors(tt.args.installation, tt.args.fieldSelectorMap); got != tt.want {
+				t.Errorf("doesInstallationMatchFieldSelectors() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_installationHasFieldWithValue(t *testing.T) {
+	type args struct {
+		installation     DisplayInstallation
+		fieldJsonTagPath string
+		value            interface{}
+	}
+	tests := []struct {
+		name string
+		args args
+		want bool
+	}{
+		{
+			name: "installation has field with value",
+			args: args{
+				installation: DisplayInstallation{
+					Name: "wordpress",
+					Status: storage.InstallationStatus{
+						Action:       "install",
+						ResultStatus: "succeeded",
+					},
+					Bundle: storage.OCIReferenceParts{
+						Version: "0.2.0",
+					},
+				},
+				fieldJsonTagPath: "name",
+				value:            "wordpress",
+			},
+			want: true,
+		},
+		{
+			name: "installation has nested field with value",
+			args: args{
+				installation: DisplayInstallation{
+					Name: "wordpress",
+					Status: storage.InstallationStatus{
+						Action:       "install",
+						ResultStatus: "succeeded",
+					},
+					Bundle: storage.OCIReferenceParts{
+						Version: "0.2.0",
+					},
+				},
+				fieldJsonTagPath: "bundle.version",
+				value:            "0.2.0",
+			},
+			want: true,
+		},
+		{
+			name: "installation does not have field with value",
+			args: args{
+				installation: DisplayInstallation{
+					Name: "wordpress",
+					Status: storage.InstallationStatus{
+						Action:       "install",
+						ResultStatus: "succeeded",
+					},
+					Bundle: storage.OCIReferenceParts{
+						Version: "0.2.0",
+					},
+				},
+				fieldJsonTagPath: "bundle.version",
+				value:            "0.2.1",
+			},
+			want: false,
+		},
+		{
+			name: "installation does not have field with value",
+			args: args{
+				installation: DisplayInstallation{
+					Name: "wordpress",
+					Status: storage.InstallationStatus{
+						Action:       "install",
+						ResultStatus: "succeeded",
+					},
+					Bundle: storage.OCIReferenceParts{
+						Version: "0.2.0",
+					},
+				},
+				fieldJsonTagPath: "xyz",
+				value:            "123",
+			},
+			want: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := installationHasFieldWithValue(tt.args.installation, tt.args.fieldJsonTagPath, tt.args.value); got != tt.want {
+				t.Errorf("installationHasFieldWithValue() = %v, want %v", got, tt.want)
+			}
+		})
+	}
 }
