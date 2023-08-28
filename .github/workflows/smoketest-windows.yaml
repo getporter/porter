@@ -16,6 +16,6 @@ jobs:
           go-version: '1.21'
           cache: false
       - name: Build
-        run: go run mage.go xbuildall
+        run: go run mage.go -v xbuildall
       - name: SmokeTest
-        run: go run mage.go testsmoke
+        run: go run mage.go -v testsmoke
