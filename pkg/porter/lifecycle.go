@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-
 	"get.porter.sh/porter/pkg/cache"
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/cnab/drivers"
@@ -14,6 +13,7 @@ import (
 	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/tracing"
 	"github.com/opencontainers/go-digest"
+	"strings"
 )
 
 // BundleAction is an interface that defines a method for supplying
@@ -196,6 +196,12 @@ func (p *Porter) resolveBundleReference(ctx context.Context, opts *BundleReferen
 	useReference := func(ref cnab.OCIReference) error {
 		pullOpts := *opts // make a copy just to do the pull
 		pullOpts.Reference = ref.String()
+
+		err := ensureVPrefix(&pullOpts)
+		if err != nil {
+			return err
+		}
+
 		cachedBundle, err := p.prepullBundleByReference(ctx, &pullOpts)
 		if err != nil {
 			return err
@@ -296,6 +302,23 @@ func (p *Porter) BuildActionArgs(ctx context.Context, installation storage.Insta
 	}
 
 	return args, nil
+}
+
+// ensureVPrefix adds a "v" prefix to the version tag if it's not already there.
+// Version tag should always be prefixed with a "v", see https://github.com/getporter/porter/issues/2886.
+// This is safe because "porter publish" adds a "v", see
+// https://github.com/getporter/porter/blob/17bd7816ef6bde856793f6122e32274aa9d01d1b/pkg/storage/installation.go#L350
+func ensureVPrefix(opts *BundleReferenceOptions) error {
+	if strings.HasPrefix("v", opts._ref.Tag()) {
+		return nil
+	}
+	ref, err := opts._ref.WithTag("v" + opts._ref.Tag())
+	if err != nil {
+		return err
+	}
+	opts.Reference = ref.String()
+	opts._ref = &ref
+	return nil
 }
 
 // prepullBundleByReference handles calling the bundle pull operation and updating
