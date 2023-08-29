@@ -86,4 +86,4 @@ and we will add you. **All** contributors belong here. 💯
 * [Troy Connor](https://github.com/troy0820)
 * [Phill Gibson](https://github.com/phillipgibson)
 * [Ludvig Liljenberg](https://github.com/ludfjig)
-* [Maninderjit Bindra][https://github.com/manisbindra]
+* [Maninderjit Bindra](https://github.com/manisbindra)

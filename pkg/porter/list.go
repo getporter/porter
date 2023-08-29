@@ -251,21 +251,18 @@ func (p *Porter) ListInstallations(ctx context.Context, opts ListOptions) (Displ
 
 	var displayInstallations DisplayInstallations
 	var fieldSelectorMap map[string]string
+	if opts.FieldSelector != "" {
+		fieldSelectorMap, err = parseFieldSelector(opts.FieldSelector)
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	for _, installation := range installations {
 		di := NewDisplayInstallation(installation)
-		if opts.FieldSelector != "" {
-			if fieldSelectorMap == nil {
-				fieldSelectorMap, err = parseFieldSelector(opts.FieldSelector)
-				if err != nil {
-					return nil, err
-				}
-			}
-			if !doesInstallationMatchFieldSelectors(di, fieldSelectorMap) {
-				continue
-			}
+		if opts.FieldSelector != "" && !doesInstallationMatchFieldSelectors(di, fieldSelectorMap) {
+			continue
 		}
-
 		displayInstallations = append(displayInstallations, di)
 
 	}
