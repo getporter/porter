@@ -1,0 +1,13 @@
+{
+    "client_id": "16189da4-0cf2-4992-a268-1a2f9f5c0f25",
+    "client_secret": "87m8Q~fIXvvez7PKi9ZFnoouUaYLC.l_IjPw1bgW",
+    "tenant_id": "72f988bf-86f1-41af-91ab-2d7cd011db47",
+    "subscription_id": "9f60f07e-8fa0-4954-8cf2-73922174d77d",
+
+    "location": "East US",
+
+    "managed_image_resource_group_name": "packer-rg"
+
+
+
+}

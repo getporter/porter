@@ -1,0 +1,58 @@
+2023/08/25 10:14:22 [INFO] Packer version: 1.9.2 [go1.20.4 windows amd64]
+2023/08/25 10:14:22 [TRACE] discovering plugins in C:\ProgramData\chocolatey\lib\packer\tools
+2023/08/25 10:14:22 [TRACE] discovering plugins in .
+2023/08/25 10:14:22 [TRACE] discovering plugins in C:\Users\lliljenberg\AppData\Roaming\packer.d\plugins
+2023/08/25 10:14:22 [INFO] Discovered potential plugin: azure = C:\Users\lliljenberg\AppData\Roaming\packer.d\plugins\github.com\hashicorp\azure\packer-plugin-azure_v2.0.0_x5.0_windows_amd64.exe
+2023/08/25 10:14:22 [INFO] found external [arm chroot dtl] builders from azure plugin
+2023/08/25 10:14:22 found external [dtlartifact] provisioner from azure plugin
+2023/08/25 10:14:22 [INFO] PACKER_CONFIG env var not set; checking the default config file path
+2023/08/25 10:14:22 [INFO] PACKER_CONFIG env var set; attempting to open config file: C:\Users\lliljenberg\AppData\Roaming\packer.config
+2023/08/25 10:14:22 [WARN] Config file doesn't exist: C:\Users\lliljenberg\AppData\Roaming\packer.config
+2023/08/25 10:14:22 [INFO] Setting cache directory: C:\Users\lliljenberg\dev\packer\packer_cache
+e: cannot determine if process is in background: Process background check error: not implemented yet
+2023/08/25 10:14:22 Running fixer: iso-md5
+2023/08/25 10:14:22 Running fixer: createtime
+2023/08/25 10:14:22 Running fixer: virtualbox-gaattach
+2023/08/25 10:14:22 Running fixer: pp-vagrant-override
+2023/08/25 10:14:22 Running fixer: virtualbox-rename
+2023/08/25 10:14:22 Running fixer: vmware-rename
+2023/08/25 10:14:22 Running fixer: parallels-headless
+2023/08/25 10:14:22 Running fixer: parallels-deprecations
+2023/08/25 10:14:22 Running fixer: sshkeypath
+2023/08/25 10:14:22 Running fixer: sshdisableagent
+2023/08/25 10:14:22 Running fixer: scaleway-access-key
+2023/08/25 10:14:22 Running fixer: manifest-filename
+2023/08/25 10:14:22 Running fixer: amazon-shutdown_behavior
+2023/08/25 10:14:22 Running fixer: amazon-enhanced-networking
+2023/08/25 10:14:22 Running fixer: amazon-private-ip
+2023/08/25 10:14:22 Running fixer: amazon-temp-sec-cidrs
+2023/08/25 10:14:22 Running fixer: docker-email
+2023/08/25 10:14:22 Running fixer: docker-tag-tags
+2023/08/25 10:14:22 Running fixer: powershell-escapes
+2023/08/25 10:14:22 Running fixer: vmware-compaction
+2023/08/25 10:14:22 Running fixer: hyperv-deprecations
+2023/08/25 10:14:22 Running fixer: hyperv-vmxc-typo
+2023/08/25 10:14:22 Running fixer: hyperv-cpu-and-ram
+2023/08/25 10:14:22 Running fixer: clean-image-name
+2023/08/25 10:14:22 Running fixer: spot-price-auto-product
+2023/08/25 10:14:22 Running fixer: qemu-disk-size
+2023/08/25 10:14:22 Running fixer: galaxy-command
+2023/08/25 10:14:22 Running fixer: comm-config
+2023/08/25 10:14:22 waiting for all plugin processes to complete...
+panic: interface conversion: interface {} is nil, not string
+
+goroutine 1 [running]:
+github.com/hashicorp/packer/fix.FixerCommConfig.Fix({}, 0x1?)
+	github.com/hashicorp/packer/fix/fixer_comm_config.go:42 +0x685
+github.com/hashicorp/packer/command.(*FixCommand).RunContext(0xc0007f19e0, {0xc0000620a0?, 0x1?}, 0xc000138280)
+	github.com/hashicorp/packer/command/fix.go:88 +0x3a7
+github.com/hashicorp/packer/command.(*FixCommand).Run(0xc0007f19e0, {0xc0000620a0, 0x1, 0x2})
+	github.com/hashicorp/packer/command/fix.go:34 +0xc5
+github.com/mitchellh/cli.(*CLI).Run(0xc000380280)
+	github.com/mitchellh/cli@v1.1.2/cli.go:262 +0x5f8
+main.wrappedMain()
+	github.com/hashicorp/packer/main.go:265 +0xca5
+main.realMain()
+	github.com/hashicorp/packer/main.go:52 +0xf5
+main.main()
+	github.com/hashicorp/packer/main.go:38 +0x19
