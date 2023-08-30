@@ -113,6 +113,8 @@ jobs:
 
   Smoke-test:
     name: Smoke Test
+    needs:
+      - Build
     runs-on: ubuntu-latest
     steps:
     - name: checkout
