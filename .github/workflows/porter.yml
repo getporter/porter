@@ -3,27 +3,15 @@ on:
   pull_request:
     branches:
     - main
+    paths-ignore:
+      - 'docs/**'
 env:
   GOVERSION: 1.20.7
 
 jobs:
-  PR_type:
-    name: Determine PR Type
-    runs-on: ubuntu-latest
-    steps:
-    - name: checkout
-      uses: actions/checkout@v3.5.0
-    - name: Is Doc Only?
-      id: BUILD
-      run: "./build/doc-only-build.sh"
-      shell: bash
-
   Build:
     name: Native Compile
-    needs:
-    - PR_type
     runs-on: ubuntu-latest
-    if: success() && needs.Setup-pr_type.outputs['pr_type.BUILD.DOCS_ONLY'] == 'false'
     steps:
     - name: checkout
       uses: actions/checkout@v3.5.0
@@ -44,10 +32,7 @@ jobs:
 
   XBuild:
     name: Cross Compile
-    needs:
-    - PR_type
     runs-on: ubuntu-latest
-    if: success() && needs.Setup-pr_type.outputs['pr_type.BUILD.DOCS_ONLY'] == 'false'
     steps:
     - name: checkout
       uses: actions/checkout@v3.5.0
@@ -68,10 +53,9 @@ jobs:
 
   Unit_test:
     name: Unit Test
-    needs:
-    - PR_type
     runs-on: ubuntu-latest
-    if: success() && needs.Setup-pr_type.outputs['pr_type.BUILD.DOCS_ONLY'] == 'false'
+    needs:
+      - Build
     steps:
     - name: checkout
       uses: actions/checkout@v3.5.0
@@ -87,10 +71,7 @@ jobs:
 
   VetLint:
     name: Vet and Lint
-    needs:
-    - PR_type
     runs-on: ubuntu-latest
-    if: success() && needs.Setup-pr_type.outputs['pr_type.BUILD.DOCS_ONLY'] == 'false'
     steps:
     - name: checkout
       uses: actions/checkout@v3.5.0
@@ -108,11 +89,11 @@ jobs:
       shell: bash
 
   Build-docker-images:
+    name: Build Docker Images
     needs:
-    - PR_type
     - XBuild
     runs-on: ubuntu-latest
-    if: success() && needs.Setup-pr_type.outputs['pr_type.BUILD.DOCS_ONLY'] == 'false'
+    if: success()
     steps:
     - name: checkout
       uses: actions/checkout@v3.5.0
@@ -131,12 +112,8 @@ jobs:
       run: mage BuildImages
 
   Smoke-test:
-    name: Run smoke tests on
-    needs:
-    - PR_type
-    - XBuild
+    name: Smoke Test
     runs-on: ubuntu-latest
-    if: success() && needs.Setup-pr_type.outputs['pr_type.BUILD.DOCS_ONLY'] == 'false'
     steps:
     - name: checkout
       uses: actions/checkout@v3.5.0
