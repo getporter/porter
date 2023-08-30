@@ -4,7 +4,7 @@ on:
     branches:
     - main
 env:
-  GOCACHE: "${{ runner.workspace }}/.cache/go-build/"
+  GOCACHE: "${{ github.workspace }}/.cache/go-build/"
   GOCACHE_KEY: v3 | go-build | "${{ runner.os }}" | go.sum
   GOCACHE_RESTOREKEYS: |
     v3 | go-build | "${{ runner.os }}"
