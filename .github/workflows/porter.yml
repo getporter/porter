@@ -4,23 +4,10 @@ on:
     branches:
     - main
 env:
-  GOCACHE: "${{ github.workspace }}/.cache/go-build/"
-  GOCACHE_KEY: v3 | go-build | "${{ runner.os }}" | go.sum
-  GOCACHE_RESTOREKEYS: |
-    v3 | go-build | "${{ runner.os }}"
-    v3 | go-build | "${{ runner.os }}" | go.sum
-  GOMODCACHE: "/home/vsts/go/pkg/mod"
-  GOMODCACHE_KEY: v4 | go-pkg | "${{ runner.os }}" | go.sum
-  GOMODCACHE_RESTOREKEYS: |
-    v4 | go-pkg | "${{ runner.os }}"
-    v4 | go-pkg | "${{ runner.os }}" | go.sum
   GOVERSION: 1.20.7
-  GOXCACHE_KEY: v3 | go-xbuild | "${{ runner.os }}" | go.sum
-  GOXCACHE_RESTOREKEYS: |
-    v3 | go-xbuild | "${{ runner.os }}"
-    v3 | go-xbuild | "${{ runner.os }}" | go.sum
+
 jobs:
-  Setup-pr_type:
+  PR_type:
     name: Determine PR Type
     runs-on: ubuntu-latest
     steps:
@@ -30,10 +17,11 @@ jobs:
       id: BUILD
       run: "./build/doc-only-build.sh"
       shell: bash
-  Validate-build:
+
+  Build:
     name: Native Compile
     needs:
-    - Setup-pr_type
+    - PR_type
     runs-on: ubuntu-latest
     if: success() && needs.Setup-pr_type.outputs['pr_type.BUILD.DOCS_ONLY'] == 'false'
     steps:
@@ -53,10 +41,11 @@ jobs:
       with:
         name: build-bin
         path: "${{ github.workspace }}/bin"
-  Validate-xbuild:
+
+  XBuild:
     name: Cross Compile
     needs:
-    - Setup-pr_type
+    - PR_type
     runs-on: ubuntu-latest
     if: success() && needs.Setup-pr_type.outputs['pr_type.BUILD.DOCS_ONLY'] == 'false'
     steps:
@@ -76,10 +65,11 @@ jobs:
       with:
         name: xbuild-bin
         path: "${{ github.workspace }}/bin"
-  Validate-unit_test:
+
+  Unit_test:
     name: Unit Test
     needs:
-    - Setup-pr_type
+    - PR_type
     runs-on: ubuntu-latest
     if: success() && needs.Setup-pr_type.outputs['pr_type.BUILD.DOCS_ONLY'] == 'false'
     steps:
@@ -94,10 +84,11 @@ jobs:
     - name: Unit Test
       run: mage TestUnit
       shell: bash
-  Validate-VetLint:
+
+  VetLint:
     name: Vet and Lint
     needs:
-    - Setup-pr_type
+    - PR_type
     runs-on: ubuntu-latest
     if: success() && needs.Setup-pr_type.outputs['pr_type.BUILD.DOCS_ONLY'] == 'false'
     steps:
@@ -115,10 +106,11 @@ jobs:
     - name: Lint
       run: mage Lint
       shell: bash
-  Validate-build_docker:
+
+  Build-docker-images:
     needs:
-    - Validate-xbuild
-    - Setup-pr_type
+    - PR_type
+    - XBuild
     runs-on: ubuntu-latest
     if: success() && needs.Setup-pr_type.outputs['pr_type.BUILD.DOCS_ONLY'] == 'false'
     steps:
@@ -137,20 +129,14 @@ jobs:
       run: go run mage.go ConfigureAgent UseXBuildBinaries
     - name: Build Docker Images
       run: mage BuildImages
-  Validate-smoke_test:
+
+  Smoke-test:
     name: Run smoke tests on
     needs:
-    - Validate-xbuild
-    - Setup-pr_type
-    runs-on:
-      - self-hosted
-      - "${{ matrix.vmImage }}"
+    - PR_type
+    - XBuild
+    runs-on: ubuntu-latest
     if: success() && needs.Setup-pr_type.outputs['pr_type.BUILD.DOCS_ONLY'] == 'false'
-    strategy:
-      matrix:
-        include:
-        - poolName: Azure Pipelines
-          vmImage: ubuntu-latest
     steps:
     - name: checkout
       uses: actions/checkout@v3.5.0
@@ -163,9 +149,6 @@ jobs:
       with:
         go-version: "${{ env.GOVERSION }}" # The Go version to download (if necessary) and use.
     - run: go version
-    - name: Windows Cache Prep
-      if: env.poolName == 'windows'
-      run: attrib -r ${{ env.GOMODCACHE }}/*.* /s
     - name: Configure Agent
       run: go run mage.go ConfigureAgent UseXBuildBinaries
     - name: Run Smoke Tests
