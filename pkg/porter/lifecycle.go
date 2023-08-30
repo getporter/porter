@@ -311,17 +311,14 @@ func (p *Porter) BuildActionArgs(ctx context.Context, installation storage.Insta
 // https://github.com/getporter/porter/blob/17bd7816ef6bde856793f6122e32274aa9d01d1b/pkg/storage/installation.go#L350
 func ensureVPrefix(opts *BundleReferenceOptions) error {
 	if opts._ref == nil {
-		idx := strings.LastIndex(opts.Reference, ":")
-		if idx == -1 {
-			return fmt.Errorf("invalid bundle reference: %s", opts.Reference)
+		ref, err := cnab.ParseOCIReference(opts.Reference)
+		if err != nil {
+			return err
 		}
-		if strings.HasPrefix(opts.Reference[idx+1:], "v") {
-			return nil
-		}
-		opts.Reference = opts.Reference[:idx] + ":v" + opts.Reference[idx+1:]
-		return nil
+		opts._ref = &ref
 	}
 	if strings.HasPrefix(opts._ref.Tag(), "v") {
+		// don't do anything if "v" is already there
 		return nil
 	}
 	ref, err := opts._ref.WithTag("v" + opts._ref.Tag())

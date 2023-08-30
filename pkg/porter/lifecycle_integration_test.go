@@ -94,24 +94,6 @@ func TestResolveBundleReference(t *testing.T) {
 		require.NotEmpty(t, ref.Definition)
 		require.NotEmpty(t, ref.Digest)
 	})
-
-	t.Run("reference without v-prefix", func(t *testing.T) {
-		t.Parallel()
-
-		p := NewTestPorter(t)
-		defer p.Close()
-		ctx := p.SetupIntegrationTest()
-
-		opts := &BundleReferenceOptions{}
-		opts.Reference = "ghcr.io/getporter/examples/porter-hello:0.2.0"
-		require.NoError(t, opts.Validate(ctx, nil, p.Porter))
-		ref, err := p.resolveBundleReference(ctx, opts)
-		require.NoError(t, err)
-		require.NotEmpty(t, opts.Name)
-		require.NotEmpty(t, ref.Definition)
-		require.NotEmpty(t, ref.RelocationMap)
-		require.NotEmpty(t, ref.Digest)
-	})
 }
 
 func buildExampleBundle() cnab.ExtendedBundle {
