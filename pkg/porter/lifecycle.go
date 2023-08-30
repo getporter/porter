@@ -310,7 +310,7 @@ func (p *Porter) BuildActionArgs(ctx context.Context, installation storage.Insta
 // This is safe because "porter publish" adds a "v", see
 // https://github.com/getporter/porter/blob/17bd7816ef6bde856793f6122e32274aa9d01d1b/pkg/storage/installation.go#L350
 func ensureVPrefix(opts *BundleReferenceOptions) error {
-	if strings.HasPrefix("v", opts._ref.Tag()) {
+	if strings.HasPrefix(opts._ref.Tag(), "v") {
 		return nil
 	}
 	ref, err := opts._ref.WithTag("v" + opts._ref.Tag())
