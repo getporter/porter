@@ -1,14 +1,21 @@
 name: porter/porter-integration
+# this will only run when this is on main branch apparently so use pr for now (temporary)
+#on:
+#  issue_comment:
+#    types: [created, edited]
 on:
-  issue_comment:
-    types: [created, edited]
+  pull_request:
+    branches:
+      - main
+    paths-ignore:
+      - 'docs/**'
 
 env:
   GOVERSION: 1.20.7
 
 jobs:
   Integration_test:
-    if: contains(github.event.comment.body, '/integration_test')
+#    if: contains(github.event.comment.body, '/integration_test')
     name: Integration Test
     runs-on: ubuntu-latest
     steps:
