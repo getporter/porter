@@ -19,10 +19,8 @@ jobs:
       with:
         go-version: "${{ env.GOVERSION }}" # The Go version to download (if necessary) and use.
     - run: go version
-    - name: Configure Agent
-      run: go run mage.go ConfigureAgent
     - name: Native Build
-      run: mage build
+      run: go run mage.go build
       shell: bash
     - name: Publish Native Binaries
       uses: actions/upload-artifact@v3.1.1
@@ -40,10 +38,8 @@ jobs:
       with:
         go-version: "${{ env.GOVERSION }}" # The Go version to download (if necessary) and use.
     - run: go version
-    - name: Configure Agent
-      run: go run mage.go ConfigureAgent
     - name: Cross Compile
-      run: mage XBuildAll
+      run: go run mage.go XBuildAll
       shell: bash
     - name: Publish Release Binaries
       uses: actions/upload-artifact@v3.1.1
@@ -54,8 +50,6 @@ jobs:
   Unit_test:
     name: Unit Test
     runs-on: ubuntu-latest
-#    needs:
-#      - Build
     steps:
     - name: checkout
       uses: actions/checkout@v3.5.0
@@ -63,10 +57,8 @@ jobs:
       with:
         go-version: "${{ env.GOVERSION }}" # The Go version to download (if necessary) and use.
     - run: go version
-    - name: Configure Agent
-      run: go run mage.go ConfigureAgent
     - name: Unit Test
-      run: mage TestUnit
+      run: go run mage.go -v TestUnit
       shell: bash
 
   VetLint:
@@ -79,13 +71,11 @@ jobs:
       with:
         go-version: "${{ env.GOVERSION }}" # The Go version to download (if necessary) and use.
     - run: go version
-    - name: Configure Agent
-      run: go run mage.go ConfigureAgent
     - name: Vet
-      run: mage Vet
+      run: go run mage.go Vet
       shell: bash
     - name: Lint
-      run: mage Lint
+      run: go run mage.go Lint
       shell: bash
 
   Build-docker-images:
@@ -107,9 +97,9 @@ jobs:
         name: xbuild-bin
         path: bin
     - name: Setup Bin
-      run: go run mage.go ConfigureAgent UseXBuildBinaries
+      run: go run mage.go UseXBuildBinaries
     - name: Build Docker Images
-      run: mage BuildImages
+      run: go run mage.go BuildImages
 
   Smoke-test:
     name: Smoke Test
@@ -128,7 +118,7 @@ jobs:
       with:
         go-version: "${{ env.GOVERSION }}" # The Go version to download (if necessary) and use.
     - run: go version
-    - name: Configure Agent
-      run: go run mage.go ConfigureAgent UseXBuildBinaries
+    - name: Setup Bin
+      run: go run mage.go UseXBuildBinaries
     - name: Run Smoke Tests
-      run: mage -v TestSmoke
+      run: go run mage.go -v TestSmoke
