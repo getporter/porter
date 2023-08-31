@@ -29,7 +29,6 @@ const (
 
 // ListOptions represent generic options for use by Porter's list commands
 type ListOptions struct {
-	installationOptions
 	printer.PrintOptions
 	AllNamespaces bool
 	Namespace     string
@@ -366,7 +365,7 @@ func doesInstallationMatchFieldSelectors(installation DisplayInstallation, field
 
 // Check if the installation has the field with the value
 // e.g. installationHasFieldWithValue(installation, "bundle.version", "0.2.0") => true if installation.Bundle.Version (for which json tag is bunde.version) == "0.2.0"
-func installationHasFieldWithValue(installation DisplayInstallation, fieldJsonTagPath string, value interface{}) bool {
+func installationHasFieldWithValue(installation DisplayInstallation, fieldJsonTagPath string, value string) bool {
 
 	fieldJsonTagPathParts := strings.Split(fieldJsonTagPath, ".")
 	current := reflect.ValueOf(installation)

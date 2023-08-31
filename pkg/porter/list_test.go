@@ -483,7 +483,7 @@ func Test_installationHasFieldWithValue(t *testing.T) {
 	type args struct {
 		installation     DisplayInstallation
 		fieldJsonTagPath string
-		value            interface{}
+		value            string
 	}
 	tests := []struct {
 		name string
