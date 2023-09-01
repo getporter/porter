@@ -11,7 +11,7 @@ import (
 	"get.porter.sh/porter/pkg/config"
 )
 
-// Create function creates a porter configuration in the specified directory or in the current directory if no directory is specified.
+// Create function creates a porter configuration in the specified directory (bundleName) or in the current directory if no directory is specified.
 // The bundle's name will be the given bundleName, or "porter_hello" if bundleName is the empty string
 func (p *Porter) Create(bundleName string) error {
 	// Normalize the bundleName by removing trailing slashes
