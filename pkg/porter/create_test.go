@@ -1,7 +1,9 @@
 package porter
 
 import (
-	"os"
+	"get.porter.sh/porter/pkg/manifest"
+	"get.porter.sh/porter/pkg/yaml"
+	"github.com/stretchr/testify/assert"
 	"path/filepath"
 	"testing"
 
@@ -10,7 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestCreateInRootDirectory(t *testing.T) {
+func TestCreateInWorkingDirectory(t *testing.T) {
 	p := NewTestPorter(t)
 	defer p.Close()
 
@@ -44,115 +46,42 @@ func TestCreateInRootDirectory(t *testing.T) {
 }
 
 // tests to ensure behavior similarity with helm create
-
-func TestCreateInDirectory(t *testing.T) {
-	// Create a temporary directory for testing
-	tempDir := os.TempDir()
-	bundleDir := filepath.Join(tempDir, "mybundle")
+func TestCreateWithBundleName(t *testing.T) {
+	bundleName := "mybundle"
 
 	p := NewTestPorter(t)
-	err := p.Create(bundleDir)
+	err := p.Create(bundleName)
 	require.NoError(t, err)
 
 	// Verify that files are present in the "mybundle" directory
-	configFileStats, err := p.FileSystem.Stat(filepath.Join(bundleDir, "porter.yaml"))
+	configFileStats, err := p.FileSystem.Stat(filepath.Join(bundleName, "porter.yaml"))
 	require.NoError(t, err)
-	tests.AssertFilePermissionsEqual(t, filepath.Join("mybundle", "porter.yaml"), pkg.FileModeWritable, configFileStats.Mode())
+	tests.AssertFilePermissionsEqual(t, filepath.Join(bundleName, "porter.yaml"), pkg.FileModeWritable, configFileStats.Mode())
 
-	helperFileStats, err := p.FileSystem.Stat(filepath.Join(bundleDir, "helpers.sh"))
+	helperFileStats, err := p.FileSystem.Stat(filepath.Join(bundleName, "helpers.sh"))
 	require.NoError(t, err)
-	tests.AssertFilePermissionsEqual(t, filepath.Join("mybundle", "helpers.sh"), pkg.FileModeExecutable, helperFileStats.Mode())
+	tests.AssertFilePermissionsEqual(t, filepath.Join(bundleName, "helpers.sh"), pkg.FileModeExecutable, helperFileStats.Mode())
 
-	dockerfileStats, err := p.FileSystem.Stat(filepath.Join(bundleDir, "template.Dockerfile"))
+	dockerfileStats, err := p.FileSystem.Stat(filepath.Join(bundleName, "template.Dockerfile"))
 	require.NoError(t, err)
-	tests.AssertFilePermissionsEqual(t, filepath.Join("mybundle", "template.Dockerfile"), pkg.FileModeWritable, dockerfileStats.Mode())
+	tests.AssertFilePermissionsEqual(t, filepath.Join(bundleName, "template.Dockerfile"), pkg.FileModeWritable, dockerfileStats.Mode())
 
-	readmeStats, err := p.FileSystem.Stat(filepath.Join(bundleDir, "README.md"))
+	readmeStats, err := p.FileSystem.Stat(filepath.Join(bundleName, "README.md"))
 	require.NoError(t, err)
-	tests.AssertFilePermissionsEqual(t, filepath.Join("mybundle", "README.md"), pkg.FileModeWritable, readmeStats.Mode())
+	tests.AssertFilePermissionsEqual(t, filepath.Join(bundleName, "README.md"), pkg.FileModeWritable, readmeStats.Mode())
 
-	gitignoreStats, err := p.FileSystem.Stat(filepath.Join(bundleDir, ".gitignore"))
+	gitignoreStats, err := p.FileSystem.Stat(filepath.Join(bundleName, ".gitignore"))
 	require.NoError(t, err)
-	tests.AssertFilePermissionsEqual(t, filepath.Join("mybundle", ".gitignore"), pkg.FileModeWritable, gitignoreStats.Mode())
+	tests.AssertFilePermissionsEqual(t, filepath.Join(bundleName, ".gitignore"), pkg.FileModeWritable, gitignoreStats.Mode())
 
-	dockerignoreStats, err := p.FileSystem.Stat(filepath.Join(bundleDir, ".dockerignore"))
+	dockerignoreStats, err := p.FileSystem.Stat(filepath.Join(bundleName, ".dockerignore"))
 	require.NoError(t, err)
-	tests.AssertFilePermissionsEqual(t, filepath.Join("mybundle", ".dockerignore"), pkg.FileModeWritable, dockerignoreStats.Mode())
-}
+	tests.AssertFilePermissionsEqual(t, filepath.Join(bundleName, ".dockerignore"), pkg.FileModeWritable, dockerignoreStats.Mode())
 
-func TestCreateInChildDirectoryWithoutExistingParentDirectory(t *testing.T) {
-	// Create a temporary directory for testing
-	tempDir := os.TempDir()
-	parentDir := filepath.Join(tempDir, "parentbundle")
-	err := os.Mkdir(parentDir, os.ModePerm)
-	require.NoError(t, err)
-
-	// Define the child directory within the existing parent directory
-	bundleDir := filepath.Join(parentDir, "childbundle")
-
-	p := NewTestPorter(t)
-	err = p.Create(bundleDir)
-
-	// Verify that the expected error is returned
-	require.Error(t, err)
-	require.Contains(t, err.Error(), "failed to create directory for bundle")
-
-	// Verify that no files are created in the subdirectory
-	_, err = p.FileSystem.Stat(filepath.Join(bundleDir, "porter.yaml"))
-	require.True(t, os.IsNotExist(err))
-
-	_, err = p.FileSystem.Stat(filepath.Join(bundleDir, "helpers.sh"))
-	require.True(t, os.IsNotExist(err))
-
-	_, err = p.FileSystem.Stat(filepath.Join(bundleDir, "template.Dockerfile"))
-	require.True(t, os.IsNotExist(err))
-
-	_, err = p.FileSystem.Stat(filepath.Join(bundleDir, "README.md"))
-	require.True(t, os.IsNotExist(err))
-
-	_, err = p.FileSystem.Stat(filepath.Join(bundleDir, ".gitignore"))
-	require.True(t, os.IsNotExist(err))
-
-	_, err = p.FileSystem.Stat(filepath.Join(bundleDir, ".dockerignore"))
-	require.True(t, os.IsNotExist(err))
-}
-
-func TestCreateInChildDirectoryWithExistingParentDirectory(t *testing.T) {
-	// Create a temporary directory for testing
-	tempDir := os.TempDir()
-	parentDir := filepath.Join(tempDir, "parentbundle")
-	err := os.Mkdir(parentDir, os.ModePerm)
-	require.NoError(t, err)
-
-	// Define the child directory within the existing parent directory
-	bundleDir := filepath.Join(parentDir, "childbundle")
-
-	p := NewTestPorter(t)
-	err = p.Create(bundleDir)
-	require.NoError(t, err)
-
-	// Verify that files are present in the child directory
-	configFileStats, err := p.FileSystem.Stat(filepath.Join(bundleDir, "porter.yaml"))
-	require.NoError(t, err)
-	tests.AssertFilePermissionsEqual(t, filepath.Join("parentbundle/childbundle", "porter.yaml"), pkg.FileModeWritable, configFileStats.Mode())
-
-	helperFileStats, err := p.FileSystem.Stat(filepath.Join(bundleDir, "helpers.sh"))
-	require.NoError(t, err)
-	tests.AssertFilePermissionsEqual(t, filepath.Join("parentbundle/childbundle", "helpers.sh"), pkg.FileModeExecutable, helperFileStats.Mode())
-
-	dockerfileStats, err := p.FileSystem.Stat(filepath.Join(bundleDir, "template.Dockerfile"))
-	require.NoError(t, err)
-	tests.AssertFilePermissionsEqual(t, filepath.Join("parentbundle/childbundle", "template.Dockerfile"), pkg.FileModeWritable, dockerfileStats.Mode())
-
-	readmeStats, err := p.FileSystem.Stat(filepath.Join(bundleDir, "README.md"))
-	require.NoError(t, err)
-	tests.AssertFilePermissionsEqual(t, filepath.Join("parentbundle/childbundle", "README.md"), pkg.FileModeWritable, readmeStats.Mode())
-
-	gitignoreStats, err := p.FileSystem.Stat(filepath.Join(bundleDir, ".gitignore"))
-	require.NoError(t, err)
-	tests.AssertFilePermissionsEqual(t, filepath.Join("parentbundle/childbundle", ".gitignore"), pkg.FileModeWritable, gitignoreStats.Mode())
-
-	dockerignoreStats, err := p.FileSystem.Stat(filepath.Join(bundleDir, ".dockerignore"))
-	require.NoError(t, err)
-	tests.AssertFilePermissionsEqual(t, filepath.Join("parentbundle/childbundle", ".dockerignore"), pkg.FileModeWritable, dockerignoreStats.Mode())
+	// verify "name" inside porter.yaml is set to "mybundle"
+	porterYaml := &manifest.Manifest{}
+	data, err := p.FileSystem.ReadFile(filepath.Join(bundleName, "porter.yaml"))
+	assert.NoError(t, err)
+	assert.NoError(t, yaml.Unmarshal(data, &porterYaml))
+	assert.True(t, porterYaml.Name == bundleName)
 }

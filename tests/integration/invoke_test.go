@@ -22,7 +22,7 @@ func TestInvokeCustomAction(t *testing.T) {
 	ctx := p.SetupIntegrationTest()
 
 	// Install a bundle with a custom action defined
-	err := p.Create()
+	err := p.Create("")
 	require.NoError(t, err)
 
 	bundleName := p.AddTestBundleDir("testdata/bundles/bundle-with-custom-action", true)

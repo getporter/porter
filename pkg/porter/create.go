@@ -11,8 +11,8 @@ import (
 	"get.porter.sh/porter/pkg/config"
 )
 
-// Create function creates a porter configuration in the specified directory (bundleName) or in the current directory if no directory is specified.
-// The bundle's name will be the given bundleName, or "porter_hello" if bundleName is the empty string
+// Create creates a new bundle configuration with the specified bundleName. A directory with the given bundleName will be created if it does not already exist.
+// If bundleName is the empty string, the configuration will be created in the current directory, and the name will be "porter-hello".
 func (p *Porter) Create(bundleName string) error {
 	// Normalize the bundleName by removing trailing slashes
 	bundleName = strings.TrimSuffix(bundleName, "/")
@@ -80,6 +80,7 @@ func (p *Porter) CopyTemplate(getTemplate func() ([]byte, error), dest string) e
 	if filepath.Ext(dest) == ".sh" {
 		mode = pkg.FileModeExecutable
 	}
+
 	if _, err := os.Stat(dest); err == nil {
 		fmt.Fprintf(os.Stderr, "WARNING: File %q already exists. Overwriting.\n", dest)
 	}
