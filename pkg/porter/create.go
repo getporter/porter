@@ -13,7 +13,7 @@ import (
 
 // Create creates a new bundle configuration in the current directory
 func (p *Porter) Create() error {
-	destinationDir := "."
+	destinationDir := "." // current directory
 
 	if err := p.CopyTemplate(p.Templates.GetManifest, filepath.Join(destinationDir, config.Name)); err != nil {
 		return err
@@ -28,14 +28,13 @@ func (p *Porter) CreateInDir(dir string) error {
 	bundleName := filepath.Base(dir)
 
 	// Create dirs if they don't exist
-	_, err := os.Stat(dir)
+	_, err := p.FileSystem.Stat(dir)
+	if errors.Is(err, os.ErrNotExist) {
+		err = p.FileSystem.MkdirAll(dir, 0755)
+	}
 	if err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			err = os.MkdirAll(dir, 0755)
-		}
-		if err != nil {
-			return fmt.Errorf("failed to create directory for bundle: %w", err)
-		}
+		// the Stat failed with an error different from os.ErrNotExist OR the MkdirAll failed to create the dir(s)
+		return fmt.Errorf("failed to create directory for bundle: %w", err)
 	}
 
 	// create porter.yaml, using base of given dir as the bundle name
@@ -89,7 +88,7 @@ func (p *Porter) CopyTemplate(getTemplate func() ([]byte, error), dest string) e
 		mode = pkg.FileModeExecutable
 	}
 
-	if _, err := os.Stat(dest); err == nil {
+	if _, err := p.FileSystem.Stat(dest); err == nil {
 		fmt.Fprintf(p.Err, "WARNING: File %q already exists. Overwriting.\n", dest)
 	}
 	err = p.FileSystem.WriteFile(dest, tmpl, mode)
