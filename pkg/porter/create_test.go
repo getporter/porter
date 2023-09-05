@@ -49,7 +49,7 @@ func TestCreateWithBundleName(t *testing.T) {
 	bundleName := "mybundle"
 
 	p := NewTestPorter(t)
-	err := p.Create()
+	err := p.CreateInDir(bundleName)
 	require.NoError(t, err)
 
 	// Verify that files are present in the "mybundle" directory
