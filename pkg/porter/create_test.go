@@ -95,33 +95,33 @@ func TestCreateNestedBundleName(t *testing.T) {
 	require.NoError(t, err)
 
 	// Verify that files are present in the "mybundle" directory
-	configFileStats, err := p.FileSystem.Stat(filepath.Join(bundleName, "porter.yaml"))
+	configFileStats, err := p.FileSystem.Stat(filepath.Join(dir, bundleName, "porter.yaml"))
 	require.NoError(t, err)
-	tests.AssertFilePermissionsEqual(t, filepath.Join(bundleName, "porter.yaml"), pkg.FileModeWritable, configFileStats.Mode())
+	tests.AssertFilePermissionsEqual(t, filepath.Join(dir, bundleName, "porter.yaml"), pkg.FileModeWritable, configFileStats.Mode())
 
-	helperFileStats, err := p.FileSystem.Stat(filepath.Join(bundleName, "helpers.sh"))
+	helperFileStats, err := p.FileSystem.Stat(filepath.Join(dir, bundleName, "helpers.sh"))
 	require.NoError(t, err)
-	tests.AssertFilePermissionsEqual(t, filepath.Join(bundleName, "helpers.sh"), pkg.FileModeExecutable, helperFileStats.Mode())
+	tests.AssertFilePermissionsEqual(t, filepath.Join(dir, bundleName, "helpers.sh"), pkg.FileModeExecutable, helperFileStats.Mode())
 
-	dockerfileStats, err := p.FileSystem.Stat(filepath.Join(bundleName, "template.Dockerfile"))
+	dockerfileStats, err := p.FileSystem.Stat(filepath.Join(dir, bundleName, "template.Dockerfile"))
 	require.NoError(t, err)
-	tests.AssertFilePermissionsEqual(t, filepath.Join(bundleName, "template.Dockerfile"), pkg.FileModeWritable, dockerfileStats.Mode())
+	tests.AssertFilePermissionsEqual(t, filepath.Join(dir, bundleName, "template.Dockerfile"), pkg.FileModeWritable, dockerfileStats.Mode())
 
-	readmeStats, err := p.FileSystem.Stat(filepath.Join(bundleName, "README.md"))
+	readmeStats, err := p.FileSystem.Stat(filepath.Join(dir, bundleName, "README.md"))
 	require.NoError(t, err)
-	tests.AssertFilePermissionsEqual(t, filepath.Join(bundleName, "README.md"), pkg.FileModeWritable, readmeStats.Mode())
+	tests.AssertFilePermissionsEqual(t, filepath.Join(dir, bundleName, "README.md"), pkg.FileModeWritable, readmeStats.Mode())
 
-	gitignoreStats, err := p.FileSystem.Stat(filepath.Join(bundleName, ".gitignore"))
+	gitignoreStats, err := p.FileSystem.Stat(filepath.Join(dir, bundleName, ".gitignore"))
 	require.NoError(t, err)
-	tests.AssertFilePermissionsEqual(t, filepath.Join(bundleName, ".gitignore"), pkg.FileModeWritable, gitignoreStats.Mode())
+	tests.AssertFilePermissionsEqual(t, filepath.Join(dir, bundleName, ".gitignore"), pkg.FileModeWritable, gitignoreStats.Mode())
 
-	dockerignoreStats, err := p.FileSystem.Stat(filepath.Join(bundleName, ".dockerignore"))
+	dockerignoreStats, err := p.FileSystem.Stat(filepath.Join(dir, bundleName, ".dockerignore"))
 	require.NoError(t, err)
-	tests.AssertFilePermissionsEqual(t, filepath.Join(bundleName, ".dockerignore"), pkg.FileModeWritable, dockerignoreStats.Mode())
+	tests.AssertFilePermissionsEqual(t, filepath.Join(dir, bundleName, ".dockerignore"), pkg.FileModeWritable, dockerignoreStats.Mode())
 
 	// verify "name" inside porter.yaml is set to "mybundle"
 	porterYaml := &manifest.Manifest{}
-	data, err := p.FileSystem.ReadFile(filepath.Join(bundleName, "porter.yaml"))
+	data, err := p.FileSystem.ReadFile(filepath.Join(dir, bundleName, "porter.yaml"))
 	require.NoError(t, err)
 	require.NoError(t, yaml.Unmarshal(data, &porterYaml))
 	require.True(t, porterYaml.Name == bundleName)

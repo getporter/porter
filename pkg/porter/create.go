@@ -31,7 +31,7 @@ func (p *Porter) CreateInDir(dir string) error {
 	_, err := os.Stat(dir)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			err = os.MkdirAll(dir, os.ModePerm)
+			err = os.MkdirAll(dir, 0755)
 		}
 		if err != nil {
 			return fmt.Errorf("failed to create directory for bundle: %w", err)
