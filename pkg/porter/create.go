@@ -11,63 +11,71 @@ import (
 	"get.porter.sh/porter/pkg/config"
 )
 
-// Create creates a new bundle configuration with the specified bundleName. A directory with the given bundleName will be created if it does not already exist.
-// If bundleName is the empty string, the configuration will be created in the current directory, and the name will be "porter-hello".
-func (p *Porter) Create(bundleName string) error {
-	// Normalize the bundleName by removing trailing slashes
-	bundleName = strings.TrimSuffix(bundleName, "/")
+// Create creates a new bundle configuration in the current directory
+func (p *Porter) Create() error {
+	destinationDir := "."
 
-	// If given a bundleName, create directory if it doesn't exist
-	if bundleName != "" {
-		_, err := os.Stat(bundleName)
-		if err != nil && errors.Is(err, os.ErrNotExist) {
-			err = os.Mkdir(bundleName, os.ModePerm)
-			if err != nil {
-				return fmt.Errorf("failed to create directory for bundle: %w", err)
-			}
+	if err := p.CopyTemplate(p.Templates.GetManifest, filepath.Join(destinationDir, config.Name)); err != nil {
+		return err
+	}
+	return p.copyAllTemplatesExceptPorterYaml(destinationDir)
+}
+
+// CreateInDir creates a new bundle configuration in the specified directory. The directory will be created if it
+// doesn't already exist. For example, if dir is "foo/bar/baz", the directory structure "foo/bar/baz" will be created.
+// The bundle name will be set to the "base" of the given directory, which is "baz" in the example above.
+func (p *Porter) CreateInDir(dir string) error {
+	bundleName := filepath.Base(dir)
+
+	// Create dirs if they don't exist
+	_, err := os.Stat(dir)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			err = os.MkdirAll(dir, os.ModePerm)
+		}
+		if err != nil {
+			return fmt.Errorf("failed to create directory for bundle: %w", err)
 		}
 	}
 
-	var err error
-	if bundleName == "" {
-		// create bundle with default name "porter_hello"
-		err = p.CopyTemplate(p.Templates.GetManifest, filepath.Join(bundleName, config.Name))
-	} else {
-		// create bundle with given name
-		err = p.CopyTemplate(func() ([]byte, error) {
-			content, err := p.Templates.GetManifest()
-			if err != nil {
-				return nil, err
-			}
-			content = []byte(strings.ReplaceAll(string(content), "porter-hello", bundleName))
-			return content, nil
-		}, filepath.Join(bundleName, config.Name))
-	}
+	// create porter.yaml, using base of given dir as the bundle name
+	err = p.CopyTemplate(func() ([]byte, error) {
+		content, err := p.Templates.GetManifest()
+		if err != nil {
+			return nil, err
+		}
+		content = []byte(strings.ReplaceAll(string(content), "porter-hello", bundleName))
+		return content, nil
+	}, filepath.Join(dir, config.Name))
 	if err != nil {
 		return err
 	}
 
-	err = p.CopyTemplate(p.Templates.GetManifestHelpers, filepath.Join(bundleName, "helpers.sh"))
+	return p.copyAllTemplatesExceptPorterYaml(dir)
+}
+
+func (p *Porter) copyAllTemplatesExceptPorterYaml(destinationDir string) error {
+	err := p.CopyTemplate(p.Templates.GetManifestHelpers, filepath.Join(destinationDir, "helpers.sh"))
 	if err != nil {
 		return err
 	}
 
-	err = p.CopyTemplate(p.Templates.GetReadme, filepath.Join(bundleName, "README.md"))
+	err = p.CopyTemplate(p.Templates.GetReadme, filepath.Join(destinationDir, "README.md"))
 	if err != nil {
 		return err
 	}
 
-	err = p.CopyTemplate(p.Templates.GetDockerfileTemplate, filepath.Join(bundleName, "template.Dockerfile"))
+	err = p.CopyTemplate(p.Templates.GetDockerfileTemplate, filepath.Join(destinationDir, "template.Dockerfile"))
 	if err != nil {
 		return err
 	}
 
-	err = p.CopyTemplate(p.Templates.GetDockerignore, filepath.Join(bundleName, ".dockerignore"))
+	err = p.CopyTemplate(p.Templates.GetDockerignore, filepath.Join(destinationDir, ".dockerignore"))
 	if err != nil {
 		return err
 	}
 
-	return p.CopyTemplate(p.Templates.GetGitignore, filepath.Join(bundleName, ".gitignore"))
+	return p.CopyTemplate(p.Templates.GetGitignore, filepath.Join(destinationDir, ".gitignore"))
 }
 
 func (p *Porter) CopyTemplate(getTemplate func() ([]byte, error), dest string) error {

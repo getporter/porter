@@ -79,7 +79,7 @@ func CleanupCurrentBundle(ctx context.Context, p *porter.TestPorter) {
 }
 
 func installExecOutputsBundle(ctx context.Context, p *porter.TestPorter) string {
-	err := p.Create("")
+	err := p.Create()
 	require.NoError(p.T(), err)
 
 	bundleName := p.AddTestBundleDir("testdata/bundles/exec-outputs", true)

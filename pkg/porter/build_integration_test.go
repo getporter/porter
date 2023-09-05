@@ -144,7 +144,7 @@ func TestPorter_LintDuringBuild(t *testing.T) {
 		testMixins := p.Mixins.(*mixin.TestMixinProvider)
 		testMixins.LintResults = lintResults
 
-		err := p.Create("mybundle")
+		err := p.Create()
 		require.NoError(t, err, "Create failed")
 
 		opts := BuildOptions{NoLint: false}
@@ -163,7 +163,7 @@ func TestPorter_LintDuringBuild(t *testing.T) {
 		testMixins := p.Mixins.(*mixin.TestMixinProvider)
 		testMixins.LintResults = lintResults
 
-		err := p.Create("mybundle")
+		err := p.Create()
 		require.NoError(t, err, "Create failed")
 
 		opts := BuildOptions{NoLint: true}

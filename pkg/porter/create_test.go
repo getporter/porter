@@ -1,13 +1,12 @@
 package porter
 
 import (
-	"get.porter.sh/porter/pkg/manifest"
-	"get.porter.sh/porter/pkg/yaml"
-	"github.com/stretchr/testify/assert"
 	"path/filepath"
 	"testing"
 
 	"get.porter.sh/porter/pkg"
+	"get.porter.sh/porter/pkg/manifest"
+	"get.porter.sh/porter/pkg/yaml"
 	"get.porter.sh/porter/tests"
 	"github.com/stretchr/testify/require"
 )
@@ -16,7 +15,7 @@ func TestCreateInWorkingDirectory(t *testing.T) {
 	p := NewTestPorter(t)
 	defer p.Close()
 
-	err := p.Create("")
+	err := p.Create()
 	require.NoError(t, err)
 
 	// Verify that files are present in the root directory
@@ -50,7 +49,7 @@ func TestCreateWithBundleName(t *testing.T) {
 	bundleName := "mybundle"
 
 	p := NewTestPorter(t)
-	err := p.Create(bundleName)
+	err := p.Create()
 	require.NoError(t, err)
 
 	// Verify that files are present in the "mybundle" directory
@@ -81,7 +80,7 @@ func TestCreateWithBundleName(t *testing.T) {
 	// verify "name" inside porter.yaml is set to "mybundle"
 	porterYaml := &manifest.Manifest{}
 	data, err := p.FileSystem.ReadFile(filepath.Join(bundleName, "porter.yaml"))
-	assert.NoError(t, err)
-	assert.NoError(t, yaml.Unmarshal(data, &porterYaml))
-	assert.True(t, porterYaml.Name == bundleName)
+	require.NoError(t, err)
+	require.NoError(t, yaml.Unmarshal(data, &porterYaml))
+	require.True(t, porterYaml.Name == bundleName)
 }
