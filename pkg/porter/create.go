@@ -90,7 +90,7 @@ func (p *Porter) CopyTemplate(getTemplate func() ([]byte, error), dest string) e
 	}
 
 	if _, err := os.Stat(dest); err == nil {
-		fmt.Fprintf(os.Stderr, "WARNING: File %q already exists. Overwriting.\n", dest)
+		fmt.Fprintf(p.Err, "WARNING: File %q already exists. Overwriting.\n", dest)
 	}
 	err = p.FileSystem.WriteFile(dest, tmpl, mode)
 	if err != nil {
