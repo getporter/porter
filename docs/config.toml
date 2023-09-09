@@ -1,16 +1,14 @@
 baseURL = "https://getporter.org/"
 languageCode = "en-us"
 title = "Porter"
-theme = "porter"
 canonifyURLs = "false"
 relativeURLs = "false"
 pluralizeListTitles = "false"
 plainIdAnchors = "true"
 defaultContentLanguage = "en"
 
-# Syntax Highlighting
-pygmentsUseClasses = true
-pygmentsStyle = "friendly"
+[[module.imports]]
+    path = 'github.com/imfing/hextra'
 
 [markup]
   defaultMarkdownHandler = "goldmark"
@@ -23,6 +21,9 @@ pygmentsStyle = "friendly"
     ordered = false
     startLevel = 2
 
+  [markup.highlight]
+    noClasses= false
+
 # Default Page Parameters
 [params]
   title = "Porter"
@@ -30,507 +31,55 @@ pygmentsStyle = "friendly"
   description = "A Friendly Cloud Installer for Cloud Native Application Bundles"
   image = "images/porter-twitter-card.png"
 
-#
+  [params.navbar.logo]
+    path = "images/porter-icon-badge.png"
+
 # Docs Navigation
-#
+[[menu.main]]
+name = "Install"
+url = "/docs/getting-started/install-porter"
+identifier = "install-porter"
+weight = 1
 
-# Introduction
 [[menu.main]]
-  name = "Introduction"
-  identifier = "introduction"
-  weight = 1
-  url = "#"
-  [[menu.main]]
-    name = "What is Porter?"
-    url = "/introduction/what-is-porter"
-    identifier = "what-is-porter"
-    weight = 1
-    parent = "introduction"
-  [[menu.main]]
-    name = "Concepts and Components"
-    url = "#"
-    identifier = "concepts-and-components"
-    weight = 5
-    parent = "introduction"
-    [[menu.main]]
-    name = "Bundles"
-    identifier = "intro-bundles"
-    url = "/introduction/intro-bundles"
-    weight = 1
-    parent = "concepts-and-components"
-    [[menu.main]]
-    name = "Parameters"
-    identifier = "intro-parameters"
-    url = "/introduction/intro-parameters"
-    weight = 5
-    parent = "concepts-and-components"
-    [[menu.main]]
-    name = "Credentials"
-    identifier = "intro-credentials"
-    url = "/introduction/intro-credentials"
-    weight = 10
-    parent = "concepts-and-components"
-    [[menu.main]]
-    name = "Configuration"
-    identifier = "intro-configuration"
-    url = "/introduction/intro-configuration"
-    weight = 15
-    parent = "concepts-and-components"
-    [[menu.main]]
-    name = "Desired State"
-    identifier = "intro-desired-state"
-    url = "/introduction/intro-desired-state"
-    weight = 20
-    parent = "concepts-and-components"
-    [[menu.main]]
-    name = "Invocation Images"
-    identifier = "intro-invocation-images"
-    url = "/introduction/intro-invocation-images"
-    weight = 25
-    parent = "concepts-and-components"
-    [[menu.main]]
-    name = "Mixins"
-    identifier = "intro-mixins"
-    url = "/introduction/intro-mixins"
-    weight = 30
-    parent = "concepts-and-components"
-    [[menu.main]]
-    name = "Plugins"
-    identifier = "intro-plugins"
-    url = "/introduction/intro-plugins"
-    weight = 35
-    parent = "concepts-and-components"
-    [[menu.main]]
-    name = "Mixins vs Plugins"
-    identifier = "mixins-vs-plugins"
-    url = "/introduction/mixins-vs-plugins"
-    weight = 40
-    parent = "concepts-and-components"
-# QuickStart
-[[menu.main]]
-  name = "QuickStart"
-  url = "/quickstart/quickstart"
-  identifier = "quickstart"
-  weight = 5
-# Getting Started
-[[menu.main]]
-  name = "Getting Started"
-  url = "#"
-  identifier = "getting-started"
-  weight = 10
-  [[menu.main]]
-    name = "Install Porter"
-    url = "/getting-started/install-porter"
-    identifier = "install-porter"
-    weight = 1
-    parent = "getting-started"
-  [[menu.main]]
-    name = "Migrate Porter v0 to v1"
-    url = "/getting-started/migrate-v0-v1"
-    identifier = "migrate-v0-v1"
-    weight = 5
-    parent = "getting-started"
-  [[menu.main]]
-  name = "Create a Bundle"
-  url = "/getting-started/create-bundle"
-  identifier = "create-bundle"
-  weight = 10
-  parent = "getting-started"
-# Configuration
-[[menu.main]]
-  name = "Configuration"
-  url = "/configuration/configuration"
-  identifier = "configuration"
-  weight = 15
-# Operations
-[[menu.main]]
-  name = "Operations"
-  url = "#"
-  identifier = "operations"
-  weight = 20
-  [[menu.main]]
-  name = "Manage Installations"
-  url = "/operations/manage-installations"
-  identifier = "manage-installations"
-  weight = 1
-  parent = "operations"
-  [[menu.main]]
-  name = "Examine Bundles"
-  url = "/operations/examine-bundles"
-  identifier = "examine-bundles"
-  weight = 5
-  parent = "operations"
-  [[menu.main]]
-  name = "View Logs"
-  url = "/operations/view-logs"
-  identifier = "view-logs"
-  weight = 10
-  parent = "operations"
-  [[menu.main]]
-  name = "Create a Porter Config File"
-  url = "/operations/create-porter-config"
-  identifier = "create-porter-config"
-  weight = 15
-  parent = "operations"
-  [[menu.main]]
-  name = "Connect to Docker"
-  url = "/operations/connect-to-docker"
-  identifier = "connect-to-docker"
-  weight = 20
-  parent = "operations"
-  [[menu.main]]
-  name = "Connect to Registry"
-  url = "/operations/connect-to-registry"
-  identifier = "connect-to-registry"
-  weight = 25
-  parent = "operations"
-# Administration
-[[menu.main]]
-  name = "Administration"
-  url = "#"
-  identifier = "administration"
-  weight = 25
-  [[menu.main]]
-  name = "Inspecting Bundles"
-  url = "/administration/inspecting-bundles"
-  identifier = "inspecting-bundles"
-  weight = 1
-  parent = "administration"
-  [[menu.main]]
-  name = "Copy Bundles"
-  url = "/administration/copy-bundles"
-  identifier = "copy-bundles"
-  weight = 5
-  parent = "administration"
-  [[menu.main]]
-  name = "Move Bundles Across Airgapped Environments"
-  url = "/administration/move-bundles-airgapped"
-  identifier = "move-bundles-airgapped"
-  weight = 10
-  parent = "administration"
-  [[menu.main]]
-  name = "Collect Diagnostics from Porter"
-  url = "/administration/collect-diag-porter"
-  identifier = "collect-diag-porter"
-  weight = 15
-  parent = "administration"
-# Development
-[[menu.main]]
-  name = "Development"
-  url = "#"
-  identifier = "development"
-  weight = 30
-  [[menu.main]]
-  name = "Authoring a Bundle"
-  url = "#"
-  identifier = "author-a-bundle"
-  parent = "development"
-  weight = 1
-    [[menu.main]]
-    name = "Create a Bundle"
-    url = "/development/create-a-bundle"
-    identifier = "create-a-bundle"
-    weight = 1
-    parent = "author-a-bundle"
-    [[menu.main]]
-    name = "Using a Custom Dockerfile"
-    url = "/development/use-custom-dockerfile"
-    identifier = "use-custom-dockerfile"
-    weight = 5
-    parent = "author-a-bundle"
-    [[menu.main]]
-    name = "Working with Dependencies"
-    url = "/development/working-with-dependencies"
-    identifier = "working-with-dependencies"
-    weight = 10
-    parent = "author-a-bundle"
-    [[menu.main]]
-    name = "Using Templates"
-    url = "/development/using-templates"
-    identifier = "using-templates"
-    weight = 15
-    parent = "author-a-bundle"
-    [[menu.main]]
-    name = "Distributing a Bundle"
-    url = "/development/distribute-bundles"
-    identifier = "distribute-bundles"
-    weight = 20
-    parent = "author-a-bundle"
-  [[menu.main]]
-  name = "Developing a Mixin"
-  url = "/development/dev-a-mixin"
-  identifier = "dev-a-mixin"
-  parent = "development"
-  weight = 5
-  [[menu.main]]
-  name = "Distributing a Mixin"
-  url = "/development/dist-a-mixin"
-  identifier = "dist-a-mixin"
-  parent = "development"
-  weight = 10
-# How-To Guides
-[[menu.main]]
-  name = "How-To Guides"
-  url = "#"
-  identifier = "how-to-guides"
-  weight = 35
-  [[menu.main]]
-  name = "Working with Mixins"
-  url = "/how-to-guides/work-with-mixins"
-  identifier = "work-with-mixins"
-  parent = "how-to-guides"
-  weight = 1
-  [[menu.main]]
-  name = "Working with Plugins"
-  url = "/how-to-guides/work-with-plugins"
-  identifier = "work-with-plugins"
-  parent = "how-to-guides"
-  weight = 5
-# Porter Operator
-[[menu.main]]
-name = "Porter Operator"
-identifier = "porter-operator"
-weight = 40
-  [[menu.main]]
-  name = "Overview"
-  identifier = "operator-overview"
-  url = "/operator/"
-  weight = 1
-  parent = "porter-operator"
-  [[menu.main]]
-  name = "QuickStart"
-  identifier = "operator-quickstart"
-  url = "/operator/quickstart/"
-  weight = 5
-  parent = "porter-operator"
-  [[menu.main]]
-  name = "Install"
-  identifier = "operator-install"
-  url = "/operator/install/"
-  weight = 10
-  parent = "porter-operator"
-  [[menu.main]]
-  name = "File Formats"
-  identifier = "operator-file-formats"
-  url = "/operator/file-formats/"
-  weight = 15
-  parent = "porter-operator"
-# Troubleshooting
-[[menu.main]]
-  name = "Troubleshooting"
-  url = "/troubleshooting/troubleshooting"
-  identifier = "troubleshooting"
-  weight = 45
-# Best Practices
-[[menu.main]]
-  name = "Best Practices"
-  url = "#"
-  identifier = "best-practices"
-  weight = 50
-  [[menu.main]]
-  name = "When to use Credentials vs Parameters"
-  url = "/best-practices/credentials-or-parameters"
-  identifier = "credentials-or-parameters"
-  parent = "best-practices"
-  weight = 1
-  [[menu.main]]
-  name = "Best Practices for the exec mixin"
-  url = "/best-practices/exec-mixin"
-  identifier = "exec-mixin"
-  parent = "best-practices"
-  weight = 5
-  [[menu.main]]
-  name = "Best Practices for Porter in a CI Pipeline"
-  url = "/best-practices/ci-pipeline"
-  identifier = "ci-pipeline"
-  parent = "best-practices"
-  weight = 10
-# Integrations
-[[menu.main]]
-  name = "Integrations"
-  url = "#"
-  identifier = "integrations"
-  weight = 50
-  [[menu.main]]
-  name = "Connect to AKS Cluster"
-  url = "/integrations/aks"
-  identifier = "aks"
-  parent = "integrations"
-  weight = 1
-  [[menu.main]]
-  name = "Connect to GKE Cluster"
-  url = "/integrations/gke"
-  identifier = "gke"
-  parent = "integrations"
-  weight = 5
-  [[menu.main]]
-  name = "Connect to KinD Cluster"
-  url = "/integrations/kind"
-  identifier = "kind"
-  parent = "integrations"
-  weight = 10
-  [[menu.main]]
-  name = "Connect to Minikube Cluster"
-  url = "/integrations/minikube"
-  identifier = "minikube"
-  parent = "integrations"
-  weight = 15
-# Learn Porter
-[[menu.main]]
-  name = "Learn Porter"
-  url = "/learn/learning"
-  identifier = "learn-porter"
-  weight = 55
-# Contribute
-[[menu.main]]
-  name = "Contribute"
-  url = "#"
-  identifier = "contribute"
-  weight = 60
-  [[menu.main]]
-  name = "How to Contribute"
-  url = "/contribute/"
-  identifier = "contribute-how"
-  parent = "contribute"
-  weight = 1
-  [[menu.main]]
-  name = "Contributing Tutorial"
-  url = "/contribute/tutorial"
-  identifier = "contribute-tutorial"
-  parent = "contribute"
-  weight = 5
-  [[menu.main]]
-  name = "Contributing Guide"
-  url = "/contribute/guide"
-  identifier = "contribute-guide"
-  parent = "contribute"
-  weight = 10
-  [[menu.main]]
-  name = "Make a Proposal"
-  url = "/contribute/proposals"
-  identifier = "contribute-proposals"
-  parent = "contribute"
-  weight = 15
-# References
-[[menu.main]]
-  name = "References"
-  url = "#"
-  identifier = "references"
-  weight = 60
-  [[menu.main]]
-  name = "CNAB Specification"
-  url = "https://cnab.io/"
-  identifier = "cnab-spec"
-  weight = 1
-  parent = "references"
-  [[menu.main]]
-  name = "Porter Commands"
-  url = "#"
-  identifier = "cli"
-  weight = 5
-  parent = "references"
-  [[menu.main]]
-    name = "Overview"
-    url = "/references/cli/porter"
-    identifier = "cli-overview"
-    weight = 1
-    parent = "cli"
-  [[menu.main]]
-    name = "Bundles"
-    url = "/references/cli/bundles"
-    identifier = "cli-bundles"
-    weight = 5
-    parent = "cli"
-  [[menu.main]]
-    name = "Credentials"
-    url = "/references/cli/credentials"
-    identifier = "cli-credentials"
-    weight = 10
-    parent = "cli"
-  [[menu.main]]
-    name = "Parameters"
-    url = "/references/cli/parameters"
-    identifier = "cli-parameters"
-    weight = 15
-    parent = "cli"
-  [[menu.main]]
-    name = "Installations"
-    url = "/references/cli/installations"
-    identifier = "cli-installations"
-    weight = 20
-    parent = "cli"
-  [[menu.main]]
-    name = "Mixins"
-    url = "/references/cli/mixins"
-    identifier = "cli-mixins"
-    weight = 25
-    parent = "cli"
-  [[menu.main]]
-    name = "Plugins"
-    url = "/references/cli/plugins"
-    identifier = "cli-plugins"
-    weight = 30
-    parent = "cli"
-  [[menu.main]]
-  name = "Compatible Registries"
-  url = "/references/compatible-registries"
-  identifier = "compat-registries"
-  weight = 10
-  parent = "references"
-  [[menu.main]]
-  name = "Docker Images"
-  url = "/references/docker-images/"
-  identifier = "docker-images"
-  weight = 15
-  parent = "references"
-  [[menu.main]]
-  name = "Examples"
-  url = "/references/examples/"
-  identifier = "examples"
-  weight = 20
-  parent = "references"
-  [[menu.main]]
-  name = "File Formats"
-  url = "/references/file-formats/"
-  identifier = "file-formats"
-  weight = 25
-  parent = "references"
-  [[menu.main]]
-  name = "Logos"
-  url = "/references/logo/"
-  identifier = "logo"
-  weight = 30
-  parent = "references"
-  [[menu.main]]
-  name = "Porter Go Library"
-  url = "/references/library/"
-  identifier = "library"
-  weight = 35
-  parent = "references"
-  [[menu.main]]
-  name = "Porter Lint Messages"
-  url = "/references/linter"
-  identifier = "linter"
-  weight = 40
-  parent = "references"
-  [[menu.main]]
-  name = "Project Short Links"
-  url = "/references/short-links"
-  identifier = "short-links"
-  weight = 45
-  parent = "references"
-  [[menu.main]]
-  name = "Version Strategy"
-  url = "/references/version-strategy"
-  identifier = "version-strategy"
-  weight = 50
-  parent = "references"
-# FAQ
-[[menu.main]]
-  name = "FAQ"
-  url = "/faq/faq"
-  identifier = "faq"
-  weight = 65
+name = "QuickStart"
+url = "/docs/quickstart"
+identifier = "quickstart"
+weight = 2
 
+[[menu.main]]
+name = "Blog"
+url = "/blog"
+identifier = "blog"
+weight = 3
 
+[[menu.main]]
+name = "Community"
+url = "/community"
+identifier = "community"
+weight = 4
 
+[[menu.main]]
+name = "Learning"
+url = "/docs/learn"
+identifier = "learn"
+weight = 5
+
+[[menu.main]]
+name = "Docs"
+url = "/docs"
+identifier = "docs"
+weight = 6
+
+[[menu.main]]
+name = "Search"
+weight = 7
+  [menu.main.params]
+  type = "search"
+
+[[menu.main]]
+name = "GitHub"
+weight = 8
+url = "https://github.com/getporter/porter"
+  [menu.main.params]
+  icon = "github"
