@@ -1,0 +1,19 @@
+{{ define "main" }}
+<div class="mx-auto flex max-w-screen-xl">
+  <div
+    class="w-full break-words flex flex-col items-center justify-center min-h-[calc(100vh-var(--navbar-height))] min-w-0 justify-start pb-8 pr-[calc(env(safe-area-inset-right)-1.5rem)]"
+  >
+    <h1 class="text-4xl text-center font-bold leading-tight tracking-tighter">
+      404
+    </h1>
+    <p class="text-center">
+      The Page you are looking for doesn't exist -
+      <a
+        style="color: hsl(var(--primary-hue) 100% 45% / var(--tw-bg-opacity))"
+        href="{{ .Site.BaseURL }}"
+        >Go Home</a
+      >
+    </p>
+  </div>
+</div>
+{{- end -}}
