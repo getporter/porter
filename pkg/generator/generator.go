@@ -2,6 +2,8 @@ package generator
 
 import (
 	"fmt"
+	"os"
+	"strings"
 
 	"get.porter.sh/porter/pkg/secrets"
 	"github.com/cnabio/cnab-go/secrets/host"
@@ -86,7 +88,10 @@ func genSurvey(name string, surveyType SurveyType) (secrets.SourceMap, error) {
 	if err := survey.AskOne(sourceValuePrompt, &value, nil); err != nil {
 		return c, err
 	}
-
+	value, err := checkUserHomeDir(value)
+	if err != nil {
+		return c, err
+	}
 	switch source {
 	case questionSecret:
 		c.Source.Strategy = secrets.SourceSecret
@@ -105,4 +110,15 @@ func genSurvey(name string, surveyType SurveyType) (secrets.SourceMap, error) {
 		c.Source.Hint = value
 	}
 	return c, nil
+}
+
+func checkUserHomeDir(value string) (string, error) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", err
+	}
+	if strings.HasPrefix(value, "~/") {
+		return strings.Replace(value, "~/", home+"/", 1), nil
+	}
+	return value, nil
 }

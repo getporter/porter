@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 
 	"get.porter.sh/porter/pkg/config"
@@ -33,11 +34,15 @@ func CreateLegacyPorterHome(t *testing.T) *config.TestConfig {
 	oldPorterPath := filepath.Join(oldPorterDir, "porter"+xplat.FileExt())
 	if _, err = os.Stat(oldPorterPath); os.IsNotExist(err) {
 		os.MkdirAll(oldPorterDir, 0700)
-		err = downloads.Download(oldPorterDir, downloads.DownloadOptions{
-			UrlTemplate: "https://github.com/getporter/porter/releases/download/{{.VERSION}}/porter-{{.GOOS}}-amd64",
+		opts := downloads.DownloadOptions{
+			UrlTemplate: "https://github.com/getporter/porter/releases/download/{{.VERSION}}/porter-{{.GOOS}}-amd64{{.EXT}}",
 			Name:        "porter",
 			Version:     "v0.38.10",
-		})
+		}
+		if runtime.GOOS == "windows" {
+			opts.Ext = ".exe"
+		}
+		err = downloads.Download(oldPorterDir, opts)
 		require.NoError(t, err, "Failed to download a copy of the old version of porter")
 	}
 

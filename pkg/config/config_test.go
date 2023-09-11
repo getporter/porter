@@ -18,7 +18,7 @@ func TestConfig_GetHomeDir(t *testing.T) {
 	home, err := c.GetHomeDir()
 	require.NoError(t, err)
 
-	assert.Equal(t, "/home/myuser/.porter", home)
+	assert.Equal(t, filepath.FromSlash("/home/myuser/.porter"), home)
 }
 
 func TestConfig_GetHomeDirFromSymlink(t *testing.T) {

@@ -20,6 +20,7 @@ These are the members of the [maintainers team](https://github.com/orgs/getporte
 * [Steven Gettys](https://github.com/sgettys)
 * [Sarah Christoff](https://github.com/schristoff)
 * [Aaron Schlesinger](https://github.com/arschles)
+* [Troy Connor](https://github.com/troy0820)
 
 ## Emeritus Maintainers
 

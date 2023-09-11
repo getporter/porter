@@ -204,4 +204,4 @@ Do not publish a Porter v1 bundle on top of an existing bundle, otherwise older 
 
 [mongodb-docker]: /plugins/mongodb-docker
 [mongodb]: /plugins/mongodb/
-[File Formats]: https://release-v1.porter.sh/reference/file-formats/
+[File Formats]: https://getporter.org/references/file-formats/

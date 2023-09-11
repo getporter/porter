@@ -2,6 +2,7 @@ package porter
 
 import (
 	"context"
+	"path/filepath"
 	"testing"
 
 	"get.porter.sh/porter/pkg"
@@ -65,7 +66,7 @@ func TestArchive_ArchiveDirectory(t *testing.T) {
 		fs: p.FileSystem,
 	}
 
-	dir, err := ex.createArchiveFolder("examples/test-bundle-0.2.0")
+	dir, err := ex.createArchiveFolder(filepath.FromSlash("examples/test-bundle-0.2.0"))
 	require.NoError(t, err)
 	require.Contains(t, dir, "examples-test-bundle-0.2.0")
 

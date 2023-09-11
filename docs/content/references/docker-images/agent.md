@@ -32,5 +32,5 @@ kubectl apply -f https://raw.githubusercontent.com/getporter/porter/a059a9668934
 
 [configuration]: /configuration
 [porter-agent]: https://github.com/getporter/porter/pkgs/container/porter-agent
-[porter client]: /docker-images/client/
+[porter client]: /references/docker-images/client/
 [Porter Operator]: https://github.com/getporter/operator
