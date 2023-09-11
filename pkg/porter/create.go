@@ -13,6 +13,7 @@ import (
 
 // Create creates a new bundle configuration in the current directory
 func (p *Porter) Create() error {
+	fmt.Fprintln(p.Out, "creating porter configuration in the current directory")
 	destinationDir := "." // current directory
 
 	if err := p.CopyTemplate(p.Templates.GetManifest, filepath.Join(destinationDir, config.Name)); err != nil {
