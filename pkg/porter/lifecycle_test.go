@@ -2,6 +2,8 @@ package porter
 
 import (
 	"context"
+	"fmt"
+	"strings"
 	"testing"
 
 	"get.porter.sh/porter/pkg"
@@ -529,4 +531,140 @@ func TestPorter_applyActionOptionsToInstallation_PreservesExistingParams(t *test
 		"my-first-param":  "3", // Should have used the override
 		"my-second-param": "2", // Should have kept the existing value from the last run
 	}, params, "Incorrect parameter values were persisted on the installationß")
+}
+
+// make sure ensureVPrefix correctly adds a 'v' to the version tag of a reference
+func Test_ensureVPrefix(t *testing.T) {
+	type args struct {
+		opts *BundleReferenceOptions
+	}
+
+	ref, err := cnab.ParseOCIReference("registry/bundle:1.2.3")
+	assert.NoError(t, err)
+
+	testCases := []struct {
+		name    string
+		args    args
+		wantErr assert.ErrorAssertionFunc
+	}{
+		{
+			name: "add v to Reference (nil _ref)",
+			args: struct{ opts *BundleReferenceOptions }{opts: &BundleReferenceOptions{
+				installationOptions: installationOptions{},
+				BundlePullOptions: BundlePullOptions{
+					Reference:        "registry/bundle:1.2.3",
+					_ref:             nil,
+					InsecureRegistry: false,
+					Force:            false,
+				},
+				bundleRef: nil,
+			},
+			}, wantErr: assert.NoError,
+		},
+		{
+			name: "add v to Reference (non-nil _ref)",
+			args: struct{ opts *BundleReferenceOptions }{opts: &BundleReferenceOptions{
+				installationOptions: installationOptions{},
+				BundlePullOptions: BundlePullOptions{
+					Reference:        "registry/bundle:1.2.3",
+					_ref:             &ref,
+					InsecureRegistry: false,
+					Force:            false,
+				},
+				bundleRef: nil,
+			},
+			}, wantErr: assert.NoError,
+		},
+	}
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			// before
+			idx := strings.LastIndex(tt.args.opts.Reference, ":")
+			assert.False(t, tt.args.opts.Reference[idx+1] == 'v')
+			if tt.args.opts._ref != nil {
+				assert.False(t, tt.args.opts._ref.Tag()[0] == 'v')
+			}
+
+			err := ensureVPrefix(tt.args.opts)
+
+			// after
+			tt.wantErr(t, err, fmt.Sprintf("ensureVPrefix(%v)", tt.args.opts))
+
+			idx = strings.LastIndex(tt.args.opts.Reference, ":")
+			assert.True(t, tt.args.opts.Reference[idx+1] == 'v')
+			if tt.args.opts._ref != nil {
+				assert.True(t, tt.args.opts._ref.Tag()[0] == 'v')
+			}
+		})
+	}
+}
+
+// make sure ensureVPrefix doesn't add an extra 'v' to the version tag of a reference if it's already there
+func Test_ensureVPrefix_idempotent(t *testing.T) {
+	type args struct {
+		opts *BundleReferenceOptions
+	}
+
+	vRef, err := cnab.ParseOCIReference("registry/bundle:v1.2.3")
+	assert.NoError(t, err)
+
+	testcasesIdempotent := []struct {
+		name    string
+		args    args
+		wantErr assert.ErrorAssertionFunc
+	}{
+		{
+			name: "don't add v to Reference with existing v (nil _ref)",
+			args: struct{ opts *BundleReferenceOptions }{opts: &BundleReferenceOptions{
+				installationOptions: installationOptions{},
+				BundlePullOptions: BundlePullOptions{
+					Reference:        "registry/bundle:v1.2.3",
+					_ref:             nil,
+					InsecureRegistry: false,
+					Force:            false,
+				},
+				bundleRef: nil,
+			},
+			}, wantErr: assert.NoError,
+		},
+		{
+			name: "don't add v to Reference with existing v (non-nil _ref)",
+			args: struct{ opts *BundleReferenceOptions }{opts: &BundleReferenceOptions{
+				installationOptions: installationOptions{},
+				BundlePullOptions: BundlePullOptions{
+					Reference:        "registry/bundle:v1.2.3",
+					_ref:             &vRef,
+					InsecureRegistry: false,
+					Force:            false,
+				},
+				bundleRef: nil,
+			},
+			}, wantErr: assert.NoError,
+		},
+	}
+	for _, tt := range testcasesIdempotent {
+		t.Run(tt.name, func(t *testing.T) {
+			// before
+			idx := strings.LastIndex(tt.args.opts.Reference, ":")
+			assert.True(t, tt.args.opts.Reference[idx+1] == 'v')
+			assert.True(t, tt.args.opts.Reference[idx+2] != 'v')
+			if tt.args.opts._ref != nil {
+				assert.True(t, tt.args.opts._ref.Tag()[0] == 'v')
+				assert.True(t, tt.args.opts._ref.Tag()[1] != 'v')
+			}
+
+			err := ensureVPrefix(tt.args.opts)
+
+			// after
+			tt.wantErr(t, err, fmt.Sprintf("ensureVPrefix(%v)", tt.args.opts))
+
+			idx = strings.LastIndex(tt.args.opts.Reference, ":")
+			assert.True(t, tt.args.opts.Reference[idx+1] == 'v')
+			assert.True(t, tt.args.opts.Reference[idx+2] != 'v')
+			if tt.args.opts._ref != nil {
+				assert.True(t, tt.args.opts._ref.Tag()[0] == 'v')
+				assert.True(t, tt.args.opts._ref.Tag()[1] != 'v')
+			}
+		})
+	}
 }

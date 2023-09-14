@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"get.porter.sh/porter/pkg/cache"
 	"get.porter.sh/porter/pkg/cnab"
@@ -196,6 +197,12 @@ func (p *Porter) resolveBundleReference(ctx context.Context, opts *BundleReferen
 	useReference := func(ref cnab.OCIReference) error {
 		pullOpts := *opts // make a copy just to do the pull
 		pullOpts.Reference = ref.String()
+
+		err := ensureVPrefix(&pullOpts)
+		if err != nil {
+			return err
+		}
+
 		cachedBundle, err := p.prepullBundleByReference(ctx, &pullOpts)
 		if err != nil {
 			return err
@@ -296,6 +303,40 @@ func (p *Porter) BuildActionArgs(ctx context.Context, installation storage.Insta
 	}
 
 	return args, nil
+}
+
+// ensureVPrefix adds a "v" prefix to the version tag if it's not already there.
+// Version tag should always be prefixed with a "v", see https://github.com/getporter/porter/issues/2886.
+// This is safe because "porter publish" adds a "v", see
+// https://github.com/getporter/porter/blob/17bd7816ef6bde856793f6122e32274aa9d01d1b/pkg/storage/installation.go#L350
+func ensureVPrefix(opts *BundleReferenceOptions) error {
+	var ociRef *cnab.OCIReference
+	if opts._ref != nil {
+		ociRef = opts._ref
+	} else {
+		ref, err := cnab.ParseOCIReference(opts.Reference)
+		if err != nil {
+			return fmt.Errorf("unable to parse OCI reference from '%s': %w", opts.Reference, err)
+		}
+		ociRef = &ref
+	}
+
+	if strings.HasPrefix(ociRef.Tag(), "v") {
+		// don't do anything if "v" is already there
+		return nil
+	}
+
+	vRef, err := ociRef.WithTag("v" + ociRef.Tag())
+	if err != nil {
+		return fmt.Errorf("unable to prefix reference tag '%s' with 'v': %w", ociRef.Tag(), err)
+	}
+
+	// always update the .Reference string, but don't add the _ref field unless it was already there (non-nil)
+	opts.Reference = vRef.String()
+	if opts._ref != nil {
+		opts._ref = &vRef
+	}
+	return nil
 }
 
 // prepullBundleByReference handles calling the bundle pull operation and updating
