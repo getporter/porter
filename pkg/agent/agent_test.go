@@ -55,6 +55,9 @@ func TestExecute(t *testing.T) {
 func makeTestPorterHome(t *testing.T) string {
 	home, err := os.MkdirTemp("", "porter-home")
 	require.NoError(t, err)
-	require.NoError(t, shx.Copy("../../bin/porter", home))
+	pwd, err := os.Getwd()
+	require.NoError(t, err)
+	rootOfRepo := filepath.Join(pwd, "../../bin/porter")
+	require.NoError(t, shx.Copy(rootOfRepo, home))
 	return home
 }
