@@ -4,7 +4,6 @@ package agent
 
 import (
 	"bytes"
-	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -47,8 +46,6 @@ func TestExecute(t *testing.T) {
 
 func makeTestPorterHome(t *testing.T) string {
 	home, err := os.MkdirTemp("", "porter-home")
-	wd, _ := os.Getwd()
-	fmt.Println(wd)
 	require.NoError(t, err)
 	porter_binary := "../../bin/porter"
 	if runtime.GOOS == "windows" {
