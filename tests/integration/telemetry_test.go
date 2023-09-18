@@ -8,7 +8,6 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
-	"time"
 
 	"get.porter.sh/porter/pkg/porter"
 	"get.porter.sh/porter/tests"
@@ -30,10 +29,11 @@ func TestTelemetrySetup(t *testing.T) {
 	defer test.RunPorter("uninstall", "otel-jaeger", "--allow-docker-host-access")
 
 	// Wait until the collection should be up
-	time.Sleep(10 * time.Second)
+	// time.Sleep(10 * time.Second)
 
 	// Try to run porter with telemetry enabled
 	p := porter.New()
+
 	defer p.Close()
 	os.Setenv("PORTER_EXPERIMENTAL", "structured-logs")
 	os.Setenv("PORTER_TELEMETRY_ENABLED", "true")
