@@ -74,6 +74,7 @@ Optional output formats include json and yaml.`,
 		"Skip the number of installations by a certain amount. Defaults to 0.")
 	f.Int64Var(&opts.Limit, "limit", 0,
 		"Limit the number of installations by a certain amount. Defaults to 0.")
+	f.StringVar(&opts.FieldSelector, "field-selector", "", "Selector (field query) to filter on, supports '=' (e.g. --field-selector bundle.version=0.2.0,status.action=install). All fields from the json output are supported.")
 
 	return cmd
 }
