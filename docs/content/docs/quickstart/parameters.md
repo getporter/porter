@@ -1,5 +1,5 @@
 ---
-title: "QuickStart: Parameters"
+title: "Parameters"
 descriptions: Learn how to use a bundle with parameters
 ---
 

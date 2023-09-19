@@ -2,6 +2,8 @@
 title: Install Porter
 description: Installing the Porter client and mixins
 weight: 1
+aliases:
+  - /install/
 ---
 
 > Join our [mailing list] for announcements of releases and announcements of new features.

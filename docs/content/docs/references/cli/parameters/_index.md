@@ -24,12 +24,14 @@ weight: 4
 
 Most commands require a Docker daemon, either local or remote.
 
-Try our QuickStart https://getporter.org/quickstart to learn how to use Porter.
+Try our [QuickStart](/docs/quickstart) to learn how to use Porter.
 
-- [porter parameters apply](/cli/porter_parameters_apply/) - Apply changes to a parameter set
-- [porter parameters create](/cli/porter_parameters_create/) - Create a Parameter Set
-- [porter parameters delete](/cli/porter_parameters_delete/) - Delete a Parameter Set
-- [porter parameters edit](/cli/porter_parameters_edit/) - Edit Parameter Set
-- [porter parameters generate](/cli/porter_parameters_generate/) - Generate Parameter Set
-- [porter parameters list](/cli/porter_parameters_list/) - List parameter sets
-- [porter parameters show](/cli/porter_parameters_show/) - Show a Parameter Set
+{{< cards >}}
+{{< card link="apply" title="Porter Parameters Apply" >}}
+{{< card link="create" title="Porter Parameters Create" >}}
+{{< card link="delete" title="Porter Parameters Delete" >}}
+{{< card link="edit" title="Porter Parameters Edit" >}}
+{{< card link="generate" title="Porter Parameters Generate" >}}
+{{< card link="list" title="Porter Parameters List" >}}
+{{< card link="show" title="Porter Parameters Show" >}}
+{{< /cards >}}

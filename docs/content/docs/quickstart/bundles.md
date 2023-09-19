@@ -1,5 +1,5 @@
 ---
-title: "QuickStart: Bundles"
+title: "Bundles"
 descriptions: Learn about bundles and how to install them with Porter
 ---
 

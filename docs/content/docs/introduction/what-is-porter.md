@@ -8,6 +8,6 @@ Porter is an implementation of the [Cloud Native Application Bundle](https://cna
 
 ## See Also
 
-- [Create a Bundle](/getting-started/create-bundle/)
-- [Distribute Bundles](/development/distribute-bundles/)
-- [Airgapped Deployments](/administration/move-bundles-airgapped/)
+- [Create a Bundle](/docs/getting-started/create-bundle/)
+- [Distribute Bundles](/docs/development/authoring-a-bundle/distribute-bundles/)
+- [Airgapped Deployments](/docs/administration/move-bundles-airgapped/)

@@ -1,5 +1,5 @@
 ---
-title: "QuickStart: Configuration"
+title: "Configuration"
 descriptions: Control Porter's behavior with its config file
 layout: single
 ---
@@ -13,10 +13,11 @@ file to achieve some common tasks.
 
 ## Create configuration file
 
-First, let's create the configuration file. 
+First, let's create the configuration file.
 
 In your PORTER_HOME directory, by default ~/.porter/, create a file with name
 config.yaml.
+
 ```yaml
 touch ~/.porter/config.yaml
 ```
@@ -25,6 +26,7 @@ touch ~/.porter/config.yaml
 
 Instead of explicitly setting namespace for multiple bundles one by one, we can define a global default namespace
 in the configuration file like so:
+
 ```yaml
 namespace: "dev"
 ```
@@ -37,6 +39,7 @@ configured, Porter returns an error when sensitive data is detected during a bun
 try out porter with bundles that contain sensitive data, such as using sensitive parameters
 or generating sensitive outputs, copy and paste below code into the
 configuration file:
+
 ```yaml
 default-secrets-plugin: "filesystem"
 ```
@@ -53,4 +56,4 @@ In this QuickStart you learned how to configure Porter to define global default
 value for bundles and porter itself. You also learned how to work with bundles
 that contains or produces sensitive data.
 
-* [Learn more about Porter's configuration file](/configuration)
+- [Learn more about Porter's configuration file](/configuration)

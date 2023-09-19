@@ -8,7 +8,7 @@ aliases:
 
 When you are authoring a bundle, you can define parameters that are required by
 your bundle. These parameters are restricted to a list of [allowable data
-types](/author-bundles/#parameter-types) and are used to define parameters such as
+types](/docs/bundle/manifest) and are used to define parameters such as
 username and password values for a backing database, or the region that a
 certain resource should be deployed in, etc. Then in your action's steps you can
 reference the parameters using porter's template language `${
@@ -21,7 +21,7 @@ When a bundle is executed, parameter values are resolved in a hierarchy of (from
 - Parameter values remembered from the last time the bundle was run
 - Defaults defined for the parameter in the bundle definition
 
-Let's use the hello-llama bundle from the [Parameters QuickStart](/quickstart/parameters/) as an example and walk through the various ways that Porter will resolve the name parameter.
+Let's use the hello-llama bundle from the [Parameters QuickStart](/docs/quickstart/parameters/) as an example and walk through the various ways that Porter will resolve the name parameter.
 
 1. The bundle has one parameter, name, and it has a default therefore we do not need to specify it when installing the bundle. Running `porter install test -r ghcr.io/getporter/hello-llama:v0.1.1` uses the default value of "llama" for the name parameter.
 2. Now we can override that name using the \--param flag, `porter upgrade test --param name=sparkles`.
@@ -38,10 +38,10 @@ can have a secret source (`secret`). See the [secrets
 plugin docs](/plugins/types/#secrets) to learn how to configure Porter to use
 an external secret store.
 
-Parameter Sets are created using the combination of [porter parameters create][create]
-and [porter parameters apply][apply].
-Afterwards a parameter set can be [edited][edit] if changes are required.
-See [porter parameters help](/cli/porter_parameters/) for all available commands.
+Parameter Sets are created using the combination of [porter parameters create](/docs/references/cli/parameters/create)
+and [porter parameters apply](/docs/references/cli/parameters/apply).
+Afterwards a parameter set can be [edited](/docs/references/cli/parameters/edit) if changes are required.
+See [porter parameters help](/docs/references/cli/porter/parameters/) for all available commands.
 
 Now when you execute the bundle you can pass the name of the parameter set to
 the command using the `--parameter-set` or `-p` flag, e.g.
@@ -50,7 +50,7 @@ the command using the `--parameter-set` or `-p` flag, e.g.
 If you are creating parameter sets manually, you can use the [Parameter Set Schema]
 to validate that you have created it properly.
 
-[Parameter Set Schema]: /src/pkg/schema/parameter-set.schema.json
+[Parameter Set Schema]: https://github.com/getporter/porter/blob/main/pkg/schema/parameter-set.schema.json
 
 ## User-specified values
 
@@ -72,19 +72,19 @@ to handle sensitive data.
 The bundle author may have decided to supply a default value for a given
 parameter as well. This value would be used when neither a user-specified
 value nor a parameter set value is supplied. See the `Parameters` section in
-the [Author Bundles](/author-bundles#parameters/) doc for more info.
+the [Author Bundles](/docs/bundle/manifest) doc for more info.
 
 ## Q & A
 
 ### Why can't the parameter source be defined in porter.yaml?
 
-See the helpful explanation in the [credentials](/credentials/) doc, which
+See the helpful explanation in the [credentials](/docs/introduction/concepts-and-components/intro-credentials/) doc, which
 applies to parameter sources as well.
 
-[create]: /cli/porter_parameters_create/
-[apply]: /cli/porter_parameters_apply/
-[edit]: /cli/porter_parameters_edit/
+[create]: /docs/references/cli/parameters/create/
+[apply]: /docs/references/cli/parameters/apply/
+[edit]: /docs/references/cli/parameters/edit/
 
 ## Related
 
-- [QuickStart: Use parameters with a bundle](/quickstart/parameters/)
+- [QuickStart: Use parameters with a bundle](/docs/quickstart/parameters/)

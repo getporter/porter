@@ -1,5 +1,5 @@
 ---
-title: "QuickStart: Credentials"
+title: "Credentials"
 descriptions: Learn how to use a bundle with credentials
 layout: single
 ---
@@ -149,15 +149,15 @@ Retrieve current user profile from GitHub
 
 ## Cleanup
 
-To clean up the resources installed from this QuickStart, use the `porter uninstall` command. 
+To clean up the resources installed from this QuickStart, use the `porter uninstall` command.
 
 ```
 porter uninstall examples/credentials-tutorial
 ```
 
-## Next Steps 
+## Next Steps
 
 In this QuickStart, you learned how to see the credentials defined on a bundle, generate a credential set telling Porter where to find the credentials values, and pass credentials when executing a bundle.
 
-* [QuickStart: Manage an installation using desired state](/quickstart/desired-state/)
-* [Understanding how credentials are resolved](/credentials/)
+- [QuickStart: Manage an installation using desired state](/quickstart/desired-state/)
+- [Understanding how credentials are resolved](/credentials/)
