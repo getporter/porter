@@ -668,3 +668,53 @@ func Test_ensureVPrefix_idempotent(t *testing.T) {
 		})
 	}
 }
+
+// ensure no v is added if specifying :latest tag
+func Test_ensureVPrefix_latest(t *testing.T) {
+
+	latestRef := "example/porter-hello:latest"
+
+	t.Run(":latest tag", func(t *testing.T) {
+		opts := BundleReferenceOptions{
+			installationOptions: installationOptions{},
+			BundlePullOptions: BundlePullOptions{
+				Reference:        latestRef,
+				_ref:             nil,
+				InsecureRegistry: false,
+				Force:            false,
+			},
+			bundleRef: nil,
+		}
+
+		err := ensureVPrefix(&opts)
+		assert.NoError(t, err)
+
+		// should be unchanged
+		assert.Equal(t, latestRef, opts.BundlePullOptions.Reference)
+	})
+}
+
+// ensure no v is added if missing tag
+func Test_ensureVPrefix_missing_tag(t *testing.T) {
+
+	latestRef := "example/porter-hello"
+
+	t.Run(":latest tag", func(t *testing.T) {
+		opts := BundleReferenceOptions{
+			installationOptions: installationOptions{},
+			BundlePullOptions: BundlePullOptions{
+				Reference:        latestRef,
+				_ref:             nil,
+				InsecureRegistry: false,
+				Force:            false,
+			},
+			bundleRef: nil,
+		}
+
+		err := ensureVPrefix(&opts)
+		assert.NoError(t, err)
+
+		// should be unchanged
+		assert.Equal(t, latestRef, opts.BundlePullOptions.Reference)
+	})
+}

@@ -321,8 +321,8 @@ func ensureVPrefix(opts *BundleReferenceOptions) error {
 		ociRef = &ref
 	}
 
-	if strings.HasPrefix(ociRef.Tag(), "v") {
-		// don't do anything if "v" is already there
+	if ociRef.Tag() == "" || ociRef.Tag() == "latest" || strings.HasPrefix(ociRef.Tag(), "v") {
+		// don't do anything if missing tag, if tag is "latest", or if "v" is already there
 		return nil
 	}
 
