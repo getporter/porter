@@ -187,8 +187,7 @@ Try our QuickStart https://getporter.org/quickstart to learn how to use Porter.
 
 			// Reload configuration with the now parsed cli flags
 			p.DataLoader = cli.LoadHierarchicalConfig(cmd)
-			_, err := p.Connect(cmd.Context())
-			return err
+			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if printVersion {
