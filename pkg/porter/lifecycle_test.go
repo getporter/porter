@@ -3,6 +3,7 @@ package porter
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 	"testing"
 
@@ -585,7 +586,7 @@ func Test_ensureVPrefix(t *testing.T) {
 				assert.False(t, tt.args.opts._ref.Tag()[0] == 'v')
 			}
 
-			err := ensureVPrefix(tt.args.opts)
+			err := ensureVPrefix(tt.args.opts, os.Stdout)
 
 			// after
 			tt.wantErr(t, err, fmt.Sprintf("ensureVPrefix(%v)", tt.args.opts))
@@ -653,7 +654,7 @@ func Test_ensureVPrefix_idempotent(t *testing.T) {
 				assert.True(t, tt.args.opts._ref.Tag()[1] != 'v')
 			}
 
-			err := ensureVPrefix(tt.args.opts)
+			err := ensureVPrefix(tt.args.opts, os.Stdout)
 
 			// after
 			tt.wantErr(t, err, fmt.Sprintf("ensureVPrefix(%v)", tt.args.opts))
@@ -686,7 +687,7 @@ func Test_ensureVPrefix_latest(t *testing.T) {
 			bundleRef: nil,
 		}
 
-		err := ensureVPrefix(&opts)
+		err := ensureVPrefix(&opts, os.Stdout)
 		assert.NoError(t, err)
 
 		// should be unchanged
@@ -711,7 +712,7 @@ func Test_ensureVPrefix_missing_tag(t *testing.T) {
 			bundleRef: nil,
 		}
 
-		err := ensureVPrefix(&opts)
+		err := ensureVPrefix(&opts, os.Stdout)
 		assert.NoError(t, err)
 
 		// should be unchanged
