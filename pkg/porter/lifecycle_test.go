@@ -3,7 +3,7 @@ package porter
 import (
 	"context"
 	"fmt"
-	"os"
+	"io"
 	"strings"
 	"testing"
 
@@ -586,7 +586,7 @@ func Test_ensureVPrefix(t *testing.T) {
 				assert.False(t, tt.args.opts._ref.Tag()[0] == 'v')
 			}
 
-			err := ensureVPrefix(tt.args.opts, os.Stdout)
+			err := ensureVPrefix(tt.args.opts, io.Discard)
 
 			// after
 			tt.wantErr(t, err, fmt.Sprintf("ensureVPrefix(%v)", tt.args.opts))
@@ -654,7 +654,7 @@ func Test_ensureVPrefix_idempotent(t *testing.T) {
 				assert.True(t, tt.args.opts._ref.Tag()[1] != 'v')
 			}
 
-			err := ensureVPrefix(tt.args.opts, os.Stdout)
+			err := ensureVPrefix(tt.args.opts, io.Discard)
 
 			// after
 			tt.wantErr(t, err, fmt.Sprintf("ensureVPrefix(%v)", tt.args.opts))
@@ -670,52 +670,31 @@ func Test_ensureVPrefix_idempotent(t *testing.T) {
 	}
 }
 
-// ensure no v is added if specifying :latest tag
+// ensure no v is added if specifying :latest tag or no tag at all
 func Test_ensureVPrefix_latest(t *testing.T) {
+	testcases := map[string]struct {
+		latestRef string
+	}{
+		"latest":     {latestRef: "example/porter-hello:latest"},
+		"not-latest": {latestRef: "example/porter-hello"},
+	}
+	for name, test := range testcases {
+		t.Run(name, func(t *testing.T) {
+			opts := BundleReferenceOptions{
+				installationOptions: installationOptions{},
+				BundlePullOptions: BundlePullOptions{
+					Reference:        test.latestRef,
+					_ref:             nil,
+					InsecureRegistry: false,
+					Force:            false,
+				},
+				bundleRef: nil,
+			}
+			err := ensureVPrefix(&opts, io.Discard)
+			assert.NoError(t, err)
 
-	latestRef := "example/porter-hello:latest"
-
-	t.Run(":latest tag", func(t *testing.T) {
-		opts := BundleReferenceOptions{
-			installationOptions: installationOptions{},
-			BundlePullOptions: BundlePullOptions{
-				Reference:        latestRef,
-				_ref:             nil,
-				InsecureRegistry: false,
-				Force:            false,
-			},
-			bundleRef: nil,
-		}
-
-		err := ensureVPrefix(&opts, os.Stdout)
-		assert.NoError(t, err)
-
-		// should be unchanged
-		assert.Equal(t, latestRef, opts.BundlePullOptions.Reference)
-	})
-}
-
-// ensure no v is added if missing tag
-func Test_ensureVPrefix_missing_tag(t *testing.T) {
-
-	latestRef := "example/porter-hello"
-
-	t.Run(":latest tag", func(t *testing.T) {
-		opts := BundleReferenceOptions{
-			installationOptions: installationOptions{},
-			BundlePullOptions: BundlePullOptions{
-				Reference:        latestRef,
-				_ref:             nil,
-				InsecureRegistry: false,
-				Force:            false,
-			},
-			bundleRef: nil,
-		}
-
-		err := ensureVPrefix(&opts, os.Stdout)
-		assert.NoError(t, err)
-
-		// should be unchanged
-		assert.Equal(t, latestRef, opts.BundlePullOptions.Reference)
-	})
+			// shouldn't change
+			assert.Equal(t, test.latestRef, opts.BundlePullOptions.Reference)
+		})
+	}
 }
