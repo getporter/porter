@@ -45,9 +45,9 @@ type TelemetryConfig struct {
 // GetStartTimeout returns the amount of time to wait for the collector to start
 // if a value was not configured, return the default timeout.
 func (c TelemetryConfig) GetStartTimeout() time.Duration {
-	// if timeout, err := time.ParseDuration(c.StartTimeout); err == nil {
-	// 	return timeout
-	// }
+	if timeout, err := time.ParseDuration(c.StartTimeout); err == nil {
+		return timeout
+	}
 	return 100 * time.Millisecond
 }
 
