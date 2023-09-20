@@ -48,7 +48,7 @@ func (c TelemetryConfig) GetStartTimeout() time.Duration {
 	// if timeout, err := time.ParseDuration(c.StartTimeout); err == nil {
 	// 	return timeout
 	// }
-	return 900 * time.Millisecond
+	return 100 * time.Millisecond
 }
 
 type LogLevel string
