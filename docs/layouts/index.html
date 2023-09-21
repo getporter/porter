@@ -4,7 +4,7 @@
   <div class="w-full break-words flex flex-col min-h-[calc(100vh-var(--navbar-height))] min-w-0 justify-start pb-8 pr-[calc(env(safe-area-inset-right)-1.5rem)]">
     <section class="flex flex-col items-center gap-2 px-6 sm:px-4 pt-8 md:pt-12">
       <h1 class="text-4xl text-center font-bold leading-tight tracking-tighter md:text-5xl mt-6">
-        <span style="background: linear-gradient(180deg, #277A9F, #359ece); color: transparent; background-clip: text">
+        <span style="background: #277A9F; background: linear-gradient(180deg, #277A9F, #359ece); color: transparent; background-clip: text; -webkit-background-clip: text;">
           Your application, and everything you need to deploy, together 
         </span>
         <span>💖</span>
@@ -32,53 +32,59 @@
         }}
       </div>
       <div class="mt-6 grid grid-cols-1 gap-4 w-full">
-          <h2 class="text-2xl font-bold text-gray-400 leading-6 mb-2">When would I use Porter?</h2>
-          <p>Porter is never a replacement for an existing tool. Think of it as doing extra nice things on
-            top of what those great tools already do!
-            Below are some reasons why working with bundles with the tools embedded inside is helpful vs. using the same
-            tools standalone.
-          </p>
+        {{ template "cta-card" (dict
+          "title" "When would I use Porter?"
+          "subtitle" "Porter is never a replacement for an existing tool. Think of it as doing extra nice things on top of what those great tools already do!"
+          "style" "background: radial-gradient(ellipse at 50% 80%,rgba(246,204,105,0.15),hsla(0,0%,100%,0));"
+          )
+        }}
+      </div>
+      <div class="mt-12 w-full">
+        <h2 class="mt-6 text-xl mx-auto text-center font-bold text-gray-400 leading-6 tracking-tighter bg-clip-text text-transparent bg-gradient-to-b from-gray-900 to-gray-600 dark:from-gray-100 dark:to-gray-400" style="max-width: 800px">
+          Some reasons Why working with Bundles with the tools embedded inside is helpful vs. using the same
+          tools standalone.
+        </h2>
       </div>
       <div class="mt-6 grid sm:grid-cols-2 lg:grid-cols-3 grid-cols-1 gap-4 w-full">
         {{ template "hextra-feature-card" (dict
           "title" "Package"
           "icon" "package"
-          "style" "background: radial-gradient(ellipse at 50% 80%,rgba(45,175,233,0.15),hsla(0,0%,100%,0));"
+          "style" "background: radial-gradient(ellipse at 60% 500%,rgba(45,175,233,0.15),hsla(0,0%,100%,0));"
           "subtitle" "Package everything you use to deploy in a single artifact that can be easily distributed over registries and across air gapped networks."
           )
         }}
         {{ template "hextra-feature-card" (dict
           "title" "Secure"
           "icon" "secure"
-          "style" "background: radial-gradient(ellipse at 50% 80%,rgba(45,175,233,0.15),hsla(0,0%,100%,0));"
+          "style" "background: radial-gradient(ellipse at 60% 500%,rgba(246,204,105,0.15),hsla(0,0%,100%,0));"
           "subtitle" "JIT secret injection, immutable artifacts, and container security are just some of Porter's security features."
           )
         }}
         {{ template "hextra-feature-card" (dict
           "title" "Time"
           "icon" "time"
-          "style" "background: radial-gradient(ellipse at 50% 80%,rgba(45,175,233,0.15),hsla(0,0%,100%,0));"
+          "style" "background: radial-gradient(ellipse at 60% 500%,rgba(208,0,82,0.15),hsla(0,0%,100%,0));"
           "subtitle" "Save time because the bundle contains the exact version of your deployment tools. Users don’t need to find and install tools or switch between versions."
           )
         }}
         {{ template "hextra-feature-card" (dict
           "title" "Rich Metadata"
           "icon" "metadata"
-          "style" "background: radial-gradient(ellipse at 50% 80%,rgba(45,175,233,0.15),hsla(0,0%,100%,0));"
+          "style" "background: radial-gradient(ellipse at 60% 500%,rgba(246,204,105,0.15),hsla(0,0%,100%,0));"
           "subtitle" "View rich metadata about a deployment. Run porter explain to quickly see how to customize an installation with parameters, what credentials are needed by the bundle. There is no need for detailed installation documentation."
           )
         }}
         {{ template "hextra-feature-card" (dict
           "title" "Operational Knowledge"
           "icon" "knowledge"
-          "style" "background: radial-gradient(ellipse at 50% 80%,rgba(45,175,233,0.15),hsla(0,0%,100%,0));"
+          "style" "background: radial-gradient(ellipse at 60% 500%,rgba(208,0,82,0.15),hsla(0,0%,100%,0));"
           "subtitle" "Reduce the operational knowledge required to manage an application. Often deployments involve multiple tools, such as terraform, helm, kubectl; all glued together with bash scripts. Bundles abstract away the details of a deployment, and provide a consistent set of commands to deploy any application. "
           )
         }}
         {{ template "hextra-feature-card" (dict
           "title" "Team"
           "icon" "team"
-          "style" "background: radial-gradient(ellipse at 50% 80%,rgba(45,175,233,0.15),hsla(0,0%,100%,0));"
+          "style" "background: radial-gradient(ellipse at 60% 500%,rgba(45,175,233,0.15),hsla(0,0%,100%,0));"
           "subtitle" "Manage deployments securely as a team. Porter uses secure just-in-time credential injection and remembers the parameters last used to deploy. Teammates don’t need to hunt down the proper values themselves, or copy sensitive credentials into local environment variables or files. Secrets remain secure in a secret store such as Hashicorp Vault or Azure Key Vault."
           )
         }}
@@ -100,7 +106,7 @@
   >
     <div class="relative w-full p-6">
       <h3 class="text-2xl font-bold text-gray-400 leading-6 mb-2">{{ $title }}</h3>
-      <p class="text-gray-500 text-sm leading-6">{{ $subtitle | markdownify }}</p>
+      <p class="text-gray-600 dark:text-gray-400 text-sm leading-6">{{ $subtitle | markdownify }}</p>
     </div>
   </div>
 {{- end -}}
@@ -123,7 +129,7 @@
         {{- partial "utils/icon.html" (dict "name" $icon) -}}
         <span style="margin-left: 0.5rem">{{ $title }}</span>
       </h3>
-      <p class="text-gray-500 text-sm leading-6">{{ $subtitle | markdownify }}</p>
+      <p class="text-gray-600 dark:text-gray-400 text-sm leading-6">{{ $subtitle | markdownify }}</p>
     </div>
   </div>
 {{- end -}}
