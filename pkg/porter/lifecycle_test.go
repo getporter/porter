@@ -3,6 +3,7 @@ package porter
 import (
 	"context"
 	"fmt"
+	"io"
 	"strings"
 	"testing"
 
@@ -585,7 +586,7 @@ func Test_ensureVPrefix(t *testing.T) {
 				assert.False(t, tt.args.opts._ref.Tag()[0] == 'v')
 			}
 
-			err := ensureVPrefix(tt.args.opts)
+			err := ensureVPrefix(tt.args.opts, io.Discard)
 
 			// after
 			tt.wantErr(t, err, fmt.Sprintf("ensureVPrefix(%v)", tt.args.opts))
@@ -653,7 +654,7 @@ func Test_ensureVPrefix_idempotent(t *testing.T) {
 				assert.True(t, tt.args.opts._ref.Tag()[1] != 'v')
 			}
 
-			err := ensureVPrefix(tt.args.opts)
+			err := ensureVPrefix(tt.args.opts, io.Discard)
 
 			// after
 			tt.wantErr(t, err, fmt.Sprintf("ensureVPrefix(%v)", tt.args.opts))
@@ -665,6 +666,35 @@ func Test_ensureVPrefix_idempotent(t *testing.T) {
 				assert.True(t, tt.args.opts._ref.Tag()[0] == 'v')
 				assert.True(t, tt.args.opts._ref.Tag()[1] != 'v')
 			}
+		})
+	}
+}
+
+// ensure no v is added if specifying :latest tag or no tag at all
+func Test_ensureVPrefix_latest(t *testing.T) {
+	testcases := map[string]struct {
+		latestRef string
+	}{
+		"latest":     {latestRef: "example/porter-hello:latest"},
+		"not-latest": {latestRef: "example/porter-hello"},
+	}
+	for name, test := range testcases {
+		t.Run(name, func(t *testing.T) {
+			opts := BundleReferenceOptions{
+				installationOptions: installationOptions{},
+				BundlePullOptions: BundlePullOptions{
+					Reference:        test.latestRef,
+					_ref:             nil,
+					InsecureRegistry: false,
+					Force:            false,
+				},
+				bundleRef: nil,
+			}
+			err := ensureVPrefix(&opts, io.Discard)
+			assert.NoError(t, err)
+
+			// shouldn't change
+			assert.Equal(t, test.latestRef, opts.BundlePullOptions.Reference)
 		})
 	}
 }
