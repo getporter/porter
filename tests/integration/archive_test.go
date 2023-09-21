@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"io"
+	"runtime"
 	"testing"
 
 	"get.porter.sh/porter/pkg"
@@ -38,7 +39,10 @@ func TestArchive_StableDigest(t *testing.T) {
 
 	info, err := p.FileSystem.Stat(archiveFile1)
 	require.NoError(p.T(), err)
-	tests.AssertFilePermissionsEqual(t, archiveFile1, pkg.FileModeWritable, info.Mode())
+	if runtime.GOOS != "windows" {
+		// permission bits make no sense on windows
+		tests.AssertFilePermissionsEqual(t, archiveFile1, pkg.FileModeWritable, info.Mode())
+	}
 
 	hash1 := getHash(p, archiveFile1)
 
