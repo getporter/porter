@@ -6,6 +6,7 @@ relativeURLs = "false"
 pluralizeListTitles = "false"
 plainIdAnchors = "true"
 defaultContentLanguage = "en"
+enableInlineShortcodes= true
 
 [[module.imports]]
     path = 'github.com/imfing/hextra'
@@ -33,6 +34,8 @@ defaultContentLanguage = "en"
 
   [params.navbar.logo]
     path = "images/porter-icon-badge.png"
+    width = 80
+    height = 42
 
 # Docs Navigation
 [[menu.main]]
