@@ -189,7 +189,6 @@ Try our QuickStart https://getporter.org/quickstart to learn how to use Porter.
 			// Reload configuration with the now parsed cli flags
 			p.DataLoader = cli.LoadHierarchicalConfig(cmd)
 			ctx, err := p.Connect(cmd.Context())
-
 			// Extract the parent span from the main command
 			parentSpan := trace.SpanFromContext(cmd.Context())
 

@@ -87,3 +87,4 @@ and we will add you. **All** contributors belong here. 💯
 * [Phill Gibson](https://github.com/phillipgibson)
 * [Ludvig Liljenberg](https://github.com/ludfjig)
 * [Maninderjit Bindra](https://github.com/manisbindra)
+* [Gonçalo Montalvão Marques](https://github.com/gonmmarques)
