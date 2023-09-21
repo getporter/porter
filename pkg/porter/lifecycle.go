@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"strings"
 
 	"get.porter.sh/porter/pkg/cache"
@@ -198,7 +199,7 @@ func (p *Porter) resolveBundleReference(ctx context.Context, opts *BundleReferen
 		pullOpts := *opts // make a copy just to do the pull
 		pullOpts.Reference = ref.String()
 
-		err := ensureVPrefix(&pullOpts)
+		err := ensureVPrefix(&pullOpts, p.Out)
 		if err != nil {
 			return err
 		}
@@ -309,7 +310,7 @@ func (p *Porter) BuildActionArgs(ctx context.Context, installation storage.Insta
 // Version tag should always be prefixed with a "v", see https://github.com/getporter/porter/issues/2886.
 // This is safe because "porter publish" adds a "v", see
 // https://github.com/getporter/porter/blob/17bd7816ef6bde856793f6122e32274aa9d01d1b/pkg/storage/installation.go#L350
-func ensureVPrefix(opts *BundleReferenceOptions) error {
+func ensureVPrefix(opts *BundleReferenceOptions, out io.Writer) error {
 	var ociRef *cnab.OCIReference
 	if opts._ref != nil {
 		ociRef = opts._ref
@@ -321,8 +322,8 @@ func ensureVPrefix(opts *BundleReferenceOptions) error {
 		ociRef = &ref
 	}
 
-	if strings.HasPrefix(ociRef.Tag(), "v") {
-		// don't do anything if "v" is already there
+	if ociRef.Tag() == "" || ociRef.Tag() == "latest" || strings.HasPrefix(ociRef.Tag(), "v") {
+		// don't do anything if missing tag, if tag is "latest", or if "v" is already there
 		return nil
 	}
 
@@ -332,6 +333,7 @@ func ensureVPrefix(opts *BundleReferenceOptions) error {
 	}
 
 	// always update the .Reference string, but don't add the _ref field unless it was already there (non-nil)
+	fmt.Fprintf(out, "WARNING: using reference %q instead of %q because missing v-prefix on tag\n", vRef.String(), ociRef.String())
 	opts.Reference = vRef.String()
 	if opts._ref != nil {
 		opts._ref = &vRef
