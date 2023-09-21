@@ -1,0 +1,21 @@
+name: Go package
+run-name: windows test
+on:
+  workflow_dispatch: {}
+  push: {}
+  pull_request: {}
+
+jobs:
+  build:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.21'
+          cache: false
+      - name: Build
+        run: go run mage.go -v xbuildall
+      - name: SmokeTest
+        run: go run mage.go -v testsmoke

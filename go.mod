@@ -3,6 +3,8 @@ module get.porter.sh/porter
 go 1.20
 
 replace (
+	// testing for windows
+	get.porter.sh/magefiles v0.6.0 => github.com/ludfjig/magefiles v0.0.0-20230818183235-007f40840672
 	// See https://github.com/hashicorp/go-plugin/pull/127 and
 	// https://github.com/hashicorp/go-plugin/pull/163
 	// Also includes branches we haven't PR'd yet: capture-yamux-logs, context-cancellation

@@ -202,10 +202,10 @@ stages:
         strategy:
           matrix:
             # Skip windows smoke tests until we can fix the windows agent
-            #windows:
-            #  poolName: "windows"
-            #  vmImage: ""
-            #  GOMODCACHE: "C:/Users/porterci/go/pkg/mod"
+            windows:
+              poolName: "windows"
+              vmImage: "windows-latest"
+              GOMODCACHE: "C:/Users/porterci/go/pkg/mod"
             linux:
               poolName: "Azure Pipelines"
               vmImage: "ubuntu-latest"
@@ -229,16 +229,28 @@ stages:
               key: "$(GOMODCACHE_KEY)"
               restoreKeys: $(GOMODCACHE_RESTOREKEYS)
               path: $(GOMODCACHE)
-          - task: Cache@2
-            displayName: Cache Go Build
+          - task: DockerInstaller@0
+            displayName: Docker Installer
             inputs:
-              key: "$(GOCACHE_KEY)"
-              restoreKeys: $(GOCACHE_RESTOREKEYS)
-              path: $(GOCACHE)
-          - script: go run mage.go ConfigureAgent UseXBuildBinaries
-            displayName: "Setup Bin"
-          - script: mage -v TestSmoke
-            displayName: "Run Smoke Tests"
+              dockerVersion: 24.0.5
+              releaseType: stable
+          - task: CmdLine@2
+            displayName: Validate docker
+            condition: eq(variables.poolName, 'windows')
+            inputs:
+              script: |
+                docker info
+                docker -v
+                docker ps
+          - task: PowerShell@2
+            displayName: Validate docker PS
+            condition: eq(variables.poolName, 'windows')
+            inputs:
+              targetType: 'inline'
+              script: |
+                docker info
+                docker -v
+                docker ps
 
   - stage: Publish
     dependsOn: Validate
