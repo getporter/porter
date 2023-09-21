@@ -335,7 +335,7 @@ func (ex *exporter) addImage(base bundle.BaseImage) error {
 // It sanitizes the name and make sure only the current user has full permission to it.
 // If the name contains a path separator, all path separators will be replaced with "-".
 func (ex *exporter) createArchiveFolder(name string) (string, error) {
-	cleanedPath := strings.ReplaceAll(afero.UnicodeSanitize(name), string(os.PathSeparator), "-")
+	cleanedPath := strings.ReplaceAll(afero.UnicodeSanitize(name), "/", "-")
 	archiveDir, err := ex.fs.TempDir("", cleanedPath)
 	if err != nil {
 		return "", fmt.Errorf("can not create a temporary archive folder: %w", err)

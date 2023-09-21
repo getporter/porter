@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"get.porter.sh/porter/pkg"
-	"golang.org/x/sync/errgroup"
 )
 
 // allow the tests to capture output
@@ -106,38 +105,7 @@ func copyConfig(relPath string, configFile string, fi os.FileInfo, porterHome st
 	}
 	defer dest.Close()
 
-	if !isExecutable(fi.Mode()) {
-		// Copy the file and write out its content at the same time
-		wg := errgroup.Group{}
-		pr, pw := io.Pipe()
-		tr := io.TeeReader(src, pw)
-
-		// Copy the File
-		wg.Go(func() error {
-			defer pw.Close()
-
-			_, err = io.Copy(dest, tr)
-			return err
-		})
-
-		// Print out the contents of the transferred file only if it's not executable
-		wg.Go(func() error {
-			// read from the PipeReader to stdout
-			_, err := io.Copy(stderr, pr)
-
-			// Pad with whitespace so it's easier to see the file contents
-			fmt.Fprintf(stderr, "\n\n")
-			return err
-		})
-
-		return wg.Wait()
-	}
-
-	// Just copy the file if it's binary, don't print it out
+	// Just copy the file
 	_, err = io.Copy(dest, src)
 	return err
-}
-
-func isExecutable(mode os.FileMode) bool {
-	return mode&0111 != 0
 }

@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -125,13 +126,16 @@ func (p *TestPorter) SetupIntegrationTest() context.Context {
 
 	// Load test credentials, with KUBECONFIG replaced properly
 	kubeconfig := filepath.Join(p.RepoRoot, "kind.config")
+	if runtime.GOOS == "windows" {
+		kubeconfig = strings.Replace(kubeconfig, `\`, `\\`, -1)
+	}
 	ciCredsPath := filepath.Join(p.RepoRoot, "build/testdata/credentials/ci.json")
 	ciCredsB, err := p.FileSystem.ReadFile(ciCredsPath)
 	require.NoError(t, err, "could not read test credentials %s", ciCredsPath)
 	// update the kubeconfig reference in the credentials to match what's on people's dev machine
 	ciCredsB = []byte(strings.Replace(string(ciCredsB), "KUBECONFIGPATH", kubeconfig, -1))
 	var testCreds storage.CredentialSet
-	err = encoding.UnmarshalYaml(ciCredsB, &testCreds)
+	err = encoding.UnmarshalJson(ciCredsB, &testCreds)
 	require.NoError(t, err, "could not unmarshal test credentials %s", ciCredsPath)
 	err = p.Credentials.UpsertCredentialSet(context.Background(), testCreds)
 	require.NoError(t, err, "could not save test credentials (ci)")
