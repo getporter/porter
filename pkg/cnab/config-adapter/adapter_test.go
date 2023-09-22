@@ -650,6 +650,7 @@ func TestManifestConverter_generateDependenciesv2(t *testing.T) {
 						"myoutput": {
 							Definition:  "myoutput-output",
 							Description: "worlds smallest output",
+							Path:        "/cnab/app/outputs/myoutput",
 						},
 					},
 					Parameters: map[string]bundle.Parameter{
@@ -657,6 +658,10 @@ func TestManifestConverter_generateDependenciesv2(t *testing.T) {
 							Definition:  "myparam-parameter",
 							Description: "worlds biggest param",
 							Required:    false,
+							Destination: &bundle.Location{
+								Path:                "",
+								EnvironmentVariable: "MYPARAM",
+							},
 						},
 					},
 					Credentials: map[string]bundle.Credential{
@@ -681,11 +686,13 @@ func TestManifestConverter_generateDependenciesv2(t *testing.T) {
 		},
 			wantDefs: map[string]*definition.Schema{
 				"myoutput-output": {
-					Type: "integer",
+					Type:        "string",
+					Description: "worlds smallest output",
 				},
 				"myparam-parameter": {
-					Type:    "string",
-					Default: "huuge",
+					Type:        "string",
+					Default:     false,
+					Description: "worlds biggest param",
 				},
 			},
 		},
