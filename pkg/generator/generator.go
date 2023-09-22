@@ -2,6 +2,8 @@ package generator
 
 import (
 	"fmt"
+	"os"
+	"strings"
 
 	"get.porter.sh/porter/pkg/secrets"
 	"github.com/cnabio/cnab-go/secrets/host"
@@ -33,18 +35,18 @@ const (
 	questionCommand = "shell command"
 )
 
-type generator func(name string, surveyType SurveyType) (secrets.Strategy, error)
+type generator func(name string, surveyType SurveyType) (secrets.SourceMap, error)
 
-func genEmptySet(name string, surveyType SurveyType) (secrets.Strategy, error) {
-	return secrets.Strategy{
+func genEmptySet(name string, surveyType SurveyType) (secrets.SourceMap, error) {
+	return secrets.SourceMap{
 		Name:   name,
-		Source: secrets.Source{Value: "TODO"},
+		Source: secrets.Source{Hint: "TODO"},
 	}, nil
 }
 
-func genSurvey(name string, surveyType SurveyType) (secrets.Strategy, error) {
+func genSurvey(name string, surveyType SurveyType) (secrets.SourceMap, error) {
 	if surveyType != surveyCredentials && surveyType != surveyParameters {
-		return secrets.Strategy{}, fmt.Errorf("unsupported survey type: %s", surveyType)
+		return secrets.SourceMap{}, fmt.Errorf("unsupported survey type: %s", surveyType)
 	}
 
 	// extra space-suffix to align question and answer. Unfortunately misaligns help text
@@ -57,7 +59,7 @@ func genSurvey(name string, surveyType SurveyType) (secrets.Strategy, error) {
 	// extra space-suffix to align question and answer. Unfortunately misaligns help text
 	sourceValuePromptTemplate := "Enter the %s that will be used to set %s %q\n "
 
-	c := secrets.Strategy{Name: name}
+	c := secrets.SourceMap{Name: name}
 
 	source := ""
 	if err := survey.AskOne(sourceTypePrompt, &source, nil); err != nil {
@@ -86,23 +88,37 @@ func genSurvey(name string, surveyType SurveyType) (secrets.Strategy, error) {
 	if err := survey.AskOne(sourceValuePrompt, &value, nil); err != nil {
 		return c, err
 	}
-
+	value, err := checkUserHomeDir(value)
+	if err != nil {
+		return c, err
+	}
 	switch source {
 	case questionSecret:
-		c.Source.Key = secrets.SourceSecret
-		c.Source.Value = value
+		c.Source.Strategy = secrets.SourceSecret
+		c.Source.Hint = value
 	case questionValue:
-		c.Source.Key = host.SourceValue
-		c.Source.Value = value
+		c.Source.Strategy = host.SourceValue
+		c.Source.Hint = value
 	case questionEnvVar:
-		c.Source.Key = host.SourceEnv
-		c.Source.Value = value
+		c.Source.Strategy = host.SourceEnv
+		c.Source.Hint = value
 	case questionPath:
-		c.Source.Key = host.SourcePath
-		c.Source.Value = value
+		c.Source.Strategy = host.SourcePath
+		c.Source.Hint = value
 	case questionCommand:
-		c.Source.Key = host.SourceCommand
-		c.Source.Value = value
+		c.Source.Strategy = host.SourceCommand
+		c.Source.Hint = value
 	}
 	return c, nil
+}
+
+func checkUserHomeDir(value string) (string, error) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", err
+	}
+	if strings.HasPrefix(value, "~/") {
+		return strings.Replace(value, "~/", home+"/", 1), nil
+	}
+	return value, nil
 }

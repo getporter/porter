@@ -223,7 +223,7 @@ func (i *Installation) SetLabel(key string, value string) {
 
 // NewInternalParameterSet creates a new ParameterSet that's used to store
 // parameter overrides with the required fields initialized.
-func (i Installation) NewInternalParameterSet(params ...secrets.Strategy) ParameterSet {
+func (i Installation) NewInternalParameterSet(params ...secrets.SourceMap) ParameterSet {
 	return NewInternalParameterSet(i.Namespace, i.ID, params...)
 }
 

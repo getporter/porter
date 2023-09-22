@@ -11,7 +11,7 @@ pool:
   vmImage: "ubuntu-latest"
 
 variables:
-  GOVERSION: "1.19.7"
+  GOVERSION: "1.20.7"
   # Cache go modules and the results of go build/test
   # Increment the version number prefix of the key and restoreKey to clear the cache
   GOCACHE: $(Pipeline.Workspace)/.cache/go-build/
@@ -42,7 +42,7 @@ stages:
 
   - stage: Validate
     dependsOn: Setup
-    condition: eq(dependencies.Setup.outputs['pr_type.BUILD.DOCS_ONLY'], 'false')
+    condition: and(succeeded(), eq(dependencies.Setup.outputs['pr_type.BUILD.DOCS_ONLY'], 'false'))
     jobs:
       - job: build
         displayName: "Native Compile"

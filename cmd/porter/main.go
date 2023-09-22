@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"runtime/debug"
+	"strconv"
 	"strings"
 
 	"get.porter.sh/porter/pkg/cli"
@@ -15,9 +16,12 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 var includeDocsCommand = false
+
+var includeGRPCServer string = "false"
 
 //go:embed helptext/usage.txt
 var usageText string
@@ -185,7 +189,14 @@ Try our QuickStart https://getporter.org/quickstart to learn how to use Porter.
 			// Reload configuration with the now parsed cli flags
 			p.DataLoader = cli.LoadHierarchicalConfig(cmd)
 			ctx, err := p.Connect(cmd.Context())
-			cmd.SetContext(ctx)
+			// Extract the parent span from the main command
+			parentSpan := trace.SpanFromContext(cmd.Context())
+
+			// Create a context with the main command's span
+			ctxWithRootCmdSpan := trace.ContextWithSpan(ctx, parentSpan)
+
+			// Set the new context to the command
+			cmd.SetContext(ctxWithRootCmdSpan)
 			return err
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -226,6 +237,11 @@ Try our QuickStart https://getporter.org/quickstart to learn how to use Porter.
 	cmd.AddCommand(buildCredentialsCommands(p))
 	cmd.AddCommand(buildParametersCommands(p))
 	cmd.AddCommand(buildCompletionCommand(p))
+	//use -ldflags "-X main.includeGRPCServer=true" during build to include
+	grpcServer, _ := strconv.ParseBool(includeGRPCServer)
+	if grpcServer {
+		cmd.AddCommand(buildGRPCServerCommands(p))
+	}
 
 	for _, alias := range buildAliasCommands(p) {
 		cmd.AddCommand(alias)

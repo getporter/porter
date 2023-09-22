@@ -520,12 +520,12 @@ func Test_Paramapalooza(t *testing.T) {
 	}
 
 	for _, tc := range testcases {
+		tc := tc
 		t.Run(tc.Name, func(t *testing.T) {
+			t.Parallel()
 			actions := []string{"install", "upgrade", "uninstall", "zombies"}
 			for _, action := range actions {
 				t.Run(action, func(t *testing.T) {
-					t.Parallel()
-					tc := tc
 
 					r := NewTestPorter(t)
 					defer r.Close()
@@ -684,6 +684,26 @@ func TestShowParameters_Found(t *testing.T) {
 			test.CompareGoldenFile(t, tc.expectedOutputFile, gotOutput)
 		})
 	}
+}
+
+func TestPrintParameters(t *testing.T) {
+	p := NewTestPorter(t)
+	defer p.Close()
+
+	opts := ListOptions{
+		PrintOptions: printer.PrintOptions{
+			Format: printer.FormatPlaintext,
+		},
+		Name: "mypset",
+	}
+
+	p.TestParameters.AddTestParameters("testdata/paramset.json")
+
+	err := p.PrintParameters(context.Background(), opts)
+	require.NoError(t, err, "an error should not have occurred")
+	gotOutput := p.TestConfig.TestContext.GetOutput()
+	test.CompareGoldenFile(t, "testdata/parameters/mypsettable.txt", gotOutput)
+
 }
 
 func TestParametersCreateOptions_Validate(t *testing.T) {
@@ -860,7 +880,7 @@ func TestPorter_ParametersApply(t *testing.T) {
 		assert.Equal(t, "mypset", ps.Name, "unexpected parameter set name")
 		require.Len(t, ps.Parameters, 1, "expected 1 parameter in the set")
 		assert.Equal(t, "foo", ps.Parameters[0].Name, "expected the foo parameter mapping defined")
-		assert.Equal(t, "secret", ps.Parameters[0].Source.Key, "expected the foo parameter mapping to come from a secret")
-		assert.Equal(t, "foo_secret", ps.Parameters[0].Source.Value, "expected the foo parameter mapping to use foo_secret")
+		assert.Equal(t, "secret", ps.Parameters[0].Source.Strategy, "expected the foo parameter mapping to come from a secret")
+		assert.Equal(t, "foo_secret", ps.Parameters[0].Source.Hint, "expected the foo parameter mapping to use foo_secret")
 	})
 }

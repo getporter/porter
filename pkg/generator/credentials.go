@@ -39,7 +39,7 @@ func GenerateCredentials(opts GenerateCredentialsOptions) (storage.CredentialSet
 
 func genCredentialSet(namespace string, name string, creds map[string]bundle.Credential, fn generator) (storage.CredentialSet, error) {
 	cs := storage.NewCredentialSet(namespace, name)
-	cs.Credentials = []secrets.Strategy{}
+	cs.Credentials = []secrets.SourceMap{}
 
 	if strings.ContainsAny(name, "./\\") {
 		return cs, fmt.Errorf("credentialset name '%s' cannot contain the following characters: './\\'", name)

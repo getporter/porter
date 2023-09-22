@@ -42,7 +42,7 @@ func buildInstallationsListCommand(p *porter.Porter) *cobra.Command {
 
 A listing of bundles currently installed by Porter will be provided, along with metadata such as creation time, last action, last status, etc.
 Optionally filters the results name, which returns all results whose name contain the provided query.
-The results may also be filtered by associated labels and the namespace in which the installation is defined. 
+The results may also be filtered by associated labels and the namespace in which the installation is defined.
 
 Optional output formats include json and yaml.`,
 		Example: `  porter installations list
@@ -74,6 +74,7 @@ Optional output formats include json and yaml.`,
 		"Skip the number of installations by a certain amount. Defaults to 0.")
 	f.Int64Var(&opts.Limit, "limit", 0,
 		"Limit the number of installations by a certain amount. Defaults to 0.")
+	f.StringVar(&opts.FieldSelector, "field-selector", "", "Selector (field query) to filter on, supports '=' (e.g. --field-selector bundle.version=0.2.0,status.action=install). All fields from the json output are supported.")
 
 	return cmd
 }
@@ -190,9 +191,9 @@ func buildInstallationRunsListCommand(p *porter.Porter) *cobra.Command {
 		Use:   "list",
 		Short: "List runs of an Installation",
 		Long:  "List runs of an Installation",
-		Example: `  porter installation runs list [NAME] [--namespace NAMESPACE] [--output FORMAT]
+		Example: `  porter installations runs list [NAME] [--namespace NAMESPACE] [--output FORMAT]
 
-  porter installations runs list --name myapp --namespace dev
+  porter installations runs list myapp --namespace dev
 
 `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
@@ -219,7 +220,7 @@ func buildInstallationInstallCommand(p *porter.Porter) *cobra.Command {
 		Short: "Create a new installation of a bundle",
 		Long: `Create a new installation of a bundle.
 
-The first argument is the name of the installation to create. This defaults to the name of the bundle. 
+The first argument is the name of the installation to create. This defaults to the name of the bundle.
 
 Once a bundle has been successfully installed, the install action cannot be repeated. This is a precaution to avoid accidentally overwriting an existing installation. If you need to re-run install, which is common when authoring a bundle, you can use the --force flag to by-pass this check.
 

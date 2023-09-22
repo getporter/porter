@@ -81,17 +81,16 @@ func (p *Porter) PrintParameters(ctx context.Context, opts ListOptions) error {
 		tp := dtprinter.DateTimePrinter{
 			Now: func() time.Time { return now },
 		}
-
-		printParamRow :=
-			func(v interface{}) []string {
-				cr, ok := v.(DisplayCredentialSet)
-				if !ok {
-					return nil
-				}
-				return []string{cr.Namespace, cr.Name, tp.Format(cr.Status.Modified)}
+		paramsSets := [][]string{}
+		for _, ps := range params {
+			for _, param := range ps.Parameters {
+				list := []string{}
+				list = append(list, ps.Namespace, param.Name, param.Source.Strategy, param.Source.Hint, tp.Format(ps.Status.Modified))
+				paramsSets = append(paramsSets, list)
 			}
-		return printer.PrintTable(p.Out, params, printParamRow,
-			"NAMESPACE", "NAME", "MODIFIED")
+		}
+		return printer.PrintTableParameterSet(p.Out, paramsSets,
+			"NAMESPACE", "NAME", "TYPE", "VALUE", "MODIFIED")
 	default:
 		return fmt.Errorf("invalid format: %s", opts.Format)
 	}
@@ -272,7 +271,7 @@ func (p *Porter) ShowParameter(ctx context.Context, opts ParameterShowOptions) e
 
 		// Iterate through all ParameterStrategies and add to rows
 		for _, pset := range paramSet.Parameters {
-			rows = append(rows, []string{pset.Name, pset.Source.Value, pset.Source.Key})
+			rows = append(rows, []string{pset.Name, pset.Source.Hint, pset.Source.Strategy})
 		}
 
 		// Build and configure our tablewriter
@@ -391,7 +390,7 @@ func (p *Porter) loadParameterSets(ctx context.Context, bun cnab.ExtendedBundle,
 				for i, param := range pset.Parameters {
 					if param.Name == paramName {
 						// Pass through value (filepath) directly to resolvedParameters
-						resolvedParameters[param.Name] = param.Source.Value
+						resolvedParameters[param.Name] = param.Source.Hint
 						// Eliminate this param from pset to prevent its resolution by
 						// the cnab-go library, which doesn't support this parameter type
 						pset.Parameters[i] = pset.Parameters[len(pset.Parameters)-1]

@@ -126,8 +126,7 @@ func (o *CredentialOptions) validateCredName(args []string) error {
 // a silent build, based on the opts.Silent flag, or interactive using a survey. Returns an
 // error if unable to generate credentials
 func (p *Porter) GenerateCredentials(ctx context.Context, opts CredentialOptions) error {
-	ctx, span := tracing.StartSpan(ctx,
-		attribute.String("reference", opts.Reference))
+	ctx, span := tracing.StartSpan(ctx, attribute.String("reference", opts.Reference))
 	defer span.EndSpan()
 
 	bundleRef, err := opts.GetBundleReference(ctx, p)
@@ -273,7 +272,7 @@ func (p *Porter) ShowCredential(ctx context.Context, opts CredentialShowOptions)
 
 		// Iterate through all CredentialStrategies and add to rows
 		for _, cs := range credSet.Credentials {
-			rows = append(rows, []string{cs.Name, cs.Source.Value, cs.Source.Key})
+			rows = append(rows, []string{cs.Name, cs.Source.Hint, cs.Source.Strategy})
 		}
 
 		// Build and configure our tablewriter

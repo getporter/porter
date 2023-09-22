@@ -10,10 +10,10 @@ import (
 )
 
 func TestCredentialStorage_CRUD(t *testing.T) {
-	cs := NewCredentialSet("dev", "sekrets", secrets.Strategy{
+	cs := NewCredentialSet("dev", "sekrets", secrets.SourceMap{
 		Name: "password", Source: secrets.Source{
-			Key:   "secret",
-			Value: "dbPassword"}})
+			Strategy: "secret",
+			Hint:     "dbPassword"}})
 
 	cp := NewTestCredentialProvider(t)
 	defer cp.Close()
@@ -34,10 +34,10 @@ func TestCredentialStorage_CRUD(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, creds, 1, "expected 1 credential set defined in all namespaces")
 
-	cs.Credentials = append(cs.Credentials, secrets.Strategy{
+	cs.Credentials = append(cs.Credentials, secrets.SourceMap{
 		Name: "token", Source: secrets.Source{
-			Key:   "secret",
-			Value: "github-token",
+			Strategy: "secret",
+			Hint:     "github-token",
 		},
 	})
 	require.NoError(t, cp.UpdateCredentialSet(context.Background(), cs))
@@ -45,10 +45,10 @@ func TestCredentialStorage_CRUD(t *testing.T) {
 	require.NoError(t, err)
 	assert.Len(t, cs.Credentials, 2)
 
-	cs2 := NewCredentialSet("dev", "sekrets-2", secrets.Strategy{
+	cs2 := NewCredentialSet("dev", "sekrets-2", secrets.SourceMap{
 		Name: "password-2", Source: secrets.Source{
-			Key:   "secret-2",
-			Value: "dbPassword-2"}})
+			Strategy: "secret-2",
+			Hint:     "dbPassword-2"}})
 	require.NoError(t, cp.InsertCredentialSet(context.Background(), cs2))
 
 	creds, err = cp.ListCredentialSets(context.Background(), ListOptions{Namespace: "dev", Skip: 1})
@@ -74,16 +74,16 @@ func TestCredentialStorage_CRUD(t *testing.T) {
 func TestCredentialStorage_Validate_GoodSources(t *testing.T) {
 	s := CredentialStore{}
 	testCreds := NewCredentialSet("dev", "mycreds",
-		secrets.Strategy{
+		secrets.SourceMap{
 			Source: secrets.Source{
-				Key:   "env",
-				Value: "SOME_ENV",
+				Strategy: "env",
+				Hint:     "SOME_ENV",
 			},
 		},
-		secrets.Strategy{
+		secrets.SourceMap{
 			Source: secrets.Source{
-				Key:   "value",
-				Value: "somevalue",
+				Strategy: "value",
+				Hint:     "somevalue",
 			},
 		})
 
@@ -94,16 +94,16 @@ func TestCredentialStorage_Validate_GoodSources(t *testing.T) {
 func TestCredentialStorage_Validate_BadSources(t *testing.T) {
 	s := CredentialStore{}
 	testCreds := NewCredentialSet("dev", "mycreds",
-		secrets.Strategy{
+		secrets.SourceMap{
 			Source: secrets.Source{
-				Key:   "wrongthing",
-				Value: "SOME_ENV",
+				Strategy: "wrongthing",
+				Hint:     "SOME_ENV",
 			},
 		},
-		secrets.Strategy{
+		secrets.SourceMap{
 			Source: secrets.Source{
-				Key:   "anotherwrongthing",
-				Value: "somevalue",
+				Strategy: "anotherwrongthing",
+				Hint:     "somevalue",
 			},
 		},
 	)

@@ -59,7 +59,7 @@ func (p *Porter) Archive(ctx context.Context, opts ArchiveOptions) error {
 
 	dir := filepath.Dir(opts.ArchiveFile)
 	if _, err := p.Config.FileSystem.Stat(dir); os.IsNotExist(err) {
-		return log.Error(fmt.Errorf("parent directory %q does not exist", dir))
+		return log.Error(fmt.Errorf("parent directory %q does not exist", filepath.ToSlash(dir)))
 	}
 
 	bundleRef, err := opts.GetBundleReference(ctx, p)
@@ -335,7 +335,7 @@ func (ex *exporter) addImage(base bundle.BaseImage) error {
 // It sanitizes the name and make sure only the current user has full permission to it.
 // If the name contains a path separator, all path separators will be replaced with "-".
 func (ex *exporter) createArchiveFolder(name string) (string, error) {
-	cleanedPath := strings.ReplaceAll(afero.UnicodeSanitize(name), string(os.PathSeparator), "-")
+	cleanedPath := strings.ReplaceAll(afero.UnicodeSanitize(name), "/", "-")
 	archiveDir, err := ex.fs.TempDir("", cleanedPath)
 	if err != nil {
 		return "", fmt.Errorf("can not create a temporary archive folder: %w", err)

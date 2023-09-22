@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"io"
+	"runtime"
 	"testing"
 
 	"get.porter.sh/porter/pkg"
@@ -38,7 +39,10 @@ func TestArchive_StableDigest(t *testing.T) {
 
 	info, err := p.FileSystem.Stat(archiveFile1)
 	require.NoError(p.T(), err)
-	tests.AssertFilePermissionsEqual(t, archiveFile1, pkg.FileModeWritable, info.Mode())
+	if runtime.GOOS != "windows" {
+		// permission bits make no sense on windows
+		tests.AssertFilePermissionsEqual(t, archiveFile1, pkg.FileModeWritable, info.Mode())
+	}
 
 	hash1 := getHash(p, archiveFile1)
 
@@ -57,7 +61,7 @@ func TestArchive_StableDigest(t *testing.T) {
 	assert.Equal(p.T(), hash1, getHash(p, archiveFile2), "shasum of archive did not stay the same on the second call to archive")
 
 	// the archive should match the hash below regardless of OS architecture, user and execution time
-	consistentHash := "27c2cf6ef0dfac6f120290a79def2e3417656d0d44adc80991d864d7c8c398ed"
+	consistentHash := "6f63a27bd8fa3886192ce9d4d561d9b2f5d5235b17a140af6d1608921fe00e7f"
 	assert.Equal(p.T(), consistentHash, hash1, "shasum of archive did not match expected hash")
 
 	// Publish bundle from archive, with new reference

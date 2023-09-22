@@ -1,0 +1,99 @@
+syntax = "proto3";
+//option go_package = "get.porter.sh/porter/gen/proto/go/installation/v1alpha1";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/any.proto";
+import "google/protobuf/struct.proto";
+package installation.v1alpha1;
+
+message Bundle {
+  string repository = 1;
+  string version = 2;
+}
+
+message InstallationStatus {
+  string runId = 1;
+  string action = 2;
+  string resultId = 3;
+  string resultStatus = 4;
+  google.protobuf.Timestamp created = 5;
+  google.protobuf.Timestamp modified = 6;
+  google.protobuf.Timestamp installed = 7;
+  google.protobuf.Timestamp uninstalled = 8;
+  string bundleReference = 9;
+  string bundleVersion = 10;
+  string bundleDigest = 11;
+}
+
+message Calculated {
+  string displayInstallationState = 1;
+  string displayInstallationStatus = 2;
+  google.protobuf.NullValue resolvedParameters = 3;
+}
+message Installation {
+  // Unique installation ID
+  string id = 1;
+  string schemaType = 2;
+  string schemaVersion = 3;
+  string name = 4;
+  string namespace = 5;
+  Bundle bundle = 6;
+  repeated string credentialSets = 7;
+  repeated string parameterSets = 8;
+  InstallationStatus status = 9;
+  Calculated calculated = 10 [json_name="_calculated"];
+}
+
+//Installations
+message ListInstallationsRequest {
+  string name = 1;
+  optional string namespace = 2;
+  optional int64 limit = 3;
+  optional int64 skip = 4;
+  map<string, string> labels = 5;
+  optional bool allNamespaces = 6;
+}
+
+message ListInstallationsResponse {
+  repeated Installation installation = 1; 
+}
+
+//InstallationRuns
+message InstallationRun {
+  int64 id = 1;
+  string bundle = 2;
+  string version = 3;
+  string action = 4;
+  map<string, string> paramters = 5;
+  google.protobuf.Timestamp started = 6;
+  google.protobuf.Timestamp stopped = 7;
+  string status = 8;
+}
+
+message ListInstallationRunsRequest {
+  Installation installation = 1;
+}
+
+message ListInstallationRunsResponse {
+  repeated InstallationRun run = 1;
+}
+
+message PorterValue {
+  string name = 1;
+  string type = 2;
+  bool sensitive = 3;
+  google.protobuf.Value value = 4;
+}
+
+message InstallationOutputs {
+  repeated PorterValue output = 1;
+}
+
+message ListInstallationLatestOutputRequest {
+  string name = 1;
+  optional string namespace = 2;
+}
+
+//InstallationRunOutputs
+message ListInstallationLatestOutputResponse {
+  repeated PorterValue outputs = 1;
+}

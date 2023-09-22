@@ -2,6 +2,9 @@ package porter
 
 import (
 	"context"
+	"fmt"
+	"io"
+	"strings"
 	"testing"
 
 	"get.porter.sh/porter/pkg"
@@ -451,12 +454,12 @@ func TestPorter_applyActionOptionsToInstallation_sanitizesParameters(t *testing.
 	// there should be no sensitive value on installation record
 	for _, param := range i.Parameters.Parameters {
 		if param.Name == sensitiveParamName {
-			require.Equal(t, param.Source.Key, secrets.SourceSecret)
-			require.NotEqual(t, param.Source.Value, sensitiveParamValue)
+			require.Equal(t, param.Source.Strategy, secrets.SourceSecret)
+			require.NotEqual(t, param.Source.Hint, sensitiveParamValue)
 			continue
 		}
-		require.Equal(t, param.Source.Key, host.SourceValue)
-		require.Equal(t, param.Source.Value, nonsensitiveParamValue)
+		require.Equal(t, param.Source.Strategy, host.SourceValue)
+		require.Equal(t, param.Source.Hint, nonsensitiveParamValue)
 	}
 
 	// When no parameter override specified, installation record should be updated
@@ -472,9 +475,9 @@ func TestPorter_applyActionOptionsToInstallation_sanitizesParameters(t *testing.
 	// Check that when no parameter overrides are specified, we use the originally specified parameters from the previous run
 	require.Len(t, i.Parameters.Parameters, 2)
 	require.Equal(t, "my-first-param", i.Parameters.Parameters[0].Name)
-	require.Equal(t, "1", i.Parameters.Parameters[0].Source.Value)
+	require.Equal(t, "1", i.Parameters.Parameters[0].Source.Hint)
 	require.Equal(t, "my-second-param", i.Parameters.Parameters[1].Name)
-	require.Equal(t, "secret", i.Parameters.Parameters[1].Source.Key)
+	require.Equal(t, "secret", i.Parameters.Parameters[1].Source.Strategy)
 }
 
 // When the installation has been used before with a parameter value
@@ -518,9 +521,9 @@ func TestPorter_applyActionOptionsToInstallation_PreservesExistingParams(t *test
 	// Check that overrides are applied on top of existing parameters
 	require.Len(t, i.Parameters.Parameters, 2)
 	require.Equal(t, "my-first-param", i.Parameters.Parameters[0].Name)
-	require.Equal(t, "value", i.Parameters.Parameters[0].Source.Key, "my-first-param isn't sensitive and can be stored in a hard-coded value")
+	require.Equal(t, "value", i.Parameters.Parameters[0].Source.Strategy, "my-first-param isn't sensitive and can be stored in a hard-coded value")
 	require.Equal(t, "my-second-param", i.Parameters.Parameters[1].Name)
-	require.Equal(t, "secret", i.Parameters.Parameters[1].Source.Key, "my-second-param should be stored on the installation using a secret since it's sensitive")
+	require.Equal(t, "secret", i.Parameters.Parameters[1].Source.Strategy, "my-second-param should be stored on the installation using a secret since it's sensitive")
 
 	// Check the values stored are correct
 	params, err := p.Parameters.ResolveAll(ctx, i.Parameters)
@@ -529,4 +532,169 @@ func TestPorter_applyActionOptionsToInstallation_PreservesExistingParams(t *test
 		"my-first-param":  "3", // Should have used the override
 		"my-second-param": "2", // Should have kept the existing value from the last run
 	}, params, "Incorrect parameter values were persisted on the installationß")
+}
+
+// make sure ensureVPrefix correctly adds a 'v' to the version tag of a reference
+func Test_ensureVPrefix(t *testing.T) {
+	type args struct {
+		opts *BundleReferenceOptions
+	}
+
+	ref, err := cnab.ParseOCIReference("registry/bundle:1.2.3")
+	assert.NoError(t, err)
+
+	testCases := []struct {
+		name    string
+		args    args
+		wantErr assert.ErrorAssertionFunc
+	}{
+		{
+			name: "add v to Reference (nil _ref)",
+			args: struct{ opts *BundleReferenceOptions }{opts: &BundleReferenceOptions{
+				installationOptions: installationOptions{},
+				BundlePullOptions: BundlePullOptions{
+					Reference:        "registry/bundle:1.2.3",
+					_ref:             nil,
+					InsecureRegistry: false,
+					Force:            false,
+				},
+				bundleRef: nil,
+			},
+			}, wantErr: assert.NoError,
+		},
+		{
+			name: "add v to Reference (non-nil _ref)",
+			args: struct{ opts *BundleReferenceOptions }{opts: &BundleReferenceOptions{
+				installationOptions: installationOptions{},
+				BundlePullOptions: BundlePullOptions{
+					Reference:        "registry/bundle:1.2.3",
+					_ref:             &ref,
+					InsecureRegistry: false,
+					Force:            false,
+				},
+				bundleRef: nil,
+			},
+			}, wantErr: assert.NoError,
+		},
+	}
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			// before
+			idx := strings.LastIndex(tt.args.opts.Reference, ":")
+			assert.False(t, tt.args.opts.Reference[idx+1] == 'v')
+			if tt.args.opts._ref != nil {
+				assert.False(t, tt.args.opts._ref.Tag()[0] == 'v')
+			}
+
+			err := ensureVPrefix(tt.args.opts, io.Discard)
+
+			// after
+			tt.wantErr(t, err, fmt.Sprintf("ensureVPrefix(%v)", tt.args.opts))
+
+			idx = strings.LastIndex(tt.args.opts.Reference, ":")
+			assert.True(t, tt.args.opts.Reference[idx+1] == 'v')
+			if tt.args.opts._ref != nil {
+				assert.True(t, tt.args.opts._ref.Tag()[0] == 'v')
+			}
+		})
+	}
+}
+
+// make sure ensureVPrefix doesn't add an extra 'v' to the version tag of a reference if it's already there
+func Test_ensureVPrefix_idempotent(t *testing.T) {
+	type args struct {
+		opts *BundleReferenceOptions
+	}
+
+	vRef, err := cnab.ParseOCIReference("registry/bundle:v1.2.3")
+	assert.NoError(t, err)
+
+	testcasesIdempotent := []struct {
+		name    string
+		args    args
+		wantErr assert.ErrorAssertionFunc
+	}{
+		{
+			name: "don't add v to Reference with existing v (nil _ref)",
+			args: struct{ opts *BundleReferenceOptions }{opts: &BundleReferenceOptions{
+				installationOptions: installationOptions{},
+				BundlePullOptions: BundlePullOptions{
+					Reference:        "registry/bundle:v1.2.3",
+					_ref:             nil,
+					InsecureRegistry: false,
+					Force:            false,
+				},
+				bundleRef: nil,
+			},
+			}, wantErr: assert.NoError,
+		},
+		{
+			name: "don't add v to Reference with existing v (non-nil _ref)",
+			args: struct{ opts *BundleReferenceOptions }{opts: &BundleReferenceOptions{
+				installationOptions: installationOptions{},
+				BundlePullOptions: BundlePullOptions{
+					Reference:        "registry/bundle:v1.2.3",
+					_ref:             &vRef,
+					InsecureRegistry: false,
+					Force:            false,
+				},
+				bundleRef: nil,
+			},
+			}, wantErr: assert.NoError,
+		},
+	}
+	for _, tt := range testcasesIdempotent {
+		t.Run(tt.name, func(t *testing.T) {
+			// before
+			idx := strings.LastIndex(tt.args.opts.Reference, ":")
+			assert.True(t, tt.args.opts.Reference[idx+1] == 'v')
+			assert.True(t, tt.args.opts.Reference[idx+2] != 'v')
+			if tt.args.opts._ref != nil {
+				assert.True(t, tt.args.opts._ref.Tag()[0] == 'v')
+				assert.True(t, tt.args.opts._ref.Tag()[1] != 'v')
+			}
+
+			err := ensureVPrefix(tt.args.opts, io.Discard)
+
+			// after
+			tt.wantErr(t, err, fmt.Sprintf("ensureVPrefix(%v)", tt.args.opts))
+
+			idx = strings.LastIndex(tt.args.opts.Reference, ":")
+			assert.True(t, tt.args.opts.Reference[idx+1] == 'v')
+			assert.True(t, tt.args.opts.Reference[idx+2] != 'v')
+			if tt.args.opts._ref != nil {
+				assert.True(t, tt.args.opts._ref.Tag()[0] == 'v')
+				assert.True(t, tt.args.opts._ref.Tag()[1] != 'v')
+			}
+		})
+	}
+}
+
+// ensure no v is added if specifying :latest tag or no tag at all
+func Test_ensureVPrefix_latest(t *testing.T) {
+	testcases := map[string]struct {
+		latestRef string
+	}{
+		"latest":     {latestRef: "example/porter-hello:latest"},
+		"not-latest": {latestRef: "example/porter-hello"},
+	}
+	for name, test := range testcases {
+		t.Run(name, func(t *testing.T) {
+			opts := BundleReferenceOptions{
+				installationOptions: installationOptions{},
+				BundlePullOptions: BundlePullOptions{
+					Reference:        test.latestRef,
+					_ref:             nil,
+					InsecureRegistry: false,
+					Force:            false,
+				},
+				bundleRef: nil,
+			}
+			err := ensureVPrefix(&opts, io.Discard)
+			assert.NoError(t, err)
+
+			// shouldn't change
+			assert.Equal(t, test.latestRef, opts.BundlePullOptions.Reference)
+		})
+	}
 }

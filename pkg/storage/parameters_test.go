@@ -2,6 +2,7 @@ package storage
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
@@ -55,7 +56,7 @@ func TestTestParameterProvider_Load(t *testing.T) {
 	t.Run("unsuccessful load", func(t *testing.T) {
 		_, err := p.Load("paramset.json")
 		require.Error(t, err)
-		assert.Contains(t, err.Error(), "no such file or directory")
+		assert.True(t, strings.Contains(err.Error(), "no such file or directory") || strings.Contains(err.Error(), "The system cannot find the file specified"))
 	})
 
 	t.Run("successful load, unsuccessful unmarshal", func(t *testing.T) {
@@ -66,39 +67,39 @@ func TestTestParameterProvider_Load(t *testing.T) {
 
 	t.Run("successful load, successful unmarshal", func(t *testing.T) {
 		expected := NewParameterSet("", "mybun",
-			secrets.Strategy{
+			secrets.SourceMap{
 				Name: "param_env",
 				Source: secrets.Source{
-					Key:   "env",
-					Value: "PARAM_ENV",
+					Strategy: "env",
+					Hint:     "PARAM_ENV",
 				},
 			},
-			secrets.Strategy{
+			secrets.SourceMap{
 				Name: "param_value",
 				Source: secrets.Source{
-					Key:   "value",
-					Value: "param_value",
+					Strategy: "value",
+					Hint:     "param_value",
 				},
 			},
-			secrets.Strategy{
+			secrets.SourceMap{
 				Name: "param_command",
 				Source: secrets.Source{
-					Key:   "command",
-					Value: "echo hello world",
+					Strategy: "command",
+					Hint:     "echo hello world",
 				},
 			},
-			secrets.Strategy{
+			secrets.SourceMap{
 				Name: "param_path",
 				Source: secrets.Source{
-					Key:   "path",
-					Value: "/path/to/param",
+					Strategy: "path",
+					Hint:     "/path/to/param",
 				},
 			},
-			secrets.Strategy{
+			secrets.SourceMap{
 				Name: "param_secret",
 				Source: secrets.Source{
-					Key:   "secret",
-					Value: "param_secret",
+					Strategy: "secret",
+					Hint:     "param_secret",
 				},
 			})
 		expected.SchemaVersion = "1.0.1" // It's an older code but it checks out

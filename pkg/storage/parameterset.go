@@ -57,7 +57,7 @@ type ParameterSetStatus struct {
 }
 
 // NewParameterSet creates a new ParameterSet with the required fields initialized.
-func NewParameterSet(namespace string, name string, params ...secrets.Strategy) ParameterSet {
+func NewParameterSet(namespace string, name string, params ...secrets.SourceMap) ParameterSet {
 	now := time.Now()
 	ps := ParameterSet{
 		ParameterSetSpec: ParameterSetSpec{
@@ -77,7 +77,7 @@ func NewParameterSet(namespace string, name string, params ...secrets.Strategy) 
 }
 
 // NewInternalParameterSet creates a new internal ParameterSet with the required fields initialized.
-func NewInternalParameterSet(namespace string, name string, params ...secrets.Strategy) ParameterSet {
+func NewInternalParameterSet(namespace string, name string, params ...secrets.SourceMap) ParameterSet {
 	return NewParameterSet(namespace, INTERNAL_PARAMETERER_SET+"-"+name, params...)
 }
 

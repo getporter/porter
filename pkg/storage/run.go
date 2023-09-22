@@ -173,9 +173,9 @@ func (r Run) TypedParameterValues() map[string]interface{} {
 	value := make(map[string]interface{})
 
 	for _, param := range r.Parameters.Parameters {
-		v, err := bun.ConvertParameterValue(param.Name, param.Value)
+		v, err := bun.ConvertParameterValue(param.Name, param.ResolvedValue)
 		if err != nil {
-			value[param.Name] = param.Value
+			value[param.Name] = param.ResolvedValue
 			continue
 		}
 		def, ok := bun.Definitions[param.Name]

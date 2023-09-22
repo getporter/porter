@@ -1,0 +1,8 @@
+version: v1
+name: buf.build/porter/installationsapi
+breaking:
+  use:
+    - FILE
+lint:
+  use:
+    - DEFAULT

@@ -18,6 +18,7 @@ import (
 	"github.com/docker/cli/cli/command"
 	dockerconfig "github.com/docker/cli/cli/config"
 	"github.com/docker/docker/api/types"
+	registrytypes "github.com/docker/docker/api/types/registry"
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/google/go-containerregistry/pkg/crane"
 	"github.com/google/go-containerregistry/pkg/v1/remote/transport"
@@ -175,7 +176,7 @@ func (r *Registry) PushImage(ctx context.Context, ref cnab.OCIReference, opts Re
 		return "", log.Errorf("error parsing the repository potion of the image reference %s: %w", ref, err)
 	}
 	authConfig := command.ResolveAuthConfig(ctx, cli, repoInfo.Index)
-	encodedAuth, err := command.EncodeAuthToBase64(authConfig)
+	encodedAuth, err := registrytypes.EncodeAuthConfig(authConfig)
 	if err != nil {
 		return "", log.Errorf("error encoding authentication information for the docker client: %w", err)
 	}
@@ -224,7 +225,7 @@ func (r *Registry) PullImage(ctx context.Context, ref cnab.OCIReference, opts Re
 		return log.Error(err)
 	}
 	authConfig := command.ResolveAuthConfig(ctx, cli, repoInfo.Index)
-	encodedAuth, err := command.EncodeAuthToBase64(authConfig)
+	encodedAuth, err := registrytypes.EncodeAuthConfig(authConfig)
 	if err != nil {
 		return log.Error(fmt.Errorf("failed to serialize docker auth config: %w", err))
 	}

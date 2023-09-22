@@ -63,7 +63,7 @@ type CredentialSetStatus struct {
 }
 
 // NewCredentialSet creates a new CredentialSet with the required fields initialized.
-func NewCredentialSet(namespace string, name string, creds ...secrets.Strategy) CredentialSet {
+func NewCredentialSet(namespace string, name string, creds ...secrets.SourceMap) CredentialSet {
 	now := time.Now()
 	cs := CredentialSet{
 		CredentialSetSpec: CredentialSetSpec{
