@@ -609,8 +609,9 @@ func TestManifestConverter_generateDependenciesv1(t *testing.T) {
 			require.NoError(t, err, "could not load manifest")
 
 			a := NewManifestConverter(c.Config, m, nil, nil)
+			defs := make(definition.Definitions, len(m.Parameters))
 
-			depsExt, depsExtKey, err := a.generateDependencies()
+			depsExt, depsExtKey, err := a.generateDependencies(ctx, &defs)
 			require.NoError(t, err)
 			require.Equal(t, cnab.DependenciesV1ExtensionKey, depsExtKey, "expected the v1 dependencies extension key")
 			require.IsType(t, &depsv1ext.Dependencies{}, depsExt, "expected a v1 dependencies extension section")
@@ -636,18 +637,43 @@ func TestManifestConverter_generateDependenciesv2(t *testing.T) {
 	t.Parallel()
 
 	testcases := []struct {
-		name    string
-		wantDep depsv2ext.Dependency
+		name     string
+		wantDep  depsv2ext.Dependency
+		wantDefs definition.Definitions
 	}{
-		{"all fields", depsv2ext.Dependency{
+		{name: "all fields", wantDep: depsv2ext.Dependency{
 			Name:    "mysql",
 			Bundle:  "getporter/azure-mysql:5.7",
 			Version: "5.7.x",
 			Interface: &depsv2ext.DependencyInterface{
 				ID:        "https://getporter.org/interfaces/#mysql",
 				Reference: "getporter/mysql-spec:5.7",
-				// TODO(PEP003): Implement with https://github.com/getporter/porter/issues/2548
-				//Document: nil,
+				Document: depsv2ext.DependencyInterfaceDocument{
+					Outputs: map[string]bundle.Output{
+						"myoutput": {
+							Definition:  "myoutput-output",
+							Description: "worlds smallest output",
+							Path:        "/cnab/app/outputs/myoutput",
+						},
+					},
+					Parameters: map[string]bundle.Parameter{
+						"myparam": {
+							Definition:  "myparam-parameter",
+							Description: "worlds biggest param",
+							Required:    false,
+							Destination: &bundle.Location{
+								Path:                "",
+								EnvironmentVariable: "MYPARAM",
+							},
+						},
+					},
+					Credentials: map[string]bundle.Credential{
+						"mycred": {
+							Description: "credential",
+							Required:    true,
+						},
+					},
+				},
 			},
 			Sharing: depsv2ext.SharingCriteria{
 				Mode:  depsv2ext.SharingModeGroup,
@@ -660,7 +686,19 @@ func TestManifestConverter_generateDependenciesv2(t *testing.T) {
 			Credentials: map[string]string{
 				"user": "${bundle.credentials.username}",
 			},
-		}},
+		},
+			wantDefs: map[string]*definition.Schema{
+				"myoutput-output": {
+					Type:        "string",
+					Description: "worlds smallest output",
+				},
+				"myparam-parameter": {
+					Type:        "string",
+					Default:     false,
+					Description: "worlds biggest param",
+				},
+			},
+		},
 	}
 
 	for _, tc := range testcases {
@@ -677,8 +715,9 @@ func TestManifestConverter_generateDependenciesv2(t *testing.T) {
 			require.NoError(t, err, "could not load manifest")
 
 			a := NewManifestConverter(c.Config, m, nil, nil)
+			defs := make(definition.Definitions, len(m.Parameters))
 
-			depsExt, depsExtKey, err := a.generateDependencies()
+			depsExt, depsExtKey, err := a.generateDependencies(ctx, &defs)
 			require.NoError(t, err)
 			require.Equal(t, cnab.DependenciesV2ExtensionKey, depsExtKey, "expected the v1 dependencies extension key")
 			require.IsType(t, &depsv2ext.Dependencies{}, depsExt, "expected a v1 dependencies extension section")
@@ -695,6 +734,7 @@ func TestManifestConverter_generateDependenciesv2(t *testing.T) {
 
 			require.NotNil(t, dep, "could not find bundle %s", tc.wantDep.Bundle)
 			assert.Equal(t, &tc.wantDep, dep)
+			assert.Equal(t, tc.wantDefs, defs)
 		})
 	}
 }
