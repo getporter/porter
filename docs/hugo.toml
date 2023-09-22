@@ -1,0 +1,93 @@
+baseURL = "https://getporter.org/"
+languageCode = "en-us"
+title = "Porter"
+canonifyURLs = "false"
+relativeURLs = "false"
+pluralizeListTitles = "false"
+plainIdAnchors = "true"
+defaultContentLanguage = "en"
+enableInlineShortcodes= true
+
+[[module.imports]]
+    path = 'github.com/imfing/hextra'
+
+[markup]
+  defaultMarkdownHandler = "goldmark"
+
+  [markup.goldmark.renderer]
+    unsafe = true
+
+  [markup.tableOfContents]
+    endLevel = 3
+    ordered = false
+    startLevel = 2
+
+  [markup.highlight]
+    noClasses= false
+
+# Default Page Parameters
+[params]
+  title = "Porter"
+  author = "Carolyn Van Slyck"
+  description = "A Friendly Cloud Installer for Cloud Native Application Bundles"
+  image = "images/porter-twitter-card.png"
+
+  [params.navbar.logo]
+    path = "images/porter-icon-badge.png"
+    width = 80
+    height = 50
+
+  [params.footer]
+    displayCopyright = true
+    displayPoweredBy = true
+
+
+# Docs Navigation
+[[menu.main]]
+name = "Install"
+url = "/docs/getting-started/install-porter"
+identifier = "install-porter"
+weight = 1
+
+[[menu.main]]
+name = "QuickStart"
+url = "/docs/quickstart"
+identifier = "quickstart"
+weight = 2
+
+[[menu.main]]
+name = "Blog"
+url = "/blog"
+identifier = "blog"
+weight = 3
+
+[[menu.main]]
+name = "Community"
+url = "/community"
+identifier = "community"
+weight = 4
+
+[[menu.main]]
+name = "Learning"
+url = "/docs/learn"
+identifier = "learn"
+weight = 5
+
+[[menu.main]]
+name = "Docs"
+url = "/docs"
+identifier = "docs"
+weight = 6
+
+[[menu.main]]
+name = "Search"
+weight = 7
+  [menu.main.params]
+  type = "search"
+
+[[menu.main]]
+name = "GitHub"
+weight = 8
+url = "https://github.com/getporter/porter"
+  [menu.main.params]
+  icon = "github"

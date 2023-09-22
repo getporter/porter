@@ -416,7 +416,7 @@ site/docs.
 
 or use only Hugo
 
-1. Download and install [Hugo 0.115.4](https://github.com/gohugoio/hugo/releases/tag/v0.115.4) extended version. 
+1. Download and install [Hugo 0.117.0](https://github.com/gohugoio/hugo/releases/tag/v0.117.0) extended version. 
 2. `cd docs`
 3. `hugo server --watch`
 
@@ -652,7 +652,7 @@ When you realize that you may need to make a breaking change, discuss it with a 
 Here are some examples of breaking changes:
 
 * The schema of porter.yaml changed.
-* The schema of Porter's [file formats](https://getporter.org/reference/file-formats) changed.
+* The schema of Porter's [file formats](https://getporter.org/references/file-formats) changed.
 * The schema of Porter's [config file](https://getporter.org/configuration/#config-file) changed.
 * Flags or behavior of a CLI command changed, such as removing a flag or adding a validation that can result in a hard error, preventing the command from running.
 
@@ -680,5 +680,5 @@ Our [version strategy] explains how we version the project, when you should expe
 breaking changes in a release, and the process for the v1 release.
 
 [cdn]: https://getporter.org/src/infra/cdn.md
-[version strategy]: https://getporter.org/project/version-strategy/
+[version strategy]: https://getporter.org/references/version-strategy/
 [Custom Windows CI Agent]: https://getporter.org/src/infra/custom-windows-ci-agent.md

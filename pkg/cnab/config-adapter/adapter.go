@@ -73,7 +73,7 @@ func (c *ManifestConverter) ToBundle(ctx context.Context) (cnab.ExtendedBundle, 
 	b.Outputs = c.generateBundleOutputs(ctx, &b.Definitions)
 	b.Credentials = c.generateBundleCredentials()
 	b.Images = c.generateBundleImages()
-	custom, err := c.generateCustomExtensions(&b)
+	custom, err := c.generateCustomExtensions(ctx, &b)
 	if err != nil {
 		return cnab.ExtendedBundle{}, err
 	}
@@ -166,134 +166,151 @@ func (c *ManifestConverter) generateDefaultAction(action string) bundle.Action {
 }
 
 func (c *ManifestConverter) generateBundleParameters(ctx context.Context, defs *definition.Definitions) map[string]bundle.Parameter {
-	log := tracing.LoggerFromContext(ctx)
-
 	params := make(map[string]bundle.Parameter, len(c.Manifest.Parameters))
 
-	addParam := func(param manifest.ParameterDefinition) {
-		// Update ApplyTo per parameter definition and manifest
-		param.UpdateApplyTo(c.Manifest)
-
-		p := bundle.Parameter{
-			Definition:  param.Name,
-			ApplyTo:     param.ApplyTo,
-			Description: param.Description,
-		}
-
-		// If the default is empty, set required to true.
-		// State parameters are always optional, and don't have a default
-		if param.Default == nil && !param.IsState {
-			p.Required = true
-		}
-
-		if param.Sensitive {
-			param.Schema.WriteOnly = toBool(true)
-		}
-
-		if !param.Destination.IsEmpty() {
-			p.Destination = &bundle.Location{
-				EnvironmentVariable: param.Destination.EnvironmentVariable,
-				Path:                manifest.ResolvePath(param.Destination.Path),
-			}
-		} else {
-			p.Destination = &bundle.Location{
-				EnvironmentVariable: manifest.ParamToEnvVar(param.Name),
-			}
-		}
-
-		if param.Type == nil {
-			// Default to a file type if the param is stored in a file
-			if param.Destination.Path != "" {
-				param.Type = "file"
-			} else {
-				// Assume it's a string otherwise
-				param.Type = "string"
-			}
-
-			log.Debugf("Defaulting the type of parameter %s to %s", param.Name, param.Type)
-		}
-
-		// Create a definition that matches the parameter if one isn't already defined
-		if _, ok := (*defs)[param.Name]; !ok {
-			kind := "parameter"
-			if param.IsState {
-				kind = "state"
-			}
-
-			defName := c.addDefinition(param.Name, kind, param.Schema, defs)
-			p.Definition = defName
-		}
-		params[param.Name] = p
-	}
-
 	for _, p := range c.Manifest.Parameters {
-		addParam(p)
+		params[p.Name] = c.generateParameterDefinition(ctx, defs, p)
 	}
 
 	for _, p := range c.buildDefaultPorterParameters() {
-		addParam(p)
+		params[p.Name] = c.generateParameterDefinition(ctx, defs, p)
 	}
 
 	return params
 }
 
 func (c *ManifestConverter) generateBundleOutputs(ctx context.Context, defs *definition.Definitions) map[string]bundle.Output {
-	log := tracing.LoggerFromContext(ctx)
 
 	outputs := make(map[string]bundle.Output, len(c.Manifest.Outputs))
 
-	addOutput := func(output manifest.OutputDefinition) {
-		o := bundle.Output{
-			Definition:  output.Name,
-			Description: output.Description,
-			ApplyTo:     output.ApplyTo,
-			// must be a standard Unix path as this will be inside of the container
-			// (only linux containers supported currently)
-			Path: path.Join(config.BundleOutputsDir, output.Name),
-		}
-
-		if output.Sensitive {
-			output.Schema.WriteOnly = toBool(true)
-		}
-
-		if output.Type == nil {
-			// Default to a file type if the param is stored in a file
-			if output.Path != "" {
-				output.Type = "file"
-			} else {
-				// Assume it's a string otherwise
-				output.Type = "string"
-			}
-			log.Debugf("Defaulting the type of output %s to %s", output.Name, output.Type)
-		}
-
-		// Create a definition that matches the output if one isn't already defined
-		if _, ok := (*defs)[output.Name]; !ok {
-			kind := "output"
-			if output.IsState {
-				kind = "state"
-			}
-
-			defName := c.addDefinition(output.Name, kind, output.Schema, defs)
-			o.Definition = defName
-		}
-		outputs[output.Name] = o
-	}
-
 	for _, o := range c.Manifest.Outputs {
-		addOutput(o)
+		outputs[o.Name] = c.generateOutputDefinition(ctx, defs, o)
 	}
 
 	for _, o := range c.buildDefaultPorterOutputs() {
-		addOutput(o)
+		outputs[o.Name] = c.generateOutputDefinition(ctx, defs, o)
 	}
 
 	return outputs
 }
 
+func (c *ManifestConverter) generateOutputDefinition(ctx context.Context, defs *definition.Definitions,
+	sourceOutput manifest.OutputDefinition) bundle.Output {
+	log := tracing.LoggerFromContext(ctx)
+
+	destinationOutput := bundle.Output{
+		Definition:  sourceOutput.Name,
+		Description: sourceOutput.Description,
+		ApplyTo:     sourceOutput.ApplyTo,
+		// must be a standard Unix path as this will be inside of the container
+		// (only linux containers supported currently)
+		Path: path.Join(config.BundleOutputsDir, sourceOutput.Name),
+	}
+
+	if sourceOutput.Sensitive {
+		sourceOutput.Schema.WriteOnly = toBool(true)
+	}
+
+	if sourceOutput.Type == nil {
+		// Default to a file type if the param is stored in a file
+		if sourceOutput.Path != "" {
+			sourceOutput.Type = "file"
+		} else {
+			// Assume it's a string otherwise
+			sourceOutput.Type = "string"
+		}
+		log.Debugf("Defaulting the type of output %s to %s", sourceOutput.Name, sourceOutput.Type)
+	}
+
+	// Create a definition that matches the output if one isn't already defined
+	if _, ok := (*defs)[sourceOutput.Name]; !ok {
+		kind := "output"
+		if sourceOutput.IsState {
+			kind = "state"
+		}
+
+		defName := c.addDefinition(sourceOutput.Name, kind, sourceOutput.Schema, defs)
+		destinationOutput.Definition = defName
+	}
+	return destinationOutput
+
+}
+
+func (c *ManifestConverter) generateParameterDefinition(ctx context.Context, defs *definition.Definitions,
+	sourceParam manifest.ParameterDefinition) bundle.Parameter {
+	log := tracing.LoggerFromContext(ctx)
+
+	// Update ApplyTo per parameter definition and manifest
+	sourceParam.UpdateApplyTo(c.Manifest)
+
+	p := bundle.Parameter{
+		Definition:  sourceParam.Name,
+		ApplyTo:     sourceParam.ApplyTo,
+		Description: sourceParam.Description,
+	}
+
+	// If the default is empty, set required to true.
+	// State parameters are always optional, and don't have a default
+	if sourceParam.Default == nil && !sourceParam.IsState {
+		p.Required = true
+	}
+
+	if sourceParam.Sensitive {
+		sourceParam.Schema.WriteOnly = toBool(true)
+	}
+
+	if !sourceParam.Destination.IsEmpty() {
+		p.Destination = &bundle.Location{
+			EnvironmentVariable: sourceParam.Destination.EnvironmentVariable,
+			Path:                manifest.ResolvePath(sourceParam.Destination.Path),
+		}
+	} else {
+		p.Destination = &bundle.Location{
+			EnvironmentVariable: manifest.ParamToEnvVar(sourceParam.Name),
+		}
+	}
+
+	if sourceParam.Type == nil {
+		// Default to a file type if the param is stored in a file
+		if sourceParam.Destination.Path != "" {
+			sourceParam.Type = "file"
+		} else {
+			// Assume it's a string otherwise
+			sourceParam.Type = "string"
+		}
+
+		log.Debugf("Defaulting the type of parameter %s to %s", sourceParam.Name, sourceParam.Type)
+	}
+
+	// Create a definition that matches the parameter if one isn't already defined
+	if _, ok := (*defs)[sourceParam.Name]; !ok {
+		kind := "parameter"
+		if sourceParam.IsState {
+			kind = "state"
+		}
+
+		defName := c.addDefinition(sourceParam.Name, kind, sourceParam.Schema, defs)
+		p.Definition = defName
+	}
+	return p
+
+}
+
+func (c *ManifestConverter) generateCredentialDefinition(sourceCred manifest.CredentialDefinition) bundle.Credential {
+	destCred := bundle.Credential{
+		Description: sourceCred.Description,
+		Required:    sourceCred.Required,
+		// we are intentionally not mapping location and applyto
+		// it is not relevant to a bundle interface
+		// for example, they are only relevant inside the bundle
+		// they don't impact your ability to swap out one bundle for another
+	}
+	return destCred
+}
+
 func (c *ManifestConverter) addDefinition(name string, kind string, def definition.Schema, defs *definition.Definitions) string {
 	defName := name
-	if !strings.HasSuffix(name, kind) {
+	if !strings.HasSuffix(name, "-"+kind) {
 		defName = name + "-" + kind
 	}
 
@@ -408,7 +425,7 @@ func (c *ManifestConverter) generateBundleImages() map[string]bundle.Image {
 	return images
 }
 
-func (c *ManifestConverter) generateDependencies() (interface{}, string, error) {
+func (c *ManifestConverter) generateDependencies(ctx context.Context, defs *definition.Definitions) (interface{}, string, error) {
 	if len(c.Manifest.Dependencies.Requires) == 0 {
 		return nil, "", nil
 	}
@@ -416,16 +433,17 @@ func (c *ManifestConverter) generateDependencies() (interface{}, string, error) 
 	// Check if they are using v1 of the dependencies spec or v2
 	if c.config.IsFeatureEnabled(experimental.FlagDependenciesV2) {
 		// Ok we are using v2!
-		deps, err := c.generateDependenciesV2()
+
+		deps, err := c.generateDependenciesV2(ctx, defs)
 		return deps, cnab.DependenciesV2ExtensionKey, err
 	}
 
 	// Default to using v1 of deps
-	deps := c.generateDependenciesV1()
+	deps := c.generateDependenciesV1(ctx)
 	return deps, cnab.DependenciesV1ExtensionKey, nil
 }
 
-func (c *ManifestConverter) generateDependenciesV1() *depsv1ext.Dependencies {
+func (c *ManifestConverter) generateDependenciesV1(ctx context.Context) *depsv1ext.Dependencies {
 	if len(c.Manifest.Dependencies.Requires) == 0 {
 		return nil
 	}
@@ -458,7 +476,7 @@ func (c *ManifestConverter) generateDependenciesV1() *depsv1ext.Dependencies {
 	return deps
 }
 
-func (c *ManifestConverter) generateDependenciesV2() (*depsv2ext.Dependencies, error) {
+func (c *ManifestConverter) generateDependenciesV2(ctx context.Context, defs *definition.Definitions) (*depsv2ext.Dependencies, error) {
 	deps := &depsv2ext.Dependencies{
 		Requires: make(map[string]depsv2ext.Dependency, len(c.Manifest.Dependencies.Requires)),
 	}
@@ -494,10 +512,31 @@ func (c *ManifestConverter) generateDependenciesV2() (*depsv2ext.Dependencies, e
 
 			// Porter doesn't let you embed a random bundle.json document into your porter.yaml
 			// While the CNAB spec lets the document be anything, we constrain the interface to a porter representation of the bundle's parameters, credentials and outputs.
+
+			// TODO(PEP003): Convert the parameters, credentials and outputs defined on manifest.BundleInterfaceDocument and create an (incomplete) bundle.json from it
+			// See https://github.com/getporter/porter/issues/2548
+
 			if dep.Bundle.Interface.Document != nil {
-				// TODO(PEP003): Convert the parameters, credentials and outputs defined on manifest.BundleInterfaceDocument and create an (incomplete) bundle.json from it
-				// See https://github.com/getporter/porter/issues/2548
-				panic("conversion of an embedded bundle interface document for a dependency is not implemented")
+
+				depsMaps := depsv2ext.DependencyInterfaceDocument{
+					Outputs:     make(map[string]bundle.Output, len(dep.Bundle.Interface.Document.Outputs)),
+					Parameters:  make(map[string]bundle.Parameter, len(dep.Bundle.Interface.Document.Parameters)),
+					Credentials: make(map[string]bundle.Credential, len(dep.Bundle.Interface.Document.Credentials)),
+				}
+				dependencyRef.Interface.Document = depsMaps
+
+				for _, o := range dep.Bundle.Interface.Document.Outputs {
+					depsMaps.Outputs[o.Name] = c.generateOutputDefinition(ctx, defs, o)
+				}
+
+				for _, p := range dep.Bundle.Interface.Document.Parameters {
+					depsMaps.Parameters[p.Name] = c.generateParameterDefinition(ctx, defs, p)
+				}
+
+				for _, cred := range dep.Bundle.Interface.Document.Credentials {
+					depsMaps.Credentials[cred.Name] = c.generateCredentialDefinition(cred)
+
+				}
 			}
 		}
 
@@ -654,7 +693,7 @@ func toFloat(v float64) *float64 {
 	return &v
 }
 
-func (c *ManifestConverter) generateCustomExtensions(b *cnab.ExtendedBundle) (map[string]interface{}, error) {
+func (c *ManifestConverter) generateCustomExtensions(ctx context.Context, b *cnab.ExtendedBundle) (map[string]interface{}, error) {
 	customExtensions := map[string]interface{}{
 		cnab.FileParameterExtensionKey: struct{}{},
 	}
@@ -665,7 +704,7 @@ func (c *ManifestConverter) generateCustomExtensions(b *cnab.ExtendedBundle) (ma
 	}
 
 	// Add the dependency extension
-	deps, depsExtKey, err := c.generateDependencies()
+	deps, depsExtKey, err := c.generateDependencies(ctx, &b.Definitions)
 	if err != nil {
 		return nil, err
 	}

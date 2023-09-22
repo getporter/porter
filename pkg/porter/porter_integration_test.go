@@ -5,6 +5,7 @@ package porter
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 
 	"get.porter.sh/porter/pkg"
@@ -13,6 +14,11 @@ import (
 )
 
 func TestPorter_FixPermissions(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		// Fixing permission bits on windows makes no sense
+		t.SkipNow()
+	}
+
 	p := NewTestPorter(t)
 	ctx := p.SetupIntegrationTest()
 	defer p.Close()
@@ -40,6 +46,11 @@ func TestPorter_FixPermissions(t *testing.T) {
 }
 
 func TestPorter_FixPermissions_NoConfigFile(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		// Fixing permission bits on windows makes no sense
+		t.SkipNow()
+	}
+
 	p := NewTestPorter(t)
 	ctx := p.SetupIntegrationTest()
 	defer p.Close()
