@@ -39,7 +39,7 @@ enableInlineShortcodes= true
 
   [params.footer]
     displayCopyright = true
-    displayPoweredBy = false
+    displayPoweredBy = true
 
 
 # Docs Navigation
