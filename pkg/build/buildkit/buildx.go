@@ -24,9 +24,11 @@ import (
 	"github.com/docker/buildx/util/confutil"
 	"github.com/docker/buildx/util/dockerutil"
 	"github.com/docker/buildx/util/progress"
+	"github.com/docker/cli/cli/command"
 	dockerconfig "github.com/docker/cli/cli/config"
 	"github.com/moby/buildkit/session"
 	"github.com/moby/buildkit/session/auth/authprovider"
+	"github.com/opencontainers/go-digest"
 	"go.opentelemetry.io/otel/attribute"
 )
 
@@ -176,6 +178,22 @@ func (b *Builder) determineBuildArgs(
 		return nil, span.Error(err)
 	}
 
+	//schristoff: iss 2676
+	// if dependencies then
+	// we should resolve the digest for each bundle in the dependencies
+	for _, d := range manifest.Dependencies.Requires {
+		//get the cnab thing
+		var ref cnab.OCIReference
+		if ref, err = cnab.ParseOCIReference(d.Bundle.Reference); err != nil {
+			return nil, err
+		}
+		//need to do something with the digest?
+		_, err := b.DigestInvocationImage(ctx, ref)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	// Determine which (if any) custom fields from porter.yaml are used in the Dockerfile
 	dockerfilePath := b.getDockerfilePath()
 	dockerfileContents, err := b.FileSystem.ReadFile(dockerfilePath)
@@ -242,6 +260,34 @@ func parseBuildArgs(unparsed []string, parsed map[string]string) {
 		value := parts[1]
 		parsed[name] = value
 	}
+}
+
+func (b *Builder) DigestInvocationImage(ctx context.Context, ref cnab.OCIReference) (digest.Digest, error) {
+	ctx, log := tracing.StartSpan(ctx)
+	defer log.EndSpan()
+
+	cli, err := docker.GetDockerClient()
+	if err != nil {
+		return "", log.Error(err)
+	}
+
+	repoInfo, err := ref.ParseRepositoryInfo()
+	if err != nil {
+		return "", log.Errorf("error parsing the repository potion of the image reference %s: %w", ref, err)
+	}
+
+	authConfig := command.ResolveAuthConfig(ctx, cli, repoInfo.Index)
+	encodedAuth, err := command.EncodeAuthToBase64(authConfig)
+	if err != nil {
+		return "", log.Errorf("error encoding authentication information for the docker client: %w", err)
+	}
+
+	imgRef := ref.String()
+	distriInspect, err := cli.Client().DistributionInspect(ctx, imgRef, encodedAuth)
+	digest := distriInspect.Descriptor.Digest
+
+	return digest, nil
+
 }
 
 func (b *Builder) TagInvocationImage(ctx context.Context, origTag, newTag string) error {
