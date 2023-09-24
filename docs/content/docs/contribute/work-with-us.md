@@ -49,11 +49,11 @@ We use two labels:
 
 [getporter.org/find-issue]: /find-issue/
 [conduct]: /src/CODE_OF_CONDUCT.md
-[contributing]: /contribute/guide/
-[find an issue]: /contribute/guide/#find-an-issue
+[contributing]: /docs/contribute/guide/
+[find an issue]: /docs/contribute/guide/#find-an-issue
 [good first issue]: /board/good+first+issue
 [help wanted]: /board/help+wanted
-[tutorial]: /contribute/tutorial/
+[tutorial]: /docs/contribute/tutorial/
 
 ## What can you work on?
 

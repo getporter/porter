@@ -20,7 +20,7 @@ Check out our new [CNCF Porter Community] channel for all of our conference talk
 - [Porter: An Opinionated CNAB Authoring Experience](#porter-an-opinionated-cnab-authoring-experience)
 - [Free Glue Code - Porter](#free-glue-code---porter)
 
-[pr]: /contribute/guide/
+[pr]: /docs/contribute/guide/
 
 ### The Devil is in the Deployments: Bundle Use Cases
 

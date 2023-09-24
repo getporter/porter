@@ -217,7 +217,7 @@ mage SetupDCO
 
 If you are using Powershell, see our Contributing Guide for [how to sign your commits][dco].
 
-[dco]: /contribute/guide/#signing-your-commits
+[dco]: /docs/contribute/guide/#signing-your-commits
 
 ## Build Porter
 
@@ -404,8 +404,8 @@ to make sure there aren't any regressions.
 mage TestUnit TestSmoke
 ```
 
-[unit tests]: /contribute/guide/#unit-tests
-[smoke tests]: /contribute/guide/#smoke-tests
+[unit tests]: /docs/contribute/guide/#unit-tests
+[smoke tests]: /docs/contribute/guide/#smoke-tests
 
 ## Celebrate!
 
@@ -413,6 +413,6 @@ You can now build Porter, modify its code and try out your changes! 🎉 Your ne
 steps should be to read our [Contributing Guide] to understand how to [find an
 issue] and contribute to Porter.
 
-[Contributing Guide]: /contribute/
-[find an issue]: /contribute/guide/#find-an-issue
+[Contributing Guide]: /docs/contribute/
+[find an issue]: /docs/contribute/guide/#find-an-issue
 [Mage]: https://magefile.org

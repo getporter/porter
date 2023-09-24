@@ -80,7 +80,7 @@ We plan to build support for these features incrementally throughout the year, s
 Phew! This is a big chunk of work for a pretty small group of maintainers and contributors.
 So if you find any of this interesting, please consider helping us out! 
 
-Our [Contributing](https://getporter.org/contribute/) landing page has details on how to get involved with the project.
+Our [Contributing](https://getporter.org/docs/contribute/) landing page has details on how to get involved with the project.
 We welcome all types of contributions, such as:
 
 * Feedback on use cases and requirements
