@@ -55,7 +55,7 @@ We meet every other week to discuss [Porter Enhancement Proposals], demo new fea
 * [Agenda](/dev-meeting)
 * [Calendar](/calendar/)
 
-[Porter Enhancement Proposals]: /contribute/proposals/
+[Porter Enhancement Proposals]: /docs/contribute/proposals/
 [slack]: https://cloud-native.slack.com/
 [invite]: https://slack.cncf.io/
 [forum]: /forum

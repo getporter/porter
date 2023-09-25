@@ -439,7 +439,7 @@ The friendly cloud installer that bootstraps your bundles using tools and assets
 * [cnab.io][cnab]
 * [cnab.io/community-meetings/#communications][cnab-slack] - #cnab CNCF Slack
 * [getporter.org][porter]
-* [getporter.org/contribute][contribute] - New Contributor Guide
+* [getporter.org/docs/contribute][contribute] - New Contributor Guide
 * [getporter.org/community][porter-slack] - #porter CNCF Slack and Office Hours
 
 ???
@@ -448,5 +448,5 @@ The friendly cloud installer that bootstraps your bundles using tools and assets
 [cnab]: https://cnab.io
 [cnab-slack]: https://cnab.io/community-meetings/#communications
 [porter]: /
-[contribute]: /contribute
+[contribute]: /docs/contribute
 [porter-slack]: /community

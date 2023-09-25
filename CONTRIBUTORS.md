@@ -89,3 +89,4 @@ and we will add you. **All** contributors belong here. 💯
 - [Maninderjit Bindra](https://github.com/manisbindra)
 - [Gonçalo Montalvão Marques](https://github.com/gonmmarques)
 - [Sumit Kumar Soni](https://github.com/zelfroster)
+- [Chaiyapruek Muangsiri](https://github.com/cmppoon)

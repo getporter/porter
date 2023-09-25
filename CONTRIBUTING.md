@@ -39,7 +39,7 @@ how things will go.
 If this is your first contribution to Porter, we have a [tutorial] that walks you
 through how to setup your developer environment, make a change and test it.
 
-[tutorial]: https://getporter.org/contribute/tutorial/
+[tutorial]: https://getporter.org/docs/contribute/tutorial/
 
 ## Code of Conduct
 
@@ -87,7 +87,7 @@ When you create your first pull request, add your name to the bottom of our
 [board]: https://getporter.org/board
 [slack]: https://getporter.org/community#slack
 [roadmap]: https://getporter.org/src/README.md#roadmap
-[pep]: https://getporter.org/contribute/proposals/
+[pep]: https://getporter.org/docs/contribute/proposals/
 
 ## Which branch to use
 
