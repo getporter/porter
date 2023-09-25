@@ -17,6 +17,7 @@ import (
 	"github.com/Masterminds/semver/v3"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
+	"github.com/opencontainers/go-digest"
 )
 
 // ManifestConverter converts from a porter manifest to a CNAB bundle definition.
@@ -489,9 +490,15 @@ func (c *ManifestConverter) generateDependenciesV2(ctx context.Context, defs *de
 	}
 
 	for _, dep := range c.Manifest.Dependencies.Requires {
+
+		digest, err := resolveImageDigest(dep.Bundle.Reference)
+		if err != nil {
+			return nil, err
+		}
 		dependencyRef := depsv2ext.Dependency{
 			Name:    dep.Name,
 			Bundle:  dep.Bundle.Reference,
+			Digest:  digest,
 			Version: dep.Bundle.Version,
 			Sharing: depsv2ext.SharingCriteria{
 				Mode: dep.Sharing.GetEffectiveMode(),
@@ -763,4 +770,14 @@ func lookupExtensionKey(name string) string {
 		key = supportedExt.Key
 	}
 	return key
+}
+
+func resolveImageDigest(bundleRef string) (digest.Digest, error) {
+
+	imgRef, err := cnab.ParseOCIReference(bundleRef)
+	if err != nil {
+		return "", fmt.Errorf("unable to parse dependency image: %s %w", bundleRef, err)
+	}
+
+	return imgRef.Digest(), nil
 }

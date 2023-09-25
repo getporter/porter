@@ -6,6 +6,7 @@ import (
 	"regexp"
 
 	"github.com/cnabio/cnab-go/bundle"
+	"github.com/opencontainers/go-digest"
 )
 
 const (
@@ -35,6 +36,12 @@ type Dependency struct {
 
 	// Bundle is the location of the bundle in a registry, for example REGISTRY/NAME:TAG
 	Bundle string `json:"bundle" mapstructure:"bundle"`
+
+	// Digest is the location of the bundle digest, for dependencies
+	// we (Porter) resolves these ourselves and fills this in
+	// there is intentionally only one omitempty, but idk if it
+	// will work how I want
+	Digest digest.Digest `json:"digest" mapstructure:"digest,omitempty"`
 
 	// Version is a set of allowed versions defined according to the https://github.com/Masterminds/semver constraint syntax.
 	Version string `json:"version,omitempty" mapstructure:"version"`
@@ -124,7 +131,6 @@ func (s DependencySource) AsBundleWiring() string {
 	if s.Value != "" {
 		return s.Value
 	}
-
 	suffix := s.WiringSuffix()
 	if s.Dependency != "" {
 		return fmt.Sprintf("bundle.dependencies.%s.%s", s.Dependency, suffix)
