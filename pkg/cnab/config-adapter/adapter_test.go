@@ -728,6 +728,7 @@ func TestManifestConverter_generateDependenciesv2(t *testing.T) {
 			for _, d := range deps.Requires {
 				if d.Bundle == tc.wantDep.Bundle {
 					dep = &d
+					require.NotEmpty(t, d.Digest, "digest was nil")
 					break
 				}
 			}
