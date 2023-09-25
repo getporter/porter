@@ -187,9 +187,6 @@ func WriteParameterToString(paramName string, value interface{}) (string, error)
 	return string(contents), nil
 }
 
-//schristoff 2627: instead of doing that weird stuff in buildx we could probably modify
-// this function to take the dependencies map
-
 // GetReferencedRegistries identifies all OCI registries used by the bundle
 // from both the invocation image and the referenced images.
 func (b ExtendedBundle) GetReferencedRegistries() ([]string, error) {
