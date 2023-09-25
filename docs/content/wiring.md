@@ -51,6 +51,15 @@ You can also provide any other attributes, as specified by the CNAB [parameters]
   default: "wordpress"
 ```
 
+If using the default parameter field it must be set. However, it must be passed in as an empty
+type. For example, for an empty string, pass in `""` as the default, or for an object use `{}`:
+
+```yaml
+- name: command
+  type: object
+  default: {}
+```
+
 ### File Parameters
 
 Porter also enables the use of file parameters in a bundle.
