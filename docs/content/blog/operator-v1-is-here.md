@@ -36,10 +36,15 @@ If you'd like to take the Operator for a spin please go through out [Quickstart 
 
 ## Recognizing our key contributors
 None of this would have been possible without the following:
+
 [Carolyn Van Slyck](https://github.com/carolynvs)
+
 [Yingrong Zhao](https://github.com/VinozzZ)
+
 [Brian DeGetter](https://github.com/bdegeeter)
+
 [Steven Gettys](https://github.com/sgettys)
+
 [Troy Connor](https://github.com/troy0820)
 
 
