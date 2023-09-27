@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"get.porter.sh/porter/pkg/cnab"
+	cnabtooci "get.porter.sh/porter/pkg/cnab/cnab-to-oci"
 	depsv1ext "get.porter.sh/porter/pkg/cnab/extensions/dependencies/v1"
 	depsv2ext "get.porter.sh/porter/pkg/cnab/extensions/dependencies/v2"
 	"get.porter.sh/porter/pkg/config"
@@ -26,6 +27,7 @@ type ManifestConverter struct {
 	Manifest        *manifest.Manifest
 	ImageDigests    map[string]string
 	InstalledMixins []mixin.Metadata
+	Registry        cnabtooci.RegistryProvider
 }
 
 func NewManifestConverter(
@@ -33,12 +35,14 @@ func NewManifestConverter(
 	manifest *manifest.Manifest,
 	imageDigests map[string]string,
 	mixins []mixin.Metadata,
+	registry cnabtooci.RegistryProvider,
 ) *ManifestConverter {
 	return &ManifestConverter{
 		config:          config,
 		Manifest:        manifest,
 		ImageDigests:    imageDigests,
 		InstalledMixins: mixins,
+		Registry:        registry,
 	}
 }
 
@@ -491,7 +495,7 @@ func (c *ManifestConverter) generateDependenciesV2(ctx context.Context, defs *de
 
 	for _, dep := range c.Manifest.Dependencies.Requires {
 
-		digest, err := resolveImageDigest(dep.Bundle.Reference)
+		digest, err := c.resolveImageDigest(ctx, dep.Bundle.Reference)
 		if err != nil {
 			return nil, err
 		}
@@ -772,12 +776,17 @@ func lookupExtensionKey(name string) string {
 	return key
 }
 
-func resolveImageDigest(bundleRef string) (digest.Digest, error) {
+func (c *ManifestConverter) resolveImageDigest(ctx context.Context, bundleRef string) (digest.Digest, error) {
+
+	// regOpts := cnabtooci.RegistryOptions{InsecureRegistry: opts.InsecureRegistry}
 
 	imgRef, err := cnab.ParseOCIReference(bundleRef)
+	insecureReg := cnabtooci.RegistryOptions{InsecureRegistry: true}
+
+	pulledBundle, err := c.Registry.PullBundle(ctx, imgRef, insecureReg)
 	if err != nil {
 		return "", fmt.Errorf("unable to parse dependency image: %s %w", bundleRef, err)
 	}
 
-	return imgRef.Digest(), nil
+	return pulledBundle.Reference.Digest(), nil
 }

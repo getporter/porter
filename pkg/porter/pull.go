@@ -15,6 +15,16 @@ type BundlePullOptions struct {
 	Force            bool
 }
 
+func GetBundlePullOptions(ref string, bundleRef *cnab.OCIReference,
+	insecureReg bool, force bool) BundlePullOptions {
+	return BundlePullOptions{
+		Reference:        ref,
+		_ref:             bundleRef,
+		InsecureRegistry: insecureReg,
+		Force:            force,
+	}
+}
+
 func (b *BundlePullOptions) Validate() error {
 	return b.validateReference()
 }
