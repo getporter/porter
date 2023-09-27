@@ -34,7 +34,7 @@ enableInlineShortcodes= true
 
   [params.navbar.logo]
     path = "images/porter-icon-badge.png"
-    width = 80
+    width = 50
     height = 50
 
   [params.footer]
