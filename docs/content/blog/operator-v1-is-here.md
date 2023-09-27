@@ -14,7 +14,7 @@ Porter Operator v1.0.0 is finally here! 🎉
 The Porter Operator gives you a native, integrated experience for managing your bundles from Kubernetes. It is the recommended way to automate your bundle pipeline with support for GitOps.
 
 ## What's new in v1?
-Our last release was v0.8.2, which updated a lot of dependencies.
+
 
 ### Outputs
 🚨 Outputs is currently WIP, we will be following up shortly with the 
