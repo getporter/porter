@@ -17,6 +17,9 @@ The Porter Operator gives you a native, integrated experience for managing your 
 Our last release was v0.8.2, which updated a lot of dependencies.
 
 ### Outputs
+🚨 Outputs is currently WIP, we will be following up shortly with the 
+ability for outputs to work after an installation upgrade.
+
 
 Our biggest feature by far is the Outputs API. Being able to share outputs between bundles,
 services, and allow users to retrieve outputs from bundles is a must have. By creating the
