@@ -44,7 +44,7 @@ Community][community] and [contribute to the project][contribute].
 [jerrycar]: https://github.com/jeremyrickard
 [sandbox]: https://cncf.io/sandbox-projects/
 [community]: /community/
-[contribute]: /contribute/
+[contribute]: /docs/contribute/
 [roadmap]: /roadmap/
 [mixin-dev-guide]: /mixin-dev-guide/
 [docker]: /mixins/docker/

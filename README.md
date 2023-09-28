@@ -60,7 +60,7 @@ Plugins let you store Porter's data and retrieve secrets from an external servic
 [Open an Issue]: https://github.com/getporter/porter/issues/new/choose
 [Forum]: https://getporter.org/forum/
 [Dev Meeting]: https://getporter.org/community/#dev-meeting
-[Porter Enhancement Proposals]: https://getporter.org/contribute/proposals/
+[Porter Enhancement Proposals]: https://getporter.org/docs/contribute/proposals/
 
 # Looking for Contributors
 
@@ -68,7 +68,7 @@ Want to work on Porter with us? 💖 We are actively seeking out new contributor
 with the hopes of building up both casual contributors and enticing some of you
 into becoming reviewers and maintainers.
 
-<p align="center">Start with our <a href="https://getporter.org/contribute/">New Contributors Guide</a>
+<p align="center">Start with our <a href="https://getporter.org/docs/contribute/">New Contributors Guide</a>
 
 Porter wouldn't be possible without our [contributors][contributors], carrying
 the load and making it better every day! 🙇‍♀️

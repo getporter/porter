@@ -107,14 +107,14 @@ func setPullRequestBaseURL() {
 // use a local copy as defined in PORTER_OPERATOR_REPOSITORY if available
 func linkOperatorDocs() {
 	// Remove the old symlink in case the source has moved
-	operatorSymlink := "docs/content/operator"
+	operatorSymlink := "docs/content/docs/operator"
 	err := os.RemoveAll(operatorSymlink)
 	if !os.IsNotExist(err) {
 		mgx.Must(err)
 	}
 
 	repoPath := ensureOperatorRepository()
-	contentPath, _ := filepath.Abs("docs/content")
+	contentPath, _ := filepath.Abs("docs/content/docs")
 	relPath, _ := filepath.Rel(contentPath, filepath.Join(repoPath, "docs/content"))
 	log.Println("ln -s", relPath, operatorSymlink)
 	mgx.Must(os.Symlink(relPath, operatorSymlink))

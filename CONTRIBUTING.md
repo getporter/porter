@@ -39,7 +39,7 @@ how things will go.
 If this is your first contribution to Porter, we have a [tutorial] that walks you
 through how to setup your developer environment, make a change and test it.
 
-[tutorial]: https://getporter.org/contribute/tutorial/
+[tutorial]: https://getporter.org/docs/contribute/tutorial/
 
 ## Code of Conduct
 
@@ -87,7 +87,7 @@ When you create your first pull request, add your name to the bottom of our
 [board]: https://getporter.org/board
 [slack]: https://getporter.org/community#slack
 [roadmap]: https://getporter.org/src/README.md#roadmap
-[pep]: https://getporter.org/contribute/proposals/
+[pep]: https://getporter.org/docs/contribute/proposals/
 
 ## Which branch to use
 
@@ -652,7 +652,7 @@ When you realize that you may need to make a breaking change, discuss it with a 
 Here are some examples of breaking changes:
 
 * The schema of porter.yaml changed.
-* The schema of Porter's [file formats](https://getporter.org/reference/file-formats) changed.
+* The schema of Porter's [file formats](https://getporter.org/references/file-formats) changed.
 * The schema of Porter's [config file](https://getporter.org/configuration/#config-file) changed.
 * Flags or behavior of a CLI command changed, such as removing a flag or adding a validation that can result in a hard error, preventing the command from running.
 
@@ -680,5 +680,5 @@ Our [version strategy] explains how we version the project, when you should expe
 breaking changes in a release, and the process for the v1 release.
 
 [cdn]: https://getporter.org/src/infra/cdn.md
-[version strategy]: https://getporter.org/project/version-strategy/
+[version strategy]: https://getporter.org/references/version-strategy/
 [Custom Windows CI Agent]: https://getporter.org/src/infra/custom-windows-ci-agent.md
