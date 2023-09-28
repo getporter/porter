@@ -90,3 +90,4 @@ and we will add you. **All** contributors belong here. 💯
 - [Gonçalo Montalvão Marques](https://github.com/gonmmarques)
 - [Sumit Kumar Soni](https://github.com/zelfroster)
 - [Chaiyapruek Muangsiri](https://github.com/cmppoon)
+- [Xin Fu](https://github.com/imfing)
