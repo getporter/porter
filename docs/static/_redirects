@@ -65,5 +65,8 @@
 /:version/install-mac.sh        https://github.com/getporter/porter/releases/download/:version/install-mac.sh 200
 /:version/install-windows.ps1   https://github.com/getporter/porter/releases/download/:version/install-windows.ps1 200
 
+# Redirect the porter release artifacts
+/:version/*           https://github.com/getporter/porter/releases/download/:version/:splat 302
+
 # Redirect the schema json files
 /schema/:version/* https://raw.githubusercontent.com/getporter/porter/release/:version/pkg/schema/:splat
