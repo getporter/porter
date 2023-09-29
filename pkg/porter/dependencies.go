@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"get.porter.sh/porter/pkg/cnab"
-	depsv1 "get.porter.sh/porter/pkg/cnab/dependencies/v1"
 	cnabprovider "get.porter.sh/porter/pkg/cnab/provider"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/manifest"
@@ -52,7 +51,7 @@ func newDependencyExecutioner(p *Porter, installation storage.Installation, acti
 }
 
 type queuedDependency struct {
-	depsv1.DependencyLock
+	cnab.DependencyLock
 	BundleReference cnab.BundleReference
 	Parameters      map[string]string
 
@@ -120,7 +119,7 @@ func (e *dependencyExecutioner) PrepareRootActionArguments(ctx context.Context) 
 	// args.Files is a map of target path to file contents
 	for _, dep := range e.deps {
 		// Copy the dependency bundle.json
-		target := runtime.GetDependencyDefinitionPath(dep.Alias)
+		target := runtime.GetDependencyDefinitionPath(dep.DependencyLock.Alias)
 		args.Files[target] = string(dep.cnabFileContents)
 	}
 
@@ -158,8 +157,7 @@ func (e *dependencyExecutioner) identifyDependencies(ctx context.Context) error 
 		return span.Error(errors.New("identifyDependencies failed to load the bundle because no bundle was specified. Please report this bug to https://github.com/getporter/porter/issues/new/choose"))
 	}
 
-	solver := &depsv1.DependencySolver{}
-	locks, err := solver.ResolveDependencies(bun)
+	locks, err := bun.ResolveDependencies(bun)
 	if err != nil {
 		return span.Error(err)
 	}
@@ -277,7 +275,9 @@ func (e *dependencyExecutioner) executeDependency(ctx context.Context, dep *queu
 	ctx, span := tracing.StartSpan(ctx)
 	defer span.EndSpan()
 
-	depName := depsv1.BuildPrerequisiteInstallationName(e.parentOpts.Name, dep.Alias)
+	//todo(schristoff): Should we untie BuildPreq func from extendedbundle?
+	eb := cnab.ExtendedBundle{}
+	depName := eb.BuildPrerequisiteInstallationName(e.parentOpts.Name, dep.Alias)
 	depInstallation, err := e.Installations.GetInstallation(ctx, e.parentOpts.Namespace, depName)
 	if err != nil {
 		if errors.Is(err, storage.ErrNotFound{}) {
