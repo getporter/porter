@@ -24,6 +24,24 @@
 # Moved Links
 /configuration/#porter-allow-docker-host-access /configuration/#allow-docker-host-access
 
+/administration/* /docs/administration/:splat
+/best-practices/* /docs/best-practices/:splat
+/bundle/* /docs/bundle/:splat
+/configuration/* /docs/configuration/:splat
+/contribute/* /docs/contribute/:splat
+/development/* /docs/development/:splat
+/faq/* /docs/faq/:splat
+/getting-started/* /docs/getting-started/:splat
+/how-to-guides/* /docs/how-to-guides/:splat
+/integrations/* /docs/integrations/:splat
+/introduction/* /docs/introduction/:splat
+/learn/* /docs/learn/:splat
+/operations/* /docs/operations/:splat
+/operator/* /docs/operator/:splat
+/quickstart/* /docs/quickstart/:splat
+/references/* /docs/references/:splat
+/troubleshooting/* /docs/troubleshooting/:splat
+
 #
 # cdn.porter.sh proxy to GitHub downloads
 #
@@ -46,9 +64,6 @@
 /:version/install-linux.sh      https://github.com/getporter/porter/releases/download/:version/install-linux.sh 200
 /:version/install-mac.sh        https://github.com/getporter/porter/releases/download/:version/install-mac.sh 200
 /:version/install-windows.ps1   https://github.com/getporter/porter/releases/download/:version/install-windows.ps1 200
-
-# Redirect the porter release artifacts
-/:version/*           https://github.com/getporter/porter/releases/download/:version/:splat 302
 
 # Redirect the schema json files
 /schema/:version/* https://raw.githubusercontent.com/getporter/porter/release/:version/pkg/schema/:splat
