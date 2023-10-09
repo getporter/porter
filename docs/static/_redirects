@@ -24,6 +24,24 @@
 # Moved Links
 /configuration/#porter-allow-docker-host-access /configuration/#allow-docker-host-access
 
+/administration/* /docs/administration/:splat
+/best-practices/* /docs/best-practices/:splat
+/bundle/* /docs/bundle/:splat
+/configuration/* /docs/configuration/:splat
+/contribute/* /docs/contribute/:splat
+/development/* /docs/development/:splat
+/faq/* /docs/faq/:splat
+/getting-started/* /docs/getting-started/:splat
+/how-to-guides/* /docs/how-to-guides/:splat
+/integrations/* /docs/integrations/:splat
+/introduction/* /docs/introduction/:splat
+/learn/* /docs/learn/:splat
+/operations/* /docs/operations/:splat
+/operator/* /docs/operator/:splat
+/quickstart/* /docs/quickstart/:splat
+/references/* /docs/references/:splat
+/troubleshooting/* /docs/troubleshooting/:splat
+
 #
 # cdn.porter.sh proxy to GitHub downloads
 #
