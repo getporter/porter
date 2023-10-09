@@ -26,11 +26,6 @@ type ExtendedBundle struct {
 }
 
 type DependencyLock struct {
-	Alias     string
-	Reference string
-}
-
-type DependecyLockv2 struct {
 	Alias        string
 	Reference    string
 	SharingMode  bool
@@ -233,7 +228,7 @@ func (b ExtendedBundle) GetReferencedRegistries() ([]string, error) {
 func (b *ExtendedBundle) ResolveDependencies(bun ExtendedBundle) ([]DependencyLock, error) {
 	//we shouldn't get here
 	if bun.HasDependenciesV2() {
-		return nil, fmt.Errorf("error executing dependencies v2 for %s", bun.Name)
+		return b.ResolveSharedDeps(bun)
 	}
 
 	rawDeps, err := bun.ReadDependenciesV1()
@@ -252,8 +247,9 @@ func (b *ExtendedBundle) ResolveDependencies(bun ExtendedBundle) ([]DependencyLo
 		}
 
 		lock := DependencyLock{
-			Alias:     dep.Name,
-			Reference: ref.String(),
+			Alias:       dep.Name,
+			Reference:   ref.String(),
+			SharingMode: false,
 		}
 		q = append(q, lock)
 	}
@@ -262,19 +258,15 @@ func (b *ExtendedBundle) ResolveDependencies(bun ExtendedBundle) ([]DependencyLo
 }
 
 // ResolveSharedDeps only works with depsv2
-func (b *ExtendedBundle) ResolveSharedDeps(bun ExtendedBundle) ([]DependencyLockv2, error) {
-	//NOTE: (schristoff) just sanity checking myself
-	if !bun.HasDependenciesV2() {
-		return nil, fmt.Errorf("error executing dependencies v2 for %s", bun.Name)
-	}
+func (b *ExtendedBundle) ResolveSharedDeps(bun ExtendedBundle) ([]DependencyLock, error) {
 	v2, err := bun.ReadDependenciesV2()
 	if err != nil {
 		return nil, fmt.Errorf("error reading dependencies v2 for %s", bun.Name)
 	}
 
-	q := make([]DependencyLockv2, 0, len(v2.Requires))
+	q := make([]DependencyLock, 0, len(v2.Requires))
 	for _, d := range v2.Requires {
-		lock := DependencyLockv2{
+		lock := DependencyLock{
 			Alias: d.Name,
 			//note (schristoff): version isnt right
 			Reference:    d.Version,
@@ -283,7 +275,7 @@ func (b *ExtendedBundle) ResolveSharedDeps(bun ExtendedBundle) ([]DependencyLock
 		}
 		q = append(q, lock)
 	}
-	return nil, nil
+	return q, nil
 }
 
 // ResolveVersion returns the bundle name, its version and any error.

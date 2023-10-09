@@ -52,8 +52,6 @@ func newDependencyExecutioner(p *Porter, installation storage.Installation, acti
 
 type queuedDependency struct {
 	cnab.DependencyLock
-	//note(schristoff): lame
-	cnab.DependecyLockv2
 	BundleReference cnab.BundleReference
 	Parameters      map[string]string
 
@@ -286,6 +284,7 @@ func (e *dependencyExecutioner) executeDependency(ctx context.Context, dep *queu
 	depName := eb.BuildPrerequisiteInstallationName(e.parentOpts.Name, dep.Alias)
 
 	depInstallation, err := e.Installations.GetInstallation(ctx, e.parentOpts.Namespace, depName)
+
 	if err != nil {
 		if errors.Is(err, storage.ErrNotFound{}) {
 			depInstallation = storage.NewInstallation(e.parentOpts.Namespace, depName)
@@ -298,6 +297,25 @@ func (e *dependencyExecutioner) executeDependency(ctx context.Context, dep *queu
 		} else {
 			return err
 		}
+	}
+
+	//If installation is found, check for v2 Sharing
+	if dep.SharingMode {
+		//unsure if this will ever happen, but just in case
+		if dep.SharingGroup == "" {
+			return fmt.Errorf("cannot resolve sharing due to empty sharing group")
+		}
+		// If it exists and they're in the same group, it'll be either installed or uninstalled
+		// If installed, wire things up, if uninstalled, error
+		if dep.SharingGroup == depInstallation.Labels["SharingGroup"] {
+			if depInstallation.Uninstalled {
+				return fmt.Errorf("error executing dependency, in uninstalled status %s", depInstallation.Name)
+			}
+			//Wire up outputs & params
+		}
+		//If we get here, we need to call someone for help
+		return fmt.Errorf("how are you here?")
+
 	}
 
 	finalParams, err := e.porter.finalizeParameters(ctx, depInstallation, dep.BundleReference.Definition, e.parentArgs.Action, dep.Parameters)
