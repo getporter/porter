@@ -12,8 +12,6 @@ import (
 	"sort"
 	"strings"
 
-	depsv2ext "get.porter.sh/porter/pkg/cnab/extensions/dependencies/v2"
-
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/experimental"
@@ -817,12 +815,12 @@ type SharingCriteria struct {
 
 // GetEffectiveMode returns the mode, taking into account the default value when
 // no mode is specified.
-func (s SharingCriteria) GetEffectiveMode() string {
+func (s SharingCriteria) GetEffectiveMode() bool {
 	if s.Mode == "" {
-		return depsv2ext.SharingModeGroup
+		return false
 	}
 
-	return s.Mode
+	return true
 }
 
 // SharingGroup defines a set of characteristics for sharing a dependency with

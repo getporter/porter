@@ -52,6 +52,8 @@ func newDependencyExecutioner(p *Porter, installation storage.Installation, acti
 
 type queuedDependency struct {
 	cnab.DependencyLock
+	//note(schristoff): lame
+	cnab.DependecyLockv2
 	BundleReference cnab.BundleReference
 	Parameters      map[string]string
 
@@ -157,6 +159,11 @@ func (e *dependencyExecutioner) identifyDependencies(ctx context.Context) error 
 		return span.Error(errors.New("identifyDependencies failed to load the bundle because no bundle was specified. Please report this bug to https://github.com/getporter/porter/issues/new/choose"))
 	}
 
+	//NOTE: (schristoff) if v2, time to jump
+	if bun.HasDependenciesV2() {
+		e.resolveSharedDeps_v2(ctx, bun)
+	}
+
 	locks, err := bun.ResolveDependencies(bun)
 	if err != nil {
 		return span.Error(err)
@@ -176,7 +183,6 @@ func (e *dependencyExecutioner) identifyDependencies(ctx context.Context) error 
 func (e *dependencyExecutioner) prepareDependency(ctx context.Context, dep *queuedDependency) error {
 	ctx, span := tracing.StartSpan(ctx)
 	defer span.EndSpan()
-
 	// Pull the dependency
 	var err error
 	pullOpts := BundlePullOptions{
@@ -278,6 +284,7 @@ func (e *dependencyExecutioner) executeDependency(ctx context.Context, dep *queu
 	//todo(schristoff): Should we untie BuildPreq func from extendedbundle?
 	eb := cnab.ExtendedBundle{}
 	depName := eb.BuildPrerequisiteInstallationName(e.parentOpts.Name, dep.Alias)
+
 	depInstallation, err := e.Installations.GetInstallation(ctx, e.parentOpts.Namespace, depName)
 	if err != nil {
 		if errors.Is(err, storage.ErrNotFound{}) {

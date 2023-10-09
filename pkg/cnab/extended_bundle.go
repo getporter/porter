@@ -30,6 +30,13 @@ type DependencyLock struct {
 	Reference string
 }
 
+type DependecyLockv2 struct {
+	Alias        string
+	Reference    string
+	SharingMode  bool
+	SharingGroup string
+}
+
 // NewBundle creates an ExtendedBundle from a given bundle.
 func NewBundle(bundle bundle.Bundle) ExtendedBundle {
 	return ExtendedBundle{bundle}
@@ -224,8 +231,9 @@ func (b ExtendedBundle) GetReferencedRegistries() ([]string, error) {
 }
 
 func (b *ExtendedBundle) ResolveDependencies(bun ExtendedBundle) ([]DependencyLock, error) {
-	if !bun.HasDependenciesV1() {
-		return nil, nil
+	//we shouldn't get here
+	if bun.HasDependenciesV2() {
+		return nil, fmt.Errorf("error executing dependencies v2 for %s", bun.Name)
 	}
 
 	rawDeps, err := bun.ReadDependenciesV1()
@@ -251,6 +259,31 @@ func (b *ExtendedBundle) ResolveDependencies(bun ExtendedBundle) ([]DependencyLo
 	}
 
 	return q, nil
+}
+
+// ResolveSharedDeps only works with depsv2
+func (b *ExtendedBundle) ResolveSharedDeps(bun ExtendedBundle) ([]DependencyLockv2, error) {
+	//NOTE: (schristoff) just sanity checking myself
+	if !bun.HasDependenciesV2() {
+		return nil, fmt.Errorf("error executing dependencies v2 for %s", bun.Name)
+	}
+	v2, err := bun.ReadDependenciesV2()
+	if err != nil {
+		return nil, fmt.Errorf("error reading dependencies v2 for %s", bun.Name)
+	}
+
+	q := make([]DependencyLockv2, 0, len(v2.Requires))
+	for _, d := range v2.Requires {
+		lock := DependencyLockv2{
+			Alias: d.Name,
+			//note (schristoff): version isnt right
+			Reference:    d.Version,
+			SharingMode:  d.Sharing.Mode,
+			SharingGroup: d.Sharing.Group.Name,
+		}
+		q = append(q, lock)
+	}
+	return nil, nil
 }
 
 // ResolveVersion returns the bundle name, its version and any error.
