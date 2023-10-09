@@ -156,12 +156,6 @@ func (e *dependencyExecutioner) identifyDependencies(ctx context.Context) error 
 		// If we hit here, there is a bug somewhere
 		return span.Error(errors.New("identifyDependencies failed to load the bundle because no bundle was specified. Please report this bug to https://github.com/getporter/porter/issues/new/choose"))
 	}
-
-	//NOTE: (schristoff) if v2, time to jump
-	if bun.HasDependenciesV2() {
-		e.resolveSharedDeps_v2(ctx, bun)
-	}
-
 	locks, err := bun.ResolveDependencies(bun)
 	if err != nil {
 		return span.Error(err)
@@ -289,6 +283,11 @@ func (e *dependencyExecutioner) executeDependency(ctx context.Context, dep *queu
 		if errors.Is(err, storage.ErrNotFound{}) {
 			depInstallation = storage.NewInstallation(e.parentOpts.Namespace, depName)
 			depInstallation.SetLabel("sh.porter.parentInstallation", e.parentArgs.Installation.String())
+
+			//if using v2, set label for sharing group so we can find it later
+			if dep.SharingMode {
+				depInstallation.SetLabel("sh.porter.SharingGroup", dep.SharingGroup)
+			}
 			// For now, assume it's okay to give the dependency the same credentials as the parent
 			depInstallation.CredentialSets = e.parentInstallation.CredentialSets
 			if err = e.Installations.InsertInstallation(ctx, depInstallation); err != nil {
@@ -307,11 +306,12 @@ func (e *dependencyExecutioner) executeDependency(ctx context.Context, dep *queu
 		}
 		// If it exists and they're in the same group, it'll be either installed or uninstalled
 		// If installed, wire things up, if uninstalled, error
-		if dep.SharingGroup == depInstallation.Labels["SharingGroup"] {
+		if dep.SharingGroup == depInstallation.Labels["sh.porter.SharingGroup"] {
 			if depInstallation.Uninstalled {
 				return fmt.Errorf("error executing dependency, in uninstalled status %s", depInstallation.Name)
 			}
-			//Wire up outputs & params
+			//note (schristoff):I think  below we wire up params so the only thing needs to be tied is
+			// credentials maybe?
 		}
 		//If we get here, we need to call someone for help
 		return fmt.Errorf("how are you here?")
