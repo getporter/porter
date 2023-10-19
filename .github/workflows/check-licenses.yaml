@@ -1,0 +1,26 @@
+name: Check licenses
+on:
+  push:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Install go-licenses
+        run: go install github.com/google/go-licenses@v1.6.0
+      - name: Check licenses
+        run: |
+          go-licenses check ./... \
+            --ignore github.com/xi2/xz,golang.org/x/sys/unix # https://github.com/xi2/xz/blob/master/LICENSE
