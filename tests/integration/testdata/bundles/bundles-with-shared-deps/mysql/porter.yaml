@@ -1,0 +1,47 @@
+# This is a test bundle that can be used as a dependency
+schemaVersion: 1.0.0
+name: wordpress-mysql
+version: 0.1.0
+description: "A test bundle dependency"
+registry: localhost:5000
+
+parameters:
+  - name: database
+    type: string
+    default: "mysqldb"
+
+mixins:
+  - exec
+
+dry-run:
+  - exec:
+      command: echo
+      arguments:
+        - "ready to install mysqldb"
+
+install:
+  - exec:
+      command: echo
+      arguments:
+        - "installing mysqldb"
+  - exec:
+      command: echo
+      arguments:
+        - "chicken"
+status:
+  - exec:
+      command: echo
+      arguments:
+        - "mysqldb is looking great!"
+
+upgrade:
+  - exec:
+      command: echo
+      arguments:
+        - "upgrading mysqldb"
+
+uninstall:
+  - exec:
+      command: echo
+      arguments:
+        - "uninstalling mysqldb"

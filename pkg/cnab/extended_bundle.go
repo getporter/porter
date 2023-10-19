@@ -226,11 +226,13 @@ func (b ExtendedBundle) GetReferencedRegistries() ([]string, error) {
 }
 
 func (b *ExtendedBundle) ResolveDependencies(bun ExtendedBundle) ([]DependencyLock, error) {
-	//we shouldn't get here
 	if bun.HasDependenciesV2() {
 		return b.ResolveSharedDeps(bun)
 	}
 
+	if !bun.HasDependenciesV1() {
+		return nil, nil
+	}
 	rawDeps, err := bun.ReadDependenciesV1()
 	// We need make sure the DependenciesV1 are ordered by the desired sequence
 	orderedDeps := rawDeps.ListBySequence()

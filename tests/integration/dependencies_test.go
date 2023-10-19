@@ -242,3 +242,61 @@ func uninstallWordpressBundle(ctx context.Context, p *porter.TestPorter, namespa
 	assert.Equal(p.T(), "ci", i.CredentialSets[0], "expected to use the alternate credential set")
 
 }
+
+func TestSharedDependencies(t *testing.T) {
+	t.Parallel()
+
+	p := porter.NewTestPorter(t)
+	// p.Config.SetExperimentalFlags(experimental.FlagDependenciesV2)
+	defer p.Close()
+	ctx := p.SetupIntegrationTest()
+
+	publishMySQLBundlev2(ctx, p)
+	p.CopyDirectory(filepath.Join(p.RepoRoot, "tests/integration/testdata/bundles/bundles-with-shared-deps/mysql"), ".", false)
+
+	namespace := p.RandomString(10)
+	installOpts := porter.NewInstallOptions()
+	installOpts.Namespace = namespace
+	installOpts.CredentialIdentifiers = []string{"ci"} // Use the ci credential set, porter should remember this for later
+
+	err := installOpts.Validate(ctx, []string{}, p.Porter)
+	require.NoError(p.T(), err, "validation of install opts for shared mysql bundle failed")
+
+	err = p.InstallBundle(ctx, installOpts)
+	require.NoError(p.T(), err, "install of shared mysql bundle failed namespace %s", namespace)
+
+	_, err = p.Installations.GetInstallation(ctx, namespace, "wordpress-mysql")
+	require.NoError(p.T(), err, "could not fetch installation status for the dependency")
+
+	//okay, now we have the existing dependency chilling
+	namespace = installWordpressBundle(ctx, p)
+	defer cleanupWordpressBundle(ctx, p, namespace)
+
+	upgradeWordpressBundle(ctx, p, namespace)
+
+	invokeWordpressBundle(ctx, p, namespace)
+
+	uninstallWordpressBundle(ctx, p, namespace)
+
+}
+
+func publishMySQLBundlev2(ctx context.Context, p *porter.TestPorter) {
+	bunDir, err := os.MkdirTemp("", "porter-mysqlv2")
+	require.NoError(p.T(), err, "could not create temp directory to publish the mysql bundle")
+	defer os.RemoveAll(bunDir)
+
+	// Rebuild the bundle from a temp directory so that we don't modify the source directory
+	// and leave modified files around.
+	p.TestConfig.TestContext.AddTestDirectory(filepath.Join(p.RepoRoot, "tests/integration/testdata/bundles/bundles-with-shared-deps/mysql"), bunDir)
+	pwd := p.Getwd()
+	p.Chdir(bunDir)
+	defer p.Chdir(pwd)
+
+	publishOpts := porter.PublishOptions{}
+	publishOpts.Force = true
+	err = publishOpts.Validate(p.Config)
+	require.NoError(p.T(), err, "validation of publish opts for dependent bundle failed")
+
+	err = p.Publish(ctx, publishOpts)
+	require.NoError(p.T(), err, "publish of dependent bundle failed")
+}
