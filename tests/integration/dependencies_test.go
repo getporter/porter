@@ -265,18 +265,13 @@ func TestSharedDependencies(t *testing.T) {
 	err = p.InstallBundle(ctx, installOpts)
 	require.NoError(p.T(), err, "install of shared mysql bundle failed namespace %s", namespace)
 
-	_, err = p.Installations.GetInstallation(ctx, namespace, "wordpress-mysql")
+	mysqlinst, err := p.Installations.GetInstallation(ctx, namespace, "wordpress-mysql")
 	require.NoError(p.T(), err, "could not fetch installation status for the dependency")
 
-	//okay, now we have the existing dependency chilling
-	namespace = installWordpressBundle(ctx, p)
-	defer cleanupWordpressBundle(ctx, p, namespace)
+	//Set the label on the installaiton so Porter knows to grab it
+	mysqlinst.SetLabel("sh.porter.SharingGroup", "myapp")
 
-	upgradeWordpressBundle(ctx, p, namespace)
-
-	invokeWordpressBundle(ctx, p, namespace)
-
-	uninstallWordpressBundle(ctx, p, namespace)
+	installWordpressBundlev2(ctx, p, namespace)
 
 }
 
@@ -299,4 +294,25 @@ func publishMySQLBundlev2(ctx context.Context, p *porter.TestPorter) {
 
 	err = p.Publish(ctx, publishOpts)
 	require.NoError(p.T(), err, "publish of dependent bundle failed")
+}
+
+func installWordpressBundlev2(ctx context.Context, p *porter.TestPorter, namespace string) {
+	// Publish the mysql bundle that we depend upon
+	publishMySQLBundle(ctx, p)
+
+	// Install the bundle that has dependencies
+	p.CopyDirectory(filepath.Join(p.RepoRoot, "tests/integration/testdata/bundles/bundles-with-shared-deps/wordpress"), ".", false)
+
+	installOpts := porter.NewInstallOptions()
+	installOpts.Namespace = namespace
+
+	err := installOpts.Validate(ctx, []string{}, p.Porter)
+	require.NoError(p.T(), err, "validation of install opts for root bundle failed")
+
+	err = p.InstallBundle(ctx, installOpts)
+	require.NoError(p.T(), err, "install of root bundle failed namespace %s", namespace)
+	// Verify that the bundle claim is present
+	i, err := p.Installations.GetInstallation(ctx, namespace, "wordpress")
+	require.NoError(p.T(), err, "could not fetch claim for the root bundle")
+	assert.Equal(p.T(), cnab.StatusSucceeded, i.Status.ResultStatus, "the root bundle wasn't recorded as being installed successfully")
 }
