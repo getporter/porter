@@ -268,6 +268,15 @@ func (b *ExtendedBundle) ResolveSharedDeps(bun ExtendedBundle) ([]DependencyLock
 
 	q := make([]DependencyLock, 0, len(v2.Requires))
 	for _, d := range v2.Requires {
+
+		//todo(schristoff): make this better?
+		if d.Sharing.Mode && d.Sharing.Group.Name == "" {
+			return nil, fmt.Errorf("dont do this")
+		}
+		if !d.Sharing.Mode && d.Sharing.Group.Name != "" {
+			return nil, fmt.Errorf("dont do this either")
+		}
+
 		lock := DependencyLock{
 			Alias: d.Name,
 			//note (schristoff): version isnt right

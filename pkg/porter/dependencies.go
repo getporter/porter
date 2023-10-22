@@ -273,10 +273,16 @@ func (e *dependencyExecutioner) executeDependency(ctx context.Context, dep *queu
 	ctx, span := tracing.StartSpan(ctx)
 	defer span.EndSpan()
 
+	if dep.SharingMode {
+		err := e.executeDependencyv2(ctx, dep)
+		return err
+	}
+
 	//todo(schristoff): Should we untie BuildPreq func from extendedbundle?
 	eb := cnab.ExtendedBundle{}
-	depName := eb.BuildPrerequisiteInstallationName(e.parentOpts.Name, dep.Alias)
 
+	//this expects depv1 style dependency to be installed as parentName+depName
+	depName := eb.BuildPrerequisiteInstallationName(e.parentOpts.Name, dep.Alias)
 	depInstallation, err := e.Installations.GetInstallation(ctx, e.parentOpts.Namespace, depName)
 
 	if err != nil {
@@ -284,10 +290,6 @@ func (e *dependencyExecutioner) executeDependency(ctx context.Context, dep *queu
 			depInstallation = storage.NewInstallation(e.parentOpts.Namespace, depName)
 			depInstallation.SetLabel("sh.porter.parentInstallation", e.parentArgs.Installation.String())
 
-			//if using v2, set label for sharing group so we can find it later
-			if dep.SharingMode {
-				depInstallation.SetLabel("sh.porter.SharingGroup", dep.SharingGroup)
-			}
 			// For now, assume it's okay to give the dependency the same credentials as the parent
 			depInstallation.CredentialSets = e.parentInstallation.CredentialSets
 			if err = e.Installations.InsertInstallation(ctx, depInstallation); err != nil {
@@ -296,26 +298,6 @@ func (e *dependencyExecutioner) executeDependency(ctx context.Context, dep *queu
 		} else {
 			return err
 		}
-	}
-
-	//If installation is found, check for v2 Sharing
-	if dep.SharingMode {
-		//unsure if this will ever happen, but just in case
-		if dep.SharingGroup == "" {
-			return fmt.Errorf("cannot resolve sharing due to empty sharing group")
-		}
-		// If it exists and they're in the same group, it'll be either installed or uninstalled
-		// If installed, wire things up, if uninstalled, error
-		if dep.SharingGroup == depInstallation.Labels["sh.porter.SharingGroup"] {
-			if depInstallation.Uninstalled {
-				return fmt.Errorf("error executing dependency, in uninstalled status %s", depInstallation.Name)
-			}
-			//note (schristoff):I think  below we wire up params so the only thing needs to be tied is
-			// credentials maybe?
-		}
-		//If we get here, we need to call someone for help
-		return fmt.Errorf("how are you here?")
-
 	}
 
 	finalParams, err := e.porter.finalizeParameters(ctx, depInstallation, dep.BundleReference.Definition, e.parentArgs.Action, dep.Parameters)
@@ -360,5 +342,33 @@ func (e *dependencyExecutioner) executeDependency(ctx context.Context, dep *queu
 		span.Infof(installationDeleteTmpl, depArgs.Installation)
 		return e.Installations.RemoveInstallation(ctx, depArgs.Installation.Namespace, depArgs.Installation.Name)
 	}
+	return nil
+}
+
+func (e *dependencyExecutioner) executeDependencyv2(ctx context.Context, dep *queuedDependency) error {
+	depInstallation, err := e.Installations.GetInstallation(ctx, e.parentOpts.Namespace, dep.Alias)
+	if err != nil {
+		if errors.Is(err, storage.ErrNotFound{}) {
+			depInstallation = storage.NewInstallation(e.parentOpts.Namespace, dep.Alias)
+			//tood(schristoff): not sure if we still want to have parents here
+			depInstallation.SetLabel("sh.porter.parentInstallation", e.parentArgs.Installation.String())
+			depInstallation.SetLabel("sh.porter.SharingGroup", dep.SharingGroup)
+
+			// For now, assume it's okay to give the dependency the same credentials as the parent
+			depInstallation.CredentialSets = e.parentInstallation.CredentialSets
+			if err = e.Installations.InsertInstallation(ctx, depInstallation); err != nil {
+				return err
+			
+		}
+		return err 
+	}
+
+
+	if dep.SharingGroup == depInstallation.Labels["sh.porter.SharingGroup"] {
+		if depInstallation.Uninstalled {
+			return fmt.Errorf("error executing dependency, in uninstalled status %s", depInstallation.Name)
+		}
+
+
 	return nil
 }
