@@ -95,7 +95,7 @@ Unless the issue specifically mentions a branch, please create your feature bran
 
 For example:
 
-```
+```bash
 # Make sure you have the most recent changes to main
 git checkout main
 git pull
@@ -177,7 +177,7 @@ have the right to contribute the code you are submitting to the project.
 
 You sign-off by adding the following to your commit messages:
 
-```
+```bash
 Author: Your Name <your.name@example.com>
 Date:   Thu Feb 2 11:41:15 2018 -0800
 
@@ -191,12 +191,16 @@ be rejected by the automated DCO check.
 
 Git has a `-s` command line option to do this automatically:
 
-    git commit -s -m 'This is my commit message'
+```
+git commit -s -m 'This is my commit message'
+```
 
 If you forgot to do this and have not yet pushed your changes to the remote
 repository, you can amend your commit with the sign-off by running 
 
-    git commit --amend -s
+```
+git commit --amend -s
+```
 
 ## The life of a pull request
 
