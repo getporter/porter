@@ -43,6 +43,9 @@ func (r *Runtime) newDriver(driverName string, args ActionArguments) (driver.Dri
 	if !args.AllowDockerHostAccess && len(args.HostVolumeMounts) == 0 {
 		driverImpl, err = drivers.LookupDriver(r.Context, driverName)
 	}
+	if err != nil {
+		return nil, err
+	}
 
 	var d *docker.Driver
 	if args.AllowDockerHostAccess || len(args.HostVolumeMounts) > 0 {
@@ -51,6 +54,9 @@ func (r *Runtime) newDriver(driverName string, args ActionArguments) (driver.Dri
 
 	if args.AllowDockerHostAccess {
 		driverImpl, err = r.dockerDriverWithHostAccess(dockerExt, d)
+	}
+	if err != nil {
+		return nil, err
 	}
 
 	if len(args.HostVolumeMounts) > 0 {
@@ -66,6 +72,9 @@ func (r *Runtime) newDriver(driverName string, args ActionArguments) (driver.Dri
 
 			return driver.Driver(dr), nil
 		}(d)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if configurable, ok := driverImpl.(driver.Configurable); ok {
