@@ -749,15 +749,30 @@ func TestBundleExecutionOptions_GetHostVolumeMounts(t *testing.T) {
 	t.Run("invalid host volume mounts", func(t *testing.T) {
 		opts := &BundleExecutionOptions{
 			HostVolumeMounts: []string{
-				"/host/path:/target/path:invalid-option",
+				"1=",
 				"/host/path",
 			},
 		}
 
-		hvs := opts.GetHostVolumeMounts()
+		actual := opts.GetHostVolumeMounts()
 
-		if len(hvs) != 0 {
-			t.Errorf("expected no host volume mounts but got %v", hvs)
+		if len(actual) != 0 {
+			t.Errorf("expected no host volume mounts but got %v", actual)
+		}
+
+	})
+
+	t.Run("invalid host volume mount r/w option value", func(t *testing.T) {
+		opts := &BundleExecutionOptions{
+			HostVolumeMounts: []string{
+				"/host/path:/target/path:invalid-option",
+			},
+		}
+
+		actual := opts.GetHostVolumeMounts()
+
+		if !actual[0].ReadOnly {
+			t.Errorf("expected ReadOnly to be true but got %v", actual[0].ReadOnly)
 		}
 
 	})
