@@ -28,21 +28,44 @@ func (r *Runtime) newDriver(driverName string, args ActionArguments) (driver.Dri
 		return nil, err
 	}
 
-	if args.AllowDockerHostAccess {
-		if driverName != DriverNameDocker {
-			return nil, fmt.Errorf("allow-docker-host-access was enabled, but the driver is %s", driverName)
-		}
+	if args.AllowDockerHostAccess && driverName != DriverNameDocker {
+		return nil, fmt.Errorf("allow-docker-host-access was enabled, but the driver is %s", driverName)
+	}
 
-		driverImpl, err = r.dockerDriverWithHostAccess(dockerExt)
-	} else {
-		if dockerRequired {
-			return nil, fmt.Errorf("extension %q is required but allow-docker-host-access was not enabled",
-				cnab.DockerExtensionKey)
-		}
+	if dockerRequired && !args.AllowDockerHostAccess {
+		return nil, fmt.Errorf("extension %q is required but allow-docker-host-access was not enabled", cnab.DockerExtensionKey)
+	}
+
+	if len(args.HostVolumeMounts) > 0 && driverName != DriverNameDocker {
+		return nil, fmt.Errorf("mount-host-volume was was used to mount a volume, but the driver is %s", driverName)
+	}
+
+	if !args.AllowDockerHostAccess && len(args.HostVolumeMounts) == 0 {
 		driverImpl, err = drivers.LookupDriver(r.Context, driverName)
 	}
-	if err != nil {
-		return nil, err
+
+	var d *docker.Driver
+	if args.AllowDockerHostAccess || len(args.HostVolumeMounts) > 0 {
+		d = &docker.Driver{}
+	}
+
+	if args.AllowDockerHostAccess {
+		driverImpl, err = r.dockerDriverWithHostAccess(dockerExt, d)
+	}
+
+	if len(args.HostVolumeMounts) > 0 {
+		driverImpl, err = func(dr *docker.Driver) (driver.Driver, error) {
+
+			dr.AddConfigurationOptions(func(cfg *container.Config, hostCfg *container.HostConfig) error {
+				err := r.addVolumeMountsToHostConfig(hostCfg, args.HostVolumeMounts)
+				if err != nil {
+					return err
+				}
+				return nil
+			})
+
+			return driver.Driver(dr), nil
+		}(d)
 	}
 
 	if configurable, ok := driverImpl.(driver.Configurable); ok {
@@ -60,8 +83,7 @@ func (r *Runtime) newDriver(driverName string, args ActionArguments) (driver.Dri
 	return driverImpl, nil
 }
 
-func (r *Runtime) dockerDriverWithHostAccess(config cnab.Docker) (driver.Driver, error) {
-	d := &docker.Driver{}
+func (r *Runtime) dockerDriverWithHostAccess(config cnab.Docker, d *docker.Driver) (driver.Driver, error) {
 
 	// Run the container with privileged access if necessary
 	if config.Privileged {
@@ -77,4 +99,14 @@ func (r *Runtime) dockerDriverWithHostAccess(config cnab.Docker) (driver.Driver,
 	d.AddConfigurationOptions(r.mountDockerSocket)
 
 	return driver.Driver(d), nil
+}
+
+func (r *Runtime) addVolumeMountsToHostConfig(hostConfig *container.HostConfig, mounts []HostVolumeMountSpec) error {
+	for _, mount := range mounts {
+		err := r.addVolumeMountToHostConfig(hostConfig, mount.Source, mount.Target, mount.ReadOnly)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

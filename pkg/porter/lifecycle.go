@@ -43,6 +43,11 @@ type BundleExecutionOptions struct {
 	// AllowDockerHostAccess grants the bundle access to the Docker socket.
 	AllowDockerHostAccess bool
 
+	// MountHostVolume mounts provides the bundle access to a host volume.
+	// This is the unparsed list of HOST_PATH:TARGET_PATH:OPTION
+	// OPTION can be ro (read-only) or rw (read-write). Defaults to ro.
+	HostVolumeMounts []string
+
 	// DebugMode indicates if the bundle should be run in debug mode.
 	DebugMode bool
 
@@ -90,6 +95,40 @@ func (o *BundleExecutionOptions) GetParameters() map[string]interface{} {
 		panic("BundleExecutionOptions.GetParameters was called before the final set of parameters were resolved with Porter.applyActionOptionsToInstallation")
 	}
 	return o.finalParams
+}
+
+// Sets the final resolved set of host volumes to be made availabe to the bundle
+func (o *BundleExecutionOptions) GetHostVolumeMounts() []cnabprovider.HostVolumeMountSpec {
+	var hostVolumeMounts []cnabprovider.HostVolumeMountSpec
+	for _, mount := range o.HostVolumeMounts {
+		var isReadOnlyMount bool
+		parts := strings.Split(mount, ":") // HOST_PATH:TARGET_PATH:OPTION
+
+		l := len(parts)
+		if l < 2 || l > 3 {
+			continue
+		}
+
+		switch {
+		case l == 2:
+			isReadOnlyMount = true
+			// next cases are l == 3
+		case parts[2] == "ro":
+			isReadOnlyMount = true
+		case parts[2] == "rw":
+			isReadOnlyMount = false
+		default:
+			isReadOnlyMount = true
+		}
+
+		hostVolumeMounts = append(hostVolumeMounts, cnabprovider.HostVolumeMountSpec{
+			Source:   parts[0],
+			Target:   parts[1],
+			ReadOnly: isReadOnlyMount,
+		})
+	}
+
+	return hostVolumeMounts
 }
 
 func (o *BundleExecutionOptions) Validate(ctx context.Context, args []string, p *Porter) error {
@@ -300,6 +339,7 @@ func (p *Porter) BuildActionArgs(ctx context.Context, installation storage.Insta
 		Params:                opts.GetParameters(),
 		Driver:                opts.Driver,
 		AllowDockerHostAccess: opts.AllowDockerHostAccess,
+		HostVolumeMounts:      opts.GetHostVolumeMounts(),
 		PersistLogs:           !opts.NoLogs,
 	}
 

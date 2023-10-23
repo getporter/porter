@@ -10,6 +10,7 @@ import (
 	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/cnab"
 	configadapter "get.porter.sh/porter/pkg/cnab/config-adapter"
+	cnabprovider "get.porter.sh/porter/pkg/cnab/provider"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/secrets"
@@ -697,4 +698,67 @@ func Test_ensureVPrefix_latest(t *testing.T) {
 			assert.Equal(t, test.latestRef, opts.BundlePullOptions.Reference)
 		})
 	}
+}
+
+func TestBundleExecutionOptions_GetHostVolumeMounts(t *testing.T) {
+	t.Run("valid host volume mounts", func(t *testing.T) {
+		opts := &BundleExecutionOptions{
+			HostVolumeMounts: []string{
+				"/host/path:/target/path:ro",
+				"/host/path:/target/path:rw",
+				"/host/path:/target/path",
+			},
+		}
+
+		expected := []cnabprovider.HostVolumeMountSpec{
+			{
+				Source:   "/host/path",
+				Target:   "/target/path",
+				ReadOnly: true,
+			},
+			{
+				Source:   "/host/path",
+				Target:   "/target/path",
+				ReadOnly: false,
+			},
+			{
+				Source:   "/host/path",
+				Target:   "/target/path",
+				ReadOnly: true,
+			},
+		}
+
+		actual := opts.GetHostVolumeMounts()
+
+		if len(expected) != len(actual) {
+			t.Errorf("expected %v but got %v", expected, actual)
+		}
+		for i := range expected {
+			if expected[i].Source != actual[i].Source {
+				t.Errorf("expected %v but got %v", expected[i].Source, actual[i].Source)
+			}
+			if expected[i].Target != actual[i].Target {
+				t.Errorf("expected %v but got %v", expected[i].Target, actual[i].Target)
+			}
+			if expected[i].ReadOnly != actual[i].ReadOnly {
+				t.Errorf("expected %v but got %v", expected[i].ReadOnly, actual[i].ReadOnly)
+			}
+		}
+	})
+
+	t.Run("invalid host volume mounts", func(t *testing.T) {
+		opts := &BundleExecutionOptions{
+			HostVolumeMounts: []string{
+				"/host/path:/target/path:invalid-option",
+				"/host/path",
+			},
+		}
+
+		hvs := opts.GetHostVolumeMounts()
+
+		if len(hvs) != 0 {
+			t.Errorf("expected no host volume mounts but got %v", hvs)
+		}
+
+	})
 }
