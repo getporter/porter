@@ -1,4 +1,4 @@
-schemaVersion: 1.0.0
+schemaVersion: 1.0.1
 name: wordpress
 version: 0.1.4
 registry: "localhost:5000"
@@ -14,7 +14,7 @@ dependencies:
   requires:
     - name: mysql
       bundle:
-        reference: localhost:5000/mysql:v0.1.4
+        reference: localhost:5000/mysql:0.1.0
       parameters:
         database-name: wordpress
         mysql-user: wordpress

@@ -275,8 +275,6 @@ func TestSharedDependencies(t *testing.T) {
 
 	p.CopyDirectory(filepath.Join(p.RepoRoot, "build/testdata/bundles/mysql"), ".", false)
 	installMySQLbundle(ctx, p, namespace)
-	p.CopyDirectory(filepath.Join(p.RepoRoot, "build/testdata/bundles/wordpress"), "./wordpress", false)
-	p.Chdir("./wordpress")
 	installWordpressBundle(ctx, p, namespace)
 
 }
