@@ -31,6 +31,9 @@ type dependencyExecutioner struct {
 	// These are populated by Prepare, call it or perish in inevitable errors
 	parentArgs cnabprovider.ActionArguments
 	deps       []*queuedDependency
+
+	// this should maybe go somewhere else
+	depArgs cnabprovider.ActionArguments
 }
 
 func newDependencyExecutioner(p *Porter, installation storage.Installation, action BundleAction) *dependencyExecutioner {
@@ -300,48 +303,14 @@ func (e *dependencyExecutioner) executeDependency(ctx context.Context, dep *queu
 		}
 	}
 
-	finalParams, err := e.porter.finalizeParameters(ctx, depInstallation, dep.BundleReference.Definition, e.parentArgs.Action, dep.Parameters)
-	if err != nil {
-		return span.Error(fmt.Errorf("error resolving parameters for dependency %s: %w", dep.Alias, err))
+	if err = e.getActionArgs(ctx, dep, depInstallation); err != nil {
+		return err
 	}
 
-	depArgs := cnabprovider.ActionArguments{
-		BundleReference:       dep.BundleReference,
-		Action:                e.parentArgs.Action,
-		Installation:          depInstallation,
-		Driver:                e.parentArgs.Driver,
-		AllowDockerHostAccess: e.parentOpts.AllowDockerHostAccess,
-		Params:                finalParams,
-		PersistLogs:           e.parentArgs.PersistLogs,
+	if err = e.executeExecute(ctx, dep); err != nil {
+		return err
 	}
 
-	// Determine if we're working with UninstallOptions, to inform deletion and
-	// error handling, etc.
-	var uninstallOpts UninstallOptions
-	if opts, ok := e.parentAction.(UninstallOptions); ok {
-		uninstallOpts = opts
-	}
-
-	var executeErrs error
-	span.Infof("Executing dependency %s...", dep.Alias)
-	err = e.CNAB.Execute(ctx, depArgs)
-	if err != nil {
-		executeErrs = multierror.Append(executeErrs, fmt.Errorf("error executing dependency %s: %w", dep.Alias, err))
-
-		// Handle errors when/if the action is uninstall
-		// If uninstallOpts is an empty struct, executeErrs will pass through
-		executeErrs = uninstallOpts.handleUninstallErrs(e.Err, executeErrs)
-		if executeErrs != nil {
-			return span.Error(executeErrs)
-		}
-	}
-
-	// If uninstallOpts is an empty struct (i.e., action not Uninstall), this
-	// will resolve to false and thus be a no-op
-	if uninstallOpts.shouldDelete() {
-		span.Infof(installationDeleteTmpl, depArgs.Installation)
-		return e.Installations.RemoveInstallation(ctx, depArgs.Installation.Namespace, depArgs.Installation.Name)
-	}
 	return nil
 }
 
@@ -358,17 +327,75 @@ func (e *dependencyExecutioner) executeDependencyv2(ctx context.Context, dep *qu
 			depInstallation.CredentialSets = e.parentInstallation.CredentialSets
 			if err = e.Installations.InsertInstallation(ctx, depInstallation); err != nil {
 				return err
-			
+			}
+
+			return err
 		}
-		return err 
 	}
 
-
 	if dep.SharingGroup == depInstallation.Labels["sh.porter.SharingGroup"] {
-		if depInstallation.Uninstalled {
-			return fmt.Errorf("error executing dependency, in uninstalled status %s", depInstallation.Name)
+		if !depInstallation.Uninstalled {
+			return fmt.Errorf("error executing dependency, dependency must be in installed status, %s is in  status %s", dep.Alias, depInstallation.Status)
 		}
+	}
+	if err = e.getActionArgs(ctx, dep, depInstallation); err != nil {
+		return err
+	}
 
+	if err = e.executeExecute(ctx, dep); err != nil {
+		return err
+	}
 
+	return nil
+}
+
+func (e *dependencyExecutioner) getActionArgs(ctx context.Context,
+	dep *queuedDependency, depInstallation storage.Installation) error {
+	finalParams, err := e.porter.finalizeParameters(ctx, depInstallation, dep.BundleReference.Definition, e.parentArgs.Action, dep.Parameters)
+	if err != nil {
+		return fmt.Errorf("error resolving parameters for dependency %s: %w", dep.Alias, err)
+	}
+	e.depArgs = cnabprovider.ActionArguments{
+		BundleReference:       dep.BundleReference,
+		Action:                e.parentArgs.Action,
+		Installation:          depInstallation,
+		Driver:                e.parentArgs.Driver,
+		AllowDockerHostAccess: e.parentOpts.AllowDockerHostAccess,
+		Params:                finalParams,
+		PersistLogs:           e.parentArgs.PersistLogs,
+	}
+	return nil
+}
+
+// running out of ideas for function names at this point
+func (e *dependencyExecutioner) executeExecute(ctx context.Context, dep *queuedDependency) error {
+	ctx, span := tracing.StartSpan(ctx)
+	// Determine if we're working with UninstallOptions, to inform deletion and
+	// error handling, etc.
+	var uninstallOpts UninstallOptions
+	if opts, ok := e.parentAction.(UninstallOptions); ok {
+		uninstallOpts = opts
+	}
+
+	var executeErrs error
+	span.Infof("Executing dependency %s...", dep.Alias)
+	err := e.CNAB.Execute(ctx, e.depArgs)
+	if err != nil {
+		executeErrs = multierror.Append(executeErrs, fmt.Errorf("error executing dependency %s: %w", dep.Alias, err))
+
+		// Handle errors when/if the action is uninstall
+		// If uninstallOpts is an empty struct, executeErrs will pass through
+		executeErrs = uninstallOpts.handleUninstallErrs(e.Err, executeErrs)
+		if executeErrs != nil {
+			return span.Error(executeErrs)
+		}
+	}
+
+	// If uninstallOpts is an empty struct (i.e., action not Uninstall), this
+	// will resolve to false and thus be a no-op
+	if uninstallOpts.shouldDelete() {
+		span.Infof(installationDeleteTmpl, e.depArgs.Installation)
+		return e.Installations.RemoveInstallation(ctx, e.depArgs.Installation.Namespace, e.depArgs.Installation.Name)
+	}
 	return nil
 }
