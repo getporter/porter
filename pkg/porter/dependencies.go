@@ -281,9 +281,7 @@ func (e *dependencyExecutioner) executeDependency(ctx context.Context, dep *queu
 		return err
 	}
 
-	//todo(schristoff): Should we untie BuildPreq func from extendedbundle?
 	eb := cnab.ExtendedBundle{}
-
 	//this expects depv1 style dependency to be installed as parentName+depName
 	depName := eb.BuildPrerequisiteInstallationName(e.parentOpts.Name, dep.Alias)
 	depInstallation, err := e.Installations.GetInstallation(ctx, e.parentOpts.Namespace, depName)

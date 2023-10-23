@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg/cnab"
+	"get.porter.sh/porter/pkg/experimental"
 	"get.porter.sh/porter/pkg/porter"
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
@@ -24,7 +25,12 @@ func TestDependenciesLifecycle(t *testing.T) {
 	defer p.Close()
 	ctx := p.SetupIntegrationTest()
 
-	namespace := installWordpressBundle(ctx, p)
+	namespace := p.RandomString(10)
+
+	// Publish the mysql bundle that we depend upon
+	publishMySQLBundle(ctx, p)
+
+	installWordpressBundle(ctx, p, namespace)
 	defer cleanupWordpressBundle(ctx, p, namespace)
 
 	upgradeWordpressBundle(ctx, p, namespace)
@@ -55,9 +61,7 @@ func publishMySQLBundle(ctx context.Context, p *porter.TestPorter) {
 	require.NoError(p.T(), err, "publish of dependent bundle failed")
 }
 
-func installWordpressBundle(ctx context.Context, p *porter.TestPorter) (namespace string) {
-	// Publish the mysql bundle that we depend upon
-	publishMySQLBundle(ctx, p)
+func installWordpressBundle(ctx context.Context, p *porter.TestPorter, namespace string) {
 
 	// Install the bundle that has dependencies
 	p.CopyDirectory(filepath.Join(p.RepoRoot, "build/testdata/bundles/wordpress"), ".", false)
@@ -107,8 +111,6 @@ func installWordpressBundle(ctx context.Context, p *porter.TestPorter) (namespac
 	i, err = p.Installations.GetInstallation(ctx, namespace, "wordpress")
 	require.NoError(p.T(), err, "could not fetch claim for the root bundle")
 	assert.Equal(p.T(), cnab.StatusSucceeded, i.Status.ResultStatus, "the root bundle wasn't recorded as being installed successfully")
-
-	return namespace
 }
 
 func cleanupWordpressBundle(ctx context.Context, p *porter.TestPorter, namespace string) {
@@ -247,14 +249,39 @@ func TestSharedDependencies(t *testing.T) {
 	t.Parallel()
 
 	p := porter.NewTestPorter(t)
-	// p.Config.SetExperimentalFlags(experimental.FlagDependenciesV2)
+	p.Config.SetExperimentalFlags(experimental.FlagDependenciesV2)
+
+	pwd := p.Getwd()
+	bunDir, err := os.MkdirTemp("", "porter-mysqlv2-")
+	require.NoError(p.T(), err, "could not create temp directory at all")
+
+	defer os.RemoveAll(bunDir)
+
+	// Rebuild the bundle from a temp directory so that we don't modify the source directory
+	// and leave modified files around.
+	p.TestConfig.TestContext.AddTestDirectory(filepath.Join(p.RepoRoot, "build/testdata/bundles/mysql"), bunDir)
+	p.TestConfig.TestContext.AddTestDirectory(filepath.Join(p.RepoRoot, "build/testdata/bundles/wordpress"), bunDir)
+
+	p.CopyDirectory(filepath.Join(p.RepoRoot, "build/testdata/bundles/wordpress"), ".", false)
+
+	p.Chdir(bunDir)
+	defer p.Chdir(pwd)
 	defer p.Close()
 	ctx := p.SetupIntegrationTest()
 
-	publishMySQLBundlev2(ctx, p)
-	p.CopyDirectory(filepath.Join(p.RepoRoot, "tests/integration/testdata/bundles/bundles-with-shared-deps/mysql"), ".", false)
-
 	namespace := p.RandomString(10)
+
+	publishMySQLBundle(ctx, p)
+
+	p.CopyDirectory(filepath.Join(p.RepoRoot, "build/testdata/bundles/mysql"), ".", false)
+	installMySQLbundle(ctx, p, namespace)
+	p.CopyDirectory(filepath.Join(p.RepoRoot, "build/testdata/bundles/wordpress"), ".", false)
+	installWordpressBundle(ctx, p, namespace)
+
+}
+
+func installMySQLbundle(ctx context.Context, p *porter.TestPorter, namespace string) {
+
 	installOpts := porter.NewInstallOptions()
 	installOpts.Namespace = namespace
 	installOpts.CredentialIdentifiers = []string{"ci"} // Use the ci credential set, porter should remember this for later
@@ -271,48 +298,4 @@ func TestSharedDependencies(t *testing.T) {
 	//Set the label on the installaiton so Porter knows to grab it
 	mysqlinst.SetLabel("sh.porter.SharingGroup", "myapp")
 
-	installWordpressBundlev2(ctx, p, namespace)
-
-}
-
-func publishMySQLBundlev2(ctx context.Context, p *porter.TestPorter) {
-	bunDir, err := os.MkdirTemp("", "porter-mysqlv2")
-	require.NoError(p.T(), err, "could not create temp directory to publish the mysql bundle")
-	defer os.RemoveAll(bunDir)
-
-	// Rebuild the bundle from a temp directory so that we don't modify the source directory
-	// and leave modified files around.
-	p.TestConfig.TestContext.AddTestDirectory(filepath.Join(p.RepoRoot, "tests/integration/testdata/bundles/bundles-with-shared-deps/mysql"), bunDir)
-	pwd := p.Getwd()
-	p.Chdir(bunDir)
-	defer p.Chdir(pwd)
-
-	publishOpts := porter.PublishOptions{}
-	publishOpts.Force = true
-	err = publishOpts.Validate(p.Config)
-	require.NoError(p.T(), err, "validation of publish opts for dependent bundle failed")
-
-	err = p.Publish(ctx, publishOpts)
-	require.NoError(p.T(), err, "publish of dependent bundle failed")
-}
-
-func installWordpressBundlev2(ctx context.Context, p *porter.TestPorter, namespace string) {
-	// Publish the mysql bundle that we depend upon
-	publishMySQLBundle(ctx, p)
-
-	// Install the bundle that has dependencies
-	p.CopyDirectory(filepath.Join(p.RepoRoot, "tests/integration/testdata/bundles/bundles-with-shared-deps/wordpress"), ".", false)
-
-	installOpts := porter.NewInstallOptions()
-	installOpts.Namespace = namespace
-
-	err := installOpts.Validate(ctx, []string{}, p.Porter)
-	require.NoError(p.T(), err, "validation of install opts for root bundle failed")
-
-	err = p.InstallBundle(ctx, installOpts)
-	require.NoError(p.T(), err, "install of root bundle failed namespace %s", namespace)
-	// Verify that the bundle claim is present
-	i, err := p.Installations.GetInstallation(ctx, namespace, "wordpress")
-	require.NoError(p.T(), err, "could not fetch claim for the root bundle")
-	assert.Equal(p.T(), cnab.StatusSucceeded, i.Status.ResultStatus, "the root bundle wasn't recorded as being installed successfully")
 }

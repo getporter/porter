@@ -10,6 +10,14 @@ parameters:
     type: string
     default: "mysqldb"
 
+credentials:
+  - name: token
+    env: CLOUD_TOKEN
+
+outputs:
+  - name: "connStr"
+    key: "big ol connStr"
+
 mixins:
   - exec
 
