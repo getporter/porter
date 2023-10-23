@@ -128,8 +128,6 @@ func TestNewDriver_Docker(t *testing.T) {
 		r.MockGetDockerGroupId()
 		defer r.Close()
 
-		// Currently, toggling Privileged is the only config exposed to users
-		// Here we supply no override, so expect Privileged to be false
 		r.Extensions[cnab.DockerExtensionKey] = cnab.Docker{}
 		r.FileSystem.Create("/var/run/docker.sock")
 		r.FileSystem.Create("/sourceFolder")
@@ -170,7 +168,6 @@ func TestNewDriver_Docker(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, false, containerHostCfg.Privileged)
 
-		// Check that the host volume mounts were added to the container host config
 		require.Len(t, containerHostCfg.Mounts, 4) //includes the docker socket mount
 		assert.Equal(t, "/sourceFolder", containerHostCfg.Mounts[1].Source)
 		assert.Equal(t, "/targetFolder", containerHostCfg.Mounts[1].Target)
@@ -226,7 +223,6 @@ func TestNewDriver_Docker(t *testing.T) {
 		containerHostCfg, err := dockerish.GetContainerHostConfig()
 		require.NoError(t, err)
 
-		// Check that the host volume mounts were added to the container host config
 		require.Len(t, containerHostCfg.Mounts, 3)
 		assert.Equal(t, "/sourceFolder", containerHostCfg.Mounts[0].Source)
 		assert.Equal(t, "/targetFolder", containerHostCfg.Mounts[0].Target)
@@ -271,7 +267,6 @@ func TestNewDriver_Docker(t *testing.T) {
 		containerHostCfg, err := dockerish.GetContainerHostConfig()
 		require.NoError(t, err)
 
-		// Check that the host volume mounts were added to the container host config
 		require.Len(t, containerHostCfg.Mounts, 1)
 		assert.Equal(t, "/sourceFolder", containerHostCfg.Mounts[0].Source)
 		assert.Equal(t, "/targetFolder", containerHostCfg.Mounts[0].Target)
