@@ -275,7 +275,8 @@ func TestSharedDependencies(t *testing.T) {
 
 	p.CopyDirectory(filepath.Join(p.RepoRoot, "build/testdata/bundles/mysql"), ".", false)
 	installMySQLbundle(ctx, p, namespace)
-	p.CopyDirectory(filepath.Join(p.RepoRoot, "build/testdata/bundles/wordpress"), ".", false)
+	p.CopyDirectory(filepath.Join(p.RepoRoot, "build/testdata/bundles/wordpress"), "./wordpress", false)
+	p.Chdir("./wordpress")
 	installWordpressBundle(ctx, p, namespace)
 
 }
@@ -292,7 +293,7 @@ func installMySQLbundle(ctx context.Context, p *porter.TestPorter, namespace str
 	err = p.InstallBundle(ctx, installOpts)
 	require.NoError(p.T(), err, "install of shared mysql bundle failed namespace %s", namespace)
 
-	mysqlinst, err := p.Installations.GetInstallation(ctx, namespace, "wordpress-mysql")
+	mysqlinst, err := p.Installations.GetInstallation(ctx, namespace, "mysql")
 	require.NoError(p.T(), err, "could not fetch installation status for the dependency")
 
 	//Set the label on the installaiton so Porter knows to grab it
