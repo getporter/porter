@@ -5,7 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"runtime"
 	"strings"
+	"unicode"
 
 	"get.porter.sh/porter/pkg/cache"
 	"get.porter.sh/porter/pkg/cnab"
@@ -103,6 +105,13 @@ func (o *BundleExecutionOptions) GetHostVolumeMounts() []cnabprovider.HostVolume
 	for _, mount := range o.HostVolumeMounts {
 		var isReadOnlyMount bool
 		parts := strings.Split(mount, ":") // HOST_PATH:TARGET_PATH:OPTION
+
+		// if parts[0] is a single character, it's a drive letter on Windows
+		// so we need to join it with the next part
+		if runtime.GOOS == "windows" && len(parts) > 1 && len(parts[0]) == 1 && unicode.IsLetter(rune(parts[0][0])) {
+			parts[1] = fmt.Sprintf("%s:%s", parts[0], parts[1])
+			parts = parts[1:]
+		}
 
 		l := len(parts)
 		if l < 2 || l > 3 {
