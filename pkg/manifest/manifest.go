@@ -1042,6 +1042,9 @@ func (s *Step) GetDescription() (string, error) {
 		return "", fmt.Errorf("invalid mixin type (%T) for mixin step (%s)", children, mixinName)
 	}
 	d := m["description"]
+	if d == nil {
+		return "", nil
+	}
 	desc, ok := d.(string)
 	if !ok {
 		return "", fmt.Errorf("invalid description type (%T) for mixin step (%s)", desc, mixinName)
