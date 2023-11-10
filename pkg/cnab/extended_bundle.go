@@ -6,6 +6,7 @@ import (
 	"sort"
 
 	depsv1ext "get.porter.sh/porter/pkg/cnab/extensions/dependencies/v1"
+	v2 "get.porter.sh/porter/pkg/cnab/extensions/dependencies/v2"
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/schema"
 	"github.com/Masterminds/semver/v3"
@@ -269,7 +270,8 @@ func (b *ExtendedBundle) ResolveSharedDeps(bun ExtendedBundle) ([]DependencyLock
 	q := make([]DependencyLock, 0, len(v2.Requires))
 	for _, d := range v2.Requires {
 
-		//todo(schristoff): make this better?
+		//todo(schristoff): We should 100% move this logic into
+		// the bundle validator area
 		if d.Sharing.Mode && d.Sharing.Group.Name == "" {
 			return nil, fmt.Errorf("dont do this")
 		}
@@ -277,10 +279,14 @@ func (b *ExtendedBundle) ResolveSharedDeps(bun ExtendedBundle) ([]DependencyLock
 			return nil, fmt.Errorf("dont do this either")
 		}
 
+		ref, err := b.ResolveVersionv2(d.Name, d)
+		if err != nil {
+			return nil, err
+		}
+
 		lock := DependencyLock{
-			Alias: d.Name,
-			//note (schristoff): version isnt right
-			Reference:    d.Version,
+			Alias:        d.Name,
+			Reference:    ref.String(),
 			SharingMode:  d.Sharing.Mode,
 			SharingGroup: d.Sharing.Group.Name,
 		}
@@ -358,4 +364,55 @@ func (b *ExtendedBundle) determineDefaultTag(dep depsv1ext.Dependency) (string, 
 // BuildPrerequisiteInstallationName generates the name of a prerequisite dependency installation.
 func (b *ExtendedBundle) BuildPrerequisiteInstallationName(installation string, dependency string) string {
 	return fmt.Sprintf("%s-%s", installation, dependency)
+}
+
+// this is all copied v2 stuff
+// ResolveVersion returns the bundle name, its version and any error.
+func (b *ExtendedBundle) ResolveVersionv2(name string, dep v2.Dependency) (OCIReference, error) {
+	ref, err := ParseOCIReference(dep.Bundle)
+	if err != nil {
+		return OCIReference{}, fmt.Errorf("error parsing dependency (%s) bundle %q as OCI reference: %w", name, dep.Bundle, err)
+	}
+
+	if dep.Version == "" {
+		// Check if they specified an explicit tag in referenced bundle already
+		if ref.HasTag() {
+			return ref, nil
+		}
+
+		tag, err := b.determineDefaultTagv2(dep)
+		if err != nil {
+			return OCIReference{}, err
+		}
+
+		return ref.WithTag(tag)
+	}
+
+	return OCIReference{}, fmt.Errorf("not implemented: dependency version range specified for %s: %w", name, err)
+}
+
+func (b *ExtendedBundle) determineDefaultTagv2(dep v2.Dependency) (string, error) {
+	tags, err := crane.ListTags(dep.Bundle)
+	if err != nil {
+		return "", fmt.Errorf("error listing tags for %s: %w", dep.Bundle, err)
+	}
+
+	var hasLatest bool
+	versions := make(semver.Collection, 0, len(tags))
+	for _, tag := range tags {
+		if tag == "latest" {
+			hasLatest = true
+			continue
+		}
+
+	}
+	if len(versions) == 0 {
+		if hasLatest {
+			return "latest", nil
+		} else {
+			return "", fmt.Errorf("no tag was specified for %s and none of the tags defined in the registry meet the criteria: semver formatted or 'latest'", dep.Bundle)
+		}
+	}
+
+	return versions[0].Original(), nil
 }

@@ -30,7 +30,7 @@ func TestDependenciesLifecycle(t *testing.T) {
 	// Publish the mysql bundle that we depend upon
 	publishMySQLBundle(ctx, p)
 
-	installWordpressBundle(ctx, p, namespace)
+	installWordpressBundle(ctx, p, namespace, "wordpress-mysql")
 	defer cleanupWordpressBundle(ctx, p, namespace)
 
 	upgradeWordpressBundle(ctx, p, namespace)
@@ -61,7 +61,10 @@ func publishMySQLBundle(ctx context.Context, p *porter.TestPorter) {
 	require.NoError(p.T(), err, "publish of dependent bundle failed")
 }
 
-func installWordpressBundle(ctx context.Context, p *porter.TestPorter, namespace string) {
+func installWordpressBundle(ctx context.Context, p *porter.TestPorter, namespace string, mysqlName string) {
+
+	_, err := p.Installations.GetInstallation(ctx, namespace, "mysql")
+	require.NoError(p.T(), err, "could not fetch installation mysql")
 
 	// Install the bundle that has dependencies
 	p.CopyDirectory(filepath.Join(p.RepoRoot, "build/testdata/bundles/wordpress"), ".", false)
@@ -88,14 +91,14 @@ func installWordpressBundle(ctx context.Context, p *porter.TestPorter, namespace
 
 	p.TestParameters.InsertParameterSet(ctx, testParamSets)
 
-	err := installOpts.Validate(ctx, []string{}, p.Porter)
+	err = installOpts.Validate(ctx, []string{}, p.Porter)
 	require.NoError(p.T(), err, "validation of install opts for root bundle failed")
 
 	err = p.InstallBundle(ctx, installOpts)
 	require.NoError(p.T(), err, "install of root bundle failed namespace %s", namespace)
 
 	// Verify that the dependency claim is present
-	i, err := p.Installations.GetInstallation(ctx, namespace, "wordpress-mysql")
+	i, err := p.Installations.GetInstallation(ctx, namespace, mysqlName)
 	require.NoError(p.T(), err, "could not fetch installation status for the dependency")
 	assert.Equal(p.T(), cnab.StatusSucceeded, i.Status.ResultStatus, "the dependency wasn't recorded as being installed successfully")
 	c, err := p.Installations.GetLastRun(ctx, namespace, i.Name)
@@ -275,7 +278,11 @@ func TestSharedDependencies(t *testing.T) {
 
 	p.CopyDirectory(filepath.Join(p.RepoRoot, "build/testdata/bundles/mysql"), ".", false)
 	installMySQLbundle(ctx, p, namespace)
-	installWordpressBundle(ctx, p, namespace)
+
+	//set up dependency?
+	p.CopyFile("/cnab/app/mysql/bundle.json", "/cnab/app/dependencies/mysql/bundle.json")
+
+	installWordpressBundle(ctx, p, namespace, "mysql")
 
 }
 
