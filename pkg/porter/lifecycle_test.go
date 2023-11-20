@@ -790,6 +790,7 @@ func TestBundleExecutionOptions_GetHostVolumeMountsWindows(t *testing.T) {
 			HostVolumeMounts: []string{
 				"C:\\Users\\testuser\\folderpath:/target/path:rw",
 				"C:\\Users\\testuser\\folderpath:/target/path",
+				"C:\\Users\\Test User\\test path:/target/path",
 			},
 		}
 
@@ -801,6 +802,11 @@ func TestBundleExecutionOptions_GetHostVolumeMountsWindows(t *testing.T) {
 			},
 			{
 				Source:   "C:\\Users\\testuser\\folderpath",
+				Target:   "/target/path",
+				ReadOnly: true,
+			},
+			{
+				Source:   "C:\\Users\\Test User\\test path",
 				Target:   "/target/path",
 				ReadOnly: true,
 			},
