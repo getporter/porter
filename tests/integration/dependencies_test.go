@@ -262,12 +262,10 @@ func TestSharedDependencies(t *testing.T) {
 
 	// Rebuild the bundle from a temp directory so that we don't modify the source directory
 	// and leave modified files around.
-	p.TestConfig.TestContext.AddTestDirectory(filepath.Join(p.RepoRoot, "build/testdata/bundles/mysql"), bunDir)
-	p.TestConfig.TestContext.AddTestDirectory(filepath.Join(p.RepoRoot, "build/testdata/bundles/wordpress"), bunDir)
+	p.TestConfig.TestContext.AddTestDirectory(filepath.Join(p.RepoRoot, "build/testdata/bundles/mysql"), bunDir+"/mysql")
+	p.TestConfig.TestContext.AddTestDirectory(filepath.Join(p.RepoRoot, "build/testdata/bundles/wordpress"), bunDir+"/wordpress")
 
-	p.CopyDirectory(filepath.Join(p.RepoRoot, "build/testdata/bundles/wordpress"), ".", false)
-
-	p.Chdir(bunDir)
+	p.Chdir(bunDir + "/mysql")
 	defer p.Chdir(pwd)
 	defer p.Close()
 	ctx := p.SetupIntegrationTest()
@@ -276,11 +274,13 @@ func TestSharedDependencies(t *testing.T) {
 
 	publishMySQLBundle(ctx, p)
 
-	p.CopyDirectory(filepath.Join(p.RepoRoot, "build/testdata/bundles/mysql"), ".", false)
 	installMySQLbundle(ctx, p, namespace)
 
-	//set up dependency?
-	p.CopyFile("/cnab/app/mysql/bundle.json", "/cnab/app/dependencies/mysql/bundle.json")
+	p.Chdir(bunDir + "wordpress")
+
+	//todo(schristoff): fix this srsly plz
+	err = p.CopyFile(bunDir+"/mysql/.cnab/bundle.json", bunDir+"/wordpress/.cnab/app/dependencies/mysql/bundle.json")
+	require.NoError(p.T(), err, "err copying mysql bundle.json")
 
 	installWordpressBundle(ctx, p, namespace, "mysql")
 
