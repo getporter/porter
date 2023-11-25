@@ -387,6 +387,10 @@ func (b *ExtendedBundle) ResolveVersionv2(name string, dep v2.Dependency) (OCIRe
 
 		return ref.WithTag(tag)
 	}
+	//I think this is going to need to be smarter
+	if dep.Version != "" {
+		return ref, nil
+	}
 
 	return OCIReference{}, fmt.Errorf("not implemented: dependency version range specified for %s: %w", name, err)
 }

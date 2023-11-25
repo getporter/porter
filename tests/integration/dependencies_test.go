@@ -63,11 +63,9 @@ func publishMySQLBundle(ctx context.Context, p *porter.TestPorter) {
 
 func installWordpressBundle(ctx context.Context, p *porter.TestPorter, namespace string, mysqlName string) {
 
-	_, err := p.Installations.GetInstallation(ctx, namespace, "mysql")
-	require.NoError(p.T(), err, "could not fetch installation mysql")
-
 	// Install the bundle that has dependencies
-	p.CopyDirectory(filepath.Join(p.RepoRoot, "build/testdata/bundles/wordpress"), ".", false)
+	err := p.CopyDirectory(filepath.Join(p.RepoRoot, "build/testdata/bundles/wordpress"), ".", false)
+	require.NoError(p.T(), err, "copy of build/testdata/bundles/wordpress failed")
 
 	namespace = p.RandomString(10)
 	installOpts := porter.NewInstallOptions()
@@ -254,40 +252,29 @@ func TestSharedDependencies(t *testing.T) {
 	p := porter.NewTestPorter(t)
 	p.Config.SetExperimentalFlags(experimental.FlagDependenciesV2)
 
-	pwd := p.Getwd()
 	bunDir, err := os.MkdirTemp("", "porter-mysqlv2-")
 	require.NoError(p.T(), err, "could not create temp directory at all")
 
 	defer os.RemoveAll(bunDir)
 
-	// Rebuild the bundle from a temp directory so that we don't modify the source directory
-	// and leave modified files around.
-	p.TestConfig.TestContext.AddTestDirectory(filepath.Join(p.RepoRoot, "build/testdata/bundles/mysql"), bunDir+"/mysql")
-	p.TestConfig.TestContext.AddTestDirectory(filepath.Join(p.RepoRoot, "build/testdata/bundles/wordpress"), bunDir+"/wordpress")
+	mysqldir := p.AddTestBundleDir(p.RepoRoot+"/build/testdata/bundles/mysql", false)
 
-	p.Chdir(bunDir + "/mysql")
-	defer p.Chdir(pwd)
-	defer p.Close()
+	wpdir := p.AddTestBundleDir(p.RepoRoot+"/build/testdata/bundles/wordpress", false)
 	ctx := p.SetupIntegrationTest()
 
 	namespace := p.RandomString(10)
-
+	p.Chdir(mysqldir)
 	publishMySQLBundle(ctx, p)
 
 	installMySQLbundle(ctx, p, namespace)
 
-	p.Chdir(bunDir + "wordpress")
-
-	//todo(schristoff): fix this srsly plz
-	err = p.CopyFile(bunDir+"/mysql/.cnab/bundle.json", bunDir+"/wordpress/.cnab/app/dependencies/mysql/bundle.json")
-	require.NoError(p.T(), err, "err copying mysql bundle.json")
-
-	installWordpressBundle(ctx, p, namespace, "mysql")
+	p.Chdir(wpdir)
+	installWordpressBundlev2(ctx, p, namespace, "mysql")
 
 }
 
 func installMySQLbundle(ctx context.Context, p *porter.TestPorter, namespace string) {
-
+	p.CopyDirectory(filepath.Join(p.RepoRoot, "build/testdata/bundles/mysql"), ".", false)
 	installOpts := porter.NewInstallOptions()
 	installOpts.Namespace = namespace
 	installOpts.CredentialIdentifiers = []string{"ci"} // Use the ci credential set, porter should remember this for later
@@ -304,4 +291,39 @@ func installMySQLbundle(ctx context.Context, p *porter.TestPorter, namespace str
 	//Set the label on the installaiton so Porter knows to grab it
 	mysqlinst.SetLabel("sh.porter.SharingGroup", "myapp")
 
+}
+
+func installWordpressBundlev2(ctx context.Context, p *porter.TestPorter, namespace string, mysqlName string) {
+
+	// Install the bundle that has dependencies
+	err := p.CopyDirectory(filepath.Join(p.RepoRoot, "build/testdata/bundles/wordpressv2"), ".", false)
+	require.NoError(p.T(), err, "copy of build/testdata/bundles/wordpressv2 failed")
+
+	namespace = p.RandomString(10)
+	installOpts := porter.NewInstallOptions()
+	installOpts.Namespace = namespace
+	installOpts.CredentialIdentifiers = []string{"ci"} // Use the ci credential set, porter should remember this for later
+	installOpts.Params = []string{
+		"wordpress-password=mypassword",
+		"namespace=" + namespace,
+		"mysql#namespace=" + namespace,
+	}
+
+	// Add a supplemental parameter set to vet dep param resolution
+	installOpts.ParameterSets = []string{"myparam"}
+	testParamSets := storage.NewParameterSet(namespace, "myparam", secrets.SourceMap{
+		Name: "mysql#probe-timeout",
+		Source: secrets.Source{
+			Strategy: host.SourceValue,
+			Hint:     "2",
+		},
+	})
+
+	p.TestParameters.InsertParameterSet(ctx, testParamSets)
+
+	err = installOpts.Validate(ctx, []string{}, p.Porter)
+	require.NoError(p.T(), err, "validation of install opts for root bundle failed")
+
+	err = p.InstallBundle(ctx, installOpts)
+	require.NoError(p.T(), err, "install of root bundle failed namespace %s", namespace)
 }
