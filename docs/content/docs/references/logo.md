@@ -105,7 +105,7 @@ Abril is a bold display typeface created by Veronika Burian & José Scaglione (a
 Note: For normal page copy please pair a more legible typeface like [Open Sans].
 
 [Abril]: https://fonts.google.com/specimen/Abril+Fatface
-[TypeTogether]: http://www.type-together.com/
+[TypeTogether]: https://www.type-together.com/
 [OFL]: https://scripts.sil.org/cms/scripts/page.php?site_id=nrsi&id=OFL
 [Open Sans]: https://fonts.google.com/specimen/Open+Sans
 
