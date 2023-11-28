@@ -64,13 +64,13 @@ uninstall:
       arguments:
         - uninstalled
 
-outputs:
-  - name: wordpress-password
-    description: "The Wordpress installation password"
-    type: string
-    default: "default-password"
-    applyTo:
-      - "install"
-      - "upgrade"
-    sensitive: true
-    path: /cnab/app/outputs/wordpress-password
+# outputs:
+#   - name: wordpress-password
+#     description: "The Wordpress installation password"
+#     type: string
+#     default: "default-password"
+#     applyTo:
+#       - "install"
+#       - "upgrade"
+#     sensitive: true
+#     path: /cnab/app/outputs/wordpress-password

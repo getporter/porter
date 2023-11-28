@@ -268,7 +268,8 @@ func (b *ExtendedBundle) ResolveSharedDeps(bun ExtendedBundle) ([]DependencyLock
 	}
 
 	q := make([]DependencyLock, 0, len(v2.Requires))
-	for _, d := range v2.Requires {
+	for name, d := range v2.Requires {
+		d.Name = name
 
 		//todo(schristoff): We should 100% move this logic into
 		// the bundle validator area

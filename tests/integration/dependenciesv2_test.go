@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg/cnab"
+	"get.porter.sh/porter/pkg/experimental"
 	"get.porter.sh/porter/pkg/porter"
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
@@ -17,32 +18,30 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestDependenciesLifecycle(t *testing.T) {
+func TestSharedDependencies(t *testing.T) {
 	t.Parallel()
 
 	p := porter.NewTestPorter(t)
-	defer p.Close()
+	p.Config.SetExperimentalFlags(experimental.FlagDependenciesV2)
+
+	bunDir, err := os.MkdirTemp("", "porter-mysqlv2-")
+	require.NoError(p.T(), err, "could not create temp directory at all")
+
+	defer os.RemoveAll(bunDir)
+
 	ctx := p.SetupIntegrationTest()
 
 	namespace := p.RandomString(10)
+	setupMysql(ctx, p, namespace)
 
-	// Publish the mysql bundle that we depend upon
-	publishMySQLBundle(ctx, p)
+	setupWordpress_v2(ctx, p, namespace)
+	defer cleanupWordpressBundle_v2(ctx, p, namespace)
 
-	installWordpressBundle(ctx, p, namespace, "wordpress-mysql")
-	defer cleanupWordpressBundle(ctx, p, namespace)
-
-	upgradeWordpressBundle(ctx, p, namespace)
-
-	invokeWordpressBundle(ctx, p, namespace)
-
-	uninstallWordpressBundle(ctx, p, namespace)
 }
 
-func publishMySQLBundle(ctx context.Context, p *porter.TestPorter) {
+func setupMysql(ctx context.Context, p *porter.TestPorter, namespace string) {
 	bunDir, err := os.MkdirTemp("", "porter-mysql")
 	require.NoError(p.T(), err, "could not create temp directory to publish the mysql bundle")
-	defer os.RemoveAll(bunDir)
 
 	// Rebuild the bundle from a temp directory so that we don't modify the source directory
 	// and leave modified files around.
@@ -58,15 +57,44 @@ func publishMySQLBundle(ctx context.Context, p *porter.TestPorter) {
 
 	err = p.Publish(ctx, publishOpts)
 	require.NoError(p.T(), err, "publish of dependent bundle failed")
+	installOpts := porter.NewInstallOptions()
+
+	installOpts.Namespace = namespace
+	installOpts.CredentialIdentifiers = []string{"ci"} // Use the ci credential set, porter should remember this for later
+
+	err = installOpts.Validate(ctx, []string{}, p.Porter)
+	require.NoError(p.T(), err, "validation of install opts for shared mysql bundle failed")
+
+	err = p.InstallBundle(ctx, installOpts)
+	require.NoError(p.T(), err, "install of shared mysql bundle failed namespace %s", namespace)
+
+	mysqlinst, err := p.Installations.GetInstallation(ctx, namespace, "mysql")
+	require.NoError(p.T(), err, "could not fetch installation status for the dependency")
+
+	//Set the label on the installaiton so Porter knows to grab it
+	mysqlinst.SetLabel("sh.porter.SharingGroup", "myapp")
+
 }
 
-func installWordpressBundle(ctx context.Context, p *porter.TestPorter, namespace string, mysqlName string) {
+func setupWordpress_v2(ctx context.Context, p *porter.TestPorter, namespace string) {
+	bunDir, err := os.MkdirTemp("", "porter-wordpress")
+	require.NoError(p.T(), err, "could not create temp directory to publish the mysql bundle")
 
-	// Install the bundle that has dependencies
-	err := p.CopyDirectory(filepath.Join(p.RepoRoot, "build/testdata/bundles/wordpress"), ".", false)
-	require.NoError(p.T(), err, "copy of build/testdata/bundles/wordpress failed")
+	// Rebuild the bundle from a temp directory so that we don't modify the source directory
+	// and leave modified files around.
+	p.TestConfig.TestContext.AddTestDirectory(filepath.Join(p.RepoRoot, "build/testdata/bundles/wordpressv2"), bunDir)
+	pwd := p.Getwd()
+	p.Chdir(bunDir)
+	defer p.Chdir(pwd)
 
-	namespace = p.RandomString(10)
+	publishOpts := porter.PublishOptions{}
+	publishOpts.Force = true
+	err = publishOpts.Validate(p.Config)
+	require.NoError(p.T(), err, "validation of publish opts for dependent bundle failed")
+
+	err = p.Publish(ctx, publishOpts)
+	require.NoError(p.T(), err, "publish of dependent bundle failed")
+
 	installOpts := porter.NewInstallOptions()
 	installOpts.Namespace = namespace
 	installOpts.CredentialIdentifiers = []string{"ci"} // Use the ci credential set, porter should remember this for later
@@ -94,11 +122,10 @@ func installWordpressBundle(ctx context.Context, p *porter.TestPorter, namespace
 	err = p.InstallBundle(ctx, installOpts)
 	require.NoError(p.T(), err, "install of root bundle failed namespace %s", namespace)
 
-	// Verify that the dependency claim is present
-	i, err := p.Installations.GetInstallation(ctx, namespace, mysqlName)
+	i, err := p.Installations.GetInstallation(ctx, namespace, "mysql")
 	require.NoError(p.T(), err, "could not fetch installation status for the dependency")
 	assert.Equal(p.T(), cnab.StatusSucceeded, i.Status.ResultStatus, "the dependency wasn't recorded as being installed successfully")
-	c, err := p.Installations.GetLastRun(ctx, namespace, i.Name)
+	c, err := p.Installations.GetLastRun(ctx, namespace, "wordpress")
 	require.NoError(p.T(), err, "GetLastRun failed")
 	resolvedParameters, err := p.Sanitizer.RestoreParameterSet(ctx, c.Parameters, cnab.ExtendedBundle{Bundle: c.Bundle})
 	require.NoError(p.T(), err, "Resolve run failed")
@@ -111,9 +138,10 @@ func installWordpressBundle(ctx context.Context, p *porter.TestPorter, namespace
 	i, err = p.Installations.GetInstallation(ctx, namespace, "wordpress")
 	require.NoError(p.T(), err, "could not fetch claim for the root bundle")
 	assert.Equal(p.T(), cnab.StatusSucceeded, i.Status.ResultStatus, "the root bundle wasn't recorded as being installed successfully")
+
 }
 
-func cleanupWordpressBundle(ctx context.Context, p *porter.TestPorter, namespace string) {
+func cleanupWordpressBundle_v2(ctx context.Context, p *porter.TestPorter, namespace string) {
 	uninstallOptions := porter.NewUninstallOptions()
 	uninstallOptions.Namespace = namespace
 	uninstallOptions.CredentialIdentifiers = []string{"ci"}
@@ -135,7 +163,7 @@ func cleanupWordpressBundle(ctx context.Context, p *porter.TestPorter, namespace
 	require.Equal(p.T(), storage.Installation{}, i)
 }
 
-func upgradeWordpressBundle(ctx context.Context, p *porter.TestPorter, namespace string) {
+func upgradeWordpressBundle_v2(ctx context.Context, p *porter.TestPorter, namespace string) {
 	upgradeOpts := porter.NewUpgradeOptions()
 	upgradeOpts.Namespace = namespace
 	// do not specify credential sets, porter should reuse what was specified from install
@@ -171,7 +199,7 @@ func upgradeWordpressBundle(ctx context.Context, p *porter.TestPorter, namespace
 	assert.Equal(p.T(), "ci", i.CredentialSets[0], "expected to use the alternate credential set")
 }
 
-func invokeWordpressBundle(ctx context.Context, p *porter.TestPorter, namespace string) {
+func invokeWordpressBundle_v2(ctx context.Context, p *porter.TestPorter, namespace string) {
 	invokeOpts := porter.NewInvokeOptions()
 	invokeOpts.Namespace = namespace
 	invokeOpts.Action = "ping"
@@ -208,7 +236,7 @@ func invokeWordpressBundle(ctx context.Context, p *porter.TestPorter, namespace 
 	assert.Equal(p.T(), "ci2", i.CredentialSets[0], "expected to use the alternate credential set")
 }
 
-func uninstallWordpressBundle(ctx context.Context, p *porter.TestPorter, namespace string) {
+func uninstallWordpressBundle_v2(ctx context.Context, p *porter.TestPorter, namespace string) {
 	uninstallOptions := porter.NewUninstallOptions()
 	uninstallOptions.Namespace = namespace
 	// Now go back to using the original set of credentials
@@ -242,25 +270,5 @@ func uninstallWordpressBundle(ctx context.Context, p *porter.TestPorter, namespa
 	// Check that we are now using the original credentials with the bundle
 	require.Len(p.T(), i.CredentialSets, 1, "expected only one credential set associated to the installation")
 	assert.Equal(p.T(), "ci", i.CredentialSets[0], "expected to use the alternate credential set")
-
-}
-
-func installMySQLbundle(ctx context.Context, p *porter.TestPorter, namespace string) {
-	p.CopyDirectory(filepath.Join(p.RepoRoot, "build/testdata/bundles/mysql"), ".", false)
-	installOpts := porter.NewInstallOptions()
-	installOpts.Namespace = namespace
-	installOpts.CredentialIdentifiers = []string{"ci"} // Use the ci credential set, porter should remember this for later
-
-	err := installOpts.Validate(ctx, []string{}, p.Porter)
-	require.NoError(p.T(), err, "validation of install opts for shared mysql bundle failed")
-
-	err = p.InstallBundle(ctx, installOpts)
-	require.NoError(p.T(), err, "install of shared mysql bundle failed namespace %s", namespace)
-
-	mysqlinst, err := p.Installations.GetInstallation(ctx, namespace, "mysql")
-	require.NoError(p.T(), err, "could not fetch installation status for the dependency")
-
-	//Set the label on the installaiton so Porter knows to grab it
-	mysqlinst.SetLabel("sh.porter.SharingGroup", "myapp")
 
 }

@@ -148,7 +148,9 @@ func (e *dependencyExecutioner) identifyDependencies(ctx context.Context) error 
 		}
 
 		bun = cachedBundle.Definition
+		
 	} else if e.parentOpts.Name != "" {
+
 		c, err := e.Installations.GetLastRun(ctx, e.parentOpts.Namespace, e.parentOpts.Name)
 		if err != nil {
 			return err
@@ -317,7 +319,6 @@ func (e *dependencyExecutioner) executeDependencyv2(ctx context.Context, dep *qu
 	if err != nil {
 		if errors.Is(err, storage.ErrNotFound{}) {
 			depInstallation = storage.NewInstallation(e.parentOpts.Namespace, dep.Alias)
-			//tood(schristoff): not sure if we still want to have parents here
 			depInstallation.SetLabel("sh.porter.parentInstallation", e.parentArgs.Installation.String())
 			depInstallation.SetLabel("sh.porter.SharingGroup", dep.SharingGroup)
 
