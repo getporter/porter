@@ -807,7 +807,7 @@ type SharingCriteria struct {
 	//  - none: The dependency cannot be shared, even within the same dependency graph.
 	//  - group: The dependency is shared with other bundles who defined the dependency
 	//    with the same sharing group. This is the default mode.
-	Mode string `yaml:"mode"`
+	Mode bool `yaml:"mode"`
 
 	// Group defines matching criteria for determining if two dependencies are in the same sharing group.
 	Group SharingGroup `yaml:"group,omitempty"`
@@ -816,11 +816,7 @@ type SharingCriteria struct {
 // GetEffectiveMode returns the mode, taking into account the default value when
 // no mode is specified.
 func (s SharingCriteria) GetEffectiveMode() bool {
-	if s.Mode == "" {
-		return false
-	}
-
-	return true
+	return s.Mode
 }
 
 // SharingGroup defines a set of characteristics for sharing a dependency with
