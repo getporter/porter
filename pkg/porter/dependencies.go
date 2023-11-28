@@ -120,6 +120,7 @@ func (e *dependencyExecutioner) PrepareRootActionArguments(ctx context.Context) 
 
 	// Define files necessary for dependencies that need to be copied into the bundle
 	// args.Files is a map of target path to file contents
+	// This creates what goes in /cnab/app/dependencies/DEP.NAME
 	for _, dep := range e.deps {
 		// Copy the dependency bundle.json
 		target := runtime.GetDependencyDefinitionPath(dep.DependencyLock.Alias)
@@ -148,9 +149,8 @@ func (e *dependencyExecutioner) identifyDependencies(ctx context.Context) error 
 		}
 
 		bun = cachedBundle.Definition
-		
-	} else if e.parentOpts.Name != "" {
 
+	} else if e.parentOpts.Name != "" {
 		c, err := e.Installations.GetLastRun(ctx, e.parentOpts.Namespace, e.parentOpts.Name)
 		if err != nil {
 			return err
@@ -279,7 +279,7 @@ func (e *dependencyExecutioner) executeDependency(ctx context.Context, dep *queu
 	defer span.EndSpan()
 
 	if dep.SharingMode {
-		err := e.executeDependencyv2(ctx, dep)
+		err := e.runDependencyv2(ctx, dep)
 		return err
 	}
 
@@ -307,14 +307,17 @@ func (e *dependencyExecutioner) executeDependency(ctx context.Context, dep *queu
 		return err
 	}
 
-	if err = e.executeExecute(ctx, dep); err != nil {
+	if err = e.finalizeExecute(ctx, dep); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (e *dependencyExecutioner) executeDependencyv2(ctx context.Context, dep *queuedDependency) error {
+// runDependencyv2 will see if the child dependency is already installed
+// if so, it will not install the dependency, but rather share the new parent
+// to the child
+func (e *dependencyExecutioner) runDependencyv2(ctx context.Context, dep *queuedDependency) error {
 	depInstallation, err := e.Installations.GetInstallation(ctx, e.parentOpts.Namespace, dep.Alias)
 	if err != nil {
 		if errors.Is(err, storage.ErrNotFound{}) {
@@ -341,7 +344,7 @@ func (e *dependencyExecutioner) executeDependencyv2(ctx context.Context, dep *qu
 		return err
 	}
 
-	if err = e.executeExecute(ctx, dep); err != nil {
+	if err = e.finalizeExecute(ctx, dep); err != nil {
 		return err
 	}
 
@@ -366,8 +369,9 @@ func (e *dependencyExecutioner) getActionArgs(ctx context.Context,
 	return nil
 }
 
-// running out of ideas for function names at this point
-func (e *dependencyExecutioner) executeExecute(ctx context.Context, dep *queuedDependency) error {
+// finalizeExecute handles some Uninstall logic that is carried out
+// right before calling CNAB execute.
+func (e *dependencyExecutioner) finalizeExecute(ctx context.Context, dep *queuedDependency) error {
 	ctx, span := tracing.StartSpan(ctx)
 	// Determine if we're working with UninstallOptions, to inform deletion and
 	// error handling, etc.

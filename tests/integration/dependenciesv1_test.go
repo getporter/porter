@@ -29,7 +29,7 @@ func TestDependenciesLifecycle(t *testing.T) {
 	// Publish the mysql bundle that we depend upon
 	publishMySQLBundle(ctx, p)
 
-	installWordpressBundle(ctx, p, namespace, "wordpress-mysql")
+	installWordpressBundle(ctx, p, namespace)
 	defer cleanupWordpressBundle(ctx, p, namespace)
 
 	upgradeWordpressBundle(ctx, p, namespace)
@@ -60,7 +60,7 @@ func publishMySQLBundle(ctx context.Context, p *porter.TestPorter) {
 	require.NoError(p.T(), err, "publish of dependent bundle failed")
 }
 
-func installWordpressBundle(ctx context.Context, p *porter.TestPorter, namespace string, mysqlName string) {
+func installWordpressBundle(ctx context.Context, p *porter.TestPorter, namespace string) {
 
 	// Install the bundle that has dependencies
 	err := p.CopyDirectory(filepath.Join(p.RepoRoot, "build/testdata/bundles/wordpress"), ".", false)
@@ -95,7 +95,7 @@ func installWordpressBundle(ctx context.Context, p *porter.TestPorter, namespace
 	require.NoError(p.T(), err, "install of root bundle failed namespace %s", namespace)
 
 	// Verify that the dependency claim is present
-	i, err := p.Installations.GetInstallation(ctx, namespace, mysqlName)
+	i, err := p.Installations.GetInstallation(ctx, namespace, "wordpress-mysql")
 	require.NoError(p.T(), err, "could not fetch installation status for the dependency")
 	assert.Equal(p.T(), cnab.StatusSucceeded, i.Status.ResultStatus, "the dependency wasn't recorded as being installed successfully")
 	c, err := p.Installations.GetLastRun(ctx, namespace, i.Name)

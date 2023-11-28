@@ -118,11 +118,6 @@ func (m *RuntimeManifest) loadDependencyDefinitions() error {
 		if err != nil {
 			return err
 		}
-		//todo(schristoff): if we are v2, we need to resolve
-		// our own dependencies
-		if m.bundle.HasDependenciesV2() {
-
-		}
 
 		bun, err := bundle.Unmarshal(bunD)
 		if err != nil {
