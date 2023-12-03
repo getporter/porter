@@ -21,36 +21,35 @@ func TestSharedDependencies(t *testing.T) {
 
 	p := porter.NewTestPorter(t)
 	p.Config.SetExperimentalFlags(experimental.FlagDependenciesV2)
-
-	bunDir, err := os.MkdirTemp("", "porter-mysqlv2-")
-	require.NoError(p.T(), err, "could not create temp directory at all")
-
+	ctx := p.SetupIntegrationTest()
+	bunDir := setupFS(ctx, p)
 	defer os.RemoveAll(bunDir)
 
-	ctx := p.SetupIntegrationTest()
-
 	namespace := p.RandomString(10)
-	setupMysql(ctx, p, namespace)
+	setupMysql(ctx, p, namespace, bunDir)
 
 	setupWordpress_v2(ctx, p, namespace)
 	defer cleanupWordpressBundle_v2(ctx, p, namespace)
 
 }
 
-func setupMysql(ctx context.Context, p *porter.TestPorter, namespace string) {
-	bunDir, err := os.MkdirTemp("", "porter-mysql")
-	require.NoError(p.T(), err, "could not create temp directory to publish the mysql bundle")
+func setupFS(ctx context.Context, p *porter.TestPorter) string {
+	bunDir, err := os.MkdirTemp("", "porter-mysql-")
+	require.NoError(p.T(), err, "could not create temp directory at all")
 
-	// Rebuild the bundle from a temp directory so that we don't modify the source directory
-	// and leave modified files around.
-	p.TestConfig.TestContext.AddTestDirectory(filepath.Join(p.RepoRoot, "build/testdata/bundles/mysql"), bunDir)
-	pwd := p.Getwd()
-	p.Chdir(bunDir)
-	defer p.Chdir(pwd)
+	p.TestConfig.TestContext.AddTestDirectory(filepath.Join(p.RepoRoot, "build/testdata/bundles/mysql"), bunDir+"/mysql")
+	p.TestConfig.TestContext.AddTestDirectory(filepath.Join(p.RepoRoot, "build/testdata/bundles/wordpressv2"), bunDir+"/wordpress")
+
+	return bunDir
+}
+
+func setupMysql(ctx context.Context, p *porter.TestPorter, namespace string, bunDir string) {
+
+	p.Chdir(bunDir + "/mysql")
 
 	publishOpts := porter.PublishOptions{}
 	publishOpts.Force = true
-	err = publishOpts.Validate(p.Config)
+	err := publishOpts.Validate(p.Config)
 	require.NoError(p.T(), err, "validation of publish opts for dependent bundle failed")
 
 	err = p.Publish(ctx, publishOpts)
@@ -119,7 +118,7 @@ func setupWordpress_v2(ctx context.Context, p *porter.TestPorter, namespace stri
 	require.NoError(p.T(), err, "could not fetch claim for the root bundle")
 	assert.Equal(p.T(), cnab.StatusSucceeded, i.Status.ResultStatus, "the root bundle wasn't recorded as being installed successfully")
 
-	//todo(schristoff):We need to ensure that parameters/outputs
+	//todo(schristoff): We need to ensure that parameters/outputs
 	// from the existing dependency
 	// get bubbled up to the new parent
 }
@@ -135,10 +134,9 @@ func cleanupWordpressBundle_v2(ctx context.Context, p *porter.TestPorter, namesp
 	err = p.UninstallBundle(ctx, uninstallOptions)
 	require.NoError(p.T(), err, "uninstall of root bundle failed")
 
-	// Verify that the dependency installation is deleted
-	i, err := p.Installations.GetInstallation(ctx, namespace, "wordpress-mysql")
-	require.ErrorIs(p.T(), err, storage.ErrNotFound{})
-	require.Equal(p.T(), storage.Installation{}, i)
+	// This shouldn't get deleted, it existed before, and it should exist after
+	i, err := p.Installations.GetInstallation(ctx, namespace, "mysql")
+	assert.Equal(p.T(), cnab.StatusSucceeded, i.Status.ResultStatus, "the dependency wasn't recorded as being installed successfully")
 
 	// Verify that the root installation is deleted
 	i, err = p.Installations.GetInstallation(ctx, namespace, "wordpress")
@@ -162,7 +160,7 @@ func upgradeWordpressBundle_v2(ctx context.Context, p *porter.TestPorter, namesp
 	require.NoError(p.T(), err, "upgrade of root bundle failed")
 
 	// Verify that the dependency claim is upgraded
-	i, err := p.Installations.GetInstallation(ctx, namespace, "wordpress-mysql")
+	i, err := p.Installations.GetInstallation(ctx, namespace, "mysql")
 	require.NoError(p.T(), err, "could not fetch claim for the dependency")
 	c, err := p.Installations.GetLastRun(ctx, i.Namespace, i.Name)
 	require.NoError(p.T(), err, "GetLastClaim failed")
@@ -200,7 +198,7 @@ func invokeWordpressBundle_v2(ctx context.Context, p *porter.TestPorter, namespa
 
 	// Verify that the dependency claim is invoked
 
-	i, err := p.Installations.GetInstallation(ctx, namespace, "wordpress-mysql")
+	i, err := p.Installations.GetInstallation(ctx, namespace, "mysql")
 	require.NoError(p.T(), err, "could not fetch claim for the dependency")
 	c, err := p.Installations.GetLastRun(ctx, i.Namespace, i.Name)
 	require.NoError(p.T(), err, "GetLastClaim failed")
@@ -235,18 +233,10 @@ func uninstallWordpressBundle_v2(ctx context.Context, p *porter.TestPorter, name
 	err = p.UninstallBundle(ctx, uninstallOptions)
 	require.NoError(p.T(), err, "uninstall of root bundle failed")
 
-	// Verify that the dependency claim is uninstalled
-	i, err := p.Installations.GetInstallation(ctx, namespace, "wordpress-mysql")
-	require.NoError(p.T(), err, "could not fetch installation for the dependency")
-	c, err := p.Installations.GetLastRun(ctx, i.Namespace, i.Name)
-	require.NoError(p.T(), err, "GetLastClaim failed")
-	assert.Equal(p.T(), cnab.ActionUninstall, c.Action, "the dependency wasn't recorded as being uninstalled")
-	assert.Equal(p.T(), cnab.StatusSucceeded, i.Status.ResultStatus, "the dependency wasn't recorded as being uninstalled successfully")
-
 	// Verify that the bundle claim is uninstalled
-	i, err = p.Installations.GetInstallation(ctx, namespace, "wordpress")
+	i, err := p.Installations.GetInstallation(ctx, namespace, "wordpress")
 	require.NoError(p.T(), err, "could not fetch installation for the root bundle")
-	c, err = p.Installations.GetLastRun(ctx, i.Namespace, i.Name)
+	c, err := p.Installations.GetLastRun(ctx, i.Namespace, i.Name)
 	require.NoError(p.T(), err, "GetLastClaim failed")
 	assert.Equal(p.T(), cnab.ActionUninstall, c.Action, "the root bundle wasn't recorded as being uninstalled")
 	assert.Equal(p.T(), cnab.StatusSucceeded, i.Status.ResultStatus, "the root bundle wasn't recorded as being uninstalled successfully")

@@ -804,8 +804,8 @@ type BundleInterfaceDocument struct {
 // SharingCriteria is a set of rules for sharing a dependency with other bundles.
 type SharingCriteria struct {
 	// Mode defines how a dependency can be shared.
-	//  - none: The dependency cannot be shared, even within the same dependency graph.
-	//  - group: The dependency is shared with other bundles who defined the dependency
+	//  - false: The dependency cannot be shared, even within the same dependency graph.
+	//  - true: The dependency is shared with other bundles who defined the dependency
 	//    with the same sharing group. This is the default mode.
 	Mode bool `yaml:"mode"`
 
