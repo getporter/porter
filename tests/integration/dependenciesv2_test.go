@@ -29,6 +29,9 @@ func TestSharedDependencies(t *testing.T) {
 	setupMysql(ctx, p, namespace, bunDir)
 
 	setupWordpress_v2(ctx, p, namespace)
+	upgradeWordpressBundle_v2(ctx, p, namespace)
+	invokeWordpressBundle_v2(ctx, p, namespace)
+	uninstallWordpressBundle_v2(ctx, p, namespace)
 	defer cleanupWordpressBundle_v2(ctx, p, namespace)
 
 }
@@ -80,9 +83,7 @@ func setupWordpress_v2(ctx context.Context, p *porter.TestPorter, namespace stri
 	// Rebuild the bundle from a temp directory so that we don't modify the source directory
 	// and leave modified files around.
 	p.TestConfig.TestContext.AddTestDirectory(filepath.Join(p.RepoRoot, "build/testdata/bundles/wordpressv2"), bunDir)
-	pwd := p.Getwd()
 	p.Chdir(bunDir)
-	defer p.Chdir(pwd)
 
 	publishOpts := porter.PublishOptions{}
 	publishOpts.Force = true

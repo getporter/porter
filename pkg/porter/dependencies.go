@@ -336,8 +336,10 @@ func (e *dependencyExecutioner) runDependencyv2(ctx context.Context, dep *queued
 	}
 
 	if dep.SharingGroup == depInstallation.Labels["sh.porter.SharingGroup"] {
+		//todo(schristoff): should we just make a new one if uninstalled?
+		// but then what should it's name be.
 		if !depInstallation.Uninstalled {
-			return fmt.Errorf("error executing dependency, dependency must be in installed status, %s is in  status %s", dep.Alias, depInstallation.Status)
+			return fmt.Errorf("error executing dependency, dependency must be in installed status or deleted, %s is in  status %s", dep.Alias, depInstallation.Status)
 		}
 	}
 	if err = e.getActionArgs(ctx, dep, depInstallation); err != nil {
@@ -377,6 +379,11 @@ func (e *dependencyExecutioner) finalizeExecute(ctx context.Context, dep *queued
 	// error handling, etc.
 	var uninstallOpts UninstallOptions
 	if opts, ok := e.parentAction.(UninstallOptions); ok {
+		//If we have depsv2 on, and no parentinstallation label, do not install
+		// this must be uninstalled directly
+		if _, ok := e.depArgs.Installation.Labels["sh.porter.parentInstallation"]; !ok && dep.SharingMode {
+			return nil
+		}
 		uninstallOpts = opts
 	}
 

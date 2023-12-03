@@ -57,7 +57,7 @@ uninstall:
   - exec:
       command: echo
       arguments:
-        - uninstalled
+        - uninstall mysql
 
 outputs:
   - name: mysql-password
