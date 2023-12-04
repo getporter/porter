@@ -342,6 +342,9 @@ func (e *dependencyExecutioner) runDependencyv2(ctx context.Context, dep *queued
 			return fmt.Errorf("error executing dependency, dependency must be in installed status or deleted, %s is in  status %s", dep.Alias, depInstallation.Status)
 		}
 	}
+
+	//todo(schristoff): PEP003 Find a better place to put this.
+	// if dep.SharingMode && e.parentAction.GetAction()
 	if err = e.getActionArgs(ctx, dep, depInstallation); err != nil {
 		return err
 	}
@@ -379,12 +382,19 @@ func (e *dependencyExecutioner) finalizeExecute(ctx context.Context, dep *queued
 	// error handling, etc.
 	var uninstallOpts UninstallOptions
 	if opts, ok := e.parentAction.(UninstallOptions); ok {
-		//If we have depsv2 on, and no parentinstallation label, do not install
+		//If we have depsv2 on, and no parentinstallation label, do not uninstall
 		// this must be uninstalled directly
 		if _, ok := e.depArgs.Installation.Labels["sh.porter.parentInstallation"]; !ok && dep.SharingMode {
 			return nil
 		}
 		uninstallOpts = opts
+	}
+
+	//
+	if e.parentAction.GetAction() == "upgrade" {
+		if _, ok := e.depArgs.Installation.Labels["sh.porter.parentInstallation"]; !ok && dep.SharingMode {
+			return nil
+		}
 	}
 
 	var executeErrs error
