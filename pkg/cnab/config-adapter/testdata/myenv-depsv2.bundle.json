@@ -137,7 +137,6 @@
         "app": {
           "bundle": "localhost:5000/myapp:v1.2.3",
           "sharing": {
-            "mode": false, 
             "group": {}
           },
           "parameters": {

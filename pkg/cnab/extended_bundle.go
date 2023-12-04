@@ -368,6 +368,8 @@ func (b *ExtendedBundle) BuildPrerequisiteInstallationName(installation string, 
 }
 
 // this is all copied v2 stuff
+// todo(schristoff): in the future, we should clean this up
+
 // ResolveVersion returns the bundle name, its version and any error.
 func (b *ExtendedBundle) ResolveVersionv2(name string, dep v2.Dependency) (OCIReference, error) {
 	ref, err := ParseOCIReference(dep.Bundle)

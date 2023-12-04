@@ -20,10 +20,10 @@ func TestSharedDependencies(t *testing.T) {
 	t.Parallel()
 
 	p := porter.NewTestPorter(t)
-	p.Config.SetExperimentalFlags(experimental.FlagDependenciesV2)
 	ctx := p.SetupIntegrationTest()
 	bunDir := setupFS(ctx, p)
 	defer os.RemoveAll(bunDir)
+	p.Config.SetExperimentalFlags(experimental.FlagDependenciesV2)
 
 	namespace := p.RandomString(10)
 	setupMysql(ctx, p, namespace, bunDir)
@@ -73,6 +73,8 @@ func setupMysql(ctx context.Context, p *porter.TestPorter, namespace string, bun
 
 	//Set the label on the installaiton so Porter knows to grab it
 	mysqlinst.SetLabel("sh.porter.SharingGroup", "myapp")
+	err = p.Installations.UpdateInstallation(ctx, mysqlinst)
+	require.NoError(p.T(), err, "could not add label to mysql inst")
 
 }
 
@@ -118,10 +120,6 @@ func setupWordpress_v2(ctx context.Context, p *porter.TestPorter, namespace stri
 	i, err = p.Installations.GetInstallation(ctx, namespace, "wordpress")
 	require.NoError(p.T(), err, "could not fetch claim for the root bundle")
 	assert.Equal(p.T(), cnab.StatusSucceeded, i.Status.ResultStatus, "the root bundle wasn't recorded as being installed successfully")
-
-	//todo(schristoff): We need to ensure that parameters/outputs
-	// from the existing dependency
-	// get bubbled up to the new parent
 }
 
 func cleanupWordpressBundle_v2(ctx context.Context, p *porter.TestPorter, namespace string) {
@@ -160,18 +158,17 @@ func upgradeWordpressBundle_v2(ctx context.Context, p *porter.TestPorter, namesp
 	err = p.UpgradeBundle(ctx, upgradeOpts)
 	require.NoError(p.T(), err, "upgrade of root bundle failed")
 
-	// Verify that the dependency claim is upgraded
+	// Verify that the dependency claim is still installed
+	// upgrade should not change our status
 	i, err := p.Installations.GetInstallation(ctx, namespace, "mysql")
 	require.NoError(p.T(), err, "could not fetch claim for the dependency")
-	c, err := p.Installations.GetLastRun(ctx, i.Namespace, i.Name)
-	require.NoError(p.T(), err, "GetLastClaim failed")
-	assert.Equal(p.T(), cnab.ActionUpgrade, c.Action, "the dependency wasn't recorded as being upgraded")
+
 	assert.Equal(p.T(), cnab.StatusSucceeded, i.Status.ResultStatus, "the dependency wasn't recorded as being upgraded successfully")
 
 	// Verify that the bundle claim is upgraded
 	i, err = p.Installations.GetInstallation(ctx, namespace, "wordpress")
 	require.NoError(p.T(), err, "could not fetch claim for the root bundle")
-	c, err = p.Installations.GetLastRun(ctx, i.Namespace, i.Name)
+	c, err := p.Installations.GetLastRun(ctx, i.Namespace, i.Name)
 	require.NoError(p.T(), err, "GetLastClaim failed")
 	assert.Equal(p.T(), cnab.ActionUpgrade, c.Action, "the root bundle wasn't recorded as being upgraded")
 	assert.Equal(p.T(), cnab.StatusSucceeded, i.Status.ResultStatus, "the root bundle wasn't recorded as being upgraded successfully")
@@ -220,6 +217,7 @@ func invokeWordpressBundle_v2(ctx context.Context, p *porter.TestPorter, namespa
 }
 
 func uninstallWordpressBundle_v2(ctx context.Context, p *porter.TestPorter, namespace string) {
+
 	uninstallOptions := porter.NewUninstallOptions()
 	uninstallOptions.Namespace = namespace
 	// Now go back to using the original set of credentials

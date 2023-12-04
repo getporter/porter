@@ -97,6 +97,9 @@ func (e *dependencyExecutioner) Execute(ctx context.Context) error {
 
 	// executeDependency the requested action against all the dependencies
 	for _, dep := range e.deps {
+		if !e.sharedActionResolver(ctx, dep) {
+			return nil
+		}
 		err := e.executeDependency(ctx, dep)
 		if err != nil {
 			return err
@@ -123,11 +126,45 @@ func (e *dependencyExecutioner) PrepareRootActionArguments(ctx context.Context) 
 	// This creates what goes in /cnab/app/dependencies/DEP.NAME
 	for _, dep := range e.deps {
 		// Copy the dependency bundle.json
+		e.checkSharedOutputs(ctx, dep)
 		target := runtime.GetDependencyDefinitionPath(dep.DependencyLock.Alias)
 		args.Files[target] = string(dep.cnabFileContents)
 	}
-
 	return args, nil
+}
+
+func (e *dependencyExecutioner) checkSharedOutputs(ctx context.Context, dep *queuedDependency) {
+	if !e.sharedActionResolver(ctx, dep) && e.parentAction.GetAction() == "install" {
+		e.getActionArgs(ctx, dep)
+	}
+}
+
+// sharedActionResolver tries to localize if v2, and shared deps
+// then what actions should we take based off labels/action type/state
+// true means continue, false means stop
+func (e *dependencyExecutioner) sharedActionResolver(ctx context.Context, dep *queuedDependency) bool {
+	depInstallation, err := e.Installations.GetInstallation(ctx, e.parentOpts.Namespace, dep.Alias)
+	if err != nil {
+		if errors.Is(err, storage.ErrNotFound{}) {
+			return true
+		}
+	}
+	e.depArgs.Installation = depInstallation
+
+	//We're real, let's check if this is in the installation the parent
+	// is referencing
+	if dep.SharingGroup == depInstallation.Labels["sh.porter.SharingGroup"] {
+		if e.parentAction.GetAction() == "install" {
+			return false
+		}
+		if e.parentAction.GetAction() == "upgrade" {
+			return true
+		}
+		if e.parentAction.GetAction() == "uninstall" {
+			return false
+		}
+	}
+	return true
 }
 
 func (e *dependencyExecutioner) identifyDependencies(ctx context.Context) error {
@@ -303,7 +340,9 @@ func (e *dependencyExecutioner) executeDependency(ctx context.Context, dep *queu
 		}
 	}
 
-	if err = e.getActionArgs(ctx, dep, depInstallation); err != nil {
+	e.depArgs.Installation = depInstallation
+
+	if err = e.getActionArgs(ctx, dep); err != nil {
 		return err
 	}
 
@@ -315,8 +354,7 @@ func (e *dependencyExecutioner) executeDependency(ctx context.Context, dep *queu
 }
 
 // runDependencyv2 will see if the child dependency is already installed
-// if so, it will not install the dependency, but rather share the new parent
-// to the child
+// and if so, use sharingmode && group to resolve what to do
 func (e *dependencyExecutioner) runDependencyv2(ctx context.Context, dep *queuedDependency) error {
 	depInstallation, err := e.Installations.GetInstallation(ctx, e.parentOpts.Namespace, dep.Alias)
 	if err != nil {
@@ -334,18 +372,29 @@ func (e *dependencyExecutioner) runDependencyv2(ctx context.Context, dep *queued
 			return err
 		}
 	}
+	//We save the installation
+	e.depArgs.Installation = depInstallation
 
+	// Installed: Return
+	// Uninstalled: Error (delete or else)
+	// Upgrade: Unsupported
+	// Invoke: At your own risk
+	//todo(schristoff): this is kind of icky, can be it less so?
 	if dep.SharingGroup == depInstallation.Labels["sh.porter.SharingGroup"] {
-		//todo(schristoff): should we just make a new one if uninstalled?
-		// but then what should it's name be.
-		if !depInstallation.Uninstalled {
+		if depInstallation.IsInstalled() {
+
+			action := e.parentAction.GetAction()
+			if action == "upgrade" || action == "uninstall" {
+				return nil
+			}
+		}
+		if depInstallation.Uninstalled {
 			return fmt.Errorf("error executing dependency, dependency must be in installed status or deleted, %s is in  status %s", dep.Alias, depInstallation.Status)
 		}
+
 	}
 
-	//todo(schristoff): PEP003 Find a better place to put this.
-	// if dep.SharingMode && e.parentAction.GetAction()
-	if err = e.getActionArgs(ctx, dep, depInstallation); err != nil {
+	if err = e.getActionArgs(ctx, dep); err != nil {
 		return err
 	}
 
@@ -357,15 +406,15 @@ func (e *dependencyExecutioner) runDependencyv2(ctx context.Context, dep *queued
 }
 
 func (e *dependencyExecutioner) getActionArgs(ctx context.Context,
-	dep *queuedDependency, depInstallation storage.Installation) error {
-	finalParams, err := e.porter.finalizeParameters(ctx, depInstallation, dep.BundleReference.Definition, e.parentArgs.Action, dep.Parameters)
+	dep *queuedDependency) error {
+	finalParams, err := e.porter.finalizeParameters(ctx, e.depArgs.Installation, dep.BundleReference.Definition, e.parentArgs.Action, dep.Parameters)
 	if err != nil {
 		return fmt.Errorf("error resolving parameters for dependency %s: %w", dep.Alias, err)
 	}
 	e.depArgs = cnabprovider.ActionArguments{
 		BundleReference:       dep.BundleReference,
 		Action:                e.parentArgs.Action,
-		Installation:          depInstallation,
+		Installation:          e.depArgs.Installation,
 		Driver:                e.parentArgs.Driver,
 		AllowDockerHostAccess: e.parentOpts.AllowDockerHostAccess,
 		Params:                finalParams,
@@ -382,19 +431,7 @@ func (e *dependencyExecutioner) finalizeExecute(ctx context.Context, dep *queued
 	// error handling, etc.
 	var uninstallOpts UninstallOptions
 	if opts, ok := e.parentAction.(UninstallOptions); ok {
-		//If we have depsv2 on, and no parentinstallation label, do not uninstall
-		// this must be uninstalled directly
-		if _, ok := e.depArgs.Installation.Labels["sh.porter.parentInstallation"]; !ok && dep.SharingMode {
-			return nil
-		}
 		uninstallOpts = opts
-	}
-
-	//
-	if e.parentAction.GetAction() == "upgrade" {
-		if _, ok := e.depArgs.Installation.Labels["sh.porter.parentInstallation"]; !ok && dep.SharingMode {
-			return nil
-		}
 	}
 
 	var executeErrs error

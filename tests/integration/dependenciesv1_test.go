@@ -244,23 +244,3 @@ func uninstallWordpressBundle(ctx context.Context, p *porter.TestPorter, namespa
 	assert.Equal(p.T(), "ci", i.CredentialSets[0], "expected to use the alternate credential set")
 
 }
-
-func installMySQLbundle(ctx context.Context, p *porter.TestPorter, namespace string) {
-	p.CopyDirectory(filepath.Join(p.RepoRoot, "build/testdata/bundles/mysql"), ".", false)
-	installOpts := porter.NewInstallOptions()
-	installOpts.Namespace = namespace
-	installOpts.CredentialIdentifiers = []string{"ci"} // Use the ci credential set, porter should remember this for later
-
-	err := installOpts.Validate(ctx, []string{}, p.Porter)
-	require.NoError(p.T(), err, "validation of install opts for shared mysql bundle failed")
-
-	err = p.InstallBundle(ctx, installOpts)
-	require.NoError(p.T(), err, "install of shared mysql bundle failed namespace %s", namespace)
-
-	mysqlinst, err := p.Installations.GetInstallation(ctx, namespace, "mysql")
-	require.NoError(p.T(), err, "could not fetch installation status for the dependency")
-
-	//Set the label on the installaiton so Porter knows to grab it
-	mysqlinst.SetLabel("sh.porter.SharingGroup", "myapp")
-
-}
