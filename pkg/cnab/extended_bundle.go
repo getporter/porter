@@ -271,13 +271,11 @@ func (b *ExtendedBundle) ResolveSharedDeps(bun ExtendedBundle) ([]DependencyLock
 	for name, d := range v2.Requires {
 		d.Name = name
 
-		// todo(schristoff): We should 100% move this logic into
-		// the bundle validator area
 		if d.Sharing.Mode && d.Sharing.Group.Name == "" {
-			return nil, fmt.Errorf("dont do this")
+			return nil, fmt.Errorf("empty sharing group, sharing group name needs to be specified to be active")
 		}
 		if !d.Sharing.Mode && d.Sharing.Group.Name != "" {
-			return nil, fmt.Errorf("dont do this either")
+			return nil, fmt.Errorf("empty sharing mode, sharing mode boolean set to `true` to be active")
 		}
 
 		ref, err := b.ResolveVersionv2(d.Name, d)
