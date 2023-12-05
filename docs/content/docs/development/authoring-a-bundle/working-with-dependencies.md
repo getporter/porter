@@ -30,7 +30,6 @@ dependencies:
 ```
 
 ## Define dependencies v2 (Shared)
-
 The second version of dependencies -- also called "shared dependencies" or DependenciesV2 -- is available under the [**experimental** flag](https://porter.sh/docs/configuration/configuration/#experimental-feature-flags), and therefore an experimental feature. Please proceed with caution.
 
 You can enable the experimental flag, thus enabling DependenciesV2, by setting an environment variable as follows:
@@ -39,7 +38,7 @@ PORTER_EXPERIMENTAL=dependencies-v2
 ```
 
 The configuration for DependenciesV2 is similar to that of the first version, except there is now a "sharing" section with the following required fields: `mode`, `group.name`.
-`mode` is a boolean, and `group.name` is the identifier which will allow for certain
+`mode` is a boolean, and `group.name` is the identifier that will allow for certain
 bundles to share parameters and outputs between each other.
 
 ```yaml
@@ -64,15 +63,15 @@ If there is an existing dependency installed that the parent bundle should conne
 porter install --label sh.porter.SharingGroup=myapp
 ```
 
-There are some safeguards in place to make the existing dependency is not changed such that it could break other bundles depending on it, therefore on the following actions this will occur:
+There are some safeguards in place to make it so other bundles depending on the dependency cannot be broken, therefore on the following actions this will occur:
 
-**Install**: For parent bundle on existing dependency, the dependency arguments will be passed to the parent. No further changes.
+**Install**: For the parent bundle on existing dependency, the dependency arguments will be passed to the parent. No further changes.
 
 **Upgrade**: The parent bundle will execute the upgrade action, but it will not change anything about the existing dependency.
 
-**Invoke**: Any changes that happen here **will** change the existing dependency. It will be the responsibility of the user to handle propagating those changes to other parent bundles if needed.
+**Invoke**: Any changes that happen here **will** change the existing dependency. It will be on the user to handle propagating those changes to other parent bundles if needed.
 
-**Uninstall**: The parent bundle will be uninstalled, but the existing dependency will not be uninstalled. The existing dependency will need to be uninstalled in a separate command.
+**Uninstall**: The parent bundle will be uninstalled, but the existing dependency will not be and needs to be uninstalled in a separate command.
 
 
 ## Ordering of dependencies
