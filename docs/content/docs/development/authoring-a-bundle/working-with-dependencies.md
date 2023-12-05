@@ -64,7 +64,7 @@ If there is an existing dependency installed that the parent bundle should conne
 porter install --label sh.porter.SharingGroup=myapp
 ```
 
-There are some safeguards in place to make the existing dependency not changed so that it can break other bundles dependening on it, therefore on the following actions this will occur:
+There are some safeguards in place to make the existing dependency is not changed such that it could break other bundles depending on it, therefore on the following actions this will occur:
 
 **Install**: For parent bundle on existing dependency, the dependency arguments will be passed to the parent. No further changes.
 
