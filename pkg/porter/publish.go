@@ -363,6 +363,11 @@ func pushUpdatedImage(layout registry.Layout, origImg string, newImgName image.N
 	return digest, nil
 }
 
+func (p *Porter) generateSBOM(ref cnab.OCIReference) error {
+	p.GetSyftSBOM
+	return nil
+}
+
 // getNewImageNameFromBundleReference derives a new image.Name object from the provided original
 // image (string) using the provided bundleTag to clean registry/org/etc.
 func getNewImageNameFromBundleReference(origImg, bundleTag string) (image.Name, error) {
