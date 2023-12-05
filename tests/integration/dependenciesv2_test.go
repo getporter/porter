@@ -28,7 +28,7 @@ func TestSharedDependencies(t *testing.T) {
 	namespace := p.RandomString(10)
 	setupMysql(ctx, p, namespace, bunDir)
 
-	setupWordpress_v2(ctx, p, namespace)
+	setupWordpress_v2(ctx, p, namespace, bunDir)
 	upgradeWordpressBundle_v2(ctx, p, namespace)
 	invokeWordpressBundle_v2(ctx, p, namespace)
 	uninstallWordpressBundle_v2(ctx, p, namespace)
@@ -40,13 +40,13 @@ func setupFS(ctx context.Context, p *porter.TestPorter) string {
 	bunDir, err := os.MkdirTemp("", "porter-mysql-")
 	require.NoError(p.T(), err, "could not create temp directory at all")
 
-	p.TestConfig.TestContext.AddTestDirectory(filepath.Join(p.RepoRoot, "build/testdata/bundles/mysql"), bunDir+"/mysql")
 	p.TestConfig.TestContext.AddTestDirectory(filepath.Join(p.RepoRoot, "build/testdata/bundles/wordpressv2"), bunDir+"/wordpress")
 
 	return bunDir
 }
 
 func setupMysql(ctx context.Context, p *porter.TestPorter, namespace string, bunDir string) {
+	p.TestConfig.TestContext.AddTestDirectory(filepath.Join(p.RepoRoot, "build/testdata/bundles/mysql"), bunDir+"/mysql")
 
 	p.Chdir(bunDir + "/mysql")
 
@@ -78,18 +78,13 @@ func setupMysql(ctx context.Context, p *porter.TestPorter, namespace string, bun
 
 }
 
-func setupWordpress_v2(ctx context.Context, p *porter.TestPorter, namespace string) {
-	bunDir, err := os.MkdirTemp("", "porter-wordpress")
-	require.NoError(p.T(), err, "could not create temp directory to publish the mysql bundle")
+func setupWordpress_v2(ctx context.Context, p *porter.TestPorter, namespace string, bunDir string) {
 
-	// Rebuild the bundle from a temp directory so that we don't modify the source directory
-	// and leave modified files around.
-	p.TestConfig.TestContext.AddTestDirectory(filepath.Join(p.RepoRoot, "build/testdata/bundles/wordpressv2"), bunDir)
-	p.Chdir(bunDir)
+	p.Chdir(bunDir + "/wordpress")
 
 	publishOpts := porter.PublishOptions{}
 	publishOpts.Force = true
-	err = publishOpts.Validate(p.Config)
+	err := publishOpts.Validate(p.Config)
 	require.NoError(p.T(), err, "validation of publish opts for dependent bundle failed")
 
 	err = p.Publish(ctx, publishOpts)
