@@ -7,8 +7,6 @@ author: "@bdegeeter"
 tags: ["cnab"]
 ---
 
-# So, You Want to Share a Cloud Application?
-
 by [Brian DeGeeter](https://github.com/bdegeeter) and [Steven Gettys](https://github.com/sgettys)
 
 We've all been there. You've done all the work to create a GitHub repo with the code needed to show off some cool new cloud application architecture. We all know there's never one tool to rule them all. It's a bit of Terraform, a healthy dose of Ansible, and of course some Bash to connect it all together.
