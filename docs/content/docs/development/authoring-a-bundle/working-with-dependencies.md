@@ -34,8 +34,7 @@ dependencies:
 DependenciesV2 is under the [**experimental** flag](https://porter.sh/docs/configuration/configuration/#experimental-feature-flags), and therefore shared dependencies
 is an experimental feature. Proceed with caution.
 
-To enable DependenciesV2 you must set the experimental flag. This can be done
-by setting an environment variable:
+You can enable the experimental flag, thus enabling DependenciesV2, by setting an environment variable as follows:
 ```
 PORTER_EXPERIMENTAL=dependencies-v2
 ```
