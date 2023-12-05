@@ -60,8 +60,7 @@ dependencies:
         namespace: wordpress
 ```
 
-If there is an existing dependency installed that the parent bundle should connect to, you must create a label for the existing dependency with the key 
-of "sh.porter.SharingGroup" and the value of the group name specified in the parent bundle. The existing dependency **must** be successfully installed. If it is uninstalled this must be deleted by the users before this can proceed. 
+If there is an existing dependency installed that the parent bundle should connect to, you must create a label for the existing dependency with the `sh.porter.SharingGroup` key, and the value of the group name specified in the parent bundle. The existing dependency **must** be successfully installed. If it is uninstalled this key must be deleted by the users before the operation can proceed. 
 
 ```
 porter install --label sh.porter.SharingGroup=myapp
