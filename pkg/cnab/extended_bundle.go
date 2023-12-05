@@ -271,7 +271,7 @@ func (b *ExtendedBundle) ResolveSharedDeps(bun ExtendedBundle) ([]DependencyLock
 	for name, d := range v2.Requires {
 		d.Name = name
 
-		//todo(schristoff): We should 100% move this logic into
+		// todo(schristoff): We should 100% move this logic into
 		// the bundle validator area
 		if d.Sharing.Mode && d.Sharing.Group.Name == "" {
 			return nil, fmt.Errorf("dont do this")
