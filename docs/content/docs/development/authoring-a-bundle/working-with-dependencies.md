@@ -41,7 +41,7 @@ PORTER_EXPERIMENTAL=dependencies-v2
 ```
 
 The configuration for dependenciesv2 is similar to v1, except now there is the "sharing" section which has the required fields of "mode", and "group" "name". 
-Mode is a boolean, and group name is the identifier which will allow for certain
+`mode` is a boolean, and `group.name` is the identifier which will allow for certain
 bundles to share parameters and outputs between each other.
 
 ```yaml
