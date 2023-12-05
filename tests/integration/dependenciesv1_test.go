@@ -24,12 +24,7 @@ func TestDependenciesLifecycle(t *testing.T) {
 	defer p.Close()
 	ctx := p.SetupIntegrationTest()
 
-	namespace := p.RandomString(10)
-
-	// Publish the mysql bundle that we depend upon
-	publishMySQLBundle(ctx, p)
-
-	installWordpressBundle(ctx, p, namespace)
+	namespace := installWordpressBundle(ctx, p)
 	defer cleanupWordpressBundle(ctx, p, namespace)
 
 	upgradeWordpressBundle(ctx, p, namespace)
@@ -60,11 +55,12 @@ func publishMySQLBundle(ctx context.Context, p *porter.TestPorter) {
 	require.NoError(p.T(), err, "publish of dependent bundle failed")
 }
 
-func installWordpressBundle(ctx context.Context, p *porter.TestPorter, namespace string) {
+func installWordpressBundle(ctx context.Context, p *porter.TestPorter) (namespace string) {
+	// Publish the mysql bundle that we depend upon
+	publishMySQLBundle(ctx, p)
 
 	// Install the bundle that has dependencies
-	err := p.CopyDirectory(filepath.Join(p.RepoRoot, "build/testdata/bundles/wordpress"), ".", false)
-	require.NoError(p.T(), err, "copy of build/testdata/bundles/wordpress failed")
+	p.CopyDirectory(filepath.Join(p.RepoRoot, "build/testdata/bundles/wordpress"), ".", false)
 
 	namespace = p.RandomString(10)
 	installOpts := porter.NewInstallOptions()
@@ -88,7 +84,7 @@ func installWordpressBundle(ctx context.Context, p *porter.TestPorter, namespace
 
 	p.TestParameters.InsertParameterSet(ctx, testParamSets)
 
-	err = installOpts.Validate(ctx, []string{}, p.Porter)
+	err := installOpts.Validate(ctx, []string{}, p.Porter)
 	require.NoError(p.T(), err, "validation of install opts for root bundle failed")
 
 	err = p.InstallBundle(ctx, installOpts)
@@ -100,7 +96,7 @@ func installWordpressBundle(ctx context.Context, p *porter.TestPorter, namespace
 	assert.Equal(p.T(), cnab.StatusSucceeded, i.Status.ResultStatus, "the dependency wasn't recorded as being installed successfully")
 	c, err := p.Installations.GetLastRun(ctx, namespace, i.Name)
 	require.NoError(p.T(), err, "GetLastRun failed")
-	resolvedParameters, err := p.Sanitizer.RestoreParameterSet(ctx, c.Parameters, cnab.ExtendedBundle{Bundle: c.Bundle})
+	resolvedParameters, err := p.Sanitizer.RestoreParameterSet(ctx, c.Parameters, cnab.ExtendedBundle{c.Bundle})
 	require.NoError(p.T(), err, "Resolve run failed")
 	assert.Equal(p.T(), "porter-ci-mysql", resolvedParameters["mysql-name"], "the dependency param value for 'mysql-name' is incorrect")
 	assert.Equal(p.T(), 2, resolvedParameters["probe-timeout"], "the dependency param value for 'probe-timeout' is incorrect")
@@ -111,6 +107,8 @@ func installWordpressBundle(ctx context.Context, p *porter.TestPorter, namespace
 	i, err = p.Installations.GetInstallation(ctx, namespace, "wordpress")
 	require.NoError(p.T(), err, "could not fetch claim for the root bundle")
 	assert.Equal(p.T(), cnab.StatusSucceeded, i.Status.ResultStatus, "the root bundle wasn't recorded as being installed successfully")
+
+	return namespace
 }
 
 func cleanupWordpressBundle(ctx context.Context, p *porter.TestPorter, namespace string) {
