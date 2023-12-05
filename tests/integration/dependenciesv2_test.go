@@ -21,12 +21,14 @@ func TestSharedDependencies(t *testing.T) {
 
 	p := porter.NewTestPorter(t)
 	ctx := p.SetupIntegrationTest()
-	bunDir := setupFS(ctx, p)
-	defer os.RemoveAll(bunDir)
+
 	p.Config.SetExperimentalFlags(experimental.FlagDependenciesV2)
 
 	namespace := p.RandomString(10)
-	setupMysql(ctx, p, namespace, bunDir)
+
+	bunDir, err := os.MkdirTemp("", "porter-mysql-")
+	require.NoError(p.T(), err, "could not create temp directory at all")
+	defer os.RemoveAll(bunDir)
 
 	setupWordpress_v2(ctx, p, namespace, bunDir)
 	upgradeWordpressBundle_v2(ctx, p, namespace)
@@ -34,15 +36,6 @@ func TestSharedDependencies(t *testing.T) {
 	uninstallWordpressBundle_v2(ctx, p, namespace)
 	defer cleanupWordpressBundle_v2(ctx, p, namespace)
 
-}
-
-func setupFS(ctx context.Context, p *porter.TestPorter) string {
-	bunDir, err := os.MkdirTemp("", "porter-mysql-")
-	require.NoError(p.T(), err, "could not create temp directory at all")
-
-	p.TestConfig.TestContext.AddTestDirectory(filepath.Join(p.RepoRoot, "build/testdata/bundles/wordpressv2"), bunDir+"/wordpress")
-
-	return bunDir
 }
 
 func setupMysql(ctx context.Context, p *porter.TestPorter, namespace string, bunDir string) {
@@ -79,8 +72,8 @@ func setupMysql(ctx context.Context, p *porter.TestPorter, namespace string, bun
 }
 
 func setupWordpress_v2(ctx context.Context, p *porter.TestPorter, namespace string, bunDir string) {
-
-	p.Chdir(bunDir + "/wordpress")
+	setupMysql(ctx, p, namespace, bunDir)
+	p.CopyDirectory(filepath.Join(p.RepoRoot, "build/testdata/bundles/wordpressv2"), ".", false)
 
 	publishOpts := porter.PublishOptions{}
 	publishOpts.Force = true
@@ -105,7 +98,7 @@ func setupWordpress_v2(ctx context.Context, p *porter.TestPorter, namespace stri
 	require.NoError(p.T(), err, "install of root bundle failed namespace %s", namespace)
 
 	numInst, err := p.Installations.ListInstallations(ctx, storage.ListOptions{Namespace: namespace})
-	assert.Equal(p.T(), len(numInst), 2)
+	assert.Equal(p.T(), 2, len(numInst))
 
 	i, err := p.Installations.GetInstallation(ctx, namespace, "mysql")
 	require.NoError(p.T(), err, "could not fetch installation status for the dependency")
