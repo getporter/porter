@@ -70,7 +70,7 @@ There are some safeguards in place to make the existing dependency not changed s
 
 **Upgrade**: The parent bundle will execute the upgrade action, but it will not change anything about the existing dependency.
 
-**Invoke**: Any changes that happen here **will** change the existing dependency. It will be on the user to handle propgating those changes to other parent bundles if needed.
+**Invoke**: Any changes that happen here **will** change the existing dependency. It will be the responsibility of the user to handle propagating those changes to other parent bundles if needed.
 
 **Uninstall**: The parent bundle will be uninstalled, but the existing dependency will not be and need to be uninstalled in a separate command.
 
