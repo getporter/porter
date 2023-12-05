@@ -72,7 +72,7 @@ There are some safeguards in place to make the existing dependency not changed s
 
 **Invoke**: Any changes that happen here **will** change the existing dependency. It will be the responsibility of the user to handle propagating those changes to other parent bundles if needed.
 
-**Uninstall**: The parent bundle will be uninstalled, but the existing dependency will not be and need to be uninstalled in a separate command.
+**Uninstall**: The parent bundle will be uninstalled, but the existing dependency will not be uninstalled. The existing dependency will need to be uninstalled in a separate command.
 
 
 ## Ordering of dependencies
