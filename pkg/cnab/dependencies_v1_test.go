@@ -44,8 +44,7 @@ func TestSupportsDependenciesV1(t *testing.T) {
 
 	t.Run("supported", func(t *testing.T) {
 		b := ExtendedBundle{bundle.Bundle{
-			RequiredExtensions: []string{DependenciesV1ExtensionKey},
-		}}
+			RequiredExtensions: []string{DependenciesV1ExtensionKey}}}
 
 		assert.True(t, b.SupportsDependenciesV1())
 	})
@@ -64,15 +63,13 @@ func TestHasDependenciesV1(t *testing.T) {
 			RequiredExtensions: []string{DependenciesV1ExtensionKey},
 			Custom: map[string]interface{}{
 				DependenciesV1ExtensionKey: struct{}{},
-			},
-		}}
+			}}}
 
 		assert.True(t, b.HasDependenciesV1())
 	})
 	t.Run("no dependencies", func(t *testing.T) {
 		b := ExtendedBundle{bundle.Bundle{
-			RequiredExtensions: []string{DependenciesV1ExtensionKey},
-		}}
+			RequiredExtensions: []string{DependenciesV1ExtensionKey}}}
 
 		assert.False(t, b.HasDependenciesV1())
 	})

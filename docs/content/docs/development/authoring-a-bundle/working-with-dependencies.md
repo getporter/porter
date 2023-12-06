@@ -29,6 +29,53 @@ dependencies:
         reference: getporter/mysql:v0.1.3
 ```
 
+## Define dependencies v2 (Shared)
+
+The second version of dependencies -- also called "shared dependencies" or DependenciesV2 -- is available under the [**experimental** flag](https://porter.sh/docs/configuration/configuration/#experimental-feature-flags), and therefore an experimental feature. Please proceed with caution.
+
+You can enable the experimental flag, thus enabling DependenciesV2, by setting an environment variable as follows:
+```
+PORTER_EXPERIMENTAL=dependencies-v2
+```
+
+The configuration for DependenciesV2 is similar to that of the first version, except there is now a "sharing" section with the following required fields: `mode`, `group.name`.
+`mode` is a boolean, and `group.name` is the identifier that will allow for certain bundles to share parameters and outputs between each other.
+
+```yaml
+dependencies:
+  requires:
+    - name: mysql
+      bundle:
+        reference: localhost:5000/mysql:v0.1.0
+      sharing:
+        mode: true
+        group:
+          name: myapp
+      parameters:
+        database-name: wordpress
+        mysql-user: wordpress
+        namespace: wordpress
+```
+
+If there is an existing dependency installed that the parent bundle should connect to, you must create a label for the existing dependency with the `sh.porter.SharingGroup` key, with the value of the group name specified in the parent bundle. 
+
+The existing dependency **must** be successfully installed. If it is uninstalled this key must be deleted by the users before the operation can proceed. 
+
+```
+porter install --label sh.porter.SharingGroup=myapp
+```
+
+There are some safeguards in place to make it so other bundles depending on the dependency cannot be broken, therefore on the following actions this will occur:
+
+**Install**: For the parent bundle on existing dependency, the dependency arguments will be passed to the parent. No further changes.
+
+**Upgrade**: The parent bundle will execute the upgrade action, but it will not change anything about the existing dependency.
+
+**Invoke**: Any changes that happen here **will** change the existing dependency. It will be on the user to handle propagating those changes to other parent bundles if needed.
+
+**Uninstall**: The parent bundle will be uninstalled, but the existing dependency will not be and needs to be uninstalled in a separate command.
+
+
 ## Ordering of dependencies
 
 If more than one dependency is declared, they will be installed in the order they are listed. For example, if both the `mysql` and

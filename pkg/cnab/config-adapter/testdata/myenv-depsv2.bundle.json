@@ -137,7 +137,6 @@
         "app": {
           "bundle": "localhost:5000/myapp:v1.2.3",
           "sharing": {
-            "mode": "group",
             "group": {}
           },
           "parameters": {
@@ -153,7 +152,6 @@
         "infra": {
           "bundle": "localhost:5000/myinfra:v0.1.0",
           "sharing": {
-            "mode": "group",
             "group": {}
           },
           "parameters": {
