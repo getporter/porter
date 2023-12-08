@@ -77,7 +77,7 @@ func (b *Builder) BuildInvocationImage(ctx context.Context, manifest *manifest.M
 	}
 
 	bldr, err := builder.New(cli,
-		builder.WithName("default"),
+		builder.WithName(cli.CurrentContext()),
 		builder.WithContextPathHash(b.Getwd()),
 	)
 	if err != nil {
