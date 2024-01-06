@@ -164,9 +164,9 @@ func (s DependencySource) WiringSuffix() string {
 // SharingCriteria is a set of rules for sharing a dependency with other bundles.
 type SharingCriteria struct {
 	// Mode defines how a dependency can be shared.
-	// * none: The dependency cannot be shared, even within the same dependency graph.
-	// * group: The dependency is shared with other bundles who defined the dependency with the same sharing group.
-	Mode string `json:"mode,omitempty" mapstructure:"mode,omitempty"`
+	// * false: The dependency cannot be shared, even within the same dependency graph.
+	// * true: The dependency is shared with other bundles who defined the dependency with the same sharing group.
+	Mode bool `json:"mode,omitempty" mapstructure:"mode,omitempty"`
 
 	// Group defines matching criteria for determining if two dependencies are in the same sharing group.
 	Group SharingGroup `json:"group,omitempty" mapstructure:"group,omitempty"`

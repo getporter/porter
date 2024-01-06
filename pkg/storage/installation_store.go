@@ -152,7 +152,9 @@ func (s InstallationStore) GetInstallation(ctx context.Context, namespace string
 			"name":      name,
 		},
 	}
+
 	err := s.store.FindOne(ctx, CollectionInstallations, opts, &out)
+
 	return out, err
 }
 

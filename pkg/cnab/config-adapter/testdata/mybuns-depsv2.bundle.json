@@ -453,7 +453,6 @@
         "db": {
           "bundle": "localhost:5000/mydb:v0.1.0",
           "sharing": {
-            "mode": "group",
             "group": {}
           },
           "parameters": {

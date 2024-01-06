@@ -24,10 +24,10 @@ func TestProcessRequiredExtensions(t *testing.T) {
 			"sh.porter.file-parameters": nil,
 			"io.cnab.dependencies": depsv1ext.Dependencies{
 				Requires: map[string]depsv1ext.Dependency{
-					"storage": depsv1ext.Dependency{
+					"storage": {
 						Bundle: "somecloud/blob-storage",
 					},
-					"mysql": depsv1ext.Dependency{
+					"mysql": {
 						Bundle: "somecloud/mysql",
 						Version: &depsv1ext.DependencyVersion{
 							AllowPrereleases: true,

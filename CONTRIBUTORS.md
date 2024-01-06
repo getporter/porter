@@ -93,3 +93,4 @@ and we will add you. **All** contributors belong here. 💯
 - [Xin Fu](https://github.com/imfing)
 - [KallyDev](https://github.com/kallydev)
 - [Salman Shah](https://github.com/sbshah97)
+- [Ray Terrill](https://github.com/rayterrill)
