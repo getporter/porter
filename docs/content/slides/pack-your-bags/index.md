@@ -190,7 +190,7 @@ class: center, middle
   ![you fight for the users](/images/pack-your-bags/Spongebob-patrick-crying.jpg)
 ]
 
-.footnote[http://vignette3.wikia.nocookie.net/spongebob/images/f/f0/Spongebob-patrick-crying.jpg/revision/latest?cb=20140713205315]
+.footnote[https://vignette3.wikia.nocookie.net/spongebob/images/f/f0/Spongebob-patrick-crying.jpg/revision/latest?cb=20140713205315]
 
 ---
 class: center, middle
@@ -290,7 +290,7 @@ class: center, middle
   ![workflow](/images/pack-your-bags/the-workflow.png) ![magic](/images/pack-your-bags/magic.gif)
 ]
 
-.footnote[_http://www.reactiongifs.com/magic-3_]
+.footnote[_https://www.reactiongifs.com/magic-3_]
 
 ---
 ## Try it out: Install a bundle

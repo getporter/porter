@@ -11,8 +11,6 @@ import (
 	"strings"
 	"time"
 
-	depsv1 "get.porter.sh/porter/pkg/cnab/dependencies/v1"
-
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/editor"
 	"get.porter.sh/porter/pkg/encoding"
@@ -665,7 +663,7 @@ func (p *Porter) resolveParameterSources(ctx context.Context, bun cnab.ExtendedB
 				outputName = source.OutputName
 			case cnab.DependencyOutputParameterSource:
 				// TODO(carolynvs): does this need to take namespace into account
-				installationName = depsv1.BuildPrerequisiteInstallationName(installation.Name, source.Dependency)
+				installationName = bun.BuildPrerequisiteInstallationName(installation.Name, source.Dependency)
 				outputName = source.OutputName
 			}
 

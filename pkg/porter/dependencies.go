@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"get.porter.sh/porter/pkg/cnab"
-	depsv1 "get.porter.sh/porter/pkg/cnab/dependencies/v1"
 	cnabprovider "get.porter.sh/porter/pkg/cnab/provider"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/manifest"
@@ -32,6 +31,9 @@ type dependencyExecutioner struct {
 	// These are populated by Prepare, call it or perish in inevitable errors
 	parentArgs cnabprovider.ActionArguments
 	deps       []*queuedDependency
+
+	// this should maybe go somewhere else
+	depArgs cnabprovider.ActionArguments
 }
 
 func newDependencyExecutioner(p *Porter, installation storage.Installation, action BundleAction) *dependencyExecutioner {
@@ -52,7 +54,7 @@ func newDependencyExecutioner(p *Porter, installation storage.Installation, acti
 }
 
 type queuedDependency struct {
-	depsv1.DependencyLock
+	cnab.DependencyLock
 	BundleReference cnab.BundleReference
 	Parameters      map[string]string
 
@@ -95,6 +97,9 @@ func (e *dependencyExecutioner) Execute(ctx context.Context) error {
 
 	// executeDependency the requested action against all the dependencies
 	for _, dep := range e.deps {
+		if !e.sharedActionResolver(ctx, dep) {
+			return nil
+		}
 		err := e.executeDependency(ctx, dep)
 		if err != nil {
 			return err
@@ -118,13 +123,48 @@ func (e *dependencyExecutioner) PrepareRootActionArguments(ctx context.Context) 
 
 	// Define files necessary for dependencies that need to be copied into the bundle
 	// args.Files is a map of target path to file contents
+	// This creates what goes in /cnab/app/dependencies/DEP.NAME
 	for _, dep := range e.deps {
 		// Copy the dependency bundle.json
-		target := runtime.GetDependencyDefinitionPath(dep.Alias)
+		e.checkSharedOutputs(ctx, dep)
+		target := runtime.GetDependencyDefinitionPath(dep.DependencyLock.Alias)
 		args.Files[target] = string(dep.cnabFileContents)
 	}
-
 	return args, nil
+}
+
+func (e *dependencyExecutioner) checkSharedOutputs(ctx context.Context, dep *queuedDependency) {
+	if !e.sharedActionResolver(ctx, dep) && e.parentAction.GetAction() == "install" {
+		e.getActionArgs(ctx, dep)
+	}
+}
+
+// sharedActionResolver tries to localize if v2, and shared deps
+// then what actions should we take based off labels/action type/state
+// true means continue, false means stop
+func (e *dependencyExecutioner) sharedActionResolver(ctx context.Context, dep *queuedDependency) bool {
+	depInstallation, err := e.Installations.GetInstallation(ctx, e.parentOpts.Namespace, dep.Alias)
+	if err != nil {
+		if errors.Is(err, storage.ErrNotFound{}) {
+			return true
+		}
+	}
+	e.depArgs.Installation = depInstallation
+
+	//We're real, let's check if this is in the installation the parent
+	// is referencing
+	if dep.SharingGroup == depInstallation.Labels["sh.porter.SharingGroup"] {
+		if e.parentAction.GetAction() == "install" {
+			return false
+		}
+		if e.parentAction.GetAction() == "upgrade" {
+			return true
+		}
+		if e.parentAction.GetAction() == "uninstall" {
+			return false
+		}
+	}
+	return true
 }
 
 func (e *dependencyExecutioner) identifyDependencies(ctx context.Context) error {
@@ -146,6 +186,7 @@ func (e *dependencyExecutioner) identifyDependencies(ctx context.Context) error 
 		}
 
 		bun = cachedBundle.Definition
+
 	} else if e.parentOpts.Name != "" {
 		c, err := e.Installations.GetLastRun(ctx, e.parentOpts.Namespace, e.parentOpts.Name)
 		if err != nil {
@@ -157,9 +198,7 @@ func (e *dependencyExecutioner) identifyDependencies(ctx context.Context) error 
 		// If we hit here, there is a bug somewhere
 		return span.Error(errors.New("identifyDependencies failed to load the bundle because no bundle was specified. Please report this bug to https://github.com/getporter/porter/issues/new/choose"))
 	}
-
-	solver := &depsv1.DependencySolver{}
-	locks, err := solver.ResolveDependencies(bun)
+	locks, err := bun.ResolveDependencies(bun)
 	if err != nil {
 		return span.Error(err)
 	}
@@ -178,7 +217,6 @@ func (e *dependencyExecutioner) identifyDependencies(ctx context.Context) error 
 func (e *dependencyExecutioner) prepareDependency(ctx context.Context, dep *queuedDependency) error {
 	ctx, span := tracing.StartSpan(ctx)
 	defer span.EndSpan()
-
 	// Pull the dependency
 	var err error
 	pullOpts := BundlePullOptions{
@@ -277,12 +315,21 @@ func (e *dependencyExecutioner) executeDependency(ctx context.Context, dep *queu
 	ctx, span := tracing.StartSpan(ctx)
 	defer span.EndSpan()
 
-	depName := depsv1.BuildPrerequisiteInstallationName(e.parentOpts.Name, dep.Alias)
+	if dep.SharingMode {
+		err := e.runDependencyv2(ctx, dep)
+		return err
+	}
+
+	eb := cnab.ExtendedBundle{}
+	//this expects depv1 style dependency to be installed as parentName+depName
+	depName := eb.BuildPrerequisiteInstallationName(e.parentOpts.Name, dep.Alias)
 	depInstallation, err := e.Installations.GetInstallation(ctx, e.parentOpts.Namespace, depName)
+
 	if err != nil {
 		if errors.Is(err, storage.ErrNotFound{}) {
 			depInstallation = storage.NewInstallation(e.parentOpts.Namespace, depName)
 			depInstallation.SetLabel("sh.porter.parentInstallation", e.parentArgs.Installation.String())
+
 			// For now, assume it's okay to give the dependency the same credentials as the parent
 			depInstallation.CredentialSets = e.parentInstallation.CredentialSets
 			if err = e.Installations.InsertInstallation(ctx, depInstallation); err != nil {
@@ -293,21 +340,93 @@ func (e *dependencyExecutioner) executeDependency(ctx context.Context, dep *queu
 		}
 	}
 
-	finalParams, err := e.porter.finalizeParameters(ctx, depInstallation, dep.BundleReference.Definition, e.parentArgs.Action, dep.Parameters)
-	if err != nil {
-		return span.Error(fmt.Errorf("error resolving parameters for dependency %s: %w", dep.Alias, err))
+	e.depArgs.Installation = depInstallation
+
+	if err = e.getActionArgs(ctx, dep); err != nil {
+		return err
 	}
 
-	depArgs := cnabprovider.ActionArguments{
+	if err = e.finalizeExecute(ctx, dep); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// runDependencyv2 will see if the child dependency is already installed
+// and if so, use sharingmode && group to resolve what to do
+func (e *dependencyExecutioner) runDependencyv2(ctx context.Context, dep *queuedDependency) error {
+	depInstallation, err := e.Installations.GetInstallation(ctx, e.parentOpts.Namespace, dep.Alias)
+	if err != nil {
+		if errors.Is(err, storage.ErrNotFound{}) {
+			depInstallation = storage.NewInstallation(e.parentOpts.Namespace, dep.Alias)
+			depInstallation.SetLabel("sh.porter.parentInstallation", e.parentArgs.Installation.String())
+			depInstallation.SetLabel("sh.porter.SharingGroup", dep.SharingGroup)
+
+			// For now, assume it's okay to give the dependency the same credentials as the parent
+			depInstallation.CredentialSets = e.parentInstallation.CredentialSets
+			if err = e.Installations.InsertInstallation(ctx, depInstallation); err != nil {
+				return err
+			}
+
+			return err
+		}
+	}
+	//We save the installation
+	e.depArgs.Installation = depInstallation
+
+	// Installed: Return
+	// Uninstalled: Error (delete or else)
+	// Upgrade: Unsupported
+	// Invoke: At your own risk
+	//todo(schristoff): this is kind of icky, can be it less so?
+	if dep.SharingGroup == depInstallation.Labels["sh.porter.SharingGroup"] {
+		if depInstallation.IsInstalled() {
+
+			action := e.parentAction.GetAction()
+			if action == "upgrade" || action == "uninstall" {
+				return nil
+			}
+		}
+		if depInstallation.Uninstalled {
+			return fmt.Errorf("error executing dependency, dependency must be in installed status or deleted, %s is in  status %s", dep.Alias, depInstallation.Status)
+		}
+
+	}
+
+	if err = e.getActionArgs(ctx, dep); err != nil {
+		return err
+	}
+
+	if err = e.finalizeExecute(ctx, dep); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (e *dependencyExecutioner) getActionArgs(ctx context.Context,
+	dep *queuedDependency) error {
+	finalParams, err := e.porter.finalizeParameters(ctx, e.depArgs.Installation, dep.BundleReference.Definition, e.parentArgs.Action, dep.Parameters)
+	if err != nil {
+		return fmt.Errorf("error resolving parameters for dependency %s: %w", dep.Alias, err)
+	}
+	e.depArgs = cnabprovider.ActionArguments{
 		BundleReference:       dep.BundleReference,
 		Action:                e.parentArgs.Action,
-		Installation:          depInstallation,
+		Installation:          e.depArgs.Installation,
 		Driver:                e.parentArgs.Driver,
 		AllowDockerHostAccess: e.parentOpts.AllowDockerHostAccess,
 		Params:                finalParams,
 		PersistLogs:           e.parentArgs.PersistLogs,
 	}
+	return nil
+}
 
+// finalizeExecute handles some Uninstall logic that is carried out
+// right before calling CNAB execute.
+func (e *dependencyExecutioner) finalizeExecute(ctx context.Context, dep *queuedDependency) error {
+	ctx, span := tracing.StartSpan(ctx)
 	// Determine if we're working with UninstallOptions, to inform deletion and
 	// error handling, etc.
 	var uninstallOpts UninstallOptions
@@ -317,7 +436,7 @@ func (e *dependencyExecutioner) executeDependency(ctx context.Context, dep *queu
 
 	var executeErrs error
 	span.Infof("Executing dependency %s...", dep.Alias)
-	err = e.CNAB.Execute(ctx, depArgs)
+	err := e.CNAB.Execute(ctx, e.depArgs)
 	if err != nil {
 		executeErrs = multierror.Append(executeErrs, fmt.Errorf("error executing dependency %s: %w", dep.Alias, err))
 
@@ -332,8 +451,8 @@ func (e *dependencyExecutioner) executeDependency(ctx context.Context, dep *queu
 	// If uninstallOpts is an empty struct (i.e., action not Uninstall), this
 	// will resolve to false and thus be a no-op
 	if uninstallOpts.shouldDelete() {
-		span.Infof(installationDeleteTmpl, depArgs.Installation)
-		return e.Installations.RemoveInstallation(ctx, depArgs.Installation.Namespace, depArgs.Installation.Name)
+		span.Infof(installationDeleteTmpl, e.depArgs.Installation)
+		return e.Installations.RemoveInstallation(ctx, e.depArgs.Installation.Namespace, e.depArgs.Installation.Name)
 	}
 	return nil
 }
