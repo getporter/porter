@@ -302,7 +302,6 @@ func (p *Porter) BuildActionArgs(ctx context.Context, installation storage.Insta
 		AllowDockerHostAccess: opts.AllowDockerHostAccess,
 		PersistLogs:           !opts.NoLogs,
 	}
-	// test cache
 	return args, nil
 }
 
