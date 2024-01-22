@@ -1,0 +1,141 @@
+{{ define "main" }}
+<div class="mx-auto flex max-w-screen-xl">
+  {{ partial "sidebar.html" (dict "context" . "disableSidebar" true) }}
+  <div class="w-full break-words flex flex-col min-h-[calc(100vh-var(--navbar-height))] min-w-0 justify-start pb-8 pr-[calc(env(safe-area-inset-right)-1.5rem)]">
+    <section class="flex flex-col items-center gap-2 px-6 sm:px-4 pt-8 md:pt-12">
+      <h1 class="text-4xl text-center font-bold leading-tight tracking-tighter md:text-5xl mt-6">
+        <span style="background: #277A9F; background: linear-gradient(180deg, #277A9F, #359ece); color: transparent; background-clip: text; -webkit-background-clip: text;">
+          Your application, and everything you need to deploy, together 
+        </span>
+        <span>💖</span>
+      </h1>
+      <p style="max-width: 800px;" class="mt-4 text-xl text-gray-600 text-center dark:text-gray-400 sm:text-xl">
+        Package your application, client tools, configuration, and deployment logic into an installer that you can
+        distribute and run with a single command.
+      </p>
+      <div class="mt-8">
+        {{- $docsURL := "docs" | relURL -}}
+        <a href="{{ $docsURL }}"
+          class="font-bold text-lg cursor-pointer px-6 py-3 text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-4 focus:ring-primary-300 rounded-md text-center mr-2 mb-2 dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800"
+        >
+          Get Started
+        </a>
+      </div>
+    </section>
+    <section class="mt-12 flex max-w-[90rem] flex-col items-start gap-2 px-6 sm:px-4 pt-8 pb-8">
+      <div class="mt-6 grid grid-cols-1 gap-4 w-full">
+        {{ template "cta-card" (dict
+          "title" "What is Porter?"
+          "subtitle" "Take everything you need to do a deployment, the application itself and the entire process to deploy it: command-line tools, configuration files, secrets, and bash scripts to glue it all together. Package that into a versioned bundle distributed over standard Docker registries or plain tgz files. <br /> Now anyone can install your application without deep knowledge of your deployment process, or following a step-by-step deployment doc, regardless of the tech stack."
+          "style" "background: radial-gradient(ellipse at 50% 80%,rgba(45,175,233,0.15),hsla(0,0%,100%,0));"
+          )
+        }}
+      </div>
+      <div class="mt-6 grid grid-cols-1 gap-4 w-full">
+        {{ template "cta-card" (dict
+          "title" "When would I use Porter?"
+          "subtitle" "Porter is never a replacement for an existing tool. Think of it as doing extra nice things on top of what those great tools already do!"
+          "style" "background: radial-gradient(ellipse at 50% 80%,rgba(246,204,105,0.15),hsla(0,0%,100%,0));"
+          )
+        }}
+      </div>
+      <!-- <div class="mt-12 w-full"> -->
+        <h2 class="mt-6 text-xl mx-auto text-center font-bold text-gray-400 leading-6 tracking-tighter bg-clip-text text-transparent bg-gradient-to-b from-gray-900 to-gray-600 dark:from-gray-100 dark:to-gray-400" style="max-width: 800px">
+        </h2>
+      <!-- </div> -->
+      <div class="mt-6 grid sm:grid-cols-2 lg:grid-cols-3 grid-cols-1 gap-4 w-full">
+        {{ template "hextra-feature-card" (dict
+          "title" "Package"
+          "icon" "package"
+          "style" "background: radial-gradient(ellipse at 60% 500%,rgba(45,175,233,0.15),hsla(0,0%,100%,0));"
+          "subtitle" "Package everything you use to deploy in a single artifact that can be easily distributed over registries and across air gapped networks."
+          )
+        }}
+        {{ template "hextra-feature-card" (dict
+          "title" "Secure"
+          "icon" "secure"
+          "style" "background: radial-gradient(ellipse at 60% 500%,rgba(246,204,105,0.15),hsla(0,0%,100%,0));"
+          "subtitle" "JIT secret injection, immutable artifacts, and container security are just some of Porter's security features."
+          )
+        }}
+        {{ template "hextra-feature-card" (dict
+          "title" "Time"
+          "icon" "time"
+          "style" "background: radial-gradient(ellipse at 60% 500%,rgba(208,0,82,0.15),hsla(0,0%,100%,0));"
+          "subtitle" "Save time because the bundle contains the exact version of your deployment tools. Users don’t need to find and install tools or switch between versions."
+          )
+        }}
+        {{ template "hextra-feature-card" (dict
+          "title" "Rich Metadata"
+          "icon" "metadata"
+          "style" "background: radial-gradient(ellipse at 60% 500%,rgba(246,204,105,0.15),hsla(0,0%,100%,0));"
+          "subtitle" "View rich metadata about a deployment. Run porter explain to quickly see how to customize an installation with parameters, what credentials are needed by the bundle. There is no need for detailed installation documentation."
+          )
+        }}
+        {{ template "hextra-feature-card" (dict
+          "title" "Operational Knowledge"
+          "icon" "knowledge"
+          "style" "background: radial-gradient(ellipse at 60% 500%,rgba(208,0,82,0.15),hsla(0,0%,100%,0));"
+          "subtitle" "Reduce the operational knowledge required to manage an application. Often deployments involve multiple tools, such as terraform, helm, kubectl; all glued together with bash scripts. Bundles abstract away the details of a deployment, and provide a consistent set of commands to deploy any application. "
+          )
+        }}
+        {{ template "hextra-feature-card" (dict
+          "title" "Team"
+          "icon" "team"
+          "style" "background: radial-gradient(ellipse at 60% 500%,rgba(45,175,233,0.15),hsla(0,0%,100%,0));"
+          "subtitle" "Manage deployments securely as a team. Porter uses secure just-in-time credential injection and remembers the parameters last used to deploy. Teammates don’t need to hunt down the proper values themselves, or copy sensitive credentials into local environment variables or files. Secrets remain secure in a secret store such as Hashicorp Vault or Azure Key Vault."
+          )
+        }}
+      </div>
+    </section>
+  </div>
+</div>
+<div class="mt-6 flex flex-col gap-4 w-full">
+  <h2 class="mt-4 text-xl mx-auto text-center font-bold text-gray-400 leading-6 tracking-tighter text-gray-600 text-center dark:text-gray-400" style="max-width: 800px">
+   We are a <a href="https://www.cncf.io/">Cloud Native Computing Foundation</a> Sandbox Project
+  </h2>
+  <a style="margin-bottom: 3rem" class="mx-auto max-w-[350px]" href="https://www.cncf.io/">
+    {{- partial "utils/icon.html" (dict "name" "cncf" "attributes" "width=350") -}}
+  </a>
+</div>
+{{- end -}}
+
+{{- define "cta-card" -}}
+  {{- $title := .title -}}
+  {{- $subtitle := .subtitle -}}
+  {{- $class := .class -}}
+  {{- $style := .style -}}
+
+  <div
+    {{ with $style }}style="{{ . | safeCSS }}"{{ end }}
+    class="{{ $class }} relative overflow-hidden rounded-3xl border border-gray-200 hover:border-gray-300 dark:border-neutral-800 dark:hover:border-neutral-700 before:pointer-events-none before:absolute before:inset-0 before:bg-glass-gradient"
+  >
+    <div class="relative w-full p-6">
+      <h3 class="text-2xl font-bold text-gray-400 leading-6 mb-2">{{ $title }}</h3>
+      <p class="text-gray-600 dark:text-gray-400 text-sm leading-6">{{ $subtitle | markdownify }}</p>
+    </div>
+  </div>
+{{- end -}}
+
+{{- define "hextra-feature-card" -}}
+  {{- $title := .title -}}
+  {{- $subtitle := .subtitle -}}
+  {{- $class := .class -}}
+  {{- $icon := .icon -}}
+  {{- $image := .image -}}
+  {{- $imageClass := .imageClass -}}
+  {{- $style := .style -}}
+
+  <div
+    {{ with $style }}style="{{ . | safeCSS }}"{{ end }}
+    class="{{ $class }} relative overflow-hidden rounded-3xl border border-gray-200 hover:border-gray-300 dark:border-neutral-800 dark:hover:border-neutral-700 before:pointer-events-none before:absolute before:inset-0 before:bg-glass-gradient"
+  >
+    <div class="relative w-full p-6">
+      <h3 class="text-2xl font-medium leading-6 mb-2 flex items-center">
+        {{- partial "utils/icon.html" (dict "name" $icon) -}}
+        <span style="margin-left: 0.5rem">{{ $title }}</span>
+      </h3>
+      <p class="text-gray-600 dark:text-gray-400 text-sm leading-6">{{ $subtitle | markdownify }}</p>
+    </div>
+  </div>
+{{- end -}}

@@ -13,8 +13,20 @@ dependencies:
         interface:
           id: "https://getporter.org/interfaces/#mysql"
           reference: "getporter/mysql-spec:5.7"
+          document:
+            outputs:
+              - name: myoutput
+                description: "worlds smallest output"
+            parameters: 
+              - name: myparam
+                description: "worlds biggest param"
+                default: false
+            credentials:
+              - name: mycred 
+                description: "credential"
+                required: true
       sharing:
-        mode: group
+        mode: true
         group:
           name: myapp
       parameters:

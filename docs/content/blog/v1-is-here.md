@@ -1,7 +1,7 @@
 ---
 title: "Porter v1.0.0 is here!"
 description: "Announcing Porter's v1.0.0 release, what is new, and our plans going forward"
-date: "2022-10-03"
+date: "2023-09-27"
 authorname: "Carolyn Van Slyck"
 author: "@carolynvs"
 authorlink: "https://carolynvanslyck.com/"

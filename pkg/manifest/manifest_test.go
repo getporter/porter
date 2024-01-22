@@ -6,8 +6,6 @@ import (
 	"strings"
 	"testing"
 
-	depsv2ext "get.porter.sh/porter/pkg/cnab/extensions/dependencies/v2"
-
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/experimental"
@@ -1033,7 +1031,7 @@ func TestManifest_DetermineDependenciesExtensionUsed(t *testing.T) {
 				{
 					Name:    "mysql",
 					Bundle:  BundleCriteria{Reference: "mysql:5.7", Version: "5.7 - 6"},
-					Sharing: SharingCriteria{Mode: depsv2ext.SharingModeGroup, Group: SharingGroup{Name: "myapp"}},
+					Sharing: SharingCriteria{Mode: true, Group: SharingGroup{Name: "myapp"}},
 				},
 			}},
 		}

@@ -5,12 +5,15 @@ import (
 	"fmt"
 	"sort"
 
+	depsv1ext "get.porter.sh/porter/pkg/cnab/extensions/dependencies/v1"
+	v2 "get.porter.sh/porter/pkg/cnab/extensions/dependencies/v2"
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/schema"
 	"github.com/Masterminds/semver/v3"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/cnabio/cnab-go/claim"
+	"github.com/google/go-containerregistry/pkg/crane"
 )
 
 const SupportedVersion = "1.0.0 || 1.1.0 || 1.2.0"
@@ -21,6 +24,13 @@ var DefaultSchemaVersion = semver.MustParse(string(BundleSchemaVersion()))
 // allowing quick type-safe access to custom extensions from the CNAB spec.
 type ExtendedBundle struct {
 	bundle.Bundle
+}
+
+type DependencyLock struct {
+	Alias        string
+	Reference    string
+	SharingMode  bool
+	SharingGroup string
 }
 
 // NewBundle creates an ExtendedBundle from a given bundle.
@@ -214,4 +224,200 @@ func (b ExtendedBundle) GetReferencedRegistries() ([]string, error) {
 	}
 	sort.Strings(regs)
 	return regs, nil
+}
+
+func (b *ExtendedBundle) ResolveDependencies(bun ExtendedBundle) ([]DependencyLock, error) {
+	if bun.HasDependenciesV2() {
+		return b.ResolveSharedDeps(bun)
+	}
+
+	if !bun.HasDependenciesV1() {
+		return nil, nil
+	}
+	rawDeps, err := bun.ReadDependenciesV1()
+	// We need make sure the DependenciesV1 are ordered by the desired sequence
+	orderedDeps := rawDeps.ListBySequence()
+
+	if err != nil {
+		return nil, fmt.Errorf("error executing dependencies for %s: %w", bun.Name, err)
+	}
+
+	q := make([]DependencyLock, 0, len(orderedDeps))
+	for _, dep := range orderedDeps {
+		ref, err := b.ResolveVersion(dep.Name, dep)
+		if err != nil {
+			return nil, err
+		}
+
+		lock := DependencyLock{
+			Alias:       dep.Name,
+			Reference:   ref.String(),
+			SharingMode: false,
+		}
+		q = append(q, lock)
+	}
+
+	return q, nil
+}
+
+// ResolveSharedDeps only works with depsv2
+func (b *ExtendedBundle) ResolveSharedDeps(bun ExtendedBundle) ([]DependencyLock, error) {
+	v2, err := bun.ReadDependenciesV2()
+	if err != nil {
+		return nil, fmt.Errorf("error reading dependencies v2 for %s", bun.Name)
+	}
+
+	q := make([]DependencyLock, 0, len(v2.Requires))
+	for name, d := range v2.Requires {
+		d.Name = name
+
+		if d.Sharing.Mode && d.Sharing.Group.Name == "" {
+			return nil, fmt.Errorf("empty sharing group, sharing group name needs to be specified to be active")
+		}
+		if !d.Sharing.Mode && d.Sharing.Group.Name != "" {
+			return nil, fmt.Errorf("empty sharing mode, sharing mode boolean set to `true` to be active")
+		}
+
+		ref, err := b.ResolveVersionv2(d.Name, d)
+		if err != nil {
+			return nil, err
+		}
+
+		lock := DependencyLock{
+			Alias:        d.Name,
+			Reference:    ref.String(),
+			SharingMode:  d.Sharing.Mode,
+			SharingGroup: d.Sharing.Group.Name,
+		}
+		q = append(q, lock)
+	}
+	return q, nil
+}
+
+// ResolveVersion returns the bundle name, its version and any error.
+func (b *ExtendedBundle) ResolveVersion(name string, dep depsv1ext.Dependency) (OCIReference, error) {
+	ref, err := ParseOCIReference(dep.Bundle)
+	if err != nil {
+		return OCIReference{}, fmt.Errorf("error parsing dependency (%s) bundle %q as OCI reference: %w", name, dep.Bundle, err)
+	}
+
+	// Here is where we could split out this logic into multiple strategy funcs / structs if necessary
+	if dep.Version == nil || len(dep.Version.Ranges) == 0 {
+		// Check if they specified an explicit tag in referenced bundle already
+		if ref.HasTag() {
+			return ref, nil
+		}
+
+		tag, err := b.determineDefaultTag(dep)
+		if err != nil {
+			return OCIReference{}, err
+		}
+
+		return ref.WithTag(tag)
+	}
+
+	return OCIReference{}, fmt.Errorf("not implemented: dependency version range specified for %s: %w", name, err)
+}
+
+func (b *ExtendedBundle) determineDefaultTag(dep depsv1ext.Dependency) (string, error) {
+	tags, err := crane.ListTags(dep.Bundle)
+	if err != nil {
+		return "", fmt.Errorf("error listing tags for %s: %w", dep.Bundle, err)
+	}
+
+	allowPrereleases := false
+	if dep.Version != nil && dep.Version.AllowPrereleases {
+		allowPrereleases = true
+	}
+
+	var hasLatest bool
+	versions := make(semver.Collection, 0, len(tags))
+	for _, tag := range tags {
+		if tag == "latest" {
+			hasLatest = true
+			continue
+		}
+
+		version, err := semver.NewVersion(tag)
+		if err == nil {
+			if !allowPrereleases && version.Prerelease() != "" {
+				continue
+			}
+			versions = append(versions, version)
+		}
+	}
+
+	if len(versions) == 0 {
+		if hasLatest {
+			return "latest", nil
+		} else {
+			return "", fmt.Errorf("no tag was specified for %s and none of the tags defined in the registry meet the criteria: semver formatted or 'latest'", dep.Bundle)
+		}
+	}
+
+	sort.Sort(sort.Reverse(versions))
+
+	return versions[0].Original(), nil
+}
+
+// BuildPrerequisiteInstallationName generates the name of a prerequisite dependency installation.
+func (b *ExtendedBundle) BuildPrerequisiteInstallationName(installation string, dependency string) string {
+	return fmt.Sprintf("%s-%s", installation, dependency)
+}
+
+// this is all copied v2 stuff
+// todo(schristoff): in the future, we should clean this up
+
+// ResolveVersion returns the bundle name, its version and any error.
+func (b *ExtendedBundle) ResolveVersionv2(name string, dep v2.Dependency) (OCIReference, error) {
+	ref, err := ParseOCIReference(dep.Bundle)
+	if err != nil {
+		return OCIReference{}, fmt.Errorf("error parsing dependency (%s) bundle %q as OCI reference: %w", name, dep.Bundle, err)
+	}
+
+	if dep.Version == "" {
+		// Check if they specified an explicit tag in referenced bundle already
+		if ref.HasTag() {
+			return ref, nil
+		}
+
+		tag, err := b.determineDefaultTagv2(dep)
+		if err != nil {
+			return OCIReference{}, err
+		}
+
+		return ref.WithTag(tag)
+	}
+	//I think this is going to need to be smarter
+	if dep.Version != "" {
+		return ref, nil
+	}
+
+	return OCIReference{}, fmt.Errorf("not implemented: dependency version range specified for %s: %w", name, err)
+}
+
+func (b *ExtendedBundle) determineDefaultTagv2(dep v2.Dependency) (string, error) {
+	tags, err := crane.ListTags(dep.Bundle)
+	if err != nil {
+		return "", fmt.Errorf("error listing tags for %s: %w", dep.Bundle, err)
+	}
+
+	var hasLatest bool
+	versions := make(semver.Collection, 0, len(tags))
+	for _, tag := range tags {
+		if tag == "latest" {
+			hasLatest = true
+			continue
+		}
+
+	}
+	if len(versions) == 0 {
+		if hasLatest {
+			return "latest", nil
+		} else {
+			return "", fmt.Errorf("no tag was specified for %s and none of the tags defined in the registry meet the criteria: semver formatted or 'latest'", dep.Bundle)
+		}
+	}
+
+	return versions[0].Original(), nil
 }

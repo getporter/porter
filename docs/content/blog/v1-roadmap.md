@@ -43,4 +43,4 @@ If you'd like to help us with v1 or contribute to the larger features in our pip
 [buildkit]: https://github.com/getporter/porter/pull/1567
 [advanced dependency management]: https://github.com/getporter/proposals/pull/8
 [labels and namespaces]: https://github.com/cnabio/cnab-spec/pull/411
-[new contributor guide]: /contribute/
+[new contributor guide]: /docs/contribute/

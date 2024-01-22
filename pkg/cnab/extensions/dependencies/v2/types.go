@@ -1,10 +1,11 @@
 package v2
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"regexp"
+
+	"github.com/cnabio/cnab-go/bundle"
 )
 
 const (
@@ -163,9 +164,9 @@ func (s DependencySource) WiringSuffix() string {
 // SharingCriteria is a set of rules for sharing a dependency with other bundles.
 type SharingCriteria struct {
 	// Mode defines how a dependency can be shared.
-	// * none: The dependency cannot be shared, even within the same dependency graph.
-	// * group: The dependency is shared with other bundles who defined the dependency with the same sharing group.
-	Mode string `json:"mode,omitempty" mapstructure:"mode,omitempty"`
+	// * false: The dependency cannot be shared, even within the same dependency graph.
+	// * true: The dependency is shared with other bundles who defined the dependency with the same sharing group.
+	Mode bool `json:"mode,omitempty" mapstructure:"mode,omitempty"`
 
 	// Group defines matching criteria for determining if two dependencies are in the same sharing group.
 	Group SharingGroup `json:"group,omitempty" mapstructure:"group,omitempty"`
@@ -192,7 +193,7 @@ type DependencyInterface struct {
 
 	// Document is an embedded subset of a bundle.json document, defining relevant
 	// portions of a bundle's interface, such as credentials, parameters and outputs.
-	Document *json.RawMessage `json:"document,omitempty" mapstructure:"document,omitempty"`
+	Document DependencyInterfaceDocument `json:"document,omitempty" mapstructure:"document,omitempty"`
 }
 
 // DependencyProvider specifies how the current bundle can be used to satisfy a dependency.
@@ -206,4 +207,14 @@ type DependencyProvider struct {
 type InterfaceDeclaration struct {
 	// ID is the URI of the interface that this bundle provides. Usually a well-known name defined by Porter or CNAB.
 	ID string `json:"id,omitempty" mapstructure:"id,omitempty"`
+}
+
+// DependencyInterfaceDocument declares an inline bundle.json that defines the bundle interface
+type DependencyInterfaceDocument struct {
+	// Outputs defined on the bundle interface
+	Outputs map[string]bundle.Output `json:"outputs,omitempty" mapstructure:"outputs,omitempty"`
+	// Parameters defined on the bundle interface
+	Parameters map[string]bundle.Parameter `json:"parameters,omitempty" mapstructure:"parameters,omitempty"`
+	// Credentials defined on the bundle interface
+	Credentials map[string]bundle.Credential `json:"credentials,omitempty" mapstructure:"credentials,omitempty"`
 }

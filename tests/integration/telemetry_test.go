@@ -25,7 +25,7 @@ func TestTelemetrySetup(t *testing.T) {
 	require.NoError(t, err, "test setup failed")
 
 	ctx := context.Background()
-	_, _, err = test.RunPorter("install", "otel-jaeger", "-r=ghcr.io/getporter/examples/otel-jaeger:v0.1.0", "--allow-docker-host-access")
+	_, _, err = test.RunPorter("install", "otel-jaeger", "-r=ghcr.io/getporter/examples/otel-jaeger:v0.1.1", "--allow-docker-host-access")
 	require.NoError(t, err)
 	defer test.RunPorter("uninstall", "otel-jaeger", "--allow-docker-host-access")
 
@@ -34,6 +34,7 @@ func TestTelemetrySetup(t *testing.T) {
 
 	// Try to run porter with telemetry enabled
 	p := porter.New()
+
 	defer p.Close()
 	os.Setenv("PORTER_EXPERIMENTAL", "structured-logs")
 	os.Setenv("PORTER_TELEMETRY_ENABLED", "true")
