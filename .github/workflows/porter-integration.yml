@@ -20,13 +20,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: checkout
-      uses: actions/checkout@v3.6.0
+      uses: actions/checkout@v4.1.0
     - uses: actions/setup-go@v4
       with:
         go-version: "${{ env.GOVERSION }}"
-    # Unable to determine registry 'ghcr.io/getporter' type. The service connection was not found or the authentication type not supported.
     - name: Docker Login
-      uses: docker/login-action@v2.2.0
+      uses: docker/login-action@v3.0.0
       with:
         registry: ghcr.io
         username: ${{ github.actor }}
