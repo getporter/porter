@@ -123,8 +123,7 @@ jobs:
     name: Run smoke tests on
     needs:
     - Validate-xbuild
-    runs-on:
-      - self-hosted
+    runs-on: ubuntu-latest
     if: success() && ${{inputs.skipTests == false}}
     steps:
     - name: checkout
