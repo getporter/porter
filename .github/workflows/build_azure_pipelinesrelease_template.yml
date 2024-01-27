@@ -78,7 +78,7 @@ jobs:
   Validate-unit_test:
     name: Unit Test
     runs-on: ubuntu-latest
-    if: !(inputs.skipTests)
+    if: ! ${{inputs.skipTests}}
     steps:
     - name: checkout
       uses: actions/checkout@v4.1.0
@@ -125,7 +125,7 @@ jobs:
     - Validate-xbuild
     runs-on:
       - self-hosted
-    if: success() && !(inputs.skipTests)
+    if: success() && ! ${{inputs.skipTests}}
     steps:
     - name: checkout
       uses: actions/checkout@v4.1.0

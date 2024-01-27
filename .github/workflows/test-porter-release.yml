@@ -22,5 +22,5 @@ jobs:
     uses: "./.github/workflows/build_azure_pipelinesrelease_template.yml"
     with:
       registry: ghcr.io/getporter/test
-      shouldPublish: "${{ inputs.shouldPublish }}"
-      skipTests: "${{ inputs.skipTests }}"
+      shouldPublish: ${{ inputs.shouldPublish }}
+      skipTests: ${{ inputs.skipTests }}
