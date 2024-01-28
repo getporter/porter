@@ -1,0 +1,124 @@
+name: porter/porter
+on:
+  pull_request:
+    branches:
+    - main
+    paths-ignore:
+      - 'docs/**'
+env:
+  GOVERSION: 1.20.7
+
+jobs:
+  Build:
+    name: Native Compile
+    runs-on: ubuntu-latest
+    steps:
+    - name: checkout
+      uses: actions/checkout@v3.5.0
+    - uses: actions/setup-go@v4
+      with:
+        go-version: "${{ env.GOVERSION }}" # The Go version to download (if necessary) and use.
+    - run: go version
+    - name: Native Build
+      run: go run mage.go build
+      shell: bash
+    - name: Publish Native Binaries
+      uses: actions/upload-artifact@v3.1.1
+      with:
+        name: build-bin
+        path: "${{ github.workspace }}/bin"
+
+  XBuild:
+    name: Cross Compile
+    runs-on: ubuntu-latest
+    steps:
+    - name: checkout
+      uses: actions/checkout@v3.5.0
+    - uses: actions/setup-go@v4
+      with:
+        go-version: "${{ env.GOVERSION }}" # The Go version to download (if necessary) and use.
+    - run: go version
+    - name: Cross Compile
+      run: go run mage.go -v XBuildAll
+      shell: bash
+    - name: Publish Release Binaries
+      uses: actions/upload-artifact@v3.1.1
+      with:
+        name: xbuild-bin
+        path: "${{ github.workspace }}/bin"
+
+  Unit_test:
+    name: Unit Test
+    runs-on: ubuntu-latest
+    steps:
+    - name: checkout
+      uses: actions/checkout@v3.5.0
+    - uses: actions/setup-go@v4
+      with:
+        go-version: "${{ env.GOVERSION }}" # The Go version to download (if necessary) and use.
+    - run: go version
+    - name: Unit Test
+      run: go run mage.go -v TestUnit
+      shell: bash
+
+  VetLint:
+    name: Vet and Lint
+    runs-on: ubuntu-latest
+    steps:
+    - name: checkout
+      uses: actions/checkout@v3.5.0
+    - uses: actions/setup-go@v4
+      with:
+        go-version: "${{ env.GOVERSION }}" # The Go version to download (if necessary) and use.
+    - run: go version
+    - name: Vet
+      run: go run mage.go Vet
+      shell: bash
+    - name: Lint
+      run: go run mage.go Lint
+      shell: bash
+
+  Build-docker-images:
+    name: Build Docker Images
+    needs:
+    - XBuild
+    runs-on: ubuntu-latest
+    if: success()
+    steps:
+    - name: checkout
+      uses: actions/checkout@v3.5.0
+    - uses: actions/setup-go@v4
+      with:
+        go-version: "${{ env.GOVERSION }}" # The Go version to download (if necessary) and use.
+    - run: go version
+    - name: Download Cross-Compiled Porter Binaries
+      uses: actions/download-artifact@v3.0.1
+      with:
+        name: xbuild-bin
+        path: bin
+    - name: Setup Bin
+      run: go run mage.go UseXBuildBinaries
+    - name: Build Docker Images
+      run: go run mage.go BuildImages
+
+  Smoke-test:
+    name: Smoke Test
+    needs:
+      - XBuild
+    runs-on: ubuntu-latest
+    steps:
+    - name: checkout
+      uses: actions/checkout@v3.5.0
+    - name: Download Cross-Compiled Porter Binaries
+      uses: actions/download-artifact@v3.0.1
+      with:
+        name: xbuild-bin
+        path: bin
+    - uses: actions/setup-go@v4
+      with:
+        go-version: "${{ env.GOVERSION }}" # The Go version to download (if necessary) and use.
+    - run: go version
+    - name: Setup Bin
+      run: go run mage.go UseXBuildBinaries
+    - name: Run Smoke Tests
+      run: go run mage.go -v TestSmoke

@@ -1,0 +1,15 @@
+name: porter/porter-release
+on:
+  push:
+    tags:
+    - v*
+    - "!latest*"
+    - "!canary*"
+jobs:
+  build_azure_pipelinesrelease_template:
+    name: build_azure_pipelinesrelease_template
+    uses: "./.github/workflows/build_azure_pipelinesrelease_template.yml"
+    with:
+      registry: ghcr.io/getporter
+      shouldPublish: true
+      skipTests: true
