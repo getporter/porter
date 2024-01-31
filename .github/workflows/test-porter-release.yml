@@ -17,10 +17,10 @@ env:
   PORTER_PACKAGES_REMOTE: https://github.com/carolynvs/porter-packages.git
   PORTER_RELEASE_REPOSITORY: github.com/carolynvs/porter
 jobs:
-  build_azure_pipelinesrelease_template:
-    name: build_azure_pipelinesrelease_template
-    uses: "./.github/workflows/build_azure_pipelinesrelease_template.yml"
+  build_pipelinesrelease_template:
+    name: build_pipelinesrelease_template
+    uses: "./.github/workflows/build_pipelinesrelease_template.yml"
     with:
       registry: ghcr.io/getporter/test
-      shouldPublish: "${{ inputs.shouldPublish }}"
-      skipTests: "${{ inputs.skipTests }}"
+      shouldPublish: ${{ inputs.shouldPublish }}
+      skipTests: ${{ inputs.skipTests }}
