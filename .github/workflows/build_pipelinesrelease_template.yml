@@ -22,7 +22,7 @@ on:
 jobs:
   Validate-build:
     name: Native Compile
-    runs-on: "{{ vars.}}"
+    runs-on: ubuntu-latest
     steps:
     - name: checkout
       uses: actions/checkout@v4.1.0
