@@ -124,7 +124,7 @@ jobs:
     needs:
     - Validate-xbuild
     runs-on:
-      - self-hosted
+      - ubunut-latest
     if: success() && ${{inputs.skipTests == false}}
     steps:
     - name: checkout
