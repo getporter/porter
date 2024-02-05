@@ -487,7 +487,7 @@ func PublishPorter() {
 	// Create or update GitHub release for the permalink (canary/latest) with the version's assets (porter binaries, exec binaries and install scripts)
 	if info.ShouldPublishPermalink() {
 		// Move the permalink tag. The existing release automatically points to the tag.
-		must.RunV("git", "tag", info.Permalink, info.Version+"^{}", "-f")
+		must.RunV("git", "tag", info.Permalink, info.Version+"-f")
 		must.RunV("git", "push", "-f", remote, info.Permalink)
 
 		releases.AddFilesToRelease(repo, info.Permalink, porterVersionDir)
