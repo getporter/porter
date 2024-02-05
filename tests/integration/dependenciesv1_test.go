@@ -18,7 +18,7 @@ import (
 )
 
 func TestDependenciesLifecycle(t *testing.T) {
-
+	t.Parallel()
 	p := porter.NewTestPorter(t)
 	defer p.Close()
 	ctx := p.SetupIntegrationTest()

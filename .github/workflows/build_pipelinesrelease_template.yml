@@ -170,7 +170,7 @@ jobs:
       run: mage PublishPorter PublishMixins
   publish-ghcr:
     env:
-      DOCKER_REGISTRY: https://ghcr.io
+      DOCKER_REGISTRY: ${{inputs.registry}}
       DOCKER_USERNAME: getporterbot
     name: Publish Docker Images
     needs:

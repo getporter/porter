@@ -39,4 +39,3 @@ jobs:
     - name: Integration Test
       run: go run mage.go -v TestIntegration
       shell: bash
- 
