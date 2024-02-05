@@ -13,7 +13,6 @@ on:
         required: false
         default: ghcr.io
 
-
 env:
   GOVERSION: 1.20.7
 
@@ -41,7 +40,7 @@ jobs:
   copy_integration_test:
     uses: getporter/porter/.github/workflows/integ-reuseable-workflow.yml@main
     with:
-      test_name: copy_test
+      test_name: copy_tests
       registry: ${{inputs.registry}}
   dependenciesv1_integration_test:
     uses: getporter/porter/.github/workflows/integ-reuseable-workflow.yml@main
@@ -118,8 +117,7 @@ jobs:
     with:
       test_name: telemetry_test
       registry: ${{inputs.registry}}
-  
-      # Reusable workflows only supports 20 jobs
+   # Reusable workflows only supports 20 jobs
   uninstall_test_integ:
     runs-on: ubuntu-latest
     steps:
