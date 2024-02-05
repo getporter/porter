@@ -94,7 +94,7 @@ jobs:
     name: Integration Test
     needs:
     - Validate-build
-    uses: "./.github/workflows/porter-integration.yml"
+    uses: "./.github/workflows/porter-integration-release.yml"
     with:
       registry: ${{inputs.registry}}
   Validate-smoke_test:
