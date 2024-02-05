@@ -1,0 +1,34 @@
+name: integ reusable workflow
+
+on:
+  workflow_call:
+    inputs:
+        test_name:
+            type: string
+            required: false
+env:
+    GOVERSION: 1.20.7
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: checkout
+      uses: actions/checkout@v4.1.0
+    - uses: actions/setup-go@v4
+      with:
+        go-version: "${{ env.GOVERSION }}"
+        cache: true
+    - name: Docker Login
+      uses: docker/login-action@v3.0.0
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    - name: Configure Agent
+      run: go run mage.go build
+      shell: bash
+    - name: Integration Test
+      run: go test -v -timeout=10m -tags=integration ./tests/integration/${{inputs.test_name}}.go
+      shell: bash
+ 

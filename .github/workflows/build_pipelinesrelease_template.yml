@@ -92,7 +92,7 @@ jobs:
       shell: bash
   Validate-integration_test:
     env:
-      GHCR_IOGETPORTER_DOCKER_REGISTRY: https://ghcr.io
+      GHCR_IOGETPORTER_DOCKER_REGISTRY: ${{inputs.registry}}
       GHCR_IOGETPORTER_DOCKER_USERNAME: getporterbot
     name: Integration Test
     needs:
@@ -140,7 +140,7 @@ jobs:
       run: go run mage.go ConfigureAgent UseXBuildBinaries
     - name: Run Smoke Tests
       run: mage -v TestSmoke
-  Publish-publish_binaries:
+  publish_binaries:
     name: Publish Binaries
     needs:
     - Validate-build
@@ -168,10 +168,10 @@ jobs:
       env:
         GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
       run: mage PublishPorter PublishMixins
-  Publish-publish_docker:
+  publish-ghcr:
     env:
-      DOCKER_REGISTRY:
-      DOCKER_USERNAME:
+      DOCKER_REGISTRY: https://ghcr.io
+      DOCKER_USERNAME: getporterbot
     name: Publish Docker Images
     needs:
     - Validate-build
@@ -195,12 +195,11 @@ jobs:
         path: bin
     - name: Setup Bin
       run: go run mage.go ConfigureAgent UseXBuildBinaries
-    # Unable to determine registry '${{parameters.registry}}' type. The service connection was not found or the authentication type not supported.
-    - name: Docker Login
+    - name: Login to Container Registry
       uses: docker/login-action@v3.0.0
       with:
-        registry: "${{ env.DOCKER_REGISTRY }}"
-        username: "${{ env.DOCKER_USERNAME }}"
-        password: "${{ secrets.DOCKER_PASSWORD }}"
+        registry: "${{inputs.registry}}"
+        username: "${{ github.actor }}"
+        password: "${{ secrets.GITHUB_TOKEN }}"
     - name: Publish Docker Images to ${{inputs.registry}}
       run: PORTER_REGISTRY=${{inputs.registry}} mage PublishImages
