@@ -40,7 +40,7 @@ jobs:
   copy_integration_test:
     uses: getporter/porter/.github/workflows/integ-reuseable-workflow.yml@main
     with:
-      test_name: copy_tests
+      test_name: copy_test
       registry: ${{inputs.registry}}
   dependenciesv1_integration_test:
     uses: getporter/porter/.github/workflows/integ-reuseable-workflow.yml@main
