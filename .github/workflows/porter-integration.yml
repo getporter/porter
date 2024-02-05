@@ -114,12 +114,14 @@ jobs:
     - name: Docker Login
       uses: docker/login-action@v3.0.0
       with:
-        registry: ghcr.io/getporter
+        registry: ghcr.io
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
     - name: Configure Agent
       run: go run mage.go build
       shell: bash
     - name: Integration Test
-      run: go test -v -timeout=10m -tags=integration ./tests/integration/uninstall_test.go
+      env: 
+        PORTER_INTEG_FILE: uninstall_test.go
+      run: go run mage.go -v TestIntegration 
       shell: bash
