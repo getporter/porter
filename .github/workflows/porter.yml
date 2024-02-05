@@ -18,6 +18,7 @@ jobs:
     - uses: actions/setup-go@v4
       with:
         go-version: "${{ env.GOVERSION }}" # The Go version to download (if necessary) and use.
+        cache: true
     - run: go version
     - name: Native Build
       run: go run mage.go build
@@ -37,6 +38,7 @@ jobs:
     - uses: actions/setup-go@v4
       with:
         go-version: "${{ env.GOVERSION }}" # The Go version to download (if necessary) and use.
+        cache: true
     - run: go version
     - name: Cross Compile
       run: go run mage.go -v XBuildAll
@@ -56,6 +58,7 @@ jobs:
     - uses: actions/setup-go@v4
       with:
         go-version: "${{ env.GOVERSION }}" # The Go version to download (if necessary) and use.
+        cache: true
     - run: go version
     - name: Unit Test
       run: go run mage.go -v TestUnit
@@ -70,6 +73,7 @@ jobs:
     - uses: actions/setup-go@v4
       with:
         go-version: "${{ env.GOVERSION }}" # The Go version to download (if necessary) and use.
+        cache: true
     - run: go version
     - name: Vet
       run: go run mage.go Vet
@@ -90,6 +94,7 @@ jobs:
     - uses: actions/setup-go@v4
       with:
         go-version: "${{ env.GOVERSION }}" # The Go version to download (if necessary) and use.
+        cache: true
     - run: go version
     - name: Download Cross-Compiled Porter Binaries
       uses: actions/download-artifact@v3.0.1
@@ -117,6 +122,7 @@ jobs:
     - uses: actions/setup-go@v4
       with:
         go-version: "${{ env.GOVERSION }}" # The Go version to download (if necessary) and use.
+        cache: true
     - run: go version
     - name: Setup Bin
       run: go run mage.go UseXBuildBinaries

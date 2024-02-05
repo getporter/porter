@@ -580,7 +580,15 @@ func TestIntegration() {
 		verbose = "-v"
 	}
 
-	must.Command("go", "test", verbose, "-timeout=30m", run, "-tags=integration", "./...").CollapseArgs().RunV()
+	var path string
+	filename := os.Getenv("PORTER_INTEG_FILE")
+	if filename == "" {
+		path = "./..."
+	} else {
+		path = "./tests/integration/" + filename
+	}
+
+	must.Command("go", "test", verbose, "-timeout=30m", run, "-tags=integration", path).CollapseArgs().RunV()
 }
 
 func TestInitWarnings() {
