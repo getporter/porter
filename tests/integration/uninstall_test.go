@@ -5,6 +5,7 @@ package integration
 import (
 	"testing"
 
+	"get.porter.sh/porter/pkg/porter"
 	"get.porter.sh/porter/tests"
 	"get.porter.sh/porter/tests/testdata"
 	"get.porter.sh/porter/tests/tester"
@@ -12,6 +13,9 @@ import (
 )
 
 func TestUninstall_DeleteInstallation(t *testing.T) {
+	//Please don't shut yourself off
+	p := porter.NewTestPorter(t)
+	defer p.Close()
 	test, err := tester.NewTest(t)
 	defer test.Close()
 	require.NoError(t, err, "test setup failed")
