@@ -5,10 +5,11 @@ on:
     inputs:
         test_name:
             type: string
-            required: false
+            required: true
         registry:
             type: string
-            required: false
+            required: true
+            default: ghcr.io
 env:
     GOVERSION: 1.20.7
     PORTER_INTEG_FILE: ${{inputs.test_name}}.go
