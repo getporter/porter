@@ -77,7 +77,7 @@ jobs:
   registry_integration_test:
     uses: schristoff/porter/.github/workflows/integ-reuseable-workflow.yml@schristoff_ghavariables
     with:
-      test_name: registy_integration_test
+      test_name: registry_integration_test
   schema_integration_test:
     uses: schristoff/porter/.github/workflows/integ-reuseable-workflow.yml@schristoff_ghavariables
     with:
