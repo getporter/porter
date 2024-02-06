@@ -128,6 +128,7 @@ jobs:
     - Validate-integration_test
     - Validate-smoke_test
     runs-on: ubuntu-latest
+    permissions: write-all
     if: success() && inputs.shouldPublish
     steps:
     - name: checkout
@@ -161,6 +162,7 @@ jobs:
     - Validate-integration_test
     - Validate-smoke_test
     runs-on: ubuntu-latest
+    permissions: write-all
     if: success() && inputs.shouldPublish
     steps:
     - name: checkout
