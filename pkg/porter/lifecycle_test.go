@@ -4,12 +4,14 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"runtime"
 	"strings"
 	"testing"
 
 	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/cnab"
 	configadapter "get.porter.sh/porter/pkg/cnab/config-adapter"
+	cnabprovider "get.porter.sh/porter/pkg/cnab/provider"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/secrets"
@@ -697,4 +699,135 @@ func Test_ensureVPrefix_latest(t *testing.T) {
 			assert.Equal(t, test.latestRef, opts.BundlePullOptions.Reference)
 		})
 	}
+}
+
+func TestBundleExecutionOptions_GetHostVolumeMounts(t *testing.T) {
+	t.Run("valid host volume mounts", func(t *testing.T) {
+		opts := &BundleExecutionOptions{
+			HostVolumeMounts: []string{
+				"/host/path:/target/path:ro",
+				"/host/path:/target/path:rw",
+				"/host/path:/target/path",
+			},
+		}
+
+		expected := []cnabprovider.HostVolumeMountSpec{
+			{
+				Source:   "/host/path",
+				Target:   "/target/path",
+				ReadOnly: true,
+			},
+			{
+				Source:   "/host/path",
+				Target:   "/target/path",
+				ReadOnly: false,
+			},
+			{
+				Source:   "/host/path",
+				Target:   "/target/path",
+				ReadOnly: true,
+			},
+		}
+
+		actual := opts.GetHostVolumeMounts()
+
+		if len(expected) != len(actual) {
+			t.Errorf("expected %v but got %v", expected, actual)
+		}
+		for i := range expected {
+			if expected[i].Source != actual[i].Source {
+				t.Errorf("expected %v but got %v", expected[i].Source, actual[i].Source)
+			}
+			if expected[i].Target != actual[i].Target {
+				t.Errorf("expected %v but got %v", expected[i].Target, actual[i].Target)
+			}
+			if expected[i].ReadOnly != actual[i].ReadOnly {
+				t.Errorf("expected %v but got %v", expected[i].ReadOnly, actual[i].ReadOnly)
+			}
+		}
+	})
+
+	t.Run("invalid host volume mounts", func(t *testing.T) {
+		opts := &BundleExecutionOptions{
+			HostVolumeMounts: []string{
+				"1=",
+				"/host/path",
+			},
+		}
+
+		actual := opts.GetHostVolumeMounts()
+
+		if len(actual) != 0 {
+			t.Errorf("expected no host volume mounts but got %v", actual)
+		}
+
+	})
+
+	t.Run("invalid host volume mount r/w option value", func(t *testing.T) {
+		opts := &BundleExecutionOptions{
+			HostVolumeMounts: []string{
+				"/host/path:/target/path:invalid-option",
+			},
+		}
+
+		actual := opts.GetHostVolumeMounts()
+
+		if !actual[0].ReadOnly {
+			t.Errorf("expected ReadOnly to be true but got %v", actual[0].ReadOnly)
+		}
+
+	})
+}
+
+func TestBundleExecutionOptions_GetHostVolumeMountsWindows(t *testing.T) {
+
+	if runtime.GOOS != "windows" {
+		t.Skip("Skipping test on non-windows platform")
+	}
+
+	t.Run("valid host volume mounts", func(t *testing.T) {
+		opts := &BundleExecutionOptions{
+			HostVolumeMounts: []string{
+				"C:\\Users\\testuser\\folderpath:/target/path:rw",
+				"C:\\Users\\testuser\\folderpath:/target/path",
+				"C:\\Users\\Test User\\test path:/target/path",
+			},
+		}
+
+		expected := []cnabprovider.HostVolumeMountSpec{
+			{
+				Source:   "C:\\Users\\testuser\\folderpath",
+				Target:   "/target/path",
+				ReadOnly: false,
+			},
+			{
+				Source:   "C:\\Users\\testuser\\folderpath",
+				Target:   "/target/path",
+				ReadOnly: true,
+			},
+			{
+				Source:   "C:\\Users\\Test User\\test path",
+				Target:   "/target/path",
+				ReadOnly: true,
+			},
+		}
+
+		actual := opts.GetHostVolumeMounts()
+
+		if len(expected) != len(actual) {
+			t.Errorf("expected %v but got %v", expected, actual)
+		}
+		for i := range expected {
+			if expected[i].Source != actual[i].Source {
+				t.Errorf("expected %v but got %v", expected[i].Source, actual[i].Source)
+			}
+			if expected[i].Target != actual[i].Target {
+				t.Errorf("expected %v but got %v", expected[i].Target, actual[i].Target)
+			}
+			if expected[i].ReadOnly != actual[i].ReadOnly {
+				t.Errorf("expected %v but got %v", expected[i].ReadOnly, actual[i].ReadOnly)
+			}
+		}
+	})
+
 }

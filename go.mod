@@ -14,7 +14,7 @@ replace (
 )
 
 require (
-	get.porter.sh/magefiles v0.6.1-0.20230822194230-77c3a69ead68
+	get.porter.sh/magefiles v0.6.1
 	github.com/Masterminds/semver/v3 v3.2.1
 	github.com/PaesslerAG/jsonpath v0.1.1
 	github.com/carolynvs/aferox v0.3.0
@@ -89,7 +89,7 @@ require (
 	github.com/PaesslerAG/gval v1.2.2 // indirect
 	github.com/PuerkitoBio/goquery v1.8.1 // indirect
 	github.com/Shopify/logrus-bugsnag v0.0.0-20230117174420-439a4b8ba167 // indirect
-	github.com/andybalholm/brotli v1.0.5 // indirect
+	github.com/andybalholm/brotli v1.1.0 // indirect
 	github.com/andybalholm/cascadia v1.3.2 // indirect
 	github.com/aws/aws-sdk-go-v2 v1.18.1 // indirect
 	github.com/aws/aws-sdk-go-v2/config v1.18.27 // indirect
@@ -152,7 +152,7 @@ require (
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
-	github.com/klauspost/compress v1.17.2 // indirect
+	github.com/klauspost/compress v1.17.6 // indirect
 	github.com/klauspost/pgzip v1.2.6 // indirect
 	github.com/kr/pty v1.1.5 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
@@ -185,7 +185,7 @@ require (
 	github.com/opencontainers/runc v1.1.12 // indirect
 	github.com/opencontainers/runtime-spec v1.1.0 // indirect
 	github.com/osteele/tuesday v1.0.3 // indirect
-	github.com/pierrec/lz4/v4 v4.1.18 // indirect
+	github.com/pierrec/lz4/v4 v4.1.21 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/client_model v0.4.0 // indirect
