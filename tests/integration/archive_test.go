@@ -19,7 +19,6 @@ import (
 // Validate that archiving a bundle twice results in the same digest
 func TestArchive_StableDigest(t *testing.T) {
 	t.Parallel()
-
 	p := porter.NewTestPorter(t)
 	defer p.Close()
 	ctx := p.SetupIntegrationTest()
