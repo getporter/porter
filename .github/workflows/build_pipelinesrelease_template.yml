@@ -1,5 +1,5 @@
 # Environment variables defined in a calling workflow are not accessible to this reusable workflow. Refer to the documentation for further details on this limitation.
-name: build_azure_pipelinesrelease_template
+name: build_pipelinesrelease_template
 on:
   workflow_call:
     inputs:
@@ -22,7 +22,7 @@ on:
 jobs:
   Validate-build:
     name: Native Compile
-    runs-on: "{{ vars.}}"
+    runs-on: ubuntu-latest
     steps:
     - name: checkout
       uses: actions/checkout@v4.1.0
@@ -78,7 +78,7 @@ jobs:
   Validate-unit_test:
     name: Unit Test
     runs-on: ubuntu-latest
-    if: !(inputs.skipTests)
+    if: ${{inputs.skipTests == false}}
     steps:
     - name: checkout
       uses: actions/checkout@v4.1.0
@@ -91,41 +91,18 @@ jobs:
       run: mage TestUnit
       shell: bash
   Validate-integration_test:
-    env:
-      GHCR_IOGETPORTER_DOCKER_REGISTRY: https://ghcr.io
-      GHCR_IOGETPORTER_DOCKER_USERNAME: getporterbot
     name: Integration Test
     needs:
     - Validate-build
-    runs-on: ubuntu-latest
-    steps:
-    - name: checkout
-      uses: actions/checkout@v4.1.0
-    - uses: actions/setup-go@v4
-      with:
-        go-version: "${{ inputs.GOVERSION }}"
-    - name: Download Bin
-      uses: actions/download-artifact@v4.1.0
-      with:
-        name: build-bin
-        path: bin
-    - name: Docker Login
-      uses: docker/login-action@v3.0.0
-      with:
-        registry: "${{ env.GHCR_IOGETPORTER_DOCKER_REGISTRY }}"
-        username: "${{ env.GHCR_IOGETPORTER_DOCKER_USERNAME }}"
-        password: "${{ secrets.GHCR_IOGETPORTER_DOCKER_PASSWORD }}"
-    - name: Configure Agent
-      run: go run mage.go ConfigureAgent SetBinExecutable
-    - name: Integration Test
-      run: mage -v TestIntegration
+    uses: "./.github/workflows/porter-integration-release.yml"
+    with:
+      registry: ${{inputs.registry}}
   Validate-smoke_test:
     name: Run smoke tests on
     needs:
     - Validate-xbuild
-    runs-on:
-      - self-hosted
-    if: success() && !(inputs.skipTests)
+    runs-on: ubuntu-latest
+    if: success() && ${{inputs.skipTests == false}}
     steps:
     - name: checkout
       uses: actions/checkout@v4.1.0
@@ -141,7 +118,7 @@ jobs:
       run: go run mage.go ConfigureAgent UseXBuildBinaries
     - name: Run Smoke Tests
       run: mage -v TestSmoke
-  Publish-publish_binaries:
+  publish_binaries:
     name: Publish Binaries
     needs:
     - Validate-build
@@ -151,6 +128,7 @@ jobs:
     - Validate-integration_test
     - Validate-smoke_test
     runs-on: ubuntu-latest
+    permissions: write-all
     if: success() && inputs.shouldPublish
     steps:
     - name: checkout
@@ -168,11 +146,13 @@ jobs:
     - name: Publish Porter Binaries
       env:
         GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+        VERSION: ${{github.ref_name}}
       run: mage PublishPorter PublishMixins
-  Publish-publish_docker:
+  publish-ghcr:
     env:
-      DOCKER_REGISTRY:
-      DOCKER_USERNAME:
+      DOCKER_REGISTRY: ${{inputs.registry}}
+      DOCKER_USERNAME: getporterbot
+      VERSION: ${{github.ref_name}}
     name: Publish Docker Images
     needs:
     - Validate-build
@@ -182,6 +162,7 @@ jobs:
     - Validate-integration_test
     - Validate-smoke_test
     runs-on: ubuntu-latest
+    permissions: write-all
     if: success() && inputs.shouldPublish
     steps:
     - name: checkout
@@ -196,12 +177,11 @@ jobs:
         path: bin
     - name: Setup Bin
       run: go run mage.go ConfigureAgent UseXBuildBinaries
-    # Unable to determine registry '${{parameters.registry}}' type. The service connection was not found or the authentication type not supported.
-    - name: Docker Login
+    - name: Login to Container Registry
       uses: docker/login-action@v3.0.0
       with:
-        registry: "${{ env.DOCKER_REGISTRY }}"
-        username: "${{ env.DOCKER_USERNAME }}"
-        password: "${{ secrets.DOCKER_PASSWORD }}"
+        registry: "${{inputs.registry}}"
+        username: "${{ github.actor }}"
+        password: "${{ secrets.GITHUB_TOKEN }}"
     - name: Publish Docker Images to ${{inputs.registry}}
       run: PORTER_REGISTRY=${{inputs.registry}} mage PublishImages
