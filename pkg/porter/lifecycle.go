@@ -351,7 +351,6 @@ func (p *Porter) BuildActionArgs(ctx context.Context, installation storage.Insta
 		HostVolumeMounts:      opts.GetHostVolumeMounts(),
 		PersistLogs:           !opts.NoLogs,
 	}
-
 	return args, nil
 }
 
