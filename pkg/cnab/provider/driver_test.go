@@ -120,4 +120,177 @@ func TestNewDriver_Docker(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, true, containerHostCfg.Privileged)
 	})
+
+	t.Run("docker with host access, default config, and host volume mounts", func(t *testing.T) {
+		t.Parallel()
+
+		r := NewTestRuntime(t)
+		r.MockGetDockerGroupId()
+		defer r.Close()
+
+		r.Extensions[cnab.DockerExtensionKey] = cnab.Docker{}
+		r.FileSystem.Create("/var/run/docker.sock")
+		r.FileSystem.Create("/sourceFolder")
+		r.FileSystem.Create("/sourceFolder2")
+		r.FileSystem.Create("/sourceFolder3")
+
+		args := ActionArguments{
+			AllowDockerHostAccess: true,
+			HostVolumeMounts: []HostVolumeMountSpec{
+				{
+					Source: "/sourceFolder",
+					Target: "/targetFolder",
+				},
+				{
+					Source:   "/sourceFolder2",
+					Target:   "/targetFolder2",
+					ReadOnly: true,
+				},
+				{
+					Source:   "/sourceFolder3",
+					Target:   "/targetFolder3",
+					ReadOnly: false,
+				},
+			},
+		}
+
+		driver, err := r.newDriver(DriverNameDocker, args)
+		require.NoError(t, err)
+		assert.IsType(t, driver, &docker.Driver{})
+
+		dockerish, ok := driver.(*docker.Driver)
+		assert.True(t, ok)
+
+		err = dockerish.ApplyConfigurationOptions()
+		assert.NoError(t, err)
+
+		containerHostCfg, err := dockerish.GetContainerHostConfig()
+		require.NoError(t, err)
+		require.Equal(t, false, containerHostCfg.Privileged)
+
+		require.Len(t, containerHostCfg.Mounts, 4) //includes the docker socket mount
+		assert.Equal(t, "/sourceFolder", containerHostCfg.Mounts[1].Source)
+		assert.Equal(t, "/targetFolder", containerHostCfg.Mounts[1].Target)
+		assert.Equal(t, false, containerHostCfg.Mounts[1].ReadOnly)
+		assert.Equal(t, "/sourceFolder2", containerHostCfg.Mounts[2].Source)
+		assert.Equal(t, "/targetFolder2", containerHostCfg.Mounts[2].Target)
+		assert.Equal(t, true, containerHostCfg.Mounts[2].ReadOnly)
+		assert.Equal(t, "/sourceFolder3", containerHostCfg.Mounts[3].Source)
+		assert.Equal(t, "/targetFolder3", containerHostCfg.Mounts[3].Target)
+		assert.Equal(t, false, containerHostCfg.Mounts[3].ReadOnly)
+	})
+
+	t.Run("host volume mount, docker driver, with multiple mounts", func(t *testing.T) {
+		t.Parallel()
+
+		r := NewTestRuntime(t)
+		defer r.Close()
+
+		r.FileSystem.Create("/sourceFolder")
+		r.FileSystem.Create("/sourceFolder2")
+		r.FileSystem.Create("/sourceFolder3")
+
+		args := ActionArguments{
+			HostVolumeMounts: []HostVolumeMountSpec{
+				{
+					Source: "/sourceFolder",
+					Target: "/targetFolder",
+				},
+				{
+					Source:   "/sourceFolder2",
+					Target:   "/targetFolder2",
+					ReadOnly: true,
+				},
+				{
+					Source:   "/sourceFolder3",
+					Target:   "/targetFolder3",
+					ReadOnly: false,
+				},
+			},
+		}
+
+		driver, err := r.newDriver(DriverNameDocker, args)
+
+		require.NoError(t, err)
+		assert.IsType(t, driver, &docker.Driver{})
+
+		dockerish, ok := driver.(*docker.Driver)
+		assert.True(t, ok)
+
+		err = dockerish.ApplyConfigurationOptions()
+		assert.NoError(t, err)
+
+		containerHostCfg, err := dockerish.GetContainerHostConfig()
+		require.NoError(t, err)
+
+		require.Len(t, containerHostCfg.Mounts, 3)
+		assert.Equal(t, "/sourceFolder", containerHostCfg.Mounts[0].Source)
+		assert.Equal(t, "/targetFolder", containerHostCfg.Mounts[0].Target)
+		assert.Equal(t, false, containerHostCfg.Mounts[0].ReadOnly)
+		assert.Equal(t, "/sourceFolder2", containerHostCfg.Mounts[1].Source)
+		assert.Equal(t, "/targetFolder2", containerHostCfg.Mounts[1].Target)
+		assert.Equal(t, true, containerHostCfg.Mounts[1].ReadOnly)
+		assert.Equal(t, "/sourceFolder3", containerHostCfg.Mounts[2].Source)
+		assert.Equal(t, "/targetFolder3", containerHostCfg.Mounts[2].Target)
+		assert.Equal(t, false, containerHostCfg.Mounts[2].ReadOnly)
+
+	})
+
+	t.Run("host volume mount, docker driver, with single mount", func(t *testing.T) {
+		t.Parallel()
+
+		r := NewTestRuntime(t)
+		defer r.Close()
+
+		r.FileSystem.Create("/sourceFolder")
+
+		args := ActionArguments{
+			HostVolumeMounts: []HostVolumeMountSpec{
+				{
+					Source: "/sourceFolder",
+					Target: "/targetFolder",
+				},
+			},
+		}
+
+		driver, err := r.newDriver(DriverNameDocker, args)
+
+		require.NoError(t, err)
+		assert.IsType(t, driver, &docker.Driver{})
+
+		dockerish, ok := driver.(*docker.Driver)
+		assert.True(t, ok)
+
+		err = dockerish.ApplyConfigurationOptions()
+		assert.NoError(t, err)
+
+		containerHostCfg, err := dockerish.GetContainerHostConfig()
+		require.NoError(t, err)
+
+		require.Len(t, containerHostCfg.Mounts, 1)
+		assert.Equal(t, "/sourceFolder", containerHostCfg.Mounts[0].Source)
+		assert.Equal(t, "/targetFolder", containerHostCfg.Mounts[0].Target)
+		assert.Equal(t, false, containerHostCfg.Mounts[0].ReadOnly)
+	})
+
+	t.Run("host volume mount, mismatch driver name", func(t *testing.T) {
+		t.Parallel()
+
+		r := NewTestRuntime(t)
+		r.MockGetDockerGroupId()
+		defer r.Close()
+
+		args := ActionArguments{
+			HostVolumeMounts: []HostVolumeMountSpec{
+				{
+					Source: "/sourceFolder",
+					Target: "/targetFolder",
+				},
+			},
+		}
+
+		_, err := r.newDriver("custom-driver", args)
+
+		assert.EqualError(t, err, "mount-host-volume was was used to mount a volume, but the driver is custom-driver")
+	})
 }
