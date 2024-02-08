@@ -679,8 +679,8 @@ func Install() {
 		// Removing the file first clears the cache so that we don't run into "zsh: killed MIXIN..."
 		// See https://stackoverflow.com/questions/67378106/mac-m1-cping-binary-over-another-results-in-crash
 		// See https://openradar.appspot.com/FB8914231
-		mgx.Must(os.Remove(filepath.Join(destDir, mixin+xplat.FileExt())))
-		mgx.Must(os.RemoveAll(filepath.Join(destDir, "runtimes")))
+		//mgx.Must(os.Remove(filepath.Join(destDir, mixin+xplat.FileExt())))
+		//mgx.Must(os.RemoveAll(filepath.Join(destDir, "runtimes")))
 
 		// Copy the mixin client binary
 		mgx.Must(shx.Copy(filepath.Join(srcDir, mixin+xplat.FileExt()), destDir))
