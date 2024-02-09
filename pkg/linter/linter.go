@@ -111,8 +111,12 @@ type Location struct {
 }
 
 func (l Location) String() string {
-	return fmt.Sprintf("%s: %s step in the %s mixin (%s)",
-		l.Action, humanize.Ordinal(l.StepNumber), l.Mixin, l.StepDescription)
+	mixin := ""
+	if l.Mixin != "" {
+		mixin = fmt.Sprintf("in the %s mixin ", l.Mixin)
+	}
+	return fmt.Sprintf("%s: %s step %s(%s)",
+		l.Action, humanize.Ordinal(l.StepNumber), mixin, l.StepDescription)
 }
 
 // Results is a set of items identified by the linter.
