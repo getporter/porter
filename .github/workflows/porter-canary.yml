@@ -3,24 +3,26 @@ on:
   workflow_dispatch:
     inputs:
       shouldPublish:
+        description: Should Publish
         default: true
         type: boolean
         required: false
       skipTests:
+        description: Skip Tests
         default: false
         type: boolean
         required: false
   push:
     branches:
-    - main
-    - release/*
+      - main
+      - release/*
   pull_request:
     branches:
-    - split-builds
+      - split-builds
 jobs:
   build_pipelinesrelease_template:
     name: build_pipelinesrelease_template
-    uses: "./.github/workflows/build_pipelinesrelease_template.yml"
+    uses: './.github/workflows/build_pipelinesrelease_template.yml'
     with:
       registry: ghcr.io/getporter
       shouldPublish: ${{inputs.shouldPublish}}
