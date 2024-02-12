@@ -1,6 +1,7 @@
 package porter
 
 import (
+	"fmt"
 	"testing"
 
 	"get.porter.sh/porter/pkg"
@@ -47,7 +48,7 @@ func TestPorter_ErrorMessageOnMissingPorterYaml(t *testing.T) {
 	}
 
 	err := o.Validate(p.Porter)
-	require.ErrorContains(t, err, "could not find porter.yaml in the current directory %s, make sure you are in the right directory or specify the porter manifest with --file")
+	require.ErrorContains(t, err, fmt.Sprintf("could not find porter.yaml in the current directory %s, make sure you are in the right directory or specify the porter manifest with --file", o.Dir))
 }
 
 func TestPorter_NoErrorWhenPorterYamlIsPresent(t *testing.T) {
