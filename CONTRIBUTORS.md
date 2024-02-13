@@ -95,3 +95,4 @@ and we will add you. **All** contributors belong here. 💯
 - [Salman Shah](https://github.com/sbshah97)
 - [Ray Terrill](https://github.com/rayterrill)
 - [Kim Christensen](https://github.com/kichristensen)
+- [Shivam](https://github.com/Bharadwajshivam28)
