@@ -179,7 +179,7 @@ func (d DisplayInstallation) ConvertToInstallation() (storage.Installation, erro
 	return i, nil
 }
 
-// ConvertParamToSet converts a Parameters into a internal ParameterSet.
+// ConvertParamToSet converts a Parameters into an internal ParameterSet.
 func (d DisplayInstallation) ConvertParamToSet() (storage.ParameterSet, error) {
 	strategies := make([]secrets.SourceMap, 0, len(d.Parameters))
 	for name, value := range d.Parameters {
