@@ -72,7 +72,16 @@ func (o *BuildOptions) Validate(p *Porter) error {
 		return err
 	}
 
-	return o.BundleDefinitionOptions.Validate(p.Context)
+	err = o.BundleDefinitionOptions.Validate(p.Context)
+	if err != nil {
+		return err
+	}
+
+	if o.File == "" {
+		return fmt.Errorf("could not find porter.yaml in the current directory %s, make sure you are in the right directory or specify the porter manifest with --file", o.Dir)
+	}
+
+	return nil
 }
 
 func stringSliceContains(allowedValues []string, value string) bool {

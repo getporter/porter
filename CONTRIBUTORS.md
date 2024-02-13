@@ -94,3 +94,4 @@ and we will add you. **All** contributors belong here. 💯
 - [KallyDev](https://github.com/kallydev)
 - [Salman Shah](https://github.com/sbshah97)
 - [Ray Terrill](https://github.com/rayterrill)
+- [Kim Christensen](https://github.com/kichristensen)
