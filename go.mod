@@ -2,8 +2,6 @@ module get.porter.sh/porter
 
 go 1.21
 
-toolchain go1.21.3
-
 replace (
 	// See https://github.com/hashicorp/go-plugin/pull/127 and
 	// https://github.com/hashicorp/go-plugin/pull/163
