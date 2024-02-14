@@ -11,7 +11,7 @@ on:
             required: true
             default: ghcr.io
 env:
-    GOVERSION: 1.20.7
+    GOVERSION: 1.21.3
     PORTER_INTEG_FILE: ${{inputs.test_name}}.go
 
 jobs:

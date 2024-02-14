@@ -45,6 +45,8 @@ cloud.google.com/go/storage v1.14.0/go.mod h1:GrKmX003DSIwi9o29oFT7YDnHYwZoctc3f
 dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9/go.mod h1:H6x//7gZCb22OMCxBHrMx7a5I7Hp++hsVxbQ4BYO7hU=
 get.porter.sh/magefiles v0.6.1 h1:JuGYK9us7Y9GJTr172wK3Y8W5rOz9CBnheuZa8yJjGc=
 get.porter.sh/magefiles v0.6.1/go.mod h1:YsSlQWtGoXCGC4pdD7NxPpvh/FryM1bM0wzMWlJC+Bg=
+get.porter.sh/magefiles v0.6.2 h1:kHuurvykssL6iZsE5S2XLtTsps79h9D4rrxDSCiHOU8=
+get.porter.sh/magefiles v0.6.2/go.mod h1:YsSlQWtGoXCGC4pdD7NxPpvh/FryM1bM0wzMWlJC+Bg=
 github.com/AdaLogics/go-fuzz-headers v0.0.0-20230811130428-ced1acdcaa24 h1:bvDV9vkmnHYOMsOr4WLk+Vo07yKIzd94sVoIqshQ4bU=
 github.com/AdaLogics/go-fuzz-headers v0.0.0-20230811130428-ced1acdcaa24/go.mod h1:8o94RPi1/7XTJvwPpRSzSUedZrtlirdB3r9Z20bi2f8=
 github.com/AdamKorcz/go-118-fuzz-build v0.0.0-20230306123547-8075edf89bb0 h1:59MxjQVfjXsBpLy+dbd2/ELV5ofnUkUZBvWSC85sheA=
