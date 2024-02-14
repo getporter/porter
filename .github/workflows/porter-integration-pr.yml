@@ -7,7 +7,7 @@ on:
     - 'docs/**'
 
 env:
-    GOVERSION: 1.20.7
+    GOVERSION: 1.21.3
 
 jobs:
   archive_integration_test:
@@ -117,7 +117,7 @@ jobs:
       run: go run mage.go build
       shell: bash
     - name: Integration Test
-      env: 
+      env:
         PORTER_INTEG_FILE: uninstall_test.go
-      run: go run mage.go -v TestIntegration 
+      run: go run mage.go -v TestIntegration
       shell: bash
