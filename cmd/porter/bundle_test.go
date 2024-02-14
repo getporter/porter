@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/tests"
 
 	"get.porter.sh/porter/pkg/porter"
@@ -189,6 +190,7 @@ func TestBuildValidate_Driver(t *testing.T) {
 				// noop
 				return nil
 			}
+			p.FileSystem.WriteFile("porter.yaml", []byte(""), pkg.FileModeWritable)
 
 			err := rootCmd.Execute()
 			if tc.wantError == "" {
