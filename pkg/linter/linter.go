@@ -68,7 +68,9 @@ type Result struct {
 func (r Result) String() string {
 	var buffer strings.Builder
 	buffer.WriteString(fmt.Sprintf("%s(%s) - %s\n", r.Level, r.Code, r.Title))
-	buffer.WriteString(r.Location.String() + "\n")
+	if r.Location.Mixin != "" {
+		buffer.WriteString(r.Location.String() + "\n")
+	}
 
 	if r.Message != "" {
 		buffer.WriteString(r.Message + "\n")
@@ -111,12 +113,8 @@ type Location struct {
 }
 
 func (l Location) String() string {
-	mixin := ""
-	if l.Mixin != "" {
-		mixin = fmt.Sprintf("in the %s mixin ", l.Mixin)
-	}
-	return fmt.Sprintf("%s: %s step %s(%s)",
-		l.Action, humanize.Ordinal(l.StepNumber), mixin, l.StepDescription)
+	return fmt.Sprintf("%s: %s step in the %s mixin (%s)",
+		l.Action, humanize.Ordinal(l.StepNumber), l.Mixin, l.StepDescription)
 }
 
 // Results is a set of items identified by the linter.
