@@ -12,8 +12,6 @@ import (
 	"sort"
 	"strings"
 
-	depsv2ext "get.porter.sh/porter/pkg/cnab/extensions/dependencies/v2"
-
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/experimental"
@@ -806,10 +804,10 @@ type BundleInterfaceDocument struct {
 // SharingCriteria is a set of rules for sharing a dependency with other bundles.
 type SharingCriteria struct {
 	// Mode defines how a dependency can be shared.
-	//  - none: The dependency cannot be shared, even within the same dependency graph.
-	//  - group: The dependency is shared with other bundles who defined the dependency
+	//  - false: The dependency cannot be shared, even within the same dependency graph.
+	//  - true: The dependency is shared with other bundles who defined the dependency
 	//    with the same sharing group. This is the default mode.
-	Mode string `yaml:"mode"`
+	Mode bool `yaml:"mode"`
 
 	// Group defines matching criteria for determining if two dependencies are in the same sharing group.
 	Group SharingGroup `yaml:"group,omitempty"`
@@ -817,11 +815,7 @@ type SharingCriteria struct {
 
 // GetEffectiveMode returns the mode, taking into account the default value when
 // no mode is specified.
-func (s SharingCriteria) GetEffectiveMode() string {
-	if s.Mode == "" {
-		return depsv2ext.SharingModeGroup
-	}
-
+func (s SharingCriteria) GetEffectiveMode() bool {
 	return s.Mode
 }
 

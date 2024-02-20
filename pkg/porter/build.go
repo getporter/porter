@@ -62,7 +62,7 @@ func (o *BuildOptions) Validate(p *Porter) error {
 		return fmt.Errorf("invalid --driver value %s", o.Driver)
 	}
 
-	// Syncing value back to the config and we will always use the config
+	// Syncing value back to the config, and we will always use the config
 	// to determine the driver
 	// This would be less awkward if we didn't do an automatic build during publish
 	p.Data.BuildDriver = o.Driver
@@ -72,7 +72,16 @@ func (o *BuildOptions) Validate(p *Porter) error {
 		return err
 	}
 
-	return o.BundleDefinitionOptions.Validate(p.Context)
+	err = o.BundleDefinitionOptions.Validate(p.Context)
+	if err != nil {
+		return err
+	}
+
+	if o.File == "" {
+		return fmt.Errorf("could not find porter.yaml in the current directory %s, make sure you are in the right directory or specify the porter manifest with --file", o.Dir)
+	}
+
+	return nil
 }
 
 func stringSliceContains(allowedValues []string, value string) bool {

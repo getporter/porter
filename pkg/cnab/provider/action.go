@@ -18,6 +18,12 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
+type HostVolumeMountSpec struct {
+	Source   string
+	Target   string
+	ReadOnly bool
+}
+
 // Shared arguments for all CNAB actions
 type ActionArguments struct {
 	// Action to execute, e.g. install, upgrade.
@@ -41,6 +47,9 @@ type ActionArguments struct {
 
 	// Give the bundle privileged access to the docker daemon.
 	AllowDockerHostAccess bool
+
+	// MountHostVolumes is a map of host paths to container paths to mount.
+	HostVolumeMounts []HostVolumeMountSpec
 
 	// PersistLogs specifies if the invocation image output should be saved as an output.
 	PersistLogs bool

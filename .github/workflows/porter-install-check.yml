@@ -1,0 +1,34 @@
+name: porter/porter-install-check
+on:
+  push:
+    branches:
+    - main
+  pull_request:
+    branches:
+    - main
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+    - name: checkout
+      uses: actions/checkout@v4.1.0
+    - name: Test Install Script
+      run: scripts/test/test-linux-install.sh
+      shell: bash
+  windows:
+    runs-on: windows-latest
+    steps:
+    - name: checkout
+      uses: actions/checkout@v4.1.0
+    - name: Test Install Script
+      run: scripts\test\test-windows-install.ps1
+      shell: powershell
+  macos:
+    runs-on:
+      - macos-latest
+    steps:
+    - name: checkout
+      uses: actions/checkout@v4.1.0
+    - name: Test Install Script
+      run: scripts/test/test-mac-install.sh
+      shell: bash

@@ -1,0 +1,187 @@
+# Environment variables defined in a calling workflow are not accessible to this reusable workflow. Refer to the documentation for further details on this limitation.
+name: build_pipelinesrelease_template
+on:
+  workflow_call:
+    inputs:
+      goVersion:
+        required: false
+        default: 1.20.7
+        type: string
+      registry:
+        required: false
+        default: ghcr.io/getporter/test
+        type: string
+      shouldPublish:
+        required: false
+        default: false
+        type: boolean
+      skipTests:
+        required: false
+        default: false
+        type: boolean
+jobs:
+  Validate-build:
+    name: Native Compile
+    runs-on: ubuntu-latest
+    steps:
+    - name: checkout
+      uses: actions/checkout@v4.1.0
+    - uses: actions/setup-go@v4
+      with:
+        go-version: "${{ inputs.GOVERSION }}"
+    - name: Configure Agent
+      run: go run mage.go ConfigureAgent
+    - name: Native Build
+      run: mage build
+      shell: bash
+    - name: Publish Native Binaries
+      uses: actions/upload-artifact@v4.0.0
+      with:
+        name: build-bin
+        path: "${{ github.workspace }}/bin"
+  Validate-xbuild:
+    name: Cross Compile
+    runs-on: ubuntu-latest
+    steps:
+    - name: checkout
+      uses: actions/checkout@v4.1.0
+    - uses: actions/setup-go@v4
+      with:
+        go-version: "${{ inputs.GOVERSION }}"
+    - name: Configure Agent
+      run: go run mage.go ConfigureAgent
+    - name: Cross Compile
+      run: mage XBuildAll
+      shell: bash
+    - name: Publish Release Binaries
+      uses: actions/upload-artifact@v4.0.0
+      with:
+        name: xbuild-bin
+        path: "${{ github.workspace }}/bin"
+  Validate-VetLint:
+    name: Vet and Lint
+    runs-on: ubuntu-latest
+    steps:
+    - name: checkout
+      uses: actions/checkout@v4.1.0
+    - uses: actions/setup-go@v4
+      with:
+        go-version: "${{ inputs.GOVERSION }}"
+    - name: Configure Agent
+      run: go run mage.go ConfigureAgent
+    - name: Vet
+      run: mage Vet
+      shell: bash
+    - name: Lint
+      run: mage Lint
+      shell: bash
+  Validate-unit_test:
+    name: Unit Test
+    runs-on: ubuntu-latest
+    if: ${{inputs.skipTests == false}}
+    steps:
+    - name: checkout
+      uses: actions/checkout@v4.1.0
+    - uses: actions/setup-go@v4
+      with:
+        go-version: "${{ inputs.GOVERSION }}"
+    - name: Configure Agent
+      run: go run mage.go ConfigureAgent
+    - name: Unit Test
+      run: mage TestUnit
+      shell: bash
+  Validate-integration_test:
+    name: Integration Test
+    needs:
+    - Validate-build
+    uses: "./.github/workflows/porter-integration-release.yml"
+    with:
+      registry: ${{inputs.registry}}
+  Validate-smoke_test:
+    name: Run smoke tests on
+    needs:
+    - Validate-xbuild
+    runs-on: ubuntu-latest
+    if: success() && ${{inputs.skipTests == false}}
+    steps:
+    - name: checkout
+      uses: actions/checkout@v4.1.0
+    - uses: actions/setup-go@v4
+      with:
+        go-version: "${{ inputs.GOVERSION }}"
+    - name: Download Cross-Compiled Porter Binaries
+      uses: actions/download-artifact@v4.1.0
+      with:
+        name: xbuild-bin
+        path: bin
+    - name: Setup Bin
+      run: go run mage.go ConfigureAgent UseXBuildBinaries
+    - name: Run Smoke Tests
+      run: mage -v TestSmoke
+  publish_binaries:
+    name: Publish Binaries
+    needs:
+    - Validate-build
+    - Validate-xbuild
+    - Validate-VetLint
+    - Validate-unit_test
+    - Validate-integration_test
+    - Validate-smoke_test
+    runs-on: ubuntu-latest
+    permissions: write-all
+    if: success() && inputs.shouldPublish
+    steps:
+    - name: checkout
+      uses: actions/checkout@v4.1.0
+    - uses: actions/setup-go@v4
+      with:
+        go-version: "${{ inputs.GOVERSION }}"
+    - name: Download Cross-Compiled Porter Binaries
+      uses: actions/download-artifact@v4.1.0
+      with:
+        name: xbuild-bin
+        path: bin
+    - name: Setup Bin
+      run: go run mage.go ConfigureAgent UseXBuildBinaries
+    - name: Publish Porter Binaries
+      env:
+        GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+        VERSION: ${{github.ref_name}}
+      run: mage PublishPorter PublishMixins
+  publish-ghcr:
+    env:
+      DOCKER_REGISTRY: ${{inputs.registry}}
+      DOCKER_USERNAME: getporterbot
+      VERSION: ${{github.ref_name}}
+    name: Publish Docker Images
+    needs:
+    - Validate-build
+    - Validate-xbuild
+    - Validate-VetLint
+    - Validate-unit_test
+    - Validate-integration_test
+    - Validate-smoke_test
+    runs-on: ubuntu-latest
+    permissions: write-all
+    if: success() && inputs.shouldPublish
+    steps:
+    - name: checkout
+      uses: actions/checkout@v4.1.0
+    - uses: actions/setup-go@v4
+      with:
+        go-version: "${{ inputs.GOVERSION }}"
+    - name: Download Cross-Compiled Porter Binaries
+      uses: actions/download-artifact@v4.1.0
+      with:
+        name: xbuild-bin
+        path: bin
+    - name: Setup Bin
+      run: go run mage.go ConfigureAgent UseXBuildBinaries
+    - name: Login to Container Registry
+      uses: docker/login-action@v3.0.0
+      with:
+        registry: "${{inputs.registry}}"
+        username: "${{ github.actor }}"
+        password: "${{ secrets.GITHUB_TOKEN }}"
+    - name: Publish Docker Images to ${{inputs.registry}}
+      run: PORTER_REGISTRY=${{inputs.registry}} mage PublishImages

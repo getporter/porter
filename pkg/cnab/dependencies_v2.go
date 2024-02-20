@@ -61,6 +61,9 @@ func (b ExtendedBundle) DependencyV2Reader() (interface{}, error) {
 		return nil, fmt.Errorf("could not marshal the untyped %s extension data %q: %w", DependenciesV2ExtensionKey, string(dataB), err)
 	}
 
+	//Note: For depedency.Name to be set properly ReadDependencyV2
+	// *must* be called.
+	//todo: make it so that ReadDependencyV2 is only able to be exported.
 	deps := v2.Dependencies{}
 	err = json.Unmarshal(dataB, &deps)
 	if err != nil {

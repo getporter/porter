@@ -1,0 +1,28 @@
+name: porter/test-porter-release
+on:
+  workflow_dispatch:
+    inputs:
+      shouldPublish:
+        description: Should Publish
+        default: true
+        type: boolean
+        required: false
+      skipTests:
+        description: Skip Tests
+        default: true
+        type: boolean
+        required: false
+  pull_request:
+    branches:
+      - main
+env:
+  PORTER_PACKAGES_REMOTE: https://github.com/carolynvs/porter-packages.git
+  PORTER_RELEASE_REPOSITORY: github.com/carolynvs/porter
+jobs:
+  build_pipelinesrelease_template:
+    name: build_pipelinesrelease_template
+    uses: './.github/workflows/build_pipelinesrelease_template.yml'
+    with:
+      registry: ghcr.io/getporter/test
+      shouldPublish: ${{ inputs.shouldPublish }}
+      skipTests: ${{ inputs.skipTests }}

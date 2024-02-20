@@ -487,7 +487,7 @@ func PublishPorter() {
 	// Create or update GitHub release for the permalink (canary/latest) with the version's assets (porter binaries, exec binaries and install scripts)
 	if info.ShouldPublishPermalink() {
 		// Move the permalink tag. The existing release automatically points to the tag.
-		must.RunV("git", "tag", info.Permalink, info.Version+"^{}", "-f")
+		must.RunV("git", "tag", "-f", info.Permalink, info.Version)
 		must.RunV("git", "push", "-f", remote, info.Permalink)
 
 		releases.AddFilesToRelease(repo, info.Permalink, porterVersionDir)
@@ -580,7 +580,15 @@ func TestIntegration() {
 		verbose = "-v"
 	}
 
-	must.Command("go", "test", verbose, "-timeout=30m", run, "-tags=integration", "./...").CollapseArgs().RunV()
+	var path string
+	filename := os.Getenv("PORTER_INTEG_FILE")
+	if filename == "" {
+		path = "./..."
+	} else {
+		path = "./tests/integration/" + filename
+	}
+
+	must.Command("go", "test", verbose, "-timeout=30m", run, "-tags=integration", path).CollapseArgs().RunV()
 }
 
 func TestInitWarnings() {
@@ -671,8 +679,7 @@ func Install() {
 		// Removing the file first clears the cache so that we don't run into "zsh: killed MIXIN..."
 		// See https://stackoverflow.com/questions/67378106/mac-m1-cping-binary-over-another-results-in-crash
 		// See https://openradar.appspot.com/FB8914231
-		mgx.Must(os.Remove(filepath.Join(destDir, mixin+xplat.FileExt())))
-		mgx.Must(os.RemoveAll(filepath.Join(destDir, "runtimes")))
+		
 
 		// Copy the mixin client binary
 		mgx.Must(shx.Copy(filepath.Join(srcDir, mixin+xplat.FileExt()), destDir))
