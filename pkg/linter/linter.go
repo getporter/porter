@@ -68,7 +68,9 @@ type Result struct {
 func (r Result) String() string {
 	var buffer strings.Builder
 	buffer.WriteString(fmt.Sprintf("%s(%s) - %s\n", r.Level, r.Code, r.Title))
-	buffer.WriteString(r.Location.String() + "\n")
+	if r.Location.Mixin != "" {
+		buffer.WriteString(r.Location.String() + "\n")
+	}
 
 	if r.Message != "" {
 		buffer.WriteString(r.Message + "\n")

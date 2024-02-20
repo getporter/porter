@@ -153,4 +153,24 @@ func TestLinter_Lint(t *testing.T) {
 		require.NoError(t, err, "Lint failed")
 		require.Len(t, results, 0, "linter should have returned 1 result")
 	})
+
+	t.Run("lint messages does not mention mixins in message not coming from mixin", func(t *testing.T) {
+		cxt := portercontext.NewTestContext(t)
+		mixins := mixin.NewTestMixinProvider()
+		l := New(cxt.Context, mixins)
+		param := map[string]manifest.ParameterDefinition{
+			"A": {
+				Name: "porter_test",
+			},
+		}
+
+		m := &manifest.Manifest{
+			Parameters: param,
+		}
+
+		results, err := l.Lint(ctx, m)
+		require.NoError(t, err, "Lint failed")
+		require.Len(t, results, 1, "linter should have returned 1 result")
+		require.NotContains(t, results[0].String(), ": 0th step in the mixin ()")
+	})
 }
