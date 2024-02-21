@@ -1,0 +1,2 @@
+install:
+  - exec: "Install a VM and collect its ID"
