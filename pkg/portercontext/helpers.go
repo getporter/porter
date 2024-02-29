@@ -28,6 +28,7 @@ type TestContext struct {
 	cleanupDirs []string
 	capturedErr *bytes.Buffer
 	capturedOut *bytes.Buffer
+	captureLogs *bytes.Buffer
 	T           *testing.T
 }
 
@@ -37,10 +38,11 @@ type TestContext struct {
 func NewTestContext(t *testing.T) *TestContext {
 	// Provide a way for tests to provide and capture stdin and stdout
 	// Copy output to the test log simultaneously, use go test -v to see the output
+	logs := &bytes.Buffer{}
 	err := &bytes.Buffer{}
-	aggErr := io.MultiWriter(err, test.Logger{T: t})
+	aggErr := io.MultiWriter(err, test.Logger{T: t}, logs)
 	out := &bytes.Buffer{}
-	aggOut := io.MultiWriter(out, test.Logger{T: t})
+	aggOut := io.MultiWriter(out, test.Logger{T: t}, logs)
 
 	innerContext := New()
 	innerContext.correlationId = "0"
@@ -64,6 +66,7 @@ func NewTestContext(t *testing.T) *TestContext {
 		Context:     innerContext,
 		capturedOut: out,
 		capturedErr: err,
+		captureLogs: logs,
 		T:           t,
 	}
 
@@ -264,6 +267,11 @@ func (c *TestContext) GetOutput() string {
 // GetError returns all text printed to stderr.
 func (c *TestContext) GetError() string {
 	return c.capturedErr.String()
+}
+
+// GetAllLogs returns all text logged both on stdout and stderr
+func (c *TestContext) GetAllLogs() string {
+	return c.captureLogs.String()
 }
 
 func (c *TestContext) ClearOutputs() {
