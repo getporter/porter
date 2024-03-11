@@ -183,11 +183,8 @@ $ porter explain ghcr.io/getporter/porter-hello:v0.2.0
 
 Now that you know how to create a bundle, here are some more detailed topics on how to customize and distribute it:
 
-- [Control how your bundle's image is built with a custom Dockerfile](/bundle/custom-dockerfile/)
-- [Customize your Porter manifest, porter.yaml][manifest]
-- [Porter Manifest File Format](/bundle/manifest/file-format/)
-- [Best Practices for the exec Mixin](/best-practices/exec-mixin/)
-- [Understand how bundles are distributed](/distribute-bundles/)
+- [Next: What is a bundle?](/quickstart/bundles.md)
+- [Next: Work with Mixins](/how-to-guides/work-with-mixins.md)
 
 [install Porter]: /install/
 [Porter Visual Studio Code]: https://marketplace.visualstudio.com/items?itemName=getporter.porter-vscode
