@@ -1,0 +1,18 @@
+schemaVersion: 1.0.0
+version: 0.1.0
+registry: example.com
+name: mybun
+
+mixins:
+  - exec
+
+install:
+  - exec:
+      description:
+        - I should be a string, but I am a list
+      command: bash
+
+uninstall:
+  - exec:
+      description: uninstall everything
+      command: bash

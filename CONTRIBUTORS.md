@@ -92,6 +92,8 @@ and we will add you. **All** contributors belong here. 💯
 - [Chaiyapruek Muangsiri](https://github.com/cmppoon)
 - [Xin Fu](https://github.com/imfing)
 - [KallyDev](https://github.com/kallydev)
+- [Matheus Cumpian](https://github.com/heavybr)
 - [Salman Shah](https://github.com/sbshah97)
 - [Ray Terrill](https://github.com/rayterrill)
 - [Kim Christensen](https://github.com/kichristensen)
+- [Shivam](https://github.com/Bharadwajshivam28)

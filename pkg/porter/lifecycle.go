@@ -158,7 +158,7 @@ func (o *BundleExecutionOptions) defaultDriver(p *Porter) {
 	//
 	// When you run porter installation apply, there are some settings from porter install
 	// that aren't exposed as flags (like driver and allow-docker-host-access).
-	// This allows the user to set them in the config file and we will use them before running the bundle.
+	// This allows the user to set them in the config file, and we will use them before running the bundle.
 	//
 
 	// Apply global config to the --driver flag

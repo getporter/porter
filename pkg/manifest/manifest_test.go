@@ -195,6 +195,26 @@ func TestManifest_Validate_Name(t *testing.T) {
 	assert.EqualError(t, err, "bundle name must be set")
 }
 
+func TestManifest_Validate_Description(t *testing.T) {
+	c := config.NewTestConfig(t)
+
+	c.TestContext.AddTestFile("testdata/porter-with-bad-description.yaml", config.Name)
+
+	_, err := LoadManifestFrom(context.Background(), c.Config, config.Name)
+	assert.ErrorContains(t, err, "validation of action \"install\" failed: invalid description type (string) for mixin step (exec)")
+}
+
+func TestManifest_Validate_InvalidType(t *testing.T) {
+	c := config.NewTestConfig(t)
+
+	c.TestContext.AddTestFile("testdata/porter-with-bad-type.yaml", config.Name)
+
+	assert.NotPanics(t, func() {
+		_, err := LoadManifestFrom(context.Background(), c.Config, config.Name)
+		assert.ErrorContains(t, err, "validation of action \"install\" failed: invalid mixin type (string) for mixin step (exec)")
+	})
+}
+
 func TestManifest_Validate_SchemaVersion(t *testing.T) {
 	invalidVersionErr := schema.ErrInvalidSchemaVersion.Error()
 

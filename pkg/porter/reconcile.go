@@ -145,7 +145,7 @@ func (p *Porter) IsInstallationInSync(ctx context.Context, i storage.Installatio
 		}
 	}
 
-	// We want to upgrade but we don't have values to compare against
+	// We want to upgrade, but we don't have values to compare against
 	// This shouldn't happen but check just in case
 	if lastRun == nil {
 		log.Info("Triggering because the last run for the installation wasn't recorded")
