@@ -795,6 +795,17 @@ func (p *Porter) applyActionOptionsToInstallation(ctx context.Context, ba Bundle
 	inst.TrackBundle(bundleRef.Reference)
 	inst.Status.Modified = time.Now()
 
+	// Remove installation parameters no longer present in the bundle
+	if inst.Parameters.Parameters != nil {
+		updatedInstParams := make(secrets.StrategyList, 0, len(inst.Parameters.Parameters))
+		for _, param := range inst.Parameters.Parameters {
+			if _, ok := bun.Parameters[param.Name]; ok {
+				updatedInstParams = append(updatedInstParams, param)
+			}
+		}
+		inst.Parameters.Parameters = updatedInstParams
+	}
+
 	//
 	// 1. Record the parameter and credential sets used on the installation
 	// if none were specified, reuse the previous sets from the installation
