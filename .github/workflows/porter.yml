@@ -1,4 +1,4 @@
-name: porter
+name: portergi
 on:
   push:
     branches:
@@ -131,6 +131,3 @@ jobs:
       run: go run mage.go UseXBuildBinaries
     - name: Run Smoke Tests
       run: go run mage.go -v TestSmoke
-
-
-
