@@ -1,6 +1,9 @@
-name: porter/porter
+name: porter
 on:
   push:
+    branches:
+    - main
+  pull_request:
     branches:
     - main
     paths-ignore:
