@@ -1,5 +1,8 @@
-name: porter-pr
+name: porter
 on:
+  push:
+    branches:
+    - main
   pull_request:
     branches:
     - main
@@ -128,3 +131,6 @@ jobs:
       run: go run mage.go UseXBuildBinaries
     - name: Run Smoke Tests
       run: go run mage.go -v TestSmoke
+
+
+
