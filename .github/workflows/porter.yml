@@ -9,7 +9,7 @@ on:
     paths-ignore:
       - 'docs/**'
 env:
-  GOVERSION: 1.20.7
+  GOVERSION: 1.21.3
 
 jobs:
   Build:
