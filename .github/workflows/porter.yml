@@ -1,4 +1,4 @@
-name: portergi
+name: porter
 on:
   push:
     branches:
