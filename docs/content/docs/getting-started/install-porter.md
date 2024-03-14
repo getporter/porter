@@ -19,7 +19,7 @@ aliases:
 - [Customize the Installation Script](#install-script-parameters)
 - [Configure Command Completion](#command-completion)
 
-# Install or Upgrade
+## Install or Upgrade
 
 The examples below use a hard-coded version of Porter. There may be a newer version available which you can check for on our [release] page.
 Set VERSION to the most recent [release] version number.
@@ -46,7 +46,7 @@ $VERSION="v1.0.14"
 .\install-porter.ps1
 ```
 
-## Running multiple versions
+### Running multiple versions
 
 If you have multiple versions of Porter installed on the same machine, you can switch between then by setting the PORTER_HOME environment variable and adding the desired version of Porter to your PATH.
 
@@ -73,7 +73,7 @@ porter version
 [mailing list]: https://groups.io/g/porter
 [Slack]: /community/#slack
 
-# Clean Install
+## Clean Install
 
 To perform a clean installation of Porter:
 
@@ -90,23 +90,23 @@ To perform a clean installation of Porter:
 
 3. Install Porter following the instructions on this page.
 
-# Latest
+## Latest
 
 Install the most recent tagged v1 release of porter and the [exec mixin].
 
-## Latest MacOS
+### Latest MacOS
 
 ```
 curl -L https://cdn.porter.sh/latest/install-mac.sh | bash
 ```
 
-## Latest Linux
+### Latest Linux
 
 ```
 curl -L https://cdn.porter.sh/latest/install-linux.sh | bash
 ```
 
-## Latest Windows
+### Latest Windows
 
 You will need to create a [PowerShell Profile][ps-link] if you do not have one.
 
@@ -114,7 +114,7 @@ You will need to create a [PowerShell Profile][ps-link] if you do not have one.
 iwr "https://cdn.porter.sh/latest/install-windows.ps1" -UseBasicParsing | iex
 ```
 
-# Canary
+## Canary
 
 Install the most recent build of Porter and the [exec mixin] from the main branch.
 
@@ -122,19 +122,19 @@ This saves you the trouble of cloning and building porter and its mixin
 repositories yourself. The build may not be stable, but it will have new features
 that we are developing.
 
-## Canary MacOS
+### Canary MacOS
 
 ```
 curl -L https://cdn.porter.sh/canary/install-mac.sh | bash
 ```
 
-## Canary Linux
+### Canary Linux
 
 ```
 curl -L https://cdn.porter.sh/canary/install-linux.sh | bash
 ```
 
-## Canary Windows
+### Canary Windows
 
 You will need to create a [PowerShell Profile][ps-link] if you do not have one.
 
@@ -142,7 +142,7 @@ You will need to create a [PowerShell Profile][ps-link] if you do not have one.
 iwr "https://cdn.porter.sh/canary/install-windows.ps1" -UseBasicParsing | iex
 ```
 
-# Mixins
+## Mixins
 
 We have a number of [mixins](/mixins) to help you get started.
 Only the [exec mixin] is installed with Porter v1.0.0+, other mixins should be installed separately.
@@ -157,7 +157,7 @@ installed terraform mixin v1.0.0-rc.1 (090064b)
 
 All the Porter-authored mixins are published to `https://cdn.porter.sh/mixins/atom.xml`.
 
-# Plugins
+## Plugins
 
 We have a couple [plugins](/plugins) which extend Porter and integrate with other cloud providers and software.
 
@@ -173,11 +173,11 @@ All the Porter-authored plugins are published to `https://cdn.porter.sh/plugins/
 
 [releases]: https://github.com/getporter/porter/releases
 
-# Install Script Parameters
+## Install Script Parameters
 
 The installation scripts provide the following parameters. Parameters can be specified with environment variables for the macOS and Linux scripts, and on Windows they are named parameters in the script.
 
-## PORTER_HOME
+### PORTER_HOME
 
 Location where Porter is installed (defaults to ~/.porter).
 
@@ -195,7 +195,7 @@ iwr REPLACE_WITH_INSTALL_URL -OutFile install-porter.ps1 -UseBasicParsing
 .\install-porter.ps1 -PORTER_HOME C:\alt\porter\home
 ```
 
-## PORTER_MIRROR
+### PORTER_MIRROR
 
 Base URL where Porter assets, such as binaries and atom feeds, are downloaded.
 This lets you set up an internal mirror. Note that atom feeds and index files
@@ -216,7 +216,7 @@ iwr REPLACE_WITH_INSTALL_URL -OutFile install-porter.ps1 -UseBasicParsing
 .\install-porter.ps1 -PORTER_MIRROR https://example.com/porter
 ```
 
-### URL Structure
+#### URL Structure
 
 Configuring a mirror of Porter's assets is out of scope of this document.
 Reach out on the Porter [mailing list] for assistance.
@@ -239,7 +239,7 @@ plugins/
   - PLUGIN/PERMALINK/PLUGIN-GOOS-GOARCH[FILE_EXT]
 ```
 
-# Command Completion
+## Command Completion
 
 Porter provides autocompletion support for Bash, Fish, Zsh, and PowerShell.
 
@@ -250,7 +250,7 @@ Porter provides autocompletion support for Bash, Fish, Zsh, and PowerShell.
 
 [here]: https://kubernetes.io/docs/tasks/tools/install-kubectl-macos/#enable-shell-autocompletion
 
-### Initial Setup
+#### Initial Setup
 
 The initial setup is to generate a completion script file and have your shell environment source it when you start your shell.
 
@@ -264,7 +264,7 @@ porter completion bash > /usr/local/etc/bash_completion.d/porter
 
 Once your completion script file is in place you will have to source it for your current shell or start a new shell session.
 
-### Completion Usage
+#### Completion Usage
 
 To list available commands for Porter, in your terminal run
 
