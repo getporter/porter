@@ -14,7 +14,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/protobuf/encoding/protojson"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 )
 
 type instInfo struct {
@@ -31,7 +31,7 @@ func TestListInstallationReturnsListOfCorrectPorterInstallations(t *testing.T) {
 	}{
 		{
 			name: "FilterByAllNamespaces",
-			opts: &iGRPC.ListInstallationsRequest{AllNamespaces: pointer.Bool(true)},
+			opts: &iGRPC.ListInstallationsRequest{AllNamespaces: ptr.To(true)},
 		},
 		{
 			name: "FilterByNamespace",
