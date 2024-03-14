@@ -50,7 +50,7 @@ mysql   getporter/mysql:v0.1.3
 ```
 
 ## Looking at a Bundle 
-When Porter creates a bundle it takes a user provided `porter.yaml` and generates a `bundle.json` that is then added to the OCI image that is pushed to your container registry. To keep things easy on the eyes, we will be reviewing a `porter.yaml`.
+When Porter creates a bundle it takes a user provided `porter.yaml` and generates a [CNAB](https://cnab.io/) `bundle.json` that is added to the OCI image that is pushed to your container registry. To keep things easy on the eyes, we will be reviewing a `porter.yaml`.
 
 
 ```yaml
@@ -106,7 +106,8 @@ uninstall:
       arguments:
         - uninstall
 ```
-We then come across the meet of the bundle, which is mixins and the actions. Porter Mixins are extensions of Porter that allow you to execute commands and actions in other tools. 
+
+We come across the core of the bundle; mixins and actions. Porter Mixins are extensions that enable structured access to common functionality and integration of common DevOps tools.
 
 Porter actions (install, upgrade, uninstall) are needed for every bundle - and specify the actions Porter will execute on those actions. 
 

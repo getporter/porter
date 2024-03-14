@@ -1,5 +1,7 @@
 ---
 title: Create a Bundle
+aliases:
+- /getting-started/create-bundle.md
 description: Create a bundle with Porter
 weight: 3
 ---

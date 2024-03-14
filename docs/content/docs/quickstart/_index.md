@@ -7,23 +7,23 @@ weight: 2
 This guide covers the most commonly used actions of Porter (install, upgrade, uninstall) and navigates users through their first Bundle experience. ✨ 
 
 ## Pre-requisites
-- (Docker)[https://docs.docker.com/get-docker/]
+- [Docker](https://docs.docker.com/get-docker/)
 
 ### Install Porter
 
-#### Latest MacOS
+##### Latest MacOS
 
 ```
 curl -L https://cdn.porter.sh/latest/install-mac.sh | bash
 ```
 
-#### Latest Linux
+##### Latest Linux
 
 ```
 curl -L https://cdn.porter.sh/latest/install-linux.sh | bash
 ```
 
-#### Latest Windows
+##### Latest Windows
 
 You will need to create a [PowerShell Profile][ps-link] if you do not have one.
 
@@ -44,7 +44,8 @@ Hello, porter
 execution completed successfully!
 ```
 
-In this example, you are installing the v0.2.0 version of the ghcr.io/getporter/examples/porter-hello bundle from its location in the default registry (Docker Hub) and setting the installation name to porter-hello.
+This example installs version `0.2.0` of the `ghcr.io/getporter/examples/porter-hello` bundle from the GitHub container registry. The installation name is `porter-hello`.
+
 
 ## List Bundle Installations
 
@@ -56,7 +57,7 @@ NAME              CREATED          MODIFIED         LAST ACTION   LAST STATUS
 porter-hello      21 minutes ago   21 minutes ago   install       succeeded
 ```
 
-In this example, it shows the bundle metadata along with the creation time, modification time, the last action that was performed, and the status of the last action.
+This `porter list` example shows bundle metadata such as the bundle installation name, creation and modification times, the last action and its status.
 
 
 ## Show Installation Information
@@ -103,7 +104,7 @@ porter uninstall porter-hello
 
 ## Next Steps
 
-You've learned how to install, upgrade, and uninstall a bundle.
+Now you've seen the basics to install, upgrade or uninstall a bundle.
 From here, you can dive into what a bundle is - or create your own!
 
 - [Next: What is a Bundle?](/quickstart/bundles/)
