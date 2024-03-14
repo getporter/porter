@@ -9,35 +9,39 @@ This guide covers the most commonly used actions of Porter (install, upgrade, un
 ## Pre-requisites
 - [Docker](https://docs.docker.com/get-docker/)
 
+- Porter
+
 ### Install Porter
 
-##### Latest MacOS
+##### MacOS
 
 ```
 curl -L https://cdn.porter.sh/latest/install-mac.sh | bash
 ```
 
-##### Latest Linux
+##### Linux
 
 ```
 curl -L https://cdn.porter.sh/latest/install-linux.sh | bash
 ```
 
-##### Latest Windows
-
-You will need to create a [PowerShell Profile][ps-link] if you do not have one.
+##### Windows
 
 ```
 iwr "https://cdn.porter.sh/latest/install-windows.ps1" -UseBasicParsing | iex
 ```
+You will need to create a PowerShell Profile if you do not have one.
+
 
 ## Install a Bundle
 
 To install a bundle, you use the `porter install` command.
 
+```console
+$ porter install porter-hello --reference ghcr.io/getporter/examples/porter-hello:v0.2.0
 ```
-porter install porter-hello --reference ghcr.io/getporter/examples/porter-hello:v0.2.0
 
+```
 executing install action from examples/porter-hello (installation: /)
 Install Hello World
 Hello, porter
@@ -53,6 +57,9 @@ To see the list of bundle installations, use the `porter list` command.
 
 ```console
 $ porter list
+```
+
+```
 NAME              CREATED          MODIFIED         LAST ACTION   LAST STATUS
 porter-hello      21 minutes ago   21 minutes ago   install       succeeded
 ```
@@ -66,6 +73,8 @@ To see information about an installation, use the `porter show` command with the
 
 ```console
 $ porter show porter-hello
+```
+```
 Name: hello
 Bundle: ghcr.io/getporter/examples/porter-hello
 Version: 0.2.0
@@ -84,9 +93,11 @@ History:
 
 To upgrade the resources managed by the bundle, use `porter upgrade`.
 
+```console
+$ porter upgrade
 ```
-porter upgrade
 
+```
 executing upgrade action from examples/porter-hello (installation: /porter-hello)
 World 2.0
 Hello, porter
@@ -98,8 +109,8 @@ execution completed successfully!
 
 To clean up the resources installed from the bundle, use the `porter uninstall` command.
 
-```
-porter uninstall porter-hello
+```console
+$ porter uninstall porter-hello
 ```
 
 ## Next Steps
