@@ -886,6 +886,38 @@ func TestPorter_ParametersApply(t *testing.T) {
 	})
 }
 
+func TestParameterRemovedFromBundle(t *testing.T) {
+	ctx := context.Background()
+	p := NewTestPorter(t)
+	p.TestConfig.TestContext.AddTestFile("testdata/porter.yaml", "porter.yaml")
+	opts := InstallOptions{
+		BundleExecutionOptions: &BundleExecutionOptions{
+			Driver: "docker",
+			BundleReferenceOptions: &BundleReferenceOptions{
+				installationOptions: installationOptions{
+					BundleDefinitionOptions: BundleDefinitionOptions{
+						File: config.Name,
+					},
+					Name: "MyInstallation",
+				},
+			},
+		},
+	}
+
+	installation := storage.NewInstallation(opts.Namespace, opts.Name)
+	installation.Parameters.Parameters = make([]secrets.SourceMap, 1)
+	installation.Parameters.Parameters[0] = secrets.SourceMap{
+		Name: "removedParam",
+		Source: secrets.Source{
+			Strategy: "value",
+			Hint:     "1",
+		},
+	}
+
+	err := p.applyActionOptionsToInstallation(ctx, opts, &installation)
+	require.NoError(t, err)
+}
+
 func Test_DependencyParameterOverride(t *testing.T) {
 	ctx := context.Background()
 	p := NewTestPorter(t)
@@ -908,8 +940,6 @@ func Test_DependencyParameterOverride(t *testing.T) {
 	}
 
 	installation := storage.NewInstallation(opts.Namespace, opts.Name)
-
-	// resolve the parameters before building the action options to use for running the bundle
 	err := p.applyActionOptionsToInstallation(ctx, opts, &installation)
 	require.NoError(t, err)
 	assert.Equal(t, opts.depParams["dep#first-param"], "1")

@@ -1,7 +1,7 @@
 <img align="right" src="docs/static/images/porter-docs-header.svg" width="300px" />
 
 [![CNCF Sandbox Project](docs/static/images/cncf-sandbox-badge.svg)](https://www.cncf.io/projects/porter/)
-[![Build Status](https://github.com/getporter/porter/actions/workflows/porter.yml/badge.svg)](https://github.com/getporter/porter/actions/workflows/porter.yml)
+[![porter](https://github.com/getporter/porter/actions/workflows/porter.yml/badge.svg?branch=main&event=push)](https://github.com/getporter/porter/actions/workflows/porter.yml)
 <a href="https://getporter.org/find-issue" alt="Find an issue to work on">
 <img src="https://img.shields.io/github/issues-search?label=%22help%20wanted%22%20issues&query=org%3Agetporter%20label%3A%22good%20first%20issue%22%2C%22help%20wanted%22%20no%3Aassignee" /></a>
 
