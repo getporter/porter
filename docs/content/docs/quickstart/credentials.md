@@ -2,6 +2,8 @@
 title: "Credentials"
 descriptions: Learn how to use a bundle with credentials
 layout: single
+aliases:
+  - /quickstart/credentials/
 ---
 
 Now that you know how to customize a bundle installation with parameters, let's look at how your bundle can authenticate with **credentials**.

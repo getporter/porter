@@ -5,6 +5,7 @@ weight: 3
 aliases:
   - /how-credentials-work/
   - /best-practices/credentials/
+  - /credentials/
 ---
 
 When you are authoring a bundle, you can define what credentials your bundle

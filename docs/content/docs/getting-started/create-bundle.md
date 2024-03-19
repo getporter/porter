@@ -2,6 +2,7 @@
 title: Create a Bundle
 aliases:
 - /getting-started/create-bundle.md
+- /getting-started/create-a-bundle/
 description: Create a bundle with Porter
 weight: 3
 ---
@@ -279,8 +280,8 @@ The publish command prints out the full bundle reference when it completes.
 
 Now that you know how to create a bundle you can follow the optional steps below, or check out more detailed topics on how to customize and distribute it:
 
-- [Next: What is a bundle?](/quickstart/bundles.md)
-- [Next: Work with Mixins](/how-to-guides/work-with-mixins.md)
+- [Next: What is a bundle?](/quickstart/bundles/)
+- [Next: Work with Mixins](/how-to-guides/work-with-mixins/)
 
 ### Leverage a different registry
 

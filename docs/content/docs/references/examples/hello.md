@@ -2,6 +2,9 @@
 title: "Example: Hello World"
 description: "Learn how to install a bundle"
 weight: 0
+aliases:
+  - /examples/hello/
+  - /examples/hello-world/
 ---
 
 Source: https://getporter.org/examples/src/hello

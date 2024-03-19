@@ -2,6 +2,8 @@
 title: "Desired State"
 descriptions: Manage an installation by defining its desired state in a file
 layout: single
+aliases:
+  - /quickstart/desired-state/
 ---
 
 You now know how to install a bundle, passing in a credential or parameter set.

@@ -2,6 +2,8 @@
 title: Connect to Docker
 description: Configure Porter to authenticate and connect to a Docker engine
 weight: 5
+aliases:
+  - /operations/connect-docker/
 ---
 
 Some Porter commands connect to a Docker engine in order to build, push, and pull the bundle image.
@@ -59,5 +61,5 @@ Porter supports additional Docker environment variables that may be useful to yo
 
 ## Next Steps
 
-- [Connect to a Docker Registry](/end-users/connect-registry/)
-- [Configure Porter](/end-users/configuration/)
+- [Connect to a Docker Registry](/operations/connect-registry/)
+- [Configure Porter](/operations/configuration/)

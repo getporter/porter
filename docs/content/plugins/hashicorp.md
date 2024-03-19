@@ -1,6 +1,9 @@
 ---
 title: Hashicorp Plugin
 description: Integrate Porter with Hashicorp
+aliases:
+  - /plugins/hashicorp/
+  - /plugins/hashicorp-vault/
 ---
 
 <img src="/images/plugins/hashicorp.png" class="mixin-logo" style="width: 300px"/>
