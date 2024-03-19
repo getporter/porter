@@ -1,8 +1,9 @@
 ---
-title: "porter mixins feed template"
-slug: porter_mixins_feed_template
-url: /cli/porter_mixins_feed_template/
+title: 'porter mixins feed template'
+aliases:
+  - /cli/porter_mixins_feed_template/
 ---
+
 ## porter mixins feed template
 
 Create an atom feed template

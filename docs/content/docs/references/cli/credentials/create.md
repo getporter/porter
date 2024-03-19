@@ -1,8 +1,9 @@
 ---
-title: "porter credentials create"
-slug: porter_credentials_create
-url: /cli/porter_credentials_create/
+title: 'porter credentials create'
+aliases:
+  - /cli/porter_credentials_create/
 ---
+
 ## porter credentials create
 
 Create a Credential

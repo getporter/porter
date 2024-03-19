@@ -1,8 +1,9 @@
 ---
-title: "porter plugins list"
-slug: porter_plugins_list
-url: /cli/porter_plugins_list/
+title: 'porter plugins list'
+aliases:
+  - /cli/porter_plugins_list/
 ---
+
 ## porter plugins list
 
 List installed plugins

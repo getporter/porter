@@ -1,8 +1,9 @@
 ---
-title: "porter bundles archive"
-slug: porter_bundles_archive
-url: /cli/porter_bundles_archive/
+title: 'porter bundles archive'
+aliases:
+  - /cli/porter_bundles_archive/
 ---
+
 ## porter bundles archive
 
 Archive a bundle from a reference

@@ -1,8 +1,9 @@
 ---
-title: "porter parameters show"
-slug: porter_parameters_show
-url: /cli/porter_parameters_show/
+title: 'porter parameters show'
+aliases:
+  - /cli/porter_parameters_show/
 ---
+
 ## porter parameters show
 
 Show a Parameter Set

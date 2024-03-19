@@ -1,8 +1,9 @@
 ---
-title: "porter install"
-slug: porter_install
-url: /cli/porter_install/
+title: 'porter install'
+aliases:
+  - /cli/porter_install/
 ---
+
 ## porter install
 
 Create a new installation of a bundle

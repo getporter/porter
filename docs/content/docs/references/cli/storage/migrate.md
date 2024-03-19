@@ -1,8 +1,9 @@
 ---
-title: "porter storage migrate"
-slug: porter_storage_migrate
-url: /cli/porter_storage_migrate/
+title: 'porter storage migrate'
+aliases:
+  - /cli/porter_storage_migrate/
 ---
+
 ## porter storage migrate
 
 Migrate data from v0.38 to v1

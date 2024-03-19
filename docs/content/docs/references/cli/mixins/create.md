@@ -1,8 +1,9 @@
 ---
-title: "porter mixins create"
-slug: porter_mixins_create
-url: /cli/porter_mixins_create/
+title: 'porter mixins create'
+aliases:
+  - /cli/porter_mixins_create/
 ---
+
 ## porter mixins create
 
 Create a new mixin project based on the getporter/skeletor repository

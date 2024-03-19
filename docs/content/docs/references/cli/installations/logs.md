@@ -1,8 +1,9 @@
 ---
-title: "porter installations logs"
-slug: porter_installations_logs
-url: /cli/porter_installations_logs/
+title: 'porter installations logs'
+aliases:
+  - /cli/porter_installations_logs/
 ---
+
 ## porter installations logs
 
 Installation Logs commands

@@ -1,8 +1,9 @@
 ---
-title: "porter bundles inspect"
-slug: porter_bundles_inspect
-url: /cli/porter_bundles_inspect/
+title: 'porter bundles inspect'
+aliases:
+  - /cli/porter_bundles_inspect/
 ---
+
 ## porter bundles inspect
 
 Inspect a bundle
@@ -13,7 +14,6 @@ Inspect a bundle by printing the invocation images and any related images images
 
 If you would like more information about the bundle, the porter explain command will provide additional information,
 like parameters, credentials, outputs and custom actions available.
-
 
 ```
 porter bundles inspect REFERENCE [flags]
@@ -27,7 +27,7 @@ porter bundles inspect REFERENCE [flags]
   porter bundle inspect localhost:5000/ghcr.io/getporter/examples/porter-hello:v0.2.0 --insecure-registry --force
   porter bundle inspect --file another/porter.yaml
   porter bundle inspect --cnab-file some/bundle.json
-		  
+
 ```
 
 ### Options

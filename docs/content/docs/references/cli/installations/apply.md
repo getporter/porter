@@ -1,8 +1,9 @@
 ---
-title: "porter installations apply"
-slug: porter_installations_apply
-url: /cli/porter_installations_apply/
+title: 'porter installations apply'
+aliases:
+  - /cli/porter_installations_apply/
 ---
+
 ## porter installations apply
 
 Apply changes to an installation

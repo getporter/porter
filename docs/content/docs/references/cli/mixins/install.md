@@ -1,8 +1,9 @@
 ---
-title: "porter mixins install"
-slug: porter_mixins_install
-url: /cli/porter_mixins_install/
+title: 'porter mixins install'
+aliases:
+  - /cli/porter_mixins_install/
 ---
+
 ## porter mixins install
 
 Install a mixin

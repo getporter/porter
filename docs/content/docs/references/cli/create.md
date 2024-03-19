@@ -1,8 +1,9 @@
 ---
-title: "porter create"
-slug: porter_create
-url: /cli/porter_create/
+title: 'porter create'
+aliases:
+  - /cli/porter_create/
 ---
+
 ## porter create
 
 Create a bundle

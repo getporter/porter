@@ -1,5 +1,7 @@
 ---
-title: "Porter Parameters Edit"
+title: 'Porter Parameters Edit'
+aliases:
+  - /cli/porter_parameters_edit/
 ---
 
 Edit Parameter Set

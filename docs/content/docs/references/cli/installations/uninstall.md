@@ -1,8 +1,9 @@
 ---
-title: "porter installations uninstall"
-slug: porter_installations_uninstall
-url: /cli/porter_installations_uninstall/
+title: 'porter installations uninstall'
+aliases:
+  - /cli/porter_installations_uninstall/
 ---
+
 ## porter installations uninstall
 
 Uninstall an installation

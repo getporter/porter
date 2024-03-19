@@ -1,8 +1,9 @@
 ---
-title: "porter upgrade"
-slug: porter_upgrade
-url: /cli/porter_upgrade/
+title: 'porter upgrade'
+aliases:
+  - /cli/porter_upgrade/
 ---
+
 ## porter upgrade
 
 Upgrade an installation

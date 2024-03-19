@@ -1,8 +1,9 @@
 ---
-title: "porter plugins uninstall"
-slug: porter_plugins_uninstall
-url: /cli/porter_plugins_uninstall/
+title: 'porter plugins uninstall'
+aliases:
+  - /cli/porter_plugins_uninstall/
 ---
+
 ## porter plugins uninstall
 
 Uninstall a plugin

@@ -1,8 +1,9 @@
 ---
-title: "porter bundles lint"
-slug: porter_bundles_lint
-url: /cli/porter_bundles_lint/
+title: 'porter bundles lint'
+aliases:
+  - /cli/porter_bundles_lint/
 ---
+
 ## porter bundles lint
 
 Lint a bundle

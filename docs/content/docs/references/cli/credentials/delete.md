@@ -1,8 +1,9 @@
 ---
-title: "porter credentials delete"
-slug: porter_credentials_delete
-url: /cli/porter_credentials_delete/
+title: 'porter credentials delete'
+aliases:
+  - /cli/porter_credentials_delete/
 ---
+
 ## porter credentials delete
 
 Delete a Credential

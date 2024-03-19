@@ -1,8 +1,9 @@
 ---
-title: "porter installations output list"
-slug: porter_installations_output_list
-url: /cli/porter_installations_output_list/
+title: 'porter installations output list'
+aliases:
+  - /cli/porter_installations_output_list/
 ---
+
 ## porter installations output list
 
 List installation outputs

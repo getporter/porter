@@ -1,8 +1,9 @@
 ---
-title: "porter explain"
-slug: porter_explain
-url: /cli/porter_explain/
+title: 'porter explain'
+aliases:
+  - /cli/porter_explain/
 ---
+
 ## porter explain
 
 Explain a bundle

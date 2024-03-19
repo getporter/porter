@@ -1,8 +1,9 @@
 ---
-title: "porter storage"
-slug: porter_storage
-url: /cli/porter_storage/
+title: 'porter storage'
+aliases:
+  - /cli/porter_storage/
 ---
+
 ## porter storage
 
 Manage data stored by Porter

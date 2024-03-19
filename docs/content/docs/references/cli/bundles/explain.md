@@ -1,8 +1,9 @@
 ---
-title: "porter bundles explain"
-slug: porter_bundles_explain
-url: /cli/porter_bundles_explain/
+title: 'porter bundles explain'
+aliases:
+  - /cli/porter_bundles_explain/
 ---
+
 ## porter bundles explain
 
 Explain a bundle
@@ -24,7 +25,7 @@ porter bundles explain REFERENCE [flags]
   porter bundle explain --file another/porter.yaml
   porter bundle explain --cnab-file some/bundle.json
   porter bundle explain --action install
-		  
+
 ```
 
 ### Options

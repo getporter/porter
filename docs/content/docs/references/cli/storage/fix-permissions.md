@@ -1,8 +1,9 @@
 ---
-title: "porter storage fix-permissions"
-slug: porter_storage_fix-permissions
-url: /cli/porter_storage_fix-permissions/
+title: 'porter storage fix-permissions'
+aliases:
+  - /cli/porter_storage_fix-permissions/
 ---
+
 ## porter storage fix-permissions
 
 Fix the permissions on your PORTER_HOME directory
