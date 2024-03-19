@@ -1,8 +1,9 @@
 ---
-title: "porter credentials generate"
-slug: porter_credentials_generate
-url: /cli/porter_credentials_generate/
+title: 'porter credentials generate'
+aliases:
+  - /cli/porter_credentials_generate/
 ---
+
 ## porter credentials generate
 
 Generate Credential Set
@@ -25,7 +26,7 @@ file system.
 
 When you wish to install, upgrade or delete a bundle, Porter will use the
 credential set to determine where to read the necessary information from and
-will then provide it to the bundle in the correct location. 
+will then provide it to the bundle in the correct location.
 
 ```
 porter credentials generate [NAME] [flags]

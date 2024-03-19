@@ -1,8 +1,9 @@
 ---
-title: "porter schema"
-slug: porter_schema
-url: /cli/porter_schema/
+title: 'porter schema'
+aliases:
+  - /cli/porter_schema/
 ---
+
 ## porter schema
 
 Print the JSON schema for the Porter manifest

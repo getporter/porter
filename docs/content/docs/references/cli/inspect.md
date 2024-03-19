@@ -1,8 +1,9 @@
 ---
-title: "porter inspect"
-slug: porter_inspect
-url: /cli/porter_inspect/
+title: 'porter inspect'
+aliases:
+  - /cli/porter_inspect/
 ---
+
 ## porter inspect
 
 Inspect a bundle
@@ -13,7 +14,6 @@ Inspect a bundle by printing the invocation images and any related images images
 
 If you would like more information about the bundle, the porter explain command will provide additional information,
 like parameters, credentials, outputs and custom actions available.
-
 
 ```
 porter inspect REFERENCE [flags]

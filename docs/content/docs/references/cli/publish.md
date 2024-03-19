@@ -1,8 +1,9 @@
 ---
-title: "porter publish"
-slug: porter_publish
-url: /cli/porter_publish/
+title: 'porter publish'
+aliases:
+  - /cli/porter_publish/
 ---
+
 ## porter publish
 
 Publish a bundle

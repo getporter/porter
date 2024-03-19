@@ -1,8 +1,9 @@
 ---
-title: "porter mixins search"
-slug: porter_mixins_search
-url: /cli/porter_mixins_search/
+title: 'porter mixins search'
+aliases:
+  - /cli/porter_mixins_search/
 ---
+
 ## porter mixins search
 
 Search available mixins

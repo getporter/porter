@@ -1,8 +1,9 @@
 ---
-title: "porter credentials apply"
-slug: porter_credentials_apply
-url: /cli/porter_credentials_apply/
+title: 'porter credentials apply'
+aliases:
+  - /cli/porter_credentials_apply/
 ---
+
 ## porter credentials apply
 
 Apply changes to a credential set

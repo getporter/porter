@@ -1,15 +1,16 @@
 ---
-title: "porter mixins feed generate"
-slug: porter_mixins_feed_generate
-url: /cli/porter_mixins_feed_generate/
+title: 'porter mixins feed generate'
+aliases:
+  - /cli/porter_mixins_feed_generate/
 ---
+
 ## porter mixins feed generate
 
 Generate an atom feed from the mixins in a directory
 
 ### Synopsis
 
-Generate an atom feed from the mixins in a directory. 
+Generate an atom feed from the mixins in a directory.
 
 A template is required, providing values for text properties such as the author name, base URLs and other values that cannot be inferred from the mixin file names. You can make a default template by running 'porter mixins feed template'.
 

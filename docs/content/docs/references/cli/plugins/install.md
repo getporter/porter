@@ -1,14 +1,14 @@
 ---
-title: "porter plugins install"
-slug: porter_plugins_install
-url: /cli/porter_plugins_install/
+title: 'porter plugins install'
+aliases:
+  - /cli/porter_plugins_install/
 ---
+
 ## porter plugins install
 
 Install plugins
 
 ### Synopsis
-
 
 Porter offers two ways to install plugins. Users can install plugins one at a time or multiple plugins through a plugins definition file.
 

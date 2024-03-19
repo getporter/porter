@@ -1,8 +1,9 @@
 ---
-title: "porter parameters delete"
-slug: porter_parameters_delete
-url: /cli/porter_parameters_delete/
+title: 'porter parameters delete'
+aliases:
+  - /cli/porter_parameters_delete/
 ---
+
 ## porter parameters delete
 
 Delete a Parameter Set

@@ -1,8 +1,9 @@
 ---
-title: "porter mixins list"
-slug: porter_mixins_list
-url: /cli/porter_mixins_list/
+title: 'porter mixins list'
+aliases:
+  - /cli/porter_mixins_list/
 ---
+
 ## porter mixins list
 
 List installed mixins

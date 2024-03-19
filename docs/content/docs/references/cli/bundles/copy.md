@@ -1,17 +1,18 @@
 ---
-title: "porter bundles copy"
-slug: porter_bundles_copy
-url: /cli/porter_bundles_copy/
+title: 'porter bundles copy'
+aliases:
+  - /cli/porter_bundles_copy/
 ---
+
 ## porter bundles copy
 
 Copy a bundle
 
 ### Synopsis
 
-Copy a published bundle from one registry to another.		
+Copy a published bundle from one registry to another.
 Source bundle can be either a tagged reference or a digest reference.
-Destination can be either a registry, a registry/repository, or a fully tagged bundle reference. 
+Destination can be either a registry, a registry/repository, or a fully tagged bundle reference.
 If the source bundle is a digest reference, destination must be a tagged reference.
 
 
@@ -25,7 +26,7 @@ porter bundles copy [flags]
   porter bundle copy
   porter bundle copy --source ghcr.io/getporter/examples/porter-hello:v0.2.0 --destination portersh
   porter bundle copy --source ghcr.io/getporter/examples/porter-hello:v0.2.0 --destination portersh --insecure-registry
-		  
+
 ```
 
 ### Options

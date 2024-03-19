@@ -1,8 +1,9 @@
 ---
-title: "porter list"
-slug: porter_list
-url: /cli/porter_list/
+title: 'porter list'
+aliases:
+  - /cli/porter_list/
 ---
+
 ## porter list
 
 List installed bundles

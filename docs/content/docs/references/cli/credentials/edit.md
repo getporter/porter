@@ -1,8 +1,9 @@
 ---
-title: "porter credentials edit"
-slug: porter_credentials_edit
-url: /cli/porter_credentials_edit/
+title: 'porter credentials edit'
+aliases:
+  - /cli/porter_credentials_edit/
 ---
+
 ## porter credentials edit
 
 Edit Credential

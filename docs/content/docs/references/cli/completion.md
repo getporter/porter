@@ -1,8 +1,9 @@
 ---
-title: "porter completion"
-slug: porter_completion
-url: /cli/porter_completion/
+title: 'porter completion'
+aliases:
+  - /cli/porter_completion/
 ---
+
 ## porter completion
 
 Generate completion script

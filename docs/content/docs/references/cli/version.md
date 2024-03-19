@@ -1,8 +1,9 @@
 ---
-title: "porter version"
-slug: porter_version
-url: /cli/porter_version/
+title: 'porter version'
+aliases:
+  - /cli/porter_version/
 ---
+
 ## porter version
 
 Print the application version

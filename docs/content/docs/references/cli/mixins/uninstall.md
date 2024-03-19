@@ -1,8 +1,9 @@
 ---
-title: "porter mixins uninstall"
-slug: porter_mixins_uninstall
-url: /cli/porter_mixins_uninstall/
+title: 'porter mixins uninstall'
+aliases:
+  - /cli/porter_mixins_uninstall/
 ---
+
 ## porter mixins uninstall
 
 Uninstall a mixin

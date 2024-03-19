@@ -1,8 +1,9 @@
 ---
-title: "porter installations invoke"
-slug: porter_installations_invoke
-url: /cli/porter_installations_invoke/
+title: 'porter installations invoke'
+aliases:
+  - /cli/porter_installations_invoke/
 ---
+
 ## porter installations invoke
 
 Invoke a custom action on an installation

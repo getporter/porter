@@ -41,7 +41,7 @@ an external secret store.
 Parameter Sets are created using the combination of [porter parameters create](/docs/references/cli/parameters/create)
 and [porter parameters apply](/docs/references/cli/parameters/apply).
 Afterwards a parameter set can be [edited](/docs/references/cli/parameters/edit) if changes are required.
-See [porter parameters help](/docs/references/cli/porter/parameters/) for all available commands.
+See [porter parameters help](/docs/references/cli/parameters/) for all available commands.
 
 Now when you execute the bundle you can pass the name of the parameter set to
 the command using the `--parameter-set` or `-p` flag, e.g.

@@ -1,8 +1,9 @@
 ---
-title: "porter plugins search"
-slug: porter_plugins_search
-url: /cli/porter_plugins_search/
+title: 'porter plugins search'
+aliases:
+  - /cli/porter_plugins_search/
 ---
+
 ## porter plugins search
 
 Search available plugins

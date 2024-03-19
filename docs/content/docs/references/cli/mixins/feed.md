@@ -1,8 +1,9 @@
 ---
-title: "porter mixins feed"
-slug: porter_mixins_feed
-url: /cli/porter_mixins_feed/
+title: 'porter mixins feed'
+aliases:
+  - /cli/porter_mixins_feed/
 ---
+
 ## porter mixins feed
 
 Feed commands

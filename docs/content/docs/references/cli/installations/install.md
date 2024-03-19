@@ -1,8 +1,9 @@
 ---
-title: "porter installations install"
-slug: porter_installations_install
-url: /cli/porter_installations_install/
+title: 'porter installations install'
+aliases:
+  - /cli/porter_installations_install/
 ---
+
 ## porter installations install
 
 Create a new installation of a bundle
@@ -19,10 +20,9 @@ Porter uses the docker driver as the default runtime for executing a bundle's in
 For example, the 'debug' driver may be specified, which simply logs the info given to it and then exits.
 
 The docker driver runs the bundle container using the local Docker host. To use a remote Docker host, set the following environment variables:
-  DOCKER_HOST (required)
-  DOCKER_TLS_VERIFY (optional)
-  DOCKER_CERT_PATH (optional)
-
+DOCKER_HOST (required)
+DOCKER_TLS_VERIFY (optional)
+DOCKER_CERT_PATH (optional)
 
 ```
 porter installations install [INSTALLATION] [flags]

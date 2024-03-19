@@ -1,8 +1,9 @@
 ---
-title: "porter parameters generate"
-slug: porter_parameters_generate
-url: /cli/porter_parameters_generate/
+title: 'porter parameters generate'
+aliases:
+  - /cli/porter_parameters_generate/
 ---
+
 ## porter parameters generate
 
 Generate Parameter Set
@@ -25,7 +26,7 @@ file system.
 
 When you wish to install, upgrade or delete a bundle, Porter will use the
 parameter set to determine where to read the necessary information from and
-will then provide it to the bundle in the correct location. 
+will then provide it to the bundle in the correct location.
 
 ```
 porter parameters generate [NAME] [flags]

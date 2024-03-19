@@ -1,8 +1,9 @@
 ---
-title: "porter show"
-slug: porter_show
-url: /cli/porter_show/
+title: 'porter show'
+aliases:
+  - /cli/porter_show/
 ---
+
 ## porter show
 
 Show an installation of a bundle

@@ -1,8 +1,9 @@
 ---
-title: "porter credentials show"
-slug: porter_credentials_show
-url: /cli/porter_credentials_show/
+title: 'porter credentials show'
+aliases:
+  - /cli/porter_credentials_show/
 ---
+
 ## porter credentials show
 
 Show a Credential
