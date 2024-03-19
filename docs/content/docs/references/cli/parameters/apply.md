@@ -1,5 +1,7 @@
 ---
 title: "Porter Parameters Apply"
+aliases:
+  - /cli/porter_parameters_apply/
 ---
 
 Apply changes to a parameter set

@@ -1,6 +1,9 @@
 ---
 title: Azure Plugin
 description: Integrate Porter with Azure Cloud
+aliases:
+  - /plugins/azure/
+  - /plugins/azure-keyvault/
 ---
 
 <img src="/images/plugins/azure.png" class="mixin-logo" style="width: 300px"/>

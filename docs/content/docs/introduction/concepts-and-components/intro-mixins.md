@@ -18,7 +18,7 @@ Only the [exec mixin](/mixins/exec/) is installed by default.
 # Next
 
 - [Use a mixin in a bundle](/author-bundles/#mixins)
-- [Mixin Architecture](/mixin-dev-guide/architecture/)
+- [Mixin Architecture](/how-to-guides/work-with-mixins/)
 
 # Available Mixins
 

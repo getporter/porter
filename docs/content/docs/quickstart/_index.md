@@ -2,6 +2,8 @@
 title: "Quickstart"
 description: ""
 weight: 2
+aliases:
+  - /quickstart/
 ---
 
 This guide covers the most commonly used actions of Porter (install, upgrade, uninstall) and navigates users through their first Bundle experience. ✨ 

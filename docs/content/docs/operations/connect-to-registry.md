@@ -2,6 +2,8 @@
 title: Connect to a Registry
 description: Configure Porter to authenticate and connect to a registry
 weight: 6
+aliases:
+  - /operations/connect-registry/
 ---
 
 Porter stores bundles in OCI (Docker) registries.
@@ -108,8 +110,3 @@ Run the following commands to clean up resources created by the commands above:
 # Remove the registry containers and their temporary volumes
 docker rm -vf registry registry-with-tls
 ```
-
-## Next Steps
-
-- [Connect to Docker](/end-users/connect-docker/)
-- [Configure Porter](/end-users/configuration/)

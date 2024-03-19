@@ -4,6 +4,8 @@ description: External videos, blog posts and tutorials about CNAB and Porter
 weight: 13
 aliases:
   - /resources/
+  - /learning/
+  - /learn/
 ---
 
 Do you have a blog post, video, tutorial, demo, or some other neat thing

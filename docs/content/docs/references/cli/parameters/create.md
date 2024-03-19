@@ -1,5 +1,7 @@
 ---
 title: "Porter Parameters Create"
+aliases:
+  - /cli/porter_parameters_create/
 ---
 
 Create a Parameter Set

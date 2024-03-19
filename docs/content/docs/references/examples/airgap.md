@@ -2,6 +2,8 @@
 title: "Example: Airgapped Environments"
 description: "Learn how deploy in a disconnected or airgapped environments with Porter"
 weight: 10
+aliases:
+  - /examples/airgap/
 ---
 
 The [ghcr.io/getporter/examples/whalegap] bundle demonstrates how to create a bundle for airgapped, or disconnected, environments. 

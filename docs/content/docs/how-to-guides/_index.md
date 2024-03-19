@@ -2,6 +2,8 @@
 title: "How to Guides"
 description: ""
 weight: 8
+aliases:
+  - /how-to-guides/
 ---
 
 **Guides for working with Mixins and Plugins**

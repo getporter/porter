@@ -2,6 +2,8 @@
 title: Working with Plugins
 description: Learn how to use plugins with Porter
 weight: 2
+aliases:
+  - /how-to-guides/work-with-plugins/
 ---
 
 In this tutorial we will use the [Azure plugin][azure] to demonstrate how to

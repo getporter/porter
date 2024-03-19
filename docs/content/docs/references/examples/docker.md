@@ -2,6 +2,8 @@
 title: "Example: Docker"
 description: "Learn how to use Docker inside a bundle"
 weight: 20
+aliases:
+  - /examples/docker/
 ---
 
 <img src="/images/porter-with-docker.png" width="250px" align="right"/>
