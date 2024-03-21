@@ -154,7 +154,6 @@ func New(cxt *portercontext.Context, mixins pkgmgmt.PackageManager) *Linter {
 	}
 }
 
-
 func (l *Linter) Lint(ctx context.Context, m *manifest.Manifest) (Results, error) {
 	// Check for reserved porter prefix on parameter names
 	reservedPrefixes := []string{"porter-", "porter_"}
@@ -167,19 +166,18 @@ func (l *Linter) Lint(ctx context.Context, m *manifest.Manifest) (Results, error
 		for _, reservedPrefix := range reservedPrefixes {
 			if strings.HasPrefix(paramName, reservedPrefix) {
 
-				res := Result {
+				res := Result{
 					Level: LevelError,
-					Location: Location {
-						Action: "",
-						Mixin: "",
-						StepNumber: 0,
+					Location: Location{
+						Action:          "",
+						Mixin:           "",
+						StepNumber:      0,
 						StepDescription: "",
-				
 					},
-					Code: "porter-100",
-					Title: "Reserved name error",
+					Code:    "porter-100",
+					Title:   "Reserved name error",
 					Message: param.Name + " has a reserved prefix. Parameters cannot start with porter- or porter_",
-					URL: "https://getporter.org/reference/linter/#porter-100",
+					URL:     "https://porter.sh/reference/linter/#porter-100",
 				}
 				results = append(results, res)
 			}

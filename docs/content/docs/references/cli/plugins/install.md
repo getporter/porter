@@ -20,7 +20,7 @@ To install multiple plugins at once, users can pass a file to the install comman
 
 porter plugins install --file plugins.yaml
 
-The file format for the plugins.yaml can be found here: https://getporter.org/reference/file-formats/#plugins
+The file format for the plugins.yaml can be found here: https://porter.sh/reference/file-formats/#plugins
 
 By default plugins are downloaded from the official Porter plugin feed at https://cdn.porter.sh/plugins/atom.xml. To download from a mirror, set the environment variable PORTER_MIRROR, or mirror in the Porter config file, with the value to replace https://cdn.porter.sh with.
 
@@ -54,7 +54,7 @@ porter plugins install NAME [flags]
 ### Options inherited from parent commands
 
 ```
-      --experimental strings   Comma separated list of experimental features to enable. See https://getporter.org/configuration/#experimental-feature-flags for available feature flags.
+      --experimental strings   Comma separated list of experimental features to enable. See https://porter.sh/configuration/#experimental-feature-flags for available feature flags.
       --verbosity string       Threshold for printing messages to the console. Available values are: debug, info, warning, error. (default "info")
 ```
 

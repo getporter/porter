@@ -65,7 +65,7 @@ AZURE_HTTP_USER_AGENT="getporter/porter/v1.0.0 getporter/az/v1.2.3"
 
 You can add your own custom strings to the user agent string by editing your [template Dockerfile] and setting the AZURE_HTTP_USER_AGENT environment variable.
 
-[template Dockerfile]: https://getporter.org/bundle/custom-dockerfile/
+[template Dockerfile]: https://porter.sh/bundle/custom-dockerfile/
 
 ## Mixin Syntax
 

@@ -117,16 +117,16 @@ of Porter. When you are asked to cut a new release, here is the process:
    - Include instructions for installing or upgrading to the new release:
     ```
       # Install or Upgrade
-      Run (or re-run) the installation from https://getporter.org/install to get the
+      Run (or re-run) the installation from https://porter.sh/install to get the
     latest version of porter.
     ```
 1. Announce the new release in the community.
-   - Email the [mailing list](https://getporter.org/mailing-list) to announce the release. In your email, call out any breaking or notable changes.
-   - Post a message in [Porter's slack channel](https://getporter.org/community/#slack).
+   - Email the [mailing list](https://porter.sh/mailing-list) to announce the release. In your email, call out any breaking or notable changes.
+   - Post a message in [Porter's slack channel](https://porter.sh/community/#slack).
 1. If there are any issues fixed in the release and someone is waiting for the fix, comment on the issue to let them know and link to the release.
-1. If the release contains new features, it should be announced through a [blog](https://getporter.org/blog/) post and on Porter's twitter account.
+1. If the release contains new features, it should be announced through a [blog](https://porter.sh/blog/) post and on Porter's twitter account.
 
 [maintainers]: https://github.com/orgs/getporter/teams/maintainers
 [admins]: https://github.com/orgs/getporter/teams/admins
 [commits]: https://github.com/getporter/porter/commits/main
-[version strategy]: https://getporter.org/project/version-strategy/
+[version strategy]: https://porter.sh/project/version-strategy/

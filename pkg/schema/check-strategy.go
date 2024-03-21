@@ -36,7 +36,7 @@ func ValidateSchemaVersion(strategy CheckStrategy, supported *semver.Constraints
 	if specified == "" {
 		specified = "(none)"
 	}
-	baseMessage := fmt.Errorf("the schema version is %s but the supported schema version is %s. See https://getporter.org/reference/file-formats/#supported-versions for more details: %w",
+	baseMessage := fmt.Errorf("the schema version is %s but the supported schema version is %s. See https://porter.sh/reference/file-formats/#supported-versions for more details: %w",
 		specified, supported, ErrInvalidSchemaVersion)
 
 	specifiedV, err := semver.NewVersion(specified)

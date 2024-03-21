@@ -1,4 +1,4 @@
-baseURL = "https://getporter.org/"
+baseURL = "https://porter.sh/"
 languageCode = "en-us"
 title = "Porter"
 canonifyURLs = "false"

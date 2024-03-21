@@ -1,6 +1,6 @@
 ---
 title: Porter Lint Messages
-description: Describes the error and warning messages returned by [porter Lint command](https://getporter.org/cli/porter_lint)
+description: Describes the error and warning messages returned by [porter Lint command](https://porter.sh/cli/porter_lint)
 weight: 9
 ---
 
@@ -17,7 +17,7 @@ Using embedded Bash scripts can be problematic because they can be difficult to 
 
 To fix the problem indicated by the exec-100 warning, you can try replacing any embedded Bash scripts in your exec mixins with scripts.
 
-You can find more information about best practices for using the exec mixin on the Porter website at the following URL: https://getporter.org/best-practices/exec-mixin/#use-scripts.
+You can find more information about best practices for using the exec mixin on the Porter website at the following URL: https://porter.sh/best-practices/exec-mixin/#use-scripts.
 
 ## porter-100
 
@@ -29,4 +29,4 @@ Using a reserved prefix can be problematic as it can overwrite a predefined para
 
 To fix the problem indicated by the porter-100 error, you should replace the prefix of any newly defined parameters to not start with "porter".
 
-You can find more information about parameters in following URL: https://getporter.org/quickstart/parameters/.
+You can find more information about parameters in following URL: https://porter.sh/quickstart/parameters/.
