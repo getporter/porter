@@ -42,7 +42,7 @@ porter installations upgrade [INSTALLATION] [flags]
 ### Options
 
 ```
-      --allow-docker-host-access     Controls if the bundle should have access to the host's Docker daemon with elevated privileges. See https://getporter.org/configuration/#allow-docker-host-access for the full implications of this flag.
+      --allow-docker-host-access     Controls if the bundle should have access to the host's Docker daemon with elevated privileges. See https://porter.sh/configuration/#allow-docker-host-access for the full implications of this flag.
       --autobuild-disabled           Do not automatically build the bundle from source when the last build is out-of-date.
       --cnab-file string             Path to the CNAB bundle.json file.
   -c, --credential-set stringArray   Credential sets to use when running the bundle. It should be a named set of credentials and may be specified multiple times.
@@ -63,7 +63,7 @@ porter installations upgrade [INSTALLATION] [flags]
 ### Options inherited from parent commands
 
 ```
-      --experimental strings   Comma separated list of experimental features to enable. See https://getporter.org/configuration/#experimental-feature-flags for available feature flags.
+      --experimental strings   Comma separated list of experimental features to enable. See https://porter.sh/configuration/#experimental-feature-flags for available feature flags.
       --verbosity string       Threshold for printing messages to the console. Available values are: debug, info, warning, error. (default "info")
 ```
 

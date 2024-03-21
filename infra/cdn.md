@@ -18,6 +18,6 @@ We have a [packages](https://github.com/getporter/packages) repository that has 
 
 ## DNS
 
-DNS entries for the `porter.sh` and `getporter.org` domains are managed via a [Netlify](https://www.netlify.com/) account.  A `cdn` CNAME record exists in this configuration such that `cdn.porter.sh` can represent the hostname for all artifact URLs.
+DNS entries for the `porter.sh` and `porter.sh` domains are managed via a [Netlify](https://www.netlify.com/) account.  A `cdn` CNAME record exists in this configuration such that `cdn.porter.sh` can represent the hostname for all artifact URLs.
 
 Netlify handles redirecting traffic to cdn.porter.sh to the appropriate backing store (either a GH release artifact or a file in a repo).

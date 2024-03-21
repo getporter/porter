@@ -14,7 +14,7 @@ Check out the new features introduced in Porter v1.0.0-alpha.3 such as MongoDB, 
 
 This is a big release for our v1 alpha with LOTS of major changes that we hope make Porter easier to use such as [MongoDB](#mongodb-support), [namespaces](#namespaces), [labels](#labels), [bundle state](#bundle-state), and [credential import](#import-credentials-and-parameter-sets). Our [release notes] have a full accounting of all **fifty-eight** pull requests that were included in this release.
 
-A v1 version of our documentation is available at https://getporter.org.
+A v1 version of our documentation is available at https://porter.sh.
 
 [release notes]: https://github.com/getporter/porter/releases/tag/v1.0.0-alpha.3
 

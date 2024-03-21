@@ -358,7 +358,7 @@ func (p *Porter) BuildActionArgs(ctx context.Context, installation storage.Insta
 // Version tag should always be prefixed with a "v", see https://github.com/getporter/porter/issues/2886.
 // This is safe because "porter publish" adds a "v", see
 // https://github.com/getporter/porter/blob/17bd7816ef6bde856793f6122e32274aa9d01d1b/pkg/storage/installation.go#L350
-func ensureVPrefix(opts *BundleReferenceOptions, out io.Writer) error {
+func bensureVPrefix(opts *BundleReferenceOptions, out io.Writer) error {
 	var ociRef *cnab.OCIReference
 	if opts._ref != nil {
 		ociRef = opts._ref

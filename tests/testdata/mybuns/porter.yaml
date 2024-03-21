@@ -145,7 +145,7 @@ outputs:
       - upgrade
       - uninstall
   - name: connStr
-    $id: "getporter.org/interfaces/mysql.connection-string"
+    $id: "porter.sh/interfaces/mysql.connection-string"
     default: ""
     applyTo:
       - install

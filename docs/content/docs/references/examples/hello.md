@@ -7,7 +7,7 @@ aliases:
   - /examples/hello-world/
 ---
 
-Source: https://getporter.org/examples/src/hello
+Source: https://porter.sh/examples/src/hello
 
 The hello world bundle, [ghcr.io/getporter/examples/porter-hello], is the simplest bundle possible.
 It prints a message to the console when various actions are performed.

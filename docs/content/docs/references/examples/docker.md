@@ -8,7 +8,7 @@ aliases:
 
 <img src="/images/porter-with-docker.png" width="250px" align="right"/>
 
-Source: https://getporter.org/examples/src/docker
+Source: https://porter.sh/examples/src/docker
 
 The [ghcr.io/getporter/examples/whalesay] bundle demonstrates how to use Docker inside a bundle!
 

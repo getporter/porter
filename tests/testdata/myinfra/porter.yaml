@@ -23,7 +23,7 @@ dependencies:
       bundle:
         reference: "localhost:5000/mysqldb:v0.1.0"
         interface:
-          id: "https://getporter.org/interfaces/#mysql"
+          id: "https://porter.sh/interfaces/#mysql"
       credentials:
         token: ${bundle.credentials.token}
       parameters:
