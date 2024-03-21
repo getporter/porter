@@ -8,7 +8,7 @@ parameters:
   - name: connstr
     description: "The database connection string"
     env: CONNSTR
-    $id: "getporter.org/interfaces/mysql.connection-string"
+    $id: "porter.sh/interfaces/mysql.connection-string"
   - name: logLevel
     type: string
 

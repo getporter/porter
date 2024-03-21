@@ -16,7 +16,7 @@ const (
 	DependenciesV2ExtensionKey = "org.getporter." + DependenciesV2ExtensionShortHand
 
 	// DependenciesV2Schema represents the schema for the DependenciesV2 Extension
-	DependenciesV2Schema = "https://getporter.org/extensions/dependencies/v2/schema.json"
+	DependenciesV2Schema = "https://porter.sh/extensions/dependencies/v2/schema.json"
 )
 
 // DependenciesV2Extension represents the required extension to enable dependencies

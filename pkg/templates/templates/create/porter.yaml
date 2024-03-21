@@ -1,7 +1,7 @@
 # This is the configuration for Porter
 # You must define steps for each action, but the rest is optional
-# See https://getporter.org/bundle/manifest/file-format/ for a description of all the allowed fields in this document.
-# See https://getporter.org/author-bundles for documentation on how to configure your bundle.
+# See https://porter.sh/bundle/manifest/file-format/ for a description of all the allowed fields in this document.
+# See https://porter.sh/author-bundles for documentation on how to configure your bundle.
 # Uncomment out the sections below to take full advantage of what Porter can do!
 
 # Optional indicator of the resource type of this file
@@ -23,7 +23,7 @@ description: "An example Porter configuration"
 registry: "localhost:5000"
 
 # If you want to customize the Dockerfile in use, uncomment the line below and update the referenced file. 
-# See https://getporter.org/bundle/custom-dockerfile/
+# See https://porter.sh/bundle/custom-dockerfile/
 #dockerfile: template.Dockerfile
 
 # Declare and optionally configure the mixins used by the bundle
@@ -55,7 +55,7 @@ uninstall:
         - uninstall
 
 # Below is an example of how to define credentials
-# See https://getporter.org/author-bundles/#credentials
+# See https://porter.sh/author-bundles/#credentials
 #credentials:
 #  - name: kubeconfig
 #    path: /home/nonroot/.kube/config
@@ -63,7 +63,7 @@ uninstall:
 #    env: USERNAME
 
 # Below is an example of how to define parameters
-# See https://getporter.org/author-bundles/#parameters
+# See https://porter.sh/author-bundles/#parameters
 #parameters:
 #  - name: mysql_user
 #    type: string
@@ -73,7 +73,7 @@ uninstall:
 # for the terraform mixin. This allows you to track
 # terraform state using the bundle instead of configuring
 # a remote backend.
-# See https://getporter.org/author-bundles/#state
+# See https://porter.sh/author-bundles/#state
 #state:
 #  - name: tfstate
 #    path: terraform/terraform.tfstate

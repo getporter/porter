@@ -14,7 +14,7 @@ install:
       description: trigger a lint error
       command: bash
       flags:
-        # This won't work because it's quoted improperly https://getporter.org/best-practices/exec-mixin/
+        # This won't work because it's quoted improperly https://porter.sh/best-practices/exec-mixin/
         c: echo "Hello World"
 
 upgrade:

@@ -31,7 +31,7 @@ Here are some ideas for how you can be more involved and participate in the comm
 
 They must follow our [Code of Conduct](CODE_OF_CONDUCT.md).
 
-[slack]: https://getporter.org/community#slack
+[slack]: https://porter.sh/community#slack
 
 ## Contributor
 

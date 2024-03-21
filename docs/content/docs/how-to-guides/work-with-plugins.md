@@ -229,7 +229,7 @@ explain` to see what credentials are necessary.
 $ porter explain ghcr.io/getporter/examples/plugins-tutorial:v0.2.0
 Name: plugins-tutorial
 Description: Example of porter resolving credentials from a secrets store using a plugin.
-This bundle is a companion for the plugin tutorial at https://getporter.org/plugins/tutorial/.
+This bundle is a companion for the plugin tutorial at https://porter.sh/plugins/tutorial/.
 Version: 0.1.0
 
 Credentials:

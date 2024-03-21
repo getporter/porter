@@ -46,7 +46,7 @@ exec:
   flags:
     c: '"echo Hello World"'
 `,
-		URL: "https://getporter.org/best-practices/exec-mixin/#quoting-escaping-bash-and-yaml",
+		URL: "https://porter.sh/best-practices/exec-mixin/#quoting-escaping-bash-and-yaml",
 	}
 	assert.Equal(t, wantInstallError, gotInstallError)
 }

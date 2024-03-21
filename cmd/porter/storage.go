@@ -29,11 +29,11 @@ func buildStorageMigrateCommand(p *porter.Porter) *cobra.Command {
 		Short: "Migrate data from v0.38 to v1",
 		Long: `Migrate data from Porter v0.38 into a v1 installation of Porter.
 
-See https://getporter.org/storage-migrate for a full description of the migration process. Below is a summary:
+See https://porter.sh/storage-migrate for a full description of the migration process. Below is a summary:
 
 Before running this command, you should have:
 
-1. Installed Porter v1, see https://getporter.org/install for instructions.
+1. Installed Porter v1, see https://porter.sh/install for instructions.
 2. Renamed the old PORTER_HOME directory, for example: mv ~/.porter ~/.porterv0.
 3. Created a new PORTER_HOME directory for the new version of Porter, for example: mkdir ~/.porter.
 4. Configured a default storage account for the new version of Porter. The data from the old account will be migrated into the default storage account.

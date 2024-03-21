@@ -31,7 +31,7 @@ outputs:
 dependencies:
   provides:
     interface:
-      id: "https://getporter.org/interfaces/#mysql"
+      id: "https://porter.sh/interfaces/#mysql"
 
 mixins:
   - exec

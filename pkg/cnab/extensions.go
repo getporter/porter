@@ -4,7 +4,7 @@ import "fmt"
 
 const (
 	// PorterExtension is the key for all Porter configuration stored in the custom section of bundles.
-	// Since it was defined before we had getporter.org, it uses our legacy domain.
+	// Since it was defined before we had porter.sh, it uses our legacy domain.
 	PorterExtension = "sh.porter"
 
 	// OfficialExtensionsPrefix is the prefix applied to extensions defined in the CNAB spec.
