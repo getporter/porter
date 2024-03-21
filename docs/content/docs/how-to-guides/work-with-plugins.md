@@ -10,76 +10,18 @@ In this tutorial we will use the [Azure plugin][azure] to demonstrate how to
 configure and use [plugins][plugins] with Porter. This allows us to manage
 bundles as a team and resolve credentials from a secure secret store.
 
-1. [Create a storage account](#create-a-storage-account)
-1. [Create a container for porter](#create-a-container-for-porter)
-1. [Save the storage account connection string](#save-the-storage-account-connection-string)
-1. [Create a key vault](#create-a-key-vault)
-1. [Add a secret](#add-a-secret)
-1. [Create a service principal](#create-a-service-principal)
-1. [Configure permissions on key vault](#configure-permissions-on-key-vault)
-1. [Configure Porter to use the plugin](#configure-porter-to-use-the-plugin)
-1. [Try it out](#try-it-out)
+- [Prerequisites](#prerequisites)
+- [Create a key vault](#create-a-key-vault)
+- [Add a secret](#add-a-secret)
+- [Create a service principal](#create-a-service-principal)
+- [Configure permissions on key vault](#configure-permissions-on-key-vault)
+- [Configure Porter to use the plugin](#configure-porter-to-use-the-plugin)
+- [Try it out](#try-it-out)
 
 ## Prerequisites
 
 - A [Microsoft Azure account](https://azure.microsoft.com/en-us/free/)
 - [Install](/install/) Porter
-
-## Create a storage account
-
-Porter needs a blob storage account to store files.
-
-1. On the Azure portal menu, select **All services**. In the list of resources, type **Storage Accounts**.
-
-1. On the Storage Accounts window that appears, choose **Add**.
-
-1. Under the Account kind field, select either **StorageV2 (general purpose v2)** or **BlobStorage**.
-
-1. Select Review + Create to review your storage account settings and create the account.
-
-1. Select **Create**.
-
-## Create a container for Porter
-
-Porter stores its data in a single blob storage container named "porter".
-
-1. Navigate to your new storage account in the Azure portal.
-
-1. In the left menu for the storage account, scroll to the **Blob service** section, then select **Containers**.
-
-1. Select the **+ Container** button.
-
-1. Type `porter` for the name of the new container. The name must be porter.
-
-1. Leave the access level for the container to **Private (no anonymous access)**.
-
-1. Click **OK** to create the container.
-
-## Save the storage account connection string
-
-Next we will save the connection string for the storage account.
-
-1. Navigate to your new storage account in the Azure portal.
-
-1. In the **Settings** section of the storage account overview, select **Access keys**. Your account access keys appear, as well as the complete connection string for each key.
-
-1. Find the **Connection String** value under **key1**, and click the **Copy** button to copy the account key.
-
-   ![Storage Access Keys](/images/plugin-tutorial/storage-keys.png)
-
-1. Define an environment variable `AZURE_STORAGE_CONNECTION_STRING` and set its value with the connection string from the previous step.
-
-   **bash**
-
-   ```
-   export AZURE_STORAGE_CONNECTION_STRING="DefaultEndpointsProtocol=https;AccountName=***;AccountKey=***;EndpointSuffix=core.windows.net"
-   ```
-
-   **powershell**
-
-   ```
-   $env:AZURE_STORAGE_CONNECTION_STRING="DefaultEndpointsProtocol=https;AccountName=***;AccountKey=***;EndpointSuffix=core.windows.net"
-   ```
 
 ## Create a key vault
 
@@ -189,12 +131,6 @@ plugin.
 
 1. Open or create `~/.porter/config.yaml`.
 
-1. Add the following line to activate the Azure blob storage plugin:
-
-   ```yaml
-   default-storage-plugin: "azure.blob"
-   ```
-
 1. Add the following lines to activate and configure the Azure keyvault secrets
    plugin. Replace `myvault` with the name of the Key Vault that you created
    earlier.
@@ -217,10 +153,6 @@ Let's try out Porter with the plugin activated and see it in action!
 $ porter list
 NAME           CREATED      MODIFIED     LAST ACTION   LAST STATUS
 ```
-
-If you had previously installed bundles before, you won't see them anymore
-because porter is using the plugin to list bundles from the storage account. So
-let's install another bundle and have it saved to the cloud.
 
 We will use the `ghcr.io/getporter/examples/plugins-tutorial:v0.2.0` bundle, let's use `porter
 explain` to see what credentials are necessary.
@@ -279,20 +211,11 @@ Using Magic Password: *******
 execution completed successfully!
 ```
 
-The installation is recorded in Azure Blob Storage and read back out again
-by the Azure plugin when we run `porter list`.
-
 ```
 $ porter list
 NAME                CREATED          MODIFIED         LAST ACTION   LAST STATUS
 plugins-tutorial    51 seconds ago   49 seconds ago   install       success
 ```
 
-Now the installation of the plugins-tutorial bundle is saved in the cloud and
-shared with the rest of our team. A co-worker using the same configuration will
-see the same list of bundles that we do, and can perform further actions on the
-bundles. Go team! 🙌
-
-[create-storage]: https://docs.microsoft.com/en-us/azure/storage/common/storage-account-create?tabs=azure-portal
 [azure]: /plugins/azure/
 [plugins]: /plugins/
