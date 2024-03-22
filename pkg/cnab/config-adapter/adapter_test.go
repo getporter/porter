@@ -555,7 +555,7 @@ func TestManifestConverter_generateBundleOutputs(t *testing.T) {
 			ContentEncoding: "base64",
 		},
 		"porter-state": &definition.Schema{
-			ID:              "https://getporter.org/generated-bundle/#porter-state",
+			ID:              "https://porter.sh/generated-bundle/#porter-state",
 			Comment:         "porter-internal",
 			Description:     "Supports persisting state for bundles. Porter internal parameter that should not be set manually.",
 			Type:            "string",
@@ -646,7 +646,7 @@ func TestManifestConverter_generateDependenciesv2(t *testing.T) {
 			Bundle:  "getporter/azure-mysql:5.7",
 			Version: "5.7.x",
 			Interface: &depsv2ext.DependencyInterface{
-				ID:        "https://getporter.org/interfaces/#mysql",
+				ID:        "https://porter.sh/interfaces/#mysql",
 				Reference: "getporter/mysql-spec:5.7",
 				Document: depsv2ext.DependencyInterfaceDocument{
 					Outputs: map[string]bundle.Output{
@@ -804,7 +804,7 @@ func TestNewManifestConverter_generateOutputWiringParameter(t *testing.T) {
 		require.NotNil(t, param.Destination, "wiring parameters should have a destination set")
 		assert.Equal(t, "PORTER_MSG_OUTPUT", param.Destination.EnvironmentVariable, "unexpected destination environment variable set")
 
-		assert.Equal(t, "https://getporter.org/generated-bundle/#porter-parameter-source-definition", paramDef.ID, "wiring parameter should have a schema id set")
+		assert.Equal(t, "https://porter.sh/generated-bundle/#porter-parameter-source-definition", paramDef.ID, "wiring parameter should have a schema id set")
 		assert.NotSame(t, outputDef, paramDef, "wiring parameter definition should be a copy")
 		assert.Equal(t, outputDef.Type, paramDef.Type, "output def and param def should have the same type")
 		assert.Equal(t, cnab.PorterInternal, paramDef.Comment, "wiring parameter should be flagged as internal")
@@ -841,7 +841,7 @@ func TestNewManifestConverter_generateDependencyOutputWiringParameter(t *testing
 	require.NotNil(t, param.Destination, "wiring parameters should have a destination set")
 	assert.Equal(t, "PORTER_MYSQL_MYSQL_PASSWORD_DEP_OUTPUT", param.Destination.EnvironmentVariable, "unexpected destination environment variable set")
 
-	assert.Equal(t, "https://getporter.org/generated-bundle/#porter-parameter-source-definition", paramDef.ID, "wiring parameter should have a schema id set")
+	assert.Equal(t, "https://porter.sh/generated-bundle/#porter-parameter-source-definition", paramDef.ID, "wiring parameter should have a schema id set")
 	assert.Equal(t, cnab.PorterInternal, paramDef.Comment, "wiring parameter should be flagged as internal")
 	assert.Empty(t, paramDef.Type, "dependency output types are of unknown types and should not be defined")
 }

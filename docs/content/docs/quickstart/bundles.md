@@ -1,6 +1,8 @@
 ---
 title: "What is a bundle"
 descriptions: Learn about bundles and how to install them with Porter
+aliases:
+  - /quickstart/bundles/
 ---
 
 ## Porter Key Concepts
@@ -72,7 +74,7 @@ parameters:
     source:
       output: name
 ```
-Parameters are will be used throughout the bundle and can even be set within the bundle! If you'd like to deep dive into parameters, and how they work, that is documented [here](/introduction/concepts-and-components/intro-parameters.md).
+Parameters are will be used throughout the bundle and can even be set within the bundle! If you'd like to deep dive into parameters, and how they work, that is documented [here](/parameters/).
 
 ```yaml
 outputs:

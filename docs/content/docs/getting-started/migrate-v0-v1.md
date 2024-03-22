@@ -32,7 +32,7 @@ mv ~/.porter ~/.porterv0
 
 ## 2. Install Porter v1
 
-[Install](https://getporter.org/install/#prerelease) the most recent Porter v1 release.
+[Install](https://porter.sh/install/#prerelease) the most recent Porter v1 release.
 The first version of Porter v1 that supports migrating old data from v0 is v1.0.0-beta.1.
 You may choose to set the PORTER_HOME environment variable to change the default location, or omit setting that environment variable to install Porter v1 in the default directory **~/.porter**.
 The instructions on the installation page have you set PORTER_HOME to avoid accidentally overwriting your v0 directory but once you have moved your old directory it's safe to use the default installation location for Porter v1.
@@ -207,4 +207,4 @@ Do not publish a Porter v1 bundle on top of an existing bundle, otherwise older 
 
 [mongodb-docker]: /plugins/mongodb-docker
 [mongodb]: /plugins/mongodb/
-[File Formats]: https://getporter.org/references/file-formats/
+[File Formats]: https://porter.sh/references/file-formats/

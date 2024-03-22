@@ -2,11 +2,13 @@
 title: "Example: Airgapped Environments"
 description: "Learn how deploy in a disconnected or airgapped environments with Porter"
 weight: 10
+aliases:
+  - /examples/airgap/
 ---
 
 The [ghcr.io/getporter/examples/whalegap] bundle demonstrates how to create a bundle for airgapped, or disconnected, environments. 
 
-Source: https://getporter.org/examples/src/airgap
+Source: https://porter.sh/examples/src/airgap
 
 The whalegap bundle distributes the [whalesay app], which is deployed with Helm to a Kubernetes cluster.
 This application serves an endpoint that draws the cowsay CLI output as a whale.

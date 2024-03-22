@@ -39,7 +39,7 @@ how things will go.
 If this is your first contribution to Porter, we have a [tutorial] that walks you
 through how to setup your developer environment, make a change and test it.
 
-[tutorial]: https://getporter.org/docs/contribute/tutorial/
+[tutorial]: https://porter.sh/docs/contribute/tutorial/
 
 ## Code of Conduct
 
@@ -47,11 +47,11 @@ The Porter community is governed by our [Code of Conduct][coc].
 This includes but isn't limited to: the porter and related mixin repositories,
 slack, interactions on social media, project meetings, conferences and meetups.
 
-[coc]: https://getporter.org/src/CODE_OF_CONDUCT.md
+[coc]: https://porter.sh/src/CODE_OF_CONDUCT.md
 
 ## Find an issue
 
-Use the [getporter.org/find-issue] link to find good first issues for new contributors and help wanted issues for our other contributors.
+Use the [porter.sh/find-issue] link to find good first issues for new contributors and help wanted issues for our other contributors.
 
 When you have been contributing for a while, take a look at the "Backlog" column on our [project board][board] for high priority issues.
 The project board is at the organization level, so it contains issues from across all the Porter repositories. 
@@ -78,16 +78,16 @@ Another great way to contribute is to create a mixin! You can start using the
 When you create your first pull request, add your name to the bottom of our 
 [Contributors][contributors] list. Thank you for making Porter better! 🙇‍♀️
 
-[getporter.org/find-issue]: https://getporter.org/find-issue/
-[contributors]: https://getporter.org/src/CONTRIBUTORS.md                                          
+[porter.sh/find-issue]: https://porter.sh/find-issue/
+[contributors]: https://porter.sh/src/CONTRIBUTORS.md                                          
 [skeletor]: https://github.com/getporter/skeletor
-[mixin-dev-guide]: https://getporter.org/mixin-dev-guide/
-[good-first-issue]: https://getporter.org/board/good+first+issue
-[help-wanted]: https://getporter.org/board/help+wanted
-[board]: https://getporter.org/board
-[slack]: https://getporter.org/community#slack
-[roadmap]: https://getporter.org/src/README.md#roadmap
-[pep]: https://getporter.org/docs/contribute/proposals/
+[mixin-dev-guide]: https://porter.sh/mixin-dev-guide/
+[good-first-issue]: https://porter.sh/board/good+first+issue
+[help-wanted]: https://porter.sh/board/help+wanted
+[board]: https://porter.sh/board
+[slack]: https://porter.sh/community#slack
+[roadmap]: https://porter.sh/src/README.md#roadmap
+[pep]: https://porter.sh/docs/contribute/proposals/
 
 ## Which branch to use
 
@@ -233,7 +233,7 @@ Porter! After your first pull request is merged, you will be invited to the
 [Contributors team] which you may choose to accept (or not). Joining the team lets
 you have issues in GitHub assigned to you.
 
-[canary]: https://getporter.org/install/#canary
+[canary]: https://porter.sh/install/#canary
 [Contributors team]: https://github.com/orgs/getporter/teams/contributors
 
 ### Follow-on PR
@@ -258,7 +258,7 @@ Our [contribution ladder][ladder] defines the roles and responsibilities for thi
 project and how to participate with the goal of moving from a user to a
 maintainer.
 
-[ladder]: https://getporter.org/src/CONTRIBUTION_LADDER.md
+[ladder]: https://porter.sh/src/CONTRIBUTION_LADDER.md
 
 # Developer Tasks
 
@@ -387,7 +387,7 @@ installed into your bin directory in the root of the repository. You can use
 
 ## Plugin Debugging
 
-If you are developing a [plugin](https://getporter.org/plugins/) and you want to
+If you are developing a [plugin](https://porter.sh/plugins/) and you want to
 debug it follow these steps:
 
 The plugin to be debugged should be compiled and placed in porters plugin path
@@ -435,7 +435,7 @@ a new blog post and then preview it:
 1. Go to /docs/content/blog and create a new file. Whatever you name the file
     will be the last part of the URL. For example a file named
     "porter-collaboration.md" will be located at
-    <https://getporter.org/blog/porter-collaboration/>.
+    <https://porter.sh/blog/porter-collaboration/>.
     
 1. At the top of the file copy and paste the frontmatter template below. The
     frontmatter is YAML that instucts the blogging software, Hugo, how to render the
@@ -498,7 +498,7 @@ On the Jaeger dashboard, select "porter" from the service drop down, and click "
 
 The smoke and integration tests will run with telemetry enabled when the PORTER_TEST_TELEMETRY_ENABLED environment variable is true.
 
-[otel-jaeger bundle]: https://getporter.org/examples/src/otel-jaeger
+[otel-jaeger bundle]: https://porter.sh/examples/src/otel-jaeger
 
 ## Debug Smoke Tests
 
@@ -522,7 +522,7 @@ If you are using GoLand, use the **Go Remote** debug configuration and make sure
 
 ## Command Documentation
 
-Our commands are documented at <https://getporter.org/cli> and that documentation is
+Our commands are documented at <https://porter.sh/cli> and that documentation is
 generated by our CLI. You should regenerate that documentation when you change
 any files in **cmd/porter** by running `mage DocsGen` which is run every time
 you run `mage build`.
@@ -593,7 +593,7 @@ dependency injection and testing strategies.
   * **templates**: files that need to be compiled into the porter binary with
       version command.
 * **scripts**:
-  * **install**: Porter [installation](https://getporter.org/install) scripts
+  * **install**: Porter [installation](https://porter.sh/install) scripts
 * **tests** have Go-based integration tests.
 
 ## Logging
@@ -656,8 +656,8 @@ When you realize that you may need to make a breaking change, discuss it with a 
 Here are some examples of breaking changes:
 
 * The schema of porter.yaml changed.
-* The schema of Porter's [file formats](https://getporter.org/references/file-formats) changed.
-* The schema of Porter's [config file](https://getporter.org/configuration/#config-file) changed.
+* The schema of Porter's [file formats](https://porter.sh/references/file-formats) changed.
+* The schema of Porter's [config file](https://porter.sh/configuration/#config-file) changed.
 * Flags or behavior of a CLI command changed, such as removing a flag or adding a validation that can result in a hard error, preventing the command from running.
 
 All of Porter's documents have a schemaVersion field and when the schema of the document is changed, the version number should be incremented as well in the default set on new documents, the supported schema version constant in the code, and in the documentation for that document.
@@ -683,6 +683,6 @@ See the [Custom Windows CI Agent] documentation for details on how the agent is 
 Our [version strategy] explains how we version the project, when you should expect
 breaking changes in a release, and the process for the v1 release.
 
-[cdn]: https://getporter.org/src/infra/cdn.md
-[version strategy]: https://getporter.org/references/version-strategy/
-[Custom Windows CI Agent]: https://getporter.org/src/infra/custom-windows-ci-agent.md
+[cdn]: https://porter.sh/src/infra/cdn.md
+[version strategy]: https://porter.sh/references/version-strategy/
+[Custom Windows CI Agent]: https://porter.sh/src/infra/custom-windows-ci-agent.md

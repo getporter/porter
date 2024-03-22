@@ -891,6 +891,12 @@ func (p *Porter) applyActionOptionsToInstallation(ctx context.Context, ba Bundle
 		resolvedParams[k] = v
 	}
 
+	for name, value := range parsedOverrides {
+		if strings.Contains(name, "#") {
+			resolvedParams[name] = value
+		}
+	}
+
 	//
 	// 6. Separate out params for the root bundle from the ones intended for dependencies
 	//    This only applies to the dep v1 implementation, in dep v2 you can't specify rando params for deps

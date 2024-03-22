@@ -2,6 +2,8 @@
 title: Porter Manifest File Format 1.0.1
 description: The 1.0.1 file format for the Porter manifest, porter.yaml
 layout: single
+aliases:
+  - /bundle/manifest/file-format/
 ---
 
 The manifest is the porter.yaml file used to build a bundle.
