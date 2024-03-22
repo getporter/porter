@@ -97,7 +97,7 @@ func TestPorter_ListParameters(t *testing.T) {
 	})
 }
 
-func Test_loadParameters_paramNotDefined(t *testing.T) {
+func Test_loadParameters_IgnoreParamNotDefined(t *testing.T) {
 	t.Parallel()
 
 	r := NewTestPorter(t)
@@ -113,7 +113,7 @@ func Test_loadParameters_paramNotDefined(t *testing.T) {
 
 	i := storage.Installation{}
 	_, err := r.finalizeParameters(context.Background(), i, b, "action", overrides)
-	require.EqualError(t, err, "parameter foo not defined in bundle")
+	require.NoError(t, err)
 }
 
 func Test_loadParameters_definitionNotDefined(t *testing.T) {
