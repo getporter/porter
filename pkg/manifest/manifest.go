@@ -156,6 +156,13 @@ func (m *Manifest) Validate(ctx context.Context, cfg *config.Config) error {
 		result = multierror.Append(result, fmt.Errorf(invalidStepErrorFormat, "uninstall", err))
 	}
 
+	if m.Upgrade != nil {
+		err = m.Upgrade.Validate(m)
+		if err != nil {
+			result = multierror.Append(result, fmt.Errorf(invalidStepErrorFormat, "upgrade", err))
+		}
+	}
+
 	for actionName, steps := range m.CustomActions {
 		err := steps.Validate(m)
 		if err != nil {

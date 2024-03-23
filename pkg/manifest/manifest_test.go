@@ -177,6 +177,45 @@ func TestAction_Validate_RequireSingleMixinData(t *testing.T) {
 	assert.EqualError(t, err, "more than one mixin specified")
 }
 
+func TestAction_Validate_RequireSingleMixinData_Actions(t *testing.T) {
+	testcases := []struct {
+		name    string
+		getStep func(*Manifest) *Steps
+	}{
+		{"install", func(m *Manifest) *Steps { return &m.Install }},
+		{"uninstall", func(m *Manifest) *Steps { return &m.Uninstall }},
+		{"upgrade", func(m *Manifest) *Steps { return &m.Upgrade }},
+		{"custom", func(m *Manifest) *Steps { status := m.CustomActions["status"]; return &status }},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx := context.Background()
+			c := config.NewTestConfig(t)
+
+			c.TestContext.AddTestFile("testdata/simple.porter.yaml", config.Name)
+
+			m, err := LoadManifestFrom(ctx, c.Config, config.Name)
+			require.NoError(t, err, "could not load manifest")
+			step := tc.getStep(m)
+
+			if len(*step) == 0 {
+				*step = make(Steps, 1)
+				(*step)[0] = &Step{
+					Data: make(map[string]interface{}),
+				}
+				(*step)[0].Data["exec"] = ""
+			}
+
+			// Sabotage!
+			(*step)[0].Data["rando-mixin"] = ""
+
+			err = m.Validate(ctx, c.Config)
+			assert.ErrorContains(t, err, "more than one mixin specified")
+		})
+	}
+}
+
 func TestManifest_Empty_Steps(t *testing.T) {
 	c := config.NewTestConfig(t)
 
