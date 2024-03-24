@@ -97,3 +97,4 @@ and we will add you. **All** contributors belong here. 💯
 - [Ray Terrill](https://github.com/rayterrill)
 - [Kim Christensen](https://github.com/kichristensen)
 - [Shivam](https://github.com/Bharadwajshivam28)
+- [David Gannon](https://github.com/dgannon991)
