@@ -6,6 +6,7 @@ weight: 9
 
 - [exec-100](#exec-100)
 - [porter-100](#porter-100)
+- [porter-101](#porter-101)
 
 ## exec-100
 
@@ -30,3 +31,30 @@ Using a reserved prefix can be problematic as it can overwrite a predefined para
 To fix the problem indicated by the porter-100 error, you should replace the prefix of any newly defined parameters to not start with "porter".
 
 You can find more information about parameters in following URL: https://porter.sh/quickstart/parameters/.
+
+## porter-101
+
+The porter-101 error suggests that an action uses a parameter that is not available to it.
+
+This is an of a manifest triggering the error (shorten for brevity):
+
+```yaml
+parameters:
+  - name: uninstallParam
+    type: string
+    applyTo:
+      - uninstall # Notice the parameter only applies to the uninstall action
+
+install:
+  - exec:
+      description: "Install Hello World"
+      command: ./helpers.sh
+      arguments:
+        - install
+        - "${ bundle.parameters.uninstallParam }"
+```
+
+To fix the problem indicated by the porter-101 error, you should ensure that all parameters used in the action applies to the actions where
+it is referenced.
+
+You can find more information about applyTo in the following URL: https://porter.sh/docs/bundle/manifest/#parameter-types.
