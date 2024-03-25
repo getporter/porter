@@ -26,8 +26,17 @@ The [OWNERS.md] file defines the maintainers of the project.
 ## Release Process
 
 Maintainers create the next release when the main branch is stable and related
-groupings of work is complete. We do not have a fixed cadence and prefer to release
-smaller batches of work more often.
+groupings of work is complete. We have a loose cadence, and strive to hit a release 
+every three (3) months.
+
+Releases are done by creating a [new release](https://github.com/getporter/porter/releases/new)
+This will trigger the Github Action Pipelines to build and publish the new release to Github and 
+the Website. After this is done, we update the [CNCF Slack Channel](https://cloud-native.slack.com/) (#porter) & [Mailing List](https://groups.io/g/porter). 
+
+## Issue Response Timeline
+
+Porter is taken care of by maintainers and contributors who volunteer their time.
+We aim to **respond** to issues within five (5) business days.
 
 ## Roadmap
 
