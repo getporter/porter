@@ -24,3 +24,7 @@ grpc-porter-tls.key
 grpc-porter.csr
 .grpcurl/
 config.yaml
+
+# Output of the go coverage tool
+coverage-unit.out
+coverage-integration.out
