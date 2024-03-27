@@ -1,0 +1,45 @@
+
+# Test docs/ links are valid.
+# 
+# htmltest https://github.com/wjdp/htmltest-action/
+# hugo https://github.com/peaceiris/actions-hugo
+# upload test results https://github.com/actions/upload-artifact
+
+name: check-doc-links
+
+on: pull_request
+jobs:
+  htmltest:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive # Fetch Hugo themes
+          fetch-depth: 0 # Fetch all history for .GitInfo and .Lastmod
+
+      - uses: actions/checkout@v4
+        with:
+          submodules: true  # Fetch Hugo themes (true OR recursive)
+          fetch-depth: 0    # Fetch all history for .GitInfo and .Lastmod
+            
+      - name: Set up Hugo
+        uses: peaceiris/actions-hugo@v2
+        with:
+          hugo-version: '0.117.0'
+          extended: true
+
+      - name: Build Hugo
+        run: hugo -s docs -d $GITHUB_WORKSPACE/dist
+
+      - name: Run htmltest
+        uses: wjdp/htmltest-action@master
+        with:
+          path: dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: htmltest-output
+          path: dist
