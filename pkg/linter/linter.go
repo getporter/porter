@@ -192,6 +192,8 @@ func (l *Linter) Lint(ctx context.Context, m *manifest.Manifest) (Results, error
 
 	// Check if parameters apply to the steps
 	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
 	span.Debug("Validating that parameters applies to the actions...")
 	tmplParams := m.GetTemplatedParameters()
 	actions := []action{
@@ -209,10 +211,6 @@ func (l *Linter) Lint(ctx context.Context, m *manifest.Manifest) (Results, error
 		}
 		results = append(results, res...)
 	}
-	span.EndSpan()
-
-	ctx, span = tracing.StartSpan(ctx)
-	defer span.EndSpan()
 
 	span.Debug("Running linters for each mixin used in the manifest...")
 	q := query.New(l.Context, l.Mixins)
