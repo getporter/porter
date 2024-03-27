@@ -19,8 +19,4 @@ _Put any questions or notes for the reviewer here._
 - [ ] Did you change porter.yaml or a storage document record? Update the corresponding schema file.
 - [ ] If this is your first pull request, please add your name to the bottom of our [Contributors][contributors] list. Thank you for making Porter better! 🙇‍♀️
 
-# Reviewer Checklist
-* Comment with /azp run test-porter-release if a magefile or build script was modified
-* Comment with /azp run porter-integration if it's a non-trivial PR
-
 [contributors]: https://porter.sh/src/CONTRIBUTORS.md
