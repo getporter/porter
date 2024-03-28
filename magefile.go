@@ -274,7 +274,7 @@ func TestUnit() {
 		v = "-v"
 	}
 
-	must.Command("go", "test", v, "./...").CollapseArgs().RunV()
+	must.Command("go", "test", v, "./...", "-coverprofile", "coverage-unit.out").CollapseArgs().RunV()
 
 	// Verify integration tests compile since we don't run them automatically on pull requests
 	must.Run("go", "test", "-run=non", "-tags=integration", "./...")
@@ -588,7 +588,7 @@ func TestIntegration() {
 		path = "./tests/integration/" + filename
 	}
 
-	must.Command("go", "test", verbose, "-timeout=30m", run, "-tags=integration", path).CollapseArgs().RunV()
+	must.Command("go", "test", verbose, "-timeout=30m", run, "-tags=integration", path, "-coverprofile", "coverage-integration.out").CollapseArgs().RunV()
 }
 
 func TestInitWarnings() {
