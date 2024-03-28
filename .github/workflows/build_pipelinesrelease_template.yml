@@ -5,7 +5,7 @@ on:
     inputs:
       goVersion:
         required: false
-        default: 1.20.7
+        default: 1.21.3
         type: string
       registry:
         required: false
@@ -129,7 +129,7 @@ jobs:
     - Validate-smoke_test
     runs-on: ubuntu-latest
     permissions: write-all
-    if: success() && inputs.shouldPublish
+    if: success() && ${{ inputs.shouldPublish == true }}
     steps:
     - name: checkout
       uses: actions/checkout@v4.1.0
@@ -163,7 +163,7 @@ jobs:
     - Validate-smoke_test
     runs-on: ubuntu-latest
     permissions: write-all
-    if: success() && inputs.shouldPublish
+    if: success() && ${{inputs.shouldPublish == true}}
     steps:
     - name: checkout
       uses: actions/checkout@v4.1.0

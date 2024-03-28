@@ -5,6 +5,7 @@ on:
     - v*
     - "!latest*"
     - "!canary*"
+
 jobs:
   build_pipelinesrelease_template:
     name: build_pipelinesrelease_template
@@ -12,4 +13,4 @@ jobs:
     with:
       registry: ghcr.io/getporter
       shouldPublish: true
-      skipTests: true
+      skipTests: false
