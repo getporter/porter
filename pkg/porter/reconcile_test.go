@@ -73,10 +73,9 @@ func TestPorter_IsInstallationInSync(t *testing.T) {
 		i := storage.NewInstallation("", "mybuns")
 		i.ParameterSets = []string{"myps"}
 		i.Status.Installed = &now
-		run := storage.Run{
-			// Use the default values from the bundle.json so that we don't trigger reconciliation
-			Parameters: storage.NewInternalParameterSet(i.Namespace, i.Name, storage.ValueStrategy("my-second-param", "override")),
-		}
+		run := i.NewRun(cnab.ActionUpgrade, bun)
+		// Use the default values from the bundle.json so that we don't trigger reconciliation
+		run.Parameters.Parameters = []secrets.SourceMap{storage.ValueStrategy("my-second-param", "override")}
 		upgradeOpts := NewUpgradeOptions()
 		upgradeOpts.bundleRef = &cnab.BundleReference{Definition: bun}
 		require.NoError(t, p.applyActionOptionsToInstallation(ctx, upgradeOpts, &i))
@@ -115,9 +114,8 @@ func TestPorter_IsInstallationInSync(t *testing.T) {
 
 		i := storage.NewInstallation("", "mybuns")
 		i.Status.Installed = &now
-		run := storage.Run{
-			Parameters: storage.NewInternalParameterSet(i.Namespace, i.Name, storage.ValueStrategy("my-second-param", "newvalue")),
-		}
+		run := i.NewRun(cnab.ActionUpgrade, bun)
+		run.Parameters.Parameters = []secrets.SourceMap{storage.ValueStrategy("my-second-param", "newvalue")}
 		upgradeOpts := NewUpgradeOptions()
 		upgradeOpts.bundleRef = &cnab.BundleReference{Definition: bun}
 		require.NoError(t, p.applyActionOptionsToInstallation(ctx, upgradeOpts, &i))
@@ -137,11 +135,10 @@ func TestPorter_IsInstallationInSync(t *testing.T) {
 		i := storage.NewInstallation("", "mybuns")
 		i.Status.Installed = &now
 		i.CredentialSets = []string{"newcreds"}
-		run := storage.Run{
-			CredentialSets: []string{"oldcreds"},
-			// Use the default values from the bundle.json so they don't trigger the reconciliation
-			Parameters: storage.NewInternalParameterSet(i.Namespace, i.Name, storage.ValueStrategy("my-second-param", "spring-music-demo")),
-		}
+		run := i.NewRun(cnab.ActionUpgrade, bun)
+		run.CredentialSets = []string{"oldcreds"}
+		// Use the default values from the bundle.json so they don't trigger the reconciliation
+		run.Parameters.Parameters = []secrets.SourceMap{storage.ValueStrategy("my-second-param", "spring-music-demo")}
 		upgradeOpts := NewUpgradeOptions()
 		upgradeOpts.bundleRef = &cnab.BundleReference{Definition: bun}
 		require.NoError(t, p.applyActionOptionsToInstallation(ctx, upgradeOpts, &i))
