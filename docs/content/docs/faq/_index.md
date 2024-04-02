@@ -9,8 +9,12 @@ weight: 16
 - [Can I use Porter bundles with other CNAB tools?](#can-i-use-porter-bundles-with-other-cnab-tools)
 - [Does Porter solve something that Ansible, Terraform, etc does not?](#does-porter-solve-something-that-ansible-terraform-etc-does-not)
 - [If an upgrade fails, can I roll back?](#if-an-upgrade-fails-can-i-roll-back)
-- [How do I run commands that aren't in the default invocation image?](#how-do-i-run-commands-that-aren-t-in-the-default-invocation-image)
+- [How do I run commands that aren't in the default invocation image?](#how-do-i-run-commands-that-arent-in-the-default-invocation-image)
 - [Are mixins just wrappers around OS or executable calls?](#are-mixins-just-wrappers-around-os-or-executable-calls)
+- [Does Porter have its own registry?](#does-porter-have-its-own-registry)
+- [What do mixins do?](#what-do-mixins-do)
+- [What is the difference between Porter and existing DevOps tools?](#what-is-the-difference-between-porter-and-existing-devops-tools)
+- [Do you have suggestions for bundles that I could make?](#do-you-have-suggestions-for-bundles-that-i-could-make)
 
 ## What is CNAB?
 
