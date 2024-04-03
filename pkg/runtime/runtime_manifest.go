@@ -417,6 +417,30 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 	return data, nil
 }
 
+func (m *RuntimeManifest) buildAndResolveMappedDependencyOutputs(sourceData map[string]interface{}) error {
+	for _, manifestDep := range m.Dependencies.Requires {
+		var depBun = sourceData["bundle"].(map[string]interface{})["dependencies"].(map[string]interface{})[manifestDep.Name].(map[string]interface{})
+		var depOutputs map[string]interface{}
+		if depBun["outputs"] == nil {
+			depOutputs = make(map[string]interface{})
+			depBun["outputs"] = depOutputs
+		} else {
+			depOutputs = depBun["outputs"].(map[string]interface{})
+		}
+
+		for outputName, mappedOutput := range manifestDep.Outputs {
+			mappedOutputTemplate := m.GetTemplatePrefix() + mappedOutput
+			renderedOutput, err := mustache.RenderRaw(mappedOutputTemplate, true, sourceData)
+			if err != nil {
+				return fmt.Errorf("unable to render dependency %s output template %s: %w", manifestDep.Name, mappedOutput, err)
+			}
+			depOutputs[outputName] = renderedOutput
+		}
+	}
+
+	return nil
+}
+
 // ResolveStep will walk through the Step's data and resolve any placeholder
 // data using the definitions in the manifest, like parameters or credentials.
 func (m *RuntimeManifest) ResolveStep(ctx context.Context, stepIndex int, step *manifest.Step) error {
@@ -426,6 +450,13 @@ func (m *RuntimeManifest) ResolveStep(ctx context.Context, stepIndex int, step *
 	sourceData, err := m.buildSourceData()
 	if err != nil {
 		return log.Error(fmt.Errorf("unable to build step template data: %w", err))
+	}
+
+	mustache.AllowMissingVariables = false
+
+	err = m.buildAndResolveMappedDependencyOutputs(sourceData)
+	if err != nil {
+		return log.Errorf("unable to build and resolve mapped dependency outputs: %w", err)
 	}
 
 	// Get the original yaml for the current step
@@ -439,7 +470,6 @@ func (m *RuntimeManifest) ResolveStep(ctx context.Context, stepIndex int, step *
 	//fmt.Fprintf(m.Err, "=== Step Data ===\n%v\n", sourceData)
 	m.debugf(log, "=== Step Template ===\n%v\n", stepTemplate)
 
-	mustache.AllowMissingVariables = false
 	rendered, err := mustache.RenderRaw(stepTemplate, true, sourceData)
 	if err != nil {
 		return log.Errorf("unable to render step template %s: %w", stepTemplate, err)

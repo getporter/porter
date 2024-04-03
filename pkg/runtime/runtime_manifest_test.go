@@ -406,6 +406,95 @@ install:
 	assert.Equal(t, []string{"mysql-password", "password"}, gotSensitiveValues, "Incorrect values were marked as sensitive")
 }
 
+func TestResolveStep_DependencyMappedOutput(t *testing.T) {
+	ctx := context.Background()
+	pCtx := portercontext.NewTestContext(t)
+
+	mContent := `schemaVersion: 1.0.0
+dependencies:
+  requires: 
+  - name: mysql
+    bundle:
+      reference: "getporter/porter-mysql"
+    outputs:
+      mappedOutput: Mapped
+
+install:
+- mymixin:
+    Arguments:
+    - ${ bundle.dependencies.mysql.outputs.mappedOutput }
+`
+	rm := runtimeManifestFromStepYaml(t, pCtx, mContent)
+	rm.bundles = map[string]cnab.ExtendedBundle{
+		"mysql": cnab.NewBundle(bundle.Bundle{}),
+	}
+
+	s := rm.Install[0]
+	err := rm.ResolveStep(ctx, 0, s)
+	require.NoError(t, err)
+
+	require.IsType(t, map[string]interface{}{}, s.Data["mymixin"], "Data.mymixin has incorrect type")
+	mixin := s.Data["mymixin"].(map[string]interface{})
+	require.IsType(t, mixin["Arguments"], []interface{}{}, "Data.mymixin.Arguments has incorrect type")
+	args := mixin["Arguments"].([]interface{})
+
+	assert.Equal(t, []interface{}{"Mapped"}, args, "Incorrect template args passed to the mixin step")
+}
+
+func TestResolveStep_DependencyTemplatedMappedOutput(t *testing.T) {
+	ctx := context.Background()
+	pCtx := portercontext.NewTestContext(t)
+	pCtx.Setenv("PORTER_MYSQL_PASSWORD_DEP_OUTPUT", "password")
+
+	mContent := `schemaVersion: 1.0.0
+dependencies:
+  requires: 
+  - name: mysql
+    bundle:
+      reference: "getporter/porter-mysql"
+    outputs:
+      mappedOutput: Mapped ${ bundle.dependencies.mysql.outputs.password }
+
+install:
+- mymixin:
+    Arguments:
+    - ${ bundle.dependencies.mysql.outputs.mappedOutput }
+`
+	rm := runtimeManifestFromStepYaml(t, pCtx, mContent)
+	ps := cnab.ParameterSources{}
+	ps.SetParameterFromDependencyOutput("porter-mysql-password", "mysql", "password")
+	rm.bundle = cnab.NewBundle(bundle.Bundle{
+		Custom: map[string]interface{}{
+			cnab.ParameterSourcesExtensionKey: ps,
+		},
+		RequiredExtensions: []string{cnab.ParameterSourcesExtensionKey},
+	})
+
+	rm.bundles = map[string]cnab.ExtendedBundle{
+		"mysql": cnab.NewBundle(bundle.Bundle{
+			Outputs: map[string]bundle.Output{
+				"password": {
+					Definition: "password",
+				},
+			},
+			Definitions: map[string]*definition.Schema{
+				"password": {WriteOnly: makeBoolPtr(true)},
+			},
+		}),
+	}
+
+	s := rm.Install[0]
+	err := rm.ResolveStep(ctx, 0, s)
+	require.NoError(t, err)
+
+	require.IsType(t, map[string]interface{}{}, s.Data["mymixin"], "Data.mymixin has incorrect type")
+	mixin := s.Data["mymixin"].(map[string]interface{})
+	require.IsType(t, mixin["Arguments"], []interface{}{}, "Data.mymixin.Arguments has incorrect type")
+	args := mixin["Arguments"].([]interface{})
+
+	assert.Equal(t, []interface{}{"Mapped password"}, args, "Incorrect template args passed to the mixin step")
+}
+
 func TestResolveInMainDict(t *testing.T) {
 	ctx := context.Background()
 	c := config.NewTestConfig(t)
