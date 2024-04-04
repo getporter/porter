@@ -82,7 +82,7 @@ jobs:
       run: go run mage.go Vet
       shell: bash
     - name: Lint
-      run: go run mage.go Lint
+      run: go run mage.go LintChanges
       shell: bash
 
   Build-docker-images:

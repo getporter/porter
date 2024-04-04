@@ -699,10 +699,16 @@ func Vet() {
 	must.RunV("go", "vet", "./...")
 }
 
-// Run staticcheck on the project
+// Run golangci-lint on the project, but only for the latest changes
+func LintChanges() {
+	mg.Deps(tools.EnsureGolangCILint)
+	must.RunV("golangci-lint", "run", "--new-from-rev=HEAD~1", "--whole-files", "./...")
+}
+
+// Run golangci-lint on the project
 func Lint() {
-	mg.Deps(tools.EnsureStaticCheck)
-	must.RunV("staticcheck", "./...")
+	mg.Deps(tools.EnsureGolangCILint)
+	must.RunV("golangci-lint", "run", "./...")
 }
 
 func getPorterHome() string {
