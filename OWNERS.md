@@ -9,12 +9,16 @@ questions about. If you don't customize it, Carolyn may make it up for you. 😉
 
 These are the members of the [maintainers team](https://github.com/orgs/getporter/teams/maintainers).
 
-* [Jeremy Rickard](https://github.com/jeremyrickard)
+* [Jeremy Rickard](https://github.com/jeremyrickard) [Microsoft]
     * Runtime and CNAB spec nerd
-* [Brian DeGeeter](https://github.com/bdegeeter)
-* [Steven Gettys](https://github.com/sgettys)
-* [Sarah Christoff](https://github.com/schristoff)
-* [Troy Connor](https://github.com/troy0820)
+* [Brian DeGeeter](https://github.com/bdegeeter) [Volant Partners]
+    * Porter Operator Lead
+* [Steven Gettys](https://github.com/sgettys) [Volant Partners]
+    * Porter Operator Lead
+* [Sarah Christoff](https://github.com/schristoff) [Defense Unicorns]
+    * Porter Core Lead 
+* [Troy Connor](https://github.com/troy0820) [Microsoft]
+    * Porter Operator Lead
 
 ## Emeritus Maintainers
 
