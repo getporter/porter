@@ -12,6 +12,7 @@
 * [Admin](#admin)
   * [How to become an admin](#admin)
 * [Release Manager](#release-manager)
+  * [How to become an release manager](#how-to-become-a-release-manager)
 ---
 
 Our ladder defines the roles and responsibilities for this project and how to
@@ -125,6 +126,14 @@ with key achievements in that release
 
 
 [release managers]: https://github.com/orgs/getporter/teams/release
+
+### How to become a release manager
+
+Anyone can become a release manager, all you have to do is reach out to a maintainer
+who will give you the proper documentation, help you identify the release date and be
+available on the date of the release. It is recommended release managers try to sign up
+for at least 2 (two) releases, so they can get comfortable with the release process. 
+
 
 ## Inactivity
 It is important for maintainers to stay active to set an example and show commitment to the project.
