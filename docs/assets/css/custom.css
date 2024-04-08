@@ -1,3 +1,7 @@
 :root {
   --primary-hue: 336deg;
 }
+
+.content iframe {
+  max-width: 100%;
+}
