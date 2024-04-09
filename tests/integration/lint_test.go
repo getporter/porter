@@ -47,3 +47,15 @@ func TestLint_ApplyToParam(t *testing.T) {
 	})
 	require.Contains(t, output, "error(porter-101) - Parameter does not apply to action", "parameters being used in actions to which they don't apply should be an error")
 }
+
+func TestLint_DependenciesSameName(t *testing.T) {
+	test, err := tester.NewTest(t)
+	defer test.Close()
+	require.NoError(t, err, "test setup failed")
+
+	_, output, _ := test.RunPorterWith(func(cmd *shx.PreparedCommand) {
+		cmd.Args("lint")
+		cmd.In(filepath.Join(test.RepoRoot, "tests/integration/testdata/bundles/bundle-with-samenamedeps-lint-error"))
+	})
+	require.Contains(t, output, "error(porter-102) - Dependency error", "multiple dependencies with the same name should be an error")
+}

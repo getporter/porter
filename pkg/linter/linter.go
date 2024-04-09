@@ -210,6 +210,28 @@ func (l *Linter) Lint(ctx context.Context, m *manifest.Manifest) (Results, error
 			return nil, span.Error(fmt.Errorf("error validating action: %s", action.name))
 		}
 		results = append(results, res...)
+  }
+
+	deps := make(map[string]interface{}, len(m.Dependencies.Requires))
+	for _, dep := range m.Dependencies.Requires {
+		if _, exists := deps[dep.Name]; exists {
+			res := Result{
+				Level: LevelError,
+				Location: Location{
+					Action:          "",
+					Mixin:           "",
+					StepNumber:      0,
+					StepDescription: "",
+				},
+				Code:    "porter-102",
+				Title:   "Dependency error",
+				Message: fmt.Sprintf("The dependency %s is defined multiple times", dep.Name),
+				URL:     "https://porter.sh/reference/linter/#porter-102",
+			}
+			results = append(results, res)
+		} else {
+			deps[dep.Name] = nil
+		}
 	}
 
 	span.Debug("Running linters for each mixin used in the manifest...")

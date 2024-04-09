@@ -175,7 +175,7 @@ func TestLinter_Lint(t *testing.T) {
 	})
 }
 
-func TestLinter_Lint_ParameterDeosNotApplyTo(t *testing.T) {
+func TestLinter_Lint_ParameterDoesNotApplyTo(t *testing.T) {
 	ctx := context.Background()
 	testCases := []struct {
 		action   string
@@ -295,4 +295,64 @@ func TestLinter_Lint_ParameterAppliesTo(t *testing.T) {
 			require.Len(t, results, 0, "linter should have returned 1 result")
 		})
 	}
+}
+
+func TestLinter_DependencyMultipleTimes(t *testing.T) {
+	t.Run("dependency defined multiple times", func(t *testing.T) {
+		cxt := portercontext.NewTestContext(t)
+		mixins := mixin.NewTestMixinProvider()
+		l := New(cxt.Context, mixins)
+
+		m := &manifest.Manifest{
+			Dependencies: manifest.Dependencies{
+				Requires: []*manifest.Dependency{
+					{Name: "mysql"},
+					{Name: "mysql"},
+				},
+			},
+		}
+
+		expectedResult := Results{
+			{
+				Code:    "porter-102",
+				Title:   "Dependency error",
+				Message: "The dependency mysql is defined multiple times",
+				URL:     "https://porter.sh/reference/linter/#porter-102",
+			},
+		}
+
+		results, err := l.Lint(context.Background(), m)
+		require.NoError(t, err, "Lint failed")
+		require.Len(t, results, 1, "linter should have returned 1 result")
+		require.Equal(t, expectedResult, results, "unexpected lint results")
+	})
+	t.Run("no dependency defined multiple times", func(t *testing.T) {
+		cxt := portercontext.NewTestContext(t)
+		mixins := mixin.NewTestMixinProvider()
+		l := New(cxt.Context, mixins)
+
+		m := &manifest.Manifest{
+			Dependencies: manifest.Dependencies{
+				Requires: []*manifest.Dependency{
+					{Name: "mysql"},
+					{Name: "mongo"},
+				},
+			},
+		}
+
+		results, err := l.Lint(context.Background(), m)
+		require.NoError(t, err, "Lint failed")
+		require.Len(t, results, 0, "linter should have returned 0 result")
+	})
+	t.Run("no dependencies", func(t *testing.T) {
+		cxt := portercontext.NewTestContext(t)
+		mixins := mixin.NewTestMixinProvider()
+		l := New(cxt.Context, mixins)
+
+		m := &manifest.Manifest{}
+
+		results, err := l.Lint(context.Background(), m)
+		require.NoError(t, err, "Lint failed")
+		require.Len(t, results, 0, "linter should have returned 0 result")
+	})
 }
