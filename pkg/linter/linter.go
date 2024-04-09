@@ -11,6 +11,7 @@ import (
 	"get.porter.sh/porter/pkg/pkgmgmt"
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/tracing"
+	"get.porter.sh/porter/pkg/yaml"
 	"github.com/dustin/go-humanize"
 )
 
@@ -154,6 +155,11 @@ func New(cxt *portercontext.Context, mixins pkgmgmt.PackageManager) *Linter {
 	}
 }
 
+type action struct {
+	name  string
+	steps manifest.Steps
+}
+
 func (l *Linter) Lint(ctx context.Context, m *manifest.Manifest) (Results, error) {
 	// Check for reserved porter prefix on parameter names
 	reservedPrefixes := []string{"porter-", "porter_"}
@@ -183,8 +189,28 @@ func (l *Linter) Lint(ctx context.Context, m *manifest.Manifest) (Results, error
 			}
 		}
 	}
+
+	// Check if parameters apply to the steps
 	ctx, span := tracing.StartSpan(ctx)
 	defer span.EndSpan()
+
+	span.Debug("Validating that parameters applies to the actions...")
+	tmplParams := m.GetTemplatedParameters()
+	actions := []action{
+		{"install", m.Install},
+		{"upgrade", m.Upgrade},
+		{"uninstall", m.Uninstall},
+	}
+	for actionName, steps := range m.CustomActions {
+		actions = append(actions, action{actionName, steps})
+	}
+	for _, action := range actions {
+		res, err := validateParamsAppliesToAction(m, action.steps, tmplParams, action.name)
+		if err != nil {
+			return nil, span.Error(fmt.Errorf("error validating action: %s", action.name))
+		}
+		results = append(results, res...)
+  }
 
 	deps := make(map[string]interface{}, len(m.Dependencies.Requires))
 	for _, dep := range m.Dependencies.Requires {
@@ -231,6 +257,56 @@ func (l *Linter) Lint(ctx context.Context, m *manifest.Manifest) (Results, error
 		}
 
 		results = append(results, r...)
+	}
+
+	return results, nil
+}
+
+func validateParamsAppliesToAction(m *manifest.Manifest, steps manifest.Steps, tmplParams manifest.ParameterDefinitions, actionName string) (Results, error) {
+	var results Results
+	for stepNumber, step := range steps {
+		data, err := yaml.Marshal(step.Data)
+		if err != nil {
+			return nil, fmt.Errorf("error during marshalling: %w", err)
+		}
+
+		tmplResult, err := m.ScanManifestTemplating(data)
+		if err != nil {
+			return nil, fmt.Errorf("error parsing templating: %w", err)
+		}
+
+		for _, variable := range tmplResult.Variables {
+			paramName, ok := m.GetTemplateParameterName(variable)
+			if !ok {
+				continue
+			}
+
+			for _, tmplParam := range tmplParams {
+				if tmplParam.Name != paramName {
+					continue
+				}
+				if !tmplParam.AppliesTo(actionName) {
+					description, err := step.GetDescription()
+					if err != nil {
+						return nil, fmt.Errorf("error getting step description: %w", err)
+					}
+					res := Result{
+						Level: LevelError,
+						Location: Location{
+							Action:          actionName,
+							Mixin:           step.GetMixinName(),
+							StepNumber:      stepNumber + 1,
+							StepDescription: description,
+						},
+						Code:    "porter-101",
+						Title:   "Parameter does not apply to action",
+						Message: fmt.Sprintf("Parameter %s does not apply to %s action", paramName, actionName),
+						URL:     "https://porter.sh/docs/references/linter/#porter-101",
+					}
+					results = append(results, res)
+				}
+			}
+		}
 	}
 
 	return results, nil
