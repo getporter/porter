@@ -36,3 +36,15 @@ func TestLint(t *testing.T) {
 	require.NotContains(t, output, "unknown command", "an unsupported mixin command should not be printed to the console in info")
 
 }
+
+func TestLint_DependenciesSameName(t *testing.T) {
+	test, err := tester.NewTest(t)
+	defer test.Close()
+	require.NoError(t, err, "test setup failed")
+
+	_, output, _ := test.RunPorterWith(func(cmd *shx.PreparedCommand) {
+		cmd.Args("lint")
+		cmd.In(filepath.Join(test.RepoRoot, "tests/integration/testdata/bundles/bundle-with-samenamedeps-lint-error"))
+	})
+	require.Contains(t, output, "error(porter-102) - Dependency error", "multiple dependencies with the same name should be an error")
+}
