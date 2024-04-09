@@ -23,6 +23,7 @@ import (
 	"github.com/cbroglie/mustache"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
+	"github.com/dustin/go-humanize"
 	"github.com/hashicorp/go-multierror"
 	"github.com/opencontainers/go-digest"
 	"go.opentelemetry.io/otel/attribute"
@@ -986,10 +987,10 @@ type BundleOutput struct {
 type Steps []*Step
 
 func (s Steps) Validate(m *Manifest) error {
-	for _, step := range s {
+	for i, step := range s {
 		err := step.Validate(m)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to validate %s step: %s", humanize.Ordinal(i+1), err)
 		}
 	}
 	return nil
@@ -1007,7 +1008,7 @@ func (s *Step) Validate(m *Manifest) error {
 		return errors.New("no mixin specified")
 	}
 	if len(s.Data) > 1 {
-		return errors.New("more than one mixin specified")
+		return errors.New("malformed step, possibly incorrect indentation")
 	}
 
 	mixinDeclared := false
