@@ -103,7 +103,7 @@ func DefaultDataStore() Data {
 		RuntimeDriver:        RuntimeDriverDocker,
 		DefaultStoragePlugin: "mongodb-docker",
 		DefaultSecretsPlugin: "host",
-		DefaultSigningPlugin: "mock",
+		DefaultSigningPlugin: "",
 		Logs:                 LogConfig{Level: "info"},
 		Verbosity:            DefaultVerbosity,
 	}
