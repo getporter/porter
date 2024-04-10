@@ -93,16 +93,15 @@ func (p *Porter) InstallBundle(ctx context.Context, opts InstallOptions) error {
 		if err != nil {
 			return err
 		}
-		log.Infof("verifying signature for %s", ref.String())
+		log.Debugf("verifying signature for %s", ref.String())
 		if !ok {
-			return fmt.Errorf("unable to get reference for bundle")
+			return log.Errorf("unable to get reference for bundle %s: %w", ref.String(), err)
 		}
-		err = p.Signatures.Verify(ctx, ref.String())
+		err = p.Signer.Verify(ctx, ref.String())
 		if err != nil {
-			log.Errorf("unable to verify signature %w", err)
-			return err
+			return log.Errorf("unable to verify signature: %w", err)
 		}
-		log.Infof("signature verified for %s", ref.String())
+		log.Debugf("signature verified for %s", ref.String())
 	}
 
 	// Run install using the updated installation record

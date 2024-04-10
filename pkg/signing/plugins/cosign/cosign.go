@@ -14,15 +14,19 @@ var _ plugins.SigningProtocol = &Cosign{}
 
 // Signer implements an in-memory signer for testing.
 type Cosign struct {
-	PublicKey  string
-	PrivateKey string
+	PublicKey    string
+	PrivateKey   string
+	RegistryMode string
+	Experimental bool
 }
 
 func NewSigner(c *portercontext.Context, cfg PluginConfig) *Cosign {
 
 	s := &Cosign{
-		PublicKey:  cfg.PublicKey,
-		PrivateKey: cfg.PrivateKey,
+		PublicKey:    cfg.PublicKey,
+		PrivateKey:   cfg.PrivateKey,
+		RegistryMode: cfg.RegistryMode,
+		Experimental: cfg.Experimental,
 	}
 
 	return s
@@ -49,7 +53,14 @@ func (s *Cosign) Sign(ctx context.Context, ref string) error {
 	ctx, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
 	log.Infof("Cosign Signer is Signing %s", ref)
-	cmd := exec.Command("cosign", "sign", ref, "--tlog-upload=false", "--key", s.PrivateKey)
+	args := []string{"sign", ref, "--tlog-upload=false", "--key", s.PrivateKey, "--yes"}
+	if s.RegistryMode != "" {
+		args = append(args, "--registry-referrers-mode", s.RegistryMode)
+	}
+	cmd := exec.Command("cosign", args...)
+	if s.Experimental {
+		cmd.Env = append(cmd.Environ(), "COSIGN_EXPERIMENTAL=1")
+	}
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("%s: %w", string(out), err)
@@ -64,7 +75,11 @@ func (s *Cosign) Verify(ctx context.Context, ref string) error {
 	defer log.EndSpan()
 
 	log.Infof("Mock Signer is Verifying %s", ref)
-	cmd := exec.Command("cosign", "verify", "--key", s.PublicKey, ref, "--insecure-ignore-tlog")
+	args := []string{"verify", "--key", s.PublicKey, ref, "--insecure-ignore-tlog"}
+	if s.RegistryMode == "oci-1-1" {
+		args = append(args, "--experimental-oci11")
+	}
+	cmd := exec.Command("cosign", args...)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("%s: %w", string(out), err)

@@ -48,7 +48,7 @@ type Porter struct {
 	CNAB          cnabprovider.CNABProvider
 	Secrets       secrets.Store
 	Storage       storage.Provider
-	Signatures    signing.Signer
+	Signer        signing.Signer
 }
 
 // New porter client, initialized with useful defaults.
@@ -56,8 +56,8 @@ func New() *Porter {
 	c := config.New()
 	storage := storage.NewPluginAdapter(storageplugin.NewStore(c))
 	secretStorage := secrets.NewPluginAdapter(secretsplugin.NewStore(c))
-	signatures := signing.NewPluginAdapter(signingplugin.NewSigner(c))
-	return NewFor(c, storage, secretStorage, signatures)
+	signer := signing.NewPluginAdapter(signingplugin.NewSigner(c))
+	return NewFor(c, storage, secretStorage, signer)
 }
 
 func NewFor(c *config.Config, store storage.Store, secretStorage secrets.Store, signer signing.Signer) *Porter {
@@ -68,6 +68,7 @@ func NewFor(c *config.Config, store storage.Store, secretStorage secrets.Store, 
 	credStorage := storage.NewCredentialStore(storageManager, secretStorage)
 	paramStorage := storage.NewParameterStore(storageManager, secretStorage)
 	sanitizerService := storage.NewSanitizer(paramStorage, secretStorage)
+
 	storageManager.Initialize(sanitizerService) // we have a bit of a dependency problem here that it would be great to figure out eventually
 
 	return &Porter{
@@ -84,6 +85,7 @@ func NewFor(c *config.Config, store storage.Store, secretStorage secrets.Store, 
 		Plugins:       plugins.NewPackageManager(c),
 		CNAB:          cnabprovider.NewRuntime(c, installationStorage, credStorage, secretStorage, sanitizerService),
 		Sanitizer:     sanitizerService,
+		Signer:        signer,
 	}
 }
 

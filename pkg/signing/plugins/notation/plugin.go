@@ -3,7 +3,6 @@ package notation
 import (
 	"fmt"
 
-	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/signing"
 	"get.porter.sh/porter/pkg/signing/plugins"
@@ -22,7 +21,6 @@ type PluginConfig struct {
 
 // Plugin is the plugin wrapper for accessing secrets from a local filesystem.
 type Plugin struct {
-	config *config.Config
 	signing.Signer
 }
 

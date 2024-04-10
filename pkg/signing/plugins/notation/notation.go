@@ -31,7 +31,7 @@ func (s *Signer) Connect(ctx context.Context) error {
 	ctx, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
 
-	log.Debug("Running mock signer")
+	log.Debug("Running notation signer")
 
 	return nil
 }

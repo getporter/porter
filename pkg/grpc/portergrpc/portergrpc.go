@@ -8,6 +8,8 @@ import (
 	"get.porter.sh/porter/pkg/porter"
 	"get.porter.sh/porter/pkg/secrets"
 	secretsplugin "get.porter.sh/porter/pkg/secrets/pluginstore"
+	"get.porter.sh/porter/pkg/signing"
+	signingplugin "get.porter.sh/porter/pkg/signing/pluginstore"
 	"get.porter.sh/porter/pkg/storage"
 	storageplugin "get.porter.sh/porter/pkg/storage/pluginstore"
 	"google.golang.org/grpc"
@@ -30,7 +32,8 @@ func NewPorterServer(cfg *config.Config) (*PorterServer, error) {
 func (s *PorterServer) NewConnectionInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 	storage := storage.NewPluginAdapter(storageplugin.NewStore(s.PorterConfig))
 	secretStorage := secrets.NewPluginAdapter(secretsplugin.NewStore(s.PorterConfig))
-	p := porter.NewFor(s.PorterConfig, storage, secretStorage)
+	signer := signing.NewPluginAdapter(signingplugin.NewSigner(s.PorterConfig))
+	p := porter.NewFor(s.PorterConfig, storage, secretStorage, signer)
 	if _, err := p.Connect(ctx); err != nil {
 		return nil, err
 	}

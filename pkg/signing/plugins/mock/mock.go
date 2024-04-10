@@ -48,6 +48,7 @@ func (s *Signer) Sign(ctx context.Context, ref string) error {
 }
 
 func (s *Signer) Verify(ctx context.Context, ref string) error {
+	//lint:ignore SA4006 ignore unused ctx for now
 	ctx, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
 

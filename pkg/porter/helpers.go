@@ -115,7 +115,7 @@ func (p *TestPorter) SetupIntegrationTest() context.Context {
 	t := p.TestConfig.TestContext.T
 
 	// Undo changes above to make a unit test friendly Porter, so we hit the host
-	p.Porter = NewFor(p.Config, p.TestStore, p.TestSecrets, p.Signatures)
+	p.Porter = NewFor(p.Config, p.TestStore, p.TestSecrets, p.Signer)
 
 	// Run the test in a temp directory
 	ctx, testDir, _ := p.TestConfig.SetupIntegrationTest()

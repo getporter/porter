@@ -3,7 +3,6 @@ package cosign
 import (
 	"fmt"
 
-	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/signing"
 	"get.porter.sh/porter/pkg/signing/plugins"
@@ -18,13 +17,14 @@ var _ plugins.SigningProtocol = &Plugin{}
 
 type PluginConfig struct {
 	//theses are paths
-	PublicKey  string `mapstructure:"publickey,omitempty"`
-	PrivateKey string `mapstructure:"privatekey,omitempty"`
+	PublicKey    string `mapstructure:"publickey,omitempty"`
+	PrivateKey   string `mapstructure:"privatekey,omitempty"`
+	RegistryMode string `mapstructure:"registrymode,omitempty"`
+	Experimental bool   `mapstructure:"experimental,omitempty"`
 }
 
 // Plugin is the plugin wrapper for accessing secrets from a local filesystem.
 type Plugin struct {
-	config *config.Config
 	signing.Signer
 }
 
