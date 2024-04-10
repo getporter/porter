@@ -77,6 +77,8 @@ type BundleExecutionOptions struct {
 	// A cache of the final resolved set of parameters that are passed to the bundle
 	// Do not use directly, use GetParameters instead.
 	finalParams map[string]interface{}
+
+	VerifyBundleBeforeExecution bool
 }
 
 func NewBundleExecutionOptions() *BundleExecutionOptions {

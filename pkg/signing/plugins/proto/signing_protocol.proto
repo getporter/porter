@@ -1,0 +1,21 @@
+syntax = "proto3";
+package plugins;
+
+option go_package = "get.porter.sh/porter/pkg/signing/plugins/proto";
+
+message SignRequest {
+  string Ref = 1;
+}
+
+message VerifyRequest {
+  string Ref = 1;
+}
+
+message SignResponse {}
+
+message VerifyResponse {}
+
+service SigningProtocol {
+  rpc Sign(SignRequest) returns (SignResponse);
+  rpc Verify(VerifyRequest) returns (VerifyResponse);
+}

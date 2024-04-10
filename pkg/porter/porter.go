@@ -17,6 +17,8 @@ import (
 	"get.porter.sh/porter/pkg/plugins"
 	"get.porter.sh/porter/pkg/secrets"
 	secretsplugin "get.porter.sh/porter/pkg/secrets/pluginstore"
+	"get.porter.sh/porter/pkg/signing"
+	signingplugin "get.porter.sh/porter/pkg/signing/pluginstore"
 	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/storage/migrations"
 	storageplugin "get.porter.sh/porter/pkg/storage/pluginstore"
@@ -46,6 +48,7 @@ type Porter struct {
 	CNAB          cnabprovider.CNABProvider
 	Secrets       secrets.Store
 	Storage       storage.Provider
+	Signatures    signing.Signer
 }
 
 // New porter client, initialized with useful defaults.
@@ -53,10 +56,11 @@ func New() *Porter {
 	c := config.New()
 	storage := storage.NewPluginAdapter(storageplugin.NewStore(c))
 	secretStorage := secrets.NewPluginAdapter(secretsplugin.NewStore(c))
-	return NewFor(c, storage, secretStorage)
+	signatures := signing.NewPluginAdapter(signingplugin.NewSigner(c))
+	return NewFor(c, storage, secretStorage, signatures)
 }
 
-func NewFor(c *config.Config, store storage.Store, secretStorage secrets.Store) *Porter {
+func NewFor(c *config.Config, store storage.Store, secretStorage secrets.Store, signer signing.Signer) *Porter {
 	cache := cache.New(c)
 
 	storageManager := migrations.NewManager(c, store)

@@ -31,6 +31,7 @@ type PublishOptions struct {
 	Tag         string
 	Registry    string
 	ArchiveFile string
+	SignBundle  bool
 }
 
 // Validate performs validation on the publish options
@@ -213,6 +214,25 @@ func (p *Porter) publishFromFile(ctx context.Context, opts PublishOptions) error
 	bundleRef, err = p.Registry.PushBundle(ctx, bundleRef, regOpts)
 	if err != nil {
 		return err
+	}
+
+	log.Infof("should I sign the bundle? %s", opts.SignBundle)
+	if opts.SignBundle {
+		log.Infof("signing bundle %s", bundleRef.String())
+		inImage, err := cnab.CalculateTemporaryImageTag(bundleRef.Reference)
+		if err != nil {
+			return err
+		}
+		log.Infof("Signing invocation image %s.", inImage.String())
+		err = p.Signatures.Sign(context.Background(), inImage.String())
+		if err != nil {
+			return err
+		}
+		log.Infof("Signing bundle artifact %s.", bundleRef.Reference.String())
+		p.Signatures.Sign(context.Background(), bundleRef.Reference.String())
+		if err != nil {
+			return err
+		}
 	}
 
 	// Perhaps we have a cached version of a bundle with the same reference, previously pulled
@@ -469,5 +489,9 @@ func (p *Porter) refreshCachedBundle(bundleRef cnab.BundleReference) error {
 			fmt.Fprintf(p.Err, "warning: unable to update cache for bundle %s: %s\n", bundleRef.Reference, err)
 		}
 	}
+	return nil
+}
+
+func (p *Porter) signBundle(bundleRef cnab.BundleReference) error {
 	return nil
 }
