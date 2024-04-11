@@ -144,7 +144,7 @@ func TestAction_Validate_RequireMixinDeclaration(t *testing.T) {
 	m.Mixins = []MixinDeclaration{}
 
 	err = m.Install.Validate(m)
-	assert.EqualError(t, err, "mixin (exec) was not declared")
+	assert.EqualError(t, err, "failed to validate 1st step: mixin (exec) was not declared")
 }
 
 func TestAction_Validate_RequireMixinData(t *testing.T) {
@@ -159,7 +159,7 @@ func TestAction_Validate_RequireMixinData(t *testing.T) {
 	m.Install[0].Data = nil
 
 	err = m.Install.Validate(m)
-	assert.EqualError(t, err, "no mixin specified")
+	assert.EqualError(t, err, "failed to validate 1st step: no mixin specified")
 }
 
 func TestAction_Validate_RequireSingleMixinData(t *testing.T) {
@@ -174,7 +174,7 @@ func TestAction_Validate_RequireSingleMixinData(t *testing.T) {
 	m.Install[0].Data["rando-mixin"] = ""
 
 	err = m.Install.Validate(m)
-	assert.EqualError(t, err, "more than one mixin specified")
+	assert.EqualError(t, err, "failed to validate 1st step: malformed step, possibly incorrect indentation")
 }
 
 func TestAction_Validate_RequireSingleMixinData_Actions(t *testing.T) {
@@ -211,7 +211,7 @@ func TestAction_Validate_RequireSingleMixinData_Actions(t *testing.T) {
 			(*step)[0].Data["rando-mixin"] = ""
 
 			err = m.Validate(ctx, c.Config)
-			assert.ErrorContains(t, err, "more than one mixin specified")
+			assert.ErrorContains(t, err, "malformed step, possibly incorrect indentation")
 		})
 	}
 }
@@ -222,7 +222,7 @@ func TestManifest_Empty_Steps(t *testing.T) {
 	c.TestContext.AddTestFile("testdata/empty-steps.yaml", config.Name)
 
 	_, err := LoadManifestFrom(context.Background(), c.Config, config.Name)
-	assert.EqualError(t, err, "3 errors occurred:\n\t* validation of action \"install\" failed: found an empty step\n\t* validation of action \"uninstall\" failed: found an empty step\n\t* validation of action \"status\" failed: found an empty step\n\n")
+	assert.EqualError(t, err, "3 errors occurred:\n\t* validation of action \"install\" failed: failed to validate 2nd step: found an empty step\n\t* validation of action \"uninstall\" failed: failed to validate 2nd step: found an empty step\n\t* validation of action \"status\" failed: failed to validate 1st step: found an empty step\n\n")
 }
 
 func TestManifest_Validate_Name(t *testing.T) {
@@ -240,7 +240,7 @@ func TestManifest_Validate_Description(t *testing.T) {
 	c.TestContext.AddTestFile("testdata/porter-with-bad-description.yaml", config.Name)
 
 	_, err := LoadManifestFrom(context.Background(), c.Config, config.Name)
-	assert.ErrorContains(t, err, "validation of action \"install\" failed: invalid description type (string) for mixin step (exec)")
+	assert.ErrorContains(t, err, "validation of action \"install\" failed: failed to validate 1st step: invalid description type (string) for mixin step (exec)")
 }
 
 func TestManifest_Validate_InvalidType(t *testing.T) {
@@ -250,7 +250,7 @@ func TestManifest_Validate_InvalidType(t *testing.T) {
 
 	assert.NotPanics(t, func() {
 		_, err := LoadManifestFrom(context.Background(), c.Config, config.Name)
-		assert.ErrorContains(t, err, "validation of action \"install\" failed: invalid mixin type (string) for mixin step (exec)")
+		assert.ErrorContains(t, err, "validation of action \"install\" failed: failed to validate 1st step: invalid mixin type (string) for mixin step (exec)")
 	})
 }
 
