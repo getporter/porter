@@ -16,12 +16,14 @@ var _ plugins.SigningProtocol = &Signer{}
 type Signer struct {
 
 	// Need the key we want to use
-	SigningKey string
+	SigningKey       string
+	InsecureRegistry bool
 }
 
 func NewSigner(c *portercontext.Context, cfg PluginConfig) *Signer {
 	s := &Signer{
-		SigningKey: cfg.SigningKey,
+		SigningKey:       cfg.SigningKey,
+		InsecureRegistry: cfg.InsecureRegistry,
 	}
 	return s
 }
@@ -46,7 +48,11 @@ func (s *Signer) Sign(ctx context.Context, ref string) error {
 	ctx, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
 
-	cmd := exec.Command("notation", "sign", ref, "--key", s.SigningKey)
+	args := []string{"sign", ref, "--key", s.SigningKey}
+	if s.InsecureRegistry {
+		args = append(args, "--insecure-registry")
+	}
+	cmd := exec.Command("notation", args...)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("%s: %w", string(out), err)
@@ -60,7 +66,11 @@ func (s *Signer) Verify(ctx context.Context, ref string) error {
 	ctx, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
 
-	cmd := exec.Command("notation", "verify", ref)
+	args := []string{"verify", ref}
+	if s.InsecureRegistry {
+		args = append(args, "--insecure-registry")
+	}
+	cmd := exec.Command("notation", args...)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("%s: %w", string(out), err)

@@ -14,25 +14,27 @@ var _ plugins.SigningProtocol = &Cosign{}
 
 // Signer implements an in-memory signer for testing.
 type Cosign struct {
-	PublicKey    string
-	PrivateKey   string
-	RegistryMode string
-	Experimental bool
+	PublicKey        string
+	PrivateKey       string
+	RegistryMode     string
+	Experimental     bool
+	InsecureRegistry bool
 }
 
 func NewSigner(c *portercontext.Context, cfg PluginConfig) *Cosign {
 
 	s := &Cosign{
-		PublicKey:    cfg.PublicKey,
-		PrivateKey:   cfg.PrivateKey,
-		RegistryMode: cfg.RegistryMode,
-		Experimental: cfg.Experimental,
+		PublicKey:        cfg.PublicKey,
+		PrivateKey:       cfg.PrivateKey,
+		RegistryMode:     cfg.RegistryMode,
+		Experimental:     cfg.Experimental,
+		InsecureRegistry: cfg.InsecureRegistry,
 	}
 
 	return s
 }
 
-// we should get the certificate... here?
+// TODO: we should get the certificate... here?
 func (s *Cosign) Connect(ctx context.Context) error {
 	//lint:ignore SA4006 ignore unused ctx for now
 	ctx, log := tracing.StartSpan(ctx)
@@ -57,6 +59,9 @@ func (s *Cosign) Sign(ctx context.Context, ref string) error {
 	if s.RegistryMode != "" {
 		args = append(args, "--registry-referrers-mode", s.RegistryMode)
 	}
+	if s.InsecureRegistry {
+		args = append(args, "--allow-insecure-registry")
+	}
 	cmd := exec.Command("cosign", args...)
 	if s.Experimental {
 		cmd.Env = append(cmd.Environ(), "COSIGN_EXPERIMENTAL=1")
@@ -78,6 +83,9 @@ func (s *Cosign) Verify(ctx context.Context, ref string) error {
 	args := []string{"verify", "--key", s.PublicKey, ref, "--insecure-ignore-tlog"}
 	if s.RegistryMode == "oci-1-1" {
 		args = append(args, "--experimental-oci11")
+	}
+	if s.InsecureRegistry {
+		args = append(args, "--allow-insecure-registry")
 	}
 	cmd := exec.Command("cosign", args...)
 	out, err := cmd.CombinedOutput()

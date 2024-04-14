@@ -16,7 +16,8 @@ const PluginKey = plugins.PluginInterface + ".porter.notation"
 var _ plugins.SigningProtocol = &Plugin{}
 
 type PluginConfig struct {
-	SigningKey string `mapstructure:"key,omitempty"`
+	SigningKey       string `mapstructure:"key,omitempty"`
+	InsecureRegistry bool   `mapstructure:"insecureregistry,omitempty"`
 }
 
 // Plugin is the plugin wrapper for accessing secrets from a local filesystem.

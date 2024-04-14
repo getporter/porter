@@ -17,10 +17,11 @@ var _ plugins.SigningProtocol = &Plugin{}
 
 type PluginConfig struct {
 	//theses are paths
-	PublicKey    string `mapstructure:"publickey,omitempty"`
-	PrivateKey   string `mapstructure:"privatekey,omitempty"`
-	RegistryMode string `mapstructure:"registrymode,omitempty"`
-	Experimental bool   `mapstructure:"experimental,omitempty"`
+	PublicKey        string `mapstructure:"publickey,omitempty"`
+	PrivateKey       string `mapstructure:"privatekey,omitempty"`
+	RegistryMode     string `mapstructure:"registrymode,omitempty"`
+	Experimental     bool   `mapstructure:"experimental,omitempty"`
+	InsecureRegistry bool   `mapstructure:"insecureregistry,omitempty"`
 }
 
 // Plugin is the plugin wrapper for accessing secrets from a local filesystem.
