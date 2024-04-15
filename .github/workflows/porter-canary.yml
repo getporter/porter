@@ -16,14 +16,20 @@ on:
     branches:
       - main
       - release/*
-  pull_request:
-    branches:
-      - split-builds
 jobs:
-  build_pipelinesrelease_template:
+  build_pipelinesrelease_template_workflow_dispatch:
+    if: ${{ github.event_name == 'workflow_dispatch' }}
     name: build_pipelinesrelease_template
     uses: ./.github/workflows/build_pipelinesrelease_template.yml
     with:
       registry: ghcr.io/getporter
       shouldPublish: "${{inputs.shouldPublish}}"
       skipTests: "${{inputs.skipTests}}"
+  build_pipelinesrelease_template_push:
+    if: ${{ github.event_name == 'push' }}
+    name: build_pipelinesrelease_template
+    uses: ./.github/workflows/build_pipelinesrelease_template.yml
+    with:
+      registry: ghcr.io/getporter
+      shouldPublish: true
+      skipTests: false
