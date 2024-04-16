@@ -19,7 +19,7 @@ on:
 jobs:
   build_pipelinesrelease_template_workflow_dispatch:
     if: ${{ github.event_name == 'workflow_dispatch' }}
-    name: build_pipelinesrelease_template
+    name: build_pipelinesrelease_template_workflow_dispatch
     uses: ./.github/workflows/build_pipelinesrelease_template.yml
     with:
       registry: ghcr.io/getporter
@@ -27,7 +27,7 @@ jobs:
       skipTests: "${{inputs.skipTests}}"
   build_pipelinesrelease_template_push:
     if: ${{ github.event_name == 'push' }}
-    name: build_pipelinesrelease_template
+    name: build_pipelinesrelease_template_push
     uses: ./.github/workflows/build_pipelinesrelease_template.yml
     with:
       registry: ghcr.io/getporter
