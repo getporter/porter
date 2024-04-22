@@ -3,6 +3,7 @@ package cosign
 import (
 	"context"
 	"fmt"
+	"os"
 	"os/exec"
 
 	"get.porter.sh/porter/pkg/portercontext"
@@ -63,8 +64,9 @@ func (s *Cosign) Sign(ctx context.Context, ref string) error {
 		args = append(args, "--allow-insecure-registry")
 	}
 	cmd := exec.Command("cosign", args...)
+	cmd.Env = append(cmd.Env, os.Environ()...)
 	if s.Experimental {
-		cmd.Env = append(cmd.Environ(), "COSIGN_EXPERIMENTAL=1")
+		cmd.Env = append(cmd.Env, "COSIGN_EXPERIMENTAL=1")
 	}
 	out, err := cmd.CombinedOutput()
 	if err != nil {
@@ -79,7 +81,7 @@ func (s *Cosign) Verify(ctx context.Context, ref string) error {
 	ctx, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
 
-	log.Infof("Mock Signer is Verifying %s", ref)
+	log.Infof("Cosign Signer is Verifying %s", ref)
 	args := []string{"verify", "--key", s.PublicKey, ref, "--insecure-ignore-tlog"}
 	if s.RegistryMode == "oci-1-1" {
 		args = append(args, "--experimental-oci11")
