@@ -24,6 +24,7 @@ func NewSigner() *Signer {
 }
 
 func (s *Signer) Connect(ctx context.Context) error {
+	//lint:ignore SA4006 ignore unused ctx for now
 	ctx, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
 
