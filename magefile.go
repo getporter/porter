@@ -734,7 +734,7 @@ func EnsureCosign() {
 
 	opts := downloads.DownloadOptions{
 		UrlTemplate: "https://github.com/sigstore/cosign/releases/download/v{{.VERSION}}/cosign-{{.GOOS}}-{{.GOARCH}}{{.EXT}}",
-		Name:        "buf",
+		Name:        "cosign",
 		Version:     "2.2.2",
 	}
 
@@ -759,7 +759,7 @@ func EnsureNotation() {
 	opts := archive.DownloadArchiveOptions{
 		DownloadOptions: downloads.DownloadOptions{
 			UrlTemplate: "https://github.com/notaryproject/notation/releases/download/v{{.VERSION}}/notation_{{.VERSION}}_{{.GOOS}}_{{.GOARCH}}{{.EXT}}",
-			Name:        "grpcurl",
+			Name:        "notation",
 			Version:     "1.1.0",
 		},
 		ArchiveExtensions: map[string]string{
