@@ -125,11 +125,10 @@ func TestRebuild(t *testing.T) {
 	// This is a regression test for a bug where the manifest would be considered out-of-date when nothing had changed
 	// caused by us using a go map when comparing the mixins used in the bundle, which has inconsistent sort order...
 
-	//todo: This test is flaky still and upsetting CI
-	// for i := 0; i < 5; i++ {
-	// 	_, output = test.RequirePorter("explain")
-	// 	tests.RequireOutputContains(t, output, "Bundle is up-to-date!", "expected the previous build to be reused")
-	// }
+	for i := 0; i < 10; i++ {
+		_, output = test.RequirePorter("explain")
+		tests.RequireOutputContains(t, output, "Bundle is up-to-date!", "expected the previous build to be reused")
+	}
 
 	bumpBundle()
 

@@ -23,6 +23,7 @@ import (
 	"github.com/cbroglie/mustache"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
+	"github.com/dustin/go-humanize"
 	"github.com/hashicorp/go-multierror"
 	"github.com/opencontainers/go-digest"
 	"go.opentelemetry.io/otel/attribute"
@@ -281,6 +282,19 @@ func (m *Manifest) getTemplateDependencyOutputName(value string) (string, string
 	return dependencyName, outputName, true
 }
 
+var templatedParameterRegex = regexp.MustCompile(`^bundle\.parameters\.(.+)$`)
+
+// GetTemplateParameterName returns the parameter name from the template variable.
+func (m *Manifest) GetTemplateParameterName(value string) (string, bool) {
+	matches := templatedParameterRegex.FindStringSubmatch(value)
+	if len(matches) < 2 {
+		return "", false
+	}
+
+	parameterName := matches[1]
+	return parameterName, true
+}
+
 // GetTemplatedOutputs returns the output definitions for any bundle level outputs
 // that have been templated, keyed by the output name.
 func (m *Manifest) GetTemplatedOutputs() OutputDefinitions {
@@ -312,6 +326,23 @@ func (m *Manifest) GetTemplatedDependencyOutputs() DependencyOutputReferences {
 		}
 	}
 	return outputs
+}
+
+// GetTemplatedParameters returns the output definitions for any bundle level outputs
+// that have been templated, keyed by the output name.
+func (m *Manifest) GetTemplatedParameters() ParameterDefinitions {
+	parameters := make(ParameterDefinitions, len(m.TemplateVariables))
+	for _, tmplVar := range m.TemplateVariables {
+		if name, ok := m.GetTemplateParameterName(tmplVar); ok {
+			parameterDef, ok := m.Parameters[name]
+			if !ok {
+				// Only return bundle level definitions
+				continue
+			}
+			parameters[name] = parameterDef
+		}
+	}
+	return parameters
 }
 
 // DetermineDependenciesExtensionUsed looks for how dependencies are used
@@ -986,10 +1017,10 @@ type BundleOutput struct {
 type Steps []*Step
 
 func (s Steps) Validate(m *Manifest) error {
-	for _, step := range s {
+	for i, step := range s {
 		err := step.Validate(m)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to validate %s step: %s", humanize.Ordinal(i+1), err)
 		}
 	}
 	return nil
@@ -1007,7 +1038,7 @@ func (s *Step) Validate(m *Manifest) error {
 		return errors.New("no mixin specified")
 	}
 	if len(s.Data) > 1 {
-		return errors.New("more than one mixin specified")
+		return errors.New("malformed step, possibly incorrect indentation")
 	}
 
 	mixinDeclared := false
@@ -1257,7 +1288,7 @@ func ReadManifest(cxt *portercontext.Context, path string) (*Manifest, error) {
 		return nil, fmt.Errorf("unsupported property set or a custom action is defined incorrectly: %w", err)
 	}
 
-	tmplResult, err := m.scanManifestTemplating(data)
+	tmplResult, err := m.ScanManifestTemplating(data)
 	if err != nil {
 		return nil, err
 	}
@@ -1293,7 +1324,7 @@ func (m *Manifest) GetTemplatePrefix() string {
 	return ""
 }
 
-func (m *Manifest) scanManifestTemplating(data []byte) (templateScanResult, error) {
+func (m *Manifest) ScanManifestTemplating(data []byte) (templateScanResult, error) {
 	const disableHtmlEscaping = true
 	templateSrc := m.GetTemplatePrefix() + string(data)
 	tmpl, err := mustache.ParseStringRaw(templateSrc, disableHtmlEscaping)
