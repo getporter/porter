@@ -278,10 +278,11 @@ func (m *Migration) migrateClaim(ctx context.Context, inst *storage.Installation
 
 	// Sanitize sensitive values on the source claim
 	bun := cnab.ExtendedBundle{Bundle: run.Bundle}
-	run.Parameters.Parameters, err = m.sanitizer.CleanParameters(ctx, run.Parameters.Parameters, bun, run.ID)
+	cleanParams, err := m.sanitizer.CleanParameters(ctx, run.Parameters.Parameters, bun, run.ID)
 	if err != nil {
 		return span.Error(err)
 	}
+	run.Parameters.Parameters = cleanParams
 
 	// Find all results associated with the run
 	resultIDs, err := m.listItems("results", run.ID)
@@ -320,18 +321,19 @@ func convertClaimToRun(inst storage.Installation, data []byte) (storage.Run, err
 	}
 
 	dest := storage.Run{
-		SchemaVersion:   storage.DefaultInstallationSchemaVersion,
-		ID:              src.ID,
-		Created:         src.Created,
-		Namespace:       inst.Namespace,
-		Installation:    src.Installation,
-		Revision:        src.Revision,
-		Action:          src.Action,
-		Bundle:          src.Bundle,
-		BundleReference: src.BundleReference,
-		BundleDigest:    "", // We didn't track digest before v1
-		Parameters:      storage.NewInternalParameterSet(inst.Namespace, src.ID, params...),
-		Custom:          src.Custom,
+		SchemaVersion:    storage.DefaultInstallationSchemaVersion,
+		ID:               src.ID,
+		Created:          src.Created,
+		Namespace:        inst.Namespace,
+		Installation:     src.Installation,
+		Revision:         src.Revision,
+		Action:           src.Action,
+		Bundle:           src.Bundle,
+		BundleReference:  src.BundleReference,
+		BundleDigest:     "", // We didn't track digest before v1
+		Parameters:       storage.NewInternalParameterSet(inst.Namespace, src.ID, params...),
+		Custom:           src.Custom,
+		ParametersDigest: "", // Leave blank, and Porter will re-resolve later if needed. This is just a cached value to improve performance.
 	}
 
 	return dest, nil
