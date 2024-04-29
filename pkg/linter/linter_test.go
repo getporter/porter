@@ -2,6 +2,7 @@ package linter
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"get.porter.sh/porter/pkg/manifest"
@@ -171,5 +172,187 @@ func TestLinter_Lint(t *testing.T) {
 		require.NoError(t, err, "Lint failed")
 		require.Len(t, results, 1, "linter should have returned 1 result")
 		require.NotContains(t, results[0].String(), ": 0th step in the mixin ()")
+	})
+}
+
+func TestLinter_Lint_ParameterDoesNotApplyTo(t *testing.T) {
+	ctx := context.Background()
+	testCases := []struct {
+		action   string
+		setSteps func(*manifest.Manifest, manifest.Steps)
+	}{
+		{"install", func(m *manifest.Manifest, steps manifest.Steps) { m.Install = steps }},
+		{"upgrade", func(m *manifest.Manifest, steps manifest.Steps) { m.Upgrade = steps }},
+		{"uninstall", func(m *manifest.Manifest, steps manifest.Steps) { m.Uninstall = steps }},
+		{"customAction", func(m *manifest.Manifest, steps manifest.Steps) {
+			m.CustomActions = make(map[string]manifest.Steps)
+			m.CustomActions["customAction"] = steps
+		}},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.action, func(t *testing.T) {
+			cxt := portercontext.NewTestContext(t)
+			mixins := mixin.NewTestMixinProvider()
+			l := New(cxt.Context, mixins)
+
+			param := map[string]manifest.ParameterDefinition{
+				"doesNotApply": {
+					Name:    "doesNotApply",
+					ApplyTo: []string{"dummy"},
+				},
+			}
+			steps := manifest.Steps{
+				&manifest.Step{
+					Data: map[string]interface{}{
+						"exec": map[string]interface{}{
+							"description": "exec step",
+							"parameters": []string{
+								"\"${ bundle.parameters.doesNotApply }\"",
+							},
+						},
+					},
+				},
+			}
+			m := &manifest.Manifest{
+				SchemaVersion:     "1.0.1",
+				TemplateVariables: []string{"bundle.parameters.doesNotApply"},
+				Parameters:        param,
+			}
+			tc.setSteps(m, steps)
+
+			lintResults := Results{
+				{
+					Level: LevelError,
+					Location: Location{
+						Action:          tc.action,
+						Mixin:           "exec",
+						StepNumber:      1,
+						StepDescription: "exec step",
+					},
+					Code:    "porter-101",
+					Title:   "Parameter does not apply to action",
+					Message: fmt.Sprintf("Parameter doesNotApply does not apply to %s action", tc.action),
+					URL:     "https://porter.sh/docs/references/linter/#porter-101",
+				},
+			}
+			results, err := l.Lint(ctx, m)
+			require.NoError(t, err, "Lint failed")
+			require.Len(t, results, 1, "linter should have returned 1 result")
+			require.Equal(t, lintResults, results, "unexpected lint results")
+		})
+	}
+}
+
+func TestLinter_Lint_ParameterAppliesTo(t *testing.T) {
+	ctx := context.Background()
+	testCases := []struct {
+		action   string
+		setSteps func(*manifest.Manifest, manifest.Steps)
+	}{
+		{"install", func(m *manifest.Manifest, steps manifest.Steps) { m.Install = steps }},
+		{"upgrade", func(m *manifest.Manifest, steps manifest.Steps) { m.Upgrade = steps }},
+		{"uninstall", func(m *manifest.Manifest, steps manifest.Steps) { m.Uninstall = steps }},
+		{"customAction", func(m *manifest.Manifest, steps manifest.Steps) {
+			m.CustomActions = make(map[string]manifest.Steps)
+			m.CustomActions["customAction"] = steps
+		}},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.action, func(t *testing.T) {
+			cxt := portercontext.NewTestContext(t)
+			mixins := mixin.NewTestMixinProvider()
+			l := New(cxt.Context, mixins)
+
+			param := map[string]manifest.ParameterDefinition{
+				"appliesTo": {
+					Name:    "appliesTo",
+					ApplyTo: []string{tc.action},
+				},
+			}
+			steps := manifest.Steps{
+				&manifest.Step{
+					Data: map[string]interface{}{
+						"exec": map[string]interface{}{
+							"description": "exec step",
+							"parameters": []string{
+								"\"${ bundle.parameters.appliesTo }\"",
+							},
+						},
+					},
+				},
+			}
+			m := &manifest.Manifest{
+				SchemaVersion:     "1.0.1",
+				TemplateVariables: []string{"bundle.parameters.appliesTo"},
+				Parameters:        param,
+			}
+			tc.setSteps(m, steps)
+
+			results, err := l.Lint(ctx, m)
+			require.NoError(t, err, "Lint failed")
+			require.Len(t, results, 0, "linter should have returned 1 result")
+		})
+	}
+}
+
+func TestLinter_DependencyMultipleTimes(t *testing.T) {
+	t.Run("dependency defined multiple times", func(t *testing.T) {
+		cxt := portercontext.NewTestContext(t)
+		mixins := mixin.NewTestMixinProvider()
+		l := New(cxt.Context, mixins)
+
+		m := &manifest.Manifest{
+			Dependencies: manifest.Dependencies{
+				Requires: []*manifest.Dependency{
+					{Name: "mysql"},
+					{Name: "mysql"},
+				},
+			},
+		}
+
+		expectedResult := Results{
+			{
+				Code:    "porter-102",
+				Title:   "Dependency error",
+				Message: "The dependency mysql is defined multiple times",
+				URL:     "https://porter.sh/reference/linter/#porter-102",
+			},
+		}
+
+		results, err := l.Lint(context.Background(), m)
+		require.NoError(t, err, "Lint failed")
+		require.Len(t, results, 1, "linter should have returned 1 result")
+		require.Equal(t, expectedResult, results, "unexpected lint results")
+	})
+	t.Run("no dependency defined multiple times", func(t *testing.T) {
+		cxt := portercontext.NewTestContext(t)
+		mixins := mixin.NewTestMixinProvider()
+		l := New(cxt.Context, mixins)
+
+		m := &manifest.Manifest{
+			Dependencies: manifest.Dependencies{
+				Requires: []*manifest.Dependency{
+					{Name: "mysql"},
+					{Name: "mongo"},
+				},
+			},
+		}
+
+		results, err := l.Lint(context.Background(), m)
+		require.NoError(t, err, "Lint failed")
+		require.Len(t, results, 0, "linter should have returned 0 result")
+	})
+	t.Run("no dependencies", func(t *testing.T) {
+		cxt := portercontext.NewTestContext(t)
+		mixins := mixin.NewTestMixinProvider()
+		l := New(cxt.Context, mixins)
+
+		m := &manifest.Manifest{}
+
+		results, err := l.Lint(context.Background(), m)
+		require.NoError(t, err, "Lint failed")
+		require.Len(t, results, 0, "linter should have returned 0 result")
 	})
 }

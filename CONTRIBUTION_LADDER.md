@@ -1,6 +1,7 @@
 # Contribution Ladder
 
 ---
+* [Roles](#roles)
 * [Community Member](#community-member)
 * [Contributor](#contributor)
   * [How to become a contributor](#how-to-become-a-contributor)
@@ -10,12 +11,24 @@
   * [Stepping Down/Emeritus Process](#stepping-downemeritus-process)
 * [Admin](#admin)
   * [How to become an admin](#admin)
+* [Release Manager](#release-manager)
+  * [How to become an release manager](#how-to-become-a-release-manager)
 ---
 
 Our ladder defines the roles and responsibilities for this project and how to
 participate with the goal of moving from a user to a maintainer. You will need
 to gain people's trust, demonstrate your competence and understanding, and meet
 the requirements of the role.
+
+## Roles
+* Community Member
+* Contributor
+* Maintainer 
+  * Porter Maintainer
+  * Porter Operator Maintainer
+  * Porter Wesbite Maintainer 
+  * Porter Triage Lead
+* Release Manager
 
 ## Community Member
 
@@ -67,6 +80,13 @@ please reach out to one or more of the contributors or maintainers.
 * Review pull requests.
 * Merge pull requests.
 
+There are three sub-types of specialization that maintainers can have:
+  * Porter Maintainer - This is someone who focuses on [Porter Core](https://github.com/getporter/porter) functionality
+  * Porter Operator Maintainer - This is someone who focuses on [Porter Operator](https://github.com/getporter/operator) functionality 
+  * Porter Wesbite Maintainer  - This is someone who helps our frontend, which leverages Hugo.
+  * Porter Community Lead - This is someone who handles the development of the community through scheduling meetings, encouraging Porter activties within the community (talks, blogposts, etc), and is the face of Porter
+  * Porter Mixin & Plugins Specialist - This is someone who builds and maintains the mixins used to help Porter work with other tooling. 
+
 Maintainers also have additional responsibilities beyond just merging code:
 
 * Help foster a safe and welcoming environment for all project participants.
@@ -88,6 +108,32 @@ contributor, and show that you can do some of the things maintainers do.
 Maintainers will do their best to regularly discuss promoting contributors. But
 don’t be shy, if you feel that this is you, please reach out to one or more of
 the maintainers.
+
+## Release Managers
+
+[Release Managers][release managers] can be either contributors or maintainers.
+Porter releases on a quarterly candence, and a release manager handles kicking off
+the release process & communicating the release. The release manager role is set **per**
+release.
+
+Release Manager responsibilities are:
+* Help foster a safe and welcoming environment for all project participants.
+  This will include understanding and enforcing our [Code of Conduct](CODE_OF_CONDUCT.md).
+* Start, and if necessary, troubleshoot the [release process](./GOVERNANCE.md#release-process) for that release
+* Communicate through channels (Slack, [Groups](https://groups.io/g/porter), and website)
+with key achievements in that release 
+* Update [release documentation](./GOVERNANCE.md#release-process) with any new findings
+
+
+[release managers]: https://github.com/orgs/getporter/teams/release
+
+### How to become a release manager
+
+Anyone can become a release manager, all you have to do is reach out to a maintainer
+who will give you the proper documentation, help you identify the release date and be
+available on the date of the release. It is recommended release managers try to sign up
+for at least 2 (two) releases, so they can get comfortable with the release process. 
+
 
 ## Inactivity
 It is important for maintainers to stay active to set an example and show commitment to the project.
