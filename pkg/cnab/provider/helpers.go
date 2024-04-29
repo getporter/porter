@@ -40,7 +40,7 @@ func NewTestRuntime(t *testing.T) *TestRuntime {
 
 func NewTestRuntimeFor(tc *config.TestConfig, testInstallations *storage.TestInstallationProvider, testCredentials *storage.TestCredentialSetProvider, testParameters *storage.TestParameterSetProvider, testSecrets secrets.Store) *TestRuntime {
 	return &TestRuntime{
-		Runtime:           NewRuntime(tc.Config, testInstallations, testCredentials, testSecrets, storage.NewSanitizer(testParameters, testSecrets)),
+		Runtime:           NewRuntime(tc.Config, testInstallations, testCredentials, testParameters, testSecrets, storage.NewSanitizer(testParameters, testSecrets)),
 		TestStorage:       storage.TestStore{},
 		TestInstallations: testInstallations,
 		TestCredentials:   testCredentials,
