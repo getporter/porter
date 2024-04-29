@@ -10,6 +10,7 @@ import (
 	"get.porter.sh/porter/pkg/schema"
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/tracing"
+	"github.com/cnabio/cnab-go/bundle"
 	"go.opentelemetry.io/otel/attribute"
 )
 
@@ -120,4 +121,37 @@ func (s *ParameterSet) Validate(ctx context.Context, strategy schema.CheckStrate
 
 func (s ParameterSet) String() string {
 	return fmt.Sprintf("%s/%s", s.Namespace, s.Name)
+}
+
+// HasParameter determines if the specified parameter is defined in the set.
+func (s ParameterSet) HasParameter(name string) bool {
+	for _, param := range s.Parameters {
+		if param.Name == name {
+			return true
+		}
+	}
+
+	return false
+}
+
+// ValidateBundle compares the given parameters with the spec in the bundle.
+//
+// This will result in an error only when the following conditions are true:
+// - a parameter in the spec is not present in the given set
+// - the parameters is required
+// - the parameter applies to the specified action
+//
+// It is allowed for spec to specify both an env var and a file. In such case, if
+// the given set provides either, it will be considered valid.
+func (s ParameterSet) ValidateBundle(spec map[string]bundle.Parameter, action string) error {
+	for name, param := range spec {
+		if !param.AppliesTo(action) {
+			continue
+		}
+
+		if !s.HasParameter(name) && param.Required {
+			return fmt.Errorf(`parameter "%s" is required`, name)
+		}
+	}
+	return nil
 }

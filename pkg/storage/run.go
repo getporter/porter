@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -13,7 +14,9 @@ var _ Document = Run{}
 var _ json.Marshaler = Run{}
 var _ json.Unmarshaler = &Run{}
 
-// Run represents the execution of an installation's bundle.
+// Run represents the execution of an installation's bundle. It contains both the
+// instructions used by Porter to run the bundle, and additional status/audit
+// fields so users can keep track of how the bundle was run.
 type Run struct {
 	// SchemaVersion of the document.
 	SchemaVersion cnab.SchemaVersion `json:"schemaVersion"`
@@ -23,6 +26,10 @@ type Run struct {
 
 	// Created timestamp of the Run.
 	Created time.Time `json:"created"`
+
+	// Modified timestamp of the Run, set when we resolve run parameters just-in-time.
+	// A run can be created ahead of time as Pending and not have its parameters resolved until much later.
+	Modified time.Time `json:"modified"`
 
 	// Namespace of the installation.
 	Namespace string `json:"namespace"`
@@ -49,23 +56,47 @@ type Run struct {
 
 	// ParameterOverrides are the key/value parameter overrides (taking precedence over
 	// parameters specified in a parameter set) specified during the run.
+	// This is a status/audit field and is not used to resolve parameters for a Run.
 	ParameterOverrides ParameterSet `json:"parameterOverrides,omitempty"`
 
 	// CredentialSets is a list of the credential set names used during the run.
+	// This is a status/audit field and is not used to resolve credentials for a Run.
 	CredentialSets []string `json:"credentialSets,omitempty"`
 
 	// ParameterSets is the list of parameter set names used during the run.
+	// This is a status/audit field and is not used to resolve parameters for a Run.
 	ParameterSets []string `json:"parameterSets,omitempty"`
 
-	// Parameters is the full set of parameters that's being used during the
-	// current run.
-	// This includes internal parameters, parameter sources, values from parameter sets, etc.
-	// Any sensitive data will be sannitized before saving to the database.
+	// Parameters is the full set of parameters that should be resolved just-in-time
+	// (JIT) before executing the bundle. This includes internal parameters,
+	// parameter sources, values from parameter sets, etc. These should be a "clean"
+	// set of parameters that have sensitive values persisted in secrets using the
+	// Sanitizer.
+	// After the parameters are resolved, this structure holds (but does not marshal)
+	// the resolved values, in addition to the mapping strategy.
 	Parameters ParameterSet `json:"parameters,omitempty"`
 
 	// Custom extension data applicable to a given runtime.
 	// TODO(carolynvs): remove custom and populate it in ToCNAB
 	Custom interface{} `json:"custom"`
+
+	// ParametersDigest is a hash or digest of the final set of parameters, which allows us to
+	// quickly determine if the parameters have changed without requiring that they
+	// are re-resolved. The value should contain the hash type, e.g. sha256:abc123...
+	// This is a status/audit field and is not used to resolve parameters for a Run.
+	ParametersDigest string `json:"parametersDigest,omitempty"`
+
+	// Credentials is the full set of credentials that should be resolved
+	// just-in-time (JIT) before executing the bundle. These should be a "clean" set
+	// of parameters that have sensitive values persisted in secrets using the
+	// Sanitizer.
+	Credentials CredentialSet `json:"credentials,omitempty"`
+
+	// CredentialsDigest is a hash or digest of the final set of credentials, which allows us to
+	// quickly determine if the credentials have changed without requiring that they
+	// are re-resolved. The value should contain the hash type, e.g. sha256:abc123...
+	// This is a status/audit field and is not used to resolve credentials for a Run.
+	CredentialsDigest string `json:"credentialsDigest,omitempty"`
 }
 
 // rawRun is an alias for Run that does not have a json marshal functions defined,
@@ -117,6 +148,7 @@ func NewRun(namespace string, installation string) Run {
 		ID:            cnab.NewULID(),
 		Revision:      cnab.NewULID(),
 		Created:       time.Now(),
+		Modified:      time.Now(),
 		Namespace:     namespace,
 		Installation:  installation,
 		Parameters:    NewInternalParameterSet(namespace, installation),
@@ -192,6 +224,36 @@ func (r Run) TypedParameterValues() map[string]interface{} {
 
 	return value
 
+}
+
+// SetParametersDigest records the hash of the resolved parameters, so we can
+// quickly tell if the parameters between runs were different without
+// re-resolving them.
+func (r *Run) SetParametersDigest() error {
+	// Calculate a hash of the resolved parameters
+	paramB, err := json.Marshal(r.Parameters.Parameters)
+	if err != nil {
+		r.ParametersDigest = ""
+		return fmt.Errorf("error calculating the digest of the run parameters: %w", err)
+	}
+
+	r.ParametersDigest = fmt.Sprintf("sha256:%x", sha256.Sum256(paramB))
+	return nil
+}
+
+// SetCredentialsDigest records the hash of the resolved credentials, so we can
+// quickly tell if the parameters between runs were different without
+// re-resolving them.
+func (r *Run) SetCredentialsDigest() error {
+	// Calculate a hash of the resolved credentials
+	credB, err := json.Marshal(r.Credentials.Credentials)
+	if err != nil {
+		r.CredentialsDigest = ""
+		return fmt.Errorf("error calculating the digest of the run credentials: %w", err)
+	}
+
+	r.CredentialsDigest = fmt.Sprintf("sha256:%x", sha256.Sum256(credB))
+	return nil
 }
 
 // NewRun creates a result for the current Run.
