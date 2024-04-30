@@ -139,6 +139,11 @@ func (p *Porter) Close() error {
 		bigErr = multierror.Append(bigErr, err)
 	}
 
+	err = p.Signer.Close()
+	if err != nil {
+		bigErr = multierror.Append(bigErr, err)
+	}
+
 	return bigErr.ErrorOrNil()
 }
 

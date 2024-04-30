@@ -111,3 +111,11 @@ func (s *Signer) Connect(ctx context.Context) error {
 
 	return nil
 }
+
+func (s *Signer) Close() error {
+	if s.conn != nil {
+		s.conn.Close(context.Background())
+		s.conn = nil
+	}
+	return nil
+}
