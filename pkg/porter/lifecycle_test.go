@@ -338,7 +338,7 @@ func TestPorter_applyActionOptionsToInstallation_FollowsParameterHierarchy(t *te
 	bun, err := configadapter.ConvertToTestBundle(ctx, p.Config, m)
 	require.NoError(t, err)
 
-	err = p.TestParameters.InsertParameterSet(ctx, storage.NewParameterSet("", "myps",
+	err = p.TestParameters.InsertParameterSet(ctx, storage.NewParameterSet("", "myps", "",
 		storage.ValueStrategy("my-second-param", "via_paramset")))
 	require.NoError(t, err, "Create my-second-param parameter set failed")
 
@@ -515,7 +515,7 @@ func TestPorter_applyActionOptionsToInstallation_PreservesExistingParams(t *test
 	opts.Params = []string{nonsensitiveParamName + "=" + nonsensitiveParamValue}
 
 	i := storage.NewInstallation("", bun.Name)
-	i.Parameters = storage.NewParameterSet("", "internal-ps",
+	i.Parameters = storage.NewParameterSet("", "internal-ps", "",
 		storage.ValueStrategy("my-first-param", "1"),
 		storage.ValueStrategy("my-second-param", "2"),
 	)

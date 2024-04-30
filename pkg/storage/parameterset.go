@@ -41,6 +41,9 @@ type ParameterSetSpec struct {
 	// Name is the name of the parameter set.
 	Name string `json:"name" yaml:"name" toml:"name"`
 
+	// Description is the description of the parameter set.
+	Description string `json:"description" yaml:"description" toml:"description"`
+
 	// Labels applied to the parameter set.
 	Labels map[string]string `json:"labels,omitempty" yaml:"labels,omitempty" toml:"labels,omitempty"`
 
@@ -58,7 +61,7 @@ type ParameterSetStatus struct {
 }
 
 // NewParameterSet creates a new ParameterSet with the required fields initialized.
-func NewParameterSet(namespace string, name string, params ...secrets.SourceMap) ParameterSet {
+func NewParameterSet(namespace string, name string, description string, params ...secrets.SourceMap) ParameterSet {
 	now := time.Now()
 	ps := ParameterSet{
 		ParameterSetSpec: ParameterSetSpec{
@@ -66,6 +69,7 @@ func NewParameterSet(namespace string, name string, params ...secrets.SourceMap)
 			SchemaVersion: DefaultParameterSetSchemaVersion,
 			Namespace:     namespace,
 			Name:          name,
+			Description:   description,
 			Parameters:    params,
 		},
 		Status: ParameterSetStatus{
@@ -79,7 +83,7 @@ func NewParameterSet(namespace string, name string, params ...secrets.SourceMap)
 
 // NewInternalParameterSet creates a new internal ParameterSet with the required fields initialized.
 func NewInternalParameterSet(namespace string, name string, params ...secrets.SourceMap) ParameterSet {
-	return NewParameterSet(namespace, INTERNAL_PARAMETERER_SET+"-"+name, params...)
+	return NewParameterSet(namespace, INTERNAL_PARAMETERER_SET+"-"+name, "", params...)
 }
 
 func (s ParameterSet) DefaultDocumentFilter() map[string]interface{} {

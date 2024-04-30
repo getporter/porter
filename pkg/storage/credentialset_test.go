@@ -17,7 +17,7 @@ import (
 )
 
 func TestNewCredentialSet(t *testing.T) {
-	cs := NewCredentialSet("dev", "mycreds", secrets.SourceMap{
+	cs := NewCredentialSet("dev", "mycreds", "", secrets.SourceMap{
 		Name: "password",
 		Source: secrets.Source{
 			Strategy: "env",
@@ -140,7 +140,7 @@ func TestDisplayCredentials_Validate(t *testing.T) {
 }
 
 func TestCredentialSet_Validate_DefaultSchemaType(t *testing.T) {
-	cs := NewCredentialSet("", "mycs")
+	cs := NewCredentialSet("", "mycs", "")
 	cs.SchemaType = ""
 	require.NoError(t, cs.Validate(context.Background(), schema.CheckStrategyExact))
 	assert.Equal(t, SchemaTypeCredentialSet, cs.SchemaType)

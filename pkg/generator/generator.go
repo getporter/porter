@@ -13,9 +13,10 @@ import (
 // GenerateOptions are the options to generate a parameter or credential set
 type GenerateOptions struct {
 	// Name of the parameter or credential set.
-	Name      string
-	Namespace string
-	Labels    map[string]string
+	Name        string
+	Namespace   string
+	Description string
+	Labels      map[string]string
 
 	// Should we survey?
 	Silent bool
@@ -35,16 +36,20 @@ const (
 	questionCommand = "shell command"
 )
 
-type generator func(name string, surveyType SurveyType) (secrets.SourceMap, error)
+type generator func(name string, description string, surveyType SurveyType) (secrets.SourceMap, error)
 
-func genEmptySet(name string, surveyType SurveyType) (secrets.SourceMap, error) {
+func genEmptySet(name string, description string, surveyType SurveyType) (secrets.SourceMap, error) {
 	return secrets.SourceMap{
 		Name:   name,
 		Source: secrets.Source{Hint: "TODO"},
 	}, nil
 }
 
-func genSurvey(name string, surveyType SurveyType) (secrets.SourceMap, error) {
+func genSurvey(name string, description string, surveyType SurveyType) (secrets.SourceMap, error) {
+	if description != "" {
+		fmt.Printf("Description: %s", description)
+	}
+
 	if surveyType != surveyCredentials && surveyType != surveyParameters {
 		return secrets.SourceMap{}, fmt.Errorf("unsupported survey type: %s", surveyType)
 	}
@@ -109,6 +114,7 @@ func genSurvey(name string, surveyType SurveyType) (secrets.SourceMap, error) {
 		c.Source.Strategy = host.SourceCommand
 		c.Source.Hint = value
 	}
+
 	return c, nil
 }
 

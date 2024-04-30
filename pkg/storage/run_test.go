@@ -171,7 +171,7 @@ func TestRun_TypedParameterValues(t *testing.T) {
 
 	run := NewRun("dev", "mybuns")
 	run.Bundle = bun
-	run.Parameters = NewParameterSet(run.Namespace, run.Bundle.Name,
+	run.Parameters = NewParameterSet(run.Namespace, run.Bundle.Name, "",
 		ValueStrategy("baz", "baz-test"),
 		ValueStrategy("name", "porter-test"),
 		ValueStrategy("porter-state", ""),

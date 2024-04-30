@@ -50,7 +50,7 @@ func TestSanitizer_Parameters(t *testing.T) {
 
 	require.Truef(t, reflect.DeepEqual(result, expected), "expected: %v, got: %v", expected, result)
 
-	pset := storage.NewParameterSet("", "dev", result...)
+	pset := storage.NewParameterSet("", "dev", "", result...)
 	resolved, err := r.TestSanitizer.RestoreParameterSet(ctx, pset, bun)
 	require.NoError(t, err)
 

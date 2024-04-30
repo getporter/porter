@@ -2,6 +2,7 @@ schemaType: ParameterSet
 schemaVersion: 1.0.1
 namespace: ""
 name: mypset
+description: ""
 parameters:
   - name: foo
     source:

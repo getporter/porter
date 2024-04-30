@@ -15,13 +15,13 @@ func Test_genEmptySet(t *testing.T) {
 		Source: secrets.Source{Hint: "TODO"},
 	}
 
-	got, err := genEmptySet("emptyset", surveyParameters)
+	got, err := genEmptySet("emptyset", "", surveyParameters)
 	require.NoError(t, err)
 	require.Equal(t, expected, got)
 }
 
 func Test_genSurvey_unsupported(t *testing.T) {
-	got, err := genSurvey("myturtleset", SurveyType("turtles"))
+	got, err := genSurvey("myturtleset", "my turtle description", SurveyType("turtles"))
 	require.EqualError(t, err, "unsupported survey type: turtles")
 	require.Equal(t, secrets.SourceMap{}, got)
 }

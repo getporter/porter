@@ -15,7 +15,7 @@ import (
 )
 
 func TestNewParameterSet(t *testing.T) {
-	ps := NewParameterSet("dev", "myparams",
+	ps := NewParameterSet("dev", "myparams", "",
 		secrets.SourceMap{
 			Name: "password",
 			Source: secrets.Source{
@@ -107,7 +107,7 @@ func TestDisplayParameterSet_Validate(t *testing.T) {
 }
 
 func TestParameterSet_Validate_DefaultSchemaType(t *testing.T) {
-	ps := NewParameterSet("", "myps")
+	ps := NewParameterSet("", "myps", "")
 	ps.SchemaType = ""
 	require.NoError(t, ps.Validate(context.Background(), schema.CheckStrategyExact))
 	assert.Equal(t, SchemaTypeParameterSet, ps.SchemaType)

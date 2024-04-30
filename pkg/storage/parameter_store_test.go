@@ -18,7 +18,7 @@ func TestParameterStore_CRUD(t *testing.T) {
 	require.NoError(t, err)
 	require.Empty(t, params, "Find should return no entries")
 
-	myParamSet := NewParameterSet("dev", "myparams",
+	myParamSet := NewParameterSet("dev", "myparams", "",
 		secrets.SourceMap{
 			Name: "myparam",
 			Source: secrets.Source{
@@ -49,7 +49,7 @@ func TestParameterStore_CRUD(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, myParamSet, pset, "Get should return the saved parameter set")
 
-	myParamSet2 := NewParameterSet("dev", "myparams2",
+	myParamSet2 := NewParameterSet("dev", "myparams2", "",
 		secrets.SourceMap{
 			Name: "myparam2",
 			Source: secrets.Source{
@@ -93,7 +93,7 @@ func TestParameterStore_CRUD(t *testing.T) {
 func TestParameterStorage_ResolveAll(t *testing.T) {
 	// The inmemory secret store currently only supports secret sources
 	// So all of these have this same source
-	testParameterSet := NewParameterSet("", "myparamset",
+	testParameterSet := NewParameterSet("", "myparamset", "",
 		secrets.SourceMap{
 			Name: "param1",
 			Source: secrets.Source{
@@ -148,7 +148,7 @@ func TestParameterStorage_Validate(t *testing.T) {
 	t.Run("valid sources", func(t *testing.T) {
 		s := ParameterStore{}
 
-		testParameterSet := NewParameterSet("", "myparams",
+		testParameterSet := NewParameterSet("", "myparams", "",
 			secrets.SourceMap{
 				Source: secrets.Source{
 					Strategy: "env",
@@ -186,7 +186,7 @@ func TestParameterStorage_Validate(t *testing.T) {
 
 	t.Run("invalid sources", func(t *testing.T) {
 		s := ParameterStore{}
-		testParameterSet := NewParameterSet("", "myparams",
+		testParameterSet := NewParameterSet("", "myparams", "",
 			secrets.SourceMap{
 				Source: secrets.Source{
 					Strategy: "wrongthing",

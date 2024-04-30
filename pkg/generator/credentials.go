@@ -28,7 +28,7 @@ func GenerateCredentials(opts GenerateCredentialsOptions) (storage.CredentialSet
 	if opts.Silent {
 		generator = genEmptySet
 	}
-	credSet, err := genCredentialSet(opts.Namespace, opts.Name, opts.Credentials, generator)
+	credSet, err := genCredentialSet(opts.Namespace, opts.Name, opts.Description, opts.Credentials, generator)
 	if err != nil {
 		return storage.CredentialSet{}, err
 	}
@@ -37,8 +37,8 @@ func GenerateCredentials(opts GenerateCredentialsOptions) (storage.CredentialSet
 	return credSet, nil
 }
 
-func genCredentialSet(namespace string, name string, creds map[string]bundle.Credential, fn generator) (storage.CredentialSet, error) {
-	cs := storage.NewCredentialSet(namespace, name)
+func genCredentialSet(namespace string, name string, description string, creds map[string]bundle.Credential, fn generator) (storage.CredentialSet, error) {
+	cs := storage.NewCredentialSet(namespace, name, description)
 	cs.Credentials = []secrets.SourceMap{}
 
 	if strings.ContainsAny(name, "./\\") {
@@ -53,7 +53,7 @@ func genCredentialSet(namespace string, name string, creds map[string]bundle.Cre
 	sort.Strings(credentialNames)
 
 	for _, name := range credentialNames {
-		c, err := fn(name, surveyCredentials)
+		c, err := fn(name, "", surveyCredentials)
 		if err != nil {
 			return cs, err
 		}

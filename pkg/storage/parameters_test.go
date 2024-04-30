@@ -66,7 +66,7 @@ func TestTestParameterProvider_Load(t *testing.T) {
 	})
 
 	t.Run("successful load, successful unmarshal", func(t *testing.T) {
-		expected := NewParameterSet("", "mybun",
+		expected := NewParameterSet("", "mybun", "",
 			secrets.SourceMap{
 				Name: "param_env",
 				Source: secrets.Source{

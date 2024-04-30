@@ -37,7 +37,7 @@ func (opts *GenerateParametersOptions) GenerateParameters() (storage.ParameterSe
 }
 
 func (opts *GenerateParametersOptions) genParameterSet(fn generator) (storage.ParameterSet, error) {
-	pset := storage.NewParameterSet(opts.Namespace, opts.Name)
+	pset := storage.NewParameterSet(opts.Namespace, opts.Name, opts.Description)
 
 	if strings.ContainsAny(opts.Name, "./\\") {
 		return pset, fmt.Errorf("parameter set name '%s' cannot contain the following characters: './\\'", opts.Name)
@@ -54,7 +54,7 @@ func (opts *GenerateParametersOptions) genParameterSet(fn generator) (storage.Pa
 		if opts.Bundle.IsInternalParameter(name) {
 			continue
 		}
-		c, err := fn(name, surveyParameters)
+		c, err := fn(name, "", surveyParameters)
 		if err != nil {
 			return pset, err
 		}

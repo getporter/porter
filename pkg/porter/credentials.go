@@ -81,10 +81,10 @@ func (p *Porter) PrintCredentials(ctx context.Context, opts ListOptions) error {
 				if !ok {
 					return nil
 				}
-				return []string{cr.Namespace, cr.Name, tp.Format(cr.Status.Modified)}
+				return []string{cr.Namespace, cr.Name, cr.Description, tp.Format(cr.Status.Modified)}
 			}
 		return printer.PrintTable(p.Out, creds, printCredRow,
-			"NAMESPACE", "NAME", "MODIFIED")
+			"NAMESPACE", "NAME", "DESCRIPTION", "MODIFIED")
 	default:
 		return span.Error(fmt.Errorf("invalid format: %s", opts.Format))
 	}
@@ -288,6 +288,7 @@ func (p *Porter) ShowCredential(ctx context.Context, opts CredentialShowOptions)
 		// Note that we are not using span.Info because the command's output must go to standard out
 		fmt.Fprintf(p.Out, "Name: %s\n", credSet.Name)
 		fmt.Fprintf(p.Out, "Namespace: %s\n", credSet.Namespace)
+		fmt.Fprintf(p.Out, "Description: %s\n", credSet.Description)
 		fmt.Fprintf(p.Out, "Created: %s\n", tp.Format(credSet.Status.Created))
 		fmt.Fprintf(p.Out, "Modified: %s\n\n", tp.Format(credSet.Status.Modified))
 

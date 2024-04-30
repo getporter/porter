@@ -48,6 +48,9 @@ type CredentialSetSpec struct {
 	// Name of the credential set.
 	Name string `json:"name" yaml:"name" toml:"name"`
 
+	// Description fo teh credential set.
+	Description string `json:"description" yaml:"description" toml:"description"`
+
 	// Labels applied to the credential set.
 	Labels map[string]string `json:"labels,omitempty" yaml:"labels,omitempty" toml:"labels,omitempty"`
 
@@ -74,13 +77,14 @@ func NewInternalCredentialSet(creds ...secrets.SourceMap) CredentialSet {
 }
 
 // NewCredentialSet creates a new CredentialSet with the required fields initialized.
-func NewCredentialSet(namespace string, name string, creds ...secrets.SourceMap) CredentialSet {
+func NewCredentialSet(namespace string, name string, description string, creds ...secrets.SourceMap) CredentialSet {
 	now := time.Now()
 	cs := CredentialSet{
 		CredentialSetSpec: CredentialSetSpec{
 			SchemaType:    SchemaTypeCredentialSet,
 			SchemaVersion: DefaultCredentialSetSchemaVersion,
 			Name:          name,
+			Description:   description,
 			Namespace:     namespace,
 			Credentials:   creds,
 		},

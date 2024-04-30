@@ -10,7 +10,7 @@ import (
 )
 
 func TestCredentialStorage_CRUD(t *testing.T) {
-	cs := NewCredentialSet("dev", "sekrets", secrets.SourceMap{
+	cs := NewCredentialSet("dev", "sekrets", "", secrets.SourceMap{
 		Name: "password", Source: secrets.Source{
 			Strategy: "secret",
 			Hint:     "dbPassword"}})
@@ -45,7 +45,7 @@ func TestCredentialStorage_CRUD(t *testing.T) {
 	require.NoError(t, err)
 	assert.Len(t, cs.Credentials, 2)
 
-	cs2 := NewCredentialSet("dev", "sekrets-2", secrets.SourceMap{
+	cs2 := NewCredentialSet("dev", "sekrets-2", "", secrets.SourceMap{
 		Name: "password-2", Source: secrets.Source{
 			Strategy: "secret-2",
 			Hint:     "dbPassword-2"}})
@@ -73,7 +73,7 @@ func TestCredentialStorage_CRUD(t *testing.T) {
 
 func TestCredentialStorage_Validate_GoodSources(t *testing.T) {
 	s := CredentialStore{}
-	testCreds := NewCredentialSet("dev", "mycreds",
+	testCreds := NewCredentialSet("dev", "mycreds", "",
 		secrets.SourceMap{
 			Source: secrets.Source{
 				Strategy: "env",
@@ -93,7 +93,7 @@ func TestCredentialStorage_Validate_GoodSources(t *testing.T) {
 
 func TestCredentialStorage_Validate_BadSources(t *testing.T) {
 	s := CredentialStore{}
-	testCreds := NewCredentialSet("dev", "mycreds",
+	testCreds := NewCredentialSet("dev", "mycreds", "",
 		secrets.SourceMap{
 			Source: secrets.Source{
 				Strategy: "wrongthing",
