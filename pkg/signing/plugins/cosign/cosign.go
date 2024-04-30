@@ -46,11 +46,6 @@ func (s *Cosign) Connect(ctx context.Context) error {
 	return nil
 }
 
-// Close implements the Close method on the signing plugins' interface.
-func (s *Cosign) Close() error {
-	return nil
-}
-
 func (s *Cosign) Sign(ctx context.Context, ref string) error {
 	//lint:ignore SA4006 ignore unused ctx for now
 	ctx, log := tracing.StartSpan(ctx)
