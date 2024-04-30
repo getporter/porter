@@ -109,6 +109,10 @@ func (s *Signer) Connect(ctx context.Context) error {
 	}
 	s.plugin = store
 
+	if err = s.plugin.Connect(ctx); err != nil {
+		return err
+	}
+
 	return nil
 }
 

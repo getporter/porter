@@ -2,6 +2,7 @@ package notation
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os/exec"
 
@@ -33,7 +34,9 @@ func (s *Signer) Connect(ctx context.Context) error {
 	ctx, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
 
-	log.Debug("Running notation signer")
+	if err := exec.Command("notation", "version").Run(); err != nil {
+		return errors.New("notation was not found")
+	}
 
 	return nil
 }

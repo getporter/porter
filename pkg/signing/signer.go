@@ -13,4 +13,6 @@ type Signer interface {
 	// Verify attempts to verify a signature for the specified
 	// reference, which can be a Porter bundle or an invocation image.
 	Verify(ctx context.Context, ref string) error
+	// TODO
+	Connect(ctx context.Context) error
 }

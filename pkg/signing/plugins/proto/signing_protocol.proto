@@ -11,11 +11,16 @@ message VerifyRequest {
   string Ref = 1;
 }
 
+message ConnectRequest {}
+
 message SignResponse {}
 
 message VerifyResponse {}
 
+message ConnectResponse {}
+
 service SigningProtocol {
   rpc Sign(SignRequest) returns (SignResponse);
   rpc Verify(VerifyRequest) returns (VerifyResponse);
+  rpc Connect(ConnectRequest) returns (ConnectResponse);
 }

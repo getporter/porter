@@ -39,6 +39,12 @@ func (m *GClient) Verify(ctx context.Context, ref string) error {
 	return err
 }
 
+func (m *GClient) Connect(ctx context.Context) error {
+	req := &proto.ConnectRequest{}
+	_, err := m.client.Connect(ctx, req)
+	return err
+}
+
 // GServer is a gRPC wrapper around a SecretsProtocol plugin
 type GServer struct {
 	c    *portercontext.Context
@@ -64,4 +70,12 @@ func (m *GServer) Verify(ctx context.Context, request *proto.VerifyRequest) (*pr
 		return nil, err
 	}
 	return &proto.VerifyResponse{}, nil
+}
+
+func (m *GServer) Connect(ctx context.Context, request *proto.ConnectRequest) (*proto.ConnectResponse, error) {
+	err := m.impl.Connect(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return &proto.ConnectResponse{}, nil
 }

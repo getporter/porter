@@ -2,6 +2,7 @@ package cosign
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -35,13 +36,14 @@ func NewSigner(c *portercontext.Context, cfg PluginConfig) *Cosign {
 	return s
 }
 
-// TODO: we should get the certificate... here?
 func (s *Cosign) Connect(ctx context.Context) error {
 	//lint:ignore SA4006 ignore unused ctx for now
 	ctx, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
 
-	log.Debug("Running cosign signer")
+	if err := exec.Command("cosign", "version").Run(); err != nil {
+		return errors.New("cosign was not found")
+	}
 
 	return nil
 }

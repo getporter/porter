@@ -34,3 +34,7 @@ func (a PluginAdapter) Sign(ctx context.Context, ref string) error {
 func (a PluginAdapter) Verify(ctx context.Context, ref string) error {
 	return a.plugin.Verify(ctx, ref)
 }
+
+func (a PluginAdapter) Connect(ctx context.Context) error {
+	return a.plugin.Connect(ctx)
+}

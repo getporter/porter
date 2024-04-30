@@ -24,6 +24,7 @@ const _ = grpc.SupportPackageIsVersion7
 type SigningProtocolClient interface {
 	Sign(ctx context.Context, in *SignRequest, opts ...grpc.CallOption) (*SignResponse, error)
 	Verify(ctx context.Context, in *VerifyRequest, opts ...grpc.CallOption) (*VerifyResponse, error)
+	Connect(ctx context.Context, in *ConnectRequest, opts ...grpc.CallOption) (*ConnectResponse, error)
 }
 
 type signingProtocolClient struct {
@@ -52,12 +53,22 @@ func (c *signingProtocolClient) Verify(ctx context.Context, in *VerifyRequest, o
 	return out, nil
 }
 
+func (c *signingProtocolClient) Connect(ctx context.Context, in *ConnectRequest, opts ...grpc.CallOption) (*ConnectResponse, error) {
+	out := new(ConnectResponse)
+	err := c.cc.Invoke(ctx, "/plugins.SigningProtocol/Connect", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SigningProtocolServer is the server API for SigningProtocol service.
 // All implementations must embed UnimplementedSigningProtocolServer
 // for forward compatibility
 type SigningProtocolServer interface {
 	Sign(context.Context, *SignRequest) (*SignResponse, error)
 	Verify(context.Context, *VerifyRequest) (*VerifyResponse, error)
+	Connect(context.Context, *ConnectRequest) (*ConnectResponse, error)
 	mustEmbedUnimplementedSigningProtocolServer()
 }
 
@@ -70,6 +81,9 @@ func (UnimplementedSigningProtocolServer) Sign(context.Context, *SignRequest) (*
 }
 func (UnimplementedSigningProtocolServer) Verify(context.Context, *VerifyRequest) (*VerifyResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Verify not implemented")
+}
+func (UnimplementedSigningProtocolServer) Connect(context.Context, *ConnectRequest) (*ConnectResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Connect not implemented")
 }
 func (UnimplementedSigningProtocolServer) mustEmbedUnimplementedSigningProtocolServer() {}
 
@@ -120,6 +134,24 @@ func _SigningProtocol_Verify_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SigningProtocol_Connect_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ConnectRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SigningProtocolServer).Connect(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/plugins.SigningProtocol/Connect",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SigningProtocolServer).Connect(ctx, req.(*ConnectRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // SigningProtocol_ServiceDesc is the grpc.ServiceDesc for SigningProtocol service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -134,6 +166,10 @@ var SigningProtocol_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Verify",
 			Handler:    _SigningProtocol_Verify_Handler,
+		},
+		{
+			MethodName: "Connect",
+			Handler:    _SigningProtocol_Connect_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
