@@ -242,7 +242,7 @@ func (c *Config) GetPorterPath(ctx context.Context) (string, error) {
 	// We try to resolve back to the original location
 	hardPath, err := evalSymlinks(porterPath)
 	if err != nil { // if we have trouble resolving symlinks, skip trying to help people who used symlinks
-		log.Error(fmt.Errorf("WARNING could not resolve %s for symbolic links: %w", porterPath, err))
+		return "", log.Error(fmt.Errorf("WARNING could not resolve %s for symbolic links: %w", porterPath, err))
 	} else if hardPath != porterPath {
 		log.Debugf("Resolved porter binary from %s to %s", porterPath, hardPath)
 		porterPath = hardPath

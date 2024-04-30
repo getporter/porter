@@ -37,11 +37,13 @@ func Docs() {
 	if baseURL != "" {
 		cmd.Args("-b", baseURL)
 	}
-	cmd.RunV()
+	err := cmd.RunV()
+	mgx.Must(err)
 }
 
 func removePreviewContainer() {
-	docker.RemoveContainer(PreviewContainer)
+	err := docker.RemoveContainer(PreviewContainer)
+	mgx.Must(err)
 }
 
 // Preview the website locally using a Docker container.
@@ -59,12 +61,13 @@ func DocsPreview() {
 	}
 	setDockerUser := fmt.Sprintf("--user=%s:%s", currentUser.Uid, currentUser.Gid)
 	pwd, _ := os.Getwd()
-	must.Run("docker", "run", "-d", "-v", pwd+":/src",
+	err = must.Run("docker", "run", "-d", "-v", pwd+":/src",
 		"-v", operatorDocs+":/src/docs/content/operator",
 		setDockerUser,
 		"-p", "1313:1313", "--name", PreviewContainer, "-w", "/src/docs",
 		"klakegg/hugo:0.78.1-ext-alpine", "server", "-D", "-F", "--noHTTPCache",
 		"--watch", "--bind=0.0.0.0")
+	mgx.Must(err)
 
 	for {
 		output, _ := must.OutputS("docker", "logs", "porter-docs")
@@ -74,7 +77,8 @@ func DocsPreview() {
 		time.Sleep(time.Second)
 	}
 
-	must.Run("open", "http://localhost:1313/docs/")
+	err = must.Run("open", "http://localhost:1313/docs/")
+	mgx.Must(err)
 }
 
 // Build a branch preview of the website.

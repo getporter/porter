@@ -1,6 +1,8 @@
 package test
 
-import "testing"
+import (
+	"testing"
+)
 
 // Logger helps capture output in a test while still showing it in the console
 type Logger struct {

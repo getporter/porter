@@ -40,15 +40,17 @@ func TestContext_LogToFile(t *testing.T) {
 		LogDirectory: "/.porter/logs",
 	})
 	c.timestampLogs = false // turn off timestamps so we can compare more easily
-	logfile := c.logFile.Name()
 	_, log := c.StartRootSpan(context.Background(), t.Name())
 	log.Info("a thing happened")
 	log.Warn("a weird thing happened")
-	log.Error(errors.New("a bad thing happened"))
+	err := log.Error(errors.New("a bad thing happened"))
+	// an error that errors
+	t.Fatal(err)
 	log.EndSpan()
 	c.Close()
 
 	// Check that the logs are in json
+	logfile := c.logFile.Name()
 	logContents, err := c.FileSystem.ReadFile(logfile)
 	require.NoError(t, err)
 	c.CompareGoldenFile("testdata/expected-logs.txt", string(logContents))
