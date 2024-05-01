@@ -1,13 +1,19 @@
 package signing
 
+import "get.porter.sh/porter/pkg/signing/plugins/mock"
+
 var _ Signer = &TestSigningProvider{}
 
 type TestSigningProvider struct {
 	PluginAdapter
-	//TODO: add a test signer here
+
+	signer *mock.Signer
 }
 
 func NewTestSigningProvider() TestSigningProvider {
-	// TODO: implement this
-	return TestSigningProvider{}
+	signer := mock.NewSigner()
+	return TestSigningProvider{
+		PluginAdapter: NewPluginAdapter(signer),
+		signer:        signer,
+	}
 }

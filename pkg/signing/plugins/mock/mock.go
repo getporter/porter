@@ -27,14 +27,6 @@ func (s *Signer) Connect(ctx context.Context) error {
 	//lint:ignore SA4006 ignore unused ctx for now
 	ctx, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
-
-	log.Debug("Running mock signer")
-
-	return nil
-}
-
-// Close implements the Close method on the signing plugins' interface.
-func (s *Signer) Close() error {
 	return nil
 }
 
@@ -43,7 +35,6 @@ func (s *Signer) Sign(ctx context.Context, ref string) error {
 	ctx, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
 
-	log.Infof("Mock Signer is Signing %s", ref)
 	s.Signatures[ref] = b64.StdEncoding.EncodeToString([]byte(ref))
 	return nil
 }
@@ -53,6 +44,9 @@ func (s *Signer) Verify(ctx context.Context, ref string) error {
 	ctx, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
 
-	log.Infof("Mock Signer is Verifying %s", ref)
+	if _, ok := s.Signatures[ref]; !ok {
+		return log.Errorf("%s is not signed", ref)
+	}
+
 	return nil
 }
