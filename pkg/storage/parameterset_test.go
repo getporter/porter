@@ -9,6 +9,7 @@ import (
 	"get.porter.sh/porter/pkg/schema"
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/tests"
+	"github.com/cnabio/cnab-go/bundle"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -110,4 +111,47 @@ func TestParameterSet_Validate_DefaultSchemaType(t *testing.T) {
 	ps.SchemaType = ""
 	require.NoError(t, ps.Validate(context.Background(), schema.CheckStrategyExact))
 	assert.Equal(t, SchemaTypeParameterSet, ps.SchemaType)
+}
+
+func TestParameterSetValidateBundle(t *testing.T) {
+	t.Run("valid - parameter specified", func(t *testing.T) {
+		spec := map[string]bundle.Parameter{
+			"kubeconfig": {},
+		}
+		ps := ParameterSet{ParameterSetSpec: ParameterSetSpec{
+			Parameters: []secrets.SourceMap{
+				{Name: "kubeconfig", ResolvedValue: "top secret param"},
+			}}}
+
+		err := ps.ValidateBundle(spec, "install")
+		require.NoError(t, err, "expected Validate to pass because the parameter was specified")
+	})
+
+	t.Run("valid - parameter not required or specified", func(t *testing.T) {
+		spec := map[string]bundle.Parameter{
+			"kubeconfig": {ApplyTo: []string{"install"}, Required: false},
+		}
+		ps := ParameterSet{}
+		err := ps.ValidateBundle(spec, "install")
+		require.NoError(t, err, "expected Validate to pass because the parameter isn't required")
+	})
+
+	t.Run("valid - missing inapplicable parameter", func(t *testing.T) {
+		spec := map[string]bundle.Parameter{
+			"kubeconfig": {ApplyTo: []string{"install"}, Required: true},
+		}
+		ps := ParameterSet{}
+		err := ps.ValidateBundle(spec, "custom")
+		require.NoError(t, err, "expected Validate to pass because the parameter isn't applicable to the custom action")
+	})
+
+	t.Run("invalid - missing required parameter", func(t *testing.T) {
+		spec := map[string]bundle.Parameter{
+			"kubeconfig": {ApplyTo: []string{"install"}, Required: true},
+		}
+		ps := ParameterSet{}
+		err := ps.ValidateBundle(spec, "install")
+		require.Error(t, err, "expected Validate to fail because the parameter applies to the specified action and is required")
+		assert.Contains(t, err.Error(), `parameter "kubeconfig" is required`)
+	})
 }

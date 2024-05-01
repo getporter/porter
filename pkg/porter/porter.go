@@ -83,7 +83,7 @@ func NewFor(c *config.Config, store storage.Store, secretStorage secrets.Store, 
 		Templates:     templates.NewTemplates(c),
 		Mixins:        mixin.NewPackageManager(c),
 		Plugins:       plugins.NewPackageManager(c),
-		CNAB:          cnabprovider.NewRuntime(c, installationStorage, credStorage, secretStorage, sanitizerService),
+		CNAB:          cnabprovider.NewRuntime(c, installationStorage, credStorage, paramStorage, secretStorage, sanitizerService),
 		Sanitizer:     sanitizerService,
 		Signer:        signer,
 	}

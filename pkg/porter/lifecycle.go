@@ -15,9 +15,11 @@ import (
 	cnabprovider "get.porter.sh/porter/pkg/cnab/provider"
 	"get.porter.sh/porter/pkg/encoding"
 	"get.porter.sh/porter/pkg/portercontext"
+	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/tracing"
 	"github.com/opencontainers/go-digest"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 // BundleAction is an interface that defines a method for supplying
@@ -343,8 +345,13 @@ func (p *Porter) BuildActionArgs(ctx context.Context, installation storage.Insta
 		}
 	}
 
+	run, err := p.createRun(ctx, bundleRef, installation, action.GetAction(), opts.GetParameters())
+	if err != nil {
+		return cnabprovider.ActionArguments{}, err
+	}
+
 	args := cnabprovider.ActionArguments{
-		Action:                action.GetAction(),
+		Run:                   run,
 		Installation:          installation,
 		BundleReference:       bundleRef,
 		Params:                opts.GetParameters(),
@@ -411,4 +418,80 @@ func (p *Porter) prepullBundleByReference(ctx context.Context, opts *BundleRefer
 	}
 
 	return cachedBundle, nil
+}
+
+// createRun generates a Run record instructing porter exactly how to run the bundle
+// and includes audit/status fields as well.
+func (p *Porter) createRun(ctx context.Context, bundleRef cnab.BundleReference, inst storage.Installation, action string, params map[string]interface{}) (storage.Run, error) {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
+	// Create a record for the run we are about to execute
+	var currentRun = inst.NewRun(action, bundleRef.Definition)
+	currentRun.Bundle = bundleRef.Definition.Bundle
+	currentRun.BundleReference = bundleRef.Reference.String()
+	currentRun.BundleDigest = bundleRef.Digest.String()
+
+	var err error
+	cleanParams, err := p.Sanitizer.CleanRawParameters(ctx, params, bundleRef.Definition, currentRun.ID)
+	if err != nil {
+		return storage.Run{}, span.Error(err)
+	}
+	currentRun.Parameters.Parameters = cleanParams
+
+	// TODO: Do not save secrets when the run isn't recorded
+	currentRun.ParameterOverrides = storage.LinkSensitiveParametersToSecrets(currentRun.ParameterOverrides, bundleRef.Definition, currentRun.ID)
+	currentRun.ParameterSets = inst.ParameterSets
+
+	// Persist an audit record of the credential sets used to determine the final
+	// credentials injected into the bundle.
+	//
+	// These should remain in the order specified on the installation, and not
+	// sorted, so that the last specified set overrides the one before it when a
+	// value is specified in more than one set.
+	currentRun.CredentialSets = inst.CredentialSets
+
+	// Combine the credential sets above into a single credential set we can resolve just-in-time (JIT) before running the bundle.
+	finalCreds := make(map[string]secrets.SourceMap, len(currentRun.Bundle.Credentials))
+	for _, csName := range currentRun.CredentialSets {
+		var cs storage.CredentialSet
+		// Try to get the creds in the local namespace first, fallback to the global creds
+		query := storage.FindOptions{
+			Sort: []string{"-namespace"},
+			Filter: bson.M{
+				"name": csName,
+				"$or": []bson.M{
+					{"namespace": ""},
+					{"namespace": currentRun.Namespace},
+				},
+			},
+		}
+		store := p.Credentials.GetDataStore()
+		err := store.FindOne(ctx, storage.CollectionCredentials, query, &cs)
+		if err != nil {
+			return storage.Run{}, span.Errorf("could not find credential set named %s in the %s namespace or global namespace: %w", csName, inst.Namespace, err)
+		}
+
+		for _, cred := range cs.Credentials {
+			credDef, ok := currentRun.Bundle.Credentials[cred.Name]
+			if !ok || !credDef.AppliesTo(currentRun.Action) {
+				// ignore extra credential mappings in the set that are not defined by the bundle or used by the current action
+				// it's okay to over specify so that people can reuse sets better
+				continue
+			}
+
+			// If a credential is mapped in multiple credential sets, the strategy associated with the last set specified "wins"
+			finalCreds[cred.Name] = cred
+		}
+	}
+
+	if len(finalCreds) > 0 {
+		// Store the composite credential set on the run, so that the runtime can later resolve them in a single step
+		currentRun.Credentials = storage.NewInternalCredentialSet()
+		for _, cred := range finalCreds {
+			currentRun.Credentials.Credentials = append(currentRun.Credentials.Credentials, cred)
+		}
+	}
+
+	return currentRun, nil
 }
