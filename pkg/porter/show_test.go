@@ -113,16 +113,15 @@ func TestPorter_ShowInstallationWithBundle(t *testing.T) {
 					storage.ValueStrategy("secretString", "foo"),
 				)
 
-				r.Parameters = i.NewInternalParameterSet(
-					[]secrets.SourceMap{
-						storage.ValueStrategy("logLevel", "3"),
-						storage.ValueStrategy("token", "top-secret"),
-						storage.ValueStrategy("secretString", "foo"),
-					}...)
+				params := []secrets.SourceMap{
+					storage.ValueStrategy("logLevel", "3"),
+					storage.ValueStrategy("token", "top-secret"),
+					storage.ValueStrategy("secretString", "foo"),
+				}
 
 				r.ParameterSets = []string{"dev-env"}
 				r.ParameterOverrides.Parameters = p.SanitizeParameters(r.ParameterOverrides.Parameters, r.ID, bun)
-				r.Parameters.Parameters = p.SanitizeParameters(r.Parameters.Parameters, r.ID, bun)
+				r.Parameters.Parameters = p.SanitizeParameters(params, r.ID, bun)
 			})
 
 			i.Parameters.Parameters = run.ParameterOverrides.Parameters
