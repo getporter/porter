@@ -10,6 +10,7 @@ import (
 	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/experimental"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/tests"
@@ -20,19 +21,19 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func runtimeManifestFromStepYaml(t *testing.T, pCtx *portercontext.TestContext, stepYaml string) *RuntimeManifest {
+func runtimeManifestFromStepYaml(t *testing.T, testConfig *config.TestConfig, stepYaml string) *RuntimeManifest {
 	mContent := []byte(stepYaml)
-	require.NoError(t, pCtx.FileSystem.WriteFile("/cnab/app/porter.yaml", mContent, pkg.FileModeWritable))
-	m, err := manifest.ReadManifest(pCtx.Context, "/cnab/app/porter.yaml")
+	require.NoError(t, testConfig.FileSystem.WriteFile("/cnab/app/porter.yaml", mContent, pkg.FileModeWritable))
+	m, err := manifest.ReadManifest(testConfig.Context, "/cnab/app/porter.yaml")
 	require.NoError(t, err, "ReadManifest failed")
-	cfg := NewConfigFor(pCtx.Context)
+	cfg := NewConfigFor(testConfig.Config)
 	return NewRuntimeManifest(cfg, cnab.ActionInstall, m)
 }
 
 func TestResolveMapParam(t *testing.T) {
 	ctx := context.Background()
-	pCtx := portercontext.NewTestContext(t)
-	pCtx.Setenv("PERSON", "Ralpha")
+	testConfig := config.NewTestConfig(t)
+	testConfig.Setenv("PERSON", "Ralpha")
 
 	mContent := `schemaVersion: 1.0.0-alpha.2
 parameters:
@@ -45,7 +46,7 @@ install:
     Parameters:
       Thing: ${ bundle.parameters.person }
 `
-	rm := runtimeManifestFromStepYaml(t, pCtx, mContent)
+	rm := runtimeManifestFromStepYaml(t, testConfig, mContent)
 	s := rm.Install[0]
 
 	err := rm.ResolveStep(ctx, 0, s)
@@ -66,8 +67,8 @@ install:
 }
 func TestStateBagUnpack(t *testing.T) {
 	ctx := context.Background()
-	pCtx := portercontext.NewTestContext(t)
-	pCtx.Setenv("PERSON", "Ralpha")
+	testConfig := config.NewTestConfig(t)
+	testConfig.Setenv("PERSON", "Ralpha")
 
 	mContent := `schemaVersion: 1.0.0-alpha.2
 parameters:
@@ -106,8 +107,8 @@ state:
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			rm := runtimeManifestFromStepYaml(t, pCtx, mContent)
-			require.NoError(t, pCtx.FileSystem.WriteFile("/porter/state.tgz", []byte(test.stateContent), pkg.FileModeWritable))
+			rm := runtimeManifestFromStepYaml(t, testConfig, mContent)
+			require.NoError(t, testConfig.FileSystem.WriteFile("/porter/state.tgz", []byte(test.stateContent), pkg.FileModeWritable))
 			s := rm.Install[0]
 
 			err := rm.ResolveStep(ctx, 0, s)
@@ -119,14 +120,14 @@ state:
 			} else {
 				require.Contains(t, err.Error(), test.expErr.Error())
 			}
-			pCtx.FileSystem.Remove("/porter/state.tgz")
+			testConfig.FileSystem.Remove("/porter/state.tgz")
 		})
 	}
 }
 
 func TestResolvePathParam(t *testing.T) {
 	ctx := context.Background()
-	pCtx := portercontext.NewTestContext(t)
+	testConfig := config.NewTestConfig(t)
 
 	mContent := `schemaVersion: 1.0.0-alpha.2
 parameters:
@@ -138,7 +139,7 @@ install:
     Parameters:
       Thing: ${ bundle.parameters.person }
 `
-	rm := runtimeManifestFromStepYaml(t, pCtx, mContent)
+	rm := runtimeManifestFromStepYaml(t, testConfig, mContent)
 	s := rm.Install[0]
 
 	err := rm.ResolveStep(ctx, 0, s)
@@ -161,7 +162,7 @@ func TestMetadataAvailableForTemplating(t *testing.T) {
 	c.TestContext.AddTestFile("testdata/metadata-substitution.yaml", config.Name)
 	m, err := manifest.LoadManifestFrom(context.Background(), c.Config, config.Name)
 	require.NoError(t, err, "LoadManifestFrom")
-	cfg := NewConfigFor(c.Context)
+	cfg := NewConfigFor(c.Config)
 	rm := NewRuntimeManifest(cfg, cnab.ActionInstall, m)
 
 	s := rm.Install[0]
@@ -181,7 +182,7 @@ func TestDependencyMetadataAvailableForTemplating(t *testing.T) {
 
 	m, err := manifest.LoadManifestFrom(context.Background(), c.Config, config.Name)
 	require.NoError(t, err, "LoadManifestFrom")
-	cfg := NewConfigFor(c.Context)
+	cfg := NewConfigFor(c.Config)
 	rm := NewRuntimeManifest(cfg, cnab.ActionInstall, m)
 	rm.bundles = map[string]cnab.ExtendedBundle{
 		"mysql": cnab.NewBundle(bundle.Bundle{
@@ -203,7 +204,7 @@ func TestDependencyMetadataAvailableForTemplating(t *testing.T) {
 
 func TestResolveMapParamUnknown(t *testing.T) {
 	ctx := context.Background()
-	pCtx := portercontext.NewTestContext(t)
+	testConfig := config.NewTestConfig(t)
 
 	mContent := `schemaVersion: 1.0.0
 install:
@@ -211,7 +212,7 @@ install:
     Parameters:
       Thing: ${bundle.parameters.person}
 `
-	rm := runtimeManifestFromStepYaml(t, pCtx, mContent)
+	rm := runtimeManifestFromStepYaml(t, testConfig, mContent)
 	s := rm.Install[0]
 
 	err := rm.ResolveStep(ctx, 0, s)
@@ -221,7 +222,7 @@ install:
 
 func TestResolveArrayUnknown(t *testing.T) {
 	ctx := context.Background()
-	pCtx := portercontext.NewTestContext(t)
+	testConfig := config.NewTestConfig(t)
 
 	mContent := `schemaVersion: 1.0.0
 parameters:
@@ -232,7 +233,7 @@ install:
     Arguments:
       - ${bundle.parameters.person}
 `
-	rm := runtimeManifestFromStepYaml(t, pCtx, mContent)
+	rm := runtimeManifestFromStepYaml(t, testConfig, mContent)
 	s := rm.Install[0]
 
 	err := rm.ResolveStep(ctx, 0, s)
@@ -242,8 +243,8 @@ install:
 
 func TestResolveArray(t *testing.T) {
 	ctx := context.Background()
-	pCtx := portercontext.NewTestContext(t)
-	pCtx.Setenv("PERSON", "Ralpha")
+	testConfig := config.NewTestConfig(t)
+	testConfig.Setenv("PERSON", "Ralpha")
 
 	mContent := `schemaVersion: 1.0.0
 parameters:
@@ -254,7 +255,7 @@ install:
     Arguments:
     - ${ bundle.parameters.person }
 `
-	rm := runtimeManifestFromStepYaml(t, pCtx, mContent)
+	rm := runtimeManifestFromStepYaml(t, testConfig, mContent)
 	s := rm.Install[0]
 
 	err := rm.ResolveStep(ctx, 0, s)
@@ -270,9 +271,9 @@ install:
 
 func TestResolveSensitiveParameter(t *testing.T) {
 	ctx := context.Background()
-	pCtx := portercontext.NewTestContext(t)
-	pCtx.Setenv("SENSITIVE_PARAM", "deliciou$dubonnet")
-	pCtx.Setenv("REGULAR_PARAM", "regular param value")
+	testConfig := config.NewTestConfig(t)
+	testConfig.Setenv("SENSITIVE_PARAM", "deliciou$dubonnet")
+	testConfig.Setenv("REGULAR_PARAM", "regular param value")
 
 	mContent := `schemaVersion: 1.0.0
 parameters:
@@ -286,7 +287,7 @@ install:
     - ${ bundle.parameters.sensitive_param }
     - ${ bundle.parameters.regular_param }
 `
-	rm := runtimeManifestFromStepYaml(t, pCtx, mContent)
+	rm := runtimeManifestFromStepYaml(t, testConfig, mContent)
 	s := rm.Install[0]
 
 	// Prior to resolving step values, this method should return an empty string array
@@ -310,8 +311,8 @@ install:
 
 func TestResolveCredential(t *testing.T) {
 	ctx := context.Background()
-	pCtx := portercontext.NewTestContext(t)
-	pCtx.Setenv("PASSWORD", "deliciou$dubonnet")
+	testConfig := config.NewTestConfig(t)
+	testConfig.Setenv("PASSWORD", "deliciou$dubonnet")
 
 	mContent := `schemaVersion: 1.0.0
 credentials:
@@ -323,7 +324,7 @@ install:
     Arguments:
     - ${ bundle.credentials.password }
 `
-	rm := runtimeManifestFromStepYaml(t, pCtx, mContent)
+	rm := runtimeManifestFromStepYaml(t, testConfig, mContent)
 	s := rm.Install[0]
 
 	// Prior to resolving step values, this method should return an empty string array
@@ -344,9 +345,9 @@ install:
 
 func TestResolveStep_DependencyOutput(t *testing.T) {
 	ctx := context.Background()
-	pCtx := portercontext.NewTestContext(t)
-	pCtx.Setenv("PORTER_MYSQL_PASSWORD_DEP_OUTPUT", "password")
-	pCtx.Setenv("PORTER_MYSQL_ROOT_PASSWORD_DEP_OUTPUT", "mysql-password")
+	testConfig := config.NewTestConfig(t)
+	testConfig.Setenv("PORTER_MYSQL_PASSWORD_DEP_OUTPUT", "password")
+	testConfig.Setenv("PORTER_MYSQL_ROOT_PASSWORD_DEP_OUTPUT", "mysql-password")
 
 	mContent := `schemaVersion: 1.0.0
 dependencies:
@@ -361,7 +362,7 @@ install:
     - ${ bundle.dependencies.mysql.outputs.password }
     - ${ bundle.dependencies.mysql.outputs.root-password }
 `
-	rm := runtimeManifestFromStepYaml(t, pCtx, mContent)
+	rm := runtimeManifestFromStepYaml(t, testConfig, mContent)
 	ps := cnab.ParameterSources{}
 	ps.SetParameterFromDependencyOutput("porter-mysql-password", "mysql", "password")
 	ps.SetParameterFromDependencyOutput("porter-mysql-root-password", "mysql", "root-password")
@@ -408,7 +409,8 @@ install:
 
 func TestResolveStep_DependencyMappedOutput(t *testing.T) {
 	ctx := context.Background()
-	pCtx := portercontext.NewTestContext(t)
+	testConfig := config.NewTestConfig(t)
+	testConfig.SetExperimentalFlags(experimental.FlagDependenciesV2)
 
 	mContent := `schemaVersion: 1.0.0
 dependencies:
@@ -424,7 +426,7 @@ install:
     Arguments:
     - ${ bundle.dependencies.mysql.outputs.mappedOutput }
 `
-	rm := runtimeManifestFromStepYaml(t, pCtx, mContent)
+	rm := runtimeManifestFromStepYaml(t, testConfig, mContent)
 	rm.bundles = map[string]cnab.ExtendedBundle{
 		"mysql": cnab.NewBundle(bundle.Bundle{}),
 	}
@@ -443,8 +445,9 @@ install:
 
 func TestResolveStep_DependencyTemplatedMappedOutput(t *testing.T) {
 	ctx := context.Background()
-	pCtx := portercontext.NewTestContext(t)
-	pCtx.Setenv("PORTER_MYSQL_PASSWORD_DEP_OUTPUT", "password")
+	testConfig := config.NewTestConfig(t)
+	testConfig.SetExperimentalFlags(experimental.FlagDependenciesV2)
+	testConfig.Setenv("PORTER_MYSQL_PASSWORD_DEP_OUTPUT", "password")
 
 	mContent := `schemaVersion: 1.0.0
 dependencies:
@@ -460,7 +463,7 @@ install:
     Arguments:
     - ${ bundle.dependencies.mysql.outputs.mappedOutput }
 `
-	rm := runtimeManifestFromStepYaml(t, pCtx, mContent)
+	rm := runtimeManifestFromStepYaml(t, testConfig, mContent)
 	ps := cnab.ParameterSources{}
 	ps.SetParameterFromDependencyOutput("porter-mysql-password", "mysql", "password")
 	rm.bundle = cnab.NewBundle(bundle.Bundle{
@@ -504,7 +507,7 @@ func TestResolveInMainDict(t *testing.T) {
 	m, err := manifest.LoadManifestFrom(context.Background(), c.Config, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
-	cfg := NewConfigFor(c.Context)
+	cfg := NewConfigFor(c.Config)
 	rm := NewRuntimeManifest(cfg, cnab.ActionInstall, m)
 
 	installStep := rm.Install[0]
@@ -531,7 +534,7 @@ func TestResolveSliceWithAMap(t *testing.T) {
 	m, err := manifest.LoadManifestFrom(context.Background(), c.Config, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
-	cfg := NewConfigFor(c.Context)
+	cfg := NewConfigFor(c.Config)
 	rm := NewRuntimeManifest(cfg, cnab.ActionInstall, m)
 
 	installStep := rm.Install[0]
@@ -550,7 +553,7 @@ func TestResolveSliceWithAMap(t *testing.T) {
 
 func TestResolveMissingStepOutputs(t *testing.T) {
 	ctx := context.Background()
-	pCtx := portercontext.NewTestContext(t)
+	testConfig := config.NewTestConfig(t)
 
 	mContent := `schemaVersion: 1.0.0
 install:
@@ -558,7 +561,7 @@ install:
     Arguments:
     - jdbc://${bundle.outputs.database_url}:${bundle.outputs.database_port}
 `
-	rm := runtimeManifestFromStepYaml(t, pCtx, mContent)
+	rm := runtimeManifestFromStepYaml(t, testConfig, mContent)
 	s := rm.Install[0]
 
 	err := rm.ResolveStep(ctx, 0, s)
@@ -567,7 +570,7 @@ install:
 
 func TestResolveSensitiveOutputs(t *testing.T) {
 	ctx := context.Background()
-	pCtx := portercontext.NewTestContext(t)
+	testConfig := config.NewTestConfig(t)
 	mContent := `schemaVersion: 1.0.0
 outputs:
 - name: username
@@ -580,7 +583,7 @@ install:
     - ${ bundle.outputs.username }
     - ${ bundle.outputs.password }
 `
-	rm := runtimeManifestFromStepYaml(t, pCtx, mContent)
+	rm := runtimeManifestFromStepYaml(t, testConfig, mContent)
 	rm.outputs = map[string]string{
 		"username": "sally",
 		"password": "top$ecret!",
@@ -605,7 +608,7 @@ install:
 
 func TestManifest_ResolveBundleName(t *testing.T) {
 	ctx := context.Background()
-	pCtx := portercontext.NewTestContext(t)
+	testConfig := config.NewTestConfig(t)
 	mContent := `schemaVersion: 1.0.0
 name: mybuns
 
@@ -614,7 +617,7 @@ install:
     Arguments:
     - ${ bundle.name }
 `
-	rm := runtimeManifestFromStepYaml(t, pCtx, mContent)
+	rm := runtimeManifestFromStepYaml(t, testConfig, mContent)
 	s := rm.Install[0]
 
 	err := rm.ResolveStep(ctx, 0, s)
@@ -731,7 +734,7 @@ func TestManifest_ApplyStepOutputs(t *testing.T) {
 	m, err := manifest.LoadManifestFrom(context.Background(), c.Config, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
-	cfg := NewConfigFor(c.Context)
+	cfg := NewConfigFor(c.Config)
 	rm := NewRuntimeManifest(cfg, cnab.ActionInstall, m)
 
 	err = rm.ApplyStepOutputs(map[string]string{"name": "world"})
@@ -753,7 +756,7 @@ func TestManifest_ResolveImageMap(t *testing.T) {
 	m, err := manifest.LoadManifestFrom(context.Background(), c.Config, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
-	cfg := NewConfigFor(c.Context)
+	cfg := NewConfigFor(c.Config)
 	rm := NewRuntimeManifest(cfg, cnab.ActionInstall, m)
 	expectedImage, ok := m.ImageMap["something"]
 	require.True(t, ok, "couldn't get expected image")
@@ -787,7 +790,7 @@ func TestManifest_ResolveImageMap(t *testing.T) {
 func TestManifest_ResolveImageMapMissingKey(t *testing.T) {
 	// Try to access an images entry that doesn't exist
 	ctx := context.Background()
-	pCtx := portercontext.NewTestContext(t)
+	testConfig := config.NewTestConfig(t)
 	mContent := `schemaVersion: 1.0.0-alpha.2
 images:
   something:
@@ -799,7 +802,7 @@ install:
     Arguments:
       - ${ bundle.images.notsomething.digest }
 `
-	rm := runtimeManifestFromStepYaml(t, pCtx, mContent)
+	rm := runtimeManifestFromStepYaml(t, testConfig, mContent)
 	s := rm.Install[0]
 
 	err := rm.ResolveStep(ctx, 0, s)
@@ -918,7 +921,6 @@ func TestResolveImageErrors(t *testing.T) {
 }
 
 func TestResolveImageWithUpdatedBundle(t *testing.T) {
-	pCtx := portercontext.NewTestContext(t)
 	m := &manifest.Manifest{
 		ImageMap: map[string]manifest.MappedImage{
 			"machine": manifest.MappedImage{
@@ -940,7 +942,7 @@ func TestResolveImageWithUpdatedBundle(t *testing.T) {
 
 	reloMap := relocation.ImageRelocationMap{}
 
-	cfg := NewConfigFor(pCtx.Context)
+	cfg := NewConfigFor(config.NewTestConfig(t).Config)
 	rm := NewRuntimeManifest(cfg, cnab.ActionInstall, m)
 	err := rm.ResolveImages(bun, reloMap)
 	require.NoError(t, err)
@@ -949,7 +951,6 @@ func TestResolveImageWithUpdatedBundle(t *testing.T) {
 }
 
 func TestResolveImageWithUpdatedMismatchedBundle(t *testing.T) {
-	pCtx := portercontext.NewTestContext(t)
 	m := &manifest.Manifest{
 		ImageMap: map[string]manifest.MappedImage{
 			"machine": manifest.MappedImage{
@@ -971,7 +972,7 @@ func TestResolveImageWithUpdatedMismatchedBundle(t *testing.T) {
 
 	reloMap := relocation.ImageRelocationMap{}
 
-	cfg := NewConfigFor(pCtx.Context)
+	cfg := NewConfigFor(config.NewTestConfig(t).Config)
 	rm := NewRuntimeManifest(cfg, cnab.ActionInstall, m)
 	err := rm.ResolveImages(bun, reloMap)
 	assert.Error(t, err)
@@ -980,7 +981,6 @@ func TestResolveImageWithUpdatedMismatchedBundle(t *testing.T) {
 }
 
 func TestResolveImageWithRelo(t *testing.T) {
-	pCtx := portercontext.NewTestContext(t)
 	m := &manifest.Manifest{
 		ImageMap: map[string]manifest.MappedImage{
 			"machine": manifest.MappedImage{
@@ -1004,7 +1004,7 @@ func TestResolveImageWithRelo(t *testing.T) {
 		"gabrtv/microservice@sha256:cca460afa270d4c527981ef9ca4989346c56cf9b20217dcea37df1ece8120687": "my.registry/microservice@sha256:cca460afa270d4c527981ef9ca4989346c56cf9b20217dcea37df1ece8120687",
 	}
 
-	cfg := NewConfigFor(pCtx.Context)
+	cfg := NewConfigFor(config.NewTestConfig(t).Config)
 	rm := NewRuntimeManifest(cfg, cnab.ActionInstall, m)
 	err := rm.ResolveImages(bun, reloMap)
 	require.NoError(t, err)
@@ -1013,7 +1013,6 @@ func TestResolveImageWithRelo(t *testing.T) {
 }
 
 func TestResolveImageRelocationNoMatch(t *testing.T) {
-	pCtx := portercontext.NewTestContext(t)
 	m := &manifest.Manifest{
 		ImageMap: map[string]manifest.MappedImage{
 			"machine": manifest.MappedImage{
@@ -1037,7 +1036,7 @@ func TestResolveImageRelocationNoMatch(t *testing.T) {
 		"deislabs/nogood:latest": "cnabio/ghost:latest",
 	}
 
-	cfg := NewConfigFor(pCtx.Context)
+	cfg := NewConfigFor(config.NewTestConfig(t).Config)
 	rm := NewRuntimeManifest(cfg, cnab.ActionInstall, m)
 	err := rm.ResolveImages(bun, reloMap)
 	require.NoError(t, err)
@@ -1046,10 +1045,10 @@ func TestResolveImageRelocationNoMatch(t *testing.T) {
 
 func TestResolveStepEncoding(t *testing.T) {
 	ctx := context.Background()
-	pCtx := portercontext.NewTestContext(t)
+	testConfig := config.NewTestConfig(t)
 
 	wantValue := `{"test":"value"}`
-	pCtx.Setenv("TEST", wantValue)
+	testConfig.Setenv("TEST", wantValue)
 
 	mContent := `schemaVersion: 1.0.0
 parameters:
@@ -1061,7 +1060,7 @@ install:
     Flags:
       c: '${bundle.parameters.test}'
 `
-	rm := runtimeManifestFromStepYaml(t, pCtx, mContent)
+	rm := runtimeManifestFromStepYaml(t, testConfig, mContent)
 	s := rm.Install[0]
 
 	err := rm.ResolveStep(ctx, 0, s)
@@ -1077,9 +1076,9 @@ install:
 
 func TestResolveInstallation(t *testing.T) {
 	ctx := context.Background()
-	pCtx := portercontext.NewTestContext(t)
-	pCtx.Setenv(config.EnvPorterInstallationNamespace, "mynamespace")
-	pCtx.Setenv(config.EnvPorterInstallationName, "mybun")
+	testConfig := config.NewTestConfig(t)
+	testConfig.Setenv(config.EnvPorterInstallationNamespace, "mynamespace")
+	testConfig.Setenv(config.EnvPorterInstallationName, "mybun")
 
 	mContent := `schemaVersion: 1.0.0
 install:
@@ -1087,7 +1086,7 @@ install:
     ns: ${ installation.namespace }
     release: ${ installation.name }
 `
-	rm := runtimeManifestFromStepYaml(t, pCtx, mContent)
+	rm := runtimeManifestFromStepYaml(t, testConfig, mContent)
 	s := rm.Install[0]
 
 	err := rm.ResolveStep(ctx, 0, s)
@@ -1102,7 +1101,7 @@ install:
 
 func TestResolveCustomMetadata(t *testing.T) {
 	ctx := context.Background()
-	pCtx := portercontext.NewTestContext(t)
+	testConfig := config.NewTestConfig(t)
 
 	mContent := `schemaVersion: 1.0.0
 custom:
@@ -1117,7 +1116,7 @@ install:
     featureA: ${ bundle.custom.myApp.featureFlags.featureA }
     notabool: "${ bundle.custom.myApp.featureFlags.featureA }"
 `
-	rm := runtimeManifestFromStepYaml(t, pCtx, mContent)
+	rm := runtimeManifestFromStepYaml(t, testConfig, mContent)
 	s := rm.Install[0]
 
 	err := rm.ResolveStep(ctx, 0, s)
@@ -1136,9 +1135,9 @@ install:
 
 func TestResolveEnvironmentVariable(t *testing.T) {
 	ctx := context.Background()
-	pCtx := portercontext.NewTestContext(t)
-	pCtx.Setenv("foo", "foo-value")
-	pCtx.Setenv("BAR", "bar-value")
+	testConfig := config.NewTestConfig(t)
+	testConfig.Setenv("foo", "foo-value")
+	testConfig.Setenv("BAR", "bar-value")
 
 	mContent := `schemaVersion: 1.0.0
 install:
@@ -1146,7 +1145,7 @@ install:
     someInput: ${ env.foo }
     moreInput: ${ env.BAR }
 `
-	rm := runtimeManifestFromStepYaml(t, pCtx, mContent)
+	rm := runtimeManifestFromStepYaml(t, testConfig, mContent)
 	s := rm.Install[0]
 
 	err := rm.ResolveStep(ctx, 0, s)
@@ -1185,8 +1184,7 @@ func TestResolveInvocationImage(t *testing.T) {
 		},
 	}
 
-	pCtx := portercontext.NewTestContext(t)
-	cfg := NewConfigFor(pCtx.Context)
+	cfg := NewConfigFor(config.NewTestConfig(t).Config)
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {

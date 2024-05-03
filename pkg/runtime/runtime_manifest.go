@@ -16,6 +16,7 @@ import (
 	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/experimental"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/tracing"
 	"get.porter.sh/porter/pkg/yaml"
@@ -454,9 +455,11 @@ func (m *RuntimeManifest) ResolveStep(ctx context.Context, stepIndex int, step *
 
 	mustache.AllowMissingVariables = false
 
-	err = m.buildAndResolveMappedDependencyOutputs(sourceData)
-	if err != nil {
-		return log.Errorf("unable to build and resolve mapped dependency outputs: %w", err)
+	if m.config.IsFeatureEnabled(experimental.FlagDependenciesV2) {
+		err = m.buildAndResolveMappedDependencyOutputs(sourceData)
+		if err != nil {
+			return log.Errorf("unable to build and resolve mapped dependency outputs: %w", err)
+		}
 	}
 
 	// Get the original yaml for the current step

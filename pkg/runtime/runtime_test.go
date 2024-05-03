@@ -252,14 +252,13 @@ func TestRuntimeManifest_ApplyUnboundBundleOutputs_File(t *testing.T) {
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			c := portercontext.NewTestContext(t)
 			m := &manifest.Manifest{
 				Name: "mybun",
 				Outputs: manifest.OutputDefinitions{
 					tc.def.Name: tc.def,
 				},
 			}
-			cfg := NewConfigFor(c.Context)
+			cfg := NewConfigFor(config.NewTestConfig(t).Config)
 			rm := NewRuntimeManifest(cfg, cnab.ActionInstall, m)
 			rm.bundle = cnab.NewBundle(bundle.Bundle{
 				Definitions: map[string]*definition.Schema{

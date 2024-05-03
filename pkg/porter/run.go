@@ -90,7 +90,7 @@ func (p *Porter) Run(ctx context.Context, opts RunOptions) error {
 		return span.Error(err)
 	}
 
-	runtimeCfg := runtime.NewConfigFor(p.Context)
+	runtimeCfg := runtime.NewConfigFor(p.Config)
 	runtimeCfg.DebugMode = opts.DebugMode
 	r := runtime.NewPorterRuntime(runtimeCfg, p.Mixins)
 	runtimeManifest := r.NewRuntimeManifest(opts.Action, m)
