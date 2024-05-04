@@ -76,7 +76,7 @@ Read more about Porter's [security features](/security-features/).
 Our v1 release is not a stopping point, but instead a way point where we can now say "Porter is stable and safe to use in production".
 We have big plans going forward, adding new features on top of v1 incrementally:
 
-* **Advanced Dependencies**: Our initial implementation of dependencies was always limited in scope. More complete and powerful dependency support is already underway. Learn more in [PEP003 Advanced Dependencies](https://github.com/getporter/proposals/blob/main/pep/003-dependency-namespaces-and-labels.md).
+* **Advanced Dependencies**: Our initial implementation of dependencies was always limited in scope. More complete and powerful dependency support is already underway. Learn more in [PEP003 Advanced Dependencies](https://github.com/getporter/proposals/blob/main/pep/003-advanced-dependencies.md).
 * **Distribute Mixins as Bundles**: After we have advanced dependency support, we are improving how mixins are distributed and executed so that they are BUNDLES! This will significantly improve performance, layer caching, mixin distribution, and bundle execution security. Learn more in [PEEP005 Mixins are Bundles](https://github.com/getporter/proposals/blob/main/pep/005-mixins-are-bundles.md).
 * **Porter Operator v1**: The [Porter Operator] is far enough along for you to try, and we aim to quickly get it ready for a v1 release.
 * **Support for signing bundles**: Porter will support integration with Notary for signing and verifying bundles.

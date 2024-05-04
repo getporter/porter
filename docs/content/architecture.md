@@ -45,7 +45,7 @@ Learn more about [how Porter works at runtime](/architecture-runtime/).
 
 * [Security Features](/security-features/)
 * [Create a Bundle](/getting-started/create-bundle/)
-* [Distribute Bundles](/development/distribute-bundles/)
-* [Airgapped Deployments](/administrators/airgap/)
+* [Distribute Bundles](/development/authoring-a-bundle/distribute-bundles//)
+* [Airgapped Deployments](/administration/move-bundles-airgapped/)
 
 [mixins]: /mixins/

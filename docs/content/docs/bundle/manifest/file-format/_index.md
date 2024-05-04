@@ -233,7 +233,7 @@ status:
 
 ## Next Steps
 
-* [Create a Bundle](/bundle/create/)
+* [Create a Bundle](/development/authoring-a-bundle/create-a-bundle/)
 
 [semver v2]: https://semver.org/spec/v2.0.0.html
 [manifest-schema]: https://raw.githubusercontent.com/getporter/porter/main/pkg/schema/manifest.schema.json
