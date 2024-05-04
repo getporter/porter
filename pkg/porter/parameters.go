@@ -553,7 +553,7 @@ func (p *Porter) ParametersApply(ctx context.Context, o ApplyOptions) error {
 		return err
 	}
 
-	span.Infof("Applied %s parameter set", params)
+	fmt.Fprintf(p.Out, "Applied %s parameter set\n", params)
 	return nil
 }
 
