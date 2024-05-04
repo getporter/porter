@@ -456,7 +456,7 @@ dependencies:
     bundle:
       reference: "getporter/porter-mysql"
     outputs:
-      mappedOutput: Mapped ${ bundle.dependencies.mysql.outputs.password }
+      mappedOutput: ${ bundle.dependencies.mysql.outputs.password }
 
 install:
 - mymixin:
@@ -495,7 +495,7 @@ install:
 	require.IsType(t, mixin["Arguments"], []interface{}{}, "Data.mymixin.Arguments has incorrect type")
 	args := mixin["Arguments"].([]interface{})
 
-	assert.Equal(t, []interface{}{"Mapped password"}, args, "Incorrect template args passed to the mixin step")
+	assert.Equal(t, []interface{}{"password"}, args, "Incorrect template args passed to the mixin step")
 }
 
 func TestResolveInMainDict(t *testing.T) {
