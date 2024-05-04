@@ -20,14 +20,14 @@ dependencies:
   requires:
     - name: infra
       bundle:
-        id: "https://getporter.org/interfaces/mysql"
+        id: "https://porter.sh/interfaces/mysql"
         reference: "localhost:5000/myinfra:v0.1.0"
         # TODO(PEP003): Implement with https://github.com/getporter/porter/issues/2548
         #interface:
         #  document:
         #    outputs:
         #      - name: mysql-connstr
-        #        $id: "getporter.org/interfaces/mysql.connection-string"
+        #        $id: "porter.sh/interfaces/mysql.connection-string"
       credentials:
         token: ${bundle.credentials.token}
       parameters:

@@ -1,5 +1,8 @@
 ---
 title: Create a Bundle
+aliases:
+- /getting-started/create-bundle.md
+- /getting-started/create-a-bundle/
 description: Create a bundle with Porter
 weight: 3
 ---
@@ -16,76 +19,287 @@ When writing a bundle, it's best to have figured out the workflow to perform the
 ## Steps
 - [Create a Bundle](#create-a-bundle)
 - [Verify the Bundle](#verify-the-bundle)
-- [Install Tools](#install-tools)
+- [Install the Bundle](#install-the-bundle)
   - [Use Mixins](#use-mixins)
-  - [Use a Custom Dockerfile](#use-a-custom-dockerfile)
-- [Customize the Install Action](#customize-the-install-action)
-- [Test Your Bundle](#test-your-bundle)
 - [Publish Your Bundle](#publish-your-bundle)
-- [Use the Published Bundle](#use-the-published-bundle)
+- [Next Steps](#next-steps)
+   - [Leverage a different registry](#leverage-a-different-registry)
+   - [Use a Custom Dockerfile](#use-a-custom-dockerfile)
+   - [Customize the Install Action](#customize-the-install-action)
+   - [Test Your Bundle](#test-your-bundle)
+   - [Third Party Mixins](#third-party-mixins)
 
 ## Create a Bundle
 
-1. Use the [porter create](/cli/porter_create) command. 
-   This creates the scaffolding for a new bundle in the *current directory*.
+   **Run this in a new or empty directory**
+
+   ```console
+   $ porter create
+   ```
+   ```
+   creating porter configuration in the current directory
+   ```
+
+   The [porter create](/cli/porter_create) creates the scaffolding for a new bundle in the *current directory*.
    This makes your current directory a bundle directory. The directory containing the files for the bundle is called the **bundle directory**.
    The generated bundle is very similar to the [hello example bundle] and prints out "Hello World" when installed.
    It does not allocate any resources and is safe to run and uninstall when you are finished.
 
-   ```console
-   $ porter create
-   creating porter configuration in the current directory
+   Check out what files Porter created in this directory:
+
+   ```console 
+   $ ls
+   ```
+   ```
+   README.md           helpers.sh          porter.yaml         template.Dockerfile
    ```
 ## Verify the Bundle
 
 Your bundle is ready to build and run!
-Let's do a quick check before making any further changes to verify that everything is working.
 
-1. Use the [porter build] command to build the bundle.
-   This prepares the bundle so that it can be distributed over a registry by building the bundle image and packaging it in a bundle.
-2. Use the [porter install] command to run the bundle's install action defined in the porter.yaml file.
+Let's see what this bundle will do:
+**Note: We've cropped out just the Porter actions part of the bundle,
+there is more that is generated and commented out**
+
+```console
+$ cat porter.yaml
+```
+
+```yaml 
+install:
+  - exec:
+      description: "Install Hello World"
+      command: ./helpers.sh
+      arguments:
+        - install
+
+upgrade:
+  - exec:
+      description: "World 2.0"
+      command: ./helpers.sh
+      arguments:
+        - upgrade
+
+uninstall:
+  - exec:
+      description: "Uninstall Hello World"
+      command: ./helpers.sh
+      arguments:
+        - uninstall
+```
+
+All actions (install, upgrade, uninstall)  are utilizing the `helpers.sh` script that was generated when `porter create` was ran. In the `helpers.sh` this is running:
+
+```bash
+install() {
+  echo Hello World
+}
+
+upgrade() {
+  echo World 2.0
+}
+
+uninstall() {
+  echo Goodbye World
+}
+
+```
+
+## Build the Bundle 
+
+```console 
+$ porter build
+```
+
+The [porter build] command prepares the bundle so that it can be distributed over a registry by building the bundle image and packaging it in a bundle.
+
+When running the build command, Porter converts the `porter.yaml` into a CNAB `bundle.json`, and creates a new directory called `/.cnab` to store all this information:
+
+```console 
+$ ls -lah
+```
+```
+schristoff  staff   160B Mar 14 09:57 .cnab
+```
+
+
+
+## Install the Bundle
+Use the [porter install] command to run the bundle's install action defined in the `porter.yaml` file.
 
    ```console
    $ porter install mybundle
+   ```
+   ```
    executing install action from porter-hello (installation: /mybundle)
    Install Hello World
    Hello World
    execution completed successfully!
    ```
 
-## Install Tools
-
-Consider what command-line tools that you use today to automate your deployment, such as Terraform, a cloud provider CLI, ansible, etc.
-There are two ways to install them into the bundle image. You can either [use mixins](#use-mixins) or install them with by defining a [custom Dockerfile](#use-a-custom-dockerfile) for your bundle:
 
 ### Use Mixins
 
+```console 
+$ porter mixins search
+```
+
+The [porter mixins search] command shows existing mixins to use in your bundle.
 [Mixins] are adapters that makes it easier to work with existing tools within a bundle.
-Use the [porter mixins search] command to find existing mixins to use in your bundle.
-If you are working with the same tool often, eventually you will want to [create a custom mixin] so that you can write installation logic, error handling, common commands a single time and reuse them across your bundles.
 
-To use a mixin in your bundle:
+Let's add a mixin to the bundle!
 
-1. Follow the mixin's instructions to install it on your computer using the [porter mixin install] command.
+```console 
+$ porter mixin install docker
+```
 
-   Mixins published by the Porter project can be installed with `porter mixin install NAME`.
-   If the mixin is published by a third party, you will need to specify the \--url or \--feed-url flags so Porter knows where to find the mixin.
-   A mixin published by Porter would look like:
-      ```console
-      porter mixin install kubernetes --version canary --url https://cdn.porter.sh/mixins/kubernetes
-      ```
-   A third party mixin install would look like:
-      ```console
-      porter mixin install helm3 --feed-url https://mchorfa.github.io/porter-helm3/atom.xml
-      ```
+Edit the `porter.yaml` to have the `docker` mixin added, to add `- docker` underneath `- exec`:
 
-2. Add the name of the mixin to the **mixins** section in porter.yaml.
-   For example, to install the [terraform mixin], you would add an array entry with the value "terraform":
-   ```yaml
-   mixins:
-     - exec
-     - terraform
+```yaml
+schemaType: Bundle
+schemaVersion: 1.0.1
+name: porter-hello
+version: 0.1.0
+description: "An example Porter configuration"
+registry: "localhost:5000"
+
+mixins:
+  - exec
+  - docker
+
+```
+
+Let's add the Docker mixin to the install action:
+
+```yaml
+mixins:
+  - exec
+  - docker
+
+install:
+  - exec:
+      description: "Install Hello World"
+      command: ./helpers.sh
+      arguments:
+        - install
+  - docker:
+      description: "Install Whalesay"
+      pull:
+        name: docker/whalesay
+        tag: latest
+  - docker:
+      description: "Run Whalesay"
+      run:
+        name: dockermixin
+        image: "docker/whalesay:latest"
+        command: cowsay
+        arguments:
+          - "Hello World"
+```
+Great! Now we can build and run install to see the Docker mixin at work
+
+```console 
+$ porter install 
+```
+
+```console
+$ porter install demo --allow-docker-host-access
+ _____________ 
+< Hello World >
+ ------------- 
+    \
+     \
+      \     
+                    ##        .            
+              ## ## ##       ==            
+           ## ## ## ##      ===            
+       /""""""""""""""""___/ ===        
+  ~~~ {~~ ~~~~ ~~~ ~~~~ ~~ ~ /  ===- ~~~   
+       \______ o          __/            
+        \    \        __/             
+          \____\______/   
+execution completed successfully!
+```
+
+
+## Publish Your Bundle
+
+We will be starting up a local Docker registry for this guide, but there are many [compatible registries] Porter supports.
+
+**Note for MacOS users: AirPlay receiver is by default on and bound to port 5000 Macs, go to System Settings and Disable "AirPlay Receiver" to not get an error here**
+
+```console 
+$ docker run -d -p 5000:5000 --name registry registry:3
+```
+
+```console 
+$ porter publish
+```
+
+```console
+Rewriting CNAB bundle.json...
+Starting to copy image localhost:5000/porter-hello@sha256:c9e80ad...
+Completed image localhost:5000/porter-hello@sha256:c9e80adbb1cf82de62... copy
+Bundle localhost:5000/porter-hello:v0.1.0 pushed successfully, with digest "sha256:95a3d2...
+```
+
+We will be able to see our bundle in our registry here:
+```console
+$ docker images
+```
+```
+REPOSITORY                    TAG                                       IMAGE ID  
+localhost:5000/porter-hello   porter-37da5464f8517662657529ad34851db9   a01f80
+```
+
+
+The [porter publish] command by default pushes the bundle to the registry defined in the `porter.yaml` file.
+
+
+The name, registry, and version fields are used to generate the bundle's default publish location when porter publish is run.
+By default, the bundle is published to REGISTRY/BUNDLE_NAME:vBUNDLE_VERSION.
+In the case used above, this looks like:
+
+```console
+$ porter explain localhost:5000/porter-hello:v0.1.0
+````
+
+This is generated from these fields in the `porter.yaml`
+
+```yaml
+name: porter-hello
+registry: "localhost:5000"
+version: 0.1.0
+```
+
+The destination may be changed by specifying \--registry, \--reference, or \--tag during [publish](/cli/porter_publish/).
+The publish command prints out the full bundle reference when it completes.
+
+
+## Next Steps
+
+Now that you know how to create a bundle you can follow the optional steps below, or check out more detailed topics on how to customize and distribute it:
+
+- [Next: What is a bundle?](/quickstart/bundles/)
+- [Next: Work with Mixins](/how-to-guides/work-with-mixins/)
+
+### Leverage a different registry
+
+1. Edit the registry field in the `porter.yaml` and change it to a registry that you can push to.
+   For example, if you have an account on Docker Hub, change the registry value from localhost:5000 to your Docker Hub username.
+2. Edit the name field and change it to your preferred name for the bundle, like "mybundle".
+3. Use the docker login command to first authenticate to the destination registry:
+
    ```
+   docker login REGISTRY
+   ```
+
+   For example, if the registry defined in the porter.yaml is ghcr.io/myuser, then run `docker login ghcr.io` to authenticate.
+
+   If you are publishing to Docker Hub, the registry field in the bundle would just be your Docker Hub username, and you would authenticate to the registry with just `docker login` without any additional arguments.
+   This works because the Docker client by default uses Docker Hub (docker.io) when a registry is not fully specified.
+
+4. Now, publish the bundle by running `porter publish`.
 
 ### Use a Custom Dockerfile
 
@@ -98,7 +312,7 @@ dockerfile: template.Dockerfile
 From there, anything you can do with Docker and [Buildkit], you can do in your custom Dockerfile.
 You can install tools, certificates, define environment variables, mount secrets, define build arguments, clone repositories, copy files from your local filesystem, and more.
 
-## Customize the Install Action
+### Customize the Install Action
 
 The default install action uses the exec mixin to call the `helpers.sh` script in the bundle directory.
 The script prints out "Hello world".
@@ -128,66 +342,25 @@ If you are not using custom mixins, put your bundle's logic in an executable, su
 During porter build, these files are copied into the bundle's image and can be used when the bundle is run.
 You can always use the exec mixin when there isn't an existing mixin, or the mixin doesn't support a particular command that you require.
 
-## Test Your Bundle
+### Test Your Bundle
 
 After you have finished editing the porter.yaml, repeat the `porter build` command to re-build the bundle with your latest changes.
 Then run `porter install mybundle --force` to install the bundle.
 The \--force flag is only safe to use in development, and it allows you to incrementally develop a bundle and re-install it without having to first uninstall it and start over after every change.
 
-## Publish Your Bundle
 
-Most registries work with Porter, if you run into trouble check our list of [compatible registries].
+### Third Party Mixins 
 
-The [porter publish] command by default pushes the bundle to the registry defined in the `porter.yaml` file.
-
-1. Edit the registry field in the `porter.yaml` and change it to a registry that you can push to.
-   For example, if you have an account on Docker Hub, change the registry value from localhost:5000 to your Docker Hub username.
-2. Edit the name field and change it to your preferred name for the bundle, like "mybundle".
-3. Use the docker login command to first authenticate to the destination registry:
-
-   ```
-   docker login REGISTRY
-   ```
-
-   For example, if the registry defined in the porter.yaml is ghcr.io/myuser, then run `docker login ghcr.io` to authenticate.
-
-   If you are publishing to Docker Hub, the registry field in the bundle would just be your Docker Hub username, and you would authenticate to the registry with just `docker login` without any additional arguments.
-   This works because the Docker client by default uses Docker Hub (docker.io) when a registry is not fully specified.
-
-4. Now, publish the bundle by running `porter publish`.
-
-## Use the Published Bundle
-
-The name, registry, and version fields are used to generate the bundle's default publish location when porter publish is run.
-By default, the bundle is published to REGISTRY/BUNDLE_NAME:vBUNDLE_VERSION.
-The destination may be changed by specifying \--registry, \--reference, or \--tag during [publish](/cli/porter_publish/).
-The publish command prints out the full bundle reference when it completes.
-
-For example, the following porter.yaml file would result in the bundle being published to "ghcr.io/getporter/porter-hello:v0.3.0".
-Note that even if you did not specify the bundle version with a v prefix, in the example below the version is `0.3.0`, by default Porter will use a v prefix in the tag of the bundle reference.
-
-```yaml
-name: porter-hello
-registry: ghcr.io/getporter
-version: 0.3.0
-```
-
-Once you have figured out the reference to your published bundle, the best way to verify that it was published successfully is with the [porter explain] command:
-
-```console
-# porter explain REFERENCE
-$ porter explain ghcr.io/getporter/porter-hello:v0.2.0
-```
-
-## Next Steps
-
-Now that you know how to create a bundle, here are some more detailed topics on how to customize and distribute it:
-
-- [Control how your bundle's image is built with a custom Dockerfile](/bundle/custom-dockerfile/)
-- [Customize your Porter manifest, porter.yaml][manifest]
-- [Porter Manifest File Format](/bundle/manifest/file-format/)
-- [Best Practices for the exec Mixin](/best-practices/exec-mixin/)
-- [Understand how bundles are distributed](/distribute-bundles/)
+   Mixins published by the Porter project can be installed with `porter mixin install NAME`.
+   If the mixin is published by a third party, you will need to specify the \--url or \--feed-url flags so Porter knows where to find the mixin.
+   A mixin published by Porter would look like:
+      ```console
+      porter mixin install kubernetes --version canary --url https://cdn.porter.sh/mixins/kubernetes
+      ```
+   A third party mixin install would look like:
+      ```console
+      porter mixin install helm3 --feed-url https://mchorfa.github.io/porter-helm3/atom.xml
+      ```
 
 [install Porter]: /install/
 [Porter Visual Studio Code]: https://marketplace.visualstudio.com/items?itemName=getporter.porter-vscode

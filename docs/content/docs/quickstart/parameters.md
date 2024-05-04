@@ -1,6 +1,8 @@
 ---
 title: "Parameters"
 descriptions: Learn how to use a bundle with parameters
+aliases:
+  - /quickstart/parameters/
 ---
 
 Now that you know how to install a bundle, let's look at how to specify parameters to customize how that bundle is installed.

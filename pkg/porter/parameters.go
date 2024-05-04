@@ -776,9 +776,15 @@ func (p *Porter) CreateParameter(opts ParameterCreateOptions) error {
 	}
 }
 
-// applyActionOptionsToInstallation applies the specified action (e.g. install/upgrade) to an installation record.
-// This resolves the parameters to their final form to be passed to the CNAB runtime, and modifies the specified installation record.
-// You must sanitize the parameters before saving the installation so that sensitive values are not saved to the database.
+// applyActionOptionsToInstallation applies the specified action (e.g.
+// install/upgrade) to an installation record. This consolidates parameters and
+// credentials into a single parameter set or credential set, ready to be resolved
+// immediately before the bundle is run, and modifies the specified installation
+// record.
+//
+// This does not resolve the parameters, that only occurs before the bundle is run.
+// You must sanitize the parameters before saving the installation so
+// that sensitive values are not saved to the database.
 func (p *Porter) applyActionOptionsToInstallation(ctx context.Context, ba BundleAction, inst *storage.Installation) error {
 	ctx, span := tracing.StartSpan(ctx)
 	defer span.EndSpan()
@@ -794,6 +800,17 @@ func (p *Porter) applyActionOptionsToInstallation(ctx context.Context, ba Bundle
 	// Update the installation with metadata from the options
 	inst.TrackBundle(bundleRef.Reference)
 	inst.Status.Modified = time.Now()
+
+	// Remove installation parameters no longer present in the bundle
+	if inst.Parameters.Parameters != nil {
+		updatedInstParams := make(secrets.StrategyList, 0, len(inst.Parameters.Parameters))
+		for _, param := range inst.Parameters.Parameters {
+			if _, ok := bun.Parameters[param.Name]; ok {
+				updatedInstParams = append(updatedInstParams, param)
+			}
+		}
+		inst.Parameters.Parameters = updatedInstParams
+	}
 
 	//
 	// 1. Record the parameter and credential sets used on the installation
@@ -878,6 +895,12 @@ func (p *Porter) applyActionOptionsToInstallation(ctx context.Context, ba Bundle
 	//
 	for k, v := range resolvedOverrides {
 		resolvedParams[k] = v
+	}
+
+	for name, value := range parsedOverrides {
+		if strings.Contains(name, "#") {
+			resolvedParams[name] = value
+		}
 	}
 
 	//

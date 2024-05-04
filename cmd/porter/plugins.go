@@ -114,7 +114,7 @@ To install multiple plugins at once, users can pass a file to the install comman
 
 porter plugins install --file plugins.yaml
 
-The file format for the plugins.yaml can be found here: https://getporter.org/reference/file-formats/#plugins
+The file format for the plugins.yaml can be found here: https://porter.sh/reference/file-formats/#plugins
 
 By default plugins are downloaded from the official Porter plugin feed at https://cdn.porter.sh/plugins/atom.xml. To download from a mirror, set the environment variable PORTER_MIRROR, or mirror in the Porter config file, with the value to replace https://cdn.porter.sh with.`,
 		Example: `  porter plugin install azure  

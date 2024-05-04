@@ -76,7 +76,7 @@ func (m *Mixin) Lint(ctx context.Context) (linter.Results, error) {
 				},
 				Title:   "Best Practice: Avoid Embedded Bash",
 				Message: "",
-				URL:     "https://getporter.org/best-practices/exec-mixin/#use-scripts",
+				URL:     "https://porter.sh/best-practices/exec-mixin/#use-scripts",
 			}
 			results = append(results, result)
 
@@ -100,7 +100,7 @@ exec:
   flags:
     c: '"echo Hello World"'
 `,
-						URL: "https://getporter.org/best-practices/exec-mixin/#quoting-escaping-bash-and-yaml",
+						URL: "https://porter.sh/best-practices/exec-mixin/#quoting-escaping-bash-and-yaml",
 					}
 					results = append(results, result)
 					break

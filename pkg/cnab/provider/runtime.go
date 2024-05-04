@@ -22,11 +22,12 @@ type Runtime struct {
 	Extensions    cnab.ProcessedExtensions
 }
 
-func NewRuntime(c *config.Config, installations storage.InstallationProvider, credentials storage.CredentialSetProvider, secrets secrets.Store, sanitizer *storage.Sanitizer) *Runtime {
+func NewRuntime(c *config.Config, installations storage.InstallationProvider, credentials storage.CredentialSetProvider, parameters storage.ParameterSetProvider, secrets secrets.Store, sanitizer *storage.Sanitizer) *Runtime {
 	return &Runtime{
 		Config:        c,
 		installations: installations,
 		credentials:   credentials,
+		parameters:    parameters,
 		secrets:       secrets,
 		sanitizer:     sanitizer,
 		Extensions:    cnab.ProcessedExtensions{},

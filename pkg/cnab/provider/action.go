@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"sort"
 
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
@@ -24,13 +23,13 @@ type HostVolumeMountSpec struct {
 	ReadOnly bool
 }
 
-// Shared arguments for all CNAB actions
+// ActionArguments are the shared arguments for all bundle runs.
 type ActionArguments struct {
-	// Action to execute, e.g. install, upgrade.
-	Action string
-
 	// Name of the installation.
 	Installation storage.Installation
+
+	// Run defines how to execute the bundle.
+	Run storage.Run
 
 	// BundleReference is the set of information necessary to execute a bundle.
 	BundleReference cnab.BundleReference
@@ -40,6 +39,7 @@ type ActionArguments struct {
 	Files map[string]string
 
 	// Params is the fully resolved set of parameters.
+	// TODO(PEP003): This should be removed in https://github.com/getporter/porter/issues/2699
 	Params map[string]interface{}
 
 	// Driver is the CNAB-compliant driver used to run bundle actions.
@@ -145,56 +145,57 @@ func (r *Runtime) Execute(ctx context.Context, args ActionArguments) error {
 	case <-ctx.Done():
 		return ctx.Err()
 	default:
+		currentRun := args.Run
 		ctx, log := tracing.StartSpan(ctx,
-			attribute.String("action", args.Action),
+			attribute.String("action", currentRun.Action),
 			attribute.Bool("allowDockerHostAccess", args.AllowDockerHostAccess),
 			attribute.String("driver", args.Driver))
 		defer log.EndSpan()
 		args.BundleReference.AddToTrace(ctx)
 		args.Installation.AddToTrace(ctx)
 
-		if args.Action == "" {
+		if currentRun.Action == "" {
 			return log.Error(errors.New("action is required"))
 		}
 
 		b, err := r.ProcessBundle(ctx, args.BundleReference.Definition)
 		if err != nil {
-			return log.Error(err)
-		}
-
-		currentRun, err := r.CreateRun(ctx, args, b)
-		if err != nil {
-			return log.Error(err)
+			return err
 		}
 
 		// Validate the action
 		if _, err := b.GetAction(currentRun.Action); err != nil {
-			return log.Error(fmt.Errorf("invalid action '%s' specified for bundle %s: %w", currentRun.Action, b.Name, err))
-		}
-
-		creds, err := r.loadCredentials(ctx, b, args)
-		if err != nil {
-			return log.Error(fmt.Errorf("not load credentials: %w", err))
+			return log.Errorf("invalid action '%s' specified for bundle %s: %w", currentRun.Action, b.Name, err)
 		}
 
 		log.Debugf("Using runtime driver %s\n", args.Driver)
 		driver, err := r.newDriver(args.Driver, args)
 		if err != nil {
-			return log.Error(fmt.Errorf("unable to instantiate driver: %w", err))
+			return log.Errorf("unable to instantiate driver: %w", err)
 		}
 
 		a := cnabaction.New(driver)
 		a.SaveLogs = args.PersistLogs
 
+		// Resolve parameters and credentials just-in-time (JIT) before running the bundle, do this at the *LAST* possible moment
+		log.Info("Just-in-time resolving credentials...")
+		if err = r.loadCredentials(ctx, b, &currentRun); err != nil {
+			return log.Errorf("could not resolve credentials before running the bundle: %w", err)
+		}
+		log.Info("Just-in-time resolving parameters...")
+		if err = r.loadParameters(ctx, b, &currentRun); err != nil {
+			return log.Errorf("could not resolve parameters before running the bundle: %w", err)
+		}
+
 		if currentRun.ShouldRecord() {
 			err = r.SaveRun(ctx, args.Installation, currentRun, cnab.StatusRunning)
 			if err != nil {
-				return log.Error(fmt.Errorf("could not save the pending action's status, the bundle was not executed: %w", err))
+				return log.Errorf("could not save the pending action's status, the bundle was not executed: %w", err)
 			}
 		}
 
 		cnabClaim := currentRun.ToCNAB()
-		cnabCreds := creds.ToCNAB()
+		cnabCreds := currentRun.Credentials.ToCNAB()
 		// The claim and credentials contain sensitive values. Only trace it in special dev builds (nothing is traced for release builds)
 		log.SetSensitiveAttributes(
 			tracing.ObjectAttribute("cnab-claim", cnabClaim),
@@ -204,44 +205,17 @@ func (r *Runtime) Execute(ctx context.Context, args ActionArguments) error {
 		if currentRun.ShouldRecord() {
 			if err != nil {
 				err = r.appendFailedResult(ctx, err, currentRun)
-				return log.Error(fmt.Errorf("failed to record that %s for installation %s failed: %w", args.Action, args.Installation.Name, err))
+				return log.Errorf("failed to record that %s for installation %s failed: %w", currentRun.Action, args.Installation.Name, err)
 			}
 			return r.SaveOperationResult(ctx, opResult, args.Installation, currentRun, currentRun.NewResultFrom(result))
 		}
 
 		if err != nil {
-			return log.Error(fmt.Errorf("execution of %s for installation %s failed: %w", args.Action, args.Installation.Name, err))
+			return log.Errorf("execution of %s for installation %s failed: %w", currentRun.Action, args.Installation.Name, err)
 		}
 
 		return nil
 	}
-}
-
-func (r *Runtime) CreateRun(ctx context.Context, args ActionArguments, b cnab.ExtendedBundle) (storage.Run, error) {
-	ctx, span := tracing.StartSpan(ctx)
-	defer span.EndSpan()
-
-	// Create a record for the run we are about to execute
-	var currentRun = args.Installation.NewRun(args.Action, b)
-	currentRun.Bundle = b.Bundle
-	currentRun.BundleReference = args.BundleReference.Reference.String()
-	currentRun.BundleDigest = args.BundleReference.Digest.String()
-
-	var err error
-	extb := cnab.NewBundle(b.Bundle)
-	currentRun.Parameters.Parameters, err = r.sanitizer.CleanRawParameters(ctx, args.Params, extb, currentRun.ID)
-	if err != nil {
-		return storage.Run{}, span.Error(err)
-	}
-
-	// TODO: Do not save secrets when the run isn't recorded
-	currentRun.ParameterOverrides = storage.LinkSensitiveParametersToSecrets(currentRun.ParameterOverrides, extb, currentRun.ID)
-	currentRun.CredentialSets = args.Installation.CredentialSets
-	sort.Strings(currentRun.CredentialSets)
-
-	currentRun.ParameterSets = args.Installation.ParameterSets
-	sort.Strings(currentRun.ParameterSets)
-	return currentRun, nil
 }
 
 // SaveRun with the specified status.
@@ -259,12 +233,12 @@ func (r *Runtime) SaveRun(ctx context.Context, installation storage.Installation
 		return span.Error(fmt.Errorf("error saving the installation record before executing the bundle: %w", err))
 	}
 
-	result := run.NewResult(status)
-	err = r.installations.InsertRun(ctx, run)
+	err = r.installations.UpsertRun(ctx, run)
 	if err != nil {
 		return span.Error(fmt.Errorf("error saving the installation run record before executing the bundle: %w", err))
 	}
 
+	result := run.NewResult(status)
 	err = r.installations.InsertResult(ctx, result)
 	if err != nil {
 		return span.Error(fmt.Errorf("error saving the installation status record before executing the bundle: %w", err))

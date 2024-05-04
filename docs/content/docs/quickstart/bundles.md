@@ -1,19 +1,9 @@
 ---
-title: "Bundles"
+title: "What is a bundle"
 descriptions: Learn about bundles and how to install them with Porter
+aliases:
+  - /quickstart/bundles/
 ---
-
-So you're interested in learning more about Porter? Great! This guide will walk you through key concepts of managing bundles. You will use the porter CLI to install, upgrade, and uninstall the bundle.
-
-## Pre-requisites
-
-Docker is a prerequisite for using Porter. Docker is used to package up the bundle.
-
-If you do not have Docker installed, go ahead and [get Docker](https://docs.docker.com/get-docker/).
-
-## Getting Porter
-
-Next, you need Porter. Follow the Porter [installation instructions](/install/).
 
 ## Porter Key Concepts
 
@@ -21,7 +11,7 @@ For this quickstart, the main concepts that you will use include:
 
 - Bundle - A bundle is your application artifact, client tools, configuration and deployment logic packaged together.
 - Installation - An instance of a bundle installed to your system.
-- Tag - A reference to the bundle in an OCI registry that contains the registry, bundle name, and version, e.g. myregistry.com/mybundle:v1.0.
+- Tag - A reference to the bundle in an [OCI](https://opencontainers.org/) registry that contains the registry, bundle name, and version, e.g. myregistry.com/mybundle:v1.0.
 - Registry - An OCI compliant artifact store.
   Many Docker registries are now OCI compliant and work with bundles, here's a list of [popular registries have been tested with Porter](/references/compatible-registries).
 
@@ -61,109 +51,79 @@ Alias   Reference
 mysql   getporter/mysql:v0.1.3
 ```
 
-For this quickstart we are going to use the hello world bundle which is a bit simpler:
+## Looking at a Bundle 
+When Porter creates a bundle it takes a user provided `porter.yaml` and generates a [CNAB](https://cnab.io/) `bundle.json` that is added to the OCI image that is pushed to your container registry. To keep things easy on the eyes, we will be reviewing a `porter.yaml`.
 
-```console
-$ porter explain ghcr.io/getporter/examples/porter-hello:v0.2.0
-Name: HELLO
-Description: An example Porter configuration
-Version: 0.2.0
+
+```yaml
+schemaVersion: 1.0.0-alpha.1
+name: examples/porter-hello
+version: 0.2.0
+description: "An example Porter configuration"
+registry: ghcr.io/getporter
 ```
 
-## Install a Bundle
+At the beginning of each bundle we specify the bundle schema version, the name of the bundle, the version of the bundle, a description and a registry.
 
-To install a bundle, you use the `porter install` command.
-
+```yaml
+parameters:
+  - name: name
+    type: string
+    default: porter
+    path: /cnab/app/foo/name.txt
+    source:
+      output: name
 ```
-porter install porter-hello --reference ghcr.io/getporter/examples/porter-hello:v0.2.0
+Parameters are will be used throughout the bundle and can even be set within the bundle! If you'd like to deep dive into parameters, and how they work, that is documented [here](/parameters/).
+
+```yaml
+outputs:
+  - name: name
+    path: /cnab/app/foo/name.txt
 ```
+Outputs will take any outputs that occurred as a result of a Porter action and can store it in a variable or in a file!
 
-In this example, you are installing the v0.2.0 version of the ghcr.io/getporter/examples/porter-hello bundle from its location in the default registry (Docker Hub) and setting the installation name to porter-hello.
+```yaml
+mixins:
+  - exec
 
-## List Bundle Installations
+install:
+  - exec:
+      description: "Install Hello World"
+      command: ./helpers.sh
+      arguments:
+        - install
 
-To see the list of bundle installations, use the `porter list` command.
+upgrade:
+  - exec:
+      description: "World 2.0"
+      command: ./helpers.sh
+      arguments:
+        - upgrade
 
-```console
-$ porter list
-NAME              CREATED          MODIFIED         LAST ACTION   LAST STATUS
-porter-hello      21 minutes ago   21 minutes ago   install       succeeded
-```
-
-In this example, it shows the bundle metadata along with the creation time, modification time, the last action that was performed, and the status of the last action.
-
-## Show Installation Information
-
-To see information about an installation, use the `porter show` command with the name of the installation.
-
-```console
-$ porter show porter-hello
-Name: hello
-Bundle: ghcr.io/getporter/examples/porter-hello
-Version: 0.2.0
-Created: 2021-05-24
-Modified: 2021-05-24
-
-History:
-------------------------------------------------------------------------
-  Run ID                      Action   Timestamp   Status     Has Logs
-------------------------------------------------------------------------
-  01F1SVDSQDVKGC0VAABZE9ERQK  install  2021-03-27  failed     true
-  01F1SVVRGSWG3FKY2ZATN4XTKC  install  2021-03-27  succeeded  true
-```
-
-## Upgrade the Installation
-
-To upgrade the resources managed by the bundle, use `porter upgrade`.
-
-### Upgrade using a version tag
-
-Most bundles are written such that a specific version of the bundle corresponds to a specific version of an application.
-So to upgrade the application to a new version you need to specify a newer version of the bundle.
-
-```console
-$ porter upgrade porter-hello --version 0.2.0
-upgrading porter-hello...
-executing upgrade action from porter-hello (installation: porter-hello)
-Upgrade Hello World
-Upgraded to World 2.0
-execution completed successfully!
+uninstall:
+  - exec:
+      description: "Uninstall Hello World"
+      command: ./helpers.sh
+      arguments:
+        - uninstall
 ```
 
-### Upgrade using digest
+We come across the core of the bundle; mixins and actions. Porter Mixins are extensions that enable structured access to common functionality and integration of common DevOps tools.
 
-When working in production environment, we highly recommend you to reference the bundle using its digest instead of tag. We used tags in our docs for simplicity, but tags can be overwritten which results in unexpected outcomes from upgrading an bundle.
-For deterministic and repeatable deployments, use digests instead of tags to ensure that you deploy exactly what you intended.
+Porter actions (install, upgrade, uninstall) are needed for every bundle - and specify the actions Porter will execute on those actions. 
 
-```console
-$ porter upgrade porter-hello --reference ghcr.io/getporter/examples/porter-hello@sha256:276b44be3f478b4c8d1f99c1925386d45a878a853f22436ece5589f32e9df384
-_
-upgrading porter-hello...
-executing upgrade action from porter-hello (installation: porter-hello)
-Upgrade Hello World
-Upgraded to World 2.0
-execution completed successfully!
-```
+Take a peak at the entire `porter.yaml` [file](https://github.com/getporter/examples/blob/main/hello/porter.yaml) to see it all put together. 
 
-## Troubleshooting
 
-If you received an `invalid media type` error like below, check that you are referencing the digest for the bundle and not the installer image.
+## What is a bundle (expanded)
 
-```plain
-unable to pull bundle: invalid media type "application/vnd.docker.distribution.manifest.v2+json" for bundle manifest
-```
+A bundle, as defined by the CNAB specification, is a standard packaging format for multi-component distributed applications. It allows packages to target different runtimes and architectures. It empowers application distributors to package applications for deployment on a wide variety of cloud platforms, providers, and services. Furthermore, it provides necessary capabilities for delivering multi-container applications in disconnected (airgapped) environments.
 
-## Cleanup
-
-To clean up the resources installed from the bundle, use the `porter uninstall` command.
-
-```
-porter uninstall porter-hello
-```
 
 ## Next Steps
 
-In this QuickStart, you learned how to use some of the features of the porter CLI to explain a bundle, install and manage its lifecycle.
+Create your own bundle, or learn more!
 
-- [QuickStart: Use parameters with a bundle](/quickstart/parameters/)
+- [Next: Create your own bundle](/getting-started/create-bundle/)
 - [Learn more about use cases for bundles](/learning/#the-devil-is-in-the-deployments-bundle-use-cases)

@@ -9,7 +9,7 @@ authorimage: "https://github.com/carolynvs.png"
 tags: ["roadmap"]
 ---
 
-Now that 2022 is finally over and [Porter v1 is out the door](https://getporter.org/blog/v1-is-here/), I'd like to share our plans for this coming year.
+Now that 2022 is finally over and [Porter v1 is out the door](https://porter.sh/blog/v1-is-here/), I'd like to share our plans for this coming year.
 <!--more-->
 
 You can find a review of 2022 and our high level plans for 2023 in our [Porter Annual Review for 2022](https://github.com/cncf/toc/pull/951/files) but let's go over the highlights for a sneek peak of what's to come.
@@ -80,7 +80,7 @@ We plan to build support for these features incrementally throughout the year, s
 Phew! This is a big chunk of work for a pretty small group of maintainers and contributors.
 So if you find any of this interesting, please consider helping us out! 
 
-Our [Contributing](https://getporter.org/docs/contribute/) landing page has details on how to get involved with the project.
+Our [Contributing](https://porter.sh/docs/contribute/) landing page has details on how to get involved with the project.
 We welcome all types of contributions, such as:
 
 * Feedback on use cases and requirements

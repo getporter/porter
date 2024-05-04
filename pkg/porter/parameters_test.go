@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg/cnab"
+	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/printer"
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
@@ -883,4 +884,63 @@ func TestPorter_ParametersApply(t *testing.T) {
 		assert.Equal(t, "secret", ps.Parameters[0].Source.Strategy, "expected the foo parameter mapping to come from a secret")
 		assert.Equal(t, "foo_secret", ps.Parameters[0].Source.Hint, "expected the foo parameter mapping to use foo_secret")
 	})
+}
+
+func TestParameterRemovedFromBundle(t *testing.T) {
+	ctx := context.Background()
+	p := NewTestPorter(t)
+	p.TestConfig.TestContext.AddTestFile("testdata/porter.yaml", "porter.yaml")
+	opts := InstallOptions{
+		BundleExecutionOptions: &BundleExecutionOptions{
+			Driver: "docker",
+			BundleReferenceOptions: &BundleReferenceOptions{
+				installationOptions: installationOptions{
+					BundleDefinitionOptions: BundleDefinitionOptions{
+						File: config.Name,
+					},
+					Name: "MyInstallation",
+				},
+			},
+		},
+	}
+
+	installation := storage.NewInstallation(opts.Namespace, opts.Name)
+	installation.Parameters.Parameters = make([]secrets.SourceMap, 1)
+	installation.Parameters.Parameters[0] = secrets.SourceMap{
+		Name: "removedParam",
+		Source: secrets.Source{
+			Strategy: "value",
+			Hint:     "1",
+		},
+	}
+
+	err := p.applyActionOptionsToInstallation(ctx, opts, &installation)
+	require.NoError(t, err)
+}
+
+func Test_DependencyParameterOverride(t *testing.T) {
+	ctx := context.Background()
+	p := NewTestPorter(t)
+	p.TestConfig.TestContext.AddTestFile("testdata/porter.yaml", "porter.yaml")
+	opts := InstallOptions{
+		BundleExecutionOptions: &BundleExecutionOptions{
+			Params: []string{
+				"dep#first-param=1",
+			},
+			Driver: "docker",
+			BundleReferenceOptions: &BundleReferenceOptions{
+				installationOptions: installationOptions{
+					BundleDefinitionOptions: BundleDefinitionOptions{
+						File: config.Name,
+					},
+					Name: "MyInstallation",
+				},
+			},
+		},
+	}
+
+	installation := storage.NewInstallation(opts.Namespace, opts.Name)
+	err := p.applyActionOptionsToInstallation(ctx, opts, &installation)
+	require.NoError(t, err)
+	assert.Equal(t, opts.depParams["dep#first-param"], "1")
 }

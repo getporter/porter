@@ -78,7 +78,7 @@ func (s *Store) Create(ctx context.Context, keyName string, keyValue string, val
 
 	err := s.plugin.Create(ctx, keyName, keyValue, value)
 	if errors.Is(err, plugins.ErrNotImplemented) {
-		return span.Error(fmt.Errorf(`the current secrets plugin does not support persisting secrets. You need to edit your porter configuration file and configure a different secrets plugin. See https://getporter.org/end-users/configuration/#change-the-default-secrets-plugin for details: %w`, err))
+		return span.Error(fmt.Errorf(`the current secrets plugin does not support persisting secrets. You need to edit your porter configuration file and configure a different secrets plugin. See https://porter.sh/end-users/configuration/#change-the-default-secrets-plugin for details: %w`, err))
 	}
 
 	return span.Error(err)

@@ -2,6 +2,8 @@
 title: Working with Mixins
 description: How do mixins work? Hotwiring a porter mixin
 weight: 1
+aliases:
+  - /how-to-guides/work-with-mixins/
 ---
 
 ## What is a Mixin

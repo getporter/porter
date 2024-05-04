@@ -15,9 +15,9 @@ You've done your homework and tested everything out. Deployed it countless times
 
 It's always something simple. The terraform code did not declare a specific version for compatibility with the user's version or the wrong version of python is installed for the Ansible role. At the end of the day, it becomes the gap between that first experience you were hoping someone would have and an environmental issue.
 
-This is where [Porter](https://getporter.org/) and [CNAB](https://cnab.io/) bundles come into play. Don't worry this is not about replacing the arduous work you've already done. It's about packaging it such that it's easier for you to maintain and for your users to engage. No more having to worry about the environment your DevOps code runs in. [Porter](https://getporter.org/) provides an opinionated workflow for packaging a versioned instance of your cloud deployment
+This is where [Porter](https://porter.sh/) and [CNAB](https://cnab.io/) bundles come into play. Don't worry this is not about replacing the arduous work you've already done. It's about packaging it such that it's easier for you to maintain and for your users to engage. No more having to worry about the environment your DevOps code runs in. [Porter](https://porter.sh/) provides an opinionated workflow for packaging a versioned instance of your cloud deployment
 
-No more confusion for your users as well. The same [Porter](https://getporter.org/) command line tool used by a maintainer for ownership of a cloud deployment is used to deploy. Your users can install your cloud architecture with just a reference to a versioned OC (docker) container image.
+No more confusion for your users as well. The same [Porter](https://porter.sh/) command line tool used by a maintainer for ownership of a cloud deployment is used to deploy. Your users can install your cloud architecture with just a reference to a versioned OC (docker) container image.
 
 No need to worry about tool dependencies, just run:
 
@@ -102,7 +102,7 @@ Additionally, what the "latest version" of a tool means today is something compl
 
 Enter CNAB and Porter.
 
-A [Porter bundle](https://getporter.org/docs/quickstart/bundles/) can be created that holds all tooling versions, scripts, local files, and dependencies.
+A [Porter bundle](https://porter.sh/docs/quickstart/bundles/) can be created that holds all tooling versions, scripts, local files, and dependencies.
 
 This reduces the steps required to install the application to two:
 1. Setup the Porter Credential Set with the necessary Azure Service Principal credentials
@@ -145,10 +145,10 @@ Let's contrast the work necessary to get the same value the porter workflow prov
 | Different versions of the application can be deployed reliably every time: | It's up to the team owning the workflow to develop a process to keep things in sync. That can be custom internal tools or just documentation. | Porter's build and publish workflow requires semantic versioning. Docker registry 2.0 supports metadata to link runtime image to code image. | It's one step for user to reference an image tag. That tag has references to the runtime image. Less to keep in sync for maintainers and less work for users. |
 | Consistent application lifecycle management independent of DevOps technology: | Keep multiple project's documentation or internal scripts up to date and consistent. | One command CLI interface independent of the DevOps tooling under the hood. | Your users just need to know a single tool and workflow. |
 | Ensure best practices for secret/credentials injection: | Another internal process that must be maintained by one or more teams. | Porter by design abstracts inputs and credentials. Namespaces provide access to different secret stores at runtime. | Takes all your existing application code and provides a better security model around it quickly. |
-| Workflow with community support and contributions: | Maintaining many custom internal tools that can vary between teams and orgs. | [Mixins](https://getporter.org/docs/introduction/concepts-and-components/intro-mixins/), CNCF supported, slack support. Not a custom internal tool. | Align on common practices that leverage the DevOps code you already have. |
+| Workflow with community support and contributions: | Maintaining many custom internal tools that can vary between teams and orgs. | [Mixins](https://porter.sh/docs/introduction/concepts-and-components/intro-mixins/), CNCF supported, slack support. Not a custom internal tool. | Align on common practices that leverage the DevOps code you already have. |
 
 ### Call to Action
 
 We all know what it's like to be in the trenches with all your focus on automating deployments. The pressures of release cycles. When does one find time to learn a new tool or technology that perhaps could help? As one who's been there for many years and watched the landscape change, this is one of those times to stop, take a pause, and take a new technology for a test drive. Porter and CNAB are not about replacing the hard work you've done over the years. They're about improving the workflow around it. Maybe you have great security and maintenance practices in place already. If so, Porter's ready for you. Maybe this is something that's still on your to-do list? If so, Porter's ready to take some of the weight of that work off your shoulders.
 
-Try out some of the examples presented here. Reach out to us in the [Porter community](https://getporter.org/community/).
+Try out some of the examples presented here. Reach out to us in the [Porter community](https://porter.sh/community/).

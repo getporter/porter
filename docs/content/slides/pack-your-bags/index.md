@@ -19,7 +19,7 @@ It can take a while for things to download and install over the workshop wifi,
 so please go to the workshop materials directory and follow the setup instructions
 to get all the materials ready.
 
-.center[👩🏽‍✈️ https://getporter.org/pack-your-bags/#setup 👩🏽‍✈️ ]
+.center[👩🏽‍✈️ https://porter.sh/pack-your-bags/#setup 👩🏽‍✈️ ]
 
 * Clone the workshop repository
   ```console
@@ -440,7 +440,7 @@ class: center, middle
 # An Example: Azure MySQL + Wordpress
 
 .center[
-  https://getporter.org/examples/src/azure-wordpress
+  https://porter.sh/examples/src/azure-wordpress
 ]
 
 ---
@@ -461,7 +461,7 @@ class: center, middle
 .center[
   🚨 Not Setup Yet? 🚨
 
-  https://getporter.org/pack-your-bags/#setup
+  https://porter.sh/pack-your-bags/#setup
   
   ]
 ---
@@ -1182,7 +1182,7 @@ _They adapt between CNAB and existing tools. Porter is just glue."_
 * azure
 * terraform
 
-.center[ https://getporter.org/mixins ]
+.center[ https://porter.sh/mixins ]
 
 ---
 name: helm

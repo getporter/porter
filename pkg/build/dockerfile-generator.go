@@ -254,7 +254,7 @@ func (g *DockerfileGenerator) copyMixin(mixin string) error {
 
 func (g *DockerfileGenerator) getIndexOfToken(lines []string, token string) int {
 	for lineNumber, lineContent := range lines {
-		if token == strings.TrimSpace(lineContent) {
+		if strings.HasPrefix(strings.TrimSpace(lineContent), token) {
 			return lineNumber
 		}
 	}
@@ -269,7 +269,7 @@ func (g *DockerfileGenerator) replaceTokens(ctx context.Context, lines []string)
 		return nil, fmt.Errorf("error generating Dockerfile content for mixins: %w", err)
 	}
 
-	fromToken := g.getIndexOfToken(lines, "FROM")
+	fromToken := g.getIndexOfToken(lines, "FROM") + 1
 
 	substitutions := []struct {
 		token        string

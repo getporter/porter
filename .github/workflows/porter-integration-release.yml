@@ -8,111 +8,132 @@ on:
         default: ghcr.io
 
 env:
-  GOVERSION: 1.20.7
+  GOVERSION: 1.21.3
 
 jobs:
   archive_integration_test:
+    name: Archive Integration Test
     uses: getporter/porter/.github/workflows/integ-reuseable-workflow.yml@main
     with:
       test_name: archive_test
       registry: ${{inputs.registry}}
   build_integration_test:
+    name: Build Integration Test
     uses: getporter/porter/.github/workflows/integ-reuseable-workflow.yml@main
     with:
       test_name: build_test
       registry: ${{inputs.registry}}
   cli_integration_test:
+    name: CLI Integration Test
     uses: getporter/porter/.github/workflows/integ-reuseable-workflow.yml@main
     with:
       test_name: cli_test
       registry: ${{inputs.registry}}
   connection_nix_integration_test:
+    name: Connection Integration Test
     uses: getporter/porter/.github/workflows/integ-reuseable-workflow.yml@main
     with:
       test_name: connection_nix_test
       registry: ${{inputs.registry}}
   copy_integration_test:
+    name: Copy Integration Test
     uses: getporter/porter/.github/workflows/integ-reuseable-workflow.yml@main
     with:
       test_name: copy_test
       registry: ${{inputs.registry}}
   dependenciesv1_integration_test:
+    name: Dependencies V1 Integration Test
     uses: getporter/porter/.github/workflows/integ-reuseable-workflow.yml@main
     with:
       test_name: dependenciesv1_test
       registry: ${{inputs.registry}}
   dependenciesv2_integration_test:
+    name: Dependencies V2 Integration Test
     uses: getporter/porter/.github/workflows/integ-reuseable-workflow.yml@main
     with:
       test_name: dependenciesv2_test
       registry: ${{inputs.registry}}
   driver_integration_test:
+    name: Driver Integration Test
     uses: getporter/porter/.github/workflows/integ-reuseable-workflow.yml@main
     with:
       test_name: driver_test
       registry: ${{inputs.registry}}
   install_integration_test:
+    name: Install Integration Test
     uses: getporter/porter/.github/workflows/integ-reuseable-workflow.yml@main
     with:
       test_name: install_test
       registry: ${{inputs.registry}}
   invoke_integration_test:
+    name: Invoke Integration Test
     uses: getporter/porter/.github/workflows/integ-reuseable-workflow.yml@main
     with:
       test_name: invoke_test
       registry: ${{inputs.registry}}
   lint_integration_test:
+    name: Lint Integration Test
     uses: getporter/porter/.github/workflows/integ-reuseable-workflow.yml@main
     with:
       test_name: lint_test
       registry: ${{inputs.registry}}
   migration_integration_test:
+    name: Migration Integration Test
     uses: getporter/porter/.github/workflows/integ-reuseable-workflow.yml@main
     with:
       test_name: migration_test
       registry: ${{inputs.registry}}
   outputs_integration_test:
+    name: Outputs Integration Test
     uses: getporter/porter/.github/workflows/integ-reuseable-workflow.yml@main
     with:
       test_name: outputs_test
       registry: ${{inputs.registry}}
   publish_integration_test:
+    name: Publish Integration Test
     uses: getporter/porter/.github/workflows/integ-reuseable-workflow.yml@main
     with:
       test_name: publish_test
       registry: ${{inputs.registry}}
   pull_integration_test:
+    name: Pull Integration Test
     uses: getporter/porter/.github/workflows/integ-reuseable-workflow.yml@main
     with:
       test_name: pull_test
       registry: ${{inputs.registry}}
   registry_integration_test:
+    name: Registry Integration Test
     uses: getporter/porter/.github/workflows/integ-reuseable-workflow.yml@main
     with:
       test_name: registry_integration_test
       registry: ${{inputs.registry}}
   schema_integration_test:
+    name: Schema Integration Test
     uses: getporter/porter/.github/workflows/integ-reuseable-workflow.yml@main
     with:
       test_name: schema_test
       registry: ${{inputs.registry}}
   sensitive_data_integration_test:
+    name: Sensitive data Integration Test
     uses: getporter/porter/.github/workflows/integ-reuseable-workflow.yml@main
     with:
       test_name: sensitive_data_test
       registry: ${{inputs.registry}}
   suppress_output_integration_test:
+    name: Suppress output Integration Test
     uses: getporter/porter/.github/workflows/integ-reuseable-workflow.yml@main
     with:
       test_name: suppress_output_test
       registry: ${{inputs.registry}}
   telemetry_test:
+    name: Telemetry Integration Test
     uses: getporter/porter/.github/workflows/integ-reuseable-workflow.yml@main
     with:
       test_name: telemetry_test
       registry: ${{inputs.registry}}
    # Reusable workflows only supports 20 jobs
   uninstall_test_integ:
+    name: Uninstall Integration Test
     runs-on: ubuntu-latest
     steps:
     - name: checkout
@@ -138,7 +159,7 @@ jobs:
       run: go run mage.go build
       shell: bash
     - name: Integration Test
-      env: 
+      env:
         PORTER_INTEG_FILE: uninstall_test.go
-      run: go run mage.go -v TestIntegration 
+      run: go run mage.go -v TestIntegration
       shell: bash

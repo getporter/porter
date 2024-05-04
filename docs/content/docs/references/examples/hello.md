@@ -2,9 +2,12 @@
 title: "Example: Hello World"
 description: "Learn how to install a bundle"
 weight: 0
+aliases:
+  - /examples/hello/
+  - /examples/hello-world/
 ---
 
-Source: https://getporter.org/examples/src/hello
+Source: https://porter.sh/examples/src/hello
 
 The hello world bundle, [ghcr.io/getporter/examples/porter-hello], is the simplest bundle possible.
 It prints a message to the console when various actions are performed.

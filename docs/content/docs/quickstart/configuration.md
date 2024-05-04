@@ -2,6 +2,8 @@
 title: "Configuration"
 descriptions: Control Porter's behavior with its config file
 layout: single
+aliases:
+  - /quickstart/configuration/
 ---
 
 You now know how to install a bundle, passing in a credential or parameter set

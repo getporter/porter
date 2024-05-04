@@ -78,7 +78,7 @@ func NewFor(c *config.Config, store storage.Store, secretStorage secrets.Store) 
 		Templates:     templates.NewTemplates(c),
 		Mixins:        mixin.NewPackageManager(c),
 		Plugins:       plugins.NewPackageManager(c),
-		CNAB:          cnabprovider.NewRuntime(c, installationStorage, credStorage, secretStorage, sanitizerService),
+		CNAB:          cnabprovider.NewRuntime(c, installationStorage, credStorage, paramStorage, secretStorage, sanitizerService),
 		Sanitizer:     sanitizerService,
 	}
 }
@@ -96,7 +96,7 @@ func (p *Porter) Connect(ctx context.Context) (context.Context, error) {
 			fmt.Fprintln(p.Err, "🚨 WARNING! This is a custom developer build of Porter with the traceSensitiveAttributes build flag set. "+
 				"Porter will include sensitive data, such as parameters and credentials, in the telemetry trace data. "+
 				"This build flag should only be used for local development only. "+
-				"If you didn't intend to use a custom build of Porter with this flag enabled, reinstall Porter using the official builds from https://getporter.org/install.")
+				"If you didn't intend to use a custom build of Porter with this flag enabled, reinstall Porter using the official builds from https://porter.sh/install.")
 		}
 	})
 
