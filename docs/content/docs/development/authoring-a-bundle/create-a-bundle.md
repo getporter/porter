@@ -185,7 +185,7 @@ Now that you know how to create a bundle, here are some more detailed topics on 
 - [Customize your Porter manifest, porter.yaml][manifest]
 - [Porter Manifest File Format](/bundle/manifest/file-format/)
 - [Best Practices for the exec Mixin](/best-practices/exec-mixin/)
-- [Understand how bundles are distributed](/distribute-bundles/)
+- [Understand how bundles are distributed](/development/authoring-a-bundle/distribute-bundles/)
 
 [install Porter]: /install/
 [Porter Visual Studio Code]: https://marketplace.visualstudio.com/items?itemName=getporter.porter-vscode
@@ -198,7 +198,7 @@ Now that you know how to create a bundle, here are some more detailed topics on 
 [porter install]: /cli/porter_install/
 [porter mixins search]: /cli/porter_mixins_search/
 [porter explain]: /cli/porter_explain/
-[porter mixin install]: /cli/porter_mixin_install/
+[porter mixin install]: /cli/porter_mixins_install/
 [Mixins]: /mixins/
 [create a custom mixin]: /mixin-dev-guide/
 [terraform mixin]: /mixins/terraform/
