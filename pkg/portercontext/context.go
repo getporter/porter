@@ -237,7 +237,7 @@ func (c *Context) makeConsoleLogger() zapcore.Core {
 	consoleEncoder := zapcore.NewConsoleEncoder(encoding)
 
 	isInformational := func(lvl zapcore.Level) bool {
-		return lvl >= zapcore.InfoLevel && lvl < zapcore.WarnLevel && lvl >= c.logCfg.Verbosity
+		return lvl < zapcore.ErrorLevel && lvl >= c.logCfg.Verbosity
 	}
 	stdoutEnabler := zap.LevelEnablerFunc(isInformational)
 	stderrEnabler := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
