@@ -24,7 +24,7 @@ Commands for working with bundles. These all have shortcuts so that you can call
 
 ### SEE ALSO
 
-- [porter](/cli/porter/) - With Porter you can package your application artifact, client tools, configuration and deployment logic together as a versioned bundle that you can distribute, and then install with a single command.
+- [porter](/references/cli/porter/) - With Porter you can package your application artifact, client tools, configuration and deployment logic together as a versioned bundle that you can distribute, and then install with a single command.
 
 Most commands require a Docker daemon, either local or remote.
 

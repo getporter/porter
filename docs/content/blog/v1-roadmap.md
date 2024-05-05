@@ -39,7 +39,7 @@ We always welcome new contributors, even if you are new to Go, containers, or ev
 If you'd like to help us with v1 or contribute to the larger features in our pipeline, the [new contributor guide] is where to start. 🚀
 
 [v1 milestone]: https://github.com/getporter/porter/milestone/16
-[version strategy]: /project/version-strategy/
+[version strategy]: /references/version-strategy/
 [buildkit]: https://github.com/getporter/porter/pull/1567
 [advanced dependency management]: https://github.com/getporter/proposals/pull/8
 [labels and namespaces]: https://github.com/cnabio/cnab-spec/pull/411
