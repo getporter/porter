@@ -79,5 +79,5 @@ But by default, that foot gun is disabled.
 * [Airgapped Deployments](/references/examples/airgap/)
 * [Blog: Upgrade your plugins to securely store sensitive data](/blog/persist-sensitive-data-safely/)
 
-[credential sets]: /introduction/intro-credentials/#credential-sets
+[credential sets]: /introduction/concepts-and-components/intro-credentials/#credential-sets
 [secrets plugins]: /plugins/types/#secrets
