@@ -64,5 +64,5 @@ overview of CNAB, demos of bundles in action and more.
 [azure-plugin]: /plugins/azure/
 [slack]: /community/#slack
 [install]: /install/
-[tutorial]: /plugins/tutorial/
+[tutorial]: /how-to-guides/work-with-plugins/
 [learning]: /learning/
