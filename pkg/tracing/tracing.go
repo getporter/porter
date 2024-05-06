@@ -5,6 +5,7 @@ import (
 
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel/trace/noop"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -34,7 +35,7 @@ func LoggerFromContext(ctx context.Context) TraceLogger {
 	} else {
 		// default to no-op
 		logger = zap.NewNop()
-		tracer = trace.NewNoopTracerProvider().Tracer("noop")
+		tracer = noop.NewTracerProvider().Tracer("noop")
 	}
 
 	return newTraceLogger(ctx, span, logger, NewTracer(tracer, nil))
