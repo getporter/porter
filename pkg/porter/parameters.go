@@ -164,6 +164,10 @@ func (p *Porter) GenerateParameters(ctx context.Context, opts ParameterOptions) 
 		return fmt.Errorf("unable to generate parameter set: %w", err)
 	}
 
+	if len(pset.Parameters) == 0 {
+		return nil
+	}
+
 	pset.Status.Created = time.Now()
 	pset.Status.Modified = pset.Status.Created
 

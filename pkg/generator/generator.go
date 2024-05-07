@@ -33,6 +33,7 @@ const (
 	questionEnvVar  = "environment variable"
 	questionPath    = "file path"
 	questionCommand = "shell command"
+	questionSkip    = "skip"
 )
 
 type generator func(name string, surveyType SurveyType) (secrets.SourceMap, error)
@@ -52,7 +53,7 @@ func genSurvey(name string, surveyType SurveyType) (secrets.SourceMap, error) {
 	// extra space-suffix to align question and answer. Unfortunately misaligns help text
 	sourceTypePrompt := &survey.Select{
 		Message: fmt.Sprintf("How would you like to set %s %q\n ", surveyType, name),
-		Options: []string{questionSecret, questionValue, questionEnvVar, questionPath, questionCommand},
+		Options: []string{questionSecret, questionValue, questionEnvVar, questionPath, questionCommand, questionSkip},
 		Default: "environment variable",
 	}
 
@@ -78,6 +79,12 @@ func genSurvey(name string, surveyType SurveyType) (secrets.SourceMap, error) {
 		promptMsg = fmt.Sprintf(sourceValuePromptTemplate, "path", surveyType, name)
 	case questionCommand:
 		promptMsg = fmt.Sprintf(sourceValuePromptTemplate, "command", surveyType, name)
+	case questionSkip:
+		promptMsg = fmt.Sprintf(sourceValuePromptTemplate, "skip", surveyType, name)
+	}
+
+	if source == questionSkip {
+		return secrets.SourceMap{}, nil
 	}
 
 	sourceValuePrompt := &survey.Input{
