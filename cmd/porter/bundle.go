@@ -190,6 +190,7 @@ func buildBundleArchiveCommand(p *porter.Porter) *cobra.Command {
 		Long:  "Archives a bundle by generating a gzipped tar archive containing the bundle, invocation image and any referenced images.",
 		Example: `  porter bundle archive mybun.tgz --reference ghcr.io/getporter/examples/porter-hello:v0.2.0
   porter bundle archive mybun.tgz --reference localhost:5000/ghcr.io/getporter/examples/porter-hello:v0.2.0 --force
+  porter bundle archive mybun.tgz --compression NoCompression --reference ghcr.io/getporter/examples/porter-hello:v0.2.0
 `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate(cmd.Context(), args, p)
@@ -199,7 +200,9 @@ func buildBundleArchiveCommand(p *porter.Porter) *cobra.Command {
 		},
 	}
 
-	addBundlePullFlags(cmd.Flags(), &opts.BundlePullOptions)
-
+	f := cmd.Flags()
+	addBundlePullFlags(f, &opts.BundlePullOptions)
+	f.StringVarP(&opts.CompressionLevel, "compression", "c", opts.GetCompressionLevelDefault(),
+		fmt.Sprintf("Compression level to use when creating the gzipped tar archive. Allowed values are: %s", strings.Join(opts.GetCompressionLevelAllowedValues(), ", ")))
 	return &cmd
 }

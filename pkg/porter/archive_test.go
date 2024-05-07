@@ -32,21 +32,25 @@ func TestArchive_Validate(t *testing.T) {
 	defer p.Close()
 
 	testcases := []struct {
-		name      string
-		args      []string
-		reference string
-		wantError string
+		name             string
+		args             []string
+		reference        string
+		compressionLevel string
+		wantError        string
 	}{
-		{"no arg", nil, "", "destination file is required"},
-		{"no tag", []string{"/path/to/file"}, "", "must provide a value for --reference of the form REGISTRY/bundle:tag"},
-		{"too many args", []string{"/path/to/file", "moar args!"}, "myreg/mybuns:v0.1.0", "only one positional argument may be specified, the archive file name, but multiple were received: [/path/to/file moar args!]"},
-		{"just right", []string{"/path/to/file"}, "myreg/mybuns:v0.1.0", ""},
+		{"no arg", nil, "", "", "destination file is required"},
+		{"no tag", []string{"/path/to/file"}, "", "", "must provide a value for --reference of the form REGISTRY/bundle:tag"},
+		{"too many args", []string{"/path/to/file", "moar args!"}, "myreg/mybuns:v0.1.0", "", "only one positional argument may be specified, the archive file name, but multiple were received: [/path/to/file moar args!]"},
+		{"invalid compression level", []string{"/path/to/file"}, "myreg/mybuns:v0.1.0", "NotValidCompression", "invalid compression level: NotValidCompression"},
+		{"no compression level", []string{"/path/to/file"}, "myreg/mybuns:v0.1.0", "NoCompression", ""},
+		{"just right", []string{"/path/to/file"}, "myreg/mybuns:v0.1.0", "", ""},
 	}
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
 			opts := ArchiveOptions{}
 			opts.Reference = tc.reference
+			opts.CompressionLevel = tc.compressionLevel
 
 			err := opts.Validate(context.Background(), tc.args, p.Porter)
 			if tc.wantError != "" {
