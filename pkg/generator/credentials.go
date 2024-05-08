@@ -53,7 +53,7 @@ func genCredentialSet(namespace string, name string, creds map[string]bundle.Cre
 	sort.Strings(credentialNames)
 
 	for _, name := range credentialNames {
-		c, err := fn(name, surveyCredentials)
+		c, err := fn(name, surveyCredentials, creds[name].Required)
 		if err != nil {
 			return cs, err
 		}

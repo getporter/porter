@@ -36,24 +36,29 @@ const (
 	questionSkip    = "skip"
 )
 
-type generator func(name string, surveyType SurveyType) (secrets.SourceMap, error)
+type generator func(name string, surveyType SurveyType, required bool) (secrets.SourceMap, error)
 
-func genEmptySet(name string, surveyType SurveyType) (secrets.SourceMap, error) {
+func genEmptySet(name string, surveyType SurveyType, required bool) (secrets.SourceMap, error) {
 	return secrets.SourceMap{
 		Name:   name,
 		Source: secrets.Source{Hint: "TODO"},
 	}, nil
 }
 
-func genSurvey(name string, surveyType SurveyType) (secrets.SourceMap, error) {
+func genSurvey(name string, surveyType SurveyType, required bool) (secrets.SourceMap, error) {
 	if surveyType != surveyCredentials && surveyType != surveyParameters {
 		return secrets.SourceMap{}, fmt.Errorf("unsupported survey type: %s", surveyType)
+	}
+
+	surveyOptions := []string{questionSecret, questionValue, questionEnvVar, questionPath, questionCommand}
+	if !required {
+		surveyOptions = append(surveyOptions, questionSkip)
 	}
 
 	// extra space-suffix to align question and answer. Unfortunately misaligns help text
 	sourceTypePrompt := &survey.Select{
 		Message: fmt.Sprintf("How would you like to set %s %q\n ", surveyType, name),
-		Options: []string{questionSecret, questionValue, questionEnvVar, questionPath, questionCommand, questionSkip},
+		Options: surveyOptions,
 		Default: "environment variable",
 	}
 
