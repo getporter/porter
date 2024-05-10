@@ -98,3 +98,45 @@ func getHash(p *porter.TestPorter, path string) string {
 
 	return fmt.Sprintf("%x", h.Sum(nil))
 }
+
+// Validate that a bundle archived with NoCompression can be published
+func TestArchive_WithNoCompression(t *testing.T) {
+	t.Parallel()
+	p := porter.NewTestPorter(t)
+	defer p.Close()
+	ctx := p.SetupIntegrationTest()
+
+	// Use a fixed bundle to work with so that we can rely on the registry and layer digests
+	const reference = "ghcr.io/getporter/examples/whalegap:v0.2.0"
+
+	// Archive bundle
+	archiveOpts := porter.ArchiveOptions{}
+	archiveOpts.Reference = reference
+	archiveOpts.CompressionLevel = "NoCompression"
+	archiveFile := "mybuns1nocomp.tgz"
+	err := archiveOpts.Validate(ctx, []string{archiveFile}, p.Porter)
+	require.NoError(p.T(), err, "validation of archive opts for bundle failed")
+
+	err = p.Archive(ctx, archiveOpts)
+	require.NoError(p.T(), err, "archival of bundle failed")
+
+	hash := getHash(p, archiveFile)
+
+	// different compressions yields different (but consistent) hashes
+	consistentHash := "191a249d861f41492ee568080a063718ad77e9b18ad0672cbf4fc2f0e4d1c07c"
+	assert.Equal(p.T(), consistentHash, hash, "shasum of archive did not match expected hash")
+
+	// Publish bundle from archive, with new reference
+	localReference := "localhost:5000/archived-nocompression-whalegap:v0.2.0"
+	publishFromArchiveOpts := porter.PublishOptions{
+		ArchiveFile: archiveFile,
+		BundlePullOptions: porter.BundlePullOptions{
+			Reference: localReference,
+		},
+	}
+	err = publishFromArchiveOpts.Validate(p.Config)
+	require.NoError(p.T(), err, "validation of publish opts for bundle failed")
+
+	err = p.Publish(ctx, publishFromArchiveOpts)
+	require.NoError(p.T(), err, "publish of bundle from archive failed")
+}
