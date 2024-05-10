@@ -420,7 +420,7 @@ install:
     mariadb.enabled: false
 ```
 
-For more information on how dependencies are handled, refer to the [dependencies](/development/working-with-dependencies/) documentation.
+For more information on how dependencies are handled, refer to the [dependencies](/development/authoring-a-bundle/working-with-dependencies/) documentation.
 
 ## Combining References
 

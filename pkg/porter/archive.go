@@ -31,7 +31,30 @@ import (
 // ArchiveOptions defines the valid options for performing an archive operation
 type ArchiveOptions struct {
 	BundleReferenceOptions
-	ArchiveFile string
+	ArchiveFile         string
+	CompressionLevel    string
+	compressionLevelInt int
+}
+
+var compressionLevelValues = map[string]int{
+	"NoCompression":      gzip.NoCompression,
+	"BestSpeed":          gzip.BestSpeed,
+	"BestCompression":    gzip.BestCompression,
+	"DefaultCompression": gzip.DefaultCompression,
+	"HuffmanOnly":        gzip.HuffmanOnly,
+}
+
+func (o *ArchiveOptions) GetCompressionLevelDefault() string {
+	return "DefaultCompression"
+}
+
+func (p *ArchiveOptions) GetCompressionLevelAllowedValues() []string {
+	levels := make([]string, 0, len(compressionLevelValues))
+	for level := range compressionLevelValues {
+		levels = append(levels, level)
+	}
+	sort.Strings(levels)
+	return levels
 }
 
 // Validate performs validation on the publish options
@@ -47,6 +70,16 @@ func (o *ArchiveOptions) Validate(ctx context.Context, args []string, p *Porter)
 	if o.Reference == "" {
 		return errors.New("must provide a value for --reference of the form REGISTRY/bundle:tag")
 	}
+
+	if o.CompressionLevel == "" {
+		o.CompressionLevel = o.GetCompressionLevelDefault()
+	}
+	level, ok := compressionLevelValues[o.CompressionLevel]
+	if !ok {
+		return fmt.Errorf("invalid compression level: %s", o.CompressionLevel)
+	}
+	o.compressionLevelInt = level
+
 	return o.BundleReferenceOptions.Validate(ctx, args, p)
 }
 
@@ -87,6 +120,7 @@ func (p *Porter) Archive(ctx context.Context, opts ArchiveOptions) error {
 		destination:           dest,
 		imageStoreConstructor: ctor,
 		insecureRegistry:      opts.InsecureRegistry,
+		compressionLevel:      opts.compressionLevelInt,
 	}
 	if err := exp.export(ctx); err != nil {
 		return log.Error(err)
@@ -105,6 +139,7 @@ type exporter struct {
 	imageStoreConstructor imagestore.Constructor
 	imageStore            imagestore.Store
 	insecureRegistry      bool
+	compressionLevel      int
 }
 
 func (ex *exporter) export(ctx context.Context) error {
@@ -156,7 +191,7 @@ func (ex *exporter) export(ctx context.Context) error {
 		return fmt.Errorf("error preparing bundle artifact: %s", err)
 	}
 
-	rc, err := ex.CustomTar(ctx, archiveDir)
+	rc, err := ex.CustomTar(ctx, archiveDir, ex.compressionLevel)
 	if err != nil {
 		return fmt.Errorf("error creating archive: %w", err)
 	}
@@ -219,10 +254,13 @@ func (ex *exporter) createTarHeader(ctx context.Context, path string, file strin
 	return header, nil
 }
 
-func (ex *exporter) CustomTar(ctx context.Context, srcPath string) (io.ReadCloser, error) {
+func (ex *exporter) CustomTar(ctx context.Context, srcPath string, compressionLevel int) (io.ReadCloser, error) {
 	pipeReader, pipeWriter := io.Pipe()
 
-	gzipWriter := gzip.NewWriter(pipeWriter)
+	gzipWriter, err := gzip.NewWriterLevel(pipeWriter, compressionLevel)
+	if err != nil {
+		return nil, err
+	}
 	tarWriter := tar.NewWriter(gzipWriter)
 
 	cleanSrcPath := filepath.Clean(srcPath)

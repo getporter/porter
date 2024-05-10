@@ -31,7 +31,7 @@ The manifest is made up of multiple components. See the [Manifest File Format] f
 
 We have full [examples](https://github.com/getporter/examples) of Porter manifests in the Porter repository.
 
-[templates]: /development/using-templates/
+[templates]: /development/authoring-a-bundle/using-templates/
 [Manifest File Format]: /reference/file-formats/#manifest
 
 ## Bundle Metadata
@@ -476,7 +476,7 @@ similar to `help`, but has a different name, you should declare it in the `custo
 ## Dependencies
 
 Dependencies are an extension of the [CNAB Spec](https://github.com/cnabio/cnab-spec/blob/master/500-CNAB-dependencies.md).
-See [dependencies](/dependencies/) for more details on how Porter handles dependencies.
+See [dependencies](/development/authoring-a-bundle/working-with-dependencies/) for more details on how Porter handles dependencies.
 
 ```yaml
 dependencies:
@@ -621,5 +621,5 @@ be copied into the final bundle so that you can access them at runtime. The path
 
 * [Manifest File Format](/reference/file-formats/#manifest)
 * [Using Mixins](/use-mixins/)
-* [Bundle Dependencies](/dependencies/)
+* [Bundle Dependencies](/development/authoring-a-bundle/working-with-dependencies/)
 * [Parameters, Credentials, Outputs, and Images in Porter](/wiring/)

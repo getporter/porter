@@ -40,10 +40,12 @@ func TestValidate(t *testing.T) {
 		spec := map[string]bundle.Credential{
 			"kubeconfig": {},
 		}
-		values := secrets.Set{
-			"kubeconfig": "top secret creds",
-		}
-		err := Validate(values, spec, "install")
+		cs := CredentialSet{CredentialSetSpec: CredentialSetSpec{
+			Credentials: []secrets.SourceMap{
+				{Name: "kubeconfig", ResolvedValue: "top secret creds"},
+			}}}
+
+		err := cs.ValidateBundle(spec, "install")
 		require.NoError(t, err, "expected Validate to pass because the credential was specified")
 	})
 
@@ -51,8 +53,8 @@ func TestValidate(t *testing.T) {
 		spec := map[string]bundle.Credential{
 			"kubeconfig": {ApplyTo: []string{"install"}, Required: false},
 		}
-		values := secrets.Set{}
-		err := Validate(values, spec, "install")
+		cs := CredentialSet{}
+		err := cs.ValidateBundle(spec, "install")
 		require.NoError(t, err, "expected Validate to pass because the credential isn't required")
 	})
 
@@ -60,8 +62,8 @@ func TestValidate(t *testing.T) {
 		spec := map[string]bundle.Credential{
 			"kubeconfig": {ApplyTo: []string{"install"}, Required: true},
 		}
-		values := secrets.Set{}
-		err := Validate(values, spec, "custom")
+		cs := CredentialSet{}
+		err := cs.ValidateBundle(spec, "custom")
 		require.NoError(t, err, "expected Validate to pass because the credential isn't applicable to the custom action")
 	})
 
@@ -69,8 +71,8 @@ func TestValidate(t *testing.T) {
 		spec := map[string]bundle.Credential{
 			"kubeconfig": {ApplyTo: []string{"install"}, Required: true},
 		}
-		values := secrets.Set{}
-		err := Validate(values, spec, "install")
+		cs := CredentialSet{}
+		err := cs.ValidateBundle(spec, "install")
 		require.Error(t, err, "expected Validate to fail because the credential applies to the specified action and is required")
 		assert.Contains(t, err.Error(), "bundle requires credential")
 	})

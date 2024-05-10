@@ -103,6 +103,35 @@ COPY mybin /cnab/app/
 		require.NoError(t, err)
 		test.CompareGoldenFile(t, "testdata/custom-dockerfile-expected-output.Dockerfile", strings.Join(gotlines, "\n"))
 	})
+
+	t.Run("build from custom docker without PORTER_INIT supplied", func(t *testing.T) {
+		t.Parallel()
+
+		c := config.NewTestConfig(t)
+		tmpl := templates.NewTemplates(c.Config)
+		configTpl, err := tmpl.GetManifest()
+		require.Nil(t, err)
+		c.TestContext.AddTestFileContents(configTpl, config.Name)
+
+		m, err := manifest.LoadManifestFrom(context.Background(), c.Config, config.Name)
+		require.NoError(t, err, "could not load manifest")
+
+		// Use a custom dockerfile template
+		m.Dockerfile = "Dockerfile.template"
+		customFrom := `FROM ubuntu:latest
+# stuff
+COPY mybin /cnab/app/
+
+`
+		c.TestContext.AddTestFileContents([]byte(customFrom), "Dockerfile.template")
+
+		mp := mixin.NewTestMixinProvider()
+		g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
+		gotlines, err := g.buildDockerfile(context.Background())
+
+		require.NoError(t, err)
+		test.CompareGoldenFile(t, "testdata/custom-dockerfile-without-init-expected-output.Dockerfile", strings.Join(gotlines, "\n"))
+	})
 }
 
 func TestPorter_generateDockerfile(t *testing.T) {
