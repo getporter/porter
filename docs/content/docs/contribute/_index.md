@@ -9,6 +9,6 @@ weight: 14
 {{< cards >}}
 {{< card link="guide" title="Contributing Guide" >}}
 {{< card link="tutorial" title="Contributing Tutorial" >}}
-{{< card link="proposal" title="Propose a change to Porter" >}}
+{{< card link="proposals" title="Propose a change to Porter" >}}
 {{< card link="work-with-us" title="Work on Porter with us" >}}
 {{< /cards >}}
