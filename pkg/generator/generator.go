@@ -33,26 +33,48 @@ const (
 	questionEnvVar  = "environment variable"
 	questionPath    = "file path"
 	questionCommand = "shell command"
+	questionSkip    = "skip"
 )
 
-type generator func(name string, surveyType SurveyType) (secrets.SourceMap, error)
+type surveyOptions struct {
+	required bool
+}
 
-func genEmptySet(name string, surveyType SurveyType) (secrets.SourceMap, error) {
+type surveyOption func(*surveyOptions)
+
+func withRequired(required bool) surveyOption {
+	return func(s *surveyOptions) {
+		s.required = required
+	}
+}
+
+type generator func(name string, surveyType SurveyType, opts ...surveyOption) (secrets.SourceMap, error)
+
+func genEmptySet(name string, surveyType SurveyType, opts ...surveyOption) (secrets.SourceMap, error) {
 	return secrets.SourceMap{
 		Name:   name,
 		Source: secrets.Source{Hint: "TODO"},
 	}, nil
 }
 
-func genSurvey(name string, surveyType SurveyType) (secrets.SourceMap, error) {
+func genSurvey(name string, surveyType SurveyType, opts ...surveyOption) (secrets.SourceMap, error) {
 	if surveyType != surveyCredentials && surveyType != surveyParameters {
 		return secrets.SourceMap{}, fmt.Errorf("unsupported survey type: %s", surveyType)
+	}
+	surveyOptions := &surveyOptions{}
+	for _, opt := range opts {
+		opt(surveyOptions)
+	}
+
+	selectOptions := []string{questionSecret, questionValue, questionEnvVar, questionPath, questionCommand}
+	if !surveyOptions.required {
+		selectOptions = append(selectOptions, questionSkip)
 	}
 
 	// extra space-suffix to align question and answer. Unfortunately misaligns help text
 	sourceTypePrompt := &survey.Select{
 		Message: fmt.Sprintf("How would you like to set %s %q\n ", surveyType, name),
-		Options: []string{questionSecret, questionValue, questionEnvVar, questionPath, questionCommand},
+		Options: selectOptions,
 		Default: "environment variable",
 	}
 
@@ -78,6 +100,12 @@ func genSurvey(name string, surveyType SurveyType) (secrets.SourceMap, error) {
 		promptMsg = fmt.Sprintf(sourceValuePromptTemplate, "path", surveyType, name)
 	case questionCommand:
 		promptMsg = fmt.Sprintf(sourceValuePromptTemplate, "command", surveyType, name)
+	case questionSkip:
+		promptMsg = fmt.Sprintf(sourceValuePromptTemplate, "skip", surveyType, name)
+	}
+
+	if source == questionSkip {
+		return secrets.SourceMap{}, nil
 	}
 
 	sourceValuePrompt := &survey.Input{
