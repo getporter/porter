@@ -29,11 +29,11 @@ func ServeMany(c *portercontext.Context, pluginMap map[int]plugin.PluginSet) {
 		VersionedPlugins: pluginMap,
 		GRPCServer: func(opts []grpc.ServerOption) *grpc.Server {
 			opts = append(opts,
+				grpc.StatsHandler(otelgrpc.NewServerHandler()),
 				// These handlers are called from left to right. The right-most handler is the one that calls the actual implementation
 				// the grpc_recovery handler should always be last so that it can recover from a panic, and then the other handlers only get
 				// a nice error (created from the panic) to deal with
 				grpc.ChainUnaryInterceptor(
-					otelgrpc.UnaryServerInterceptor(),
 					makeLogUnaryHandler(c),
 					makePanicHandler()),
 			)
