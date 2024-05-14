@@ -50,7 +50,7 @@ func (g *DockerfileGenerator) GenerateDockerFile(ctx context.Context) error {
 	var lines []string
 	var err error
 	if g.Config.IsFeatureEnabled(experimental.FlagFullControlDockerfile) {
-		span.Warnf("Experimental feature \"%s\" enabled: Dockerfile will be used without changes by Porter",
+		span.Warnf("WARNING: Experimental feature \"%s\" enabled: Dockerfile will be used without changes by Porter",
 			experimental.FullControlDockerfile)
 		lines, err = g.readRawDockerfile(ctx)
 		if err != nil {
