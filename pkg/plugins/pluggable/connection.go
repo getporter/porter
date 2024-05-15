@@ -148,7 +148,7 @@ func (c *PluginConnection) Start(ctx context.Context, pluginCfg io.Reader) error
 		// Configure gRPC to propagate the span context so the plugin's traces
 		// show up under the current span
 		GRPCDialOptions: []grpc.DialOption{
-			grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()),
+			grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
 		},
 	})
 

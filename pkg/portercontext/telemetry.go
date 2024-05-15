@@ -20,7 +20,7 @@ import (
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
-	"go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel/trace/noop"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -47,7 +47,7 @@ func (c *Context) configureTelemetry(ctx context.Context, cfg LogConfiguration, 
 }
 
 func createNoopTracer() tracing.Tracer {
-	tracer := trace.NewNoopTracerProvider().Tracer("noop")
+	tracer := noop.NewTracerProvider().Tracer("noop")
 	cleanup := func(_ context.Context) error { return nil }
 	t := tracing.NewTracer(tracer, cleanup)
 	t.IsNoOp = true

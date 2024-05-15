@@ -19,6 +19,8 @@ These are the members of the [maintainers team](https://github.com/orgs/getporte
     * Porter Core Lead 
 * [Troy Connor](https://github.com/troy0820) [Microsoft]
     * Porter Operator Lead
+* [Kim Christensen](https://github.com/kichristensen) [SimCorp]
+    * Porter Core
 
 ## Emeritus Maintainers
 

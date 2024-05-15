@@ -96,7 +96,7 @@ install:
 
 This blog post focuses on just the docker mixin, but here is a [full
 working example for how to use Docker Compose in a
-bundle](/examples/src/compose/).
+bundle](/examples/src/dockerapp/).
 
 ### Use Docker
 
@@ -234,6 +234,6 @@ us to take this further, please reach out on the [porter][porter-repo] or [docke
 repositories!
 
 [porter-repo]: https://github.com/getporter/porter/
-[docker-repo]: https://github.com/getporter/mixin-docker/
+[docker-repo]: https://github.com/getporter/docker-mixin
 [compose-spec]: https://www.compose-spec.io/
 [docker mixin]: /mixins/docker/
