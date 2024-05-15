@@ -54,7 +54,7 @@ func (opts *GenerateParametersOptions) genParameterSet(fn generator) (storage.Pa
 		if opts.Bundle.IsInternalParameter(name) {
 			continue
 		}
-		c, err := fn(name, surveyParameters)
+		c, err := fn(name, surveyParameters, withRequired(opts.Bundle.Parameters[name].Required))
 		if err != nil {
 			return pset, err
 		}

@@ -186,6 +186,18 @@ func (c *Config) GetSecretsPlugin(name string) (SecretsPlugin, error) {
 	return SecretsPlugin{}, errors.New("secrets %q not defined")
 }
 
+func (c *Config) GetSigningPlugin(name string) (SigningPlugin, error) {
+	if c != nil {
+		for _, cs := range c.Data.SigningPlugin {
+			if cs.Name == name {
+				return cs, nil
+			}
+		}
+	}
+
+	return SigningPlugin{}, errors.New("signing %q not defined")
+}
+
 // GetHomeDir determines the absolute path to the porter home directory.
 // Hierarchy of checks:
 // - PORTER_HOME
