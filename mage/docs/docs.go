@@ -29,8 +29,7 @@ const (
 // Build the website in preparation for deploying to the production website on Netlify.
 // Uses symlinks so it won't work on Windows. Don't run locally, use DocsPreview instead.
 func Docs() {
-	// Remove the preview container because otherwise it holds a file open and we can't delete the volume mount created at docs/content/operator
-	mg.SerialDeps(removePreviewContainer, linkOperatorDocs)
+	mg.SerialDeps(linkOperatorDocs)
 
 	cmd := must.Command("hugo", "--source", "docs/")
 	baseURL := os.Getenv("BASEURL")
