@@ -88,6 +88,35 @@ func (p *Porter) InstallBundle(ctx context.Context, opts InstallOptions) error {
 		return fmt.Errorf("error saving installation record: %w", err)
 	}
 
+	if opts.VerifyBundleBeforeExecution {
+		ref, ok, err := i.Bundle.GetBundleReference()
+		if err != nil {
+			return err
+		}
+		log.Debugf("verifying bundle signature for %s", ref.String())
+		if !ok {
+			return log.Errorf("unable to get reference for bundle %s: %w", ref.String(), err)
+		}
+		err = p.Signer.Verify(ctx, ref.String())
+		if err != nil {
+			return log.Errorf("unable to verify signature: %w", err)
+		}
+		log.Debugf("bundle signature verified for %s", ref.String())
+
+		bun, err := opts.GetOptions().GetBundleReference(ctx, p)
+		if err != nil {
+			return log.Errorf("unable to get bundle reference")
+		}
+
+		invocationImage := bun.Definition.InvocationImages[0].Image
+		log.Debugf("verifying invocation image signature for %s", invocationImage)
+		err = p.Signer.Verify(ctx, invocationImage)
+		if err != nil {
+			return log.Errorf("unable to verify signature: %w", err)
+		}
+		log.Debugf("invocation image signature verified for %s", invocationImage)
+	}
+
 	// Run install using the updated installation record
 	return p.ExecuteAction(ctx, i, opts)
 }
