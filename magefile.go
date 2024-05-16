@@ -24,6 +24,9 @@ import (
 	"get.porter.sh/porter/tests/tester"
 	mageci "github.com/carolynvs/magex/ci"
 	"github.com/carolynvs/magex/mgx"
+	magepkg "github.com/carolynvs/magex/pkg"
+	"github.com/carolynvs/magex/pkg/archive"
+	"github.com/carolynvs/magex/pkg/downloads"
 	"github.com/carolynvs/magex/shx"
 	"github.com/carolynvs/magex/xplat"
 	"github.com/magefile/mage/mg"
@@ -567,7 +570,7 @@ func chmodRecursive(name string, mode os.FileMode) error {
 
 // Run integration tests (slow).
 func TestIntegration() {
-	mg.Deps(tests.EnsureTestCluster, copySchema, TryRegisterLocalHostAlias, BuildTestMixin, BuildTestPlugin)
+	mg.Deps(tests.EnsureTestCluster, copySchema, TryRegisterLocalHostAlias, BuildTestMixin, BuildTestPlugin, EnsureCosign, EnsureNotation)
 
 	var run string
 	runTest := os.Getenv("PORTER_RUN_TEST")
@@ -728,4 +731,50 @@ func getPorterHome() string {
 // to comply with our DCO
 func SetupDCO() error {
 	return git.SetupDCO()
+}
+
+func EnsureCosign() {
+	if ok, _ := magepkg.IsCommandAvailable("cosign", "version", "v2.2.2"); ok {
+		return
+	}
+
+	opts := downloads.DownloadOptions{
+		UrlTemplate: "https://github.com/sigstore/cosign/releases/download/v{{.VERSION}}/cosign-{{.GOOS}}-{{.GOARCH}}{{.EXT}}",
+		Name:        "cosign",
+		Version:     "2.2.2",
+	}
+
+	if runtime.GOOS == "windows" {
+		opts.Ext = ".exe"
+	}
+
+	err := downloads.DownloadToGopathBin(opts)
+	mgx.Must(err)
+}
+
+func EnsureNotation() {
+	if ok, _ := magepkg.IsCommandAvailable("notation", "version", "1.1.0"); ok {
+		return
+	}
+
+	target := "notation{{.EXT}}"
+	if runtime.GOOS == "windows" {
+		target = "notation.exe"
+	}
+
+	opts := archive.DownloadArchiveOptions{
+		DownloadOptions: downloads.DownloadOptions{
+			UrlTemplate: "https://github.com/notaryproject/notation/releases/download/v{{.VERSION}}/notation_{{.VERSION}}_{{.GOOS}}_{{.GOARCH}}{{.EXT}}",
+			Name:        "notation",
+			Version:     "1.1.0",
+		},
+		ArchiveExtensions: map[string]string{
+			"linux":   ".tar.gz",
+			"darwin":  ".tar.gz",
+			"windows": ".zip",
+		},
+		TargetFileTemplate: target,
+	}
+	err := archive.DownloadToGopathBin(opts)
+	mgx.Must(err)
 }

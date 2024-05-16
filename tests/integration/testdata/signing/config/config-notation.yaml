@@ -1,0 +1,15 @@
+default-signer: notation
+default-storage: testdb
+
+signers:
+  - name: notation
+    plugin: notation
+    config:
+      key: porter-test.org
+      insecureregistry: true
+
+storage:
+  - name: testdb
+    plugin: mongodb
+    config:
+      url: mongodb://localhost:27017/${env.PORTER_TEST_DB_NAME}?connect=direct

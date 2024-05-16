@@ -16,6 +16,7 @@ import (
 	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/experimental"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/tracing"
 	"get.porter.sh/porter/pkg/yaml"
@@ -417,6 +418,30 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 	return data, nil
 }
 
+func (m *RuntimeManifest) buildAndResolveMappedDependencyOutputs(sourceData map[string]interface{}) error {
+	for _, manifestDep := range m.Dependencies.Requires {
+		var depBun = sourceData["bundle"].(map[string]interface{})["dependencies"].(map[string]interface{})[manifestDep.Name].(map[string]interface{})
+		var depOutputs map[string]interface{}
+		if depBun["outputs"] == nil {
+			depOutputs = make(map[string]interface{})
+			depBun["outputs"] = depOutputs
+		} else {
+			depOutputs = depBun["outputs"].(map[string]interface{})
+		}
+
+		for outputName, mappedOutput := range manifestDep.Outputs {
+			mappedOutputTemplate := m.GetTemplatePrefix() + mappedOutput
+			renderedOutput, err := mustache.RenderRaw(mappedOutputTemplate, true, sourceData)
+			if err != nil {
+				return fmt.Errorf("unable to render dependency %s output template %s: %w", manifestDep.Name, mappedOutput, err)
+			}
+			depOutputs[outputName] = renderedOutput
+		}
+	}
+
+	return nil
+}
+
 // ResolveStep will walk through the Step's data and resolve any placeholder
 // data using the definitions in the manifest, like parameters or credentials.
 func (m *RuntimeManifest) ResolveStep(ctx context.Context, stepIndex int, step *manifest.Step) error {
@@ -426,6 +451,15 @@ func (m *RuntimeManifest) ResolveStep(ctx context.Context, stepIndex int, step *
 	sourceData, err := m.buildSourceData()
 	if err != nil {
 		return log.Error(fmt.Errorf("unable to build step template data: %w", err))
+	}
+
+	mustache.AllowMissingVariables = false
+
+	if m.config.IsFeatureEnabled(experimental.FlagDependenciesV2) {
+		err = m.buildAndResolveMappedDependencyOutputs(sourceData)
+		if err != nil {
+			return log.Errorf("unable to build and resolve mapped dependency outputs: %w", err)
+		}
 	}
 
 	// Get the original yaml for the current step
@@ -439,7 +473,6 @@ func (m *RuntimeManifest) ResolveStep(ctx context.Context, stepIndex int, step *
 	//fmt.Fprintf(m.Err, "=== Step Data ===\n%v\n", sourceData)
 	m.debugf(log, "=== Step Template ===\n%v\n", stepTemplate)
 
-	mustache.AllowMissingVariables = false
 	rendered, err := mustache.RenderRaw(stepTemplate, true, sourceData)
 	if err != nil {
 		return log.Errorf("unable to render step template %s: %w", stepTemplate, err)
@@ -495,7 +528,10 @@ func (m *RuntimeManifest) Initialize(ctx context.Context) error {
 			// that's a cnab change somewhere probably
 			// the problem is in injectParameters in cnab-go
 			if string(bytes) == "null" {
-				m.config.FileSystem.Remove(param.Destination.Path)
+				err := m.config.FileSystem.Remove(param.Destination.Path)
+				if err != nil {
+					return fmt.Errorf("unable to remove destination path: %w", err)
+				}
 				continue
 			}
 			decoded, err := base64.StdEncoding.DecodeString(string(bytes))
@@ -542,7 +578,10 @@ func (m *RuntimeManifest) unpackStateBag(ctx context.Context) error {
 	// the problem is in injectParameters in cnab-go
 	if string(bytes) == "null" {
 		m.debugf(log, "Bundle state file has null content")
-		m.config.FileSystem.Remove(statePath)
+		err = m.config.FileSystem.Remove(statePath)
+		if err != nil {
+			log.Error(err)
+		}
 		return nil
 	}
 	// Unpack the state file and copy its contents to where the bundle expects them
@@ -598,7 +637,9 @@ func (m *RuntimeManifest) unpackStateBag(ctx context.Context) error {
 			continue
 		}
 
-		unpackStateFile(tr, header)
+		if err = unpackStateFile(tr, header); err != nil {
+			return err
+		}
 	}
 
 	return nil
