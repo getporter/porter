@@ -61,8 +61,12 @@ func (e *Editor) Run(ctx context.Context) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer e.FileSystem.Remove(tempFile.Name())
-
+	defer func() error {
+		if err = e.FileSystem.Remove(tempFile.Name()); err != nil {
+			return err
+		}
+		return nil
+	}()
 	_, err = tempFile.Write(e.contents)
 	if err != nil {
 		return nil, err

@@ -70,7 +70,8 @@ func TestMainWithMockedCommandHandlers(m *testing.M) {
 // the new test output.
 func CompareGoldenFile(t *testing.T, goldenFile string, got string) {
 	if os.Getenv("PORTER_UPDATE_TEST_FILES") == "true" {
-		os.MkdirAll(filepath.Dir(goldenFile), pkg.FileModeDirectory)
+		err := os.MkdirAll(filepath.Dir(goldenFile), pkg.FileModeDirectory)
+		require.NoError(t, err)
 		t.Logf("Updated test file %s to match latest test output", goldenFile)
 		require.NoError(t, os.WriteFile(goldenFile, []byte(got), pkg.FileModeWritable), "could not update golden file %s", goldenFile)
 	} else {
