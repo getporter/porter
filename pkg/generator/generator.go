@@ -47,7 +47,7 @@ type surveyOption func(*surveyOptions)
 
 func withDescription(description string) surveyOption {
 	return func(s *surveyOptions) {
-		s.description = description
+		s.description = formatDescriptionForSurvey(description)
 	}
 }
 
@@ -84,13 +84,9 @@ func buildSurveySelect(name string, surveyType SurveyType, opts ...surveyOption)
 		selectOptions = append(selectOptions, questionSkip)
 	}
 
-	// if there is a description, append the newline to the end of it
-	// this prevents empty descriptions adding new lines
-	description := formatDescriptionForSurvey(surveyOptions.description)
-
 	// extra space-suffix to align question and answer. Unfortunately misaligns help text
 	return &survey.Select{
-		Message: fmt.Sprintf(surveryFormatString, surveyPrefix, surveyType, name, description),
+		Message: fmt.Sprintf(surveryFormatString, surveyPrefix, surveyType, name, surveyOptions.description),
 		Options: selectOptions,
 		Default: "environment variable",
 	}
