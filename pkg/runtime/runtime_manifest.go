@@ -495,7 +495,10 @@ func (m *RuntimeManifest) Initialize(ctx context.Context) error {
 			// that's a cnab change somewhere probably
 			// the problem is in injectParameters in cnab-go
 			if string(bytes) == "null" {
-				m.config.FileSystem.Remove(param.Destination.Path)
+				err := m.config.FileSystem.Remove(param.Destination.Path)
+				if err != nil {
+					return fmt.Errorf("unable to remove destination path: %w", err)
+				}
 				continue
 			}
 			decoded, err := base64.StdEncoding.DecodeString(string(bytes))
@@ -542,7 +545,10 @@ func (m *RuntimeManifest) unpackStateBag(ctx context.Context) error {
 	// the problem is in injectParameters in cnab-go
 	if string(bytes) == "null" {
 		m.debugf(log, "Bundle state file has null content")
-		m.config.FileSystem.Remove(statePath)
+		err = m.config.FileSystem.Remove(statePath)
+		if err != nil {
+			log.Error(err)
+		}
 		return nil
 	}
 	// Unpack the state file and copy its contents to where the bundle expects them
@@ -598,7 +604,9 @@ func (m *RuntimeManifest) unpackStateBag(ctx context.Context) error {
 			continue
 		}
 
-		unpackStateFile(tr, header)
+		if err = unpackStateFile(tr, header); err != nil {
+			return err
+		}
 	}
 
 	return nil
