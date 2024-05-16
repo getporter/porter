@@ -14,14 +14,18 @@ func TestParseDatabase(t *testing.T) {
 	tc := portercontext.NewTestContext(t)
 	t.Run("db specified", func(t *testing.T) {
 		mongo := NewStore(tc.Context, PluginConfig{URL: "mongodb://localhost:27017/test/"})
-		mongo.Connect(ctx)
+		if err := mongo.Connect(ctx); err != nil {
+			t.Fatal(err)
+		}
 		defer mongo.Close()
 		assert.Equal(t, "test", mongo.database)
 	})
 
 	t.Run("default db", func(t *testing.T) {
 		mongo := NewStore(tc.Context, PluginConfig{URL: "mongodb://localhost:27017"})
-		mongo.Connect(ctx)
+		if err := mongo.Connect(ctx); err != nil {
+			t.Fatal(err)
+		}
 		defer mongo.Close()
 		assert.Equal(t, "porter", mongo.database)
 	})

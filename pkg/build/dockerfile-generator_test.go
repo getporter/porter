@@ -64,7 +64,8 @@ func TestPorter_buildCustomDockerfile(t *testing.T) {
 COPY mybin /cnab/app/
 
 `
-		c.TestContext.AddTestFileContents([]byte(customFrom), "Dockerfile.template")
+		err = c.TestContext.AddTestFileContents([]byte(customFrom), "Dockerfile.template")
+		require.NoError(t, err)
 
 		mp := mixin.NewTestMixinProvider()
 		g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
@@ -95,7 +96,8 @@ COPY mybin /cnab/app/
 COPY mybin /cnab/app/
 
 `
-		c.TestContext.AddTestFileContents([]byte(customFrom), "Dockerfile.template")
+		err = c.TestContext.AddTestFileContents([]byte(customFrom), "Dockerfile.template")
+		require.NoError(t, err)
 
 		mp := mixin.NewTestMixinProvider()
 		g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
@@ -124,7 +126,8 @@ COPY mybin /cnab/app/
 COPY mybin /cnab/app/
 
 `
-		c.TestContext.AddTestFileContents([]byte(customFrom), "Dockerfile.template")
+		err = c.TestContext.AddTestFileContents([]byte(customFrom), "Dockerfile.template")
+		require.NoError(t, err)
 
 		mp := mixin.NewTestMixinProvider()
 		g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
@@ -226,7 +229,8 @@ func TestPorter_appendBuildInstructionsIfMixinTokenIsNotPresent(t *testing.T) {
 ARG BUNDLE_DIR
 COPY mybin /cnab/app/
 `
-	c.TestContext.AddTestFileContents([]byte(customFrom), "Dockerfile.template")
+	err = c.TestContext.AddTestFileContents([]byte(customFrom), "Dockerfile.template")
+	require.NoError(t, err)
 
 	mp := mixin.NewTestMixinProvider()
 	g := NewDockerfileGenerator(c.Config, m, tmpl, mp)

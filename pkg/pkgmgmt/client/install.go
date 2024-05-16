@@ -200,14 +200,18 @@ func (fs *FileSystem) downloadFile(ctx context.Context, url url.URL, destPath st
 		return log.Error(fmt.Errorf("unable to check if directory exists %s: %w", parentDir, err))
 	}
 
-	cleanup := func() {}
+	cleanup := func() error { return nil }
 	if !parentDirExists {
 		err = fs.FileSystem.MkdirAll(parentDir, pkg.FileModeDirectory)
 		if err != nil {
 			return log.Error(fmt.Errorf("unable to create parent directory %s: %w", parentDir, err))
 		}
-		cleanup = func() {
-			fs.FileSystem.RemoveAll(parentDir) // If we can't download the file, don't leave traces of it
+		cleanup = func() error {
+			// If we can't download the file, don't leave traces of it
+			if err = fs.FileSystem.RemoveAll(parentDir); err != nil {
+				return err
+			}
+			return nil
 		}
 	}
 
