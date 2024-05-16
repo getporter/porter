@@ -120,7 +120,7 @@ state:
 			} else {
 				require.Contains(t, err.Error(), test.expErr.Error())
 			}
-			err = pCtx.FileSystem.Remove("/porter/state.tgz")
+			err = testConfig.FileSystem.Remove("/porter/state.tgz")
 			require.NoError(t, err)
 		})
 	}
