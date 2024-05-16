@@ -120,7 +120,10 @@ state:
 			} else {
 				require.Contains(t, err.Error(), test.expErr.Error())
 			}
-			testConfig.FileSystem.Remove("/porter/state.tgz")
+			if test.stateContent != "null" {
+				err = testConfig.FileSystem.Remove("/porter/state.tgz")
+				require.NoError(t, err)
+			}
 		})
 	}
 }

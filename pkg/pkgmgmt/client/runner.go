@@ -84,7 +84,9 @@ func (r *Runner) Run(ctx context.Context, commandOpts pkgmgmt.CommandOptions) er
 		}
 		go func() {
 			defer stdin.Close()
-			io.WriteString(stdin, commandOpts.Input)
+			if _, err := io.WriteString(stdin, commandOpts.Input); err != nil {
+				span.Error(err)
+			}
 		}()
 	}
 
