@@ -37,10 +37,17 @@ const (
 )
 
 type surveyOptions struct {
-	required bool
+	required    bool
+	description string
 }
 
 type surveyOption func(*surveyOptions)
+
+func withDescription(description string) surveyOption {
+	return func(s *surveyOptions) {
+		s.description = description
+	}
+}
 
 func withRequired(required bool) surveyOption {
 	return func(s *surveyOptions) {
@@ -71,9 +78,16 @@ func genSurvey(name string, surveyType SurveyType, opts ...surveyOption) (secret
 		selectOptions = append(selectOptions, questionSkip)
 	}
 
+	// if there is a description, append the newline to the end of it
+	// this prevents empty descriptions adding new lines
+	var description = ""
+	if surveyOptions.description != "" {
+		description = surveyOptions.description + "\n"
+	}
+
 	// extra space-suffix to align question and answer. Unfortunately misaligns help text
 	sourceTypePrompt := &survey.Select{
-		Message: fmt.Sprintf("How would you like to set %s %q\n ", surveyType, name),
+		Message: fmt.Sprintf("How would you like to set %s %q\n\n%s ", surveyType, name, description),
 		Options: selectOptions,
 		Default: "environment variable",
 	}
