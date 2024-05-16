@@ -34,7 +34,7 @@ const (
 	questionPath        = "file path"
 	questionCommand     = "shell command"
 	questionSkip        = "skip"
-	surveryFormatString = "%s %s %q\n\n%s "
+	surveryFormatString = "%s %s %q\n%s"
 	surveyPrefix        = "How would you like to set"
 )
 
