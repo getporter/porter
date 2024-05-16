@@ -161,7 +161,7 @@ func (c *PluginConnection) Start(ctx context.Context, pluginCfg io.Reader) error
 			pluginErr = ": plugin stderr was " + pluginErr
 		}
 		err = fmt.Errorf("could not connect to the %s plugin%s: %w", c.key, pluginErr, err)
-		span.Error(err) // Emit the error before trying to close the connection
+		err = span.Error(err) // Emit the error before trying to close the connection
 		c.Close(ctx)
 		return err
 	}

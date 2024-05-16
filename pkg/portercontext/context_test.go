@@ -44,7 +44,10 @@ func TestContext_LogToFile(t *testing.T) {
 	_, log := c.StartRootSpan(context.Background(), t.Name())
 	log.Info("a thing happened")
 	log.Warn("a weird thing happened")
-	log.Error(errors.New("a bad thing happened"))
+	//throwing away error here because it is a test
+	// we do not return it
+	_ = log.Error(errors.New("a bad thing happened"))
+
 	log.EndSpan()
 	c.Close()
 

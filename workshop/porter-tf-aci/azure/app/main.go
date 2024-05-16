@@ -13,7 +13,10 @@ func handle(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "couldn't find MYSQL FQDN", http.StatusInternalServerError)
 	}
 
-	w.Write([]byte(fmt.Sprintf("Hello, I'm a webserver that wants to connect to a MYSQL at %s", sqlFQDN)))
+	_, err := w.Write([]byte(fmt.Sprintf("Hello, I'm a webserver that wants to connect to a MYSQL at %s", sqlFQDN)))
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func main() {
