@@ -28,12 +28,14 @@ const (
 	surveyCredentials SurveyType = "credential"
 	surveyParameters  SurveyType = "parameter"
 
-	questionSecret  = "secret"
-	questionValue   = "specific value"
-	questionEnvVar  = "environment variable"
-	questionPath    = "file path"
-	questionCommand = "shell command"
-	questionSkip    = "skip"
+	questionSecret      = "secret"
+	questionValue       = "specific value"
+	questionEnvVar      = "environment variable"
+	questionPath        = "file path"
+	questionCommand     = "shell command"
+	questionSkip        = "skip"
+	surveryFormatString = "%s %s %q\n\n%s "
+	surveyPrefix        = "How would you like to set"
 )
 
 type surveyOptions struct {
@@ -64,10 +66,14 @@ func genEmptySet(name string, surveyType SurveyType, opts ...surveyOption) (secr
 	}, nil
 }
 
-func genSurvey(name string, surveyType SurveyType, opts ...surveyOption) (secrets.SourceMap, error) {
-	if surveyType != surveyCredentials && surveyType != surveyParameters {
-		return secrets.SourceMap{}, fmt.Errorf("unsupported survey type: %s", surveyType)
+func formatDescriptionForSurvey(description string) string {
+	if description != "" {
+		description = description + "\n"
 	}
+	return description
+}
+
+func buildSurveySelect(name string, surveyType SurveyType, opts ...surveyOption) *survey.Select {
 	surveyOptions := &surveyOptions{}
 	for _, opt := range opts {
 		opt(surveyOptions)
@@ -80,17 +86,24 @@ func genSurvey(name string, surveyType SurveyType, opts ...surveyOption) (secret
 
 	// if there is a description, append the newline to the end of it
 	// this prevents empty descriptions adding new lines
-	var description = ""
-	if surveyOptions.description != "" {
-		description = surveyOptions.description + "\n"
-	}
+	description := formatDescriptionForSurvey(surveyOptions.description)
 
 	// extra space-suffix to align question and answer. Unfortunately misaligns help text
-	sourceTypePrompt := &survey.Select{
-		Message: fmt.Sprintf("How would you like to set %s %q\n\n%s ", surveyType, name, description),
+	return &survey.Select{
+		Message: fmt.Sprintf(surveryFormatString, surveyPrefix, surveyType, name, description),
 		Options: selectOptions,
 		Default: "environment variable",
 	}
+
+}
+
+func genSurvey(name string, surveyType SurveyType, opts ...surveyOption) (secrets.SourceMap, error) {
+	if surveyType != surveyCredentials && surveyType != surveyParameters {
+		return secrets.SourceMap{}, fmt.Errorf("unsupported survey type: %s", surveyType)
+	}
+
+	// extra space-suffix to align question and answer. Unfortunately misaligns help text
+	sourceTypePrompt := buildSurveySelect(name, surveyType, opts...)
 
 	// extra space-suffix to align question and answer. Unfortunately misaligns help text
 	sourceValuePromptTemplate := "Enter the %s that will be used to set %s %q\n "

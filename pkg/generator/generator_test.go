@@ -1,6 +1,7 @@
 package generator
 
 import (
+	"fmt"
 	"os"
 	"testing"
 
@@ -43,4 +44,28 @@ func TestCheckUserHomeDir(t *testing.T) {
 			assert.Equal(t, test.expectedValue, newVal)
 		})
 	}
+}
+
+func TestBuildSurveySelectRequiredTrue(t *testing.T) {
+	survey := buildSurveySelect("name", surveyCredentials, withRequired(true))
+	assert.NotContains(t, survey.Options, questionSkip)
+}
+
+func TestBuildSurveySelectRequiredFalse(t *testing.T) {
+	survey := buildSurveySelect("name", surveyCredentials, withRequired(false))
+	assert.Contains(t, survey.Options, questionSkip)
+}
+
+func TestBuildSurveySelectEmptyDescription(t *testing.T) {
+	name := "name_value"
+	description := ""
+	survey := buildSurveySelect(name, surveyCredentials, withDescription(description))
+	assert.Equal(t, survey.Message, fmt.Sprintf(surveryFormatString, surveyPrefix, surveyCredentials, name, formatDescriptionForSurvey(description)))
+}
+
+func TestBuildSurveySelectValidDescription(t *testing.T) {
+	name := "name_value"
+	description := "here are details on how to fill out the survey"
+	survey := buildSurveySelect(name, surveyCredentials, withDescription(description))
+	assert.Equal(t, survey.Message, fmt.Sprintf(surveryFormatString, surveyPrefix, surveyCredentials, name, formatDescriptionForSurvey(description)))
 }
