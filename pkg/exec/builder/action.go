@@ -78,8 +78,7 @@ func unmarshalActionMap(actionMap map[string][]interface{}, builder BuildableAct
 //			 return &action, err
 //		 })
 func LoadAction(ctx context.Context, cfg runtime.RuntimeConfig, commandFile string, unmarshal func([]byte) (interface{}, error)) error {
-	//lint:ignore SA4006 ignore unused ctx for now
-	ctx, span := tracing.StartSpan(ctx)
+	_, span := tracing.StartSpan(ctx)
 	defer span.EndSpan()
 
 	contents, err := readInputFromStdinOrFile(cfg, commandFile)

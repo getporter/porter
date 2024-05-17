@@ -705,7 +705,7 @@ func Vet() {
 // Run golangci-lint on the project
 func Lint() {
 	mg.Deps(tools.EnsureGolangCILint)
-	must.RunV("golangci-lint", "run", "--max-issues-per-linter", "150", "./...")
+	must.RunV("golangci-lint", "run", "--max-issues-per-linter", "0", "--max-same-issues", "0", "./...")
 }
 
 func getPorterHome() string {

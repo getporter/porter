@@ -36,7 +36,7 @@ func Docs() {
 	if baseURL != "" {
 		cmd.Args("-b", baseURL)
 	}
-	cmd.RunV()
+	mgx.Must(cmd.RunV())
 }
 
 func removePreviewContainer() {

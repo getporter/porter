@@ -87,8 +87,7 @@ func (s ParameterSet) DefaultDocumentFilter() map[string]interface{} {
 }
 
 func (s *ParameterSet) Validate(ctx context.Context, strategy schema.CheckStrategy) error {
-	//lint:ignore SA4006 ignore unused context for now
-	ctx, span := tracing.StartSpan(ctx,
+	_, span := tracing.StartSpan(ctx,
 		attribute.String("parameterSet", s.String()),
 		attribute.String("schemaVersion", string(s.SchemaVersion)),
 		attribute.String("defaultSchemaVersion", string(DefaultParameterSetSchemaVersion)))

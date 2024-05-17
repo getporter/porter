@@ -9,6 +9,7 @@ import (
 
 	"get.porter.sh/porter/pkg/pkgmgmt"
 	"get.porter.sh/porter/pkg/portercontext"
+	"github.com/stretchr/testify/require"
 )
 
 var _ pkgmgmt.PackageManager = &TestPackageManager{}
@@ -105,10 +106,14 @@ func NewTestRunner(t *testing.T, name string, pkgType string, runtime bool) *Tes
 	r.Context = c.Context
 
 	// Setup Porter home
-	c.FileSystem.Create("/home/myuser/.porter/porter")
-	c.FileSystem.Create("/home/myuser/.porter/runtimes/porter-runtime")
-	c.FileSystem.Create(path.Join(pkgDir, name))
-	c.FileSystem.Create(path.Join(pkgDir, "runtimes", name+"-runtime"))
+	_, err := c.FileSystem.Create("/home/myuser/.porter/porter")
+	require.NoError(t, err)
+	_, err = c.FileSystem.Create("/home/myuser/.porter/runtimes/porter-runtime")
+	require.NoError(t, err)
+	_, err = c.FileSystem.Create(path.Join(pkgDir, name))
+	require.NoError(t, err)
+	_, err = c.FileSystem.Create(path.Join(pkgDir, "runtimes", name+"-runtime"))
+	require.NoError(t, err)
 
 	return r
 }

@@ -156,8 +156,7 @@ func (i *InstallationSpec) Apply(input InstallationSpec) {
 
 // Validate the installation document and report the first error.
 func (i *InstallationSpec) Validate(ctx context.Context, strategy schema.CheckStrategy) error {
-	//lint:ignore SA4006 ignore unused context for now
-	ctx, span := tracing.StartSpan(ctx,
+	_, span := tracing.StartSpan(ctx,
 		attribute.String("installation", i.String()),
 		attribute.String("schemaVersion", string(i.SchemaVersion)),
 		attribute.String("defaultSchemaVersion", string(DefaultInstallationSchemaVersion)))

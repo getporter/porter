@@ -13,8 +13,7 @@ import (
 )
 
 func (feed *MixinFeed) Load(ctx context.Context, file string) error {
-	//lint:ignore SA4006 ignore unused ctx for now
-	ctx, span := tracing.StartSpan(ctx)
+	_, span := tracing.StartSpan(ctx)
 	defer span.EndSpan()
 
 	contents, err := feed.FileSystem.ReadFile(file)

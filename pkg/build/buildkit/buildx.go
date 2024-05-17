@@ -163,8 +163,7 @@ func (b *Builder) determineBuildArgs(
 	manifest *manifest.Manifest,
 	opts build.BuildImageOptions) (map[string]string, error) {
 
-	//lint:ignore SA4006 ignore unused context for now
-	ctx, span := tracing.StartSpan(ctx)
+	_, span := tracing.StartSpan(ctx)
 	defer span.EndSpan()
 
 	// This will grow later when we add custom build args from the porter.yaml

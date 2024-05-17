@@ -30,8 +30,7 @@ func NewSigner(c *portercontext.Context, cfg PluginConfig) *Signer {
 }
 
 func (s *Signer) Connect(ctx context.Context) error {
-	//lint:ignore SA4006 ignore unused ctx for now
-	ctx, log := tracing.StartSpan(ctx)
+	_, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
 
 	if err := exec.Command("notation", "version").Run(); err != nil {
@@ -42,8 +41,7 @@ func (s *Signer) Connect(ctx context.Context) error {
 }
 
 func (s *Signer) Sign(ctx context.Context, ref string) error {
-	//lint:ignore SA4006 ignore unused ctx for now
-	ctx, log := tracing.StartSpan(ctx)
+	_, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
 
 	args := []string{"sign", ref, "--key", s.SigningKey}
@@ -60,8 +58,7 @@ func (s *Signer) Sign(ctx context.Context, ref string) error {
 }
 
 func (s *Signer) Verify(ctx context.Context, ref string) error {
-	//lint:ignore SA4006 ignore unused ctx for now
-	ctx, log := tracing.StartSpan(ctx)
+	_, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
 
 	args := []string{"verify", ref}

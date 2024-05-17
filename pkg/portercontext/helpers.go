@@ -129,7 +129,7 @@ func (c *TestContext) AddCleanupDir(dir string) {
 
 func (c *TestContext) Close() {
 	for _, dir := range c.cleanupDirs {
-		c.FileSystem.RemoveAll(dir)
+		_ = c.FileSystem.RemoveAll(dir)
 	}
 }
 

@@ -33,7 +33,7 @@ func CreateLegacyPorterHome(t *testing.T) *config.TestConfig {
 	oldPorterDir := filepath.Join(c.TestContext.FindRepoRoot(), "bin", "v0")
 	oldPorterPath := filepath.Join(oldPorterDir, "porter"+xplat.FileExt())
 	if _, err = os.Stat(oldPorterPath); os.IsNotExist(err) {
-		os.MkdirAll(oldPorterDir, 0700)
+		require.NoError(t, os.MkdirAll(oldPorterDir, 0700))
 		opts := downloads.DownloadOptions{
 			UrlTemplate: "https://github.com/getporter/porter/releases/download/{{.VERSION}}/porter-{{.GOOS}}-amd64{{.EXT}}",
 			Name:        "porter",
@@ -52,8 +52,8 @@ func CreateLegacyPorterHome(t *testing.T) *config.TestConfig {
 
 	// fixup permissions on the home directory to make the filesystem plugin happy
 	// I'm calling porter so that I don't reimplement this functionality
-	shx.Command(oldPorterPath, "storage", "fix-permissions").
-		Env("PORTER_HOME=" + tmp).Must().RunS()
+	require.NoError(t, shx.Command(oldPorterPath, "storage", "fix-permissions").
+		Env("PORTER_HOME="+tmp).Must().RunS())
 
 	_, err = c.Load(context.Background(), nil)
 	require.NoError(t, err, "Failed to load the test context from the temp PORTER_HOME")
