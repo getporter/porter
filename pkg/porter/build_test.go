@@ -58,8 +58,9 @@ func TestPorter_NoErrorWhenPorterYamlIsPresent(t *testing.T) {
 	o := BuildOptions{
 		BundleDefinitionOptions: BundleDefinitionOptions{},
 	}
-	p.FileSystem.WriteFile("porter.yaml", []byte(""), pkg.FileModeWritable)
+	err := p.FileSystem.WriteFile("porter.yaml", []byte(""), pkg.FileModeWritable)
+	require.NoError(t, err)
 
-	err := o.Validate(p.Porter)
+	err = o.Validate(p.Porter)
 	require.NoError(t, err, "validate BuildOptions failed")
 }

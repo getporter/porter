@@ -35,13 +35,14 @@ func TestPorter_Run(t *testing.T) {
 	require.NoError(t, e.SetValue("schemaVersion", ""))
 	require.NoError(t, e.WriteFile("porter.yaml"))
 
-	p.FileSystem.Create("/home/nonroot/.kube/config")
+	_, err := p.FileSystem.Create("/home/nonroot/.kube/config")
+	require.NoError(t, err)
 
 	opts := NewRunOptions(p.Config)
 	opts.Action = cnab.ActionInstall
 	opts.File = "porter.yaml"
 
-	err := opts.Validate()
+	err = opts.Validate()
 	require.NoError(t, err, "could not validate run options")
 
 	err = p.Run(context.Background(), opts)

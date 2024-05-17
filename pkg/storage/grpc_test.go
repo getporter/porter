@@ -29,8 +29,16 @@ func TestRoundTripDataOverGRPC(t *testing.T) {
 	require.NoError(t, err)
 	grpcServer := grpc.NewServer()
 	proto.RegisterStorageProtocolServer(grpcServer, server)
-	go grpcServer.Serve(lis)
-	defer grpcServer.Stop()
+	errs := make(chan error, 1)
+	go func() {
+		errs <- grpcServer.Serve(lis)
+	}()
+	defer func() {
+		grpcServer.Stop()
+		if err := <-errs; err != nil {
+			require.NoError(t, err)
+		}
+	}()
 
 	conn, err := grpc.Dial(lis.Addr().String(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	require.NoError(t, err)

@@ -702,16 +702,10 @@ func Vet() {
 	must.RunV("go", "vet", "./...")
 }
 
-// Run golangci-lint on the project, but only for the latest changes
-func LintChanges() {
-	mg.Deps(tools.EnsureGolangCILint)
-	must.RunV("golangci-lint", "run", "--new-from-rev=HEAD~1", "--whole-files", "./...")
-}
-
 // Run golangci-lint on the project
 func Lint() {
 	mg.Deps(tools.EnsureGolangCILint)
-	must.RunV("golangci-lint", "run", "./...")
+	must.RunV("golangci-lint", "run", "--max-issues-per-linter", "150", "./...")
 }
 
 func getPorterHome() string {

@@ -63,12 +63,12 @@ func TestPorter_ListParameters(t *testing.T) {
 	p := NewTestPorter(t)
 	defer p.Close()
 	ctx := context.Background()
-	p.TestParameters.InsertParameterSet(ctx, storage.NewParameterSet("", "shared-mysql"))
-	p.TestParameters.InsertParameterSet(ctx, storage.NewParameterSet("dev", "carolyn-wordpress"))
-	p.TestParameters.InsertParameterSet(ctx, storage.NewParameterSet("dev", "vaughn-wordpress"))
-	p.TestParameters.InsertParameterSet(ctx, storage.NewParameterSet("test", "staging-wordpress"))
-	p.TestParameters.InsertParameterSet(ctx, storage.NewParameterSet("test", "iat-wordpress"))
-	p.TestParameters.InsertParameterSet(ctx, storage.NewParameterSet("test", "shared-mysql"))
+	require.NoError(t, p.TestParameters.InsertParameterSet(ctx, storage.NewParameterSet("", "shared-mysql")))
+	require.NoError(t, p.TestParameters.InsertParameterSet(ctx, storage.NewParameterSet("dev", "carolyn-wordpress")))
+	require.NoError(t, p.TestParameters.InsertParameterSet(ctx, storage.NewParameterSet("dev", "vaughn-wordpress")))
+	require.NoError(t, p.TestParameters.InsertParameterSet(ctx, storage.NewParameterSet("test", "staging-wordpress")))
+	require.NoError(t, p.TestParameters.InsertParameterSet(ctx, storage.NewParameterSet("test", "iat-wordpress")))
+	require.NoError(t, p.TestParameters.InsertParameterSet(ctx, storage.NewParameterSet("test", "shared-mysql")))
 
 	t.Run("all-namespaces", func(t *testing.T) {
 		opts := ListOptions{AllNamespaces: true}

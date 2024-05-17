@@ -24,7 +24,7 @@ func TestPorter_buildDockerfile(t *testing.T) {
 	tmpl := templates.NewTemplates(c.Config)
 	configTpl, err := tmpl.GetManifest()
 	require.Nil(t, err)
-	c.TestContext.AddTestFileContents(configTpl, config.Name)
+	require.NoError(t, c.TestContext.AddTestFileContents(configTpl, config.Name))
 
 	m, err := manifest.LoadManifestFrom(context.Background(), c.Config, config.Name)
 	require.NoError(t, err, "could not load manifest")
@@ -52,7 +52,7 @@ func TestPorter_buildCustomDockerfile(t *testing.T) {
 		tmpl := templates.NewTemplates(c.Config)
 		configTpl, err := tmpl.GetManifest()
 		require.Nil(t, err)
-		c.TestContext.AddTestFileContents(configTpl, config.Name)
+		require.NoError(t, c.TestContext.AddTestFileContents(configTpl, config.Name))
 
 		m, err := manifest.LoadManifestFrom(context.Background(), c.Config, config.Name)
 		require.NoError(t, err, "could not load manifest")
@@ -82,7 +82,7 @@ COPY mybin /cnab/app/
 		tmpl := templates.NewTemplates(c.Config)
 		configTpl, err := tmpl.GetManifest()
 		require.Nil(t, err)
-		c.TestContext.AddTestFileContents(configTpl, config.Name)
+		require.NoError(t, c.TestContext.AddTestFileContents(configTpl, config.Name))
 
 		m, err := manifest.LoadManifestFrom(context.Background(), c.Config, config.Name)
 		require.NoError(t, err, "could not load manifest")
@@ -113,7 +113,7 @@ COPY mybin /cnab/app/
 		tmpl := templates.NewTemplates(c.Config)
 		configTpl, err := tmpl.GetManifest()
 		require.Nil(t, err)
-		c.TestContext.AddTestFileContents(configTpl, config.Name)
+		require.NoError(t, c.TestContext.AddTestFileContents(configTpl, config.Name))
 
 		m, err := manifest.LoadManifestFrom(context.Background(), c.Config, config.Name)
 		require.NoError(t, err, "could not load manifest")
@@ -151,7 +151,7 @@ func TestPorter_generateDockerfile(t *testing.T) {
 	tmpl := templates.NewTemplates(c.Config)
 	configTpl, err := tmpl.GetManifest()
 	require.Nil(t, err)
-	c.TestContext.AddTestFileContents(configTpl, config.Name)
+	require.NoError(t, c.TestContext.AddTestFileContents(configTpl, config.Name))
 
 	m, err := manifest.LoadManifestFrom(ctx, c.Config, config.Name)
 	require.NoError(t, err, "could not load manifest")
@@ -184,7 +184,7 @@ func TestPorter_prepareDockerFilesystem(t *testing.T) {
 	tmpl := templates.NewTemplates(c.Config)
 	configTpl, err := tmpl.GetManifest()
 	require.Nil(t, err)
-	c.TestContext.AddTestFileContents(configTpl, config.Name)
+	require.NoError(t, c.TestContext.AddTestFileContents(configTpl, config.Name))
 
 	m, err := manifest.LoadManifestFrom(context.Background(), c.Config, config.Name)
 	require.NoError(t, err, "could not load manifest")
@@ -217,7 +217,7 @@ func TestPorter_appendBuildInstructionsIfMixinTokenIsNotPresent(t *testing.T) {
 	tmpl := templates.NewTemplates(c.Config)
 	configTpl, err := tmpl.GetManifest()
 	require.Nil(t, err)
-	c.TestContext.AddTestFileContents(configTpl, config.Name)
+	require.NoError(t, c.TestContext.AddTestFileContents(configTpl, config.Name))
 
 	m, err := manifest.LoadManifestFrom(context.Background(), c.Config, config.Name)
 	require.NoError(t, err, "could not load manifest")
@@ -248,7 +248,7 @@ func TestPorter_buildMixinsSection_mixinErr(t *testing.T) {
 	tmpl := templates.NewTemplates(c.Config)
 	configTpl, err := tmpl.GetManifest()
 	require.Nil(t, err)
-	c.TestContext.AddTestFileContents(configTpl, config.Name)
+	require.NoError(t, c.TestContext.AddTestFileContents(configTpl, config.Name))
 
 	m, err := manifest.LoadManifestFrom(ctx, c.Config, config.Name)
 	require.NoError(t, err, "could not load manifest")
