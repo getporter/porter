@@ -6,6 +6,9 @@ const (
 
 	// DependenciesV2 is the name of the experimental feature flag for PEP003 - Advanced Dependencies.
 	DependenciesV2 = "dependencies-v2"
+
+	// FullControlDockerfile is the name of the experimental feature flag giving authors full control of the invocation image Dockerfile
+	FullControlDockerfile = "full-control-dockerfile"
 )
 
 // FeatureFlags is an enum of possible feature flags
@@ -17,6 +20,9 @@ const (
 
 	// FlagDependenciesV2 gates the changes from PEP003 - Advanced Dependencies.
 	FlagDependenciesV2
+
+	// FlagFullControlDockerfile gates the changes required for giving authors full control of the invocation image Dockerfile
+	FlagFullControlDockerfile
 )
 
 // ParseFlags converts a list of feature flag names into a bit map for faster lookups.
@@ -28,6 +34,8 @@ func ParseFlags(flags []string) FeatureFlags {
 			experimental = experimental | FlagNoopFeature
 		case DependenciesV2:
 			experimental = experimental | FlagDependenciesV2
+		case FullControlDockerfile:
+			experimental = experimental | FlagFullControlDockerfile
 		}
 	}
 	return experimental
