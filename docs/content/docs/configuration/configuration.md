@@ -22,6 +22,7 @@ You may set a default value for a configuration value in the config file, overri
   - [Build Drivers](#build-drivers)
   - [Structured Logs](#structured-logs)
   - [Dependencies v2](#dependencies-v2)
+  - [Full control Dockerfile](#full-control-dockerfile)
 - [Common Configuration Settings](#common-configuration-settings)
   - [Set Current Namespace](#namespace)
   - [Output Formatting](#output)
@@ -277,6 +278,15 @@ telemetry:
 
 The `dependencies-v2` experimental flag is not yet implemented.
 When it is completed, it is used to activate the features from [PEP003 - Advanced Dependencies](https://github.com/getporter/proposals/blob/main/pep/003-advanced-dependencies.md).
+
+### Full control Dockerfile
+
+The `full-control-dockerfile` experimental flag disables all Dockerfile generation when building bundles.
+When enabled Porter will use the file referenced by `dockerfile` in the Porter manifest when building the invocation image *without modifying* it in any way.
+Ie. Porter will not process `# PORTER_x` placeholders, nor inject any user configuration and `CMD` statements.
+It is up to the bundle author to ensure that the contents of the Dockerfile contains the necessary tools for any mixins to function and a layout that can be executed as a Porter bundle.
+
+*Note:* when using the `dockerfile` property in the Porter manifest the `autobuild` functionality does not re-build the bundle on changes to the contents of the referenced file.
 
 ## Common Configuration Settings
 

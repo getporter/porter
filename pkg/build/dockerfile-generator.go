@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"path/filepath"
@@ -11,6 +12,7 @@ import (
 
 	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/experimental"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/mixin/query"
 	"get.porter.sh/porter/pkg/pkgmgmt"
@@ -45,9 +47,20 @@ func (g *DockerfileGenerator) GenerateDockerFile(ctx context.Context) error {
 	ctx, span := tracing.StartSpan(ctx)
 	defer span.EndSpan()
 
-	lines, err := g.buildDockerfile(ctx)
-	if err != nil {
-		return span.Error(fmt.Errorf("error generating the Dockerfile: %w", err))
+	var lines []string
+	var err error
+	if g.Config.IsFeatureEnabled(experimental.FlagFullControlDockerfile) {
+		span.Warnf("WARNING: Experimental feature \"%s\" enabled: Dockerfile will be used without changes by Porter",
+			experimental.FullControlDockerfile)
+		lines, err = g.readRawDockerfile(ctx)
+		if err != nil {
+			return span.Error(fmt.Errorf("error reading the Dockerfile: %w", err))
+		}
+	} else {
+		lines, err = g.buildDockerfile(ctx)
+		if err != nil {
+			return span.Error(fmt.Errorf("error generating the Dockerfile: %w", err))
+		}
 	}
 
 	contents := strings.Join(lines, "\n")
@@ -61,6 +74,33 @@ func (g *DockerfileGenerator) GenerateDockerFile(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func (g *DockerfileGenerator) readRawDockerfile(ctx context.Context) ([]string, error) {
+	if g.Manifest.Dockerfile == "" {
+		return nil, errors.New("no Dockerfile specified in the manifest")
+	}
+	exists, err := g.FileSystem.Exists(g.Manifest.Dockerfile)
+	if err != nil {
+		return nil, fmt.Errorf("error checking if Dockerfile exists: %q: %w", g.Manifest.Dockerfile, err)
+	}
+	if !exists {
+		return nil, fmt.Errorf("the Dockerfile specified in the manifest doesn't exist: %q", g.Manifest.Dockerfile)
+	}
+
+	file, err := g.FileSystem.Open(g.Manifest.Dockerfile)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	var lines []string
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		lines = append(lines, scanner.Text())
+	}
+
+	return lines, scanner.Err()
 }
 
 func (g *DockerfileGenerator) buildDockerfile(ctx context.Context) ([]string, error) {
