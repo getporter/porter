@@ -376,8 +376,8 @@ func (b *ExtendedBundle) ResolveVersionv2(name string, dep v2.Dependency) (OCIRe
 	}
 
 	if dep.Version == "" {
-		// Check if they specified an explicit tag in referenced bundle already
-		if ref.HasTag() {
+		// Check if they specified an explicit tag or digest in referenced bundle already
+		if ref.HasTag() || ref.HasDigest() {
 			return ref, nil
 		}
 
