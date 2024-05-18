@@ -189,12 +189,12 @@ func TestPorter_ListCredentials(t *testing.T) {
 	defer p.Close()
 
 	ctx := context.Background()
-	p.TestCredentials.InsertCredentialSet(ctx, storage.NewCredentialSet("", "shared-mysql"))
-	p.TestCredentials.InsertCredentialSet(ctx, storage.NewCredentialSet("dev", "carolyn-wordpress"))
-	p.TestCredentials.InsertCredentialSet(ctx, storage.NewCredentialSet("dev", "vaughn-wordpress"))
-	p.TestCredentials.InsertCredentialSet(ctx, storage.NewCredentialSet("test", "staging-wordpress"))
-	p.TestCredentials.InsertCredentialSet(ctx, storage.NewCredentialSet("test", "iat-wordpress"))
-	p.TestCredentials.InsertCredentialSet(ctx, storage.NewCredentialSet("test", "shared-mysql"))
+	require.NoError(t, p.TestCredentials.InsertCredentialSet(ctx, storage.NewCredentialSet("", "shared-mysql")))
+	require.NoError(t, p.TestCredentials.InsertCredentialSet(ctx, storage.NewCredentialSet("dev", "carolyn-wordpress")))
+	require.NoError(t, p.TestCredentials.InsertCredentialSet(ctx, storage.NewCredentialSet("dev", "vaughn-wordpress")))
+	require.NoError(t, p.TestCredentials.InsertCredentialSet(ctx, storage.NewCredentialSet("test", "staging-wordpress")))
+	require.NoError(t, p.TestCredentials.InsertCredentialSet(ctx, storage.NewCredentialSet("test", "iat-wordpress")))
+	require.NoError(t, p.TestCredentials.InsertCredentialSet(ctx, storage.NewCredentialSet("test", "shared-mysql")))
 
 	t.Run("all-namespaces", func(t *testing.T) {
 		opts := ListOptions{AllNamespaces: true}

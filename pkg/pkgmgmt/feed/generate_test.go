@@ -297,23 +297,29 @@ func TestGenerate_ExistingFeed(t *testing.T) {
 	tc.AddTestFile("testdata/atom-template.xml", "template.xml")
 	tc.AddTestFile("testdata/atom-existing.xml", "atom.xml")
 
-	tc.FileSystem.Create("bin/v1.2.4/helm-darwin-amd64")
-	tc.FileSystem.Create("bin/v1.2.4/helm-linux-amd64")
-	tc.FileSystem.Create("bin/v1.2.4/helm-windows-amd64.exe")
+	_, err := tc.FileSystem.Create("bin/v1.2.4/helm-darwin-amd64")
+	require.NoError(t, err)
+	_, err = tc.FileSystem.Create("bin/v1.2.4/helm-linux-amd64")
+	require.NoError(t, err)
+	_, err = tc.FileSystem.Create("bin/v1.2.4/helm-windows-amd64.exe")
+	require.NoError(t, err)
 
 	up4, _ := time.Parse("2006-Jan-02", "2013-Feb-04")
-	tc.FileSystem.Chtimes("bin/v1.2.4/helm-darwin-amd64", up4, up4)
-	tc.FileSystem.Chtimes("bin/v1.2.4/helm-linux-amd64", up4, up4)
-	tc.FileSystem.Chtimes("bin/v1.2.4/helm-windows-amd64.exe", up4, up4)
+	require.NoError(t, tc.FileSystem.Chtimes("bin/v1.2.4/helm-darwin-amd64", up4, up4))
+	require.NoError(t, tc.FileSystem.Chtimes("bin/v1.2.4/helm-linux-amd64", up4, up4))
+	require.NoError(t, tc.FileSystem.Chtimes("bin/v1.2.4/helm-windows-amd64.exe", up4, up4))
 
-	tc.FileSystem.Create("bin/canary/exec-darwin-amd64")
-	tc.FileSystem.Create("bin/canary/exec-linux-amd64")
-	tc.FileSystem.Create("bin/canary/exec-windows-amd64.exe")
+	_, err = tc.FileSystem.Create("bin/canary/exec-darwin-amd64")
+	require.NoError(t, err)
+	_, err = tc.FileSystem.Create("bin/canary/exec-linux-amd64")
+	require.NoError(t, err)
+	_, err = tc.FileSystem.Create("bin/canary/exec-windows-amd64.exe")
+	require.NoError(t, err)
 
 	up10, _ := time.Parse("2006-Jan-02", "2013-Feb-10")
-	tc.FileSystem.Chtimes("bin/canary/exec-darwin-amd64", up10, up10)
-	tc.FileSystem.Chtimes("bin/canary/exec-linux-amd64", up10, up10)
-	tc.FileSystem.Chtimes("bin/canary/exec-windows-amd64.exe", up10, up10)
+	require.NoError(t, tc.FileSystem.Chtimes("bin/canary/exec-darwin-amd64", up10, up10))
+	require.NoError(t, tc.FileSystem.Chtimes("bin/canary/exec-linux-amd64", up10, up10))
+	require.NoError(t, tc.FileSystem.Chtimes("bin/canary/exec-windows-amd64.exe", up10, up10))
 
 	opts := GenerateOptions{
 		AtomFile:        "atom.xml",
@@ -321,7 +327,7 @@ func TestGenerate_ExistingFeed(t *testing.T) {
 		TemplateFile:    "template.xml",
 	}
 	f := NewMixinFeed(tc.Context)
-	err := f.Generate(ctx, opts)
+	err = f.Generate(ctx, opts)
 	require.NoError(t, err)
 	err = f.Save(opts)
 	require.NoError(t, err)
@@ -343,23 +349,29 @@ func TestGenerate_RegenerateDoesNotCreateDuplicates(t *testing.T) {
 	tc.AddTestFile("testdata/atom-template.xml", "template.xml")
 	tc.AddTestFile("testdata/atom-existing.xml", "atom.xml")
 
-	tc.FileSystem.Create("bin/v1.2.4/helm-darwin-amd64")
-	tc.FileSystem.Create("bin/v1.2.4/helm-linux-amd64")
-	tc.FileSystem.Create("bin/v1.2.4/helm-windows-amd64.exe")
+	_, err := tc.FileSystem.Create("bin/v1.2.4/helm-darwin-amd64")
+	require.NoError(t, err)
+	_, err = tc.FileSystem.Create("bin/v1.2.4/helm-linux-amd64")
+	require.NoError(t, err)
+	_, err = tc.FileSystem.Create("bin/v1.2.4/helm-windows-amd64.exe")
+	require.NoError(t, err)
 
 	up4, _ := time.Parse("2006-Jan-02", "2013-Feb-04")
-	tc.FileSystem.Chtimes("bin/v1.2.4/helm-darwin-amd64", up4, up4)
-	tc.FileSystem.Chtimes("bin/v1.2.4/helm-linux-amd64", up4, up4)
-	tc.FileSystem.Chtimes("bin/v1.2.4/helm-windows-amd64.exe", up4, up4)
+	require.NoError(t, tc.FileSystem.Chtimes("bin/v1.2.4/helm-darwin-amd64", up4, up4))
+	require.NoError(t, tc.FileSystem.Chtimes("bin/v1.2.4/helm-linux-amd64", up4, up4))
+	require.NoError(t, tc.FileSystem.Chtimes("bin/v1.2.4/helm-windows-amd64.exe", up4, up4))
 
-	tc.FileSystem.Create("bin/canary/exec-darwin-amd64")
-	tc.FileSystem.Create("bin/canary/exec-linux-amd64")
-	tc.FileSystem.Create("bin/canary/exec-windows-amd64.exe")
+	_, err = tc.FileSystem.Create("bin/canary/exec-darwin-amd64")
+	require.NoError(t, err)
+	_, err = tc.FileSystem.Create("bin/canary/exec-linux-amd64")
+	require.NoError(t, err)
+	_, err = tc.FileSystem.Create("bin/canary/exec-windows-amd64.exe")
+	require.NoError(t, err)
 
 	up10, _ := time.Parse("2006-Jan-02", "2013-Feb-10")
-	tc.FileSystem.Chtimes("bin/canary/exec-darwin-amd64", up10, up10)
-	tc.FileSystem.Chtimes("bin/canary/exec-linux-amd64", up10, up10)
-	tc.FileSystem.Chtimes("bin/canary/exec-windows-amd64.exe", up10, up10)
+	require.NoError(t, tc.FileSystem.Chtimes("bin/canary/exec-darwin-amd64", up10, up10))
+	require.NoError(t, tc.FileSystem.Chtimes("bin/canary/exec-linux-amd64", up10, up10))
+	require.NoError(t, tc.FileSystem.Chtimes("bin/canary/exec-windows-amd64.exe", up10, up10))
 
 	opts := GenerateOptions{
 		AtomFile:        "atom.xml",
@@ -368,7 +380,7 @@ func TestGenerate_RegenerateDoesNotCreateDuplicates(t *testing.T) {
 	}
 	f := NewMixinFeed(tc.Context)
 
-	err := f.Generate(ctx, opts)
+	err = f.Generate(ctx, opts)
 	require.NoError(t, err)
 	err = f.Save(opts)
 	require.NoError(t, err)

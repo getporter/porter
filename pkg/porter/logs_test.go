@@ -89,7 +89,7 @@ func TestPorter_ShowInstallationLogs(t *testing.T) {
 		i := p.TestInstallations.CreateInstallation(storage.NewInstallation("", "test"))
 		c := p.TestInstallations.CreateRun(i.NewRun(cnab.ActionInstall, bun))
 		r := p.TestInstallations.CreateResult(c.NewResult(cnab.StatusSucceeded), func(r *storage.Result) {
-			r.OutputMetadata.SetGeneratedByBundle(cnab.OutputInvocationImageLogs, false)
+			require.NoError(t, r.OutputMetadata.SetGeneratedByBundle(cnab.OutputInvocationImageLogs, false))
 		})
 
 		p.TestInstallations.CreateOutput(r.NewOutput(cnab.OutputInvocationImageLogs, []byte(testLogs)))

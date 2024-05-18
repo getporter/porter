@@ -97,8 +97,14 @@ func (p *Porter) printBundleInspectTable(bun *InspectableBundle) error {
 	fmt.Fprintf(p.Out, "Version: %s\n", bun.Version)
 	fmt.Fprintln(p.Out, "")
 
-	p.printInvocationImageInspectBlock(bun)
-	p.printImagesInspectBlock(bun)
+	err := p.printInvocationImageInspectBlock(bun)
+	if err != nil {
+		return err
+	}
+	err = p.printImagesInspectBlock(bun)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 

@@ -443,8 +443,7 @@ func (o *CredentialCreateOptions) Validate(args []string) error {
 }
 
 func (p *Porter) CreateCredential(ctx context.Context, opts CredentialCreateOptions) error {
-	//lint:ignore SA4006 ignore unused ctx for now
-	ctx, span := tracing.StartSpan(ctx)
+	_, span := tracing.StartSpan(ctx)
 	defer span.EndSpan()
 
 	if opts.OutputType == "" {

@@ -39,25 +39,25 @@ func BindViperToEnvironmentVariables(v *viper.Viper) {
 	// See https://github.com/open-telemetry/opentelemetry-go/tree/main/exporters/otlp/otlptrace
 	var err error
 	if err = v.BindEnv("telemetry.endpoint", "OTEL_EXPORTER_OTLP_ENDPOINT", "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT"); err != nil {
-		errors.Unwrap(err)
+		_ = errors.Unwrap(err)
 	}
 	if err = v.BindEnv("telemetry.protocol", "OTEL_EXPORTER_OTLP_PROTOCOL", "OTEL_EXPORTER_OTLP_TRACES_PROTOCOL"); err != nil {
-		errors.Unwrap(err)
+		_ = errors.Unwrap(err)
 	}
 	if err = v.BindEnv("telemetry.insecure", "OTEL_EXPORTER_OTLP_INSECURE", "OTEL_EXPORTER_OTLP_TRACES_INSECURE"); err != nil {
-		errors.Unwrap(err)
+		_ = errors.Unwrap(err)
 	}
 	if err = v.BindEnv("telemetry.certificate", "OTEL_EXPORTER_OTLP_CERTIFICATE", "OTEL_EXPORTER_OTLP_TRACES_CERTIFICATE"); err != nil {
-		errors.Unwrap(err)
+		_ = errors.Unwrap(err)
 	}
 	if err = v.BindEnv("telemetry.headers", "OTEL_EXPORTER_OTLP_HEADERS", "OTEL_EXPORTER_OTLP_TRACES_HEADERS"); err != nil {
-		errors.Unwrap(err)
+		_ = errors.Unwrap(err)
 	}
 	if err = v.BindEnv("telemetry.compression", "OTEL_EXPORTER_OTLP_COMPRESSION", "OTEL_EXPORTER_OTLP_TRACES_COMPRESSION"); err != nil {
-		errors.Unwrap(err)
+		_ = errors.Unwrap(err)
 	}
 	if err = v.BindEnv("telemetry.timeout", "OTEL_EXPORTER_OTLP_TIMEOUT", "OTEL_EXPORTER_OTLP_TRACES_TIMEOUT"); err != nil {
-		errors.Unwrap(err)
+		_ = errors.Unwrap(err)
 	}
 }
 
@@ -74,8 +74,7 @@ func LoadFromViper(viperCfg func(v *viper.Viper), cobraCfg func(v *viper.Viper))
 	return func(ctx context.Context, cfg *Config, templateData map[string]interface{}) error {
 		home, _ := cfg.GetHomeDir()
 
-		//lint:ignore SA4006 ignore unused context for now
-		ctx, log := tracing.StartSpanWithName(ctx, "LoadFromViper", attribute.String("porter.PORTER_HOME", home))
+		_, log := tracing.StartSpanWithName(ctx, "LoadFromViper", attribute.String("porter.PORTER_HOME", home))
 		defer log.EndSpan()
 
 		v := viper.New()

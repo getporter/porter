@@ -2,6 +2,7 @@ package editor
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -61,11 +62,8 @@ func (e *Editor) Run(ctx context.Context) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer func() error {
-		if err = e.FileSystem.Remove(tempFile.Name()); err != nil {
-			return err
-		}
-		return nil
+	defer func() {
+		err = errors.Join(err, e.FileSystem.Remove(tempFile.Name()))
 	}()
 	_, err = tempFile.Write(e.contents)
 	if err != nil {
@@ -90,5 +88,5 @@ func (e *Editor) Run(ctx context.Context) ([]byte, error) {
 		return nil, err
 	}
 
-	return contents, nil
+	return contents, err
 }

@@ -297,8 +297,7 @@ func (r *Registry) ListTags(ctx context.Context, ref cnab.OCIReference, opts Reg
 	// Get the fully-qualified repository name, including docker.io (required by crane)
 	repository := ref.Named.Name()
 
-	//lint:ignore SA4006 ignore unused context for now
-	ctx, span := tracing.StartSpan(ctx, attribute.String("repository", repository))
+	_, span := tracing.StartSpan(ctx, attribute.String("repository", repository))
 	defer span.EndSpan()
 
 	tags, err := crane.ListTags(repository, opts.toCraneOptions()...)
@@ -315,8 +314,7 @@ func (r *Registry) ListTags(ctx context.Context, ref cnab.OCIReference, opts Reg
 // GetBundleMetadata returns information about a bundle in a registry
 // Use ErrNotFound to detect if the error is because the bundle is not in the registry.
 func (r *Registry) GetBundleMetadata(ctx context.Context, ref cnab.OCIReference, opts RegistryOptions) (BundleMetadata, error) {
-	//lint:ignore SA4006 ignore unused context for now
-	ctx, span := tracing.StartSpan(ctx, attribute.String("reference", ref.String()))
+	_, span := tracing.StartSpan(ctx, attribute.String("reference", ref.String()))
 	defer span.EndSpan()
 
 	bundleDigest, err := crane.Digest(ref.String(), opts.toCraneOptions()...)

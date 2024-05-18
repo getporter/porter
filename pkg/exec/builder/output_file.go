@@ -15,8 +15,7 @@ type OutputFile interface {
 
 // ProcessFileOutputs makes the contents of a file specified by any OutputFile interface available as an output.
 func ProcessFileOutputs(ctx context.Context, cfg runtime.RuntimeConfig, step StepWithOutputs) error {
-	//lint:ignore SA4006 ignore unused ctx for now
-	ctx, span := tracing.StartSpan(ctx)
+	_, span := tracing.StartSpan(ctx)
 	defer span.EndSpan()
 
 	outputs := step.GetOutputs()

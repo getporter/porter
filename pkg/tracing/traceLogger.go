@@ -85,7 +85,7 @@ type RootTraceLogger interface {
 	TraceLogger
 
 	// Close the tracer and send data to the telemetry collector
-	Close()
+	Close() error
 }
 
 var _ TraceLogger = traceLogger{}
@@ -102,12 +102,13 @@ type traceLogger struct {
 }
 
 // Close the root span and send the telemetry data to the collector.
-func (l traceLogger) Close() {
+func (l traceLogger) Close() error {
 	l.span.End()
 
 	if err := l.tracer.Close(context.Background()); err != nil {
-		l.Errorf("error closing the Tracer: %w", err)
+		return l.Errorf("error closing the Tracer: %w", err)
 	}
+	return nil
 }
 
 // ShouldLog returns if the current log level includes the specified level.
@@ -151,7 +152,7 @@ func (l traceLogger) EndSpan(opts ...trace.SpanEndOption) {
 
 	// If there was a panic, mark the span and include the stack trace
 	if panicErr := recover(); panicErr != nil {
-		l.Error(fmt.Errorf("%s", panicErr),
+		panicErr = l.Error(fmt.Errorf("%s", panicErr),
 			attribute.Bool("panic", true),
 			attribute.String("stackTrace", string(debug.Stack())))
 		panic(panicErr) // rethrow

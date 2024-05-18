@@ -62,8 +62,10 @@ func TestSharedOptions_defaultBundleFiles_CNABFile(t *testing.T) {
 func TestSharedOptions_validateBundleJson(t *testing.T) {
 	cxt := portercontext.NewTestContext(t)
 
-	cxt.FileSystem.Create("mybun1/bundle.json")
-	cxt.FileSystem.Create("bundle1.json")
+	_, err := cxt.FileSystem.Create("mybun1/bundle.json")
+	require.NoError(t, err)
+	_, err = cxt.FileSystem.Create("bundle1.json")
+	require.NoError(t, err)
 
 	testcases := []struct {
 		name           string

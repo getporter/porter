@@ -702,10 +702,10 @@ func Vet() {
 	must.RunV("go", "vet", "./...")
 }
 
-// Run staticcheck on the project
+// Run golangci-lint on the project
 func Lint() {
-	mg.Deps(tools.EnsureStaticCheck)
-	must.RunV("staticcheck", "./...")
+	mg.Deps(tools.EnsureGolangCILint)
+	must.RunV("golangci-lint", "run", "--max-issues-per-linter", "0", "--max-same-issues", "0", "./...")
 }
 
 func getPorterHome() string {

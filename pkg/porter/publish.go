@@ -276,7 +276,9 @@ func (p *Porter) publishFromArchive(ctx context.Context, opts PublishOptions) er
 	if err != nil {
 		return log.Errorf("error creating temp directory for archive extraction: %w", err)
 	}
-	defer p.FileSystem.RemoveAll(tmpDir)
+	defer func() {
+		err = errors.Join(err, p.FileSystem.RemoveAll(tmpDir))
+	}()
 
 	bundleRef, err := p.extractBundle(ctx, tmpDir, source)
 	if err != nil {
@@ -332,8 +334,7 @@ func (p *Porter) publishFromArchive(ctx context.Context, opts PublishOptions) er
 
 // extractBundle extracts a bundle using the provided opts and returns the extracted bundle
 func (p *Porter) extractBundle(ctx context.Context, tmpDir, source string) (cnab.BundleReference, error) {
-	//lint:ignore SA4006 ignore unused ctx for now
-	ctx, span := tracing.StartSpan(ctx)
+	_, span := tracing.StartSpan(ctx)
 	defer span.EndSpan()
 
 	span.Debugf("Extracting bundle from archive %s...", source)

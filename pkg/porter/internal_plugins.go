@@ -90,7 +90,7 @@ func (p *Porter) RunInternalPlugins(ctx context.Context, opts RunInternalPluginO
 		if closer, ok := impl.(closablePlugin); ok {
 			if err = closer.Close(ctx); err != nil {
 				log := tracing.LoggerFromContext(ctx)
-				log.Error(fmt.Errorf("error stopping the %s plugin: %w", opts.Key, err))
+				_ = log.Error(fmt.Errorf("error stopping the %s plugin: %w", opts.Key, err))
 			}
 		}
 	}()
