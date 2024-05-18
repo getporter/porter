@@ -76,7 +76,10 @@ func (p *Porter) PrintLintResults(ctx context.Context, opts LintOptions) error {
 		case printer.FormatPlaintext:
 			fmt.Fprintln(p.Out, results.String())
 		case printer.FormatJson:
-			printer.PrintJson(p.Out, results)
+			err := printer.PrintJson(p.Out, results)
+			if err != nil {
+				return err
+			}
 		default:
 			return fmt.Errorf("invalid format: %s", opts.Format)
 		}

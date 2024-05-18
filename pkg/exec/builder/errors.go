@@ -36,8 +36,7 @@ type IgnoreErrorWithOutput struct {
 }
 
 func (h IgnoreErrorHandler) HandleError(ctx context.Context, err ExitError, stdout string, stderr string) error {
-	//lint:ignore SA4006 ignore unused ctx for now
-	ctx, span := tracing.StartSpan(ctx)
+	_, span := tracing.StartSpan(ctx)
 	defer span.EndSpan()
 
 	// We shouldn't be called when there is no error but just in case, let's check

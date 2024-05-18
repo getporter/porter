@@ -167,7 +167,7 @@ func validateInstallations(t *testing.T, expected storage.Installation, actual *
 	bActInst, err := pjm.Marshal(actual)
 	require.NoError(t, err)
 	var pJson bytes.Buffer
-	json.Indent(&pJson, bActInst, "", "  ")
+	require.NoError(t, json.Indent(&pJson, bActInst, "", "  "))
 	assert.JSONEq(t, string(bExpInst), string(bActInst))
 }
 

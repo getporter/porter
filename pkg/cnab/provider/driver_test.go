@@ -32,7 +32,8 @@ func TestNewDriver_Docker(t *testing.T) {
 		r.MockGetDockerGroupId()
 		defer r.Close()
 
-		r.FileSystem.Create("/var/run/docker.sock")
+		_, err := r.FileSystem.Create("/var/run/docker.sock")
+		require.NoError(t, err)
 		args := ActionArguments{
 			AllowDockerHostAccess: true,
 		}
@@ -69,7 +70,8 @@ func TestNewDriver_Docker(t *testing.T) {
 		// Currently, toggling Privileged is the only config exposed to users
 		// Here we supply no override, so expect Privileged to be false
 		r.Extensions[cnab.DockerExtensionKey] = cnab.Docker{}
-		r.FileSystem.Create("/var/run/docker.sock")
+		_, err := r.FileSystem.Create("/var/run/docker.sock")
+		require.NoError(t, err)
 		args := ActionArguments{
 			AllowDockerHostAccess: true,
 		}
@@ -101,7 +103,8 @@ func TestNewDriver_Docker(t *testing.T) {
 		r.Extensions[cnab.DockerExtensionKey] = cnab.Docker{
 			Privileged: true,
 		}
-		r.FileSystem.Create("/var/run/docker.sock")
+		_, err := r.FileSystem.Create("/var/run/docker.sock")
+		require.NoError(t, err)
 		args := ActionArguments{
 			AllowDockerHostAccess: true,
 		}
@@ -129,10 +132,14 @@ func TestNewDriver_Docker(t *testing.T) {
 		defer r.Close()
 
 		r.Extensions[cnab.DockerExtensionKey] = cnab.Docker{}
-		r.FileSystem.Create("/var/run/docker.sock")
-		r.FileSystem.Create("/sourceFolder")
-		r.FileSystem.Create("/sourceFolder2")
-		r.FileSystem.Create("/sourceFolder3")
+		_, err := r.FileSystem.Create("/var/run/docker.sock")
+		require.NoError(t, err)
+		_, err = r.FileSystem.Create("/sourceFolder")
+		require.NoError(t, err)
+		_, err = r.FileSystem.Create("/sourceFolder2")
+		require.NoError(t, err)
+		_, err = r.FileSystem.Create("/sourceFolder3")
+		require.NoError(t, err)
 
 		args := ActionArguments{
 			AllowDockerHostAccess: true,
@@ -186,9 +193,12 @@ func TestNewDriver_Docker(t *testing.T) {
 		r := NewTestRuntime(t)
 		defer r.Close()
 
-		r.FileSystem.Create("/sourceFolder")
-		r.FileSystem.Create("/sourceFolder2")
-		r.FileSystem.Create("/sourceFolder3")
+		_, err := r.FileSystem.Create("/sourceFolder")
+		require.NoError(t, err)
+		_, err = r.FileSystem.Create("/sourceFolder2")
+		require.NoError(t, err)
+		_, err = r.FileSystem.Create("/sourceFolder3")
+		require.NoError(t, err)
 
 		args := ActionArguments{
 			HostVolumeMounts: []HostVolumeMountSpec{
@@ -242,7 +252,8 @@ func TestNewDriver_Docker(t *testing.T) {
 		r := NewTestRuntime(t)
 		defer r.Close()
 
-		r.FileSystem.Create("/sourceFolder")
+		_, err := r.FileSystem.Create("/sourceFolder")
+		require.NoError(t, err)
 
 		args := ActionArguments{
 			HostVolumeMounts: []HostVolumeMountSpec{

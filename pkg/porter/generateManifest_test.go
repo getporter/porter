@@ -246,7 +246,7 @@ func Test_depv2_bundleDigest(t *testing.T) {
 			}
 			p.TestConfig.TestContext.AddTestFile(filepath.Join("testdata/generateManifest", tc.originalManifest), config.Name)
 			opts := BuildOptions{}
-			opts.Validate(p.Porter)
+			require.NoError(t, opts.Validate(p.Porter))
 
 			err := p.generateInternalManifest(context.Background(), opts)
 			if tc.wantErr != "" {

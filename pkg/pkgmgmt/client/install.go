@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -118,7 +119,9 @@ func (fs *FileSystem) InstallFromFeedURL(ctx context.Context, opts pkgmgmt.Insta
 	if err != nil {
 		return log.Error(fmt.Errorf("error creating temp directory: %w", err))
 	}
-	defer fs.FileSystem.RemoveAll(tmpDir)
+	defer func() {
+		err = errors.Join(err, fs.FileSystem.RemoveAll(tmpDir))
+	}()
 	feedPath := filepath.Join(tmpDir, "atom.xml")
 
 	err = fs.downloadFile(ctx, feedUrl, feedPath, false)
@@ -147,7 +150,7 @@ func (fs *FileSystem) InstallFromFeedURL(ctx context.Context, opts pkgmgmt.Insta
 		return log.Error(fmt.Errorf("%s @ %s did not publish a download for linux/amd64", opts.Name, opts.Version))
 	}
 
-	return fs.downloadPackage(ctx, opts.Name, *clientUrl, *runtimeUrl)
+	return errors.Join(err, fs.downloadPackage(ctx, opts.Name, *clientUrl, *runtimeUrl))
 }
 
 func (fs *FileSystem) downloadPackage(ctx context.Context, name string, clientUrl url.URL, runtimeUrl url.URL) error {
@@ -166,7 +169,7 @@ func (fs *FileSystem) downloadPackage(ctx context.Context, name string, clientUr
 	runtimePath := filepath.Join(pkgDir, "runtimes", name+"-runtime")
 	err = fs.downloadFile(ctx, runtimeUrl, runtimePath, true)
 	if err != nil {
-		fs.FileSystem.RemoveAll(pkgDir) // If the runtime download fails, cleanup the package so it's not half installed
+		err = errors.Join(err, fs.FileSystem.RemoveAll(pkgDir)) // If the runtime download fails, cleanup the package so it's not half installed
 		return err
 	}
 
@@ -217,7 +220,7 @@ func (fs *FileSystem) downloadFile(ctx context.Context, url url.URL, destPath st
 
 	destFile, err := fs.FileSystem.Create(destPath)
 	if err != nil {
-		cleanup()
+		_ = cleanup()
 		return log.Error(fmt.Errorf("could not create the file at %s: %w", destPath, err))
 	}
 	defer destFile.Close()
@@ -225,14 +228,14 @@ func (fs *FileSystem) downloadFile(ctx context.Context, url url.URL, destPath st
 	if executable {
 		err = fs.FileSystem.Chmod(destPath, pkg.FileModeExecutable)
 		if err != nil {
-			cleanup()
+			_ = cleanup()
 			return log.Error(fmt.Errorf("could not set the file as executable at %s: %w", destPath, err))
 		}
 	}
 
 	_, err = io.Copy(destFile, resp.Body)
 	if err != nil {
-		cleanup()
+		_ = cleanup()
 		return log.Error(fmt.Errorf("error writing the file to %s: %w", destPath, err))
 	}
 	return nil

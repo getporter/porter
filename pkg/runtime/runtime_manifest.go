@@ -580,7 +580,7 @@ func (m *RuntimeManifest) unpackStateBag(ctx context.Context) error {
 		m.debugf(log, "Bundle state file has null content")
 		err = m.config.FileSystem.Remove(statePath)
 		if err != nil {
-			log.Error(err)
+			_ = log.Error(err)
 		}
 		return nil
 	}

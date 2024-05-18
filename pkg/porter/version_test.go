@@ -27,7 +27,7 @@ func TestPrintVersion(t *testing.T) {
 	opts := VersionOpts{}
 	err := opts.Validate()
 	require.NoError(t, err)
-	p.PrintVersion(ctx, opts)
+	require.NoError(t, p.PrintVersion(ctx, opts))
 
 	gotOutput := p.TestConfig.TestContext.GetOutput()
 	wantOutput := "porter v1.2.3 (abc123)"
@@ -52,7 +52,7 @@ func TestPrintJsonVersion(t *testing.T) {
 	opts.RawFormat = string(printer.FormatJson)
 	err := opts.Validate()
 	require.NoError(t, err)
-	p.PrintVersion(ctx, opts)
+	require.NoError(t, p.PrintVersion(ctx, opts))
 
 	gotOutput := p.TestConfig.TestContext.GetOutput()
 	wantOutput := `{
@@ -87,7 +87,7 @@ func TestPrintDebugInfoJsonVersion(t *testing.T) {
 	opts.RawFormat = string(printer.FormatJson)
 	err := opts.Validate()
 	require.Nil(t, err)
-	p.PrintVersion(ctx, opts)
+	require.NoError(t, p.PrintVersion(ctx, opts))
 
 	gotOutput := p.TestConfig.TestContext.GetOutput()
 	test.CompareGoldenFile(t, "testdata/version/version-output.json", gotOutput)
@@ -113,7 +113,7 @@ func TestPrintDebugInfoPlainTextVersion(t *testing.T) {
 	opts := VersionOpts{System: true}
 	err := opts.Validate()
 	require.Nil(t, err)
-	p.PrintVersion(ctx, opts)
+	require.NoError(t, p.PrintVersion(ctx, opts))
 
 	gotOutput := p.TestConfig.TestContext.GetOutput()
 	test.CompareGoldenFile(t, "testdata/version/version-output.txt", gotOutput)

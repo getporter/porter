@@ -435,5 +435,5 @@ func addBundleActionFlags(f *pflag.FlagSet, actionOpts porter.BundleAction) {
 
 	// Gracefully support any renamed flags
 	f.StringArrayVar(&opts.CredentialIdentifiers, "cred", nil, "DEPRECATED")
-	f.MarkDeprecated("cred", "please use credential-set instead.")
+	_ = f.MarkDeprecated("cred", "please use credential-set instead.")
 }

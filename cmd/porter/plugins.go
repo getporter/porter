@@ -170,7 +170,10 @@ func buildPluginRunCommand(p *porter.Porter) *cobra.Command {
 		Use:   "run PLUGIN_KEY",
 		Short: "Serve internal plugins",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			opts.ApplyArgs(args)
+			err := opts.ApplyArgs(args)
+			if err != nil {
+				return err
+			}
 			return p.RunInternalPlugins(cmd.Context(), opts)
 		},
 		Hidden: true, // This should ALWAYS be hidden, it is not a user-facing command

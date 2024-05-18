@@ -88,5 +88,8 @@ func (p TestParameterSetProvider) AddTestParametersDirectory(dir string) {
 }
 
 func (p TestParameterSetProvider) AddSecret(key string, value string) {
-	p.TestSecrets.Create(context.Background(), secrets.SourceSecret, key, value)
+	err := p.TestSecrets.Create(context.Background(), secrets.SourceSecret, key, value)
+	if err != nil {
+		p.T.Fatal(fmt.Errorf("could not create secret %s: %w", key, err))
+	}
 }

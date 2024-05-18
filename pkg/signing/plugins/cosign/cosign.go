@@ -37,8 +37,7 @@ func NewSigner(c *portercontext.Context, cfg PluginConfig) *Cosign {
 }
 
 func (s *Cosign) Connect(ctx context.Context) error {
-	//lint:ignore SA4006 ignore unused ctx for now
-	ctx, log := tracing.StartSpan(ctx)
+	_, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
 
 	if err := exec.Command("cosign", "version").Run(); err != nil {
@@ -49,8 +48,7 @@ func (s *Cosign) Connect(ctx context.Context) error {
 }
 
 func (s *Cosign) Sign(ctx context.Context, ref string) error {
-	//lint:ignore SA4006 ignore unused ctx for now
-	ctx, log := tracing.StartSpan(ctx)
+	_, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
 	log.Infof("Cosign Signer is Signing %s", ref)
 	args := []string{"sign", ref, "--tlog-upload=false", "--key", s.PrivateKey, "--yes"}
@@ -74,8 +72,7 @@ func (s *Cosign) Sign(ctx context.Context, ref string) error {
 }
 
 func (s *Cosign) Verify(ctx context.Context, ref string) error {
-	//lint:ignore SA4006 ignore unused ctx for now
-	ctx, log := tracing.StartSpan(ctx)
+	_, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
 
 	log.Infof("Cosign Signer is Verifying %s", ref)

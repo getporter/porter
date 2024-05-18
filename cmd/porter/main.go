@@ -69,7 +69,7 @@ func main() {
 		defer func() {
 			// Capture panics and trace them
 			if panicErr := recover(); panicErr != nil {
-				log.Error(fmt.Errorf("%s", panicErr),
+				_ = log.Error(fmt.Errorf("%s", panicErr),
 					attribute.Bool("panic", true),
 					attribute.String("stackTrace", string(debug.Stack())))
 				log.EndSpan()
@@ -84,7 +84,7 @@ func main() {
 		if err := rootCmd.ExecuteContext(ctx); err != nil {
 			// Ideally we log all errors in the span that generated it,
 			// but as a failsafe, always log the error at the root span as well
-			log.Error(err)
+			_ = log.Error(err)
 			return cli.ExitCodeErr
 		}
 		return cli.ExitCodeSuccess

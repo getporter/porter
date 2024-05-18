@@ -265,7 +265,8 @@ func TestCache_StoreBundle_Overwrite(t *testing.T) {
 	// be overwritten
 	cb := CachedBundle{BundleReference: cnab.BundleReference{Reference: kahn1dot01}}
 	cb.SetCacheDir(cacheDir)
-	cfg.FileSystem.Create(cb.BuildManifestPath())
+	_, err = cfg.FileSystem.Create(cb.BuildManifestPath())
+	require.NoError(t, err)
 	_, err = cfg.FileSystem.Create(cb.BuildRelocationFilePath())
 	require.NoError(t, err)
 	junkPath := filepath.Join(cb.cacheDir, "junk.txt")

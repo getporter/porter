@@ -352,11 +352,26 @@ func (p *Porter) printBundleExplainTable(bun *PrintableBundle, bundleReference s
 	}
 	fmt.Fprintln(p.Out, "")
 
-	p.printCredentialsExplainBlock(bun)
-	p.printParametersExplainBlock(bun)
-	p.printOutputsExplainBlock(bun)
-	p.printActionsExplainBlock(bun)
-	p.printDependenciesExplainBlock(bun)
+	err := p.printCredentialsExplainBlock(bun)
+	if err != nil {
+		return err
+	}
+	err = p.printParametersExplainBlock(bun)
+	if err != nil {
+		return err
+	}
+	err = p.printOutputsExplainBlock(bun)
+	if err != nil {
+		return err
+	}
+	err = p.printActionsExplainBlock(bun)
+	if err != nil {
+		return err
+	}
+	err = p.printDependenciesExplainBlock(bun)
+	if err != nil {
+		return err
+	}
 
 	if extendedBundle.IsPorterBundle() && len(bun.Mixins) > 0 {
 		fmt.Fprintf(p.Out, "This bundle uses the following tools: %s.\n", strings.Join(bun.Mixins, ", "))
@@ -368,7 +383,10 @@ func (p *Porter) printBundleExplainTable(bun *PrintableBundle, bundleReference s
 		fmt.Fprintln(p.Out, "") // force a blank line after this block
 	}
 
-	p.printInstallationInstructionBlock(bun, bundleReference, extendedBundle)
+	err = p.printInstallationInstructionBlock(bun, bundleReference, extendedBundle)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 

@@ -190,9 +190,10 @@ func TestBuildValidate_Driver(t *testing.T) {
 				// noop
 				return nil
 			}
-			p.FileSystem.WriteFile("porter.yaml", []byte(""), pkg.FileModeWritable)
+			err := p.FileSystem.WriteFile("porter.yaml", []byte(""), pkg.FileModeWritable)
+			require.NoError(t, err)
 
-			err := rootCmd.Execute()
+			err = rootCmd.Execute()
 			if tc.wantError == "" {
 				require.NoError(t, err)
 				assert.Equal(t, tc.wantDriver, p.Data.BuildDriver)

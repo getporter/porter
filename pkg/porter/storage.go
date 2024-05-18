@@ -82,7 +82,7 @@ func (p *Porter) FixPermissions(ctx context.Context) error {
 
 	fixDir := func(dir string, mode os.FileMode) error {
 		var bigErr *multierror.Error
-		p.FileSystem.Walk(dir, func(path string, info fs.FileInfo, err error) error {
+		bigErr = multierror.Append(bigErr, p.FileSystem.Walk(dir, func(path string, info fs.FileInfo, err error) error {
 			if err != nil {
 				if !os.IsNotExist(err) {
 					bigErr = multierror.Append(bigErr, fmt.Errorf("error walking path %s: %w", path, err))
@@ -100,7 +100,7 @@ func (p *Porter) FixPermissions(ctx context.Context) error {
 				}
 			}
 			return nil
-		})
+		}))
 		return bigErr.ErrorOrNil()
 	}
 

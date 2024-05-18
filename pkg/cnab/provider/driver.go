@@ -86,7 +86,10 @@ func (r *Runtime) newDriver(driverName string, args ActionArguments) (driver.Dri
 			}
 		}
 
-		configurable.SetConfig(driverCfg)
+		err = configurable.SetConfig(driverCfg)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return driverImpl, nil
