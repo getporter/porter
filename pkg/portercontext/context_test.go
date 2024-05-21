@@ -58,8 +58,8 @@ func TestContext_LogToFile(t *testing.T) {
 
 	// Compare the human readable logs sent to stderr
 	if runtime.GOOS == "windows" {
-		c.CompareGoldenFile("testdata/expected-output-windows.txt", c.GetError())
+		c.CompareGoldenFile("testdata/expected-output-windows.txt", c.GetAllLogs())
 	} else {
-		c.CompareGoldenFile("testdata/expected-output.txt", c.GetError())
+		c.CompareGoldenFile("testdata/expected-output.txt", c.GetAllLogs())
 	}
 }
