@@ -31,7 +31,7 @@ func main() {
 		defer func() {
 			// Capture panics and trace them
 			if panicErr := recover(); panicErr != nil {
-				log.Error(fmt.Errorf("%s", panicErr),
+				_ = log.Error(fmt.Errorf("%s", panicErr),
 					attribute.Bool("panic", true),
 					attribute.String("stackTrace", string(debug.Stack())))
 				log.EndSpan()

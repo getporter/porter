@@ -151,7 +151,9 @@ func (ex *exporter) export(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("can not create archive folder: %w", err)
 	}
-	defer ex.fs.RemoveAll(archiveDir)
+	defer func() {
+		err = errors.Join(err, ex.fs.RemoveAll(archiveDir))
+	}()
 
 	bundleFile, err := ex.fs.OpenFile(filepath.Join(archiveDir, "bundle.json"), os.O_RDWR|os.O_CREATE, pkg.FileModeWritable)
 	if err != nil {
@@ -324,7 +326,7 @@ func (ex *exporter) CustomTar(ctx context.Context, srcPath string, compressionLe
 		}
 
 		// build tar
-		filepath.Walk(cleanSrcPath, walker)
+		err = filepath.Walk(cleanSrcPath, walker)
 	}()
 
 	return pipeReader, nil

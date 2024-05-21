@@ -25,7 +25,7 @@ func TestBuildListMixinsCommand_AlternateFormat(t *testing.T) {
 	defer p.Close()
 
 	cmd := buildMixinsListCommand(p.Porter)
-	cmd.ParseFlags([]string{"-o", "json"})
+	require.NoError(t, cmd.ParseFlags([]string{"-o", "json"}))
 
 	err := cmd.PreRunE(cmd, []string{})
 
@@ -38,7 +38,7 @@ func TestBuildListMixinsCommand_BadFormat(t *testing.T) {
 	defer p.Close()
 
 	cmd := buildMixinsListCommand(p.Porter)
-	cmd.ParseFlags([]string{"-o", "flarts"})
+	require.NoError(t, cmd.ParseFlags([]string{"-o", "flarts"}))
 
 	err := cmd.PreRunE(cmd, []string{})
 

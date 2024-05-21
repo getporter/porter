@@ -35,7 +35,7 @@ func LoadHierarchicalConfig(cmd *cobra.Command) config.DataStoreLoaderFunc {
 			} else if v.IsSet(viperKey) {
 				// Apply viper to the flag
 				val := getFlagValue(v, viperKey)
-				flags.Set(f.Name, val)
+				_ = flags.Set(f.Name, val)
 			}
 		})
 	}

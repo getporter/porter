@@ -155,6 +155,10 @@ func (p *Porter) GenerateCredentials(ctx context.Context, opts CredentialOptions
 		return span.Error(fmt.Errorf("unable to generate credentials: %w", err))
 	}
 
+	if len(cs.Credentials) == 0 {
+		return nil
+	}
+
 	cs.Status.Created = time.Now()
 	cs.Status.Modified = cs.Status.Created
 
@@ -439,8 +443,7 @@ func (o *CredentialCreateOptions) Validate(args []string) error {
 }
 
 func (p *Porter) CreateCredential(ctx context.Context, opts CredentialCreateOptions) error {
-	//lint:ignore SA4006 ignore unused ctx for now
-	ctx, span := tracing.StartSpan(ctx)
+	_, span := tracing.StartSpan(ctx)
 	defer span.EndSpan()
 
 	if opts.OutputType == "" {

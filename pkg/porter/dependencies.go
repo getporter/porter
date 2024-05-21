@@ -126,17 +126,21 @@ func (e *dependencyExecutioner) PrepareRootActionArguments(ctx context.Context) 
 	// This creates what goes in /cnab/app/dependencies/DEP.NAME
 	for _, dep := range e.deps {
 		// Copy the dependency bundle.json
-		e.checkSharedOutputs(ctx, dep)
+		err = e.checkSharedOutputs(ctx, dep)
+		if err != nil {
+			return cnabprovider.ActionArguments{}, err
+		}
 		target := runtime.GetDependencyDefinitionPath(dep.DependencyLock.Alias)
 		args.Files[target] = string(dep.cnabFileContents)
 	}
 	return args, nil
 }
 
-func (e *dependencyExecutioner) checkSharedOutputs(ctx context.Context, dep *queuedDependency) {
+func (e *dependencyExecutioner) checkSharedOutputs(ctx context.Context, dep *queuedDependency) error {
 	if !e.sharedActionResolver(ctx, dep) && e.parentAction.GetAction() == "install" {
-		e.getActionArgs(ctx, dep)
+		return e.getActionArgs(ctx, dep)
 	}
+	return nil
 }
 
 // sharedActionResolver tries to localize if v2, and shared deps

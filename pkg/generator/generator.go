@@ -28,33 +28,78 @@ const (
 	surveyCredentials SurveyType = "credential"
 	surveyParameters  SurveyType = "parameter"
 
-	questionSecret  = "secret"
-	questionValue   = "specific value"
-	questionEnvVar  = "environment variable"
-	questionPath    = "file path"
-	questionCommand = "shell command"
+	questionSecret      = "secret"
+	questionValue       = "specific value"
+	questionEnvVar      = "environment variable"
+	questionPath        = "file path"
+	questionCommand     = "shell command"
+	questionSkip        = "skip"
+	surveryFormatString = "%s %s %q\n%s"
+	surveyPrefix        = "How would you like to set"
 )
 
-type generator func(name string, surveyType SurveyType) (secrets.SourceMap, error)
+type surveyOptions struct {
+	required    bool
+	description string
+}
 
-func genEmptySet(name string, surveyType SurveyType) (secrets.SourceMap, error) {
+type surveyOption func(*surveyOptions)
+
+func withDescription(description string) surveyOption {
+	return func(s *surveyOptions) {
+		s.description = formatDescriptionForSurvey(description)
+	}
+}
+
+func withRequired(required bool) surveyOption {
+	return func(s *surveyOptions) {
+		s.required = required
+	}
+}
+
+type generator func(name string, surveyType SurveyType, opts ...surveyOption) (secrets.SourceMap, error)
+
+func genEmptySet(name string, surveyType SurveyType, opts ...surveyOption) (secrets.SourceMap, error) {
 	return secrets.SourceMap{
 		Name:   name,
 		Source: secrets.Source{Hint: "TODO"},
 	}, nil
 }
 
-func genSurvey(name string, surveyType SurveyType) (secrets.SourceMap, error) {
+func formatDescriptionForSurvey(description string) string {
+	if description != "" {
+		description = description + "\n"
+	}
+	return description
+}
+
+func buildSurveySelect(name string, surveyType SurveyType, opts ...surveyOption) *survey.Select {
+	surveyOptions := &surveyOptions{}
+	for _, opt := range opts {
+		opt(surveyOptions)
+	}
+
+	selectOptions := []string{questionSecret, questionValue, questionEnvVar, questionPath, questionCommand}
+	if !surveyOptions.required {
+		selectOptions = append(selectOptions, questionSkip)
+	}
+
+	// extra space-suffix to align question and answer. Unfortunately misaligns help text
+	return &survey.Select{
+		Message: fmt.Sprintf(surveryFormatString, surveyPrefix, surveyType, name, surveyOptions.description),
+		Options: selectOptions,
+		Default: "environment variable",
+	}
+
+}
+
+func genSurvey(name string, surveyType SurveyType, opts ...surveyOption) (secrets.SourceMap, error) {
 	if surveyType != surveyCredentials && surveyType != surveyParameters {
 		return secrets.SourceMap{}, fmt.Errorf("unsupported survey type: %s", surveyType)
 	}
 
 	// extra space-suffix to align question and answer. Unfortunately misaligns help text
-	sourceTypePrompt := &survey.Select{
-		Message: fmt.Sprintf("How would you like to set %s %q\n ", surveyType, name),
-		Options: []string{questionSecret, questionValue, questionEnvVar, questionPath, questionCommand},
-		Default: "environment variable",
-	}
+	sourceTypePrompt := buildSurveySelect(name, surveyType, opts...)
 
 	// extra space-suffix to align question and answer. Unfortunately misaligns help text
 	sourceValuePromptTemplate := "Enter the %s that will be used to set %s %q\n "
@@ -78,6 +123,12 @@ func genSurvey(name string, surveyType SurveyType) (secrets.SourceMap, error) {
 		promptMsg = fmt.Sprintf(sourceValuePromptTemplate, "path", surveyType, name)
 	case questionCommand:
 		promptMsg = fmt.Sprintf(sourceValuePromptTemplate, "command", surveyType, name)
+	case questionSkip:
+		promptMsg = fmt.Sprintf(sourceValuePromptTemplate, "skip", surveyType, name)
+	}
+
+	if source == questionSkip {
+		return secrets.SourceMap{}, nil
 	}
 
 	sourceValuePrompt := &survey.Input{

@@ -19,7 +19,8 @@ func TestPrintVersion(t *testing.T) {
 	opts := version.Options{}
 	err := opts.Validate()
 	require.NoError(t, err)
-	m.PrintVersion(opts)
+	err = m.PrintVersion(opts)
+	require.NoError(t, err)
 
 	gotOutput := m.TestConfig.TestContext.GetOutput()
 	wantOutput := "exec v1.2.3 (abc123) by Porter Authors"
@@ -38,7 +39,8 @@ func TestPrintJsonVersion(t *testing.T) {
 	opts.RawFormat = string(printer.FormatJson)
 	err := opts.Validate()
 	require.NoError(t, err)
-	m.PrintVersion(opts)
+	err = m.PrintVersion(opts)
+	require.NoError(t, err)
 
 	gotOutput := m.TestConfig.TestContext.GetOutput()
 	wantOutput := `{

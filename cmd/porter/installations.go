@@ -255,6 +255,7 @@ The docker driver runs the bundle container using the local Docker host. To use 
 		"Create the installation in the specified namespace. Defaults to the global namespace.")
 	f.StringSliceVarP(&opts.Labels, "label", "l", nil,
 		"Associate the specified labels with the installation. May be specified multiple times.")
+	f.BoolVar(&opts.VerifyBundleBeforeExecution, "verify-bundle", false, "Verify the bundle signature before executing")
 	addBundleActionFlags(f, opts)
 
 	// Allow configuring the --driver flag with runtime-driver, to avoid conflicts with other commands
@@ -434,5 +435,5 @@ func addBundleActionFlags(f *pflag.FlagSet, actionOpts porter.BundleAction) {
 
 	// Gracefully support any renamed flags
 	f.StringArrayVar(&opts.CredentialIdentifiers, "cred", nil, "DEPRECATED")
-	f.MarkDeprecated("cred", "please use credential-set instead.")
+	_ = f.MarkDeprecated("cred", "please use credential-set instead.")
 }

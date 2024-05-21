@@ -52,7 +52,10 @@ func (m *Migration) Connect(ctx context.Context) error {
 	oldConfig := config.New()
 	oldConfig.SetHomeDir(m.opts.OldHome)
 	oldConfig.SetPorterPath(filepath.Join(m.opts.OldHome, "porter"))
-	oldConfig.Load(ctx, nil)
+	_, err := oldConfig.Load(ctx, nil)
+	if err != nil {
+		return log.Error(fmt.Errorf("could not load old config: %w", err))
+	}
 	oldConfig.Setenv(config.EnvHOME, m.opts.OldHome)
 
 	l := pluggable.NewPluginLoader(oldConfig)
@@ -195,10 +198,8 @@ func (m *Migration) migrateInstallations(ctx context.Context) error {
 	var bigErr *multierror.Error
 	for _, name := range names {
 		if err = m.migrateInstallation(ctx, name); err != nil {
-			span.Error(err, attribute.String("installation", name))
-
 			// Keep track of which installations failed but otherwise keep trying to migrate as many as possible
-			bigErr = multierror.Append(bigErr, err)
+			bigErr = multierror.Append(bigErr, span.Error(err, attribute.String("installation", name)))
 		}
 	}
 

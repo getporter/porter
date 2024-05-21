@@ -31,6 +31,7 @@ type PublishOptions struct {
 	Tag         string
 	Registry    string
 	ArchiveFile string
+	SignBundle  bool
 }
 
 // Validate performs validation on the publish options
@@ -215,6 +216,24 @@ func (p *Porter) publishFromFile(ctx context.Context, opts PublishOptions) error
 		return err
 	}
 
+	if opts.SignBundle {
+		log.Debugf("signing bundle %s", bundleRef.String())
+		inImage, err := cnab.CalculateTemporaryImageTag(bundleRef.Reference)
+		if err != nil {
+			return log.Errorf("error calculation temporary image tag: %w", err)
+		}
+		log.Debugf("Signing invocation image %s.", inImage.String())
+		err = p.Signer.Sign(context.Background(), inImage.String())
+		if err != nil {
+			return log.Errorf("error signing invocation image: %w", err)
+		}
+		log.Debugf("Signing bundle artifact %s.", bundleRef.Reference.String())
+		err = p.Signer.Sign(context.Background(), bundleRef.Reference.String())
+		if err != nil {
+			return log.Errorf("error signing bundle artifact: %w", err)
+		}
+	}
+
 	// Perhaps we have a cached version of a bundle with the same reference, previously pulled
 	// If so, replace it, as it is most likely out-of-date per this publish
 	err = p.refreshCachedBundle(bundleRef)
@@ -257,7 +276,9 @@ func (p *Porter) publishFromArchive(ctx context.Context, opts PublishOptions) er
 	if err != nil {
 		return log.Errorf("error creating temp directory for archive extraction: %w", err)
 	}
-	defer p.FileSystem.RemoveAll(tmpDir)
+	defer func() {
+		err = errors.Join(err, p.FileSystem.RemoveAll(tmpDir))
+	}()
 
 	bundleRef, err := p.extractBundle(ctx, tmpDir, source)
 	if err != nil {
@@ -313,8 +334,7 @@ func (p *Porter) publishFromArchive(ctx context.Context, opts PublishOptions) er
 
 // extractBundle extracts a bundle using the provided opts and returns the extracted bundle
 func (p *Porter) extractBundle(ctx context.Context, tmpDir, source string) (cnab.BundleReference, error) {
-	//lint:ignore SA4006 ignore unused ctx for now
-	ctx, span := tracing.StartSpan(ctx)
+	_, span := tracing.StartSpan(ctx)
 	defer span.EndSpan()
 
 	span.Debugf("Extracting bundle from archive %s...", source)

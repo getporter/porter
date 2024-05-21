@@ -167,10 +167,10 @@ func TestManifestIgnoredWithTag(t *testing.T) {
 
 		// `path.Join(wd...` -> makes cnab.go#defaultBundleFiles#manifestExists `true`
 		// Only when `manifestExists` eq to `true`, default bundle logic will run
-		p.TestConfig.TestContext.AddTestFileContents([]byte(""), config.Name)
+		require.NoError(t, p.TestConfig.TestContext.AddTestFileContents([]byte(""), config.Name))
 		// When execution reach to `readFromFile`, manifest file path will be lost.
 		// So, had to use root manifest file also for error simuation purpose
-		p.TestConfig.TestContext.AddTestFileContents([]byte(""), config.Name)
+		require.NoError(t, p.TestConfig.TestContext.AddTestFileContents([]byte(""), config.Name))
 
 		err := opts.Validate(context.Background(), nil, p.Porter)
 		require.NoError(t, err, "Validate failed")
@@ -181,7 +181,7 @@ func TestBundleActionOptions_Validate(t *testing.T) {
 	t.Run("driver flag unset", func(t *testing.T) {
 		p := NewTestPorter(t)
 		p.DataLoader = config.LoadFromEnvironment()
-		p.FileSystem.WriteFile("/home/myuser/.porter/config.yaml", []byte("runtime-driver: kubernetes"), pkg.FileModeWritable)
+		require.NoError(t, p.FileSystem.WriteFile("/home/myuser/.porter/config.yaml", []byte("runtime-driver: kubernetes"), pkg.FileModeWritable))
 		ctx, err := p.Connect(context.Background())
 		require.NoError(t, err)
 
@@ -193,7 +193,7 @@ func TestBundleActionOptions_Validate(t *testing.T) {
 	t.Run("driver flag set", func(t *testing.T) {
 		p := NewTestPorter(t)
 		p.DataLoader = config.LoadFromEnvironment()
-		p.FileSystem.WriteFile("/home/myuser/.porter/config.yaml", []byte("driver: kubernetes"), pkg.FileModeWritable)
+		require.NoError(t, p.FileSystem.WriteFile("/home/myuser/.porter/config.yaml", []byte("driver: kubernetes"), pkg.FileModeWritable))
 		ctx, err := p.Connect(context.Background())
 		require.NoError(t, err)
 

@@ -148,7 +148,7 @@ func (c *PluginConnection) Start(ctx context.Context, pluginCfg io.Reader) error
 		// Configure gRPC to propagate the span context so the plugin's traces
 		// show up under the current span
 		GRPCDialOptions: []grpc.DialOption{
-			grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()),
+			grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
 		},
 	})
 
@@ -161,7 +161,7 @@ func (c *PluginConnection) Start(ctx context.Context, pluginCfg io.Reader) error
 			pluginErr = ": plugin stderr was " + pluginErr
 		}
 		err = fmt.Errorf("could not connect to the %s plugin%s: %w", c.key, pluginErr, err)
-		span.Error(err) // Emit the error before trying to close the connection
+		err = span.Error(err) // Emit the error before trying to close the connection
 		c.Close(ctx)
 		return err
 	}
@@ -339,7 +339,7 @@ func (c *PluginConnection) collectPluginLogs(ctx context.Context) {
 
 			switch pluginLog["@level"] {
 			case hclog.Error:
-				span.Error(fmt.Errorf(msg))
+				_ = span.Error(fmt.Errorf(msg))
 			case hclog.Warn:
 				span.Warn(msg)
 			case hclog.Info:

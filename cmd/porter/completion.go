@@ -16,17 +16,18 @@ For additional details see: https://porter.sh/install#command-completion`,
 		DisableFlagsInUseLine: true,
 		ValidArgs:             []string{"bash", "zsh", "fish", "powershell"},
 		Args:                  cobra.MatchAll(cobra.ExactArgs(1), cobra.OnlyValidArgs),
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			switch args[0] {
 			case "bash":
-				cmd.Root().GenBashCompletion(p.Out)
+				return cmd.Root().GenBashCompletion(p.Out)
 			case "zsh":
-				cmd.Root().GenZshCompletion(p.Out)
+				return cmd.Root().GenZshCompletion(p.Out)
 			case "fish":
-				cmd.Root().GenFishCompletion(p.Out, true)
+				return cmd.Root().GenFishCompletion(p.Out, true)
 			case "powershell":
-				cmd.Root().GenPowerShellCompletionWithDesc(p.Out)
+				return cmd.Root().GenPowerShellCompletionWithDesc(p.Out)
 			}
+			return nil
 		},
 	}
 	cmd.Annotations = map[string]string{

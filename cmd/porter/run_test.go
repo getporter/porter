@@ -15,7 +15,7 @@ func TestRun_Validate(t *testing.T) {
 
 	configTpl, err := p.Templates.GetManifest()
 	require.NoError(t, err)
-	p.TestConfig.TestContext.AddTestFileContents(configTpl, config.Name)
+	require.NoError(t, p.TestConfig.TestContext.AddTestFileContents(configTpl, config.Name))
 	cmd := buildRunCommand(p.Porter)
 
 	p.Setenv(config.EnvACTION, cnab.ActionInstall)
@@ -30,7 +30,7 @@ func TestRun_ValidateCustomAction(t *testing.T) {
 
 	configTpl, err := p.Templates.GetManifest()
 	require.NoError(t, err)
-	p.TestConfig.TestContext.AddTestFileContents(configTpl, config.Name)
+	require.NoError(t, p.TestConfig.TestContext.AddTestFileContents(configTpl, config.Name))
 	cmd := buildRunCommand(p.Porter)
 
 	p.Setenv(config.EnvACTION, "status")

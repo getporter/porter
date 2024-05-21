@@ -94,7 +94,7 @@ func (s *PorterGRPCService) ListenAndServe() (*grpc.Server, error) {
 	select {
 	case err := <-srvErrCh:
 		if err != nil {
-			log.Errorf("failed to serve GRPC listener: %w", err)
+			_ = log.Errorf("failed to serve GRPC listener: %w", err)
 			os.Exit(1)
 		}
 	default:
@@ -112,7 +112,7 @@ func (s *PorterGRPCService) ListenAndServe() (*grpc.Server, error) {
 	select {
 	case err := <-srvErrCh:
 		if err != nil {
-			log.Errorf("Unable to start a http server. %w", err)
+			_ = log.Errorf("Unable to start a http server. %w", err)
 			os.Exit(1)
 		}
 	default:
