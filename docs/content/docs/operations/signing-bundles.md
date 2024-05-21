@@ -21,7 +21,7 @@ Learn how to configure Porter to sign bundles.
 
 Instructions on for the install Cosign can be found on the [Cosign Installation page](https://docs.sigstore.dev/system_config/installation/), and instructions on how to generate a key-pair can be found in the [Cosign Quickstart Guide](https://docs.sigstore.dev/signing/quickstart/#signing-with-a-generated-key).
 
-🚧 Currently Porter does not support [Keyless Signing](https://docs.sigstore.dev/signing/overview/).
+🚧 Currently Porter does not support [Keyless Signing](https://docs.sigstore.dev/signing/overview/) or reading the key-pair from anything but files.
 
 #### Configuration
 
@@ -48,6 +48,7 @@ signer:
       # experimental: false
       
       # Allow signing of bundles in registries with expired or self-signed certificates.
+      # Should only be used for testing.
       # insecureregistry: false
 ```
 
@@ -60,6 +61,8 @@ signer:
 3. A trust policy for verification have been configured.
 
 Instructions on for the install Notation can be found on the [Notation Installation page](https://notaryproject.dev/docs/user-guides/installation/cli/), and instructions on how to configure a signing key, certificate and trust policy can be found in the [Notation Quickstart Guide](https://notaryproject.dev/docs/quickstart-guides/quickstart-sign-image-artifact/).
+
+⚠️ Self-signed certificates should only be used for testing.
 
 #### Configuration
 
@@ -74,9 +77,10 @@ signer:
   - name: "mysigner"
     plugin: "notation"
     config:
-      key: <NAME_OF_KEY>
+      key: <NOTATION_KEY_NAME>
 
       # Allow signing of bundles HTTP registries
+      # Should only be used for testing.
       # insecureregistry: false
 ```
 
