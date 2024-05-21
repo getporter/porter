@@ -310,7 +310,7 @@ func TestManifest_Validate_SchemaVersion(t *testing.T) {
 
 		// Check that a warning is printed
 		// We aren't returning an error because we want to give it a chance to work first. Later we may turn this into a hard error after people have had time to migrate.
-		assert.Contains(t, cfg.TestContext.GetError(), invalidVersionErr)
+		assert.Contains(t, cfg.TestContext.GetOutput(), invalidVersionErr)
 	})
 }
 
@@ -549,7 +549,7 @@ func TestSetDefaults(t *testing.T) {
 		err := m.validateMetadata(ctx, cfg.Config)
 		require.NoError(t, err)
 		require.Contains(t,
-			cfg.TestContext.GetError(),
+			cfg.TestContext.GetOutput(),
 			"WARNING: both registry and reference were provided; using the reference value of getporter/org/mybun:v1.2.3 for the bundle reference\n",
 		)
 
