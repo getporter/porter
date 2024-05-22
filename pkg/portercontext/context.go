@@ -213,10 +213,18 @@ func (c *Context) configureLoggingWith(ctx context.Context, baseLogger zapcore.C
 func (c *Context) makeConsoleLogger() zapcore.Core {
 	encoding := c.makeLogEncoding()
 
+	stdout := c.Out
 	stderr := c.Err
+	if f, ok := stdout.(*os.File); ok {
+		if isatty.IsTerminal(f.Fd()) {
+			stdout = colorable.NewColorable(f)
+			encoding.EncodeLevel = zapcore.LowercaseColorLevelEncoder
+		}
+	}
+
 	if f, ok := stderr.(*os.File); ok {
 		if isatty.IsTerminal(f.Fd()) {
-			stderr = colorable.NewColorable(f)
+			stdout = colorable.NewColorable(f)
 			encoding.EncodeLevel = zapcore.LowercaseColorLevelEncoder
 		}
 	}
@@ -227,7 +235,20 @@ func (c *Context) makeConsoleLogger() zapcore.Core {
 		encoding.LevelKey = ""
 	}
 	consoleEncoder := zapcore.NewConsoleEncoder(encoding)
-	return zapcore.NewCore(consoleEncoder, zapcore.AddSync(stderr), c.logCfg.Verbosity)
+
+	isInformational := func(lvl zapcore.Level) bool {
+		return lvl < zapcore.ErrorLevel && lvl >= c.logCfg.Verbosity
+	}
+	stdoutEnabler := zap.LevelEnablerFunc(isInformational)
+	stderrEnabler := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
+		return !isInformational(lvl) && lvl >= zapcore.ErrorLevel
+	})
+
+	return zapcore.NewTee(
+		zapcore.NewCore(consoleEncoder, zapcore.AddSync(stdout), stdoutEnabler),
+		zapcore.NewCore(consoleEncoder, zapcore.AddSync(stderr), stderrEnabler),
+	)
+	// return zapcore.NewCore(consoleEncoder, zapcore.AddSync(stdout), c.logCfg.Verbosity)
 }
 
 func (c *Context) configureFileLog(dir string) (zapcore.Core, error) {

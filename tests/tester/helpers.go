@@ -55,7 +55,7 @@ func (t Tester) MakeTestBundle(name string, ref string) {
 }
 
 func (t Tester) ShowInstallation(namespace string, name string) (porter.DisplayInstallation, error) {
-	stdout, _, err := t.RunPorter("show", name, "--namespace", namespace, "--output=json")
+	stdout, _, err := t.RunPorter("show", name, "--namespace", namespace, "--output=json", "--verbosity=info")
 	if err != nil {
 		return porter.DisplayInstallation{}, err
 	}
@@ -91,6 +91,7 @@ func (t Tester) ListInstallations(allNamespaces bool, namespace string, name str
 		"list",
 		"--output=json",
 		"--name", name,
+		"--verbosity=info",
 	}
 	if allNamespaces {
 		args = append(args, "--all-namespaces")

@@ -397,7 +397,7 @@ func (p *Porter) CredentialsApply(ctx context.Context, o ApplyOptions) error {
 		return err
 	}
 
-	span.Infof("Applied %s credential set", creds)
+	fmt.Fprintf(p.Out, "Applied %s credential set\n", creds)
 	return nil
 }
 

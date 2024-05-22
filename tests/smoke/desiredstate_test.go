@@ -64,8 +64,8 @@ func TestDesiredState(t *testing.T) {
 	// This also tests out that --allow-docker-host-access is being defaulted properly from the Porter config file
 	output, stderr, err := test.RunPorter("installation", "apply", "mybuns.yaml", "--namespace", "operator")
 	require.NoError(t, err)
-	require.Contains(t, stderr, "The installation is out-of-sync, running the install action")
-	require.Contains(t, stderr, "Triggering because the installation has not completed successfully yet")
+	require.Contains(t, output, "The installation is out-of-sync, running the install action")
+	require.Contains(t, output, "Triggering because the installation has not completed successfully yet")
 	installation := test.RequireInstallationExists("operator", "mybuns")
 	require.Equal(t, "succeeded", installation.Status.ResultStatus)
 

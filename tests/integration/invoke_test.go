@@ -52,7 +52,7 @@ func TestInvokeCustomAction(t *testing.T) {
 
 	// Check that debug output from the porter runtime was printed by the bundle and porter collected it
 	// This checks that the PORTER_DEBUG parameter is being properly passed to a bundle when run with porter invoke --debug
-	gotStderr := p.TestConfig.TestContext.GetError()
+	gotStderr := p.TestConfig.TestContext.GetOutput()
 	tests.RequireOutputContains(t, gotStderr, runtimeDebugOutputCheck, "expected debug output from the porter runtime to be output by the bundle")
 
 	// Verify that the custom action was recorded properly

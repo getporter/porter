@@ -35,7 +35,7 @@ func TestPorter_IsInstallationInSync(t *testing.T) {
 		insync, err := p.IsInstallationInSync(p.RootContext, i, nil, opts)
 		require.NoError(t, err)
 		assert.True(t, insync)
-		assert.Contains(t, p.TestConfig.TestContext.GetError(), "Ignoring because installation.uninstalled is true but the installation doesn't exist yet")
+		assert.Contains(t, p.TestConfig.TestContext.GetOutput(), "Ignoring because installation.uninstalled is true but the installation doesn't exist yet")
 	})
 
 	t.Run("new installation with uninstalled false", func(t *testing.T) {
@@ -51,7 +51,7 @@ func TestPorter_IsInstallationInSync(t *testing.T) {
 		insync, err := p.IsInstallationInSync(p.RootContext, i, nil, opts)
 		require.NoError(t, err)
 		assert.False(t, insync)
-		assert.Contains(t, p.TestConfig.TestContext.GetError(), "Triggering because the installation has not completed successfully yet")
+		assert.Contains(t, p.TestConfig.TestContext.GetOutput(), "Triggering because the installation has not completed successfully yet")
 	})
 
 	t.Run("installed - no changes", func(t *testing.T) {
@@ -104,7 +104,7 @@ func TestPorter_IsInstallationInSync(t *testing.T) {
 		insync, err := p.IsInstallationInSync(p.RootContext, i, &run, upgradeOpts)
 		require.NoError(t, err)
 		assert.False(t, insync)
-		assert.Contains(t, p.TestConfig.TestContext.GetError(), "Triggering because the bundle definition has changed")
+		assert.Contains(t, p.TestConfig.TestContext.GetOutput(), "Triggering because the bundle definition has changed")
 	})
 
 	t.Run("installed - param changed", func(t *testing.T) {
@@ -123,7 +123,7 @@ func TestPorter_IsInstallationInSync(t *testing.T) {
 		insync, err := p.IsInstallationInSync(p.RootContext, i, &run, upgradeOpts)
 		require.NoError(t, err)
 		assert.False(t, insync)
-		assert.Contains(t, p.TestConfig.TestContext.GetError(), "Triggering because the parameters have changed")
+		assert.Contains(t, p.TestConfig.TestContext.GetOutput(), "Triggering because the parameters have changed")
 
 	})
 
@@ -146,7 +146,7 @@ func TestPorter_IsInstallationInSync(t *testing.T) {
 		insync, err := p.IsInstallationInSync(p.RootContext, i, &run, upgradeOpts)
 		require.NoError(t, err)
 		assert.False(t, insync)
-		assert.Contains(t, p.TestConfig.TestContext.GetError(), "Triggering because the credential set names have changed")
+		assert.Contains(t, p.TestConfig.TestContext.GetOutput(), "Triggering because the credential set names have changed")
 
 	})
 
@@ -165,7 +165,7 @@ func TestPorter_IsInstallationInSync(t *testing.T) {
 		insync, err := p.IsInstallationInSync(p.RootContext, i, nil, opts)
 		require.NoError(t, err)
 		assert.False(t, insync)
-		assert.Contains(t, p.TestConfig.TestContext.GetError(), "Triggering because installation.uninstalled is true")
+		assert.Contains(t, p.TestConfig.TestContext.GetOutput(), "Triggering because installation.uninstalled is true")
 	})
 
 	t.Run("uninstalled: uninstalled set to back to false", func(t *testing.T) {
@@ -185,6 +185,6 @@ func TestPorter_IsInstallationInSync(t *testing.T) {
 		insync, err := p.IsInstallationInSync(p.RootContext, i, nil, NewUninstallOptions())
 		require.NoError(t, err)
 		assert.True(t, insync)
-		assert.Contains(t, p.TestConfig.TestContext.GetError(), "Ignoring because the installation is uninstalled")
+		assert.Contains(t, p.TestConfig.TestContext.GetOutput(), "Ignoring because the installation is uninstalled")
 	})
 }
