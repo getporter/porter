@@ -305,7 +305,7 @@ COPY mybin /cnab/app/
 	require.NoError(t, err)
 
 	// Verify that we logged the dockerfile contents
-	tests.RequireOutputContains(t, c.TestContext.GetError(), string(gotDockerfile), "expected the dockerfile to be printed to the logs")
+	tests.RequireOutputContains(t, c.TestContext.GetOutput(), string(gotDockerfile), "expected the dockerfile to be printed to the logs")
 	assert.Equal(t, customFrom, string(gotDockerfile))
 }
 
