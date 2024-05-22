@@ -2,8 +2,6 @@
 title: "porter bundles inspect"
 slug: porter_bundles_inspect
 url: /cli/porter_bundles_inspect/
-aliases:
-  - /inspect-bundles
 ---
 ## porter bundles inspect
 
