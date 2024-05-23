@@ -1,8 +1,9 @@
 ---
-title: "Porter Parameters Apply"
-aliases:
-  - /cli/porter_parameters_apply/
+title: "porter parameters apply"
+slug: porter_parameters_apply
+url: /cli/porter_parameters_apply/
 ---
+## porter parameters apply
 
 Apply changes to a parameter set
 
@@ -13,8 +14,9 @@ Apply changes from the specified file to a parameter set. If the parameter set d
 Supported file extensions: json and yaml.
 
 You can use the generate and show commands to create the initial file:
-porter parameters generate myparams --reference SOME_BUNDLE
-porter parameters show myparams --output yaml > myparams.yaml
+  porter parameters generate myparams --reference SOME_BUNDLE
+  porter parameters show myparams --output yaml > myparams.yaml
+
 
 ```
 porter parameters apply FILE [flags]
@@ -42,4 +44,5 @@ porter parameters apply FILE [flags]
 
 ### SEE ALSO
 
-- [porter parameters](/cli/porter_parameters/) - Parameter set commands
+* [porter parameters](/cli/porter_parameters/)	 - Parameter set commands
+

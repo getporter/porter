@@ -397,7 +397,7 @@ func (p *Porter) CredentialsApply(ctx context.Context, o ApplyOptions) error {
 		return err
 	}
 
-	span.Infof("Applied %s credential set", creds)
+	fmt.Fprintf(p.Out, "Applied %s credential set\n", creds)
 	return nil
 }
 
@@ -443,8 +443,7 @@ func (o *CredentialCreateOptions) Validate(args []string) error {
 }
 
 func (p *Porter) CreateCredential(ctx context.Context, opts CredentialCreateOptions) error {
-	//lint:ignore SA4006 ignore unused ctx for now
-	ctx, span := tracing.StartSpan(ctx)
+	_, span := tracing.StartSpan(ctx)
 	defer span.EndSpan()
 
 	if opts.OutputType == "" {

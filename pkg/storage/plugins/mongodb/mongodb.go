@@ -88,7 +88,9 @@ func (s *Store) Close() error {
 		cxt, cancel := context.WithTimeout(context.Background(), s.timeout)
 		defer cancel()
 
-		s.client.Disconnect(cxt)
+		if err := s.client.Disconnect(cxt); err != nil {
+			return err
+		}
 		s.client = nil
 	}
 	return nil

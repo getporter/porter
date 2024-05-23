@@ -97,7 +97,9 @@ func TestExperimentalFlags(t *testing.T) {
 
 		cmd := buildRootCommandFrom(p.Porter)
 		cmd.SetArgs([]string{"install"})
-		cmd.Execute()
+		err := cmd.Execute()
+		require.Error(t, err)
+
 		assert.False(t, p.Config.IsFeatureEnabled(experimental.FlagNoopFeature))
 	})
 
@@ -107,7 +109,8 @@ func TestExperimentalFlags(t *testing.T) {
 
 		cmd := buildRootCommandFrom(p.Porter)
 		cmd.SetArgs([]string{"install", "--experimental", experimental.NoopFeature})
-		cmd.Execute()
+		err := cmd.Execute()
+		require.Error(t, err)
 
 		assert.True(t, p.Config.IsFeatureEnabled(experimental.FlagNoopFeature))
 	})
@@ -121,7 +124,8 @@ func TestExperimentalFlags(t *testing.T) {
 
 		cmd := buildRootCommandFrom(p.Porter)
 		cmd.SetArgs([]string{"install"})
-		cmd.Execute()
+		err := cmd.Execute()
+		require.Error(t, err)
 
 		assert.True(t, p.Config.IsFeatureEnabled(experimental.FlagNoopFeature))
 	})
@@ -134,7 +138,8 @@ func TestExperimentalFlags(t *testing.T) {
 		require.NoError(t, p.FileSystem.WriteFile("/home/myuser/.porter/config.yaml", cfg, pkg.FileModeWritable))
 		cmd := buildRootCommandFrom(p.Porter)
 		cmd.SetArgs([]string{"install"})
-		cmd.Execute()
+		err := cmd.Execute()
+		require.Error(t, err)
 
 		assert.True(t, p.Config.IsFeatureEnabled(experimental.FlagNoopFeature))
 	})
@@ -147,7 +152,8 @@ func TestExperimentalFlags(t *testing.T) {
 		require.NoError(t, p.FileSystem.WriteFile("/home/myuser/.porter/config.yaml", cfg, pkg.FileModeWritable))
 		cmd := buildRootCommandFrom(p.Porter)
 		cmd.SetArgs([]string{"install", "--experimental", "no-op"})
-		cmd.Execute()
+		err := cmd.Execute()
+		require.Error(t, err)
 
 		assert.True(t, p.Config.IsFeatureEnabled(experimental.FlagNoopFeature))
 	})
@@ -161,7 +167,8 @@ func TestExperimentalFlags(t *testing.T) {
 
 		cmd := buildRootCommandFrom(p.Porter)
 		cmd.SetArgs([]string{"install", "--experimental", "no-op"})
-		cmd.Execute()
+		err := cmd.Execute()
+		require.Error(t, err)
 
 		assert.True(t, p.Config.IsFeatureEnabled(experimental.FlagNoopFeature))
 	})
@@ -177,7 +184,8 @@ func TestExperimentalFlags(t *testing.T) {
 		require.NoError(t, p.FileSystem.WriteFile("/home/myuser/.porter/config.yaml", cfg, pkg.FileModeWritable))
 		cmd := buildRootCommandFrom(p.Porter)
 		cmd.SetArgs([]string{"install"})
-		cmd.Execute()
+		err := cmd.Execute()
+		require.Error(t, err)
 
 		assert.False(t, p.Config.IsFeatureEnabled(experimental.FlagNoopFeature))
 	})
@@ -198,7 +206,9 @@ func TestVerbosity(t *testing.T) {
 
 		cmd := buildRootCommandFrom(p.Porter)
 		cmd.SetArgs([]string{"install"})
-		cmd.Execute()
+		err := cmd.Execute()
+		require.Error(t, err)
+
 		assert.Equal(t, config.LogLevelInfo, p.Config.GetVerbosity())
 	})
 
@@ -208,7 +218,8 @@ func TestVerbosity(t *testing.T) {
 
 		cmd := buildRootCommandFrom(p.Porter)
 		cmd.SetArgs([]string{"install", "--verbosity=debug"})
-		cmd.Execute()
+		err := cmd.Execute()
+		require.Error(t, err)
 
 		assert.Equal(t, config.LogLevelDebug, p.Config.GetVerbosity())
 	})
@@ -222,7 +233,8 @@ func TestVerbosity(t *testing.T) {
 
 		cmd := buildRootCommandFrom(p.Porter)
 		cmd.SetArgs([]string{"install"})
-		cmd.Execute()
+		err := cmd.Execute()
+		require.Error(t, err)
 
 		assert.Equal(t, config.LogLevelError, p.Config.GetVerbosity())
 	})
@@ -235,7 +247,8 @@ func TestVerbosity(t *testing.T) {
 		require.NoError(t, p.FileSystem.WriteFile("/home/myuser/.porter/config.yaml", cfg, pkg.FileModeWritable))
 		cmd := buildRootCommandFrom(p.Porter)
 		cmd.SetArgs([]string{"install"})
-		cmd.Execute()
+		err := cmd.Execute()
+		require.Error(t, err)
 
 		assert.Equal(t, config.LogLevelWarn, p.Config.GetVerbosity())
 	})
@@ -248,7 +261,8 @@ func TestVerbosity(t *testing.T) {
 		require.NoError(t, p.FileSystem.WriteFile("/home/myuser/.porter/config.yaml", cfg, pkg.FileModeWritable))
 		cmd := buildRootCommandFrom(p.Porter)
 		cmd.SetArgs([]string{"install", "--verbosity", "warn"})
-		cmd.Execute()
+		err := cmd.Execute()
+		require.Error(t, err)
 
 		assert.Equal(t, config.LogLevelWarn, p.Config.GetVerbosity())
 	})
@@ -262,7 +276,8 @@ func TestVerbosity(t *testing.T) {
 
 		cmd := buildRootCommandFrom(p.Porter)
 		cmd.SetArgs([]string{"install", "--verbosity=debug"})
-		cmd.Execute()
+		err := cmd.Execute()
+		require.Error(t, err)
 
 		assert.Equal(t, config.LogLevelDebug, p.Config.GetVerbosity())
 	})
@@ -278,7 +293,8 @@ func TestVerbosity(t *testing.T) {
 		require.NoError(t, p.FileSystem.WriteFile("/home/myuser/.porter/config.yaml", cfg, pkg.FileModeWritable))
 		cmd := buildRootCommandFrom(p.Porter)
 		cmd.SetArgs([]string{"install"})
-		cmd.Execute()
+		err := cmd.Execute()
+		require.Error(t, err)
 
 		assert.Equal(t, config.LogLevelWarn, p.Config.GetVerbosity())
 	})

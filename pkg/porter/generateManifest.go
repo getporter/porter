@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	cnabtooci "get.porter.sh/porter/pkg/cnab/cnab-to-oci"
+	"get.porter.sh/porter/pkg/experimental"
 
 	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/build"
@@ -14,6 +15,7 @@ import (
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/tracing"
 	"get.porter.sh/porter/pkg/yaml"
+	"github.com/docker/distribution/reference"
 	"github.com/mikefarah/yq/v3/pkg/yqlib"
 	"github.com/opencontainers/go-digest"
 	"go.opentelemetry.io/otel/attribute"
@@ -111,13 +113,81 @@ func (p *Porter) generateInternalManifest(ctx context.Context, opts BuildOptions
 			}
 		}
 		return e.SetValue(path+"digest", digest.String())
-
 	})
 	if err != nil {
 		return err
 	}
 
+	if p.IsFeatureEnabled(experimental.FlagDependenciesV2) {
+		if err = p.resolveDependencyDigest(ctx, e, regOpts); err != nil {
+			return err
+		}
+	}
+
 	return e.WriteFile(build.LOCAL_MANIFEST)
+}
+
+func (p *Porter) resolveDependencyDigest(ctx context.Context, e *yaml.Editor, opts cnabtooci.RegistryOptions) error {
+	// find all referenced dependencies that does not have digest specified
+	// get the digest for all of them and update the manifest with the digest
+	return e.WalkNodes(ctx, "dependencies.requires.*", func(ctx context.Context, nc *yqlib.NodeContext) error {
+		ctx, span := tracing.StartSpanWithName(ctx, "updateDependencyTagToDigest")
+		defer span.EndSpan()
+
+		dep := &manifest.Dependency{}
+		if err := nc.Node.Decode(dep); err != nil {
+			return span.Errorf("failed to deserialize dependency in manifest: %w", err)
+		}
+
+		span.SetAttributes(attribute.String("dependency", dep.Name))
+
+		bundleOpts := BundleReferenceOptions{
+			BundlePullOptions: BundlePullOptions{
+				Reference:        dep.Bundle.Reference,
+				InsecureRegistry: opts.InsecureRegistry,
+			},
+		}
+
+		ref, err := cnab.ParseOCIReference(dep.Bundle.Reference)
+		if err != nil {
+			return span.Errorf("failed to parse OCI reference for dependency %s: %w", dep.Name, err)
+		}
+
+		if ref.Tag() == "" || ref.Tag() == "latest" {
+			return nil
+		}
+
+		bundleRef, err := p.resolveBundleReference(ctx, &bundleOpts)
+		if err != nil {
+			return span.Errorf("failed to resolve dependency %s: %w", dep.Name, err)
+		}
+
+		digest := bundleRef.Digest
+		span.SetAttributes(attribute.String("digest", digest.Encoded()))
+
+		var path string
+		for _, p := range nc.PathStack {
+			switch t := p.(type) {
+			case string:
+				path += fmt.Sprintf("%s.", t)
+			case int:
+				path = strings.TrimSuffix(path, ".")
+				path += fmt.Sprintf("[%s].", strconv.Itoa(t))
+			default:
+				continue
+			}
+		}
+
+		newRef := cnab.OCIReference{
+			Named: reference.TrimNamed(bundleRef.Reference.Named),
+		}
+		refWithDigest, err := newRef.WithDigest(digest)
+		if err != nil {
+			return span.Errorf("failed to set digest: %w", err)
+		}
+
+		return e.SetValue(path+"bundle.reference", refWithDigest.String())
+	})
 }
 
 // getImageDigest retrieves the repository digest associated with the specified image reference.

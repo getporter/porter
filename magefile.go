@@ -164,8 +164,8 @@ func XBuildMixins() {
 // Generate cli documentation for the website
 func DocsGen() {
 	// Remove the generated cli directory so that it can detect deleted files
-	os.RemoveAll("docs/content/cli")
-	os.Mkdir("docs/content/cli", pkg.FileModeDirectory)
+	os.RemoveAll("docs/content/docs/references/cli")
+	os.Mkdir("docs/content/docs/references/cli", pkg.FileModeDirectory)
 
 	must.RunV("go", "run", "--tags=docs", "./cmd/porter", "docs")
 }
@@ -702,10 +702,10 @@ func Vet() {
 	must.RunV("go", "vet", "./...")
 }
 
-// Run staticcheck on the project
+// Run golangci-lint on the project
 func Lint() {
-	mg.Deps(tools.EnsureStaticCheck)
-	must.RunV("staticcheck", "./...")
+	mg.Deps(tools.EnsureGolangCILint)
+	must.RunV("golangci-lint", "run", "--max-issues-per-linter", "0", "--max-same-issues", "0", "./...")
 }
 
 func getPorterHome() string {

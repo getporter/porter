@@ -86,7 +86,7 @@ The docker driver builds the bundle image using the local Docker host. To use a 
 		"Path to the build context directory where all bundle assets are located. Defaults to the current directory.")
 	f.StringVar(&opts.Driver, "driver", porter.BuildDriverDefault,
 		fmt.Sprintf("Driver for building the invocation image. Allowed values are: %s", strings.Join(porter.BuildDriverAllowedValues, ", ")))
-	f.MarkHidden("driver") // Hide the driver flag since there aren't any choices to make right now
+	_ = f.MarkHidden("driver") // Hide the driver flag since there aren't any choices to make right now
 	f.StringArrayVar(&opts.BuildArgs, "build-arg", nil,
 		"Set build arguments in the template Dockerfile (format: NAME=VALUE). May be specified multiple times. Max length is 5,000 characters.")
 	f.StringArrayVar(&opts.SSH, "ssh", nil,

@@ -8,9 +8,11 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg/build"
+	"get.porter.sh/porter/pkg/cache"
 	"get.porter.sh/porter/pkg/cnab"
 	cnabtooci "get.porter.sh/porter/pkg/cnab/cnab-to-oci"
 	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/experimental"
 	"get.porter.sh/porter/pkg/test"
 	"github.com/docker/docker/api/types"
 	"github.com/stretchr/testify/require"
@@ -181,6 +183,83 @@ func Test_getImageLatestDigest(t *testing.T) {
 			}
 
 			require.Equal(t, tc.wantDigest, digest.String())
+		})
+	}
+}
+
+func Test_depv2_bundleDigest(t *testing.T) {
+	defaultMockFindBundle := func(ref cnab.OCIReference) (cache.CachedBundle, bool, error) {
+		cachedBundle := cache.CachedBundle{
+			BundleReference: cnab.BundleReference{
+				Reference: ref,
+				Digest:    "sha256:3abc67269f59e3ed824e811a1ff1ee64f0d44c0218efefada57a4bebc2d7ef6f",
+			},
+		}
+
+		return cachedBundle, true, nil
+	}
+
+	testcases := []struct {
+		name             string
+		originalManifest string
+		wantManifest     string
+		wantErr          string
+		mockFindBundle   func(ref cnab.OCIReference) (cache.CachedBundle, bool, error)
+		mockPullBundle   func(ctx context.Context, ref cnab.OCIReference, opts cnabtooci.RegistryOptions) (cnab.BundleReference, error)
+	}{
+		{
+			name:             "use digest in bundle reference",
+			wantManifest:     "expected-result-depv2.yaml",
+			originalManifest: "original-depv2.yaml",
+		},
+		{
+			name:             "not found reference",
+			wantManifest:     "expected-result-depv2.yaml",
+			originalManifest: "original-depv2.yaml",
+			mockFindBundle: func(ref cnab.OCIReference) (cache.CachedBundle, bool, error) {
+				return cache.CachedBundle{}, false, nil
+			},
+			mockPullBundle: func(ctx context.Context, ref cnab.OCIReference, opts cnabtooci.RegistryOptions) (cnab.BundleReference, error) {
+				return cnab.BundleReference{}, errors.New("failed to pull bundle")
+			},
+			wantErr: "failed to pull bundle",
+		},
+		{
+			name:             "no default bundle reference",
+			wantManifest:     "expected-result-depv2-no-default-ref.yaml",
+			originalManifest: "original-depv2-no-default-ref.yaml",
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			p := NewTestPorter(t)
+			p.SetExperimentalFlags(experimental.FlagDependenciesV2)
+			defer p.Close()
+			if tc.mockFindBundle != nil {
+				p.TestCache.FindBundleMock = tc.mockFindBundle
+			} else {
+				p.TestCache.FindBundleMock = defaultMockFindBundle
+			}
+			if tc.mockPullBundle != nil {
+				p.TestRegistry.MockPullBundle = tc.mockPullBundle
+			}
+			p.TestConfig.TestContext.AddTestFile(filepath.Join("testdata/generateManifest", tc.originalManifest), config.Name)
+			opts := BuildOptions{}
+			require.NoError(t, opts.Validate(p.Porter))
+
+			err := p.generateInternalManifest(context.Background(), opts)
+			if tc.wantErr != "" {
+				require.ErrorContains(t, err, tc.wantErr)
+				return
+			}
+			require.NoError(t, err)
+
+			goldenFile := filepath.Join("testdata/generateManifest", tc.wantManifest)
+			p.TestConfig.TestContext.AddTestFile(goldenFile, tc.wantManifest)
+			got, err := p.FileSystem.ReadFile(build.LOCAL_MANIFEST)
+			require.NoError(t, err)
+			test.CompareGoldenFile(t, goldenFile, string(got))
 		})
 	}
 }

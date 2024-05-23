@@ -51,9 +51,12 @@ func (m *LegacyPluginAdapter) Connect(ctx context.Context) error {
 	oldConfig := config.New()
 	oldConfig.SetHomeDir(m.oldPorterHome)
 	oldConfig.SetPorterPath(filepath.Join(m.oldPorterHome, "porter"))
-	oldConfig.Load(ctx, func(ctx context.Context, secretKey string) (string, error) {
+	_, err := oldConfig.Load(ctx, func(ctx context.Context, secretKey string) (string, error) {
 		return "", nil
 	})
+	if err != nil {
+		return err
+	}
 	oldConfig.Setenv(config.EnvHOME, m.oldPorterHome)
 
 	// Start the plugin

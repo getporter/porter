@@ -24,15 +24,13 @@ func NewSigner() *Signer {
 }
 
 func (s *Signer) Connect(ctx context.Context) error {
-	//lint:ignore SA4006 ignore unused ctx for now
-	ctx, log := tracing.StartSpan(ctx)
+	_, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
 	return nil
 }
 
 func (s *Signer) Sign(ctx context.Context, ref string) error {
-	//lint:ignore SA4006 ignore unused ctx for now
-	ctx, log := tracing.StartSpan(ctx)
+	_, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
 
 	s.Signatures[ref] = b64.StdEncoding.EncodeToString([]byte(ref))
@@ -40,8 +38,7 @@ func (s *Signer) Sign(ctx context.Context, ref string) error {
 }
 
 func (s *Signer) Verify(ctx context.Context, ref string) error {
-	//lint:ignore SA4006 ignore unused ctx for now
-	ctx, log := tracing.StartSpan(ctx)
+	_, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
 
 	if _, ok := s.Signatures[ref]; !ok {

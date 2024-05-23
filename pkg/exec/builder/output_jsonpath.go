@@ -19,8 +19,7 @@ type OutputJsonPath interface {
 // ProcessJsonPathOutputs evaluates the specified output buffer as JSON, looks through the outputs for
 // any that implement the OutputJsonPath and extracts their output.
 func ProcessJsonPathOutputs(ctx context.Context, cfg runtime.RuntimeConfig, step StepWithOutputs, stdout string) error {
-	//lint:ignore SA4006 ignore unused ctx for now
-	ctx, span := tracing.StartSpan(ctx)
+	_, span := tracing.StartSpan(ctx)
 	defer span.EndSpan()
 
 	outputs := step.GetOutputs()

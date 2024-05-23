@@ -2,6 +2,7 @@ package config
 
 import (
 	"context"
+	"log"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -42,14 +43,27 @@ func (c *TestConfig) SetupUnitTest() {
 	c.SetHomeDir(home)
 
 	// Fake out the porter home directory
-	c.FileSystem.Create(filepath.Join(home, "porter"))
-	c.FileSystem.Create(filepath.Join(home, "runtimes", "porter-runtime"))
+	var err error
+	if _, err = c.FileSystem.Create(filepath.Join(home, "porter")); err != nil {
+		log.Fatal(err)
+	}
+	if _, err = c.FileSystem.Create(filepath.Join(home, "runtimes", "porter-runtime")); err != nil {
+		log.Fatal(err)
+	}
 
 	mixinsDir := filepath.Join(home, "mixins")
-	c.FileSystem.Create(filepath.Join(mixinsDir, "exec/exec"))
-	c.FileSystem.Create(filepath.Join(mixinsDir, "exec/runtimes/exec-runtime"))
-	c.FileSystem.Create(filepath.Join(mixinsDir, "testmixin/testmixin"))
-	c.FileSystem.Create(filepath.Join(mixinsDir, "testmixin/runtimes/testmixin-runtime"))
+	if _, err = c.FileSystem.Create(filepath.Join(mixinsDir, "exec/exec")); err != nil {
+		log.Fatal(err)
+	}
+	if _, err = c.FileSystem.Create(filepath.Join(mixinsDir, "exec/runtimes/exec-runtime")); err != nil {
+		log.Fatal(err)
+	}
+	if _, err = c.FileSystem.Create(filepath.Join(mixinsDir, "testmixin/testmixin")); err != nil {
+		log.Fatal(err)
+	}
+	if _, err = c.FileSystem.Create(filepath.Join(mixinsDir, "testmixin/runtimes/testmixin-runtime")); err != nil {
+		log.Fatal(err)
+	}
 }
 
 // SetupIntegrationTest initializes the filesystem with the supporting files in

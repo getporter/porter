@@ -18,8 +18,7 @@ type OutputRegex interface {
 // ProcessRegexOutputs looks through the outputs for any that implement the OutputRegex,
 // applies the regular expression to the output buffer and extracts their output.
 func ProcessRegexOutputs(ctx context.Context, cfg runtime.RuntimeConfig, step StepWithOutputs, stdout string) error {
-	//lint:ignore SA4006 ignore unused ctx for now
-	ctx, span := tracing.StartSpan(ctx)
+	_, span := tracing.StartSpan(ctx)
 	defer span.EndSpan()
 
 	outputs := step.GetOutputs()

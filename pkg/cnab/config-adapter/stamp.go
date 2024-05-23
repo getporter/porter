@@ -135,7 +135,7 @@ func (c *ManifestConverter) GenerateStamp(ctx context.Context) (Stamp, error) {
 	if err != nil {
 		// The digest is only used to decide if we need to rebuild, it is not an error condition to not
 		// have a digest.
-		log.Error(fmt.Errorf("WARNING: Could not digest the porter manifest file: %w", err))
+		log.Warn(fmt.Sprint("WARNING: Could not digest the porter manifest file: %w", err))
 		stamp.ManifestDigest = "unknown"
 	} else {
 		stamp.ManifestDigest = digest

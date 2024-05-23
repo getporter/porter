@@ -53,7 +53,7 @@ func TestPublish_Validate_ArchivePath(t *testing.T) {
 	err := opts.Validate(p.Config)
 	assert.ErrorContains(t, err, "file does not exist")
 
-	p.FileSystem.WriteFile("mybuns.tgz", []byte("mybuns"), pkg.FileModeWritable)
+	require.NoError(t, p.FileSystem.WriteFile("mybuns.tgz", []byte("mybuns"), pkg.FileModeWritable))
 	err = opts.Validate(p.Config)
 	assert.EqualError(t, err, "must provide a value for --reference of the form REGISTRY/bundle:tag")
 

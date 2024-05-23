@@ -254,7 +254,7 @@ func TestStoreManifest(t *testing.T) {
 
 func TestCache_StoreBundle_Overwrite(t *testing.T) {
 	t.Parallel()
-
+	var err error
 	cfg := config.NewTestConfig(t)
 	home, _ := cfg.Config.GetHomeDir()
 	cacheDir := filepath.Join(home, "cache")
@@ -265,13 +265,15 @@ func TestCache_StoreBundle_Overwrite(t *testing.T) {
 	// be overwritten
 	cb := CachedBundle{BundleReference: cnab.BundleReference{Reference: kahn1dot01}}
 	cb.SetCacheDir(cacheDir)
-	cfg.FileSystem.Create(cb.BuildManifestPath())
-	cfg.FileSystem.Create(cb.BuildRelocationFilePath())
+	_, err = cfg.FileSystem.Create(cb.BuildManifestPath())
+	require.NoError(t, err)
+	_, err = cfg.FileSystem.Create(cb.BuildRelocationFilePath())
+	require.NoError(t, err)
 	junkPath := filepath.Join(cb.cacheDir, "junk.txt")
-	cfg.FileSystem.Create(junkPath)
-
+	_, err = cfg.FileSystem.Create(junkPath)
+	require.NoError(t, err)
 	// Refresh the cache
-	cb, err := c.StoreBundle(cb.BundleReference)
+	cb, err = c.StoreBundle(cb.BundleReference)
 	require.NoError(t, err, "StoreBundle failed")
 
 	exists, _ := cfg.FileSystem.Exists(cb.BuildBundlePath())

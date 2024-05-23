@@ -20,16 +20,18 @@ porter bundles archive FILENAME --reference PUBLISHED_BUNDLE [flags]
 ```
   porter bundle archive mybun.tgz --reference ghcr.io/getporter/examples/porter-hello:v0.2.0
   porter bundle archive mybun.tgz --reference localhost:5000/ghcr.io/getporter/examples/porter-hello:v0.2.0 --force
+  porter bundle archive mybun.tgz --compression NoCompression --reference ghcr.io/getporter/examples/porter-hello:v0.2.0
 
 ```
 
 ### Options
 
 ```
-      --force               Force a fresh pull of the bundle
-  -h, --help                help for archive
-      --insecure-registry   Don't require TLS for the registry
-  -r, --reference string    Use a bundle in an OCI registry specified by the given reference.
+  -c, --compression string   Compression level to use when creating the gzipped tar archive. Allowed values are: BestCompression, BestSpeed, DefaultCompression, HuffmanOnly, NoCompression (default "DefaultCompression")
+      --force                Force a fresh pull of the bundle
+  -h, --help                 help for archive
+      --insecure-registry    Don't require TLS for the registry
+  -r, --reference string     Use a bundle in an OCI registry specified by the given reference.
 ```
 
 ### Options inherited from parent commands

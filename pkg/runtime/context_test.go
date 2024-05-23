@@ -3,7 +3,7 @@ package runtime
 import (
 	"testing"
 
-	"get.porter.sh/porter/pkg/portercontext"
+	"get.porter.sh/porter/pkg/config"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -23,9 +23,9 @@ func TestRuntimeConfig_DebugMode(t *testing.T) {
 		t.Run(tc.debugEnv, func(t *testing.T) {
 			t.Parallel()
 
-			pctx := portercontext.New()
-			pctx.Setenv("PORTER_DEBUG", tc.debugEnv)
-			c := NewConfigFor(pctx)
+			config := config.NewTestConfig(t)
+			config.Setenv("PORTER_DEBUG", tc.debugEnv)
+			c := NewConfigFor(config.Config)
 			assert.Equal(t, tc.wantDebug, c.DebugMode)
 		})
 	}
