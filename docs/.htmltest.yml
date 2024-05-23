@@ -1,0 +1,5 @@
+IgnoreURLs:
+  - ^/forum$
+  - ^/zoom/dev/$
+  - ^/dev-meeting$
+  - ^/calendar/$

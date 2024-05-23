@@ -38,6 +38,7 @@ jobs:
         uses: wjdp/htmltest-action@master
         with:
           path: dist
+          config: docs/.htmltest.yml
 
       - uses: actions/upload-artifact@v4
         with:
