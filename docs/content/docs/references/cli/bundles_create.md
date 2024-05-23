@@ -9,7 +9,7 @@ Create a bundle
 
 ### Synopsis
 
-Create a bundle. This generates a porter bundle in the directory with the specified name or in the current directory if no name is provided.
+Create a bundle. This command creates a new porter bundle with the specified bundle-name, in the directory with the specified bundle-name. The directory will be created if it doesn't already exist. If no bundle-name is provided, the bundle will be created in current directory and the bundle name will be 'porter-hello'.
 
 ```
 porter bundles create [bundle-name] [flags]
