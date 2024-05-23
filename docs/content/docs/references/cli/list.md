@@ -35,14 +35,15 @@ porter list [flags]
 ### Options
 
 ```
-      --all-namespaces     Include all namespaces in the results.
-  -h, --help               help for list
-  -l, --label strings      Filter the installations by a label formatted as: KEY=VALUE. May be specified multiple times.
-      --limit int          Limit the number of installations by a certain amount. Defaults to 0.
-      --name string        Filter the installations where the name contains the specified substring.
-  -n, --namespace string   Filter the installations by namespace. Defaults to the global namespace.
-  -o, --output string      Specify an output format.  Allowed values: plaintext, json, yaml (default "plaintext")
-      --skip int           Skip the number of installations by a certain amount. Defaults to 0.
+      --all-namespaces          Include all namespaces in the results.
+      --field-selector string   Selector (field query) to filter on, supports '=' (e.g. --field-selector bundle.version=0.2.0,status.action=install). All fields from the json output are supported.
+  -h, --help                    help for list
+  -l, --label strings           Filter the installations by a label formatted as: KEY=VALUE. May be specified multiple times.
+      --limit int               Limit the number of installations by a certain amount. Defaults to 0.
+      --name string             Filter the installations where the name contains the specified substring.
+  -n, --namespace string        Filter the installations by namespace. Defaults to the global namespace.
+  -o, --output string           Specify an output format.  Allowed values: plaintext, json, yaml (default "plaintext")
+      --skip int                Skip the number of installations by a certain amount. Defaults to 0.
 ```
 
 ### Options inherited from parent commands

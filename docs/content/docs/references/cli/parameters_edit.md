@@ -1,8 +1,9 @@
 ---
-title: "Porter Parameters Edit"
-aliases:
-  - /cli/porter_parameters_edit/
+title: "porter parameters edit"
+slug: porter_parameters_edit
+url: /cli/porter_parameters_edit/
 ---
+## porter parameters edit
 
 Edit Parameter Set
 
@@ -36,4 +37,5 @@ porter parameters edit [flags]
 
 ### SEE ALSO
 
-- [porter parameters](/cli/porter_parameters/) - Parameter set commands
+* [porter parameters](/cli/porter_parameters/)	 - Parameter set commands
+

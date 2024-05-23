@@ -42,6 +42,7 @@ porter publish [flags]
       --insecure-registry    Don't require TLS for the registry
   -r, --reference string     Use a bundle in an OCI registry specified by the given reference.
       --registry string      Override the registry portion of the bundle reference, e.g. docker.io, myregistry.com/myorg
+      --sign-bundle          Sign the bundle using the configured signing plugin
       --tag string           Override the Docker tag portion of the bundle reference, e.g. latest, v0.1.1
 ```
 

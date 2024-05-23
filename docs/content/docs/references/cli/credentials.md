@@ -1,24 +1,16 @@
 ---
-title: "porter create"
-slug: porter_create
-url: /cli/porter_create/
+title: "porter credentials"
+slug: porter_credentials
+url: /cli/porter_credentials/
 ---
-## porter create
+## porter credentials
 
-Create a bundle
-
-### Synopsis
-
-Create a bundle. This command creates a new porter bundle with the specified bundle-name, in the directory with the specified bundle-name. The directory will be created if it doesn't already exist. If no bundle-name is provided, the bundle will be created in current directory and the bundle name will be 'porter-hello'.
-
-```
-porter create [bundle-name] [flags]
-```
+Credentials commands
 
 ### Options
 
 ```
-  -h, --help   help for create
+  -h, --help   help for credentials
 ```
 
 ### Options inherited from parent commands
@@ -36,4 +28,11 @@ Most commands require a Docker daemon, either local or remote.
 
 Try our QuickStart https://porter.sh/quickstart to learn how to use Porter.
 
+* [porter credentials apply](/cli/porter_credentials_apply/)	 - Apply changes to a credential set
+* [porter credentials create](/cli/porter_credentials_create/)	 - Create a Credential
+* [porter credentials delete](/cli/porter_credentials_delete/)	 - Delete a Credential
+* [porter credentials edit](/cli/porter_credentials_edit/)	 - Edit Credential
+* [porter credentials generate](/cli/porter_credentials_generate/)	 - Generate Credential Set
+* [porter credentials list](/cli/porter_credentials_list/)	 - List credentials
+* [porter credentials show](/cli/porter_credentials_show/)	 - Show a Credential
 

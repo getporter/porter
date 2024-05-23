@@ -17,7 +17,7 @@ replace (
 )
 
 require (
-	get.porter.sh/magefiles v0.6.5
+	get.porter.sh/magefiles v0.6.6
 	github.com/Masterminds/semver/v3 v3.2.1
 	github.com/PaesslerAG/jsonpath v0.1.1
 	github.com/carolynvs/aferox v0.3.0
@@ -154,7 +154,7 @@ require (
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
-	github.com/klauspost/compress v1.17.7 // indirect
+	github.com/klauspost/compress v1.17.8 // indirect
 	github.com/klauspost/pgzip v1.2.6 // indirect
 	github.com/kr/pty v1.1.5 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
@@ -209,7 +209,7 @@ require (
 	github.com/tonistiigi/fsutil v0.0.0-20230629203738-36ef4d8c0dbb // indirect
 	github.com/tonistiigi/units v0.0.0-20180711220420-6950e57a87ea // indirect
 	github.com/tonistiigi/vt100 v0.0.0-20230623042737-f9a4f7ef6531 // indirect
-	github.com/ulikunitz/xz v0.5.11 // indirect
+	github.com/ulikunitz/xz v0.5.12 // indirect
 	github.com/vbatts/tar-split v0.11.3 // indirect
 	github.com/weppos/publicsuffix-go v0.5.0 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
