@@ -12,13 +12,17 @@ Porter has built-in support for signing bundles and the associated invocation im
 Learn how to configure Porter to sign bundles.
 
 - [Cosign](#cosign)
+  - [Prerequisites](#prerequisites)
+  - [Configuration](#configuration)
 - [Notation](#notation)
+  - [Prerequisites](#prerequisites-1)
+  - [Configuration](#configuration-1)
+- [Sign bundle](#sign-bundle)
+- [Verify bundle](#verify-bundle)
 
-## Cofiguration
+## Cosign
 
-### Cosign
-
-#### Prerequisites
+### Prerequisites
 
 1. Cosign is installed and is available on the on the `PATH`.
 2. A key-pair for signing is available.
@@ -27,7 +31,7 @@ Instructions on for the install Cosign can be found on the [Cosign Installation 
 
 🚧 Currently Porter does not support [Keyless Signing](https://docs.sigstore.dev/signing/overview/) or reading the key-pair from anything but files.
 
-#### Configuration
+### Configuration
 
 Porter have to be configure to use [Cosign] to sign bundles and invocation images. All configuration is done through the [Porter config file](/docs/configuration/configuration/). To configure [Cosign] add the following to the configuration file.
 
@@ -56,9 +60,9 @@ signer:
       # insecureregistry: false
 ```
 
-### Notation
+## Notation
 
-#### Prerequisites
+### Prerequisites
 
 1. Notation is installed and is available on the on the `PATH`.
 2. A signing key and certificate have been configured.
@@ -68,7 +72,7 @@ Instructions on for the install Notation can be found on the [Notation Installat
 
 ⚠️ Self-signed certificates should only be used for testing.
 
-#### Configuration
+### Configuration
 
 Porter have to be configure to use [Notation] to sign bundles and invocation images. All configuration is done through the [Porter config file](/docs/configuration/configuration/). To configure [Notation] add the following to the configuration file.
 
