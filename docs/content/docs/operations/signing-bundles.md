@@ -4,6 +4,10 @@ description: Signing of Porter bundles
 weight: 7
 ---
 
+{{< callout type="info" >}}
+  Signing is supported from v1.1.0
+{{< /callout >}}
+
 Porter has built-in support for signing bundles and the associated invocation image using [Cosign] or [Notation].
 Learn how to configure Porter to sign bundles.
 
