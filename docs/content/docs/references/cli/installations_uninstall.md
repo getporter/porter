@@ -1,19 +1,19 @@
 ---
-title: "porter invoke"
-slug: porter_invoke
-url: /cli/porter_invoke/
+title: "porter installations uninstall"
+slug: porter_installations_uninstall
+url: /cli/porter_installations_uninstall/
 ---
-## porter invoke
+## porter installations uninstall
 
-Invoke a custom action on an installation
+Uninstall an installation
 
 ### Synopsis
 
-Invoke a custom action on an installation.
+Uninstall an installation
 
-The first argument is the installation name upon which to invoke the action. This defaults to the name of the bundle.
+The first argument is the installation name to uninstall. This defaults to the name of the bundle.
 
-Porter uses the docker driver as the default runtime for executing a bundle's invocation image, but an alternate driver may be supplied via '--driver/-d' or the PORTER_RUNTIME_DRIVER environment variable.
+Porter uses the docker driver as the default runtime for executing a bundle's invocation image, but an alternate driver may be supplied via '--driver/-d'' or the PORTER_RUNTIME_DRIVER environment variable.
 For example, the 'debug' driver may be specified, which simply logs the info given to it and then exits.
 
 The docker driver runs the bundle container using the local Docker host. To use a remote Docker host, set the following environment variables:
@@ -23,35 +23,38 @@ The docker driver runs the bundle container using the local Docker host. To use 
 
 
 ```
-porter invoke [INSTALLATION] --action ACTION [flags]
+porter installations uninstall [INSTALLATION] [flags]
 ```
 
 ### Examples
 
 ```
-  porter invoke --action ACTION
-  porter invoke --reference ghcr.io/getporter/examples/kubernetes:v0.2.0
-  porter invoke --reference localhost:5000/ghcr.io/getporter/examples/kubernetes:v0.2.0 --insecure-registry --force
-  porter invoke --action ACTION MyAppInDev --file myapp/bundle.json
-  porter invoke --action ACTION  --parameter-set azure --param test-mode=true --param header-color=blue
-  porter invoke --action ACTION --credential-set azure --credential-set kubernetes
-  porter invoke --action ACTION --driver debug
+  porter installation uninstall
+  porter installation uninstall --reference ghcr.io/getporter/examples/kubernetes:v0.2.0
+  porter installation uninstall --reference localhost:5000/ghcr.io/getporter/examples/kubernetes:v0.2.0 --insecure-registry --force
+  porter installation uninstall MyAppInDev --file myapp/bundle.json
+  porter installation uninstall --parameter-set azure --param test-mode=true --param header-color=blue
+  porter installation uninstall --credential-set azure --credential-set kubernetes
+  porter installation uninstall --driver debug
+  porter installation uninstall --delete
+  porter installation uninstall --force-delete
 
 ```
 
 ### Options
 
 ```
-      --action string                   Custom action name to invoke.
       --allow-docker-host-access        Controls if the bundle should have access to the host's Docker daemon with elevated privileges. See https://porter.sh/configuration/#allow-docker-host-access for the full implications of this flag.
       --autobuild-disabled              Do not automatically build the bundle from source when the last build is out-of-date.
       --cnab-file string                Path to the CNAB bundle.json file.
   -c, --credential-set stringArray      Credential sets to use when running the bundle. It should be a named set of credentials and may be specified multiple times.
       --debug                           Run the bundle in debug mode.
+      --delete                          Delete all records associated with the installation, assuming the uninstall action succeeds
   -d, --driver string                   Specify a driver to use. Allowed values: docker, debug (default "docker")
   -f, --file porter.yaml                Path to the Porter manifest. Defaults to porter.yaml in the current directory.
       --force                           Force a fresh pull of the bundle
-  -h, --help                            help for invoke
+      --force-delete                    UNSAFE. Delete all records associated with the installation, even if uninstall fails. This is intended for cleaning up test data and is not recommended for production environments.
+  -h, --help                            help for uninstall
       --insecure-registry               Don't require TLS for the registry
       --mount-host-volume stringArray   Mount a host volume into the bundle. Format is <host path>:<container path>[:<option>]. May be specified multiple times. Option can be ro (read-only), rw (read-write), default is ro.
   -n, --namespace string                Namespace of the specified installation. Defaults to the global namespace.
@@ -70,10 +73,5 @@ porter invoke [INSTALLATION] --action ACTION [flags]
 
 ### SEE ALSO
 
-* [porter](/cli/porter/)	 - With Porter you can package your application artifact, client tools, configuration and deployment logic together as a versioned bundle that you can distribute, and then install with a single command.
-
-Most commands require a Docker daemon, either local or remote.
-
-Try our QuickStart https://porter.sh/quickstart to learn how to use Porter.
-
+* [porter installations](/cli/porter_installations/)	 - Installation commands
 

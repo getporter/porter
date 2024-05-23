@@ -1,24 +1,16 @@
 ---
-title: "porter create"
-slug: porter_create
-url: /cli/porter_create/
+title: "porter mixins"
+slug: porter_mixins
+url: /cli/porter_mixins/
 ---
-## porter create
+## porter mixins
 
-Create a bundle
-
-### Synopsis
-
-Create a bundle. This command creates a new porter bundle with the specified bundle-name, in the directory with the specified bundle-name. The directory will be created if it doesn't already exist. If no bundle-name is provided, the bundle will be created in current directory and the bundle name will be 'porter-hello'.
-
-```
-porter create [bundle-name] [flags]
-```
+Mixin commands. Mixins assist with authoring bundles.
 
 ### Options
 
 ```
-  -h, --help   help for create
+  -h, --help   help for mixins
 ```
 
 ### Options inherited from parent commands
@@ -36,4 +28,10 @@ Most commands require a Docker daemon, either local or remote.
 
 Try our QuickStart https://porter.sh/quickstart to learn how to use Porter.
 
+* [porter mixins create](/cli/porter_mixins_create/)	 - Create a new mixin project based on the getporter/skeletor repository
+* [porter mixins feed](/cli/porter_mixins_feed/)	 - Feed commands
+* [porter mixins install](/cli/porter_mixins_install/)	 - Install a mixin
+* [porter mixins list](/cli/porter_mixins_list/)	 - List installed mixins
+* [porter mixins search](/cli/porter_mixins_search/)	 - Search available mixins
+* [porter mixins uninstall](/cli/porter_mixins_uninstall/)	 - Uninstall a mixin
 
