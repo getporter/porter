@@ -24,7 +24,7 @@ to get all the materials ready.
 1. Go to https://labs.play-with-docker.com/
 1. Sign in with your Docker Hub account, or create one if you don't already have an account.
 1. Click `Add new instance`
-1. [Install Porter](/install)
+1. [Install Porter](/docs/getting-started/install-porter/)
    ```
    curl https://deislabs.blob.core.windows.net/porter/latest/install-linux.sh | bash
    export PATH=$PATH:~/.porter
@@ -1359,7 +1359,7 @@ exclude: true
   * A new manifest list for the bundle credentials and parameters.
 * When pulling a bundle, it reconstructs it from the parts mentioned above
 
-See [OCI Bundle Format](/oci-bundle-format) for an example.
+See [OCI Bundle Format](/oci-bundle-format/) for an example.
 
 ---
 name: survey

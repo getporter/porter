@@ -51,7 +51,7 @@ Resources that are not defined in a namespace are considered global.
 When an installation is defined in a namespace, it can reference a credential or parameter set that is also defined in that namespace or at the global scope.
 Resources defined globally cannot reference other resources that are defined in a namespace.
 
-You can set the current namespace in the [Porter configuration file](/configuration/#config-file) using the namespace setting.
+You can set the current namespace in the [Porter configuration file](/docs/configuration/configuration/#config-file) using the namespace setting.
 
 When an installation references a parameter or credential set, Porter first looks for a resource with that name in the current namespace.
 If one does not exist, Porter then looks for that resource at the global level.

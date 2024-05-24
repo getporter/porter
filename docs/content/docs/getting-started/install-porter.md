@@ -144,7 +144,7 @@ iwr "https://cdn.porter.sh/canary/install-windows.ps1" -UseBasicParsing | iex
 
 ## Mixins
 
-We have a number of [mixins](/mixins) to help you get started.
+We have a number of [mixins](/mixins/) to help you get started.
 Only the [exec mixin] is installed with Porter v1.0.0+, other mixins should be installed separately.
 
 You can update an existing mixin, or install a new mixin using the `porter mixin
@@ -159,7 +159,7 @@ All the Porter-authored mixins are published to `https://cdn.porter.sh/mixins/at
 
 ## Plugins
 
-We have a couple [plugins](/plugins) which extend Porter and integrate with other cloud providers and software.
+We have a couple [plugins](/plugins/) which extend Porter and integrate with other cloud providers and software.
 
 You can update an existing plugin, or install a new plugin using the `porter plugin
 install` command:

@@ -11,7 +11,7 @@ A Porter bundle is defined by a Porter manifest file named porter.yaml.
 The manifest defines metadata about the bundle, such as its name or what parameters it accepts, and it also defines actions that the bundle can execute, like install, upgrade and uninstall along with any custom actions.
 
 The manifest supports variable substitution through [templates].
-You can [customize the Dockerfile](/bundle/custom-dockerfile/) used to build the bundle installer.
+You can [customize the Dockerfile](/docs/bundle/custom-dockerfile/) used to build the bundle installer.
 
 The manifest is made up of multiple components. See the [Manifest File Format] for a full list of available fields.
 
@@ -31,8 +31,8 @@ The manifest is made up of multiple components. See the [Manifest File Format] f
 
 We have full [examples](https://github.com/getporter/examples) of Porter manifests in the Porter repository.
 
-[templates]: /development/authoring-a-bundle/using-templates/
-[Manifest File Format]: /reference/file-formats/#manifest
+[templates]: /docs/development/authoring-a-bundle/using-templates/
+[Manifest File Format]: /docs/bundle/manifest/file-format/
 
 ## Bundle Metadata
 
@@ -65,7 +65,7 @@ maintainers:
   
    When the version is used to default the tag, and it contains a plus sign (+), the plus sign is replaced with an underscore because while + is a valid semver delimiter for the build metadata, it is not an allowed character in a tag.
 * `dockerfile`: OPTIONAL. The relative path to a Dockerfile to use as a template during `porter build`. 
-    See [Custom Dockerfile](/bundle/custom-dockerfile/) for details on how to use a custom Dockerfile.
+    See [Custom Dockerfile](/docs/bundle/custom-dockerfile/) for details on how to use a custom Dockerfile.
 * `custom`: OPTIONAL. A map of [custom bundle metadata](https://github.com/cnabio/cnab-spec/blob/master/101-bundle-json.md#custom-extensions).
   These values are stored in the bundle definition and can be queried without pulling the invocation image.
   We recommend not storing large values in the custom field and to save large values as files in the bundle directory instead.
@@ -101,7 +101,7 @@ mixins:
         url: "https://charts.bitnami.com/bitnami"
 ```
 
-See [Using Mixins](/use-mixins) to learn more about how mixins work.
+See [Using Mixins](/use-mixins/) to learn more about how mixins work.
 
 ## Parameters
 
@@ -476,7 +476,7 @@ similar to `help`, but has a different name, you should declare it in the `custo
 ## Dependencies
 
 Dependencies are an extension of the [CNAB Spec](https://github.com/cnabio/cnab-spec/blob/master/500-CNAB-dependencies.md).
-See [dependencies](/development/authoring-a-bundle/working-with-dependencies/) for more details on how Porter handles dependencies.
+See [dependencies](/docs/development/authoring-a-bundle/working-with-dependencies/) for more details on how Porter handles dependencies.
 
 ```yaml
 dependencies:
@@ -499,7 +499,7 @@ dependencies:
 The `images` section of the Porter manifest corresponds to the [Image Map](https://github.com/cnabio/cnab-spec/blob/master/103-bundle-runtime.md#image-maps)
 section of the CNAB Spec. These are images used in the bundle and declaring them enables Porter to manage the following for you:
 
-* publishing the bundle [copies referenced images into the published bundle](/distribute-bundles/#image-references-after-publishing).
+* publishing the bundle [copies referenced images into the published bundle](/docs/development/authoring-a-bundle/distribute-bundles/#image-references-after-publishing).
 * [archiving the bundle](/archive-bundles/) includes the referenced images in the archive.
 
 Here is an example:
@@ -514,14 +514,14 @@ images:
 ```
 
 This information is used to generate the corresponding section of the `bundle.json` and can be
-used in [template expressions](/wiring), much like `parameters`, `credentials` and `outputs`, allowing you to build image references using 
+used in [template expressions](/wiring/), much like `parameters`, `credentials` and `outputs`, allowing you to build image references using 
 the `repository` and `digest` attributes. For example:
 
 ```
 image: ${bundle.images.websvc.repository}@${bundle.images.websvc.digest}
 ```
 
-At runtime, these will be updated appropriately if a bundle has been [copied](/administration/copy-bundles/). Note that while `tag` is available, you should prefer the use of `digest`.
+At runtime, these will be updated appropriately if a bundle has been [copied](/docs/administration/copy-bundles/). Note that while `tag` is available, you should prefer the use of `digest`.
 
 Here is a breakdown of all the supported fields on an image in this section of the manifest:
 
@@ -590,7 +590,7 @@ Currently, Porter supports the following required extensions and configuration:
 Access to the host Docker daemon is necessary to run this bundle.
 
 When the bundle is executed, this elevated privilege must be explicitly granted to the bundle using the
-[Allow Docker Host Access configuration](/configuration/#allow-docker-host-access) setting.
+[Allow Docker Host Access configuration](/docs/configuration/configuration/#allow-docker-host-access) setting.
 
 **Name:** 
 
@@ -619,7 +619,7 @@ be copied into the final bundle so that you can access them at runtime. The path
 
 ## See Also
 
-* [Manifest File Format](/reference/file-formats/#manifest)
+* [Manifest File Format](/docs/reference/file-formats/#manifest)
 * [Using Mixins](/use-mixins/)
-* [Bundle Dependencies](/development/authoring-a-bundle/working-with-dependencies/)
+* [Bundle Dependencies](/docs/development/authoring-a-bundle/working-with-dependencies/)
 * [Parameters, Credentials, Outputs, and Images in Porter](/wiring/)

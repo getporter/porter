@@ -5,7 +5,7 @@ description: Run a command or script
 
 Run a command or script.
 
-✅ Learn how to use the exec mixin with our [Exec Mixin Best Practice Guide](/best-practices/exec-mixin/)
+✅ Learn how to use the exec mixin with our [Exec Mixin Best Practice Guide](/docs/best-practices/exec-mixin/)
 
 Source: https://porter.sh/src/pkg/exec
 

@@ -3,3 +3,12 @@ IgnoreURLs:
   - ^/zoom/dev/$
   - ^/dev-meeting$
   - ^/calendar/$
+  - ^/find-issue/$
+  - ^/board/
+  - ^/roadmap
+  - ^/src
+  - ^/examples
+  - ^/forum
+  - ^/docker-mixin/src
+IgnoreAltMissing: true
+IgnoreInternalEmptyHash: true

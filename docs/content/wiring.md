@@ -89,7 +89,7 @@ The syntax to pass a parameter to porter is the same for both regular and file p
 $ porter install --param mytar=./my.tar.gz
 ```
 
-See the [Parameters section of the Author Bundles doc](/author-bundles#parameters) for additional examples and configuration.
+See the [Parameters section of the Author Bundles doc](/docs/bundle/manifest/#parameters) for additional examples and configuration.
 
 ## Wiring Parameters
 
@@ -420,7 +420,7 @@ install:
     mariadb.enabled: false
 ```
 
-For more information on how dependencies are handled, refer to the [dependencies](/development/authoring-a-bundle/working-with-dependencies/) documentation.
+For more information on how dependencies are handled, refer to the [dependencies](/docs/development/authoring-a-bundle/working-with-dependencies/) documentation.
 
 ## Combining References
 
@@ -439,5 +439,5 @@ install:
 ```
 
 [mixin-architecture]: /mixin-dev-guide/architecture/
-[credentials]: /credentials/
-[parameters]: /parameters/
+[credentials]: /docs/introduction/concepts-and-components/intro-credentials/
+[parameters]: /docs/introduction/concepts-and-components/intro-parameters/

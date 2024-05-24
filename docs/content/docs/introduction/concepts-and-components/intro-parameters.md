@@ -10,7 +10,7 @@ aliases:
 
 When you are authoring a bundle, you can define parameters that are required by
 your bundle. These parameters are restricted to a list of [allowable data
-types](/docs/bundle/manifest) and are used to define parameters such as
+types](/docs/bundle/manifest/) and are used to define parameters such as
 username and password values for a backing database, or the region that a
 certain resource should be deployed in, etc. Then in your action's steps you can
 reference the parameters using porter's template language `${
@@ -74,7 +74,7 @@ to handle sensitive data.
 The bundle author may have decided to supply a default value for a given
 parameter as well. This value would be used when neither a user-specified
 value nor a parameter set value is supplied. See the `Parameters` section in
-the [Author Bundles](/docs/bundle/manifest) doc for more info.
+the [Author Bundles](/docs/bundle/manifest/) doc for more info.
 
 ## Q & A
 
@@ -83,9 +83,9 @@ the [Author Bundles](/docs/bundle/manifest) doc for more info.
 See the helpful explanation in the [credentials](/docs/introduction/concepts-and-components/intro-credentials/) doc, which
 applies to parameter sources as well.
 
-[create]: /docs/references/cli/parameters/create/
-[apply]: /docs/references/cli/parameters/apply/
-[edit]: /docs/references/cli/parameters/edit/
+[create]: /docs/references/cli/parameters_create/
+[apply]: /docs/references/cli/parameters_apply/
+[edit]: /docs/references/cli/parameters_edit/
 
 ## Related
 
