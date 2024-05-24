@@ -6,8 +6,11 @@
 # upload test results https://github.com/actions/upload-artifact
 
 name: Check Website Links
-
 on: pull_request
+
+env:
+  GOVERSION: 1.21.3
+
 jobs:
   htmltest:
     runs-on: ubuntu-latest
@@ -19,6 +22,11 @@ jobs:
         with:
           submodules: true  # Fetch Hugo themes (true OR recursive)
           fetch-depth: 0    # Fetch all history for .GitInfo and .Lastmod
+
+      - uses: actions/setup-go@v4
+        with:
+          go-version: "${{ env.GOVERSION }}" # The Go version to download (if necessary) and use.
+          cache: true
             
       - name: Set up Hugo
         uses: peaceiris/actions-hugo@v2
