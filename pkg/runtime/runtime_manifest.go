@@ -687,6 +687,7 @@ func (m *RuntimeManifest) packStateBag(ctx context.Context) error {
 		if err != nil {
 			return log.Error(fmt.Errorf("error reading state file %s for variable %s: %w", s.Path, s.Name, err))
 		}
+		defer f.Close()
 
 		_, err = io.Copy(tw, f)
 		if err != nil {
