@@ -619,7 +619,7 @@ be copied into the final bundle so that you can access them at runtime. The path
 
 ## See Also
 
-* [Manifest File Format](/docs/reference/file-formats/#manifest)
+* [Manifest File Format](/docs/bundle/manifest/file-format/)
 * [Using Mixins](/use-mixins/)
 * [Bundle Dependencies](/docs/development/authoring-a-bundle/working-with-dependencies/)
 * [Parameters, Credentials, Outputs, and Images in Porter](/wiring/)

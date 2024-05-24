@@ -12,7 +12,7 @@ With any porter error, it can really help to re-run the command again with the `
 
 ## Examine Previous Logs
 
-Porter [saves the logs](/operations/view-logs/) when a bundle is executed. Comparing the logs
+Porter [saves the logs](/docs/operations/view-logs/) when a bundle is executed. Comparing the logs
 from a failing run to those from a successful run may assist with
 troubleshooting.
 

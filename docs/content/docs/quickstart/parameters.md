@@ -91,7 +91,7 @@ execution completed successfully!
 
 ## Create a Parameter Set
 
-Create a parameter set for the hello-llama with the combination of `porter parameters create` and `porter parameters apply` commands. The `create` command will generate a [template file](/reference/file-formats#parameter-set). You need to edit the file to include the corresponding parameters needed for the bundle. After modifying the file, the `apply` command will create the parameter set based on the file.
+Create a parameter set for the hello-llama with the combination of `porter parameters create` and `porter parameters apply` commands. The `create` command will generate a [template file](/docs/references/file-formats/parameter-set/). You need to edit the file to include the corresponding parameters needed for the bundle. After modifying the file, the `apply` command will create the parameter set based on the file.
 
 ```console
 $ porter parameters create hello-llama.json

@@ -28,9 +28,142 @@ Run the following command to run the porter-hello bundle on a cluster to try it 
 kubectl apply -f https://raw.githubusercontent.com/getporter/porter/a059a9668934dff475f9d9633781d2f32512581d/examples/porter-agent-manifest.yaml
 ```
 
-<script src="https://gist-it.appspot.com/https://github.com/getporter/porter/blob/main/examples/porter-agent-manifest.yaml"></script>
+```yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: porter-agent-test
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: porter-agent-role
+  namespace: porter-agent-test
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  - namespaces
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - pods/log
+  verbs:
+  - get
+  - list
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - watch
+- apiGroups:
+  - batch
+  resources:
+  - jobs
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: porter-agent
+  namespace: porter-agent-test
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: porter-agent
+  namespace: porter-agent-test
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: porter-agent-role
+subjects:
+- kind: ServiceAccount
+  name: porter-agent
+  namespace: porter-agent-test
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: porter-hello-shared
+  namespace: porter-agent-test
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 64Mi
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: porter-hello-3591
+  namespace: porter-agent-test
+spec:
+  containers:
+  - args:
+    - install
+    - porter-hello
+    - --reference=getporter/porter-hello:v0.1.1
+    - --driver=kubernetes
+    env:
+    - name: KUBE_NAMESPACE
+      value: porter-agent-test
+    - name: IN_CLUSTER
+      value: "true"
+    - name: LABELS
+      value: porter=true installation=porter-hello installation-version=3591
+    - name: JOB_VOLUME_NAME
+      value: porter-hello-shared
+    - name: JOB_VOLUME_PATH
+      value: /porter-shared
+    - name: CLEANUP_JOBS
+      value: "true"
+    - name: SERVICE_ACCOUNT
+    - name: AFFINITY_MATCH_LABELS
+      value: installation=porter-hello installation-version=3591
+    envFrom:
+    - secretRef:
+        name: porter-env
+        optional: true
+    image: getporter/porter-agent:latest
+    name: porter-hello-3591
+    resources: {}
+    volumeMounts:
+    - mountPath: /porter-shared
+      name: porter-shared
+    - mountPath: /porter-config
+      name: porter-config
+  serviceAccountName: porter-agent
+  volumes:
+  - name: porter-shared
+    persistentVolumeClaim:
+      claimName: porter-hello-shared
+  - name: porter-config
+    secret:
+      defaultMode: 420
+      optional: true
+      secretName: porter-config
+```
 
-[configuration]: /configuration
+[configuration]: /docs/configuration/configuration/
 [porter-agent]: https://github.com/getporter/porter/pkgs/container/porter-agent
-[porter client]: /references/docker-images/client/
+[porter client]: /docs/references/docker-images/client/
 [Porter Operator]: https://github.com/getporter/operator

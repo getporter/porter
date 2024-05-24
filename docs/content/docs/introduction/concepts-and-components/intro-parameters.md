@@ -40,10 +40,10 @@ can have a secret source (`secret`). See the [secrets
 plugin docs](/plugins/types/#secrets) to learn how to configure Porter to use
 an external secret store.
 
-Parameter Sets are created using the combination of [porter parameters create](/docs/references/cli/parameters/create)
-and [porter parameters apply](/docs/references/cli/parameters/apply).
-Afterwards a parameter set can be [edited](/docs/references/cli/parameters/edit) if changes are required.
-See [porter parameters help](/docs/references/cli/parameters) for all available commands.
+Parameter Sets are created using the combination of [porter parameters create](/cli/porter_parameters_create/)
+and [porter parameters apply](/cli/porter_parameters_apply/).
+Afterwards a parameter set can be [edited](/cli/porter_parameters_edit/) if changes are required.
+See [porter parameters help](/cli/porter_parameters/) for all available commands.
 
 Now when you execute the bundle you can pass the name of the parameter set to
 the command using the `--parameter-set` or `-p` flag, e.g.
@@ -83,9 +83,9 @@ the [Author Bundles](/docs/bundle/manifest/) doc for more info.
 See the helpful explanation in the [credentials](/docs/introduction/concepts-and-components/intro-credentials/) doc, which
 applies to parameter sources as well.
 
-[create]: /docs/references/cli/parameters_create/
-[apply]: /docs/references/cli/parameters_apply/
-[edit]: /docs/references/cli/parameters_edit/
+[create]: /cli/porter_parameters_create/
+[apply]: /cli/porter_parameters_apply/
+[edit]: /cli/porter_parameters_edit/
 
 ## Related
 

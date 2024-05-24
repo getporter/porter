@@ -16,24 +16,24 @@ configurations, so you don't need to repeat them each time when you run porter.
 The configuration file should be stored in the PORTER_HOME directory, by default
 ~/.porter/. In the example below, we are going to use the yaml format, however,
 porter supports other file formats for its config file as well. For more detailed
-information, please see [configuration](/configuration/#config-file).
+information, please see [configuration](/docs/configuration/configuration/#config-file).
 
 Create a file at ~/.porter/config.yaml and open it in your editor.
 
 ## Configure Plugins
 
-By default, Porter uses the [host plugin](/plugins/host) for resolving secrets and the [mongodb-docker](/plugins/mongodb-docker) as the storage
+By default, Porter uses the [host plugin](/plugins/host/) for resolving secrets and the [mongodb-docker](/plugins/mongodb-docker/) as the storage
 plugin. In the examples below, we will see how to configure Porter to use other plugins.
 
 ### Change the default secrets plugin
 
 The default host plugin does not provide the functionality to work with bundles
 that work with sensitive data.
-Next, configure Porter to use the [filesystem](/plugins/filesystem) as the secret plugin so that you can work with sensitive data.
+Next, configure Porter to use the [filesystem](/plugins/filesystem/) as the secret plugin so that you can work with sensitive data.
 The filesystem plugin stores secrets in your PORTER_HOME directory. It is suitable for trying out Porter, and local development and testing, but should not be used in production.
 
 Once you have the [newly created config file](#create-a-config-file), open in your choice of editor,
-change the default secret plugin to [filesystem](/plugins/filesystem):
+change the default secret plugin to [filesystem](/plugins/filesystem/):
 
 ```yaml
 default-secrets-plugin: "filesystem"
@@ -41,8 +41,8 @@ default-secrets-plugin: "filesystem"
 
 After saving this change to the config file, you will be able to work with
 bundles that contains sensitive parameters or outputs on your local machine. Be
-aware that the [filesystem](/plugins/filesystem) stores sensitive data in plaintext on your filesystem.
-Use either the [azure-keyvault](/plugins/azure-keyvault) or [hashicorp-vault](/plugins/hashicorp-vault) plugin in production.
+aware that the [filesystem](/plugins/filesystem/) stores sensitive data in plaintext on your filesystem.
+Use either the [azure-keyvault](/plugins/azure-keyvault/) or [hashicorp-vault](/plugins/hashicorp-vault/) plugin in production.
 
 ### Change the default storage plugin
 
@@ -68,5 +68,5 @@ suitable for production use.
 
 ## Next Steps
 
-- [Configuration File Format](/configuration/)
-- [Available Plugins](/plugins/#available-plugins)
+- [Configuration File Format](/docs/configuration/configuration/)
+- [Available Plugins](/plugins/)

@@ -76,4 +76,4 @@ See the [Search Guide][search-guide] on how to search for available mixins and/o
 add your own to the list.
 
 [mk]: /src/mixin.mk
-[search-guide]: /package-search
+[search-guide]: /package-search/

@@ -13,16 +13,15 @@ you are writing a mixin in Go, we strongly recommend starting from the template.
 
 **Required Commands**
 
-- [build](#build)
-- [schema](#schema)
-- [install](#install)
-- [upgrade](#upgrade)
-- [uninstall](#uninstall)
+* [build](#build)
+* [schema](#schema)
+* [install](#install)
+* [upgrade](#upgrade)
+* [uninstall](#uninstall)
 
 **Optional Commands**
 
 * [invoke](#invoke)
-
 
 ## build
 
