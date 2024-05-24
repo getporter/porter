@@ -20,6 +20,7 @@ IgnoreURLs:
   - ^/v\d\.
   - ^/latest/
   - ^/community/src/
-  - http://localhost:1313/docs
+  - ^http://localhost:1313/docs$
+  - ^https://marketplace.visualstudio.com/items\?itemName=getporter.porter-vscode$
 IgnoreAltMissing: true
 IgnoreInternalEmptyHash: true

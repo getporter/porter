@@ -5,7 +5,7 @@
 # hugo https://github.com/peaceiris/actions-hugo
 # upload test results https://github.com/actions/upload-artifact
 
-name: check-doc-links
+name: Check Website Links
 
 on: pull_request
 jobs:
