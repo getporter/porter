@@ -22,7 +22,7 @@ storage:
     timeout: 10 # time in seconds
 ```
 
-[config file]: /configuration/#config-file
+[config file]: /docs/configuration/configuration/#config-file
 
 ## Config Parameters
 

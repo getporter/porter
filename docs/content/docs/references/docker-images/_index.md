@@ -9,6 +9,6 @@ you for your CI pipelines and in other situations where you can't install Porter
 locally, such as workshops.
 
 {{< cards >}}
-{{< card link="agent" title="Porter Agent Docker Image" >}}
-{{< card link="client" title="Porter Client Docker Image" >}}
+{{< card link="agent/" title="Porter Agent Docker Image" >}}
+{{< card link="client/" title="Porter Client Docker Image" >}}
 {{< /cards >}}

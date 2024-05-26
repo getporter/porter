@@ -105,4 +105,4 @@ maintainer to admin.
 <p align="center">Sound like fun? 👍 Join us!</p>
 
 [contribution ladder]: /src/CONTRIBUTION_LADDER.md
-[Slack]: /community#slack
+[Slack]: /community/#slack

@@ -58,7 +58,7 @@ The user running the bundle, and Porter, needs to know that this bundle
 requires the local Docker daemon connected to the bundle. We have added a new
 section to porter.yaml for required extensions, and defined a new prototype
 extension that says that the bundle [requires access to a Docker
-daemon](/author-bundles/#docker):
+daemon](/docs/bundle/manifest/#docker):
 
 ```yaml
 required:
@@ -99,7 +99,63 @@ install:
 In my porter.yaml, I can use the docker mixin to execute docker commands
 in my bundle:
 
-<script src="https://gist-it.appspot.com/https://github.com/getporter/examples/blob/main/docker/porter.yaml"></script>
+```yaml
+schemaVersion: 1.0.0-alpha.1
+name: examples/whalesay
+version: 0.2.0
+description: "An example bundle that uses docker through the magic of whalespeak"
+registry: ghcr.io/getporter
+
+required:
+  - docker
+
+parameters:
+  - name: msg
+    description: a message for the whales to speak
+    type: string
+    default: "whale hello there!"
+    applyTo:
+      - say
+
+mixins:
+  - docker
+
+install:
+  - docker:
+      run:
+        image: "docker/whalesay:latest"
+        rm: true
+        arguments:
+          - cowsay
+          - Hello World
+      
+upgrade:
+  - docker:
+      run:
+        image: "docker/whalesay:latest"
+        rm: true
+        arguments:
+          - cowsay
+          - World 2.0
+
+say:
+  - docker:
+      run:
+        image: "docker/whalesay:latest"
+        rm: true
+        arguments:
+          - cowsay
+          - "{{ bundle.parameters.msg }}"
+
+uninstall:
+  - docker:
+      run:
+        image: "docker/whalesay:latest"
+        rm: true
+        arguments:
+          - cowsay
+          - Goodbye World
+```
 
 After I have tested the bundle, I used `porter publish` to push it up to `ghcr.io/getporter/examples/whalesay:v0.2.0`.
 
@@ -107,7 +163,7 @@ After I have tested the bundle, I used `porter publish` to push it up to `ghcr.i
 
 Now that the bundle is ready to use, the user running the bundle needs to
 give the bundle elevated permission with the [Allow Docker Host
-Access](/configuration/#allow-docker-host-access) setting. This
+Access](/docs/configuration/configuration/#allow-docker-host-access) setting. This
 is because giving a container access to the host's Docker socket, or running a
 container with `--privileged`, has security implications for the underlying host,
 and should only be given to trusted containers, or in this case trusted bundles.

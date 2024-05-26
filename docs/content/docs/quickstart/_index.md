@@ -120,8 +120,8 @@ $ porter uninstall porter-hello
 Now you've seen the basics to install, upgrade or uninstall a bundle.
 From here, you can dive into what a bundle is - or create your own!
 
-- [Next: What is a Bundle?](/quickstart/bundles/)
-- [Next: Create my own bundle](/getting-started/create-a-bundle/)
-- [Learn more about use cases for bundles](/learning/#the-devil-is-in-the-deployments-bundle-use-cases)
+- [Next: What is a Bundle?](/docs/quickstart/bundles/)
+- [Next: Create my own bundle](/docs/getting-started/create-bundle/)
+- [Learn more about use cases for bundles](/docs/learn/#the-devil-is-in-the-deployments-bundle-use-cases)
 
 

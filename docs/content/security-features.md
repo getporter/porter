@@ -58,7 +58,7 @@ Porter builds and runs the bundle with a non-root user, limiting the container's
 
 Here is an explanation of [why you do not want to run containers as root](https://medium.com/@mccode/processes-in-containers-should-not-run-as-root-2feae3f0df3b).
 
-The [Custom Dockerfile](/bundle/custom-dockerfile/) documentation has more information about writing a bundle to work when run as a non-root user.
+The [Custom Dockerfile](/docs/bundle/custom-dockerfile/) documentation has more information about writing a bundle to work when run as a non-root user.
 
 ## IronBank distributed artifacts
 
@@ -75,9 +75,9 @@ But by default, that foot gun is disabled.
 
 # See Also
 
-* [Distribute Bundles](/distribute-bundles/)
-* [Airgapped Deployments](/references/examples/airgap/)
+* [Distribute Bundles](/distributing-bundles/)
+* [Airgapped Deployments](/docs/references/examples/airgap/)
 * [Blog: Upgrade your plugins to securely store sensitive data](/blog/persist-sensitive-data-safely/)
 
-[credential sets]: /introduction/concepts-and-components/intro-credentials/#credential-sets
+[credential sets]: /docs/introduction/concepts-and-components/intro-credentials/#credential-sets
 [secrets plugins]: /plugins/types/#secrets

@@ -448,5 +448,5 @@ The friendly cloud installer that bootstraps your bundles using tools and assets
 [cnab]: https://cnab.io
 [cnab-slack]: https://cnab.io/community-meetings/#communications
 [porter]: /
-[contribute]: /docs/contribute
-[porter-slack]: /community
+[contribute]: /docs/contribute/
+[porter-slack]: /community/
