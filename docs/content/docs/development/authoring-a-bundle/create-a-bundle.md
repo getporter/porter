@@ -27,7 +27,7 @@ You must [install Porter], and optionally can use the [Porter Visual Studio Code
 
 ## Create a Bundle
 
-Use the [porter create](/cli/porter_create) command to scaffold a new bundle in the current directory.
+Use the [porter create](/cli/porter_create/) command to scaffold a new bundle in the current directory.
 The directory containing the files for the bundle is called the **bundle directory**.
 The generated bundle is very similar to the [hello example bundle] and prints out "Hello World" when installed.
 It does not allocate any resources and is safe to run and uninstall when you are finished.
@@ -181,16 +181,16 @@ $ porter explain ghcr.io/getporter/porter-hello:v0.2.0
 
 Now that you know how to create a bundle, here are some more detailed topics on how to customize and distribute it:
 
-- [Control how your bundle's image is built with a custom Dockerfile](/bundle/custom-dockerfile/)
+- [Control how your bundle's image is built with a custom Dockerfile](/docs/bundle/custom-dockerfile/)
 - [Customize your Porter manifest, porter.yaml][manifest]
 - [Porter Manifest File Format](/bundle/manifest/file-format/)
-- [Best Practices for the exec Mixin](/best-practices/exec-mixin/)
-- [Understand how bundles are distributed](/development/authoring-a-bundle/distribute-bundles/)
+- [Best Practices for the exec Mixin](/docs/best-practices/exec-mixin/)
+- [Understand how bundles are distributed](/docs/development/authoring-a-bundle/distribute-bundles/)
 
 [install Porter]: /install/
 [Porter Visual Studio Code]: https://marketplace.visualstudio.com/items?itemName=getporter.porter-vscode
 [hello example bundle]: /examples/hello/
-[manifest]: /bundle/manifest/
+[manifest]: /docs/bundle/manifest/
 [local-registry]: https://docs.docker.com/registry/deploying/#run-a-local-registry
 [porter create]: /cli/porter_create/
 [porter build]: /cli/porter_build/
@@ -202,8 +202,8 @@ Now that you know how to create a bundle, here are some more detailed topics on 
 [Mixins]: /mixins/
 [create a custom mixin]: /mixin-dev-guide/
 [terraform mixin]: /mixins/terraform/
-[do not embed bash commands]: /best-practices/exec-mixin/
+[do not embed bash commands]: /docs/best-practices/exec-mixin/
 [ignore-errors]: /blog/ignoring-errors/
 [compatible registries]: /compatible-registries/
-[custom Dockerfile]: /bundle/custom-dockerfile/
+[custom Dockerfile]: /docs/bundle/custom-dockerfile/
 [Buildkit]: https://docs.docker.com/develop/develop-images/build_enhancements/

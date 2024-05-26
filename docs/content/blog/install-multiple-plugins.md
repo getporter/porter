@@ -40,7 +40,7 @@ installed azure plugin v1.0.1 (e361abc)
 installed kubernetes plugin v1.0.1 (f01c944)
 ```
 
-Make sure to update your current plugins schema file to the [latest format](/reference/file-formats/#plugins) 
+Make sure to update your current plugins schema file to the [latest format](/docs/references/file-formats/plugins/) 
 Please [let us know][contact] how the change went (good or bad), and we are happy to help if you have questions, or you would like help with your migration.
 
 [announced]: https://github.com/docker/roadmap/issues/209

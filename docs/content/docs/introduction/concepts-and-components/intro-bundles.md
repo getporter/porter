@@ -65,4 +65,4 @@ uninstall:
 ## Next Steps
 
 - Learn more about Bundles - TODO
-- [Introduction to Parameters](/docs/introduction/concepts-and-components/intro-parameters)
+- [Introduction to Parameters](/docs/introduction/concepts-and-components/intro-parameters/)

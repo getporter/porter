@@ -224,7 +224,7 @@ Use the trace and logs configuration sections below to configure how logs and te
 
 #### Logs
 
-Porter can be configured to [write a logfile for each command](/administrators/diagnostics/#logs).
+Porter can be configured to [write a logfile for each command](/docs/administration/collect-diag-porter/#logs).
 
 The following log settings are available:
 
@@ -274,7 +274,7 @@ telemetry:
 ### Dependencies v2
 
 The `dependencies-v2` experimental flag is not yet implemented.
-When it is completed, it is used to activate the features from [PEP003 - Advanced Dependencies](https://github.com/getporter/proposals/blob/main/pep/003-dependency-namespaces-and-labels.md).
+When it is completed, it is used to activate the features from [PEP003 - Advanced Dependencies](https://github.com/getporter/proposals/blob/main/pep/003-advanced-dependencies.md).
 
 ### Full control Dockerfile
 

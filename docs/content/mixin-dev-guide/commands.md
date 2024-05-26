@@ -18,15 +18,12 @@ you are writing a mixin in Go, we strongly recommend starting from the template.
 * [install](#install)
 * [upgrade](#upgrade)
 * [uninstall](#uninstall)
-* [version](#version)
 
 **Optional Commands**
 
 * [invoke](#invoke)
-* [lint](#lint)
 
-
-# build
+## build
 
 The build command (required) is called on the local machine during the `porter
 build` command. Any mixin configuration and all usages of the mixin are passed
@@ -59,7 +56,7 @@ RUN apt-get update && apt-get install -y azure-cli
 RUN az extension add --name azure-cli-iot-ext 
 ```
 
-# schema
+## schema
 
 The schema command (required) is used in multiple porter commands, such as
 `porter schema`, `porter build` and `porter run`. The mixin should return a json
@@ -210,7 +207,7 @@ the action, e.g. "install", and a definition named `<action>Step`, e.g.
 *schemas. So write your references relative to your mixin's schema document, and
 *porter will take care of adjusting it when the schema is merged.
 
-# install
+## install
 
 The install command (required) is called from inside the invocation image during
 the `porter run` command. The current step from the manifest is passed on stdin.
@@ -244,7 +241,7 @@ topsecret
 alsotopsecret
 ```
 
-# upgrade
+## upgrade
 
 The upgrade command (required) is called from inside the invocation image during
 the `porter run` command. The current step from the manifest is passed on stdin.
@@ -277,7 +274,7 @@ topsecret
 updatedtopsecret
 ```
 
-# uninstall
+## uninstall
 
 The uninstall command (required) is called from inside the invocation image during
 the `porter run` command. The current step from the manifest is passed on stdin.
@@ -294,7 +291,7 @@ uninstall:
       - ${ bundle.parameters.mysql-name }
 ```
 
-# invoke
+## invoke
 
 The invoke command (optional) is called from inside the invocation image during
 the `porter run` command when a custom action defined in the bundle is executed.
@@ -318,7 +315,7 @@ status:
       c: echo "Don't mind me, just getting the status of something..."
 ```
 
-# version
+## version
 
 The version command (required) is used by porter during `porter build` and when
 listing installed mixins via `porter mixins list`. It should support an

@@ -1,0 +1,44 @@
+
+# Test docs/ links are valid.
+# 
+# htmltest https://github.com/wjdp/htmltest-action/
+# hugo https://github.com/peaceiris/actions-hugo
+# upload test results https://github.com/actions/upload-artifact
+
+name: Check Website Links
+on: pull_request
+
+env:
+  GOVERSION: 1.21.3
+
+jobs:
+  htmltest:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          submodules: true  # Fetch Hugo themes (true OR recursive)
+          fetch-depth: 0    # Fetch all history for .GitInfo and .Lastmod
+
+      - uses: actions/setup-go@v4
+        with:
+          go-version: "${{ env.GOVERSION }}" # The Go version to download (if necessary) and use.
+          cache: true
+            
+      - name: Set up Hugo
+        uses: peaceiris/actions-hugo@v2
+        with:
+          hugo-version: '0.117.0'
+          extended: true
+
+      - name: Build website
+        run: go run mage.go -v Docs
+
+      - name: Run htmltest
+        uses: wjdp/htmltest-action@master
+        with:
+          path: docs/public
+          config: docs/.htmltest.yml

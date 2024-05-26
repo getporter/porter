@@ -3,7 +3,7 @@ title: Parameters, Credentials, Outputs, and Images in Porter
 description: How to wire parameters, credentials and outputs into steps
 ---
 
-In the Porter manifest, you can declare both parameters and credentials. In addition to providing a mechanism for declaring parameters and credentials at the bundle level, Porter provides a way to declare how each of these are provided to [mixins][mixin-architecture]. This mechanism is also applicable to declaring how output from one mixin can be passed to another, as well as how to consume parameters, credentials and outputs from bundle dependencies. Finally, you can also use this technique to reference images defined in the `images` section of the manifest.
+In the Porter manifest, you can declare both parameters and credentials. In addition to providing a mechanism for declaring parameters and credentials at the bundle level, Porter provides a way to declare how each of these are provided to mixins. This mechanism is also applicable to declaring how output from one mixin can be passed to another, as well as how to consume parameters, credentials and outputs from bundle dependencies. Finally, you can also use this technique to reference images defined in the `images` section of the manifest.
 
 * [Wiring Installation Metadata](#wiring-installation-metadata)
 * [Parameters](#parameters)
@@ -89,7 +89,7 @@ The syntax to pass a parameter to porter is the same for both regular and file p
 $ porter install --param mytar=./my.tar.gz
 ```
 
-See the [Parameters section of the Author Bundles doc](/author-bundles#parameters) for additional examples and configuration.
+See the [Parameters section of the Author Bundles doc](/docs/bundle/manifest/#parameters) for additional examples and configuration.
 
 ## Wiring Parameters
 
@@ -420,7 +420,7 @@ install:
     mariadb.enabled: false
 ```
 
-For more information on how dependencies are handled, refer to the [dependencies](/development/authoring-a-bundle/working-with-dependencies/) documentation.
+For more information on how dependencies are handled, refer to the [dependencies](/docs/development/authoring-a-bundle/working-with-dependencies/) documentation.
 
 ## Combining References
 
@@ -438,6 +438,5 @@ install:
       jdbc_url: "jdbc:mysql://${ bundle.outputs.mysql_host }:${ bundle.outputs.mysql_port }/${ bundle.parameters.database_name }
 ```
 
-[mixin-architecture]: /mixin-dev-guide/architecture/
-[credentials]: /credentials/
-[parameters]: /parameters/
+[credentials]: /docs/introduction/concepts-and-components/intro-credentials/
+[parameters]: /docs/introduction/concepts-and-components/intro-parameters/

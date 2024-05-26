@@ -11,4 +11,4 @@ aliases:
 - [Parameter Sets](./parameter-set/)
 - [Installation](./installation/)
 - [Plugins](./plugins/)
-- [Porter Operator File Formats](/operator/file-formats/)
+- [Porter Operator File Formats](/docs/operator/file-formats/)

@@ -21,7 +21,7 @@ You can find a review of 2022 and our high level plans for 2023 in our [Porter A
 
 ### Porter Operator
 
-The [Porter Operator](/operator/) is a Kubernetes operator that runs bundles on your cluster. With the operator you can:
+The [Porter Operator](/docs/operator/) is a Kubernetes operator that runs bundles on your cluster. With the operator you can:
 
 * Automate running bundles on Kubernetes
 * Upgrade to new versions of bundles when they are released
@@ -31,11 +31,11 @@ Many users, especially adopters with large-scale Porter deployments, are eagerly
 We made great progress on the operator last year and our [v1 milestone](https://github.com/getporter/operator/milestone/1) outlines the remaining work necessary for a stable release.
 
 The operator is ready to try out and we would love your feedback!
-We have a [quickstart](/operator/quickstart/) that walks you through installing the operator and running a bundle. Give it a shot and let us know what you think.
+We have a [quickstart](/docs/operator/quickstart/) that walks you through installing the operator and running a bundle. Give it a shot and let us know what you think.
 
 ### Advanced Dependencies
 
-Porter plans to support advanced workflows and dependency scenarios ([PEP003](https://github.com/getporter/proposals/blob/main/pep/003-dependency-namespaces-and-labels.md)), where users can define bundles that have a complex dependency graph.
+Porter plans to support advanced workflows and dependency scenarios ([PEP003](https://github.com/getporter/proposals/blob/main/pep/003-advanced-dependencies.md)), where users can define bundles that have a complex dependency graph.
 Dependencies may be an interface such as requiring a MySQL database whether it came from a dedicated server, a Helm chart, or a database as a service from a cloud provider.
 Dependencies may also be resolved to existing installations of bundles, such as a shared dev database or a redis instance for the staging environment.
 

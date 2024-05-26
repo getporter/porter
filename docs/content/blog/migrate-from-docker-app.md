@@ -32,9 +32,52 @@ We will use the [docker-compose mixin] to migrate an existing Docker App to Port
 1. Create a porter.yaml file in the same directory as your docker app next to the docker-compose.yaml.
     Copy into porter.yaml the contents below.
 
-    <script src="https://gist-it.appspot.com/https://github.com/getporter/porter/blob/main/examples/dockerapp/porter.yaml"></script>
+    ```yaml
+    schemaVersion: 1.0.0-alpha.1
+    name: examples/dockerapp
+    version: 0.2.0
+    description: "An example bundle that demonstrates how to move from Docker App to Porter"
+    registry: ghcr.io/getporter
 
-1. Open metadata.yaml from your docker app.
+    required:
+    - docker:
+        privileged: false # Change to true if you need privileged containers
+
+    parameters:
+    - name: hello_text
+      type: string
+      env: hello_text
+      default: hello from porter
+    - name: hello_port
+      type: integer
+      env: hello_port
+      default: 8080
+    - name: context
+      type: string
+      default: default
+
+    mixins:
+    - docker-compose
+
+    install:
+    - docker-compose:
+        arguments:
+        - up
+        - -d
+
+    upgrade:
+    - docker-compose:
+        arguments:
+        - up
+        - -d
+
+    uninstall:
+    - docker-compose:
+        arguments:
+        - down
+    ```
+
+2. Open metadata.yaml from your docker app.
 
     ```yaml
     version: 0.1.0
@@ -45,7 +88,7 @@ We will use the [docker-compose mixin] to migrate an existing Docker App to Port
         email: mariagomez@example.com
     ```
 
-1. Open porter.yaml and copy the version, name, and description values into porter.yaml into the corresponding fields.
+3. Open porter.yaml and copy the version, name, and description values into porter.yaml into the corresponding fields.
     Porter doesn't have a field for maintainers, so that doesn't need to be migrated.
 
     ```yaml
@@ -54,7 +97,7 @@ We will use the [docker-compose mixin] to migrate an existing Docker App to Port
     description: My amazing docker app
     ```
 
-1. Open your parameters.yaml. Add each parameter to porter's parameters field.
+4. Open your parameters.yaml. Add each parameter to porter's parameters field.
     If your parameter used a period or other characters that are not allowed in an environment variable name, replace that character with an acceptable substitute such as underscore _.
     Update your docker-compose.yaml to use any of the newly renamed parameters.
 
@@ -78,7 +121,7 @@ We will use the [docker-compose mixin] to migrate an existing Docker App to Port
       default: 8080
     ```
 
-1. Install the bundle with `porter install --allow-docker-host-access`.
+5. Install the bundle with `porter install --allow-docker-host-access`.
    The `--allow-docker-host-access` flag is required so that the bundle can communicate with the docker host.
   
     Porter supports the [DOCKER_HOST and DOCKER_CONTEXT environment variables](https://www.docker.com/blog/how-to-deploy-on-remote-docker-hosts-with-docker-compose/).
@@ -94,7 +137,7 @@ We will use the [docker-compose mixin] to migrate an existing Docker App to Port
     execution completed successfully!
     ```
 
-1. Confirm that your application was deploy with `docker ps`.
+6. Confirm that your application was deploy with `docker ps`.
 
     ```console
     $ docker ps
@@ -102,7 +145,7 @@ We will use the [docker-compose mixin] to migrate an existing Docker App to Port
     c5428e359333   hashicorp/http-echo   "/http-echo -text 'h…"   27 minutes ago   Up 27 minutes   0.0.0.0:8080->5678/tcp, :::8080->5678/tcp   app_hello_1
     ```
 
-1. You can view your installations with `porter list`:
+7. You can view your installations with `porter list`:
   
     ```console
     $ porter list
@@ -110,7 +153,7 @@ We will use the [docker-compose mixin] to migrate an existing Docker App to Port
     my-docker-app        28 minutes ago   28 minutes ago   install       succeeded
     ```
 
-1. Let's look at the details of your migrated application with `porter show`.
+8. Let's look at the details of your migrated application with `porter show`.
     The output tells us that it was installed successfully and shows the history of changes made to the installation.
 
     ```console
@@ -133,11 +176,11 @@ We will use the [docker-compose mixin] to migrate an existing Docker App to Port
       01F4YMH7AETP2P38Y81YVQ5TJS  install  28 minutes ago  succeeded  true
     ```
 
-1. So far we have been working inside the "developer iteration loop", where you can edit the bundle on your local filesystem and deploy it to your developer environment to test it.
+9. So far we have been working inside the "developer iteration loop", where you can edit the bundle on your local filesystem and deploy it to your developer environment to test it.
     Once the bundle is stable, the next step is to publish it to an OCI registry so that others can install your bundle using its reference.
     All of the porter commands accept a flag, \--reference, for example `porter install --reference ghcr.io/getporter/examples/porter-hello:v0.2` so that you do not need to distribute the bundle files themselves.
 
-1. When you are ready to share your bundle with others, select which OCI registry where you will host the bundle, for example, `ghcr.io/getporter` or on Docker Hub under your username `carolynvs`.
+10. When you are ready to share your bundle with others, select which OCI registry where you will host the bundle, for example, `ghcr.io/getporter` or on Docker Hub under your username `carolynvs`.
     Edit your porter.yaml and set the registry field to the destination registry.
   
     ```yaml
@@ -147,7 +190,7 @@ We will use the [docker-compose mixin] to migrate an existing Docker App to Port
     registry: carolynvs
     ```
   
-1. Publish your bundle to the destination registry with `porter publish`.
+11. Publish your bundle to the destination registry with `porter publish`.
 
     ```console
     $ porter publish
@@ -180,7 +223,7 @@ We will use the [docker-compose mixin] to migrate an existing Docker App to Port
     The last line of the output prints the full reference to the published bundle, in this case `docker.io/carolynvs/my-docker-app:v0.1.0`.
     You can use or omit the docker.io registry depending on your preference.
 
-1. Now that your bundle is published, let's install it.
+12. Now that your bundle is published, let's install it.
     First change your current directory in your terminal to leave the directory containing your bundle's source code.
     We are going to install the bundle again, this time using the published bundle.
 
@@ -196,21 +239,21 @@ We will use the [docker-compose mixin] to migrate an existing Docker App to Port
     $ porter install my-app --reference carolynvs/my-docker-app:v0.1.0
     ```
 
-1. Oops! You made a mistake in your original bundle and need to fix it.
+13. Oops! You made a mistake in your original bundle and need to fix it.
     Open your porter.yaml file and increase the version number.
 
     ```
     version: 0.1.1
     ```
 
-1. Rebuild the bundle and publish the new version.
+14. Rebuild the bundle and publish the new version.
 
     ```
     porter build
     porter publish
     ```
 
-1. You can use `porter upgrade` to upgrade the installation to the latest version, specifying the newly published version of your bundle.
+15. You can use `porter upgrade` to upgrade the installation to the latest version, specifying the newly published version of your bundle.
 
     ```
     $ porter upgrade my-app --reference YOUR_UPDATED_BUNDLE_REFERENCE --allow-docker-host-access
@@ -223,7 +266,7 @@ We will use the [docker-compose mixin] to migrate an existing Docker App to Port
 
     You can configure Porter to always [allow Docker host access] so that you do not need to set it with a flag on every command.
 
-1. Once you are done, uninstall the bundle with `porter uninstall`.
+16. Once you are done, uninstall the bundle with `porter uninstall`.
   
     ```
     porter uninstall my-app
@@ -236,5 +279,5 @@ Please [let us know][contact] how the migration went (good or bad), and we are h
 [announced]: https://github.com/docker/roadmap/issues/209
 [Install Porter]: /install/
 [docker-compose mixin]: /mixins/docker-compose/
-[allow Docker host access]: /configuration/#allow-docker-host-access
+[allow Docker host access]: /docs/configuration/configuration/#allow-docker-host-access
 [contact]: /community/

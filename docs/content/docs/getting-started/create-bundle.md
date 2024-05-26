@@ -3,6 +3,7 @@ title: Create a Bundle
 aliases:
 - /getting-started/create-bundle.md
 - /getting-started/create-a-bundle/
+- /bundle/create/
 description: Create a bundle with Porter
 weight: 3
 ---
@@ -40,7 +41,7 @@ When writing a bundle, it's best to have figured out the workflow to perform the
    creating porter configuration in the current directory
    ```
 
-   The [porter create](/cli/porter_create) creates the scaffolding for a new bundle in the *current directory*.
+   The [porter create](/cli/porter_create/) creates the scaffolding for a new bundle in the *current directory*.
    This makes your current directory a bundle directory. The directory containing the files for the bundle is called the **bundle directory**.
    The generated bundle is very similar to the [hello example bundle] and prints out "Hello World" when installed.
    It does not allocate any resources and is safe to run and uninstall when you are finished.
@@ -364,7 +365,7 @@ The \--force flag is only safe to use in development, and it allows you to incre
 
 [install Porter]: /install/
 [Porter Visual Studio Code]: https://marketplace.visualstudio.com/items?itemName=getporter.porter-vscode
-[hello example bundle]: /references/examples/hello/
+[hello example bundle]: /docs/references/examples/hello/
 [manifest]: /bundle/manifest/
 [local-registry]: https://docs.docker.com/registry/deploying/#run-a-local-registry
 [porter create]: /cli/porter_create/
@@ -377,7 +378,7 @@ The \--force flag is only safe to use in development, and it allows you to incre
 [Mixins]: /mixins/
 [create a custom mixin]: /mixin-dev-guide/
 [terraform mixin]: /mixins/terraform/
-[do not embed bash commands]: /best-practices/exec-mixin/
+[do not embed bash commands]: /docs/best-practices/exec-mixin/
 [ignore-errors]: /blog/ignoring-errors/
 [compatible registries]: /compatible-registries/
 [custom Dockerfile]: /bundle/custom-dockerfile/
