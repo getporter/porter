@@ -196,7 +196,7 @@ $ porter credentials apply plugins-tutorial.json
 Applied /plugins-tutorial credential set
 ```
 
-For more information on how to use `porter credentials` commands, take a look at our [credentials quickstart guide](/quickstart/credentials).
+For more information on how to use `porter credentials` commands, take a look at our [credentials quickstart guide](/quickstart/credentials/).
 
 Now we are ready to install the bundle and pass it our generated credentials. 🎉
 Porter is using the Azure plugin to inject the password credential from Azure

@@ -10,7 +10,7 @@ aliases:
 
 When you are authoring a bundle, you can define parameters that are required by
 your bundle. These parameters are restricted to a list of [allowable data
-types](/docs/bundle/manifest) and are used to define parameters such as
+types](/docs/bundle/manifest/) and are used to define parameters such as
 username and password values for a backing database, or the region that a
 certain resource should be deployed in, etc. Then in your action's steps you can
 reference the parameters using porter's template language `${
@@ -40,10 +40,10 @@ can have a secret source (`secret`). See the [secrets
 plugin docs](/plugins/types/#secrets) to learn how to configure Porter to use
 an external secret store.
 
-Parameter Sets are created using the combination of [porter parameters create](/docs/references/cli/parameters/create)
-and [porter parameters apply](/docs/references/cli/parameters/apply).
-Afterwards a parameter set can be [edited](/docs/references/cli/parameters/edit) if changes are required.
-See [porter parameters help](/docs/references/cli/parameters) for all available commands.
+Parameter Sets are created using the combination of [porter parameters create](/cli/porter_parameters_create/)
+and [porter parameters apply](/cli/porter_parameters_apply/).
+Afterwards a parameter set can be [edited](/cli/porter_parameters_edit/) if changes are required.
+See [porter parameters help](/cli/porter_parameters/) for all available commands.
 
 Now when you execute the bundle you can pass the name of the parameter set to
 the command using the `--parameter-set` or `-p` flag, e.g.
@@ -74,7 +74,7 @@ to handle sensitive data.
 The bundle author may have decided to supply a default value for a given
 parameter as well. This value would be used when neither a user-specified
 value nor a parameter set value is supplied. See the `Parameters` section in
-the [Author Bundles](/docs/bundle/manifest) doc for more info.
+the [Author Bundles](/docs/bundle/manifest/) doc for more info.
 
 ## Q & A
 
@@ -83,9 +83,9 @@ the [Author Bundles](/docs/bundle/manifest) doc for more info.
 See the helpful explanation in the [credentials](/docs/introduction/concepts-and-components/intro-credentials/) doc, which
 applies to parameter sources as well.
 
-[create]: /docs/references/cli/parameters/create/
-[apply]: /docs/references/cli/parameters/apply/
-[edit]: /docs/references/cli/parameters/edit/
+[create]: /cli/porter_parameters_create/
+[apply]: /cli/porter_parameters_apply/
+[edit]: /cli/porter_parameters_edit/
 
 ## Related
 

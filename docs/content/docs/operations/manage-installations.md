@@ -74,4 +74,4 @@ With a GitOps workflow, you define the desired state of your applications and in
 [porter upgrade]: /cli/porter_upgrade/
 [porter uninstall]: /cli/porter_uninstall/
 [porter installation apply]: /cli/porter_installations_apply/
-[Porter Operator]: /operator/
+[Porter Operator]: /docs/operator/

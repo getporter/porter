@@ -26,7 +26,7 @@ to get all the materials ready.
   git clone https://github.com/getporter/porter.git
   cd porter/workshop
   ```
-* [Install Porter](/install)
+* [Install Porter](/install/)
 * Create a [Docker Hub](https://hub.docker.com/signup) account if you don't have one
 * Create a Kubernetes Cluster on [macOS](https://docs.docker.com/docker-for-mac/kubernetes/) or [Windows](https://docs.docker.com/docker-for-windows/kubernetes/)
 
@@ -1305,7 +1305,7 @@ Example tag of `cnabaholic/hello-people:latest`:
   * A new manifest list for the bundle credentials and parameters.
 * When pulling a bundle, it reconstructs it from the parts mentioned above
 
-See [OCI Bundle Format](/oci-bundle-format) for an example.
+See [OCI Bundle Format](/oci-bundle-format/) for an example.
 
 ---
 class: center, middle

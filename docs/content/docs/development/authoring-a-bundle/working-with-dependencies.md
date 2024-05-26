@@ -194,4 +194,4 @@ transitive dependencies, are ignored. See [Design: Dependency Graph Resolution](
 for our backlog item tracking this feature. We do plan to support it!
 
 [example]: /src/build/testdata/bundles/wordpress/porter.yaml
-[parameter-set]: /parameters#parameter-sets
+[parameter-set]: /docs/introduction/concepts-and-components/intro-parameters/#parameter-sets

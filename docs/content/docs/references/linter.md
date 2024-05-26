@@ -19,7 +19,7 @@ Using embedded Bash scripts can be problematic because they can be difficult to 
 
 To fix the problem indicated by the exec-100 warning, you can try replacing any embedded Bash scripts in your exec mixins with scripts.
 
-You can find more information about best practices for using the exec mixin on the Porter website at the following URL: https://porter.sh/best-practices/exec-mixin/#use-scripts.
+You can find more information about best practices for using the exec mixin on the Porter website at the following URL: https://porter.sh(/docs/best-practices/exec-mixin/)#use-scripts.
 
 ## porter-100
 
