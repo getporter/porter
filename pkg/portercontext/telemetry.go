@@ -22,7 +22,6 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 	"go.opentelemetry.io/otel/trace/noop"
 	"go.uber.org/zap"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
 
@@ -126,7 +125,7 @@ func (c *Context) createTraceClient(cfg LogConfiguration) (otlptrace.Client, err
 
 	switch cfg.TelemetryProtocol {
 	case "grpc":
-		opts := []otlptracegrpc.Option{otlptracegrpc.WithDialOption(grpc.WithBlock())}
+		opts := []otlptracegrpc.Option{}
 		if cfg.TelemetryEndpoint != "" {
 			opts = append(opts, otlptracegrpc.WithEndpoint(cfg.TelemetryEndpoint))
 		}
