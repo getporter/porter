@@ -18,7 +18,7 @@ Below are schema versions for installations, and the corresponding Porter versio
 Sometimes you may want to work with a different version of a resource than what is supported by Porter, especially when migrating from one version of Porter to another.
 The [schema-check] configuration setting allows you to change how Porter behaves when the schemaVersion of a resource doesn't match Porter's supported version.
 
-[schema-check]: /configuration/#schema-check
+[schema-check]: /docs/configuration/configuration/#schema-check
 
 ## Example
 

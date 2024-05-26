@@ -78,7 +78,7 @@ You can also specify the version of the mixin by adding the version flag. For ex
 run: porter mixins install az --version v0.4.2
 ```
 
-Take a look at the [documentation](/mixins) to see all available mixins and how to know what command to run to install them. The documentation provides install commands for each mixin. The command `porter mixin search` lists all the mixins created by the community. Depending on if the URL is an atom feed or a github url you can install the mixin using
+Take a look at the [documentation](/mixins/) to see all available mixins and how to know what command to run to install them. The documentation provides install commands for each mixin. The command `porter mixin search` lists all the mixins created by the community. Depending on if the URL is an atom feed or a github url you can install the mixin using
 
 ```yaml
 porter mixins install NAME --feed-url ATOM_URL
@@ -111,7 +111,7 @@ If you are not the only one contributing to the repository and other contributor
 
 ### Use credential files
 
-If you were using credentials in your bundle, you will need to set up a credential file in your repository to use with your workflow. For example, if you run `porter credentials create mybun.json`, a JSON file named mybun.json is created. The resulting [credential set template file](/reference/file-formats/#credential-set) (which does not contain any sensitive credentials) is located in the current directory. You can run `porter credentials apply mybun.json` to apply the changes. If the specified credential set already exists, the changes will override the existing credential set, otherwise the apply command will create a new credential set. Then, to install your bundle with the newly created credential set, you would run the following:
+If you were using credentials in your bundle, you will need to set up a credential file in your repository to use with your workflow. For example, if you run `porter credentials create mybun.json`, a JSON file named mybun.json is created. The resulting [credential set template file](/docs/references/file-formats/credential-set/) (which does not contain any sensitive credentials) is located in the current directory. You can run `porter credentials apply mybun.json` to apply the changes. If the specified credential set already exists, the changes will override the existing credential set, otherwise the apply command will create a new credential set. Then, to install your bundle with the newly created credential set, you would run the following:
 
 ```yaml
 porter install -c <name-of-the-credential-set>

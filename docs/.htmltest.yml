@@ -1,0 +1,26 @@
+IgnoreURLs:
+  - ^/forum$
+  - ^/zoom/dev/$
+  - ^/dev-meeting
+  - ^/calendar/$
+  - ^/find-issue
+  - ^/board/
+  - ^/roadmap
+  - ^/src
+  - ^/examples
+  - ^/forum
+  - ^/packages
+  - ^/schema/
+  - ^/docker-mixin/src
+  - ^/mailing-list/$
+  - ^/videos/?$
+  - ^/devstats/$
+  - ^/twitter/$
+  - ^/slack/?$
+  - ^/v\d\.
+  - ^/latest/
+  - ^/community/src/
+  - ^http://localhost:1313/docs$
+  - ^https://marketplace.visualstudio.com/
+IgnoreAltMissing: true
+IgnoreInternalEmptyHash: true

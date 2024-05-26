@@ -2,6 +2,8 @@
 title: Migrate from Porter v0 to v1
 description: How to prepare for and migrate Porter's data
 weight: 2
+aliases:
+  - /storage-migrate
 ---
 
 Porter's data storage backend and format are changing from v0 to v1.0.
@@ -49,7 +51,7 @@ Here are secret plugins that we recommend for production use:
 - [Kubernetes Secrets](/plugins/kubernetes/#secrets)
 - [Hashicorp Vault](/plugins/hashicorp/)
 
-For more information on why a secrets plugin is required, and step-by-step instructions to configure one, see [Upgrade your plugins to securely store sensitive data](/blog/persist-sensitive-data-safely).
+For more information on why a secrets plugin is required, and step-by-step instructions to configure one, see [Upgrade your plugins to securely store sensitive data](/blog/persist-sensitive-data-safely/).
 
 ## 4. Configure a Storage Plugin
 
@@ -115,7 +117,7 @@ porter storage migrate --old-home ~/.porterv0 [--old-account ACCOUNT_NAME] [--na
 The only required flag is \--old-home, which you should set to the location where you moved your v0 PORTER_HOME directory.
 You may also optionally set \--old-account if the data that you want to migrate is not the configured default storage account.
 
-By default, Porter migrates your data into the [current namespace](/configuration/#namespace), which may be configured in your Porter v1 configuration file or the PORTER_NAMESPACE environment variable.
+By default, Porter migrates your data into the [current namespace](/docs/configuration/configuration/#namespace), which may be configured in your Porter v1 configuration file or the PORTER_NAMESPACE environment variable.
 Porter v0 doesn't have the concept of namespaces, and effectively everything was defined in the global (empty) namespace.
 We recommend using the \--namespace flag and being explicit about where the data should be migrated.
 
@@ -205,6 +207,6 @@ To upgrade a bundle for use with Porter v1:
 🚨 After you have migrated your bundle to the Porter v1 format, do not forget to bump your bundle version!
 Do not publish a Porter v1 bundle on top of an existing bundle, otherwise older v0 Porter clients will be unable to use the bundle.
 
-[mongodb-docker]: /plugins/mongodb-docker
+[mongodb-docker]: /plugins/mongodb-docker/
 [mongodb]: /plugins/mongodb/
 [File Formats]: https://porter.sh/references/file-formats/

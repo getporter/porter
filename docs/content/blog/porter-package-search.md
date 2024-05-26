@@ -55,7 +55,7 @@ installed terraform mixin v0.5.1-beta.1 (597a442)
 ```
 
 
-The [Terraform mixin](/mixins/terraform) is now available for use in our next Porter bundle.
+The [Terraform mixin](/mixins/terraform/) is now available for use in our next Porter bundle.
 To peruse the full list of mixins, simply issue `porter mixin search` without
 any query.
 

@@ -20,8 +20,8 @@ With Porter, anyone can install your application without needing deep knowledge 
 
 Learn more about Porter:
 
-* [QuickStart: Use a bundle](/quickstart)
-* [Learn when bundles make sense, when they don’t, and what your day could look like if you were using them](/learning/#the-devil-is-in-the-deployments-bundle-use-cases)
+* [QuickStart: Use a bundle](/quickstart/)
+* [Learn when bundles make sense, when they don’t, and what your day could look like if you were using them](/docs/learn/#the-devil-is-in-the-deployments-bundle-use-cases)
 * [Get a high level overview of bundles and Porter](/architecture/)
 * [Understand Porter's security features](/security-features/)
 
@@ -44,7 +44,7 @@ Porter also supports specifying the desired state of an installation (or credent
 Porter will reconcile that against its database and determine the appropriate action to execute, if any, to reach that state.
 This makes it much easier to automate running Porter based on triggers such as a git push, or when a new version of a bundle is released, without having to deal with figuring out if you should call install or upgrade, and other things that Porter can figure out for you.
 
-Desired state also supports the upcoming [Porter Operator](/operator/), a Kubernetes operator that automates running Porter on a Kubernetes cluster, similar to the Helm Operator.
+Desired state also supports the upcoming [Porter Operator](/docs/operator/), a Kubernetes operator that automates running Porter on a Kubernetes cluster, similar to the Helm Operator.
 The operator is still under development but is coming up on our roadmap now that Porter v1 is live.
 
 ### Improved Data Persistence
@@ -81,4 +81,4 @@ We have big plans going forward, adding new features on top of v1 incrementally:
 * **Porter Operator v1**: The [Porter Operator] is far enough along for you to try, and we aim to quickly get it ready for a v1 release.
 * **Support for signing bundles**: Porter will support integration with Notary for signing and verifying bundles.
 
-[Porter Operator]: /operator/
+[Porter Operator]: /docs/operator/

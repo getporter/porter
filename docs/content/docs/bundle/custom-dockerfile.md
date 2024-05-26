@@ -94,7 +94,7 @@ By default, Porter uses the [1.4.0 dockerfile syntax](https://docs.docker.com/en
 # Bundles do not run as root
 
 Porter runs the bundle image as a non-root user.
-This means that if you need to initialize the user's home directory, you should use the [BUNDLE_USER](#BUNDLE_USER) build argument to locate the home directory.
+This means that if you need to initialize the user's home directory, you should use the [BUNDLE_USER](#bundle_user) build argument to locate the home directory.
 If you need to run some commands as root and others as the non-root user that the bundle image will run under, you can use that same argument to switch the current user in the Dockerfile.
 By default, all commands in the Dockerfile run as root (so that you can install and configure the image), so you will need to carefully use the USER statement to switch to the non-root user.
 

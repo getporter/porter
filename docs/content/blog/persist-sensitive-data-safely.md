@@ -19,7 +19,7 @@ Now Porter requires users to configure a secret store to hold any data that has 
 
 Let's walk through how to utilize this new feature by updating your Porter configuration file and selecting an appropriate secret plugin. 
 
-First, [install the latest Porter v1 prerelease](/install/#prerelease).
+First, [install the latest Porter v1 prerelease](/docs/getting-started/install-porter/#canary).
 
 Next, let's install a bundle that handles sensitive data using just the default Porter configuration.
 

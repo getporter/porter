@@ -248,7 +248,7 @@ Use the trace and logs configuration sections below to configure how logs and te
 
 #### Logs
 
-Porter can be configured to [write a logfile for each command](/administration/collect-diag-porter/#logs).
+Porter can be configured to [write a logfile for each command](/docs/administration/collect-diag-porter/#logs).
 
 The following log settings are available:
 
