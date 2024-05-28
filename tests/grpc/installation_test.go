@@ -124,7 +124,7 @@ func TestInstall_installationMessage(t *testing.T) {
 
 			//Client setup
 			ctx := context.TODO()
-			client, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(bufDialer), grpc.WithTransportCredentials(insecure.NewCredentials()))
+			client, err := grpc.NewClient("passthrough://bufnet", grpc.WithContextDialer(bufDialer), grpc.WithTransportCredentials(insecure.NewCredentials()))
 			require.NoError(t, err)
 			defer client.Close()
 			instClient := pGRPC.NewPorterClient(client)
