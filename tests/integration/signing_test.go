@@ -19,8 +19,6 @@ import (
 )
 
 func TestCosign(t *testing.T) {
-	t.Parallel()
-
 	testr, err := tester.NewTestWithConfig(t, "tests/integration/testdata/signing/config/config-cosign.yaml")
 	require.NoError(t, err, "tester.NewTest failed")
 	defer testr.Close()
@@ -47,8 +45,6 @@ func TestCosign(t *testing.T) {
 }
 
 func TestNotation(t *testing.T) {
-	t.Parallel()
-
 	testr, err := tester.NewTestWithConfig(t, "tests/integration/testdata/signing/config/config-notation.yaml")
 	require.NoError(t, err, "tester.NewTest failed")
 	defer testr.Close()
