@@ -26,6 +26,17 @@ jobs:
     - name: Native Build
       run: go run mage.go build
       shell: bash
+    - name: Check if all doc changes have been pushed
+      run: |
+        if [ "$(git status --porcelain docs/)" ];
+        then
+          echo "There are changes to the documentation that have not been pushed! Please push the following files after build"
+          git status -s docs/
+          exit 1
+        else
+          echo "All documentation changes have been pushed"
+        fi
+      shell: bash
     - name: Publish Native Binaries
       uses: actions/upload-artifact@v3.1.1
       with:
