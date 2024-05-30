@@ -190,4 +190,4 @@ jobs:
         username: "${{ github.actor }}"
         password: "${{ secrets.GITHUB_TOKEN }}"
     - name: Publish Docker Images to ${{inputs.registry}}
-      run: PORTER_REGISTRY=${{inputs.registry}} mage PublishImages
+      run: PORTER_REGISTRY=${{inputs.registry}} mage PublishImages PublishServerMultiArchImages
