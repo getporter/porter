@@ -8,7 +8,7 @@ on:
         default: ghcr.io
 
 env:
-  GOVERSION: 1.22.0
+  GOVERSION: 1.21.3
 
 jobs:
   archive_integration_test:
