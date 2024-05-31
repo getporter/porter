@@ -210,7 +210,7 @@ func (l *Linter) Lint(ctx context.Context, m *manifest.Manifest) (Results, error
 			return nil, span.Error(fmt.Errorf("error validating action: %s", action.name))
 		}
 		results = append(results, res...)
-  }
+	}
 
 	deps := make(map[string]interface{}, len(m.Dependencies.Requires))
 	for _, dep := range m.Dependencies.Requires {
@@ -246,6 +246,10 @@ func (l *Linter) Lint(ctx context.Context, m *manifest.Manifest) (Results, error
 			// Ignore mixins that do not support the lint command
 			if strings.Contains(response.Error.Error(), "unknown command") {
 				continue
+			}
+			// put a helpful error when the mixin is not installed
+			if strings.Contains(response.Error.Error(), "not installed") {
+				return nil, span.Error(fmt.Errorf("mixin %s is not currently installed. To find install details you can run: porter mixin search %s", response.Name, response.Name))
 			}
 			return nil, span.Error(fmt.Errorf("lint command failed for mixin %s: %s", response.Name, response.Stdout))
 		}
