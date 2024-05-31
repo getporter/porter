@@ -42,22 +42,23 @@ porter invoke [INSTALLATION] --action ACTION [flags]
 ### Options
 
 ```
-      --action string                Custom action name to invoke.
-      --allow-docker-host-access     Controls if the bundle should have access to the host's Docker daemon with elevated privileges. See https://porter.sh/configuration/#allow-docker-host-access for the full implications of this flag.
-      --autobuild-disabled           Do not automatically build the bundle from source when the last build is out-of-date.
-      --cnab-file string             Path to the CNAB bundle.json file.
-  -c, --credential-set stringArray   Credential sets to use when running the bundle. It should be a named set of credentials and may be specified multiple times.
-      --debug                        Run the bundle in debug mode.
-  -d, --driver string                Specify a driver to use. Allowed values: docker, debug (default "docker")
-  -f, --file porter.yaml             Path to the Porter manifest. Defaults to porter.yaml in the current directory.
-      --force                        Force a fresh pull of the bundle
-  -h, --help                         help for invoke
-      --insecure-registry            Don't require TLS for the registry
-  -n, --namespace string             Namespace of the specified installation. Defaults to the global namespace.
-      --no-logs                      Do not persist the bundle execution logs
-      --param stringArray            Define an individual parameter in the form NAME=VALUE. Overrides parameters otherwise set via --parameter-set. May be specified multiple times.
-  -p, --parameter-set stringArray    Parameter sets to use when running the bundle. It should be a named set of parameters and may be specified multiple times.
-  -r, --reference string             Use a bundle in an OCI registry specified by the given reference.
+      --action string                   Custom action name to invoke.
+      --allow-docker-host-access        Controls if the bundle should have access to the host's Docker daemon with elevated privileges. See https://porter.sh/configuration/#allow-docker-host-access for the full implications of this flag.
+      --autobuild-disabled              Do not automatically build the bundle from source when the last build is out-of-date.
+      --cnab-file string                Path to the CNAB bundle.json file.
+  -c, --credential-set stringArray      Credential sets to use when running the bundle. It should be a named set of credentials and may be specified multiple times.
+      --debug                           Run the bundle in debug mode.
+  -d, --driver string                   Specify a driver to use. Allowed values: docker, debug (default "docker")
+  -f, --file porter.yaml                Path to the Porter manifest. Defaults to porter.yaml in the current directory.
+      --force                           Force a fresh pull of the bundle
+  -h, --help                            help for invoke
+      --insecure-registry               Don't require TLS for the registry
+      --mount-host-volume stringArray   Mount a host volume into the bundle. Format is <host path>:<container path>[:<option>]. May be specified multiple times. Option can be ro (read-only), rw (read-write), default is ro.
+  -n, --namespace string                Namespace of the specified installation. Defaults to the global namespace.
+      --no-logs                         Do not persist the bundle execution logs
+      --param stringArray               Define an individual parameter in the form NAME=VALUE. Overrides parameters otherwise set via --parameter-set. May be specified multiple times.
+  -p, --parameter-set stringArray       Parameter sets to use when running the bundle. It should be a named set of parameters and may be specified multiple times.
+  -r, --reference string                Use a bundle in an OCI registry specified by the given reference.
 ```
 
 ### Options inherited from parent commands

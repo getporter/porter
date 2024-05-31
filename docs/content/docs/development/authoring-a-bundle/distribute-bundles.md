@@ -147,7 +147,7 @@ Here we can see that the spring-music image was relocated inside the published b
 
 `jeremyrickard/spring-music@sha256:8f113...` → `jeremyrickard/porter-do-bundle@sha256:8f113...`
 
-[images]: /author-bundles/#images
+[images]: /docs/bundle/manifest/#images
 
 ### Archived Bundle Artifacts
 
@@ -163,4 +163,4 @@ ignored:
 - `jeremyrickard/porter-do-bundle/spring-music`
 
 [digest]: https://github.com/opencontainers/image-spec/blob/master/descriptor.md#digests
-[image-map]: /author-bundles/#images
+[image-map]: /docs/bundle/manifest/#images

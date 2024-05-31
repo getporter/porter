@@ -25,7 +25,7 @@ Below are schema versions for the Porter manifest, and the corresponding Porter 
 Sometimes you may want to work with a different version of a resource than what is supported by Porter, especially when migrating from one version of Porter to another.
 The [schema-check] configuration setting allows you to change how Porter behaves when the schemaVersion of a resource doesn't match Porter's supported version.
 
-[schema-check]: /configuration/#schema-check
+[schema-check]: /docs/configuration/configuration/#schema-check
 
 ## Example 
 
@@ -233,7 +233,7 @@ status:
 
 ## Next Steps
 
-* [Create a Bundle](/development/authoring-a-bundle/create-a-bundle/)
+* [Create a Bundle](/docs/development/authoring-a-bundle/create-a-bundle/)
 
 [semver v2]: https://semver.org/spec/v2.0.0.html
 [manifest-schema]: https://raw.githubusercontent.com/getporter/porter/main/pkg/schema/manifest.schema.json

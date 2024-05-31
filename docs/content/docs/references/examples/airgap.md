@@ -83,7 +83,7 @@ The helm chart must have been written to allow specifying the location of any im
 Then in your install step, use the helm \--set flag overriding the image with its location in the airgapped environment.
 Porter handles tracking the image location for you, just use the template variables to swap the image used by the helm chart.
 
-[images]: /author-bundles/#images
+[images]: /docs/bundle/manifest/#images
 
 ## Move the bundle across the airgap
 

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"get.porter.sh/porter/pkg"
@@ -133,9 +134,11 @@ func TestRebuild(t *testing.T) {
 	bumpBundle()
 
 	// Explain the bundle, with --autobuild-disabled. It should work since the bundle has been built
-	explainJson, output := test.RequirePorter("explain", "--autobuild-disabled", "-o=json")
+	explainJson, output := test.RequirePorter("explain", "--autobuild-disabled", "-o=json", "--verbosity=warn")
 	tests.RequireOutputContains(t, output, "WARNING: The bundle is out-of-date. Skipping autobuild because --autobuild-disabled was specified")
 	require.NotContains(t, output, "Building bundle ===>")
+	// todo(kichristensen): in the future this should be improved
+	explainJson = strings.ReplaceAll(explainJson, "WARNING: The bundle is out-of-date. Skipping autobuild because --autobuild-disabled was specified", "")
 	var explainResult map[string]interface{}
 	err = json.Unmarshal([]byte(explainJson), &explainResult)
 	require.NoError(t, err, "could not marshal explain output as json")

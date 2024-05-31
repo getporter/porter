@@ -17,13 +17,13 @@ Only the [exec mixin](/mixins/exec/) is installed by default.
 
 # Next
 
-- [Use a mixin in a bundle](/author-bundles/#mixins)
+- [Use a mixin in a bundle](/docs/bundle/manifest/#images)
 - [Mixin Architecture](/how-to-guides/work-with-mixins/)
 
 # Available Mixins
 
 Below are mixins that are either maintained by the Porter authors, or are community mixins that are known to be well-maintained.
-Use the [porter mixins search](/cli/porter_mixins_search) command to see all known mixins.
+Use the [porter mixins search](/cli/porter_mixins_search/) command to see all known mixins.
 
 See the [Search Guide][search-guide] on how to search for available plugins and/or
 add your own to the list.

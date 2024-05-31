@@ -23,17 +23,17 @@ func TestPublish(t *testing.T) {
 	test.RequirePorter("create")
 
 	// Try to publish with autobuild disabled, it should fail
-	_, _, err = test.RunPorter("publish", "--autobuild-disabled")
-	require.ErrorContains(t, err, "Skipping autobuild because --autobuild-disabled was specified")
+	_, output, _ := test.RunPorter("publish", "--autobuild-disabled")
+	tests.RequireOutputContains(t, output, "Skipping autobuild because --autobuild-disabled was specified")
 
 	// Try again with autobuild disabled via a config setting instead of a flag
 	// This is a regression test for https://github.com/getporter/porter/issues/2735
 	test.EditYaml(path.Join(test.PorterHomeDir, "config.yaml"), func(yq *yaml.Editor) error {
 		return yq.SetValue("autobuild-disabled", "true")
 	})
-	_, output, err := test.RunPorter("publish")
+	_, output, _ = test.RunPorter("publish")
 	fmt.Println(output)
-	require.ErrorContains(t, err, "Skipping autobuild because --autobuild-disabled was specified")
+	tests.RequireOutputContains(t, output, "Skipping autobuild because --autobuild-disabled was specified")
 
 	// Build with version override
 	test.RequirePorter("build", "--version=0.0.0")

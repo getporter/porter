@@ -41,7 +41,7 @@ See [Telemetry Settings][telemetry] for all the supported configuration settings
 
 [compat]: https://opentelemetry.io/vendors/
 [OpenTelemetry environment variables]: https://github.com/open-telemetry/opentelemetry-specification/blob/v1.8.0/specification/protocol/exporter.md
-[telemetry]: /configuration/#telemetry
-[Log Settings]: /configuration/#logs
+[telemetry]: /docs/configuration/configuration/#telemetry
+[Log Settings]: /docs/configuration/configuration/#logs
 [OpenTelemetry]: https://opentelemetry.io
 [otel-jaeger bundle]: /examples/src/otel-jaeger

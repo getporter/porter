@@ -5,6 +5,9 @@ on:
     - main
     paths-ignore:
     - 'docs/**'
+  pull_request:
+    branches:
+      - main
 
 env:
     GOVERSION: 1.21.3

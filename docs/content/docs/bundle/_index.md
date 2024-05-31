@@ -7,6 +7,6 @@ description: ""
 **Learn about Bundle in Porter**
 
 {{< cards >}}
-{{< card link="custom-dockerfile" title="Custom Dockerfile" >}}
-{{< card link="manifest" title="Manifest" >}}
+{{< card link="custom-dockerfile/" title="Custom Dockerfile" >}}
+{{< card link="manifest/" title="Manifest" >}}
 {{< /cards >}}

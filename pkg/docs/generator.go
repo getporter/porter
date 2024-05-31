@@ -17,7 +17,7 @@ type DocsOptions struct {
 	Destination string
 }
 
-const DefaultDestination = "./docs/content/cli/"
+const DefaultDestination = "./docs/content/docs/references/cli"
 
 func (o *DocsOptions) Validate(cxt *portercontext.Context) error {
 	if o.Destination == "" {

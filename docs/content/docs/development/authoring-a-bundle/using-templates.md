@@ -88,7 +88,7 @@ install:
       namespace: "myNamespace"
 ```
 
-[custom metadata]: /author-bundles/#custom
+[custom metadata]: /docs/bundle/manifest/#custom
 
 #### parameters
 
@@ -224,7 +224,7 @@ image digest for the specified tag and then update the bundle to reference the i
 by digest instead of the provided tag. This helps to ensure deterministic and
 repeatable bundle execution.
 
-[referenced images]: /author-bundles/#images
+[referenced images]: /docs/bundle/manifest/#images
 
 ### env
 
