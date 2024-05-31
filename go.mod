@@ -1,8 +1,6 @@
 module get.porter.sh/porter
 
-go 1.21
-
-toolchain go1.21.3
+go 1.22
 
 replace (
 	// See https://github.com/hashicorp/go-plugin/pull/127 and
@@ -17,7 +15,7 @@ replace (
 )
 
 require (
-	get.porter.sh/magefiles v0.6.5
+	get.porter.sh/magefiles v0.6.7
 	github.com/Masterminds/semver/v3 v3.2.1
 	github.com/PaesslerAG/jsonpath v0.1.1
 	github.com/carolynvs/aferox v0.3.0
