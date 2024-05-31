@@ -9,7 +9,7 @@ name: Check Website Links
 on: pull_request
 
 env:
-  GOVERSION: 1.22
+  GOVERSION: 1.22.0
 
 jobs:
   htmltest:

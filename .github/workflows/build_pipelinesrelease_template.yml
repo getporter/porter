@@ -5,7 +5,7 @@ on:
     inputs:
       goVersion:
         required: false
-        default: "1.22"
+        default: 1.22.0
         type: string
       registry:
         required: false
