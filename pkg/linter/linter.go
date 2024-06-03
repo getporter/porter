@@ -249,7 +249,7 @@ func (l *Linter) Lint(ctx context.Context, m *manifest.Manifest) (Results, error
 			}
 			// put a helpful error when the mixin is not installed
 			if strings.Contains(response.Error.Error(), "not installed") {
-				return nil, span.Error(fmt.Errorf("mixin %s is not currently installed. To find install details you can run: porter mixin search %s", response.Name, response.Name))
+				return nil, span.Error(fmt.Errorf("mixin %[1]s is not currently installed. To find view more details you can run: porter mixin search %[1]s. To install you can run porter mixin install %[1]s", response.Name))
 			}
 			return nil, span.Error(fmt.Errorf("lint command failed for mixin %s: %s", response.Name, response.Stdout))
 		}
