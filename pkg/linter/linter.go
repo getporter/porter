@@ -12,6 +12,7 @@ import (
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/tracing"
 	"get.porter.sh/porter/pkg/yaml"
+	"github.com/Masterminds/semver"
 	"github.com/dustin/go-humanize"
 )
 
@@ -261,6 +262,37 @@ func (l *Linter) Lint(ctx context.Context, m *manifest.Manifest) (Results, error
 		}
 
 		results = append(results, r...)
+	}
+
+	span.Debug("Getting versions for each mixin used in the manifest...")
+	for _, mixin := range m.Mixins {
+		if mapConfig, ok := mixin.Config.(map[string]interface{}); ok {
+			if v, exists := mapConfig["version"]; exists {
+
+				if versionConstraint, ok := v.(string); ok {
+					installedMeta, err := l.Mixins.GetMetadata(ctx, mixin.Name)
+					if err != nil {
+						return nil, span.Error(fmt.Errorf("unable to get metadata from mixin %s: %w", mixin.Name, err))
+					}
+					installedVersion := installedMeta.GetVersionInfo().Version
+
+					c, err := semver.NewConstraint(versionConstraint)
+					if err != nil {
+						return nil, span.Error(fmt.Errorf("invalid constraint for mixin%s: %s. %w", mixin.Name, versionConstraint, err))
+					}
+
+					v, err := semver.NewVersion(installedVersion)
+					if err != nil {
+						return nil, span.Error(fmt.Errorf("invalid version number from mixin %s: %s. %w", mixin.Name, installedVersion, err))
+					}
+
+					if !c.Check(v) {
+						return nil, span.Error(fmt.Errorf("mixin %s is installed at version %s but your bundle requires version %s", mixin.Name, installedVersion, versionConstraint))
+					}
+				}
+			}
+		}
+		fmt.Println()
 	}
 
 	return results, nil
