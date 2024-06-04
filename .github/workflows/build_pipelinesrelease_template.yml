@@ -151,7 +151,12 @@ jobs:
       env:
         GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
         VERSION: ${{github.ref_name}}
-      run: mage PublishPorter PublishMixins
+      run: mage PublishPorter
+    - name: Publish Porter Mixins
+      env:
+        GITHUB_TOKEN: "${{ secrets.PUBLISH_TOKEN }}"
+        VERSION: ${{github.ref_name}}
+      run: mage PublishMixins
   publish-ghcr:
     env:
       DOCKER_REGISTRY: ${{inputs.registry}}
@@ -191,3 +196,4 @@ jobs:
         password: "${{ secrets.GITHUB_TOKEN }}"
     - name: Publish Docker Images to ${{inputs.registry}}
       run: PORTER_REGISTRY=${{inputs.registry}} mage PublishImages PublishServerMultiArchImages
+
