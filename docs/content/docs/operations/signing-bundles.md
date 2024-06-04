@@ -74,7 +74,7 @@ Instructions on for the install Notation can be found on the [Notation Installat
 
 ### Configuration
 
-Porter have to be configure to use [Notation] to sign bundles and invocation images. All configuration is done through the [Porter config file](/docs/configuration/configuration/). To configure [Notation] add the following to the configuration file.
+Porter has to be configured to use [Notation] to sign bundles and invocation images. All configuration is done through the [Porter config file](/docs/configuration/configuration/). To configure [Notation] add the following to the configuration file.
 
 ```yaml
 # ~/.porter/config.yaml
