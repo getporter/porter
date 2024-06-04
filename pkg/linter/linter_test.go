@@ -7,7 +7,9 @@ import (
 
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/mixin"
+	"get.porter.sh/porter/pkg/pkgmgmt"
 	"get.porter.sh/porter/pkg/portercontext"
+	"get.porter.sh/porter/tests"
 	"github.com/stretchr/testify/require"
 )
 
@@ -355,4 +357,28 @@ func TestLinter_DependencyMultipleTimes(t *testing.T) {
 		require.NoError(t, err, "Lint failed")
 		require.Len(t, results, 0, "linter should have returned 0 result")
 	})
+}
+
+func TestLinter_Lint_MissingMixin(t *testing.T) {
+	cxt := portercontext.NewTestContext(t)
+	mixins := mixin.NewTestMixinProvider()
+	l := New(cxt.Context, mixins)
+
+	mixinName := "made-up-mixin-that-is-not-installed"
+
+	m := &manifest.Manifest{
+		Mixins: []manifest.MixinDeclaration{
+			{
+				Name: mixinName,
+			},
+		},
+	}
+
+	mixins.RunAssertions = append(mixins.RunAssertions, func(mixinCxt *portercontext.Context, mixinName string, commandOpts pkgmgmt.CommandOptions) error {
+		return fmt.Errorf("%s not installed", mixinName)
+	})
+
+	_, err := l.Lint(context.Background(), m)
+	require.Error(t, err, "Linting should return an error")
+	tests.RequireOutputContains(t, err.Error(), fmt.Sprintf("%s is not currently installed", mixinName))
 }
