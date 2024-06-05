@@ -25,6 +25,7 @@ type TestMixinProvider struct {
 	ReturnBuildError bool
 }
 
+// hoist these into variables so tests can reference them safely
 var ExampleMixinName = "testmixin"
 var ExampleMixinSemver = semver.New(0, 1, 0, "", "")
 
