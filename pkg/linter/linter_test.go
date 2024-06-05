@@ -442,6 +442,12 @@ func TestLinter_Lint_MixinVersions(t *testing.T) {
 			results, err := l.Lint(context.Background(), m)
 			if testCase.errExpected {
 				require.Error(t, err, "Linting should return an error")
+				tests.RequireOutputContains(t, err.Error(), fmt.Sprintf(
+					"mixin %s is installed at version v%s but your bundle requires version %s",
+					mixin.ExampleMixinName,
+					exampleMixinVersion,
+					getVersionFromMixinConfig(testCase.mixins[0].Config),
+				))
 			} else {
 				require.NoError(t, err, "Linting should not return an error")
 			}
@@ -449,4 +455,16 @@ func TestLinter_Lint_MixinVersions(t *testing.T) {
 		})
 	}
 
+}
+
+func getVersionFromMixinConfig(config interface{}) string {
+	if mapConfig, ok := config.(map[string]interface{}); ok {
+		if v, exists := mapConfig["version"]; exists {
+
+			if versionConstraint, ok := v.(string); ok {
+				return versionConstraint
+			}
+		}
+	}
+	return ""
 }
