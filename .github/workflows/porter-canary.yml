@@ -12,3 +12,4 @@ jobs:
       registry: ghcr.io/getporter
       shouldPublish: true
       skipTests: false
+    secrets: inherit
