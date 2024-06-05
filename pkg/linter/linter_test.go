@@ -382,3 +382,71 @@ func TestLinter_Lint_MissingMixin(t *testing.T) {
 	require.Error(t, err, "Linting should return an error")
 	tests.RequireOutputContains(t, err.Error(), fmt.Sprintf("%s is not currently installed", mixinName))
 }
+
+func TestLinter_Lint_MixinVersions(t *testing.T) {
+	cxt := portercontext.NewTestContext(t)
+	mixinProvider := mixin.NewTestMixinProvider()
+	l := New(cxt.Context, mixinProvider)
+
+	exampleMixinVersion := mixin.ExampleMixinSemver.String()
+
+	// build up some test semvers
+	patchDifferenceSemver := fmt.Sprintf("%d.%d.%d", mixin.ExampleMixinSemver.Major(), mixin.ExampleMixinSemver.Minor(), mixin.ExampleMixinSemver.Patch()+1)
+	anyPatchAccepted := fmt.Sprintf("%d.%d.x", mixin.ExampleMixinSemver.Major(), mixin.ExampleMixinSemver.Minor())
+	lessThanNextMajor := fmt.Sprintf("<%d.%d", mixin.ExampleMixinSemver.Major()+1, mixin.ExampleMixinSemver.Minor())
+
+	testCases := []struct {
+		name        string
+		errExpected bool
+		mixins      []manifest.MixinDeclaration
+	}{
+		{"exact-semver", false, []manifest.MixinDeclaration{
+			{
+				Name: mixin.ExampleMixinName,
+				Config: map[string]interface{}{
+					"version": exampleMixinVersion,
+				},
+			},
+		}},
+		{"different-patch", true, []manifest.MixinDeclaration{
+			{
+				Name: mixin.ExampleMixinName,
+				Config: map[string]interface{}{
+					"version": patchDifferenceSemver,
+				},
+			},
+		}},
+		{"accept-different-patch", false, []manifest.MixinDeclaration{
+			{
+				Name: mixin.ExampleMixinName,
+				Config: map[string]interface{}{
+					"version": anyPatchAccepted,
+				},
+			},
+		}},
+		{"accept-less-than-versions", false, []manifest.MixinDeclaration{
+			{
+				Name: mixin.ExampleMixinName,
+				Config: map[string]interface{}{
+					"version": lessThanNextMajor,
+				},
+			},
+		}},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			m := &manifest.Manifest{
+				Mixins: testCase.mixins,
+			}
+			results, err := l.Lint(context.Background(), m)
+			if testCase.errExpected {
+				require.Error(t, err, "Linting should return an error")
+			} else {
+				require.NoError(t, err, "Linting should not return an error")
+			}
+			require.Len(t, results, 0, "linter should have returned 0 result")
+		})
+	}
+
+}
