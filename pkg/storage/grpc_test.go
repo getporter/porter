@@ -40,7 +40,7 @@ func TestRoundTripDataOverGRPC(t *testing.T) {
 		}
 	}()
 
-	conn, err := grpc.Dial(lis.Addr().String(), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(lis.Addr().String(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	require.NoError(t, err)
 	defer conn.Close()
 	client := pluginstore.NewClient(proto.NewStorageProtocolClient(conn))
