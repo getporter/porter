@@ -112,6 +112,10 @@ default-secrets: "mysecrets"
 # the configuration in the secrets section.
 default-secrets-plugin: "kubernetes.secret"
 
+# Use the signer configuration name mysigner.
+# If not specified, bundles and invocation images cannot be signed.
+default-signer: "mysigner"
+
 # Defines storage accounts
 storage:
   # The storage account name
@@ -145,6 +149,23 @@ secrets:
 
       # The subscription where the vault is defined
       subscription-id: "${env.AZURE_SUBSCRIPTION_ID}"
+
+# Define signers
+signer:
+  # The signer name
+  - name: "mysigner"
+    
+    # The plugin used to sign bundles
+    plugin: "cosign"
+    
+    # Additional configuration for the signer
+    # These values vary depending on the plugin used
+    config:
+      # Path to the public key
+      publickey: /home/porter/cosign.pub
+
+      # Path to the public key
+      privatekey: /home/porter/cosign.key
 
 # Log command output to a file in PORTER_HOME/logs/
 logs:
