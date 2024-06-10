@@ -12,6 +12,7 @@ import (
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/tracing"
 	"get.porter.sh/porter/pkg/yaml"
+	"github.com/Masterminds/semver/v3"
 	"github.com/dustin/go-humanize"
 )
 
@@ -263,7 +264,53 @@ func (l *Linter) Lint(ctx context.Context, m *manifest.Manifest) (Results, error
 		results = append(results, r...)
 	}
 
+	span.Debug("Getting versions for each mixin used in the manifest...")
+	err = l.validateVersionNumberConstraints(ctx, m)
+	if err != nil {
+		return nil, span.Error(err)
+	}
+
 	return results, nil
+}
+
+func (l *Linter) validateVersionNumberConstraints(ctx context.Context, m *manifest.Manifest) error {
+	for _, mixin := range m.Mixins {
+		if mapConfig, ok := mixin.Config.(map[string]interface{}); ok {
+			if v, exists := mapConfig["version"]; exists {
+
+				if versionConstraint, ok := v.(string); ok {
+					installedMeta, err := l.Mixins.GetMetadata(ctx, mixin.Name)
+					if err != nil {
+						return fmt.Errorf("unable to get metadata from mixin %s: %w", mixin.Name, err)
+					}
+					installedVersion := installedMeta.GetVersionInfo().Version
+
+					err = validateSemverConstraint(mixin.Name, installedVersion, versionConstraint)
+					if err != nil {
+						return err
+					}
+				}
+			}
+		}
+	}
+	return nil
+}
+
+func validateSemverConstraint(name string, installedVersion string, versionConstraint string) error {
+	c, err := semver.NewConstraint(versionConstraint)
+	if err != nil {
+		return fmt.Errorf("invalid constraint for mixin%s: %s. %w", name, versionConstraint, err)
+	}
+
+	v, err := semver.NewVersion(installedVersion)
+	if err != nil {
+		return fmt.Errorf("invalid version number from mixin %s: %s. %w", name, installedVersion, err)
+	}
+
+	if !c.Check(v) {
+		return fmt.Errorf("mixin %s is installed at version %s but your bundle requires version %s", name, installedVersion, versionConstraint)
+	}
+	return nil
 }
 
 func validateParamsAppliesToAction(m *manifest.Manifest, steps manifest.Steps, tmplParams manifest.ParameterDefinitions, actionName string) (Results, error) {
