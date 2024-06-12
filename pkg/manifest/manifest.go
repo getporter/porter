@@ -1277,7 +1277,7 @@ func ReadManifestData(cxt *portercontext.Context, path string) ([]byte, error) {
 
 // ReadManifest determines if specified path is a URL or a filepath.
 // After reading the data in the path it returns a Manifest and any errors
-func ReadManifest(cxt *portercontext.Context, path string) (*Manifest, error) {
+func ReadManifest(cxt *portercontext.Context, path string, config *config.Config) (*Manifest, error) {
 	data, err := ReadManifestData(cxt, path)
 	if err != nil {
 		return nil, err
@@ -1286,6 +1286,10 @@ func ReadManifest(cxt *portercontext.Context, path string) (*Manifest, error) {
 	m, err := UnmarshalManifest(cxt, data)
 	if err != nil {
 		return nil, fmt.Errorf("unsupported property set or a custom action is defined incorrectly: %w", err)
+	}
+
+	if config.IsFeatureEnabled(experimental.FlagDependenciesV2) {
+		// TODO: Add logic here to handle outputs template variable
 	}
 
 	tmplResult, err := m.ScanManifestTemplating(data)
@@ -1359,7 +1363,7 @@ func LoadManifestFrom(ctx context.Context, config *config.Config, file string) (
 	ctx, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
 
-	m, err := ReadManifest(config.Context, file)
+	m, err := ReadManifest(config.Context, file, config)
 	if err != nil {
 		return nil, err
 	}
