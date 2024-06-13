@@ -282,6 +282,20 @@ func (m *Manifest) getTemplateDependencyOutputName(value string) (string, string
 	return dependencyName, outputName, true
 }
 
+var templatedDependencyShortOutputRegex = regexp.MustCompile(`^outputs.(.+)$`)
+
+// getTemplateDependencyOutputName returns the dependency and output name from the
+// template variable.
+func (m *Manifest) getTemplateDependencyShortOutputName(value string) (string, bool) {
+	matches := templatedDependencyShortOutputRegex.FindStringSubmatch(value)
+	if len(matches) < 2 {
+		return "", false
+	}
+
+	outputName := matches[1]
+	return outputName, true
+}
+
 var templatedParameterRegex = regexp.MustCompile(`^bundle\.parameters\.(.+)$`)
 
 // GetTemplateParameterName returns the parameter name from the template variable.
@@ -1288,11 +1302,7 @@ func ReadManifest(cxt *portercontext.Context, path string, config *config.Config
 		return nil, fmt.Errorf("unsupported property set or a custom action is defined incorrectly: %w", err)
 	}
 
-	if config.IsFeatureEnabled(experimental.FlagDependenciesV2) {
-		// TODO: Add logic here to handle outputs template variable
-	}
-
-	tmplResult, err := m.ScanManifestTemplating(data)
+	tmplResult, err := m.ScanManifestTemplating(data, config)
 	if err != nil {
 		return nil, err
 	}
@@ -1328,12 +1338,62 @@ func (m *Manifest) GetTemplatePrefix() string {
 	return ""
 }
 
-func (m *Manifest) ScanManifestTemplating(data []byte) (templateScanResult, error) {
+func (m *Manifest) ScanManifestTemplating(data []byte, config *config.Config) (templateScanResult, error) {
+	// Handle outputs variable
+	shortHandOutputVariables := []string{}
+	if config.IsFeatureEnabled(experimental.FlagDependenciesV2) {
+		for _, dep := range m.Dependencies.Requires {
+			for outputName, output := range dep.Outputs {
+				vars, err := m.getTemplateVariables(output)
+				if err != nil {
+					return templateScanResult{}, fmt.Errorf("error parsing the templating used in the manifest for dependency %s output %s: %w", dep.Name, outputName, err)
+				}
+
+				for tmplVar := range vars {
+					outputTemplateName, ok := m.getTemplateDependencyShortOutputName(tmplVar)
+					if ok {
+						shortHandOutputVariables = append(shortHandOutputVariables, fmt.Sprintf("bundle.dependencies.%s.outputs.%s", dep.Name, outputTemplateName))
+					}
+				}
+			}
+		}
+	}
+
+	vars, err := m.getTemplateVariables(string(data))
+	if err != nil {
+		return templateScanResult{}, fmt.Errorf("error parsing the templating used in the manifest: %w", err)
+	}
+
+	result := templateScanResult{
+		Variables: make([]string, 0, len(vars)+len(shortHandOutputVariables)),
+	}
+	result.Variables = append(result.Variables, shortHandOutputVariables...)
+	for v := range vars {
+		result.Variables = append(result.Variables, v)
+	}
+
+	// TODO: Handle duplicate variables
+	if config.IsFeatureEnabled(experimental.FlagDependenciesV2) {
+		filteredVars := make([]string, 0, len(result.Variables))
+		for _, tmplVar := range result.Variables {
+			if !strings.HasPrefix(tmplVar, "outputs.") {
+				filteredVars = append(filteredVars, tmplVar)
+			}
+		}
+
+		result.Variables = filteredVars
+	}
+
+	sort.Strings(result.Variables)
+	return result, nil
+}
+
+func (m *Manifest) getTemplateVariables(data string) (map[string]struct{}, error) {
 	const disableHtmlEscaping = true
 	templateSrc := m.GetTemplatePrefix() + string(data)
 	tmpl, err := mustache.ParseStringRaw(templateSrc, disableHtmlEscaping)
 	if err != nil {
-		return templateScanResult{}, fmt.Errorf("error parsing the templating used in the manifest: %w", err)
+		return nil, fmt.Errorf("error parsing the templating used in the manifest: %w", err)
 	}
 
 	tags := tmpl.Tags()
@@ -1346,15 +1406,7 @@ func (m *Manifest) ScanManifestTemplating(data []byte) (templateScanResult, erro
 		vars[tag.Name()] = struct{}{}
 	}
 
-	result := templateScanResult{
-		Variables: make([]string, 0, len(vars)),
-	}
-	for v := range vars {
-		result.Variables = append(result.Variables, v)
-	}
-
-	sort.Strings(result.Variables)
-	return result, nil
+	return vars, nil
 }
 
 // LoadManifestFrom reads and validates the manifest at the specified location,
