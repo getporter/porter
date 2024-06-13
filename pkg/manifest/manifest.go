@@ -1364,24 +1364,23 @@ func (m *Manifest) ScanManifestTemplating(data []byte, config *config.Config) (t
 		return templateScanResult{}, fmt.Errorf("error parsing the templating used in the manifest: %w", err)
 	}
 
-	result := templateScanResult{
-		Variables: make([]string, 0, len(vars)+len(shortHandOutputVariables)),
-	}
-	result.Variables = append(result.Variables, shortHandOutputVariables...)
-	for v := range vars {
-		result.Variables = append(result.Variables, v)
-	}
-
-	// TODO: Handle duplicate variables
 	if config.IsFeatureEnabled(experimental.FlagDependenciesV2) {
-		filteredVars := make([]string, 0, len(result.Variables))
-		for _, tmplVar := range result.Variables {
-			if !strings.HasPrefix(tmplVar, "outputs.") {
-				filteredVars = append(filteredVars, tmplVar)
+		for tmplVar := range vars {
+			if strings.HasPrefix(tmplVar, "outputs.") {
+				delete(vars, tmplVar)
 			}
 		}
 
-		result.Variables = filteredVars
+		for _, shortHandVar := range shortHandOutputVariables {
+			vars[shortHandVar] = struct{}{}
+		}
+	}
+
+	result := templateScanResult{
+		Variables: make([]string, 0, len(vars)),
+	}
+	for v := range vars {
+		result.Variables = append(result.Variables, v)
 	}
 
 	sort.Strings(result.Variables)
