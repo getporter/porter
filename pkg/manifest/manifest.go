@@ -284,7 +284,7 @@ func (m *Manifest) getTemplateDependencyOutputName(value string) (string, string
 
 var templatedDependencyShortOutputRegex = regexp.MustCompile(`^outputs.(.+)$`)
 
-// getTemplateDependencyOutputName returns the dependency and output name from the
+// getTemplateDependencyShortOutputName returns the dependency output name from the
 // template variable.
 func (m *Manifest) getTemplateDependencyShortOutputName(value string) (string, bool) {
 	matches := templatedDependencyShortOutputRegex.FindStringSubmatch(value)
@@ -1340,23 +1340,9 @@ func (m *Manifest) GetTemplatePrefix() string {
 
 func (m *Manifest) ScanManifestTemplating(data []byte, config *config.Config) (templateScanResult, error) {
 	// Handle outputs variable
-	shortHandOutputVariables := []string{}
-	if config.IsFeatureEnabled(experimental.FlagDependenciesV2) {
-		for _, dep := range m.Dependencies.Requires {
-			for outputName, output := range dep.Outputs {
-				vars, err := m.getTemplateVariables(output)
-				if err != nil {
-					return templateScanResult{}, fmt.Errorf("error parsing the templating used in the manifest for dependency %s output %s: %w", dep.Name, outputName, err)
-				}
-
-				for tmplVar := range vars {
-					outputTemplateName, ok := m.getTemplateDependencyShortOutputName(tmplVar)
-					if ok {
-						shortHandOutputVariables = append(shortHandOutputVariables, fmt.Sprintf("bundle.dependencies.%s.outputs.%s", dep.Name, outputTemplateName))
-					}
-				}
-			}
-		}
+	shortOutputVars, err := m.mapShortDependencyOutputVariables(config)
+	if err != nil {
+		return templateScanResult{}, fmt.Errorf("error parsing the templating used in the manifest: %w", err)
 	}
 
 	vars, err := m.getTemplateVariables(string(data))
@@ -1365,15 +1351,7 @@ func (m *Manifest) ScanManifestTemplating(data []byte, config *config.Config) (t
 	}
 
 	if config.IsFeatureEnabled(experimental.FlagDependenciesV2) {
-		for tmplVar := range vars {
-			if strings.HasPrefix(tmplVar, "outputs.") {
-				delete(vars, tmplVar)
-			}
-		}
-
-		for _, shortHandVar := range shortHandOutputVariables {
-			vars[shortHandVar] = struct{}{}
-		}
+		m.deduplicateAndFilterShortOutputVariables(shortOutputVars, vars)
 	}
 
 	result := templateScanResult{
@@ -1385,6 +1363,41 @@ func (m *Manifest) ScanManifestTemplating(data []byte, config *config.Config) (t
 
 	sort.Strings(result.Variables)
 	return result, nil
+}
+
+func (m *Manifest) mapShortDependencyOutputVariables(config *config.Config) ([]string, error) {
+	shortOutputVars := []string{}
+	if config.IsFeatureEnabled(experimental.FlagDependenciesV2) {
+		for _, dep := range m.Dependencies.Requires {
+			for outputName, output := range dep.Outputs {
+				vars, err := m.getTemplateVariables(output)
+				if err != nil {
+					return nil, fmt.Errorf("error parsing the templating used for dependency %s output %s: %w", dep.Name, outputName, err)
+				}
+
+				for tmplVar := range vars {
+					outputTemplateName, ok := m.getTemplateDependencyShortOutputName(tmplVar)
+					if ok {
+						shortOutputVars = append(shortOutputVars, fmt.Sprintf("bundle.dependencies.%s.outputs.%s", dep.Name, outputTemplateName))
+					}
+				}
+			}
+		}
+	}
+
+	return shortOutputVars, nil
+}
+
+func (m *Manifest) deduplicateAndFilterShortOutputVariables(shortOutputVars []string, vars map[string]struct{}) {
+	for tmplVar := range vars {
+		if strings.HasPrefix(tmplVar, "outputs.") {
+			delete(vars, tmplVar)
+		}
+	}
+
+	for _, shortHandVar := range shortOutputVars {
+		vars[shortHandVar] = struct{}{}
+	}
 }
 
 func (m *Manifest) getTemplateVariables(data string) (map[string]struct{}, error) {
