@@ -192,6 +192,41 @@ install:
         database-password: ${ bundle.dependencies.mysql.outputs.mysql-password }
 ```
 
+##### Dependecies v2 (experimental)
+
+The second version of dependencies, called DependenciesV2, is available under the
+[**experimental** flag](https://porter.sh/docs/configuration/configuration/#experimental-feature-flags).
+
+You can enable the experimental flag by setting an environment variable as follows:
+
+```
+PORTER_EXPERIMENTAL=dependencies-v2
+```
+
+When DependenciesV2 is enabled, it is possible to use templating inside the dependency output section, like this:
+
+```yaml
+dependencies:
+  requires:
+    - name: mysql
+      bundle:
+        reference: getporter/mysql:v0.1.3
+        outputs:
+          connection-string: "Server=mysql;Database=myDb;Uid=${bundle.parameters.uid};Pwd=${bundles.dependencies.mysql.mysql-password};"
+```
+
+If referencing an output from the same dependency, the format `outputs.OUTPUT_NAME` can also be used.
+
+```yaml
+dependencies:
+  requires:
+    - name: mysql
+      bundle:
+        reference: getporter/mysql:v0.1.3
+        outputs:
+          connection-string: "Server=mysql;Database=myDb;Uid=${bundle.parameters.uid};Pwd=${outputs.mysql-password};"
+```
+
 #### images
 
 The bundle.images variable contains metadata about [referenced images] in the bundle.
