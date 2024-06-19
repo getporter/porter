@@ -3,9 +3,9 @@ package inmemory
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"get.porter.sh/porter/pkg/secrets/plugins"
-	"github.com/cnabio/cnab-go/secrets/host"
 )
 
 var _ plugins.SecretsProtocol = &Store{}
@@ -38,8 +38,7 @@ func (s *Store) Resolve(ctx context.Context, keyName string, keyValue string) (s
 		return value, nil
 	}
 
-	hostStore := host.SecretStore{}
-	return hostStore.Resolve(keyName, keyValue)
+	return "", fmt.Errorf("unsupported keyName %s", keyName)
 }
 
 func (s *Store) Create(ctx context.Context, keyName string, keyValue string, value string) error {
