@@ -36,7 +36,7 @@ require (
 	github.com/dustin/go-humanize v1.0.1
 	github.com/ghodss/yaml v1.0.0
 	github.com/google/go-cmp v0.6.0
-	github.com/google/go-containerregistry v0.19.0
+	github.com/google/go-containerregistry v0.19.2
 	github.com/google/uuid v1.6.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
@@ -53,7 +53,7 @@ require (
 	github.com/moby/term v0.5.0
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/opencontainers/go-digest v1.0.0
-	github.com/osteele/liquid v1.3.0
+	github.com/osteele/liquid v1.4.0
 	github.com/pelletier/go-toml v1.9.5
 	github.com/prometheus/client_golang v1.19.1
 	github.com/spf13/afero v1.9.5
