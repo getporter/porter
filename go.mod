@@ -36,7 +36,7 @@ require (
 	github.com/dustin/go-humanize v1.0.1
 	github.com/ghodss/yaml v1.0.0
 	github.com/google/go-cmp v0.6.0
-	github.com/google/go-containerregistry v0.19.0
+	github.com/google/go-containerregistry v0.19.2
 	github.com/google/uuid v1.6.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
