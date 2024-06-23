@@ -27,7 +27,7 @@ require (
 	github.com/cnabio/cnab-go v0.25.1
 	github.com/cnabio/cnab-to-oci v0.4.0
 	github.com/cnabio/image-relocation v0.9.0
-	github.com/containerd/containerd v1.7.17
+	github.com/containerd/containerd v1.7.18
 	github.com/davecgh/go-spew v1.1.1
 	github.com/docker/buildx v0.11.2
 	github.com/docker/cli v24.0.5+incompatible
@@ -111,6 +111,7 @@ require (
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/containerd/console v1.0.3 // indirect
 	github.com/containerd/continuity v0.4.2 // indirect
+	github.com/containerd/errdefs v0.1.0 // indirect
 	github.com/containerd/log v0.1.0 // indirect
 	github.com/containerd/stargz-snapshotter/estargz v0.14.3 // indirect
 	github.com/containerd/typeurl/v2 v2.1.1 // indirect
