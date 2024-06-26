@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 
+	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/mixin/query"
 	"get.porter.sh/porter/pkg/pkgmgmt"
@@ -160,7 +161,7 @@ type action struct {
 	steps manifest.Steps
 }
 
-func (l *Linter) Lint(ctx context.Context, m *manifest.Manifest) (Results, error) {
+func (l *Linter) Lint(ctx context.Context, m *manifest.Manifest, config *config.Config) (Results, error) {
 	// Check for reserved porter prefix on parameter names
 	reservedPrefixes := []string{"porter-", "porter_"}
 	params := m.Parameters
@@ -205,7 +206,7 @@ func (l *Linter) Lint(ctx context.Context, m *manifest.Manifest) (Results, error
 		actions = append(actions, action{actionName, steps})
 	}
 	for _, action := range actions {
-		res, err := validateParamsAppliesToAction(m, action.steps, tmplParams, action.name)
+		res, err := validateParamsAppliesToAction(m, action.steps, tmplParams, action.name, config)
 		if err != nil {
 			return nil, span.Error(fmt.Errorf("error validating action: %s", action.name))
 		}
@@ -266,7 +267,7 @@ func (l *Linter) Lint(ctx context.Context, m *manifest.Manifest) (Results, error
 	return results, nil
 }
 
-func validateParamsAppliesToAction(m *manifest.Manifest, steps manifest.Steps, tmplParams manifest.ParameterDefinitions, actionName string) (Results, error) {
+func validateParamsAppliesToAction(m *manifest.Manifest, steps manifest.Steps, tmplParams manifest.ParameterDefinitions, actionName string, config *config.Config) (Results, error) {
 	var results Results
 	for stepNumber, step := range steps {
 		data, err := yaml.Marshal(step.Data)
@@ -274,7 +275,7 @@ func validateParamsAppliesToAction(m *manifest.Manifest, steps manifest.Steps, t
 			return nil, fmt.Errorf("error during marshalling: %w", err)
 		}
 
-		tmplResult, err := m.ScanManifestTemplating(data)
+		tmplResult, err := m.ScanManifestTemplating(data, config)
 		if err != nil {
 			return nil, fmt.Errorf("error parsing templating: %w", err)
 		}

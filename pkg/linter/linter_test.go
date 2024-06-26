@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"testing"
 
+	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/mixin"
 	"get.porter.sh/porter/pkg/portercontext"
@@ -13,6 +14,8 @@ import (
 
 func TestLinter_Lint(t *testing.T) {
 	ctx := context.Background()
+	testConfig := config.NewTestConfig(t).Config
+
 	t.Run("no results", func(t *testing.T) {
 		cxt := portercontext.NewTestContext(t)
 		mixins := mixin.NewTestMixinProvider()
@@ -26,7 +29,7 @@ func TestLinter_Lint(t *testing.T) {
 		}
 		mixins.LintResults = nil
 
-		results, err := l.Lint(ctx, m)
+		results, err := l.Lint(ctx, m, testConfig)
 		require.NoError(t, err, "Lint failed")
 		require.Len(t, results, 0, "linter should have returned 0 results")
 	})
@@ -50,7 +53,7 @@ func TestLinter_Lint(t *testing.T) {
 			},
 		}
 
-		results, err := l.Lint(ctx, m)
+		results, err := l.Lint(ctx, m, testConfig)
 		require.NoError(t, err, "Lint failed")
 		require.Len(t, results, 1, "linter should have returned 1 result")
 		require.Equal(t, mixins.LintResults, results, "unexpected lint results")
@@ -68,7 +71,7 @@ func TestLinter_Lint(t *testing.T) {
 			},
 		}
 
-		results, err := l.Lint(ctx, m)
+		results, err := l.Lint(ctx, m, testConfig)
 		require.NoError(t, err, "Lint failed")
 		require.Len(t, results, 0, "linter should ignore mixins that doesn't support the lint command")
 	})
@@ -121,7 +124,7 @@ func TestLinter_Lint(t *testing.T) {
 				},
 			}
 
-			results, err := l.Lint(ctx, m)
+			results, err := l.Lint(ctx, m, testConfig)
 			require.NoError(t, err, "Lint failed")
 			require.Len(t, results, 1, "linter should have returned 1 result")
 			require.Equal(t, mixins.LintResults, results, "unexpected lint results")
@@ -149,7 +152,7 @@ func TestLinter_Lint(t *testing.T) {
 			},
 		}
 
-		results, err := l.Lint(ctx, m)
+		results, err := l.Lint(ctx, m, testConfig)
 		require.NoError(t, err, "Lint failed")
 		require.Len(t, results, 0, "linter should have returned 1 result")
 	})
@@ -168,7 +171,7 @@ func TestLinter_Lint(t *testing.T) {
 			Parameters: param,
 		}
 
-		results, err := l.Lint(ctx, m)
+		results, err := l.Lint(ctx, m, testConfig)
 		require.NoError(t, err, "Lint failed")
 		require.Len(t, results, 1, "linter should have returned 1 result")
 		require.NotContains(t, results[0].String(), ": 0th step in the mixin ()")
@@ -189,6 +192,7 @@ func TestLinter_Lint_ParameterDoesNotApplyTo(t *testing.T) {
 			m.CustomActions["customAction"] = steps
 		}},
 	}
+	testConfig := config.NewTestConfig(t).Config
 
 	for _, tc := range testCases {
 		t.Run(tc.action, func(t *testing.T) {
@@ -236,7 +240,7 @@ func TestLinter_Lint_ParameterDoesNotApplyTo(t *testing.T) {
 					URL:     "https://porter.sh/docs/references/linter/#porter-101",
 				},
 			}
-			results, err := l.Lint(ctx, m)
+			results, err := l.Lint(ctx, m, testConfig)
 			require.NoError(t, err, "Lint failed")
 			require.Len(t, results, 1, "linter should have returned 1 result")
 			require.Equal(t, lintResults, results, "unexpected lint results")
@@ -258,6 +262,7 @@ func TestLinter_Lint_ParameterAppliesTo(t *testing.T) {
 			m.CustomActions["customAction"] = steps
 		}},
 	}
+	testConfig := config.NewTestConfig(t).Config
 
 	for _, tc := range testCases {
 		t.Run(tc.action, func(t *testing.T) {
@@ -290,7 +295,7 @@ func TestLinter_Lint_ParameterAppliesTo(t *testing.T) {
 			}
 			tc.setSteps(m, steps)
 
-			results, err := l.Lint(ctx, m)
+			results, err := l.Lint(ctx, m, testConfig)
 			require.NoError(t, err, "Lint failed")
 			require.Len(t, results, 0, "linter should have returned 1 result")
 		})
@@ -298,6 +303,8 @@ func TestLinter_Lint_ParameterAppliesTo(t *testing.T) {
 }
 
 func TestLinter_DependencyMultipleTimes(t *testing.T) {
+	testConfig := config.NewTestConfig(t).Config
+
 	t.Run("dependency defined multiple times", func(t *testing.T) {
 		cxt := portercontext.NewTestContext(t)
 		mixins := mixin.NewTestMixinProvider()
@@ -321,7 +328,7 @@ func TestLinter_DependencyMultipleTimes(t *testing.T) {
 			},
 		}
 
-		results, err := l.Lint(context.Background(), m)
+		results, err := l.Lint(context.Background(), m, testConfig)
 		require.NoError(t, err, "Lint failed")
 		require.Len(t, results, 1, "linter should have returned 1 result")
 		require.Equal(t, expectedResult, results, "unexpected lint results")
@@ -340,7 +347,7 @@ func TestLinter_DependencyMultipleTimes(t *testing.T) {
 			},
 		}
 
-		results, err := l.Lint(context.Background(), m)
+		results, err := l.Lint(context.Background(), m, testConfig)
 		require.NoError(t, err, "Lint failed")
 		require.Len(t, results, 0, "linter should have returned 0 result")
 	})
@@ -351,7 +358,7 @@ func TestLinter_DependencyMultipleTimes(t *testing.T) {
 
 		m := &manifest.Manifest{}
 
-		results, err := l.Lint(context.Background(), m)
+		results, err := l.Lint(context.Background(), m, testConfig)
 		require.NoError(t, err, "Lint failed")
 		require.Len(t, results, 0, "linter should have returned 0 result")
 	})

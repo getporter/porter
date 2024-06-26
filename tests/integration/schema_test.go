@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/manifest"
 	testhelper "get.porter.sh/porter/pkg/test"
 	"get.porter.sh/porter/pkg/yaml"
@@ -56,7 +57,7 @@ mixins.2.testmixin: Additional property missingproperty is not allowed`},
 		t.Run(tm.name, func(t *testing.T) {
 			// Load the manifest as a go dump
 			testManifestPath := tm.path
-			mani, err := manifest.ReadManifest(test.TestContext.Context, testManifestPath)
+			mani, err := manifest.ReadManifest(test.TestContext.Context, testManifestPath, config.NewTestConfig(t).Config)
 
 			maniYaml, err := yaml.Marshal(mani)
 			require.NoError(t, err, "error marshaling manifest to yaml")
