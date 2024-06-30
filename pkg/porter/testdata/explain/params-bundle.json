@@ -1,5 +1,17 @@
 {
   "custom": {
+    "io.cnab.parameter-sources": {
+      "seed": {
+        "priority": [
+          "output"
+        ],
+        "sources": {
+          "output": {
+            "name": "seed"
+          }
+        }
+      }
+    },
     "io.cnab.dependencies": null,
     "sh.porter": {
       "manifestDigest": "5040d45d0c44e7632563966c33f5e8980e83cfa7c0485f725b623b7604f072f0",
