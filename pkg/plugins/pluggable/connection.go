@@ -338,11 +338,11 @@ func (c *PluginConnection) collectPluginLogs(ctx context.Context) {
 			}
 
 			switch pluginLog["@level"] {
-			case hclog.Error:
+			case "error":
 				_ = span.Error(fmt.Errorf(msg))
-			case hclog.Warn:
+			case "warn":
 				span.Warn(msg)
-			case hclog.Info:
+			case "info":
 				span.Infof(msg)
 			default:
 				span.Debug(msg)

@@ -102,3 +102,32 @@ func TestContext_PluginVerbosityLevel(t *testing.T) {
 		})
 	}
 }
+
+func TestContext_PluginLogCollectorLevel(t *testing.T) {
+	c := NewTestContext(t)
+	c.IsInternalPlugin = true
+	c.ConfigureLogging(context.Background(), LogConfiguration{
+		Verbosity: zapcore.DebugLevel,
+	})
+
+	_, log := c.StartRootSpan(context.Background(), t.Name())
+	log.Debug("debug log")
+	log.Info("info log")
+	log.Warn("warning log")
+	//throwing away error here because it is a test
+	// we do not return it
+	_ = log.Error(errors.New("error log"))
+
+	log.EndSpan()
+	c.Close()
+
+	lines := strings.Split(c.captureLogs.String(), "\n")
+	require.Contains(t, lines[0], "\"@level\":\"debug\"")
+	require.Contains(t, lines[0], "\"@message\":\"debug log\"")
+	require.Contains(t, lines[1], "\"@level\":\"info\"")
+	require.Contains(t, lines[1], "\"@message\":\"info log\"")
+	require.Contains(t, lines[2], "\"@level\":\"warn\"")
+	require.Contains(t, lines[2], "\"@message\":\"warning log\"")
+	require.Contains(t, lines[3], "\"@level\":\"error\"")
+	require.Contains(t, lines[3], "\"@message\":\"error log\"")
+}
