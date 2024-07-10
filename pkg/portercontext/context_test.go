@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"runtime"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -61,5 +62,43 @@ func TestContext_LogToFile(t *testing.T) {
 		c.CompareGoldenFile("testdata/expected-output-windows.txt", c.GetAllLogs())
 	} else {
 		c.CompareGoldenFile("testdata/expected-output.txt", c.GetAllLogs())
+	}
+}
+
+func TestContext_PluginVerbosityLevel(t *testing.T) {
+	testcases := []struct {
+		name                 string
+		verbosityLevel       zapcore.Level
+		wantNumberOfLogLines int
+	}{
+		{"debug level", zapcore.DebugLevel, 4},
+		{"info level", zapcore.InfoLevel, 3},
+		{"warn level", zapcore.WarnLevel, 2},
+		{"error level", zapcore.ErrorLevel, 1},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			c := NewTestContext(t)
+			c.IsInternalPlugin = true
+			c.ConfigureLogging(context.Background(), LogConfiguration{
+				Verbosity: tc.verbosityLevel,
+			})
+
+			_, log := c.StartRootSpan(context.Background(), t.Name())
+			log.Debug("debug log")
+			log.Info("info log")
+			log.Warn("warning log")
+			//throwing away error here because it is a test
+			// we do not return it
+			_ = log.Error(errors.New("error log"))
+
+			log.EndSpan()
+			c.Close()
+
+			lines := strings.Split(c.captureLogs.String(), "\n")
+			lines = lines[:len(lines)-1] // Remove last line as it will be empty
+			require.Len(t, lines, tc.wantNumberOfLogLines)
+		})
 	}
 }
