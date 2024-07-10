@@ -39,8 +39,8 @@ You will need to create a PowerShell Profile if you do not have one.
 
 To install a bundle, you use the `porter install` command.
 
-```console
-$ porter install porter-hello --reference ghcr.io/getporter/examples/porter-hello:v0.2.0
+```bash
+porter install porter-hello --reference ghcr.io/getporter/examples/porter-hello:v0.2.0
 ```
 
 ```
@@ -57,8 +57,8 @@ This example installs version `0.2.0` of the `ghcr.io/getporter/examples/porter-
 
 To see the list of bundle installations, use the `porter list` command.
 
-```console
-$ porter list
+```bash
+porter list
 ```
 
 ```
@@ -73,8 +73,8 @@ This `porter list` example shows bundle metadata such as the bundle installation
 
 To see information about an installation, use the `porter show` command with the name of the installation.
 
-```console
-$ porter show porter-hello
+```bash
+porter show porter-hello
 ```
 ```
 Name: hello
@@ -95,8 +95,8 @@ History:
 
 To upgrade the resources managed by the bundle, use `porter upgrade`.
 
-```console
-$ porter upgrade
+```bash
+porter upgrade
 ```
 
 ```
@@ -111,8 +111,8 @@ execution completed successfully!
 
 To clean up the resources installed from the bundle, use the `porter uninstall` command.
 
-```console
-$ porter uninstall porter-hello
+```bash
+porter uninstall porter-hello
 ```
 
 ## Next Steps
