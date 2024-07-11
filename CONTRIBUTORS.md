@@ -99,3 +99,4 @@ and we will add you. **All** contributors belong here. 💯
 - [Shivam](https://github.com/Bharadwajshivam28)
 - [David Gannon](https://github.com/dgannon991)
 - [guangwu guo](https://github.com/testwill)
+- [Eric Herrmann](https://github.com/egherrmann)
