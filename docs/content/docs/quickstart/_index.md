@@ -96,7 +96,7 @@ History:
 To upgrade the resources managed by the bundle, use `porter upgrade`.
 
 ```console
-$ porter upgrade
+$ porter upgrade porter-hello
 ```
 
 ```
