@@ -15,7 +15,7 @@ Mixins are critical building blocks for bundles, and we hope the Docker mixin wi
 
 The Docker mixin abstracts this logic for you and allows you to specify the Docker commands with the arguments and flags that you want to execute directly in the Porter manifest. The commands currently provided by the Docker mixin are pull, push, run, build, login, and remove. To view all the syntax for the commands, take a look at the [README](https://github.com/deislabs/porter-docker).
 
-Let's go through an example bundle to try out the mixin. First, we will use the Docker mixin to pull and run [docker/whalesay](https://hub.docker.com/r/docker/whalesay/). Then, we will write our own Dockerfile, build it, and push it to Docker Hub.
+Let's go through an example bundle to try out the mixin. First, we will use the Docker mixin to pull and run [ghcr.io/getporter/examples/images/whalesay](https://github.com/orgs/getporter/packages/container/package/examples%2Fimages%2Fwhalesay). Then, we will write our own Dockerfile, build it, and push it to Docker Hub.
 
 ## Author the bundle
 Writing a bundle with the Docker mixin has a few steps:
@@ -56,19 +56,19 @@ mixins:
 
 ### Use Docker CLI
 
-Next, delete the install, upgrade, and uninstall actions. Now, to run docker/whalesay, copy and paste the code below into the porter.yaml to pull the image and then run it with a command to say "Hello World". 
+Next, delete the install, upgrade, and uninstall actions. Now, to run ghcr.io/getporter/examples/images/whalesay, copy and paste the code below into the porter.yaml to pull the image and then run it with a command to say "Hello World". 
 ```
 install:
 - docker:
     description: "Install Whalesay"
     pull:
-      name: docker/whalesay
+      name: ghcr.io/getporter/examples/images/whalesay
       tag: latest
 - docker:
     description: "Run Whalesay"
     run:
       name: dockermixin
-      image: "docker/whalesay:latest"
+      image: "ghcr.io/getporter/examples/images/whalesay:latest"
       command: cowsay
       arguments:
         - "Hello World"
