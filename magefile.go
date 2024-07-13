@@ -421,11 +421,22 @@ func pushImagesTo(registry string, info releases.GitMetadata) {
 func PublishServerMultiArchImages() {
 	registry := getRegistry()
 	info := releases.LoadMetadata()
-	buildAndPushServerMultiArch(registry, info)
+
+	if info.IsTaggedRelease {
+		buildAndPushServerMultiArch(registry, info.Version)
+	} else {
+		fmt.Println("Skipping server image publish for not tagged release", info.Version)
+	}
+
+	if info.ShouldPublishPermalink() {
+		buildAndPushServerMultiArch(registry, info.Permalink)
+	} else {
+		fmt.Println("Skipping server image publish for permalink", info.Permalink)
+	}
 }
 
-func buildAndPushServerMultiArch(registry string, info releases.GitMetadata) {
-	img := fmt.Sprintf("%s/server:%s", registry, info.Version)
+func buildAndPushServerMultiArch(registry string, tag string) {
+	img := fmt.Sprintf("%s/server:%s", registry, tag)
 	must.RunV("docker", "buildx", "create", "--use")
 	must.RunV("docker", "buildx", "bake", "-f", "docker-bake.json", "--push", "--set", "server.tags="+img, "server")
 }
