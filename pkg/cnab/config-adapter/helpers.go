@@ -13,7 +13,7 @@ import (
 
 func LoadTestBundle(t *testing.T, config *config.Config, path string) cnab.ExtendedBundle {
 	ctx := context.Background()
-	m, err := manifest.ReadManifest(config.Context, path)
+	m, err := manifest.ReadManifest(config.Context, path, config)
 	require.NoError(t, err)
 	b, err := ConvertToTestBundle(ctx, config, m)
 	require.NoError(t, err)

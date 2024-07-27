@@ -282,6 +282,20 @@ func (m *Manifest) getTemplateDependencyOutputName(value string) (string, string
 	return dependencyName, outputName, true
 }
 
+var templatedDependencyShortOutputRegex = regexp.MustCompile(`^outputs.(.+)$`)
+
+// getTemplateDependencyShortOutputName returns the dependency output name from the
+// template variable.
+func (m *Manifest) getTemplateDependencyShortOutputName(value string) (string, bool) {
+	matches := templatedDependencyShortOutputRegex.FindStringSubmatch(value)
+	if len(matches) < 2 {
+		return "", false
+	}
+
+	outputName := matches[1]
+	return outputName, true
+}
+
 var templatedParameterRegex = regexp.MustCompile(`^bundle\.parameters\.(.+)$`)
 
 // GetTemplateParameterName returns the parameter name from the template variable.
@@ -1277,7 +1291,7 @@ func ReadManifestData(cxt *portercontext.Context, path string) ([]byte, error) {
 
 // ReadManifest determines if specified path is a URL or a filepath.
 // After reading the data in the path it returns a Manifest and any errors
-func ReadManifest(cxt *portercontext.Context, path string) (*Manifest, error) {
+func ReadManifest(cxt *portercontext.Context, path string, config *config.Config) (*Manifest, error) {
 	data, err := ReadManifestData(cxt, path)
 	if err != nil {
 		return nil, err
@@ -1288,7 +1302,7 @@ func ReadManifest(cxt *portercontext.Context, path string) (*Manifest, error) {
 		return nil, fmt.Errorf("unsupported property set or a custom action is defined incorrectly: %w", err)
 	}
 
-	tmplResult, err := m.ScanManifestTemplating(data)
+	tmplResult, err := m.ScanManifestTemplating(data, config)
 	if err != nil {
 		return nil, err
 	}
@@ -1324,22 +1338,20 @@ func (m *Manifest) GetTemplatePrefix() string {
 	return ""
 }
 
-func (m *Manifest) ScanManifestTemplating(data []byte) (templateScanResult, error) {
-	const disableHtmlEscaping = true
-	templateSrc := m.GetTemplatePrefix() + string(data)
-	tmpl, err := mustache.ParseStringRaw(templateSrc, disableHtmlEscaping)
+func (m *Manifest) ScanManifestTemplating(data []byte, config *config.Config) (templateScanResult, error) {
+	// Handle outputs variable
+	shortOutputVars, err := m.mapShortDependencyOutputVariables(config)
 	if err != nil {
 		return templateScanResult{}, fmt.Errorf("error parsing the templating used in the manifest: %w", err)
 	}
 
-	tags := tmpl.Tags()
-	vars := map[string]struct{}{} // Keep track of unique variable names
-	for _, tag := range tags {
-		if tag.Type() != mustache.Variable {
-			continue
-		}
+	vars, err := m.getTemplateVariables(string(data))
+	if err != nil {
+		return templateScanResult{}, fmt.Errorf("error parsing the templating used in the manifest: %w", err)
+	}
 
-		vars[tag.Name()] = struct{}{}
+	if config.IsFeatureEnabled(experimental.FlagDependenciesV2) {
+		m.deduplicateAndFilterShortOutputVariables(shortOutputVars, vars)
 	}
 
 	result := templateScanResult{
@@ -1353,13 +1365,69 @@ func (m *Manifest) ScanManifestTemplating(data []byte) (templateScanResult, erro
 	return result, nil
 }
 
+func (m *Manifest) mapShortDependencyOutputVariables(config *config.Config) ([]string, error) {
+	shortOutputVars := []string{}
+	if config.IsFeatureEnabled(experimental.FlagDependenciesV2) {
+		for _, dep := range m.Dependencies.Requires {
+			for outputName, output := range dep.Outputs {
+				vars, err := m.getTemplateVariables(output)
+				if err != nil {
+					return nil, fmt.Errorf("error parsing the templating used for dependency %s output %s: %w", dep.Name, outputName, err)
+				}
+
+				for tmplVar := range vars {
+					outputTemplateName, ok := m.getTemplateDependencyShortOutputName(tmplVar)
+					if ok {
+						shortOutputVars = append(shortOutputVars, fmt.Sprintf("bundle.dependencies.%s.outputs.%s", dep.Name, outputTemplateName))
+					}
+				}
+			}
+		}
+	}
+
+	return shortOutputVars, nil
+}
+
+func (m *Manifest) deduplicateAndFilterShortOutputVariables(shortOutputVars []string, vars map[string]struct{}) {
+	for tmplVar := range vars {
+		if strings.HasPrefix(tmplVar, "outputs.") {
+			delete(vars, tmplVar)
+		}
+	}
+
+	for _, shortHandVar := range shortOutputVars {
+		vars[shortHandVar] = struct{}{}
+	}
+}
+
+func (m *Manifest) getTemplateVariables(data string) (map[string]struct{}, error) {
+	const disableHtmlEscaping = true
+	templateSrc := m.GetTemplatePrefix() + string(data)
+	tmpl, err := mustache.ParseStringRaw(templateSrc, disableHtmlEscaping)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing the templating used in the manifest: %w", err)
+	}
+
+	tags := tmpl.Tags()
+	vars := map[string]struct{}{} // Keep track of unique variable names
+	for _, tag := range tags {
+		if tag.Type() != mustache.Variable {
+			continue
+		}
+
+		vars[tag.Name()] = struct{}{}
+	}
+
+	return vars, nil
+}
+
 // LoadManifestFrom reads and validates the manifest at the specified location,
 // and returns a populated Manifest structure.
 func LoadManifestFrom(ctx context.Context, config *config.Config, file string) (*Manifest, error) {
 	ctx, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
 
-	m, err := ReadManifest(config.Context, file)
+	m, err := ReadManifest(config.Context, file, config)
 	if err != nil {
 		return nil, err
 	}

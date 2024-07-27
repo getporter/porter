@@ -16,6 +16,13 @@
         "env": "LOGLEVEL"
       }
     },
+    "porter-app-port-dep-output": {
+      "definition": "porter-app-port-dep-output",
+      "description": "Wires up the app dependency port output for use as a parameter. Porter internal parameter that should not be set manually.",
+      "destination": {
+        "env": "PORTER_APP_PORT_DEP_OUTPUT"
+      }
+    },
     "porter-debug": {
       "definition": "porter-debug-parameter",
       "description": "Print debug information from Porter when executing the bundle",
@@ -69,6 +76,10 @@
       "default": "info",
       "type": "string"
     },
+    "porter-app-port-dep-output": {
+      "$comment": "porter-internal",
+      "$id": "https://porter.sh/generated-bundle/#porter-parameter-source-definition"
+    },
     "porter-debug-parameter": {
       "$comment": "porter-internal",
       "$id": "https://porter.sh/generated-bundle/#porter-debug",
@@ -99,6 +110,17 @@
   ],
   "custom": {
     "io.cnab.parameter-sources": {
+      "porter-app-port-dep-output": {
+        "priority": [
+          "dependencies.output"
+        ],
+        "sources": {
+          "dependencies.output": {
+            "dependency": "app",
+            "name": "port"
+          }
+        }
+      },
       "porter-infra-ip-dep-output": {
         "priority": [
           "dependencies.output"
