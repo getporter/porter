@@ -429,6 +429,8 @@ func (m *RuntimeManifest) buildAndResolveMappedDependencyOutputs(sourceData map[
 			depOutputs = depBun["outputs"].(map[string]interface{})
 		}
 
+		sourceData["outputs"] = depOutputs
+
 		for outputName, mappedOutput := range manifestDep.Outputs {
 			mappedOutputTemplate := m.GetTemplatePrefix() + mappedOutput
 			renderedOutput, err := mustache.RenderRaw(mappedOutputTemplate, true, sourceData)
@@ -438,6 +440,8 @@ func (m *RuntimeManifest) buildAndResolveMappedDependencyOutputs(sourceData map[
 			depOutputs[outputName] = renderedOutput
 		}
 	}
+
+	delete(sourceData, "outputs")
 
 	return nil
 }
