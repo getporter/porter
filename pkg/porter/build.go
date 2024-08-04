@@ -29,7 +29,7 @@ type BuildOptions struct {
 	// NoLint indicates if lint should be run before build.
 	NoLint bool
 
-	// Driver to use when building the invocation image.
+	// Driver to use when building the bundle image.
 	Driver string
 
 	// Custom is the unparsed list of NAME=VALUE custom inputs set on the command line.
@@ -138,8 +138,8 @@ func (p *Porter) Build(ctx context.Context, opts BuildOptions) error {
 	}
 
 	// Build bundle so that resulting bundle.json is available for inclusion
-	// into the invocation image.
-	// Note: the content digest field on the invocation image section of the
+	// into the bundle image.
+	// Note: the content digest field on the bundle image section of the
 	// bundle.json will *not* be correct until the image is actually pushed
 	// to a registry.  The bundle.json will need to be updated after publishing
 	// and provided just-in-time during bundle execution.
@@ -160,7 +160,7 @@ func (p *Porter) Build(ctx context.Context, opts BuildOptions) error {
 
 	err = builder.BuildInvocationImage(ctx, m, opts.BuildImageOptions)
 	if err != nil {
-		return span.Error(fmt.Errorf("unable to build CNAB invocation image: %w", err))
+		return span.Error(fmt.Errorf("unable to build CNAB bundle image: %w", err))
 	}
 
 	return nil

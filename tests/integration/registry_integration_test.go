@@ -29,7 +29,7 @@ func TestRegistry(t *testing.T) {
 		tags, err := r.ListTags(ctx, repo, regOpts)
 		require.NoError(t, err, "ListTags failed")
 		require.Contains(t, tags, "v0.2.0", "expected a tag for the bundle version")
-		require.Contains(t, tags, "3cb284ae76addb8d56b52bb7d6838351", "expected a tag for the invocation image")
+		require.Contains(t, tags, "3cb284ae76addb8d56b52bb7d6838351", "expected a tag for the bundle image")
 
 		// GetBundleMetadata
 		// Validates that we are passing auth when querying the registry

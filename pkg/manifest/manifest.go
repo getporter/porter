@@ -82,16 +82,16 @@ type Manifest struct {
 	// in the format REGISTRY/NAME or REGISTRY/NAME:TAG
 	Reference string `yaml:"reference,omitempty"`
 
-	// DockerTag is the Docker tag portion of the published invocation
+	// DockerTag is the Docker tag portion of the published bundle
 	// image and bundle.  It will only be set at time of publishing.
 	DockerTag string `yaml:"-"`
 
-	// Image is the name of the invocation image in the format REGISTRY/NAME:TAG
+	// Image is the name of the bundle image in the format REGISTRY/NAME:TAG
 	// It doesn't map to any field in the manifest as it has been deprecated
 	// and isn't meant to be user-specified
 	Image string `yaml:"-"`
 
-	// Dockerfile is the relative path to the Dockerfile template for the invocation image
+	// Dockerfile is the relative path to the Dockerfile template for the bundle image
 	Dockerfile string `yaml:"dockerfile,omitempty"`
 
 	Mixins []MixinDeclaration `yaml:"mixins,omitempty"`
@@ -1172,7 +1172,7 @@ func (m *Manifest) SetDefaults() error {
 	return m.SetInvocationImageAndReference("")
 }
 
-// SetInvocationImageAndReference sets the invocation image name and the
+// SetInvocationImageAndReference sets the bundle image name and the
 // bundle reference on the manifest per the provided reference or via the
 // registry or name values on the manifest.
 func (m *Manifest) SetInvocationImageAndReference(ref string) error {

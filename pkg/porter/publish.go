@@ -84,7 +84,7 @@ func (o *PublishOptions) validateTag() error {
 	return nil
 }
 
-// Publish is a composite function that publishes an invocation image, rewrites the porter manifest
+// Publish is a composite function that publishes an bundle image, rewrites the porter manifest
 // and then regenerates the bundle.json. Finally, it publishes the manifest to an OCI registry.
 func (p *Porter) Publish(ctx context.Context, opts PublishOptions) error {
 	ctx, log := tracing.StartSpan(ctx)
@@ -112,7 +112,7 @@ func (p *Porter) publishFromFile(ctx context.Context, opts PublishOptions) error
 	// If the manifest file is the default/user-supplied manifest,
 	// hot-swap in Porter's canonical translation (if exists) from
 	// the .cnab/app directory, as there may be dynamic overrides for
-	// the name and version fields to inform invocation image naming.
+	// the name and version fields to inform bundle image naming.
 	canonicalManifest := filepath.Join(opts.Dir, build.LOCAL_MANIFEST)
 	canonicalExists, err := p.FileSystem.Exists(canonicalManifest)
 	if err != nil {
@@ -136,7 +136,7 @@ func (p *Porter) publishFromFile(ctx context.Context, opts PublishOptions) error
 		}
 	}
 
-	// Capture original invocation image name as it may be updated below
+	// Capture original bundle image name as it may be updated below
 	origInvImg := m.Image
 
 	// Check for tag and registry overrides optionally supplied on publish
@@ -153,11 +153,11 @@ func (p *Porter) publishFromFile(ctx context.Context, opts PublishOptions) error
 		m.Reference = ""
 	}
 
-	// Update invocation image and reference with opts.Reference, which may be
+	// Update bundle image and reference with opts.Reference, which may be
 	// empty, which is fine - we still may need to pick up tag and/or registry
 	// overrides
 	if err := m.SetInvocationImageAndReference(opts.Reference); err != nil {
-		return log.Errorf("unable to set invocation image name and reference: %w", err)
+		return log.Errorf("unable to set bundle image name and reference: %w", err)
 	}
 
 	if origInvImg != m.Image {
@@ -203,7 +203,7 @@ func (p *Porter) publishFromFile(ctx context.Context, opts PublishOptions) error
 
 	bundleRef.Digest, err = p.Registry.PushImage(ctx, imgRef, regOpts)
 	if err != nil {
-		return log.Errorf("unable to push CNAB invocation image %q: %w", m.Image, err)
+		return log.Errorf("unable to push CNAB bundle image %q: %w", m.Image, err)
 	}
 
 	bundleRef.Definition, err = p.rewriteBundleWithInvocationImageDigest(ctx, m, bundleRef.Digest)
@@ -222,10 +222,10 @@ func (p *Porter) publishFromFile(ctx context.Context, opts PublishOptions) error
 		if err != nil {
 			return log.Errorf("error calculation temporary image tag: %w", err)
 		}
-		log.Debugf("Signing invocation image %s.", inImage.String())
+		log.Debugf("Signing bundle image %s.", inImage.String())
 		err = p.Signer.Sign(context.Background(), inImage.String())
 		if err != nil {
-			return log.Errorf("error signing invocation image: %w", err)
+			return log.Errorf("error signing bundle image: %w", err)
 		}
 		log.Debugf("Signing bundle artifact %s.", bundleRef.Reference.String())
 		err = p.Signer.Sign(context.Background(), bundleRef.Reference.String())
@@ -421,14 +421,14 @@ func getNewImageNameFromBundleReference(origImg, bundleTag string) (image.Name, 
 func (p *Porter) rewriteBundleWithInvocationImageDigest(ctx context.Context, m *manifest.Manifest, digest digest.Digest) (cnab.ExtendedBundle, error) {
 	taggedImage, err := p.rewriteImageWithDigest(m.Image, digest.String())
 	if err != nil {
-		return cnab.ExtendedBundle{}, fmt.Errorf("unable to update invocation image reference: %w", err)
+		return cnab.ExtendedBundle{}, fmt.Errorf("unable to update bundle image reference: %w", err)
 	}
 	m.Image = taggedImage
 
 	fmt.Fprintln(p.Out, "\nRewriting CNAB bundle.json...")
 	err = p.buildBundle(ctx, m, digest)
 	if err != nil {
-		return cnab.ExtendedBundle{}, fmt.Errorf("unable to rewrite CNAB bundle.json with updated invocation image digest: %w", err)
+		return cnab.ExtendedBundle{}, fmt.Errorf("unable to rewrite CNAB bundle.json with updated bundle image digest: %w", err)
 	}
 
 	bun, err := cnab.LoadBundle(p.Context, build.LOCAL_BUNDLE)
@@ -470,7 +470,7 @@ func (p *Porter) rewriteImageWithDigest(InvocationImage string, imgDigest string
 		return "", fmt.Errorf("unable to parse docker image: %s", err)
 	}
 
-	// Change the invocation image from bundlerepo:tag-hash => bundlerepo@sha256:abc123
+	// Change the bundle image from bundlerepo:tag-hash => bundlerepo@sha256:abc123
 	// Do not continue to reference the temporary tag that we used to push, otherwise that will prevent the registry from garbage collecting it later.
 	repo := cnab.MustParseOCIReference(taggedRef.Repository())
 
