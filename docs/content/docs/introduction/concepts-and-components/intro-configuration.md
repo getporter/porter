@@ -232,7 +232,7 @@ The following log settings are available:
 | ---------------- | ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | logs.log-to-file | PORTER_LOGS_LOG_TO_FILE | Specifies if a logfile should be written for each command.                                                                                                                                                     |
 | logs.structured  | PORTER_LOGS_STRUCTURED  | Specifies if the logs printed to the console should include a timestamp and log level                                                                                                                          |
-| logs.level       | PORTER_LOGS_LEVEL       | Filters the logs to the specified level and higher. The log level controls both the logs written to file, and the logs output to the console when porter is run. Allowed values are: debug, info, warn, error. |
+| logs.level       | PORTER_LOGS_LEVEL       | Filters the logs to the specified level and higher. The log level controls the logs written to file when porter is run. Allowed values are: debug, info, warn, error. |
 
 #### Telemetry
 

@@ -122,7 +122,7 @@ func (c *PluginConnection) Start(ctx context.Context, pluginCfg io.Reader) error
 	logger := hclog.New(&hclog.LoggerOptions{
 		Name:       "porter",
 		Output:     c.logsWriter,
-		Level:      hclog.Debug,
+		Level:      hclog.Warn,
 		JSONFormat: true,
 	})
 	c.client = plugin.NewClient(&plugin.ClientConfig{
@@ -338,11 +338,11 @@ func (c *PluginConnection) collectPluginLogs(ctx context.Context) {
 			}
 
 			switch pluginLog["@level"] {
-			case hclog.Error:
+			case "error":
 				_ = span.Error(fmt.Errorf(msg))
-			case hclog.Warn:
+			case "warn":
 				span.Warn(msg)
-			case hclog.Info:
+			case "info":
 				span.Infof(msg)
 			default:
 				span.Debug(msg)
