@@ -198,7 +198,7 @@ func WriteParameterToString(paramName string, value interface{}) (string, error)
 }
 
 // GetReferencedRegistries identifies all OCI registries used by the bundle
-// from both the invocation image and the referenced images.
+// from both the bundle image and the referenced images.
 func (b ExtendedBundle) GetReferencedRegistries() ([]string, error) {
 	regMap := make(map[string]struct{})
 	for _, ii := range b.InvocationImages {

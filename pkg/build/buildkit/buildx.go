@@ -69,7 +69,7 @@ func (b *Builder) BuildInvocationImage(ctx context.Context, manifest *manifest.M
 	ctx, span := tracing.StartSpan(ctx, attribute.String("image", manifest.Image))
 	defer span.EndSpan()
 
-	span.Info("Building invocation image")
+	span.Info("Building bundle image")
 
 	cli, err := docker.GetDockerClient()
 	if err != nil {
@@ -186,7 +186,7 @@ func (b *Builder) determineBuildArgs(
 		return nil, span.Errorf("Error parsing custom build arguments from the Dockerfile at %s: %w", dockerfilePath, err)
 	}
 
-	// Pass custom values as build args when building the invocation image
+	// Pass custom values as build args when building the bundle image
 	argNameRegex := regexp.MustCompile(`[^A-Z0-9_]`)
 	for k, v := range convertedCustomInput {
 		// Make all arg names upper-case

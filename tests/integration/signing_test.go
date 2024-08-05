@@ -41,7 +41,7 @@ func TestCosign(t *testing.T) {
 	_, output = testr.RequirePorter("install", "--verify-bundle", "--reference", ref.String(), "--insecure-registry")
 	fmt.Println(output)
 	require.Contains(t, output, fmt.Sprintf("bundle signature verified for %s", ref.String()))
-	require.Contains(t, output, fmt.Sprintf("invocation image signature verified for %s", invocationImageRef.String()))
+	require.Contains(t, output, fmt.Sprintf("bundle image signature verified for %s", invocationImageRef.String()))
 }
 
 func TestNotation(t *testing.T) {
@@ -107,7 +107,7 @@ func TestNotation(t *testing.T) {
 	_, output = testr.RequirePorter("install", "--verify-bundle", "--reference", ref.String(), "--insecure-registry")
 	fmt.Println(output)
 	require.Contains(t, output, fmt.Sprintf("bundle signature verified for %s", ref.String()))
-	require.Contains(t, output, fmt.Sprintf("invocation image signature verified for %s", invocationImageRef.String()))
+	require.Contains(t, output, fmt.Sprintf("bundle image signature verified for %s", invocationImageRef.String()))
 }
 
 func toRefWithDigest(t *testing.T, ref cnab.OCIReference) cnab.OCIReference {
@@ -120,7 +120,7 @@ func toRefWithDigest(t *testing.T, ref cnab.OCIReference) cnab.OCIReference {
 }
 
 func getInvocationImageDigest(t *testing.T, output string) cnab.OCIReference {
-	r := regexp.MustCompile(`(?m:^Signing invocation image (localhost:\d+/cosign:porter-[0-9a-z]+)\.)`)
+	r := regexp.MustCompile(`(?m:^Signing bundle image (localhost:\d+/cosign:porter-[0-9a-z]+)\.)`)
 	matches := r.FindAllStringSubmatch(output, -1)
 	require.Len(t, matches, 1)
 	invocationImageRefString := matches[0][1]

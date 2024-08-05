@@ -15,7 +15,7 @@ In order to build a CNAB with the kubernetes mixin, the bundle author should pla
 
 ## Buildtime
 
-Rather than trying to rebuild the functionality of `kubectl`, this mixin will contribute lines to the invocation image Dockerfile that will result in `kubectl` being installed:
+Rather than trying to rebuild the functionality of `kubectl`, this mixin will contribute lines to the bundle image Dockerfile that will result in `kubectl` being installed:
 
 ```
 RUN apt-get update && \
@@ -57,7 +57,7 @@ The mixin allows bundle authors to specify the following parameters on install:
 
 ### Upgrade
 
- At runtime, the mixin will use the `kubectl apply` command when an `upgrade` action is specified. This will result in the resources defined in the supplied manifests being created or deleted, as appropriate. As the manifests will be contained within the bundle's invocation image, an upgrade action against an invocation image that was used for install is a no-op. The use of the `apply` command will allow the use of the `wait` flag The mixin will not support all of the [options](https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands#apply) available, specifically `dry-run`, or options related to editing or deleting resources. Available parameters are spelled out below.
+ At runtime, the mixin will use the `kubectl apply` command when an `upgrade` action is specified. This will result in the resources defined in the supplied manifests being created or deleted, as appropriate. As the manifests will be contained within the bundle image, an upgrade action against an bundle image that was used for install is a no-op. The use of the `apply` command will allow the use of the `wait` flag The mixin will not support all of the [options](https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands#apply) available, specifically `dry-run`, or options related to editing or deleting resources. Available parameters are spelled out below.
 
 | Parameter | Type | Description | Default |
 |-----------|------|-------------|---------|

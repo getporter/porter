@@ -1238,7 +1238,7 @@ func TestResolveInvocationImage(t *testing.T) {
 		},
 		{name: "failure with invalid digest",
 			bundleInvocationImg: bundle.BaseImage{Image: "blah/ghost:latest", ImageType: "docker", Digest: "123"},
-			wantErr:             "unable to get invocation image reference with digest",
+			wantErr:             "unable to get bundle image reference with digest",
 		},
 	}
 

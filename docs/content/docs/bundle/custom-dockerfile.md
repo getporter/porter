@@ -5,15 +5,15 @@ aliases:
 - /custom-dockerfile/
 ---
 
-Porter automatically generates a Dockerfile and uses it to build the invocation image for your bundle.
+Porter automatically generates a Dockerfile and uses it to build the bundle image for your bundle.
 It runs the container as an unprivileged user with membership in the root group, copies all the files from the current directory into the bundle, and installs SSL certificates.
-Sometimes you may want to full control over your bundle's invocation image, for example to install additional software used by the bundle.
+Sometimes you may want to full control over your bundle image, for example to install additional software used by the bundle.
 
 When you run porter create, a template Dockerfile is created for you in the current directory named **template.Dockerfile**:
 
 ```Dockerfile
 # syntax=docker/dockerfile-upstream:1.4.0
-# This is a template Dockerfile for the bundle's invocation image
+# This is a template Dockerfile for the bundle image
 # You can customize it to use different base images, install tools and copy configuration files.
 #
 # Porter will use it as a template and append lines to it for the mixins
@@ -155,7 +155,7 @@ You can control where they are injected by placing a comment in your Dockerfile 
 When that line is omitted, the lines are appended to the end of the template.
 
 The location of this comment can significantly impact the time it takes to rebuild your bundle, due to image layers and caching.
-By default, this line is placed before copying your local files into the bundle, so that you can iterate on your scripts and on the porter manifest without having to rebuild those layers of the invocation image.
+By default, this line is placed before copying your local files into the bundle, so that you can iterate on your scripts and on the porter manifest without having to rebuild those layers of the bundle image.
 
 # Variables
 
@@ -193,7 +193,7 @@ COPY myfile /home/${BUNDLE_USER}/
 
 ## BUNDLE_DIR
 
-The **BUNDLE_DIR** argument is declared in the [PORTER_INIT](#porter_init) section is the path to the bundle directory inside the invocation image.
+The **BUNDLE_DIR** argument is declared in the [PORTER_INIT](#porter_init) section is the path to the bundle directory inside the bundle image.
 You may then use this when copying files from the local filesystem to the bundle's working directory.
 We strongly recommend that you always use this variable and do not copy files into directories outside BUNDLE_DIR.
 If you do, you are responsible for setting the file permissions so that the bundle's user ([BUNDLE_USER](#bundle_user)) and the bundle's group (root) have the same permissions.

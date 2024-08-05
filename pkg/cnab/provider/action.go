@@ -51,7 +51,7 @@ type ActionArguments struct {
 	// MountHostVolumes is a map of host paths to container paths to mount.
 	HostVolumeMounts []HostVolumeMountSpec
 
-	// PersistLogs specifies if the invocation image output should be saved as an output.
+	// PersistLogs specifies if the bundle image output should be saved as an output.
 	PersistLogs bool
 }
 
@@ -127,10 +127,10 @@ func (r *Runtime) AddRelocation(args ActionArguments) cnabaction.OperationConfig
 
 			op.Files["/cnab/app/relocation-mapping.json"] = string(b)
 
-			// If the invocation image is present in the relocation mapping, we need
+			// If the bundle image is present in the relocation mapping, we need
 			// to update the operation and set the new image reference. Unfortunately,
 			// the relocation mapping is just reference => reference, so there isn't a
-			// great way to check for the invocation image.
+			// great way to check for the bundle image.
 			if mappedInvo, ok := args.BundleReference.RelocationMap[op.Image.Image]; ok {
 				op.Image.Image = mappedInvo
 			}

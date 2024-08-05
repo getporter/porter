@@ -778,7 +778,7 @@ func (m *RuntimeManifest) applyUnboundBundleOutputs(ctx context.Context) error {
 	return log.Error(bigErr.ErrorOrNil())
 }
 
-// ResolveInvocationImage updates the RuntimeManifest to properly reflect the invocation image passed to the bundle via the
+// ResolveInvocationImage updates the RuntimeManifest to properly reflect the bundle image passed to the bundle via the
 // mounted bundle.json and relocation mapping
 func (m *RuntimeManifest) ResolveInvocationImage(bun cnab.ExtendedBundle, reloMap relocation.ImageRelocationMap) error {
 	for _, image := range bun.InvocationImages {
@@ -788,11 +788,11 @@ func (m *RuntimeManifest) ResolveInvocationImage(bun cnab.ExtendedBundle, reloMa
 
 		ref, err := cnab.ParseOCIReference(image.Image)
 		if err != nil {
-			return fmt.Errorf("unable to parse invocation image reference: %w", err)
+			return fmt.Errorf("unable to parse bundle image reference: %w", err)
 		}
 		refWithDigest, err := ref.WithDigest(digest.Digest(image.Digest))
 		if err != nil {
-			return fmt.Errorf("unable to get invocation image reference with digest: %w", err)
+			return fmt.Errorf("unable to get bundle image reference with digest: %w", err)
 		}
 
 		m.Image = refWithDigest.String()
@@ -829,7 +829,7 @@ func (m *RuntimeManifest) ResolveImages(bun cnab.ExtendedBundle, reloMap relocat
 	}
 	for oldRef, reloRef := range reloMap {
 		alias := reverseLookup[oldRef]
-		if manifestImage, ok := m.ImageMap[alias]; ok { //note, there might be other images in the relocation mapping, like the invocation image
+		if manifestImage, ok := m.ImageMap[alias]; ok { //note, there might be other images in the relocation mapping, like the bundle image
 			err := resolveImage(&manifestImage, reloRef)
 			if err != nil {
 				return fmt.Errorf("unable to update image map from relocation mapping: %w", err)

@@ -209,7 +209,7 @@ the action, e.g. "install", and a definition named `<action>Step`, e.g.
 
 ## install
 
-The install command (required) is called from inside the invocation image during
+The install command (required) is called from inside the bundle image during
 the `porter run` command. The current step from the manifest is passed on stdin.
 The mixin should write any output values to their own files in the
 `/cnab/app/porter/outputs/` directory.
@@ -243,7 +243,7 @@ alsotopsecret
 
 ## upgrade
 
-The upgrade command (required) is called from inside the invocation image during
+The upgrade command (required) is called from inside the bundle image during
 the `porter run` command. The current step from the manifest is passed on stdin.
 The mixin should write any output values to their own files in the
 `/cnab/app/porter/outputs/` directory.
@@ -276,7 +276,7 @@ updatedtopsecret
 
 ## uninstall
 
-The uninstall command (required) is called from inside the invocation image during
+The uninstall command (required) is called from inside the bundle image during
 the `porter run` command. The current step from the manifest is passed on stdin.
 
 Example:
@@ -293,7 +293,7 @@ uninstall:
 
 ## invoke
 
-The invoke command (optional) is called from inside the invocation image during
+The invoke command (optional) is called from inside the bundle image during
 the `porter run` command when a custom action defined in the bundle is executed.
 The current step from the manifest is passed on stdin. The mixin should write
 any output values to their own files in the `/cnab/app/porter/outputs/` directory.

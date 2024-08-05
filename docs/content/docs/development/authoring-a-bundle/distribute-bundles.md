@@ -6,7 +6,7 @@ aliases:
   - /distributing-bundles/
 ---
 
-Once you have built a bundle with Porter, the next step is to share the bundle and invocation image so others can use it. Porter uses OCI (Docker) registries to share both CNAB bundle manifest and invocation images.
+Once you have built a bundle with Porter, the next step is to share the bundle and bundle image so others can use it. Porter uses OCI (Docker) registries to share both CNAB bundle manifest and bundle images.
 
 - [Preparing For Bundle Publishing](#preparing-for-bundle-publishing)
 - [Bundle Publish](#bundle-publish)
@@ -15,11 +15,11 @@ Once you have built a bundle with Porter, the next step is to share the bundle a
 
 ## Preparing For Bundle Publishing
 
-Before you can publish your bundle, you must first run a `porter build` command. This will create the invocation image so it can be pushed to an OCI (Docker) registry along with your CNAB bundle manifest. It's a good idea to work with your bundle and test it locally before you publish it to a registry.
+Before you can publish your bundle, you must first run a `porter build` command. This will create the bundle image so it can be pushed to an OCI (Docker) registry along with your CNAB bundle manifest. It's a good idea to work with your bundle and test it locally before you publish it to a registry.
 
 ## Bundle Publish
 
-Once you are satisfied with the bundle, the next step is to publish the bundle! Bundle publishing involves pushing both the invocation image and the CNAB bundle manifest to an OCI registry. Porter uses [docker tags](https://docs.docker.com/engine/reference/commandline/tag/) for both invocation images and CNAB bundle manifests. These are defined in your `porter.yaml` file:
+Once you are satisfied with the bundle, the next step is to publish the bundle! Bundle publishing involves pushing both the bundle image and the CNAB bundle manifest to an OCI registry. Porter uses [docker tags](https://docs.docker.com/engine/reference/commandline/tag/) for both bundle images and CNAB bundle manifests. These are defined in your `porter.yaml` file:
 
 ```yaml
 name: kubernetes
@@ -30,15 +30,15 @@ registry: getporter
 
 This YAML snippet indicates that the bundle will be built and tagged as `getporter/kubernetes:v0.2.0`. This full bundle reference is constructed from the provided `registry`, `name` and `version` fields. We recommend using [semantic versioning](https://semver.org/) for the bundle version.
 
-The generated invocation image name will be auto-derived from the same combination of `registry`, `name` and `version`. Using the example above, an invocation image with the name of `getporter/kubernetes:porter-HASH` will be built.
+The generated bundle image name will be auto-derived from the same combination of `registry`, `name` and `version`. Using the example above, an bundle image with the name of `getporter/kubernetes:porter-HASH` will be built.
 
-Once you have provided values for the fields above, run the `porter build` command one last time to verify that your invocation image can be successfully built.
+Once you have provided values for the fields above, run the `porter build` command one last time to verify that your bundle image can be successfully built.
 
-Next, run the `porter publish` command in order to push the invocation image to the specified repository and to regenerate a CNAB bundle manifest using this newly pushed image. You should see output like the following:
+Next, run the `porter publish` command in order to push the bundle image to the specified repository and to regenerate a CNAB bundle manifest using this newly pushed image. You should see output like the following:
 
 ```
 $ porter publish
-Pushing CNAB invocation image...
+Pushing CNAB bundle image...
 The push refers to repository [docker.io/getporter/kubernetes]
 0f4d408243ab: Preparing
 6573f19b0ef5: Preparing
@@ -66,7 +66,7 @@ Bundle tag docker.io/getporter/kubernetes:v0.2.0 pushed successfully, with diges
 
 Note: you can safely ignore the `WARN[0005] reference for unknown type: application/vnd.cnab.config.v1+json` message, if it appears.
 
-When this command is complete, your CNAB bundle manifest and invocation image will have been successfully pushed to the specified OCI registry. It can then be installed with the `porter install` command:
+When this command is complete, your CNAB bundle manifest and bundle image will have been successfully pushed to the specified OCI registry. It can then be installed with the `porter install` command:
 
 ```
 $ porter install --reference getporter/kubernetes:v0.2.0 -c kool-kred
@@ -84,7 +84,7 @@ executing porter install configuration from /cnab/app/porter.yaml
 Install Hello World App
 ```
 
-The latter example ensures immutability for your bundle. After you've initially run `porter publish`, your tagged reference, such as `getporter/kubernetes:v0.2.0` can be updated with subsequent `porter publish` commands. However, the digested version `getporter/kubernetes@sha256:10a41e6d5af73f2cebe4bf6d368bdf5ccc39e641117051d30f88cf0c69e4e456` will not change. If you'd like to publish different version of the bundle, you will need to update minimally the `tag` attribute and optionally the `invocationImage` attribute, before running `porter publish` again. (Porter will detect the manifest change and automatically run a new bundle and invocation image build prior to publishing.)
+The latter example ensures immutability for your bundle. After you've initially run `porter publish`, your tagged reference, such as `getporter/kubernetes:v0.2.0` can be updated with subsequent `porter publish` commands. However, the digested version `getporter/kubernetes@sha256:10a41e6d5af73f2cebe4bf6d368bdf5ccc39e641117051d30f88cf0c69e4e456` will not change. If you'd like to publish different version of the bundle, you will need to update minimally the `tag` attribute, before running `porter publish` again. (Porter will detect the manifest change and automatically run a new bundle and bundle image build prior to publishing.)
 
 ## Publish Archived Bundles
 
@@ -102,7 +102,7 @@ references and instead should use the [images] section and templating so that th
 are referencing the published location of the image.
 
 - REGISTRY/ORG/BUNDLE:TAG
-  - REGISTRY/ORG/BUNDLE@**INVOCATION_IMAGE_DIGEST**
+  - REGISTRY/ORG/BUNDLE@**BUNDLE_IMAGE_DIGEST**
   - REGISTRY/ORG/BUNDLE@**REFERENCED_IMAGE_1_DIGEST**
   - REGISTRY/ORG/BUNDLE@**REFERENCED_IMAGE_2_DIGEST**
 
@@ -124,7 +124,7 @@ images:
       digest: "sha256:8f1133d81f1b078c865cdb11d17d1ff15f55c449d3eecca50190eed0f5e5e26f"
 ```
 
-When this bundle is published, both the invocation image and the spring-music
+When this bundle is published, both the bundle image and the spring-music
 image will be copied and stored in the context of the bundle. To see this in
 action, you can use the `porter inspect` command to see what images will
 actually be used for a given bundle.
@@ -134,7 +134,7 @@ Name: spring-music
 Description: Run the Spring Music Service on Kubernetes and Digital Ocean PostgreSQL
 Version: 0.5.0
 
-Invocation Images:
+Bundle Images:
 Image                                            Type     Digest            Original Image
 jeremyrickard/porter-do-bundle@sha256:74b86...   docker   sha256:74b86...   jeremyrickard/porter-do-bundle-installer:v0.5.0
 

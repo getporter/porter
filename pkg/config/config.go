@@ -44,15 +44,15 @@ const (
 	// during the execution of a bundle action.
 	BundleOutputsDir = "/cnab/app/outputs"
 
-	// ClaimFilepath is the filepath to the claim.json inside of an invocation image
+	// ClaimFilepath is the filepath to the claim.json inside of an bundle image
 	ClaimFilepath = "/cnab/claim.json"
 
 	// EnvPorterInstallationNamespace is the name of the environment variable which is injected into the
-	// invocation image, containing the namespace of the installation.
+	// bundle image, containing the namespace of the installation.
 	EnvPorterInstallationNamespace = "PORTER_INSTALLATION_NAMESPACE"
 
 	// EnvPorterInstallationName is the name of the environment variable which is injected into the
-	// invocation image, containing the name of the installation.
+	// bundle image, containing the name of the installation.
 	EnvPorterInstallationName = "PORTER_INSTALLATION_NAME"
 
 	// DefaultVerbosity is the default value for the --verbosity flag.

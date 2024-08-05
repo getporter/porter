@@ -279,7 +279,7 @@ When it is completed, it is used to activate the features from [PEP003 - Advance
 ### Full control Dockerfile
 
 The `full-control-dockerfile` experimental flag disables all Dockerfile generation when building bundles.
-When enabled Porter will use the file referenced by `dockerfile` in the Porter manifest when building the invocation image *without modifying* it in any way.
+When enabled Porter will use the file referenced by `dockerfile` in the Porter manifest when building the bundle image *without modifying* it in any way.
 Ie. Porter will not process `# PORTER_x` placeholders, nor inject any user configuration and `CMD` statements.
 It is up to the bundle author to ensure that the contents of the Dockerfile contains the necessary tools for any mixins to function and a layout that can be executed as a Porter bundle.
 

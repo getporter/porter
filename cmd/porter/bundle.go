@@ -53,7 +53,7 @@ func buildBundleBuildCommand(p *porter.Porter) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "build",
 		Short: "Build a bundle",
-		Long: `Builds the bundle in the current directory by generating a Dockerfile and a CNAB bundle.json, and then building the invocation image.
+		Long: `Builds the bundle in the current directory by generating a Dockerfile and a CNAB bundle.json, and then building the bundle image.
 
 The docker driver builds the bundle image using the local Docker host. To use a remote Docker host, set the following environment variables:
   DOCKER_HOST (required)
@@ -85,7 +85,7 @@ The docker driver builds the bundle image using the local Docker host. To use a 
 	f.StringVarP(&opts.Dir, "dir", "d", "",
 		"Path to the build context directory where all bundle assets are located. Defaults to the current directory.")
 	f.StringVar(&opts.Driver, "driver", porter.BuildDriverDefault,
-		fmt.Sprintf("Driver for building the invocation image. Allowed values are: %s", strings.Join(porter.BuildDriverAllowedValues, ", ")))
+		fmt.Sprintf("Driver for building the bundle image. Allowed values are: %s", strings.Join(porter.BuildDriverAllowedValues, ", ")))
 	_ = f.MarkHidden("driver") // Hide the driver flag since there aren't any choices to make right now
 	f.StringArrayVar(&opts.BuildArgs, "build-arg", nil,
 		"Set build arguments in the template Dockerfile (format: NAME=VALUE). May be specified multiple times. Max length is 5,000 characters.")
@@ -94,7 +94,7 @@ The docker driver builds the bundle image using the local Docker host. To use a 
 	f.StringArrayVar(&opts.Secrets, "secret", nil,
 		"Secret file to expose to the build (format: id=mysecret,src=/local/secret). Custom values are accessible as build arguments in the template Dockerfile and in the manifest using template variables. May be specified multiple times.")
 	f.BoolVar(&opts.NoCache, "no-cache", false,
-		"Do not use the Docker cache when building the bundle's invocation image.")
+		"Do not use the Docker cache when building the bundle image.")
 	f.StringArrayVar(&opts.Customs, "custom", nil,
 		"Define an individual key-value pair for the custom section in the form of NAME=VALUE. Use dot notation to specify a nested custom field. May be specified multiple times. Max length is 5,000 characters when used as a build argument.")
 	f.BoolVar(&opts.InsecureRegistry, "insecure-registry", false,
@@ -143,9 +143,9 @@ func buildBundlePublishCommand(p *porter.Porter) *cobra.Command {
 	cmd := cobra.Command{
 		Use:   "publish",
 		Short: "Publish a bundle",
-		Long: `Publishes a bundle by pushing the invocation image and bundle to a registry.
+		Long: `Publishes a bundle by pushing the bundle image and bundle to a registry.
 
-Note: if overrides for registry/tag/reference are provided, this command only re-tags the invocation image and bundle; it does not re-build the bundle.`,
+Note: if overrides for registry/tag/reference are provided, this command only re-tags the bundle image and bundle; it does not re-build the bundle.`,
 		Example: `  porter bundle publish
   porter bundle publish --file myapp/porter.yaml
   porter bundle publish --dir myapp
@@ -188,7 +188,7 @@ func buildBundleArchiveCommand(p *porter.Porter) *cobra.Command {
 	cmd := cobra.Command{
 		Use:   "archive FILENAME --reference PUBLISHED_BUNDLE",
 		Short: "Archive a bundle from a reference",
-		Long:  "Archives a bundle by generating a gzipped tar archive containing the bundle, invocation image and any referenced images.",
+		Long:  "Archives a bundle by generating a gzipped tar archive containing the bundle, bundle image and any referenced images.",
 		Example: `  porter bundle archive mybun.tgz --reference ghcr.io/getporter/examples/porter-hello:v0.2.0
   porter bundle archive mybun.tgz --reference localhost:5000/ghcr.io/getporter/examples/porter-hello:v0.2.0 --force
   porter bundle archive mybun.tgz --compression NoCompression --reference ghcr.io/getporter/examples/porter-hello:v0.2.0

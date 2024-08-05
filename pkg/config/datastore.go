@@ -8,10 +8,10 @@ const (
 	// the build driver.
 	BuildDriverBuildkit = "buildkit"
 
-	// RuntimeDriverDocker specifies that the invocation image should be executed on docker.
+	// RuntimeDriverDocker specifies that the bundle image should be executed on docker.
 	RuntimeDriverDocker = "docker"
 
-	// RuntimeDriverKubernetes specifies that the invocation image should be executed on kubernetes.
+	// RuntimeDriverKubernetes specifies that the bundle image should be executed on kubernetes.
 	RuntimeDriverKubernetes = "kubernetes"
 )
 

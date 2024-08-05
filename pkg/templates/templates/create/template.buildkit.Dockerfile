@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile-upstream:1.4.0
-# This is a template Dockerfile for the bundle's invocation image
+# This is a template Dockerfile for the bundle image
 # You can customize it to use different base images, install tools and copy configuration files.
 #
 # Porter will use it as a template and append lines to it for the mixins

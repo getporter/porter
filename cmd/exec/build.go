@@ -10,7 +10,7 @@ import (
 func buildBuildCommand(m *exec.Mixin) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "build",
-		Short: "Generate Dockerfile lines for the bundle invocation image",
+		Short: "Generate Dockerfile lines for the bundle image",
 		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Fprintln(m.Config.Out, "# exec mixin has no buildtime dependencies")
 		},

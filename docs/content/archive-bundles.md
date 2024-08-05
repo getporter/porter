@@ -3,7 +3,7 @@ title: Archiving Bundles
 description: Archiving Bundles with Porter
 ---
 
-Porter allows you to share bundles by [publishing](/distributing-bundles/) them to an OCI registry. Porter also allows you to copy a bundle from one registry to another. Using these commands, bundle users have flexibility in how they leverage published bundles. What if you want to use a published bundle on a disconnected or edge network that has limited connectivity? The `porter archive` command and the `porter publish` commands allow you to take the bundle from a registry on one network, move it to the network or location, and republish it into another registry for use within that environment. The generated bundle archive contains the CNAB `bundle.json`, along with an OCI [image layout](https://github.com/opencontainers/image-spec/blob/master/image-layout.md) containing the invocation image and any images declared in the `images` section of the `bundle.json`. This enables the entire bundle to be easily moved into a private data center or across an air-gapped network, and republished within that environment.
+Porter allows you to share bundles by [publishing](/distributing-bundles/) them to an OCI registry. Porter also allows you to copy a bundle from one registry to another. Using these commands, bundle users have flexibility in how they leverage published bundles. What if you want to use a published bundle on a disconnected or edge network that has limited connectivity? The `porter archive` command and the `porter publish` commands allow you to take the bundle from a registry on one network, move it to the network or location, and republish it into another registry for use within that environment. The generated bundle archive contains the CNAB `bundle.json`, along with an OCI [image layout](https://github.com/opencontainers/image-spec/blob/master/image-layout.md) containing the bundle image and any images declared in the `images` section of the `bundle.json`. This enables the entire bundle to be easily moved into a private data center or across an air-gapped network, and republished within that environment.
 
 For a working example of how to move a bundle across an airgap, read [Example: Airgapped Environments](/examples/airgap/).
 
@@ -56,7 +56,7 @@ drwxr-xr-x  0 jeremyrickard staff       0 Oct 18 10:27 ./artifacts/layout/blobs/
 -rw-r--r--  0 jeremyrickard staff     2955 Oct 18 10:27 ./bundle.json
 ```
 
-In this archive file, you will see the `bundle.json`, along with all of the artifacts that represent the OCI image layout. In this case, we had two images, the invocation image and an application image. They are both written to the `artifacts/` directory as part of the OCI image layout.
+In this archive file, you will see the `bundle.json`, along with all of the artifacts that represent the OCI image layout. In this case, we had two images, the bundle image and an application image. They are both written to the `artifacts/` directory as part of the OCI image layout.
 
 ## Publish a Bundle Archive
 

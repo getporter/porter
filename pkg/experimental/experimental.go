@@ -7,7 +7,7 @@ const (
 	// DependenciesV2 is the name of the experimental feature flag for PEP003 - Advanced Dependencies.
 	DependenciesV2 = "dependencies-v2"
 
-	// FullControlDockerfile is the name of the experimental feature flag giving authors full control of the invocation image Dockerfile
+	// FullControlDockerfile is the name of the experimental feature flag giving authors full control of the bundle image Dockerfile
 	FullControlDockerfile = "full-control-dockerfile"
 )
 
@@ -21,7 +21,7 @@ const (
 	// FlagDependenciesV2 gates the changes from PEP003 - Advanced Dependencies.
 	FlagDependenciesV2
 
-	// FlagFullControlDockerfile gates the changes required for giving authors full control of the invocation image Dockerfile
+	// FlagFullControlDockerfile gates the changes required for giving authors full control of the bundle image Dockerfile
 	FlagFullControlDockerfile
 )
 

@@ -22,7 +22,7 @@ can be deleted.
 
 ## template.Dockerfile
 
-This is a template Dockerfile for the bundle's invocation image. You can
+This is a template Dockerfile for the bundle image. You can
 customize it to use different base images, install tools and copy configuration
 files. Porter will use it as a template and append lines to it for the mixin and to set
 the CMD appropriately for the CNAB specification. You can delete this file if you don't
@@ -35,7 +35,7 @@ dockerfile: template.Dockerfile
 ```
 
 By default, the Dockerfile template is disabled and Porter automatically copies
-all of the files in the current directory into the bundle's invocation image. When
+all of the files in the current directory into the bundle image. When
 you use a custom Dockerfile template, you must manually copy files into the bundle
 using COPY statements in the Dockerfile template.
 
@@ -47,5 +47,5 @@ delete it if you don't need it.
 
 ## .dockerignore
 
-This is a default file that controls which files are copied into the bundle's
-invocation image by default. You can delete it if you don't need it.
+This is a default file that controls which files are copied into the bundle
+image by default. You can delete it if you don't need it.

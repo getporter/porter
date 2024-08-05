@@ -145,7 +145,7 @@ See [Parameters][parameters] to learn how parameters are passed in to Porter pri
 
 ## Credentials
 
-Credentials are defined in the `porter.yaml` with a YAML block of one more credential definitions. You can declare that a credential should be placed in a path within the invocation image or into an environment variable.
+Credentials are defined in the `porter.yaml` with a YAML block of one more credential definitions. You can declare that a credential should be placed in a path within the bundle image or into an environment variable.
 
 To declare a file injection:
 

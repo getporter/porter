@@ -9,7 +9,7 @@ The "Porter runtime" specifically refers to the embedded copy of the porter-runt
 Below is an outline of what happens when a bundle is executed:
 
 1. Porter identifies all parameters and credentials, resolving parameter and credentials sets against the host environment and any configured secret stores.
-2. Porter runs a container using the bundle's invocation image, injecting the parameters and credentials as files and/or environment variables.
+2. Porter runs a container using the bundle image, injecting the parameters and credentials as files and/or environment variables.
 3. The entrypoint of the container is the Porter runtime. It parses the porter.yaml file embedded in the bundle, and executes the steps defined for the current action (such as install or upgrade).
 4. For each step, Porter calls the corresponding mixins which are also embedded in the bundle.
 5. The mixin performs an action, most commonly translating the yaml snippet for the step into a call to a development tool. For example, the helm3 mixin handles calling out to the helm CLI.

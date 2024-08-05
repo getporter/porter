@@ -109,10 +109,10 @@ func (p *Porter) printBundleInspectTable(bun *InspectableBundle) error {
 }
 
 func (p *Porter) printInvocationImageInspectBlock(bun *InspectableBundle) error {
-	fmt.Fprintln(p.Out, "Invocation Images:")
+	fmt.Fprintln(p.Out, "Bundle Images:")
 	err := p.printInvocationImageInspectTable(bun)
 	if err != nil {
-		return fmt.Errorf("unable to print invocation images table: %w", err)
+		return fmt.Errorf("unable to print bundle images table: %w", err)
 	}
 	fmt.Fprintln(p.Out, "") // force a blank line after this block
 	return nil

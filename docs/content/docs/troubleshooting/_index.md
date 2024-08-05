@@ -97,8 +97,8 @@ Porter assumes a debian-based base image that has apt available. Many of the mix
 and the binary that they shim.
 
 ```
-Starting Invocation Image Build =======>
-Error: unable to build CNAB invocation image: failed to stream docker build output: The command '/bin/sh -c apt-get update && apt-get install -y apt-transport-https curl && curl -o kubectl https://storage.googleapis.com/kubernetes-release/release/v1.15.5/bin/linux/amd64/kubectl && mv kubectl /usr/local/bin && chmod a+x /usr/local/bin/kubectl' returned a non-zero code: 127
+Starting Bundle Image Build =======>
+Error: unable to build CNAB bundle image: failed to stream docker build output: The command '/bin/sh -c apt-get update && apt-get install -y apt-transport-https curl && curl -o kubectl https://storage.googleapis.com/kubernetes-release/release/v1.15.5/bin/linux/amd64/kubectl && mv kubectl /usr/local/bin && chmod a+x /usr/local/bin/kubectl' returned a non-zero code: 127
 ```
 
 For now you must base your custom Dockerfile on debian or ubuntu.

@@ -573,7 +573,7 @@ dependency injection and testing strategies.
   this repository
 * **docs**: our website
 * **pkg**
-  * **build**: implements building the invocation image.
+  * **build**: implements building the bundle image.
   * **cache**: handles the cache of bundles that have been pulled by commands
   like `porter install --reference`.
   * **cnab**: deals with the CNAB spec

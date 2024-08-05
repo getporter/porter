@@ -67,7 +67,7 @@ maintainers:
 * `dockerfile`: OPTIONAL. The relative path to a Dockerfile to use as a template during `porter build`. 
     See [Custom Dockerfile](/docs/bundle/custom-dockerfile/) for details on how to use a custom Dockerfile.
 * `custom`: OPTIONAL. A map of [custom bundle metadata](https://github.com/cnabio/cnab-spec/blob/master/101-bundle-json.md#custom-extensions).
-  These values are stored in the bundle definition and can be queried without pulling the invocation image.
+  These values are stored in the bundle definition and can be queried without pulling the bundle image.
   We recommend not storing large values in the custom field and to save large values as files in the bundle directory instead.
 * `maintainers`: OPTIONAL. A map of bundle maintainers. Per maintainer, `name`, `email`, and `url` can be specified. Every field is optional.
 
@@ -598,7 +598,7 @@ When the bundle is executed, this elevated privilege must be explicitly granted 
 
 **Configuration:**
 
-  * `privileged: BOOLEAN` - OPTIONAL. Whether or not the `--privileged` flag should be set when the bundle's invocation image runs. Defaults to false.
+  * `privileged: BOOLEAN` - OPTIONAL. Whether or not the `--privileged` flag should be set when the bundle's bundle image runs. Defaults to false.
 
 Example:
 
