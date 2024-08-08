@@ -3,6 +3,7 @@ package storage
 import (
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/storage/plugins/testplugin"
+	"github.com/cnabio/cnab-go/secrets/host"
 )
 
 var _ Store = TestStore{}
@@ -22,4 +23,8 @@ func NewTestStore(tc *config.TestConfig) TestStore {
 
 func (s TestStore) Close() error {
 	return s.testPlugin.Close()
+}
+
+func isHandledByHostPlugin(strategy string) bool {
+	return strategy == host.SourceCommand || strategy == host.SourceEnv || strategy == host.SourcePath || strategy == host.SourceValue
 }
