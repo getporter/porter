@@ -223,12 +223,12 @@ func (p *Porter) publishFromFile(ctx context.Context, opts PublishOptions) error
 			return log.Errorf("error calculation temporary image tag: %w", err)
 		}
 		log.Debugf("Signing invocation image %s.", inImage.String())
-		err = p.Signer.Sign(context.Background(), inImage.String())
+		err = p.signImage(ctx, inImage)
 		if err != nil {
 			return log.Errorf("error signing invocation image: %w", err)
 		}
 		log.Debugf("Signing bundle artifact %s.", bundleRef.Reference.String())
-		err = p.Signer.Sign(context.Background(), bundleRef.Reference.String())
+		err = p.signImage(ctx, bundleRef.Reference)
 		if err != nil {
 			return log.Errorf("error signing bundle artifact: %w", err)
 		}
@@ -311,6 +311,19 @@ func (p *Porter) publishFromArchive(ctx context.Context, opts PublishOptions) er
 		}
 
 		bundleRef.RelocationMap = relocMap
+
+		if opts.SignBundle {
+			relocInvImage := relocMap[invImg.Image]
+			log.Debugf("Signing invocation image %s...", relocInvImage)
+			invImageRef, err := cnab.ParseOCIReference(relocInvImage)
+			if err != nil {
+				return log.Errorf("failed to parse OCI reference %s: %w", relocInvImage, err)
+			}
+			err = p.signImage(ctx, invImageRef)
+			if err != nil {
+				return log.Errorf("failed to sign image %s: %w", invImageRef.String(), err)
+			}
+		}
 	}
 	for _, img := range bundleRef.Definition.Images {
 		relocMap, err := p.relocateImage(bundleRef.RelocationMap, layout, img.Image, opts.Reference)
@@ -322,6 +335,14 @@ func (p *Porter) publishFromArchive(ctx context.Context, opts PublishOptions) er
 	}
 
 	bundleRef, err = p.Registry.PushBundle(ctx, bundleRef, regOpts)
+	if opts.SignBundle {
+		log.Debugf("Signing bundle %s...", bundleRef.String())
+		err = p.signImage(ctx, bundleRef.Reference)
+		if err != nil {
+			return log.Errorf("failed to sign bundle %s: %w", bundleRef.String(), err)
+		}
+	}
+
 	if err != nil {
 		return err
 	}
@@ -490,4 +511,13 @@ func (p *Porter) refreshCachedBundle(bundleRef cnab.BundleReference) error {
 		}
 	}
 	return nil
+}
+
+// signImage signs a image using the configured signing plugin
+func (p *Porter) signImage(ctx context.Context, ref cnab.OCIReference) error {
+	_, log := tracing.StartSpan(ctx)
+	defer log.EndSpan()
+
+	log.Debugf("Signing image %s...", ref.String())
+	return p.Signer.Sign(context.Background(), ref.String())
 }
