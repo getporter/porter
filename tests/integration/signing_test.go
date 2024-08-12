@@ -36,10 +36,33 @@ func TestCosign(t *testing.T) {
 	require.NoError(t, err, "Publish failed")
 
 	ref = toRefWithDigest(t, ref)
-	invocationImageRef := getInvocationImageDigest(t, output)
+	invocationImageRef := resolveInvocationImageDigest(t, output)
 
 	_, output = testr.RequirePorter("install", "--verify-bundle", "--reference", ref.String(), "--insecure-registry")
+	require.Contains(t, output, fmt.Sprintf("bundle signature verified for %s", ref.String()))
+	require.Contains(t, output, fmt.Sprintf("invocation image signature verified for %s", invocationImageRef.String()))
+
+	tmpDir, err := os.MkdirTemp("", "cosignBundle")
+	require.NoError(t, err, "Error creating temporary directory")
+	defer func() {
+		os.RemoveAll(tmpDir)
+	}()
+	archivePath := filepath.Join(tmpDir, "cosignBundle.tgz")
+	_, output = testr.RequirePorter("archive", archivePath, "--insecure-registry", "--reference", ref.String())
+	ref, err = cnab.ParseOCIReference(fmt.Sprintf("%s/cosign-from-archive:v1.0.0", reg.String()))
+	require.NoError(t, err, "error parsing OCI reference")
+
+	_, output, err = testr.RunPorterWith(func(pc *shx.PreparedCommand) {
+		pc.Args("publish", "--sign-bundle", "--insecure-registry", "--archive", archivePath, "-r", ref.String())
+		pc.Env("COSIGN_PASSWORD='test'")
+	})
 	fmt.Println(output)
+	require.NoError(t, err, "Publish archive failed")
+
+	ref = toRefWithDigest(t, ref)
+	invocationImageRef = getInvocationImageDigest(t, output)
+
+	_, output = testr.RequirePorter("install", "--verify-bundle", "--reference", ref.String(), "--insecure-registry", "--force")
 	require.Contains(t, output, fmt.Sprintf("bundle signature verified for %s", ref.String()))
 	require.Contains(t, output, fmt.Sprintf("invocation image signature verified for %s", invocationImageRef.String()))
 }
@@ -102,10 +125,34 @@ func TestNotation(t *testing.T) {
 	require.NoError(t, err, "Publish failed")
 
 	ref = toRefWithDigest(t, ref)
-	invocationImageRef := getInvocationImageDigest(t, output)
+	invocationImageRef := resolveInvocationImageDigest(t, output)
 
 	_, output = testr.RequirePorter("install", "--verify-bundle", "--reference", ref.String(), "--insecure-registry")
 	fmt.Println(output)
+	require.Contains(t, output, fmt.Sprintf("bundle signature verified for %s", ref.String()))
+	require.Contains(t, output, fmt.Sprintf("invocation image signature verified for %s", invocationImageRef.String()))
+
+	tmpDir, err := os.MkdirTemp("", "cosignBundle")
+	require.NoError(t, err, "Error creating temporary directory")
+	defer func() {
+		os.RemoveAll(tmpDir)
+	}()
+	archivePath := filepath.Join(tmpDir, "cosignBundle.tgz")
+	_, output = testr.RequirePorter("archive", archivePath, "--insecure-registry", "--reference", ref.String())
+	ref, err = cnab.ParseOCIReference(fmt.Sprintf("%s/cosign-from-archive:v1.0.0", reg.String()))
+	require.NoError(t, err, "error parsing OCI reference")
+
+	_, output, err = testr.RunPorterWith(func(pc *shx.PreparedCommand) {
+		pc.Args("publish", "--sign-bundle", "--insecure-registry", "--archive", archivePath, "-r", ref.String())
+		pc.Env("COSIGN_PASSWORD='test'")
+	})
+	fmt.Println(output)
+	require.NoError(t, err, "Publish archive failed")
+
+	ref = toRefWithDigest(t, ref)
+	invocationImageRef = getInvocationImageDigest(t, output)
+
+	_, output = testr.RequirePorter("install", "--verify-bundle", "--reference", ref.String(), "--insecure-registry", "--force")
 	require.Contains(t, output, fmt.Sprintf("bundle signature verified for %s", ref.String()))
 	require.Contains(t, output, fmt.Sprintf("invocation image signature verified for %s", invocationImageRef.String()))
 }
@@ -119,7 +166,7 @@ func toRefWithDigest(t *testing.T, ref cnab.OCIReference) cnab.OCIReference {
 	return ref
 }
 
-func getInvocationImageDigest(t *testing.T, output string) cnab.OCIReference {
+func resolveInvocationImageDigest(t *testing.T, output string) cnab.OCIReference {
 	r := regexp.MustCompile(`(?m:^Signing invocation image (localhost:\d+/cosign:porter-[0-9a-z]+)\.)`)
 	matches := r.FindAllStringSubmatch(output, -1)
 	require.Len(t, matches, 1)
@@ -131,4 +178,12 @@ func getInvocationImageDigest(t *testing.T, output string) cnab.OCIReference {
 	ref, err = ref.WithDigest(digest.Digest(desc.Digest.String()))
 	require.NoError(t, err)
 	return ref
+}
+
+func getInvocationImageDigest(t *testing.T, output string) cnab.OCIReference {
+	r := regexp.MustCompile(`(?m:^Signing invocation image (localhost:\d+/cosign-from-archive@sha256:[0-9a-z]+)\.)`)
+	matches := r.FindAllStringSubmatch(output, -1)
+	require.Len(t, matches, 1)
+	invocationImageRefString := matches[0][1]
+	return cnab.MustParseOCIReference(invocationImageRefString)
 }
