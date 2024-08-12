@@ -19,6 +19,7 @@ type CopyOpts struct {
 	Destination      string
 	InsecureRegistry bool
 	Force            bool
+	SignBundle       bool
 }
 
 // Validate performs validation logic on the options specified for a bundle copy
@@ -98,9 +99,27 @@ func (p *Porter) CopyBundle(ctx context.Context, opts *CopyOpts) error {
 
 	bunRef.Reference = destinationRef
 
-	_, err = p.Registry.PushBundle(ctx, bunRef, regOpts)
+	bunRef, err = p.Registry.PushBundle(ctx, bunRef, regOpts)
 	if err != nil {
 		return span.Error(fmt.Errorf("unable to copy bundle to new location: %w", err))
 	}
+
+	if opts.SignBundle {
+		for _, invImage := range bunRef.Definition.InvocationImages {
+			relocInvImage := bunRef.RelocationMap[invImage.Image]
+			span.Debugf("Signing invocation image %s...", relocInvImage)
+			err = p.Signer.Sign(ctx, relocInvImage)
+			if err != nil {
+				return span.Errorf("failed to sign image %s: %w", relocInvImage, err)
+			}
+		}
+
+		span.Debugf("Signing bundle %s", bunRef.Reference.String())
+		err = p.Signer.Sign(ctx, bunRef.Reference.String())
+		if err != nil {
+			return span.Errorf("failed to bundle %s: %w", bunRef.Reference.String(), err)
+		}
+	}
+
 	return nil
 }
