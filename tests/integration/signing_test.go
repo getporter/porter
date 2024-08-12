@@ -26,9 +26,7 @@ func TestCosign(t *testing.T) {
 	defer reg.Close()
 	ref := cnab.MustParseOCIReference(fmt.Sprintf("%s/cosign:v1.0.0", reg.String()))
 
-	cmd := shx.Command("cosign", "generate-key-pair").Env("COSIGN_PASSWORD='test'").In(testr.PorterHomeDir)
-	err = cmd.RunE()
-	require.NoError(t, err, "Generate cosign key pair failed")
+	setupCosign(t, testr)
 	_, output, err := testr.RunPorterWith(func(pc *shx.PreparedCommand) {
 		pc.Args("publish", "--sign-bundle", "--insecure-registry", "-f", "testdata/bundles/signing/porter.yaml", "-r", ref.String())
 		pc.Env("COSIGN_PASSWORD='test'")
@@ -38,9 +36,25 @@ func TestCosign(t *testing.T) {
 	ref = toRefWithDigest(t, ref)
 	invocationImageRef := resolveInvocationImageDigest(t, output)
 
-	_, output = testr.RequirePorter("install", "--verify-bundle", "--reference", ref.String(), "--insecure-registry")
+	_, output = testr.RequirePorter("install", "--verify-bundle", "--reference", ref.String(), "--insecure-registry", "--force")
 	require.Contains(t, output, fmt.Sprintf("bundle signature verified for %s", ref.String()))
 	require.Contains(t, output, fmt.Sprintf("invocation image signature verified for %s", invocationImageRef.String()))
+}
+
+func TestCosignFromArchive(t *testing.T) {
+	testr, err := tester.NewTestWithConfig(t, "tests/integration/testdata/signing/config/config-cosign.yaml")
+	require.NoError(t, err, "tester.NewTest failed")
+	defer testr.Close()
+	reg := testr.StartTestRegistry(tester.TestRegistryOptions{UseTLS: true})
+	defer reg.Close()
+	ref := cnab.MustParseOCIReference(fmt.Sprintf("%s/cosign:v1.0.0", reg.String()))
+
+	setupCosign(t, testr)
+	_, output, err := testr.RunPorterWith(func(pc *shx.PreparedCommand) {
+		pc.Args("publish", "--insecure-registry", "-f", "testdata/bundles/signing/porter.yaml", "-r", ref.String())
+		pc.Env("COSIGN_PASSWORD='test'")
+	})
+	require.NoError(t, err, "Publish failed")
 
 	tmpDir, err := os.MkdirTemp("", "cosignBundle")
 	require.NoError(t, err, "Error creating temporary directory")
@@ -60,11 +74,17 @@ func TestCosign(t *testing.T) {
 	require.NoError(t, err, "Publish archive failed")
 
 	ref = toRefWithDigest(t, ref)
-	invocationImageRef = getInvocationImageDigest(t, output)
+	invocationImageRef := getInvocationImageDigest(t, output)
 
 	_, output = testr.RequirePorter("install", "--verify-bundle", "--reference", ref.String(), "--insecure-registry", "--force")
 	require.Contains(t, output, fmt.Sprintf("bundle signature verified for %s", ref.String()))
 	require.Contains(t, output, fmt.Sprintf("invocation image signature verified for %s", invocationImageRef.String()))
+}
+
+func setupCosign(t *testing.T, testr tester.Tester) {
+	cmd := shx.Command("cosign", "generate-key-pair").Env("COSIGN_PASSWORD='test'").In(testr.PorterHomeDir)
+	err := cmd.RunE()
+	require.NoError(t, err, "Generate cosign key pair failed")
 }
 
 func TestNotation(t *testing.T) {
@@ -75,8 +95,63 @@ func TestNotation(t *testing.T) {
 	defer reg.Close()
 	ref := cnab.MustParseOCIReference(fmt.Sprintf("%s/cosign:v1.0.0", reg.String()))
 
+	setupNotation(t, testr)
+	_, output, err := testr.RunPorterWith(func(pc *shx.PreparedCommand) {
+		pc.Args("publish", "--sign-bundle", "--insecure-registry", "-f", "testdata/bundles/signing/porter.yaml", "-r", ref.String())
+	})
+	require.NoError(t, err, "Publish failed")
+
+	ref = toRefWithDigest(t, ref)
+	invocationImageRef := resolveInvocationImageDigest(t, output)
+
+	_, output = testr.RequirePorter("install", "--verify-bundle", "--reference", ref.String(), "--insecure-registry", "--force")
+	fmt.Println(output)
+	require.Contains(t, output, fmt.Sprintf("bundle signature verified for %s", ref.String()))
+	require.Contains(t, output, fmt.Sprintf("invocation image signature verified for %s", invocationImageRef.String()))
+}
+
+func TestNotationFromArchive(t *testing.T) {
+	testr, err := tester.NewTestWithConfig(t, "tests/integration/testdata/signing/config/config-notation.yaml")
+	require.NoError(t, err, "tester.NewTest failed")
+	defer testr.Close()
+	reg := testr.StartTestRegistry(tester.TestRegistryOptions{UseTLS: false})
+	defer reg.Close()
+	ref := cnab.MustParseOCIReference(fmt.Sprintf("%s/cosign:v1.0.0", reg.String()))
+
+	setupNotation(t, testr)
+	_, output, err := testr.RunPorterWith(func(pc *shx.PreparedCommand) {
+		pc.Args("publish", "--insecure-registry", "-f", "testdata/bundles/signing/porter.yaml", "-r", ref.String())
+	})
+	require.NoError(t, err, "Publish failed")
+
+	tmpDir, err := os.MkdirTemp("", "cosignBundle")
+	require.NoError(t, err, "Error creating temporary directory")
+	defer func() {
+		os.RemoveAll(tmpDir)
+	}()
+	archivePath := filepath.Join(tmpDir, "cosignBundle.tgz")
+	_, output = testr.RequirePorter("archive", archivePath, "--insecure-registry", "--reference", ref.String())
+	ref, err = cnab.ParseOCIReference(fmt.Sprintf("%s/cosign-from-archive:v1.0.0", reg.String()))
+	require.NoError(t, err, "error parsing OCI reference")
+
+	_, output, err = testr.RunPorterWith(func(pc *shx.PreparedCommand) {
+		pc.Args("publish", "--sign-bundle", "--insecure-registry", "--archive", archivePath, "-r", ref.String())
+		pc.Env("COSIGN_PASSWORD='test'")
+	})
+	fmt.Println(output)
+	require.NoError(t, err, "Publish archive failed")
+
+	ref = toRefWithDigest(t, ref)
+	invocationImageRef := getInvocationImageDigest(t, output)
+
+	_, output = testr.RequirePorter("install", "--verify-bundle", "--reference", ref.String(), "--insecure-registry", "--force")
+	require.Contains(t, output, fmt.Sprintf("bundle signature verified for %s", ref.String()))
+	require.Contains(t, output, fmt.Sprintf("invocation image signature verified for %s", invocationImageRef.String()))
+}
+
+func setupNotation(t *testing.T, testr tester.Tester) {
 	cmd := shx.Command("notation", "cert", "generate-test", "porter-test.org")
-	err = cmd.RunE()
+	err := cmd.RunE()
 	require.NoError(t, err, "Generate notation certificate failed")
 	defer func() {
 		output, err := shx.Command("notation", "key", "ls").Output()
@@ -118,43 +193,6 @@ func TestNotation(t *testing.T) {
 	require.NoError(t, err, "Creation of trust policy failed")
 	err = shx.Command("notation", "policy", "import", trustPolicyPath).RunE()
 	require.NoError(t, err, "importing trust policy failed")
-
-	_, output, err := testr.RunPorterWith(func(pc *shx.PreparedCommand) {
-		pc.Args("publish", "--sign-bundle", "--insecure-registry", "-f", "testdata/bundles/signing/porter.yaml", "-r", ref.String())
-	})
-	require.NoError(t, err, "Publish failed")
-
-	ref = toRefWithDigest(t, ref)
-	invocationImageRef := resolveInvocationImageDigest(t, output)
-
-	_, output = testr.RequirePorter("install", "--verify-bundle", "--reference", ref.String(), "--insecure-registry")
-	fmt.Println(output)
-	require.Contains(t, output, fmt.Sprintf("bundle signature verified for %s", ref.String()))
-	require.Contains(t, output, fmt.Sprintf("invocation image signature verified for %s", invocationImageRef.String()))
-
-	tmpDir, err := os.MkdirTemp("", "cosignBundle")
-	require.NoError(t, err, "Error creating temporary directory")
-	defer func() {
-		os.RemoveAll(tmpDir)
-	}()
-	archivePath := filepath.Join(tmpDir, "cosignBundle.tgz")
-	_, output = testr.RequirePorter("archive", archivePath, "--insecure-registry", "--reference", ref.String())
-	ref, err = cnab.ParseOCIReference(fmt.Sprintf("%s/cosign-from-archive:v1.0.0", reg.String()))
-	require.NoError(t, err, "error parsing OCI reference")
-
-	_, output, err = testr.RunPorterWith(func(pc *shx.PreparedCommand) {
-		pc.Args("publish", "--sign-bundle", "--insecure-registry", "--archive", archivePath, "-r", ref.String())
-		pc.Env("COSIGN_PASSWORD='test'")
-	})
-	fmt.Println(output)
-	require.NoError(t, err, "Publish archive failed")
-
-	ref = toRefWithDigest(t, ref)
-	invocationImageRef = getInvocationImageDigest(t, output)
-
-	_, output = testr.RequirePorter("install", "--verify-bundle", "--reference", ref.String(), "--insecure-registry", "--force")
-	require.Contains(t, output, fmt.Sprintf("bundle signature verified for %s", ref.String()))
-	require.Contains(t, output, fmt.Sprintf("invocation image signature verified for %s", invocationImageRef.String()))
 }
 
 func toRefWithDigest(t *testing.T, ref cnab.OCIReference) cnab.OCIReference {
