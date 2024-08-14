@@ -8,11 +8,10 @@ set -euo pipefail
 export PORTER_HOME=${PORTER_HOME:-~/.porter}
 export PORTER_MIRROR=${PORTER_MIRROR:-https://cdn.porter.sh}
 PORTER_VERSION=${PORTER_VERSION:-latest}
+
 MONGO_IMAGE_FILE="mongo_image.tar"
 MONGO_IMAGE_URL="docker.io/library/mongo:4.0-xenial"
-TS=$(date +%Y%m%d_%H%M%S)
-
-BUNDLE_NAME=porter-download-$TS
+BUNDLE_NAME="porter-offline-install-$PORTER_VERSION"
 DOWNLOAD_DIR="/tmp/$BUNDLE_NAME"
 
 mkdir -p $DOWNLOAD_DIR
@@ -26,7 +25,7 @@ curl -fsSLo "$DOWNLOAD_DIR/install-linux.sh" "$PORTER_MIRROR/$PORTER_VERSION/ins
 echo "Downloading Porter from $PORTER_MIRROR/$PORTER_VERSION/porter-linux-amd64"
 curl -fsSLo "$DOWNLOAD_DIR/porter-linux-amd64" "$PORTER_MIRROR/$PORTER_VERSION/porter-linux-amd64"
 
-TAR_FILE="porter_bundle_$TS.tar.gz"
+TAR_FILE="$BUNDLE_NAME.tar.gz"
 echo "Creating tarball: $TAR_FILE..."
 tar -czvf "$TAR_FILE" -C /tmp "$(basename "$DOWNLOAD_DIR")" 
 
