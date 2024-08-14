@@ -11,7 +11,7 @@ PORTER_VERSION=${PORTER_VERSION:-latest}
 
 MONGO_IMAGE_FILE="mongo_image.tar"
 MONGO_IMAGE_URL="docker.io/library/mongo:4.0-xenial"
-BUNDLE_NAME="porter-offline-install-$PORTER_VERSION"
+BUNDLE_NAME="porter-air-gapped-install-$PORTER_VERSION"
 DOWNLOAD_DIR="/tmp/$BUNDLE_NAME"
 
 mkdir -p $DOWNLOAD_DIR

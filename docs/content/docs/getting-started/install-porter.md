@@ -32,9 +32,7 @@ curl -L https://cdn.porter.sh/$VERSION/install-mac.sh | bash
 ```
 
 **Linux**
-
-```bash
-export VERSION="v1.1.0"
+```bash export VERSION="v1.1.0"
 curl -L https://cdn.porter.sh/$VERSION/install-linux.sh | bash
 ```
 
@@ -112,6 +110,21 @@ You will need to create a [PowerShell Profile][ps-link] if you do not have one.
 
 ```
 iwr "https://cdn.porter.sh/latest/install-windows.ps1" -UseBasicParsing | iex
+```
+## Air-gapped Install
+
+To run the installation script in an air-gapped environment, create an air-gapped installation package with the `bundle-linux.sh` script.
+
+```
+curl -L https://raw.githubusercontent.com/getporter/porter/main/scripts/bundle/bundle-linux.sh | bash
+```
+
+Then extract and install Porter.
+
+```
+echo "tar -xzf porter-air-gapped-install-latest.tar.gz -C ."
+echo "cd porter-air-gapped-install-latest"
+echo "bash install-linux.sh"
 ```
 
 ## Canary
