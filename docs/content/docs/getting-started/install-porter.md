@@ -32,6 +32,7 @@ curl -L https://cdn.porter.sh/$VERSION/install-mac.sh | bash
 ```
 
 **Linux**
+
 ```bash 
 export VERSION="v1.1.0"
 curl -L https://cdn.porter.sh/$VERSION/install-linux.sh | bash
