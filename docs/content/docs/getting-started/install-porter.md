@@ -114,6 +114,22 @@ You will need to create a [PowerShell Profile][ps-link] if you do not have one.
 iwr "https://cdn.porter.sh/latest/install-windows.ps1" -UseBasicParsing | iex
 ```
 
+## Air-gapped Install
+
+To run the installation script in an air-gapped environment, create an air-gapped installation package with the `bundle-linux.sh` script.
+
+```
+curl -L https://raw.githubusercontent.com/getporter/porter/main/scripts/bundle/bundle-linux.sh | bash
+```
+
+Then extract and install Porter.
+
+```
+echo "tar -xzf porter-air-gapped-install-latest.tar.gz -C ."
+echo "cd porter-air-gapped-install-latest"
+echo "bash install-bundle.sh"
+```
+
 ## Canary
 
 Install the most recent build of Porter and the [exec mixin] from the main branch.
