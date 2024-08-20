@@ -17,7 +17,7 @@ echo "Installing porter@$PORTER_VERSION to $PORTER_HOME from $PORTER_BINARY_URL"
 
 mkdir -p "$PORTER_HOME/runtimes"
 
-curl -fsSLo "$PORTER_HOME/porter" "$PORTER_BINARY_URL" 
+curl -fsSLo "$PORTER_HOME/porter" "$PORTER_BINARY_URL"
 chmod +x "$PORTER_HOME/porter"
 cp "$PORTER_HOME/porter" "$PORTER_HOME/runtimes/porter-runtime"
 echo Installed "$("$PORTER_HOME"/porter version)"
