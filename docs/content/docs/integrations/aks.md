@@ -106,12 +106,12 @@ parameters:
       - merge
 ```
 
-* Bellow you can find a custom action called `merge` that it's used to autheticate in Azure and sets the desired subscription (that contains the resource group and AKS cluster) and uses [outputs](https://porter.sh/wiring/#outputs) to save the *kubeconfig* file:
+* An example of the `install` action that integrates with AKS and utilizes [Kubernetes mixin](https://porter.sh/design/kubernetes-mixin/) to deploy a pod to the cluster, based on the `cnab/app/nginx` manifest:
 
 ```bash
-merge:
+install:
   - az:
-      description: "Azure login"
+      description: "Azure CLI login"
       arguments:
         - login
       flags:
@@ -119,6 +119,7 @@ merge:
         username: ${ bundle.credentials.azure_client_id }
         password: ${ bundle.credentials.azure_client_secret }
         tenant: ${ bundle.credentials.azure_tenant_id }
+
   - az:
       description: "Azure set subscription Id"
       arguments:
@@ -126,6 +127,7 @@ merge:
         - "set"
       flags:
         subscription: ${ bundle.credentials.azure_subscription_id }
+  
   - az:
       description: "Get access creds for AKS"
       arguments:
@@ -134,17 +136,23 @@ merge:
       flags:
         resource-group: ${ bundle.parameters.rg_name }
         name: ${ bundle.parameters.aks_name }
-        context: akscluster
-        file: "newconf"
-      suppress-output: false
+  
+  - kubernetes:
+      description: "Deploy nginx pod"
+      manifests:
+        - cnab/app/nginx
+      wait: true
+      surpress-output: false
       outputs:
-        - name: kubeconfig
-          path: newconf
-
-outputs:
-  - name: newconf
-    type: file
-    path: newconf
+        - name: pod_name
+          resourceType: "pod"
+          resourceName: "basic-nginx"
+          namespace: "default"
+          jsonPath: "metadata.name"
 ```
 
-* Write the *kubeconfig* file to disk: `porter installations output show newconf > aks_config`, afterwards you can use it as it is: `kubectl --kubeconfig=aks_config config get-contexts` or merge it in the existing `~/.kube/config`.
+* Bundle usage: 
+
+```bash
+porter install -c akscreds --param rg_name=<RESOURCE_GROUP_NAME> --param aks_name=<AKS_NAME>
+```
