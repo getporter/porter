@@ -1169,13 +1169,13 @@ func UnmarshalManifest(cxt *portercontext.Context, manifestData []byte) (*Manife
 
 // SetDefaults updates the manifest with default values where not populated
 func (m *Manifest) SetDefaults() error {
-	return m.SetInvocationImageAndReference("")
+	return m.SetBundleImageAndReference("")
 }
 
-// SetInvocationImageAndReference sets the bundle image name and the
+// SetBundleImageAndReference sets the bundle image name and the
 // bundle reference on the manifest per the provided reference or via the
 // registry or name values on the manifest.
-func (m *Manifest) SetInvocationImageAndReference(ref string) error {
+func (m *Manifest) SetBundleImageAndReference(ref string) error {
 	if ref != "" {
 		m.Reference = ref
 	}

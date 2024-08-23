@@ -156,7 +156,7 @@ func (p *Porter) publishFromFile(ctx context.Context, opts PublishOptions) error
 	// Update bundle image and reference with opts.Reference, which may be
 	// empty, which is fine - we still may need to pick up tag and/or registry
 	// overrides
-	if err := m.SetInvocationImageAndReference(opts.Reference); err != nil {
+	if err := m.SetBundleImageAndReference(opts.Reference); err != nil {
 		return log.Errorf("unable to set bundle image name and reference: %w", err)
 	}
 
