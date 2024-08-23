@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"get.porter.sh/porter/pkg/secrets"
+	hostSecrets "get.porter.sh/porter/pkg/secrets/plugins/host"
 	"get.porter.sh/porter/pkg/tracing"
 	"github.com/cnabio/cnab-go/secrets/host"
 	"github.com/hashicorp/go-multierror"
@@ -21,14 +22,16 @@ const (
 // providing typed access and additional business logic around
 // credential sets, usually referred to as "credentials" as a shorthand.
 type CredentialStore struct {
-	Documents Store
-	Secrets   secrets.Store
+	Documents   Store
+	Secrets     secrets.Store
+	HostSecrets hostSecrets.Store
 }
 
 func NewCredentialStore(storage Store, secrets secrets.Store) *CredentialStore {
 	return &CredentialStore{
-		Documents: storage,
-		Secrets:   secrets,
+		Documents:   storage,
+		Secrets:     secrets,
+		HostSecrets: hostSecrets.NewStore(),
 	}
 }
 
@@ -62,7 +65,13 @@ func (s CredentialStore) ResolveAll(ctx context.Context, creds CredentialSet) (s
 	var resolveErrors error
 
 	for _, cred := range creds.Credentials {
-		value, err := s.Secrets.Resolve(ctx, cred.Source.Strategy, cred.Source.Hint)
+		var value string
+		var err error
+		if isHandledByHostPlugin(cred.Source.Strategy) {
+			value, err = s.HostSecrets.Resolve(ctx, cred.Source.Strategy, cred.Source.Hint)
+		} else {
+			value, err = s.Secrets.Resolve(ctx, cred.Source.Strategy, cred.Source.Hint)
+		}
 		if err != nil {
 			resolveErrors = multierror.Append(resolveErrors, fmt.Errorf("unable to resolve credential %s.%s from %s %s: %w", creds.Name, cred.Name, cred.Source.Strategy, cred.Source.Hint, err))
 		}
