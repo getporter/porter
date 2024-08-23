@@ -107,7 +107,7 @@ func (p *Porter) CopyBundle(ctx context.Context, opts *CopyOpts) error {
 	if opts.SignBundle {
 		for _, invImage := range bunRef.Definition.InvocationImages {
 			relocInvImage := bunRef.RelocationMap[invImage.Image]
-			span.Debugf("Signing invocation image %s...", relocInvImage)
+			span.Debugf("Signing bundle image %s...", relocInvImage)
 			err = p.Signer.Sign(ctx, relocInvImage)
 			if err != nil {
 				return span.Errorf("failed to sign image %s: %w", relocInvImage, err)

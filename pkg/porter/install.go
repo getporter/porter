@@ -112,12 +112,12 @@ func (p *Porter) InstallBundle(ctx context.Context, opts InstallOptions) error {
 		if relocInvImage, ok := bun.RelocationMap[invocationImage]; ok {
 			invocationImage = relocInvImage
 		}
-		log.Debugf("verifying invocation image signature for %s", invocationImage)
+		log.Debugf("verifying bundle image signature for %s", invocationImage)
 		err = p.Signer.Verify(ctx, invocationImage)
 		if err != nil {
 			return log.Errorf("unable to verify signature: %w", err)
 		}
-		log.Debugf("invocation image signature verified for %s", invocationImage)
+		log.Debugf("bundle image signature verified for %s", invocationImage)
 	}
 
 	// Run install using the updated installation record

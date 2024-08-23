@@ -34,11 +34,11 @@ func TestCosign(t *testing.T) {
 	require.NoError(t, err, "Publish failed")
 
 	ref = toRefWithDigest(t, ref)
-	invocationImageRef := resolveInvocationImageDigest(t, output, "sign")
+	bundleImageRef := resolveBundleImageDigest(t, output, "sign")
 
 	_, output = testr.RequirePorter("install", "--verify-bundle", "--reference", ref.String(), "--insecure-registry", "--force")
 	require.Contains(t, output, fmt.Sprintf("bundle signature verified for %s", ref.String()))
-	require.Contains(t, output, fmt.Sprintf("invocation image signature verified for %s", invocationImageRef.String()))
+	require.Contains(t, output, fmt.Sprintf("bundle image signature verified for %s", bundleImageRef.String()))
 }
 
 func TestCosignFromArchive(t *testing.T) {
@@ -74,11 +74,11 @@ func TestCosignFromArchive(t *testing.T) {
 	require.NoError(t, err, "Publish archive failed")
 
 	ref = toRefWithDigest(t, ref)
-	invocationImageRef := getInvocationImageDigest(t, output, "sign-from-archive")
+	bundleImageRef := getBundleImageDigest(t, output, "sign-from-archive")
 
 	_, output = testr.RequirePorter("install", "--verify-bundle", "--reference", ref.String(), "--insecure-registry", "--force")
 	require.Contains(t, output, fmt.Sprintf("bundle signature verified for %s", ref.String()))
-	require.Contains(t, output, fmt.Sprintf("invocation image signature verified for %s", invocationImageRef.String()))
+	require.Contains(t, output, fmt.Sprintf("bundle image signature verified for %s", bundleImageRef.String()))
 }
 
 func TestCosignCopyBundle(t *testing.T) {
@@ -107,11 +107,11 @@ func TestCosignCopyBundle(t *testing.T) {
 	require.NoError(t, err, "Copy failed")
 
 	ref = toRefWithDigest(t, ref)
-	invocationImageRef := getInvocationImageDigest(t, output, "sign")
+	bundleImageRef := getBundleImageDigest(t, output, "sign")
 
 	_, output = testr.RequirePorter("install", "--verify-bundle", "--reference", copiedRef.String(), "--insecure-registry", "--force")
 	require.Contains(t, output, fmt.Sprintf("bundle signature verified for %s", copiedRef.String()))
-	require.Contains(t, output, fmt.Sprintf("invocation image signature verified for %s", invocationImageRef.String()))
+	require.Contains(t, output, fmt.Sprintf("bundle image signature verified for %s", bundleImageRef.String()))
 }
 
 func setupCosign(t *testing.T, testr tester.Tester) {
@@ -136,12 +136,12 @@ func TestNotation(t *testing.T) {
 	require.NoError(t, err, "Publish failed")
 
 	ref = toRefWithDigest(t, ref)
-	invocationImageRef := resolveInvocationImageDigest(t, output, "sign")
+	bundleImageRef := resolveBundleImageDigest(t, output, "sign")
 
 	_, output = testr.RequirePorter("install", "--verify-bundle", "--reference", ref.String(), "--insecure-registry", "--force")
 	fmt.Println(output)
 	require.Contains(t, output, fmt.Sprintf("bundle signature verified for %s", ref.String()))
-	require.Contains(t, output, fmt.Sprintf("invocation image signature verified for %s", invocationImageRef.String()))
+	require.Contains(t, output, fmt.Sprintf("bundle image signature verified for %s", bundleImageRef.String()))
 }
 
 func TestNotationFromArchive(t *testing.T) {
@@ -176,11 +176,11 @@ func TestNotationFromArchive(t *testing.T) {
 	require.NoError(t, err, "Publish archive failed")
 
 	ref = toRefWithDigest(t, ref)
-	invocationImageRef := getInvocationImageDigest(t, output, "sign-from-archive")
+	bundleImageRef := getBundleImageDigest(t, output, "sign-from-archive")
 
 	_, output = testr.RequirePorter("install", "--verify-bundle", "--reference", ref.String(), "--insecure-registry", "--force")
 	require.Contains(t, output, fmt.Sprintf("bundle signature verified for %s", ref.String()))
-	require.Contains(t, output, fmt.Sprintf("invocation image signature verified for %s", invocationImageRef.String()))
+	require.Contains(t, output, fmt.Sprintf("bundle image signature verified for %s", bundleImageRef.String()))
 }
 
 func TestNotationCopyBundle(t *testing.T) {
@@ -207,11 +207,11 @@ func TestNotationCopyBundle(t *testing.T) {
 	require.NoError(t, err, "Copy failed")
 
 	ref = toRefWithDigest(t, ref)
-	invocationImageRef := getInvocationImageDigest(t, output, "sign")
+	bundleImageRef := getBundleImageDigest(t, output, "sign")
 
 	_, output = testr.RequirePorter("install", "--verify-bundle", "--reference", copiedRef.String(), "--insecure-registry", "--force")
 	require.Contains(t, output, fmt.Sprintf("bundle signature verified for %s", copiedRef.String()))
-	require.Contains(t, output, fmt.Sprintf("invocation image signature verified for %s", invocationImageRef.String()))
+	require.Contains(t, output, fmt.Sprintf("bundle image signature verified for %s", bundleImageRef.String()))
 }
 
 func setupNotation(t *testing.T, testr tester.Tester) {
@@ -270,8 +270,8 @@ func toRefWithDigest(t *testing.T, ref cnab.OCIReference) cnab.OCIReference {
 	return ref
 }
 
-func resolveInvocationImageDigest(t *testing.T, output string, imageName string) cnab.OCIReference {
-	r := regexp.MustCompile(fmt.Sprintf(`(?m:^Signing invocation image (localhost:\d+/%s:porter-[0-9a-z]+)\.)`, imageName))
+func resolveBundleImageDigest(t *testing.T, output string, imageName string) cnab.OCIReference {
+	r := regexp.MustCompile(fmt.Sprintf(`(?m:^Signing bundle image (localhost:\d+/%s:porter-[0-9a-z]+)\.)`, imageName))
 	matches := r.FindAllStringSubmatch(output, -1)
 	require.Len(t, matches, 1)
 	invocationImageRefString := matches[0][1]
@@ -284,8 +284,8 @@ func resolveInvocationImageDigest(t *testing.T, output string, imageName string)
 	return ref
 }
 
-func getInvocationImageDigest(t *testing.T, output string, imageName string) cnab.OCIReference {
-	r := regexp.MustCompile(fmt.Sprintf(`(?m:^Signing invocation image (localhost:\d+/%s@sha256:[0-9a-z]+)\.)`, imageName))
+func getBundleImageDigest(t *testing.T, output string, imageName string) cnab.OCIReference {
+	r := regexp.MustCompile(fmt.Sprintf(`(?m:^Signing bundle image (localhost:\d+/%s@sha256:[0-9a-z]+)\.)`, imageName))
 	matches := r.FindAllStringSubmatch(output, -1)
 	require.Len(t, matches, 1)
 	invocationImageRefString := matches[0][1]

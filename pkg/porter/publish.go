@@ -222,10 +222,10 @@ func (p *Porter) publishFromFile(ctx context.Context, opts PublishOptions) error
 		if err != nil {
 			return log.Errorf("error calculation temporary image tag: %w", err)
 		}
-		log.Debugf("Signing invocation image %s.", inImage.String())
+		log.Debugf("Signing bundle image %s.", inImage.String())
 		err = p.signImage(ctx, inImage)
 		if err != nil {
-			return log.Errorf("error signing invocation image: %w", err)
+			return log.Errorf("error signing bundle image: %w", err)
 		}
 		log.Debugf("Signing bundle artifact %s.", bundleRef.Reference.String())
 		err = p.signImage(ctx, bundleRef.Reference)
@@ -314,7 +314,7 @@ func (p *Porter) publishFromArchive(ctx context.Context, opts PublishOptions) er
 
 		if opts.SignBundle {
 			relocInvImage := relocMap[invImg.Image]
-			log.Debugf("Signing invocation image %s...", relocInvImage)
+			log.Debugf("Signing bundle image %s...", relocInvImage)
 			invImageRef, err := cnab.ParseOCIReference(relocInvImage)
 			if err != nil {
 				return log.Errorf("failed to parse OCI reference %s: %w", relocInvImage, err)
