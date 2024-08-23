@@ -90,6 +90,38 @@ func TestParameterStore_CRUD(t *testing.T) {
 	require.ErrorIs(t, err, ErrNotFound{})
 }
 
+func TestParameterStorage_ResolveNonSecret(t *testing.T) {
+	testParameterSet := NewParameterSet("", "myparamset",
+		secrets.SourceMap{
+			Name: "param1",
+			Source: secrets.Source{
+				Strategy: "secret",
+				Hint:     "param1",
+			},
+		},
+		secrets.SourceMap{
+			Name: "param2",
+			Source: secrets.Source{
+				Strategy: "value",
+				Hint:     "param2_value",
+			},
+		})
+
+	paramStore := NewTestParameterProvider(t)
+	defer paramStore.Close()
+
+	paramStore.AddSecret("param1", "param1_value")
+
+	expected := secrets.Set{
+		"param1": "param1_value",
+		"param2": "param2_value",
+	}
+
+	resolved, err := paramStore.ResolveAll(context.Background(), testParameterSet)
+	require.NoError(t, err)
+	require.Equal(t, expected, resolved)
+}
+
 func TestParameterStorage_ResolveAll(t *testing.T) {
 	// The inmemory secret store currently only supports secret sources
 	// So all of these have this same source
