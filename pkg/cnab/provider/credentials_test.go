@@ -8,6 +8,7 @@ import (
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
 	"github.com/cnabio/cnab-go/bundle"
+	"github.com/cnabio/cnab-go/secrets/host"
 	"github.com/cnabio/cnab-go/valuesource"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -144,4 +145,43 @@ func TestRuntime_loadCredentials_WithApplyTo(t *testing.T) {
 		assert.Equal(t, valuesource.Set{"password": "mypassword"}, gotValues, "incorrect resolved credentials")
 	})
 
+}
+
+func TestRuntime_nonSecretValue_loadCredentials(t *testing.T) {
+	t.Parallel()
+
+	r := NewTestRuntime(t)
+	defer r.Close()
+
+	b := cnab.NewBundle(bundle.Bundle{
+		Credentials: map[string]bundle.Credential{
+			"password": {
+				Location: bundle.Location{
+					EnvironmentVariable: "PASSWORD",
+				},
+			},
+		},
+	})
+
+	run := storage.Run{
+		Action: cnab.ActionInstall,
+		Credentials: storage.NewInternalCredentialSet(secrets.SourceMap{
+			Name: "password",
+			Source: secrets.Source{
+				Strategy: host.SourceValue,
+				Hint:     "mypassword",
+			},
+		}),
+	}
+	err := r.loadCredentials(context.Background(), b, &run)
+	require.NoError(t, err, "loadCredentials failed")
+	require.Equal(t, "sha256:9b6063069a6d911421cf53b30b91836b70957c30eddc70a760eff4765b8cede5",
+		run.CredentialsDigest, "expected loadCredentials to set the digest of resolved credentials")
+	require.NotEmpty(t, run.Credentials.Credentials[0].ResolvedValue, "expected loadCredentials to set the resolved value of the credentials on the Run")
+
+	gotValues := run.Credentials.ToCNAB()
+	wantValues := valuesource.Set{
+		"password": "mypassword",
+	}
+	assert.Equal(t, wantValues, gotValues, "resolved unexpected credential values")
 }
