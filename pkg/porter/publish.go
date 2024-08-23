@@ -163,7 +163,7 @@ func (p *Porter) publishFromFile(ctx context.Context, opts PublishOptions) error
 	if origInvImg != m.Image {
 		// Tag it so that it will be known/found by Docker for publishing
 		builder := p.GetBuilder(ctx)
-		if err := builder.TagInvocationImage(ctx, origInvImg, m.Image); err != nil {
+		if err := builder.TagBundleImage(ctx, origInvImg, m.Image); err != nil {
 			return err
 		}
 	}
@@ -203,10 +203,10 @@ func (p *Porter) publishFromFile(ctx context.Context, opts PublishOptions) error
 
 	bundleRef.Digest, err = p.Registry.PushImage(ctx, imgRef, regOpts)
 	if err != nil {
-		return log.Errorf("unable to push CNAB bundle image %q: %w", m.Image, err)
+		return log.Errorf("unable to push bundle image %q: %w", m.Image, err)
 	}
 
-	bundleRef.Definition, err = p.rewriteBundleWithInvocationImageDigest(ctx, m, bundleRef.Digest)
+	bundleRef.Definition, err = p.rewriteBundleWithBundleImageDigest(ctx, m, bundleRef.Digest)
 	if err != nil {
 		return err
 	}
@@ -242,7 +242,7 @@ func (p *Porter) publishFromFile(ctx context.Context, opts PublishOptions) error
 
 // publishFromArchive (re-)publishes a bundle, provided by the archive file, using the provided tag.
 //
-// After the bundle is extracted from the archive, we iterate through all of the images (invocation
+// After the bundle is extracted from the archive, we iterate through all of the images (bundle
 // and application) listed in the bundle, grab their digests by parsing the extracted
 // OCI Layout, rename each based on the registry/org values derived from the provided tag
 // and then push each updated image with the original digests
@@ -418,7 +418,7 @@ func getNewImageNameFromBundleReference(origImg, bundleTag string) (image.Name, 
 	return image.NewName(newImgRef.String())
 }
 
-func (p *Porter) rewriteBundleWithInvocationImageDigest(ctx context.Context, m *manifest.Manifest, digest digest.Digest) (cnab.ExtendedBundle, error) {
+func (p *Porter) rewriteBundleWithBundleImageDigest(ctx context.Context, m *manifest.Manifest, digest digest.Digest) (cnab.ExtendedBundle, error) {
 	taggedImage, err := p.rewriteImageWithDigest(m.Image, digest.String())
 	if err != nil {
 		return cnab.ExtendedBundle{}, fmt.Errorf("unable to update bundle image reference: %w", err)
@@ -464,8 +464,8 @@ func (p *Porter) relocateImage(relocationMap relocation.ImageRelocationMap, layo
 	return relocationMap, nil
 }
 
-func (p *Porter) rewriteImageWithDigest(InvocationImage string, imgDigest string) (string, error) {
-	taggedRef, err := cnab.ParseOCIReference(InvocationImage)
+func (p *Porter) rewriteImageWithDigest(image string, imgDigest string) (string, error) {
+	taggedRef, err := cnab.ParseOCIReference(image)
 	if err != nil {
 		return "", fmt.Errorf("unable to parse docker image: %s", err)
 	}

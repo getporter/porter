@@ -65,7 +65,7 @@ func (l unstructuredLogger) Write(p []byte) (n int, err error) {
 	return len(p), nil
 }
 
-func (b *Builder) BuildInvocationImage(ctx context.Context, manifest *manifest.Manifest, opts build.BuildImageOptions) error {
+func (b *Builder) BuildBundleImage(ctx context.Context, manifest *manifest.Manifest, opts build.BuildImageOptions) error {
 	ctx, span := tracing.StartSpan(ctx, attribute.String("image", manifest.Image))
 	defer span.EndSpan()
 
@@ -243,7 +243,7 @@ func parseBuildArgs(unparsed []string, parsed map[string]string) {
 	}
 }
 
-func (b *Builder) TagInvocationImage(ctx context.Context, origTag, newTag string) error {
+func (b *Builder) TagBundleImage(ctx context.Context, origTag, newTag string) error {
 	ctx, log := tracing.StartSpan(ctx, attribute.String("source-tag", origTag), attribute.String("destination-tag", newTag))
 	defer log.EndSpan()
 

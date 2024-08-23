@@ -158,9 +158,9 @@ func (p *Porter) Build(ctx context.Context, opts BuildOptions) error {
 
 	builder := p.GetBuilder(ctx)
 
-	err = builder.BuildInvocationImage(ctx, m, opts.BuildImageOptions)
+	err = builder.BuildBundleImage(ctx, m, opts.BuildImageOptions)
 	if err != nil {
-		return span.Error(fmt.Errorf("unable to build CNAB bundle image: %w", err))
+		return span.Error(fmt.Errorf("unable to build bundle image: %w", err))
 	}
 
 	return nil
