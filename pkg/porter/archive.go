@@ -83,7 +83,7 @@ func (o *ArchiveOptions) Validate(ctx context.Context, args []string, p *Porter)
 	return o.BundleReferenceOptions.Validate(ctx, args, p)
 }
 
-// Archive is a composite function that generates a CNAB thick bundle. It will pull the invocation image, and
+// Archive is a composite function that generates a CNAB thick bundle. It will pull the bundle image, and
 // any referenced images locally (if needed), export them to individual layers, generate a bundle.json and
 // then generate a gzipped tar archive containing the bundle.json and the images
 func (p *Porter) Archive(ctx context.Context, opts ArchiveOptions) error {

@@ -9,7 +9,7 @@ Build a bundle
 
 ### Synopsis
 
-Builds the bundle in the current directory by generating a Dockerfile and a CNAB bundle.json, and then building the invocation image.
+Builds the bundle in the current directory by generating a Dockerfile and a CNAB bundle.json, and then building the bundle image.
 
 The docker driver builds the bundle image using the local Docker host. To use a remote Docker host, set the following environment variables:
   DOCKER_HOST (required)
@@ -44,7 +44,7 @@ porter build [flags]
   -h, --help                    help for build
       --insecure-registry       Don't require TLS when pulling referenced images
       --name string             Override the bundle name
-      --no-cache                Do not use the Docker cache when building the bundle's invocation image.
+      --no-cache                Do not use the Docker cache when building the bundle image.
       --no-lint                 Do not run the linter
       --secret stringArray      Secret file to expose to the build (format: id=mysecret,src=/local/secret). Custom values are accessible as build arguments in the template Dockerfile and in the manifest using template variables. May be specified multiple times.
       --ssh stringArray         SSH agent socket or keys to expose to the build (format: default|<id>[=<socket>|<key>[,<key>]]). May be specified multiple times.

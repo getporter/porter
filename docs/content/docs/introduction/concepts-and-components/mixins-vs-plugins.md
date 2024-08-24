@@ -10,9 +10,9 @@ aliases:
 understand both Porter and CNAB, so you don't have to, and ideally have built-in
 logic to make your bundles easier to author and more robust. They are involved
 when the bundle is built, assisting with generating the Dockerfile for the
-invocation image. Most importantly they are responsible for handling the actions
+bundle image. Most importantly they are responsible for handling the actions
 in your porter.yaml when your bundle is run. For example, the helm mixin
-installs the helm CLI into the invocation image, and then uses it to execute any
+installs the helm CLI into the bundle image, and then uses it to execute any
 helm actions defined in the bundle.
 
 I like to think of mixins as paint colors on your paint palette 🎨 that you use

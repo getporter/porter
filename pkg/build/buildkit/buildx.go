@@ -65,11 +65,11 @@ func (l unstructuredLogger) Write(p []byte) (n int, err error) {
 	return len(p), nil
 }
 
-func (b *Builder) BuildInvocationImage(ctx context.Context, manifest *manifest.Manifest, opts build.BuildImageOptions) error {
+func (b *Builder) BuildBundleImage(ctx context.Context, manifest *manifest.Manifest, opts build.BuildImageOptions) error {
 	ctx, span := tracing.StartSpan(ctx, attribute.String("image", manifest.Image))
 	defer span.EndSpan()
 
-	span.Info("Building invocation image")
+	span.Info("Building bundle image")
 
 	cli, err := docker.GetDockerClient()
 	if err != nil {
@@ -186,7 +186,7 @@ func (b *Builder) determineBuildArgs(
 		return nil, span.Errorf("Error parsing custom build arguments from the Dockerfile at %s: %w", dockerfilePath, err)
 	}
 
-	// Pass custom values as build args when building the invocation image
+	// Pass custom values as build args when building the bundle image
 	argNameRegex := regexp.MustCompile(`[^A-Z0-9_]`)
 	for k, v := range convertedCustomInput {
 		// Make all arg names upper-case
@@ -243,7 +243,7 @@ func parseBuildArgs(unparsed []string, parsed map[string]string) {
 	}
 }
 
-func (b *Builder) TagInvocationImage(ctx context.Context, origTag, newTag string) error {
+func (b *Builder) TagBundleImage(ctx context.Context, origTag, newTag string) error {
 	ctx, log := tracing.StartSpan(ctx, attribute.String("source-tag", origTag), attribute.String("destination-tag", newTag))
 	defer log.EndSpan()
 

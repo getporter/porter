@@ -8,7 +8,7 @@ weight: 7
   Signing is supported from v1.1.0
 {{< /callout >}}
 
-Porter has built-in support for signing bundles and the associated invocation image using [Cosign] or [Notation].
+Porter has built-in support for signing bundles and the associated bundle image using [Cosign] or [Notation].
 Learn how to configure Porter to sign bundles.
 
 - [Cosign](#cosign)
@@ -33,7 +33,7 @@ Instructions on for the install Cosign can be found on the [Cosign Installation 
 
 ### Configuration
 
-Porter have to be configure to use [Cosign] to sign bundles and invocation images. All configuration is done through the [Porter config file](/docs/configuration/configuration/). To configure [Cosign] add the following to the configuration file.
+Porter have to be configure to use [Cosign] to sign bundles and bundle images. All configuration is done through the [Porter config file](/docs/configuration/configuration/). To configure [Cosign] add the following to the configuration file.
 
 ```yaml
 # ~/.porter/config.yaml
@@ -74,7 +74,7 @@ Instructions on for the install Notation can be found on the [Notation Installat
 
 ### Configuration
 
-Porter has to be configured to use [Notation] to sign bundles and invocation images. All configuration is done through the [Porter config file](/docs/configuration/configuration/). To configure [Notation] add the following to the configuration file.
+Porter has to be configured to use [Notation] to sign bundles and bundle images. All configuration is done through the [Porter config file](/docs/configuration/configuration/). To configure [Notation] add the following to the configuration file.
 
 ```yaml
 # ~/.porter/config.yaml

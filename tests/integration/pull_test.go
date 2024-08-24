@@ -23,6 +23,6 @@ func TestPull_ContentDigestMissing(t *testing.T) {
 
 	cachedBun, err := p.PullBundle(ctx, opts)
 	require.Contains(t, err.Error(),
-		"unable to verify that the pulled image getporterci/mysql-installer:no-content-digest is the invocation image referenced by the bundle because the bundle does not specify a content digest. This could allow for the invocation image to be replaced or tampered with")
+		"unable to verify that the pulled image getporterci/mysql-installer:no-content-digest is the bundle image referenced by the bundle because the bundle does not specify a content digest. This could allow for the bundle image to be replaced or tampered with")
 	require.Equal(t, cache.CachedBundle{}, cachedBun)
 }

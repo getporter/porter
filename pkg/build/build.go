@@ -43,11 +43,11 @@ var (
 )
 
 type Builder interface {
-	// BuildInvocationImage using the bundle in the build context directory
-	BuildInvocationImage(ctx context.Context, manifest *manifest.Manifest, opts BuildImageOptions) error
+	// BuildBundleImage using the bundle in the build context directory
+	BuildBundleImage(ctx context.Context, manifest *manifest.Manifest, opts BuildImageOptions) error
 
-	// TagInvocationImage using the origTag and newTag values supplied
-	TagInvocationImage(ctx context.Context, origTag, newTag string) error
+	// TagBundleImage using the origTag and newTag values supplied
+	TagBundleImage(ctx context.Context, origTag, newTag string) error
 }
 
 // BuildImageOptions represents some flags exposed by docker.
