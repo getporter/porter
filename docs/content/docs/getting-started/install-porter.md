@@ -12,6 +12,7 @@ aliases:
 - [Install or Upgrade Porter](#install-or-upgrade)
 - [Clean Install](#clean-install)
 - [Install Latest Release](#latest)
+- [Air-gapped Install](#air-gapped-install)
 - [Install a Canary Build](#canary)
 - [Install a Mixin](#mixins)
 - [Install a Plugin](#plugins)
