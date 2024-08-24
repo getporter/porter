@@ -130,6 +130,9 @@ echo "cd porter-air-gapped-install-latest"
 echo "bash install-bundle.sh"
 ```
 
+> Note: Mixins are not currently included in the air-gapped-bundle.
+
+
 ## Canary
 
 Install the most recent build of Porter and the [exec mixin] from the main branch.
