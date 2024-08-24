@@ -90,8 +90,7 @@ func (s *Store) Resolve(ctx context.Context, keyName string, keyValue string) (s
 
 	// check if the keyName is secret
 	if keyName != secrets.SourceSecret {
-		value, err := s.hostStore.Resolve(ctx, keyName, keyValue)
-		return value, log.Error(err)
+		return "", log.Errorf("unsupported keyName %s", keyName)
 	}
 
 	path := filepath.Join(s.secretDir, keyValue)
