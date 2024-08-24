@@ -116,7 +116,7 @@ iwr "https://cdn.porter.sh/latest/install-windows.ps1" -UseBasicParsing | iex
 
 ## Air-gapped Install
 
-To run the installation script in an air-gapped environment, create an air-gapped installation package with the `bundle-linux.sh` script.
+To run the installation script in an air-gapped environment, create an air-gapped installation package with the `bundle-linux.sh` script. Note that mixins are not currently included in the air-gapped-bundle.
 
 ```
 curl -L https://raw.githubusercontent.com/getporter/porter/main/scripts/bundle/bundle-linux.sh | bash
@@ -130,7 +130,6 @@ echo "cd porter-air-gapped-install-latest"
 echo "bash install-bundle.sh"
 ```
 
-> Note: Mixins are not currently included in the air-gapped-bundle.
 
 
 ## Canary
