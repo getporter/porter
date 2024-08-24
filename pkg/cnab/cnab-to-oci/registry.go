@@ -35,7 +35,7 @@ type ErrNoContentDigest error
 // NewErrNoContentDigest returns an ErrNoContentDigest formatted with the
 // provided image name
 func NewErrNoContentDigest(image string) ErrNoContentDigest {
-	return fmt.Errorf("unable to verify that the pulled image %s is the invocation image referenced by the bundle because the bundle does not specify a content digest. This could allow for the invocation image to be replaced or tampered with", image)
+	return fmt.Errorf("unable to verify that the pulled image %s is the bundle image referenced by the bundle because the bundle does not specify a content digest. This could allow for the bundle image to be replaced or tampered with", image)
 }
 
 var _ RegistryProvider = &Registry{}

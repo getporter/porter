@@ -167,8 +167,8 @@ func TestExtendedBundle_IsSensitiveParameter(t *testing.T) {
 }
 
 func TestExtendedBundle_GetReferencedRegistries(t *testing.T) {
-	t.Run("invocation image in different registry", func(t *testing.T) {
-		// Make sure we are looking at the images and the invocation image
+	t.Run("bundle image in different registry", func(t *testing.T) {
+		// Make sure we are looking at the images and the bundle image
 		b := NewBundle(bundle.Bundle{
 			InvocationImages: []bundle.InvocationImage{
 				{BaseImage: bundle.BaseImage{Image: "docker.io/example/mybuns:abc123"}},
@@ -186,7 +186,7 @@ func TestExtendedBundle_GetReferencedRegistries(t *testing.T) {
 		require.Equal(t, wantRegs, regs, "unexpected registries identified in the bundle")
 	})
 
-	t.Run("invocation image in same registry", func(t *testing.T) {
+	t.Run("bundle image in same registry", func(t *testing.T) {
 		// Make sure that we don't generate duplicate registry entries
 		b := NewBundle(bundle.Bundle{
 			InvocationImages: []bundle.InvocationImage{

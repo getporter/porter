@@ -63,7 +63,7 @@ func (t *Templates) GetDockerfileTemplate() ([]byte, error) {
 	return t.fs.ReadFile(tmpl)
 }
 
-// GetRunScript returns a run script template for invocation images.
+// GetRunScript returns a run script template for bundle images.
 func (t *Templates) GetRunScript() ([]byte, error) {
 	return t.fs.ReadFile("templates/build/cnab/app/run")
 }
@@ -77,7 +77,7 @@ func (t *Templates) GetSchema() ([]byte, error) {
 	return t.fs.ReadFile("templates/schema.json")
 }
 
-// GetDockerfile returns the default Dockerfile for invocation images.
+// GetDockerfile returns the default Dockerfile for bundle images.
 func (t *Templates) GetDockerfile() ([]byte, error) {
 	tmpl := fmt.Sprintf("templates/build/%s.Dockerfile", t.GetBuildDriver())
 	return t.fs.ReadFile(tmpl)

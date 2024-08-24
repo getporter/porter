@@ -9,9 +9,9 @@ Publish a bundle
 
 ### Synopsis
 
-Publishes a bundle by pushing the invocation image and bundle to a registry.
+Publishes a bundle by pushing the bundle image and bundle to a registry.
 
-Note: if overrides for registry/tag/reference are provided, this command only re-tags the invocation image and bundle; it does not re-build the bundle.
+Note: if overrides for registry/tag/reference are provided, this command only re-tags the bundle image and bundle; it does not re-build the bundle.
 
 ```
 porter publish [flags]

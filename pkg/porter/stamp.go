@@ -95,7 +95,7 @@ func (p *Porter) IsBundleUpToDate(ctx context.Context, opts BundleDefinitionOpti
 			return false, span.Error(err)
 		}
 
-		// Check whether invocation images exist in host registry.
+		// Check whether bundle images exist in host registry.
 		for _, invocationImage := range bun.InvocationImages {
 			// if the invocationImage is built before using a random string tag,
 			// we should rebuild it with the new format
@@ -114,10 +114,10 @@ func (p *Porter) IsBundleUpToDate(ctx context.Context, opts BundleDefinitionOpti
 			_, err = p.Registry.GetCachedImage(ctx, imgRef)
 			if err != nil {
 				if errors.Is(err, cnabtooci.ErrNotFound{}) {
-					span.Debugf("%s because the invocation image %s doesn't exist in the local image cache", rebuildMessagePrefix, invocationImage.Image)
+					span.Debugf("%s because the bundle image %s doesn't exist in the local image cache", rebuildMessagePrefix, invocationImage.Image)
 					return false, nil
 				}
-				err = fmt.Errorf("an error occurred checking the Docker cache for the invocation image: %w", err)
+				err = fmt.Errorf("an error occurred checking the Docker cache for the bundle image: %w", err)
 				span.Debugf("%s: %w", rebuildMessagePrefix, err)
 				return false, span.Error(err)
 			}

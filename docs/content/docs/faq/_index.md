@@ -11,7 +11,7 @@ aliases:
 - [Can I use Porter bundles with other CNAB tools?](#can-i-use-porter-bundles-with-other-cnab-tools)
 - [Does Porter solve something that Ansible, Terraform, etc does not?](#does-porter-solve-something-that-ansible-terraform-etc-does-not)
 - [If an upgrade fails, can I roll back?](#if-an-upgrade-fails-can-i-roll-back)
-- [How do I run commands that aren't in the default invocation image?](#how-do-i-run-commands-that-arent-in-the-default-invocation-image)
+- [How do I run commands that aren't in the default bundle image?](#how-do-i-run-commands-that-arent-in-the-default-bundle-image)
 - [Are mixins just wrappers around OS or executable calls?](#are-mixins-just-wrappers-around-os-or-executable-calls)
 - [Does Porter have its own registry?](#does-porter-have-its-own-registry)
 - [What do mixins do?](#what-do-mixins-do)
@@ -94,7 +94,7 @@ and have an instance ID they would like to store and use later, it's up to the
 bundle author to find a spot to store that data right now. There isn't a
 standard mechanism defined by the CNAB spec yet.
 
-## How do I run commands that aren't in the default invocation image?
+## How do I run commands that aren't in the default bundle image?
 
 When you create a new bundle, porter generates Dockerfile.tmpl file for you. In
 the porter.yaml you can specify `dockerfile: dockerfile.tmpl` to tell Porter

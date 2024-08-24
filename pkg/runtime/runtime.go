@@ -59,7 +59,7 @@ func (r *PorterRuntime) Execute(ctx context.Context, rm *RuntimeManifest) error 
 
 	err = r.RuntimeManifest.ResolveInvocationImage(rtb, reloMap)
 	if err != nil {
-		return fmt.Errorf("unable to resolve bundle invocation images: %w", err)
+		return fmt.Errorf("unable to resolve bundle images: %w", err)
 	}
 	err = r.RuntimeManifest.ResolveImages(rtb, reloMap)
 	if err != nil {

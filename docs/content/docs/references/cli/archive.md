@@ -9,7 +9,7 @@ Archive a bundle from a reference
 
 ### Synopsis
 
-Archives a bundle by generating a gzipped tar archive containing the bundle, invocation image and any referenced images.
+Archives a bundle by generating a gzipped tar archive containing the bundle, bundle image and any referenced images.
 
 ```
 porter archive FILENAME --reference PUBLISHED_BUNDLE [flags]
