@@ -132,7 +132,7 @@ func (p *Porter) Build(ctx context.Context, opts BuildOptions) error {
 	m.ManifestPath = opts.File
 
 	if !opts.NoLint {
-		if err := p.preLint(ctx, opts.File); err != nil {
+		if err := p.preLint(ctx, build.LOCAL_MANIFEST); err != nil {
 			return err
 		}
 	}

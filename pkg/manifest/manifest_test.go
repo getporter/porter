@@ -851,6 +851,24 @@ func TestLoadManifestWithCustomData(t *testing.T) {
 	require.Equal(t, "two", val10, "test5[1] value is unexpected")
 }
 
+func TestLoadManifestWithImageSectionUsingCustomData(t *testing.T) {
+	c := config.NewTestConfig(t)
+
+	c.TestContext.AddTestFile("testdata/porter-with-custom-image-section.yaml", config.Name)
+
+	m, err := LoadManifestFrom(context.Background(), c.Config, config.Name)
+	require.NoError(t, err, "could not load manifest")
+
+	require.NotNil(t, m, "manifest was nil")
+	val, ok := m.Custom["myApp"].(map[string]interface{})
+	require.True(t, ok, "Cannot cast foo value to map[string]interface{}")
+
+	myAppImage := m.ImageMap["myApp"]
+	expectedDigest, ok := val["digest"].(string)
+	require.True(t, ok, "Cannot cast digest to string")
+	require.Equal(t, expectedDigest, myAppImage.Digest, "digest in image should be taken from custom value")
+}
+
 func TestLoadManifestWithRequiredExtensions(t *testing.T) {
 	c := config.NewTestConfig(t)
 

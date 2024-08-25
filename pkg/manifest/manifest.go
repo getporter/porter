@@ -1302,6 +1302,26 @@ func ReadManifest(cxt *portercontext.Context, path string, config *config.Config
 		return nil, fmt.Errorf("unsupported property set or a custom action is defined incorrectly: %w", err)
 	}
 
+	// Map custom values to image section
+	imageSection, err := yaml.Marshal(m.ImageMap)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal image section: %w", err)
+	}
+	mustache.AllowMissingVariables = false
+	imageContext := map[string]interface{}{
+		"bundle": map[string]interface{}{
+			"custom": m.Custom,
+		},
+	}
+	renderedImageSection, err := mustache.RenderRaw(m.GetTemplatePrefix()+string(imageSection), true, imageContext)
+	if err != nil {
+		return nil, fmt.Errorf("failed to render image section: %w", err)
+	}
+	err = yaml.Unmarshal([]byte(renderedImageSection), &m.ImageMap)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal image section: %w", err)
+	}
+
 	tmplResult, err := m.ScanManifestTemplating(data, config)
 	if err != nil {
 		return nil, err
