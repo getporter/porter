@@ -270,7 +270,7 @@ func TestPublish_RefreshCachedBundle_OnlyWarning(t *testing.T) {
 }
 
 func TestPublish_RewriteImageWithDigest(t *testing.T) {
-	// change from our temporary tag for the invocation image to using ONLY the digest
+	// change from our temporary tag for the bundle image to using ONLY the digest
 	p := NewTestPorter(t)
 	defer p.Close()
 

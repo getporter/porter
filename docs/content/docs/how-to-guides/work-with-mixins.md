@@ -34,14 +34,14 @@ install:
 
 ## Mixin API
 
-Porter defines a contract that mixins must fulfill in order to be included in the Porter ecosystem. This contract specifies how Porter will execute the mixins, as show above, but also specifies how the mixin is used to build the invocation image for the bundle. Additionally, the contract specifies how a mixin can specify the inputs it can accept and the outputs that it can provide.
+Porter defines a contract that mixins must fulfill in order to be included in the Porter ecosystem. This contract specifies how Porter will execute the mixins, as show above, but also specifies how the mixin is used to build the bundle image for the bundle. Additionally, the contract specifies how a mixin can specify the inputs it can accept and the outputs that it can provide.
 
 Here's a diagram that illustrates how mixins fits into Porter's execution flow:
 <img src="/images/mixins/flow-chart.png" style="max-width: 80%; height: auto;"/>
 
 ### Build Time
 
-The previous example introduced how mixins are used when a bundle is executed. In the case of the `exec` mixin, the resulting bundle invocation image already has everything needed to execute the mixin. Other mixins may require additional runtime software. The `helm` mixin, for example, requires the [Helm](https://helm.sh/) client at runtime. Porter is responsible for building the invocation image for the bundle, so it needs to know what each mixin will need so that it can be included in the bundle. The mixin is responsible for providing any relevant lines to ensure that the generated invocation image Dockerfile has all required runtime components. Porter expects that the mixin will provide any relevant Dockerfile additions through a `build` command. The `build` should output any necessary Dockerfile commands to standard out. To see this in action, consider the `helm` mixin:
+The previous example introduced how mixins are used when a bundle is executed. In the case of the `exec` mixin, the resulting bundle image already has everything needed to execute the mixin. Other mixins may require additional runtime software. The `helm` mixin, for example, requires the [Helm](https://helm.sh/) client at runtime. Porter is responsible for building the bundle image for the bundle, so it needs to know what each mixin will need so that it can be included in the bundle. The mixin is responsible for providing any relevant lines to ensure that the generated bundle image Dockerfile has all required runtime components. Porter expects that the mixin will provide any relevant Dockerfile additions through a `build` command. The `build` should output any necessary Dockerfile commands to standard out. To see this in action, consider the `helm` mixin:
 
 ```console
 $ ./bin/mixins/helm/helm build
@@ -58,7 +58,7 @@ In this case, the `helm` mixin will first run apt-get update and then install `c
 
 ### Run Time
 
-The [CNAB specification](https://github.com/cnabio/cnab-spec/blob/master/103-bundle-runtime.md) specifies three actions that an invocation image should support:
+The [CNAB specification](https://github.com/cnabio/cnab-spec/blob/master/103-bundle-runtime.md) specifies three actions that an bundle image should support:
 
 - install
 - upgrade
@@ -74,7 +74,7 @@ Usage:
   helm [command]
 
 Available Commands:
-  build       Generate Dockerfile lines for the bundle invocation image
+  build       Generate Dockerfile lines for the bundle image
   help        Help about any command
   install     Execute the install functionality of this mixin
   uninstall   Execute the uninstall functionality of this mixin

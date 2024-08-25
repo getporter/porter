@@ -194,7 +194,7 @@ We will use the [docker-compose mixin] to migrate an existing Docker App to Port
 
     ```console
     $ porter publish
-    Pushing CNAB invocation image...
+    Pushing CNAB bundle image...
     The push refers to repository [docker.io/carolynvs/my-docker-app-installer]
     a5fd17ef8522: Preparing
     878a51fed4d7: Preparing
