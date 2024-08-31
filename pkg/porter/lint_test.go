@@ -67,6 +67,50 @@ func TestPorter_Lint(t *testing.T) {
 	assert.Len(t, results, 1, "Lint returned the wrong number of results")
 }
 
+func TestPorter_LintImageCustomDataWithDefault(t *testing.T) {
+	p := NewTestPorter(t)
+	defer p.Close()
+
+	p.TestConfig.TestContext.AddTestFile("testdata/porter-image-custom-data-default.yaml", "porter.yaml")
+
+	mixins := p.Mixins.(*mixin.TestMixinProvider)
+	mixins.LintResults = linter.Results{
+		{
+			Level: linter.LevelError,
+		},
+	}
+
+	var opts LintOptions
+	err := opts.Validate(p.Context)
+	require.NoError(t, err, "Validate failed")
+
+	results, err := p.Lint(context.Background(), opts)
+	require.NoError(t, err, "Lint failed")
+	assert.Len(t, results, 1, "Lint returned the wrong number of results")
+}
+
+func TestPorter_LintImageCustomDataWithoutDefault(t *testing.T) {
+	p := NewTestPorter(t)
+	defer p.Close()
+
+	p.TestConfig.TestContext.AddTestFile("testdata/porter-image-custom-data-no-default.yaml", "porter.yaml")
+
+	mixins := p.Mixins.(*mixin.TestMixinProvider)
+	mixins.LintResults = linter.Results{
+		{
+			Level: linter.LevelError,
+		},
+	}
+
+	var opts LintOptions
+	err := opts.Validate(p.Context)
+	require.NoError(t, err, "Validate failed")
+
+	results, err := p.Lint(context.Background(), opts)
+	require.NoError(t, err, "Lint failed")
+	assert.Len(t, results, 1, "Lint returned the wrong number of results")
+}
+
 func TestPorter_PrintLintResults(t *testing.T) {
 	lintResults := linter.Results{
 		{

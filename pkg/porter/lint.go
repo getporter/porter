@@ -55,7 +55,7 @@ func (o *LintOptions) validateFile(cxt *portercontext.Context) error {
 // Lint porter.yaml for any problems and report the results.
 // This calls the mixins to analyze their sections of the manifest.
 func (p *Porter) Lint(ctx context.Context, opts LintOptions) (linter.Results, error) {
-	manifest, err := manifest.LoadManifestFrom(ctx, p.Config, opts.File)
+	manifest, err := manifest.LoadManifestFromAllowMissingVariables(ctx, p.Config, opts.File)
 	if err != nil {
 		return nil, err
 	}

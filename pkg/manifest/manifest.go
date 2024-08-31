@@ -1291,7 +1291,7 @@ func ReadManifestData(cxt *portercontext.Context, path string) ([]byte, error) {
 
 // ReadManifest determines if specified path is a URL or a filepath.
 // After reading the data in the path it returns a Manifest and any errors
-func ReadManifest(cxt *portercontext.Context, path string, config *config.Config) (*Manifest, error) {
+func ReadManifest(cxt *portercontext.Context, path string, config *config.Config, allowMissingVariables bool) (*Manifest, error) {
 	data, err := ReadManifestData(cxt, path)
 	if err != nil {
 		return nil, err
@@ -1307,7 +1307,7 @@ func ReadManifest(cxt *portercontext.Context, path string, config *config.Config
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal image section: %w", err)
 	}
-	mustache.AllowMissingVariables = false
+	mustache.AllowMissingVariables = allowMissingVariables
 	imageContext := map[string]interface{}{
 		"bundle": map[string]interface{}{
 			"custom": m.Custom,
@@ -1444,10 +1444,20 @@ func (m *Manifest) getTemplateVariables(data string) (map[string]struct{}, error
 // LoadManifestFrom reads and validates the manifest at the specified location,
 // and returns a populated Manifest structure.
 func LoadManifestFrom(ctx context.Context, config *config.Config, file string) (*Manifest, error) {
+	return loadManifestFrom(ctx, config, file, false)
+}
+
+// LoadManifestFromAllowMissingVariables reads and validates the manifest at the specified location,
+// and returns a populated Manifest structure, while allowing missing variables.
+func LoadManifestFromAllowMissingVariables(ctx context.Context, config *config.Config, file string) (*Manifest, error) {
+	return loadManifestFrom(ctx, config, file, true)
+}
+
+func loadManifestFrom(ctx context.Context, config *config.Config, file string, allowMissingVariables bool) (*Manifest, error) {
 	ctx, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
 
-	m, err := ReadManifest(config.Context, file, config)
+	m, err := ReadManifest(config.Context, file, config, allowMissingVariables)
 	if err != nil {
 		return nil, err
 	}

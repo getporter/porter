@@ -24,7 +24,7 @@ import (
 func runtimeManifestFromStepYaml(t *testing.T, testConfig *config.TestConfig, stepYaml string) *RuntimeManifest {
 	mContent := []byte(stepYaml)
 	require.NoError(t, testConfig.FileSystem.WriteFile("/cnab/app/porter.yaml", mContent, pkg.FileModeWritable))
-	m, err := manifest.ReadManifest(testConfig.Context, "/cnab/app/porter.yaml", testConfig.Config)
+	m, err := manifest.ReadManifest(testConfig.Context, "/cnab/app/porter.yaml", testConfig.Config, false)
 	require.NoError(t, err, "ReadManifest failed")
 	cfg := NewConfigFor(testConfig.Config)
 	return NewRuntimeManifest(cfg, cnab.ActionInstall, m)

@@ -57,7 +57,7 @@ mixins.2.testmixin: Additional property missingproperty is not allowed`},
 		t.Run(tm.name, func(t *testing.T) {
 			// Load the manifest as a go dump
 			testManifestPath := tm.path
-			mani, err := manifest.ReadManifest(test.TestContext.Context, testManifestPath, config.NewTestConfig(t).Config)
+			mani, err := manifest.ReadManifest(test.TestContext.Context, testManifestPath, config.NewTestConfig(t).Config, false)
 
 			maniYaml, err := yaml.Marshal(mani)
 			require.NoError(t, err, "error marshaling manifest to yaml")

@@ -1,0 +1,39 @@
+schemaVersion: 1.0.0
+name: porter-hello
+version: 0.1.0
+description: "A bundle with a custom action"
+registry: "localhost:5000"
+
+custom:
+  digest: "sha256:6b5a28ccbb76f12ce771a23757880c6083234255c5ba191fca1c5db1f71c1687"
+
+images: 
+   something:
+      description: "an image"
+      imageType: "docker"
+      repository: "getporter/boo"
+      digest: "${ bundle.custom.digest }"
+
+mixins:
+  - exec
+
+install:
+  - exec:
+      description: "Install Hello World"
+      command: echo
+      arguments:
+        - "Hello world"
+
+upgrade:
+  - exec:
+      description: "World 2.0"
+      command: bash
+      flags:
+        c: echo World 2.0
+
+uninstall:
+  - exec:
+      description: "Uninstall Hello World"
+      command: bash
+      flags:
+        c: echo Goodbye World
