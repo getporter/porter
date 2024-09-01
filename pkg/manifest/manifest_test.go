@@ -12,6 +12,7 @@ import (
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/schema"
 	"get.porter.sh/porter/pkg/yaml"
+	"github.com/Masterminds/semver/v3"
 	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -587,6 +588,43 @@ func TestMixinDeclaration_UnmarshalYAML_Invalid(t *testing.T) {
 
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "mixin declaration contained more than one mixin")
+}
+
+func TestMixinDeclaration_UnmarshalYAML_Versions(t *testing.T) {
+	cxt := portercontext.NewTestContext(t)
+	cxt.AddTestFile("testdata/mixin-with-versions.yaml", config.Name)
+	m, err := ReadManifest(cxt.Context, config.Name, config.NewTestConfig(t).Config)
+
+	execVersion, _ := semver.NewConstraint("1")
+	axVersion, _ := semver.NewConstraint("1.1.X")
+	terraformVersoin, _ := semver.NewConstraint(">=2")
+
+	require.NoError(t, err)
+	assert.Len(t, m.Mixins, 3, "expected 3 mixins")
+	assert.Equal(t, "exec", m.Mixins[0].Name)
+	assert.Equal(t, "az", m.Mixins[1].Name)
+	assert.Equal(t, "terraform", m.Mixins[2].Name)
+	assert.Equal(t, execVersion, m.Mixins[0].Version)
+	assert.Equal(t, axVersion, m.Mixins[1].Version)
+	assert.Equal(t, terraformVersoin, m.Mixins[2].Version)
+}
+
+func TestMixinDeclaration_UnmarshalYAML_Versions_Empty(t *testing.T) {
+	cxt := portercontext.NewTestContext(t)
+	cxt.AddTestFile("testdata/mixin-with-empty-version.yaml", config.Name)
+	_, err := ReadManifest(cxt.Context, config.Name, config.NewTestConfig(t).Config)
+
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid mixin name/version: improper constraint:")
+}
+
+func TestMixinDeclaration_UnmarshalYAML_Versions_Invalid(t *testing.T) {
+	cxt := portercontext.NewTestContext(t)
+	cxt.AddTestFile("testdata/mixin-with-invalid-version.yaml", config.Name)
+	_, err := ReadManifest(cxt.Context, config.Name, config.NewTestConfig(t).Config)
+
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid mixin name/version: expected name@version, got: az@this@that")
 }
 
 func TestCredentialsDefinition_UnmarshalYAML(t *testing.T) {
