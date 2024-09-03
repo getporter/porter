@@ -111,7 +111,7 @@ jobs:
         cache: true
     - run: go version
     - name: Download Cross-Compiled Porter Binaries
-      uses: actions/download-artifact@v3.0.1
+      uses: actions/download-artifact@v4.1.7
       with:
         name: xbuild-bin
         path: bin
@@ -129,7 +129,7 @@ jobs:
     - name: checkout
       uses: actions/checkout@v3.5.0
     - name: Download Cross-Compiled Porter Binaries
-      uses: actions/download-artifact@v3.0.1
+      uses: actions/download-artifact@v4.1.7
       with:
         name: xbuild-bin
         path: bin
