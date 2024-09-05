@@ -251,3 +251,5 @@ require (
 )
 
 //replace get.porter.sh/magefiles v0.3.3 => ../magefiles
+
+replace golang.org/x/net => golang.org/x/net v0.26.0
