@@ -439,6 +439,11 @@ func TestLinter_Lint_MixinVersions(t *testing.T) {
 				Version: lessThanNextMajorConstraint,
 			},
 		}},
+		{"no-version-provided", false, []manifest.MixinDeclaration{
+			{
+				Name: mixin.ExampleMixinName,
+			},
+		}},
 	}
 
 	for _, testCase := range testCases {
