@@ -64,6 +64,10 @@ func (p *Porter) UpgradeBundle(ctx context.Context, opts *UpgradeOptions) error 
 		return span.Errorf("could not find installation %s/%s: %w", opts.Namespace, opts.Name, err)
 	}
 
+	if !i.IsInstalled() {
+		return span.Errorf("The installation cannot be upgraded, because it is not installed. Verify the installation name and namespace, and if correct, use porter install.")
+	}
+
 	if opts.Reference != "" {
 		i.TrackBundle(opts.GetReference())
 	} else if opts.Version != "" {

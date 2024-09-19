@@ -27,9 +27,9 @@ Learn how to configure Porter to sign bundles.
 1. Cosign is installed and is available on the on the `PATH`.
 2. A key-pair for signing is available.
 
-Instructions on for the install Cosign can be found on the [Cosign Installation page](https://docs.sigstore.dev/system_config/installation/), and instructions on how to generate a key-pair can be found in the [Cosign Quickstart Guide](https://docs.sigstore.dev/signing/quickstart/#signing-with-a-generated-key).
+Instructions on for the install Cosign can be found on the [Cosign Installation page](https://docs.sigstore.dev/cosign/system_config/installation/), and instructions on how to generate a key-pair can be found in the [Cosign Signing with Self-Managed Keys](https://docs.sigstore.dev/cosign/key_management/signing_with_self-managed_keys/).
 
-🚧 Currently Porter does not support [Keyless Signing](https://docs.sigstore.dev/signing/overview/) or reading the key-pair from anything but files.
+🚧 Currently Porter does not support [Keyless Signing](https://docs.sigstore.dev/cosign/signing/overview/) or reading the key-pair from anything but files.
 
 ### Configuration
 
@@ -100,5 +100,5 @@ To sign run [porter publish](/cli/porter_publish/) with the `--sign-bundle` flag
 
 A bundle can be verified before installation by adding the `--verify-bundle` flag to [porter install](/cli/porter_publish/).
 
-[Cosign]: https://docs.sigstore.dev/signing/quickstart/
+[Cosign]: https://docs.sigstore.dev/quickstart/quickstart-cosign/
 [Notation]: https://notaryproject.dev/docs/quickstart-guides/quickstart-sign-image-artifact/

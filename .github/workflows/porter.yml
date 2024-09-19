@@ -38,7 +38,7 @@ jobs:
         fi
       shell: bash
     - name: Publish Native Binaries
-      uses: actions/upload-artifact@v3.1.1
+      uses: actions/upload-artifact@v4.4.0
       with:
         name: build-bin
         path: "${{ github.workspace }}/bin"
@@ -58,7 +58,7 @@ jobs:
       run: go run mage.go -v XBuildAll
       shell: bash
     - name: Publish Release Binaries
-      uses: actions/upload-artifact@v3.1.1
+      uses: actions/upload-artifact@v4.4.0
       with:
         name: xbuild-bin
         path: "${{ github.workspace }}/bin"
@@ -111,7 +111,7 @@ jobs:
         cache: true
     - run: go version
     - name: Download Cross-Compiled Porter Binaries
-      uses: actions/download-artifact@v3.0.1
+      uses: actions/download-artifact@v4.1.8
       with:
         name: xbuild-bin
         path: bin
@@ -129,7 +129,7 @@ jobs:
     - name: checkout
       uses: actions/checkout@v3.5.0
     - name: Download Cross-Compiled Porter Binaries
-      uses: actions/download-artifact@v3.0.1
+      uses: actions/download-artifact@v4.1.8
       with:
         name: xbuild-bin
         path: bin
