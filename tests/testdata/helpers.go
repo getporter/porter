@@ -36,4 +36,7 @@ const (
 
 	// MyAppRef is the full reference to the myapp test bundle.
 	MyAppRef = "localhost:5000/myapp:v1.2.3"
+
+	// EmbeddedImg is the test bundle that exercies embedded images.
+	EmbeddedImg = "embeddedimg"
 )

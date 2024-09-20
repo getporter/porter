@@ -20,6 +20,7 @@ type CopyOpts struct {
 	InsecureRegistry bool
 	Force            bool
 	SignBundle       bool
+	PreserveTags     bool
 }
 
 // Validate performs validation logic on the options specified for a bundle copy
@@ -98,7 +99,6 @@ func (p *Porter) CopyBundle(ctx context.Context, opts *CopyOpts) error {
 	}
 
 	bunRef.Reference = destinationRef
-
 	bunRef, err = p.Registry.PushBundle(ctx, bunRef, regOpts)
 	if err != nil {
 		return span.Error(fmt.Errorf("unable to copy bundle to new location: %w", err))

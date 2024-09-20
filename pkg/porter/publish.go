@@ -11,6 +11,7 @@ import (
 	"get.porter.sh/porter/pkg/build"
 	"get.porter.sh/porter/pkg/cnab"
 	cnabtooci "get.porter.sh/porter/pkg/cnab/cnab-to-oci"
+	configadapter "get.porter.sh/porter/pkg/cnab/config-adapter"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/tracing"
@@ -104,7 +105,7 @@ func (p *Porter) publishFromFile(ctx context.Context, opts PublishOptions) error
 		BundleDefinitionOptions: opts.BundleDefinitionOptions,
 		InsecureRegistry:        opts.InsecureRegistry,
 	}
-	_, err := p.ensureLocalBundleIsUpToDate(ctx, buildOpts)
+	bundleRef, err := p.ensureLocalBundleIsUpToDate(ctx, buildOpts)
 	if err != nil {
 		return err
 	}
@@ -172,7 +173,7 @@ func (p *Porter) publishFromFile(ctx context.Context, opts PublishOptions) error
 		return log.Errorf("porter.yaml is missing registry or reference values needed for publishing")
 	}
 
-	var bundleRef cnab.BundleReference
+	// var bundleRef cnab.BundleReference
 	bundleRef.Reference, err = cnab.ParseOCIReference(m.Reference)
 	if err != nil {
 		return log.Errorf("invalid reference %s: %w", m.Reference, err)
@@ -206,7 +207,11 @@ func (p *Porter) publishFromFile(ctx context.Context, opts PublishOptions) error
 		return log.Errorf("unable to push bundle image %q: %w", m.Image, err)
 	}
 
-	bundleRef.Definition, err = p.rewriteBundleWithBundleImageDigest(ctx, m, bundleRef.Digest)
+	stamp, err := configadapter.LoadStamp(bundleRef.Definition)
+	if err != nil {
+		return log.Errorf("failed to load stamp from bundle definition: %w", err)
+	}
+	bundleRef.Definition, err = p.rewriteBundleWithBundleImageDigest(ctx, m, bundleRef.Digest, stamp.PreserveTags)
 	if err != nil {
 		return err
 	}
@@ -335,16 +340,16 @@ func (p *Porter) publishFromArchive(ctx context.Context, opts PublishOptions) er
 	}
 
 	bundleRef, err = p.Registry.PushBundle(ctx, bundleRef, regOpts)
+	if err != nil {
+		return err
+	}
+
 	if opts.SignBundle {
 		log.Debugf("Signing bundle %s...", bundleRef.String())
 		err = p.signImage(ctx, bundleRef.Reference)
 		if err != nil {
 			return log.Errorf("failed to sign bundle %s: %w", bundleRef.String(), err)
 		}
-	}
-
-	if err != nil {
-		return err
 	}
 
 	// Perhaps we have a cached version of a bundle with the same tag, previously pulled
@@ -439,7 +444,7 @@ func getNewImageNameFromBundleReference(origImg, bundleTag string) (image.Name, 
 	return image.NewName(newImgRef.String())
 }
 
-func (p *Porter) rewriteBundleWithBundleImageDigest(ctx context.Context, m *manifest.Manifest, digest digest.Digest) (cnab.ExtendedBundle, error) {
+func (p *Porter) rewriteBundleWithBundleImageDigest(ctx context.Context, m *manifest.Manifest, digest digest.Digest, preserveTags bool) (cnab.ExtendedBundle, error) {
 	taggedImage, err := p.rewriteImageWithDigest(m.Image, digest.String())
 	if err != nil {
 		return cnab.ExtendedBundle{}, fmt.Errorf("unable to update bundle image reference: %w", err)
@@ -447,7 +452,7 @@ func (p *Porter) rewriteBundleWithBundleImageDigest(ctx context.Context, m *mani
 	m.Image = taggedImage
 
 	fmt.Fprintln(p.Out, "\nRewriting CNAB bundle.json...")
-	err = p.buildBundle(ctx, m, digest)
+	err = p.buildBundle(ctx, m, digest, preserveTags)
 	if err != nil {
 		return cnab.ExtendedBundle{}, fmt.Errorf("unable to rewrite CNAB bundle.json with updated bundle image digest: %w", err)
 	}

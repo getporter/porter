@@ -40,6 +40,7 @@ porter publish [flags]
       --force                Force push the bundle to overwrite the previously published bundle
   -h, --help                 help for publish
       --insecure-registry    Don't require TLS for the registry
+      --preserve-tags        Preserve the original tag name on referenced images
   -r, --reference string     Use a bundle in an OCI registry specified by the given reference.
       --registry string      Override the registry portion of the bundle reference, e.g. docker.io, myregistry.com/myorg
       --sign-bundle          Sign the bundle using the configured signing plugin

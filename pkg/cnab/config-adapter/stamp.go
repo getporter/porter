@@ -36,8 +36,9 @@ type Stamp struct {
 	EncodedManifest string `json:"manifest"`
 
 	// Version and commit define the version of the Porter used when a bundle was built.
-	Version string `json:"version"`
-	Commit  string `json:"commit"`
+	Version      string `json:"version"`
+	Commit       string `json:"commit"`
+	PreserveTags bool   `json:"preserveTags"`
 }
 
 // DecodeManifest base64 decodes the manifest stored in the stamp
@@ -113,7 +114,7 @@ func (m MixinRecords) Swap(i, j int) {
 	m[j] = tmp
 }
 
-func (c *ManifestConverter) GenerateStamp(ctx context.Context) (Stamp, error) {
+func (c *ManifestConverter) GenerateStamp(ctx context.Context, preserveTags bool) (Stamp, error) {
 	log := tracing.LoggerFromContext(ctx)
 
 	stamp := Stamp{}
@@ -124,6 +125,7 @@ func (c *ManifestConverter) GenerateStamp(ctx context.Context) (Stamp, error) {
 		return Stamp{}, err
 	}
 	stamp.EncodedManifest = base64.StdEncoding.EncodeToString(rawManifest)
+	stamp.PreserveTags = preserveTags
 
 	stamp.Mixins = make(map[string]MixinRecord, len(c.Manifest.Mixins))
 	usedMixins := c.getUsedMixinRecords()
