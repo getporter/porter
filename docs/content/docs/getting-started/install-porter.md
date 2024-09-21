@@ -119,18 +119,23 @@ iwr "https://cdn.porter.sh/latest/install-windows.ps1" -UseBasicParsing | iex
 
 To run the installation script in an air-gapped environment, create an air-gapped installation package with the `bundle-linux.sh` script. Note that mixins are not currently included in the air-gapped-bundle.
 
-```
+```sh
 curl -L https://raw.githubusercontent.com/getporter/porter/main/scripts/bundle/bundle-linux.sh | bash
 ```
 
 Then extract and install Porter.
 
-```
-echo "tar -xzf porter-air-gapped-install-latest.tar.gz -C ."
-echo "cd porter-air-gapped-install-latest"
-echo "bash install-bundle.sh"
+```sh
+tar -xzf porter-air-gapped-install-latest.tar.gz -C .
+cd porter-air-gapped-install-latest
+bash install-bundle.sh
 ```
 
+Note: The `install-bundle.sh` script starts mongo. If mongo ever has to be restarted use the following command.
+
+```
+docker run --name porter-mongodb-docker-plugin -d -p 27018:27017 -v mongodb_data:/data/db --restart always mongo:4.0-xenial
+```
 
 
 ## Canary
