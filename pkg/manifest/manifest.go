@@ -640,8 +640,30 @@ func (l Location) IsEmpty() bool {
 }
 
 type MixinDeclaration struct {
-	Name   string
-	Config interface{}
+	Name    string
+	Version *semver.Constraints
+	Config  interface{}
+}
+
+func extractVersionFromName(name string) (string, *semver.Constraints, error) {
+	parts := strings.Split(name, "@")
+
+	// if there isn't a version in the name, just stop!
+	if len(parts) == 1 {
+		return name, nil, nil
+	}
+
+	// if we somehow got more parts than expected!
+	if len(parts) != 2 {
+		return "", nil, fmt.Errorf("expected name@version, got: %s", name)
+	}
+
+	version, err := semver.NewConstraint(parts[1])
+	if err != nil {
+		return "", nil, err
+	}
+
+	return parts[0], version, nil
 }
 
 // UnmarshalYAML allows mixin declarations to either be a normal list of strings
@@ -652,12 +674,25 @@ type MixinDeclaration struct {
 //   - az:
 //     extensions:
 //   - iot
+//
+// for each type, we can optionally support a version number in the name field
+// mixins:
+// - exec@2.1.1
+// or
+//   - az@2.1.1
+//     extensions:
+//   - iot
 func (m *MixinDeclaration) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	// First try to just read the mixin name
 	var mixinNameOnly string
 	err := unmarshal(&mixinNameOnly)
 	if err == nil {
-		m.Name = mixinNameOnly
+		name, version, err := extractVersionFromName(mixinNameOnly)
+		if err != nil {
+			return fmt.Errorf("invalid mixin name/version: %w", err)
+		}
+		m.Name = name
+		m.Version = version
 		m.Config = nil
 		return nil
 	}
@@ -676,7 +711,12 @@ func (m *MixinDeclaration) UnmarshalYAML(unmarshal func(interface{}) error) erro
 	}
 
 	for mixinName, config := range mixinWithConfig {
-		m.Name = mixinName
+		name, version, err := extractVersionFromName(mixinName)
+		if err != nil {
+			return fmt.Errorf("invalid mixin name/version: %w", err)
+		}
+		m.Name = name
+		m.Version = version
 		m.Config = config
 		break // There is only one mixin anyway but break for clarity
 	}
