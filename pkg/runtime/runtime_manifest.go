@@ -6,6 +6,7 @@ import (
 	"compress/gzip"
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -131,15 +132,27 @@ func (m *RuntimeManifest) loadDependencyDefinitions() error {
 	return nil
 }
 
-func (m *RuntimeManifest) resolveParameter(pd manifest.ParameterDefinition) string {
+func (m *RuntimeManifest) resolveParameter(pd manifest.ParameterDefinition) (interface{}, error) {
+	getValue := func(envVar string) (interface{}, error) {
+		value := m.config.Getenv(envVar)
+		if pd.Type == "object" {
+			var obj map[string]interface{}
+			if err := json.Unmarshal([]byte(value), &obj); err != nil {
+				return nil, err
+			}
+			return obj, nil
+		}
+		return value, nil
+	}
+
 	if pd.Destination.EnvironmentVariable != "" {
-		return m.config.Getenv(pd.Destination.EnvironmentVariable)
+		return getValue(pd.Destination.EnvironmentVariable)
 	}
 	if pd.Destination.Path != "" {
-		return pd.Destination.Path
+		return pd.Destination.Path, nil
 	}
 	envVar := manifest.ParamToEnvVar(pd.Name)
-	return m.config.Getenv(envVar)
+	return getValue(envVar)
 }
 
 func (m *RuntimeManifest) resolveCredential(cd manifest.CredentialDefinition) (string, error) {
@@ -271,9 +284,12 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 		}
 
 		pe := param.Name
-		val := m.resolveParameter(param)
+		val, err := m.resolveParameter(param)
+		if err != nil {
+			return nil, err
+		}
 		if param.Sensitive {
-			m.setSensitiveValue(val)
+			m.setSensitiveValue(val.(string))
 		}
 		params[pe] = val
 	}

@@ -34,17 +34,21 @@ func TestResolveMapParam(t *testing.T) {
 	ctx := context.Background()
 	testConfig := config.NewTestConfig(t)
 	testConfig.Setenv("PERSON", "Ralpha")
+	testConfig.Setenv("CONTACT", "{ \"name\": \"Breta\" }")
 
 	mContent := `schemaVersion: 1.0.0-alpha.2
 parameters:
 - name: person
 - name: place
   applyTo: [install]
+- name: contact
+  type: object
 
 install:
 - mymixin:
     Parameters:
       Thing: ${ bundle.parameters.person }
+      Object: ${ bundle.parameters.contact.name }
 `
 	rm := runtimeManifestFromStepYaml(t, testConfig, mContent)
 	s := rm.Install[0]
@@ -61,6 +65,13 @@ install:
 
 	assert.Equal(t, "Ralpha", val)
 	assert.NotContains(t, "place", pms, "parameters that don't apply to the current action should not be resolved")
+
+	// New assertions for the contact parameter
+	require.IsType(t, "string", pms["Object"], "Data.mymixin.Parameters.Object has incorrect type")
+	contactName := pms["Object"].(string)
+	require.IsType(t, "string", contactName, "Data.mymixin.Parameters.Object.name has incorrect type")
+
+	assert.Equal(t, "Breta", contactName)
 
 	err = rm.Initialize(ctx)
 	require.NoError(t, err)
