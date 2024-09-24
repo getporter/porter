@@ -8,7 +8,10 @@ import (
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/mixin"
+	"get.porter.sh/porter/pkg/pkgmgmt"
 	"get.porter.sh/porter/pkg/portercontext"
+	"get.porter.sh/porter/tests"
+	"github.com/Masterminds/semver/v3"
 	"github.com/stretchr/testify/require"
 )
 
@@ -362,4 +365,106 @@ func TestLinter_DependencyMultipleTimes(t *testing.T) {
 		require.NoError(t, err, "Lint failed")
 		require.Len(t, results, 0, "linter should have returned 0 result")
 	})
+}
+
+func TestLinter_Lint_MissingMixin(t *testing.T) {
+	cxt := portercontext.NewTestContext(t)
+	mixins := mixin.NewTestMixinProvider()
+	l := New(cxt.Context, mixins)
+	testConfig := config.NewTestConfig(t).Config
+
+	mixinName := "made-up-mixin-that-is-not-installed"
+
+	m := &manifest.Manifest{
+		Mixins: []manifest.MixinDeclaration{
+			{
+				Name: mixinName,
+			},
+		},
+	}
+
+	mixins.RunAssertions = append(mixins.RunAssertions, func(mixinCxt *portercontext.Context, mixinName string, commandOpts pkgmgmt.CommandOptions) error {
+		return fmt.Errorf("%s not installed", mixinName)
+	})
+
+	_, err := l.Lint(context.Background(), m, testConfig)
+	require.Error(t, err, "Linting should return an error")
+	tests.RequireOutputContains(t, err.Error(), fmt.Sprintf("%s is not currently installed", mixinName))
+}
+
+func TestLinter_Lint_MixinVersions(t *testing.T) {
+	cxt := portercontext.NewTestContext(t)
+	mixinProvider := mixin.NewTestMixinProvider()
+	l := New(cxt.Context, mixinProvider)
+	testConfig := config.NewTestConfig(t).Config
+
+	exampleMixinVersion := mixin.ExampleMixinSemver.String()
+
+	// build up some test semvers
+	patchDifferenceSemver := fmt.Sprintf("%d.%d.%d", mixin.ExampleMixinSemver.Major(), mixin.ExampleMixinSemver.Minor(), mixin.ExampleMixinSemver.Patch()+1)
+	anyPatchAccepted := fmt.Sprintf("%d.%d.x", mixin.ExampleMixinSemver.Major(), mixin.ExampleMixinSemver.Minor())
+	lessThanNextMajor := fmt.Sprintf("<%d.%d", mixin.ExampleMixinSemver.Major()+1, mixin.ExampleMixinSemver.Minor())
+
+	exampleMixinVersionConstraint, _ := semver.NewConstraint(exampleMixinVersion)
+	patchDifferenceSemverConstraint, _ := semver.NewConstraint(patchDifferenceSemver)
+	anyPatchAcceptedConstraint, _ := semver.NewConstraint(anyPatchAccepted)
+	lessThanNextMajorConstraint, _ := semver.NewConstraint(lessThanNextMajor)
+
+	testCases := []struct {
+		name        string
+		errExpected bool
+		mixins      []manifest.MixinDeclaration
+	}{
+		{"exact-semver", false, []manifest.MixinDeclaration{
+			{
+				Name:    mixin.ExampleMixinName,
+				Version: exampleMixinVersionConstraint,
+			},
+		}},
+		{"different-patch", true, []manifest.MixinDeclaration{
+			{
+				Name:    mixin.ExampleMixinName,
+				Version: patchDifferenceSemverConstraint,
+			},
+		}},
+		{"accept-different-patch", false, []manifest.MixinDeclaration{
+			{
+				Name:    mixin.ExampleMixinName,
+				Version: anyPatchAcceptedConstraint,
+			},
+		}},
+		{"accept-less-than-versions", false, []manifest.MixinDeclaration{
+			{
+				Name:    mixin.ExampleMixinName,
+				Version: lessThanNextMajorConstraint,
+			},
+		}},
+		{"no-version-provided", false, []manifest.MixinDeclaration{
+			{
+				Name: mixin.ExampleMixinName,
+			},
+		}},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			m := &manifest.Manifest{
+				Mixins: testCase.mixins,
+			}
+			results, err := l.Lint(context.Background(), m, testConfig)
+			if testCase.errExpected {
+				require.Error(t, err, "Linting should return an error")
+				tests.RequireOutputContains(t, err.Error(), fmt.Sprintf(
+					"mixin %s is installed at version v%s but your bundle requires version %s",
+					mixin.ExampleMixinName,
+					exampleMixinVersion,
+					testCase.mixins[0].Version.String(),
+				))
+			} else {
+				require.NoError(t, err, "Linting should not return an error")
+			}
+			require.Len(t, results, 0, "linter should have returned 0 result")
+		})
+	}
+
 }
