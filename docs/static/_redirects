@@ -64,6 +64,7 @@
 /:version/install-linux.sh      https://github.com/getporter/porter/releases/download/:version/install-linux.sh 200
 /:version/install-mac.sh        https://github.com/getporter/porter/releases/download/:version/install-mac.sh 200
 /:version/install-windows.ps1   https://github.com/getporter/porter/releases/download/:version/install-windows.ps1 200
+/:version/bundle-linux.sh       https://github.com/getporter/porter/releases/download/:version/bundle-linux.sh 200
 
 # Redirect the porter release artifacts
 /:version/*           https://github.com/getporter/porter/releases/download/:version/:splat 302
