@@ -48,7 +48,8 @@ install:
 - mymixin:
     Parameters:
       Thing: ${ bundle.parameters.person }
-      Object: ${ bundle.parameters.contact.name }
+      ObjectName: ${ bundle.parameters.contact.name }
+      Object: '${ bundle.parameters.contact }'
 `
 	rm := runtimeManifestFromStepYaml(t, testConfig, mContent)
 	s := rm.Install[0]
@@ -66,12 +67,18 @@ install:
 	assert.Equal(t, "Ralpha", val)
 	assert.NotContains(t, "place", pms, "parameters that don't apply to the current action should not be resolved")
 
-	// New assertions for the contact parameter
-	require.IsType(t, "string", pms["Object"], "Data.mymixin.Parameters.Object has incorrect type")
-	contactName := pms["Object"].(string)
-	require.IsType(t, "string", contactName, "Data.mymixin.Parameters.Object.name has incorrect type")
-
+	// Asserting `bundle.parameters.contact.name` works.
+	require.IsType(t, "string", pms["ObjectName"], "Data.mymixin.Parameters.ObjectName has incorrect type")
+	contactName := pms["ObjectName"].(string)
+	require.IsType(t, "string", contactName, "Data.mymixin.Parameters.ObjectName.name has incorrect type")
 	assert.Equal(t, "Breta", contactName)
+
+	// Asserting `bundle.parameters.contact` evaluates to the JSON string
+	// representation of the object.
+	require.IsType(t, "string", pms["Object"], "Data.mymixin.Parameters.Object has incorrect type")
+	contact := pms["Object"].(string)
+	require.IsType(t, "string", contact, "Data.mymixin.Parameters.Object has incorrect type")
+	assert.Equal(t, "{\"name\":\"Breta\"}", contact)
 
 	err = rm.Initialize(ctx)
 	require.NoError(t, err)

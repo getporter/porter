@@ -132,6 +132,19 @@ func (m *RuntimeManifest) loadDependencyDefinitions() error {
 	return nil
 }
 
+// This wrapper type serve as a way of formatting a `map[string]interface{}` as
+// JSON when the templating by mustache is done. It makes it possible to
+// maintain the JSON string representation of the map while still allowing the
+// map to be used as a context in the templating, allowing for accessing the
+// map's keys in the template.
+type FormattedObject map[string]interface{}
+
+// Format the `FormattedObject` as a JSON string.
+func (fo FormattedObject) Format(f fmt.State, c rune) {
+	jsonStr, _ := json.Marshal(fo)
+	fmt.Fprintf(f, string(jsonStr))
+}
+
 func (m *RuntimeManifest) resolveParameter(pd manifest.ParameterDefinition) (interface{}, error) {
 	getValue := func(envVar string) (interface{}, error) {
 		value := m.config.Getenv(envVar)
@@ -140,7 +153,7 @@ func (m *RuntimeManifest) resolveParameter(pd manifest.ParameterDefinition) (int
 			if err := json.Unmarshal([]byte(value), &obj); err != nil {
 				return nil, err
 			}
-			return obj, nil
+			return FormattedObject(obj), nil
 		}
 		return value, nil
 	}
