@@ -102,5 +102,6 @@ and we will add you. **All** contributors belong here. 💯
 - [Eric Herrmann](https://github.com/egherrmann)
 - [Alex Dejanu](https://github.com/dejanu)
 - [Leo Bergnéhr](https://github.com/lbergnehr)
+- [John Cudd](https://github.com/jmcudd)
 
 

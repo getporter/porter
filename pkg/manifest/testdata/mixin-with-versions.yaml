@@ -1,0 +1,6 @@
+mixins:
+  - exec@1
+  - az@1.1.X:
+      extensions:
+        - iot
+  - terraform@>=2
