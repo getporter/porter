@@ -302,7 +302,7 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 			return nil, err
 		}
 		if param.Sensitive {
-			m.setSensitiveValue(val.(string))
+			m.setSensitiveValue(fmt.Sprint(val))
 		}
 		params[pe] = val
 	}
