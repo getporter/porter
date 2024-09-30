@@ -37,6 +37,7 @@ If the source bundle is a digest reference, destination must be a tagged referen
 	cmd.Flag("force").Annotations = map[string][]string{
 		"viper-key": {"force-overwrite"},
 	}
+	f.BoolVar(&opts.SignBundle, "sign-bundle", false, "Sign the bundle using the configured signing plugin")
 
 	return &cmd
 }

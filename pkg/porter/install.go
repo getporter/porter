@@ -109,6 +109,9 @@ func (p *Porter) InstallBundle(ctx context.Context, opts InstallOptions) error {
 		}
 
 		invocationImage := bun.Definition.InvocationImages[0].Image
+		if relocInvImage, ok := bun.RelocationMap[invocationImage]; ok {
+			invocationImage = relocInvImage
+		}
 		log.Debugf("verifying bundle image signature for %s", invocationImage)
 		err = p.Signer.Verify(ctx, invocationImage)
 		if err != nil {

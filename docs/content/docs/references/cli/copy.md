@@ -35,6 +35,7 @@ porter copy [flags]
       --force                Force push the bundle to overwrite the previously published bundle
   -h, --help                 help for copy
       --insecure-registry    Don't require TLS for registries
+      --sign-bundle          Sign the bundle using the configured signing plugin
       --source string         The fully qualified source bundle, including tag or digest.
 ```
 
