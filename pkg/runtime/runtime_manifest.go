@@ -142,7 +142,7 @@ type FormattedObject map[string]interface{}
 // Format the `FormattedObject` as a JSON string.
 func (fo FormattedObject) Format(f fmt.State, c rune) {
 	jsonStr, _ := json.Marshal(fo)
-	fmt.Fprintf(f, string(jsonStr))
+	fmt.Fprintf(f, "%s", string(jsonStr))
 }
 
 func (m *RuntimeManifest) resolveParameter(pd manifest.ParameterDefinition) (interface{}, error) {
