@@ -122,7 +122,7 @@ func (c *PluginConnection) Start(ctx context.Context, pluginCfg io.Reader) error
 	logger := hclog.New(&hclog.LoggerOptions{
 		Name:       "porter",
 		Output:     c.logsWriter,
-		Level:      hclog.Warn,
+		Level:      hclog.Debug,
 		JSONFormat: true,
 	})
 	c.client = plugin.NewClient(&plugin.ClientConfig{
@@ -335,6 +335,13 @@ func (c *PluginConnection) collectPluginLogs(ctx context.Context) {
 			msg, ok := pluginLog["@message"].(string)
 			if !ok {
 				continue
+			}
+
+			// This message is always printed when a plugin exists
+			// polluting the output. This is hardcoded in hashicorp/go-plugin.
+			// Always convert it to a debug log.
+			if msg == "plugin process exited" {
+				pluginLog["@level"] = "debug"
 			}
 
 			switch pluginLog["@level"] {
