@@ -6,6 +6,7 @@ import (
 	"compress/gzip"
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -131,15 +132,40 @@ func (m *RuntimeManifest) loadDependencyDefinitions() error {
 	return nil
 }
 
-func (m *RuntimeManifest) resolveParameter(pd manifest.ParameterDefinition) string {
+// This wrapper type serve as a way of formatting a `map[string]interface{}` as
+// JSON when the templating by mustache is done. It makes it possible to
+// maintain the JSON string representation of the map while still allowing the
+// map to be used as a context in the templating, allowing for accessing the
+// map's keys in the template.
+type FormattedObject map[string]interface{}
+
+// Format the `FormattedObject` as a JSON string.
+func (fo FormattedObject) Format(f fmt.State, c rune) {
+	jsonStr, _ := json.Marshal(fo)
+	fmt.Fprintf(f, "%s", string(jsonStr))
+}
+
+func (m *RuntimeManifest) resolveParameter(pd manifest.ParameterDefinition) (interface{}, error) {
+	getValue := func(envVar string) (interface{}, error) {
+		value := m.config.Getenv(envVar)
+		if pd.Type == "object" {
+			var obj map[string]interface{}
+			if err := json.Unmarshal([]byte(value), &obj); err != nil {
+				return nil, err
+			}
+			return FormattedObject(obj), nil
+		}
+		return value, nil
+	}
+
 	if pd.Destination.EnvironmentVariable != "" {
-		return m.config.Getenv(pd.Destination.EnvironmentVariable)
+		return getValue(pd.Destination.EnvironmentVariable)
 	}
 	if pd.Destination.Path != "" {
-		return pd.Destination.Path
+		return pd.Destination.Path, nil
 	}
 	envVar := manifest.ParamToEnvVar(pd.Name)
-	return m.config.Getenv(envVar)
+	return getValue(envVar)
 }
 
 func (m *RuntimeManifest) resolveCredential(cd manifest.CredentialDefinition) (string, error) {
@@ -271,9 +297,12 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 		}
 
 		pe := param.Name
-		val := m.resolveParameter(param)
+		val, err := m.resolveParameter(param)
+		if err != nil {
+			return nil, err
+		}
 		if param.Sensitive {
-			m.setSensitiveValue(val)
+			m.setSensitiveValue(fmt.Sprint(val))
 		}
 		params[pe] = val
 	}

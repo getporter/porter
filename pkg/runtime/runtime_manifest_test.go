@@ -34,17 +34,22 @@ func TestResolveMapParam(t *testing.T) {
 	ctx := context.Background()
 	testConfig := config.NewTestConfig(t)
 	testConfig.Setenv("PERSON", "Ralpha")
+	testConfig.Setenv("CONTACT", "{ \"name\": \"Breta\" }")
 
 	mContent := `schemaVersion: 1.0.0-alpha.2
 parameters:
 - name: person
 - name: place
   applyTo: [install]
+- name: contact
+  type: object
 
 install:
 - mymixin:
     Parameters:
       Thing: ${ bundle.parameters.person }
+      ObjectName: ${ bundle.parameters.contact.name }
+      Object: '${ bundle.parameters.contact }'
 `
 	rm := runtimeManifestFromStepYaml(t, testConfig, mContent)
 	s := rm.Install[0]
@@ -61,6 +66,19 @@ install:
 
 	assert.Equal(t, "Ralpha", val)
 	assert.NotContains(t, "place", pms, "parameters that don't apply to the current action should not be resolved")
+
+	// Asserting `bundle.parameters.contact.name` works.
+	require.IsType(t, "string", pms["ObjectName"], "Data.mymixin.Parameters.ObjectName has incorrect type")
+	contactName := pms["ObjectName"].(string)
+	require.IsType(t, "string", contactName, "Data.mymixin.Parameters.ObjectName.name has incorrect type")
+	assert.Equal(t, "Breta", contactName)
+
+	// Asserting `bundle.parameters.contact` evaluates to the JSON string
+	// representation of the object.
+	require.IsType(t, "string", pms["Object"], "Data.mymixin.Parameters.Object has incorrect type")
+	contact := pms["Object"].(string)
+	require.IsType(t, "string", contact, "Data.mymixin.Parameters.Object has incorrect type")
+	assert.Equal(t, "{\"name\":\"Breta\"}", contact)
 
 	err = rm.Initialize(ctx)
 	require.NoError(t, err)
@@ -276,18 +294,23 @@ func TestResolveSensitiveParameter(t *testing.T) {
 	ctx := context.Background()
 	testConfig := config.NewTestConfig(t)
 	testConfig.Setenv("SENSITIVE_PARAM", "deliciou$dubonnet")
+	testConfig.Setenv("SENSITIVE_OBJECT", "{ \"secret\": \"this_is_secret\" }")
 	testConfig.Setenv("REGULAR_PARAM", "regular param value")
 
 	mContent := `schemaVersion: 1.0.0
 parameters:
 - name: sensitive_param
   sensitive: true
+- name: sensitive_object
+  sensitive: true
+  type: object
 - name: regular_param
 
 install:
 - mymixin:
     Arguments:
     - ${ bundle.parameters.sensitive_param }
+    - '${ bundle.parameters.sensitive_object }'
     - ${ bundle.parameters.regular_param }
 `
 	rm := runtimeManifestFromStepYaml(t, testConfig, mContent)
@@ -304,12 +327,13 @@ install:
 	require.IsType(t, mixin["Arguments"], []interface{}{}, "Data.mymixin.Arguments has incorrect type")
 	args := mixin["Arguments"].([]interface{})
 
-	require.Len(t, args, 2)
+	require.Len(t, args, 3)
 	assert.Equal(t, "deliciou$dubonnet", args[0])
-	assert.Equal(t, "regular param value", args[1])
+  assert.Equal(t, "{\"secret\":\"this_is_secret\"}", args[1])
+	assert.Equal(t, "regular param value", args[2])
 
 	// There should now be one sensitive value tracked under the manifest
-	assert.Equal(t, []string{"deliciou$dubonnet"}, rm.GetSensitiveValues())
+  assert.Equal(t, []string{"deliciou$dubonnet", "{\"secret\":\"this_is_secret\"}"}, rm.GetSensitiveValues())
 }
 
 func TestResolveCredential(t *testing.T) {
