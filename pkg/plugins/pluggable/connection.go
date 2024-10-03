@@ -337,20 +337,20 @@ func (c *PluginConnection) collectPluginLogs(ctx context.Context) {
 				continue
 			}
 
-			// This message is always printed when a plugin exists
-			// polluting the output. This is hardcoded in hashicorp/go-plugin.
-			// Always convert it to a debug log.
-			if msg == "plugin process exited" {
-				pluginLog["@level"] = "debug"
-			}
-
 			switch pluginLog["@level"] {
 			case "error":
 				_ = span.Error(fmt.Errorf(msg))
 			case "warn":
 				span.Warn(msg)
 			case "info":
-				span.Infof(msg)
+				// This message is always printed when a plugin exists
+				// polluting the output. This is hardcoded in hashicorp/go-plugin.
+				// Always convert it to a debug log.
+				if msg == "plugin process exited" {
+					span.Debug(msg) // Log at debug level instead of info
+				} else {
+					span.Info(msg)
+				}
 			default:
 				span.Debug(msg)
 			}
