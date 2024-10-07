@@ -66,9 +66,6 @@ type InstallationSpec struct {
 	// Parameters specified by the user through overrides.
 	// Does not include defaults, or values resolved from parameter sources.
 	Parameters ParameterSet `json:"parameters,omitempty"`
-
-	// Status of the installation.
-	Status InstallationStatus `json:"status,omitempty"`
 }
 
 func (i InstallationSpec) String() string {
