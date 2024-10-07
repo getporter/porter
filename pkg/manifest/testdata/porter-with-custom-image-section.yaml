@@ -1,0 +1,27 @@
+schemaVersion: 1.0.0
+name: mybundle
+version: 0.1.0
+registry: example.com
+
+mixins:
+  - exec
+
+custom:
+  myApp: 
+    digest: sha256:6b91f0ccfc945d46b8f76937cae9acb7123f210b05105ef9a4b6f0e23e9cdcb6
+
+images:
+  myApp:
+    repository: test/repo
+    digest: ${ bundle.custom.myApp.digest }
+
+install:
+  - exec:
+      description: "Install Hello World"
+      command: bash
+
+        
+uninstall:
+  - exec:
+      description: "Uninstall Hello World"
+      command: bash

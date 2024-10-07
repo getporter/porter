@@ -545,6 +545,24 @@ A last note on `digest`.  Taking the example of the library `nginx` Docker image
 ]
 ```
 
+{{< callout type="info" >}}
+  Custom data in the `images` section is support from v1.2.0
+{{< /callout >}}
+
+It is possible to make the `images` section more dynamic by using [custom data](#custom). It is the only templating supported in the section.
+
+```yaml
+custom:
+  websvcDigest: "sha256:85b1a9b4b60a4cf73a23517dad677e64edf467107fa7d58fce9c50e6a3e4c914"
+
+images:
+  websvc:
+      description: "A simple web service"
+      imageType: "docker"
+      repository: "jeremyrickard/devops-days-msp"
+      digest: "${ bundle.custom.websvcDigest }"
+```
+
 ## Custom
 
 The Custom section of a Porter manifest is intended for bundle authors to
