@@ -7,13 +7,14 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cnabio/cnab-go/bundle"
+	"github.com/cnabio/cnab-go/valuesource"
+	"go.opentelemetry.io/otel/attribute"
+
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/schema"
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/tracing"
-	"github.com/cnabio/cnab-go/bundle"
-	"github.com/cnabio/cnab-go/valuesource"
-	"go.opentelemetry.io/otel/attribute"
 )
 
 var _ Document = CredentialSet{}
@@ -31,7 +32,7 @@ var _ Document = CredentialSet{}
 // handles accessing secrets.
 type CredentialSet struct {
 	CredentialSetSpec `yaml:",inline"`
-	Status            CredentialSetStatus `json:"status,omitempty" yaml:"status,omitempty" toml:"status,omitempty"`
+	Status            CredentialSetStatus `json:"status,omitempty" yaml:"status,omitempty" toml:"status,omitempty" gorm:"embedded;embeddedPrefix:status_"`
 }
 
 // CredentialSetSpec represents the set of user-modifiable fields on a CredentialSet.
@@ -49,10 +50,10 @@ type CredentialSetSpec struct {
 	Name string `json:"name" yaml:"name" toml:"name"`
 
 	// Labels applied to the credential set.
-	Labels map[string]string `json:"labels,omitempty" yaml:"labels,omitempty" toml:"labels,omitempty"`
+	Labels map[string]string `json:"labels,omitempty" yaml:"labels,omitempty" toml:"labels,omitempty" gorm:"type:jsonb"`
 
 	// Credentials is a list of credential resolution strategies.
-	Credentials secrets.StrategyList `json:"credentials,omitempty" yaml:"credentials,omitempty" toml:"credentials,omitempty"`
+	Credentials secrets.StrategyList `json:"credentials,omitempty" yaml:"credentials,omitempty" toml:"credentials,omitempty" gorm:"type:jsonb"`
 }
 
 // We implement a custom json marshal instead of using tags, so that we can omit zero-value timestamps
