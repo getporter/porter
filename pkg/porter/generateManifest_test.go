@@ -29,6 +29,10 @@ func Test_generateInternalManifest(t *testing.T) {
 		opts:         BuildOptions{},
 		wantManifest: "expected-result.yaml",
 	}, {
+		name:         "preserve tags",
+		opts:         BuildOptions{BundleDefinitionOptions: BundleDefinitionOptions{PreserveTags: true}},
+		wantManifest: "expected-result-preserve-tags.yaml",
+	}, {
 		name: "--file set",
 		opts: BuildOptions{
 			BundleDefinitionOptions: BundleDefinitionOptions{
