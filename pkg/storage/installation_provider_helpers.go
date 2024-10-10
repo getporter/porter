@@ -6,8 +6,12 @@ import (
 	"testing"
 	"time"
 
-	"get.porter.sh/porter/pkg/config"
+	"github.com/robinbraemer/devroach"
 	"github.com/stretchr/testify/require"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
+
+	"get.porter.sh/porter/pkg/config"
 )
 
 var (
@@ -20,28 +24,44 @@ var (
 )
 
 type TestInstallationProvider struct {
-	InstallationStore
-	TestStore
+	InstallationProvider
+	Name string
+
 	t         *testing.T
 	idCounter uint
+}
+
+func (p *TestInstallationProvider) Close() error {
+	return nil // replaced by t.Cleanup
 }
 
 func NewTestInstallationProvider(t *testing.T) *TestInstallationProvider {
 	tc := config.NewTestConfig(t)
 	testStore := NewTestStore(tc)
+	t.Cleanup(func() { _ = testStore.Close() })
 	return NewTestInstallationProviderFor(t, testStore)
+}
+
+func NewTestInstallationProviderSQL(t *testing.T) *TestInstallationProvider {
+	db := devroach.NewPoolT(t, nil)
+	gormDB, err := gorm.Open(postgres.Open(db.Config().ConnString()), &gorm.Config{})
+	require.NoError(t, err)
+	err = gormDB.AutoMigrate(&Installation{}, &Result{}, &Output{}, &Run{})
+	require.NoError(t, err)
+
+	return &TestInstallationProvider{
+		t:                    t,
+		InstallationProvider: NewInstallationStoreSQL(gormDB),
+		Name:                 "PostgreSQL/CockroachDB",
+	}
 }
 
 func NewTestInstallationProviderFor(t *testing.T, testStore TestStore) *TestInstallationProvider {
 	return &TestInstallationProvider{
-		t:                 t,
-		TestStore:         testStore,
-		InstallationStore: NewInstallationStore(testStore),
+		t:                    t,
+		InstallationProvider: NewInstallationStore(testStore),
+		Name:                 "TestStore",
 	}
-}
-
-func (p *TestInstallationProvider) Close() error {
-	return p.TestStore.Close()
 }
 
 // CreateInstallation creates a new test installation and saves it.
