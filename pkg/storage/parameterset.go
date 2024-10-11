@@ -43,7 +43,7 @@ type ParameterSetSpec struct {
 	Name string `json:"name" yaml:"name" toml:"name"`
 
 	// Labels applied to the parameter set.
-	Labels map[string]string `json:"labels,omitempty" yaml:"labels,omitempty" toml:"labels,omitempty" gorm:"type:jsonb"`
+	Labels Labels `json:"labels,omitempty" yaml:"labels,omitempty" toml:"labels,omitempty" gorm:"type:jsonb"`
 
 	// Parameters is a list of parameter specs.
 	Parameters secrets.StrategyList `json:"parameters" yaml:"parameters" toml:"parameters" gorm:"type:jsonb"`

@@ -339,32 +339,19 @@ func (s *InstallationStoreSQL) UpsertInstallation(ctx context.Context, installat
 }
 
 func (s *InstallationStoreSQL) RemoveInstallation(ctx context.Context, namespace string, name string) error {
-	tx := s.db.WithContext(ctx).Begin()
-	defer func() {
-		if r := recover(); r != nil {
-			tx.Rollback()
+	return s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := tx.Where("namespace = ? AND name = ?", namespace, name).Delete(&Installation{}).Error; err != nil {
+			return err
 		}
-	}()
-
-	if err := tx.Where("namespace = ? AND name = ?", namespace, name).Delete(&Installation{}).Error; err != nil {
-		tx.Rollback()
-		return err
-	}
-
-	if err := tx.Where("namespace = ? AND installation = ?", namespace, name).Delete(&Run{}).Error; err != nil {
-		tx.Rollback()
-		return err
-	}
-
-	if err := tx.Where("namespace = ? AND installation = ?", namespace, name).Delete(&Result{}).Error; err != nil {
-		tx.Rollback()
-		return err
-	}
-
-	if err := tx.Where("namespace = ? AND installation = ?", namespace, name).Delete(&Output{}).Error; err != nil {
-		tx.Rollback()
-		return err
-	}
-
-	return tx.Commit().Error
+		if err := tx.Where("namespace = ? AND installation = ?", namespace, name).Delete(&Run{}).Error; err != nil {
+			return err
+		}
+		if err := tx.Where("namespace = ? AND installation = ?", namespace, name).Delete(&Result{}).Error; err != nil {
+			return err
+		}
+		if err := tx.Where("namespace = ? AND installation = ?", namespace, name).Delete(&Output{}).Error; err != nil {
+			return err
+		}
+		return nil
+	})
 }

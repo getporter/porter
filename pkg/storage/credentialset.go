@@ -50,7 +50,7 @@ type CredentialSetSpec struct {
 	Name string `json:"name" yaml:"name" toml:"name"`
 
 	// Labels applied to the credential set.
-	Labels map[string]string `json:"labels,omitempty" yaml:"labels,omitempty" toml:"labels,omitempty" gorm:"type:jsonb"`
+	Labels Labels `json:"labels,omitempty" yaml:"labels,omitempty" toml:"labels,omitempty" gorm:"type:jsonb"`
 
 	// Credentials is a list of credential resolution strategies.
 	Credentials secrets.StrategyList `json:"credentials,omitempty" yaml:"credentials,omitempty" toml:"credentials,omitempty" gorm:"type:jsonb"`
