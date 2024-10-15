@@ -6,13 +6,21 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/spf13/cobra"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/experimental"
 	"get.porter.sh/porter/pkg/porter"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
+
+func buildRootCommand(t *testing.T) *cobra.Command {
+	p, err := porter.NewWith(porter.Options{})
+	require.NoError(t, err)
+	return buildRootCommandFrom(p)
+}
 
 func TestCommandWiring(t *testing.T) {
 	testcases := []string{
@@ -39,7 +47,7 @@ func TestCommandWiring(t *testing.T) {
 		t.Run(tc, func(t *testing.T) {
 			osargs := strings.Split(tc, " ")
 
-			rootCmd := buildRootCommand()
+			rootCmd := buildRootCommand(t)
 			cmd, _, err := rootCmd.Find(osargs)
 			assert.NoError(t, err)
 			assert.Equal(t, osargs[len(osargs)-1], cmd.Name())
@@ -50,7 +58,7 @@ func TestCommandWiring(t *testing.T) {
 func TestHelp(t *testing.T) {
 	t.Run("no args", func(t *testing.T) {
 		var output bytes.Buffer
-		rootCmd := buildRootCommand()
+		rootCmd := buildRootCommand(t)
 		rootCmd.SetArgs([]string{})
 		rootCmd.SetOut(&output)
 
@@ -61,7 +69,7 @@ func TestHelp(t *testing.T) {
 
 	t.Run("help", func(t *testing.T) {
 		var output bytes.Buffer
-		rootCmd := buildRootCommand()
+		rootCmd := buildRootCommand(t)
 		rootCmd.SetArgs([]string{"help"})
 		rootCmd.SetOut(&output)
 
@@ -72,7 +80,7 @@ func TestHelp(t *testing.T) {
 
 	t.Run("--help", func(t *testing.T) {
 		var output bytes.Buffer
-		rootCmd := buildRootCommand()
+		rootCmd := buildRootCommand(t)
 		rootCmd.SetArgs([]string{"--help"})
 		rootCmd.SetOut(&output)
 

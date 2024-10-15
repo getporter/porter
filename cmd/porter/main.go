@@ -10,13 +10,14 @@ import (
 	"strconv"
 	"strings"
 
-	"get.porter.sh/porter/pkg/cli"
-	"get.porter.sh/porter/pkg/config"
-	"get.porter.sh/porter/pkg/porter"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
+
+	"get.porter.sh/porter/pkg/cli"
+	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/porter"
 )
 
 var includeDocsCommand = false
@@ -35,7 +36,12 @@ const (
 
 func main() {
 	run := func() int {
-		p := porter.New()
+		p, err := porter.NewWith(porter.Options{})
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err.Error())
+			os.Exit(cli.ExitCodeErr)
+		}
+
 		ctx, cancel := handleInterrupt(context.Background(), p)
 		defer cancel()
 
@@ -156,10 +162,6 @@ func getCalledCommand(cmd *cobra.Command) (*cobra.Command, string, string) {
 	formattedCommand := fmt.Sprintf("porter %s", strings.Join(os.Args[1:], " "))
 
 	return calledCommand, calledCommandStr, formattedCommand
-}
-
-func buildRootCommand() *cobra.Command {
-	return buildRootCommandFrom(porter.New())
 }
 
 func buildRootCommandFrom(p *porter.Porter) *cobra.Command {

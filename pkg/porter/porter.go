@@ -4,8 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/url"
 	"strings"
 	"sync"
+
+	"github.com/hashicorp/go-multierror"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 
 	"get.porter.sh/porter/pkg/build"
 	"get.porter.sh/porter/pkg/build/buildkit"
@@ -22,9 +27,9 @@ import (
 	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/storage/migrations"
 	storageplugin "get.porter.sh/porter/pkg/storage/pluginstore"
+	"get.porter.sh/porter/pkg/storage/sql"
 	"get.porter.sh/porter/pkg/templates"
 	"get.porter.sh/porter/pkg/tracing"
-	"github.com/hashicorp/go-multierror"
 )
 
 // Porter is the logic behind the porter client.
@@ -47,22 +52,63 @@ type Porter struct {
 	Plugins       plugins.PluginProvider
 	CNAB          cnabprovider.CNABProvider
 	Secrets       secrets.Store
-	Storage       storage.Provider
 	Signer        signing.Signer
+
+	// Deprecated: Use the individual storage providers in the Porter struct instead
+	// This is only here for backwards compatibility where MongoDB was the only storage provider.
+	Storage storage.Provider
+}
+
+// Options for configuring a new Porter client passed to NewWith.
+type Options struct {
+	Config        *config.Config // Optional. Defaults to a config.New.
+	SecretStorage secrets.Store  // Optional. Defaults to a secrets.NewPluginAdapter(secretsplugin.NewStore).
+	Signer        signing.Signer // Optional. Defaults to a signing.NewPluginAdapter(signingplugin.NewSigner).
+}
+
+// NewWith creates a new Porter client with useful defaults that can be overridden with the provided options.
+func NewWith(opt Options) (*Porter, error) {
+	if opt.Config == nil {
+		opt.Config = config.New()
+	}
+	if opt.SecretStorage == nil {
+		opt.SecretStorage = secrets.NewPluginAdapter(secretsplugin.NewStore(opt.Config))
+	}
+	if opt.Signer == nil {
+		opt.Signer = signing.NewPluginAdapter(signingplugin.NewSigner(opt.Config))
+	}
+
+	if p, ok := sql.IsPostgresStorage(opt.Config); ok {
+		po, err := newWithSQL(opt.Config, p, opt.SecretStorage, opt.Signer)
+		if err != nil {
+			return nil, err
+		}
+		return po, nil
+	}
+
+	storage := storage.NewPluginAdapter(storageplugin.NewStore(opt.Config))
+	return newFor(opt.Config, storage, opt.SecretStorage, opt.Signer), nil
 }
 
 // New porter client, initialized with useful defaults.
+//
+// Deprecated: Use NewWith instead. New does not support SQL storage backends.
 func New() *Porter {
 	c := config.New()
-	storage := storage.NewPluginAdapter(storageplugin.NewStore(c))
+
 	secretStorage := secrets.NewPluginAdapter(secretsplugin.NewStore(c))
 	signer := signing.NewPluginAdapter(signingplugin.NewSigner(c))
-	return NewFor(c, storage, secretStorage, signer)
+
+	storage := storage.NewPluginAdapter(storageplugin.NewStore(c))
+	return newFor(c, storage, secretStorage, signer)
 }
 
-func NewFor(c *config.Config, store storage.Store, secretStorage secrets.Store, signer signing.Signer) *Porter {
-	cache := cache.New(c)
-
+func newFor(
+	c *config.Config,
+	store storage.Store,
+	secretStorage secrets.Store,
+	signer signing.Signer,
+) *Porter {
 	storageManager := migrations.NewManager(c, store)
 	installationStorage := storage.NewInstallationStore(storageManager)
 	credStorage := storage.NewCredentialStore(storageManager, secretStorage)
@@ -71,9 +117,53 @@ func NewFor(c *config.Config, store storage.Store, secretStorage secrets.Store, 
 
 	storageManager.Initialize(sanitizerService) // we have a bit of a dependency problem here that it would be great to figure out eventually
 
+	return newWith(c, installationStorage, credStorage, paramStorage, secretStorage, signer, sanitizerService, storageManager)
+}
+
+func newWithSQL(
+	c *config.Config,
+	p config.StoragePlugin,
+	secretStorage secrets.Store,
+	signer signing.Signer,
+) (*Porter, error) {
+	pc, err := sql.UnmarshalPluginConfig(p.GetConfig())
+	if err != nil {
+		return nil, fmt.Errorf("could not unmarshal plugin config: %s", err)
+	}
+	if pc.URL == "" {
+		return nil, errors.New("no URL provided in plugin config")
+	}
+	_, err = url.Parse(pc.URL)
+	if err != nil {
+		return nil, fmt.Errorf("invalid URL provided in plugin config: %s", err)
+	}
+	db, err := gorm.Open(postgres.Open(pc.URL))
+	if err != nil {
+		return nil, fmt.Errorf("could not open database: %s", err)
+	}
+
+	installationStorage := storage.NewInstallationStoreSQL(db)
+	credStorage := storage.NewCredentialStoreSQL(db, secretStorage)
+	paramStorage := storage.NewParameterStoreSQL(db, secretStorage)
+	sanitizerService := storage.NewSanitizer(paramStorage, secretStorage)
+
+	return newWith(c, installationStorage, credStorage, paramStorage, secretStorage, signer, sanitizerService, nil), nil
+}
+
+func newWith(
+	c *config.Config,
+	installationStorage storage.InstallationProvider,
+	credStorage storage.CredentialSetProvider,
+	paramStorage storage.ParameterSetProvider,
+	secretStorage secrets.Store,
+	signer signing.Signer,
+	sanitizerService *storage.Sanitizer,
+	storageManager storage.Provider,
+) *Porter {
+
 	return &Porter{
 		Config:        c,
-		Cache:         cache,
+		Cache:         cache.New(c),
 		Storage:       storageManager,
 		Installations: installationStorage,
 		Credentials:   credStorage,
@@ -129,9 +219,11 @@ func (p *Porter) Close() error {
 		bigErr = multierror.Append(bigErr, err)
 	}
 
-	err = p.Storage.Close()
-	if err != nil {
-		bigErr = multierror.Append(bigErr, err)
+	if p.Storage != nil {
+		err = p.Storage.Close()
+		if err != nil {
+			bigErr = multierror.Append(bigErr, err)
+		}
 	}
 
 	err = p.Config.Close()

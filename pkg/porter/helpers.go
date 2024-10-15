@@ -11,6 +11,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cnabio/cnab-go/bundle"
+	"github.com/stretchr/testify/require"
+
 	"get.porter.sh/porter/pkg/build"
 	"get.porter.sh/porter/pkg/cache"
 	"get.porter.sh/porter/pkg/cnab"
@@ -26,8 +29,6 @@ import (
 	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/tracing"
 	"get.porter.sh/porter/pkg/yaml"
-	"github.com/cnabio/cnab-go/bundle"
-	"github.com/stretchr/testify/require"
 )
 
 type TestPorter struct {
@@ -123,8 +124,10 @@ func (p *TestPorter) SetupIntegrationTest() context.Context {
 	p.CreateBundleDir()
 
 	// Write out a storage schema so that we don't trigger a migration check
-	err := p.Storage.WriteSchema(ctx)
-	require.NoError(t, err, "failed to set the storage schema")
+	if p.Storage != nil {
+		err := p.Storage.WriteSchema(ctx)
+		require.NoError(t, err, "failed to set the storage schema")
+	}
 
 	// Load test credentials, with KUBECONFIG replaced properly
 	kubeconfig := filepath.Join(p.RepoRoot, "kind.config")

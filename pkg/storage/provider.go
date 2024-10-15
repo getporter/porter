@@ -6,6 +6,8 @@ import (
 
 // Provider handles high level functions over Porter's storage systems such as
 // migrating data formats.
+//
+// Warning: To work with sql migrations you must use get.porter.sh/porter/pkg/storage/sql/migrate instead.
 type Provider interface {
 	Store
 
