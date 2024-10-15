@@ -87,7 +87,7 @@ func NewWith(opt Options) (*Porter, error) {
 	}
 
 	storage := storage.NewPluginAdapter(storageplugin.NewStore(opt.Config))
-	return newFor(opt.Config, storage, opt.SecretStorage, opt.Signer), nil
+	return NewFor(opt.Config, storage, opt.SecretStorage, opt.Signer), nil
 }
 
 // New porter client, initialized with useful defaults.
@@ -100,10 +100,10 @@ func New() *Porter {
 	signer := signing.NewPluginAdapter(signingplugin.NewSigner(c))
 
 	storage := storage.NewPluginAdapter(storageplugin.NewStore(c))
-	return newFor(c, storage, secretStorage, signer)
+	return NewFor(c, storage, secretStorage, signer)
 }
 
-func newFor(
+func NewFor(
 	c *config.Config,
 	store storage.Store,
 	secretStorage secrets.Store,
