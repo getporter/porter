@@ -85,6 +85,20 @@ Porter handles tracking the image location for you, just use the template variab
 
 [images]: /docs/bundle/manifest/#images
 
+If using exec mixin, image digests can be passed via environmental variables or arguments.
+
+```yaml
+install:
+  - exec:
+      description: "Insall WhaleGap"
+      command: ./porter-scripts.sh
+      arguments:
+        - install
+      envs:
+        whalesayImage: "${ bundle.images.whalesayd.repository }@${ bundle.images.whalesayd.digest }"
+```
+
+
 ## Move the bundle across the airgap
 
 Let's simulate moving the bundle across an airgap by publishing the bundle to a different registry.
