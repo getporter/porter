@@ -95,7 +95,7 @@ install:
       arguments:
         - install
       envs:
-        whalesayImage: "${ bundle.images.whalesayd.repository }@${ bundle.images.whalesayd.digest }"
+        IMAGE_whalesayd: "${ bundle.images.whalesayd.repository }@${ bundle.images.whalesayd.digest }"
 ```
 
 
