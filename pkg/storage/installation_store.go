@@ -4,8 +4,9 @@ import (
 	"context"
 	"errors"
 
-	"get.porter.sh/porter/pkg/tracing"
 	"go.mongodb.org/mongo-driver/bson"
+
+	"get.porter.sh/porter/pkg/tracing"
 )
 
 const (

@@ -3,57 +3,71 @@ package storage
 import (
 	"context"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"testing"
 
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/encoding"
-	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/secrets"
+	"get.porter.sh/porter/pkg/storage/sql/migrate"
+
 	"github.com/carolynvs/aferox"
+	"github.com/robinbraemer/devroach"
 	"github.com/spf13/afero"
+	"github.com/stretchr/testify/require"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
 var _ CredentialSetProvider = &TestCredentialSetProvider{}
 
 type TestCredentialSetProvider struct {
-	*CredentialStore
+	CredentialSetProvider
+	Name string
 
-	T           *testing.T
-	TestContext *portercontext.TestContext
+	T *testing.T
 	// TestSecrets allows you to set up secrets for unit testing
 	TestSecrets secrets.TestSecretsProvider
-	TestStorage Store
 }
 
 func NewTestCredentialProvider(t *testing.T) *TestCredentialSetProvider {
 	tc := config.NewTestConfig(t)
 	testStore := NewTestStore(tc)
 	testSecrets := secrets.NewTestSecretsProvider()
+	t.Cleanup(func() {
+		_ = testStore.Close()
+		_ = testSecrets.Close()
+	})
 	return NewTestCredentialProviderFor(t, testStore, testSecrets)
+}
+
+func NewTestCredentialProviderSQL(t *testing.T) *TestCredentialSetProvider {
+	db := devroach.NewPoolT(t, nil)
+	gormDB, err := gorm.Open(postgres.Open(db.Config().ConnString()), &gorm.Config{})
+	require.NoError(t, err)
+	err = migrate.MigrateDB(context.Background(), gormDB)
+	require.NoError(t, err)
+
+	testSecrets := secrets.NewTestSecretsProvider()
+	return &TestCredentialSetProvider{
+		T:                     t,
+		TestSecrets:           testSecrets,
+		CredentialSetProvider: NewCredentialStoreSQL(gormDB, testSecrets),
+		Name:                  "PostgreSQL/CockroachDB", // will be updated when supporting other SQL dialects
+	}
 }
 
 func NewTestCredentialProviderFor(t *testing.T, testStore Store, testSecrets secrets.TestSecretsProvider) *TestCredentialSetProvider {
 	return &TestCredentialSetProvider{
 		T:           t,
-		TestContext: portercontext.NewTestContext(t),
 		TestSecrets: testSecrets,
-		TestStorage: testStore,
-		CredentialStore: &CredentialStore{
+		CredentialSetProvider: &CredentialStore{
 			Documents: testStore,
 			Secrets:   testSecrets,
 		},
+		Name: "TestStore/MongoDB",
 	}
-}
-
-func (p TestCredentialSetProvider) Close() error {
-	// sometimes we are testing with a mock that needs to be released at the end of the test
-	if closer, ok := p.TestStorage.(io.Closer); ok {
-		return closer.Close()
-	}
-	return nil
 }
 
 // Load a CredentialSet from a test file at a given path.
@@ -76,7 +90,7 @@ func (p TestCredentialSetProvider) AddTestCredentials(path string) {
 		p.T.Fatal(fmt.Errorf("could not read test credentials from %s: %w", path, err))
 	}
 
-	err = p.CredentialStore.InsertCredentialSet(context.Background(), cs)
+	err = p.CredentialSetProvider.InsertCredentialSet(context.Background(), cs)
 	if err != nil {
 		p.T.Fatal(fmt.Errorf("could not load test credentials into in memory credential storage: %w", err))
 	}

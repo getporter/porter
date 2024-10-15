@@ -2,14 +2,12 @@ package storage
 
 import (
 	"context"
-	"fmt"
-	"strings"
+
+	"go.mongodb.org/mongo-driver/bson"
 
 	"get.porter.sh/porter/pkg/secrets"
 	hostSecrets "get.porter.sh/porter/pkg/secrets/plugins/host"
 	"get.porter.sh/porter/pkg/tracing"
-	"github.com/cnabio/cnab-go/secrets/host"
-	"github.com/hashicorp/go-multierror"
 )
 
 var _ CredentialSetProvider = &CredentialStore{}
@@ -52,8 +50,21 @@ func EnsureCredentialIndices(ctx context.Context, store Store) error {
 	return span.Error(err)
 }
 
-func (s CredentialStore) GetDataStore() Store {
-	return s.Documents
+func (s CredentialStore) FindCredentialSet(ctx context.Context, namespace string, name string) (CredentialSet, error) {
+	var out CredentialSet
+	// Try to get the creds in the local namespace first, fallback to the global creds
+	query := FindOptions{
+		Sort: []string{"-namespace"},
+		Filter: bson.M{
+			"name": name,
+			"$or": []bson.M{
+				{"namespace": ""},
+				{"namespace": namespace},
+			},
+		},
+	}
+	err := s.Documents.FindOne(ctx, CollectionCredentials, query, &out)
+	return out, err
 }
 
 /*
@@ -61,49 +72,11 @@ func (s CredentialStore) GetDataStore() Store {
 */
 
 func (s CredentialStore) ResolveAll(ctx context.Context, creds CredentialSet) (secrets.Set, error) {
-	resolvedCreds := make(secrets.Set)
-	var resolveErrors error
-
-	for _, cred := range creds.Credentials {
-		var value string
-		var err error
-		if isHandledByHostPlugin(cred.Source.Strategy) {
-			value, err = s.HostSecrets.Resolve(ctx, cred.Source.Strategy, cred.Source.Hint)
-		} else {
-			value, err = s.Secrets.Resolve(ctx, cred.Source.Strategy, cred.Source.Hint)
-		}
-		if err != nil {
-			resolveErrors = multierror.Append(resolveErrors, fmt.Errorf("unable to resolve credential %s.%s from %s %s: %w", creds.Name, cred.Name, cred.Source.Strategy, cred.Source.Hint, err))
-		}
-
-		resolvedCreds[cred.Name] = value
-	}
-
-	return resolvedCreds, resolveErrors
+	return resolveAll(ctx, creds.Credentials, s.HostSecrets, s.Secrets, creds.Name, "credential")
 }
 
 func (s CredentialStore) Validate(ctx context.Context, creds CredentialSet) error {
-	validSources := []string{secrets.SourceSecret, host.SourceValue, host.SourceEnv, host.SourcePath, host.SourceCommand}
-	var errors error
-
-	for _, cs := range creds.Credentials {
-		valid := false
-		for _, validSource := range validSources {
-			if cs.Source.Strategy == validSource {
-				valid = true
-				break
-			}
-		}
-		if !valid {
-			errors = multierror.Append(errors, fmt.Errorf(
-				"%s is not a valid source. Valid sources are: %s",
-				cs.Source.Strategy,
-				strings.Join(validSources, ", "),
-			))
-		}
-	}
-
-	return errors
+	return validate(creds.Credentials)
 }
 
 /*

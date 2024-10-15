@@ -12,6 +12,7 @@ import (
 	"gorm.io/gorm"
 
 	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/storage/sql/migrate"
 )
 
 var (
@@ -31,10 +32,6 @@ type TestInstallationProvider struct {
 	idCounter uint
 }
 
-func (p *TestInstallationProvider) Close() error {
-	return nil // replaced by t.Cleanup
-}
-
 func NewTestInstallationProvider(t *testing.T) *TestInstallationProvider {
 	tc := config.NewTestConfig(t)
 	testStore := NewTestStore(tc)
@@ -46,13 +43,13 @@ func NewTestInstallationProviderSQL(t *testing.T) *TestInstallationProvider {
 	db := devroach.NewPoolT(t, nil)
 	gormDB, err := gorm.Open(postgres.Open(db.Config().ConnString()), &gorm.Config{})
 	require.NoError(t, err)
-	err = gormDB.AutoMigrate(&Installation{}, &Result{}, &Output{}, &Run{})
+	err = migrate.MigrateDB(context.Background(), gormDB)
 	require.NoError(t, err)
 
 	return &TestInstallationProvider{
 		t:                    t,
 		InstallationProvider: NewInstallationStoreSQL(gormDB),
-		Name:                 "PostgreSQL/CockroachDB",
+		Name:                 "PostgreSQL/CockroachDB", // will be updated when supporting other SQL dialects
 	}
 }
 
@@ -60,7 +57,7 @@ func NewTestInstallationProviderFor(t *testing.T, testStore TestStore) *TestInst
 	return &TestInstallationProvider{
 		t:                    t,
 		InstallationProvider: NewInstallationStore(testStore),
-		Name:                 "TestStore",
+		Name:                 "TestStore/MongoDB",
 	}
 }
 

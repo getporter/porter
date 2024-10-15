@@ -11,8 +11,8 @@ import (
 	"get.porter.sh/porter/pkg/secrets"
 )
 
-func (m *migrations) Up0001(ctx context.Context, tx *sql.Tx) error {
-	db, err := m.GORM(ctx, tx)
+func Up0001(ctx context.Context, tx *sql.Tx) error {
+	db, err := fromContext(ctx, tx)
 	if err != nil {
 		return err
 	}
@@ -142,6 +142,8 @@ func (m *migrations) Up0001(ctx context.Context, tx *sql.Tx) error {
 		&Result{},
 		&Output{},
 		&Run{},
+		&CredentialSet{},
+		&ParameterSet{},
 	)
 	if err != nil {
 		return err
@@ -155,6 +157,8 @@ func (m *migrations) Up0001(ctx context.Context, tx *sql.Tx) error {
 	CREATE INDEX IF NOT EXISTS "idx_outputs_namespace_installation_result_id" ON "outputs" ("namespace", "installation", "result_id" DESC);
 	CREATE UNIQUE INDEX IF NOT EXISTS "idx_outputs_result_id_name" ON "outputs" ("result_id", "name");
 	CREATE INDEX IF NOT EXISTS "idx_outputs_namespace_installation_name_result_id" ON "outputs" ("namespace", "installation", "name", "result_id" DESC);
+	CREATE UNIQUE INDEX IF NOT EXISTS "idx_credentials_namespace_name" ON "credential_sets" ("namespace", "name");
+	CREATE UNIQUE INDEX IF NOT EXISTS "idx_parameters_namespace_name" ON "parameter_sets" ("namespace", "name");
 `)
 	if err != nil {
 		return err
@@ -163,18 +167,20 @@ func (m *migrations) Up0001(ctx context.Context, tx *sql.Tx) error {
 	return nil
 }
 
-func (m *migrations) Down0001(ctx context.Context, tx *sql.Tx) error {
-	db, err := m.GORM(ctx, tx)
+func Down0001(ctx context.Context, tx *sql.Tx) error {
+	db, err := fromContext(ctx, tx)
 	if err != nil {
 		return err
 	}
 
 	// tables
 	type (
-		Installation struct{}
-		Result       struct{}
-		Output       struct{}
-		Run          struct{}
+		Installation  struct{}
+		Result        struct{}
+		Output        struct{}
+		Run           struct{}
+		CredentialSet struct{}
+		ParameterSet  struct{}
 	)
 
 	return db.Migrator().DropTable(
@@ -182,5 +188,7 @@ func (m *migrations) Down0001(ctx context.Context, tx *sql.Tx) error {
 		&Result{},
 		&Output{},
 		&Run{},
+		&CredentialSet{},
+		&ParameterSet{},
 	)
 }

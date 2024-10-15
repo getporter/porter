@@ -56,17 +56,17 @@ func (s *InstallationStoreSQL) ListInstallations(ctx context.Context, listOption
 	_, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
 
-	var installations []Installation
-	query := s.db.WithContext(ctx).Order("namespace, name")
+	var out []Installation
+	query := s.db.WithContext(ctx).Order("namespace ASC, name ASC")
 
 	// Filter by Namespace
-	if listOptions.Namespace != "" {
+	if listOptions.Namespace != "" && listOptions.Namespace != "*" {
 		query = query.Where("namespace = ?", listOptions.Namespace)
 	}
 
 	// Filter by Name
 	if listOptions.Name != "" {
-		query = query.Where("name = ?", listOptions.Name)
+		query = query.Where("name LIKE ?", "%"+listOptions.Name+"%")
 	}
 
 	// Filter by Labels
@@ -87,12 +87,12 @@ func (s *InstallationStoreSQL) ListInstallations(ctx context.Context, listOption
 	}
 
 	// Execute the query
-	err := query.Find(&installations).Error
+	err := query.Find(&out).Error
 	if err != nil {
 		return nil, log.Error(err)
 	}
 
-	return installations, nil
+	return out, nil
 }
 
 func (s *InstallationStoreSQL) ListRuns(ctx context.Context, namespace string, installation string) ([]Run, map[string][]Result, error) {
