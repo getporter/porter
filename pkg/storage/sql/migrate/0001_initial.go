@@ -137,12 +137,30 @@ func (m *migrations) Up0001(ctx context.Context, tx *sql.Tx) error {
 		}
 	)
 
-	return db.Migrator().CreateTable(
+	err = db.Migrator().CreateTable(
 		&Installation{},
 		&Result{},
 		&Output{},
 		&Run{},
 	)
+	if err != nil {
+		return err
+	}
+
+	_, err = tx.ExecContext(ctx, `
+	CREATE UNIQUE INDEX IF NOT EXISTS "idx_installations_namespace_name" ON "installations" ("namespace", "name");
+	CREATE INDEX IF NOT EXISTS "idx_runs_namespace_installation" ON "runs" ("namespace", "installation");
+	CREATE INDEX IF NOT EXISTS "idx_results_namespace_installation" ON "results" ("namespace", "installation");
+	CREATE INDEX IF NOT EXISTS "idx_results_run_id" ON "results" ("run_id");
+	CREATE INDEX IF NOT EXISTS "idx_outputs_namespace_installation_result_id" ON "outputs" ("namespace", "installation", "result_id" DESC);
+	CREATE UNIQUE INDEX IF NOT EXISTS "idx_outputs_result_id_name" ON "outputs" ("result_id", "name");
+	CREATE INDEX IF NOT EXISTS "idx_outputs_namespace_installation_name_result_id" ON "outputs" ("namespace", "installation", "name", "result_id" DESC);
+`)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (m *migrations) Down0001(ctx context.Context, tx *sql.Tx) error {

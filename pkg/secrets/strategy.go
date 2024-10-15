@@ -37,7 +37,7 @@ type SourceMap struct {
 	// ResolvedValue holds the resolved parameter or credential value.
 	// When a parameter or credential is resolved, it is loaded into this field. In all
 	// other cases, it is empty. This field is omitted during serialization.
-	ResolvedValue string `json:"-" yaml:"-"`
+	ResolvedValue string `json:"-" yaml:"-" gorm:"-"`
 }
 
 // Source specifies how to resolve a parameter or credential from an external
