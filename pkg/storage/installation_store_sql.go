@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"golang.org/x/sync/errgroup"
 	"gorm.io/gorm"
 
 	"get.porter.sh/porter/pkg/tracing"
@@ -99,14 +100,21 @@ func (s *InstallationStoreSQL) ListRuns(ctx context.Context, namespace string, i
 	var runs []Run
 	var results []Result
 
-	err := s.db.WithContext(ctx).Where("namespace = ? AND installation = ?", namespace, installation).Order("id").Find(&runs).Error
-	if err != nil {
+	eg, ctx := errgroup.WithContext(ctx)
+	eg.Go(func() error {
+		return s.db.WithContext(ctx).
+			Where("namespace = ? AND installation = ?", namespace, installation).
+			Order("id").
+			Find(&runs).Error
+	})
+	eg.Go(func() error {
+		return s.db.WithContext(ctx).
+			Where("namespace = ? AND installation = ?", namespace, installation).
+			Order("run_id, id").
+			Find(&results).Error
+	})
+	if err := eg.Wait(); err != nil {
 		return nil, nil, err
-	}
-
-	err = s.db.WithContext(ctx).Where("namespace = ? AND installation = ?", namespace, installation).Find(&results).Error
-	if err != nil {
-		return runs, nil, err
 	}
 
 	resultsMap := make(map[string][]Result, len(runs))
@@ -152,7 +160,7 @@ func (s *InstallationStoreSQL) FindInstallations(ctx context.Context, findOpts F
 			// Assume it's a label query
 			if strings.HasPrefix(key, "labels.") {
 				labelKey := strings.TrimPrefix(key, "labels.")
-				query = query.Where("labels->? @> ?", labelKey, fmt.Sprintf("\"%v\"", value))
+				query = query.Where("labels->? @> ?", labelKey, fmt.Sprintf(`%q`, value))
 			}
 		}
 	}
