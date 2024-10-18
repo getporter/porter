@@ -20,7 +20,7 @@ func UnmarshalPluginConfig(rawCfg interface{}) (cfg PluginConfig, err error) {
 	return
 }
 
-func IsPostgresStorage(c *config.Config) (s config.StoragePlugin, ok bool) {
+func IsSQLStore(c *config.Config) (s config.StoragePlugin, ok bool) {
 	// TODO add other sql databases
 	if c.Data.DefaultStoragePlugin == "postgres" {
 		for _, s = range c.Data.StoragePlugins {

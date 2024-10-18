@@ -169,7 +169,7 @@ func (p *Porter) Connect(ctx context.Context) (context.Context, error) {
 			return nil // already initialized
 		}
 
-		storagePlugin, ok := sql.IsPostgresStorage(p.Config)
+		storagePlugin, ok := sql.IsSQLStore(p.Config)
 		if !ok {
 			store := storage.NewPluginAdapter(storageplugin.NewStore(p.Config))
 			mgr := migrations.NewManager(p.Config, store)
