@@ -31,28 +31,6 @@ func NewInstallationStoreSQL(db *gorm.DB) *InstallationStoreSQL {
 	}
 }
 
-// EnsureInstallationIndicesSQL creates indices on the installations table.
-// TODO move to gorm migration step
-func EnsureInstallationIndicesSQL(ctx context.Context, db *gorm.DB) error {
-	ctx, span := tracing.StartSpan(ctx)
-	defer span.EndSpan()
-
-	span.Debug("Initializing installation table indices")
-
-	// Create indices similar to MongoDB
-	err := db.WithContext(ctx).Exec(`
-		CREATE UNIQUE INDEX IF NOT EXISTS idx_installations_namespace_name ON installations (namespace, name);
-		CREATE INDEX IF NOT EXISTS idx_runs_namespace_installation ON runs (namespace, installation);
-		CREATE INDEX IF NOT EXISTS idx_results_namespace_installation ON results (namespace, installation);
-		CREATE INDEX IF NOT EXISTS idx_results_run_id ON results (run_id);
-		CREATE INDEX IF NOT EXISTS idx_outputs_namespace_installation_result_id ON outputs (namespace, installation, result_id DESC);
-		CREATE UNIQUE INDEX IF NOT EXISTS idx_outputs_result_id_name ON outputs (result_id, name);
-		CREATE INDEX IF NOT EXISTS idx_outputs_namespace_installation_name_result_id ON outputs (namespace, installation, name, result_id DESC);
-	`).Error
-
-	return span.Error(err)
-}
-
 func (s *InstallationStoreSQL) ListInstallations(ctx context.Context, listOptions ListOptions) ([]Installation, error) {
 	_, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
