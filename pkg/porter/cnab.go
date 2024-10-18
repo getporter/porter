@@ -43,6 +43,9 @@ type BundleDefinitionOptions struct {
 	// definition has changed since it was last built and automatically build before
 	// executing the requested command.
 	AutoBuildDisabled bool
+
+	// PreserveTags keep the original tag name on referenced images.
+	PreserveTags bool
 }
 
 func (o *BundleDefinitionOptions) Validate(cxt *portercontext.Context) error {
