@@ -11,6 +11,11 @@ import (
 	"strings"
 	"time"
 
+	dtprinter "github.com/carolynvs/datetime-printer"
+	"github.com/cnabio/cnab-go/bundle"
+	"github.com/cnabio/cnab-go/bundle/definition"
+	"github.com/olekukonko/tablewriter"
+
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/editor"
 	"get.porter.sh/porter/pkg/encoding"
@@ -19,11 +24,6 @@ import (
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/tracing"
-	dtprinter "github.com/carolynvs/datetime-printer"
-	"github.com/cnabio/cnab-go/bundle"
-	"github.com/cnabio/cnab-go/bundle/definition"
-	"github.com/olekukonko/tablewriter"
-	"go.mongodb.org/mongo-driver/bson"
 )
 
 // ParameterShowOptions represent options for Porter's parameter show command
@@ -361,21 +361,8 @@ func (p *Porter) loadParameterSets(ctx context.Context, bun cnab.ExtendedBundle,
 	resolvedParameters := secrets.Set{}
 
 	for _, name := range params {
-		// Try to get the params in the local namespace first, fallback to the global creds
-		query := storage.FindOptions{
-			Sort: []string{"-namespace"},
-			Filter: bson.M{
-				"name": name,
-				"$or": []bson.M{
-					{"namespace": ""},
-					{"namespace": namespace},
-				},
-			},
-		}
-		store := p.Parameters.GetDataStore()
-
-		var pset storage.ParameterSet
-		err := store.FindOne(ctx, storage.CollectionParameters, query, &pset)
+		// Try to get the params in the local namespace first, fallback to the global params
+		pset, err := p.Parameters.FindParameterSet(ctx, name, namespace)
 		if err != nil {
 			return nil, err
 		}

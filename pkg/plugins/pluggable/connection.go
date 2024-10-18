@@ -15,15 +15,16 @@ import (
 	"sync"
 	"time"
 
-	"get.porter.sh/porter/pkg/config"
-	"get.porter.sh/porter/pkg/plugins"
-	"get.porter.sh/porter/pkg/tracing"
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-multierror"
 	"github.com/hashicorp/go-plugin"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.opentelemetry.io/otel/attribute"
 	"google.golang.org/grpc"
+
+	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/plugins"
+	"get.porter.sh/porter/pkg/tracing"
 )
 
 // PluginConnection represents a connection to a plugin.

@@ -8,7 +8,8 @@ import (
 
 // ParameterSetProvider interface for managing sets of parameters.
 type ParameterSetProvider interface {
-	GetDataStore() Store
+	// FindParameterSet finds a parameter set by name in the specified namespace, or falls back to the global namespace.
+	FindParameterSet(ctx context.Context, namespace string, name string) (ParameterSet, error)
 
 	// ResolveAll parameter values in the parameter set.
 	ResolveAll(ctx context.Context, params ParameterSet) (secrets.Set, error)

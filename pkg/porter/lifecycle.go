@@ -9,6 +9,8 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/opencontainers/go-digest"
+
 	"get.porter.sh/porter/pkg/cache"
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/cnab/drivers"
@@ -18,8 +20,6 @@ import (
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/tracing"
-	"github.com/opencontainers/go-digest"
-	"go.mongodb.org/mongo-driver/bson"
 )
 
 // BundleAction is an interface that defines a method for supplying
@@ -456,18 +456,7 @@ func (p *Porter) createRun(ctx context.Context, bundleRef cnab.BundleReference, 
 	for _, csName := range currentRun.CredentialSets {
 		var cs storage.CredentialSet
 		// Try to get the creds in the local namespace first, fallback to the global creds
-		query := storage.FindOptions{
-			Sort: []string{"-namespace"},
-			Filter: bson.M{
-				"name": csName,
-				"$or": []bson.M{
-					{"namespace": ""},
-					{"namespace": currentRun.Namespace},
-				},
-			},
-		}
-		store := p.Credentials.GetDataStore()
-		err := store.FindOne(ctx, storage.CollectionCredentials, query, &cs)
+		cs, err := p.Credentials.FindCredentialSet(ctx, currentRun.Namespace, csName)
 		if err != nil {
 			return storage.Run{}, span.Errorf("could not find credential set named %s in the %s namespace or global namespace: %w", csName, inst.Namespace, err)
 		}

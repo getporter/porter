@@ -6,12 +6,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cnabio/cnab-go/bundle"
+	"go.opentelemetry.io/otel/attribute"
+
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/schema"
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/tracing"
-	"github.com/cnabio/cnab-go/bundle"
-	"go.opentelemetry.io/otel/attribute"
 )
 
 const (
@@ -24,7 +25,7 @@ var _ Document = ParameterSet{}
 // sources/strategies for value resolution
 type ParameterSet struct {
 	ParameterSetSpec `yaml:",inline"`
-	Status           ParameterSetStatus `json:"status" yaml:"status" toml:"status"`
+	Status           ParameterSetStatus `json:"status" yaml:"status" toml:"status" gorm:"embedded;embeddedPrefix:status_"`
 }
 
 // ParameterSetSpec represents the set of user-modifiable fields on a ParameterSet.
@@ -42,10 +43,10 @@ type ParameterSetSpec struct {
 	Name string `json:"name" yaml:"name" toml:"name"`
 
 	// Labels applied to the parameter set.
-	Labels map[string]string `json:"labels,omitempty" yaml:"labels,omitempty" toml:"labels,omitempty"`
+	Labels Labels `json:"labels,omitempty" yaml:"labels,omitempty" toml:"labels,omitempty" gorm:"type:jsonb"`
 
 	// Parameters is a list of parameter specs.
-	Parameters secrets.StrategyList `json:"parameters" yaml:"parameters" toml:"parameters"`
+	Parameters secrets.StrategyList `json:"parameters" yaml:"parameters" toml:"parameters" gorm:"type:jsonb"`
 }
 
 // ParameterSetStatus contains additional status metadata that has been set by Porter.

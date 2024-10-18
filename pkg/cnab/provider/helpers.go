@@ -4,14 +4,14 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/test"
-	"github.com/hashicorp/go-multierror"
-	"github.com/stretchr/testify/require"
 )
 
 const debugDriver = "debug"
@@ -31,6 +31,11 @@ func NewTestRuntime(t *testing.T) *TestRuntime {
 	tc := config.NewTestConfig(t)
 	testStorage := storage.NewTestStore(tc)
 	testSecrets := secrets.NewTestSecretsProvider()
+	t.Cleanup(func() {
+		_ = testStorage.Close()
+		_ = testSecrets.Close()
+	})
+
 	testInstallations := storage.NewTestInstallationProviderFor(tc.TestContext.T, testStorage)
 	testCredentials := storage.NewTestCredentialProviderFor(tc.TestContext.T, testStorage, testSecrets)
 	testParameters := storage.NewTestParameterProviderFor(tc.TestContext.T, testStorage, testSecrets)
@@ -47,16 +52,6 @@ func NewTestRuntimeFor(tc *config.TestConfig, testInstallations *storage.TestIns
 		TestParameters:    testParameters,
 		TestConfig:        tc,
 	}
-}
-
-func (t *TestRuntime) Close() error {
-	var bigErr *multierror.Error
-
-	bigErr = multierror.Append(bigErr, t.TestInstallations.Close())
-	bigErr = multierror.Append(bigErr, t.TestCredentials.Close())
-	bigErr = multierror.Append(bigErr, t.TestParameters.Close())
-
-	return bigErr.ErrorOrNil()
 }
 
 func (t *TestRuntime) LoadBundle(bundleFile string) (cnab.ExtendedBundle, error) {

@@ -8,14 +8,15 @@ import (
 	"strings"
 	"time"
 
-	"get.porter.sh/porter/pkg/cnab"
-	"get.porter.sh/porter/pkg/schema"
-	"get.porter.sh/porter/pkg/secrets"
-	"get.porter.sh/porter/pkg/tracing"
 	"github.com/Masterminds/semver/v3"
 	"github.com/opencontainers/go-digest"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
+
+	"get.porter.sh/porter/pkg/cnab"
+	"get.porter.sh/porter/pkg/schema"
+	"get.porter.sh/porter/pkg/secrets"
+	"get.porter.sh/porter/pkg/tracing"
 )
 
 var _ Document = Installation{}
@@ -27,7 +28,7 @@ type Installation struct {
 	InstallationSpec
 
 	// Status of the installation.
-	Status InstallationStatus `json:"status,omitempty"`
+	Status InstallationStatus `json:"status,omitempty" gorm:"embedded;embeddedPrefix:status_"`
 }
 
 // InstallationSpec contains installation fields that represent the desired state of the installation.
@@ -48,24 +49,34 @@ type InstallationSpec struct {
 	Uninstalled bool `json:"uninstalled,omitempty"`
 
 	// Bundle specifies the bundle reference to use with the installation.
-	Bundle OCIReferenceParts `json:"bundle"`
+	Bundle OCIReferenceParts `json:"bundle" gorm:"embedded;embeddedPrefix:bundle_"`
 
 	// Custom extension data applicable to a given runtime.
 	// TODO(carolynvs): remove and populate in ToCNAB when we firm up the spec
-	Custom interface{} `json:"custom,omitempty"`
+	Custom interface{} `json:"custom,omitempty" gorm:"type:jsonb"`
 
 	// Labels applied to the installation.
-	Labels map[string]string `json:"labels,omitempty"`
+	Labels Labels `json:"labels,omitempty" gorm:"type:jsonb"`
 
 	// CredentialSets that should be included when the bundle is reconciled.
-	CredentialSets []string `json:"credentialSets,omitempty"`
+	CredentialSets []string `json:"credentialSets,omitempty" gorm:"type:jsonb"`
 
 	// ParameterSets that should be included when the bundle is reconciled.
-	ParameterSets []string `json:"parameterSets,omitempty"`
+	ParameterSets []string `json:"parameterSets,omitempty" gorm:"type:jsonb"`
 
 	// Parameters specified by the user through overrides.
 	// Does not include defaults, or values resolved from parameter sources.
-	Parameters ParameterSet `json:"parameters,omitempty"`
+	Parameters ParameterSet `json:"parameters,omitempty" gorm:"embedded;embeddedPrefix:parameters_"`
+}
+
+type Labels map[string]string
+
+func (l *Labels) Scan(value interface{}) error {
+	b, ok := value.([]byte)
+	if !ok {
+		return errors.New("could not scan labels")
+	}
+	return json.Unmarshal(b, l)
 }
 
 func (i InstallationSpec) String() string {

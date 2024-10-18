@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/cnabio/cnab-go/secrets/host"
+	"github.com/hashicorp/go-multierror"
+	"go.mongodb.org/mongo-driver/bson"
+
 	"get.porter.sh/porter/pkg/secrets"
 	hostSecrets "get.porter.sh/porter/pkg/secrets/plugins/host"
 	"get.porter.sh/porter/pkg/tracing"
-	"github.com/cnabio/cnab-go/secrets/host"
-	"github.com/hashicorp/go-multierror"
 )
 
 var _ ParameterSetProvider = &ParameterStore{}
@@ -55,32 +57,47 @@ func (s ParameterStore) GetDataStore() Store {
 }
 
 func (s ParameterStore) ResolveAll(ctx context.Context, params ParameterSet) (secrets.Set, error) {
+	return resolveAll(ctx, params.Parameters, s.HostSecrets, s.Secrets, params.Name, "parameter")
+}
+
+func resolveAll(
+	ctx context.Context,
+	list secrets.StrategyList,
+	hostSecrets hostSecrets.Store,
+	secretsStore secrets.Store,
+	name string,
+	kind string,
+) (secrets.Set, error) {
 	resolvedParams := make(secrets.Set)
 	var resolveErrors error
 
-	for _, param := range params.Parameters {
+	for _, srcMap := range list {
 		var value string
 		var err error
-		if isHandledByHostPlugin(param.Source.Strategy) {
-			value, err = s.HostSecrets.Resolve(ctx, param.Source.Strategy, param.Source.Hint)
+		if isHandledByHostPlugin(srcMap.Source.Strategy) {
+			value, err = hostSecrets.Resolve(ctx, srcMap.Source.Strategy, srcMap.Source.Hint)
 		} else {
-			value, err = s.Secrets.Resolve(ctx, param.Source.Strategy, param.Source.Hint)
+			value, err = secretsStore.Resolve(ctx, srcMap.Source.Strategy, srcMap.Source.Hint)
 		}
 		if err != nil {
-			resolveErrors = multierror.Append(resolveErrors, fmt.Errorf("unable to resolve parameter %s.%s from %s %s: %w", params.Name, param.Name, param.Source.Strategy, param.Source.Hint, err))
+			resolveErrors = multierror.Append(resolveErrors, fmt.Errorf("unable to resolve %s %s.%s from %s %s: %w", kind, name, srcMap.Name, srcMap.Source.Strategy, srcMap.Source.Hint, err))
 		}
 
-		resolvedParams[param.Name] = value
+		resolvedParams[srcMap.Name] = value
 	}
 
 	return resolvedParams, resolveErrors
 }
 
 func (s ParameterStore) Validate(ctx context.Context, params ParameterSet) error {
+	return validate(params.Parameters)
+}
+
+func validate(list secrets.StrategyList) error {
 	validSources := []string{secrets.SourceSecret, host.SourceValue, host.SourceEnv, host.SourcePath, host.SourceCommand}
 	var errors error
 
-	for _, cs := range params.Parameters {
+	for _, cs := range list {
 		valid := false
 		for _, validSource := range validSources {
 			if cs.Source.Strategy == validSource {
@@ -123,6 +140,21 @@ func (s ParameterStore) GetParameterSet(ctx context.Context, namespace string, n
 		},
 	}
 	err := s.Documents.FindOne(ctx, CollectionParameters, opts, &out)
+	return out, err
+}
+func (s ParameterStore) FindParameterSet(ctx context.Context, namespace string, name string) (ParameterSet, error) {
+	var out ParameterSet
+	query := FindOptions{
+		Sort: []string{"-namespace"},
+		Filter: bson.M{
+			"name": name,
+			"$or": []bson.M{
+				{"namespace": ""},
+				{"namespace": namespace},
+			},
+		},
+	}
+	err := s.Documents.FindOne(ctx, CollectionCredentials, query, &out)
 	return out, err
 }
 

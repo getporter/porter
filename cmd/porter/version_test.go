@@ -5,9 +5,10 @@ import (
 	"os"
 	"testing"
 
-	"get.porter.sh/porter/pkg"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"get.porter.sh/porter/pkg"
 )
 
 func TestVersion(t *testing.T) {
@@ -15,7 +16,7 @@ func TestVersion(t *testing.T) {
 	pkg.Commit = "abc123"
 
 	t.Run("command", func(t *testing.T) {
-		p := buildRootCommand()
+		p := buildRootCommand(t)
 
 		// Capture output
 		var out bytes.Buffer
@@ -30,7 +31,7 @@ func TestVersion(t *testing.T) {
 	})
 
 	t.Run("flag", func(t *testing.T) {
-		p := buildRootCommand()
+		p := buildRootCommand(t)
 
 		// Capture output
 		var out bytes.Buffer

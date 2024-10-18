@@ -5,13 +5,14 @@ import (
 	"os"
 	"testing"
 
-	"get.porter.sh/porter/pkg/porter"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"get.porter.sh/porter/pkg/porter"
 )
 
 func TestCompletion(t *testing.T) {
-	p := buildRootCommand()
+	p := buildRootCommand(t)
 
 	// Capture the output of the command.
 	var out bytes.Buffer
