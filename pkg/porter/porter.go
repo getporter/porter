@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/url"
 	"strings"
 	"sync"
 
@@ -28,6 +27,7 @@ import (
 	"get.porter.sh/porter/pkg/storage/migrations"
 	storageplugin "get.porter.sh/porter/pkg/storage/pluginstore"
 	"get.porter.sh/porter/pkg/storage/sql"
+	"get.porter.sh/porter/pkg/storage/sql/migrate"
 	"get.porter.sh/porter/pkg/templates"
 	"get.porter.sh/porter/pkg/tracing"
 )
@@ -54,6 +54,8 @@ type Porter struct {
 	Secrets       secrets.Store
 	Signer        signing.Signer
 
+	onClose []func() error
+
 	// Deprecated: Use the individual storage providers in the Porter struct instead
 	// This is only here for backwards compatibility where MongoDB was the only storage provider.
 	Storage storage.Provider
@@ -61,33 +63,27 @@ type Porter struct {
 
 // Options for configuring a new Porter client passed to NewWith.
 type Options struct {
-	Config        *config.Config // Optional. Defaults to a config.New.
-	SecretStorage secrets.Store  // Optional. Defaults to a secrets.NewPluginAdapter(secretsplugin.NewStore).
-	Signer        signing.Signer // Optional. Defaults to a signing.NewPluginAdapter(signingplugin.NewSigner).
+	Config  *config.Config // Optional. Defaults to a config.New.
+	Secrets secrets.Store  // Optional. Defaults to a secrets.NewPluginAdapter(secretsplugin.NewStore).
+	Signer  signing.Signer // Optional. Defaults to a signing.NewPluginAdapter(signingplugin.NewSigner).
 }
 
 // NewWith creates a new Porter client with useful defaults that can be overridden with the provided options.
+//
+// Porter.Connect must be called before using the Porter client and Porter.Close must be called when done.
 func NewWith(opt Options) (*Porter, error) {
 	if opt.Config == nil {
 		opt.Config = config.New()
 	}
-	if opt.SecretStorage == nil {
-		opt.SecretStorage = secrets.NewPluginAdapter(secretsplugin.NewStore(opt.Config))
+	if opt.Secrets == nil {
+		opt.Secrets = secrets.NewPluginAdapter(secretsplugin.NewStore(opt.Config))
 	}
 	if opt.Signer == nil {
 		opt.Signer = signing.NewPluginAdapter(signingplugin.NewSigner(opt.Config))
 	}
 
-	if p, ok := sql.IsPostgresStorage(opt.Config); ok {
-		po, err := newWithSQL(opt.Config, p, opt.SecretStorage, opt.Signer)
-		if err != nil {
-			return nil, err
-		}
-		return po, nil
-	}
-
-	storage := storage.NewPluginAdapter(storageplugin.NewStore(opt.Config))
-	return NewFor(opt.Config, storage, opt.SecretStorage, opt.Signer), nil
+	// storage initialization is deferred until Connect is called where we certainly have the config loaded
+	return newWith(opt.Config, nil, nil, nil, opt.Secrets, opt.Signer, nil, nil), nil
 }
 
 // New porter client, initialized with useful defaults.
@@ -103,6 +99,9 @@ func New() *Porter {
 	return NewFor(c, storage, secretStorage, signer)
 }
 
+// NewFor creates a new Porter client with the provided configuration and storage backend.
+//
+// Deprecated: Use NewWith instead. NewFor does not support SQL storage backends.
 func NewFor(
 	c *config.Config,
 	store storage.Store,
@@ -120,36 +119,6 @@ func NewFor(
 	return newWith(c, installationStorage, credStorage, paramStorage, secretStorage, signer, sanitizerService, storageManager)
 }
 
-func newWithSQL(
-	c *config.Config,
-	p config.StoragePlugin,
-	secretStorage secrets.Store,
-	signer signing.Signer,
-) (*Porter, error) {
-	pc, err := sql.UnmarshalPluginConfig(p.GetConfig())
-	if err != nil {
-		return nil, fmt.Errorf("could not unmarshal plugin config: %s", err)
-	}
-	if pc.URL == "" {
-		return nil, errors.New("no URL provided in plugin config")
-	}
-	_, err = url.Parse(pc.URL)
-	if err != nil {
-		return nil, fmt.Errorf("invalid URL provided in plugin config: %s", err)
-	}
-	db, err := gorm.Open(postgres.Open(pc.URL))
-	if err != nil {
-		return nil, fmt.Errorf("could not open database: %s", err)
-	}
-
-	installationStorage := storage.NewInstallationStoreSQL(db)
-	credStorage := storage.NewCredentialStoreSQL(db, secretStorage)
-	paramStorage := storage.NewParameterStoreSQL(db, secretStorage)
-	sanitizerService := storage.NewSanitizer(paramStorage, secretStorage)
-
-	return newWith(c, installationStorage, credStorage, paramStorage, secretStorage, signer, sanitizerService, nil), nil
-}
-
 func newWith(
 	c *config.Config,
 	installationStorage storage.InstallationProvider,
@@ -160,6 +129,10 @@ func newWith(
 	sanitizerService *storage.Sanitizer,
 	storageManager storage.Provider,
 ) *Porter {
+	var cnab cnabprovider.CNABProvider
+	if installationStorage != nil && credStorage != nil && paramStorage != nil && secretStorage != nil && sanitizerService != nil {
+		cnab = cnabprovider.NewRuntime(c, installationStorage, credStorage, paramStorage, secretStorage, sanitizerService)
+	}
 
 	return &Porter{
 		Config:        c,
@@ -173,7 +146,7 @@ func newWith(
 		Templates:     templates.NewTemplates(c),
 		Mixins:        mixin.NewPackageManager(c),
 		Plugins:       plugins.NewPackageManager(c),
-		CNAB:          cnabprovider.NewRuntime(c, installationStorage, credStorage, paramStorage, secretStorage, sanitizerService),
+		CNAB:          cnab,
 		Sanitizer:     sanitizerService,
 		Signer:        signer,
 	}
@@ -196,8 +169,66 @@ func (p *Porter) Connect(ctx context.Context) (context.Context, error) {
 		}
 	})
 
+	init := func(ctx context.Context) error {
+		if p.Installations != nil && p.Credentials != nil && p.Parameters != nil && p.Sanitizer != nil {
+			return nil // already initialized
+		}
+
+		storagePlugin, ok := sql.IsPostgresStorage(p.Config)
+		if !ok {
+			store := storage.NewPluginAdapter(storageplugin.NewStore(p.Config))
+			mgr := migrations.NewManager(p.Config, store)
+
+			p.Storage = mgr
+			p.Installations = storage.NewInstallationStore(p.Storage)
+			p.Credentials = storage.NewCredentialStore(p.Storage, p.Secrets)
+			p.Parameters = storage.NewParameterStore(p.Storage, p.Secrets)
+			p.Sanitizer = storage.NewSanitizer(p.Parameters, p.Secrets)
+
+			mgr.Initialize(p.Sanitizer) // we have a bit of a dependency problem here that it would be great to figure out eventually
+			return nil
+		}
+
+		// Initialize the SQL storage backend
+		pc, err := sql.UnmarshalPluginConfig(storagePlugin.GetConfig())
+		if err != nil {
+			return fmt.Errorf("could not unmarshal plugin config: %s", err)
+		}
+		if pc.URL == "" {
+			return errors.New("no URL provided in plugin config")
+		}
+		db, err := gorm.Open(postgres.Open(pc.URL))
+		if err != nil {
+			return fmt.Errorf("could not open database: %s", err)
+		}
+		closeFn := func() error {
+			if sqlDB, err := db.DB(); err == nil {
+				return sqlDB.Close()
+			}
+			return nil
+		}
+		if err = migrate.MigrateDB(ctx, db); err != nil {
+			_ = closeFn()
+			return err
+		}
+
+		p.onClose = append(p.onClose, closeFn)
+
+		if p.Installations == nil {
+			p.Installations = storage.NewInstallationStoreSQL(db)
+		}
+		if p.Credentials == nil {
+			p.Credentials = storage.NewCredentialStoreSQL(db, p.Secrets)
+		}
+		if p.Parameters == nil {
+			p.Parameters = storage.NewParameterStoreSQL(db, p.Secrets)
+		}
+
+		return nil
+	}
+
 	// Load the config file and replace any referenced secrets
-	return p.Config.Load(ctx, func(innerCtx context.Context, secret string) (string, error) {
+	ctx, err := p.Config.Load(ctx, func(innerCtx context.Context, secret string) (string, error) {
 		value, err := p.Secrets.Resolve(innerCtx, "secret", secret)
 		if err != nil {
 			if strings.Contains(err.Error(), "invalid value source: secret") {
@@ -207,6 +238,22 @@ func (p *Porter) Connect(ctx context.Context) (context.Context, error) {
 		}
 		return value, nil
 	})
+	if err != nil {
+		return ctx, err
+	}
+
+	if err = init(ctx); err != nil {
+		return ctx, err
+	}
+
+	if p.Sanitizer == nil {
+		p.Sanitizer = storage.NewSanitizer(p.Parameters, p.Secrets)
+	}
+	if p.CNAB == nil {
+		p.CNAB = cnabprovider.NewRuntime(p.Config, p.Installations, p.Credentials, p.Parameters, p.Secrets, p.Sanitizer)
+	}
+
+	return ctx, nil
 }
 
 // Close releases resources used by Porter before terminating the application.
@@ -222,6 +269,11 @@ func (p *Porter) Close() error {
 	if p.Storage != nil {
 		err = p.Storage.Close()
 		if err != nil {
+			bigErr = multierror.Append(bigErr, err)
+		}
+	}
+	for _, do := range p.onClose {
+		if err = do(); err != nil {
 			bigErr = multierror.Append(bigErr, err)
 		}
 	}
