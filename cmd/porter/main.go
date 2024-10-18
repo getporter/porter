@@ -36,11 +36,7 @@ const (
 
 func main() {
 	run := func() int {
-		p, err := porter.NewWith(porter.Options{})
-		if err != nil {
-			fmt.Fprintln(os.Stderr, err.Error())
-			os.Exit(cli.ExitCodeErr)
-		}
+		p := porter.New()
 
 		ctx, cancel := handleInterrupt(context.Background(), p)
 		defer cancel()

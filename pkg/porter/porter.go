@@ -63,45 +63,30 @@ type Porter struct {
 
 // Options for configuring a new Porter client passed to NewWith.
 type Options struct {
-	Config  *config.Config // Optional. Defaults to a config.New.
-	Secrets secrets.Store  // Optional. Defaults to a secrets.NewPluginAdapter(secretsplugin.NewStore).
-	Signer  signing.Signer // Optional. Defaults to a signing.NewPluginAdapter(signingplugin.NewSigner).
+	Config        *config.Config                // Optional. Defaults to a config.New.
+	Secrets       secrets.Store                 // Optional. Defaults to a secrets.NewPluginAdapter(secretsplugin.NewStore).
+	Signer        signing.Signer                // Optional. Defaults to a signing.NewPluginAdapter(signingplugin.NewSigner).
+	Installations storage.InstallationProvider  // Optional. Defaults to a storage.NewInstallationStore for MongoDB or storage.NewInstallationStoreSQL for SQL.
+	Credentials   storage.CredentialSetProvider // Optional. Defaults to a storage.NewCredentialStore for MongoDB or storage.NewCredentialStoreSQL for SQL.
+	Parameters    storage.ParameterSetProvider  // Optional. Defaults to a storage.NewParameterStore for MongoDB or storage.NewParameterStoreSQL for SQL.
+	Sanitizer     *storage.Sanitizer            // Optional. Defaults to a storage.NewSanitizer for MongoDB or storage.NewSanitizer for SQL.
 }
 
 // NewWith creates a new Porter client with useful defaults that can be overridden with the provided options.
-//
-// Porter.Connect must be called before using the Porter client and Porter.Close must be called when done.
-func NewWith(opt Options) (*Porter, error) {
-	if opt.Config == nil {
-		opt.Config = config.New()
-	}
-	if opt.Secrets == nil {
-		opt.Secrets = secrets.NewPluginAdapter(secretsplugin.NewStore(opt.Config))
-	}
-	if opt.Signer == nil {
-		opt.Signer = signing.NewPluginAdapter(signingplugin.NewSigner(opt.Config))
-	}
-
-	// storage initialization is deferred until Connect is called where we certainly have the config loaded
-	return newWith(opt.Config, nil, nil, nil, opt.Secrets, opt.Signer, nil, nil), nil
+func NewWith(opts Options) *Porter {
+	return newWith(opts.Config, opts.Installations, opts.Credentials, opts.Parameters, opts.Secrets, opts.Signer, opts.Sanitizer, nil)
 }
 
 // New porter client, initialized with useful defaults.
-//
-// Deprecated: Use NewWith instead. New does not support SQL storage backends.
+// Use NewWith to override the defaults.
 func New() *Porter {
-	c := config.New()
-
-	secretStorage := secrets.NewPluginAdapter(secretsplugin.NewStore(c))
-	signer := signing.NewPluginAdapter(signingplugin.NewSigner(c))
-
-	storage := storage.NewPluginAdapter(storageplugin.NewStore(c))
-	return NewFor(c, storage, secretStorage, signer)
+	// differ full initialization to Connect
+	return newWith(nil, nil, nil, nil, nil, nil, nil, nil)
 }
 
 // NewFor creates a new Porter client with the provided configuration and storage backend.
 //
-// Deprecated: Use NewWith instead. NewFor does not support SQL storage backends.
+// Deprecated: Use NewWith instead. NewFor does not support newer sql storage backends.
 func NewFor(
 	c *config.Config,
 	store storage.Store,
@@ -129,6 +114,16 @@ func newWith(
 	sanitizerService *storage.Sanitizer,
 	storageManager storage.Provider,
 ) *Porter {
+	if c == nil {
+		c = config.New()
+	}
+	if secretStorage == nil {
+		secretStorage = secrets.NewPluginAdapter(secretsplugin.NewStore(c))
+	}
+	if signer == nil {
+		signer = signing.NewPluginAdapter(signingplugin.NewSigner(c))
+	}
+
 	var cnab cnabprovider.CNABProvider
 	if installationStorage != nil && credStorage != nil && paramStorage != nil && secretStorage != nil && sanitizerService != nil {
 		cnab = cnabprovider.NewRuntime(c, installationStorage, credStorage, paramStorage, secretStorage, sanitizerService)

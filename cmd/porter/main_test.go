@@ -16,9 +16,8 @@ import (
 	"get.porter.sh/porter/pkg/porter"
 )
 
-func buildRootCommand(t *testing.T) *cobra.Command {
-	p, err := porter.NewWith(porter.Options{})
-	require.NoError(t, err)
+func buildRootCommand(_ *testing.T) *cobra.Command {
+	p := porter.New()
 	return buildRootCommandFrom(p)
 }
 
