@@ -843,6 +843,14 @@ func (p *Porter) applyActionOptionsToInstallation(ctx context.Context, ba Bundle
 	// Default the porter-debug param to --debug
 	if o.DebugMode {
 		parsedOverrides["porter-debug"] = "true"
+	} else {
+		// Remove porter-debug parameter from the installation parameters
+		for i := len(inst.Parameters.Parameters) - 1; i >= 0; i-- {
+			if inst.Parameters.Parameters[i].Name == "porter-debug" {
+				inst.Parameters.Parameters = append(inst.Parameters.Parameters[:i], inst.Parameters.Parameters[i+1:]...)
+				break
+			}
+		}
 	}
 
 	// Apply overrides on to of any pre-existing parameters that were specified previously

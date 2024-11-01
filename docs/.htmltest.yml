@@ -22,5 +22,6 @@ IgnoreURLs:
   - ^/community/src/
   - ^http://localhost:1313/docs$
   - ^https://marketplace.visualstudio.com/
+  - ^https://porter.sh/find-issue/$
 IgnoreAltMissing: true
 IgnoreInternalEmptyHash: true
