@@ -30,3 +30,39 @@ func TestUpgrade_failedInstallation(t *testing.T) {
 	err = p.UpgradeBundle(ctx, upgradeOpts)
 	require.Error(t, err, "Upgrade should fail, because the installation failed")
 }
+
+func TestUpgrade_DebugModeAppliesToSingleInvocation(t *testing.T) {
+	p := porter.NewTestPorter(t)
+	defer p.Close()
+	ctx := p.SetupIntegrationTest()
+
+	p.AddTestBundleDir("testdata/bundles/bundle-with-custom-action", false)
+
+	installOpts := porter.NewInstallOptions()
+	err := installOpts.Validate(ctx, []string{}, p.Porter)
+	require.NoError(t, err)
+
+	err = p.InstallBundle(ctx, installOpts)
+	require.NoError(t, err)
+
+	upgradeOpts := porter.NewUpgradeOptions()
+	upgradeOpts.DebugMode = true
+	err = upgradeOpts.Validate(ctx, []string{}, p.Porter)
+	require.NoError(t, err)
+
+	err = p.UpgradeBundle(ctx, upgradeOpts)
+	require.NoError(t, err)
+	output := p.TestConfig.TestContext.GetOutput()
+	require.Contains(t, output, "== Step Template ===")
+	p.TestConfig.TestContext.ClearOutputs()
+
+	upgradeOpts = porter.NewUpgradeOptions()
+	upgradeOpts.DebugMode = false
+	err = upgradeOpts.Validate(ctx, []string{}, p.Porter)
+	require.NoError(t, err)
+
+	err = p.UpgradeBundle(ctx, upgradeOpts)
+	require.NoError(t, err)
+	output = p.TestConfig.TestContext.GetOutput()
+	require.NotContains(t, output, "== Step Template ===")
+}
