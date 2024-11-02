@@ -4,6 +4,15 @@ on:
     branches:
       - main
       - release/*
+
+# This configuration ensures that multiple canary releases don't run at the same time:
+# - The 'group' combines the workflow name and git reference to create a unique identifier
+# - 'cancel-in-progress: false' means if a new release is triggered, it will wait in line
+#   instead of canceling any running release
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   build_pipelinesrelease_template:
     name: build_pipelinesrelease_template
