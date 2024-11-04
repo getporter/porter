@@ -5,10 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync"
 
 	"github.com/Masterminds/semver/v3"
 	"github.com/docker/distribution/reference"
 	"github.com/docker/docker/registry"
+	"github.com/google/go-containerregistry/pkg/crane"
 	"github.com/opencontainers/go-digest"
 )
 
@@ -232,4 +234,65 @@ func (r OCIReference) ParseRepositoryInfo() (*registry.RepositoryInfo, error) {
 		return nil, errors.New("OCIReference has not been initialized")
 	}
 	return registry.ParseRepositoryInfo(r.Named)
+}
+
+// FindTagMatchingDigest returns the reference with the tag that matches the digest.
+// If no tag matches the digest, the original reference is returned.
+func (r OCIReference) FindTagMatchingDigest(insecureRegistry bool) (OCIReference, error) {
+	if r.HasTag() {
+		return r, nil
+	}
+
+	craneOpts := []crane.Option{}
+	if insecureRegistry {
+		craneOpts = append(craneOpts, crane.Insecure)
+	}
+
+	targetDigest := r.Digest().String()
+	tags, err := crane.ListTags(r.Repository(), craneOpts...)
+	if err != nil {
+		return OCIReference{}, err
+	}
+
+	// Use a goroutine pool to check digests concurrently
+	const maxConcurrency = 10
+	semaphore := make(chan struct{}, maxConcurrency)
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+	var matchingTag string
+
+	for _, t := range tags {
+		wg.Add(1)
+		go func(tag string) {
+			defer wg.Done()
+			semaphore <- struct{}{}
+			defer func() { <-semaphore }()
+
+			ref := fmt.Sprintf("%s:%s", r.Repository(), tag)
+			digest, err := crane.Digest(ref, craneOpts...)
+			if err == nil && digest == targetDigest {
+				mu.Lock()
+				matchingTag = tag
+				mu.Unlock()
+			}
+		}(t)
+
+		if matchingTag != "" {
+			break
+		}
+	}
+
+	wg.Wait()
+
+	if matchingTag != "" {
+		refWithTag, err := ParseOCIReference(fmt.Sprintf("%s:%s", r.Repository(), matchingTag))
+		if err != nil {
+			return OCIReference{}, err
+		}
+		return refWithTag, nil
+	}
+
+	return OCIReference{
+		Named: reference.TrimNamed(r.Named),
+	}, nil
 }

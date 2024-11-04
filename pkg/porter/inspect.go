@@ -5,9 +5,44 @@ import (
 	"fmt"
 
 	"get.porter.sh/porter/pkg/cnab"
+	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/printer"
 	"github.com/cnabio/cnab-go/bundle"
 )
+
+type InspectOpts struct {
+	BundleReferenceOptions
+	printer.PrintOptions
+
+	// ResolveTags will resolve tags if true
+	ResolveTags bool
+}
+
+func (o *InspectOpts) Validate(args []string, pctx *portercontext.Context) error {
+	// Allow reference to be specified as a positional argument, or using --reference
+	if len(args) == 1 {
+		o.Reference = args[0]
+	} else if len(args) > 1 {
+		return fmt.Errorf("only one positional argument may be specified, the bundle reference, but multiple were received: %s", args)
+	}
+
+	err := o.BundleDefinitionOptions.Validate(pctx)
+	if err != nil {
+		return err
+	}
+
+	err = o.ParseFormat()
+	if err != nil {
+		return err
+	}
+	if o.Reference != "" {
+		o.File = ""
+		o.CNABFile = ""
+
+		return o.validateReference()
+	}
+	return nil
+}
 
 type InspectableBundle struct {
 	Name             string                     `json:"name" yaml:"name"`
@@ -28,30 +63,34 @@ type PrintableImage struct {
 	Original string `json:"originalImage" yaml:"originalImage"`
 }
 
-func (p *Porter) Inspect(ctx context.Context, o ExplainOpts) error {
+func (p *Porter) Inspect(ctx context.Context, o InspectOpts) error {
 	bundleRef, err := o.GetBundleReference(ctx, p)
 	if err != nil {
 		return err
 	}
 
-	ib, err := generateInspectableBundle(bundleRef)
+	ib, err := generateInspectableBundle(bundleRef, &o)
 	if err != nil {
 		return fmt.Errorf("unable to inspect bundle: %w", err)
 	}
 	return p.printBundleInspect(o, ib)
 }
 
-func generateInspectableBundle(bundleRef cnab.BundleReference) (*InspectableBundle, error) {
+func generateInspectableBundle(bundleRef cnab.BundleReference, opts *InspectOpts) (*InspectableBundle, error) {
 	ib := &InspectableBundle{
 		Name:        bundleRef.Definition.Name,
 		Description: bundleRef.Definition.Description,
 		Version:     bundleRef.Definition.Version,
 	}
-	ib.InvocationImages, ib.Images = handleInspectRelocate(bundleRef)
+	var err error
+	ib.InvocationImages, ib.Images, err = handleInspectRelocate(bundleRef, opts)
+	if err != nil {
+		return nil, err
+	}
 	return ib, nil
 }
 
-func handleInspectRelocate(bundleRef cnab.BundleReference) ([]PrintableInvocationImage, []PrintableImage) {
+func handleInspectRelocate(bundleRef cnab.BundleReference, opts *InspectOpts) ([]PrintableInvocationImage, []PrintableImage, error) {
 	invoImages := []PrintableInvocationImage{}
 	for _, invoImage := range bundleRef.Definition.InvocationImages {
 		pii := PrintableInvocationImage{
@@ -60,6 +99,18 @@ func handleInspectRelocate(bundleRef cnab.BundleReference) ([]PrintableInvocatio
 		if mappedInvo, ok := bundleRef.RelocationMap[invoImage.Image]; ok {
 			pii.Original = pii.Image
 			pii.Image = mappedInvo
+		}
+		if opts.ResolveTags {
+			originalRef, err := getMatchingTag(pii.Original, opts)
+			if err != nil {
+				return nil, nil, err
+			}
+			pii.Original = originalRef.String()
+			imageRef, err := getMatchingTag(pii.Image, opts)
+			if err != nil {
+				return nil, nil, err
+			}
+			pii.Image = imageRef.String()
 		}
 		invoImages = append(invoImages, pii)
 	}
@@ -73,12 +124,24 @@ func handleInspectRelocate(bundleRef cnab.BundleReference) ([]PrintableInvocatio
 			pi.Original = pi.Image.Image
 			pi.Image.Image = mappedImg
 		}
+		if opts.ResolveTags {
+			originalRef, err := getMatchingTag(pi.Original, opts)
+			if err != nil {
+				return nil, nil, err
+			}
+			pi.Original = originalRef.String()
+			imageRef, err := getMatchingTag(pi.Image.Image, opts)
+			if err != nil {
+				return nil, nil, err
+			}
+			pi.Image.Image = imageRef.String()
+		}
 		images = append(images, pi)
 	}
-	return invoImages, images
+	return invoImages, images, nil
 }
 
-func (p *Porter) printBundleInspect(o ExplainOpts, ib *InspectableBundle) error {
+func (p *Porter) printBundleInspect(o InspectOpts, ib *InspectableBundle) error {
 	switch o.Format {
 	case printer.FormatJson:
 		return printer.PrintJson(p.Out, ib)
@@ -125,9 +188,9 @@ func (p *Porter) printInvocationImageInspectTable(bun *InspectableBundle) error 
 			if !ok {
 				return nil
 			}
-			return []string{ii.Image, ii.ImageType, ii.Digest, ii.Original}
+			return []string{ii.Image, ii.Digest, ii.Original}
 		}
-	return printer.PrintTable(p.Out, bun.InvocationImages, printInvocationImageRow, "Image", "Type", "Digest", "Original Image")
+	return printer.PrintTable(p.Out, bun.InvocationImages, printInvocationImageRow, "Image", "Digest", "Original Image")
 }
 
 func (p *Porter) printImagesInspectBlock(bun *InspectableBundle) error {
@@ -155,4 +218,22 @@ func (p *Porter) printImagesInspectTable(bun *InspectableBundle) error {
 			return []string{pi.Name, pi.ImageType, pi.Image.Image, pi.Digest, pi.Original}
 		}
 	return printer.PrintTable(p.Out, bun.Images, printImageRow, "Name", "Type", "Image", "Digest", "Original Image")
+}
+
+func getMatchingTag(ref string, opts *InspectOpts) (cnab.OCIReference, error) {
+	imgRef, err := cnab.ParseOCIReference(ref)
+	if err != nil {
+		return cnab.OCIReference{}, err
+	}
+
+	if !imgRef.HasDigest() {
+		return imgRef, nil
+	}
+
+	image, err := imgRef.FindTagMatchingDigest(opts.InsecureRegistry)
+	if err != nil {
+		return cnab.OCIReference{}, err
+	}
+
+	return image, nil
 }

@@ -165,3 +165,11 @@ func TestOCIReference_WithDigest(t *testing.T) {
 		assert.Contains(t, err.Error(), "invalid digest")
 	})
 }
+
+func TestOCIReference_FindTagMatchingDigest(t *testing.T) {
+	ref := MustParseOCIReference("ghcr.io/getporter/examples/porter-hello@sha256:276b44be3f478b4c8d1f99c1925386d45a878a853f22436ece5589f32e9df384")
+
+	result, err := ref.FindTagMatchingDigest(false)
+	require.NoError(t, err)
+	assert.Equal(t, "v0.2.0", result.Tag())
+}

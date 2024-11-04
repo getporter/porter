@@ -6,7 +6,7 @@ import (
 )
 
 func buildBundleInspectCommand(p *porter.Porter) *cobra.Command {
-	opts := porter.ExplainOpts{}
+	opts := porter.InspectOpts{}
 	cmd := cobra.Command{
 		Use:   "inspect REFERENCE",
 		Short: "Inspect a bundle",
@@ -33,5 +33,6 @@ like parameters, credentials, outputs and custom actions available.
 	f.StringVarP(&opts.RawFormat, "output", "o", "plaintext",
 		"Specify an output format.  Allowed values: plaintext, json, yaml")
 	addBundlePullFlags(f, &opts.BundlePullOptions)
+	f.BoolVar(&opts.ResolveTags, "resolve-tags", false, "Resolve tags")
 	return &cmd
 }
