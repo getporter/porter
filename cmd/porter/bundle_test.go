@@ -9,10 +9,11 @@ import (
 	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/tests"
 
-	"get.porter.sh/porter/pkg/porter"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"get.porter.sh/porter/pkg/porter"
 )
 
 func TestValidateInstallCommand(t *testing.T) {
@@ -30,7 +31,7 @@ func TestValidateInstallCommand(t *testing.T) {
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
 			var outBuf bytes.Buffer
-			p := buildRootCommand()
+			p := buildRootCommand(t)
 			p.SetOut(&outBuf)
 			p.SetErr(&outBuf)
 			osargs := strings.Split(tc.args, " ")
@@ -69,7 +70,7 @@ func TestValidateUninstallCommand(t *testing.T) {
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
 			var outBuf bytes.Buffer
-			p := buildRootCommand()
+			p := buildRootCommand(t)
 			p.SetOut(&outBuf)
 			p.SetErr(&outBuf)
 			osargs := strings.Split(tc.args, " ")
@@ -105,7 +106,7 @@ func TestValidateInvokeCommand(t *testing.T) {
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			p := buildRootCommand()
+			p := buildRootCommand(t)
 			osargs := strings.Split(tc.args, " ")
 			cmd, args, err := p.Find(osargs)
 			require.NoError(t, err)
@@ -136,7 +137,7 @@ func TestValidateInstallationListCommand(t *testing.T) {
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			p := buildRootCommand()
+			p := buildRootCommand(t)
 			osargs := strings.Split(tc.args, " ")
 			cmd, args, err := p.Find(osargs)
 			require.NoError(t, err)

@@ -1,6 +1,7 @@
 package secrets
 
 import (
+	"database/sql/driver"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -37,7 +38,7 @@ type SourceMap struct {
 	// ResolvedValue holds the resolved parameter or credential value.
 	// When a parameter or credential is resolved, it is loaded into this field. In all
 	// other cases, it is empty. This field is omitted during serialization.
-	ResolvedValue string `json:"-" yaml:"-"`
+	ResolvedValue string `json:"-" yaml:"-" gorm:"-"`
 }
 
 // Source specifies how to resolve a parameter or credential from an external
@@ -127,4 +128,18 @@ func (l StrategyList) Swap(i, j int) {
 
 func (l StrategyList) Len() int {
 	return len(l)
+}
+
+// Scan implements the sql.Scanner interface for StrategyList.
+func (l *StrategyList) Scan(value interface{}) error {
+	bytes, ok := value.([]byte)
+	if !ok {
+		return fmt.Errorf("unsupported Scan, storing driver.Value type %T into type *secrets.StrategyList", value)
+	}
+	return json.Unmarshal(bytes, l)
+}
+
+// Value implements the driver.Valuer interface for StrategyList.
+func (l StrategyList) Value() (driver.Value, error) {
+	return json.Marshal(l)
 }

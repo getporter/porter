@@ -8,10 +8,11 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/hashicorp/go-multierror"
+
 	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/tracing"
-	"github.com/hashicorp/go-multierror"
 )
 
 type MigrateStorageOptions struct {
@@ -29,6 +30,9 @@ func (o MigrateStorageOptions) Validate() error {
 }
 
 func (p *Porter) MigrateStorage(ctx context.Context, opts MigrateStorageOptions) error {
+	if p.Storage == nil {
+		return nil
+	}
 	if err := opts.Validate(); err != nil {
 		return err
 	}

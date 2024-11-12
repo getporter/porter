@@ -6,8 +6,9 @@ import (
 	"fmt"
 	"time"
 
-	"get.porter.sh/porter/pkg/cnab"
 	"github.com/cnabio/cnab-go/bundle"
+
+	"get.porter.sh/porter/pkg/cnab"
 )
 
 var _ Document = Run{}
@@ -45,7 +46,7 @@ type Run struct {
 
 	// Bundle is the definition of the bundle.
 	// Bundle has custom marshal logic in MarshalJson.
-	Bundle bundle.Bundle `json:"-"`
+	Bundle bundle.Bundle `json:"-" gorm:"json"`
 
 	// BundleReference is the canonical reference to the bundle used in the action.
 	BundleReference string `json:"bundleReference"`
@@ -57,15 +58,15 @@ type Run struct {
 	// ParameterOverrides are the key/value parameter overrides (taking precedence over
 	// parameters specified in a parameter set) specified during the run.
 	// This is a status/audit field and is not used to resolve parameters for a Run.
-	ParameterOverrides ParameterSet `json:"parameterOverrides,omitempty"`
+	ParameterOverrides ParameterSet `json:"parameterOverrides,omitempty" gorm:"embedded;embeddedPrefix:parameterOverrides_"`
 
 	// CredentialSets is a list of the credential set names used during the run.
 	// This is a status/audit field and is not used to resolve credentials for a Run.
-	CredentialSets []string `json:"credentialSets,omitempty"`
+	CredentialSets []string `json:"credentialSets,omitempty" gorm:"type:jsonb"`
 
 	// ParameterSets is the list of parameter set names used during the run.
 	// This is a status/audit field and is not used to resolve parameters for a Run.
-	ParameterSets []string `json:"parameterSets,omitempty"`
+	ParameterSets []string `json:"parameterSets,omitempty" gorm:"type:jsonb"`
 
 	// Parameters is the full set of parameters that should be resolved just-in-time
 	// (JIT) before executing the bundle. This includes internal parameters,
@@ -74,11 +75,11 @@ type Run struct {
 	// Sanitizer.
 	// After the parameters are resolved, this structure holds (but does not marshal)
 	// the resolved values, in addition to the mapping strategy.
-	Parameters ParameterSet `json:"parameters,omitempty"`
+	Parameters ParameterSet `json:"parameters,omitempty" gorm:"embedded;embeddedPrefix:parameters_"`
 
 	// Custom extension data applicable to a given runtime.
 	// TODO(carolynvs): remove custom and populate it in ToCNAB
-	Custom interface{} `json:"custom"`
+	Custom interface{} `json:"custom" gorm:"type:jsonb"`
 
 	// ParametersDigest is a hash or digest of the final set of parameters, which allows us to
 	// quickly determine if the parameters have changed without requiring that they
@@ -90,7 +91,7 @@ type Run struct {
 	// just-in-time (JIT) before executing the bundle. These should be a "clean" set
 	// of parameters that have sensitive values persisted in secrets using the
 	// Sanitizer.
-	Credentials CredentialSet `json:"credentials,omitempty"`
+	Credentials CredentialSet `json:"credentials,omitempty" gorm:"embedded;embeddedPrefix:credentials_"`
 
 	// CredentialsDigest is a hash or digest of the final set of credentials, which allows us to
 	// quickly determine if the credentials have changed without requiring that they
