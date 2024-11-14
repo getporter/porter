@@ -18,6 +18,7 @@ import (
 	"github.com/docker/cli/cli/command"
 	dockerconfig "github.com/docker/cli/cli/config"
 	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/image"
 	registrytypes "github.com/docker/docker/api/types/registry"
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/google/go-containerregistry/pkg/crane"
@@ -175,12 +176,12 @@ func (r *Registry) PushImage(ctx context.Context, ref cnab.OCIReference, opts Re
 	if err != nil {
 		return "", log.Errorf("error parsing the repository potion of the image reference %s: %w", ref, err)
 	}
-	authConfig := command.ResolveAuthConfig(ctx, cli, repoInfo.Index)
+	authConfig := command.ResolveAuthConfig(cli.ConfigFile(), repoInfo.Index)
 	encodedAuth, err := registrytypes.EncodeAuthConfig(authConfig)
 	if err != nil {
 		return "", log.Errorf("error encoding authentication information for the docker client: %w", err)
 	}
-	options := types.ImagePushOptions{
+	options := image.PushOptions{
 		RegistryAuth: encodedAuth,
 	}
 
@@ -224,12 +225,13 @@ func (r *Registry) PullImage(ctx context.Context, ref cnab.OCIReference, opts Re
 	if err != nil {
 		return log.Error(err)
 	}
-	authConfig := command.ResolveAuthConfig(ctx, cli, repoInfo.Index)
+	cli.ConfigFile()
+	authConfig := command.ResolveAuthConfig(cli.ConfigFile(), repoInfo.Index)
 	encodedAuth, err := registrytypes.EncodeAuthConfig(authConfig)
 	if err != nil {
 		return log.Error(fmt.Errorf("failed to serialize docker auth config: %w", err))
 	}
-	options := types.ImagePullOptions{
+	options := image.PullOptions{
 		RegistryAuth: encodedAuth,
 	}
 
