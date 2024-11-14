@@ -20,11 +20,7 @@ replace (
 
 require (
 	get.porter.sh/magefiles v0.6.8
-<<<<<<< HEAD
-	github.com/Masterminds/semver/v3 v3.2.1
-=======
 	github.com/Masterminds/semver/v3 v3.3.0
->>>>>>> 369f9aaa (update more deps)
 	github.com/PaesslerAG/jsonpath v0.1.1
 	github.com/carolynvs/aferox v0.3.0
 	github.com/carolynvs/datetime-printer v0.2.0
@@ -60,11 +56,7 @@ require (
 	github.com/moby/term v0.5.0
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/opencontainers/go-digest v1.0.0
-<<<<<<< HEAD
-	github.com/osteele/liquid v1.4.0
-=======
 	github.com/osteele/liquid v1.6.0
->>>>>>> 369f9aaa (update more deps)
 	github.com/pelletier/go-toml v1.9.5
 	github.com/prometheus/client_golang v1.20.5
 	github.com/spf13/afero v1.11.0
