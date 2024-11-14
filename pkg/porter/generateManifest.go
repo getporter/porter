@@ -15,7 +15,7 @@ import (
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/tracing"
 	"get.porter.sh/porter/pkg/yaml"
-	"github.com/docker/distribution/reference"
+	"github.com/distribution/reference"
 	"github.com/mikefarah/yq/v3/pkg/yqlib"
 	"github.com/opencontainers/go-digest"
 	"go.opentelemetry.io/otel/attribute"

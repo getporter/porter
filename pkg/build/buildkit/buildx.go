@@ -27,6 +27,7 @@ import (
 	dockerconfig "github.com/docker/cli/cli/config"
 	"github.com/moby/buildkit/session"
 	"github.com/moby/buildkit/session/auth/authprovider"
+	"github.com/moby/buildkit/util/progress/progressui"
 	"go.opentelemetry.io/otel/attribute"
 )
 
@@ -83,12 +84,12 @@ func (b *Builder) BuildBundleImage(ctx context.Context, manifest *manifest.Manif
 	if err != nil {
 		return span.Error(err)
 	}
-	nodes, err := bldr.LoadNodes(ctx, false)
+	nodes, err := bldr.LoadNodes(ctx)
 	if err != nil {
 		return span.Error(err)
 	}
 
-	currentSession := []session.Attachable{authprovider.NewDockerAuthProvider(dockerconfig.LoadDefaultConfigFile(b.Err))}
+	currentSession := []session.Attachable{authprovider.NewDockerAuthProvider(dockerconfig.LoadDefaultConfigFile(b.Err), make(map[string]*authprovider.AuthTLSConfig))}
 
 	ssh, err := buildflags.ParseSSHSpecs(opts.SSH)
 	if err != nil {
@@ -125,7 +126,7 @@ func (b *Builder) BuildBundleImage(ctx context.Context, manifest *manifest.Manif
 			Inputs: buildx.Inputs{
 				ContextPath:    b.Getwd(),
 				DockerfilePath: b.getDockerfilePath(),
-				InStream:       b.In,
+				InStream:       buildx.NewSyncMultiReader(b.In),
 			},
 			BuildArgs: args,
 			Session:   currentSession,
@@ -133,14 +134,13 @@ func (b *Builder) BuildBundleImage(ctx context.Context, manifest *manifest.Manif
 		},
 	}
 
-	mode := progress.PrinterModeAuto // Auto writes to stderr regardless of what you pass in
-	out := unstructuredLogger{span}
-	printer, err := progress.NewPrinter(ctx, out, os.Stderr, mode)
+	mode := progressui.AutoMode // Auto writes to stderr regardless of what you pass in
+	printer, err := progress.NewPrinter(ctx, os.Stderr, mode)
 	if err != nil {
 		return span.Error(err)
 	}
 
-	_, buildErr := buildx.Build(ctx, nodes, buildxOpts, dockerutil.NewClient(cli), confutil.ConfigDir(cli), printer)
+	_, buildErr := buildx.Build(ctx, nodes, buildxOpts, dockerutil.NewClient(cli), confutil.NewConfig(cli), printer)
 	printErr := printer.Wait()
 
 	if buildErr == nil && printErr != nil {
