@@ -155,7 +155,7 @@ func EnsureMongoIsRunning(ctx context.Context, c *portercontext.Context, contain
 			err = exec.Command("docker", "volume", "create", dataVol).Run()
 			if err != nil {
 				if exitErr, ok := err.(*exec.ExitError); ok {
-					err = fmt.Errorf(string(exitErr.Stderr))
+					err = fmt.Errorf("%s", string(exitErr.Stderr))
 				}
 				return nil, span.Error(fmt.Errorf("error creating %s docker volume: %w", dataVol, err))
 			}
@@ -170,7 +170,7 @@ func EnsureMongoIsRunning(ctx context.Context, c *portercontext.Context, contain
 		err := exec.Command("docker", "pull", mongoImg).Run()
 		if err != nil {
 			if exitErr, ok := err.(*exec.ExitError); ok {
-				err = fmt.Errorf(string(exitErr.Stderr))
+				err = fmt.Errorf("%s", string(exitErr.Stderr))
 			}
 			return span.Error(fmt.Errorf("error pulling %s: %w", mongoImg, err))
 		}
@@ -186,7 +186,7 @@ func EnsureMongoIsRunning(ctx context.Context, c *portercontext.Context, contain
 		err = mongoC.Start()
 		if err != nil {
 			if exitErr, ok := err.(*exec.ExitError); ok {
-				err = fmt.Errorf(string(exitErr.Stderr))
+				err = fmt.Errorf("%s", string(exitErr.Stderr))
 			}
 			return span.Error(fmt.Errorf("error running a mongo container for the mongodb-docker plugin: %w", err))
 		}
@@ -200,7 +200,7 @@ func EnsureMongoIsRunning(ctx context.Context, c *portercontext.Context, contain
 			}
 		} else {
 			if exitErr, ok := err.(*exec.ExitError); ok {
-				err = fmt.Errorf(string(exitErr.Stderr))
+				err = fmt.Errorf("%s", string(exitErr.Stderr))
 			}
 			return nil, span.Error(fmt.Errorf("error inspecting container %s: %w", container, err))
 		}
@@ -208,7 +208,7 @@ func EnsureMongoIsRunning(ctx context.Context, c *portercontext.Context, contain
 		err = exec.Command("docker", "rm", "-f", container).Run()
 		if err != nil {
 			if exitErr, ok := err.(*exec.ExitError); ok {
-				err = fmt.Errorf(string(exitErr.Stderr))
+				err = fmt.Errorf("%s", string(exitErr.Stderr))
 			}
 			return nil, span.Error(fmt.Errorf("error cleaning up stopped container %s: %w", container, err))
 		}
