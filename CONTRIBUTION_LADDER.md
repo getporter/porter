@@ -137,7 +137,7 @@ for at least 2 (two) releases, so they can get comfortable with the release proc
 
 ## Inactivity
 It is important for maintainers to stay active to set an example and show commitment to the project.
-Inactivity is harmful to the project as it may lead to unexpected delays, contributor attrition, and a lost of trust in the project.
+Inactivity is harmful to the project as it may lead to unexpected delays, contributor attrition, and a loss of trust in the project.
 
 * Inactivity is measured by:
     * Periods of no contributions for longer than 6 months, where contributions must include maintainer-level tasks:
