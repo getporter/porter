@@ -339,7 +339,7 @@ func (c *PluginConnection) collectPluginLogs(ctx context.Context) {
 
 			switch pluginLog["@level"] {
 			case "error":
-				_ = span.Error(fmt.Errorf(msg))
+				_ = span.Error(fmt.Errorf("%s", msg))
 			case "warn":
 				span.Warn(msg)
 			case "info":

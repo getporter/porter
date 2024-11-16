@@ -10,7 +10,7 @@ on:
       - main
 
 env:
-    GOVERSION: 1.21.3
+    GOVERSION: 1.23.3
 
 jobs:
   archive_integration_test:
