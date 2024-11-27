@@ -251,7 +251,7 @@ func (p *Porter) resolveBundleReference(ctx context.Context, opts *BundleReferen
 		pullOpts := *opts // make a copy just to do the pull
 		pullOpts.Reference = ref.String()
 
-		err := ensureVPrefix(&pullOpts, p.Out)
+		err := ensureVPrefix(&pullOpts, p.Err)
 		if err != nil {
 			return err
 		}
