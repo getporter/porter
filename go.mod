@@ -29,7 +29,7 @@ require (
 	github.com/cnabio/cnab-go v0.25.2
 	github.com/cnabio/cnab-to-oci v0.4.1
 	github.com/cnabio/image-relocation v0.9.0
-	github.com/containerd/containerd v1.7.23
+	github.com/containerd/containerd v1.7.24
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
 	github.com/distribution/reference v0.6.0
 	github.com/docker/buildx v0.18.0
