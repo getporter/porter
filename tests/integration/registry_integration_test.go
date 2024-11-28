@@ -77,4 +77,10 @@ func TestRegistry(t *testing.T) {
 		_, err = r.GetBundleMetadata(ctx, ref, regOpts)
 		require.ErrorIs(t, cnabtooci.ErrNotFound{}, err)
 	})
+
+	t.Run("pull docker image as bundle", func(t *testing.T) {
+		ref := cnab.MustParseOCIReference("getporter/porter-hello-installer:0.1.0")
+		_, err := r.PullBundle(ctx, ref, cnabtooci.RegistryOptions{})
+		require.ErrorContains(t, err, "the provided reference must be a Porter bundle")
+	})
 }
