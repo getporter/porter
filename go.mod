@@ -35,7 +35,7 @@ require (
 	github.com/docker/buildx v0.19.1
 	github.com/docker/cli v27.4.0-rc.2+incompatible
 	github.com/docker/distribution v2.8.3+incompatible
-	github.com/docker/docker v27.4.0-rc.2+incompatible
+	github.com/docker/docker v27.4.0-rc.3+incompatible
 	github.com/dustin/go-humanize v1.0.1
 	github.com/ghodss/yaml v1.0.0
 	github.com/google/go-cmp v0.6.0
