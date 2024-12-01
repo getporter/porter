@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"get.porter.sh/porter/pkg/cnab"
+	configadapter "get.porter.sh/porter/pkg/cnab/config-adapter"
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/tracing"
 	"github.com/cnabio/cnab-go/driver/docker"
@@ -99,6 +100,7 @@ func (r *Registry) PullBundle(ctx context.Context, ref cnab.OCIReference, opts R
 	return bundleRef, nil
 }
 
+// PushBundle pushes a bundle to an OCI registry.
 func (r *Registry) PushBundle(ctx context.Context, bundleRef cnab.BundleReference, opts RegistryOptions) (cnab.BundleReference, error) {
 	ctx, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
@@ -157,6 +159,17 @@ func (r *Registry) PushBundle(ctx context.Context, bundleRef cnab.BundleReferenc
 		return cnab.BundleReference{}, log.Error(fmt.Errorf("error pushing the bundle to %s: %w", bundleRef.Reference, err))
 	}
 	bundleRef.Digest = d.Digest
+
+	stamp, err := configadapter.LoadStamp(bundleRef.Definition)
+	if err != nil {
+		return cnab.BundleReference{}, log.Errorf("error loading stamp from bundle: %w", err)
+	}
+	if stamp.PreserveTags {
+		err = preserveRelocatedImageTags(ctx, bundleRef, opts)
+		if err != nil {
+			return cnab.BundleReference{}, log.Error(fmt.Errorf("error preserving tags on relocated images: %w", err))
+		}
+	}
 
 	log.Infof("Bundle %s pushed successfully, with digest %q\n", bundleRef.Reference, d.Digest)
 	return bundleRef, nil
@@ -465,4 +478,45 @@ func GetInsecureRegistryTransport() *http.Transport {
 	skipTLS = skipTLS.Clone()
 	skipTLS.TLSClientConfig.InsecureSkipVerify = true
 	return skipTLS
+}
+
+func preserveRelocatedImageTags(ctx context.Context, bundleRef cnab.BundleReference, opts RegistryOptions) error {
+	_, log := tracing.StartSpan(ctx)
+	defer log.EndSpan()
+
+	if len(bundleRef.Definition.Images) <= 0 {
+		log.Debugf("No images to preserve tags on")
+		return nil
+	}
+
+	log.Infof("Tagging relocated images...")
+	for _, image := range bundleRef.Definition.Images {
+		imageRef, err := cnab.ParseOCIReference(image.Image)
+		if err != nil {
+			return log.Errorf("error parsing image reference %s: %w", image.Image, err)
+		}
+
+		if !imageRef.HasTag() {
+			log.Debugf("Image %s has no tag, skipping", imageRef)
+			continue
+		}
+
+		if relocImage, ok := bundleRef.RelocationMap[image.Image]; ok {
+			relocRef, err := cnab.ParseOCIReference(relocImage)
+			if err != nil {
+				return log.Errorf("error parsing image reference %s: %w", relocImage, err)
+			}
+
+			dstRef := fmt.Sprintf("%s/%s:%s", relocRef.Registry(), imageRef.Repository(), imageRef.Tag())
+			log.Debugf("Copying image %s to %s", relocRef, dstRef)
+			err = crane.Copy(relocRef.String(), dstRef, opts.toCraneOptions()...)
+			if err != nil {
+				return log.Errorf("error copying image %s to %s: %w", relocRef, dstRef, err)
+			}
+		} else {
+			log.Debugf("No relocation for image %s", imageRef)
+		}
+	}
+
+	return nil
 }

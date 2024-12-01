@@ -93,26 +93,48 @@ func (p *Porter) generateInternalManifest(ctx context.Context, opts BuildOptions
 		if err != nil {
 			return span.Errorf("failed to parse image %s reference: %w", img.Repository, err)
 		}
+		if opts.PreserveTags {
+			if img.Tag == "" {
+				var path string
+				for _, p := range nc.PathStack {
+					switch t := p.(type) {
+					case string:
+						path += fmt.Sprintf("%s.", t)
+					case int:
+						path = strings.TrimSuffix(path, ".")
+						path += fmt.Sprintf("[%s].", strconv.Itoa(t))
+					default:
+						continue
+					}
+				}
 
-		digest, err := p.getImageDigest(ctx, ref, regOpts)
-		if err != nil {
-			return span.Error(err)
-		}
-		span.SetAttributes(attribute.String("digest", digest.Encoded()))
-
-		var path string
-		for _, p := range nc.PathStack {
-			switch t := p.(type) {
-			case string:
-				path += fmt.Sprintf("%s.", t)
-			case int:
-				path = strings.TrimSuffix(path, ".")
-				path += fmt.Sprintf("[%s].", strconv.Itoa(t))
-			default:
-				continue
+				return e.SetValue(path+"tag", "latest")
 			}
+		} else {
+
+			digest, err := p.getImageDigest(ctx, ref, regOpts)
+			if err != nil {
+				return span.Error(err)
+			}
+			span.SetAttributes(attribute.String("digest", digest.Encoded()))
+
+			var path string
+			for _, p := range nc.PathStack {
+				switch t := p.(type) {
+				case string:
+					path += fmt.Sprintf("%s.", t)
+				case int:
+					path = strings.TrimSuffix(path, ".")
+					path += fmt.Sprintf("[%s].", strconv.Itoa(t))
+				default:
+					continue
+				}
+			}
+
+			return e.SetValue(path+"digest", digest.String())
 		}
-		return e.SetValue(path+"digest", digest.String())
+
+		return nil
 	})
 	if err != nil {
 		return err

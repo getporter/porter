@@ -1,0 +1,34 @@
+schemaVersion: 1.0.0-alpha.1
+name: mybun
+version: 0.1.0
+description: "An example Porter configuration"
+registry: "localhost:5000"
+
+images:
+  mybun:
+    image: "docker.io/getporter/porter-hello"
+    tag: "v0.1.1"
+
+mixins:
+  - exec
+
+install:
+  - exec:
+      description: "Install Hello World"
+      command: ./helpers.sh
+      arguments:
+        - install
+
+upgrade:
+  - exec:
+      description: "Upgrade Hello World"
+      command: ./helpers.sh
+      arguments:
+        - upgrade
+
+uninstall:
+  - exec:
+      description: "Uninstall Hello World"
+      command: ./helpers.sh
+      arguments:
+        - uninstall

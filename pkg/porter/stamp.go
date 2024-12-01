@@ -137,7 +137,7 @@ func (p *Porter) IsBundleUpToDate(ctx context.Context, opts BundleDefinitionOpti
 			return false, span.Error(err)
 		}
 
-		converter := configadapter.NewManifestConverter(p.Config, m, nil, mixins)
+		converter := configadapter.NewManifestConverter(p.Config, m, nil, mixins, opts.PreserveTags)
 		newDigest, err := converter.DigestManifest()
 		if err != nil {
 			err = fmt.Errorf("the current manifest digest cannot be calculated: %w", err)
@@ -145,12 +145,19 @@ func (p *Porter) IsBundleUpToDate(ctx context.Context, opts BundleDefinitionOpti
 			return false, span.Error(err)
 		}
 
-		manifestChanged := oldStamp.ManifestDigest != newDigest
+		preserveTagsChanged := oldStamp.PreserveTags != opts.PreserveTags
+		digestChanged := oldStamp.ManifestDigest != newDigest
+		manifestChanged := digestChanged || preserveTagsChanged
 		if manifestChanged {
-			span.Debugf("%s because the cached bundle is stale", rebuildMessagePrefix)
+			if preserveTagsChanged {
+				span.Debugf("PreserveTags is set to %t in the stamp, but the build is being run with PreserveTags set to %t", oldStamp.PreserveTags, opts.PreserveTags)
+			}
+			if digestChanged {
+				span.Debugf("%s because the cached bundle is stale", rebuildMessagePrefix)
+			}
 			if span.IsTracingEnabled() {
 				previousStampB, _ := json.Marshal(oldStamp)
-				currentStamp, _ := converter.GenerateStamp(ctx)
+				currentStamp, _ := converter.GenerateStamp(ctx, opts.PreserveTags)
 				currentStampB, _ := json.Marshal(currentStamp)
 				span.SetAttributes(
 					attribute.String("previous-stamp", string(previousStampB)),
