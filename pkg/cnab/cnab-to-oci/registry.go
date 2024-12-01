@@ -79,6 +79,9 @@ func (r *Registry) PullBundle(ctx context.Context, ref cnab.OCIReference, opts R
 
 	bun, reloMap, digest, err := remotes.Pull(ctx, ref.Named, resolver)
 	if err != nil {
+		if strings.Contains(err.Error(), "invalid media type") {
+			return cnab.BundleReference{}, span.Errorf("the provided reference must be a Porter bundle: %w", err)
+		}
 		return cnab.BundleReference{}, span.Errorf("unable to pull bundle: %w", err)
 	}
 
