@@ -210,8 +210,8 @@ github.com/denisenkom/go-mssqldb v0.0.0-20191128021309-1d7a30a10f73/go.mod h1:xb
 github.com/dgrijalva/jwt-go v3.2.0+incompatible/go.mod h1:E3ru+11k8xSBh+hMPgOLZmtrrCbhqsmaPHjLKYnJCaQ=
 github.com/distribution/reference v0.5.0 h1:/FUIFXtfc/x2gpa5/VGfiGLuOIdYa1t65IKK2OFGvA0=
 github.com/distribution/reference v0.5.0/go.mod h1:BbU0aIcezP1/5jX/8MP0YiH4SdvB5Y4f/wlDRiLyi3E=
-github.com/docker/buildx v0.18.0 h1:rSauXHeJt90NvtXrLK5J992Eb0UPJZs2vV3u1zTf1nE=
-github.com/docker/buildx v0.18.0/go.mod h1:JGNSshOhHs5FhG3u51jXUf4lLOeD2QBIlJ2vaRB67p4=
+github.com/docker/buildx v0.19.1 h1:muQEvRJLvOCS0p/67gPwjnQPWqE5ot3sGkb2Eq7vCmw=
+github.com/docker/buildx v0.19.1/go.mod h1:k4WP+XmGRYL0a7l4RZAI2TqpwhuAuSQ5U/rosRgFmAA=
 github.com/docker/cli v0.0.0-20190925022749-754388324470/go.mod h1:JLrzqnKDaYBop7H2jaqPtU4hHvMKP+vjCwu2uszcLI8=
 github.com/docker/cli v27.4.0-rc.2+incompatible h1:A0GZwegDlt2wdt3tpmrUzkVOZmbhvd7i05wPSf7Oo74=
 github.com/docker/cli v27.4.0-rc.2+incompatible/go.mod h1:JLrzqnKDaYBop7H2jaqPtU4hHvMKP+vjCwu2uszcLI8=
