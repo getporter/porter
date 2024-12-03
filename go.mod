@@ -24,7 +24,6 @@ require (
 	github.com/PaesslerAG/jsonpath v0.1.1
 	github.com/carolynvs/aferox v0.3.0
 	github.com/carolynvs/datetime-printer v0.2.0
-	github.com/carolynvs/magex v0.9.0
 	github.com/cbroglie/mustache v1.4.0
 	github.com/cnabio/cnab-go v0.25.2
 	github.com/cnabio/cnab-to-oci v0.4.1
@@ -66,6 +65,7 @@ require (
 	github.com/stretchr/testify v1.10.0
 	github.com/tidwall/gjson v1.18.0
 	github.com/tidwall/sjson v1.2.5
+	github.com/uwu-tools/magex v0.10.0
 	github.com/xeipuuv/gojsonschema v1.2.0
 	go.mongodb.org/mongo-driver v1.17.1
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.57.0
@@ -112,6 +112,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sts v1.32.4 // indirect
 	github.com/aws/smithy-go v1.22.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
+	github.com/carolynvs/magex v0.9.0 // indirect
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/containerd/console v1.0.4 // indirect

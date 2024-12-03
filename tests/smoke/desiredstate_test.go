@@ -9,9 +9,9 @@ import (
 	"get.porter.sh/porter/pkg/yaml"
 	"get.porter.sh/porter/tests"
 	"get.porter.sh/porter/tests/tester"
-	"github.com/carolynvs/magex/mgx"
-	"github.com/carolynvs/magex/shx"
 	"github.com/stretchr/testify/require"
+	"github.com/uwu-tools/magex/mgx"
+	"github.com/uwu-tools/magex/shx"
 )
 
 // Test desired state workflows used by the porter operator

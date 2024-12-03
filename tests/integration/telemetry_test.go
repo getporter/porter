@@ -13,9 +13,9 @@ import (
 	"get.porter.sh/porter/pkg/porter"
 	"get.porter.sh/porter/tests"
 	"get.porter.sh/porter/tests/tester"
-	"github.com/carolynvs/magex/shx"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/uwu-tools/magex/shx"
 )
 
 // Validate that we can configure a live connection to a telemetry endpoint
