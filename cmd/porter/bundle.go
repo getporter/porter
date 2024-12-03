@@ -89,6 +89,8 @@ The docker driver builds the bundle image using the local Docker host. To use a 
 	_ = f.MarkHidden("driver") // Hide the driver flag since there aren't any choices to make right now
 	f.StringArrayVar(&opts.BuildArgs, "build-arg", nil,
 		"Set build arguments in the template Dockerfile (format: NAME=VALUE). May be specified multiple times. Max length is 5,000 characters.")
+	f.StringArrayVar(&opts.BuildContexts, "build-context", nil,
+		"Define additional build context with specified contents. May be specified multiple times.")
 	f.StringArrayVar(&opts.SSH, "ssh", nil,
 		"SSH agent socket or keys to expose to the build (format: default|<id>[=<socket>|<key>[,<key>]]). May be specified multiple times.")
 	f.StringArrayVar(&opts.Secrets, "secret", nil,
