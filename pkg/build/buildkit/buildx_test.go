@@ -8,6 +8,7 @@ import (
 	"get.porter.sh/porter/pkg/build"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/manifest"
+	buildx "github.com/docker/buildx/build"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -28,6 +29,26 @@ func Test_parseBuildArgs(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			var gotArgs = map[string]string{}
 			parseBuildArgs(tc.inputArgs, gotArgs)
+			assert.Equal(t, tc.wantArgs, gotArgs)
+		})
+	}
+}
+
+func Test_parseBuildContexts(t *testing.T) {
+	testcases := []struct {
+		name      string
+		inputArgs []string
+		wantArgs  map[string]buildx.NamedContext
+	}{
+		{name: "valid args", inputArgs: []string{"A=1", "B=2=2", "C="},
+			wantArgs: map[string]buildx.NamedContext{"A": {Path: "1"}, "B": {Path: "2=2"}, "C": {}}},
+		{name: "missing equal sign", inputArgs: []string{"A"},
+			wantArgs: map[string]buildx.NamedContext{}},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			var gotArgs = parseBuildContexts(tc.inputArgs)
 			assert.Equal(t, tc.wantArgs, gotArgs)
 		})
 	}

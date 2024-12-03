@@ -120,6 +120,8 @@ func (b *Builder) BuildBundleImage(ctx context.Context, manifest *manifest.Manif
 	}
 	span.SetAttributes(tracing.ObjectAttribute("build-args", args))
 
+	buildContexts := parseBuildContexts(opts.BuildContexts)
+
 	buildxOpts := map[string]buildx.Options{
 		"default": {
 			Tags: []string{manifest.Image},
@@ -127,6 +129,7 @@ func (b *Builder) BuildBundleImage(ctx context.Context, manifest *manifest.Manif
 				ContextPath:    b.Getwd(),
 				DockerfilePath: b.getDockerfilePath(),
 				InStream:       buildx.NewSyncMultiReader(b.In),
+				NamedContexts:  buildContexts,
 			},
 			BuildArgs: args,
 			Session:   currentSession,
@@ -241,6 +244,26 @@ func parseBuildArgs(unparsed []string, parsed map[string]string) {
 		value := parts[1]
 		parsed[name] = value
 	}
+}
+
+func parseBuildContexts(unparsed []string) map[string]buildx.NamedContext {
+	parsed := make(map[string]buildx.NamedContext)
+
+	for _, arg := range unparsed {
+		parts := strings.SplitN(arg, "=", 2)
+		if len(parts) < 2 {
+			// ignore --build-context with only one part
+			continue
+		}
+
+		name := parts[0]
+		value := parts[1]
+		parsed[name] = buildx.NamedContext{
+			Path: value,
+		}
+	}
+
+	return parsed
 }
 
 func (b *Builder) TagBundleImage(ctx context.Context, origTag, newTag string) error {
