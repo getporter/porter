@@ -8,8 +8,8 @@ import (
 	"get.porter.sh/porter/tests"
 	"get.porter.sh/porter/tests/testdata"
 	"get.porter.sh/porter/tests/tester"
-	"github.com/carolynvs/magex/shx"
 	"github.com/stretchr/testify/require"
+	"github.com/uwu-tools/magex/shx"
 )
 
 // Test general flows in porter

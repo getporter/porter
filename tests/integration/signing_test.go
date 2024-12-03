@@ -11,11 +11,11 @@ import (
 
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/tests/tester"
-	"github.com/carolynvs/magex/shx"
 	"github.com/docker/distribution/reference"
 	"github.com/google/go-containerregistry/pkg/crane"
 	"github.com/opencontainers/go-digest"
 	"github.com/stretchr/testify/require"
+	"github.com/uwu-tools/magex/shx"
 )
 
 func TestCosign(t *testing.T) {
