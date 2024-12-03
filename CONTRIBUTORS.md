@@ -105,5 +105,4 @@ and we will add you. **All** contributors belong here. 💯
 - [John Cudd](https://github.com/jmcudd)
 - [Robin Brämer](https://github.com/robinbraemer)
 - [Geeta Chavan](https://github.com/geetachavan1)
-
-
+- [Stephen Augustus](https://github.com/justaugustus)
