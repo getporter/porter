@@ -19,6 +19,9 @@ type UpgradeOptions struct {
 
 	// Version of the bundle to upgrade to
 	Version string
+
+	// ForceUpgrade allows the upgrade to run even if the current installation is marked as failed.
+	ForceUpgrade bool
 }
 
 func NewUpgradeOptions() *UpgradeOptions {
@@ -64,7 +67,7 @@ func (p *Porter) UpgradeBundle(ctx context.Context, opts *UpgradeOptions) error 
 		return span.Errorf("could not find installation %s/%s: %w", opts.Namespace, opts.Name, err)
 	}
 
-	if !i.IsInstalled() {
+	if !i.IsInstalled() && !opts.ForceUpgrade {
 		return span.Errorf("The installation cannot be upgraded, because it is not installed. Verify the installation name and namespace, and if correct, use porter install.")
 	}
 

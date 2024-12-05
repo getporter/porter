@@ -50,6 +50,7 @@ porter upgrade [INSTALLATION] [flags]
   -d, --driver string                   Specify a driver to use. Allowed values: docker, debug (default "docker")
   -f, --file porter.yaml                Path to the Porter manifest. Defaults to porter.yaml in the current directory.
       --force                           Force a fresh pull of the bundle
+      --force-upgrade                   Force the upgrade to run even if the current installation is marked as failed.
   -h, --help                            help for upgrade
       --insecure-registry               Don't require TLS for the registry
       --mount-host-volume stringArray   Mount a host volume into the bundle. Format is <host path>:<container path>[:<option>]. May be specified multiple times. Option can be ro (read-only), rw (read-write), default is ro.
