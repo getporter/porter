@@ -4,11 +4,11 @@ import (
 	"os/exec"
 	"runtime"
 
-	"github.com/carolynvs/magex/mgx"
-	"github.com/carolynvs/magex/pkg"
-	"github.com/carolynvs/magex/pkg/archive"
-	"github.com/carolynvs/magex/pkg/downloads"
 	"github.com/magefile/mage/mg"
+	"github.com/uwu-tools/magex/mgx"
+	"github.com/uwu-tools/magex/pkg"
+	"github.com/uwu-tools/magex/pkg/archive"
+	"github.com/uwu-tools/magex/pkg/downloads"
 )
 
 func EnsureProtobufTools() {

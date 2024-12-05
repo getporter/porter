@@ -16,8 +16,8 @@ import (
 	"get.porter.sh/porter/tests"
 	"get.porter.sh/porter/tests/tester"
 	"github.com/Masterminds/semver/v3"
-	"github.com/carolynvs/magex/shx"
 	"github.com/stretchr/testify/require"
+	"github.com/uwu-tools/magex/shx"
 )
 
 func TestBuild(t *testing.T) {

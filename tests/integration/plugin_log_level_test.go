@@ -7,8 +7,8 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/tests/tester"
-	"github.com/carolynvs/magex/shx"
 	"github.com/stretchr/testify/require"
+	"github.com/uwu-tools/magex/shx"
 )
 
 func TestPluginDebugLogsVerbosityArgument(t *testing.T) {
