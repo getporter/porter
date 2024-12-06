@@ -34,21 +34,29 @@ func Test_parseBuildArgs(t *testing.T) {
 	}
 }
 
-func Test_parseBuildContexts(t *testing.T) {
+func Test_toNamedContexts(t *testing.T) {
 	testcases := []struct {
 		name      string
-		inputArgs []string
+		inputArgs map[string]string
 		wantArgs  map[string]buildx.NamedContext
 	}{
-		{name: "valid args", inputArgs: []string{"A=1", "B=2=2", "C="},
-			wantArgs: map[string]buildx.NamedContext{"A": {Path: "1"}, "B": {Path: "2=2"}, "C": {}}},
-		{name: "missing equal sign", inputArgs: []string{"A"},
-			wantArgs: map[string]buildx.NamedContext{}},
+		{name: "Basic conversion",
+			inputArgs: map[string]string{"context1": "/path/to/context1", "context2": "/path/to/context2"},
+			wantArgs:  map[string]buildx.NamedContext{"context1": {Path: "/path/to/context1"}, "context2": {Path: "/path/to/context2"}}},
+		{name: "Single entry",
+			inputArgs: map[string]string{"singlecontext": "/single/path"},
+			wantArgs:  map[string]buildx.NamedContext{"singlecontext": {Path: "/single/path"}}},
+		{name: "Empty path",
+			inputArgs: map[string]string{"singlecontext": ""},
+			wantArgs:  map[string]buildx.NamedContext{"singlecontext": {Path: ""}}},
+		{name: "Empty input map",
+			inputArgs: map[string]string{},
+			wantArgs:  map[string]buildx.NamedContext{}},
 	}
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			var gotArgs = parseBuildContexts(tc.inputArgs)
+			var gotArgs = toNamedContexts(tc.inputArgs)
 			assert.Equal(t, tc.wantArgs, gotArgs)
 		})
 	}
