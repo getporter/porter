@@ -77,7 +77,7 @@ func (p *Porter) ShowBundleOutput(ctx context.Context, opts *OutputShowOptions) 
 		return fmt.Errorf("unable to read output '%s' for installation '%s/%s': %w", opts.Output, opts.Namespace, opts.Name, err)
 	}
 
-	fmt.Fprintln(p.Out, output)
+	fmt.Fprint(p.Out, output)
 	return nil
 }
 
