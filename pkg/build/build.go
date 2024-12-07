@@ -61,6 +61,9 @@ type BuildImageOptions struct {
 	// BuildArgs is the set of docker build --build-arg specified.
 	BuildArgs []string
 
+	// BuildContexts is the set of docker build --build-context specified.
+	BuildContexts []string
+
 	// NoCache is the docker build --no-cache flag specified.
 	NoCache bool
 }

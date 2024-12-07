@@ -8,6 +8,7 @@ import (
 	"get.porter.sh/porter/pkg/build"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/manifest"
+	buildx "github.com/docker/buildx/build"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -28,6 +29,34 @@ func Test_parseBuildArgs(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			var gotArgs = map[string]string{}
 			parseBuildArgs(tc.inputArgs, gotArgs)
+			assert.Equal(t, tc.wantArgs, gotArgs)
+		})
+	}
+}
+
+func Test_toNamedContexts(t *testing.T) {
+	testcases := []struct {
+		name      string
+		inputArgs map[string]string
+		wantArgs  map[string]buildx.NamedContext
+	}{
+		{name: "Basic conversion",
+			inputArgs: map[string]string{"context1": "/path/to/context1", "context2": "/path/to/context2"},
+			wantArgs:  map[string]buildx.NamedContext{"context1": {Path: "/path/to/context1"}, "context2": {Path: "/path/to/context2"}}},
+		{name: "Single entry",
+			inputArgs: map[string]string{"singlecontext": "/single/path"},
+			wantArgs:  map[string]buildx.NamedContext{"singlecontext": {Path: "/single/path"}}},
+		{name: "Empty path",
+			inputArgs: map[string]string{"singlecontext": ""},
+			wantArgs:  map[string]buildx.NamedContext{"singlecontext": {Path: ""}}},
+		{name: "Empty input map",
+			inputArgs: map[string]string{},
+			wantArgs:  map[string]buildx.NamedContext{}},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			var gotArgs = toNamedContexts(tc.inputArgs)
 			assert.Equal(t, tc.wantArgs, gotArgs)
 		})
 	}
