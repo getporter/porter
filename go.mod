@@ -31,7 +31,7 @@ require (
 	github.com/containerd/containerd v1.7.24
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
 	github.com/distribution/reference v0.6.0
-	github.com/docker/buildx v0.19.1
+	github.com/docker/buildx v0.19.2
 	github.com/docker/cli v27.4.0-rc.2+incompatible
 	github.com/docker/distribution v2.8.3+incompatible
 	github.com/docker/docker v27.4.0-rc.2+incompatible
