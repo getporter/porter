@@ -11,8 +11,8 @@ import (
 	"get.porter.sh/porter/pkg/yaml"
 	"get.porter.sh/porter/tests"
 	"get.porter.sh/porter/tests/testdata"
-	"github.com/carolynvs/magex/shx"
 	"github.com/stretchr/testify/require"
+	"github.com/uwu-tools/magex/shx"
 )
 
 type TestBundleOptions struct {

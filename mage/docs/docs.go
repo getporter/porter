@@ -10,9 +10,9 @@ import (
 	"time"
 
 	"get.porter.sh/magefiles/docker"
-	"github.com/carolynvs/magex/mgx"
-	"github.com/carolynvs/magex/shx"
 	"github.com/magefile/mage/mg"
+	"github.com/uwu-tools/magex/mgx"
+	"github.com/uwu-tools/magex/shx"
 )
 
 var must = shx.CommandBuilder{StopOnError: true}

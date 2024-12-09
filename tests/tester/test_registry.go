@@ -6,9 +6,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/carolynvs/magex/shx"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/uwu-tools/magex/shx"
 )
 
 // TestRegistryAlias is the environment variable that contains a pre-configured

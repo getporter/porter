@@ -304,6 +304,8 @@ The docker driver runs the bundle container using the local Docker host. To use 
 		"Namespace of the specified installation. Defaults to the global namespace.")
 	f.StringVar(&opts.Version, "version", "",
 		"Version to which the installation should be upgraded. This represents the version of the bundle, which assumes the convention of setting the bundle tag to its version.")
+	f.BoolVar(&opts.ForceUpgrade, "force-upgrade", false,
+		"Force the upgrade to run even if the current installation is marked as failed.")
 	addBundleActionFlags(f, opts)
 
 	// Allow configuring the --driver flag with runtime-driver, to avoid conflicts with other commands
