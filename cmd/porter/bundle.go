@@ -101,6 +101,7 @@ The docker driver builds the bundle image using the local Docker host. To use a 
 		"Define an individual key-value pair for the custom section in the form of NAME=VALUE. Use dot notation to specify a nested custom field. May be specified multiple times. Max length is 5,000 characters when used as a build argument.")
 	f.BoolVar(&opts.InsecureRegistry, "insecure-registry", false,
 		"Don't require TLS when pulling referenced images")
+	f.BoolVar(&opts.PreserveTags, "preserve-tags", false, "Preserve the original tag name on referenced images")
 
 	// Allow configuring the --driver flag with build-driver, to avoid conflicts with other commands
 	cmd.Flag("driver").Annotations = map[string][]string{
@@ -180,6 +181,7 @@ Note: if overrides for registry/tag/reference are provided, this command only re
 	}
 	f.BoolVar(&opts.AutoBuildDisabled, "autobuild-disabled", false, "Do not automatically build the bundle from source when the last build is out-of-date.")
 	f.BoolVar(&opts.SignBundle, "sign-bundle", false, "Sign the bundle using the configured signing plugin")
+	f.BoolVar(&opts.PreserveTags, "preserve-tags", false, "Preserve the original tag name on referenced images")
 
 	return &cmd
 }

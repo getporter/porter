@@ -25,6 +25,7 @@ type ManifestConverter struct {
 	Manifest        *manifest.Manifest
 	ImageDigests    map[string]string
 	InstalledMixins []mixin.Metadata
+	PreserveTags    bool
 }
 
 func NewManifestConverter(
@@ -32,12 +33,14 @@ func NewManifestConverter(
 	manifest *manifest.Manifest,
 	imageDigests map[string]string,
 	mixins []mixin.Metadata,
+	preserveTags bool,
 ) *ManifestConverter {
 	return &ManifestConverter{
 		config:          config,
 		Manifest:        manifest,
 		ImageDigests:    imageDigests,
 		InstalledMixins: mixins,
+		PreserveTags:    preserveTags,
 	}
 }
 
@@ -45,7 +48,7 @@ func (c *ManifestConverter) ToBundle(ctx context.Context) (cnab.ExtendedBundle, 
 	ctx, span := tracing.StartSpan(ctx)
 	defer span.EndSpan()
 
-	stamp, err := c.GenerateStamp(ctx)
+	stamp, err := c.GenerateStamp(ctx, c.PreserveTags)
 	if err != nil {
 		return cnab.ExtendedBundle{}, span.Error(err)
 	}

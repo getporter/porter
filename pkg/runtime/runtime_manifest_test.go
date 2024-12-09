@@ -333,9 +333,7 @@ install:
 	assert.Equal(t, "regular param value", args[2])
 
 	// There should now be one sensitive value tracked under the manifest
-	assert.Len(t, rm.GetSensitiveValues(), 2)
-	assert.Contains(t, rm.GetSensitiveValues(), "deliciou$dubonnet")
-	assert.Contains(t, rm.GetSensitiveValues(), "{\"secret\":\"this_is_secret\"}")
+	assert.ElementsMatch(t, []string{"deliciou$dubonnet", "{\"secret\":\"this_is_secret\"}"}, rm.GetSensitiveValues())
 }
 
 func TestResolveCredential(t *testing.T) {
