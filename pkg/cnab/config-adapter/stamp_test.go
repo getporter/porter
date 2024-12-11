@@ -21,31 +21,44 @@ var simpleManifestDigest = "4a748b8ac237b4af8f1eb3a327a82dfdd7eb70f3a1126e97a9e5
 func TestConfig_GenerateStamp(t *testing.T) {
 	// Do not run this test in parallel
 	// Still need to figure out what is introducing flakey-ness
-
-	c := config.NewTestConfig(t)
-	c.TestContext.AddTestFileFromRoot("pkg/manifest/testdata/simple.porter.yaml", config.Name)
-
-	ctx := context.Background()
-	m, err := manifest.LoadManifestFrom(ctx, c.Config, config.Name)
-	require.NoError(t, err, "could not load manifest")
-
-	installedMixins := []mixin.Metadata{
-		{Name: "exec", VersionInfo: pkgmgmt.VersionInfo{Version: "v1.2.3"}},
+	testcases := []struct {
+		name         string
+		preserveTags bool
+	}{
+		{name: "not preserving tags", preserveTags: false},
+		{name: "preserving tags", preserveTags: true},
 	}
 
-	a := NewManifestConverter(c.Config, m, nil, installedMixins)
-	stamp, err := a.GenerateStamp(ctx)
-	require.NoError(t, err, "DigestManifest failed")
-	assert.Equal(t, simpleManifestDigest, stamp.ManifestDigest)
-	assert.Equal(t, map[string]MixinRecord{"exec": {Name: "exec", Version: "v1.2.3"}}, stamp.Mixins, "Stamp.Mixins was not populated properly")
-	assert.Equal(t, pkg.Version, stamp.Version)
-	assert.Equal(t, pkg.Commit, stamp.Commit)
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			c := config.NewTestConfig(t)
+			c.TestContext.AddTestFileFromRoot("pkg/manifest/testdata/simple.porter.yaml", config.Name)
 
-	gotManifestContentsB, err := stamp.DecodeManifest()
-	require.NoError(t, err, "DecodeManifest failed")
-	wantManifestContentsB, err := c.FileSystem.ReadFile(config.Name)
-	require.NoError(t, err, "could not read %s", config.Name)
-	assert.Equal(t, string(wantManifestContentsB), string(gotManifestContentsB), "Stamp.EncodedManifest was not popluated and decoded properly")
+			ctx := context.Background()
+			m, err := manifest.LoadManifestFrom(ctx, c.Config, config.Name)
+			require.NoError(t, err, "could not load manifest")
+
+			installedMixins := []mixin.Metadata{
+				{Name: "exec", VersionInfo: pkgmgmt.VersionInfo{Version: "v1.2.3"}},
+			}
+
+			a := NewManifestConverter(c.Config, m, nil, installedMixins, tc.preserveTags)
+			stamp, err := a.GenerateStamp(ctx, tc.preserveTags)
+			require.NoError(t, err, "DigestManifest failed")
+			assert.Equal(t, simpleManifestDigest, stamp.ManifestDigest)
+			assert.Equal(t, map[string]MixinRecord{"exec": {Name: "exec", Version: "v1.2.3"}}, stamp.Mixins, "Stamp.Mixins was not populated properly")
+			assert.Equal(t, pkg.Version, stamp.Version)
+			assert.Equal(t, pkg.Commit, stamp.Commit)
+			assert.Equal(t, tc.preserveTags, stamp.PreserveTags)
+
+			gotManifestContentsB, err := stamp.DecodeManifest()
+			require.NoError(t, err, "DecodeManifest failed")
+			wantManifestContentsB, err := c.FileSystem.ReadFile(config.Name)
+			require.NoError(t, err, "could not read %s", config.Name)
+			assert.Equal(t, string(wantManifestContentsB), string(gotManifestContentsB), "Stamp.EncodedManifest was not popluated and decoded properly")
+		})
+	}
 }
 
 func TestConfig_LoadStamp(t *testing.T) {
@@ -59,6 +72,7 @@ func TestConfig_LoadStamp(t *testing.T) {
 				"mixins": map[string]interface{}{
 					"exec": struct{}{},
 				},
+				"preserveTags": true,
 			},
 		},
 	})
@@ -68,6 +82,7 @@ func TestConfig_LoadStamp(t *testing.T) {
 	assert.Equal(t, "somedigest", stamp.ManifestDigest)
 	assert.Equal(t, map[string]MixinRecord{"exec": {}}, stamp.Mixins, "Stamp.Mixins was not populated properly")
 	assert.Equal(t, "abc123", stamp.EncodedManifest)
+	assert.Equal(t, true, stamp.PreserveTags)
 }
 
 func TestConfig_LoadStamp_Invalid(t *testing.T) {
@@ -146,7 +161,7 @@ func TestConfig_DigestManifest(t *testing.T) {
 		m, err := manifest.LoadManifestFrom(context.Background(), c.Config, config.Name)
 		require.NoError(t, err, "could not load manifest")
 
-		a := NewManifestConverter(c.Config, m, nil, nil)
+		a := NewManifestConverter(c.Config, m, nil, nil, false)
 		digest, err := a.DigestManifest()
 		require.NoError(t, err, "DigestManifest failed")
 
@@ -176,8 +191,8 @@ func TestConfig_GenerateStamp_IncludeVersion(t *testing.T) {
 	m, err := manifest.LoadManifestFrom(ctx, c.Config, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
-	a := NewManifestConverter(c.Config, m, nil, nil)
-	stamp, err := a.GenerateStamp(ctx)
+	a := NewManifestConverter(c.Config, m, nil, nil, false)
+	stamp, err := a.GenerateStamp(ctx, false)
 	require.NoError(t, err, "DigestManifest failed")
 	assert.Equal(t, "v1.2.3", stamp.Version)
 	assert.Equal(t, "abc123", stamp.Commit)

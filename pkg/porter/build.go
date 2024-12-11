@@ -143,7 +143,7 @@ func (p *Porter) Build(ctx context.Context, opts BuildOptions) error {
 	// bundle.json will *not* be correct until the image is actually pushed
 	// to a registry.  The bundle.json will need to be updated after publishing
 	// and provided just-in-time during bundle execution.
-	if err := p.buildBundle(ctx, m, ""); err != nil {
+	if err := p.buildBundle(ctx, m, "", opts.PreserveTags); err != nil {
 		return span.Error(fmt.Errorf("unable to build bundle: %w", err))
 	}
 
@@ -227,7 +227,7 @@ func (p *Porter) getUsedMixins(ctx context.Context, m *manifest.Manifest) ([]mix
 	return usedMixins, nil
 }
 
-func (p *Porter) buildBundle(ctx context.Context, m *manifest.Manifest, digest digest.Digest) error {
+func (p *Porter) buildBundle(ctx context.Context, m *manifest.Manifest, digest digest.Digest, preserveTags bool) error {
 	imageDigests := map[string]string{m.Image: digest.String()}
 
 	mixins, err := p.getUsedMixins(ctx, m)
@@ -235,7 +235,7 @@ func (p *Porter) buildBundle(ctx context.Context, m *manifest.Manifest, digest d
 		return err
 	}
 
-	converter := configadapter.NewManifestConverter(p.Config, m, imageDigests, mixins)
+	converter := configadapter.NewManifestConverter(p.Config, m, imageDigests, mixins, preserveTags)
 	bun, err := converter.ToBundle(ctx)
 	if err != nil {
 		return err

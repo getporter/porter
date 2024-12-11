@@ -186,7 +186,7 @@ func TestPorter_paramRequired(t *testing.T) {
 	m, err := manifest.LoadManifestFrom(ctx, p.Config, config.Name)
 	require.NoError(t, err)
 
-	err = p.buildBundle(ctx, m, "digest")
+	err = p.buildBundle(ctx, m, "digest", false)
 	require.NoError(t, err)
 
 	bundleBytes, err := p.FileSystem.ReadFile(build.LOCAL_BUNDLE)
@@ -278,7 +278,7 @@ func TestPorter_BuildWithCustomValues(t *testing.T) {
 	m, err := manifest.LoadManifestFrom(ctx, p.Config, config.Name)
 	require.NoError(t, err)
 
-	err = p.buildBundle(ctx, m, "digest")
+	err = p.buildBundle(ctx, m, "digest", false)
 	require.NoError(t, err)
 
 	opts := BuildOptions{Customs: []string{"customKey1=editedCustomValue1"}}
@@ -291,4 +291,36 @@ func TestPorter_BuildWithCustomValues(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, bun.Custom["customKey1"], "editedCustomValue1")
+}
+
+func TestPorter_BuildWithPreserveTags(t *testing.T) {
+	p := NewTestPorter(t)
+	defer p.Close()
+
+	p.TestConfig.TestContext.AddTestFile("./testdata/porter-with-image-tag.yaml", config.Name)
+
+	ctx := context.Background()
+	m, err := manifest.LoadManifestFrom(ctx, p.Config, config.Name)
+	require.NoError(t, err)
+
+	err = p.buildBundle(ctx, m, "digest", true)
+	require.NoError(t, err)
+
+	opts := BuildOptions{
+		BundleDefinitionOptions: BundleDefinitionOptions{
+			PreserveTags: true,
+		},
+	}
+	require.NoError(t, opts.Validate(p.Porter), "Validate failed")
+
+	err = p.Build(ctx, opts)
+	require.NoError(t, err)
+
+	bun, err := p.CNAB.LoadBundle(build.LOCAL_BUNDLE)
+	require.NoError(t, err)
+
+	stamp, err := configadapter.LoadStamp(bun)
+	require.NoError(t, err)
+	assert.Equal(t, stamp.PreserveTags, true)
+	assert.Empty(t, bun.Images["something"].Digest)
 }

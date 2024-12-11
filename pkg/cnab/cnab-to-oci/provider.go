@@ -54,3 +54,13 @@ func (o RegistryOptions) toCraneOptions() []crane.Option {
 	}
 	return result
 }
+
+type PushBundleOptions struct {
+	RegistryOptions
+}
+
+func WithRegistryOptions(registryOpts RegistryOptions) func(*PushBundleOptions) {
+	return func(opts *PushBundleOptions) {
+		opts.RegistryOptions = registryOpts
+	}
+}
