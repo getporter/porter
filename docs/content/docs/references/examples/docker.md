@@ -19,7 +19,7 @@ application, or even more creative tasks that you have already
 containerized. Well now you can reuse all that hard work and logic from within
 your bundles!
 
-Let's walk through using my favorite container, [docker/whalesay][whalesay], in a bundle.
+Let's walk through using my favorite container, [ghcr.io/getporter/examples/images/whalesay][whalesay], in a bundle.
 
 ```
  _____________________
@@ -38,7 +38,7 @@ Let's walk through using my favorite container, [docker/whalesay][whalesay], in 
           \____\______/
 ```
 
-[whalesay]: https://hub.docker.com/r/docker/whalesay/
+[whalesay]: https://github.com/orgs/getporter/packages/container/package/examples%2Fimages%2Fwhalesay
 
 ## Author the bundle
 Writing a bundle that uses Docker has a few steps:
@@ -123,7 +123,7 @@ mixins:
 install:
   - docker:
       run:
-        image: "docker/whalesay:latest"
+        image: "ghcr.io/getporter/examples/images/whalesay:latest"
         rm: true
         arguments:
           - cowsay
@@ -132,7 +132,7 @@ install:
 upgrade:
   - docker:
       run:
-        image: "docker/whalesay:latest"
+        image: "ghcr.io/getporter/examples/images/whalesay:latest"
         rm: true
         arguments:
           - cowsay
@@ -141,7 +141,7 @@ upgrade:
 say:
   - docker:
       run:
-        image: "docker/whalesay:latest"
+        image: "ghcr.io/getporter/examples/images/whalesay:latest"
         rm: true
         arguments:
           - cowsay
@@ -150,7 +150,7 @@ say:
 uninstall:
   - docker:
       run:
-        image: "docker/whalesay:latest"
+        image: "ghcr.io/getporter/examples/images/whalesay:latest"
         rm: true
         arguments:
           - cowsay

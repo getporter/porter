@@ -87,7 +87,7 @@ You can specify either the tag or the digest.
 - docker:
     description: "Install Whalesay"
     pull:
-      name: docker/whalesay
+      name: ghcr.io/getporter/examples/images/whalesay
       tag: latest
 ````
 
@@ -183,7 +183,7 @@ You can specify either the tag or the digest.
     description: "Run Whalesay"
     run:
       name: mixinpractice
-      image: "docker/whalesay:latest"
+      image: "ghcr.io/getporter/examples/images/whalesay:latest"
       detach: true
       ports:
         - host: 8080

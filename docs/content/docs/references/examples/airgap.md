@@ -49,16 +49,16 @@ images:
   whalesayd:
       description: "Whalesay as a service"
       imageType: "docker"
-      repository: "carolynvs/whalesayd"
-      digest: "sha256:8b92b7269f59e3ed824e811a1ff1ee64f0d44c0218efefada57a4bebc2d7ef6f"
+      repository: "ghcr.io/getporter/examples/images/whalesayd"
+      digest: "sha256:18c099989986f61c0678b8040cc8d2e80ba20ecd096da51f8da3a31c5d1138b8"
 ```
 
 The repository field should be the image name, without a tag or digest included, and the digest is the repository digest of the image.
 You can get that information by running the following docker command:
 
 ```console
-$ docker image inspect carolynvs/whalesayd:v0.1.0 --format '{{.RepoDigests}}'
-[carolynvs/whalesayd@sha256:8b92b7269f59e3ed824e811a1ff1ee64f0d44c0218efefada57a4bebc2d7ef6f]
+$ docker image inspect ghcr.io/getporter/examples/images/whalesayd:v0.1.1 --format '{{.RepoDigests}}'
+[ghcr.io/getporter/examples/images/whalesayd@sha256:18c099989986f61c0678b8040cc8d2e80ba20ecd096da51f8da3a31c5d1138b8]
 ```
 
 ### Specify new image location
@@ -174,7 +174,7 @@ Containers:
     Image ID:       docker.io/YOURNAME/whalegap@sha256:8b92b7269f59e3ed824e811a1ff1ee64f0d44c0218efefada57a4bebc2d7ef6f
 ```
 
-From the output of kubectl describe, you can see that the image deployed was not the original image referenced in the bundle, carolynvs/whalesayd, and instead it references a new location _inside_ the relocated bundle repository.
+From the output of kubectl describe, you can see that the image deployed was not the original image referenced in the bundle, ghcr.io/getporter/examples/images/whalesayd, and instead it references a new location _inside_ the relocated bundle repository.
 All referenced images are published into the same repository as the bundle, and they are only available using their digest, not the original image name.
 
 ## Next Steps
@@ -182,4 +182,4 @@ All referenced images are published into the same repository as the bundle, and 
 * [Understand how Porter publishes archived bundles to a registry](/archive-bundles/)
 
 [ghcr.io/getporter/examples/whalegap]: https://github.com/orgs/getporter/packages/container/package/examples%2Fwhalegap
-[whalesay app]: https://github.com/carolynvs/whalesayd
+[whalesay app]: https://github.com/orgs/getporter/packages/container/package/examples%2Fimages%2Fwhalesayd
