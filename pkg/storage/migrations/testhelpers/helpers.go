@@ -8,10 +8,10 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg/config"
-	"github.com/carolynvs/magex/pkg/downloads"
-	"github.com/carolynvs/magex/shx"
-	"github.com/carolynvs/magex/xplat"
 	"github.com/stretchr/testify/require"
+	"github.com/uwu-tools/magex/pkg/downloads"
+	"github.com/uwu-tools/magex/shx"
+	"github.com/uwu-tools/magex/xplat"
 )
 
 // CreateLegacyPorterHome creates a porter v0.38 PORTER_HOME with legacy data

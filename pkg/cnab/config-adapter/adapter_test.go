@@ -28,23 +28,39 @@ func TestManifestConverter(t *testing.T) {
 		configHandler func(c *config.Config)
 		manifestPath  string
 		goldenFile    string
+		preserveTags  bool
 	}{
 		{name: "mybuns depsv1",
 			configHandler: func(c *config.Config) {},
 			manifestPath:  "tests/testdata/mybuns/porter.yaml",
-			goldenFile:    "testdata/mybuns-depsv1.bundle.json"},
+			goldenFile:    "testdata/mybuns-depsv1.bundle.json",
+			preserveTags:  false},
+		{name: "mybuns depsv1 preserveTags",
+			configHandler: func(c *config.Config) {},
+			manifestPath:  "tests/testdata/mybuns/porter.yaml",
+			goldenFile:    "testdata/mybuns-depsv1.bundle.preserveTags.json",
+			preserveTags:  true},
 		{name: "mybuns depsv2",
 			configHandler: func(c *config.Config) {
 				c.SetExperimentalFlags(experimental.FlagDependenciesV2)
 			},
 			manifestPath: "tests/testdata/mybuns/porter.yaml",
-			goldenFile:   "testdata/mybuns-depsv2.bundle.json"},
+			goldenFile:   "testdata/mybuns-depsv2.bundle.json",
+			preserveTags: false},
+		{name: "mybuns depsv2 preserveTags",
+			configHandler: func(c *config.Config) {
+				c.SetExperimentalFlags(experimental.FlagDependenciesV2)
+			},
+			manifestPath: "tests/testdata/mybuns/porter.yaml",
+			goldenFile:   "testdata/mybuns-depsv2.bundle.preserveTags.json",
+			preserveTags: true},
 		{name: "myenv depsv2",
 			configHandler: func(c *config.Config) {
 				c.SetExperimentalFlags(experimental.FlagDependenciesV2)
 			},
 			manifestPath: "tests/testdata/myenv/porter.yaml",
-			goldenFile:   "testdata/myenv-depsv2.bundle.json"},
+			goldenFile:   "testdata/myenv-depsv2.bundle.json",
+			preserveTags: false},
 	}
 
 	for _, tc := range testcases {
@@ -64,7 +80,7 @@ func TestManifestConverter(t *testing.T) {
 				{Name: "exec", VersionInfo: pkgmgmt.VersionInfo{Version: "v1.2.3"}},
 			}
 
-			a := NewManifestConverter(c.Config, m, nil, installedMixins)
+			a := NewManifestConverter(c.Config, m, nil, installedMixins, tc.preserveTags)
 
 			bun, err := a.ToBundle(ctx)
 			require.NoError(t, err, "ToBundle failed")
@@ -89,39 +105,54 @@ func prepBundleForDiff(b *bundle.Bundle) {
 }
 
 func TestManifestConverter_ToBundle(t *testing.T) {
-	t.Parallel()
+	testcases := []struct {
+		name         string
+		preserveTags bool
+	}{
+		{name: "not preserving tags", preserveTags: false},
+		{name: "preserving tags", preserveTags: true},
+	}
 
-	c := config.NewTestConfig(t)
-	c.TestContext.AddTestFileFromRoot("tests/testdata/mybuns/porter.yaml", config.Name)
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
-	ctx := context.Background()
-	m, err := manifest.LoadManifestFrom(ctx, c.Config, config.Name)
-	require.NoError(t, err, "could not load manifest")
+			c := config.NewTestConfig(t)
+			c.TestContext.AddTestFileFromRoot("tests/testdata/mybuns/porter.yaml", config.Name)
 
-	a := NewManifestConverter(c.Config, m, nil, nil)
+			ctx := context.Background()
+			m, err := manifest.LoadManifestFrom(ctx, c.Config, config.Name)
+			require.NoError(t, err, "could not load manifest")
 
-	bun, err := a.ToBundle(ctx)
-	require.NoError(t, err, "ToBundle failed")
+			a := NewManifestConverter(c.Config, m, nil, nil, tc.preserveTags)
 
-	assert.Equal(t, cnab.BundleSchemaVersion(), bun.SchemaVersion)
-	assert.Equal(t, "mybuns", bun.Name)
-	assert.Equal(t, "0.1.2", bun.Version)
-	assert.Equal(t, "A very thorough test bundle", bun.Description)
+			bun, err := a.ToBundle(ctx)
+			require.NoError(t, err, "ToBundle failed")
 
-	stamp, err := LoadStamp(bun)
-	require.NoError(t, err, "could not load porter's stamp")
-	assert.NotNil(t, stamp)
+			assert.Equal(t, cnab.BundleSchemaVersion(), bun.SchemaVersion)
+			assert.Equal(t, "mybuns", bun.Name)
+			assert.Equal(t, "0.1.2", bun.Version)
+			assert.Equal(t, "A very thorough test bundle", bun.Description)
 
-	assert.Contains(t, bun.Actions, "status", "custom action 'status' was not populated")
+			stamp, err := LoadStamp(bun)
+			require.NoError(t, err, "could not load porter's stamp")
+			assert.NotNil(t, stamp)
 
-	require.Len(t, bun.Credentials, 2, "expected two credentials")
-	assert.Contains(t, bun.Parameters, "porter-debug", "porter-debug parameter was not defined")
-	assert.Contains(t, bun.Definitions, "porter-debug-parameter", "porter-debug definition was not defined")
+			assert.Equal(t, tc.preserveTags, stamp.PreserveTags)
 
-	assert.True(t, bun.HasDependenciesV1(), "DependenciesV1 was not populated")
-	assert.Contains(t, bun.RequiredExtensions, "io.cnab.dependencies")
+			assert.Contains(t, bun.Actions, "status", "custom action 'status' was not populated")
 
-	assert.NotEmpty(t, bun.Outputs, "expected multiple outputs generated")
+			require.Len(t, bun.Credentials, 2, "expected two credentials")
+			assert.Contains(t, bun.Parameters, "porter-debug", "porter-debug parameter was not defined")
+			assert.Contains(t, bun.Definitions, "porter-debug-parameter", "porter-debug definition was not defined")
+
+			assert.True(t, bun.HasDependenciesV1(), "DependenciesV1 was not populated")
+			assert.Contains(t, bun.RequiredExtensions, "io.cnab.dependencies")
+
+			assert.NotEmpty(t, bun.Outputs, "expected multiple outputs generated")
+		})
+	}
 }
 
 func TestManifestConverter_generateBundleCredentials(t *testing.T) {
@@ -134,7 +165,7 @@ func TestManifestConverter_generateBundleCredentials(t *testing.T) {
 	m, err := manifest.LoadManifestFrom(ctx, c.Config, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
-	a := NewManifestConverter(c.Config, m, nil, nil)
+	a := NewManifestConverter(c.Config, m, nil, nil, false)
 
 	bun, err := a.ToBundle(ctx)
 	require.NoError(t, err, "ToBundle failed")
@@ -325,7 +356,7 @@ func TestManifestConverter_generateBundleParametersSchema(t *testing.T) {
 			m, err := manifest.LoadManifestFrom(ctx, c.Config, config.Name)
 			require.NoError(t, err, "could not load manifest")
 
-			a := NewManifestConverter(c.Config, m, nil, nil)
+			a := NewManifestConverter(c.Config, m, nil, nil, false)
 
 			defs := make(definition.Definitions, len(m.Parameters))
 			params := a.generateBundleParameters(ctx, &defs)
@@ -352,7 +383,7 @@ func TestManifestConverter_buildDefaultPorterParameters(t *testing.T) {
 	m, err := manifest.LoadManifestFrom(ctx, c.Config, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
-	a := NewManifestConverter(c.Config, m, nil, nil)
+	a := NewManifestConverter(c.Config, m, nil, nil, false)
 
 	defs := make(definition.Definitions, len(m.Parameters))
 	params := a.generateBundleParameters(ctx, &defs)
@@ -378,7 +409,7 @@ func TestManifestConverter_generateImages(t *testing.T) {
 	m, err := manifest.LoadManifestFrom(ctx, c.Config, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
-	a := NewManifestConverter(c.Config, m, nil, nil)
+	a := NewManifestConverter(c.Config, m, nil, nil, false)
 
 	mappedImage := manifest.MappedImage{
 		Description: "un petite server",
@@ -420,7 +451,7 @@ func TestManifestConverter_generateBundleImages_EmptyLabels(t *testing.T) {
 	m, err := manifest.LoadManifestFrom(ctx, c.Config, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
-	a := NewManifestConverter(c.Config, m, nil, nil)
+	a := NewManifestConverter(c.Config, m, nil, nil, false)
 
 	mappedImage := manifest.MappedImage{
 		Description: "un petite server",
@@ -450,7 +481,7 @@ func TestManifestConverter_generateBundleOutputs(t *testing.T) {
 	m, err := manifest.LoadManifestFrom(ctx, c.Config, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
-	a := NewManifestConverter(c.Config, m, nil, nil)
+	a := NewManifestConverter(c.Config, m, nil, nil, false)
 
 	outputDefinitions := manifest.OutputDefinitions{
 		"output1": {
@@ -608,7 +639,7 @@ func TestManifestConverter_generateDependenciesv1(t *testing.T) {
 			m, err := manifest.LoadManifestFrom(ctx, c.Config, config.Name)
 			require.NoError(t, err, "could not load manifest")
 
-			a := NewManifestConverter(c.Config, m, nil, nil)
+			a := NewManifestConverter(c.Config, m, nil, nil, false)
 			defs := make(definition.Definitions, len(m.Parameters))
 
 			depsExt, depsExtKey, err := a.generateDependencies(ctx, &defs)
@@ -714,7 +745,7 @@ func TestManifestConverter_generateDependenciesv2(t *testing.T) {
 			m, err := manifest.LoadManifestFrom(ctx, c.Config, config.Name)
 			require.NoError(t, err, "could not load manifest")
 
-			a := NewManifestConverter(c.Config, m, nil, nil)
+			a := NewManifestConverter(c.Config, m, nil, nil, false)
 			defs := make(definition.Definitions, len(m.Parameters))
 
 			depsExt, depsExtKey, err := a.generateDependencies(ctx, &defs)
@@ -749,7 +780,7 @@ func TestManifestConverter_generateParameterSources(t *testing.T) {
 	m, err := manifest.LoadManifestFrom(ctx, c.Config, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
-	a := NewManifestConverter(c.Config, m, nil, nil)
+	a := NewManifestConverter(c.Config, m, nil, nil, false)
 
 	b, err := a.ToBundle(ctx)
 	require.NoError(t, err, "ToBundle failed")
@@ -775,7 +806,7 @@ func TestNewManifestConverter_generateOutputWiringParameter(t *testing.T) {
 	m, err := manifest.LoadManifestFrom(ctx, c.Config, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
-	a := NewManifestConverter(c.Config, m, nil, nil)
+	a := NewManifestConverter(c.Config, m, nil, nil, false)
 
 	outputDef := definition.Schema{
 		Type: "string",
@@ -805,7 +836,7 @@ func TestNewManifestConverter_generateOutputWiringParameter(t *testing.T) {
 		assert.Equal(t, "PORTER_MSG_OUTPUT", param.Destination.EnvironmentVariable, "unexpected destination environment variable set")
 
 		assert.Equal(t, "https://porter.sh/generated-bundle/#porter-parameter-source-definition", paramDef.ID, "wiring parameter should have a schema id set")
-		assert.NotSame(t, outputDef, paramDef, "wiring parameter definition should be a copy")
+		assert.NotSame(t, &outputDef, &paramDef, "wiring parameter definition should be a copy")
 		assert.Equal(t, outputDef.Type, paramDef.Type, "output def and param def should have the same type")
 		assert.Equal(t, cnab.PorterInternal, paramDef.Comment, "wiring parameter should be flagged as internal")
 	})
@@ -831,7 +862,7 @@ func TestNewManifestConverter_generateDependencyOutputWiringParameter(t *testing
 	m, err := manifest.LoadManifestFrom(ctx, c.Config, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
-	a := NewManifestConverter(c.Config, m, nil, nil)
+	a := NewManifestConverter(c.Config, m, nil, nil, false)
 
 	ref := manifest.DependencyOutputReference{Dependency: "mysql", Output: "mysql-password"}
 	name, param, paramDef := a.generateDependencyOutputWiringParameter(ref)
@@ -856,7 +887,7 @@ func TestManifestConverter_generateRequiredExtensions_ParameterSources(t *testin
 	m, err := manifest.LoadManifestFrom(ctx, c.Config, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
-	a := NewManifestConverter(c.Config, m, nil, nil)
+	a := NewManifestConverter(c.Config, m, nil, nil, false)
 
 	bun, err := a.ToBundle(ctx)
 	require.NoError(t, err, "ToBundle failed")
@@ -873,7 +904,7 @@ func TestManifestConverter_generateRequiredExtensions(t *testing.T) {
 	m, err := manifest.LoadManifestFrom(ctx, c.Config, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
-	a := NewManifestConverter(c.Config, m, nil, nil)
+	a := NewManifestConverter(c.Config, m, nil, nil, false)
 
 	bun, err := a.ToBundle(ctx)
 	require.NoError(t, err, "ToBundle failed")
@@ -892,7 +923,7 @@ func TestManifestConverter_generateCustomExtensions_withRequired(t *testing.T) {
 	m, err := manifest.LoadManifestFrom(ctx, c.Config, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
-	a := NewManifestConverter(c.Config, m, nil, nil)
+	a := NewManifestConverter(c.Config, m, nil, nil, false)
 
 	bun, err := a.ToBundle(ctx)
 	require.NoError(t, err, "ToBundle failed")
@@ -912,7 +943,7 @@ func TestManifestConverter_GenerateCustomActionDefinitions(t *testing.T) {
 	m, err := manifest.LoadManifestFrom(ctx, c.Config, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
-	a := NewManifestConverter(c.Config, m, nil, nil)
+	a := NewManifestConverter(c.Config, m, nil, nil, false)
 
 	defs := a.generateCustomActionDefinitions()
 	require.Len(t, defs, 3, "expected 3 custom action definitions to be generated")
@@ -986,7 +1017,7 @@ func TestManifestConverter_generateCustomMetadata(t *testing.T) {
 	m, err := manifest.LoadManifestFrom(ctx, c.Config, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
-	a := NewManifestConverter(c.Config, m, nil, nil)
+	a := NewManifestConverter(c.Config, m, nil, nil, false)
 
 	bun, err := a.ToBundle(ctx)
 	require.NoError(t, err, "ToBundle failed")
@@ -1021,7 +1052,7 @@ func TestManifestConverter_generatedMaintainers(t *testing.T) {
 	m, err := manifest.LoadManifestFrom(ctx, c.Config, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
-	a := NewManifestConverter(c.Config, m, nil, nil)
+	a := NewManifestConverter(c.Config, m, nil, nil, false)
 
 	got := a.generateBundleMaintainers()
 	assert.Len(t, got, len(want), "Created bundle should contain desired maintainers")

@@ -338,12 +338,19 @@ func (c *PluginConnection) collectPluginLogs(ctx context.Context) {
 			}
 
 			switch pluginLog["@level"] {
-			case hclog.Error:
-				_ = span.Error(fmt.Errorf(msg))
-			case hclog.Warn:
+			case "error":
+				_ = span.Error(fmt.Errorf("%s", msg))
+			case "warn":
 				span.Warn(msg)
-			case hclog.Info:
-				span.Infof(msg)
+			case "info":
+				// This message is always printed when a plugin exists
+				// polluting the output. This is hardcoded in hashicorp/go-plugin.
+				// Always convert it to a debug log.
+				if msg == "plugin process exited" {
+					span.Debug(msg) // Log at debug level instead of info
+				} else {
+					span.Info(msg)
+				}
 			default:
 				span.Debug(msg)
 			}

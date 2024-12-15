@@ -43,11 +43,11 @@ var (
 )
 
 type Builder interface {
-	// BuildInvocationImage using the bundle in the build context directory
-	BuildInvocationImage(ctx context.Context, manifest *manifest.Manifest, opts BuildImageOptions) error
+	// BuildBundleImage using the bundle in the build context directory
+	BuildBundleImage(ctx context.Context, manifest *manifest.Manifest, opts BuildImageOptions) error
 
-	// TagInvocationImage using the origTag and newTag values supplied
-	TagInvocationImage(ctx context.Context, origTag, newTag string) error
+	// TagBundleImage using the origTag and newTag values supplied
+	TagBundleImage(ctx context.Context, origTag, newTag string) error
 }
 
 // BuildImageOptions represents some flags exposed by docker.
@@ -60,6 +60,9 @@ type BuildImageOptions struct {
 
 	// BuildArgs is the set of docker build --build-arg specified.
 	BuildArgs []string
+
+	// BuildContexts is the set of docker build --build-context specified.
+	BuildContexts []string
 
 	// NoCache is the docker build --no-cache flag specified.
 	NoCache bool

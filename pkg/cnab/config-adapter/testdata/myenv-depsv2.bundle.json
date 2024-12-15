@@ -16,6 +16,13 @@
         "env": "LOGLEVEL"
       }
     },
+    "porter-app-port-dep-output": {
+      "definition": "porter-app-port-dep-output",
+      "description": "Wires up the app dependency port output for use as a parameter. Porter internal parameter that should not be set manually.",
+      "destination": {
+        "env": "PORTER_APP_PORT_DEP_OUTPUT"
+      }
+    },
     "porter-debug": {
       "definition": "porter-debug-parameter",
       "description": "Print debug information from Porter when executing the bundle",
@@ -69,6 +76,10 @@
       "default": "info",
       "type": "string"
     },
+    "porter-app-port-dep-output": {
+      "$comment": "porter-internal",
+      "$id": "https://porter.sh/generated-bundle/#porter-parameter-source-definition"
+    },
     "porter-debug-parameter": {
       "$comment": "porter-internal",
       "$id": "https://porter.sh/generated-bundle/#porter-debug",
@@ -99,6 +110,17 @@
   ],
   "custom": {
     "io.cnab.parameter-sources": {
+      "porter-app-port-dep-output": {
+        "priority": [
+          "dependencies.output"
+        ],
+        "sources": {
+          "dependencies.output": {
+            "dependency": "app",
+            "name": "port"
+          }
+        }
+      },
       "porter-infra-ip-dep-output": {
         "priority": [
           "dependencies.output"
@@ -173,7 +195,8 @@
       },
       "manifest": "c2NoZW1hVmVyc2lvbjogMS4xLjAKbmFtZTogbXllbnYKdmVyc2lvbjogMC4xLjAKZGVzY3JpcHRpb246ICJBICdtZXRhJyBidW5kbGUgdGhhdCBkZXBsb3lzIGV2ZXJ5dGhpbmcgaXQgbmVlZHMgYnkgYWRkaW5nIGRlcGVuZGVuY2llcyIKcmVnaXN0cnk6ICJsb2NhbGhvc3Q6NTAwMCIKCmNyZWRlbnRpYWxzOgogIC0gbmFtZTogdG9rZW4KCnBhcmFtZXRlcnM6CiAgLSBuYW1lOiBsb2dMZXZlbAogICAgdHlwZTogc3RyaW5nCiAgICBkZWZhdWx0OiBpbmZvCgpvdXRwdXRzOgogIC0gbmFtZTogZW5kcG9pbnQKICAgIHR5cGU6IHN0cmluZwoKZGVwZW5kZW5jaWVzOgogIHJlcXVpcmVzOgogICAgLSBuYW1lOiBpbmZyYQogICAgICBidW5kbGU6CiAgICAgICAgaWQ6ICJodHRwczovL3BvcnRlci5zaC9pbnRlcmZhY2VzL215c3FsIgogICAgICAgIHJlZmVyZW5jZTogImxvY2FsaG9zdDo1MDAwL215aW5mcmE6djAuMS4wIgogICAgICAgICMgVE9ETyhQRVAwMDMpOiBJbXBsZW1lbnQgd2l0aCBodHRwczovL2dpdGh1Yi5jb20vZ2V0cG9ydGVyL3BvcnRlci9pc3N1ZXMvMjU0OAogICAgICAgICNpbnRlcmZhY2U6CiAgICAgICAgIyAgZG9jdW1lbnQ6CiAgICAgICAgIyAgICBvdXRwdXRzOgogICAgICAgICMgICAgICAtIG5hbWU6IG15c3FsLWNvbm5zdHIKICAgICAgICAjICAgICAgICAkaWQ6ICJwb3J0ZXIuc2gvaW50ZXJmYWNlcy9teXNxbC5jb25uZWN0aW9uLXN0cmluZyIKICAgICAgY3JlZGVudGlhbHM6CiAgICAgICAgdG9rZW46ICR7YnVuZGxlLmNyZWRlbnRpYWxzLnRva2VufQogICAgICBwYXJhbWV0ZXJzOgogICAgICAgIGRhdGFiYXNlOiBteWVudmRiCiAgICAgICAgbG9nTGV2ZWw6ICR7YnVuZGxlLnBhcmFtZXRlcnMubG9nTGV2ZWx9CiAgICAtIG5hbWU6IGFwcAogICAgICBidW5kbGU6CiAgICAgICAgcmVmZXJlbmNlOiAibG9jYWxob3N0OjUwMDAvbXlhcHA6djEuMi4zIgogICAgICBjcmVkZW50aWFsczoKICAgICAgICBkYi1jb25uc3RyOiAke2J1bmRsZS5kZXBlbmRlbmNpZXMuaW5mcmEub3V0cHV0cy5teXNxbC1jb25uc3RyfQogICAgICBwYXJhbWV0ZXJzOgogICAgICAgIGxvZ0xldmVsOiAke2J1bmRsZS5wYXJhbWV0ZXJzLmxvZ0xldmVsfQogICAgICBvdXRwdXRzOgogICAgICAgIGVuZHBvaW50OiAiaHR0cHM6Ly8ke2J1bmRsZS5kZXBlbmRlbmNpZXMuaW5mcmEub3V0cHV0cy5pcH06JHtvdXRwdXRzLnBvcnR9L215YXBwIgoKIyBUaGUgcmVzdCBiZWxvdyBpcyBib2lsZXJwbGF0ZSB0byBtYWtlIHBvcnRlciBoYXBweQojIFNpbmNlIHRoaXMgaXMgYSAibWV0YSIgYnVuZGxlLCBpdCBkb2Vzbid0IGRvIGFueXRoaW5nIGl0c2VsZiwganVzdCByZWZlcmVuY2VzIG90aGVyIGJ1bmRsZXMKbWl4aW5zOgogIC0gZXhlYwoKaW5zdGFsbDoKICAtIGV4ZWM6CiAgICAgIGNvbW1hbmQ6IGVjaG8KICAgICAgYXJndW1lbnRzOgogICAgICAgIC0gIkluc3RhbGxpbmcgYW4gZW52aXJvbm1lbnQiCgp1cGdyYWRlOgogIC0gZXhlYzoKICAgICAgY29tbWFuZDogZWNobwogICAgICBhcmd1bWVudHM6CiAgICAgICAgLSAiVXBncmFkaW5nIGFuIGVudmlyb25tZW50IgoKdW5pbnN0YWxsOgogIC0gZXhlYzoKICAgICAgY29tbWFuZDogZWNobwogICAgICBhcmd1bWVudHM6CiAgICAgICAgLSAiVW5pbnN0YWxsaW5nIGFuIGVudmlyb25tZW50Igo=",
       "version": "",
-      "commit": ""
+      "commit": "",
+      "preserveTags": false
     },
     "sh.porter.file-parameters": {}
   }

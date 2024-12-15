@@ -6,12 +6,14 @@ import (
 	"fmt"
 	"strings"
 
+	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/mixin/query"
 	"get.porter.sh/porter/pkg/pkgmgmt"
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/tracing"
 	"get.porter.sh/porter/pkg/yaml"
+	"github.com/Masterminds/semver/v3"
 	"github.com/dustin/go-humanize"
 )
 
@@ -160,7 +162,7 @@ type action struct {
 	steps manifest.Steps
 }
 
-func (l *Linter) Lint(ctx context.Context, m *manifest.Manifest) (Results, error) {
+func (l *Linter) Lint(ctx context.Context, m *manifest.Manifest, config *config.Config) (Results, error) {
 	// Check for reserved porter prefix on parameter names
 	reservedPrefixes := []string{"porter-", "porter_"}
 	params := m.Parameters
@@ -205,7 +207,7 @@ func (l *Linter) Lint(ctx context.Context, m *manifest.Manifest) (Results, error
 		actions = append(actions, action{actionName, steps})
 	}
 	for _, action := range actions {
-		res, err := validateParamsAppliesToAction(m, action.steps, tmplParams, action.name)
+		res, err := validateParamsAppliesToAction(m, action.steps, tmplParams, action.name, config)
 		if err != nil {
 			return nil, span.Error(fmt.Errorf("error validating action: %s", action.name))
 		}
@@ -263,10 +265,47 @@ func (l *Linter) Lint(ctx context.Context, m *manifest.Manifest) (Results, error
 		results = append(results, r...)
 	}
 
+	span.Debug("Getting versions for each mixin used in the manifest...")
+	err = l.validateVersionNumberConstraints(ctx, m)
+	if err != nil {
+		return nil, span.Error(err)
+	}
+
 	return results, nil
 }
 
-func validateParamsAppliesToAction(m *manifest.Manifest, steps manifest.Steps, tmplParams manifest.ParameterDefinitions, actionName string) (Results, error) {
+func (l *Linter) validateVersionNumberConstraints(ctx context.Context, m *manifest.Manifest) error {
+	for _, mixin := range m.Mixins {
+		if mixin.Version != nil {
+			installedMeta, err := l.Mixins.GetMetadata(ctx, mixin.Name)
+			if err != nil {
+				return fmt.Errorf("unable to get metadata from mixin %s: %w", mixin.Name, err)
+			}
+			installedVersion := installedMeta.GetVersionInfo().Version
+
+			err = validateSemverConstraint(mixin.Name, installedVersion, mixin.Version)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func validateSemverConstraint(name string, installedVersion string, versionConstraint *semver.Constraints) error {
+	v, err := semver.NewVersion(installedVersion)
+	if err != nil {
+		return fmt.Errorf("invalid version number from mixin %s: %s. %w", name, installedVersion, err)
+	}
+
+	if !versionConstraint.Check(v) {
+		return fmt.Errorf("mixin %s is installed at version %s but your bundle requires version %s", name, installedVersion, versionConstraint)
+	}
+	return nil
+}
+
+func validateParamsAppliesToAction(m *manifest.Manifest, steps manifest.Steps, tmplParams manifest.ParameterDefinitions, actionName string, config *config.Config) (Results, error) {
 	var results Results
 	for stepNumber, step := range steps {
 		data, err := yaml.Marshal(step.Data)
@@ -274,7 +313,7 @@ func validateParamsAppliesToAction(m *manifest.Manifest, steps manifest.Steps, t
 			return nil, fmt.Errorf("error during marshalling: %w", err)
 		}
 
-		tmplResult, err := m.ScanManifestTemplating(data)
+		tmplResult, err := m.ScanManifestTemplating(data, config)
 		if err != nil {
 			return nil, fmt.Errorf("error parsing templating: %w", err)
 		}

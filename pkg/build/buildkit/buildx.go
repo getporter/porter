@@ -27,6 +27,7 @@ import (
 	dockerconfig "github.com/docker/cli/cli/config"
 	"github.com/moby/buildkit/session"
 	"github.com/moby/buildkit/session/auth/authprovider"
+	"github.com/moby/buildkit/util/progress/progressui"
 	"go.opentelemetry.io/otel/attribute"
 )
 
@@ -65,11 +66,11 @@ func (l unstructuredLogger) Write(p []byte) (n int, err error) {
 	return len(p), nil
 }
 
-func (b *Builder) BuildInvocationImage(ctx context.Context, manifest *manifest.Manifest, opts build.BuildImageOptions) error {
+func (b *Builder) BuildBundleImage(ctx context.Context, manifest *manifest.Manifest, opts build.BuildImageOptions) error {
 	ctx, span := tracing.StartSpan(ctx, attribute.String("image", manifest.Image))
 	defer span.EndSpan()
 
-	span.Info("Building invocation image")
+	span.Info("Building bundle image")
 
 	cli, err := docker.GetDockerClient()
 	if err != nil {
@@ -83,12 +84,12 @@ func (b *Builder) BuildInvocationImage(ctx context.Context, manifest *manifest.M
 	if err != nil {
 		return span.Error(err)
 	}
-	nodes, err := bldr.LoadNodes(ctx, false)
+	nodes, err := bldr.LoadNodes(ctx)
 	if err != nil {
 		return span.Error(err)
 	}
 
-	currentSession := []session.Attachable{authprovider.NewDockerAuthProvider(dockerconfig.LoadDefaultConfigFile(b.Err))}
+	currentSession := []session.Attachable{authprovider.NewDockerAuthProvider(dockerconfig.LoadDefaultConfigFile(b.Err), make(map[string]*authprovider.AuthTLSConfig))}
 
 	ssh, err := buildflags.ParseSSHSpecs(opts.SSH)
 	if err != nil {
@@ -119,13 +120,19 @@ func (b *Builder) BuildInvocationImage(ctx context.Context, manifest *manifest.M
 	}
 	span.SetAttributes(tracing.ObjectAttribute("build-args", args))
 
+	buildContexts, err := buildflags.ParseContextNames(opts.BuildContexts)
+	if err != nil {
+		return span.Errorf("error parsing the --build-context flags: %w", err)
+	}
+
 	buildxOpts := map[string]buildx.Options{
 		"default": {
 			Tags: []string{manifest.Image},
 			Inputs: buildx.Inputs{
 				ContextPath:    b.Getwd(),
 				DockerfilePath: b.getDockerfilePath(),
-				InStream:       b.In,
+				InStream:       buildx.NewSyncMultiReader(b.In),
+				NamedContexts:  toNamedContexts(buildContexts),
 			},
 			BuildArgs: args,
 			Session:   currentSession,
@@ -133,14 +140,13 @@ func (b *Builder) BuildInvocationImage(ctx context.Context, manifest *manifest.M
 		},
 	}
 
-	mode := progress.PrinterModeAuto // Auto writes to stderr regardless of what you pass in
-	out := unstructuredLogger{span}
-	printer, err := progress.NewPrinter(ctx, out, os.Stderr, mode)
+	mode := progressui.AutoMode // Auto writes to stderr regardless of what you pass in
+	printer, err := progress.NewPrinter(ctx, os.Stderr, mode)
 	if err != nil {
 		return span.Error(err)
 	}
 
-	_, buildErr := buildx.Build(ctx, nodes, buildxOpts, dockerutil.NewClient(cli), confutil.ConfigDir(cli), printer)
+	_, buildErr := buildx.Build(ctx, nodes, buildxOpts, dockerutil.NewClient(cli), confutil.NewConfig(cli), printer)
 	printErr := printer.Wait()
 
 	if buildErr == nil && printErr != nil {
@@ -186,7 +192,7 @@ func (b *Builder) determineBuildArgs(
 		return nil, span.Errorf("Error parsing custom build arguments from the Dockerfile at %s: %w", dockerfilePath, err)
 	}
 
-	// Pass custom values as build args when building the invocation image
+	// Pass custom values as build args when building the bundle image
 	argNameRegex := regexp.MustCompile(`[^A-Z0-9_]`)
 	for k, v := range convertedCustomInput {
 		// Make all arg names upper-case
@@ -243,7 +249,15 @@ func parseBuildArgs(unparsed []string, parsed map[string]string) {
 	}
 }
 
-func (b *Builder) TagInvocationImage(ctx context.Context, origTag, newTag string) error {
+func toNamedContexts(m map[string]string) map[string]buildx.NamedContext {
+	m2 := make(map[string]buildx.NamedContext, len(m))
+	for k, v := range m {
+		m2[k] = buildx.NamedContext{Path: v}
+	}
+	return m2
+}
+
+func (b *Builder) TagBundleImage(ctx context.Context, origTag, newTag string) error {
 	ctx, log := tracing.StartSpan(ctx, attribute.String("source-tag", origTag), attribute.String("destination-tag", newTag))
 	defer log.EndSpan()
 

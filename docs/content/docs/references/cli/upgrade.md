@@ -13,7 +13,7 @@ Upgrade an installation.
 
 The first argument is the installation name to upgrade. This defaults to the name of the bundle.
 
-Porter uses the docker driver as the default runtime for executing a bundle's invocation image, but an alternate driver may be supplied via '--driver/-d' or the PORTER_RUNTIME_DRIVER environment variable.
+Porter uses the docker driver as the default runtime for executing a bundle image, but an alternate driver may be supplied via '--driver/-d' or the PORTER_RUNTIME_DRIVER environment variable.
 For example, the 'debug' driver may be specified, which simply logs the info given to it and then exits.
 
 The docker driver runs the bundle container using the local Docker host. To use a remote Docker host, set the following environment variables:
@@ -50,6 +50,7 @@ porter upgrade [INSTALLATION] [flags]
   -d, --driver string                   Specify a driver to use. Allowed values: docker, debug (default "docker")
   -f, --file porter.yaml                Path to the Porter manifest. Defaults to porter.yaml in the current directory.
       --force                           Force a fresh pull of the bundle
+      --force-upgrade                   Force the upgrade to run even if the current installation is marked as failed.
   -h, --help                            help for upgrade
       --insecure-registry               Don't require TLS for the registry
       --mount-host-volume stringArray   Mount a host volume into the bundle. Format is <host path>:<container path>[:<option>]. May be specified multiple times. Option can be ro (read-only), rw (read-write), default is ro.

@@ -9,9 +9,9 @@ Publish a bundle
 
 ### Synopsis
 
-Publishes a bundle by pushing the invocation image and bundle to a registry.
+Publishes a bundle by pushing the bundle image and bundle to a registry.
 
-Note: if overrides for registry/tag/reference are provided, this command only re-tags the invocation image and bundle; it does not re-build the bundle.
+Note: if overrides for registry/tag/reference are provided, this command only re-tags the bundle image and bundle; it does not re-build the bundle.
 
 ```
 porter publish [flags]
@@ -40,6 +40,7 @@ porter publish [flags]
       --force                Force push the bundle to overwrite the previously published bundle
   -h, --help                 help for publish
       --insecure-registry    Don't require TLS for the registry
+      --preserve-tags        Preserve the original tag name on referenced images
   -r, --reference string     Use a bundle in an OCI registry specified by the given reference.
       --registry string      Override the registry portion of the bundle reference, e.g. docker.io, myregistry.com/myorg
       --sign-bundle          Sign the bundle using the configured signing plugin

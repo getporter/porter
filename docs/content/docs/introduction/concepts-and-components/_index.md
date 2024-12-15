@@ -11,7 +11,7 @@ description: ""
 {{< card link="intro-configuration/" title="Configuration" >}}
 {{< card link="intro-credentials/" title="Credentials" >}}
 {{< card link="intro-desired-state/" title="Desired State" >}}
-{{< card link="intro-invocation-images/" title="Invocation Images" >}}
+{{< card link="intro-bundle-images/" title="Bundle Images" >}}
 {{< card link="intro-mixins/" title="Mixins" >}}
 {{< card link="mixins-vs-plugins/" title="Mixins vs Plugins" >}}
 {{< card link="intro-plugins/" title="Plugins" >}}

@@ -6,6 +6,7 @@ import (
 	"compress/gzip"
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -131,15 +132,40 @@ func (m *RuntimeManifest) loadDependencyDefinitions() error {
 	return nil
 }
 
-func (m *RuntimeManifest) resolveParameter(pd manifest.ParameterDefinition) string {
+// This wrapper type serve as a way of formatting a `map[string]interface{}` as
+// JSON when the templating by mustache is done. It makes it possible to
+// maintain the JSON string representation of the map while still allowing the
+// map to be used as a context in the templating, allowing for accessing the
+// map's keys in the template.
+type FormattedObject map[string]interface{}
+
+// Format the `FormattedObject` as a JSON string.
+func (fo FormattedObject) Format(f fmt.State, c rune) {
+	jsonStr, _ := json.Marshal(fo)
+	fmt.Fprintf(f, "%s", string(jsonStr))
+}
+
+func (m *RuntimeManifest) resolveParameter(pd manifest.ParameterDefinition) (interface{}, error) {
+	getValue := func(envVar string) (interface{}, error) {
+		value := m.config.Getenv(envVar)
+		if pd.Type == "object" {
+			var obj map[string]interface{}
+			if err := json.Unmarshal([]byte(value), &obj); err != nil {
+				return nil, err
+			}
+			return FormattedObject(obj), nil
+		}
+		return value, nil
+	}
+
 	if pd.Destination.EnvironmentVariable != "" {
-		return m.config.Getenv(pd.Destination.EnvironmentVariable)
+		return getValue(pd.Destination.EnvironmentVariable)
 	}
 	if pd.Destination.Path != "" {
-		return pd.Destination.Path
+		return pd.Destination.Path, nil
 	}
 	envVar := manifest.ParamToEnvVar(pd.Name)
-	return m.config.Getenv(envVar)
+	return getValue(envVar)
 }
 
 func (m *RuntimeManifest) resolveCredential(cd manifest.CredentialDefinition) (string, error) {
@@ -271,9 +297,12 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 		}
 
 		pe := param.Name
-		val := m.resolveParameter(param)
+		val, err := m.resolveParameter(param)
+		if err != nil {
+			return nil, err
+		}
 		if param.Sensitive {
-			m.setSensitiveValue(val)
+			m.setSensitiveValue(fmt.Sprint(val))
 		}
 		params[pe] = val
 	}
@@ -429,6 +458,8 @@ func (m *RuntimeManifest) buildAndResolveMappedDependencyOutputs(sourceData map[
 			depOutputs = depBun["outputs"].(map[string]interface{})
 		}
 
+		sourceData["outputs"] = depOutputs
+
 		for outputName, mappedOutput := range manifestDep.Outputs {
 			mappedOutputTemplate := m.GetTemplatePrefix() + mappedOutput
 			renderedOutput, err := mustache.RenderRaw(mappedOutputTemplate, true, sourceData)
@@ -438,6 +469,8 @@ func (m *RuntimeManifest) buildAndResolveMappedDependencyOutputs(sourceData map[
 			depOutputs[outputName] = renderedOutput
 		}
 	}
+
+	delete(sourceData, "outputs")
 
 	return nil
 }
@@ -774,7 +807,7 @@ func (m *RuntimeManifest) applyUnboundBundleOutputs(ctx context.Context) error {
 	return log.Error(bigErr.ErrorOrNil())
 }
 
-// ResolveInvocationImage updates the RuntimeManifest to properly reflect the invocation image passed to the bundle via the
+// ResolveInvocationImage updates the RuntimeManifest to properly reflect the bundle image passed to the bundle via the
 // mounted bundle.json and relocation mapping
 func (m *RuntimeManifest) ResolveInvocationImage(bun cnab.ExtendedBundle, reloMap relocation.ImageRelocationMap) error {
 	for _, image := range bun.InvocationImages {
@@ -784,11 +817,11 @@ func (m *RuntimeManifest) ResolveInvocationImage(bun cnab.ExtendedBundle, reloMa
 
 		ref, err := cnab.ParseOCIReference(image.Image)
 		if err != nil {
-			return fmt.Errorf("unable to parse invocation image reference: %w", err)
+			return fmt.Errorf("unable to parse bundle image reference: %w", err)
 		}
 		refWithDigest, err := ref.WithDigest(digest.Digest(image.Digest))
 		if err != nil {
-			return fmt.Errorf("unable to get invocation image reference with digest: %w", err)
+			return fmt.Errorf("unable to get bundle image reference with digest: %w", err)
 		}
 
 		m.Image = refWithDigest.String()
@@ -825,7 +858,7 @@ func (m *RuntimeManifest) ResolveImages(bun cnab.ExtendedBundle, reloMap relocat
 	}
 	for oldRef, reloRef := range reloMap {
 		alias := reverseLookup[oldRef]
-		if manifestImage, ok := m.ImageMap[alias]; ok { //note, there might be other images in the relocation mapping, like the invocation image
+		if manifestImage, ok := m.ImageMap[alias]; ok { //note, there might be other images in the relocation mapping, like the bundle image
 			err := resolveImage(&manifestImage, reloRef)
 			if err != nil {
 				return fmt.Errorf("unable to update image map from relocation mapping: %w", err)

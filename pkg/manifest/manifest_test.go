@@ -12,6 +12,7 @@ import (
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/schema"
 	"get.porter.sh/porter/pkg/yaml"
+	"github.com/Masterminds/semver/v3"
 	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -263,7 +264,7 @@ func TestManifest_Validate_SchemaVersion(t *testing.T) {
 		cfg.TestContext.UseFilesystem()
 		cfg.Data.SchemaCheck = string(schema.CheckStrategyExact)
 
-		m, err := ReadManifest(cfg.Context, "testdata/porter.yaml")
+		m, err := ReadManifest(cfg.Context, "testdata/porter.yaml", cfg.Config)
 		require.NoError(t, err)
 
 		err = m.Validate(ctx, cfg.Config)
@@ -281,7 +282,7 @@ func TestManifest_Validate_SchemaVersion(t *testing.T) {
 		cfg.TestContext.EditYaml("porter.yaml", func(yq *yaml.Editor) error {
 			return yq.SetValue("schemaVersion", "1.1.0")
 		})
-		m, err := ReadManifest(cfg.Context, "porter.yaml")
+		m, err := ReadManifest(cfg.Context, "porter.yaml", cfg.Config)
 		require.NoError(t, err)
 
 		err = m.Validate(ctx, cfg.Config)
@@ -300,7 +301,7 @@ func TestManifest_Validate_SchemaVersion(t *testing.T) {
 		defer span.EndSpan()
 		cfg.Data.SchemaCheck = string(schema.CheckStrategyNone)
 
-		m, err := ReadManifest(cfg.Context, "testdata/porter.yaml")
+		m, err := ReadManifest(cfg.Context, "testdata/porter.yaml", cfg.Config)
 		require.NoError(t, err)
 
 		m.SchemaVersion = ""
@@ -415,7 +416,7 @@ func TestManifest_Validate_WrongSchema(t *testing.T) {
 func TestReadManifest_URL(t *testing.T) {
 	cxt := portercontext.NewTestContext(t)
 	url := "https://raw.githubusercontent.com/getporter/porter/v0.27.1/pkg/manifest/testdata/simple.porter.yaml"
-	m, err := ReadManifest(cxt.Context, url)
+	m, err := ReadManifest(cxt.Context, url, config.NewTestConfig(t).Config)
 
 	require.NoError(t, err)
 	assert.Equal(t, "hello", m.Name)
@@ -423,7 +424,7 @@ func TestReadManifest_URL(t *testing.T) {
 
 func TestReadManifest_Validate_InvalidURL(t *testing.T) {
 	cxt := portercontext.NewTestContext(t)
-	_, err := ReadManifest(cxt.Context, "http://fake-example-porter")
+	_, err := ReadManifest(cxt.Context, "http://fake-example-porter", config.NewTestConfig(t).Config)
 
 	assert.Error(t, err)
 	assert.Regexp(t, "could not reach url http://fake-example-porter", err)
@@ -432,7 +433,7 @@ func TestReadManifest_Validate_InvalidURL(t *testing.T) {
 func TestReadManifest_File(t *testing.T) {
 	cxt := portercontext.NewTestContext(t)
 	cxt.AddTestFile("testdata/simple.porter.yaml", config.Name)
-	m, err := ReadManifest(cxt.Context, config.Name)
+	m, err := ReadManifest(cxt.Context, config.Name, config.NewTestConfig(t).Config)
 
 	require.NoError(t, err)
 	assert.Equal(t, "hello", m.Name)
@@ -562,7 +563,7 @@ func TestSetDefaults(t *testing.T) {
 
 func TestReadManifest_Validate_MissingFile(t *testing.T) {
 	cxt := portercontext.NewTestContext(t)
-	_, err := ReadManifest(cxt.Context, "fake-porter.yaml")
+	_, err := ReadManifest(cxt.Context, "fake-porter.yaml", config.NewTestConfig(t).Config)
 
 	assert.EqualError(t, err, "the specified porter configuration file fake-porter.yaml does not exist")
 }
@@ -570,7 +571,7 @@ func TestReadManifest_Validate_MissingFile(t *testing.T) {
 func TestMixinDeclaration_UnmarshalYAML(t *testing.T) {
 	cxt := portercontext.NewTestContext(t)
 	cxt.AddTestFile("testdata/mixin-with-config.yaml", config.Name)
-	m, err := ReadManifest(cxt.Context, config.Name)
+	m, err := ReadManifest(cxt.Context, config.Name, config.NewTestConfig(t).Config)
 
 	require.NoError(t, err)
 	assert.Len(t, m.Mixins, 3, "expected 3 mixins")
@@ -583,10 +584,47 @@ func TestMixinDeclaration_UnmarshalYAML(t *testing.T) {
 func TestMixinDeclaration_UnmarshalYAML_Invalid(t *testing.T) {
 	cxt := portercontext.NewTestContext(t)
 	cxt.AddTestFile("testdata/mixin-with-bad-config.yaml", config.Name)
-	_, err := ReadManifest(cxt.Context, config.Name)
+	_, err := ReadManifest(cxt.Context, config.Name, config.NewTestConfig(t).Config)
 
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "mixin declaration contained more than one mixin")
+}
+
+func TestMixinDeclaration_UnmarshalYAML_Versions(t *testing.T) {
+	cxt := portercontext.NewTestContext(t)
+	cxt.AddTestFile("testdata/mixin-with-versions.yaml", config.Name)
+	m, err := ReadManifest(cxt.Context, config.Name, config.NewTestConfig(t).Config)
+
+	execVersion, _ := semver.NewConstraint("1")
+	axVersion, _ := semver.NewConstraint("1.1.X")
+	terraformVersoin, _ := semver.NewConstraint(">=2")
+
+	require.NoError(t, err)
+	assert.Len(t, m.Mixins, 3, "expected 3 mixins")
+	assert.Equal(t, "exec", m.Mixins[0].Name)
+	assert.Equal(t, "az", m.Mixins[1].Name)
+	assert.Equal(t, "terraform", m.Mixins[2].Name)
+	assert.Equal(t, execVersion, m.Mixins[0].Version)
+	assert.Equal(t, axVersion, m.Mixins[1].Version)
+	assert.Equal(t, terraformVersoin, m.Mixins[2].Version)
+}
+
+func TestMixinDeclaration_UnmarshalYAML_Versions_Empty(t *testing.T) {
+	cxt := portercontext.NewTestContext(t)
+	cxt.AddTestFile("testdata/mixin-with-empty-version.yaml", config.Name)
+	_, err := ReadManifest(cxt.Context, config.Name, config.NewTestConfig(t).Config)
+
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid mixin name/version: improper constraint:")
+}
+
+func TestMixinDeclaration_UnmarshalYAML_Versions_Invalid(t *testing.T) {
+	cxt := portercontext.NewTestContext(t)
+	cxt.AddTestFile("testdata/mixin-with-invalid-version.yaml", config.Name)
+	_, err := ReadManifest(cxt.Context, config.Name, config.NewTestConfig(t).Config)
+
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid mixin name/version: expected name@version, got: az@this@that")
 }
 
 func TestCredentialsDefinition_UnmarshalYAML(t *testing.T) {
@@ -598,7 +636,7 @@ func TestCredentialsDefinition_UnmarshalYAML(t *testing.T) {
 	t.Run("all credentials in the generated manifest file are required", func(t *testing.T) {
 		cxt := portercontext.NewTestContext(t)
 		cxt.AddTestFile("testdata/with-credentials.yaml", config.Name)
-		m, err := ReadManifest(cxt.Context, config.Name)
+		m, err := ReadManifest(cxt.Context, config.Name, config.NewTestConfig(t).Config)
 		require.NoError(t, err)
 		assertAllCredentialsRequired(t, m.Credentials)
 
@@ -878,7 +916,7 @@ func TestLoadManifestWithRequiredExtensions(t *testing.T) {
 func TestReadManifest_WithTemplateVariables(t *testing.T) {
 	cxt := portercontext.NewTestContext(t)
 	cxt.AddTestFile("testdata/porter-with-templating.yaml", config.Name)
-	m, err := ReadManifest(cxt.Context, config.Name)
+	m, err := ReadManifest(cxt.Context, config.Name, config.NewTestConfig(t).Config)
 	require.NoError(t, err, "ReadManifest failed")
 	wantVars := []string{"bundle.dependencies.mysql.outputs.mysql-password", "bundle.outputs.msg", "bundle.outputs.name"}
 	assert.Equal(t, wantVars, m.TemplateVariables)
@@ -887,7 +925,7 @@ func TestReadManifest_WithTemplateVariables(t *testing.T) {
 func TestManifest_GetTemplatedOutputs(t *testing.T) {
 	cxt := portercontext.NewTestContext(t)
 	cxt.AddTestFile("testdata/porter-with-templating.yaml", config.Name)
-	m, err := ReadManifest(cxt.Context, config.Name)
+	m, err := ReadManifest(cxt.Context, config.Name, config.NewTestConfig(t).Config)
 	require.NoError(t, err, "ReadManifest failed")
 
 	outputs := m.GetTemplatedOutputs()
@@ -899,7 +937,7 @@ func TestManifest_GetTemplatedOutputs(t *testing.T) {
 func TestManifest_GetTemplatedDependencyOutputs(t *testing.T) {
 	cxt := portercontext.NewTestContext(t)
 	cxt.AddTestFile("testdata/porter-with-templating.yaml", config.Name)
-	m, err := ReadManifest(cxt.Context, config.Name)
+	m, err := ReadManifest(cxt.Context, config.Name, config.NewTestConfig(t).Config)
 	require.NoError(t, err, "ReadManifest failed")
 
 	outputs := m.GetTemplatedDependencyOutputs()

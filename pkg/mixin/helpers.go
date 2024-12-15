@@ -10,6 +10,7 @@ import (
 	"get.porter.sh/porter/pkg/pkgmgmt"
 	"get.porter.sh/porter/pkg/pkgmgmt/client"
 	"get.porter.sh/porter/pkg/portercontext"
+	"github.com/Masterminds/semver/v3"
 )
 
 type TestMixinProvider struct {
@@ -24,6 +25,10 @@ type TestMixinProvider struct {
 	ReturnBuildError bool
 }
 
+// hoist these into variables so tests can reference them safely
+var ExampleMixinName = "testmixin"
+var ExampleMixinSemver = semver.New(0, 1, 0, "", "")
+
 // NewTestMixinProvider helps us test Porter.Mixins in our unit tests without actually hitting any real plugins on the file system.
 func NewTestMixinProvider() *TestMixinProvider {
 	packages := []pkgmgmt.PackageMetadata{
@@ -36,9 +41,9 @@ func NewTestMixinProvider() *TestMixinProvider {
 			},
 		},
 		&Metadata{
-			Name: "testmixin",
+			Name: ExampleMixinName,
 			VersionInfo: pkgmgmt.VersionInfo{
-				Version: "v0.1.0",
+				Version: fmt.Sprintf("v%s", ExampleMixinSemver.String()),
 				Commit:  "abc123",
 				Author:  "Porter Authors",
 			},
@@ -78,7 +83,7 @@ func (p *TestMixinProvider) GetSchema(ctx context.Context, name string) (string,
 	switch name {
 	case "exec":
 		schemaFile = "../exec/schema/exec.json"
-	case "testmixin":
+	case ExampleMixinName:
 		schemaFile = "../../cmd/testmixin/schema.json"
 	default:
 		return "", nil

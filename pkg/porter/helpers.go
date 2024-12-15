@@ -267,10 +267,10 @@ func NewTestBuildProvider() *TestBuildProvider {
 	return &TestBuildProvider{}
 }
 
-func (t *TestBuildProvider) BuildInvocationImage(ctx context.Context, manifest *manifest.Manifest, opts build.BuildImageOptions) error {
+func (t *TestBuildProvider) BuildBundleImage(ctx context.Context, manifest *manifest.Manifest, opts build.BuildImageOptions) error {
 	return nil
 }
 
-func (t *TestBuildProvider) TagInvocationImage(ctx context.Context, origTag, newTag string) error {
+func (t *TestBuildProvider) TagBundleImage(ctx context.Context, origTag, newTag string) error {
 	return nil
 }

@@ -6,7 +6,7 @@ aliases:
   - /copying-bundles/
 ---
 
-Porter allows you to copy a bundle, and all associated images, from one registry to another. This includes both the invocation images and the images defined in the `images` section of the bundle. For example, consider the following `images` map:
+Porter allows you to copy a bundle, and all associated images, from one registry to another. This includes both the bundle images and the images defined in the `images` section of the bundle. For example, consider the following `images` map:
 
 ```yaml
 images:
@@ -22,7 +22,7 @@ images:
     digest: "sha256:85b1a9b4b60a4cf73a23517dad677e64edf467107fa7d58fce9c50e6a3e4c914"
 ```
 
-When this bundle is copied, the invocation image, along with the `backend` and `websvc` images will be copied to the new repository. If the bundle author has properly used image [wiring](/wiring/#wiring-images), the new image references will be available within the bundle at run-time.
+When this bundle is copied, the bundle image, along with the `backend` and `websvc` images will be copied to the new repository. If the bundle author has properly used image [wiring](/wiring/#wiring-images), the new image references will be available within the bundle at run-time.
 
 This is useful when you have restrictions on where you can pull Docker images from or would otherwise like to have control over assets you will be using. Any operation on the copied bundle will utilize these copied images as well. IIf you'd like to rename something within a registry, Porter also allows you to copy from one bundle tag to another bundle tag inside the same registry.
 

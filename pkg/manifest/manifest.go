@@ -82,16 +82,16 @@ type Manifest struct {
 	// in the format REGISTRY/NAME or REGISTRY/NAME:TAG
 	Reference string `yaml:"reference,omitempty"`
 
-	// DockerTag is the Docker tag portion of the published invocation
+	// DockerTag is the Docker tag portion of the published bundle
 	// image and bundle.  It will only be set at time of publishing.
 	DockerTag string `yaml:"-"`
 
-	// Image is the name of the invocation image in the format REGISTRY/NAME:TAG
+	// Image is the name of the bundle image in the format REGISTRY/NAME:TAG
 	// It doesn't map to any field in the manifest as it has been deprecated
 	// and isn't meant to be user-specified
 	Image string `yaml:"-"`
 
-	// Dockerfile is the relative path to the Dockerfile template for the invocation image
+	// Dockerfile is the relative path to the Dockerfile template for the bundle image
 	Dockerfile string `yaml:"dockerfile,omitempty"`
 
 	Mixins []MixinDeclaration `yaml:"mixins,omitempty"`
@@ -280,6 +280,20 @@ func (m *Manifest) getTemplateDependencyOutputName(value string) (string, string
 	dependencyName := matches[1]
 	outputName := matches[2]
 	return dependencyName, outputName, true
+}
+
+var templatedDependencyShortOutputRegex = regexp.MustCompile(`^outputs.(.+)$`)
+
+// getTemplateDependencyShortOutputName returns the dependency output name from the
+// template variable.
+func (m *Manifest) getTemplateDependencyShortOutputName(value string) (string, bool) {
+	matches := templatedDependencyShortOutputRegex.FindStringSubmatch(value)
+	if len(matches) < 2 {
+		return "", false
+	}
+
+	outputName := matches[1]
+	return outputName, true
 }
 
 var templatedParameterRegex = regexp.MustCompile(`^bundle\.parameters\.(.+)$`)
@@ -626,8 +640,30 @@ func (l Location) IsEmpty() bool {
 }
 
 type MixinDeclaration struct {
-	Name   string
-	Config interface{}
+	Name    string
+	Version *semver.Constraints
+	Config  interface{}
+}
+
+func extractVersionFromName(name string) (string, *semver.Constraints, error) {
+	parts := strings.Split(name, "@")
+
+	// if there isn't a version in the name, just stop!
+	if len(parts) == 1 {
+		return name, nil, nil
+	}
+
+	// if we somehow got more parts than expected!
+	if len(parts) != 2 {
+		return "", nil, fmt.Errorf("expected name@version, got: %s", name)
+	}
+
+	version, err := semver.NewConstraint(parts[1])
+	if err != nil {
+		return "", nil, err
+	}
+
+	return parts[0], version, nil
 }
 
 // UnmarshalYAML allows mixin declarations to either be a normal list of strings
@@ -638,12 +674,25 @@ type MixinDeclaration struct {
 //   - az:
 //     extensions:
 //   - iot
+//
+// for each type, we can optionally support a version number in the name field
+// mixins:
+// - exec@2.1.1
+// or
+//   - az@2.1.1
+//     extensions:
+//   - iot
 func (m *MixinDeclaration) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	// First try to just read the mixin name
 	var mixinNameOnly string
 	err := unmarshal(&mixinNameOnly)
 	if err == nil {
-		m.Name = mixinNameOnly
+		name, version, err := extractVersionFromName(mixinNameOnly)
+		if err != nil {
+			return fmt.Errorf("invalid mixin name/version: %w", err)
+		}
+		m.Name = name
+		m.Version = version
 		m.Config = nil
 		return nil
 	}
@@ -662,7 +711,12 @@ func (m *MixinDeclaration) UnmarshalYAML(unmarshal func(interface{}) error) erro
 	}
 
 	for mixinName, config := range mixinWithConfig {
-		m.Name = mixinName
+		name, version, err := extractVersionFromName(mixinName)
+		if err != nil {
+			return fmt.Errorf("invalid mixin name/version: %w", err)
+		}
+		m.Name = name
+		m.Version = version
 		m.Config = config
 		break // There is only one mixin anyway but break for clarity
 	}
@@ -1155,13 +1209,13 @@ func UnmarshalManifest(cxt *portercontext.Context, manifestData []byte) (*Manife
 
 // SetDefaults updates the manifest with default values where not populated
 func (m *Manifest) SetDefaults() error {
-	return m.SetInvocationImageAndReference("")
+	return m.SetBundleImageAndReference("")
 }
 
-// SetInvocationImageAndReference sets the invocation image name and the
+// SetBundleImageAndReference sets the bundle image name and the
 // bundle reference on the manifest per the provided reference or via the
 // registry or name values on the manifest.
-func (m *Manifest) SetInvocationImageAndReference(ref string) error {
+func (m *Manifest) SetBundleImageAndReference(ref string) error {
 	if ref != "" {
 		m.Reference = ref
 	}
@@ -1277,7 +1331,7 @@ func ReadManifestData(cxt *portercontext.Context, path string) ([]byte, error) {
 
 // ReadManifest determines if specified path is a URL or a filepath.
 // After reading the data in the path it returns a Manifest and any errors
-func ReadManifest(cxt *portercontext.Context, path string) (*Manifest, error) {
+func ReadManifest(cxt *portercontext.Context, path string, config *config.Config) (*Manifest, error) {
 	data, err := ReadManifestData(cxt, path)
 	if err != nil {
 		return nil, err
@@ -1288,7 +1342,7 @@ func ReadManifest(cxt *portercontext.Context, path string) (*Manifest, error) {
 		return nil, fmt.Errorf("unsupported property set or a custom action is defined incorrectly: %w", err)
 	}
 
-	tmplResult, err := m.ScanManifestTemplating(data)
+	tmplResult, err := m.ScanManifestTemplating(data, config)
 	if err != nil {
 		return nil, err
 	}
@@ -1324,22 +1378,20 @@ func (m *Manifest) GetTemplatePrefix() string {
 	return ""
 }
 
-func (m *Manifest) ScanManifestTemplating(data []byte) (templateScanResult, error) {
-	const disableHtmlEscaping = true
-	templateSrc := m.GetTemplatePrefix() + string(data)
-	tmpl, err := mustache.ParseStringRaw(templateSrc, disableHtmlEscaping)
+func (m *Manifest) ScanManifestTemplating(data []byte, config *config.Config) (templateScanResult, error) {
+	// Handle outputs variable
+	shortOutputVars, err := m.mapShortDependencyOutputVariables(config)
 	if err != nil {
 		return templateScanResult{}, fmt.Errorf("error parsing the templating used in the manifest: %w", err)
 	}
 
-	tags := tmpl.Tags()
-	vars := map[string]struct{}{} // Keep track of unique variable names
-	for _, tag := range tags {
-		if tag.Type() != mustache.Variable {
-			continue
-		}
+	vars, err := m.getTemplateVariables(string(data))
+	if err != nil {
+		return templateScanResult{}, fmt.Errorf("error parsing the templating used in the manifest: %w", err)
+	}
 
-		vars[tag.Name()] = struct{}{}
+	if config.IsFeatureEnabled(experimental.FlagDependenciesV2) {
+		m.deduplicateAndFilterShortOutputVariables(shortOutputVars, vars)
 	}
 
 	result := templateScanResult{
@@ -1353,13 +1405,69 @@ func (m *Manifest) ScanManifestTemplating(data []byte) (templateScanResult, erro
 	return result, nil
 }
 
+func (m *Manifest) mapShortDependencyOutputVariables(config *config.Config) ([]string, error) {
+	shortOutputVars := []string{}
+	if config.IsFeatureEnabled(experimental.FlagDependenciesV2) {
+		for _, dep := range m.Dependencies.Requires {
+			for outputName, output := range dep.Outputs {
+				vars, err := m.getTemplateVariables(output)
+				if err != nil {
+					return nil, fmt.Errorf("error parsing the templating used for dependency %s output %s: %w", dep.Name, outputName, err)
+				}
+
+				for tmplVar := range vars {
+					outputTemplateName, ok := m.getTemplateDependencyShortOutputName(tmplVar)
+					if ok {
+						shortOutputVars = append(shortOutputVars, fmt.Sprintf("bundle.dependencies.%s.outputs.%s", dep.Name, outputTemplateName))
+					}
+				}
+			}
+		}
+	}
+
+	return shortOutputVars, nil
+}
+
+func (m *Manifest) deduplicateAndFilterShortOutputVariables(shortOutputVars []string, vars map[string]struct{}) {
+	for tmplVar := range vars {
+		if strings.HasPrefix(tmplVar, "outputs.") {
+			delete(vars, tmplVar)
+		}
+	}
+
+	for _, shortHandVar := range shortOutputVars {
+		vars[shortHandVar] = struct{}{}
+	}
+}
+
+func (m *Manifest) getTemplateVariables(data string) (map[string]struct{}, error) {
+	const disableHtmlEscaping = true
+	templateSrc := m.GetTemplatePrefix() + string(data)
+	tmpl, err := mustache.ParseStringRaw(templateSrc, disableHtmlEscaping)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing the templating used in the manifest: %w", err)
+	}
+
+	tags := tmpl.Tags()
+	vars := map[string]struct{}{} // Keep track of unique variable names
+	for _, tag := range tags {
+		if tag.Type() != mustache.Variable {
+			continue
+		}
+
+		vars[tag.Name()] = struct{}{}
+	}
+
+	return vars, nil
+}
+
 // LoadManifestFrom reads and validates the manifest at the specified location,
 // and returns a populated Manifest structure.
 func LoadManifestFrom(ctx context.Context, config *config.Config, file string) (*Manifest, error) {
 	ctx, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
 
-	m, err := ReadManifest(config.Context, file)
+	m, err := ReadManifest(config.Context, file, config)
 	if err != nil {
 		return nil, err
 	}

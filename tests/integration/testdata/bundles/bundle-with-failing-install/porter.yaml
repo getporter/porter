@@ -1,0 +1,29 @@
+schemaVersion: 1.0.1
+name: porter-failing-install
+version: 0.1.0
+description: "A bundle that always fails installation"
+registry: "localhost:5000"
+
+mixins:
+  - exec
+
+install:
+  - exec:
+      description: "Install Hello World"
+      command: ./helpers.sh
+      arguments:
+        - install
+
+upgrade:
+  - exec:
+      description: "Upgrade Hello World"
+      command: ./helpers.sh
+      arguments:
+        - upgrade
+
+uninstall:
+  - exec:
+      description: "Uninstall Hello World"
+      command: ./helpers.sh
+      arguments:
+        - uninstall

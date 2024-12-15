@@ -113,7 +113,7 @@ default-secrets: "mysecrets"
 default-secrets-plugin: "kubernetes.secret"
 
 # Use the signer configuration name mysigner.
-# If not specified, bundles and invocation images cannot be signed.
+# If not specified, bundles and bundle images cannot be signed.
 default-signer: "mysigner"
 
 # Defines storage accounts
@@ -256,7 +256,7 @@ The following log settings are available:
 | ---------------- | ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | logs.log-to-file | PORTER_LOGS_LOG_TO_FILE | Specifies if a logfile should be written for each command.                                                                                                                                                     |
 | logs.structured  | PORTER_LOGS_STRUCTURED  | Specifies if the logs printed to the console should include a timestamp and log level                                                                                                                          |
-| logs.level       | PORTER_LOGS_LEVEL       | Filters the logs to the specified level and higher. The log level controls both the logs written to file, and the logs output to the console when porter is run. Allowed values are: debug, info, warn, error. |
+| logs.level       | PORTER_LOGS_LEVEL       | Filters the logs to the specified level and higher. The log level controls the logs written to file when porter is run. Allowed values are: debug, info, warn, error. |
 
 #### Telemetry
 
@@ -303,7 +303,7 @@ When it is completed, it is used to activate the features from [PEP003 - Advance
 ### Full control Dockerfile
 
 The `full-control-dockerfile` experimental flag disables all Dockerfile generation when building bundles.
-When enabled Porter will use the file referenced by `dockerfile` in the Porter manifest when building the invocation image *without modifying* it in any way.
+When enabled Porter will use the file referenced by `dockerfile` in the Porter manifest when building the bundle image *without modifying* it in any way.
 Ie. Porter will not process `# PORTER_x` placeholders, nor inject any user configuration and `CMD` statements.
 It is up to the bundle author to ensure that the contents of the Dockerfile contains the necessary tools for any mixins to function and a layout that can be executed as a Porter bundle.
 

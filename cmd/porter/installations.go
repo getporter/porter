@@ -224,7 +224,7 @@ The first argument is the name of the installation to create. This defaults to t
 
 Once a bundle has been successfully installed, the install action cannot be repeated. This is a precaution to avoid accidentally overwriting an existing installation. If you need to re-run install, which is common when authoring a bundle, you can use the --force flag to by-pass this check.
 
-Porter uses the docker driver as the default runtime for executing a bundle's invocation image, but an alternate driver may be supplied via '--driver/-d' or the PORTER_RUNTIME_DRIVER environment variable.
+Porter uses the docker driver as the default runtime for executing a bundle image, but an alternate driver may be supplied via '--driver/-d' or the PORTER_RUNTIME_DRIVER environment variable.
 For example, the 'debug' driver may be specified, which simply logs the info given to it and then exits.
 
 The docker driver runs the bundle container using the local Docker host. To use a remote Docker host, set the following environment variables:
@@ -274,7 +274,7 @@ func buildInstallationUpgradeCommand(p *porter.Porter) *cobra.Command {
 
 The first argument is the installation name to upgrade. This defaults to the name of the bundle.
 
-Porter uses the docker driver as the default runtime for executing a bundle's invocation image, but an alternate driver may be supplied via '--driver/-d' or the PORTER_RUNTIME_DRIVER environment variable.
+Porter uses the docker driver as the default runtime for executing a bundle image, but an alternate driver may be supplied via '--driver/-d' or the PORTER_RUNTIME_DRIVER environment variable.
 For example, the 'debug' driver may be specified, which simply logs the info given to it and then exits.
 
 The docker driver runs the bundle container using the local Docker host. To use a remote Docker host, set the following environment variables:
@@ -304,6 +304,8 @@ The docker driver runs the bundle container using the local Docker host. To use 
 		"Namespace of the specified installation. Defaults to the global namespace.")
 	f.StringVar(&opts.Version, "version", "",
 		"Version to which the installation should be upgraded. This represents the version of the bundle, which assumes the convention of setting the bundle tag to its version.")
+	f.BoolVar(&opts.ForceUpgrade, "force-upgrade", false,
+		"Force the upgrade to run even if the current installation is marked as failed.")
 	addBundleActionFlags(f, opts)
 
 	// Allow configuring the --driver flag with runtime-driver, to avoid conflicts with other commands
@@ -322,7 +324,7 @@ func buildInstallationInvokeCommand(p *porter.Porter) *cobra.Command {
 
 The first argument is the installation name upon which to invoke the action. This defaults to the name of the bundle.
 
-Porter uses the docker driver as the default runtime for executing a bundle's invocation image, but an alternate driver may be supplied via '--driver/-d' or the PORTER_RUNTIME_DRIVER environment variable.
+Porter uses the docker driver as the default runtime for executing a bundle image, but an alternate driver may be supplied via '--driver/-d' or the PORTER_RUNTIME_DRIVER environment variable.
 For example, the 'debug' driver may be specified, which simply logs the info given to it and then exits.
 
 The docker driver runs the bundle container using the local Docker host. To use a remote Docker host, set the following environment variables:
@@ -370,7 +372,7 @@ func buildInstallationUninstallCommand(p *porter.Porter) *cobra.Command {
 
 The first argument is the installation name to uninstall. This defaults to the name of the bundle.
 
-Porter uses the docker driver as the default runtime for executing a bundle's invocation image, but an alternate driver may be supplied via '--driver/-d'' or the PORTER_RUNTIME_DRIVER environment variable.
+Porter uses the docker driver as the default runtime for executing a bundle image, but an alternate driver may be supplied via '--driver/-d'' or the PORTER_RUNTIME_DRIVER environment variable.
 For example, the 'debug' driver may be specified, which simply logs the info given to it and then exits.
 
 The docker driver runs the bundle container using the local Docker host. To use a remote Docker host, set the following environment variables:

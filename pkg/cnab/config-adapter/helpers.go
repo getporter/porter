@@ -13,7 +13,7 @@ import (
 
 func LoadTestBundle(t *testing.T, config *config.Config, path string) cnab.ExtendedBundle {
 	ctx := context.Background()
-	m, err := manifest.ReadManifest(config.Context, path)
+	m, err := manifest.ReadManifest(config.Context, path, config)
 	require.NoError(t, err)
 	b, err := ConvertToTestBundle(ctx, config, m)
 	require.NoError(t, err)
@@ -24,6 +24,6 @@ func LoadTestBundle(t *testing.T, config *config.Config, path string) cnab.Exten
 // and making a bundle.json for it. Does not make an accurate representation
 // of the bundle, but is suitable for testing.
 func ConvertToTestBundle(ctx context.Context, cfg *config.Config, manifest *manifest.Manifest) (cnab.ExtendedBundle, error) {
-	converter := NewManifestConverter(cfg, manifest, nil, nil)
+	converter := NewManifestConverter(cfg, manifest, nil, nil, false)
 	return converter.ToBundle(ctx)
 }

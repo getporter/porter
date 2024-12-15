@@ -10,6 +10,7 @@ import (
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/tests/testdata"
 	"get.porter.sh/porter/tests/tester"
+	"github.com/google/go-containerregistry/pkg/crane"
 	"github.com/stretchr/testify/require"
 )
 
@@ -57,4 +58,54 @@ func TestCopy_UsesRelocationMap(t *testing.T) {
 	images := inspectRaw["invocationImages"].([]interface{})
 	invocationImage := images[0].(map[string]interface{})
 	require.Contains(t, invocationImage["originalImage"].(string), fmt.Sprintf("%s/orig-mydb", reg1))
+}
+
+func TestCopy_PreserveTags(t *testing.T) {
+	testcases := []struct {
+		name         string
+		preserveTags bool
+	}{
+		{"preserve tags", true},
+		{"do not preserve tags", false},
+	}
+
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			test, err := tester.NewTest(t)
+			defer test.Close()
+			require.NoError(t, err, "test setup failed")
+
+			// Start a temporary registry, that uses plain http (no TLS)
+			reg1 := test.StartTestRegistry(tester.TestRegistryOptions{UseTLS: false})
+			defer reg1.Close()
+
+			// Publish the bundle to the insecure registry
+			origRef := fmt.Sprintf("%s/orig-mydb:v0.1.1", reg1)
+			opts := []func(*tester.TestBundleOptions){}
+			if tc.preserveTags {
+				opts = append(opts, tester.PreserveTags)
+			}
+			test.MakeTestBundle(testdata.EmbeddedImg, origRef, opts...)
+
+			// Start a temporary (insecure) registry on a random port, with a self-signed certificate
+			reg2 := test.StartTestRegistry(tester.TestRegistryOptions{UseTLS: true})
+			defer reg2.Close()
+
+			// Copy the bundle to the integration test registry, using --insecure-registry
+			// because the destination uses a self-signed certificate
+			copiedRef := fmt.Sprintf("%s/copy-mydb:v0.1.1", reg2)
+			test.RequirePorter("copy", "--source", origRef, "--destination", copiedRef, "--insecure-registry")
+
+			reg1.Close()
+
+			// Get the original image from the relocation map
+			_, err = crane.Digest(fmt.Sprintf("%s/alpine:3.20.3", reg2), crane.Insecure)
+			if tc.preserveTags {
+				require.NoError(t, err)
+			} else {
+				require.Error(t, err)
+			}
+		})
+	}
 }

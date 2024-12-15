@@ -11,9 +11,17 @@ import (
 	"get.porter.sh/porter/pkg/yaml"
 	"get.porter.sh/porter/tests"
 	"get.porter.sh/porter/tests/testdata"
-	"github.com/carolynvs/magex/shx"
 	"github.com/stretchr/testify/require"
+	"github.com/uwu-tools/magex/shx"
 )
+
+type TestBundleOptions struct {
+	PreserveTags bool
+}
+
+func PreserveTags(opts *TestBundleOptions) {
+	opts.PreserveTags = true
+}
 
 // PrepareTestBundle ensures that the mybuns test bundle is ready to use.
 func (t Tester) PrepareTestBundle() {
@@ -34,24 +42,31 @@ func (t Tester) ApplyTestBundlePrerequisites() {
 	t.RequirePorter("credentials", "apply", filepath.Join(t.RepoRoot, "tests/testdata/creds/mybuns.yaml"), "--namespace=")
 }
 
-func (t Tester) MakeTestBundle(name string, ref string) {
-	// Skip if we've already pushed it for another test
+func (t Tester) MakeTestBundle(name string, ref string, options ...func(*TestBundleOptions)) {
+	opts := TestBundleOptions{}
+	for _, option := range options {
+		option(&opts)
+	}
+
 	if _, _, err := t.RunPorter("explain", ref); err == nil {
 		return
 	}
-
 	pwd, _ := os.Getwd()
 	defer t.Chdir(pwd)
 	t.Chdir(filepath.Join(t.RepoRoot, "tests/testdata/", name))
-
-	// TODO(carolynvs): porter publish detection of needing a build should do this
 	output, err := shx.OutputS("docker", "inspect", strings.Replace(ref, name, name+"-installer", 1))
 	if output == "[]" || err != nil {
-		t.RequirePorter("build")
+		cmd := []string{"build"}
+		if opts.PreserveTags {
+			cmd = append(cmd, "--preserve-tags")
+		}
+		t.RequirePorter(cmd...)
 	}
-
-	// Rely on the auto build functionality to avoid long slow rebuilds when nothing has changed
-	t.RequirePorter("publish", "--reference", ref)
+	cmd := []string{"publish", "--reference", ref, "--verbosity", "debug"}
+	if opts.PreserveTags {
+		cmd = append(cmd, "--preserve-tags")
+	}
+	t.RequirePorter(cmd...)
 }
 
 func (t Tester) ShowInstallation(namespace string, name string) (porter.DisplayInstallation, error) {

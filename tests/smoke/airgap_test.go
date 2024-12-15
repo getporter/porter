@@ -12,11 +12,11 @@ import (
 	"get.porter.sh/porter/pkg/yaml"
 	"get.porter.sh/porter/tests/testdata"
 	"get.porter.sh/porter/tests/tester"
-	"github.com/carolynvs/magex/shx"
 	"github.com/cnabio/cnab-go/bundle/loader"
 	"github.com/cnabio/cnab-go/packager"
 	"github.com/cnabio/cnab-to-oci/relocation"
 	"github.com/stretchr/testify/require"
+	"github.com/uwu-tools/magex/shx"
 )
 
 // Validate that we can move a bundle into an aigraped environment
