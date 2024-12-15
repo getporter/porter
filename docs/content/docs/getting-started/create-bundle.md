@@ -186,13 +186,13 @@ install:
   - docker:
       description: "Install Whalesay"
       pull:
-        name: docker/whalesay
+        name: ghcr.io/getporter/examples/images/whalesay
         tag: latest
   - docker:
       description: "Run Whalesay"
       run:
         name: dockermixin
-        image: "docker/whalesay:latest"
+        image: "ghcr.io/getporter/examples/images/whalesay:latest"
         command: cowsay
         arguments:
           - "Hello World"
