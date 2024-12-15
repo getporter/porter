@@ -271,4 +271,4 @@ require (
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
 
-//replace get.porter.sh/magefiles v0.3.3 => ../magefiles
+replace github.com/cnabio/cnab-go v0.25.1 => ../cnabio-cnab-go
