@@ -21,6 +21,7 @@ import (
 	"github.com/spf13/afero"
 	"go.opentelemetry.io/otel/attribute"
 	"go.uber.org/zap"
+	"go.uber.org/zap/buffer"
 	"go.uber.org/zap/zapcore"
 )
 
@@ -79,6 +80,8 @@ type Context struct {
 
 	// InternalPluginKey is the current plugin that Porter is running as, e.g. storage.porter.mongodb
 	InternalPluginKey string
+
+	censoredWriter *CensoredWriter
 }
 
 // New creates a new context in the specified directory.
@@ -95,13 +98,14 @@ func New() *Context {
 	}
 
 	c := &Context{
-		environ:       getEnviron(),
-		FileSystem:    aferox.NewAferox(pwd, afero.NewOsFs()),
-		In:            os.Stdin,
-		Out:           NewCensoredWriter(os.Stdout),
-		Err:           NewCensoredWriter(os.Stderr),
-		correlationId: correlationId,
-		timestampLogs: true,
+		environ:        getEnviron(),
+		FileSystem:     aferox.NewAferox(pwd, afero.NewOsFs()),
+		In:             os.Stdin,
+		Out:            NewCensoredWriter(os.Stdout),
+		Err:            NewCensoredWriter(os.Stderr),
+		correlationId:  correlationId,
+		timestampLogs:  true,
+		censoredWriter: NewCensoredWriter(os.Stdout),
 	}
 
 	// Make the correlation id available for the plugins to use
@@ -132,6 +136,7 @@ func (c *Context) makeLogEncoding() zapcore.EncoderConfig {
 			encoder.AppendString("")
 		}
 	}
+
 	return enc
 }
 
@@ -234,7 +239,7 @@ func (c *Context) makeConsoleLogger() zapcore.Core {
 		encoding.TimeKey = ""
 		encoding.LevelKey = ""
 	}
-	consoleEncoder := zapcore.NewConsoleEncoder(encoding)
+	censoredEncoder := &CensoredEncoder{Encoder: zapcore.NewConsoleEncoder(encoding), censoredWriter: c.censoredWriter}
 
 	isInformational := func(lvl zapcore.Level) bool {
 		return lvl < zapcore.ErrorLevel && lvl >= c.logCfg.Verbosity
@@ -245,10 +250,9 @@ func (c *Context) makeConsoleLogger() zapcore.Core {
 	})
 
 	return zapcore.NewTee(
-		zapcore.NewCore(consoleEncoder, zapcore.AddSync(stdout), stdoutEnabler),
-		zapcore.NewCore(consoleEncoder, zapcore.AddSync(stderr), stderrEnabler),
+		zapcore.NewCore(censoredEncoder, zapcore.AddSync(stdout), stdoutEnabler),
+		zapcore.NewCore(censoredEncoder, zapcore.AddSync(stderr), stderrEnabler),
 	)
-	// return zapcore.NewCore(consoleEncoder, zapcore.AddSync(stdout), c.logCfg.Verbosity)
 }
 
 func (c *Context) configureFileLog(dir string) (zapcore.Core, error) {
@@ -268,7 +272,8 @@ func (c *Context) configureFileLog(dir string) (zapcore.Core, error) {
 
 	// Split logs to the console and file
 	fileEncoder := zapcore.NewJSONEncoder(c.makeLogEncoding())
-	return zapcore.NewCore(fileEncoder, zapcore.AddSync(c.logFile), c.logCfg.LogLevel), nil
+	censoredEncoder := &CensoredEncoder{Encoder: fileEncoder, censoredWriter: c.censoredWriter}
+	return zapcore.NewCore(censoredEncoder, zapcore.AddSync(c.logFile), c.logCfg.LogLevel), nil
 }
 
 func (c *Context) buildLogFileName() string {
@@ -451,6 +456,16 @@ func (cw *CensoredWriter) Write(b []byte) (int, error) {
 	return len(b), err
 }
 
+func (cw *CensoredWriter) Censor(b []byte) []byte {
+	for _, val := range cw.sensitiveValues {
+		if strings.TrimSpace(val) != "" {
+			b = bytes.Replace(b, []byte(val), []byte("*******"), -1)
+		}
+	}
+
+	return b
+}
+
 func (c *Context) CopyDirectory(srcDir, destDir string, includeBaseDir bool) error {
 	var stripPrefix string
 	if includeBaseDir {
@@ -527,9 +542,30 @@ func (c *Context) SetSensitiveValues(vals []string) {
 		out := NewCensoredWriter(c.Out)
 		out.SetSensitiveValues(vals)
 		c.Out = out
+		c.censoredWriter.SetSensitiveValues(vals)
 
 		err := NewCensoredWriter(c.Err)
 		err.SetSensitiveValues(vals)
 		c.Err = err
 	}
+}
+
+type CensoredEncoder struct {
+	zapcore.Encoder
+	censoredWriter *CensoredWriter
+}
+
+func (ce CensoredEncoder) Clone() zapcore.Encoder {
+	return &CensoredEncoder{Encoder: ce.Encoder.Clone(), censoredWriter: ce.censoredWriter}
+}
+
+func (ce CensoredEncoder) EncodeEntry(entry zapcore.Entry, fields []zapcore.Field) (*buffer.Buffer, error) {
+	entry.Message = string(ce.censoredWriter.Censor([]byte(entry.Message)))
+	for _, field := range fields {
+		if field.Type == zapcore.StringType {
+			field.String = string(ce.censoredWriter.Censor([]byte(field.String)))
+		}
+	}
+
+	return ce.Encoder.EncodeEntry(entry, fields)
 }

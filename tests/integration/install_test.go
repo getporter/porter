@@ -127,3 +127,24 @@ func TestInstall_stringParam(t *testing.T) {
 	output := p.TestConfig.TestContext.GetOutput()
 	require.Contains(t, output, "Hello, Demo Time", "expected action output to contain provided file contents")
 }
+
+func TestInstall_SensitiveValuesAreNotLogged(t *testing.T) {
+	p := porter.NewTestPorter(t)
+	defer p.Close()
+	ctx := p.SetupIntegrationTest()
+
+	p.AddTestBundleDir("testdata/bundles/failing-bundle-with-sensitive-data", false)
+
+	installOpts := porter.NewInstallOptions()
+	installOpts.Params = []string{"password=topsecret"}
+
+	err := installOpts.Validate(ctx, []string{}, p.Porter)
+	require.NoError(t, err)
+
+	err = p.InstallBundle(ctx, installOpts)
+	require.Error(t, err)
+
+	output := p.TestConfig.TestContext.GetOutput()
+	require.NotContains(t, output, "topsecret", "expected sensitive data to not be logged")
+	require.Contains(t, output, "*******")
+}
