@@ -202,7 +202,7 @@ func TestNotationCopyBundle(t *testing.T) {
 	require.NoError(t, err, "Publish failed")
 
 	_, output, err = testr.RunPorterWith(func(pc *shx.PreparedCommand) {
-		pc.Args("copy", "--insecure-registry", "--sign-bundle", "--source", ref.String(), "--destination", copiedRef.String())
+		pc.Args("copy", "--insecure-registry", "--sign-bundle", "--source", ref.String(), "--destination", copiedRef.String(), "--force")
 	})
 	require.NoError(t, err, "Copy failed")
 
