@@ -9,6 +9,8 @@ import (
 	"strings"
 
 	"get.porter.sh/porter/pkg/tracing"
+	"github.com/jeremywohl/flatten"
+	"github.com/mitchellh/mapstructure"
 	"github.com/osteele/liquid"
 	"github.com/osteele/liquid/render"
 	"github.com/spf13/viper"
@@ -85,7 +87,8 @@ func LoadFromViper(viperCfg func(v *viper.Viper), cobraCfg func(v *viper.Viper))
 		v.AllowEmptyEnv(true)
 
 		// Initialize empty config
-		err := v.SetDefaultsFrom(cfg.Data)
+		// 2024-12-23: This is still needed, otherwise TestLegacyPluginAdapter fails.
+		err := setDefaultsFrom(v, cfg.Data)
 		if err != nil {
 			return log.Error(fmt.Errorf("error initializing configuration data: %w", err))
 		}
@@ -155,6 +158,23 @@ func LoadFromViper(viperCfg func(v *viper.Viper), cobraCfg func(v *viper.Viper))
 		cfg.viper = v
 		return nil
 	}
+}
+
+func setDefaultsFrom(v *viper.Viper, val interface{}) error {
+	var tmp map[string]interface{}
+	err := mapstructure.Decode(val, &tmp)
+	if err != nil {
+		return fmt.Errorf("error decoding configuration from struct: %v", err)
+	}
+
+	defaults, err := flatten.Flatten(tmp, "", flatten.DotStyle)
+	if err != nil {
+		return fmt.Errorf("error flattening default configuration from struct: %v", err)
+	}
+	for defaultKey, defaultValue := range defaults {
+		v.SetDefault(defaultKey, defaultValue)
+	}
+	return nil
 }
 
 func listTemplateVariables(tmpl *liquid.Template) []string {
