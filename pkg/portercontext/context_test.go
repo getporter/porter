@@ -131,3 +131,76 @@ func TestContext_PluginLogCollectorLevel(t *testing.T) {
 	require.Contains(t, lines[3], "\"@level\":\"error\"")
 	require.Contains(t, lines[3], "\"@message\":\"error log\"")
 }
+
+func TestContext_SensitiveLogsAreCensored(t *testing.T) {
+	c := NewTestContext(t)
+	defer c.Close()
+	c.ConfigureLogging(context.Background(), LogConfiguration{
+		Verbosity: zapcore.DebugLevel,
+	})
+	c.SetSensitiveValues([]string{"topsecret"})
+
+	c.logger.Info("this is a test with sensitive data: topsecret")
+
+	logs := c.captureLogs.String()
+	require.Contains(t, logs, "this is a test with sensitive data: *******")
+	require.NotContains(t, logs, "topsecret")
+}
+
+func TestContext_TracesWithSensitiveLogsAreCensored(t *testing.T) {
+	c := NewTestContext(t)
+	c.ConfigureLogging(context.Background(), LogConfiguration{
+		Verbosity: zapcore.DebugLevel,
+	})
+	c.SetSensitiveValues([]string{"topsecret"})
+
+	_, log := c.StartRootSpan(context.Background(), t.Name())
+	log.Debug("this is a test with sensitive data: topsecret")
+	log.EndSpan()
+	c.Close()
+
+	logs := c.captureLogs.String()
+	require.Contains(t, logs, "this is a test with sensitive data: *******")
+	require.NotContains(t, logs, "topsecret")
+}
+
+func TestContext_PluginLogsAreCensored(t *testing.T) {
+	c := NewTestContext(t)
+	c.IsInternalPlugin = true
+	c.ConfigureLogging(context.Background(), LogConfiguration{
+		Verbosity: zapcore.DebugLevel,
+	})
+	c.SetSensitiveValues([]string{"topsecret"})
+
+	_, log := c.StartRootSpan(context.Background(), t.Name())
+	log.Debug("this is a test with sensitive data: topsecret")
+	log.EndSpan()
+	c.Close()
+
+	logs := c.captureLogs.String()
+	require.Contains(t, logs, "this is a test with sensitive data: *******")
+	require.NotContains(t, logs, "topsecret")
+}
+
+func TestContext_LogToFileWithCensoredValues(t *testing.T) {
+	c := NewTestContext(t)
+	c.ConfigureLogging(context.Background(), LogConfiguration{
+		Verbosity:    zapcore.DebugLevel,
+		LogLevel:     zapcore.DebugLevel,
+		LogToFile:    true,
+		LogDirectory: "/.porter/logs",
+	})
+	c.SetSensitiveValues([]string{"topsecret"})
+	c.timestampLogs = false // turn off timestamps so we can compare more easily
+	logfile := c.logFile.Name()
+	_, log := c.StartRootSpan(context.Background(), t.Name())
+	log.Info("this is a test with sensitive data: topsecret")
+
+	log.EndSpan()
+	c.Close()
+
+	logContents, err := c.FileSystem.ReadFile(logfile)
+	require.NoError(t, err)
+	require.Contains(t, string(logContents), "this is a test with sensitive data: *******")
+	require.NotContains(t, string(logContents), "topsecret")
+}
