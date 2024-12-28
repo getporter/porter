@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 
 	"get.porter.sh/porter/pkg/secrets"
@@ -60,11 +61,15 @@ func (s CredentialStore) GetDataStore() Store {
 	Secrets
 */
 
-func (s CredentialStore) ResolveAll(ctx context.Context, creds CredentialSet) (secrets.Set, error) {
+func (s CredentialStore) ResolveAll(ctx context.Context, creds CredentialSet, keys []string) (secrets.Set, error) {
 	resolvedCreds := make(secrets.Set)
 	var resolveErrors error
 
 	for _, cred := range creds.Credentials {
+		if !slices.Contains(keys, cred.Name) {
+			continue
+		}
+
 		var value string
 		var err error
 		if isHandledByHostPlugin(cred.Source.Strategy) {

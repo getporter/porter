@@ -12,7 +12,7 @@ func (r *Runtime) loadCredentials(ctx context.Context, b cnab.ExtendedBundle, ru
 	ctx, span := tracing.StartSpan(ctx)
 	defer span.EndSpan()
 
-	resolvedCredentials, err := r.credentials.ResolveAll(ctx, run.Credentials)
+	resolvedCredentials, err := r.credentials.ResolveAll(ctx, run.Credentials, run.Credentials.Keys())
 	if err != nil {
 		return span.Error(err)
 	}

@@ -185,3 +185,12 @@ func (s CredentialSet) ValidateBundle(spec map[string]bundle.Credential, action 
 	}
 	return nil
 }
+
+// Keys returns the names of all the credentials in the set.
+func (s CredentialSet) Keys() []string {
+	keys := make([]string, len(s.Credentials))
+	for _, cred := range s.Credentials {
+		keys = append(keys, cred.Name)
+	}
+	return keys
+}
