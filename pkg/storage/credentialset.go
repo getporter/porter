@@ -194,3 +194,13 @@ func (s CredentialSet) Keys() []string {
 	}
 	return keys
 }
+
+// GetCredential returns the credential with the given name, and a boolean indicating if it was found.
+func (s CredentialSet) GetCredential(name string) (secrets.SourceMap, bool) {
+	for _, cred := range s.Credentials {
+		if cred.Name == name {
+			return cred, true
+		}
+	}
+	return secrets.SourceMap{}, false
+}

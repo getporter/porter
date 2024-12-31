@@ -3,7 +3,6 @@ package storage
 import (
 	"context"
 	"fmt"
-	"slices"
 	"strings"
 
 	"get.porter.sh/porter/pkg/secrets"
@@ -62,11 +61,16 @@ func (s CredentialStore) GetDataStore() Store {
 */
 
 func (s CredentialStore) ResolveAll(ctx context.Context, creds CredentialSet, keys []string) (secrets.Set, error) {
-	resolvedCreds := make(secrets.Set)
-	var resolveErrors error
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
 
-	for _, cred := range creds.Credentials {
-		if !slices.Contains(keys, cred.Name) {
+	resolvedCreds := make(secrets.Set)
+	var resolveErrors *multierror.Error
+
+	for _, key := range keys {
+		cred, ok := creds.GetCredential(key)
+		if !ok {
+			resolveErrors = multierror.Append(resolveErrors, span.Errorf("credential %s not found", key))
 			continue
 		}
 
@@ -78,7 +82,7 @@ func (s CredentialStore) ResolveAll(ctx context.Context, creds CredentialSet, ke
 			value, err = s.Secrets.Resolve(ctx, cred.Source.Strategy, cred.Source.Hint)
 		}
 		if err != nil {
-			resolveErrors = multierror.Append(resolveErrors, fmt.Errorf("unable to resolve credential %s.%s from %s %s: %w", creds.Name, cred.Name, cred.Source.Strategy, cred.Source.Hint, err))
+			resolveErrors = multierror.Append(resolveErrors, span.Errorf("unable to resolve credential %s.%s from %s %s: %w", creds.Name, cred.Name, cred.Source.Strategy, cred.Source.Hint, err))
 		}
 
 		resolvedCreds[cred.Name] = value
