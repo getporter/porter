@@ -17,8 +17,12 @@ func (r *Runtime) loadCredentials(ctx context.Context, b cnab.ExtendedBundle, ru
 		return span.Error(err)
 	}
 
-	for i, cred := range run.Credentials.Credentials {
-		run.Credentials.Credentials[i].ResolvedValue = resolvedCredentials[cred.Name]
+	for _, key := range run.Credentials.Keys() {
+		cred, ok := run.Credentials.GetCredential(key)
+		if !ok {
+			return span.Errorf("credential %s not found", key)
+		}
+		cred.ResolvedValue = resolvedCredentials[key]
 	}
 
 	err = run.Credentials.ValidateBundle(b.Credentials, run.Action)
