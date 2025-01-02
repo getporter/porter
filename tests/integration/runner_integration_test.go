@@ -1,6 +1,6 @@
 //go:build integration
 
-package client
+package integration
 
 import (
 	"bytes"
@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg/pkgmgmt"
+	"get.porter.sh/porter/pkg/pkgmgmt/client"
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/test"
 	"get.porter.sh/porter/tests"
@@ -27,7 +28,7 @@ func TestRunner_Run(t *testing.T) {
 	binDir := c.FindBinDir()
 
 	// I'm not using the TestRunner because I want to use the current filesystem, not an isolated one
-	r := NewRunner("exec", filepath.Join(binDir, "mixins/exec"), false)
+	r := client.NewRunner("exec", filepath.Join(binDir, "mixins/exec"), false)
 
 	// Capture the output
 	r.Out = output
@@ -66,7 +67,7 @@ func TestRunner_RunWithMaskedOutput(t *testing.T) {
 	binDir := c.FindBinDir()
 
 	// I'm not using the TestRunner because I want to use the current filesystem, not an isolated one
-	r := NewRunner("exec", filepath.Join(binDir, "mixins/exec"), false)
+	r := client.NewRunner("exec", filepath.Join(binDir, "mixins/exec"), false)
 
 	// Capture the output
 	r.Out = censoredWriter
