@@ -154,3 +154,12 @@ func (s ParameterSet) ValidateBundle(spec map[string]bundle.Parameter, action st
 	}
 	return nil
 }
+
+// Keys returns the names of all the parameters in the set.
+func (s ParameterSet) Keys() []string {
+	keys := make([]string, len(s.Parameters))
+	for _, param := range s.Parameters {
+		keys = append(keys, param.Name)
+	}
+	return keys
+}

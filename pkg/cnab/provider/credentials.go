@@ -12,13 +12,15 @@ func (r *Runtime) loadCredentials(ctx context.Context, b cnab.ExtendedBundle, ru
 	ctx, span := tracing.StartSpan(ctx)
 	defer span.EndSpan()
 
-	resolvedCredentials, err := r.credentials.ResolveAll(ctx, run.Credentials)
+	resolvedCredentials, err := r.credentials.ResolveAll(ctx, run.Credentials, run.Credentials.Keys())
 	if err != nil {
 		return span.Error(err)
 	}
 
 	for i, cred := range run.Credentials.Credentials {
-		run.Credentials.Credentials[i].ResolvedValue = resolvedCredentials[cred.Name]
+		if resolvedValue, ok := resolvedCredentials[cred.Name]; ok {
+			run.Credentials.Credentials[i].ResolvedValue = resolvedValue
+		}
 	}
 
 	err = run.Credentials.ValidateBundle(b.Credentials, run.Action)
