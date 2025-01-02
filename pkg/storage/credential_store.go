@@ -88,7 +88,7 @@ func (s CredentialStore) ResolveAll(ctx context.Context, creds CredentialSet, ke
 		resolvedCreds[cred.Name] = value
 	}
 
-	return resolvedCreds, resolveErrors
+	return resolvedCreds, resolveErrors.ErrorOrNil()
 }
 
 func (s CredentialStore) Validate(ctx context.Context, creds CredentialSet) error {
