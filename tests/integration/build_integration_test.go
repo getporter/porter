@@ -1,6 +1,6 @@
 //go:build integration
 
-package porter
+package integration
 
 import (
 	"context"
@@ -15,6 +15,7 @@ import (
 	"get.porter.sh/porter/pkg/linter"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/mixin"
+	"get.porter.sh/porter/pkg/porter"
 	"get.porter.sh/porter/pkg/schema"
 	"get.porter.sh/porter/pkg/yaml"
 	"get.porter.sh/porter/tests"
@@ -24,7 +25,7 @@ import (
 )
 
 func TestPorter_Build(t *testing.T) {
-	p := NewTestPorter(t)
+	p := porter.NewTestPorter(t)
 	defer p.Close()
 
 	configTpl, err := p.Templates.GetManifest()
@@ -37,7 +38,7 @@ func TestPorter_Build(t *testing.T) {
 	junkExists, _ := p.FileSystem.DirExists(junkDir)
 	assert.True(t, junkExists, "failed to create junk files for the test")
 
-	opts := BuildOptions{}
+	opts := porter.BuildOptions{}
 	require.NoError(t, opts.Validate(p.Porter), "Validate failed")
 
 	err = p.Build(context.Background(), opts)
@@ -106,7 +107,7 @@ func TestPorter_Build_ChecksManifestSchemaVersion(t *testing.T) {
 	}
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			p := NewTestPorter(t)
+			p := porter.NewTestPorter(t)
 			defer p.Close()
 
 			// Make a bundle with the specified schemaVersion
@@ -116,7 +117,7 @@ func TestPorter_Build_ChecksManifestSchemaVersion(t *testing.T) {
 			require.NoError(t, e.SetValue("schemaVersion", tc.schemaVersion))
 			require.NoError(t, e.WriteFile("porter.yaml"))
 
-			opts := BuildOptions{}
+			opts := porter.BuildOptions{}
 			opts.File = "porter.yaml"
 			err := p.Build(context.Background(), opts)
 			if tc.wantErr == "" {
@@ -138,7 +139,7 @@ func TestPorter_LintDuringBuild(t *testing.T) {
 	}
 
 	t.Run("failing lint should stop build", func(t *testing.T) {
-		p := NewTestPorter(t)
+		p := porter.NewTestPorter(t)
 		defer p.Close()
 
 		testMixins := p.Mixins.(*mixin.TestMixinProvider)
@@ -147,7 +148,7 @@ func TestPorter_LintDuringBuild(t *testing.T) {
 		err := p.Create()
 		require.NoError(t, err, "Create failed")
 
-		opts := BuildOptions{NoLint: false}
+		opts := porter.BuildOptions{NoLint: false}
 		err = opts.Validate(p.Porter)
 		require.NoError(t, err)
 
@@ -157,7 +158,7 @@ func TestPorter_LintDuringBuild(t *testing.T) {
 	})
 
 	t.Run("ignores lint error with --no-lint", func(t *testing.T) {
-		p := NewTestPorter(t)
+		p := porter.NewTestPorter(t)
 		defer p.Close()
 
 		testMixins := p.Mixins.(*mixin.TestMixinProvider)
@@ -166,7 +167,7 @@ func TestPorter_LintDuringBuild(t *testing.T) {
 		err := p.Create()
 		require.NoError(t, err, "Create failed")
 
-		opts := BuildOptions{NoLint: true}
+		opts := porter.BuildOptions{NoLint: true}
 		err = opts.Validate(p.Porter)
 		require.NoError(t, err)
 
@@ -177,17 +178,16 @@ func TestPorter_LintDuringBuild(t *testing.T) {
 }
 
 func TestPorter_paramRequired(t *testing.T) {
-	p := NewTestPorter(t)
+	p := porter.NewTestPorter(t)
 	defer p.Close()
 
 	p.TestConfig.TestContext.AddTestFile("./testdata/paramafest.yaml", config.Name)
 
 	ctx := context.Background()
-	m, err := manifest.LoadManifestFrom(ctx, p.Config, config.Name)
-	require.NoError(t, err)
+	opts := porter.BuildOptions{}
+	require.NoError(t, opts.Validate(p.Porter), "Validate failed")
 
-	err = p.buildBundle(ctx, m, "digest", false)
-	require.NoError(t, err)
+	err := p.Build(ctx, opts)
 
 	bundleBytes, err := p.FileSystem.ReadFile(build.LOCAL_BUNDLE)
 	require.NoError(t, err)
@@ -201,42 +201,44 @@ func TestPorter_paramRequired(t *testing.T) {
 }
 
 func TestBuildOptions_Validate(t *testing.T) {
-	p := NewTestPorter(t)
+	p := porter.NewTestPorter(t)
 	defer p.Close()
+
+	p.TestConfig.TestContext.AddTestFile("./testdata/porter.yaml", config.Name)
 
 	testcases := []struct {
 		name       string
-		opts       BuildOptions
+		opts       porter.BuildOptions
 		wantDriver string
 		wantError  string
 	}{{
 		name:       "no opts",
-		opts:       BuildOptions{},
+		opts:       porter.BuildOptions{},
 		wantDriver: config.BuildDriverBuildkit,
 	}, {
 		name:      "invalid version set - latest",
-		opts:      BuildOptions{metadataOpts: metadataOpts{Version: "latest"}},
+		opts:      porter.BuildOptions{MetadataOpts: porter.MetadataOpts{Version: "latest"}},
 		wantError: `invalid bundle version: "latest" is not a valid semantic version`,
 	}, {
 		name: "valid version - v prefix",
-		opts: BuildOptions{metadataOpts: metadataOpts{Version: "v1.0.0"}},
+		opts: porter.BuildOptions{MetadataOpts: porter.MetadataOpts{Version: "v1.0.0"}},
 	}, {
 		name: "valid version - with hash",
-		opts: BuildOptions{metadataOpts: metadataOpts{Version: "v0.1.7+58d98af56c3a4c40c69535654216bd4a1fa701e7"}},
+		opts: porter.BuildOptions{MetadataOpts: porter.MetadataOpts{Version: "v0.1.7+58d98af56c3a4c40c69535654216bd4a1fa701e7"}},
 	}, {
 		name: "valid name and value set",
-		opts: BuildOptions{metadataOpts: metadataOpts{Name: "newname", Version: "1.0.0"}},
+		opts: porter.BuildOptions{MetadataOpts: porter.MetadataOpts{Name: "newname", Version: "1.0.0"}},
 	}, {
 		name:      "deprecated driver: docker",
-		opts:      BuildOptions{Driver: config.BuildDriverDocker},
+		opts:      porter.BuildOptions{Driver: config.BuildDriverDocker},
 		wantError: `invalid --driver value docker`,
 	}, {
 		name:       "valid driver: buildkit",
-		opts:       BuildOptions{Driver: config.BuildDriverBuildkit},
+		opts:       porter.BuildOptions{Driver: config.BuildDriverBuildkit},
 		wantDriver: config.BuildDriverBuildkit,
 	}, {
 		name:      "invalid driver",
-		opts:      BuildOptions{Driver: "missing-driver"},
+		opts:      porter.BuildOptions{Driver: "missing-driver"},
 		wantError: `invalid --driver value missing-driver`,
 	}}
 
@@ -257,11 +259,13 @@ func TestBuildOptions_Validate(t *testing.T) {
 }
 
 func TestBuildOptions_Defaults(t *testing.T) {
-	p := NewTestPorter(t)
+	p := porter.NewTestPorter(t)
 	defer p.Close()
 
+	p.TestConfig.TestContext.AddTestFile("./testdata/porter.yaml", config.Name)
+
 	t.Run("default driver", func(t *testing.T) {
-		opts := BuildOptions{}
+		opts := porter.BuildOptions{}
 		err := opts.Validate(p.Porter)
 		require.NoError(t, err, "Validate failed")
 		assert.Equal(t, config.BuildDriverBuildkit, opts.Driver)
@@ -269,22 +273,17 @@ func TestBuildOptions_Defaults(t *testing.T) {
 }
 
 func TestPorter_BuildWithCustomValues(t *testing.T) {
-	p := NewTestPorter(t)
+	p := porter.NewTestPorter(t)
 	defer p.Close()
 
 	p.TestConfig.TestContext.AddTestFile("./testdata/porter.yaml", config.Name)
 
 	ctx := context.Background()
-	m, err := manifest.LoadManifestFrom(ctx, p.Config, config.Name)
-	require.NoError(t, err)
 
-	err = p.buildBundle(ctx, m, "digest", false)
-	require.NoError(t, err)
-
-	opts := BuildOptions{Customs: []string{"customKey1=editedCustomValue1"}}
+	opts := porter.BuildOptions{Customs: []string{"customKey1=editedCustomValue1"}}
 	require.NoError(t, opts.Validate(p.Porter), "Validate failed")
 
-	err = p.Build(ctx, opts)
+	err := p.Build(ctx, opts)
 	require.NoError(t, err)
 
 	bun, err := p.CNAB.LoadBundle(build.LOCAL_BUNDLE)
@@ -294,26 +293,20 @@ func TestPorter_BuildWithCustomValues(t *testing.T) {
 }
 
 func TestPorter_BuildWithPreserveTags(t *testing.T) {
-	p := NewTestPorter(t)
+	p := porter.NewTestPorter(t)
 	defer p.Close()
 
 	p.TestConfig.TestContext.AddTestFile("./testdata/porter-with-image-tag.yaml", config.Name)
 
 	ctx := context.Background()
-	m, err := manifest.LoadManifestFrom(ctx, p.Config, config.Name)
-	require.NoError(t, err)
-
-	err = p.buildBundle(ctx, m, "digest", true)
-	require.NoError(t, err)
-
-	opts := BuildOptions{
-		BundleDefinitionOptions: BundleDefinitionOptions{
+	opts := porter.BuildOptions{
+		BundleDefinitionOptions: porter.BundleDefinitionOptions{
 			PreserveTags: true,
 		},
 	}
 	require.NoError(t, opts.Validate(p.Porter), "Validate failed")
 
-	err = p.Build(ctx, opts)
+	err := p.Build(ctx, opts)
 	require.NoError(t, err)
 
 	bun, err := p.CNAB.LoadBundle(build.LOCAL_BUNDLE)

@@ -1,6 +1,6 @@
 //go:build integration
 
-package porter
+package integration
 
 import (
 	"context"
@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg/cnab"
+	"get.porter.sh/porter/pkg/porter"
 	"get.porter.sh/porter/pkg/storage"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
@@ -15,6 +16,7 @@ import (
 )
 
 var (
+	kahnlatest     = cnab.MustParseOCIReference("deislabs/kubekahn:latest")
 	kahnlatestHash = "fd4bbe38665531d10bb653140842a370"
 )
 
@@ -23,14 +25,14 @@ func TestResolveBundleReference(t *testing.T) {
 	t.Run("current bundle source", func(t *testing.T) {
 		t.Parallel()
 
-		p := NewTestPorter(t)
+		p := porter.NewTestPorter(t)
 		defer p.Close()
 
 		p.AddTestBundleDir(filepath.Join(p.RepoRoot, "tests/testdata/mybuns"), true)
 
-		opts := &BundleReferenceOptions{}
+		opts := &porter.BundleReferenceOptions{}
 		require.NoError(t, opts.Validate(context.Background(), nil, p.Porter))
-		ref, err := p.resolveBundleReference(context.Background(), opts)
+		ref, err := opts.GetBundleReference(context.Background(), p.Porter)
 		require.NoError(t, err)
 		require.NotEmpty(t, opts.Name)
 		require.NotEmpty(t, ref.Definition)
@@ -39,15 +41,15 @@ func TestResolveBundleReference(t *testing.T) {
 	t.Run("cnab file", func(t *testing.T) {
 		t.Parallel()
 
-		p := NewTestPorter(t)
+		p := porter.NewTestPorter(t)
 		defer p.Close()
 
 		p.AddTestFile(filepath.Join(p.RepoRoot, "build/testdata/bundles/mysql/.cnab/bundle.json"), "bundle.json")
 
-		opts := &BundleReferenceOptions{}
+		opts := &porter.BundleReferenceOptions{}
 		opts.CNABFile = "bundle.json"
 		require.NoError(t, opts.Validate(context.Background(), nil, p.Porter))
-		ref, err := p.resolveBundleReference(context.Background(), opts)
+		ref, err := opts.GetBundleReference(context.Background(), p.Porter)
 		require.NoError(t, err)
 		require.NotEmpty(t, opts.Name)
 		require.NotEmpty(t, ref.Definition)
@@ -56,14 +58,14 @@ func TestResolveBundleReference(t *testing.T) {
 	t.Run("reference", func(t *testing.T) {
 		t.Parallel()
 
-		p := NewTestPorter(t)
+		p := porter.NewTestPorter(t)
 		defer p.Close()
 		ctx := p.SetupIntegrationTest()
 
-		opts := &BundleReferenceOptions{}
+		opts := &porter.BundleReferenceOptions{}
 		opts.Reference = "ghcr.io/getporter/examples/porter-hello:v0.2.0"
 		require.NoError(t, opts.Validate(ctx, nil, p.Porter))
-		ref, err := p.resolveBundleReference(ctx, opts)
+		ref, err := opts.GetBundleReference(context.Background(), p.Porter)
 		require.NoError(t, err)
 		require.NotEmpty(t, opts.Name)
 		require.NotEmpty(t, ref.Definition)
@@ -74,7 +76,7 @@ func TestResolveBundleReference(t *testing.T) {
 	t.Run("installation name", func(t *testing.T) {
 		t.Parallel()
 
-		p := NewTestPorter(t)
+		p := porter.NewTestPorter(t)
 		defer p.Close()
 
 		bun := buildExampleBundle()
@@ -84,11 +86,11 @@ func TestResolveBundleReference(t *testing.T) {
 			r.Bundle = bun.Bundle
 			r.BundleDigest = kahnlatestHash
 		})
-		opts := &BundleReferenceOptions{}
+		opts := &porter.BundleReferenceOptions{}
 		opts.Name = "example"
 		opts.Namespace = "dev"
 		require.NoError(t, opts.Validate(context.Background(), nil, p.Porter))
-		ref, err := p.resolveBundleReference(context.Background(), opts)
+		ref, err := opts.GetBundleReference(context.Background(), p.Porter)
 		require.NoError(t, err)
 		require.NotEmpty(t, opts.Name)
 		require.NotEmpty(t, ref.Definition)

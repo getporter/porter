@@ -21,9 +21,9 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 )
 
-// metadataOpts contain manifest fields eligible for dynamic
+// MetadataOpts contain manifest fields eligible for dynamic
 // updating prior to saving Porter's internal version of the manifest
-type metadataOpts struct {
+type MetadataOpts struct {
 	Name    string
 	Version string
 }
