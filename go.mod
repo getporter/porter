@@ -31,7 +31,7 @@ require (
 	github.com/containerd/containerd v1.7.24
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
 	github.com/distribution/reference v0.6.0
-	github.com/docker/buildx v0.19.2
+	github.com/docker/buildx v0.19.3
 	github.com/docker/cli v27.4.1+incompatible
 	github.com/docker/distribution v2.8.3+incompatible
 	github.com/docker/docker v27.4.1+incompatible
@@ -52,7 +52,7 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/mmcdole/gofeed v1.3.0
 	github.com/moby/buildkit v0.18.2
-	github.com/moby/term v0.5.0
+	github.com/moby/term v0.5.2
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/osteele/liquid v1.6.0
@@ -89,7 +89,7 @@ require (
 require (
 	github.com/AdaLogics/go-fuzz-headers v0.0.0-20240806141605-e8a1dd7889d6 // indirect
 	github.com/AdamKorcz/go-118-fuzz-build v0.0.0-20231105174938-2b5cbb29f3e2 // indirect
-	github.com/Azure/go-ansiterm v0.0.0-20230124172434-306776ec8161 // indirect
+	github.com/Azure/go-ansiterm v0.0.0-20250102033503-faa5f7b0171c // indirect
 	github.com/Masterminds/semver v1.5.0 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/Microsoft/hcsshim v0.12.9 // indirect
