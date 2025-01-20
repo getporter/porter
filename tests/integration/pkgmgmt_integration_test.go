@@ -1,6 +1,6 @@
 //go:build integration
 
-package mixin
+package integration
 
 import (
 	"context"
@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/mixin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -22,11 +23,11 @@ func TestPackageManager_GetSchema(t *testing.T) {
 	binDir := c.TestContext.FindBinDir()
 	c.SetHomeDir(binDir)
 
-	p := NewPackageManager(c.Config)
+	p := mixin.NewPackageManager(c.Config)
 	gotSchema, err := p.GetSchema(ctx, "exec")
 	require.NoError(t, err)
 
-	wantSchema, err := os.ReadFile("../exec/schema/exec.json")
+	wantSchema, err := os.ReadFile("../../pkg/exec/schema/exec.json")
 	require.NoError(t, err)
 	assert.Equal(t, string(wantSchema), gotSchema)
 }
