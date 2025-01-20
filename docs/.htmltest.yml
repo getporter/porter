@@ -25,3 +25,4 @@ IgnoreURLs:
   - ^https://porter.sh/find-issue/$
 IgnoreAltMissing: true
 IgnoreInternalEmptyHash: true
+IgnoreSSLVerify: true
