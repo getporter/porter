@@ -42,8 +42,12 @@ func (flag Flag) ToSlice(dashes Dashes) []string {
 		result = append(result, flagName)
 	} else {
 		for _, value := range flag.Values {
-			result = append(result, flagName)
-			result = append(result, value)
+			if dash == dashes.Long {
+				result = append(result, fmt.Sprintf("%s=%s", flagName, value))
+			} else {
+				result = append(result, flagName)
+				result = append(result, value)
+			}
 		}
 	}
 	return result
