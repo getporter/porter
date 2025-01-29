@@ -1,6 +1,6 @@
 //go:build integration
 
-package agent
+package integration
 
 import (
 	"bytes"
@@ -9,6 +9,7 @@ import (
 	"runtime"
 	"testing"
 
+	"get.porter.sh/porter/pkg/agent"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/uwu-tools/magex/shx"
@@ -21,10 +22,10 @@ func TestExecute(t *testing.T) {
 
 	stdoutBuff := &bytes.Buffer{}
 	stderrBuff := &bytes.Buffer{}
-	stdout = stdoutBuff
-	stderr = stderrBuff
+	agent.Stdout = stdoutBuff
+	agent.Stderr = stderrBuff
 
-	err, run := Execute([]string{"help"}, home, cfg)
+	err, run := agent.Execute([]string{"help"}, home, cfg)
 	require.NoError(t, err)
 	assert.True(t, run, "porter should have run")
 	gotStderr := stderrBuff.String()

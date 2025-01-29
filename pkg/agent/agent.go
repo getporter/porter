@@ -14,8 +14,8 @@ import (
 
 // allow the tests to capture output
 var (
-	stdout io.Writer = os.Stdout
-	stderr io.Writer = os.Stderr
+	Stdout io.Writer = os.Stdout
+	Stderr io.Writer = os.Stderr
 )
 
 // The porter agent wraps the porter cli,
@@ -67,19 +67,19 @@ func Execute(porterCommand []string, porterHome string, porterConfig string) (er
 	}
 
 	// Remind everyone the version of Porter we are using
-	fmt.Fprintf(stderr, "porter version\n")
+	fmt.Fprintf(Stderr, "porter version\n")
 	cmd := exec.Command(porter, "version")
-	cmd.Stdout = stderr // send all non-bundle output to stderr
-	cmd.Stderr = stderr
+	cmd.Stdout = Stderr // send all non-bundle output to stderr
+	cmd.Stderr = Stderr
 	if err = cmd.Run(); err != nil {
 		return fmt.Errorf("porter version check failed: %w", err), false
 	}
 
 	// Run the specified porter command
-	fmt.Fprintf(stderr, "porter %s\n", strings.Join(porterCommand, " "))
+	fmt.Fprintf(Stderr, "porter %s\n", strings.Join(porterCommand, " "))
 	cmd = exec.Command(porter, porterCommand...)
-	cmd.Stdout = stdout
-	cmd.Stderr = stderr
+	cmd.Stdout = Stdout
+	cmd.Stderr = Stderr
 	cmd.Stdin = os.Stdin
 	if err := cmd.Start(); err != nil {
 		return err, false
@@ -89,7 +89,7 @@ func Execute(porterCommand []string, porterHome string, porterConfig string) (er
 
 func copyConfig(relPath string, configFile string, fi os.FileInfo, porterHome string) error {
 	destFile := filepath.Join(porterHome, relPath)
-	fmt.Fprintln(stderr, "Loading configuration", relPath, "into", destFile)
+	fmt.Fprintln(Stderr, "Loading configuration", relPath, "into", destFile)
 	src, err := os.OpenFile(configFile, os.O_RDONLY, 0)
 	if err != nil {
 		return err

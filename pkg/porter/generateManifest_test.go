@@ -42,15 +42,15 @@ func Test_generateInternalManifest(t *testing.T) {
 		wantManifest: "expected-result.yaml",
 	}, {
 		name:         "name set",
-		opts:         BuildOptions{metadataOpts: metadataOpts{Name: "newname"}},
+		opts:         BuildOptions{MetadataOpts: MetadataOpts{Name: "newname"}},
 		wantManifest: "new-name.yaml",
 	}, {
 		name:         "version set",
-		opts:         BuildOptions{metadataOpts: metadataOpts{Version: "1.0.0"}},
+		opts:         BuildOptions{MetadataOpts: MetadataOpts{Version: "1.0.0"}},
 		wantManifest: "new-version.yaml",
 	}, {
 		name:         "name and value set",
-		opts:         BuildOptions{metadataOpts: metadataOpts{Name: "newname", Version: "1.0.0"}},
+		opts:         BuildOptions{MetadataOpts: MetadataOpts{Name: "newname", Version: "1.0.0"}},
 		wantManifest: "all-fields.yaml",
 	}, {
 		name:         "custom input set",
