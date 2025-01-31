@@ -79,16 +79,16 @@ func (p *Porter) PrintParameters(ctx context.Context, opts ListOptions) error {
 		tp := dtprinter.DateTimePrinter{
 			Now: func() time.Time { return now },
 		}
-		paramsSets := [][]string{}
+		result := [][]string{}
 		for _, ps := range params {
 			for _, param := range ps.Parameters {
 				list := []string{}
-				list = append(list, ps.Namespace, param.Name, param.Source.Strategy, param.Source.Hint, tp.Format(ps.Status.Modified))
-				paramsSets = append(paramsSets, list)
+				list = append(list, ps.Namespace, ps.Name, param.Name, param.Source.Strategy, param.Source.Hint, tp.Format(ps.Status.Modified))
+				result = append(result, list)
 			}
 		}
-		return printer.PrintTableParameterSet(p.Out, paramsSets,
-			"NAMESPACE", "NAME", "TYPE", "VALUE", "MODIFIED")
+		return printer.PrintTableParameterSet(p.Out, result,
+			"NAMESPACE", "PARAMETER SET", "NAME", "TYPE", "VALUE", "MODIFIED")
 	default:
 		return fmt.Errorf("invalid format: %s", opts.Format)
 	}
