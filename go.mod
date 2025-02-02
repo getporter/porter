@@ -76,7 +76,7 @@ require (
 	go.uber.org/zap v1.27.0
 	golang.org/x/sync v0.10.0
 	google.golang.org/grpc v1.70.0
-	google.golang.org/protobuf v1.36.3
+	google.golang.org/protobuf v1.36.4
 	gopkg.in/AlecAivazis/survey.v1 v1.8.8
 	gopkg.in/op/go-logging.v1 v1.0.0-20160211212156-b2cb9fa56473
 	gopkg.in/yaml.v3 v3.0.1
