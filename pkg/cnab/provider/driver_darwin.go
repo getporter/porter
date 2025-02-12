@@ -20,11 +20,11 @@ func (r *Runtime) mountDockerSocket(cfg *container.Config, hostCfg *container.Ho
 	return nil
 }
 
-func (r *Runtime) addVolumeMountToHostConfig(hostConfig *container.HostConfig, source string, target string, readOnly bool) error {
+func (r *Runtime) addVolumeMountToHostConfig(hostConfig *container.HostConfig, source string, target string, readOnly bool, mountType mount.Type) error {
 	mount := mount.Mount{
 		Source:   source,
 		Target:   target,
-		Type:     "bind",
+		Type:     mountType,
 		ReadOnly: readOnly,
 	}
 	hostConfig.Mounts = append(hostConfig.Mounts, mount)

@@ -18,6 +18,7 @@ import (
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/tracing"
+	"github.com/docker/docker/api/types/mount"
 	"github.com/opencontainers/go-digest"
 	"go.mongodb.org/mongo-driver/bson"
 )
@@ -48,8 +49,9 @@ type BundleExecutionOptions struct {
 	AllowDockerHostAccess bool
 
 	// MountHostVolume mounts provides the bundle access to a host volume.
-	// This is the unparsed list of HOST_PATH:TARGET_PATH:OPTION
+	// This is the unparsed list of HOST_PATH:TARGET_PATH:OPTION:MOUNT_TYPE
 	// OPTION can be ro (read-only) or rw (read-write). Defaults to ro.
+	// MOUNT_TYPE can be bind, volume, or tmpfs. Defaults to bind.
 	HostVolumeMounts []string
 
 	// DebugMode indicates if the bundle should be run in debug mode.
@@ -106,10 +108,10 @@ func (o *BundleExecutionOptions) GetParameters() map[string]interface{} {
 // Sets the final resolved set of host volumes to be made availabe to the bundle
 func (o *BundleExecutionOptions) GetHostVolumeMounts() []cnabprovider.HostVolumeMountSpec {
 	var hostVolumeMounts []cnabprovider.HostVolumeMountSpec
-	for _, mount := range o.HostVolumeMounts {
+	for _, mountString := range o.HostVolumeMounts {
+		var mountType mount.Type = mount.TypeBind
 		var isReadOnlyMount bool
-		parts := strings.Split(mount, ":") // HOST_PATH:TARGET_PATH:OPTION
-
+		parts := strings.Split(mountString, ":") // HOST_PATH:TARGET_PATH:OPTION:MOUNT_TYPE
 		// if parts[0] is a single character, it's a drive letter on Windows
 		// so we need to join it with the next part
 		if runtime.GOOS == "windows" && len(parts) > 1 && len(parts[0]) == 1 && unicode.IsLetter(rune(parts[0][0])) {
@@ -118,7 +120,8 @@ func (o *BundleExecutionOptions) GetHostVolumeMounts() []cnabprovider.HostVolume
 		}
 
 		l := len(parts)
-		if l < 2 || l > 3 {
+		if l < 2 || l > 4 {
+			fmt.Printf("ERROR: invalid mount: %s\n", mountString)
 			continue
 		}
 
@@ -134,10 +137,19 @@ func (o *BundleExecutionOptions) GetHostVolumeMounts() []cnabprovider.HostVolume
 			isReadOnlyMount = true
 		}
 
+		if l == 4 {
+			mountType = mount.Type(parts[3])
+			if mountType != mount.TypeBind && mountType != mount.TypeVolume && mountType != mount.TypeTmpfs {
+				fmt.Printf("ERROR: invalid mount type: %s\n", mountType)
+				continue
+			}
+		}
+
 		hostVolumeMounts = append(hostVolumeMounts, cnabprovider.HostVolumeMountSpec{
 			Source:   parts[0],
 			Target:   parts[1],
 			ReadOnly: isReadOnlyMount,
+			Type:     mountType,
 		})
 	}
 
