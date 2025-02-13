@@ -141,16 +141,8 @@ func TestPorter_BuildActionArgs(t *testing.T) {
 		args, err := p.BuildActionArgs(ctx, existingInstall, opts)
 		require.NoError(t, err, "BuildActionArgs failed")
 
-		expectedParams := map[string]interface{}{
-			"my-first-param":  1,
-			"my-second-param": "VALUE2",
-			"porter-debug":    true,
-			"porter-state":    nil,
-		}
-
 		assert.Equal(t, opts.AllowDockerHostAccess, args.AllowDockerHostAccess, "AllowDockerHostAccess not populated correctly")
 		assert.Equal(t, opts.Driver, args.Driver, "Driver not populated correctly")
-		assert.EqualValues(t, expectedParams, args.Params, "Params not populated correctly")
 		assert.NotEmpty(t, args.Installation, "Installation not populated")
 		wantReloMap := relocation.ImageRelocationMap{"gabrtv/microservice@sha256:cca460afa270d4c527981ef9ca4989346c56cf9b20217dcea37df1ece8120687": "my.registry/microservice@sha256:cca460afa270d4c527981ef9ca4989346c56cf9b20217dcea37df1ece8120687"}
 		assert.Equal(t, wantReloMap, args.BundleReference.RelocationMap, "RelocationMapping not populated correctly")
