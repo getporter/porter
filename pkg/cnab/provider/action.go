@@ -12,6 +12,7 @@ import (
 	"get.porter.sh/porter/pkg/tracing"
 	cnabaction "github.com/cnabio/cnab-go/action"
 	"github.com/cnabio/cnab-go/driver"
+	"github.com/docker/docker/api/types/mount"
 	"github.com/hashicorp/go-multierror"
 	"go.opentelemetry.io/otel/attribute"
 	"go.uber.org/zap/zapcore"
@@ -21,6 +22,7 @@ type HostVolumeMountSpec struct {
 	Source   string
 	Target   string
 	ReadOnly bool
+	Type     mount.Type
 }
 
 // ActionArguments are the shared arguments for all bundle runs.
