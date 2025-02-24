@@ -357,7 +357,7 @@ func validateParameterName(args []string) error {
 }
 
 // loadParameterSets loads parameter values per their parameter set strategies
-func (p *Porter) loadParameterSets(ctx context.Context, bun cnab.ExtendedBundle, namespace string, params []string) (secrets.Set, error) {
+func (p *Porter) loadParameterSets(ctx context.Context, bun cnab.ExtendedBundle, namespace string, params []string, overridenParameters secrets.StrategyList) (secrets.Set, error) {
 	resolvedParameters := secrets.Set{}
 
 	for _, name := range params {
@@ -378,6 +378,13 @@ func (p *Porter) loadParameterSets(ctx context.Context, bun cnab.ExtendedBundle,
 		err := store.FindOne(ctx, storage.CollectionParameters, query, &pset)
 		if err != nil {
 			return nil, err
+		}
+
+		var skipParams []string
+		for _, param := range pset.Parameters {
+			if overridenParameters.Contains(param.Name) {
+				skipParams = append(skipParams, param.Name)
+			}
 		}
 
 		// A parameter may correspond to a Porter-specific parameter type of 'file'
@@ -402,7 +409,7 @@ func (p *Porter) loadParameterSets(ctx context.Context, bun cnab.ExtendedBundle,
 			}
 		}
 
-		rc, err := p.Parameters.ResolveAll(ctx, pset)
+		rc, err := p.Parameters.ResolveAll(ctx, pset, skipParams...)
 		if err != nil {
 			return nil, err
 		}
@@ -884,7 +891,7 @@ func (p *Porter) applyActionOptionsToInstallation(ctx context.Context, ba Bundle
 	//
 	// 3. Resolve named parameter sets
 	//
-	resolvedParams, err := p.loadParameterSets(ctx, bun, o.Namespace, inst.ParameterSets)
+	resolvedParams, err := p.loadParameterSets(ctx, bun, o.Namespace, inst.ParameterSets, inst.Parameters.Parameters)
 	if err != nil {
 		return fmt.Errorf("unable to process provided parameter sets: %w", err)
 	}
