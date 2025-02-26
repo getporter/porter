@@ -185,3 +185,22 @@ func (s CredentialSet) ValidateBundle(spec map[string]bundle.Credential, action 
 	}
 	return nil
 }
+
+// Keys returns the names of all the credentials in the set.
+func (s CredentialSet) Keys() []string {
+	keys := make([]string, 0, len(s.Credentials))
+	for _, cred := range s.Credentials {
+		keys = append(keys, cred.Name)
+	}
+	return keys
+}
+
+// GetCredential returns the credential with the given name, and a boolean indicating if it was found.
+func (s CredentialSet) GetCredential(name string) (*secrets.SourceMap, bool) {
+	for _, cred := range s.Credentials {
+		if cred.Name == name {
+			return &cred, true
+		}
+	}
+	return nil, false
+}

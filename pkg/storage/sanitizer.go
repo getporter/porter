@@ -101,7 +101,7 @@ func sanitizedParam(param secrets.SourceMap, id string) secrets.SourceMap {
 
 // RestoreParameterSet resolves the raw parameter data from a secrets store.
 func (s *Sanitizer) RestoreParameterSet(ctx context.Context, pset ParameterSet, bun cnab.ExtendedBundle) (map[string]interface{}, error) {
-	params, err := s.parameter.ResolveAll(ctx, pset)
+	params, err := s.parameter.ResolveAll(ctx, pset, pset.Keys())
 	if err != nil {
 		return nil, err
 	}
