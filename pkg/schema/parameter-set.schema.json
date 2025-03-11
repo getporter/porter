@@ -32,7 +32,7 @@
             },
             "value": {
               "description": "Hard-coded value",
-              "type": "string"
+              "type": ["string", "number", "object", "array", "boolean"]
             }
           },
           "additionalProperties": true
@@ -86,7 +86,7 @@
     "schemaVersion": {
       "description": "Version of the parameter set schema to which this document adheres",
       "type": "string",
-      "default": "1.0.1"
+      "default": "1.1.0"
     }
   },
   "required": [
