@@ -37,11 +37,11 @@ func TestOCIReference(t *testing.T) {
 		},
 		{
 			Name:             "tagged reference",
-			Ref:              MustParseOCIReference("jeremyrickard/porter-do-bundle:v0.1.0"),
+			Ref:              MustParseOCIReference("jeremyrickard/porter-do-bundle:v0.1.0-pre_build.123"),
 			ExpectedRegistry: "docker.io",
 			ExpectedRepo:     "jeremyrickard/porter-do-bundle",
-			ExpectedTag:      "v0.1.0",
-			ExpectedVersion:  "0.1.0",
+			ExpectedTag:      "v0.1.0-pre_build.123",
+			ExpectedVersion:  "0.1.0-pre+build.123",
 		},
 		{
 			Name:             "no tag",
@@ -129,6 +129,14 @@ func TestOCIReference_WithVersion(t *testing.T) {
 		result, err := ref.WithVersion("1.2.3")
 		require.NoError(t, err)
 		assert.Equal(t, "v1.2.3", result.Tag())
+	})
+
+	t.Run("semver with build metadata", func(t *testing.T) {
+		ref := MustParseOCIReference("getporter/porter-hello")
+
+		result, err := ref.WithVersion("1.2.3+git0a2b3c4d")
+		require.NoError(t, err)
+		assert.Equal(t, "v1.2.3_git0a2b3c4d", result.Tag())
 	})
 
 	t.Run("invalid semver", func(t *testing.T) {
