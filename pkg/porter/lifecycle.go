@@ -364,7 +364,7 @@ func (p *Porter) BuildActionArgs(ctx context.Context, installation storage.Insta
 }
 
 // ensureVPrefix adds a "v" prefix to the version tag if it's not already there.
-// Version tag should always be prefixed with a "v", see https://github.com/getporter/porter/issues/2886.
+// Semver version tags tag should always be prefixed with a "v", see https://github.com/getporter/porter/issues/2886.
 // This is safe because "porter publish" adds a "v", see
 // https://github.com/getporter/porter/blob/17bd7816ef6bde856793f6122e32274aa9d01d1b/pkg/storage/installation.go#L350
 func ensureVPrefix(opts *BundleReferenceOptions, out io.Writer) error {
@@ -379,8 +379,8 @@ func ensureVPrefix(opts *BundleReferenceOptions, out io.Writer) error {
 		ociRef = &ref
 	}
 
-	if ociRef.Tag() == "" || ociRef.Tag() == "latest" || strings.HasPrefix(ociRef.Tag(), "v") {
-		// don't do anything if missing tag, if tag is "latest", or if "v" is already there
+	// Do nothing for empty tags, tags that do not start with a number and non-semver tags
+	if !tagStartsWithNumber(ociRef) || !ociRef.HasVersion() {
 		return nil
 	}
 
@@ -396,6 +396,10 @@ func ensureVPrefix(opts *BundleReferenceOptions, out io.Writer) error {
 		opts._ref = &vRef
 	}
 	return nil
+}
+
+func tagStartsWithNumber(ociRef *cnab.OCIReference) bool {
+	return ociRef.HasTag() && ociRef.Tag()[0] >= '0' && ociRef.Tag()[0] <= '9'
 }
 
 // prepullBundleByReference handles calling the bundle pull operation and updating
