@@ -69,6 +69,13 @@ func (s *Source) UnmarshalRaw(raw map[string]interface{}) error {
 			s.Strategy = k
 			if value, ok := v.(string); ok {
 				s.Hint = value
+
+			} else if s.Strategy == "value" {
+				value, err := unmarshalRawValue(v)
+				if err != nil {
+					return err
+				}
+				s.Hint = value
 			} else {
 				s.Hint = fmt.Sprintf("%v", s.Hint)
 			}
@@ -76,6 +83,21 @@ func (s *Source) UnmarshalRaw(raw map[string]interface{}) error {
 		return nil
 	default:
 		return errors.New("multiple key/value pairs specified for source but only one may be defined")
+	}
+}
+
+func unmarshalRawValue(rawValue interface{}) (string, error) {
+	switch value := rawValue.(type) {
+	case []interface{}, map[string]interface{}:
+		encodedValue, err := json.Marshal(value)
+		if err != nil {
+			return "", fmt.Errorf("unable to convert %T into a string: %w", value, err)
+		}
+		return string(encodedValue), nil
+	case nil:
+		return "", nil
+	default:
+		return fmt.Sprintf("%v", value), nil
 	}
 }
 
