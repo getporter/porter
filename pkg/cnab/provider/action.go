@@ -14,7 +14,6 @@ import (
 	"github.com/cnabio/cnab-go/driver"
 	"github.com/hashicorp/go-multierror"
 	"go.opentelemetry.io/otel/attribute"
-	"go.uber.org/zap/zapcore"
 )
 
 type HostVolumeMountSpec struct {
@@ -37,10 +36,6 @@ type ActionArguments struct {
 	// Additional files to copy into the bundle
 	// Target Path => File Contents
 	Files map[string]string
-
-	// Params is the fully resolved set of parameters.
-	// TODO(PEP003): This should be removed in https://github.com/getporter/porter/issues/2699
-	Params map[string]interface{}
 
 	// Driver is the CNAB-compliant driver used to run bundle actions.
 	Driver string
@@ -107,10 +102,6 @@ func (r *Runtime) AddEnvironment(args ActionArguments) cnabaction.OperationConfi
 		// Pass the verbosity from porter's local config into the bundle
 		op.Environment[verbosityEnv] = r.Config.GetVerbosity().Level().String()
 
-		// When a bundle is run in debug mode, the verbosity is automatically set to debug
-		if debugMode, _ := args.Params["porter-debug"].(bool); debugMode {
-			op.Environment[verbosityEnv] = zapcore.DebugLevel.String()
-		}
 		return nil
 	}
 }
