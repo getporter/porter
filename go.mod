@@ -24,7 +24,7 @@ require (
 	github.com/cnabio/cnab-go v0.25.2
 	github.com/cnabio/cnab-to-oci v0.4.1
 	github.com/cnabio/image-relocation v0.9.0
-	github.com/containerd/containerd v1.7.25
+	github.com/containerd/containerd v1.7.27
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
 	github.com/distribution/reference v0.6.0
 	github.com/docker/buildx v0.19.3
@@ -117,7 +117,7 @@ require (
 	github.com/containerd/log v0.1.0 // indirect
 	github.com/containerd/platforms v0.2.1 // indirect
 	github.com/containerd/stargz-snapshotter/estargz v0.16.1 // indirect
-	github.com/containerd/ttrpc v1.2.6 // indirect
+	github.com/containerd/ttrpc v1.2.7 // indirect
 	github.com/containerd/typeurl/v2 v2.2.3 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.5 // indirect
 	github.com/cyberphone/json-canonicalization v0.0.0-20231217050601-ba74d44ecf5f // indirect
