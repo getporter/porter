@@ -61,6 +61,14 @@ func (r *Runtime) ApplyConfig(ctx context.Context, args ActionArguments) cnabact
 		r.AddFiles(ctx, args),
 		r.AddEnvironment(args),
 		r.AddRelocation(args),
+		r.SetContext(ctx),
+	}
+}
+
+func (r *Runtime) SetContext(ctx context.Context) cnabaction.OperationConfigFunc {
+	return func(op *driver.Operation) error {
+		op.CTX = ctx
+		return nil
 	}
 }
 
@@ -201,6 +209,11 @@ func (r *Runtime) Execute(ctx context.Context, args ActionArguments) error {
 			tracing.ObjectAttribute("cnab-claim", cnabClaim),
 			tracing.ObjectAttribute("cnab-credentials", cnabCreds))
 		opResult, result, err := a.Run(cnabClaim, cnabCreds, r.ApplyConfig(ctx, args)...)
+
+		// if the error was due to context, just stop and return the context error
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
 
 		if currentRun.ShouldRecord() {
 			if err != nil {
