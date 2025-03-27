@@ -354,7 +354,6 @@ func (p *Porter) BuildActionArgs(ctx context.Context, installation storage.Insta
 		Run:                   run,
 		Installation:          installation,
 		BundleReference:       bundleRef,
-		Params:                opts.GetParameters(),
 		Driver:                opts.Driver,
 		AllowDockerHostAccess: opts.AllowDockerHostAccess,
 		HostVolumeMounts:      opts.GetHostVolumeMounts(),

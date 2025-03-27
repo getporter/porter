@@ -304,7 +304,6 @@ func (e *dependencyExecutioner) prepareDependency(ctx context.Context, dep *queu
 				dep.Parameters = make(map[string]string, 1)
 			}
 			dep.Parameters[paramName] = value
-			delete(e.parentArgs.Params, key)
 		}
 	}
 
@@ -426,7 +425,6 @@ func (e *dependencyExecutioner) getActionArgs(ctx context.Context,
 		Run:                   depRun,
 		Driver:                e.parentArgs.Driver,
 		AllowDockerHostAccess: e.parentOpts.AllowDockerHostAccess,
-		Params:                finalParams,
 		PersistLogs:           e.parentArgs.PersistLogs,
 	}
 	return nil
