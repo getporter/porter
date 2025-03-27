@@ -522,7 +522,7 @@ func TestPorter_applyActionOptionsToInstallation_PreservesExistingParams(t *test
 	require.Equal(t, "secret", i.Parameters.Parameters[1].Source.Strategy, "my-second-param should be stored on the installation using a secret since it's sensitive")
 
 	// Check the values stored are correct
-	params, err := p.Parameters.ResolveAll(ctx, i.Parameters)
+	params, err := p.Parameters.ResolveAll(ctx, i.Parameters, i.Parameters.Keys())
 	require.NoError(t, err, "Failed to resolve the installation parameters")
 	require.Equal(t, secrets.Set{
 		"my-first-param":  "3", // Should have used the override
