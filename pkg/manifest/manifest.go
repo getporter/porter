@@ -1276,8 +1276,11 @@ func (m *Manifest) getDockerTagFromBundleRef(bundleRef cnab.OCIReference) (strin
 	// Docker tag is missing from the provided bundle tag, so default it
 	// to use the manifest version prefixed with v
 	// Example: bundle version is 1.0.0, so the bundle tag is v1.0.0
-	cleanTag := strings.ReplaceAll(m.Version, "+", "_") // Semver may include a + which is not allowed in a docker tag, e.g. v1.0.0-alpha.1+buildmetadata, change that to v1.0.0-alpha.1_buildmetadata
-	return fmt.Sprintf("v%s", cleanTag), nil
+	newRef, err := bundleRef.WithVersion(m.Version)
+	if err != nil {
+		return "", err
+	}
+	return newRef.Tag(), nil
 }
 
 // ResolvePath resolves a path specified in the Porter manifest into

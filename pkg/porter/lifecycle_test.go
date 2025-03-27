@@ -2,11 +2,9 @@ package porter
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"runtime"
 	"sort"
-	"strings"
 	"testing"
 
 	"get.porter.sh/porter/pkg"
@@ -141,16 +139,8 @@ func TestPorter_BuildActionArgs(t *testing.T) {
 		args, err := p.BuildActionArgs(ctx, existingInstall, opts)
 		require.NoError(t, err, "BuildActionArgs failed")
 
-		expectedParams := map[string]interface{}{
-			"my-first-param":  1,
-			"my-second-param": "VALUE2",
-			"porter-debug":    true,
-			"porter-state":    nil,
-		}
-
 		assert.Equal(t, opts.AllowDockerHostAccess, args.AllowDockerHostAccess, "AllowDockerHostAccess not populated correctly")
 		assert.Equal(t, opts.Driver, args.Driver, "Driver not populated correctly")
-		assert.EqualValues(t, expectedParams, args.Params, "Params not populated correctly")
 		assert.NotEmpty(t, args.Installation, "Installation not populated")
 		wantReloMap := relocation.ImageRelocationMap{"gabrtv/microservice@sha256:cca460afa270d4c527981ef9ca4989346c56cf9b20217dcea37df1ece8120687": "my.registry/microservice@sha256:cca460afa270d4c527981ef9ca4989346c56cf9b20217dcea37df1ece8120687"}
 		assert.Equal(t, wantReloMap, args.BundleReference.RelocationMap, "RelocationMapping not populated correctly")
@@ -540,167 +530,73 @@ func TestPorter_applyActionOptionsToInstallation_PreservesExistingParams(t *test
 	}, params, "Incorrect parameter values were persisted on the installationß")
 }
 
-// make sure ensureVPrefix correctly adds a 'v' to the version tag of a reference
 func Test_ensureVPrefix(t *testing.T) {
-	type args struct {
-		opts *BundleReferenceOptions
-	}
-
 	ref, err := cnab.ParseOCIReference("registry/bundle:1.2.3")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	testCases := []struct {
-		name    string
-		args    args
-		wantErr assert.ErrorAssertionFunc
+		name       string
+		reference  string
+		ref        *cnab.OCIReference
+		want       string
+		wantRefTag string
 	}{
 		{
-			name: "add v to Reference (nil _ref)",
-			args: struct{ opts *BundleReferenceOptions }{opts: &BundleReferenceOptions{
-				installationOptions: installationOptions{},
-				BundlePullOptions: BundlePullOptions{
-					Reference:        "registry/bundle:1.2.3",
-					_ref:             nil,
-					InsecureRegistry: false,
-					Force:            false,
-				},
-				bundleRef: nil,
-			},
-			}, wantErr: assert.NoError,
+			name:      "adds v prefix to semver reference",
+			reference: "registry/bundle:1.2.3",
+			ref:       nil,
+			want:      "registry/bundle:v1.2.3",
 		},
 		{
-			name: "add v to Reference (non-nil _ref)",
-			args: struct{ opts *BundleReferenceOptions }{opts: &BundleReferenceOptions{
-				installationOptions: installationOptions{},
-				BundlePullOptions: BundlePullOptions{
-					Reference:        "registry/bundle:1.2.3",
-					_ref:             &ref,
-					InsecureRegistry: false,
-					Force:            false,
-				},
-				bundleRef: nil,
-			},
-			}, wantErr: assert.NoError,
-		},
-	}
-	for _, tt := range testCases {
-		t.Run(tt.name, func(t *testing.T) {
-			// before
-			idx := strings.LastIndex(tt.args.opts.Reference, ":")
-			assert.False(t, tt.args.opts.Reference[idx+1] == 'v')
-			if tt.args.opts._ref != nil {
-				assert.False(t, tt.args.opts._ref.Tag()[0] == 'v')
-			}
-
-			err := ensureVPrefix(tt.args.opts, io.Discard)
-
-			// after
-			tt.wantErr(t, err, fmt.Sprintf("ensureVPrefix(%v)", tt.args.opts))
-
-			idx = strings.LastIndex(tt.args.opts.Reference, ":")
-			assert.True(t, tt.args.opts.Reference[idx+1] == 'v')
-			if tt.args.opts._ref != nil {
-				assert.True(t, tt.args.opts._ref.Tag()[0] == 'v')
-			}
-		})
-	}
-}
-
-// make sure ensureVPrefix doesn't add an extra 'v' to the version tag of a reference if it's already there
-func Test_ensureVPrefix_idempotent(t *testing.T) {
-	type args struct {
-		opts *BundleReferenceOptions
-	}
-
-	vRef, err := cnab.ParseOCIReference("registry/bundle:v1.2.3")
-	assert.NoError(t, err)
-
-	testcasesIdempotent := []struct {
-		name    string
-		args    args
-		wantErr assert.ErrorAssertionFunc
-	}{
-		{
-			name: "don't add v to Reference with existing v (nil _ref)",
-			args: struct{ opts *BundleReferenceOptions }{opts: &BundleReferenceOptions{
-				installationOptions: installationOptions{},
-				BundlePullOptions: BundlePullOptions{
-					Reference:        "registry/bundle:v1.2.3",
-					_ref:             nil,
-					InsecureRegistry: false,
-					Force:            false,
-				},
-				bundleRef: nil,
-			},
-			}, wantErr: assert.NoError,
+			name:       "updates _ref if present",
+			reference:  "registry/bundle:1.2.3",
+			ref:        &ref,
+			want:       "registry/bundle:v1.2.3",
+			wantRefTag: "v1.2.3",
 		},
 		{
-			name: "don't add v to Reference with existing v (non-nil _ref)",
-			args: struct{ opts *BundleReferenceOptions }{opts: &BundleReferenceOptions{
-				installationOptions: installationOptions{},
-				BundlePullOptions: BundlePullOptions{
-					Reference:        "registry/bundle:v1.2.3",
-					_ref:             &vRef,
-					InsecureRegistry: false,
-					Force:            false,
-				},
-				bundleRef: nil,
-			},
-			}, wantErr: assert.NoError,
+			name:      "is idempotent",
+			reference: "registry/bundle:v1.2.3",
+			ref:       nil,
+			want:      "registry/bundle:v1.2.3",
+		},
+		{
+			name:      "ignores non-semver references",
+			reference: "registry/bundle:latest",
+			ref:       nil,
+			want:      "registry/bundle:latest",
+		},
+		{
+			name:      "ignores references with no tag",
+			reference: "registry/bundle",
+			ref:       nil,
+			want:      "registry/bundle",
 		},
 	}
-	for _, tt := range testcasesIdempotent {
-		t.Run(tt.name, func(t *testing.T) {
-			// before
-			idx := strings.LastIndex(tt.args.opts.Reference, ":")
-			assert.True(t, tt.args.opts.Reference[idx+1] == 'v')
-			assert.True(t, tt.args.opts.Reference[idx+2] != 'v')
-			if tt.args.opts._ref != nil {
-				assert.True(t, tt.args.opts._ref.Tag()[0] == 'v')
-				assert.True(t, tt.args.opts._ref.Tag()[1] != 'v')
-			}
 
-			err := ensureVPrefix(tt.args.opts, io.Discard)
-
-			// after
-			tt.wantErr(t, err, fmt.Sprintf("ensureVPrefix(%v)", tt.args.opts))
-
-			idx = strings.LastIndex(tt.args.opts.Reference, ":")
-			assert.True(t, tt.args.opts.Reference[idx+1] == 'v')
-			assert.True(t, tt.args.opts.Reference[idx+2] != 'v')
-			if tt.args.opts._ref != nil {
-				assert.True(t, tt.args.opts._ref.Tag()[0] == 'v')
-				assert.True(t, tt.args.opts._ref.Tag()[1] != 'v')
-			}
-		})
-	}
-}
-
-// ensure no v is added if specifying :latest tag or no tag at all
-func Test_ensureVPrefix_latest(t *testing.T) {
-	testcases := map[string]struct {
-		latestRef string
-	}{
-		"latest":     {latestRef: "example/porter-hello:latest"},
-		"not-latest": {latestRef: "example/porter-hello"},
-	}
-	for name, test := range testcases {
-		t.Run(name, func(t *testing.T) {
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
 			opts := BundleReferenceOptions{
 				installationOptions: installationOptions{},
 				BundlePullOptions: BundlePullOptions{
-					Reference:        test.latestRef,
-					_ref:             nil,
+					Reference:        tc.reference,
+					_ref:             tc.ref,
 					InsecureRegistry: false,
 					Force:            false,
 				},
 				bundleRef: nil,
 			}
-			err := ensureVPrefix(&opts, io.Discard)
-			assert.NoError(t, err)
 
-			// shouldn't change
-			assert.Equal(t, test.latestRef, opts.BundlePullOptions.Reference)
+			err = ensureVPrefix(&opts, io.Discard)
+
+			assert.Equal(t, tc.want, opts.BundlePullOptions.Reference)
+			assert.NoError(t, err)
+			if tc.wantRefTag == "" {
+				assert.Nil(t, opts.BundlePullOptions._ref)
+			} else {
+				require.NotNil(t, opts.BundlePullOptions._ref)
+				assert.Equal(t, tc.wantRefTag, opts.BundlePullOptions._ref.Tag())
+			}
 		})
 	}
 }

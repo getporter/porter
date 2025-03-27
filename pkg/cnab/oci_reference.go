@@ -163,7 +163,7 @@ func (r OCIReference) HasVersion() bool {
 	}
 
 	if tagged, ok := r.Named.(reference.Tagged); ok {
-		_, err := semver.NewVersion(tagged.Tag())
+		_, err := semverFromTag(tagged.Tag())
 		return err == nil
 	}
 	return false
@@ -176,7 +176,7 @@ func (r OCIReference) Version() string {
 	}
 
 	if tagged, ok := r.Named.(reference.Tagged); ok {
-		v, err := semver.NewVersion(tagged.Tag())
+		v, err := semverFromTag(tagged.Tag())
 		if err == nil {
 			return v.String()
 		}
@@ -185,6 +185,7 @@ func (r OCIReference) Version() string {
 }
 
 // WithVersion creates a new reference using the repository and the specified bundle version.
+// If build metadata is present, "+" is conveted to "_".
 func (r OCIReference) WithVersion(version string) (OCIReference, error) {
 	if r.Named == nil {
 		return OCIReference{}, errors.New("OCIReference has not been initialized")
@@ -195,7 +196,7 @@ func (r OCIReference) WithVersion(version string) (OCIReference, error) {
 		return OCIReference{}, fmt.Errorf("invalid bundle version specified %s: %w", version, err)
 	}
 
-	newRef, err := reference.WithTag(r.Named, "v"+v.String())
+	newRef, err := reference.WithTag(r.Named, tagFromSemver(v))
 	if err != nil {
 		return OCIReference{}, err
 	}
@@ -232,4 +233,12 @@ func (r OCIReference) ParseRepositoryInfo() (*registry.RepositoryInfo, error) {
 		return nil, errors.New("OCIReference has not been initialized")
 	}
 	return registry.ParseRepositoryInfo(r.Named)
+}
+
+func semverFromTag(tag string) (*semver.Version, error) {
+	return semver.NewVersion(strings.Replace(tag, "_", "+", 1))
+}
+
+func tagFromSemver(version *semver.Version) string {
+	return fmt.Sprintf("v%s", strings.Replace(version.String(), "+", "_", 1))
 }
