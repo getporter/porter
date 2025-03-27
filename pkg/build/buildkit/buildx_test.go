@@ -9,6 +9,7 @@ import (
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/manifest"
 	buildx "github.com/docker/buildx/build"
+	"github.com/moby/buildkit/client"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -245,4 +246,89 @@ func TestBuilder_determineBuildArgs(t *testing.T) {
 		"BIG_BUILD_ARG":    maxArg,
 		"CUSTOM_BIG_LABEL": maxArg}
 	require.Equal(t, wantArgs, args, "incorrect arguments returned")
+}
+
+func TestBuilder_parseCacheOptions(t *testing.T) {
+	testcases := []struct {
+		name      string
+		cacheOpts []string
+		want      []client.CacheOptionsEntry
+		wantErr   bool
+	}{
+		{
+			name:      "empty options",
+			cacheOpts: []string{},
+			want:      nil,
+			wantErr:   false,
+		},
+		{
+			name:      "valid registry cache",
+			cacheOpts: []string{"type=registry,ref=user/app:cache"},
+			want: []client.CacheOptionsEntry{
+				{
+					Type: "registry",
+					Attrs: map[string]string{
+						"ref": "user/app:cache",
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name:      "valid local cache",
+			cacheOpts: []string{"type=local,src=/path/to/cache"},
+			want: []client.CacheOptionsEntry{
+				{
+					Type: "local",
+					Attrs: map[string]string{
+						"src": "/path/to/cache",
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name:      "multiple cache options",
+			cacheOpts: []string{"type=registry,ref=user/app:cache", "type=local,src=/path/to/cache"},
+			want: []client.CacheOptionsEntry{
+				{
+					Type: "registry",
+					Attrs: map[string]string{
+						"ref": "user/app:cache",
+					},
+				},
+				{
+					Type: "local",
+					Attrs: map[string]string{
+						"src": "/path/to/cache",
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name:      "missing type field",
+			cacheOpts: []string{"ref=user/app:cache"},
+			want:      nil,
+			wantErr:   true,
+		},
+		{
+			name:      "invalid format",
+			cacheOpts: []string{"type:registry"},
+			want:      nil,
+			wantErr:   true,
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			got, err := parseCacheOptions(tc.cacheOpts)
+			if tc.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, tc.want, got)
+		})
+	}
 }

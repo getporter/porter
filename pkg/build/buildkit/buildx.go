@@ -24,6 +24,7 @@ import (
 	"github.com/docker/buildx/util/dockerutil"
 	"github.com/docker/buildx/util/progress"
 	dockerconfig "github.com/docker/cli/cli/config"
+	"github.com/moby/buildkit/client"
 	"github.com/moby/buildkit/session"
 	"github.com/moby/buildkit/session/auth/authprovider"
 	"github.com/moby/buildkit/util/progress/progressui"
@@ -127,6 +128,11 @@ func (b *Builder) BuildBundleImage(ctx context.Context, manifest *manifest.Manif
 		return span.Errorf("error parsing the --build-context flags: %w", err)
 	}
 
+	cacheFrom, err := parseCacheOptions(opts.CacheFrom)
+	if err != nil {
+		return span.Errorf("error parsing the --cache-from flags: %w", err)
+	}
+
 	buildxOpts := map[string]buildx.Options{
 		"default": {
 			Tags: []string{manifest.Image},
@@ -139,6 +145,7 @@ func (b *Builder) BuildBundleImage(ctx context.Context, manifest *manifest.Manif
 			BuildArgs: args,
 			Session:   currentSession,
 			NoCache:   opts.NoCache,
+			CacheFrom: cacheFrom,
 		},
 	}
 
@@ -257,6 +264,54 @@ func toNamedContexts(m map[string]string) map[string]buildx.NamedContext {
 		m2[k] = buildx.NamedContext{Path: v}
 	}
 	return m2
+}
+
+// parseCacheOptions converts cache strings like "type=registry,ref=user/app:cache"
+// into CacheOptionsEntry structs. Each cache option must have a type field.
+func parseCacheOptions(cacheFlags []string) ([]client.CacheOptionsEntry, error) {
+	if len(cacheFlags) == 0 {
+		return nil, nil
+	}
+
+	entries := make([]client.CacheOptionsEntry, 0, len(cacheFlags))
+	for _, flag := range cacheFlags {
+		entry, err := parseCacheOption(flag)
+		if err != nil {
+			return nil, fmt.Errorf("parsing cache option %q: %w", flag, err)
+		}
+		entries = append(entries, entry)
+	}
+	return entries, nil
+}
+
+func parseCacheOption(flag string) (client.CacheOptionsEntry, error) {
+	parts := strings.Split(flag, ",")
+	if len(parts) == 0 {
+		return client.CacheOptionsEntry{}, fmt.Errorf("empty cache option")
+	}
+
+	entry := client.CacheOptionsEntry{
+		Attrs: make(map[string]string, len(parts)-1), // Pre-allocate map with estimated size
+	}
+
+	for _, part := range parts {
+		key, value, found := strings.Cut(part, "=")
+		if !found {
+			return client.CacheOptionsEntry{}, fmt.Errorf("invalid format, expected key=value")
+		}
+
+		if key == "type" {
+			entry.Type = value
+		} else {
+			entry.Attrs[key] = value
+		}
+	}
+
+	if entry.Type == "" {
+		return client.CacheOptionsEntry{}, fmt.Errorf("missing required type field")
+	}
+
+	return entry, nil
 }
 
 func (b *Builder) TagBundleImage(ctx context.Context, origTag, newTag string) error {
