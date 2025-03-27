@@ -248,7 +248,7 @@ func (p *Porter) ListInstallations(ctx context.Context, opts ListOptions) (Displ
 		return nil, log.Error(fmt.Errorf("could not list installations: %w", err))
 	}
 
-	var displayInstallations DisplayInstallations
+	var displayInstallations DisplayInstallations = DisplayInstallations{}
 	var fieldSelectorMap map[string]string
 	if opts.FieldSelector != "" {
 		fieldSelectorMap, err = parseFieldSelector(opts.FieldSelector)

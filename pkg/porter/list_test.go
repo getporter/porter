@@ -104,6 +104,14 @@ func TestPorter_ListInstallations(t *testing.T) {
 		require.NoError(t, err)
 		assert.Len(t, results, 1)
 	})
+
+	t.Run("empty namespace", func(t *testing.T) {
+		opts := ListOptions{Namespace: "nonexistent"}
+		results, err := p.ListInstallations(ctx, opts)
+		require.NoError(t, err)
+		assert.Len(t, results, 0)
+		assert.NotNil(t, results)
+	})
 }
 
 func TestPorter_ListInstallationsWithFieldSelector(t *testing.T) {
