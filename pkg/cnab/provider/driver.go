@@ -115,7 +115,7 @@ func (r *Runtime) dockerDriverWithHostAccess(config cnab.Docker, d *docker.Drive
 
 func (r *Runtime) addVolumeMountsToHostConfig(hostConfig *container.HostConfig, mounts []HostVolumeMountSpec) error {
 	for _, mount := range mounts {
-		err := r.addVolumeMountToHostConfig(hostConfig, mount.Source, mount.Target, mount.ReadOnly)
+		err := r.addVolumeMountToHostConfig(hostConfig, mount.Source, mount.Target, mount.ReadOnly, mount.Type)
 		if err != nil {
 			return err
 		}
