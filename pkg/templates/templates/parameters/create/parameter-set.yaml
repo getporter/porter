@@ -1,6 +1,6 @@
 # See the Parameter Set file format documentation at https://porter.sh/reference/file-formats/#parameter-set
 schemaType: ParameterSet
-schemaVersion: 1.0.1
+schemaVersion: 1.1.0
 # Name of the parameter set.
 name: NAME
 # The namespace in which the parameter set is defined.
