@@ -128,6 +128,36 @@ func TestInstall_stringParam(t *testing.T) {
 	require.Contains(t, output, "Hello, Demo Time", "expected action output to contain provided file contents")
 }
 
+func TestInstall_overrideParamIncludedInParamSet(t *testing.T) {
+
+	p := porter.NewTestPorter(t)
+	defer p.Close()
+	ctx := p.SetupIntegrationTest()
+
+	p.AddTestBundleDir("testdata/bundles/bundle-with-string-params", false)
+
+	installOpts := porter.NewInstallOptions()
+	installOpts.Params = []string{"name=Demo Time"}
+	installOpts.ParameterSets = []string{"myparam"}
+	testParamSets := storage.NewParameterSet("", "myparam", secrets.SourceMap{
+		Name: "name",
+		Source: secrets.Source{
+			Strategy: host.SourceEnv,
+			Hint:     "DEMO_TIME",
+		},
+	})
+	p.TestParameters.InsertParameterSet(ctx, testParamSets)
+
+	err := installOpts.Validate(ctx, []string{}, p.Porter)
+	require.NoError(t, err)
+
+	err = p.InstallBundle(ctx, installOpts)
+	require.NoError(t, err)
+
+	output := p.TestConfig.TestContext.GetOutput()
+	require.Contains(t, output, "Hello, Demo Time", "expected action output to contain provided file contents")
+}
+
 func TestInstall_SensitiveValuesAreNotLogged(t *testing.T) {
 	p := porter.NewTestPorter(t)
 	defer p.Close()
