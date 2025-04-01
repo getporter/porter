@@ -106,3 +106,4 @@ and we will add you. **All** contributors belong here. 💯
 - [Robin Brämer](https://github.com/robinbraemer)
 - [Geeta Chavan](https://github.com/geetachavan1)
 - [Stephen Augustus](https://github.com/justaugustus)
+- [Erik Cederberg](https://github.com/erikced)
