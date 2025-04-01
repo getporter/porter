@@ -60,11 +60,20 @@ func (s CredentialStore) GetDataStore() Store {
 	Secrets
 */
 
-func (s CredentialStore) ResolveAll(ctx context.Context, creds CredentialSet) (secrets.Set, error) {
-	resolvedCreds := make(secrets.Set)
-	var resolveErrors error
+func (s CredentialStore) ResolveAll(ctx context.Context, creds CredentialSet, keys []string) (secrets.Set, error) {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
 
-	for _, cred := range creds.Credentials {
+	resolvedCreds := make(secrets.Set)
+	var resolveErrors *multierror.Error
+
+	for _, key := range keys {
+		cred, ok := creds.GetCredential(key)
+		if !ok {
+			resolveErrors = multierror.Append(resolveErrors, span.Errorf("credential %s not found", key))
+			continue
+		}
+
 		var value string
 		var err error
 		if isHandledByHostPlugin(cred.Source.Strategy) {
@@ -73,13 +82,13 @@ func (s CredentialStore) ResolveAll(ctx context.Context, creds CredentialSet) (s
 			value, err = s.Secrets.Resolve(ctx, cred.Source.Strategy, cred.Source.Hint)
 		}
 		if err != nil {
-			resolveErrors = multierror.Append(resolveErrors, fmt.Errorf("unable to resolve credential %s.%s from %s %s: %w", creds.Name, cred.Name, cred.Source.Strategy, cred.Source.Hint, err))
+			resolveErrors = multierror.Append(resolveErrors, span.Errorf("unable to resolve credential %s.%s from %s %s: %w", creds.Name, cred.Name, cred.Source.Strategy, cred.Source.Hint, err))
 		}
 
 		resolvedCreds[cred.Name] = value
 	}
 
-	return resolvedCreds, resolveErrors
+	return resolvedCreds, resolveErrors.ErrorOrNil()
 }
 
 func (s CredentialStore) Validate(ctx context.Context, creds CredentialSet) error {
