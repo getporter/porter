@@ -454,6 +454,108 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 	})
 }
 
+func Test_ParameterTypeConversion(t *testing.T) {
+	t.Parallel()
+	setup := func() (InstallOptions, storage.Installation) {
+		bun := cnab.NewBundle(bundle.Bundle{
+			Name:          "mybuns",
+			Version:       "1.0.0",
+			SchemaVersion: "v1.0.0",
+			InvocationImages: []bundle.InvocationImage{
+				{BaseImage: bundle.BaseImage{Image: "mybuns:latest", ImageType: "docker"}},
+			},
+			Definitions: definition.Definitions{
+				"string":  &definition.Schema{Type: "string"},
+				"number":  &definition.Schema{Type: "number"},
+				"integer": &definition.Schema{Type: "integer"},
+				"boolean": &definition.Schema{Type: "boolean"},
+				"array":   &definition.Schema{Type: "array"},
+				"object":  &definition.Schema{Type: "object"},
+			},
+			Parameters: map[string]bundle.Parameter{
+				"string":  {Definition: "string", Required: true, Destination: &bundle.Location{Path: "str"}},
+				"number":  {Definition: "number", Required: true, Destination: &bundle.Location{Path: "num"}},
+				"integer": {Definition: "integer", Required: true, Destination: &bundle.Location{Path: "int"}},
+				"boolean": {Definition: "boolean", Required: true, Destination: &bundle.Location{Path: "bool"}},
+				"array":   {Definition: "array", Required: true, Destination: &bundle.Location{Path: "arr"}},
+				"object":  {Definition: "object", Required: true, Destination: &bundle.Location{Path: "obj"}},
+			},
+		})
+
+		opts := NewInstallOptions()
+		opts.bundleRef = &cnab.BundleReference{Definition: bun}
+		i := storage.NewInstallation(opts.Namespace, opts.Name)
+		return opts, i
+	}
+
+	testcases := []struct {
+		name         string
+		parameterSet string
+		params       []string
+	}{
+		{
+			name: "command line parameters",
+			params: []string{
+				"string=abc123",
+				"number=3.1415",
+				"integer=3",
+				"boolean=true",
+				`array=[1, "a", 3.1415, [2, "b"], {"c": 3}, false]`,
+				`object={"items": ["a", "b", "c", 1, 2, 3], "valid": true }`,
+			},
+		},
+		{
+			name:         "native parameter set",
+			parameterSet: "testdata/paramset-native.json",
+		},
+		{
+			name:         "stringified parameter set",
+			parameterSet: "testdata/paramset-stringified.json",
+		},
+	}
+
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			p := NewTestPorter(t)
+			defer p.Close()
+
+			opts, i := setup()
+			opts.Params = tc.params
+			if tc.parameterSet != "" {
+				p.TestParameters.AddTestParameters(tc.parameterSet)
+				opts.ParameterSets = []string{"mypset"}
+			}
+
+			err := p.applyActionOptionsToInstallation(context.Background(), opts, &i)
+			require.NoError(t, err)
+			finalParams := opts.GetParameters()
+
+			expectedParams := map[string]interface{}{
+				"string":  "abc123",
+				"number":  3.1415,
+				"integer": 3,
+				"boolean": true,
+				"array": []interface{}{
+					1.0, "a", 3.1415, []interface{}{2.0, "b"}, map[string]interface{}{"c": 3.0}, false,
+				},
+				"object": map[string]interface{}{
+					"items": []interface{}{"a", "b", "c", 1.0, 2.0, 3.0},
+					"valid": true,
+				},
+			}
+
+			for name, expected := range expectedParams {
+				actual, ok := finalParams[name]
+				require.True(t, ok, "Parameter %s not found", name)
+				assert.Equal(t, expected, actual)
+			}
+		})
+	}
+}
+
 // This is intended to cover the matrix of cases around parameter value resolution.
 // It exercises the matrix for all supported actions.
 func Test_Paramapalooza(t *testing.T) {

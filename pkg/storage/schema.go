@@ -28,7 +28,7 @@ const (
 
 	// DefaultParameterSetSchemaVersion represents the version associated with the schema
 	//	// for parameter set documents.
-	DefaultParameterSetSchemaVersion = cnab.SchemaVersion("1.0.1")
+	DefaultParameterSetSchemaVersion = cnab.SchemaVersion("1.1.0")
 )
 
 var (
@@ -48,7 +48,7 @@ var (
 	SupportedInstallationSchemaVersions = schema.MustParseConstraint("1.0.2")
 
 	// SupportedParameterSetSchemaVersions represents the set of allowed schema versions for ParameterSet documents.
-	SupportedParameterSetSchemaVersions = schema.MustParseConstraint("1.0.1")
+	SupportedParameterSetSchemaVersions = schema.MustParseConstraint("1.0.1 || 1.1.0")
 )
 
 type Schema struct {

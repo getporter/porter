@@ -1,0 +1,44 @@
+{
+  "name": "mypset",
+  "parameters": [
+    {
+      "name": "string",
+      "source": {
+        "value": "abc123"
+      }
+    },
+    {
+      "name": "number",
+      "source": {
+        "value": 3.1415
+      }
+    },
+    {
+      "name": "integer",
+      "source": {
+        "value": 3
+      }
+    },
+    {
+      "name": "boolean",
+      "source": {
+        "value": true
+      }
+    },
+    {
+      "name": "array",
+      "source": {
+        "value": [1, "a", 3.1415, [2, "b"], {"c": 3}, false]
+      }
+    },
+    {
+      "name": "object",
+      "source": {
+        "value": {
+          "items": ["a", "b", "c", 1, 2, 3],
+          "valid": true
+        }
+      }
+    }
+  ]
+}
