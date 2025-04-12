@@ -23,7 +23,7 @@ import (
 
 type BuildOptions struct {
 	BundleDefinitionOptions
-	metadataOpts
+	MetadataOpts
 	build.BuildImageOptions
 
 	// NoLint indicates if lint should be run before build.

@@ -55,12 +55,12 @@ func (s ParameterStore) GetDataStore() Store {
 	return s.Documents
 }
 
-func (s ParameterStore) ResolveAll(ctx context.Context, params ParameterSet, skipParams ...string) (secrets.Set, error) {
+func (s ParameterStore) ResolveAll(ctx context.Context, params ParameterSet, keys []string) (secrets.Set, error) {
 	resolvedParams := make(secrets.Set)
 	var resolveErrors error
 
 	for _, param := range params.Parameters {
-		if slices.Contains(skipParams, param.Name) {
+		if !slices.Contains(keys, param.Name) {
 			continue
 		}
 

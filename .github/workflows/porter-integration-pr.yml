@@ -10,207 +10,151 @@ on:
       - main
 
 env:
-    GOVERSION: 1.23.3
+  GOVERSION: 1.23.3
 
 jobs:
   archive_integration_test:
+    name: Archive Integration Test
     uses: getporter/porter/.github/workflows/integ-reuseable-workflow.yml@main
     with:
       test_name: archive_test
   build_integration_test:
+    name: Build Integration Test
     uses: getporter/porter/.github/workflows/integ-reuseable-workflow.yml@main
     with:
       test_name: build_test
   cli_integration_test:
+    name: CLI Integration Test
     uses: getporter/porter/.github/workflows/integ-reuseable-workflow.yml@main
     with:
       test_name: cli_test
   connection_nix_integration_test:
+    name: Connection Integration Test
     uses: getporter/porter/.github/workflows/integ-reuseable-workflow.yml@main
     with:
       test_name: connection_nix_test
   copy_integration_test:
+    name: Copy Integration Test
     uses: getporter/porter/.github/workflows/integ-reuseable-workflow.yml@main
     with:
       test_name: copy_test
   dependenciesv1_integration_test:
+    name: Dependencies V1 Integration Test
     uses: getporter/porter/.github/workflows/integ-reuseable-workflow.yml@main
     with:
       test_name: dependenciesv1_test
   dependenciesv2_integration_test:
+    name: Dependencies V2 Integration Test
     uses: getporter/porter/.github/workflows/integ-reuseable-workflow.yml@main
     with:
       test_name: dependenciesv2_test
   driver_integration_test:
+    name: Driver Integration Test
     uses: getporter/porter/.github/workflows/integ-reuseable-workflow.yml@main
     with:
       test_name: driver_test
   install_integration_test:
+    name: Install Integration Test
     uses: getporter/porter/.github/workflows/integ-reuseable-workflow.yml@main
     with:
       test_name: install_test
   invoke_integration_test:
+    name: Invoke Integration Test
     uses: getporter/porter/.github/workflows/integ-reuseable-workflow.yml@main
     with:
       test_name: invoke_test
   lint_integration_test:
+    name: Lint Integration Test
     uses: getporter/porter/.github/workflows/integ-reuseable-workflow.yml@main
     with:
       test_name: lint_test
   migration_integration_test:
+    name: Migration Integration Test
     uses: getporter/porter/.github/workflows/integ-reuseable-workflow.yml@main
     with:
       test_name: migration_test
   outputs_integration_test:
+    name: Outputs Integration Test
     uses: getporter/porter/.github/workflows/integ-reuseable-workflow.yml@main
     with:
       test_name: outputs_test
   publish_integration_test:
+    name: Publish Integration Test
     uses: getporter/porter/.github/workflows/integ-reuseable-workflow.yml@main
     with:
       test_name: publish_test
   pull_integration_test:
+    name: Pull Integration Test
     uses: getporter/porter/.github/workflows/integ-reuseable-workflow.yml@main
     with:
       test_name: pull_test
   registry_integration_test:
+    name: Registry Integration Test
     uses: getporter/porter/.github/workflows/integ-reuseable-workflow.yml@main
     with:
       test_name: registry_integration_test
   schema_integration_test:
+    name: Schema Integration Test
     uses: getporter/porter/.github/workflows/integ-reuseable-workflow.yml@main
     with:
       test_name: schema_test
   sensitive_data_integration_test:
+    name: Sensitive data Integration Test
     uses: getporter/porter/.github/workflows/integ-reuseable-workflow.yml@main
     with:
       test_name: sensitive_data_test
   suppress_output_integration_test:
+    name: Suppress output Integration Test
     uses: getporter/porter/.github/workflows/integ-reuseable-workflow.yml@main
     with:
       test_name: suppress_output_test
   telemetry_test:
+    name: Telemetry Integration Test
     uses: getporter/porter/.github/workflows/integ-reuseable-workflow.yml@main
     with:
       test_name: telemetry_test
-   # Reusable workflows only supports 20 jobs
   uninstall_test_integ:
-    runs-on: ubuntu-latest
-    steps:
-    - name: checkout
-      uses: actions/checkout@v4.1.0
-    - uses: actions/setup-go@v4
-      with:
-        go-version: "${{ env.GOVERSION }}"
-        cache: true
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
-    - name: Cache Docker layers
-      uses: actions/cache@v3
-      with:
-        path: /tmp/.buildx-cache
-        key: ${{ runner.os }}-buildx-${{ github.sha }}
-    - name: Docker Login
-      uses: docker/login-action@v3.0.0
-      with:
-        registry: ghcr.io
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
-    - name: Configure Agent
-      run: go run mage.go build
-      shell: bash
-    - name: Integration Test
-      env:
-        PORTER_INTEG_FILE: uninstall_test.go
-      run: go run mage.go -v TestIntegration
-      shell: bash
+    name: Uninstall Integration Test
+    uses: getporter/porter/.github/workflows/integ-reuseable-workflow.yml@main
+    with:
+      test_name: uninstall_test
   signing_test_integ:
-    runs-on: ubuntu-latest
-    steps:
-    - name: checkout
-      uses: actions/checkout@v4.1.0
-    - uses: actions/setup-go@v4
-      with:
-        go-version: "${{ env.GOVERSION }}"
-        cache: true
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
-    - name: Cache Docker layers
-      uses: actions/cache@v3
-      with:
-        path: /tmp/.buildx-cache
-        key: ${{ runner.os }}-buildx-${{ github.sha }}
-    - name: Docker Login
-      uses: docker/login-action@v3.0.0
-      with:
-        registry: ghcr.io
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
-    - name: Configure Agent
-      run: go run mage.go build
-      shell: bash
-    - name: Integration Test
-      env:
-        PORTER_INTEG_FILE: signing_test.go
-      run: go run mage.go -v TestIntegration
-      shell: bash
+    name: Signing Integration Test
+    uses: getporter/porter/.github/workflows/integ-reuseable-workflow.yml@main
+    with:
+      test_name: signing_test
   upgrade_test_integ:
-    runs-on: ubuntu-latest
-    steps:
-    - name: checkout
-      uses: actions/checkout@v4.1.0
-    - uses: actions/setup-go@v4
-      with:
-        go-version: "${{ env.GOVERSION }}"
-        cache: true
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
-    - name: Cache Docker layers
-      uses: actions/cache@v3
-      with:
-        path: /tmp/.buildx-cache
-        key: ${{ runner.os }}-buildx-${{ github.sha }}
-    - name: Docker Login
-      uses: docker/login-action@v3.0.0
-      with:
-        registry: ghcr.io
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
-    - name: Configure Agent
-      run: go run mage.go build
-      shell: bash
-    - name: Integration Test
-      env:
-        PORTER_INTEG_FILE: upgrade_test.go
-      run: go run mage.go -v TestIntegration
-      shell: bash
+    name: Upgrade Integration Test
+    uses: getporter/porter/.github/workflows/integ-reuseable-workflow.yml@main
+    with:
+      test_name: upgrade_test
   plugin_log_level_test_integ:
-    runs-on: ubuntu-latest
-    steps:
-    - name: checkout
-      uses: actions/checkout@v4.1.0
-    - uses: actions/setup-go@v4
-      with:
-        go-version: "${{ env.GOVERSION }}"
-        cache: true
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
-    - name: Cache Docker layers
-      uses: actions/cache@v3
-      with:
-        path: /tmp/.buildx-cache
-        key: ${{ runner.os }}-buildx-${{ github.sha }}
-    - name: Docker Login
-      uses: docker/login-action@v3.0.0
-      with:
-        registry: ghcr.io
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
-    - name: Configure Agent
-      run: go run mage.go build
-      shell: bash
-    - name: Integration Test
-      env:
-        PORTER_INTEG_FILE: plugin_log_level_test.go
-      run: go run mage.go -v TestIntegration
-      shell: bash
+    name: Plugin Log Level Integration Test
+    uses: getporter/porter/.github/workflows/integ-reuseable-workflow.yml@main
+    with:
+      test_name: plugin_log_level_test
+  porter_build_integration_test:
+    name: Porter Build Integration Test
+    uses: getporter/porter/.github/workflows/integ-reuseable-workflow.yml@main
+    with:
+      test_name: build_integration_test
+  lifecycle_integration_test:
+    name: Lifecycle Integration Test
+    uses: getporter/porter/.github/workflows/integ-reuseable-workflow.yml@main
+    with:
+      test_name: lifecycle_integration_test
+  pkgmgmt_integration_test:
+    name: Package Management Integration Test
+    uses: getporter/porter/.github/workflows/integ-reuseable-workflow.yml@main
+    with:
+      test_name: pkgmgmt_integration_test
+  runner_integration_test:
+    name: Runner Integration Test
+    uses: getporter/porter/.github/workflows/integ-reuseable-workflow.yml@main
+    with:
+      test_name: runner_integration_test
+  agent_integration_test:
+    name: Agent Integration Test
+    uses: getporter/porter/.github/workflows/integ-reuseable-workflow.yml@main
+    with:
+      test_name: agent_integration_test

@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 	"time"
@@ -79,16 +80,16 @@ func (p *Porter) PrintParameters(ctx context.Context, opts ListOptions) error {
 		tp := dtprinter.DateTimePrinter{
 			Now: func() time.Time { return now },
 		}
-		paramsSets := [][]string{}
+		result := [][]string{}
 		for _, ps := range params {
 			for _, param := range ps.Parameters {
 				list := []string{}
-				list = append(list, ps.Namespace, param.Name, param.Source.Strategy, param.Source.Hint, tp.Format(ps.Status.Modified))
-				paramsSets = append(paramsSets, list)
+				list = append(list, ps.Namespace, ps.Name, param.Name, param.Source.Strategy, param.Source.Hint, tp.Format(ps.Status.Modified))
+				result = append(result, list)
 			}
 		}
-		return printer.PrintTableParameterSet(p.Out, paramsSets,
-			"NAMESPACE", "NAME", "TYPE", "VALUE", "MODIFIED")
+		return printer.PrintTableParameterSet(p.Out, result,
+			"NAMESPACE", "PARAMETER SET", "NAME", "TYPE", "VALUE", "MODIFIED")
 	default:
 		return fmt.Errorf("invalid format: %s", opts.Format)
 	}
@@ -409,7 +410,17 @@ func (p *Porter) loadParameterSets(ctx context.Context, bun cnab.ExtendedBundle,
 			}
 		}
 
-		rc, err := p.Parameters.ResolveAll(ctx, pset, skipParams...)
+		keysToResolve := pset.Keys()
+		if len(skipParams) > 0 {
+			keysToResolve = []string{}
+			for _, param := range pset.Parameters {
+				if !slices.Contains(skipParams, param.Name) {
+					keysToResolve = append(keysToResolve, param.Name)
+				}
+			}
+		}
+
+		rc, err := p.Parameters.ResolveAll(ctx, pset, keysToResolve)
 		if err != nil {
 			return nil, err
 		}
@@ -901,7 +912,7 @@ func (p *Porter) applyActionOptionsToInstallation(ctx context.Context, ba Bundle
 
 	//
 	// 4. Resolve the installation's internal parameter set
-	resolvedOverrides, err := p.Parameters.ResolveAll(ctx, inst.Parameters)
+	resolvedOverrides, err := p.Parameters.ResolveAll(ctx, inst.Parameters, inst.Parameters.Keys())
 	if err != nil {
 		return err
 	}
