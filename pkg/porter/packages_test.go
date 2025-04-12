@@ -69,7 +69,7 @@ func TestPorter_SearchPackages_Mixins(t *testing.T) {
 		wantOutput: "testdata/packages/search-single-match.txt",
 	}, {
 		name:       "mixin name multiple match",
-		mixin:      "ku",
+		mixin:      "docker",
 		format:     printer.FormatPlaintext,
 		wantOutput: "testdata/packages/search-multi-match.txt",
 	}, {
