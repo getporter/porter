@@ -402,7 +402,7 @@ func (p *Porter) loadParameterSets(ctx context.Context, bun cnab.ExtendedBundle,
 			}
 		}
 
-		rc, err := p.Parameters.ResolveAll(ctx, pset)
+		rc, err := p.Parameters.ResolveAll(ctx, pset, pset.Keys())
 		if err != nil {
 			return nil, err
 		}
@@ -894,7 +894,7 @@ func (p *Porter) applyActionOptionsToInstallation(ctx context.Context, ba Bundle
 
 	//
 	// 4. Resolve the installation's internal parameter set
-	resolvedOverrides, err := p.Parameters.ResolveAll(ctx, inst.Parameters)
+	resolvedOverrides, err := p.Parameters.ResolveAll(ctx, inst.Parameters, inst.Parameters.Keys())
 	if err != nil {
 		return err
 	}

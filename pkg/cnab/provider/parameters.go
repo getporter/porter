@@ -14,7 +14,7 @@ func (r *Runtime) loadParameters(ctx context.Context, b cnab.ExtendedBundle, run
 	ctx, span := tracing.StartSpan(ctx)
 	defer span.EndSpan()
 
-	resolvedParameters, err := r.parameters.ResolveAll(ctx, run.Parameters)
+	resolvedParameters, err := r.parameters.ResolveAll(ctx, run.Parameters, run.Parameters.Keys())
 	if err != nil {
 		return err
 	}

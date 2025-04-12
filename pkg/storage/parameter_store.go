@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 
 	"get.porter.sh/porter/pkg/secrets"
@@ -54,11 +55,15 @@ func (s ParameterStore) GetDataStore() Store {
 	return s.Documents
 }
 
-func (s ParameterStore) ResolveAll(ctx context.Context, params ParameterSet) (secrets.Set, error) {
+func (s ParameterStore) ResolveAll(ctx context.Context, params ParameterSet, keys []string) (secrets.Set, error) {
 	resolvedParams := make(secrets.Set)
 	var resolveErrors error
 
 	for _, param := range params.Parameters {
+		if !slices.Contains(keys, param.Name) {
+			continue
+		}
+
 		var value string
 		var err error
 		if isHandledByHostPlugin(param.Source.Strategy) {

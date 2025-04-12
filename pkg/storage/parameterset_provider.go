@@ -11,7 +11,7 @@ type ParameterSetProvider interface {
 	GetDataStore() Store
 
 	// ResolveAll parameter values in the parameter set.
-	ResolveAll(ctx context.Context, params ParameterSet) (secrets.Set, error)
+	ResolveAll(ctx context.Context, params ParameterSet, keys []string) (secrets.Set, error)
 
 	// Validate the parameter set is defined properly.
 	Validate(ctx context.Context, params ParameterSet) error

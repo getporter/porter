@@ -117,7 +117,7 @@ func TestParameterStorage_ResolveNonSecret(t *testing.T) {
 		"param2": "param2_value",
 	}
 
-	resolved, err := paramStore.ResolveAll(context.Background(), testParameterSet)
+	resolved, err := paramStore.ResolveAll(context.Background(), testParameterSet, testParameterSet.Keys())
 	require.NoError(t, err)
 	require.Equal(t, expected, resolved)
 }
@@ -153,7 +153,23 @@ func TestParameterStorage_ResolveAll(t *testing.T) {
 			"param2": "param2_value",
 		}
 
-		resolved, err := paramStore.ResolveAll(context.Background(), testParameterSet)
+		resolved, err := paramStore.ResolveAll(context.Background(), testParameterSet, testParameterSet.Keys())
+		require.NoError(t, err)
+		require.Equal(t, expected, resolved)
+	})
+
+	t.Run("resolve params only resolves the requested keys", func(t *testing.T) {
+		paramStore := NewTestParameterProvider(t)
+		defer paramStore.Close()
+
+		paramStore.AddSecret("param1", "param1_value")
+		paramStore.AddSecret("param2", "param2_value")
+
+		expected := secrets.Set{
+			"param1": "param1_value",
+		}
+
+		resolved, err := paramStore.ResolveAll(context.Background(), testParameterSet, []string{"param1"})
 		require.NoError(t, err)
 		require.Equal(t, expected, resolved)
 	})
@@ -170,7 +186,7 @@ func TestParameterStorage_ResolveAll(t *testing.T) {
 			"param2": "",
 		}
 
-		resolved, err := paramStore.ResolveAll(context.Background(), testParameterSet)
+		resolved, err := paramStore.ResolveAll(context.Background(), testParameterSet, testParameterSet.Keys())
 		require.EqualError(t, err, "1 error occurred:\n\t* unable to resolve parameter myparamset.param2 from secret param2: secret not found\n\n")
 		require.Equal(t, expected, resolved)
 	})
