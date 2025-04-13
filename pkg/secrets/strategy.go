@@ -150,3 +150,12 @@ func (l StrategyList) Swap(i, j int) {
 func (l StrategyList) Len() int {
 	return len(l)
 }
+
+func (l StrategyList) Contains(name string) bool {
+	for _, param := range l {
+		if param.Name == name {
+			return true
+		}
+	}
+	return false
+}
