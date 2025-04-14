@@ -4,6 +4,7 @@ import (
 	"context"
 	"net"
 	"testing"
+	"time"
 
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/storage/plugins"
@@ -96,6 +97,9 @@ func TestRoundTripDataOverGRPC(t *testing.T) {
 		},
 	})
 	require.NoError(t, err)
+
+	// Add a small delay to ensure all documents are properly indexed
+	time.Sleep(100 * time.Millisecond)
 
 	aggregateResults, err := client.Aggregate(ctx, plugins.AggregateOptions{
 		Collection: CollectionOutputs,
