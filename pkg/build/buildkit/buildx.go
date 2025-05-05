@@ -89,7 +89,10 @@ func (b *Builder) BuildBundleImage(ctx context.Context, manifest *manifest.Manif
 		return span.Error(err)
 	}
 
-	currentSession := []session.Attachable{authprovider.NewDockerAuthProvider(dockerconfig.LoadDefaultConfigFile(b.Err), make(map[string]*authprovider.AuthTLSConfig))}
+	currentSession := []session.Attachable{authprovider.NewDockerAuthProvider(authprovider.DockerAuthProviderConfig{
+		ConfigFile: dockerconfig.LoadDefaultConfigFile(b.Err),
+		TLSConfigs: make(map[string]*authprovider.AuthTLSConfig),
+	})}
 
 	ssh, err := buildflags.ParseSSHSpecs(opts.SSH)
 	if err != nil {
