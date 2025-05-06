@@ -18,7 +18,6 @@ import (
 	containerdRemotes "github.com/containerd/containerd/remotes"
 	"github.com/docker/cli/cli/command"
 	dockerconfig "github.com/docker/cli/cli/config"
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/image"
 	registrytypes "github.com/docker/docker/api/types/registry"
 	"github.com/docker/docker/pkg/jsonmessage"
@@ -295,7 +294,7 @@ func (r *Registry) GetCachedImage(ctx context.Context, ref cnab.OCIReference) (I
 		return ImageMetadata{}, log.Error(err)
 	}
 
-	result, _, err := cli.Client().ImageInspectWithRaw(ctx, image)
+	result, err := cli.Client().ImageInspect(ctx, image)
 	if err != nil {
 		err = fmt.Errorf("failed to find image in docker cache: %w", ErrNotFound{Reference: ref})
 		// log as debug because this isn't a terminal error
@@ -404,7 +403,7 @@ type ImageMetadata struct {
 	RepoDigests []string
 }
 
-func NewImageSummaryFromInspect(ref cnab.OCIReference, sum types.ImageInspect) (ImageMetadata, error) {
+func NewImageSummaryFromInspect(ref cnab.OCIReference, sum image.InspectResponse) (ImageMetadata, error) {
 	img := ImageMetadata{
 		Reference:   ref,
 		RepoDigests: sum.RepoDigests,
