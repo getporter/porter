@@ -93,7 +93,7 @@ func ParseDependencySource(templateVariable string) (DependencySource, error) {
 	matches := dependencySourceWiringRegex.FindStringSubmatch(templateVariable)
 
 	// If it doesn't match our wiring syntax, assume that it is a hard coded value
-	if matches == nil || len(matches) < 5 {
+	if len(matches) < 5 {
 		return DependencySource{Value: templateVariable}, nil
 	}
 

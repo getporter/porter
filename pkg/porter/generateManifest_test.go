@@ -14,7 +14,7 @@ import (
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/experimental"
 	"get.porter.sh/porter/pkg/test"
-	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/image"
 	"github.com/stretchr/testify/require"
 )
 
@@ -106,7 +106,7 @@ func mockGetImageMetadataFailure(ctx context.Context, ref cnab.OCIReference, opt
 }
 
 func mockGetCachedImage(ctx context.Context, ref cnab.OCIReference) (cnabtooci.ImageMetadata, error) {
-	sum := types.ImageInspect{
+	sum := image.InspectResponse{
 		ID:          "test-id",
 		RepoDigests: []string{"test/whalesayd@sha256:8b92b7269f59e3ed824e811a1ff1ee64f0d44c0218efefada57a4bebc2d7ef6f"},
 	}
@@ -115,7 +115,7 @@ func mockGetCachedImage(ctx context.Context, ref cnab.OCIReference) (cnabtooci.I
 
 func Test_getImageLatestDigest(t *testing.T) {
 	defaultMockGetCachedImage := func(ctx context.Context, ref cnab.OCIReference) (cnabtooci.ImageMetadata, error) {
-		sum := types.ImageInspect{
+		sum := image.InspectResponse{
 			ID:          "test-id",
 			RepoDigests: []string{"test/repo@sha256:8b92b7269f59e3ed824e811a1ff1ee64f0d44c0218efefada57a4bebc2d7ef6f"},
 		}
