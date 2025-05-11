@@ -134,7 +134,7 @@ bash install-bundle.sh
 Note: The `install-bundle.sh` script starts mongo. If mongo ever has to be restarted use the following command.
 
 ```
-docker run --name porter-mongodb-docker-plugin -d -p 27018:27017 -v mongodb_data:/data/db --restart always mongo:4.0-xenial
+docker run --name porter-mongodb-docker-plugin -d -p 27018:27017 -v mongodb_data:/data/db --restart always mongo:8.0-noble
 ```
 
 
