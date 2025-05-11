@@ -16,6 +16,8 @@ import (
 	"get.porter.sh/porter/pkg/tracing"
 	dtprinter "github.com/carolynvs/datetime-printer"
 	"github.com/olekukonko/tablewriter"
+	"github.com/olekukonko/tablewriter/renderer"
+	"github.com/olekukonko/tablewriter/tw"
 	"go.opentelemetry.io/otel/attribute"
 )
 
@@ -280,13 +282,34 @@ func (p *Porter) ShowCredential(ctx context.Context, opts CredentialShowOptions)
 		}
 
 		// Build and configure our tablewriter
-		table := tablewriter.NewWriter(p.Out)
-		table.SetCenterSeparator("")
-		table.SetColumnSeparator("")
-		table.SetAlignment(tablewriter.ALIGN_LEFT)
-		table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
-		table.SetBorders(tablewriter.Border{Left: false, Right: false, Bottom: false, Top: true})
-		table.SetAutoFormatHeaders(false)
+		table := tablewriter.NewTable(p.Out,
+			tablewriter.WithRenderer(renderer.NewBlueprint(tw.RendererConfig{
+				Settings: tw.Settings{
+					Separators: tw.Separators{
+						BetweenColumns: tw.Off,
+					},
+				},
+				Borders: tw.Border{
+					Top:    tw.On,
+					Left:   tw.Off,
+					Right:  tw.Off,
+					Bottom: tw.Off,
+				},
+			})),
+			tablewriter.WithConfig(tablewriter.Config{
+				Header: tw.CellConfig{
+					Formatting: tw.CellFormatting{
+						Alignment:  tw.AlignLeft,
+						AutoFormat: false,
+					},
+				},
+				Row: tw.CellConfig{
+					Formatting: tw.CellFormatting{
+						Alignment: tw.AlignLeft,
+					},
+				},
+			}),
+		)
 
 		// First, print the CredentialSet metadata
 		// Note that we are not using span.Info because the command's output must go to standard out
@@ -306,7 +329,7 @@ func (p *Porter) ShowCredential(ctx context.Context, opts CredentialShowOptions)
 		}
 
 		// Now print the table
-		table.SetHeader([]string{"Name", "Local Source", "Source Type"})
+		table.Header([]string{"Name", "Local Source", "Source Type"})
 		for _, row := range rows {
 			table.Append(row)
 		}
