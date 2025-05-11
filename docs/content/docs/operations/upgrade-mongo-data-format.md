@@ -28,6 +28,8 @@ To perform the upgrade, run the following script:
 ```bash
 #!/bin/bash
 
+set -eou pipefail
+
 # Function to wait for MongoDB to be ready
 wait_for_mongodb() {
   local container_name=$1
