@@ -388,25 +388,10 @@ func (p *Porter) loadParameterSets(ctx context.Context, bun cnab.ExtendedBundle,
 			}
 		}
 
-		// A parameter may correspond to a Porter-specific parameter type of 'file'
-		// If so, add value (filepath) directly to map and remove from pset
-		for paramName, paramDef := range bun.Parameters {
-			paramSchema, ok := bun.Definitions[paramDef.Definition]
+		for _, paramDef := range bun.Parameters {
+			_, ok := bun.Definitions[paramDef.Definition]
 			if !ok {
 				return nil, fmt.Errorf("definition %s not defined in bundle", paramDef.Definition)
-			}
-
-			if bun.IsFileType(paramSchema) {
-				for i, param := range pset.Parameters {
-					if param.Name == paramName {
-						// Pass through value (filepath) directly to resolvedParameters
-						resolvedParameters[param.Name] = param.Source.Hint
-						// Eliminate this param from pset to prevent its resolution by
-						// the cnab-go library, which doesn't support this parameter type
-						pset.Parameters[i] = pset.Parameters[len(pset.Parameters)-1]
-						pset.Parameters = pset.Parameters[:len(pset.Parameters)-1]
-					}
-				}
 			}
 		}
 
