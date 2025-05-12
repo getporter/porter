@@ -91,6 +91,12 @@ The docker driver builds the bundle image using the local Docker host. To use a 
 		"Set build arguments in the template Dockerfile (format: NAME=VALUE). May be specified multiple times. Max length is 5,000 characters.")
 	f.StringArrayVar(&opts.BuildContexts, "build-context", nil,
 		"Define additional build context with specified contents (format: NAME=PATH). May be specified multiple times.")
+	f.StringArrayVar(&opts.CacheFrom, "cache-from", nil,
+		"Add cache source images to the build cache. May be specified multiple times.")
+	f.StringArrayVar(&opts.CacheTo, "cache-to", nil,
+		"Add cache target images to the build cache.")
+	f.StringVar(&opts.Output, "output", "", "Set docker output options (excluding type and name).")
+	f.StringVar(&opts.Builder, "builder", "", "Set the name of the buildkit builder to use.")
 	f.StringArrayVar(&opts.SSH, "ssh", nil,
 		"SSH agent socket or keys to expose to the build (format: default|<id>[=<socket>|<key>[,<key>]]). May be specified multiple times.")
 	f.StringArrayVar(&opts.Secrets, "secret", nil,
