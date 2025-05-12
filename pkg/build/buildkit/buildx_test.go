@@ -332,3 +332,62 @@ func TestBuilder_parseCacheOptions(t *testing.T) {
 		})
 	}
 }
+
+func TestBuilder_parseOutput(t *testing.T) {
+	const defaultName = "porter-abcd1234"
+	testcases := []struct {
+		name       string
+		outputOpts string
+		want       client.ExportEntry
+		wantErr    bool
+	}{
+		{
+			name: "empty options",
+			want: client.ExportEntry{
+				Type: client.ExporterDocker,
+				Attrs: map[string]string{
+					"name": defaultName,
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name:       "valid options",
+			outputOpts: "compression=estargz,force-compression=true",
+			want: client.ExportEntry{
+				Type: client.ExporterDocker,
+				Attrs: map[string]string{
+					"name":              defaultName,
+					"compression":       "estargz",
+					"force-compression": "true",
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name:       "return error on type override",
+			outputOpts: "type=local",
+			want:       client.ExportEntry{},
+			wantErr:    true,
+		},
+		{
+			name:       "return error on name override",
+			outputOpts: "name=my-registry/repo:tag",
+			want:       client.ExportEntry{},
+			wantErr:    true,
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			got, err := parseOutput(tc.outputOpts, defaultName)
+			if tc.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			assert.Len(t, got, 1)
+			assert.Equal(t, tc.want, got[0])
+		})
+	}
+}

@@ -95,6 +95,7 @@ The docker driver builds the bundle image using the local Docker host. To use a 
 		"Add cache source images to the build cache. May be specified multiple times.")
 	f.StringArrayVar(&opts.CacheTo, "cache-to", nil,
 		"Add cache target images to the build cache.")
+	f.StringVar(&opts.Output, "output", "", "Set docker output options (excluding type and name).")
 	f.StringArrayVar(&opts.SSH, "ssh", nil,
 		"SSH agent socket or keys to expose to the build (format: default|<id>[=<socket>|<key>[,<key>]]). May be specified multiple times.")
 	f.StringArrayVar(&opts.Secrets, "secret", nil,

@@ -138,6 +138,11 @@ func (b *Builder) BuildBundleImage(ctx context.Context, manifest *manifest.Manif
 		return span.Errorf("error parsing the --cache-to flags: %w", err)
 	}
 
+	exports, err := parseOutput(opts.Output, manifest.Image)
+	if err != nil {
+		return span.Errorf("error parsing the --output flag: %w", err)
+	}
+
 	buildxOpts := map[string]buildx.Options{
 		"default": {
 			Tags: []string{manifest.Image},
@@ -148,6 +153,7 @@ func (b *Builder) BuildBundleImage(ctx context.Context, manifest *manifest.Manif
 				NamedContexts:  toNamedContexts(buildContexts),
 			},
 			BuildArgs: args,
+			Exports:   exports,
 			Session:   currentSession,
 			NoCache:   opts.NoCache,
 			CacheFrom: cacheFrom,
@@ -318,6 +324,38 @@ func parseCacheOption(flag string) (client.CacheOptionsEntry, error) {
 	}
 
 	return entry, nil
+}
+
+func parseOutput(flag string, name string) ([]client.ExportEntry, error) {
+	attrs := map[string]string{
+		"name": name,
+	}
+	if flag != "" {
+		parts := strings.Split(flag, ",")
+		for _, part := range parts {
+			key, value, found := strings.Cut(part, "=")
+			if !found {
+				return nil, fmt.Errorf("invalid format, expected key=value")
+			}
+
+			if key == "type" {
+				if value != client.ExporterDocker {
+					return nil, fmt.Errorf("output type cannot be overridden")
+				}
+				continue
+			} else if key == "name" {
+				return nil, fmt.Errorf("output name cannot be overridden")
+			}
+			attrs[key] = value
+		}
+	}
+
+	return []client.ExportEntry{
+		{
+			Type:  client.ExporterDocker,
+			Attrs: attrs,
+		},
+	}, nil
 }
 
 func (b *Builder) TagBundleImage(ctx context.Context, origTag, newTag string) error {

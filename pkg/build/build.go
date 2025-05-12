@@ -72,4 +72,7 @@ type BuildImageOptions struct {
 
 	// CacheTo is the set of docker build --cache-to flags specified.
 	CacheTo []string
+
+	// Output is a subset of docker build --output options.
+	Output string
 }

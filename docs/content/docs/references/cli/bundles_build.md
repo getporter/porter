@@ -49,6 +49,7 @@ porter bundles build [flags]
       --name string                 Override the bundle name
       --no-cache                    Do not use the Docker cache when building the bundle image.
       --no-lint                     Do not run the linter
+      --output string               Set docker output options (excluding type and name).
       --preserve-tags               Preserve the original tag name on referenced images
       --secret stringArray          Secret file to expose to the build (format: id=mysecret,src=/local/secret). Custom values are accessible as build arguments in the template Dockerfile and in the manifest using template variables. May be specified multiple times.
       --ssh stringArray             SSH agent socket or keys to expose to the build (format: default|<id>[=<socket>|<key>[,<key>]]). May be specified multiple times.
