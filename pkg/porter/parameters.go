@@ -24,6 +24,8 @@ import (
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/olekukonko/tablewriter"
+	"github.com/olekukonko/tablewriter/renderer"
+	"github.com/olekukonko/tablewriter/tw"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -278,13 +280,35 @@ func (p *Porter) ShowParameter(ctx context.Context, opts ParameterShowOptions) e
 		}
 
 		// Build and configure our tablewriter
-		table := tablewriter.NewWriter(p.Out)
-		table.SetCenterSeparator("")
-		table.SetColumnSeparator("")
-		table.SetAlignment(tablewriter.ALIGN_LEFT)
-		table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
-		table.SetBorders(tablewriter.Border{Left: false, Right: false, Bottom: false, Top: true})
-		table.SetAutoFormatHeaders(false)
+		table := tablewriter.NewTable(p.Out,
+			tablewriter.WithRenderer(renderer.NewBlueprint(tw.RendererConfig{
+				Settings: tw.Settings{
+					Separators: tw.Separators{
+						BetweenColumns: tw.Off,
+					},
+				},
+				Borders: tw.Border{
+					Top:    tw.On,
+					Left:   tw.Off,
+					Right:  tw.Off,
+					Bottom: tw.Off,
+				},
+			})),
+			tablewriter.WithConfig(tablewriter.Config{
+				Header: tw.CellConfig{
+					Formatting: tw.CellFormatting{
+						Alignment:  tw.AlignLeft,
+						AutoFormat: false,
+					},
+				},
+				Row: tw.CellConfig{
+					Formatting: tw.CellFormatting{
+						Alignment: tw.AlignLeft,
+						MaxWidth:  30,
+					},
+				},
+			}),
+		)
 
 		// First, print the ParameterSet metadata
 		fmt.Fprintf(p.Out, "Name: %s\n", paramSet.Name)
@@ -302,11 +326,15 @@ func (p *Porter) ShowParameter(ctx context.Context, opts ParameterShowOptions) e
 		}
 
 		// Now print the table
-		table.SetHeader([]string{"Name", "Local Source", "Source Type"})
+		table.Header([]string{"Name", "Local Source", "Source Type"})
 		for _, row := range rows {
-			table.Append(row)
+			if err := table.Append(row); err != nil {
+				return err
+			}
 		}
-		table.Render()
+		if err := table.Render(); err != nil {
+			return err
+		}
 		return nil
 	default:
 		return fmt.Errorf("invalid format: %s", opts.Format)
@@ -524,19 +552,44 @@ func NewDisplayValuesFromParameters(bun cnab.ExtendedBundle, params map[string]i
 
 func (p *Porter) printDisplayValuesTable(values []DisplayValue) error {
 	// Build and configure our tablewriter for the outputs
-	table := tablewriter.NewWriter(p.Out)
-	table.SetCenterSeparator("")
-	table.SetColumnSeparator("")
-	table.SetAlignment(tablewriter.ALIGN_LEFT)
-	table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
-	table.SetBorders(tablewriter.Border{Left: false, Right: false, Bottom: false, Top: true})
-	table.SetAutoFormatHeaders(false)
+	table := tablewriter.NewTable(p.Out,
+		tablewriter.WithRenderer(renderer.NewBlueprint(tw.RendererConfig{
+			Settings: tw.Settings{
+				Separators: tw.Separators{
+					BetweenColumns: tw.Off,
+				},
+			},
+			Borders: tw.Border{
+				Top:    tw.On,
+				Left:   tw.Off,
+				Right:  tw.Off,
+				Bottom: tw.Off,
+			},
+		})),
+		tablewriter.WithConfig(tablewriter.Config{
+			Header: tw.CellConfig{
+				Formatting: tw.CellFormatting{
+					Alignment:  tw.AlignLeft,
+					AutoFormat: false,
+				},
+			},
+			Row: tw.CellConfig{
+				Formatting: tw.CellFormatting{
+					Alignment: tw.AlignLeft,
+				},
+			},
+		}),
+	)
 
-	table.SetHeader([]string{"Name", "Type", "Value"})
+	table.Header([]string{"Name", "Type", "Value"})
 	for _, param := range values {
-		table.Append([]string{param.Name, param.Type, param.PrintValue()})
+		if err := table.Append([]string{param.Name, param.Type, param.PrintValue()}); err != nil {
+			return err
+		}
 	}
-	table.Render()
+	if err := table.Render(); err != nil {
+		return err
+	}
 
 	return nil
 }
