@@ -69,4 +69,7 @@ type BuildImageOptions struct {
 
 	// CacheFrom is the set of docker build --cache-from flags specified.
 	CacheFrom []string
+
+	// CacheTo is the set of docker build --cache-to flags specified.
+	CacheTo []string
 }
