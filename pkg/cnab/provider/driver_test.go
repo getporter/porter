@@ -5,6 +5,7 @@ import (
 
 	"get.porter.sh/porter/pkg/cnab"
 	"github.com/cnabio/cnab-go/driver/docker"
+	"github.com/docker/docker/api/types/mount"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -131,34 +132,36 @@ func TestNewDriver_Docker(t *testing.T) {
 		r.MockGetDockerGroupId()
 		defer r.Close()
 
-		r.Extensions[cnab.DockerExtensionKey] = cnab.Docker{}
-		_, err := r.FileSystem.Create("/var/run/docker.sock")
-		require.NoError(t, err)
-		_, err = r.FileSystem.Create("/sourceFolder")
-		require.NoError(t, err)
-		_, err = r.FileSystem.Create("/sourceFolder2")
-		require.NoError(t, err)
-		_, err = r.FileSystem.Create("/sourceFolder3")
-		require.NoError(t, err)
+		var hostVolumeMounts = []HostVolumeMountSpec{
+			{
+				Source:   "/sourceFolder",
+				Target:   "/targetFolder",
+				ReadOnly: false,
+				Type:     mount.TypeBind,
+			},
+			{
+				Source:   "/sourceFolder2",
+				Target:   "/targetFolder2",
+				ReadOnly: true,
+				Type:     mount.TypeBind,
+			},
+			{
+				Source:   "/sourceFolder3",
+				Target:   "/targetFolder3",
+				ReadOnly: false,
+				Type:     mount.TypeBind,
+			},
+			{
+				Source:   "volume",
+				Target:   "/targetFolder4",
+				ReadOnly: true,
+				Type:     mount.TypeVolume,
+			},
+		}
 
 		args := ActionArguments{
 			AllowDockerHostAccess: true,
-			HostVolumeMounts: []HostVolumeMountSpec{
-				{
-					Source: "/sourceFolder",
-					Target: "/targetFolder",
-				},
-				{
-					Source:   "/sourceFolder2",
-					Target:   "/targetFolder2",
-					ReadOnly: true,
-				},
-				{
-					Source:   "/sourceFolder3",
-					Target:   "/targetFolder3",
-					ReadOnly: false,
-				},
-			},
+			HostVolumeMounts:      hostVolumeMounts,
 		}
 
 		driver, err := r.newDriver(DriverNameDocker, args)
@@ -175,16 +178,14 @@ func TestNewDriver_Docker(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, false, containerHostCfg.Privileged)
 
-		require.Len(t, containerHostCfg.Mounts, 4) //includes the docker socket mount
-		assert.Equal(t, "/sourceFolder", containerHostCfg.Mounts[1].Source)
-		assert.Equal(t, "/targetFolder", containerHostCfg.Mounts[1].Target)
-		assert.Equal(t, false, containerHostCfg.Mounts[1].ReadOnly)
-		assert.Equal(t, "/sourceFolder2", containerHostCfg.Mounts[2].Source)
-		assert.Equal(t, "/targetFolder2", containerHostCfg.Mounts[2].Target)
-		assert.Equal(t, true, containerHostCfg.Mounts[2].ReadOnly)
-		assert.Equal(t, "/sourceFolder3", containerHostCfg.Mounts[3].Source)
-		assert.Equal(t, "/targetFolder3", containerHostCfg.Mounts[3].Target)
-		assert.Equal(t, false, containerHostCfg.Mounts[3].ReadOnly)
+		require.Len(t, containerHostCfg.Mounts, 5) //includes the docker socket mount
+
+		for i, hostMount := range hostVolumeMounts {
+			assert.Equal(t, hostMount.Source, containerHostCfg.Mounts[i+1].Source)
+			assert.Equal(t, hostMount.Target, containerHostCfg.Mounts[i+1].Target)
+			assert.Equal(t, hostMount.ReadOnly, containerHostCfg.Mounts[i+1].ReadOnly)
+			assert.Equal(t, hostMount.Type, containerHostCfg.Mounts[i+1].Type)
+		}
 	})
 
 	t.Run("host volume mount, docker driver, with multiple mounts", func(t *testing.T) {
@@ -193,30 +194,25 @@ func TestNewDriver_Docker(t *testing.T) {
 		r := NewTestRuntime(t)
 		defer r.Close()
 
-		_, err := r.FileSystem.Create("/sourceFolder")
-		require.NoError(t, err)
-		_, err = r.FileSystem.Create("/sourceFolder2")
-		require.NoError(t, err)
-		_, err = r.FileSystem.Create("/sourceFolder3")
-		require.NoError(t, err)
+		var hostVolumeMounts = []HostVolumeMountSpec{
+			{
+				Source: "/sourceFolder",
+				Target: "/targetFolder",
+			},
+			{
+				Source:   "/sourceFolder2",
+				Target:   "/targetFolder2",
+				ReadOnly: true,
+			},
+			{
+				Source:   "/sourceFolder3",
+				Target:   "/targetFolder3",
+				ReadOnly: false,
+			},
+		}
 
 		args := ActionArguments{
-			HostVolumeMounts: []HostVolumeMountSpec{
-				{
-					Source: "/sourceFolder",
-					Target: "/targetFolder",
-				},
-				{
-					Source:   "/sourceFolder2",
-					Target:   "/targetFolder2",
-					ReadOnly: true,
-				},
-				{
-					Source:   "/sourceFolder3",
-					Target:   "/targetFolder3",
-					ReadOnly: false,
-				},
-			},
+			HostVolumeMounts: hostVolumeMounts,
 		}
 
 		driver, err := r.newDriver(DriverNameDocker, args)
@@ -234,16 +230,13 @@ func TestNewDriver_Docker(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Len(t, containerHostCfg.Mounts, 3)
-		assert.Equal(t, "/sourceFolder", containerHostCfg.Mounts[0].Source)
-		assert.Equal(t, "/targetFolder", containerHostCfg.Mounts[0].Target)
-		assert.Equal(t, false, containerHostCfg.Mounts[0].ReadOnly)
-		assert.Equal(t, "/sourceFolder2", containerHostCfg.Mounts[1].Source)
-		assert.Equal(t, "/targetFolder2", containerHostCfg.Mounts[1].Target)
-		assert.Equal(t, true, containerHostCfg.Mounts[1].ReadOnly)
-		assert.Equal(t, "/sourceFolder3", containerHostCfg.Mounts[2].Source)
-		assert.Equal(t, "/targetFolder3", containerHostCfg.Mounts[2].Target)
-		assert.Equal(t, false, containerHostCfg.Mounts[2].ReadOnly)
 
+		for i, hostMount := range hostVolumeMounts {
+			assert.Equal(t, hostMount.Source, containerHostCfg.Mounts[i].Source)
+			assert.Equal(t, hostMount.Target, containerHostCfg.Mounts[i].Target)
+			assert.Equal(t, hostMount.ReadOnly, containerHostCfg.Mounts[i].ReadOnly)
+			assert.Equal(t, hostMount.Type, containerHostCfg.Mounts[i].Type)
+		}
 	})
 
 	t.Run("host volume mount, docker driver, with single mount", func(t *testing.T) {
@@ -252,14 +245,15 @@ func TestNewDriver_Docker(t *testing.T) {
 		r := NewTestRuntime(t)
 		defer r.Close()
 
-		_, err := r.FileSystem.Create("/sourceFolder")
-		require.NoError(t, err)
+		//		_, err := r.FileSystem.Create("/sourceFolder")
+		//require.NoError(t, err)
 
 		args := ActionArguments{
 			HostVolumeMounts: []HostVolumeMountSpec{
 				{
 					Source: "/sourceFolder",
 					Target: "/targetFolder",
+					Type:   mount.TypeBind,
 				},
 			},
 		}
@@ -282,6 +276,7 @@ func TestNewDriver_Docker(t *testing.T) {
 		assert.Equal(t, "/sourceFolder", containerHostCfg.Mounts[0].Source)
 		assert.Equal(t, "/targetFolder", containerHostCfg.Mounts[0].Target)
 		assert.Equal(t, false, containerHostCfg.Mounts[0].ReadOnly)
+		assert.Equal(t, mount.TypeBind, containerHostCfg.Mounts[0].Type)
 	})
 
 	t.Run("host volume mount, mismatch driver name", func(t *testing.T) {
