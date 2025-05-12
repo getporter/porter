@@ -136,6 +136,7 @@ func (p *Porter) ShowPlugin(ctx context.Context, opts ShowPluginOptions) error {
 				Row: tw.CellConfig{
 					Formatting: tw.CellFormatting{
 						Alignment: tw.AlignLeft,
+						MaxWidth:  30,
 					},
 				},
 			}),
@@ -149,9 +150,13 @@ func (p *Porter) ShowPlugin(ctx context.Context, opts ShowPluginOptions) error {
 
 		table.Header([]string{"Type", "Implementation"})
 		for _, row := range plugin.Implementations {
-			table.Append([]string{row.Type, row.Name})
+			if err := table.Append([]string{row.Type, row.Name}); err != nil {
+				return err
+			}
 		}
-		table.Render()
+		if err := table.Render(); err != nil {
+			return err
+		}
 		return nil
 
 	case printer.FormatJson:

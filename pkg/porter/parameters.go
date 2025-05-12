@@ -304,6 +304,7 @@ func (p *Porter) ShowParameter(ctx context.Context, opts ParameterShowOptions) e
 				Row: tw.CellConfig{
 					Formatting: tw.CellFormatting{
 						Alignment: tw.AlignLeft,
+						MaxWidth:  30,
 					},
 				},
 			}),
@@ -327,9 +328,13 @@ func (p *Porter) ShowParameter(ctx context.Context, opts ParameterShowOptions) e
 		// Now print the table
 		table.Header([]string{"Name", "Local Source", "Source Type"})
 		for _, row := range rows {
-			table.Append(row)
+			if err := table.Append(row); err != nil {
+				return err
+			}
 		}
-		table.Render()
+		if err := table.Render(); err != nil {
+			return err
+		}
 		return nil
 	default:
 		return fmt.Errorf("invalid format: %s", opts.Format)
@@ -578,9 +583,13 @@ func (p *Porter) printDisplayValuesTable(values []DisplayValue) error {
 
 	table.Header([]string{"Name", "Type", "Value"})
 	for _, param := range values {
-		table.Append([]string{param.Name, param.Type, param.PrintValue()})
+		if err := table.Append([]string{param.Name, param.Type, param.PrintValue()}); err != nil {
+			return err
+		}
 	}
-	table.Render()
+	if err := table.Render(); err != nil {
+		return err
+	}
 
 	return nil
 }

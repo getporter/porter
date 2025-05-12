@@ -11,7 +11,6 @@ import (
 )
 
 func NewTableSection(out io.Writer) *tablewriter.Table {
-	// table := tablewriter.NewWriter(out)
 	table := tablewriter.NewTable(out,
 		tablewriter.WithRenderer(renderer.NewBlueprint(tw.RendererConfig{
 			Settings: tw.Settings{
@@ -38,6 +37,7 @@ func NewTableSection(out io.Writer) *tablewriter.Table {
 					Alignment:  tw.AlignLeft,
 					AutoWrap:   tw.WrapNormal,
 					AutoFormat: false,
+					MaxWidth:   30,
 				},
 			},
 		}),
@@ -52,9 +52,14 @@ func PrintTableParameterSet(out io.Writer, params [][]string, headers ...string)
 	// Print the outputs table
 	table.Header(headers)
 	for _, v := range params {
-		table.Append(v)
+		if err := table.Append(v); err != nil {
+			return err
+		}
 	}
-	table.Render()
+	if err := table.Render(); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -71,9 +76,14 @@ func PrintTable(out io.Writer, v interface{}, getRow func(row interface{}) []str
 	// Print the outputs table
 	table.Header(headers)
 	for i := 0; i < rows.Len(); i++ {
-		table.Append(getRow(rows.Index(i).Interface()))
+		if err := table.Append(getRow(rows.Index(i).Interface())); err != nil {
+			return err
+		}
 	}
 
-	table.Render()
+	if err := table.Render(); err != nil {
+		return err
+	}
+
 	return nil
 }

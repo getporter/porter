@@ -306,6 +306,7 @@ func (p *Porter) ShowCredential(ctx context.Context, opts CredentialShowOptions)
 				Row: tw.CellConfig{
 					Formatting: tw.CellFormatting{
 						Alignment: tw.AlignLeft,
+						MaxWidth:  30,
 					},
 				},
 			}),
@@ -331,9 +332,13 @@ func (p *Porter) ShowCredential(ctx context.Context, opts CredentialShowOptions)
 		// Now print the table
 		table.Header([]string{"Name", "Local Source", "Source Type"})
 		for _, row := range rows {
-			table.Append(row)
+			if err := table.Append(row); err != nil {
+				return err
+			}
 		}
-		table.Render()
+		if err := table.Render(); err != nil {
+			return err
+		}
 		return nil
 	default:
 		return span.Error(fmt.Errorf("invalid format: %s", opts.Format))
