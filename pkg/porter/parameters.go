@@ -23,6 +23,7 @@ import (
 	dtprinter "github.com/carolynvs/datetime-printer"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
+	"github.com/cnabio/cnab-go/secrets/host"
 	"github.com/olekukonko/tablewriter"
 	"go.mongodb.org/mongo-driver/bson"
 )
@@ -389,16 +390,15 @@ func (p *Porter) loadParameterSets(ctx context.Context, bun cnab.ExtendedBundle,
 		}
 
 		// A parameter may correspond to a Porter-specific parameter type of 'file'
-		// If so, add value (filepath) directly to map and remove from pset
+		// If so and the hint is a filepath, pass the value directly and remove from pset
 		for paramName, paramDef := range bun.Parameters {
 			paramSchema, ok := bun.Definitions[paramDef.Definition]
 			if !ok {
 				return nil, fmt.Errorf("definition %s not defined in bundle", paramDef.Definition)
 			}
-
 			if bun.IsFileType(paramSchema) {
 				for i, param := range pset.Parameters {
-					if param.Name == paramName {
+					if param.Name == paramName && param.Source.Strategy == host.SourcePath {
 						// Pass through value (filepath) directly to resolvedParameters
 						resolvedParameters[param.Name] = param.Source.Hint
 						// Eliminate this param from pset to prevent its resolution by
