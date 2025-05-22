@@ -14,6 +14,9 @@ parameters:
   - name: myotherfile
     type: file
     path: /cnab/app/myotherfile
+  - name: yetanotherfile
+    type: file
+    path: /cnab/app/yetanotherfile
   # This is added to cover bug fix for https://github.com/getporter/porter/issues/835
   # It will be inherently exercised in install_test.go via a default installation
   - name: onlyUpgrade
@@ -29,6 +32,11 @@ outputs:
   - name: myotherfile
     type: file
     path: /cnab/app/myotherfile
+    applyTo:
+      - install
+  - name: yetanotherfile
+    type: file
+    path: /cnab/app/yetanotherfile
     applyTo:
       - install
 
