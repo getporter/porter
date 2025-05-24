@@ -442,7 +442,7 @@ a new blog post and then preview it:
     <https://porter.sh/blog/porter-collaboration/>.
     
 1. At the top of the file copy and paste the frontmatter template below. The
-    frontmatter is YAML that instucts the blogging software, Hugo, how to render the
+    frontmatter is YAML that instructs the blogging software, Hugo, how to render the
     blog post.
     
     ```yaml

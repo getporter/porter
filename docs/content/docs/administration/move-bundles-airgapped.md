@@ -16,7 +16,7 @@ At a high level, this involves the following steps:
 4. Install the bundle referencing the new location of the bundle inside the airgapped network.
 
 <figure>
-    <img src="/docs/administration/porter-airgap-publish.png" alt="a drawing showing two networks side by side, separated by an airgap. Network A has a docker registry with a copy of a bundle that includes the bundle.json, installer and the whalesayd image. An arrow labeled porter archive leads to a box with all those components in a single box labeled whalegap.tgz. Then another arrow labeled with a disc goes across the airgap, copying the same whalegap.tgz box wit its components into Network B. Then a final arrow labeled porter publish puts a copy of the bundle and its contents in Registry B, inside Network B."/>
+    <img src="/docs/administration/porter-airgap-publish.png" alt="a drawing showing two networks side by side, separated by an airgap. Network A has a docker registry with a copy of a bundle that includes the bundle.json, installer and the whalesayd image. An arrow labeled porter archive leads to a box with all those components in a single box labeled whalegap.tgz. Then another arrow labeled with a disc goes across the airgap, copying the same whalegap.tgz box with its components into Network B. Then a final arrow labeled porter publish puts a copy of the bundle and its contents in Registry B, inside Network B."/>
     <figcaption>Moving the whalegap bundle across an airgap</figcaption>
 </figure>
 

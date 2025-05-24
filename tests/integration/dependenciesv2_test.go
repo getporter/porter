@@ -64,7 +64,7 @@ func setupMysql(ctx context.Context, p *porter.TestPorter, namespace string, bun
 	mysqlinst, err := p.Installations.GetInstallation(ctx, namespace, "mysql")
 	require.NoError(p.T(), err, "could not fetch installation status for the dependency")
 
-	//Set the label on the installaiton so Porter knows to grab it
+	//Set the label on the installation so Porter knows to grab it
 	mysqlinst.SetLabel("sh.porter.SharingGroup", "myapp")
 	err = p.Installations.UpdateInstallation(ctx, mysqlinst)
 	require.NoError(p.T(), err, "could not add label to mysql inst")
