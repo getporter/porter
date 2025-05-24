@@ -157,8 +157,8 @@ func ExecuteStep(ctx context.Context, cfg runtime.RuntimeConfig, step Executable
 	stdout := &bytes.Buffer{}
 	stderr := &bytes.Buffer{}
 	suppressOutput := false
-	if suppressable, ok := step.(SuppressesOutput); ok {
-		suppressOutput = suppressable.SuppressesOutput()
+	if suppressible, ok := step.(SuppressesOutput); ok {
+		suppressOutput = suppressible.SuppressesOutput()
 	}
 
 	if suppressOutput {

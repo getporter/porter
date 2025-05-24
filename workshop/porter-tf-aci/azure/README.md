@@ -14,11 +14,11 @@ To install the bundle, you'll also need an Azure credential.
 
 The `terraform` directory contains a set of Terraform configurations that will utilize the Azure provider to create an Azure MySQL instance and store the TF state file in an Azure storage account. The files in here aren't special for use with CNAB or Porter. If you've completed the from scratch exercise, these are exactly the same!
 
-## Reviw the bundle/arm directory
+## Review the bundle/arm directory
 
 ## Review the bundle/porter.yaml
 
-Review the `porter.yaml` in the `bundle` diretory see what the bundle will do with the `terraform` and `ARM` manifests. An important aspect to note in this bundle is that each step produces an output. The `azure` mixin is first used to create an Azure storage account, resulting in a storage account key. Next, that storage account key is used as a parameter to the `terraform` mixin, which in turn produces a FQDN for the MySQL instance. This FQDN is used as a parameter for the ARM template deployed with the `azure` mixin. This last step produces an IP_ADDRESS for the container. Both the IP_ADDRESS and the STORAGE_ACCOUNT_KEY are further exposed as bundle outputs. These values can be obtained after installing the bundle.
+Review the `porter.yaml` in the `bundle` directory see what the bundle will do with the `terraform` and `ARM` manifests. An important aspect to note in this bundle is that each step produces an output. The `azure` mixin is first used to create an Azure storage account, resulting in a storage account key. Next, that storage account key is used as a parameter to the `terraform` mixin, which in turn produces a FQDN for the MySQL instance. This FQDN is used as a parameter for the ARM template deployed with the `azure` mixin. This last step produces an IP_ADDRESS for the container. Both the IP_ADDRESS and the STORAGE_ACCOUNT_KEY are further exposed as bundle outputs. These values can be obtained after installing the bundle.
 
 Finally, the `porter.yaml` also defines an `imageMap`. In this section, you can declare any images that will be used in addition to the invocation image. These are used for digest validation and for creation of thick bundles.
 

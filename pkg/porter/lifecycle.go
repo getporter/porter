@@ -103,7 +103,7 @@ func (o *BundleExecutionOptions) GetParameters() map[string]interface{} {
 	return o.finalParams
 }
 
-// Sets the final resolved set of host volumes to be made availabe to the bundle
+// Sets the final resolved set of host volumes to be made available to the bundle
 func (o *BundleExecutionOptions) GetHostVolumeMounts() []cnabprovider.HostVolumeMountSpec {
 	var hostVolumeMounts []cnabprovider.HostVolumeMountSpec
 	for _, mount := range o.HostVolumeMounts {

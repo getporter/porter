@@ -90,7 +90,7 @@ If using exec mixin, image digests can be passed via environmental variables or 
 ```yaml
 install:
   - exec:
-      description: "Insall WhaleGap"
+      description: "Install WhaleGap"
       command: ./porter-scripts.sh
       arguments:
         - install

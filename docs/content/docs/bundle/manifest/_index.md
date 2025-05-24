@@ -433,7 +433,7 @@ outputs:
 * `stateless`: Indicates that the action is purely informational and can be executed before the install action runs.
 * `modifies`: Indicates whether this action modifies resources managed by the bundle.
 
-In this example, the output `help-message` is not going to be recorded during bundle execution. This is determined by two criterias:
+In this example, the output `help-message` is not going to be recorded during bundle execution. This is determined by two criteria:
   - `myhelp` is configured to be stateless and do not modify any bundle resources.
   - there's no bundle level output applied to `myhelp` action
 

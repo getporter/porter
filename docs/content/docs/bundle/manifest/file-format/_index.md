@@ -77,7 +77,7 @@ parameters:
       - install
       - upgrade
   - name: connstr
-    description: MyApp database connnection string
+    description: MyApp database connection string
     type: string
     env: MYAPP_CONNECTION_STRING
     sensitive: true
