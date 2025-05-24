@@ -244,7 +244,7 @@ name: use-cases
 ]
 
 ???
-* DNS, load balancer, ssl certificat, CDN...
+* DNS, load balancer, ssl certificate, CDN...
 * Apps have baggage, state and deploying them is more than just code drops
 
 ---

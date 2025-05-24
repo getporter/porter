@@ -185,7 +185,7 @@ func (r OCIReference) Version() string {
 }
 
 // WithVersion creates a new reference using the repository and the specified bundle version.
-// If build metadata is present, "+" is conveted to "_".
+// If build metadata is present, "+" is converted to "_".
 func (r OCIReference) WithVersion(version string) (OCIReference, error) {
 	if r.Named == nil {
 		return OCIReference{}, errors.New("OCIReference has not been initialized")

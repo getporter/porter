@@ -21,7 +21,7 @@ import (
 
 // Validate that we can move a bundle into an aigraped environment
 // and that it works without referencing the old environment/images.
-// This also validates a lot of our insecure/unsecure registry configurations.
+// This also validates a lot of our insecure/unsecured registry configurations.
 func TestAirgappedEnvironment(t *testing.T) {
 	testcases := []struct {
 		name     string

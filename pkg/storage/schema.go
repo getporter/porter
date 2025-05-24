@@ -101,7 +101,7 @@ func (s Schema) ShouldMigrateCredentialSets() bool {
 // ShouldMigrateParameterSets checks if the minimum version of the parameter set resources in the database is unsupported and requires a migration to work with this version of Porter.
 // Since Porter can support a range of resource versions, this means that the db may have multiple representations of a resource in the database, and will migrate them to the latest support schema version on an as-needed basis.
 func (s Schema) ShouldMigrateParameterSets() bool {
-	// Determine if the minimum paramter set version in the db is completely unsupported by this version of Porter
+	// Determine if the minimum parameter set version in the db is completely unsupported by this version of Porter
 	warnOnly, err := schema.ValidateSchemaVersion(schema.CheckStrategyExact, SupportedParameterSetSchemaVersions, string(s.Parameters), DefaultParameterSetSemverSchemaVersion)
 	return !warnOnly && err != nil
 }

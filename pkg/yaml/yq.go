@@ -149,7 +149,7 @@ func (e *Editor) GetNode(path string) (*yaml.Node, error) {
 }
 
 // WalkNodes executes f for all yaml nodes found in path.
-// If an error is returned from f, the WalkNodes function will return the error and stop interating through
+// If an error is returned from f, the WalkNodes function will return the error and stop iterating through
 // the rest of the nodes.
 func (e *Editor) WalkNodes(ctx context.Context, path string, f func(ctx context.Context, nc *yqlib.NodeContext) error) error {
 	nodes, err := e.yq.Get(e.node, path)

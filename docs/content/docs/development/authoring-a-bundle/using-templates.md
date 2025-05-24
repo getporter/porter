@@ -192,7 +192,7 @@ install:
         database-password: ${ bundle.dependencies.mysql.outputs.mysql-password }
 ```
 
-##### Dependecies v2 (experimental)
+##### Dependencies v2 (experimental)
 
 The second version of dependencies, called DependenciesV2, is available under the
 [**experimental** flag](https://porter.sh/docs/configuration/configuration/#experimental-feature-flags).
