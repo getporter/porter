@@ -209,9 +209,9 @@ func (fs *FileSystem) downloadFile(ctx context.Context, url url.URL, destPath st
 		resp, err = http.DefaultClient.Do(req)
 		if err != nil {
 			lastErr = err
-			// Check if it's an EOF error
-			if errors.Is(err, io.EOF) {
-				continue // Retry on EOF
+			// Check if it's an ErrUnexpectedEOF error
+			if errors.Is(err, io.ErrUnexpectedEOF) {
+				continue // Retry on ErrUnexpectedEOF
 			}
 			return log.Error(fmt.Errorf("error downloading %s: %w", url.String(), err))
 		}
