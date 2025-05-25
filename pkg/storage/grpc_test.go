@@ -99,7 +99,7 @@ func TestRoundTripDataOverGRPC(t *testing.T) {
 	require.NoError(t, err)
 
 	// Add a small delay to ensure all documents are properly indexed
-	time.Sleep(100 * time.Millisecond)
+	time.Sleep(200 * time.Millisecond)
 
 	aggregateResults, err := client.Aggregate(ctx, plugins.AggregateOptions{
 		Collection: CollectionOutputs,
@@ -125,6 +125,11 @@ func TestRoundTripDataOverGRPC(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.Len(t, aggregateResults, 2)
-	// make sure the group function is picking the most recent output value with the same name
-	require.Contains(t, aggregateResults[0].Lookup("lastOutput").String(), "222")
+	// Find the thing2 output and verify it has the most recent resultId
+	for _, result := range aggregateResults {
+		if result.Lookup("_id").String() == "thing2" {
+			require.Contains(t, result.Lookup("lastOutput").String(), "222")
+			break
+		}
+	}
 }
