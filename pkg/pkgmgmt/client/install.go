@@ -11,6 +11,7 @@ import (
 	"path"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"time"
 
 	"get.porter.sh/porter/pkg"
@@ -209,9 +210,9 @@ func (fs *FileSystem) downloadFile(ctx context.Context, url url.URL, destPath st
 		resp, err = http.DefaultClient.Do(req)
 		if err != nil {
 			lastErr = err
-			// Check if it's an ErrUnexpectedEOF error
-			if errors.Is(err, io.ErrUnexpectedEOF) {
-				continue // Retry on ErrUnexpectedEOF
+			// Check for retryable errors
+			if errors.Is(err, io.ErrUnexpectedEOF) || strings.Contains(err.Error(), "TLS handshake timeout") {
+				continue // Retry on retryable errors
 			}
 			return log.Error(fmt.Errorf("error downloading %s: %w", url.String(), err))
 		}
