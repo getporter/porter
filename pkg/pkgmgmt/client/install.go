@@ -211,7 +211,7 @@ func (fs *FileSystem) downloadFile(ctx context.Context, url url.URL, destPath st
 		if err != nil {
 			lastErr = err
 			// Check for retryable errors
-			if errors.Is(err, io.ErrUnexpectedEOF) || strings.Contains(err.Error(), "TLS handshake timeout") {
+			if errors.Is(err, io.ErrUnexpectedEOF) || errors.Is(err, io.EOF) || strings.Contains(err.Error(), "TLS handshake timeout") {
 				continue // Retry on retryable errors
 			}
 			return log.Error(fmt.Errorf("error downloading %s: %w", url.String(), err))
