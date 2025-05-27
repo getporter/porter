@@ -22,7 +22,7 @@ mixins:
 
 name: hello
 version: 0.1.0
-regisry: getporter
+registry: getporter
 
 install:
   - exec:

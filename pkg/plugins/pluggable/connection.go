@@ -225,7 +225,7 @@ func (c *PluginConnection) Close(ctx context.Context) error {
 
 		// Stop processing logs from the plugin and wait for the log collection routine to complete
 		// This avoids a race where the log collector picks up a message but doesn't print it until
-		// after we close the logfile. This ensures that everything releated to the plugins is released
+		// after we close the logfile. This ensures that everything related to the plugins is released
 		// when Close exits.
 		c.cancelLogCtx()
 		c.logsWriter.Close()

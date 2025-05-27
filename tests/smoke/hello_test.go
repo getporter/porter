@@ -98,7 +98,7 @@ func TestHelloBundle(t *testing.T) {
 	test.RequirePorter("install", testdata.MyBuns, "--reference", testdata.MyBunsRef, "--namespace=test", "-c=mybuns", "--force", "--param", "password=supersecret")
 
 	// Upgrade our installation, passing the same cred/param set that is already specified, it shouldn't create duplicates
-	// We are also overridding a different parameter, the old value for password should be remembered even though we didn't explicitly set it
+	// We are also overriding a different parameter, the old value for password should be remembered even though we didn't explicitly set it
 	test.RequirePorter("upgrade", testdata.MyBuns, "--namespace", test.CurrentNamespace(), "-p=mybuns", "-c=mybuns", "--param", "log_level=1")
 	// no duplicate in credential set or parameter set on the installation
 	// record

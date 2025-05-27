@@ -180,7 +180,7 @@ func validateOutputs(t *testing.T, dvs porter.DisplayValues, actual *iGRPC.ListI
 	for i, gPV := range actual.GetOutputs() {
 		bActOut, err := pjm.Marshal(gPV)
 		require.NoError(t, err)
-		//TODO: make this not dependant on order
+		//TODO: make this not dependent on order
 		bExpOut := gjson.GetBytes(bExpOuts, strconv.Itoa(i)).String()
 		assert.JSONEq(t, bExpOut, string(bActOut))
 	}

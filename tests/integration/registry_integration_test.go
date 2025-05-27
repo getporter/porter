@@ -63,7 +63,7 @@ func TestRegistry(t *testing.T) {
 		require.Equal(t, "sha256:276b44be3f478b4c8d1f99c1925386d45a878a853f22436ece5589f32e9df384", meta.Digest.String(), "incorrect bundle digest")
 	})
 
-	t.Run("nonexistant bundle", func(t *testing.T) {
+	t.Run("nonexistent bundle", func(t *testing.T) {
 		ref := cnab.MustParseOCIReference("ghcr.io/getporter/oops-i-dont-exist")
 
 		// List Tags

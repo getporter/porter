@@ -21,7 +21,7 @@ import (
 
 func TestConvertInstallation(t *testing.T) {
 	inst := convertInstallation("mybuns")
-	assert.Empty(t, inst.ID, "the installation id should start off unitialized so that later we can set it using the claim")
+	assert.Empty(t, inst.ID, "the installation id should start off uninitialized so that later we can set it using the claim")
 	assert.Empty(t, inst.Namespace, "by default installations are migrated into the global namespace")
 	assert.Equal(t, "mybuns", inst.Name, "incorrect name")
 	assert.Equal(t, storage.DefaultInstallationSchemaVersion, inst.SchemaVersion, "incorrect schema version")

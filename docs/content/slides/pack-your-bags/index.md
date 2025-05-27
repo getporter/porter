@@ -697,7 +697,7 @@ name: parameters
 Variables in your bundle that you can specify when you execute the bundle
 and are loaded into the bundle either as environment variables or files.
 
-### Define a Paramer
+### Define a Parameter
 ```yaml
 parameters:
 - name: name
@@ -1101,7 +1101,7 @@ install:
 ---
 ## Step Outputs
 
-* You tell the mixin what data to extract and put into an ouput
+* You tell the mixin what data to extract and put into an output
 * Each mixin output will look different, but they all require a `name`
 * Porter stores the output value, making it available to later steps
 * Not all mixins support outputs

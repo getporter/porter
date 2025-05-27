@@ -143,7 +143,7 @@ func (t Tester) EditYaml(path string, transformations ...func(yq *yaml.Editor) e
 	t.TestContext.EditYaml(path, transformations...)
 }
 
-// RequireFileMode checks that all files in the specified path match the specifed
+// RequireFileMode checks that all files in the specified path match the specified
 // file mode. Uses a glob pattern to match.
 func (t *Tester) RequireFileMode(path string, mode os.FileMode) {
 	if !tests.AssertDirectoryPermissionsEqual(t.T, path, mode) {

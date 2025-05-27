@@ -212,12 +212,12 @@ func TestDisplayInstallation_ConvertToInstallation(t *testing.T) {
 	require.Equal(t, install.SchemaVersion, convertedInstallation.SchemaVersion, "invalid schema version")
 	require.Equal(t, install.Name, convertedInstallation.Name, "invalid installation name")
 	require.Equal(t, install.Namespace, convertedInstallation.Namespace, "invalid installation namespace")
-	require.Equal(t, install.Uninstalled, convertedInstallation.Uninstalled, "invalid installation unstalled status")
+	require.Equal(t, install.Uninstalled, convertedInstallation.Uninstalled, "invalid installation uninstalled status")
 	require.Equal(t, install.Bundle.Digest, convertedInstallation.Bundle.Digest, "invalid installation bundle")
 
 	require.Equal(t, len(install.Labels), len(convertedInstallation.Labels))
 	for key := range displayInstall.Labels {
-		require.Equal(t, install.Labels[key], convertedInstallation.Labels[key], "invalid installation lables")
+		require.Equal(t, install.Labels[key], convertedInstallation.Labels[key], "invalid installation labels")
 	}
 
 	require.Equal(t, install.Custom, convertedInstallation.Custom, "invalid installation custom")

@@ -203,12 +203,12 @@ func (p *Porter) IsInstallationInSync(ctx context.Context, i storage.Installatio
 
 	oldParams, err := prepParametersForComparison(lastRunParams)
 	if err != nil {
-		return false, fmt.Errorf("error prepping old parameters for comparision: %w", err)
+		return false, fmt.Errorf("error prepping old parameters for comparison: %w", err)
 	}
 
 	newParams, err := prepParametersForComparison(opts.GetParameters())
 	if err != nil {
-		return false, fmt.Errorf("error prepping current parameters for comparision: %w", err)
+		return false, fmt.Errorf("error prepping current parameters for comparison: %w", err)
 	}
 
 	if !cmp.Equal(oldParams, newParams) {

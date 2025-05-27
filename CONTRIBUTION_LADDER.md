@@ -84,7 +84,7 @@ There are three sub-types of specialization that maintainers can have:
   * Porter Maintainer - This is someone who focuses on [Porter Core](https://github.com/getporter/porter) functionality
   * Porter Operator Maintainer - This is someone who focuses on [Porter Operator](https://github.com/getporter/operator) functionality 
   * Porter Wesbite Maintainer  - This is someone who helps our frontend, which leverages Hugo.
-  * Porter Community Lead - This is someone who handles the development of the community through scheduling meetings, encouraging Porter activties within the community (talks, blogposts, etc), and is the face of Porter
+  * Porter Community Lead - This is someone who handles the development of the community through scheduling meetings, encouraging Porter activities within the community (talks, blogposts, etc), and is the face of Porter
   * Porter Mixin & Plugins Specialist - This is someone who builds and maintains the mixins used to help Porter work with other tooling. 
 
 Maintainers also have additional responsibilities beyond just merging code:

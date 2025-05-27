@@ -79,7 +79,7 @@ History:
 ```
 
 In the output above, we can see that I first tried to install a bundle and it
-failed. Since it was executed with a verison of Porter older than v0.35.0, no
+failed. Since it was executed with a version of Porter older than v0.35.0, no
 logs are available. Then I reinstalled the bundle using the latest version of
 Porter, and luckily this time it succeeded, and the logs were persisted.
 

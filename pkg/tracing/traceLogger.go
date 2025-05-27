@@ -77,7 +77,7 @@ type TraceLogger interface {
 	// ShouldLog returns if the current log level includes the specified level.
 	ShouldLog(level zapcore.Level) bool
 
-	// IsTracingEnabled returns if the current logger is configed to send trace data.
+	// IsTracingEnabled returns if the current logger is configured to send trace data.
 	IsTracingEnabled() bool
 }
 
