@@ -1,4 +1,4 @@
-------------------------------------------------------------------
-  NAMESPACE  PARAMETER SET  NAME  TYPE    VALUE       MODIFIED    
-------------------------------------------------------------------
-             mypset         foo   secret  foo_secret  1983-04-18  
+────────────────────────────────────────────────────────────────
+ NAMESPACE  PARAMETER SET  NAME  TYPE    VALUE       MODIFIED   
+────────────────────────────────────────────────────────────────
+            mypset         foo   secret  foo_secret  1983-04-18 
