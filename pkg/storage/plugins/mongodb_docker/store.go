@@ -162,9 +162,10 @@ func EnsureMongoIsRunning(ctx context.Context, c *portercontext.Context, contain
 		}
 	}
 
+	mongoImg := "mongo:8.0-noble"
+
 	// TODO(carolynvs): run this using the docker library
 	startMongo := func() error {
-		mongoImg := "mongo:8.0-noble"
 		span.Debugf("pulling %s", mongoImg)
 
 		err := exec.Command("docker", "pull", mongoImg).Run()
@@ -216,6 +217,9 @@ func EnsureMongoIsRunning(ctx context.Context, c *portercontext.Context, contain
 		if err = startMongo(); err != nil {
 			return nil, span.Error(err)
 		}
+	} else if !strings.Contains(string(containerStatus), mongoImg) {
+		err = span.Errorf("this version of Porter requires %s. Please upgrade the MongoDB data format as described in https://porter.sh/docs/operations/upgrade-mongo-data-format/.", mongoImg)
+		return nil, err
 	}
 
 	// wait until the mongo daemon is ready
