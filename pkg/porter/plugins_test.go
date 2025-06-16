@@ -160,11 +160,11 @@ Version: v1.0
 Commit: abc123
 Author: Porter Authors
 
----------------------------
-  Type     Implementation  
----------------------------
-  storage  blob            
-  storage  mongo           
+─────────────────────────
+ TYPE     IMPLEMENTATION 
+─────────────────────────
+ storage  blob           
+ storage  mongo          
 `
 		actual := p.TestConfig.TestContext.GetOutput()
 		assert.Equal(t, expected, actual)
