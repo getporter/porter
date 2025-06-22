@@ -433,8 +433,8 @@ github.com/opencontainers/runtime-spec v1.2.0/go.mod h1:jwyrGlmzljRJv/Fgzds9SsS/
 github.com/opencontainers/selinux v1.11.1 h1:nHFvthhM0qY8/m+vfhJylliSshm8G1jJ2jDMcgULaH8=
 github.com/opencontainers/selinux v1.11.1/go.mod h1:E5dMC3VPuVvVHDYmi78qvhJp8+M586T4DlDRYpFkyec=
 github.com/opentracing/opentracing-go v1.1.0/go.mod h1:UkNAQd3GIcIGf0SeVgPpRdFStlNbqXla1AfSYxPUl2o=
-github.com/osteele/liquid v1.6.0 h1:bTsbZjPIr7F+pU+K6o//Y5//W4McMzvUlMXWGOVvpc0=
-github.com/osteele/liquid v1.6.0/go.mod h1:xU0Z2dn2hOQIEFEWNmeltOmCtfhtoW/2fCyiNQeNG+U=
+github.com/osteele/liquid v1.7.0 h1:VsbPSchE5D5S5scylAIvERET4dnCxsO6IDri2oSJ5Dk=
+github.com/osteele/liquid v1.7.0/go.mod h1:xU0Z2dn2hOQIEFEWNmeltOmCtfhtoW/2fCyiNQeNG+U=
 github.com/osteele/tuesday v1.0.3 h1:SrCmo6sWwSgnvs1bivmXLvD7Ko9+aJvvkmDjB5G4FTU=
 github.com/osteele/tuesday v1.0.3/go.mod h1:pREKpE+L03UFuR+hiznj3q7j3qB1rUZ4XfKejwWFF2M=
 github.com/pelletier/go-toml v1.2.0/go.mod h1:5z9KED0ma1S8pY6P1sdut58dfprrGBbd/94hg7ilaic=
