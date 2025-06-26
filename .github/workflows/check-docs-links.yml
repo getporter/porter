@@ -9,7 +9,7 @@
 # on: pull_request
 
 # env:
-#   GOVERSION: 1.23.3
+#   GOVERSION: 1.24.4
 
 
 # jobs:
