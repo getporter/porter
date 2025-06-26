@@ -18,7 +18,6 @@ import (
 	"github.com/cnabio/cnab-go/driver/docker"
 	buildx "github.com/docker/buildx/build"
 	"github.com/docker/buildx/builder"
-	"github.com/docker/buildx/controller/pb"
 	_ "github.com/docker/buildx/driver/docker" // Register the docker driver with buildkit
 	"github.com/docker/buildx/util/buildflags"
 	"github.com/docker/buildx/util/confutil"
@@ -99,7 +98,7 @@ func (b *Builder) BuildBundleImage(ctx context.Context, manifest *manifest.Manif
 		return span.Errorf("error parsing the --ssh flags: %w", err)
 	}
 
-	pbssh, err := pb.CreateSSH(ssh)
+	pbssh, err := buildx.CreateSSH(ssh)
 	if err != nil {
 		return span.Errorf("error creating ssh ", err)
 	}
@@ -110,7 +109,7 @@ func (b *Builder) BuildBundleImage(ctx context.Context, manifest *manifest.Manif
 	if err != nil {
 		return span.Errorf("error parsing the --secret flags: %w", err)
 	}
-	pbsecrets, err := pb.CreateSecrets(secrets)
+	pbsecrets, err := buildx.CreateSecrets(secrets)
 	if err != nil {
 		return span.Errorf("error creating secrets %w", err)
 	}
