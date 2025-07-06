@@ -12,6 +12,8 @@ import (
 	"get.porter.sh/porter/pkg/printer"
 	"get.porter.sh/porter/pkg/tracing"
 	"github.com/olekukonko/tablewriter"
+	"github.com/olekukonko/tablewriter/renderer"
+	"github.com/olekukonko/tablewriter/tw"
 	"go.opentelemetry.io/otel/attribute"
 	"go.uber.org/zap/zapcore"
 )
@@ -110,13 +112,35 @@ func (p *Porter) ShowPlugin(ctx context.Context, opts ShowPluginOptions) error {
 	case printer.FormatPlaintext:
 		// Build and configure our tablewriter
 		// TODO: make this a function and reuse it in printer/table.go
-		table := tablewriter.NewWriter(p.Out)
-		table.SetCenterSeparator("")
-		table.SetColumnSeparator("")
-		table.SetAlignment(tablewriter.ALIGN_LEFT)
-		table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
-		table.SetBorders(tablewriter.Border{Left: false, Right: false, Bottom: false, Top: true})
-		table.SetAutoFormatHeaders(false)
+		table := tablewriter.NewTable(p.Out,
+			tablewriter.WithRenderer(renderer.NewBlueprint(tw.RendererConfig{
+				Settings: tw.Settings{
+					Separators: tw.Separators{
+						BetweenColumns: tw.Off,
+					},
+				},
+				Borders: tw.Border{
+					Top:    tw.On,
+					Left:   tw.Off,
+					Right:  tw.Off,
+					Bottom: tw.Off,
+				},
+			})),
+			tablewriter.WithConfig(tablewriter.Config{
+				Header: tw.CellConfig{
+					Formatting: tw.CellFormatting{
+						Alignment:  tw.AlignLeft,
+						AutoFormat: false,
+					},
+				},
+				Row: tw.CellConfig{
+					Formatting: tw.CellFormatting{
+						Alignment: tw.AlignLeft,
+						MaxWidth:  30,
+					},
+				},
+			}),
+		)
 
 		// First, print the plugin metadata
 		fmt.Fprintf(p.Out, "Name: %s\n", plugin.Name)
@@ -124,11 +148,15 @@ func (p *Porter) ShowPlugin(ctx context.Context, opts ShowPluginOptions) error {
 		fmt.Fprintf(p.Out, "Commit: %s\n", plugin.Commit)
 		fmt.Fprintf(p.Out, "Author: %s\n\n", plugin.Author)
 
-		table.SetHeader([]string{"Type", "Implementation"})
+		table.Header([]string{"Type", "Implementation"})
 		for _, row := range plugin.Implementations {
-			table.Append([]string{row.Type, row.Name})
+			if err := table.Append([]string{row.Type, row.Name}); err != nil {
+				return err
+			}
 		}
-		table.Render()
+		if err := table.Render(); err != nil {
+			return err
+		}
 		return nil
 
 	case printer.FormatJson:
