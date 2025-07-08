@@ -178,7 +178,13 @@ func EnsureMongoIsRunning(ctx context.Context, c *portercontext.Context, contain
 
 		span.Debugf("running a mongo server in a container on port %s", port)
 
-		args := []string{"run", "--name", container, "-p=" + port + ":27017", "-d"}
+		args := []string{"run", "--name", container, "-p=" + port + ":27017", "-d",
+			"--health-cmd", "echo 'db.runCommand(\"ping\").ok' | mongosh localhost:27017/admin --quiet",
+			"--health-interval", "30s",
+			"--health-retries", "3",
+			"--health-start-period", "10s",
+			"--health-start-interval", "1s",
+		}
 		if dataVol != "" {
 			args = append(args, "--mount", "source="+dataVol+",destination=/data/db")
 		}
@@ -238,13 +244,27 @@ func EnsureMongoIsRunning(ctx context.Context, c *portercontext.Context, contain
 		case <-timeout.Done():
 			return nil, span.Error(errors.New("timeout waiting for local mongodb daemon to be ready"))
 		case <-tick.C:
-			conn := mongodb.NewStore(c, mongoPluginCfg)
-			err := conn.Connect(ctx)
+			containerStatus, err := exec.Command("docker", "inspect", "--format", "{{lower .State.Health.Status }}", container).Output()
 			if err == nil {
-				return conn, nil
+				containerHealth := strings.TrimSpace(string(containerStatus))
+				span.Debugf("MongoDB container status: [%s]", containerHealth)
+				if !strings.EqualFold(containerHealth, "healthy") {
+					containerLogs, err := exec.Command("docker", "logs", container).Output()
+					if err == nil && strings.Contains(string(containerLogs), "This version of MongoDB is too recent to start up on the existing data files") {
+						err = span.Errorf("this version of Porter requires %s. Please upgrade the MongoDB data format as described in https://porter.sh/docs/operations/upgrade-mongo-data-format/.", mongoImg)
+						return nil, err
+					}
+				} else {
+					conn := mongodb.NewStore(c, mongoPluginCfg)
+					err = conn.Connect(ctx)
+					if err == nil {
+						return conn, nil
+					}
+				}
 			}
 		}
 	}
+
 }
 
 func checkDockerAvailability(ctx context.Context) error {
