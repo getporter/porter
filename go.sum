@@ -83,8 +83,8 @@ github.com/cespare/xxhash/v2 v2.3.0/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XL
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
 github.com/cnabio/cnab-go v0.25.4 h1:EPEv1S9uG5vB2poIA9EsEXUBufv1AV+lU1TO6nIOlWk=
 github.com/cnabio/cnab-go v0.25.4/go.mod h1:9XTuoX36sXje4d0tgf4IeVYy6UrZ4/dOCZkq07q06Qc=
-github.com/cnabio/cnab-to-oci v0.4.2 h1:Yyjjzuwdlw4HEUXdCgZ7lqOpCF9fdl3oRj0ZH/q7Eyw=
-github.com/cnabio/cnab-to-oci v0.4.2/go.mod h1:8fFquYhSKR2IkFvwszQqdU2QY+jU0K20oToq1KvYeWo=
+github.com/cnabio/cnab-to-oci v0.4.3 h1:H4wukx+PJtcq6GrMtaT9856gkyzcKp1hFmAiWEkd0iU=
+github.com/cnabio/cnab-to-oci v0.4.3/go.mod h1:/fBwGSMYko9k4duRdzoOlAO0WRd8zOSoGYSwlkXQDrA=
 github.com/cnabio/image-relocation v0.9.1 h1:9bPplt/7+70R7YvVOYu2OK/QGOBmni1bd0qziNWyhfM=
 github.com/cnabio/image-relocation v0.9.1/go.mod h1:wxZPSAg9FtS5sqs4i/hm7TQjgmsfwrc93YzgwhbISFU=
 github.com/cncf/udpa/go v0.0.0-20191209042840-269d4d468f6f/go.mod h1:M8M6+tZqaGXZJjfX53e64911xZQV5JYwmTeXPW+k8Sc=
@@ -148,12 +148,12 @@ github.com/distribution/reference v0.6.1-0.20240718132515-8c942b0459df h1:5dsN0R
 github.com/distribution/reference v0.6.1-0.20240718132515-8c942b0459df/go.mod h1:BbU0aIcezP1/5jX/8MP0YiH4SdvB5Y4f/wlDRiLyi3E=
 github.com/docker/buildx v0.25.0 h1:qs5WxBo0wQKSXcQ+v6UhWaeM2Pu+95ZCymaimRzInaE=
 github.com/docker/buildx v0.25.0/go.mod h1:xJcOeBhz49tgqN174MMGuOU4bxNmgfaLnZn7Gm641EE=
-github.com/docker/cli v28.3.1+incompatible h1:ZUdwOLDEBoE3TE5rdC9IXGY5HPHksJK3M+hJEWhh2mc=
-github.com/docker/cli v28.3.1+incompatible/go.mod h1:JLrzqnKDaYBop7H2jaqPtU4hHvMKP+vjCwu2uszcLI8=
+github.com/docker/cli v28.3.2+incompatible h1:mOt9fcLE7zaACbxW1GeS65RI67wIJrTnqS3hP2huFsY=
+github.com/docker/cli v28.3.2+incompatible/go.mod h1:JLrzqnKDaYBop7H2jaqPtU4hHvMKP+vjCwu2uszcLI8=
 github.com/docker/distribution v2.8.3+incompatible h1:AtKxIZ36LoNK51+Z6RpzLpddBirtxJnzDrHLEKxTAYk=
 github.com/docker/distribution v2.8.3+incompatible/go.mod h1:J2gT2udsDAN96Uj4KfcMRqY0/ypR+oyYUYmja8H+y+w=
-github.com/docker/docker v28.3.1+incompatible h1:20+BmuA9FXlCX4ByQ0vYJcUEnOmRM6XljDnFWR+jCyY=
-github.com/docker/docker v28.3.1+incompatible/go.mod h1:eEKB0N0r5NX/I1kEveEz05bcu8tLC/8azJZsviup8Sk=
+github.com/docker/docker v28.3.2+incompatible h1:wn66NJ6pWB1vBZIilP8G3qQPqHy5XymfYn5vsqeA5oA=
+github.com/docker/docker v28.3.2+incompatible/go.mod h1:eEKB0N0r5NX/I1kEveEz05bcu8tLC/8azJZsviup8Sk=
 github.com/docker/docker-credential-helpers v0.9.3 h1:gAm/VtF9wgqJMoxzT3Gj5p4AqIjCBS4wrsOh9yRqcz8=
 github.com/docker/docker-credential-helpers v0.9.3/go.mod h1:x+4Gbw9aGmChi3qTLZj8Dfn0TD20M/fuWy0E5+WDeCo=
 github.com/docker/go v1.5.1-1 h1:hr4w35acWBPhGBXlzPoHpmZ/ygPjnmFVxGxxGnMyP7k=

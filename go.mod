@@ -16,14 +16,14 @@ require (
 	github.com/carolynvs/datetime-printer v0.2.0
 	github.com/cbroglie/mustache v1.4.0
 	github.com/cnabio/cnab-go v0.25.4
-	github.com/cnabio/cnab-to-oci v0.4.2
+	github.com/cnabio/cnab-to-oci v0.4.3
 	github.com/cnabio/image-relocation v0.9.1
 	github.com/containerd/containerd v1.7.27
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
 	github.com/distribution/reference v0.6.1-0.20240718132515-8c942b0459df
 	github.com/docker/buildx v0.25.0
-	github.com/docker/cli v28.3.1+incompatible
-	github.com/docker/docker v28.3.1+incompatible
+	github.com/docker/cli v28.3.2+incompatible
+	github.com/docker/docker v28.3.2+incompatible
 	github.com/dustin/go-humanize v1.0.1
 	github.com/ghodss/yaml v1.0.0
 	github.com/google/go-cmp v0.7.0
