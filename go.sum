@@ -83,8 +83,8 @@ github.com/cespare/xxhash/v2 v2.3.0/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XL
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
 github.com/cnabio/cnab-go v0.25.4 h1:EPEv1S9uG5vB2poIA9EsEXUBufv1AV+lU1TO6nIOlWk=
 github.com/cnabio/cnab-go v0.25.4/go.mod h1:9XTuoX36sXje4d0tgf4IeVYy6UrZ4/dOCZkq07q06Qc=
-github.com/cnabio/cnab-to-oci v0.4.2 h1:Yyjjzuwdlw4HEUXdCgZ7lqOpCF9fdl3oRj0ZH/q7Eyw=
-github.com/cnabio/cnab-to-oci v0.4.2/go.mod h1:8fFquYhSKR2IkFvwszQqdU2QY+jU0K20oToq1KvYeWo=
+github.com/cnabio/cnab-to-oci v0.4.3 h1:H4wukx+PJtcq6GrMtaT9856gkyzcKp1hFmAiWEkd0iU=
+github.com/cnabio/cnab-to-oci v0.4.3/go.mod h1:/fBwGSMYko9k4duRdzoOlAO0WRd8zOSoGYSwlkXQDrA=
 github.com/cnabio/image-relocation v0.9.1 h1:9bPplt/7+70R7YvVOYu2OK/QGOBmni1bd0qziNWyhfM=
 github.com/cnabio/image-relocation v0.9.1/go.mod h1:wxZPSAg9FtS5sqs4i/hm7TQjgmsfwrc93YzgwhbISFU=
 github.com/cncf/udpa/go v0.0.0-20191209042840-269d4d468f6f/go.mod h1:M8M6+tZqaGXZJjfX53e64911xZQV5JYwmTeXPW+k8Sc=
