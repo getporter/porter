@@ -16,7 +16,7 @@ require (
 	github.com/carolynvs/datetime-printer v0.2.0
 	github.com/cbroglie/mustache v1.4.0
 	github.com/cnabio/cnab-go v0.25.4
-	github.com/cnabio/cnab-to-oci v0.4.2
+	github.com/cnabio/cnab-to-oci v0.4.3
 	github.com/cnabio/image-relocation v0.9.1
 	github.com/containerd/containerd v1.7.27
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
