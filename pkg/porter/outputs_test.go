@@ -26,13 +26,13 @@ func TestPorter_printOutputsTable(t *testing.T) {
 	p := NewTestPorter(t)
 	defer p.Close()
 
-	want := `---------------------------------------------------------------------------------
-  Name     Type    Value                                                         
----------------------------------------------------------------------------------
-  bar      string  ******                                                        
-  foo      string  /path/to/foo                                                  
-  object   object  {"a":{"b":1,"c":2},"d":"yay"}                                 
-  longfoo  string  DFo6Wc2jDhmA7Yt4PbHyh8RO4vVG7leOzK412gf2TXNPJhuCUs1rB29nk...  
+	want := `───────────────────────────────────────────────────────────────────────────────
+ NAME     TYPE    VALUE                                                        
+───────────────────────────────────────────────────────────────────────────────
+ bar      string  ******                                                       
+ foo      string  /path/to/foo                                                 
+ object   object  {"a":{"b":1,"c":2},"d":"yay"}                                
+ longfoo  string  DFo6Wc2jDhmA7Yt4PbHyh8RO4vVG7leOzK412gf2TXNPJhuCUs1rB29nk... 
 `
 
 	outputs := DisplayValues{
