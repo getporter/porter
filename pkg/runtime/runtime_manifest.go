@@ -17,7 +17,6 @@ import (
 	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
-	"get.porter.sh/porter/pkg/experimental"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/tracing"
 	"get.porter.sh/porter/pkg/yaml"
@@ -27,6 +26,8 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"github.com/opencontainers/go-digest"
 	yaml3 "gopkg.in/yaml.v3"
+
+	v2 "get.porter.sh/porter/pkg/cnab/extensions/dependencies/v2"
 )
 
 const (
@@ -114,20 +115,61 @@ func (m *RuntimeManifest) GetInstallationName() string {
 }
 
 func (m *RuntimeManifest) loadDependencyDefinitions() error {
-	m.bundles = make(map[string]cnab.ExtendedBundle, len(m.Dependencies.Requires))
-	for _, dep := range m.Dependencies.Requires {
-		bunD, err := GetDependencyDefinition(m.config.Context, dep.Name)
-		if err != nil {
-			return err
+	if _, ok := m.bundle.Custom[cnab.DependenciesV2ExtensionKey]; ok {
+		fmt.Printf("it has dependencies v2!\n")
+		data, ok := m.bundle.Custom[cnab.DependenciesV2ExtensionKey]
+		if !ok {
+			return fmt.Errorf("attempted to read %s extension data from runtime manifest but none are defined", cnab.DependenciesV2ExtensionKey)
 		}
 
-		bun, err := bundle.Unmarshal(bunD)
+		dataB, err := json.Marshal(data)
 		if err != nil {
-			return fmt.Errorf("error unmarshaling bundle definition for dependency %s: %w", dep.Name, err)
+			return fmt.Errorf("could not marshal the untyped %s extension data %q: %w", cnab.DependenciesV2ExtensionKey, string(dataB), err)
 		}
 
-		m.bundles[dep.Name] = cnab.NewBundle(*bun)
+		fmt.Printf("dependecies v2 data: %s\n", string(dataB))
+
+		deps := v2.Dependencies{}
+		err = json.Unmarshal(dataB, &deps)
+		if err != nil {
+			return fmt.Errorf("could not unmarshal the %s extension %q: %w", cnab.DependenciesV2ExtensionKey, string(dataB), err)
+		}
+
+		fmt.Printf("runtime_manifest.go: loadDependencyDefinition: deps: %v\n", deps)
+
+		m.bundles = make(map[string]cnab.ExtendedBundle, len(deps.Requires))
+		for depName := range deps.Requires {
+			bunD, err := GetDependencyDefinition(m.config.Context, depName)
+			if err != nil {
+				return err
+			}
+
+			bun, err := bundle.Unmarshal(bunD)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling bundle definition for dependency %s: %w", depName, err)
+			}
+
+			m.bundles[depName] = cnab.NewBundle(*bun)
+		}
+	} else {
+		fmt.Printf("it has dependencies v1!\n")
+		m.bundles = make(map[string]cnab.ExtendedBundle, len(m.Dependencies.Requires))
+		for _, dep := range m.Dependencies.Requires {
+			bunD, err := GetDependencyDefinition(m.config.Context, dep.Name)
+			if err != nil {
+				return err
+			}
+
+			bun, err := bundle.Unmarshal(bunD)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling bundle definition for dependency %s: %w", dep.Name, err)
+			}
+
+			m.bundles[dep.Name] = cnab.NewBundle(*bun)
+		}
 	}
+
+	fmt.Printf("runtime_manifest.go: loadDependencyDefinition: m.bundles: %v\n", m.bundles)
 
 	return nil
 }
@@ -448,27 +490,72 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 }
 
 func (m *RuntimeManifest) buildAndResolveMappedDependencyOutputs(sourceData map[string]interface{}) error {
-	for _, manifestDep := range m.Dependencies.Requires {
-		var depBun = sourceData["bundle"].(map[string]interface{})["dependencies"].(map[string]interface{})[manifestDep.Name].(map[string]interface{})
-		var depOutputs map[string]interface{}
-		if depBun["outputs"] == nil {
-			depOutputs = make(map[string]interface{})
-			depBun["outputs"] = depOutputs
-		} else {
-			depOutputs = depBun["outputs"].(map[string]interface{})
+	if _, ok := m.Custom[cnab.DependenciesV2ExtensionKey]; ok {
+		data, ok := m.bundle.Custom[cnab.DependenciesV2ExtensionKey]
+		if !ok {
+			return fmt.Errorf("attempted to read %s extension data from runtime manifest but none are defined", cnab.DependenciesV2ExtensionKey)
 		}
 
-		sourceData["outputs"] = depOutputs
+		dataB, err := json.Marshal(data)
+		if err != nil {
+			return fmt.Errorf("could not marshal the untyped %s extension data %q: %w", cnab.DependenciesV2ExtensionKey, string(dataB), err)
+		}
 
-		for outputName, mappedOutput := range manifestDep.Outputs {
-			mappedOutputTemplate := m.GetTemplatePrefix() + mappedOutput
-			renderedOutput, err := mustache.RenderRaw(mappedOutputTemplate, true, sourceData)
-			if err != nil {
-				return fmt.Errorf("unable to render dependency %s output template %s: %w", manifestDep.Name, mappedOutput, err)
+		deps := v2.Dependencies{}
+		err = json.Unmarshal(dataB, &deps)
+		if err != nil {
+			return fmt.Errorf("could not unmarshal the %s extension %q: %w", cnab.DependenciesV2ExtensionKey, string(dataB), err)
+		}
+
+		fmt.Printf("runtime_manifest.go: buildAndResolveMappedDependencyOutputs: deps: %v\n", deps)
+
+		for depName, manifestDep := range deps.Requires {
+			fmt.Printf("runtime_manifest.go: sourceData[\"bundle\"]: %v\n", sourceData["bundle"])
+			var depBun = sourceData["bundle"].(map[string]interface{})["dependencies"].(map[string]interface{})[depName].(map[string]interface{})
+			var depOutputs map[string]interface{}
+			if depBun["outputs"] == nil {
+				depOutputs = make(map[string]interface{})
+				depBun["outputs"] = depOutputs
+			} else {
+				depOutputs = depBun["outputs"].(map[string]interface{})
 			}
-			depOutputs[outputName] = renderedOutput
+
+			sourceData["outputs"] = depOutputs
+
+			for outputName, mappedOutput := range manifestDep.Outputs {
+				mappedOutputTemplate := m.GetTemplatePrefix() + mappedOutput
+				renderedOutput, err := mustache.RenderRaw(mappedOutputTemplate, true, sourceData)
+				if err != nil {
+					return fmt.Errorf("unable to render dependency %s output template %s: %w", manifestDep.Name, mappedOutput, err)
+				}
+				depOutputs[outputName] = renderedOutput
+			}
+		}
+	} else {
+		for _, manifestDep := range m.Dependencies.Requires {
+			var depBun = sourceData["bundle"].(map[string]interface{})["dependencies"].(map[string]interface{})[manifestDep.Name].(map[string]interface{})
+			var depOutputs map[string]interface{}
+			if depBun["outputs"] == nil {
+				depOutputs = make(map[string]interface{})
+				depBun["outputs"] = depOutputs
+			} else {
+				depOutputs = depBun["outputs"].(map[string]interface{})
+			}
+
+			sourceData["outputs"] = depOutputs
+
+			for outputName, mappedOutput := range manifestDep.Outputs {
+				mappedOutputTemplate := m.GetTemplatePrefix() + mappedOutput
+				renderedOutput, err := mustache.RenderRaw(mappedOutputTemplate, true, sourceData)
+				if err != nil {
+					return fmt.Errorf("unable to render dependency %s output template %s: %w", manifestDep.Name, mappedOutput, err)
+				}
+				depOutputs[outputName] = renderedOutput
+			}
 		}
 	}
+
+	fmt.Printf("runtime_manfiest.go: buildAndResolveMappedDependencyOutputs: sourceData[\"outputs\"]: %v\n", sourceData["outputs"])
 
 	delete(sourceData, "outputs")
 
@@ -486,9 +573,18 @@ func (m *RuntimeManifest) ResolveStep(ctx context.Context, stepIndex int, step *
 		return log.Error(fmt.Errorf("unable to build step template data: %w", err))
 	}
 
+	fmt.Printf("runtime_manfiest.go: ResolveStep: sourceData: %v\n", sourceData)
+
 	mustache.AllowMissingVariables = false
 
-	if m.config.IsFeatureEnabled(experimental.FlagDependenciesV2) {
+	// if m.config.IsFeatureEnabled(experimental.FlagDependenciesV2) {
+	// 	err = m.buildAndResolveMappedDependencyOutputs(sourceData)
+	// 	if err != nil {
+	// 		return log.Errorf("unable to build and resolve mapped dependency outputs: %w", err)
+	// 	}
+	// }
+
+	if _, ok := m.Custom[cnab.DependenciesV2ExtensionKey]; ok {
 		err = m.buildAndResolveMappedDependencyOutputs(sourceData)
 		if err != nil {
 			return log.Errorf("unable to build and resolve mapped dependency outputs: %w", err)

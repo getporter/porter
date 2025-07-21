@@ -203,6 +203,14 @@ func GetMixins() error {
 		url     string
 		feed    string
 		version string
+	}{}
+
+	/*
+	mixins := []struct {
+		name    string
+		url     string
+		feed    string
+		version string
 	}{
 		{name: "docker"},
 		{name: "docker-compose"},
@@ -211,6 +219,7 @@ func GetMixins() error {
 		{name: "kubernetes"},
 		{name: "helm3", feed: "https://mchorfa.github.io/porter-helm3/atom.xml", version: "v0.1.16"},
 	}
+	*/
 	var errG errgroup.Group
 	for _, mixin := range mixins {
 		mixin := mixin

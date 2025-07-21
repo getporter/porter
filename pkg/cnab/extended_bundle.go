@@ -264,7 +264,7 @@ func (b *ExtendedBundle) ResolveDependencies(bun ExtendedBundle) ([]DependencyLo
 func (b *ExtendedBundle) ResolveSharedDeps(bun ExtendedBundle) ([]DependencyLock, error) {
 	v2, err := bun.ReadDependenciesV2()
 	if err != nil {
-		return nil, fmt.Errorf("error reading dependencies v2 for %s", bun.Name)
+		return nil, fmt.Errorf("error reading dependencies v2 for %s: %v", bun.Name, err)
 	}
 
 	q := make([]DependencyLock, 0, len(v2.Requires))

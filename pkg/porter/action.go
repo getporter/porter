@@ -2,6 +2,7 @@ package porter
 
 import (
 	"context"
+	"fmt"
 
 	"get.porter.sh/porter/pkg/storage"
 )
@@ -24,6 +25,8 @@ func (p *Porter) ExecuteAction(ctx context.Context, installation storage.Install
 	if err != nil {
 		return err
 	}
+
+	fmt.Printf("action.go: actionArgs: %v\n", actionArgs)
 
 	return p.CNAB.Execute(ctx, actionArgs)
 }
