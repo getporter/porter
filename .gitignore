@@ -13,7 +13,6 @@ trivy-results.sarif
 
 .cnab
 examples/**/Dockerfile
-workshop/**/Dockerfile
 
 .vscode
 *.code-workspace
