@@ -20,6 +20,7 @@ porter installations output list [--installation|i INSTALLATION] [flags]
 ```
   porter installation outputs list
     porter installation outputs list --installation another-bundle
+    porter installation outputs list --run 01EZSWJXFATDE24XDHS5D5PWK6
 
 ```
 
@@ -30,6 +31,7 @@ porter installations output list [--installation|i INSTALLATION] [flags]
   -i, --installation string   Specify the installation to which the output belongs.
   -n, --namespace string      Namespace in which the installation is defined. Defaults to the global namespace.
   -o, --output string         Specify an output format.  Allowed values: plaintext, json, yaml (default "plaintext")
+  -r, --run string            The bundle run that generated the outputs.
 ```
 
 ### Options inherited from parent commands

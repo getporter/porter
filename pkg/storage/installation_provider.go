@@ -63,6 +63,12 @@ type InstallationProvider interface {
 	// associated with the installation.
 	GetLastOutputs(ctx context.Context, namespace string, installation string) (Outputs, error)
 
+	// GetOutputs returns all outputs associated with the specified run.
+	GetOutputs(ctx context.Context, runID string) (Outputs, error)
+
+	// GetOutput returns a specific output by name from the specified run.
+	GetOutput(ctx context.Context, runID string, name string) (Output, error)
+
 	// RemoveInstallation by its name.
 	RemoveInstallation(ctx context.Context, namespace string, name string) error
 
