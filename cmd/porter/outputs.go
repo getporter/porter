@@ -30,6 +30,7 @@ func buildBundleOutputListCommand(p *porter.Porter) *cobra.Command {
 		Long:  "Displays a listing of installation outputs.",
 		Example: `  porter installation outputs list
     porter installation outputs list --installation another-bundle
+    porter installation outputs list --run 01EZSWJXFATDE24XDHS5D5PWK6
 `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate(args, p.Context)
@@ -46,6 +47,8 @@ func buildBundleOutputListCommand(p *porter.Porter) *cobra.Command {
 		"Namespace in which the installation is defined. Defaults to the global namespace.")
 	f.StringVarP(&opts.Name, "installation", "i", "",
 		"Specify the installation to which the output belongs.")
+	f.StringVarP(&opts.RunID, "run", "r", "",
+		"The bundle run that generated the outputs.")
 
 	return &cmd
 }
@@ -56,9 +59,12 @@ func buildBundleOutputShowCommand(p *porter.Porter) *cobra.Command {
 	cmd := cobra.Command{
 		Use:   "show NAME [--installation|-i INSTALLATION]",
 		Short: "Show the output of an installation",
-		Long:  "Show the output of an installation",
+		Long: `Show the output of an installation.
+
+Either display the output from a specific run of a bundle with --run, or use --installation to display the output from its most recent run.`,
 		Example: `  porter installation output show kubeconfig
-    porter installation output show subscription-id --installation azure-mysql`,
+    porter installation output show subscription-id --installation azure-mysql
+    porter installation output show kubeconfig --run 01EZSWJXFATDE24XDHS5D5PWK6`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate(args, p.Context)
 		},
@@ -72,6 +78,8 @@ func buildBundleOutputShowCommand(p *porter.Porter) *cobra.Command {
 		"Namespace in which the installation is defined. Defaults to the global namespace.")
 	f.StringVarP(&opts.Name, "installation", "i", "",
 		"Specify the installation to which the output belongs.")
+	f.StringVarP(&opts.RunID, "run", "r", "",
+		"The bundle run that generated the output.")
 
 	return &cmd
 }

@@ -243,6 +243,30 @@ func (s InstallationStore) GetLastOutputs(ctx context.Context, namespace string,
 	return NewOutputs(lastOutputs), err
 }
 
+func (s InstallationStore) GetOutputs(ctx context.Context, runID string) (Outputs, error) {
+	var outputs []Output
+	opts := FindOptions{
+		Sort: []string{"name"},
+		Filter: bson.M{
+			"runId": runID,
+		},
+	}
+	err := s.store.Find(ctx, CollectionOutputs, opts, &outputs)
+	return NewOutputs(outputs), err
+}
+
+func (s InstallationStore) GetOutput(ctx context.Context, runID string, name string) (Output, error) {
+	var out Output
+	opts := FindOptions{
+		Filter: bson.M{
+			"runId": runID,
+			"name":  name,
+		},
+	}
+	err := s.store.FindOne(ctx, CollectionOutputs, opts, &out)
+	return out, err
+}
+
 func (s InstallationStore) GetLogs(ctx context.Context, runID string) (string, bool, error) {
 	var out Output
 	opts := FindOptions{

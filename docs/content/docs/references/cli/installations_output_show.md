@@ -9,7 +9,9 @@ Show the output of an installation
 
 ### Synopsis
 
-Show the output of an installation
+Show the output of an installation.
+
+Either display the output from a specific run of a bundle with --run, or use --installation to display the output from its most recent run.
 
 ```
 porter installations output show NAME [--installation|-i INSTALLATION] [flags]
@@ -20,6 +22,7 @@ porter installations output show NAME [--installation|-i INSTALLATION] [flags]
 ```
   porter installation output show kubeconfig
     porter installation output show subscription-id --installation azure-mysql
+    porter installation output show kubeconfig --run 01EZSWJXFATDE24XDHS5D5PWK6
 ```
 
 ### Options
@@ -28,6 +31,7 @@ porter installations output show NAME [--installation|-i INSTALLATION] [flags]
   -h, --help                  help for show
   -i, --installation string   Specify the installation to which the output belongs.
   -n, --namespace string      Namespace in which the installation is defined. Defaults to the global namespace.
+  -r, --run string            The bundle run that generated the output.
 ```
 
 ### Options inherited from parent commands
