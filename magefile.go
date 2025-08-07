@@ -373,16 +373,6 @@ func buildImages(registry string, info releases.GitMetadata) {
 		return shx.Run("docker", "tag", img, fmt.Sprintf("%s/porter-agent:%s", registry, info.Permalink))
 	})
 
-	g.Go(func() error {
-		img := fmt.Sprintf("%s/workshop:%s", registry, info.Version)
-		err := shx.Command("docker", "build", "-t", img, "-f", "build/images/workshop/Dockerfile", ".").
-			Env(enableBuildKit).RunV()
-		if err != nil {
-			return err
-		}
-
-		return shx.Run("docker", "tag", img, fmt.Sprintf("%s/workshop:%s", registry, info.Permalink))
-	})
 	mgx.Must(g.Wait())
 }
 
@@ -467,7 +457,6 @@ func buildServerImage(registry string, info releases.GitMetadata, goarch string)
 func pushImages(registry string, tag string) {
 	pushImage(fmt.Sprintf("%s/porter:%s", registry, tag))
 	pushImage(fmt.Sprintf("%s/porter-agent:%s", registry, tag))
-	pushImage(fmt.Sprintf("%s/workshop:%s", registry, tag))
 }
 
 func pushImage(img string) {

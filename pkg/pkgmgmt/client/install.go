@@ -11,6 +11,8 @@ import (
 	"path"
 	"path/filepath"
 	"runtime"
+	"strings"
+	"time"
 
 	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/pkgmgmt"
@@ -185,14 +187,49 @@ func (fs *FileSystem) downloadFile(ctx context.Context, url url.URL, destPath st
 		return log.Error(fmt.Errorf("error creating web request to %s: %w", url.String(), err))
 	}
 
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return log.Error(fmt.Errorf("error downloading %s: %w", url.String(), err))
+	// Retry configuration
+	maxRetries := 3
+	baseDelay := 1 * time.Second
+	var lastErr error
+	var resp *http.Response
+
+	// Retry loop for HTTP request only
+	for attempt := 0; attempt < maxRetries; attempt++ {
+		if attempt > 0 {
+			// Calculate exponential backoff delay
+			delay := baseDelay * time.Duration(1<<uint(attempt-1))
+			log.Debugf("Retrying download after %v delay (attempt %d/%d)", delay, attempt+1, maxRetries)
+
+			// Check if context is cancelled before sleeping
+			if ctx.Err() != nil {
+				return ctx.Err()
+			}
+			time.Sleep(delay)
+		}
+
+		resp, err = http.DefaultClient.Do(req)
+		if err != nil {
+			lastErr = err
+			// Check for retryable errors
+			if errors.Is(err, io.ErrUnexpectedEOF) || errors.Is(err, io.EOF) || strings.Contains(err.Error(), "TLS handshake timeout") {
+				continue // Retry on retryable errors
+			}
+			return log.Error(fmt.Errorf("error downloading %s: %w", url.String(), err))
+		}
+
+		if resp.StatusCode != 200 {
+			resp.Body.Close()
+			err := fmt.Errorf("bad status returned when downloading %s (%d) %s", url.String(), resp.StatusCode, resp.Status)
+			log.Debugf(err.Error()) // Only debug log this since higher up on the stack we may handle this error
+			return err
+		}
+
+		// If we get here, we have a successful response
+		break
 	}
-	if resp.StatusCode != 200 {
-		err := fmt.Errorf("bad status returned when downloading %s (%d) %s", url.String(), resp.StatusCode, resp.Status)
-		log.Debugf(err.Error()) // Only debug log this since higher up on the stack we may handle this error
-		return err
+
+	if resp == nil {
+		return log.Error(fmt.Errorf("failed to download %s after %d attempts: %w", url.String(), maxRetries, lastErr))
 	}
 	defer resp.Body.Close()
 
@@ -238,5 +275,6 @@ func (fs *FileSystem) downloadFile(ctx context.Context, url url.URL, destPath st
 		_ = cleanup()
 		return log.Error(fmt.Errorf("error writing the file to %s: %w", destPath, err))
 	}
+
 	return nil
 }

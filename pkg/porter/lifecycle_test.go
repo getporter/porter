@@ -159,7 +159,7 @@ func TestManifestIgnoredWithTag(t *testing.T) {
 		// Only when `manifestExists` eq to `true`, default bundle logic will run
 		require.NoError(t, p.TestConfig.TestContext.AddTestFileContents([]byte(""), config.Name))
 		// When execution reach to `readFromFile`, manifest file path will be lost.
-		// So, had to use root manifest file also for error simuation purpose
+		// So, had to use root manifest file also for error simulation purpose
 		require.NoError(t, p.TestConfig.TestContext.AddTestFileContents([]byte(""), config.Name))
 
 		err := opts.Validate(context.Background(), nil, p.Porter)

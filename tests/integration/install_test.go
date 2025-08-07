@@ -3,6 +3,7 @@
 package integration
 
 import (
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -59,7 +60,17 @@ func TestInstall_fileParam(t *testing.T) {
 			Strategy: host.SourcePath,
 			Hint:     "./myotherfile",
 		},
-	})
+	},
+		secrets.SourceMap{
+			Name: "yetanotherfile",
+			Source: secrets.Source{
+				Strategy: host.SourceEnv,
+				Hint:     "YET_ANOTHER_FILE_PATH",
+			},
+		})
+
+	os.Setenv("YET_ANOTHER_FILE_PATH", "./myfile")
+	defer os.Unsetenv("YET_ANOTHER_FILE_PATH")
 
 	p.TestParameters.InsertParameterSet(ctx, testParamSets)
 
@@ -80,6 +91,9 @@ func TestInstall_fileParam(t *testing.T) {
 	myotherfile, ok := outputs.GetByName("myotherfile")
 	require.True(t, ok, "expected myotherfile output to be persisted")
 	assert.Equal(t, "Hello Other World!", string(myotherfile.Value), "expected output 'myotherfile' to match the decoded file contents")
+	yetanotherfile, ok := outputs.GetByName("yetanotherfile")
+	require.True(t, ok, "expected yetanotherfile output to be persisted")
+	assert.Equal(t, "Hello World!", string(yetanotherfile.Value), "expected output 'yetanotherfile' to match the decoded file contents")
 }
 
 func TestInstall_withDockerignore(t *testing.T) {

@@ -4,7 +4,7 @@ set -euo pipefail
 PORTER_MIRROR=${PORTER_MIRROR:-https://cdn.porter.sh}
 PORTER_VERSION=${PORTER_VERSION:-latest}
 MONGO_IMAGE_FILE="mongo_image.tar"
-MONGO_IMAGE_URL="docker.io/library/mongo:4.0-xenial"
+MONGO_IMAGE_URL="docker.io/library/mongo:8.0-noble"
 BUNDLE_NAME="porter-air-gapped-install-$PORTER_VERSION"
 DOWNLOAD_DIR="/tmp/$BUNDLE_NAME"
 
@@ -31,7 +31,7 @@ bash install-linux.sh
 docker load -i "$MONGO_IMAGE_FILE"
 if ! docker ps -q -f name=porter-mongodb-docker-plugin; then
   echo "Running MongoDB container..."
-  docker run --name porter-mongodb-docker-plugin -d -p 27018:27017 -v mongodb_data:/data/db --restart always mongo:4.0-xenial
+  docker run --name porter-mongodb-docker-plugin -d -p 27018:27017 -v mongodb_data:/data/db --restart always mongo:8.0-noble
 else
   echo "MongoDB container is already running."
 fi

@@ -48,7 +48,7 @@ exec:
 ```
 
 Right now Porter [doesn't preserve the wrapping quotes around mapping values][851], so if you
-have lines that contain a colon followed by a space `: ` or a hash `#` preceeded by a space, then
+have lines that contain a colon followed by a space `: ` or a hash `#` preceded by a space, then
 things will get tricky. If you can remove the space, or wrap the entire line in an extra quote, that
 should workaround the problem.
 

@@ -42,7 +42,7 @@ Now let's configure Porter to persist sensitive data with the [filesystem](/plug
 default-secrets-plugin: "filesystem"
 ```
 
-The [filesystem plugin](/plugins/filesystem/) resolves and stores sensitive bundle parameters and outpus as plain-text files in your PORTER_HOME directory.
+The [filesystem plugin](/plugins/filesystem/) resolves and stores sensitive bundle parameters and outputs as plain-text files in your PORTER_HOME directory.
 Note: the filesystem plugin is only intended for testing and local development usage. It's not intended to be used in production. The end of this blog post has recommended plugins that are suitable for production use. 
 
 Now you have a secret store set up, we can finally to install the example bundle, this time successfully.
@@ -66,7 +66,7 @@ Instead, we can find our "password" in our filesystem plugin. In your PORTER_HOM
 
 This is why it's important to choose a secure secret plugin for your production environment so that your sensitive data is protected. As you can see, the filesystem plugin is only acceptable for local development and testing.
 
-Here are some secret plugins that we recommand for production use:
+Here are some secret plugins that we recommend for production use:
 - [Azure Key Vault](/plugins/azure/#secrets)
 - [Kubernetes Secrets](/plugins/kubernetes/#secrets)
 - [Hashicorp Vault](/plugins/hashicorp/)
