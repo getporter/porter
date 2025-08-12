@@ -442,4 +442,44 @@ func TestInstallationStorageProvider_Outputs(t *testing.T) {
 		assert.True(t, hasLogs, "expected logs to be found")
 		assert.Equal(t, "upgrade logs", logs, "did not find the most recent logs for foo")
 	})
+
+	t.Run("GetOutputs", func(t *testing.T) {
+		outputs, err := cp.GetOutputs(context.Background(), foo.ID)
+
+		require.NoError(t, err, "GetOutputs failed")
+		assert.Equal(t, 4, outputs.Len(), "wrong number of outputs identified")
+
+		gotOutput1, hasOutput1 := outputs.GetByName("output1")
+		assert.True(t, hasOutput1, "should have found output1")
+		assert.Equal(t, "upgrade output1", string(gotOutput1.Value), "did not find the correct value for output1")
+
+		gotOutput2, hasOutput2 := outputs.GetByName("output2")
+		assert.True(t, hasOutput2, "should have found output2")
+		assert.Equal(t, "upgrade output2", string(gotOutput2.Value), "did not find the correct value for output2")
+	})
+
+	t.Run("GetOutputs - invalid run", func(t *testing.T) {
+		outputs, err := cp.GetOutputs(context.Background(), "missing")
+		require.NoError(t, err)
+		assert.Equal(t, 0, outputs.Len())
+	})
+
+	t.Run("GetOutput", func(t *testing.T) {
+		o, err := cp.GetOutput(context.Background(), foo.ID, "output1")
+
+		require.NoError(t, err, "GetOutput failed")
+		assert.Equal(t, "upgrade output1", string(o.Value), "did not find the correct value for output1")
+	})
+
+	t.Run("GetOutput - invalid run", func(t *testing.T) {
+		o, err := cp.GetOutput(context.Background(), "missing", "output1")
+		require.ErrorIs(t, err, ErrNotFound{})
+		assert.Empty(t, o)
+	})
+
+	t.Run("GetOutput - invalid output name", func(t *testing.T) {
+		o, err := cp.GetOutput(context.Background(), foo.ID, "missing")
+		require.ErrorIs(t, err, ErrNotFound{})
+		assert.Empty(t, o)
+	})
 }

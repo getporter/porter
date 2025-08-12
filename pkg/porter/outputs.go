@@ -16,12 +16,14 @@ import (
 type OutputShowOptions struct {
 	installationOptions
 	Output string
+	RunID  string
 }
 
 // OutputListOptions represent options for a bundle output list command
 type OutputListOptions struct {
 	installationOptions
 	printer.PrintOptions
+	RunID string
 }
 
 // Validate validates the provided args, using the provided context,
@@ -36,12 +38,18 @@ func (o *OutputShowOptions) Validate(args []string, cxt *portercontext.Context) 
 		return fmt.Errorf("only one positional argument may be specified, the output name, but multiple were received: %s", args)
 	}
 
-	// If not provided, attempt to derive installation name from context
-	if o.installationOptions.Name == "" {
-		err := o.installationOptions.defaultBundleFiles(cxt)
-		if err != nil {
-			return errors.New("installation name must be provided via [--installation|-i INSTALLATION]")
-		}
+	if o.Name != "" && o.RunID != "" {
+		return errors.New("either --installation or --run should be specified, not both")
+	}
+
+	// Attempt to derive installation name from context
+	err := o.installationOptions.defaultBundleFiles(cxt)
+	if err != nil {
+		return err
+	}
+
+	if o.File == "" && o.Name == "" && o.RunID == "" {
+		return errors.New("either --installation or --run is required")
 	}
 
 	return nil
@@ -56,10 +64,18 @@ func (o *OutputListOptions) Validate(args []string, cxt *portercontext.Context) 
 		return err
 	}
 
+	if o.Name != "" && o.RunID != "" {
+		return errors.New("either --installation or --run should be specified, not both")
+	}
+
 	// Attempt to derive installation name from context
 	err = o.installationOptions.defaultBundleFiles(cxt)
 	if err != nil {
-		return fmt.Errorf("installation name must be provided: %w", err)
+		return err
+	}
+
+	if o.File == "" && o.Name == "" && o.RunID == "" {
+		return errors.New("either --installation or --run is required")
 	}
 
 	return o.ParseFormat()
@@ -67,14 +83,24 @@ func (o *OutputListOptions) Validate(args []string, cxt *portercontext.Context) 
 
 // ShowBundleOutput shows a bundle output value, according to the provided options
 func (p *Porter) ShowBundleOutput(ctx context.Context, opts *OutputShowOptions) error {
-	err := p.applyDefaultOptions(ctx, &opts.installationOptions)
-	if err != nil {
-		return err
-	}
+	var output string
+	var err error
 
-	output, err := p.ReadBundleOutput(ctx, opts.Output, opts.Name, opts.Namespace)
-	if err != nil {
-		return fmt.Errorf("unable to read output '%s' for installation '%s/%s': %w", opts.Output, opts.Namespace, opts.Name, err)
+	if opts.RunID != "" {
+		output, err = p.ReadBundleOutputFromRun(ctx, opts.Output, opts.RunID)
+		if err != nil {
+			return fmt.Errorf("unable to read output '%s' for run '%s': %w", opts.Output, opts.RunID, err)
+		}
+	} else {
+		err = p.applyDefaultOptions(ctx, &opts.installationOptions)
+		if err != nil {
+			return err
+		}
+
+		output, err = p.ReadBundleOutput(ctx, opts.Output, opts.Name, opts.Namespace)
+		if err != nil {
+			return fmt.Errorf("unable to read output '%s' for installation '%s/%s': %w", opts.Output, opts.Namespace, opts.Name, err)
+		}
 	}
 
 	fmt.Fprint(p.Out, output)
@@ -115,22 +141,38 @@ func NewDisplayValuesFromOutputs(bun cnab.ExtendedBundle, outputs storage.Output
 // ListBundleOutputs lists the outputs for a given bundle according to the
 // provided display format
 func (p *Porter) ListBundleOutputs(ctx context.Context, opts *OutputListOptions) (DisplayValues, error) {
-	err := p.applyDefaultOptions(ctx, &opts.installationOptions)
-	if err != nil {
-		return nil, err
-	}
+	var outputs storage.Outputs
+	var c storage.Run
+	var err error
 
-	outputs, err := p.Installations.GetLastOutputs(ctx, opts.Namespace, opts.Name)
-	if err != nil {
-		return nil, err
+	if opts.RunID != "" {
+		outputs, err = p.Installations.GetOutputs(ctx, opts.RunID)
+		if err != nil {
+			return nil, err
+		}
+
+		c, err = p.Installations.GetRun(ctx, opts.RunID)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		err = p.applyDefaultOptions(ctx, &opts.installationOptions)
+		if err != nil {
+			return nil, err
+		}
+
+		outputs, err = p.Installations.GetLastOutputs(ctx, opts.Namespace, opts.Name)
+		if err != nil {
+			return nil, err
+		}
+
+		c, err = p.Installations.GetLastRun(ctx, opts.Namespace, opts.Name)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	resolved, err := p.Sanitizer.RestoreOutputs(ctx, outputs)
-	if err != nil {
-		return nil, err
-	}
-
-	c, err := p.Installations.GetLastRun(ctx, opts.Namespace, opts.Name)
 	if err != nil {
 		return nil, err
 	}
@@ -166,6 +208,21 @@ func (p *Porter) PrintBundleOutputs(ctx context.Context, opts OutputListOptions)
 // ReadBundleOutput reads a bundle output from an installation
 func (p *Porter) ReadBundleOutput(ctx context.Context, outputName, installation, namespace string) (string, error) {
 	o, err := p.Installations.GetLastOutput(ctx, namespace, installation, outputName)
+	if err != nil {
+		return "", err
+	}
+
+	o, err = p.Sanitizer.RestoreOutput(ctx, o)
+	if err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("%v", string(o.Value)), nil
+}
+
+// ReadBundleOutputFromRun reads a bundle output from a specific run
+func (p *Porter) ReadBundleOutputFromRun(ctx context.Context, outputName, runID string) (string, error) {
+	o, err := p.Installations.GetOutput(ctx, runID, outputName)
 	if err != nil {
 		return "", err
 	}
