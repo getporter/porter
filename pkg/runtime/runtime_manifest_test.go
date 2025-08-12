@@ -1,6 +1,9 @@
 package runtime
 
 import (
+	"archive/tar"
+	"bytes"
+	"compress/gzip"
 	"context"
 	"fmt"
 	"io"
@@ -1238,6 +1241,100 @@ install:
 
 	assert.Equal(t, "foo-value", mixin["someInput"], "expected lower-case foo env var was resolved")
 	assert.Equal(t, "bar-value", mixin["moreInput"], "expected upper-case BAR env var was resolved")
+}
+
+func TestStateBagUnpackWithParentDirectoryCreation(t *testing.T) {
+	ctx := context.Background()
+	testConfig := config.NewTestConfig(t)
+
+	mContent := `schemaVersion: 1.0.0-alpha.2
+state:
+- name: some_state
+  path: /path/to/some_state
+
+install:
+- mymixin:
+    Parameters:
+      Thing: test
+`
+	rm := runtimeManifestFromStepYaml(t, testConfig, mContent)
+
+	// Create a valid tar.gz file with state content
+	stateContent := "test state content"
+	stateArchive := createTestStateArchive(t, "some_state", stateContent)
+
+	// Write the state archive to the expected location
+	require.NoError(t, testConfig.FileSystem.WriteFile("/porter/state.tgz", stateArchive, pkg.FileModeWritable))
+
+	// Resolve the step first (following the pattern from existing tests)
+	s := rm.Install[0]
+	err := rm.ResolveStep(ctx, 0, s)
+	require.NoError(t, err, "ResolveStep should succeed")
+
+	// Test that Initialize succeeds and creates the parent directory
+	err = rm.Initialize(ctx)
+	if err != nil {
+		t.Logf("Initialize failed with error: %v", err)
+		t.Logf("StateBag length: %d", len(rm.StateBag))
+		for i, state := range rm.StateBag {
+			t.Logf("StateBag[%d]: name=%s, path=%s", i, state.Name, state.Path)
+		}
+	}
+	require.NoError(t, err, "Initialize should succeed and create parent directories for state files")
+
+	// Verify that the parent directory was created
+	parentDir := "/path/to"
+	exists, err := testConfig.FileSystem.DirExists(parentDir)
+	require.NoError(t, err)
+	assert.True(t, exists, "Parent directory should be created")
+
+	// Verify that the state file was created with correct content
+	stateFilePath := "/path/to/some_state"
+	exists, err = testConfig.FileSystem.DirExists(stateFilePath)
+	require.NoError(t, err)
+	assert.False(t, exists, "State file should not be a directory")
+
+	content, err := testConfig.FileSystem.ReadFile(stateFilePath)
+	require.NoError(t, err)
+	assert.Equal(t, stateContent, string(content), "State file should contain the expected content")
+
+	// Clean up
+	require.NoError(t, testConfig.FileSystem.Remove("/porter/state.tgz"))
+}
+
+// createTestStateArchive creates a tar.gz archive with the given state file
+func createTestStateArchive(t *testing.T, stateName, content string) []byte {
+	// Create a buffer to write our archive to
+	var buf bytes.Buffer
+
+	// Create a gzip writer
+	gw := gzip.NewWriter(&buf)
+	defer gw.Close()
+
+	// Create a tar writer
+	tw := tar.NewWriter(gw)
+	defer tw.Close()
+
+	// Create tar header
+	header := &tar.Header{
+		Name: "porter-state/" + stateName,
+		Mode: 0644,
+		Size: int64(len(content)),
+	}
+
+	// Write the header
+	err := tw.WriteHeader(header)
+	require.NoError(t, err)
+
+	// Write the content
+	_, err = tw.Write([]byte(content))
+	require.NoError(t, err)
+
+	// Close the writers to flush the data
+	tw.Close()
+	gw.Close()
+
+	return buf.Bytes()
 }
 
 func TestResolveInvocationImage(t *testing.T) {

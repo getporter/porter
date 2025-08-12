@@ -630,7 +630,14 @@ func (m *RuntimeManifest) unpackStateBag(ctx context.Context) error {
 		dest := stateFiles[name]
 		m.debugf(log, "  - %s -> %s", name, dest)
 
-		f, err := os.OpenFile(dest, os.O_CREATE|os.O_RDWR, os.FileMode(header.Mode))
+		// Ensure parent directory exists before creating the file
+		parentDir := filepath.Dir(dest)
+		if err := m.config.FileSystem.MkdirAll(parentDir, pkg.FileModeDirectory); err != nil {
+			return log.Error(fmt.Errorf("error creating parent directory for state file %s: %w", dest, err))
+		}
+
+		// Create the file using the file system abstraction instead of os.OpenFile
+		f, err := m.config.FileSystem.OpenFile(dest, os.O_CREATE|os.O_RDWR, os.FileMode(header.Mode))
 		if err != nil {
 			return log.Error(fmt.Errorf("error creating state file %s: %w", dest, err))
 		}

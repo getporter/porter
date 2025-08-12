@@ -1,0 +1,34 @@
+schemaType: Bundle
+schemaVersion: 1.0.1
+name: state-path-test
+version: 0.1.0
+description: "An example Porter configuration"
+registry: "localhost:5000"
+mixins:
+  - exec
+state:
+  - name: some_state
+    path: /path/to/some_state
+install:
+  - exec:
+      description: "Install"
+      command: sh
+      arguments:
+        - -c
+        - |-
+          mkdir -p /path/to
+          echo "Installing v${ bundle.version }" | tee /path/to/some_state
+upgrade:
+  - exec:
+      description: "Upgrade"
+      command: sh
+      arguments:
+        - -c
+        - |-
+          echo "Upgrading to v${ bundle.version }" | tee -a /path/to/some_state
+uninstall:
+  - exec:
+      description: "Uninstall"
+      command: echo
+      arguments:
+        - bye
