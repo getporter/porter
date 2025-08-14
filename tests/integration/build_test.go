@@ -5,9 +5,11 @@ package integration
 import (
 	"encoding/json"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/build"
@@ -39,7 +41,6 @@ func TestBuild(t *testing.T) {
 	bun, err := cnab.LoadBundle(test.TestContext.Context, build.LOCAL_BUNDLE)
 	require.NoError(t, err)
 	require.Equal(t, bun.Custom["customKey1"], "editedCustomValue1")
-
 }
 
 // This test uses build and the --no-lint flag, which is not a global flag defined on config.DataStore,
@@ -181,4 +182,58 @@ func TestRebuild(t *testing.T) {
 	// Uninstall the bundle
 	_, output = test.RequirePorter("uninstall", installationName)
 	tests.RequireOutputContains(t, output, "Building bundle ===>", "expected a rebuild before uninstall")
+}
+
+func TestBuild_CacheExportImport(t *testing.T) {
+	test, err := tester.NewTest(t)
+	defer test.Close()
+	require.NoError(t, err, "test setup failed")
+
+	bunPath := filepath.Join(test.RepoRoot, "tests/testdata/mybuns/*")
+	require.NoError(t, shx.Copy(bunPath, test.TestDir, shx.CopyRecursive))
+	test.Chdir(test.TestDir)
+
+	// Build the bundle
+	_, output := test.RequirePorter("build", "--cache-to=type=inline", "--name=porter-test-build")
+
+	// Validate that the invocation image is created with inline cache
+	tests.RequireOutputContains(t, output, "preparing layers for inline cache")
+
+	bun, err := cnab.LoadBundle(test.TestContext.Context, build.LOCAL_BUNDLE)
+	require.NoError(t, err)
+	require.Equal(t, 1, len(bun.InvocationImages))
+	iiRef := bun.InvocationImages[0].Image
+
+	// Rebuild the bundle using the already built image as cache source
+	_, output = test.RequirePorter("build", "--cache-from=type=registry,ref="+iiRef, "--name=porter-test-build")
+
+	// Validate that the build attempts to use the cache
+	tests.RequireOutputContains(t, output, "importing cache manifest from "+iiRef)
+}
+
+func TestBuild_BuildxBuilder(t *testing.T) {
+	test, err := tester.NewTest(t)
+	defer test.Close()
+	require.NoError(t, err, "test setup failed")
+
+	// Create a custom buildx builder
+	builderName := "porter-test-builder-" + time.Now().Format("20060102150405")
+	require.NoError(
+		t,
+		exec.Command("docker", "buildx", "create", "--driver=docker-container", "--name="+builderName, "--bootstrap").Run(),
+		"failed to create custom builder",
+	)
+	defer func() {
+		exec.Command("docker", "buildx", "rm", builderName).Run()
+	}()
+
+	bunPath := filepath.Join(test.RepoRoot, "tests/testdata/mybuns/*")
+	require.NoError(t, shx.Copy(bunPath, test.TestDir, shx.CopyRecursive))
+	test.Chdir(test.TestDir)
+
+	// Build the bundle
+	_, output := test.RequirePorter("build", "--builder="+builderName, "--name=porter-test-build", "--output=compress=zstd")
+
+	// Validate that a custom builder has been used
+	tests.RequireOutputContains(t, output, "importing to docker")
 }
