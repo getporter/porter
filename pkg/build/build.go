@@ -66,4 +66,16 @@ type BuildImageOptions struct {
 
 	// NoCache is the docker build --no-cache flag specified.
 	NoCache bool
+
+	// Builder is the name of the buildkit builder to use
+	Builder string
+
+	// CacheFrom is the set of docker build --cache-from flags specified.
+	CacheFrom []string
+
+	// CacheTo is the set of docker build --cache-to flags specified.
+	CacheTo []string
+
+	// Output is a subset of docker build --output options.
+	Output string
 }
