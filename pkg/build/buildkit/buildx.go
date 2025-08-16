@@ -18,12 +18,14 @@ import (
 	"github.com/cnabio/cnab-go/driver/docker"
 	buildx "github.com/docker/buildx/build"
 	"github.com/docker/buildx/builder"
-	_ "github.com/docker/buildx/driver/docker" // Register the docker driver with buildkit
+	_ "github.com/docker/buildx/driver/docker"           // Register the docker driver with buildkit
+	_ "github.com/docker/buildx/driver/docker-container" // Register the docker-container driver with buildkit
 	"github.com/docker/buildx/util/buildflags"
 	"github.com/docker/buildx/util/confutil"
 	"github.com/docker/buildx/util/dockerutil"
 	"github.com/docker/buildx/util/progress"
 	dockerconfig "github.com/docker/cli/cli/config"
+	"github.com/moby/buildkit/client"
 	"github.com/moby/buildkit/session"
 	"github.com/moby/buildkit/session/auth/authprovider"
 	"github.com/moby/buildkit/util/progress/progressui"
@@ -77,7 +79,7 @@ func (b *Builder) BuildBundleImage(ctx context.Context, manifest *manifest.Manif
 	}
 
 	bldr, err := builder.New(cli,
-		builder.WithName(cli.CurrentContext()),
+		builder.WithName(opts.Builder),
 		builder.WithContextPathHash(b.Getwd()),
 	)
 	if err != nil {
@@ -127,6 +129,21 @@ func (b *Builder) BuildBundleImage(ctx context.Context, manifest *manifest.Manif
 		return span.Errorf("error parsing the --build-context flags: %w", err)
 	}
 
+	cacheFrom, err := parseCacheOptions(opts.CacheFrom)
+	if err != nil {
+		return span.Errorf("error parsing the --cache-from flags: %w", err)
+	}
+
+	cacheTo, err := parseCacheOptions(opts.CacheTo)
+	if err != nil {
+		return span.Errorf("error parsing the --cache-to flags: %w", err)
+	}
+
+	exports, err := parseOutput(opts.Output, manifest.Image)
+	if err != nil {
+		return span.Errorf("error parsing the --output flag: %w", err)
+	}
+
 	buildxOpts := map[string]buildx.Options{
 		"default": {
 			Tags: []string{manifest.Image},
@@ -137,8 +154,11 @@ func (b *Builder) BuildBundleImage(ctx context.Context, manifest *manifest.Manif
 				NamedContexts:  toNamedContexts(buildContexts),
 			},
 			BuildArgs: args,
+			Exports:   exports,
 			Session:   currentSession,
 			NoCache:   opts.NoCache,
+			CacheFrom: cacheFrom,
+			CacheTo:   cacheTo,
 		},
 	}
 
@@ -257,6 +277,86 @@ func toNamedContexts(m map[string]string) map[string]buildx.NamedContext {
 		m2[k] = buildx.NamedContext{Path: v}
 	}
 	return m2
+}
+
+// parseCacheOptions converts cache strings like "type=registry,ref=user/app:cache"
+// into CacheOptionsEntry structs. Each cache option must have a type field.
+func parseCacheOptions(cacheFlags []string) ([]client.CacheOptionsEntry, error) {
+	if len(cacheFlags) == 0 {
+		return nil, nil
+	}
+
+	entries := make([]client.CacheOptionsEntry, 0, len(cacheFlags))
+	for _, flag := range cacheFlags {
+		entry, err := parseCacheOption(flag)
+		if err != nil {
+			return nil, fmt.Errorf("parsing cache option %q: %w", flag, err)
+		}
+		entries = append(entries, entry)
+	}
+	return entries, nil
+}
+
+func parseCacheOption(flag string) (client.CacheOptionsEntry, error) {
+	parts := strings.Split(flag, ",")
+	if len(parts) == 0 {
+		return client.CacheOptionsEntry{}, fmt.Errorf("empty cache option")
+	}
+
+	entry := client.CacheOptionsEntry{
+		Attrs: make(map[string]string, len(parts)-1), // Pre-allocate map with estimated size
+	}
+
+	for _, part := range parts {
+		key, value, found := strings.Cut(part, "=")
+		if !found {
+			return client.CacheOptionsEntry{}, fmt.Errorf("invalid format, expected key=value")
+		}
+
+		if key == "type" {
+			entry.Type = value
+		} else {
+			entry.Attrs[key] = value
+		}
+	}
+
+	if entry.Type == "" {
+		return client.CacheOptionsEntry{}, fmt.Errorf("missing required type field")
+	}
+
+	return entry, nil
+}
+
+func parseOutput(flag string, name string) ([]client.ExportEntry, error) {
+	attrs := map[string]string{
+		"name": name,
+	}
+	if flag != "" {
+		parts := strings.Split(flag, ",")
+		for _, part := range parts {
+			key, value, found := strings.Cut(part, "=")
+			if !found {
+				return nil, fmt.Errorf("invalid format, expected key=value")
+			}
+
+			if key == "type" {
+				if value != client.ExporterDocker {
+					return nil, fmt.Errorf("output type cannot be overridden")
+				}
+				continue
+			} else if key == "name" {
+				return nil, fmt.Errorf("output name cannot be overridden")
+			}
+			attrs[key] = value
+		}
+	}
+
+	return []client.ExportEntry{
+		{
+			Type:  client.ExporterDocker,
+			Attrs: attrs,
+		},
+	}, nil
 }
 
 func (b *Builder) TagBundleImage(ctx context.Context, origTag, newTag string) error {
