@@ -1,4 +1,3 @@
-baseURL = "https://porter.sh/"
 languageCode = "en-us"
 title = "Porter"
 canonifyURLs = "false"
@@ -25,9 +24,23 @@ enableInlineShortcodes= true
   [markup.highlight]
     noClasses= false
 
+[languages]
+  [languages.en]
+    languageName = "Current"
+    contentDir = "content/current"
+    weight = 1
+    [languages.en.params]
+      title = "Porter"
+  [languages.next]
+    languageName = "Next"
+    contentDir = "content/next"
+    weight = 2
+    [languages.next.params]
+      title = "Porter (Next)"
+
+
 # Default Page Parameters
 [params]
-  title = "Porter"
   author = "Carolyn Van Slyck"
   description = "A Friendly Cloud Installer for Cloud Native Application Bundles"
   image = "images/porter-twitter-card.png"
@@ -45,37 +58,37 @@ enableInlineShortcodes= true
 # Docs Navigation
 [[menu.main]]
 name = "Install"
-url = "/docs/getting-started/install-porter/"
+url = "docs/getting-started/install-porter/"
 identifier = "install-porter"
 weight = 1
 
 [[menu.main]]
 name = "QuickStart"
-url = "/docs/quickstart/"
+url = "docs/quickstart/"
 identifier = "quickstart"
 weight = 2
 
 [[menu.main]]
 name = "Blog"
-url = "/blog/"
+url = "blog/"
 identifier = "blog"
 weight = 3
 
 [[menu.main]]
 name = "Community"
-url = "/community/"
+url = "community/"
 identifier = "community"
 weight = 4
 
 [[menu.main]]
 name = "Learning"
-url = "/docs/learn/"
+url = "docs/learn/"
 identifier = "learn"
 weight = 5
 
 [[menu.main]]
 name = "Docs"
-url = "/docs/"
+url = "docs/"
 identifier = "docs"
 weight = 6
 
@@ -91,3 +104,13 @@ weight = 8
 url = "https://github.com/getporter/porter"
   [menu.main.params]
   icon = "github"
+
+[[menu.versions]]
+  name = "Current"
+  url = "/"
+  weight = 1
+
+[[menu.versions]]
+  name = "Next"
+  url = "/next/"
+  weight = 2
