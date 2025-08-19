@@ -41,7 +41,7 @@ require (
 	github.com/mikefarah/yq/v3 v3.0.0-20201202084205-8846255d1c37
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/mmcdole/gofeed v1.3.0
-	github.com/moby/buildkit v0.23.2
+	github.com/moby/buildkit v0.23.0-rc1.0.20250806140246-955c2b2f7d01
 	github.com/moby/term v0.5.2
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/opencontainers/go-digest v1.0.0
@@ -104,7 +104,7 @@ require (
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/containerd/console v1.0.5 // indirect
 	github.com/containerd/containerd/api v1.9.0 // indirect
-	github.com/containerd/containerd/v2 v2.1.3 // indirect
+	github.com/containerd/containerd/v2 v2.1.4 // indirect
 	github.com/containerd/continuity v0.4.5 // indirect
 	github.com/containerd/errdefs v1.0.0 // indirect
 	github.com/containerd/errdefs/pkg v0.3.0 // indirect
