@@ -158,3 +158,8 @@ jobs:
     uses: getporter/porter/.github/workflows/integ-reuseable-workflow.yml@main
     with:
       test_name: agent_integration_test
+  state_test:
+    name: Agent Integration Test
+    uses: getporter/porter/.github/workflows/integ-reuseable-workflow.yml@main
+    with:
+      test_name: state_test
