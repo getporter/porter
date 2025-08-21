@@ -43,7 +43,7 @@ require (
 	github.com/mmcdole/gofeed v1.3.0
 	github.com/moby/buildkit v0.23.0-rc1.0.20250806140246-955c2b2f7d01
 	github.com/moby/term v0.5.2
-	github.com/olekukonko/tablewriter v0.0.5
+	github.com/olekukonko/tablewriter v1.0.9
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/osteele/liquid v1.7.0
 	github.com/pelletier/go-toml v1.9.5
@@ -179,6 +179,8 @@ require (
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/oklog/run v1.1.0 // indirect
 	github.com/oklog/ulid v1.3.1 // indirect
+	github.com/olekukonko/errors v1.1.0 // indirect
+	github.com/olekukonko/ll v0.0.9 // indirect
 	github.com/opencontainers/image-spec v1.1.1 // indirect
 	github.com/osteele/tuesday v1.0.3 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.4 // indirect
