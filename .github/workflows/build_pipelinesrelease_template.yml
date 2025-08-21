@@ -19,6 +19,8 @@ on:
         required: false
         default: false
         type: boolean
+permissions:
+  contents: read
 jobs:
   Validate-build:
     name: Native Compile
@@ -130,7 +132,8 @@ jobs:
     - Validate-integration_test
     - Validate-smoke_test
     runs-on: ubuntu-latest
-    permissions: write-all
+    permissions:
+      contents: write
     if: success() && ${{ inputs.shouldPublish == true }}
     steps:
     - name: checkout
@@ -171,7 +174,9 @@ jobs:
     - Validate-integration_test
     - Validate-smoke_test
     runs-on: ubuntu-latest
-    permissions: write-all
+    permissions:
+      contents: write
+      packages: write
     if: success() && ${{inputs.shouldPublish == true}}
     steps:
     - name: checkout

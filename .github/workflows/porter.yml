@@ -10,6 +10,8 @@ on:
       - 'docs/**'
 env:
   GOVERSION: 1.24.4
+permissions:
+  contents: read
 
 jobs:
   Build:

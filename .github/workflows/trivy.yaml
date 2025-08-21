@@ -12,6 +12,10 @@ on:
     paths-ignore:
       - 'docs/**'
 
+permissions:
+  contents: read
+  security-events: write
+
 jobs:
   scan:
     runs-on: ubuntu-latest
