@@ -13,6 +13,10 @@ env:
     GOVERSION: 1.24.4
     PORTER_INTEG_FILE: ${{inputs.test_name}}.go
 
+permissions:
+  contents: read
+  packages: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
