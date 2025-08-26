@@ -9,6 +9,8 @@ on:
 
 env:
   GOVERSION: 1.24.4
+permissions:
+  contents: read
 
 jobs:
   archive_integration_test:
