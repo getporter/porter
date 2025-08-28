@@ -21,6 +21,7 @@ on:
         type: boolean
 permissions:
   contents: read
+  packages: read
 jobs:
   Validate-build:
     name: Native Compile
