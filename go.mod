@@ -21,7 +21,7 @@ require (
 	github.com/containerd/containerd v1.7.28
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
 	github.com/distribution/reference v0.6.1-0.20240718132515-8c942b0459df
-	github.com/docker/buildx v0.27.0
+	github.com/docker/buildx v0.28.0
 	github.com/docker/cli v28.4.0+incompatible
 	github.com/docker/docker v28.3.3+incompatible
 	github.com/dustin/go-humanize v1.0.1
@@ -41,7 +41,7 @@ require (
 	github.com/mikefarah/yq/v3 v3.0.0-20201202084205-8846255d1c37
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/mmcdole/gofeed v1.3.0
-	github.com/moby/buildkit v0.23.0-rc1.0.20250806140246-955c2b2f7d01
+	github.com/moby/buildkit v0.24.0
 	github.com/moby/term v0.5.2
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/opencontainers/go-digest v1.0.0
