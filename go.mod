@@ -22,7 +22,7 @@ require (
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
 	github.com/distribution/reference v0.6.1-0.20240718132515-8c942b0459df
 	github.com/docker/buildx v0.27.0
-	github.com/docker/cli v28.3.3+incompatible
+	github.com/docker/cli v28.4.0+incompatible
 	github.com/docker/docker v28.3.3+incompatible
 	github.com/dustin/go-humanize v1.0.1
 	github.com/ghodss/yaml v1.0.0
