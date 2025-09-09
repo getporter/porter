@@ -1,7 +1,7 @@
---------------------------------------------------------------------------------------------------------------------
-  Name            Description                     Author          URL                                    URL Type   
---------------------------------------------------------------------------------------------------------------------
-  docker          A mixin for using the docker    Porter Authors  https://cdn.porter.sh/mixins/atom.xml  Atom Feed  
-                  cli                                                                                               
-  docker-compose  A mixin for using the           Porter Authors  https://cdn.porter.sh/mixins/atom.xml  Atom Feed  
-                  docker-compose cli                                                                                
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Name            Description                   Author          URL                                    URL Type  
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ docker          A mixin for using the docker  Porter Authors  https://cdn.porter.sh/mixins/atom.xml  Atom Feed 
+                 cli                                                                                            
+ docker-compose  A mixin for using the         Porter Authors  https://cdn.porter.sh/mixins/atom.xml  Atom Feed 
+                 docker-compose cli                                                                             

@@ -6,18 +6,43 @@ import (
 	"reflect"
 
 	"github.com/olekukonko/tablewriter"
+	"github.com/olekukonko/tablewriter/renderer"
+	"github.com/olekukonko/tablewriter/tw"
 )
 
 func NewTableSection(out io.Writer) *tablewriter.Table {
-	table := tablewriter.NewWriter(out)
-	table.SetCenterSeparator("")
-	table.SetColumnSeparator("")
-	table.SetAlignment(tablewriter.ALIGN_LEFT)
-	table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
-	table.SetBorders(tablewriter.Border{Left: false, Right: false, Bottom: false, Top: true})
-	table.SetAutoFormatHeaders(false)
-	table.SetAutoWrapText(true)
-	table.SetReflowDuringAutoWrap(true)
+	table := tablewriter.NewTable(out,
+		tablewriter.WithRenderer(renderer.NewBlueprint(tw.Rendition{
+			Settings: tw.Settings{
+				Separators: tw.Separators{
+					BetweenColumns: tw.Off,
+				},
+			},
+			Borders: tw.Border{
+				Top:    tw.On,
+				Left:   tw.Off,
+				Right:  tw.Off,
+				Bottom: tw.Off,
+			},
+		})),
+		tablewriter.WithConfig(tablewriter.Config{
+			Header: tw.CellConfig{
+				Formatting: tw.CellFormatting{
+					Alignment:  tw.AlignLeft,
+					AutoFormat: tw.Off,
+				},
+			},
+			Row: tw.CellConfig{
+				ColMaxWidths: tw.CellWidth{Global: 30},
+				Formatting: tw.CellFormatting{
+					Alignment:  tw.AlignLeft,
+					AutoWrap:   tw.WrapNormal,
+					AutoFormat: tw.Off,
+				},
+			},
+		}),
+	)
+
 	return table
 }
 
@@ -25,12 +50,14 @@ func PrintTableParameterSet(out io.Writer, params [][]string, headers ...string)
 	table := NewTableSection(out)
 
 	// Print the outputs table
-	table.SetHeader(headers)
+	table.Header(headers)
 	for _, v := range params {
-		table.Append(v)
+		err := table.Append(v)
+		if err != nil {
+			return err
+		}
 	}
-	table.Render()
-	return nil
+	return table.Render()
 }
 
 // PrintTable outputs a dataset in tabular format
@@ -44,11 +71,14 @@ func PrintTable(out io.Writer, v interface{}, getRow func(row interface{}) []str
 	table := NewTableSection(out)
 
 	// Print the outputs table
-	table.SetHeader(headers)
+	table.Header(headers)
 	for i := 0; i < rows.Len(); i++ {
-		table.Append(getRow(rows.Index(i).Interface()))
+		err := table.Append(getRow(rows.Index(i).Interface()))
+		if err != nil {
+			return err
+		}
+
 	}
 
-	table.Render()
-	return nil
+	return table.Render()
 }

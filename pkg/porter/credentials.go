@@ -12,10 +12,10 @@ import (
 	"get.porter.sh/porter/pkg/encoding"
 	"get.porter.sh/porter/pkg/generator"
 	"get.porter.sh/porter/pkg/printer"
+	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/tracing"
 	dtprinter "github.com/carolynvs/datetime-printer"
-	"github.com/olekukonko/tablewriter"
 	"go.opentelemetry.io/otel/attribute"
 )
 
@@ -269,25 +269,6 @@ func (p *Porter) ShowCredential(ctx context.Context, opts CredentialShowOptions)
 			Now: func() time.Time { return now },
 		}
 
-		// Here we use an instance of olekukonko/tablewriter as our table,
-		// rather than using the printer pkg variant, as we wish to decorate
-		// the table a bit differently from the default
-		var rows [][]string
-
-		// Iterate through all CredentialStrategies and add to rows
-		for _, cs := range credSet.Credentials {
-			rows = append(rows, []string{cs.Name, cs.Source.Hint, cs.Source.Strategy})
-		}
-
-		// Build and configure our tablewriter
-		table := tablewriter.NewWriter(p.Out)
-		table.SetCenterSeparator("")
-		table.SetColumnSeparator("")
-		table.SetAlignment(tablewriter.ALIGN_LEFT)
-		table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
-		table.SetBorders(tablewriter.Border{Left: false, Right: false, Bottom: false, Top: true})
-		table.SetAutoFormatHeaders(false)
-
 		// First, print the CredentialSet metadata
 		// Note that we are not using span.Info because the command's output must go to standard out
 		fmt.Fprintf(p.Out, "Name: %s\n", credSet.Name)
@@ -305,13 +286,14 @@ func (p *Porter) ShowCredential(ctx context.Context, opts CredentialShowOptions)
 			fmt.Fprintln(p.Out)
 		}
 
-		// Now print the table
-		table.SetHeader([]string{"Name", "Local Source", "Source Type"})
-		for _, row := range rows {
-			table.Append(row)
-		}
-		table.Render()
-		return nil
+		return printer.PrintTable(p.Out, credSet.Credentials, func(row interface{}) []string {
+			c, ok := row.(secrets.SourceMap)
+			if !ok {
+				return nil
+			}
+			return []string{c.Name, c.Source.Hint, c.Source.Strategy}
+		}, "Name", "Local Source", "Source Type")
+
 	default:
 		return span.Error(fmt.Errorf("invalid format: %s", opts.Format))
 	}

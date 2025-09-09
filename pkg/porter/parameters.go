@@ -24,7 +24,6 @@ import (
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/cnabio/cnab-go/secrets/host"
-	"github.com/olekukonko/tablewriter"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -268,25 +267,6 @@ func (p *Porter) ShowParameter(ctx context.Context, opts ParameterShowOptions) e
 			Now: func() time.Time { return now },
 		}
 
-		// Here we use an instance of olekukonko/tablewriter as our table,
-		// rather than using the printer pkg variant, as we wish to decorate
-		// the table a bit differently from the default
-		var rows [][]string
-
-		// Iterate through all ParameterStrategies and add to rows
-		for _, pset := range paramSet.Parameters {
-			rows = append(rows, []string{pset.Name, pset.Source.Hint, pset.Source.Strategy})
-		}
-
-		// Build and configure our tablewriter
-		table := tablewriter.NewWriter(p.Out)
-		table.SetCenterSeparator("")
-		table.SetColumnSeparator("")
-		table.SetAlignment(tablewriter.ALIGN_LEFT)
-		table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
-		table.SetBorders(tablewriter.Border{Left: false, Right: false, Bottom: false, Top: true})
-		table.SetAutoFormatHeaders(false)
-
 		// First, print the ParameterSet metadata
 		fmt.Fprintf(p.Out, "Name: %s\n", paramSet.Name)
 		fmt.Fprintf(p.Out, "Created: %s\n", tp.Format(paramSet.Status.Created))
@@ -303,12 +283,14 @@ func (p *Porter) ShowParameter(ctx context.Context, opts ParameterShowOptions) e
 		}
 
 		// Now print the table
-		table.SetHeader([]string{"Name", "Local Source", "Source Type"})
-		for _, row := range rows {
-			table.Append(row)
-		}
-		table.Render()
-		return nil
+		return printer.PrintTable(p.Out, paramSet.Parameters, func(row interface{}) []string {
+			c, ok := row.(secrets.SourceMap)
+			if !ok {
+				return nil
+			}
+			return []string{c.Name, c.Source.Hint, c.Source.Strategy}
+		}, "Name", "Local Source", "Source Type")
+
 	default:
 		return fmt.Errorf("invalid format: %s", opts.Format)
 	}
@@ -524,21 +506,13 @@ func NewDisplayValuesFromParameters(bun cnab.ExtendedBundle, params map[string]i
 
 func (p *Porter) printDisplayValuesTable(values []DisplayValue) error {
 	// Build and configure our tablewriter for the outputs
-	table := tablewriter.NewWriter(p.Out)
-	table.SetCenterSeparator("")
-	table.SetColumnSeparator("")
-	table.SetAlignment(tablewriter.ALIGN_LEFT)
-	table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
-	table.SetBorders(tablewriter.Border{Left: false, Right: false, Bottom: false, Top: true})
-	table.SetAutoFormatHeaders(false)
-
-	table.SetHeader([]string{"Name", "Type", "Value"})
-	for _, param := range values {
-		table.Append([]string{param.Name, param.Type, param.PrintValue()})
-	}
-	table.Render()
-
-	return nil
+	return printer.PrintTable(p.Out, values, func(row interface{}) []string {
+		c, ok := row.(DisplayValue)
+		if !ok {
+			return nil
+		}
+		return []string{c.Name, c.Type, c.PrintValue()}
+	}, "Name", "Type", "Value")
 }
 
 func (p *Porter) ParametersApply(ctx context.Context, o ApplyOptions) error {

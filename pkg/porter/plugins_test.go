@@ -155,19 +155,8 @@ func TestPorter_ShowPlugin(t *testing.T) {
 		err := p.ShowPlugin(ctx, opts)
 		require.NoError(t, err, "ShowPlugin failed")
 
-		expected := `Name: plugin1
-Version: v1.0
-Commit: abc123
-Author: Porter Authors
-
----------------------------
-  Type     Implementation  
----------------------------
-  storage  blob            
-  storage  mongo           
-`
 		actual := p.TestConfig.TestContext.GetOutput()
-		assert.Equal(t, expected, actual)
+		test.CompareGoldenFile(t, "testdata/plugins/show-plugin.txt", actual)
 	})
 
 	t.Run("yaml", func(t *testing.T) {

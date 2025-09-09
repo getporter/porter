@@ -11,7 +11,6 @@ import (
 	"get.porter.sh/porter/pkg/plugins"
 	"get.porter.sh/porter/pkg/printer"
 	"get.porter.sh/porter/pkg/tracing"
-	"github.com/olekukonko/tablewriter"
 	"go.opentelemetry.io/otel/attribute"
 	"go.uber.org/zap/zapcore"
 )
@@ -108,28 +107,19 @@ func (p *Porter) ShowPlugin(ctx context.Context, opts ShowPluginOptions) error {
 
 	switch opts.Format {
 	case printer.FormatPlaintext:
-		// Build and configure our tablewriter
-		// TODO: make this a function and reuse it in printer/table.go
-		table := tablewriter.NewWriter(p.Out)
-		table.SetCenterSeparator("")
-		table.SetColumnSeparator("")
-		table.SetAlignment(tablewriter.ALIGN_LEFT)
-		table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
-		table.SetBorders(tablewriter.Border{Left: false, Right: false, Bottom: false, Top: true})
-		table.SetAutoFormatHeaders(false)
-
 		// First, print the plugin metadata
 		fmt.Fprintf(p.Out, "Name: %s\n", plugin.Name)
 		fmt.Fprintf(p.Out, "Version: %s\n", plugin.Version)
 		fmt.Fprintf(p.Out, "Commit: %s\n", plugin.Commit)
 		fmt.Fprintf(p.Out, "Author: %s\n\n", plugin.Author)
 
-		table.SetHeader([]string{"Type", "Implementation"})
-		for _, row := range plugin.Implementations {
-			table.Append([]string{row.Type, row.Name})
-		}
-		table.Render()
-		return nil
+		return printer.PrintTable(p.Out, plugin.Implementations, func(v interface{}) []string {
+			m, ok := v.(plugins.Implementation)
+			if !ok {
+				return nil
+			}
+			return []string{m.Type, m.Name}
+		}, "Type", "Implementation")
 
 	case printer.FormatJson:
 		return printer.PrintJson(p.Out, plugin)
