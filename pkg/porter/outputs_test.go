@@ -9,6 +9,7 @@ import (
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/printer"
 	"get.porter.sh/porter/pkg/storage"
+	"get.porter.sh/porter/pkg/test"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/stretchr/testify/assert"
@@ -27,15 +28,6 @@ func TestPorter_printOutputsTable(t *testing.T) {
 	p := NewTestPorter(t)
 	defer p.Close()
 
-	want := `---------------------------------------------------------------------------------
-  Name     Type    Value                                                         
----------------------------------------------------------------------------------
-  bar      string  ******                                                        
-  foo      string  /path/to/foo                                                  
-  object   object  {"a":{"b":1,"c":2},"d":"yay"}                                 
-  longfoo  string  DFo6Wc2jDhmA7Yt4PbHyh8RO4vVG7leOzK412gf2TXNPJhuCUs1rB29nk...  
-`
-
 	outputs := DisplayValues{
 		{Name: "bar", Type: "string", Value: "bar-value", Sensitive: true},
 		{Name: "foo", Type: "string", Value: "/path/to/foo"},
@@ -46,7 +38,7 @@ func TestPorter_printOutputsTable(t *testing.T) {
 	require.NoError(t, err)
 
 	got := p.TestConfig.TestContext.GetOutput()
-	require.Equal(t, want, got)
+	test.CompareGoldenFile(t, "testdata/outputs/print-outputs-table.txt", got)
 }
 
 func TestPorter_PrintBundleOutputs(t *testing.T) {
@@ -138,8 +130,8 @@ func TestOutputOptions_WithRunID(t *testing.T) {
 	t.Parallel()
 
 	testcases := []struct {
-		name                string
-		opts                interface{}
+		name               string
+		opts               interface{}
 		runID              string
 		installation       string
 		expectedValidation bool
@@ -149,7 +141,7 @@ func TestOutputOptions_WithRunID(t *testing.T) {
 			name: "OutputListOptions with RunID only",
 			opts: &OutputListOptions{
 				installationOptions: installationOptions{},
-				PrintOptions: printer.PrintOptions{Format: printer.FormatPlaintext},
+				PrintOptions:        printer.PrintOptions{Format: printer.FormatPlaintext},
 			},
 			runID:              "01TEST_RUN_ID",
 			expectedValidation: true,
@@ -158,7 +150,7 @@ func TestOutputOptions_WithRunID(t *testing.T) {
 			name: "OutputShowOptions with RunID only",
 			opts: &OutputShowOptions{
 				installationOptions: installationOptions{},
-				Output: "test-output",
+				Output:              "test-output",
 			},
 			runID:              "01TEST_RUN_ID",
 			expectedValidation: true,
@@ -176,7 +168,7 @@ func TestOutputOptions_WithRunID(t *testing.T) {
 			expectedError:      "either --installation or --run should be specified, not both",
 		},
 		{
-			name: "OutputShowOptions with both RunID and installation", 
+			name: "OutputShowOptions with both RunID and installation",
 			opts: &OutputShowOptions{
 				installationOptions: installationOptions{
 					Name: "test-installation",
@@ -286,9 +278,9 @@ func TestPorter_ListBundleOutputs_WithRunID(t *testing.T) {
 		assert.Equal(t, "bar-output", barOutput.Value)
 
 		require.NotNil(t, fooOutput, "should have found foo output")
-		assert.Equal(t, "foo", fooOutput.Name) 
+		assert.Equal(t, "foo", fooOutput.Name)
 		assert.True(t, fooOutput.Sensitive, "foo output should be marked as sensitive")
-		assert.Equal(t, "foo-output", fooOutput.Value) // The actual value should be stored
+		assert.Equal(t, "foo-output", fooOutput.Value)    // The actual value should be stored
 		assert.Equal(t, "******", fooOutput.PrintValue()) // But should be masked when printed
 	})
 }
