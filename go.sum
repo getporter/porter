@@ -146,8 +146,6 @@ github.com/distribution/distribution v2.8.3+incompatible h1:RlpEXBLq/WPXYvBYMDAm
 github.com/distribution/distribution v2.8.3+incompatible/go.mod h1:EgLm2NgWtdKgzF9NpMzUKgzmR7AMmb0VQi2B+ZzDRjc=
 github.com/distribution/reference v0.6.1-0.20240718132515-8c942b0459df h1:5dsN0RDoKdzqhxBIJ/fJxZGAtcAbkCd6FUPtkao6ROM=
 github.com/distribution/reference v0.6.1-0.20240718132515-8c942b0459df/go.mod h1:BbU0aIcezP1/5jX/8MP0YiH4SdvB5Y4f/wlDRiLyi3E=
-github.com/docker/buildx v0.27.0 h1:8QQOqIAMpDItzlmYO5ua/AR2Qttu07hHeOeOxPSbUR8=
-github.com/docker/buildx v0.27.0/go.mod h1:omZ9N6owYkRoAN79fq+Dfa0RwfR3iblCGuUyThovCpM=
 github.com/docker/buildx v0.28.0 h1:ZnrVsZ/qQwSOQ4Fx3IgXjiurAwvocaF1YUaPbIXD89E=
 github.com/docker/buildx v0.28.0/go.mod h1:nLwx58w7xrQbLVSXiWiHpkVhY4ou4ci/hYomc139Vjk=
 github.com/docker/cli v28.4.0+incompatible h1:RBcf3Kjw2pMtwui5V0DIMdyeab8glEw5QY0UUU4C9kY=
@@ -524,8 +522,9 @@ github.com/spf13/cobra v1.10.1/go.mod h1:7SmJGaTHFVBY0jW4NXGluQoLvhqFQM+6XSKD+P4
 github.com/spf13/jwalterweatherman v1.0.0/go.mod h1:cQK4TGJAtQXfYWX+Ddv3mKDzgVb68N+wFjFa4jdeBTo=
 github.com/spf13/pflag v1.0.3/go.mod h1:DYY7MBk1bdzusC3SYhjObp+wFpr4gzcvqqNjLnInEg4=
 github.com/spf13/pflag v1.0.5/go.mod h1:McXfInJRrz4CZXVZOBLb0bTZqETkiAhM9Iw0y3An2Bg=
-github.com/spf13/pflag v1.0.9 h1:9exaQaMOCwffKiiiYk6/BndUBv+iRViNW+4lEMi0PvY=
 github.com/spf13/pflag v1.0.9/go.mod h1:McXfInJRrz4CZXVZOBLb0bTZqETkiAhM9Iw0y3An2Bg=
+github.com/spf13/pflag v1.0.10 h1:4EBh2KAYBwaONj6b2Ye1GiHfwjqyROoF4RwYO+vPwFk=
+github.com/spf13/pflag v1.0.10/go.mod h1:McXfInJRrz4CZXVZOBLb0bTZqETkiAhM9Iw0y3An2Bg=
 github.com/spf13/viper v1.4.0/go.mod h1:PTJ7Z/lr49W6bUbkmS1V3by4uWynFiR9p7+dSq/yZzE=
 github.com/spf13/viper v1.20.1 h1:ZMi+z/lvLyPSCoNtFCpqjy0S4kPbirhpTMwl8BkW9X4=
 github.com/spf13/viper v1.20.1/go.mod h1:P9Mdzt1zoHIG8m2eZQinpiBjo6kCmZSKBClNNqjJvu4=
