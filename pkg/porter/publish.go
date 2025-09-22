@@ -8,6 +8,9 @@ import (
 	"path/filepath"
 	"strings"
 
+	_ "modernc.org/sqlite" // required for rpmdb and other features
+
+	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/build"
 	"get.porter.sh/porter/pkg/cnab"
 	cnabtooci "get.porter.sh/porter/pkg/cnab/cnab-to-oci"
@@ -15,6 +18,8 @@ import (
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/tracing"
+	"github.com/anchore/syft/syft"
+	"github.com/anchore/syft/syft/format/spdxjson"
 	"github.com/cnabio/cnab-go/bundle/loader"
 	"github.com/cnabio/cnab-go/packager"
 	"github.com/cnabio/cnab-to-oci/relocation"
@@ -33,6 +38,7 @@ type PublishOptions struct {
 	Registry    string
 	ArchiveFile string
 	SignBundle  bool
+	SBOMPath    string
 }
 
 // Validate performs validation on the publish options
@@ -239,6 +245,11 @@ func (p *Porter) publishFromFile(ctx context.Context, opts PublishOptions) error
 		}
 	}
 
+	if opts.SBOMPath != "" {
+		if err := p.generateSBOM(ctx, bundleRef, opts.SBOMPath); err != nil {
+			return log.Error(err)
+		}
+	}
 	// Perhaps we have a cached version of a bundle with the same reference, previously pulled
 	// If so, replace it, as it is most likely out-of-date per this publish
 	err = p.refreshCachedBundle(bundleRef)
@@ -352,10 +363,57 @@ func (p *Porter) publishFromArchive(ctx context.Context, opts PublishOptions) er
 		}
 	}
 
+	if opts.SBOMPath != "" {
+		if err := p.generateSBOM(ctx, bundleRef, opts.SBOMPath); err != nil {
+			return log.Error(err)
+		}
+	}
 	// Perhaps we have a cached version of a bundle with the same tag, previously pulled
 	// If so, replace it, as it is most likely out-of-date per this publish
 	err = p.refreshCachedBundle(bundleRef)
 	return log.Error(err)
+}
+
+func (p *Porter) generateSBOM(ctx context.Context, bundleRef cnab.BundleReference, sbomPath string) error {
+	ctx, log := tracing.StartSpan(ctx)
+	defer log.EndSpan()
+
+	log.Infof("Generating SBOM for bundle %s...", bundleRef.Reference.String())
+
+	source, err := syft.GetSource(ctx, bundleRef.String(), syft.DefaultGetSourceConfig())
+	if err != nil {
+		return log.Errorf("failed to create source bundle %s: %w", bundleRef.Reference.String(), err)
+	}
+	sbom, err := syft.CreateSBOM(ctx, source, syft.DefaultCreateSBOMConfig().WithTool("Porter", pkg.Version))
+	if err != nil {
+		return log.Errorf("failed to create SBOM for bundle %s: %w", bundleRef.Reference.String(), err)
+	}
+	log.Infof("SBOM for bundle %s generated successfully", bundleRef.Reference.String())
+
+	err = p.FileSystem.MkdirAll(filepath.Dir(sbomPath), 0o755)
+	if err != nil {
+		return log.Errorf("failed to create directory for SBOM %s: %w", sbomPath, err)
+	}
+
+	f, err := p.FileSystem.Create(sbomPath)
+	if err != nil {
+		return log.Errorf("failed to create SBOM file %s: %w", sbomPath, err)
+	}
+	defer func() {
+		err = errors.Join(err, f.Close())
+	}()
+
+	encoder, err := spdxjson.NewFormatEncoderWithConfig(spdxjson.DefaultEncoderConfig())
+	if err != nil {
+		return log.Errorf("failed to create SBOM encoder: %w", err)
+	}
+	err = encoder.Encode(f, *sbom)
+	if err != nil {
+		return log.Errorf("failed to encode SBOM: %w", err)
+	}
+
+	log.Infof("SBOM for bundle %s written to %s", bundleRef.Reference.String(), sbomPath)
+	return nil
 }
 
 // extractBundle extracts a bundle using the provided opts and returns the extracted bundle
