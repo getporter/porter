@@ -5,10 +5,23 @@
 
 version: 2
 updates:
-- package-ecosystem: gomod
-  directory: /
-  schedule:
-    interval: weekly
-    day: sunday
-  labels:
-    - "dependabot 🤖"
+  - package-ecosystem: gomod
+    directory: /
+    labels:
+      - "dependabot 🤖"
+    schedule:
+      interval: weekly
+      day: sunday
+      groups:
+        go-dependencies:
+          update-types:
+            - "minor"
+            - "patch"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    labels:
+      - "dependabot 🤖"
+    schedule:
+      interval: weekly
+      day: sunday
