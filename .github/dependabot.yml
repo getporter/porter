@@ -12,11 +12,11 @@ updates:
     schedule:
       interval: weekly
       day: sunday
-      groups:
-        go-dependencies:
-          update-types:
-            - "minor"
-            - "patch"
+    groups:
+      go-dependencies:
+        update-types:
+          - "minor"
+          - "patch"
 
   - package-ecosystem: "github-actions"
     directory: "/"
