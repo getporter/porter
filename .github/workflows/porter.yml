@@ -20,7 +20,7 @@ jobs:
     steps:
     - name: checkout
       uses: actions/checkout@v3.5.0
-    - uses: actions/setup-go@v4
+    - uses: actions/setup-go@v6
       with:
         go-version: "${{ env.GOVERSION }}" # The Go version to download (if necessary) and use.
         cache: true
@@ -51,7 +51,7 @@ jobs:
     steps:
     - name: checkout
       uses: actions/checkout@v3.5.0
-    - uses: actions/setup-go@v4
+    - uses: actions/setup-go@v6
       with:
         go-version: "${{ env.GOVERSION }}" # The Go version to download (if necessary) and use.
         cache: true
@@ -71,7 +71,7 @@ jobs:
     steps:
     - name: checkout
       uses: actions/checkout@v3.5.0
-    - uses: actions/setup-go@v4
+    - uses: actions/setup-go@v6
       with:
         go-version: "${{ env.GOVERSION }}" # The Go version to download (if necessary) and use.
         cache: true
@@ -86,7 +86,7 @@ jobs:
     steps:
     - name: checkout
       uses: actions/checkout@v3.5.0
-    - uses: actions/setup-go@v4
+    - uses: actions/setup-go@v6
       with:
         go-version: "${{ env.GOVERSION }}" # The Go version to download (if necessary) and use.
         cache: true
@@ -107,7 +107,7 @@ jobs:
     steps:
     - name: checkout
       uses: actions/checkout@v3.5.0
-    - uses: actions/setup-go@v4
+    - uses: actions/setup-go@v6
       with:
         go-version: "${{ env.GOVERSION }}" # The Go version to download (if necessary) and use.
         cache: true
@@ -135,7 +135,7 @@ jobs:
       with:
         name: xbuild-bin
         path: bin
-    - uses: actions/setup-go@v4
+    - uses: actions/setup-go@v6
       with:
         go-version: "${{ env.GOVERSION }}" # The Go version to download (if necessary) and use.
         cache: true

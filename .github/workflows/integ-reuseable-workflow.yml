@@ -23,7 +23,7 @@ jobs:
     steps:
     - name: checkout
       uses: actions/checkout@v4.1.0
-    - uses: actions/setup-go@v4
+    - uses: actions/setup-go@v6
       with:
         go-version: "${{ env.GOVERSION }}"
         cache: true
