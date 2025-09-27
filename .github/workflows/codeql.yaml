@@ -24,7 +24,7 @@ jobs:
         with:
           fetch-depth: 0 # Get all git history
       - name: Set up Go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
           cache: true
