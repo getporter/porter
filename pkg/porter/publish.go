@@ -413,7 +413,7 @@ func (p *Porter) generateSBOM(ctx context.Context, bundleRef cnab.BundleReferenc
 	}
 
 	log.Infof("SBOM for bundle %s written to %s", bundleRef.Reference.String(), sbomPath)
-	return nil
+	return err
 }
 
 // extractBundle extracts a bundle using the provided opts and returns the extracted bundle
