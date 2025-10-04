@@ -336,14 +336,9 @@ func (r OCIReferenceParts) GetBundleReference() (cnab.OCIReference, bool, error)
 	}
 
 	if r.Version != "" {
-		v, err := semver.NewVersion(r.Version)
-		if err != nil {
-			return cnab.OCIReference{}, false, errors.New("invalid BundleVersion")
-		}
-
 		// The bundle version feature can only be used with standard naming conventions
 		// everyone else can use the tag field if they do weird things
-		ref, err = ref.WithTag("v" + v.String())
+		ref, err = ref.WithVersion(r.Version)
 		if err != nil {
 			return cnab.OCIReference{}, false, fmt.Errorf("error joining the bundle Repository %s and Version %s: %w", r.Repository, r.Version, err)
 		}
