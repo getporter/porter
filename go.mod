@@ -252,4 +252,4 @@ require (
 )
 
 //replace get.porter.sh/magefiles v0.3.3 => ../magefiles
-replace github.com/cnabio/cnab-to-oci v0.4.3 => github.com/dgannon991/cnabio-cnab-to-oci v0.5.2-0.20251007193534-7250caf1c7e7
+replace github.com/cnabio/cnab-to-oci v0.4.3 => github.com/dgannon991/cnabio-cnab-to-oci v0.5.2-0.20251007200004-e91345c37d49
