@@ -34,10 +34,10 @@ jobs:
       - name: Configure Agent
         run: go run mage.go -v ConfigureAgent InstallBuildTools
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@v4
         with:
           languages: go
       - name: Build Binaries
         run: mage -v BuildPorter BuildExecMixin BuildAgent
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@v4
