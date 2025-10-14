@@ -3,7 +3,9 @@ package porter
 import (
 	"context"
 	"errors"
+	"os"
 	"runtime"
+	"strings"
 	"testing"
 	"time"
 
@@ -328,4 +330,32 @@ func TestPublish_ForceOverwrite(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestPublish_SBOM(t *testing.T) {
+	p := NewTestPorter(t)
+	defer p.Close()
+
+	p.TestConfig.TestContext.AddTestFile("testdata/porter.yaml", "porter.yaml")
+
+	f, err := os.CreateTemp(t.TempDir(), "sbom.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	opts := PublishOptions{SBOMPath: f.Name()}
+
+	err = opts.Validate(p.Config)
+	require.NoError(t, err)
+
+	ctx := context.Background()
+	err = p.Publish(ctx, opts)
+
+	require.NoError(t, err)
+
+	b, err := os.ReadFile(f.Name())
+	if err != nil {
+		t.Fatal(err)
+	}
+	s := string(b)
+	assert.True(t, strings.Contains(s, "SPDX-2.3"))
 }
