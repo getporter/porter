@@ -24,4 +24,4 @@ jobs:
       - name: Check licenses
         run: |
           go-licenses check ./... \
-            --ignore github.com/xi2/xz,golang.org/x/sys/unix # https://github.com/xi2/xz/blob/master/LICENSE
+            --ignore github.com/xi2/xz,golang.org/x/sys/unix,modernc.org/mathutil # https://github.com/xi2/xz/blob/master/LICENSE, https://gitlab.com/cznic/mathutil/-/blob/master/LICENSE
