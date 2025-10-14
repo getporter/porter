@@ -245,15 +245,21 @@ func (p *Porter) publishFromFile(ctx context.Context, opts PublishOptions) error
 		}
 	}
 
+	// Perhaps we have a cached version of a bundle with the same reference, previously pulled
+	// If so, replace it, as it is most likely out-of-date per this publish
+	err = p.refreshCachedBundle(bundleRef)
+	if err != nil {
+		return log.Error(err)
+	}
+
+	// Generate SBOM if requested
 	if opts.SBOMPath != "" {
 		if err := p.generateSBOM(ctx, bundleRef, opts.SBOMPath); err != nil {
 			return log.Error(err)
 		}
 	}
-	// Perhaps we have a cached version of a bundle with the same reference, previously pulled
-	// If so, replace it, as it is most likely out-of-date per this publish
-	err = p.refreshCachedBundle(bundleRef)
-	return log.Error(err)
+
+	return nil
 }
 
 // publishFromArchive (re-)publishes a bundle, provided by the archive file, using the provided tag.
@@ -363,15 +369,21 @@ func (p *Porter) publishFromArchive(ctx context.Context, opts PublishOptions) er
 		}
 	}
 
+	// Perhaps we have a cached version of a bundle with the same reference, previously pulled
+	// If so, replace it, as it is most likely out-of-date per this publish
+	err = p.refreshCachedBundle(bundleRef)
+	if err != nil {
+		return log.Error(err)
+	}
+
+	// Generate SBOM if requested
 	if opts.SBOMPath != "" {
 		if err := p.generateSBOM(ctx, bundleRef, opts.SBOMPath); err != nil {
 			return log.Error(err)
 		}
 	}
-	// Perhaps we have a cached version of a bundle with the same tag, previously pulled
-	// If so, replace it, as it is most likely out-of-date per this publish
-	err = p.refreshCachedBundle(bundleRef)
-	return log.Error(err)
+
+	return nil
 }
 
 func (p *Porter) generateSBOM(ctx context.Context, bundleRef cnab.BundleReference, sbomPath string) error {
@@ -413,7 +425,7 @@ func (p *Porter) generateSBOM(ctx context.Context, bundleRef cnab.BundleReferenc
 	}
 
 	log.Infof("SBOM for bundle %s written to %s", bundleRef.Reference.String(), sbomPath)
-	return nil
+	return err
 }
 
 // extractBundle extracts a bundle using the provided opts and returns the extracted bundle
