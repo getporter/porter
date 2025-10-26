@@ -40,7 +40,7 @@ jobs:
         fi
       shell: bash
     - name: Publish Native Binaries
-      uses: actions/upload-artifact@v4.6.2
+      uses: actions/upload-artifact@v5.0.0
       with:
         name: build-bin
         path: "${{ github.workspace }}/bin"
@@ -60,7 +60,7 @@ jobs:
       run: go run mage.go -v XBuildAll
       shell: bash
     - name: Publish Release Binaries
-      uses: actions/upload-artifact@v4.6.2
+      uses: actions/upload-artifact@v5.0.0
       with:
         name: xbuild-bin
         path: "${{ github.workspace }}/bin"
