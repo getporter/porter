@@ -148,7 +148,9 @@ The lint command is run automatically when you build a bundle. The command is av
 
 func buildBundlePublishCommand(p *porter.Porter) *cobra.Command {
 
-	opts := porter.PublishOptions{}
+	opts := porter.PublishOptions{
+		SBOMGenerator: porter.NewSBOMGenerator(p.FileSystem),
+	}
 	cmd := cobra.Command{
 		Use:   "publish",
 		Short: "Publish a bundle",

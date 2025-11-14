@@ -3,9 +3,7 @@ package porter
 import (
 	"context"
 	"errors"
-	"os"
 	"runtime"
-	"strings"
 	"testing"
 	"time"
 
@@ -332,19 +330,28 @@ func TestPublish_ForceOverwrite(t *testing.T) {
 	}
 }
 
+type MockSBOMGenerator struct {
+	BundleRef cnab.BundleReference
+	SBOMPath  string
+}
+
+func (m *MockSBOMGenerator) Generate(ctx context.Context, bundleRef cnab.BundleReference, sbomPath string) error {
+	m.BundleRef = bundleRef
+	m.SBOMPath = sbomPath
+	return nil
+}
+
 func TestPublish_SBOM(t *testing.T) {
 	p := NewTestPorter(t)
 	defer p.Close()
 
 	p.TestConfig.TestContext.AddTestFile("testdata/porter.yaml", "porter.yaml")
 
-	f, err := os.CreateTemp(t.TempDir(), "sbom.json")
-	if err != nil {
-		t.Fatal(err)
-	}
-	opts := PublishOptions{SBOMPath: f.Name()}
+	mockGenerator := &MockSBOMGenerator{}
+	mockFilePath := "sbom.json"
+	opts := PublishOptions{SBOMPath: mockFilePath, SBOMGenerator: mockGenerator}
 
-	err = opts.Validate(p.Config)
+	err := opts.Validate(p.Config)
 	require.NoError(t, err)
 
 	ctx := context.Background()
@@ -352,10 +359,8 @@ func TestPublish_SBOM(t *testing.T) {
 
 	require.NoError(t, err)
 
-	b, err := os.ReadFile(f.Name())
-	if err != nil {
-		t.Fatal(err)
-	}
-	s := string(b)
-	assert.True(t, strings.Contains(s, "SPDX-2.3"))
+	// the full reference will be host, repo, and tag
+	// these are hardcoded in the testdata/porter.yaml file
+	require.Equal(t, "localhost:5000/porter-hello:v0.1.0", mockGenerator.BundleRef.Reference.String())
+	require.Equal(t, mockFilePath, mockGenerator.SBOMPath)
 }
