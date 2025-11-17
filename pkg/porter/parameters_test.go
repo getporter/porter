@@ -296,6 +296,191 @@ func Test_loadParameters_fileParameter(t *testing.T) {
 	require.Equal(t, "SGVsbG8gV29ybGQh", params["foo"], "expected param 'foo' to be the base64-encoded file contents")
 }
 
+func TestGetUnconvertedValueFromRaw_ObjectWithFilePrefix(t *testing.T) {
+	t.Parallel()
+
+	t.Run("object parameter with @ prefix reads file as JSON", func(t *testing.T) {
+		t.Parallel()
+
+		r := NewTestPorter(t)
+		defer r.Close()
+
+		// Map the test file from testdata to the virtual filesystem
+		r.TestConfig.TestContext.AddTestFile("testdata/object-param-valid.json", "/tmp/config.json")
+
+		b := cnab.NewBundle(bundle.Bundle{
+			Definitions: definition.Definitions{
+				"config": &definition.Schema{
+					Type: "object",
+				},
+			},
+			Parameters: map[string]bundle.Parameter{
+				"config": {
+					Definition: "config",
+					Required:   true,
+				},
+			},
+		})
+
+		def := b.Definitions["config"]
+		result, err := r.getUnconvertedValueFromRaw(b, def, "config", "@/tmp/config.json")
+		require.NoError(t, err)
+
+		testJSON := `{"name": "test", "value": 123, "nested": {"key": "val"}}`
+		require.Equal(t, testJSON, result, "expected the file contents to be returned as-is")
+	})
+
+	t.Run("object parameter with inline JSON works without @ prefix", func(t *testing.T) {
+		t.Parallel()
+
+		r := NewTestPorter(t)
+		defer r.Close()
+
+		b := cnab.NewBundle(bundle.Bundle{
+			Definitions: definition.Definitions{
+				"config": &definition.Schema{
+					Type: "object",
+				},
+			},
+			Parameters: map[string]bundle.Parameter{
+				"config": {
+					Definition: "config",
+					Required:   true,
+				},
+			},
+		})
+
+		inlineJSON := `{"name": "test", "value": 456}`
+		def := b.Definitions["config"]
+		result, err := r.getUnconvertedValueFromRaw(b, def, "config", inlineJSON)
+		require.NoError(t, err)
+		require.Equal(t, inlineJSON, result, "expected inline JSON to pass through unchanged")
+	})
+
+	t.Run("object parameter with @ prefix returns error when file not found", func(t *testing.T) {
+		t.Parallel()
+
+		r := NewTestPorter(t)
+		defer r.Close()
+
+		b := cnab.NewBundle(bundle.Bundle{
+			Definitions: definition.Definitions{
+				"config": &definition.Schema{
+					Type: "object",
+				},
+			},
+			Parameters: map[string]bundle.Parameter{
+				"config": {
+					Definition: "config",
+					Required:   true,
+				},
+			},
+		})
+
+		def := b.Definitions["config"]
+		_, err := r.getUnconvertedValueFromRaw(b, def, "config", "@/nonexistent/file.json")
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "unable to read file for object parameter config")
+	})
+
+	t.Run("object parameter with @ prefix returns error when file is not valid JSON", func(t *testing.T) {
+		t.Parallel()
+
+		r := NewTestPorter(t)
+		defer r.Close()
+
+		// Map the test file with invalid JSON from testdata to the virtual filesystem
+		r.TestConfig.TestContext.AddTestFile("testdata/object-param-invalid.json", "/tmp/invalid.json")
+
+		b := cnab.NewBundle(bundle.Bundle{
+			Definitions: definition.Definitions{
+				"config": &definition.Schema{
+					Type: "object",
+				},
+			},
+			Parameters: map[string]bundle.Parameter{
+				"config": {
+					Definition: "config",
+					Required:   true,
+				},
+			},
+		})
+
+		def := b.Definitions["config"]
+		_, err := r.getUnconvertedValueFromRaw(b, def, "config", "@/tmp/invalid.json")
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "does not contain valid JSON")
+	})
+
+	t.Run("non-object parameter ignores @ prefix", func(t *testing.T) {
+		t.Parallel()
+
+		r := NewTestPorter(t)
+		defer r.Close()
+
+		b := cnab.NewBundle(bundle.Bundle{
+			Definitions: definition.Definitions{
+				"name": &definition.Schema{
+					Type: "string",
+				},
+			},
+			Parameters: map[string]bundle.Parameter{
+				"name": {
+					Definition: "name",
+					Required:   true,
+				},
+			},
+		})
+
+		def := b.Definitions["name"]
+		result, err := r.getUnconvertedValueFromRaw(b, def, "name", "@/some/path")
+		require.NoError(t, err)
+		require.Equal(t, "@/some/path", result, "expected @ prefix to be treated as literal string for non-object types")
+	})
+}
+
+func TestFinalizeParameters_ObjectWithFilePrefix(t *testing.T) {
+	t.Parallel()
+
+	t.Run("end-to-end: object parameter with @ prefix", func(t *testing.T) {
+		t.Parallel()
+
+		r := NewTestPorter(t)
+		defer r.Close()
+
+		// Map the test file from testdata to the virtual filesystem
+		r.TestConfig.TestContext.AddTestFile("testdata/object-param-dbconfig.json", "/tmp/dbconfig.json")
+
+		b := cnab.NewBundle(bundle.Bundle{
+			Definitions: definition.Definitions{
+				"dbconfig": &definition.Schema{
+					Type: "object",
+				},
+			},
+			Parameters: map[string]bundle.Parameter{
+				"dbconfig": {
+					Definition: "dbconfig",
+					Required:   true,
+				},
+			},
+		})
+
+		overrides := map[string]string{
+			"dbconfig": "@/tmp/dbconfig.json",
+		}
+
+		i := storage.Installation{}
+		params, err := r.finalizeParameters(context.Background(), i, b, "install", overrides)
+		require.NoError(t, err)
+
+		// Verify the parameter was parsed as an object
+		dbconfig, ok := params["dbconfig"].(map[string]interface{})
+		require.True(t, ok, "expected dbconfig to be parsed as an object")
+		require.Equal(t, "mydb", dbconfig["database"])
+		require.Equal(t, float64(5432), dbconfig["port"])
+	})
+}
+
 func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 	t.Parallel()
 

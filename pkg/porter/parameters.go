@@ -612,7 +612,6 @@ func (p *Porter) finalizeParameters(ctx context.Context, installation storage.In
 			// bundle dependency parameters can be any type, not sure we have a solid way to do a typed conversion
 			typedParams[key] = unconverted
 		}
-
 	}
 
 	return bundle.ValuesOrDefaults(typedParams, &bun.Bundle, action)
@@ -629,6 +628,35 @@ func (p *Porter) getUnconvertedValueFromRaw(b cnab.ExtendedBundle, def *definiti
 			return base64.StdEncoding.EncodeToString(bytes), nil
 		}
 	}
+
+	// Handle object type with @ prefix for file paths
+	// Security: This only applies to user-provided values from CLI/parameter sets,
+	// NOT default values from bundle definitions (which are processed later via ValuesOrDefaults)
+	if def.Type == "object" {
+		// Check if value starts with @ indicating a file path
+		if strings.HasPrefix(rawValue, "@") {
+			filePath := strings.TrimPrefix(rawValue, "@")
+
+			// Read the file
+			bytes, err := p.FileSystem.ReadFile(filePath)
+			if err != nil {
+				return "", fmt.Errorf("unable to read file for object parameter %s at %s: %w",
+					key, filePath, err)
+			}
+
+			// Validate it's valid JSON before returning
+			var testParse interface{}
+			if err := json.Unmarshal(bytes, &testParse); err != nil {
+				return "", fmt.Errorf("file %s for parameter %s does not contain valid JSON: %w",
+					filePath, key, err)
+			}
+
+			// Return as string - ConvertValue will parse it later
+			return string(bytes), nil
+		}
+		// No @ prefix - treat as inline JSON, will be validated by ConvertValue
+	}
+
 	return rawValue, nil
 }
 
