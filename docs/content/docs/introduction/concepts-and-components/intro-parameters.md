@@ -64,6 +64,32 @@ parameter override is `--param`.
 For example, you may decide to override the `db_name` parameter for a given
 installation via `porter install --param db_name=mydb -p myparamset`.
 
+### Object Parameters from Files
+
+For object-type parameters, you can load JSON data from a file by prefixing the file path with `@`:
+
+```bash
+porter install --param config=@config.json
+```
+
+This feature:
+- Works with both `--param` CLI flags and parameter set `value` sources
+- Only applies to parameters defined with `type: object` in the bundle
+- Validates that the file contains valid JSON before processing
+- **Security note**: Only user-provided values support the `@` prefix. Default values in bundle definitions cannot use `@` for security reasons.
+
+Example parameter set using `@` prefix:
+
+```yaml
+schemaType: ParameterSet
+schemaVersion: 1.1.0
+name: myparams
+parameters:
+  - name: config
+    source:
+      value: "@/path/to/config.json"
+```
+
 When a parameter's bundle definition is set to `sensitive=true`, the user-specified
 value will be stored into a secret store to prevent security leakage. See the [secrets
 plugin docs](/plugins/types/#secrets) to learn how porter uses an external secret store
