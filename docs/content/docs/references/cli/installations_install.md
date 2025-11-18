@@ -36,6 +36,7 @@ porter installations install [INSTALLATION] [flags]
   porter installation install --reference localhost:5000/ghcr.io/getporter/examples/kubernetes:v0.2.0 --insecure-registry --force
   porter installation install MyAppInDev --file myapp/bundle.json
   porter installation install --parameter-set azure --param test-mode=true --param header-color=blue
+  porter installation install --param config=@config.json
   porter installation install --credential-set azure --credential-set kubernetes
   porter installation install --driver debug
   porter installation install --label env=dev --label owner=myuser
@@ -59,7 +60,7 @@ porter installations install [INSTALLATION] [flags]
       --mount-host-volume stringArray   Mount a host volume into the bundle. Format is <host path>:<container path>[:<option>]. May be specified multiple times. Option can be ro (read-only), rw (read-write), default is ro.
   -n, --namespace string                Create the installation in the specified namespace. Defaults to the global namespace.
       --no-logs                         Do not persist the bundle execution logs
-      --param stringArray               Define an individual parameter in the form NAME=VALUE. Overrides parameters otherwise set via --parameter-set. May be specified multiple times.
+      --param stringArray               Define an individual parameter in the form NAME=VALUE. Overrides parameters otherwise set via --parameter-set. May be specified multiple times. For object parameters, use @FILEPATH to load JSON from a file (e.g., --param config=@config.json).
   -p, --parameter-set stringArray       Parameter sets to use when running the bundle. It should be a named set of parameters and may be specified multiple times.
   -r, --reference string                Use a bundle in an OCI registry specified by the given reference.
       --verify-bundle                   Verify the bundle signature before executing
