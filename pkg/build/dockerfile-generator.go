@@ -167,36 +167,23 @@ func (g *DockerfileGenerator) getBaseDockerfile(ctx context.Context) ([]string, 
 }
 
 func (g *DockerfileGenerator) buildPorterSection() []string {
-	// The user-provided manifest may be located separate from the build context directory.
-	// Therefore, we only need to add lines if the relative manifest path exists inside of
-	// the current working directory.
-	manifestPath := g.FileSystem.Abs(g.Manifest.ManifestPath)
-	if relManifestPath, err := filepath.Rel(g.Getwd(), manifestPath); err == nil {
-		if !strings.Contains(relManifestPath, "..") {
-			return []string{
-				// Remove the user-provided Porter manifest as the canonical version
-				// will migrate via its location in .cnab
-				fmt.Sprintf(`RUN rm ${BUNDLE_DIR}/%s`, relManifestPath),
-			}
-		}
-	}
+	// No longer needed - porter.yaml is excluded via .dockerignore
+	// The canonical version is in .cnab/app/porter.yaml
 	return []string{}
 }
 
 func (g *DockerfileGenerator) buildCNABSection() []string {
-	copyCNAB := "COPY .cnab /cnab"
+	// Build context is now .cnab directory, so copy current directory to /cnab
+	// Use --chown and --chmod to set permissions during COPY to avoid creating an extra layer
+	copyCNAB := "COPY . /cnab"
 	if g.GetBuildDriver() == config.BuildDriverBuildkit {
-		copyCNAB = "COPY --link .cnab /cnab"
+		copyCNAB = "COPY --link --chown=${BUNDLE_UID}:${BUNDLE_GID} --chmod=775 . /cnab"
 	}
 
 	return []string{
-		// Putting RUN before COPY here as a workaround for https://github.com/moby/moby/issues/37965, back to back COPY statements in the same directory (e.g. /cnab) _may_ result in an error from Docker depending on unpredictable factors
-		`RUN rm -fr ${BUNDLE_DIR}/.cnab`,
-		// Copy the non-user cnab files, like mixins and porter.yaml, from the local .cnab directory into the bundle
+		// Copy .cnab directory contents (build context is .cnab) into the bundle
+		// Set ownership and permissions during copy to avoid extra layer
 		copyCNAB,
-		// Ensure that regardless of the container's UID, the root group (default group for arbitrary users that do not exist in the container) has the same permissions as the owner
-		// See https://developers.redhat.com/blog/2020/10/26/adapting-docker-and-kubernetes-containers-to-run-on-red-hat-openshift-container-platform#group_ownership_and_file_permission
-		`RUN chgrp -R ${BUNDLE_GID} /cnab && chmod -R g=u /cnab`,
 		// default to running as the nonroot user that the porter agent uses.
 		// When running in kubernetes, if you specify a different UID, make sure to set fsGroup to the same UID, and runasGroup to 0
 		`USER ${BUNDLE_UID}`,

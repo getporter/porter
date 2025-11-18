@@ -144,14 +144,18 @@ func (b *Builder) BuildBundleImage(ctx context.Context, manifest *manifest.Manif
 		return span.Errorf("error parsing the --output flag: %w", err)
 	}
 
+	// Build from .cnab directory as context, add parent dir as named context for user files
+	namedContexts := toNamedContexts(buildContexts)
+	namedContexts["userfiles"] = buildx.NamedContext{Path: b.Getwd()}
+
 	buildxOpts := map[string]buildx.Options{
 		"default": {
 			Tags: []string{manifest.Image},
 			Inputs: buildx.Inputs{
-				ContextPath:    b.Getwd(),
+				ContextPath:    filepath.Join(b.Getwd(), build.LOCAL_CNAB),
 				DockerfilePath: b.getDockerfilePath(),
 				InStream:       buildx.NewSyncMultiReader(b.In),
-				NamedContexts:  toNamedContexts(buildContexts),
+				NamedContexts:  namedContexts,
 			},
 			BuildArgs: args,
 			Exports:   exports,
