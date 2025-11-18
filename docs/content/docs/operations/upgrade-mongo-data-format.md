@@ -54,7 +54,7 @@ docker pull mongo:4.2-bionic
 docker run --name porter-migrate --rm --mount source=porter-mongodb-docker-plugin-data,destination=/data/db -d mongo:4.2-bionic
 wait_for_mongodb "porter-migrate" "mongo"
 docker exec -it porter-migrate mongo --eval "db.adminCommand( { setFeatureCompatibilityVersion: '4.2' } )"
-docker exec -it porter-migrate mongo --eval "db.adminCommand( { shutdown: 1 } )"
+docker stop --timeout=120 porter-migrate
 
 # Upgrade from 4.2 to 4.4
 echo "Upgrading from MongoDB 4.2 to 4.4..."
@@ -62,7 +62,7 @@ docker pull mongo:4.4-focal
 docker run --name porter-migrate --rm --mount source=porter-mongodb-docker-plugin-data,destination=/data/db -d mongo:4.4-focal
 wait_for_mongodb "porter-migrate" "mongo"
 docker exec -it porter-migrate mongo --eval "db.adminCommand( { setFeatureCompatibilityVersion: '4.4' } )"
-docker exec -it porter-migrate mongo --eval "db.adminCommand( { shutdown: 1 } )"
+docker stop --timeout=120 porter-migrate
 
 # Upgrade from 4.4 to 5.0
 echo "Upgrading from MongoDB 4.4 to 5.0..."
@@ -70,7 +70,7 @@ docker pull mongo:5.0-focal
 docker run --name porter-migrate --rm --mount source=porter-mongodb-docker-plugin-data,destination=/data/db -d mongo:5.0-focal
 wait_for_mongodb "porter-migrate" "mongo"
 docker exec -it porter-migrate mongo --eval "db.adminCommand( { setFeatureCompatibilityVersion: '5.0' } )"
-docker exec -it porter-migrate mongo --eval "db.adminCommand( { shutdown: 1 } )"
+docker stop --timeout=120 porter-migrate
 
 # Upgrade from 5.0 to 6.0
 echo "Upgrading from MongoDB 5.0 to 6.0..."
@@ -78,7 +78,7 @@ docker pull mongo:6.0-jammy
 docker run --name porter-migrate --rm --mount source=porter-mongodb-docker-plugin-data,destination=/data/db -d mongo:6.0-jammy
 wait_for_mongodb "porter-migrate" "mongosh"
 docker exec -it porter-migrate mongosh --eval "db.adminCommand( { setFeatureCompatibilityVersion: '6.0' } )"
-docker exec -it porter-migrate mongosh --eval "db.adminCommand( { shutdown: 1 } )"
+docker stop --timeout=120 porter-migrate
 
 # Upgrade from 6.0 to 7.0
 echo "Upgrading from MongoDB 6.0 to 7.0..."
@@ -86,7 +86,7 @@ docker pull mongo:7.0-jammy
 docker run --name porter-migrate --rm --mount source=porter-mongodb-docker-plugin-data,destination=/data/db -d mongo:7.0-jammy
 wait_for_mongodb "porter-migrate" "mongosh"
 docker exec -it porter-migrate mongosh --eval "db.adminCommand( { setFeatureCompatibilityVersion: '7.0', confirm: true } )"
-docker exec -it porter-migrate mongosh --eval "db.adminCommand( { shutdown: 1 } )"
+docker stop --timeout=120 porter-migrate
 
 # Final upgrade to 8.0
 echo "Finalizing upgrade to MongoDB 8.0..."
@@ -94,7 +94,7 @@ docker pull mongo:8.0-noble
 docker run --name porter-migrate --rm --mount source=porter-mongodb-docker-plugin-data,destination=/data/db -d mongo:8.0-noble
 wait_for_mongodb "porter-migrate" "mongosh"
 docker exec -it porter-migrate mongosh --eval "db.adminCommand( { setFeatureCompatibilityVersion: '8.0', confirm: true } )"
-docker exec -it porter-migrate mongosh --eval "db.adminCommand( { shutdown: 1 } )"
+docker stop --timeout=120 porter-migrate
 
 echo "MongoDB upgrade completed successfully!"
 ```
