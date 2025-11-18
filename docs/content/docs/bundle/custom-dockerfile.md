@@ -34,8 +34,9 @@ RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/
 
 # PORTER_MIXINS
 
-# Use the BUNDLE_DIR build argument to copy files into the bundle's working directory
-COPY --link . ${BUNDLE_DIR}
+# Copy user files from the bundle source directory into the bundle's working directory
+# Porter provides a 'userfiles' named build context that points to your bundle directory
+COPY --from=userfiles --link . ${BUNDLE_DIR}
 ```
 
 Add the following line to your **porter.yaml** file to instruct porter to use the template, instead of generating one from scratch:
@@ -49,6 +50,46 @@ It is your responsibility to provide a suitable base image, for example one that
 Mixins assume that apt is available to install packages.
 Porter only supports targeting a single os/architecture when the bundle is built. By default, Porter targets linux/amd64.
 You can change the platform used in the Dockerfile.
+
+# Build Context
+
+Porter builds bundle images using the `.cnab` directory (generated during the build) as the build context.
+Your bundle's source files are made available through a named build context called `userfiles`, which points to your bundle directory.
+
+When using a custom Dockerfile:
+- The default build context is the `.cnab` directory
+- Your bundle's source files (porter.yaml, scripts, configs, etc.) are available via the `userfiles` named context
+- Use `COPY --from=userfiles` to copy files from your bundle directory
+- The PORTER_* tokens automatically handle copying files correctly
+
+## Copying Files from Your Bundle Directory
+
+To copy files from your bundle directory into the image, use the `userfiles` named context:
+
+```Dockerfile
+# Copy all user files (recommended - matches default behavior)
+COPY --from=userfiles --link . ${BUNDLE_DIR}
+
+# Copy a specific file
+COPY --from=userfiles --link myconfig.yaml /etc/app/config.yaml
+
+# Copy a directory
+COPY --from=userfiles --link scripts/ ${BUNDLE_DIR}/scripts/
+```
+
+Files excluded by `.dockerignore` in your bundle directory will not be copied.
+By default, `.cnab` and `porter.yaml` are excluded (the canonical `porter.yaml` is in `.cnab/app/`).
+
+## Copying Files from the .cnab Context
+
+In advanced scenarios, you may need to access files from the `.cnab` directory (the build context):
+
+```Dockerfile
+# Copy from .cnab directory (build context)
+COPY --link app/porter.yaml /cnab/app/porter.yaml
+
+# This is rarely needed - Porter handles .cnab contents automatically
+```
 
 # Custom Build Arguments
 
@@ -194,12 +235,13 @@ COPY myfile /home/${BUNDLE_USER}/
 ## BUNDLE_DIR
 
 The **BUNDLE_DIR** argument is declared in the [PORTER_INIT](#porter_init) section is the path to the bundle directory inside the bundle image.
-You may then use this when copying files from the local filesystem to the bundle's working directory.
+You may then use this when copying files from your bundle source directory to the bundle's working directory.
 We strongly recommend that you always use this variable and do not copy files into directories outside BUNDLE_DIR.
 If you do, you are responsible for setting the file permissions so that the bundle's user ([BUNDLE_USER](#bundle_user)) and the bundle's group (root) have the same permissions.
 
 ```Dockerfile
-COPY . ${BUNDLE_DIR}
+# Copy files from your bundle directory using the userfiles named context
+COPY --from=userfiles --link . ${BUNDLE_DIR}
 ```
 
 ## See Also
