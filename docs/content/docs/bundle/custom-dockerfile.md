@@ -53,21 +53,53 @@ You can change the platform used in the Dockerfile.
 
 # Build Context
 
-Porter builds bundle images using the `.cnab` directory (generated during the build) as the build context.
-Your bundle's source files are made available through a named build context called `userfiles`, which points to your bundle directory.
+Porter supports two build modes that affect how bundle images are built. The mode is controlled by the experimental `optimized-bundle-build` feature flag.
 
-When using a custom Dockerfile:
-- The default build context is the `.cnab` directory
-- Your bundle's source files (porter.yaml, scripts, configs, etc.) are available via the `userfiles` named context
-- Use `COPY --from=userfiles` to copy files from your bundle directory
-- The PORTER_* tokens automatically handle copying files correctly
+## Default Build Context (Legacy)
+
+By default (when the feature flag is **not** enabled), Porter builds from your bundle's root directory:
+- Build context: Your bundle directory (project root)
+- User files are copied with `COPY . ${BUNDLE_DIR}` and then cleaned up
+- The `.cnab` directory is copied separately into `/cnab`
+- Works with existing custom Dockerfiles without modification
+
+## Optimized Build Context (Experimental)
+
+When you enable the `optimized-bundle-build` experimental feature flag, Porter uses an optimized build approach that reduces bundle image size by ~54%:
+
+```toml
+# ~/.porter/config.toml
+experimental = ["optimized-bundle-build"]
+```
+
+With this flag enabled:
+- Build context: The `.cnab` directory (generated during the build)
+- Your bundle's source files are made available through a named build context called `userfiles`
+- User files are copied with `COPY --from=userfiles` to avoid duplication
+- Permissions are set during COPY using `--chown` and `--chmod` flags
+- Eliminates redundant RUN commands and duplicate layers
+
+**Benefits:**
+- ~54% smaller bundle images (e.g., 446MB → 204MB)
+- Fewer image layers
+- More efficient builds
+
+**Migration Required:**
+If you have a custom Dockerfile, you need to update it to use the `userfiles` named context:
+
+```diff
+- COPY --link . ${BUNDLE_DIR}
++ COPY --from=userfiles --link . ${BUNDLE_DIR}
+```
 
 ## Copying Files from Your Bundle Directory
 
-To copy files from your bundle directory into the image, use the `userfiles` named context:
+### With Optimized Build (Experimental)
+
+When using the `optimized-bundle-build` feature flag, copy files from the `userfiles` named context:
 
 ```Dockerfile
-# Copy all user files (recommended - matches default behavior)
+# Copy all user files (recommended)
 COPY --from=userfiles --link . ${BUNDLE_DIR}
 
 # Copy a specific file
@@ -78,18 +110,23 @@ COPY --from=userfiles --link scripts/ ${BUNDLE_DIR}/scripts/
 ```
 
 Files excluded by `.dockerignore` in your bundle directory will not be copied.
-By default, `.cnab` and `porter.yaml` are excluded (the canonical `porter.yaml` is in `.cnab/app/`).
 
-## Copying Files from the .cnab Context
+### With Default Build (Legacy)
 
-In advanced scenarios, you may need to access files from the `.cnab` directory (the build context):
+When **not** using the experimental flag, copy files directly from the build context:
 
 ```Dockerfile
-# Copy from .cnab directory (build context)
-COPY --link app/porter.yaml /cnab/app/porter.yaml
+# Copy all files from bundle directory
+COPY --link . ${BUNDLE_DIR}
 
-# This is rarely needed - Porter handles .cnab contents automatically
+# Copy a specific file
+COPY --link myconfig.yaml /etc/app/config.yaml
+
+# Copy a directory
+COPY --link scripts/ ${BUNDLE_DIR}/scripts/
 ```
+
+**Note:** Porter will automatically remove `porter.yaml` and `.cnab` directory after copying.
 
 # Custom Build Arguments
 

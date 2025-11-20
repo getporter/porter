@@ -23,5 +23,8 @@ RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/
 # PORTER_MIXINS
 
 # Copy user files from the bundle source directory into the bundle's working directory
-# Porter provides a 'userfiles' named build context that points to your bundle directory
-COPY --from=userfiles --link . ${BUNDLE_DIR}
+# When using the 'optimized-bundle-build' experimental feature, use this syntax:
+#   COPY --from=userfiles --link . ${BUNDLE_DIR}
+# Otherwise (default), use:
+#   COPY --link . ${BUNDLE_DIR}
+# Porter will automatically add the appropriate COPY instruction based on your configuration.
