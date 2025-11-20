@@ -92,6 +92,12 @@ jobs:
     with:
       test_name: outputs_test
       registry: ${{inputs.registry}}
+  object_param_integration_test:
+    name: Object Param Integration Test
+    uses: getporter/porter/.github/workflows/integ-reuseable-workflow.yml@main
+    with:
+      test_name: object_param_test
+      registry: ${{inputs.registry}}
   publish_integration_test:
     name: Publish Integration Test
     uses: getporter/porter/.github/workflows/integ-reuseable-workflow.yml@main
