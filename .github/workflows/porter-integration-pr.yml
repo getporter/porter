@@ -81,6 +81,11 @@ jobs:
     uses: getporter/porter/.github/workflows/integ-reuseable-workflow.yml@main
     with:
       test_name: outputs_test
+  object_param_integration_test:
+    name: Object Param Integration Test
+    uses: getporter/porter/.github/workflows/integ-reuseable-workflow.yml@main
+    with:
+      test_name: object_param_test
   publish_integration_test:
     name: Publish Integration Test
     uses: getporter/porter/.github/workflows/integ-reuseable-workflow.yml@main

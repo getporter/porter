@@ -59,7 +59,7 @@ porter installations uninstall [INSTALLATION] [flags]
       --mount-host-volume stringArray   Mount a host volume into the bundle. Format is <host path>:<container path>[:<option>]. May be specified multiple times. Option can be ro (read-only), rw (read-write), default is ro.
   -n, --namespace string                Namespace of the specified installation. Defaults to the global namespace.
       --no-logs                         Do not persist the bundle execution logs
-      --param stringArray               Define an individual parameter in the form NAME=VALUE. Overrides parameters otherwise set via --parameter-set. May be specified multiple times.
+      --param stringArray               Define an individual parameter in the form NAME=VALUE. Overrides parameters otherwise set via --parameter-set. May be specified multiple times. For object parameters, use @FILEPATH to load JSON from a file (e.g., --param config=@config.json).
   -p, --parameter-set stringArray       Parameter sets to use when running the bundle. It should be a named set of parameters and may be specified multiple times.
   -r, --reference string                Use a bundle in an OCI registry specified by the given reference.
 ```

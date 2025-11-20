@@ -34,6 +34,7 @@ porter installations invoke [INSTALLATION] --action ACTION [flags]
   porter installation invoke --reference localhost:5000/ghcr.io/getporter/examples/kubernetes:v0.2.0 --insecure-registry --force
   porter installation invoke --action ACTION MyAppInDev --file myapp/bundle.json
   porter installation invoke --action ACTION  --parameter-set azure --param test-mode=true --param header-color=blue
+  porter installation invoke --action ACTION --param config=@config.json
   porter installation invoke --action ACTION --credential-set azure --credential-set kubernetes
   porter installation invoke --action ACTION --driver debug
 
@@ -56,7 +57,7 @@ porter installations invoke [INSTALLATION] --action ACTION [flags]
       --mount-host-volume stringArray   Mount a host volume into the bundle. Format is <host path>:<container path>[:<option>]. May be specified multiple times. Option can be ro (read-only), rw (read-write), default is ro.
   -n, --namespace string                Namespace of the specified installation. Defaults to the global namespace.
       --no-logs                         Do not persist the bundle execution logs
-      --param stringArray               Define an individual parameter in the form NAME=VALUE. Overrides parameters otherwise set via --parameter-set. May be specified multiple times.
+      --param stringArray               Define an individual parameter in the form NAME=VALUE. Overrides parameters otherwise set via --parameter-set. May be specified multiple times. For object parameters, use @FILEPATH to load JSON from a file (e.g., --param config=@config.json).
   -p, --parameter-set stringArray       Parameter sets to use when running the bundle. It should be a named set of parameters and may be specified multiple times.
   -r, --reference string                Use a bundle in an OCI registry specified by the given reference.
 ```

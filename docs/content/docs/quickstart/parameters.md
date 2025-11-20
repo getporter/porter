@@ -45,6 +45,15 @@ For example:
 porter install --param name=Robin
 ```
 
+For object-type parameters, you can load JSON data from a file by prefixing the file path with `@`:
+
+```
+porter install --param config=@config.json
+```
+
+The `@` prefix is supported for CLI parameters, allowing you to manage complex configurations in separate JSON files.
+This is particularly useful for object parameters that contain nested data structures.
+
 When trying out a bundle, it might work well to set individual parameter values on the command line with the --param flag.
 Parameter sets store multiple parameters and pass them to a bundle using the parameter set name.
 With parameter sets you can avoid errors, and the requirement of remembering and manually configuring parameters at the command line.
@@ -52,7 +61,7 @@ Parameter sets store the parameter name, and the source of the parameter value w
 
 - hard-coded value
 - environment variable
-- file
+- file path
 - command
 - secret
 
@@ -100,7 +109,7 @@ $ cat hello-llama.json
 # modify hello-llama.json with your editor to the content below
 {
     "schemaType": "ParameterSet",
-    "schemaVersion": "1.0.1",
+    "schemaVersion": "1.1.0",
     "name": "hello-llama",
     "parameters": [
         {
@@ -112,7 +121,7 @@ $ cat hello-llama.json
     ]
 }
 $ porter parameters apply hello-llama.json
-Applied /hello-llama parameter se
+Applied /hello-llama parameter set
 ```
 
 This creates a parameter set named hello-llama.

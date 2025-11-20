@@ -1,0 +1,34 @@
+schemaType: Bundle
+schemaVersion: 1.0.1
+name: bundle-with-object-params
+version: 0.1.0
+description: "Test bundle with object parameters loaded from files"
+registry: "localhost:5000"
+
+mixins:
+  - exec
+
+parameters:
+  - name: config
+    type: object
+
+install:
+  - exec:
+      description: "Echo object parameter values"
+      command: echo
+      arguments:
+        - "Config name: ${{ bundle.parameters.config.name }}"
+
+upgrade:
+  - exec:
+      description: "Upgrade"
+      command: echo
+      arguments:
+        - "Upgrading"
+
+uninstall:
+  - exec:
+      description: "Uninstall"
+      command: echo
+      arguments:
+        - "Uninstalling"

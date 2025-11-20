@@ -237,6 +237,7 @@ The docker driver runs the bundle container using the local Docker host. To use 
   porter installation install --reference localhost:5000/ghcr.io/getporter/examples/kubernetes:v0.2.0 --insecure-registry --force
   porter installation install MyAppInDev --file myapp/bundle.json
   porter installation install --parameter-set azure --param test-mode=true --param header-color=blue
+  porter installation install --param config=@config.json
   porter installation install --credential-set azure --credential-set kubernetes
   porter installation install --driver debug
   porter installation install --label env=dev --label owner=myuser
@@ -287,6 +288,7 @@ The docker driver runs the bundle container using the local Docker host. To use 
   porter installation upgrade --reference localhost:5000/ghcr.io/getporter/examples/kubernetes:v0.2.0 --insecure-registry --force
   porter installation upgrade MyAppInDev --file myapp/bundle.json
   porter installation upgrade --parameter-set azure --param test-mode=true --param header-color=blue
+  porter installation upgrade --param config=@config.json
   porter installation upgrade --credential-set azure --credential-set kubernetes
   porter installation upgrade --driver debug
 `,
@@ -337,6 +339,7 @@ The docker driver runs the bundle container using the local Docker host. To use 
   porter installation invoke --reference localhost:5000/ghcr.io/getporter/examples/kubernetes:v0.2.0 --insecure-registry --force
   porter installation invoke --action ACTION MyAppInDev --file myapp/bundle.json
   porter installation invoke --action ACTION  --parameter-set azure --param test-mode=true --param header-color=blue
+  porter installation invoke --action ACTION --param config=@config.json
   porter installation invoke --action ACTION --credential-set azure --credential-set kubernetes
   porter installation invoke --action ACTION --driver debug
 `,
@@ -427,7 +430,7 @@ func addBundleActionFlags(f *pflag.FlagSet, actionOpts porter.BundleAction) {
 	f.StringArrayVarP(&opts.ParameterSets, "parameter-set", "p", nil,
 		"Parameter sets to use when running the bundle. It should be a named set of parameters and may be specified multiple times.")
 	f.StringArrayVar(&opts.Params, "param", nil,
-		"Define an individual parameter in the form NAME=VALUE. Overrides parameters otherwise set via --parameter-set. May be specified multiple times.")
+		"Define an individual parameter in the form NAME=VALUE. Overrides parameters otherwise set via --parameter-set. May be specified multiple times. For object parameters, use @FILEPATH to load JSON from a file (e.g., --param config=@config.json).")
 	f.StringArrayVarP(&opts.CredentialIdentifiers, "credential-set", "c", nil,
 		"Credential sets to use when running the bundle. It should be a named set of credentials and may be specified multiple times.")
 	f.StringVarP(&opts.Driver, "driver", "d", porter.DefaultDriver,
