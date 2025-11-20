@@ -44,6 +44,24 @@ func runDesiredStateTest(t *testing.T, enableOptimizedBuild bool) {
 	if enableOptimizedBuild {
 		os.Setenv("PORTER_EXPERIMENTAL", "optimized-bundle-build")
 		defer os.Unsetenv("PORTER_EXPERIMENTAL")
+
+		// Switch mybuns to use the optimized Dockerfile
+		mybunsYaml := filepath.Join(test.RepoRoot, "tests/testdata/mybuns/porter.yaml")
+		originalDockerfile := ""
+		test.EditYaml(mybunsYaml, func(yq *yaml.Editor) error {
+			val, err := yq.GetValue("dockerfile")
+			if err == nil {
+				originalDockerfile = val
+			}
+			return yq.SetValue("dockerfile", "Dockerfile-optimized.tmpl")
+		})
+		defer func() {
+			if originalDockerfile != "" {
+				test.EditYaml(mybunsYaml, func(yq *yaml.Editor) error {
+					return yq.SetValue("dockerfile", originalDockerfile)
+				})
+			}
+		}()
 	}
 
 	test.PrepareTestBundle()

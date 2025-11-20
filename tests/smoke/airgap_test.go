@@ -91,6 +91,13 @@ func TestAirgappedEnvironment(t *testing.T) {
 					return err
 				}
 
+				// Switch to optimized Dockerfile if the feature flag is enabled
+				if tc.enableOptimizedBuild {
+					if err := yq.SetValue("dockerfile", "Dockerfile-optimized.tmpl"); err != nil {
+						return err
+					}
+				}
+
 				// Reference our copy of the whalesayd image
 				return yq.SetValue("images.whalesayd.repository", fmt.Sprintf("%s/whalesayd", reg1))
 			})
