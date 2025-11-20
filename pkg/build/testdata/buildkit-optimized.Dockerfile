@@ -1,0 +1,24 @@
+# syntax=docker/dockerfile-upstream:1.4.0
+FROM --platform=linux/amd64 debian:stable-slim
+
+ARG BUNDLE_DIR
+ARG BUNDLE_UID=65532
+ARG BUNDLE_USER=nonroot
+ARG BUNDLE_GID=0
+RUN useradd ${BUNDLE_USER} -m -u ${BUNDLE_UID} -g ${BUNDLE_GID} -o
+
+RUN rm -f /etc/apt/apt.conf.d/docker-clean; echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
+RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/apt \
+    apt-get update && apt-get install -y ca-certificates
+
+# exec mixin has no buildtime dependencies
+
+# testmixin mixin has no buildtime dependencies
+
+
+# Copy user files from the bundle source directory (excludes .cnab and porter.yaml via .dockerignore)
+COPY --from=userfiles --link . ${BUNDLE_DIR}/
+COPY --link --chown=${BUNDLE_UID}:${BUNDLE_GID} --chmod=775 . /cnab
+USER ${BUNDLE_UID}
+WORKDIR ${BUNDLE_DIR}
+CMD ["/cnab/app/run"]
