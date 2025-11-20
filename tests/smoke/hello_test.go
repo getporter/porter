@@ -3,6 +3,7 @@
 package smoke
 
 import (
+	"os"
 	"testing"
 
 	"get.porter.sh/porter/tests"
@@ -14,11 +15,34 @@ import (
 
 // Test general flows in porter
 func TestHelloBundle(t *testing.T) {
+	testcases := []struct {
+		name                string
+		enableOptimizedBuild bool
+	}{
+		{name: "default build", enableOptimizedBuild: false},
+		{name: "optimized build", enableOptimizedBuild: true},
+	}
+
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			runHelloBundleTest(t, tc.enableOptimizedBuild)
+		})
+	}
+}
+
+func runHelloBundleTest(t *testing.T, enableOptimizedBuild bool) {
 	// I am always using require, so that we stop immediately upon an error
 	// A long test is hard to debug when it fails in the middle and keeps going
 	test, err := tester.NewTest(t)
 	defer test.Close()
 	require.NoError(t, err, "test setup failed")
+
+	// Enable optimized build if requested
+	if enableOptimizedBuild {
+		os.Setenv("PORTER_EXPERIMENTAL", "optimized-bundle-build")
+		defer os.Unsetenv("PORTER_EXPERIMENTAL")
+	}
 
 	test.PrepareTestBundle()
 	require.NoError(t, shx.Copy("testdata/buncfg.json", test.TestDir))
