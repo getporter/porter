@@ -9,4 +9,3 @@ RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/
 
 # PORTER_MIXINS
 
-COPY --link . ${BUNDLE_DIR}

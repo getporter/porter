@@ -16,7 +16,6 @@ RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/
 # testmixin mixin has no buildtime dependencies
 
 
-# Copy user files from the bundle source directory (excludes .cnab and porter.yaml via .dockerignore)
 COPY --from=userfiles --link . ${BUNDLE_DIR}/
 COPY --link --chown=${BUNDLE_UID}:${BUNDLE_GID} --chmod=775 . /cnab
 USER ${BUNDLE_UID}

@@ -167,9 +167,27 @@ func (g *DockerfileGenerator) getBaseDockerfile(ctx context.Context) ([]string, 
 }
 
 func (g *DockerfileGenerator) buildPorterSection() []string {
-	// No longer needed - porter.yaml is excluded via .dockerignore
-	// The canonical version is in .cnab/app/porter.yaml
-	return []string{}
+	if g.IsFeatureEnabled(experimental.FlagOptimizedBundleBuild) {
+		// Optimized build: Copy user files from the userfiles named context
+		copyUserFiles := "COPY . ${BUNDLE_DIR}"
+		if g.GetBuildDriver() == config.BuildDriverBuildkit {
+			copyUserFiles = "COPY --from=userfiles --link . ${BUNDLE_DIR}/"
+		}
+		return []string{
+			// Copy user files from the bundle source directory (excludes .cnab and porter.yaml via .dockerignore)
+			copyUserFiles,
+		}
+	}
+
+	// Legacy build: Copy all files from build context, then clean up
+	copyUserFiles := "COPY . ${BUNDLE_DIR}"
+	if g.GetBuildDriver() == config.BuildDriverBuildkit {
+		copyUserFiles = "COPY --link . ${BUNDLE_DIR}"
+	}
+	return []string{
+		copyUserFiles,
+		"RUN rm ${BUNDLE_DIR}/porter.yaml",
+	}
 }
 
 func (g *DockerfileGenerator) buildCNABSection() []string {
