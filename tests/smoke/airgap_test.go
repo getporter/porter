@@ -5,6 +5,7 @@ package smoke
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -24,18 +25,22 @@ import (
 // This also validates a lot of our insecure/unsecured registry configurations.
 func TestAirgappedEnvironment(t *testing.T) {
 	testcases := []struct {
-		name     string
-		useTLS   bool
-		useAlias bool
-		insecure bool
+		name                 string
+		useTLS               bool
+		useAlias             bool
+		insecure             bool
+		enableOptimizedBuild bool
 	}{
 		// Validate we "just work" with an unsecured registry on localhost, just like docker does, without specifying --insecure-registry
-		{name: "plain http, no alias", useTLS: false, useAlias: false, insecure: false},
+		{name: "plain http, no alias, default build", useTLS: false, useAlias: false, insecure: false, enableOptimizedBuild: false},
+		{name: "plain http, no alias, optimized build", useTLS: false, useAlias: false, insecure: false, enableOptimizedBuild: true},
 		// Validate we can connect to plain http when we can't detect that it's loopback/localhost as long as --insecure-registry is specified
 		// We do not support docker's extra automagic where it resolves the host and treats it like localhost. You have to specify --insecure-registry with a custom hostname
-		{name: "plain http, use alias", useTLS: false, useAlias: true, insecure: true},
+		{name: "plain http, use alias, default build", useTLS: false, useAlias: true, insecure: true, enableOptimizedBuild: false},
+		{name: "plain http, use alias, optimized build", useTLS: false, useAlias: true, insecure: true, enableOptimizedBuild: true},
 		// Validate that --insecure-registry works with self-signed certificates
-		{name: "untrusted tls, no alias", useTLS: false, useAlias: true, insecure: true},
+		{name: "untrusted tls, no alias, default build", useTLS: false, useAlias: true, insecure: true, enableOptimizedBuild: false},
+		{name: "untrusted tls, no alias, optimized build", useTLS: false, useAlias: true, insecure: true, enableOptimizedBuild: true},
 	}
 	for _, tc := range testcases {
 		tc := tc
@@ -45,6 +50,13 @@ func TestAirgappedEnvironment(t *testing.T) {
 			test, err := tester.NewTest(t)
 			defer test.Close()
 			require.NoError(t, err, "test setup failed")
+
+			// Enable optimized build if requested
+			if tc.enableOptimizedBuild {
+				os.Setenv("PORTER_EXPERIMENTAL", "optimized-bundle-build")
+				defer os.Unsetenv("PORTER_EXPERIMENTAL")
+			}
+
 			test.Chdir(test.TestDir)
 
 			// Start a temporary insecure test registry
