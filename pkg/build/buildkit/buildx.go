@@ -13,6 +13,7 @@ import (
 	"get.porter.sh/porter/pkg/build"
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/experimental"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/tracing"
 	"github.com/cnabio/cnab-go/driver/docker"
@@ -144,15 +145,24 @@ func (b *Builder) BuildBundleImage(ctx context.Context, manifest *manifest.Manif
 		return span.Errorf("error parsing the --output flag: %w", err)
 	}
 
-	// Build from .cnab directory as context, add parent dir as named context for user files
 	namedContexts := toNamedContexts(buildContexts)
-	namedContexts["userfiles"] = buildx.NamedContext{Path: b.Getwd()}
+	var contextPath string
+
+	// Use optimized build context when feature flag is enabled
+	if b.IsFeatureEnabled(experimental.FlagOptimizedBundleBuild) {
+		// Build from .cnab directory as context, add parent dir as named context for user files
+		namedContexts["userfiles"] = buildx.NamedContext{Path: b.Getwd()}
+		contextPath = filepath.Join(b.Getwd(), build.LOCAL_CNAB)
+	} else {
+		// Legacy behavior: build from project root
+		contextPath = b.Getwd()
+	}
 
 	buildxOpts := map[string]buildx.Options{
 		"default": {
 			Tags: []string{manifest.Image},
 			Inputs: buildx.Inputs{
-				ContextPath:    filepath.Join(b.Getwd(), build.LOCAL_CNAB),
+				ContextPath:    contextPath,
 				DockerfilePath: b.getDockerfilePath(),
 				InStream:       buildx.NewSyncMultiReader(b.In),
 				NamedContexts:  namedContexts,
