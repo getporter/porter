@@ -9,5 +9,4 @@ RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/
 
 # PORTER_MIXINS
 
-# Copy user files from the bundle source directory (excludes .cnab and porter.yaml via .dockerignore)
-COPY --from=userfiles --link . ${BUNDLE_DIR}/
+COPY --link . ${BUNDLE_DIR}
