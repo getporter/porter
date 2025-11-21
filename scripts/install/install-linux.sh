@@ -8,10 +8,10 @@ set -euo pipefail
 # PORTER_VERSION:     The version of Porter assets to download.
 # PORTER_BINARY_URL:  The URL to porter binary (https:// or file:// for local binary)
 
-PORTER_MIRROR=${PORTER_MIRROR:-https://cdn.porter.sh}
+export PORTER_HOME=${PORTER_HOME:-~/.porter}
+export PORTER_MIRROR=${PORTER_MIRROR:-https://cdn.porter.sh}
 PORTER_VERSION=${PORTER_VERSION:-latest}
-PORTER_HOME=${PORTER_HOME:-$HOME/.porter}
-PORTER_BINARY_URL=${PORTER_BINARY_URL:-"$PORTER_MIRROR/download/$PORTER_VERSION/porter-linux-amd64"}
+PORTER_BINARY_URL=${PORTER_BINARY_URL:-"$PORTER_MIRROR/$PORTER_VERSION/porter-linux-amd64"}
 
 echo "Installing porter@$PORTER_VERSION to $PORTER_HOME from $PORTER_BINARY_URL"
 
