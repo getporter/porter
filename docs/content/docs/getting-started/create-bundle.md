@@ -283,6 +283,7 @@ Now that you know how to create a bundle you can follow the optional steps below
 
 - [Next: What is a bundle?](/quickstart/bundles/)
 - [Next: Work with Mixins](/how-to-guides/work-with-mixins/)
+- [Persisting Data Between Bundle Actions](/docs/development/authoring-a-bundle/persisting-data/) - Learn how to remember data from install for use in upgrade and uninstall
 
 ### Leverage a different registry
 
