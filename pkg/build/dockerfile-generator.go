@@ -184,10 +184,19 @@ func (g *DockerfileGenerator) buildPorterSection() []string {
 	if g.GetBuildDriver() == config.BuildDriverBuildkit {
 		copyUserFiles = "COPY --link . ${BUNDLE_DIR}"
 	}
-	return []string{
-		copyUserFiles,
-		"RUN rm ${BUNDLE_DIR}/porter.yaml",
+
+	lines := []string{copyUserFiles}
+
+	// The user-provided manifest may be located separate from the build context directory.
+	// Only remove it if the manifest path exists inside the current working directory.
+	manifestPath := g.FileSystem.Abs(g.Manifest.ManifestPath)
+	if relManifestPath, err := filepath.Rel(g.Getwd(), manifestPath); err == nil {
+		if !strings.Contains(relManifestPath, "..") {
+			lines = append(lines, fmt.Sprintf(`RUN rm ${BUNDLE_DIR}/%s`, relManifestPath))
+		}
 	}
+
+	return lines
 }
 
 func (g *DockerfileGenerator) buildCNABSection() []string {
