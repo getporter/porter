@@ -15,8 +15,8 @@ echo "Installing porter@$PORTER_VERSION to $PORTER_HOME from $PORTER_MIRROR"
 
 mkdir -p $PORTER_HOME/runtimes
 
-curl -fsSLo $PORTER_HOME/porter $PORTER_MIRROR/$PORTER_VERSION/porter-darwin-amd64
-curl -fsSLo $PORTER_HOME/runtimes/porter-runtime $PORTER_MIRROR/$PORTER_VERSION/porter-linux-amd64
+curl -fsSLo $PORTER_HOME/porter $PORTER_MIRROR/download/$PORTER_VERSION/porter-darwin-amd64
+curl -fsSLo $PORTER_HOME/runtimes/porter-runtime $PORTER_MIRROR/download/$PORTER_VERSION/porter-linux-amd64
 chmod +x $PORTER_HOME/porter
 chmod +x $PORTER_HOME/runtimes/porter-runtime
 echo Installed `$PORTER_HOME/porter version`
