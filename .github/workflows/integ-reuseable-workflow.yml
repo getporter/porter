@@ -45,6 +45,7 @@ jobs:
       shell: bash
     - name: Aggressive cleanup
       run: |
+        df -h
         # Remove Java (JDKs)
         sudo rm -rf /usr/lib/jvm
         # Remove .NET SDKs
@@ -65,10 +66,6 @@ jobs:
         sudo rm -rf /opt/az
         # Remove PowerShell
         sudo rm -rf /usr/local/share/powershell
-        # Remove CodeQL and other toolcaches
-        sudo rm -rf /opt/hostedtoolcache
-        docker system prune -af || true
-        docker builder prune -af || true
         df -h
       shell: bash
     - name: Integration Test
