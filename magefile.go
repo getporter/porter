@@ -350,21 +350,9 @@ func buildImages(registry string, info releases.GitMetadata) {
 
 	enableBuildKit := "DOCKER_BUILDKIT=1"
 	g.Go(func() error {
-		img := fmt.Sprintf("%s/porter:%s", registry, info.Version)
-		err := shx.Command("docker", "build", "-t", img, "-f", "build/images/client/Dockerfile", ".").
-			Env(enableBuildKit).RunV()
-		if err != nil {
-			return err
-		}
-
-		err = shx.Run("docker", "tag", img, fmt.Sprintf("%s/porter:%s", registry, info.Permalink))
-		if err != nil {
-			return err
-		}
-
-		// porter-agent does a FROM porter so they can't go in parallel
-		img = fmt.Sprintf("%s/porter-agent:%s", registry, info.Version)
-		err = shx.Command("docker", "build", "-t", img, "--build-arg", "PORTER_VERSION="+info.Version, "--build-arg", "REGISTRY="+registry, "-f", "build/images/agent/Dockerfile", ".").
+		// Build porter-agent image
+		img := fmt.Sprintf("%s/porter-agent:%s", registry, info.Version)
+		err := shx.Command("docker", "build", "-t", img, "-f", "build/images/agent/Dockerfile", ".").
 			Env(enableBuildKit).RunV()
 		if err != nil {
 			return err
@@ -455,7 +443,6 @@ func buildServerImage(registry string, info releases.GitMetadata, goarch string)
 }
 
 func pushImages(registry string, tag string) {
-	pushImage(fmt.Sprintf("%s/porter:%s", registry, tag))
 	pushImage(fmt.Sprintf("%s/porter-agent:%s", registry, tag))
 }
 

@@ -1,7 +1,6 @@
 # Porter Docker Images
 
-* client - This provides the porter client installed in a container. See the 
-  [Porter Client Docker Image][client] documentation for examples of how to 
-  use it.
+* agent - The Porter agent is used for executing bundles in Kubernetes. See the
+  [Porter Agent Docker Image][agent] documentation for more information.
 
-[client]: https://porter.sh/docker-images/client/
+[agent]: https://porter.sh/docker-images/agent/
