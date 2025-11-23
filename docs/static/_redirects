@@ -59,15 +59,26 @@
 /mixins/:mixin/:version/:file       https://github.com/getporter/:mixin-mixin/releases/download/:version/:file 302
 /plugins/:plugin/:version/:file     https://github.com/getporter/:plugin-plugins/releases/download/:version/:file 302
 
+# Porter binary downloads (new /download/ prefix)
 # Directly serve these files directly so that the curl commands run by the end-user don't need to worry about redirects
 # We can only serve content directly through Netlify's CDN for files under 2MB
+/download/:version/install-linux.sh      https://github.com/getporter/porter/releases/download/:version/install-linux.sh 200
+/download/:version/install-mac.sh        https://github.com/getporter/porter/releases/download/:version/install-mac.sh 200
+/download/:version/install-windows.ps1   https://github.com/getporter/porter/releases/download/:version/install-windows.ps1 200
+/download/:version/bundle-linux.sh       https://github.com/getporter/porter/releases/download/:version/bundle-linux.sh 200
+
+# Redirect the porter release artifacts
+/download/:version/*           https://github.com/getporter/porter/releases/download/:version/:splat 302
+
+# Backward compatibility redirects for existing install script URLs (temporary, may be removed in the future)
+# These only redirect the specific files that are downloaded by install scripts
 /:version/install-linux.sh      https://github.com/getporter/porter/releases/download/:version/install-linux.sh 200
 /:version/install-mac.sh        https://github.com/getporter/porter/releases/download/:version/install-mac.sh 200
 /:version/install-windows.ps1   https://github.com/getporter/porter/releases/download/:version/install-windows.ps1 200
 /:version/bundle-linux.sh       https://github.com/getporter/porter/releases/download/:version/bundle-linux.sh 200
-
-# Redirect the porter release artifacts
-/:version/*           https://github.com/getporter/porter/releases/download/:version/:splat 302
+/:version/porter-linux-amd64    https://github.com/getporter/porter/releases/download/:version/porter-linux-amd64 302
+/:version/porter-darwin-amd64   https://github.com/getporter/porter/releases/download/:version/porter-darwin-amd64 302
+/:version/porter-windows-amd64.exe https://github.com/getporter/porter/releases/download/:version/porter-windows-amd64.exe 302
 
 # Redirect the schema json files
 /schema/:version/* https://raw.githubusercontent.com/getporter/porter/release/:version/pkg/schema/:splat
