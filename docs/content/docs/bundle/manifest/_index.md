@@ -207,6 +207,50 @@ The syntax to pass a parameter to porter is the same for both regular and file p
 $ porter install --param mytar=./my.tar.gz
 ```
 
+#### File Parameter Default Values
+
+File parameters can optionally have default values. The default value represents the **content of the file** (not a file path), and must be either an empty string or a base64-encoded string. When the bundle runs, Porter decodes the base64 value and writes it to the file path specified in the parameter definition.
+
+**Valid: Empty string default (creates an empty file)**
+```yaml
+parameters:
+  - name: myconfig
+    type: file
+    path: /cnab/app/config.txt
+    default: ''
+```
+
+**Valid: Base64-encoded content**
+```yaml
+parameters:
+  - name: myconfig
+    type: file
+    path: /cnab/app/config.txt
+    default: SGVsbG8gV29ybGQh  # Base64-encoded "Hello World!"
+    # When the bundle runs, /cnab/app/config.txt will contain: Hello World!
+```
+
+**Invalid: File paths or plain text are not allowed as defaults**
+```yaml
+parameters:
+  - name: myconfig
+    type: file
+    path: /cnab/app/config.txt
+    default: /path/to/file.txt  # ❌ Error: not valid base64
+```
+
+```yaml
+parameters:
+  - name: myconfig
+    type: file
+    path: /cnab/app/config.txt
+    default: hello world  # ❌ Error: not valid base64
+```
+
+Porter validates default values during `porter build` and will report an error if the default value is not valid base64-encoded data. This ensures that invalid defaults are caught early with a clear error message rather than failing at runtime.
+
+**Note:** If you need to load file contents from the filesystem when creating or using a bundle, use a [parameter set](/docs/quickstart/parameters/) with the `path` source instead of specifying a default value in the bundle manifest. Default values are embedded in the bundle definition itself.
+
 ### Parameter Sources
 
 Parameters can also use the value from an output from the current bundle or one of its dependencies as its default value
