@@ -718,6 +718,71 @@ func TestValidateParameterDefinition_defaultFailsValidation(t *testing.T) {
 `)
 }
 
+func TestValidateParameterDefinition_fileTypeWithInvalidBase64Default(t *testing.T) {
+	testcases := []struct {
+		name          string
+		defaultValue  interface{}
+		expectError   bool
+		errorContains string
+	}{
+		{
+			name:         "valid: empty string default",
+			defaultValue: "",
+			expectError:  false,
+		},
+		{
+			name:         "valid: no default",
+			defaultValue: nil,
+			expectError:  false,
+		},
+		{
+			name:         "valid: proper base64 encoded default",
+			defaultValue: "SGVsbG8gV29ybGQh", // "Hello World!" in base64
+			expectError:  false,
+		},
+		{
+			name:          "invalid: plain text default",
+			defaultValue:  "hello world",
+			expectError:   true,
+			errorContains: `parameter "myparam" of type 'file' has a default value that is not valid base64`,
+		},
+		{
+			name:          "invalid: file path as default",
+			defaultValue:  "/path/to/file.txt",
+			expectError:   true,
+			errorContains: `parameter "myparam" of type 'file' has a default value that is not valid base64`,
+		},
+		{
+			name:          "invalid: malformed base64",
+			defaultValue:  "not-valid-base64!@#",
+			expectError:   true,
+			errorContains: `parameter "myparam" of type 'file' has a default value that is not valid base64`,
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			pd := ParameterDefinition{
+				Name: "myparam",
+				Schema: definition.Schema{
+					Type:    "file",
+					Default: tc.defaultValue,
+				},
+			}
+			pd.Destination = Location{Path: "/path/to/file"}
+
+			err := pd.Validate()
+
+			if tc.expectError {
+				assert.Error(t, err)
+				assert.Contains(t, err.Error(), tc.errorContains)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
 func TestValidateOutputDefinition_missingPath(t *testing.T) {
 	od := OutputDefinition{
 		Name: "myoutput",
