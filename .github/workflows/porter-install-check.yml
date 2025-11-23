@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: checkout
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
     - name: Test Install Script
       run: scripts/test/test-linux-install.sh
       shell: bash
@@ -21,7 +21,7 @@ jobs:
     runs-on: windows-latest
     steps:
     - name: checkout
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
     - name: Test Install Script
       run: scripts\test\test-windows-install.ps1
       shell: powershell
@@ -30,7 +30,7 @@ jobs:
       - macos-latest
     steps:
     - name: checkout
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
     - name: Test Install Script
       run: scripts/test/test-mac-install.sh
       shell: bash

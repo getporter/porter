@@ -28,7 +28,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: checkout
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
     - uses: actions/setup-go@v6
       with:
         go-version: ${{ inputs.goVersion }}
@@ -47,7 +47,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: checkout
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
       with:
         fetch-depth: 0
     - uses: actions/setup-go@v6
@@ -68,7 +68,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: checkout
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
     - uses: actions/setup-go@v6
       with:
         go-version: ${{ inputs.goVersion }}
@@ -86,7 +86,7 @@ jobs:
     if: ${{inputs.skipTests == false}}
     steps:
     - name: checkout
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
     - uses: actions/setup-go@v6
       with:
         go-version: ${{ inputs.goVersion }}
@@ -110,7 +110,7 @@ jobs:
     if: success() && ${{inputs.skipTests == false}}
     steps:
     - name: checkout
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
     - uses: actions/setup-go@v6
       with:
         go-version: ${{ inputs.goVersion }}
@@ -138,7 +138,7 @@ jobs:
     if: success() && ${{ inputs.shouldPublish == true }}
     steps:
     - name: checkout
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
       with:
         fetch-depth: 0
     - uses: actions/setup-go@v6
@@ -181,7 +181,7 @@ jobs:
     if: success() && ${{inputs.shouldPublish == true}}
     steps:
     - name: checkout
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
       with:
         fetch-depth: 0
     - uses: actions/setup-go@v6
