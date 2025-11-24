@@ -337,7 +337,17 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 			return nil, err
 		}
 		if param.Sensitive {
+			// Register the whole parameter value
 			m.setSensitiveValue(fmt.Sprint(val))
+
+			// For object parameters, also register all sub-property values
+			// so that ${bundle.parameters.obj.field} is masked in output
+			if param.Type == "object" {
+				subValues := extractObjectValues(val)
+				for _, subVal := range subValues {
+					m.setSensitiveValue(subVal)
+				}
+			}
 		}
 		params[pe] = val
 	}
