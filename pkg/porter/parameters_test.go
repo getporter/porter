@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sort"
 	"testing"
+	"time"
 
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
@@ -1170,6 +1171,83 @@ func TestPorter_ParametersApply(t *testing.T) {
 		assert.Equal(t, "foo", ps.Parameters[0].Name, "expected the foo parameter mapping defined")
 		assert.Equal(t, "secret", ps.Parameters[0].Source.Strategy, "expected the foo parameter mapping to come from a secret")
 		assert.Equal(t, "foo_secret", ps.Parameters[0].Source.Hint, "expected the foo parameter mapping to use foo_secret")
+	})
+
+	t.Run("timestamps are set correctly on first apply", func(t *testing.T) {
+		ctx := context.Background()
+		p := NewTestPorter(t)
+		defer p.Close()
+
+		p.AddTestFile("testdata/parameters/mypset.yaml", "mypset.yaml")
+
+		beforeApply := time.Now()
+		opts := ApplyOptions{
+			Namespace: "",
+			File:      "mypset.yaml",
+		}
+		err := p.ParametersApply(ctx, opts)
+		require.NoError(t, err, "ParametersApply failed")
+		afterApply := time.Now()
+
+		ps, err := p.Parameters.GetParameterSet(ctx, "", "mypset")
+		require.NoError(t, err, "Failed to retrieve applied parameter set")
+
+		// Verify Created timestamp is set and within expected range
+		assert.False(t, ps.Status.Created.IsZero(), "Created timestamp should be set")
+		assert.True(t, ps.Status.Created.After(beforeApply) || ps.Status.Created.Equal(beforeApply), "Created timestamp should be >= beforeApply")
+		assert.True(t, ps.Status.Created.Before(afterApply) || ps.Status.Created.Equal(afterApply), "Created timestamp should be <= afterApply")
+
+		// Verify Modified timestamp is set and within expected range
+		assert.False(t, ps.Status.Modified.IsZero(), "Modified timestamp should be set")
+		assert.True(t, ps.Status.Modified.After(beforeApply) || ps.Status.Modified.Equal(beforeApply), "Modified timestamp should be >= beforeApply")
+		assert.True(t, ps.Status.Modified.Before(afterApply) || ps.Status.Modified.Equal(afterApply), "Modified timestamp should be <= afterApply")
+
+		// On first apply, Created and Modified should be the same
+		assert.Equal(t, ps.Status.Created, ps.Status.Modified, "Created and Modified should be the same on first apply")
+	})
+
+	t.Run("timestamps are updated correctly on subsequent apply", func(t *testing.T) {
+		ctx := context.Background()
+		p := NewTestPorter(t)
+		defer p.Close()
+
+		p.AddTestFile("testdata/parameters/mypset.yaml", "mypset.yaml")
+
+		// First apply
+		opts := ApplyOptions{
+			Namespace: "",
+			File:      "mypset.yaml",
+		}
+		err := p.ParametersApply(ctx, opts)
+		require.NoError(t, err, "First ParametersApply failed")
+
+		ps1, err := p.Parameters.GetParameterSet(ctx, "", "mypset")
+		require.NoError(t, err, "Failed to retrieve parameter set after first apply")
+		firstCreated := ps1.Status.Created
+		firstModified := ps1.Status.Modified
+
+		// Wait a bit to ensure timestamps differ
+		time.Sleep(10 * time.Millisecond)
+
+		// Second apply
+		beforeSecondApply := time.Now()
+		err = p.ParametersApply(ctx, opts)
+		require.NoError(t, err, "Second ParametersApply failed")
+		afterSecondApply := time.Now()
+
+		ps2, err := p.Parameters.GetParameterSet(ctx, "", "mypset")
+		require.NoError(t, err, "Failed to retrieve parameter set after second apply")
+
+		// Verify Created timestamp remains unchanged
+		assert.Equal(t, firstCreated, ps2.Status.Created, "Created timestamp should not change on subsequent apply")
+
+		// Verify Modified timestamp is updated
+		assert.True(t, ps2.Status.Modified.After(firstModified), "Modified timestamp should be updated on subsequent apply")
+		assert.True(t, ps2.Status.Modified.After(beforeSecondApply) || ps2.Status.Modified.Equal(beforeSecondApply), "Modified timestamp should be >= beforeSecondApply")
+		assert.True(t, ps2.Status.Modified.Before(afterSecondApply) || ps2.Status.Modified.Equal(afterSecondApply), "Modified timestamp should be <= afterSecondApply")
+
+		// Created and Modified should now be different
+		assert.NotEqual(t, ps2.Status.Created, ps2.Status.Modified, "Created and Modified should differ after subsequent apply")
 	})
 }
 
