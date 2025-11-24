@@ -314,6 +314,7 @@ install:
     Arguments:
     - ${ bundle.parameters.sensitive_param }
     - '${ bundle.parameters.sensitive_object }'
+    - ${ bundle.parameters.sensitive_object.secret }
     - ${ bundle.parameters.regular_param }
 `
 	rm := runtimeManifestFromStepYaml(t, testConfig, mContent)
@@ -330,13 +331,76 @@ install:
 	require.IsType(t, mixin["Arguments"], []interface{}{}, "Data.mymixin.Arguments has incorrect type")
 	args := mixin["Arguments"].([]interface{})
 
-	require.Len(t, args, 3)
+	require.Len(t, args, 4)
 	assert.Equal(t, "deliciou$dubonnet", args[0])
 	assert.Equal(t, "{\"secret\":\"this_is_secret\"}", args[1])
-	assert.Equal(t, "regular param value", args[2])
+	assert.Equal(t, "this_is_secret", args[2])
+	assert.Equal(t, "regular param value", args[3])
 
-	// There should now be one sensitive value tracked under the manifest
-	assert.ElementsMatch(t, []string{"deliciou$dubonnet", "{\"secret\":\"this_is_secret\"}"}, rm.GetSensitiveValues())
+	// Verify sensitive values include both the whole object and sub-properties
+	sensitiveValues := rm.GetSensitiveValues()
+	assert.Contains(t, sensitiveValues, "deliciou$dubonnet")
+	assert.Contains(t, sensitiveValues, "{\"secret\":\"this_is_secret\"}")
+	assert.Contains(t, sensitiveValues, "this_is_secret", "sub-property value should be tracked as sensitive")
+}
+
+func TestResolveSensitiveObjectSubProperties(t *testing.T) {
+	ctx := context.Background()
+	testConfig := config.NewTestConfig(t)
+	testConfig.Setenv("SENSITIVE_CREDS", `{"apiKey": "secret-key-123", "password": "secret-pass-456", "nested": {"token": "nested-token-789"}}`)
+	testConfig.Setenv("SENSITIVE_ARRAY", `{"keys": ["key1", "key2"], "count": 42}`)
+
+	mContent := `schemaVersion: 1.0.0
+parameters:
+- name: sensitive_creds
+  sensitive: true
+  type: object
+- name: sensitive_array
+  sensitive: true
+  type: object
+
+install:
+- mymixin:
+    Arguments:
+    - ${ bundle.parameters.sensitive_creds.apiKey }
+    - ${ bundle.parameters.sensitive_creds.password }
+    - ${ bundle.parameters.sensitive_creds.nested.token }
+    - '${ bundle.parameters.sensitive_creds }'
+    - '${ bundle.parameters.sensitive_creds.nested }'
+    - ${ bundle.parameters.sensitive_array.count }
+`
+	rm := runtimeManifestFromStepYaml(t, testConfig, mContent)
+	s := rm.Install[0]
+
+	err := rm.ResolveStep(ctx, 0, s)
+	require.NoError(t, err)
+
+	require.IsType(t, map[string]interface{}{}, s.Data["mymixin"], "Data.mymixin has incorrect type")
+	mixin := s.Data["mymixin"].(map[string]interface{})
+	require.IsType(t, mixin["Arguments"], []interface{}{}, "Data.mymixin.Arguments has incorrect type")
+	args := mixin["Arguments"].([]interface{})
+
+	require.Len(t, args, 6)
+	assert.Equal(t, "secret-key-123", args[0])
+	assert.Equal(t, "secret-pass-456", args[1])
+	assert.Equal(t, "nested-token-789", args[2])
+	// When accessing a nested object property, it resolves to the map representation
+	assert.Equal(t, "map[token:nested-token-789]", args[4])
+
+	// Verify all sub-property values are tracked as sensitive
+	sensitiveValues := rm.GetSensitiveValues()
+	assert.Contains(t, sensitiveValues, "secret-key-123", "apiKey value should be tracked as sensitive")
+	assert.Contains(t, sensitiveValues, "secret-pass-456", "password value should be tracked as sensitive")
+	assert.Contains(t, sensitiveValues, "nested-token-789", "nested token value should be tracked as sensitive")
+	assert.Contains(t, sensitiveValues, "key1", "array element should be tracked as sensitive")
+	assert.Contains(t, sensitiveValues, "key2", "array element should be tracked as sensitive")
+	assert.Contains(t, sensitiveValues, "42", "numeric value should be tracked as sensitive")
+
+	// Verify intermediate nested objects are also tracked
+	assert.Contains(t, sensitiveValues, `{"token":"nested-token-789"}`, "nested object should be tracked as sensitive")
+
+	// The whole object JSON strings should also be tracked
+	assert.Contains(t, sensitiveValues, `{"apiKey":"secret-key-123","nested":{"token":"nested-token-789"},"password":"secret-pass-456"}`)
 }
 
 func TestResolveCredential(t *testing.T) {
