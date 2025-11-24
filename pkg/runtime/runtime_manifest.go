@@ -209,6 +209,41 @@ func (m *RuntimeManifest) setSensitiveValue(val string) {
 	}
 }
 
+// extractObjectValues recursively extracts all leaf values from an object
+// (map or array) and returns them as strings. This ensures that sub-properties
+// of sensitive object parameters are also tracked as sensitive values.
+func extractObjectValues(obj any) []string {
+	var values []string
+
+	switch v := obj.(type) {
+	case map[string]any:
+		// Recursively extract values from nested maps
+		for _, val := range v {
+			values = append(values, extractObjectValues(val)...)
+		}
+	case []any:
+		// Recursively extract values from arrays
+		for _, item := range v {
+			values = append(values, extractObjectValues(item)...)
+		}
+	case string:
+		// Leaf value - only add non-empty strings
+		if strings.TrimSpace(v) != "" {
+			values = append(values, v)
+		}
+	case nil:
+		// Skip nil values
+	default:
+		// Convert other types (numbers, bools) to strings
+		strVal := fmt.Sprint(v)
+		if strings.TrimSpace(strVal) != "" {
+			values = append(values, strVal)
+		}
+	}
+
+	return values
+}
+
 func (m *RuntimeManifest) GetSteps() manifest.Steps {
 	return m.steps
 }
