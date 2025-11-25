@@ -209,6 +209,58 @@ func (m *RuntimeManifest) setSensitiveValue(val string) {
 	}
 }
 
+// extractObjectValues recursively extracts all leaf values from an object
+// (map or array) and returns them as strings. This ensures that sub-properties
+// of sensitive object parameters are also tracked as sensitive values.
+// For nested objects and arrays, it also includes their JSON representation
+// to prevent leakage through intermediate property access.
+func extractObjectValues(obj any) []string {
+	var values []string
+
+	switch v := obj.(type) {
+	case FormattedObject:
+		// Handle FormattedObject (which is returned by resolveParameter for object types)
+		// Don't add JSON representation for the top-level object (already handled by caller)
+		// Recursively extract values from the map
+		for _, val := range v {
+			values = append(values, extractObjectValues(val)...)
+		}
+	case map[string]any:
+		// Add the JSON representation of this nested object
+		if jsonBytes, err := json.Marshal(v); err == nil {
+			values = append(values, string(jsonBytes))
+		}
+		// Recursively extract values from nested maps
+		for _, val := range v {
+			values = append(values, extractObjectValues(val)...)
+		}
+	case []any:
+		// Add the JSON representation of this array
+		if jsonBytes, err := json.Marshal(v); err == nil {
+			values = append(values, string(jsonBytes))
+		}
+		// Recursively extract values from arrays
+		for _, item := range v {
+			values = append(values, extractObjectValues(item)...)
+		}
+	case string:
+		// Leaf value - only add non-empty strings
+		if strings.TrimSpace(v) != "" {
+			values = append(values, v)
+		}
+	case nil:
+		// Skip nil values
+	default:
+		// Convert other types (numbers, bools) to strings
+		strVal := fmt.Sprint(v)
+		if strings.TrimSpace(strVal) != "" {
+			values = append(values, strVal)
+		}
+	}
+
+	return values
+}
+
 func (m *RuntimeManifest) GetSteps() manifest.Steps {
 	return m.steps
 }
@@ -302,7 +354,17 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 			return nil, err
 		}
 		if param.Sensitive {
+			// Register the whole parameter value
 			m.setSensitiveValue(fmt.Sprint(val))
+
+			// For object parameters, also register all sub-property values
+			// so that ${bundle.parameters.obj.field} is masked in output
+			if param.Type == "object" {
+				subValues := extractObjectValues(val)
+				for _, subVal := range subValues {
+					m.setSensitiveValue(subVal)
+				}
+			}
 		}
 		params[pe] = val
 	}
