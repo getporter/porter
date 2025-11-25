@@ -16,8 +16,8 @@ $env:PORTER_HOME=$PORTER_HOME
 $env:PORTER_MIRROR=$PORTER_MIRROR
 mkdir -f $PORTER_HOME/runtimes
 
-(new-object System.Net.WebClient).DownloadFile("$PORTER_MIRROR/$PORTER_VERSION/porter-windows-amd64.exe", "$PORTER_HOME\porter.exe")
-(new-object System.Net.WebClient).DownloadFile("$PORTER_MIRROR/$PORTER_VERSION/porter-linux-amd64", "$PORTER_HOME\runtimes\porter-runtime")
+(new-object System.Net.WebClient).DownloadFile("$PORTER_MIRROR/download/$PORTER_VERSION/porter-windows-amd64.exe", "$PORTER_HOME\porter.exe")
+(new-object System.Net.WebClient).DownloadFile("$PORTER_MIRROR/download/$PORTER_VERSION/porter-linux-amd64", "$PORTER_HOME\runtimes\porter-runtime")
 echo "Installed $(& $PORTER_HOME\porter.exe version)"
 
 & $PORTER_HOME/porter mixin install exec --version $PORTER_VERSION
