@@ -2,6 +2,7 @@ package manifest
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"io"
@@ -498,6 +499,19 @@ func (pd *ParameterDefinition) Validate() error {
 		}
 		pdCopy.Type = "string"
 		pdCopy.ContentEncoding = "base64"
+
+		// Validate that the default value (if provided) is valid base64
+		if pd.Default != nil {
+			defaultStr, ok := pd.Default.(string)
+			if ok && defaultStr != "" {
+				// Attempt to decode - should be valid base64
+				if _, err := base64.StdEncoding.DecodeString(defaultStr); err != nil {
+					result = multierror.Append(result,
+						fmt.Errorf("parameter %q of type 'file' has a default value that is not valid base64: %w",
+							pd.Name, err))
+				}
+			}
+		}
 	}
 
 	// Validate the Parameter Definition schema itself
