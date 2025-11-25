@@ -537,7 +537,22 @@ func (p *Porter) ParametersApply(ctx context.Context, o ApplyOptions) error {
 	}
 
 	params.Namespace = namespace
-	params.Status.Modified = time.Now()
+
+	// Check if this is a new parameter set (first apply) or an update
+	// by attempting to retrieve the existing parameter set
+	existing, err := p.Parameters.GetParameterSet(ctx, namespace, params.Name)
+	isNew := err != nil // If there's an error (not found), it's a new parameter set
+
+	now := time.Now()
+	if isNew {
+		// For new parameter sets, set the Created timestamp
+		params.Status.Created = now
+	} else {
+		// For existing parameter sets, preserve the original Created timestamp
+		params.Status.Created = existing.Status.Created
+	}
+	// Always update the Modified timestamp
+	params.Status.Modified = now
 
 	err = p.Parameters.Validate(ctx, params.ParameterSet)
 	if err != nil {
