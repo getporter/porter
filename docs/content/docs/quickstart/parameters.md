@@ -168,3 +168,4 @@ In this QuickStart, you learned how to see the parameters defined on a bundle, t
 
 - [QuickStart: Pass credentials to a bundle](/quickstart/credentials/)
 - [Understanding how parameters are resolved](/docs/introduction/concepts-and-components/intro-parameters/)
+- [Persisting Data Between Bundle Actions](/docs/development/authoring-a-bundle/persisting-data/) - Learn how bundle authors can use parameters to remember data across actions

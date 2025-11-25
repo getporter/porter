@@ -184,6 +184,7 @@ Now that you know how to create a bundle, here are some more detailed topics on 
 - [Control how your bundle's image is built with a custom Dockerfile](/docs/bundle/custom-dockerfile/)
 - [Customize your Porter manifest, porter.yaml][manifest]
 - [Porter Manifest File Format](/bundle/manifest/file-format/)
+- [Persisting Data Between Bundle Actions](/docs/development/authoring-a-bundle/persisting-data/) - Learn how to remember data from install for use in upgrade and uninstall
 - [Best Practices for the exec Mixin](/docs/best-practices/exec-mixin/)
 - [Understand how bundles are distributed](/docs/development/authoring-a-bundle/distribute-bundles/)
 

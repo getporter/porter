@@ -220,7 +220,8 @@ For example, given the install step above, we can use the `MYSQL_URL` with the h
 Just like in the case of credentials and parameters, the value of the `bundle.outputs.MYSQL_URL` reference will be rewritten in the YAML before the helm mixin is invoked.
 
 Parameters can also use the value from an output from the current bundle or one of its dependencies as its default value
-using the `source` field when defining the parameter.
+using the `source` field when defining the parameter. This is useful for persisting data between bundle actions, such as
+resource IDs created during install that are needed during upgrade or uninstall.
 
 **Source an output from the current bundle**
 ```yaml
@@ -241,6 +242,9 @@ parameters:
     dependency: mysql
     source: connstr
 ```
+
+See [Persisting Data Between Bundle Actions](/docs/development/authoring-a-bundle/persisting-data/) for a complete guide
+with working examples on when to use parameter sources versus state files.
 
 ## Wiring Custom Metadata
 
