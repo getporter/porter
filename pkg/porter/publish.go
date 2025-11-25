@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	_ "modernc.org/sqlite" // required for rpmdb and other features
+
 	"get.porter.sh/porter/pkg/build"
 	"get.porter.sh/porter/pkg/cnab"
 	cnabtooci "get.porter.sh/porter/pkg/cnab/cnab-to-oci"
@@ -29,10 +31,12 @@ import (
 type PublishOptions struct {
 	BundlePullOptions
 	BundleDefinitionOptions
-	Tag         string
-	Registry    string
-	ArchiveFile string
-	SignBundle  bool
+	Tag           string
+	Registry      string
+	ArchiveFile   string
+	SignBundle    bool
+	SBOMPath      string
+	SBOMGenerator SBOMGenerator
 }
 
 // Validate performs validation on the publish options
@@ -242,7 +246,18 @@ func (p *Porter) publishFromFile(ctx context.Context, opts PublishOptions) error
 	// Perhaps we have a cached version of a bundle with the same reference, previously pulled
 	// If so, replace it, as it is most likely out-of-date per this publish
 	err = p.refreshCachedBundle(bundleRef)
-	return log.Error(err)
+	if err != nil {
+		return log.Error(err)
+	}
+
+	// Generate SBOM if requested
+	if opts.SBOMPath != "" {
+		if err := opts.SBOMGenerator.Generate(ctx, bundleRef, opts.SBOMPath); err != nil {
+			return log.Error(err)
+		}
+	}
+
+	return nil
 }
 
 // publishFromArchive (re-)publishes a bundle, provided by the archive file, using the provided tag.
@@ -352,10 +367,21 @@ func (p *Porter) publishFromArchive(ctx context.Context, opts PublishOptions) er
 		}
 	}
 
-	// Perhaps we have a cached version of a bundle with the same tag, previously pulled
+	// Perhaps we have a cached version of a bundle with the same reference, previously pulled
 	// If so, replace it, as it is most likely out-of-date per this publish
 	err = p.refreshCachedBundle(bundleRef)
-	return log.Error(err)
+	if err != nil {
+		return log.Error(err)
+	}
+
+	// Generate SBOM if requested
+	if opts.SBOMPath != "" {
+		if err := opts.SBOMGenerator.Generate(ctx, bundleRef, opts.SBOMPath); err != nil {
+			return log.Error(err)
+		}
+	}
+
+	return nil
 }
 
 // extractBundle extracts a bundle using the provided opts and returns the extracted bundle

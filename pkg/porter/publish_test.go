@@ -329,3 +329,38 @@ func TestPublish_ForceOverwrite(t *testing.T) {
 		})
 	}
 }
+
+type MockSBOMGenerator struct {
+	BundleRef cnab.BundleReference
+	SBOMPath  string
+}
+
+func (m *MockSBOMGenerator) Generate(ctx context.Context, bundleRef cnab.BundleReference, sbomPath string) error {
+	m.BundleRef = bundleRef
+	m.SBOMPath = sbomPath
+	return nil
+}
+
+func TestPublish_SBOM(t *testing.T) {
+	p := NewTestPorter(t)
+	defer p.Close()
+
+	p.TestConfig.TestContext.AddTestFile("testdata/porter.yaml", "porter.yaml")
+
+	mockGenerator := &MockSBOMGenerator{}
+	mockFilePath := "sbom.json"
+	opts := PublishOptions{SBOMPath: mockFilePath, SBOMGenerator: mockGenerator}
+
+	err := opts.Validate(p.Config)
+	require.NoError(t, err)
+
+	ctx := context.Background()
+	err = p.Publish(ctx, opts)
+
+	require.NoError(t, err)
+
+	// the full reference will be host, repo, and tag
+	// these are hardcoded in the testdata/porter.yaml file
+	require.Equal(t, "localhost:5000/porter-hello:v0.1.0", mockGenerator.BundleRef.Reference.String())
+	require.Equal(t, mockFilePath, mockGenerator.SBOMPath)
+}
