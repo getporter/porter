@@ -211,31 +211,30 @@ func GetMixins() error {
 		{name: "kubernetes"},
 		{name: "helm3", feed: "https://mchorfa.github.io/porter-helm3/atom.xml", version: "v0.1.16"},
 	}
-	var errG errgroup.Group
 	for _, mixin := range mixins {
-		mixin := mixin
 		mixinDir := filepath.Join("bin/mixins/", mixin.name)
 		if _, err := os.Stat(mixinDir); err == nil {
 			log.Println("Mixin already installed into bin:", mixin.name)
 			continue
 		}
 
-		errG.Go(func() error {
-			log.Println("Installing mixin:", mixin.name)
-			if mixin.version == "" {
-				mixin.version = defaultMixinVersion
-			}
-			var source string
-			if mixin.feed != "" {
-				source = "--feed-url=" + mixin.feed
-			} else {
-				source = "--url=" + mixin.url
-			}
-			return porter("mixin", "install", mixin.name, "--version", mixin.version, source).Run()
-		})
+		log.Println("Installing mixin:", mixin.name)
+		if mixin.version == "" {
+			mixin.version = defaultMixinVersion
+		}
+		var source string
+		if mixin.feed != "" {
+			source = "--feed-url=" + mixin.feed
+		} else {
+			source = "--url=" + mixin.url
+		}
+		err := porter("mixin", "install", mixin.name, "--version", mixin.version, source).Run()
+		if err != nil {
+			return err
+		}
 	}
 
-	return errG.Wait()
+	return nil
 }
 
 // Run a porter command from the bin
