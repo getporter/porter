@@ -8,7 +8,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"io/fs"
+	"path/filepath"
+	"runtime"
 	"sort"
+	"strings"
 
 	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/cnab"
@@ -26,7 +31,7 @@ type Stamp struct {
 	// porter build to help determine if the last build is stale.
 	// * manifest
 	// * mixins
-	// * (TODO) files in current directory
+	// * files in current directory (content and executable permissions)
 	ManifestDigest string `json:"manifestDigest"`
 
 	// Mixins used in the bundle.
@@ -149,6 +154,103 @@ func (c *ManifestConverter) GenerateStamp(ctx context.Context, preserveTags bool
 	return stamp, nil
 }
 
+// hashBundleFiles walks the bundle directory and hashes all relevant files,
+// including their content and executable permissions (cross-platform compatible).
+// Returns a sorted map of relative file paths to their content hashes.
+func (c *ManifestConverter) hashBundleFiles(bundleDir string) (map[string]string, error) {
+	fileHashes := make(map[string]string)
+
+	// Directories and files to skip
+	skipDirs := map[string]bool{
+		".cnab":        true,
+		".git":         true,
+		"node_modules": true,
+		".porter":      true,
+		"vendor":       true,
+	}
+
+	// Use afero Walk to work with virtual filesystem in tests
+	err := c.config.FileSystem.Walk(bundleDir, func(path string, info fs.FileInfo, err error) error {
+		if err != nil {
+			// Skip files that don't exist or can't be accessed
+			return nil
+		}
+
+		// Get relative path from bundle directory
+		relPath, err := filepath.Rel(bundleDir, path)
+		if err != nil {
+			return err
+		}
+
+		// Skip the root directory itself
+		if relPath == "." {
+			return nil
+		}
+
+		// Skip hidden files and directories (cross-platform)
+		if strings.HasPrefix(filepath.Base(path), ".") {
+			if info.IsDir() {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+
+		// Skip specific directories
+		if info.IsDir() {
+			if skipDirs[info.Name()] {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+
+		// Only process regular files
+		if !info.Mode().IsRegular() {
+			return nil
+		}
+
+		// Read file content
+		content, err := c.config.FileSystem.ReadFile(path)
+		if err != nil {
+			// Skip files that can't be read
+			return nil
+		}
+
+		// Hash the file content
+		contentHash := sha256.Sum256(content)
+		hashStr := hex.EncodeToString(contentHash[:])
+
+		// Check if file is executable
+		if isExecutable(info) {
+			// Append executable marker to hash to ensure permission changes trigger rebuild
+			hashStr += ":x"
+		}
+
+		// Use forward slashes for consistency across platforms
+		normalizedPath := filepath.ToSlash(relPath)
+		fileHashes[normalizedPath] = hashStr
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to walk bundle directory: %w", err)
+	}
+
+	return fileHashes, nil
+}
+
+// isExecutable checks if a file has the executable permission bit set.
+// Bundles always run in a Linux distribution, so we only check Unix permissions on Linux.
+// On other platforms, we skip the check to avoid false positives from permission emulation.
+func isExecutable(info fs.FileInfo) bool {
+	// Only check executable bit on Linux where bundles actually run
+	if runtime.GOOS != "linux" {
+		return false
+	}
+	mode := info.Mode()
+	return mode&0111 != 0
+}
+
 func (c *ManifestConverter) DigestManifest() (string, error) {
 	if exists, _ := c.config.FileSystem.Exists(c.Manifest.ManifestPath); !exists {
 		return "", fmt.Errorf("the specified porter configuration file %s does not exist", c.Manifest.ManifestPath)
@@ -166,6 +268,29 @@ func (c *ManifestConverter) DigestManifest() (string, error) {
 	sort.Sort(usedMixins) // Ensure that this is sorted so the digest is consistent
 	for _, mixinRecord := range usedMixins {
 		data = append(append(data, mixinRecord.Name...), mixinRecord.Version...)
+	}
+
+	// Hash all files in the bundle directory to detect content and permission changes
+	bundleDir := filepath.Dir(c.Manifest.ManifestPath)
+	fileHashes, err := c.hashBundleFiles(bundleDir)
+	if err != nil {
+		// Log warning but continue - file hashing is an enhancement, not critical
+		// This maintains backward compatibility if there are issues accessing files
+		fmt.Fprintf(io.Discard, "WARNING: Could not hash bundle files: %v\n", err)
+	} else {
+		// Sort file paths for deterministic digest
+		sortedPaths := make([]string, 0, len(fileHashes))
+		for path := range fileHashes {
+			sortedPaths = append(sortedPaths, path)
+		}
+		sort.Strings(sortedPaths)
+
+		// Append file hashes to digest data
+		for _, path := range sortedPaths {
+			hash := fileHashes[path]
+			data = append(data, []byte(path)...)
+			data = append(data, []byte(hash)...)
+		}
 	}
 
 	digest := sha256.Sum256(data)

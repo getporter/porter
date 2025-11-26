@@ -184,6 +184,82 @@ func TestRebuild(t *testing.T) {
 	tests.RequireOutputContains(t, output, "Building bundle ===>", "expected a rebuild before uninstall")
 }
 
+func TestRebuild_FileContentAndPermissionChanges(t *testing.T) {
+	// Regression test for https://github.com/getporter/porter/issues/1818
+	// Verify that changes to file content and permissions trigger a rebuild
+	test, err := tester.NewTest(t)
+	defer test.Close()
+	require.NoError(t, err, "test setup failed")
+
+	// Create a bundle with a custom script
+	test.Chdir(test.TestDir)
+	test.RequirePorter("create")
+
+	// Create a script file that will be used by the exec mixin
+	scriptPath := filepath.Join(test.TestDir, "test-script.sh")
+	scriptContent := []byte("#!/bin/bash\necho 'initial version'")
+	err = os.WriteFile(scriptPath, scriptContent, pkg.FileModeWritable)
+	require.NoError(t, err, "failed to create test script")
+
+	// Build the bundle initially
+	_, output := test.RequirePorter("explain")
+	tests.RequireOutputContains(t, output, "Building bundle ===>", "expected initial build")
+
+	// Explain again, should not rebuild (bundle is up-to-date)
+	_, output = test.RequirePorter("explain")
+	tests.RequireOutputContains(t, output, "Bundle is up-to-date!", "expected bundle to be up-to-date")
+
+	// Modify the script content
+	modifiedContent := []byte("#!/bin/bash\necho 'modified version'")
+	err = os.WriteFile(scriptPath, modifiedContent, pkg.FileModeWritable)
+	require.NoError(t, err, "failed to modify test script")
+
+	// Explain again, should trigger rebuild due to file content change
+	_, output = test.RequirePorter("explain")
+	tests.RequireOutputContains(t, output, "Building bundle ===>", "expected rebuild after script content change")
+
+	// Explain again, should not rebuild (bundle is up-to-date again)
+	_, output = test.RequirePorter("explain")
+	tests.RequireOutputContains(t, output, "Bundle is up-to-date!", "expected bundle to be up-to-date after rebuild")
+
+	// Change script permissions to executable
+	err = os.Chmod(scriptPath, pkg.FileModeExecutable)
+	require.NoError(t, err, "failed to chmod test script")
+
+	// Explain again, should trigger rebuild due to permission change
+	_, output = test.RequirePorter("explain")
+	tests.RequireOutputContains(t, output, "Building bundle ===>", "expected rebuild after script permission change")
+
+	// Explain again, should not rebuild (bundle is up-to-date)
+	_, output = test.RequirePorter("explain")
+	tests.RequireOutputContains(t, output, "Bundle is up-to-date!", "expected bundle to be up-to-date after permission change rebuild")
+
+	// Add a new file
+	newFilePath := filepath.Join(test.TestDir, "new-file.txt")
+	err = os.WriteFile(newFilePath, []byte("new file content"), pkg.FileModeWritable)
+	require.NoError(t, err, "failed to create new file")
+
+	// Explain again, should trigger rebuild due to new file
+	_, output = test.RequirePorter("explain")
+	tests.RequireOutputContains(t, output, "Building bundle ===>", "expected rebuild after adding new file")
+
+	// Explain again, should not rebuild (bundle is up-to-date)
+	_, output = test.RequirePorter("explain")
+	tests.RequireOutputContains(t, output, "Bundle is up-to-date!", "expected bundle to be up-to-date after new file rebuild")
+
+	// Delete a file
+	err = os.Remove(scriptPath)
+	require.NoError(t, err, "failed to delete test script")
+
+	// Explain again, should trigger rebuild due to file deletion
+	_, output = test.RequirePorter("explain")
+	tests.RequireOutputContains(t, output, "Building bundle ===>", "expected rebuild after deleting file")
+
+	// Explain again, should not rebuild (bundle is up-to-date)
+	_, output = test.RequirePorter("explain")
+	tests.RequireOutputContains(t, output, "Bundle is up-to-date!", "expected bundle to be up-to-date after deletion rebuild")
+}
+
 func TestBuild_CacheExportImport(t *testing.T) {
 	test, err := tester.NewTest(t)
 	defer test.Close()

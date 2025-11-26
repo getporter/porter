@@ -85,9 +85,12 @@ experimental:
 build-driver: "buildkit"
 
 # Do not automatically build a bundle from source
-# before running the requested command when Porter detects that it is out-out-date.
-# Example: Normally running porter explain in a bundle directory should trigger an automatic porter build after you have edited porter.yaml
-# and disabling autobuild would have porter explain use the cached build (which could be stale).
+# before running the requested command when Porter detects that it is out-of-date.
+# Porter detects changes to porter.yaml, mixins, Porter version, and all files in the bundle directory
+# (including scripts, templates, and custom Dockerfiles).
+# Example: Normally running porter explain in a bundle directory should trigger an automatic porter build
+# after you have edited porter.yaml or any bundle files, and disabling autobuild would have porter explain
+# use the cached build (which could be stale).
 autobuild-disabled: true
 
 # Overwrite the existing published bundle when publishing or copying a bundle.
@@ -306,8 +309,6 @@ The `full-control-dockerfile` experimental flag disables all Dockerfile generati
 When enabled Porter will use the file referenced by `dockerfile` in the Porter manifest when building the bundle image *without modifying* it in any way.
 Ie. Porter will not process `# PORTER_x` placeholders, nor inject any user configuration and `CMD` statements.
 It is up to the bundle author to ensure that the contents of the Dockerfile contains the necessary tools for any mixins to function and a layout that can be executed as a Porter bundle.
-
-*Note:* when using the `dockerfile` property in the Porter manifest the `autobuild` functionality does not re-build the bundle on changes to the contents of the referenced file.
 
 ## Common Configuration Settings
 
