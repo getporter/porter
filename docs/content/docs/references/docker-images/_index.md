@@ -1,6 +1,6 @@
 ---
 title: Docker Images
-description: Listing of available Docker images of the Porter client
+description: Listing of available Docker images for Porter
 weight: 4
 ---
 
@@ -10,5 +10,4 @@ locally, such as workshops.
 
 {{< cards >}}
 {{< card link="agent/" title="Porter Agent Docker Image" >}}
-{{< card link="client/" title="Porter Client Docker Image" >}}
 {{< /cards >}}
