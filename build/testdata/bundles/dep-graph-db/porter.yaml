@@ -20,14 +20,14 @@ install:
       description: "Install database"
       command: bash
       flags:
-        c: '"echo \"Installing database...\" && echo \"db://localhost:5432/testdb\" > ${CNAB_OUTPUT_DIR}/connstr"'
+        c: '"echo \"Installing database...\" && echo \"db://localhost:5432/testdb\" > /cnab/app/outputs/connstr"'
 
 upgrade:
   - exec:
       description: "Upgrade database"
       command: bash
       flags:
-        c: '"echo \"Upgrading database...\" && echo \"db://localhost:5432/testdb-upgraded\" > ${CNAB_OUTPUT_DIR}/connstr"'
+        c: '"echo \"Upgrading database...\" && echo \"db://localhost:5432/testdb-upgraded\" > /cnab/app/outputs/connstr"'
 
 uninstall:
   - exec:
