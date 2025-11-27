@@ -32,6 +32,9 @@ type dependencyExecutioner struct {
 	parentArgs cnabprovider.ActionArguments
 	deps       []*queuedDependency
 
+	// dependencyGraph contains the resolved dependency graph with execution order
+	dependencyGraph *DependencyGraph
+
 	// this should maybe go somewhere else
 	depArgs cnabprovider.ActionArguments
 }
@@ -207,11 +210,66 @@ func (e *dependencyExecutioner) identifyDependencies(ctx context.Context) error 
 		return span.Error(err)
 	}
 
-	e.deps = make([]*queuedDependency, len(locks))
-	for i, lock := range locks {
-		span.Debugf("Resolved dependency %s to %s", lock.Alias, lock.Reference)
-		e.deps[i] = &queuedDependency{
-			DependencyLock: lock,
+	// Try to load the manifest to build dependency graph
+	// This is optional - if we can't load a manifest, we fall back to sequential execution
+	var m *manifest.Manifest
+	if e.parentOpts.File != "" {
+		m, err = manifest.LoadManifestFrom(ctx, e.Config, e.parentOpts.File)
+		if err != nil {
+			// Log but don't fail - we can still execute dependencies sequentially
+			span.Debugf("Could not load manifest for dependency graph: %v", err)
+		}
+	}
+
+	// Build dependency graph if we have a manifest with dependencies
+	if m != nil && len(m.Dependencies.Requires) > 0 {
+		graph, err := e.porter.buildDependencyGraph(m)
+		if err != nil {
+			return span.Error(fmt.Errorf("error building dependency graph: %w", err))
+		}
+
+		// Compute execution order
+		err = graph.computeExecutionOrder()
+		if err != nil {
+			return span.Error(err)
+		}
+
+		// Validate output references
+		err = graph.validateOutputReferences(m)
+		if err != nil {
+			return span.Error(err)
+		}
+
+		e.dependencyGraph = graph
+
+		// Populate dependency locks into graph nodes
+		lockMap := make(map[string]cnab.DependencyLock)
+		for _, lock := range locks {
+			lockMap[lock.Alias] = lock
+		}
+		for _, node := range graph.Nodes {
+			if lock, exists := lockMap[node.Name]; exists {
+				node.Lock = lock
+			}
+		}
+
+		// Build deps list in execution order
+		e.deps = make([]*queuedDependency, len(graph.ExecutionOrder))
+		for i, depName := range graph.ExecutionOrder {
+			node := graph.Nodes[depName]
+			span.Debugf("Resolved dependency %s to %s (execution order: %d)", node.Lock.Alias, node.Lock.Reference, i)
+			e.deps[i] = &queuedDependency{
+				DependencyLock: node.Lock,
+			}
+		}
+	} else {
+		// No manifest or no dependencies - use original sequential order
+		e.deps = make([]*queuedDependency, len(locks))
+		for i, lock := range locks {
+			span.Debugf("Resolved dependency %s to %s", lock.Alias, lock.Reference)
+			e.deps[i] = &queuedDependency{
+				DependencyLock: lock,
+			}
 		}
 	}
 
@@ -310,6 +368,64 @@ func (e *dependencyExecutioner) prepareDependency(ctx context.Context, dep *queu
 	return nil
 }
 
+// resolveOutputReferences resolves output references in dependency parameters and credentials
+// to their actual values from executed dependencies
+func (e *dependencyExecutioner) resolveOutputReferences(ctx context.Context, dep *queuedDependency) error {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
+	// If we don't have a dependency graph, there are no output references to resolve
+	if e.dependencyGraph == nil {
+		return nil
+	}
+
+	// Find the node for this dependency
+	node, exists := e.dependencyGraph.Nodes[dep.Alias]
+	if !exists {
+		// This dependency isn't in the graph, nothing to resolve
+		return nil
+	}
+
+	// If this node doesn't use any outputs from other dependencies, return early
+	if len(node.OutputsUsed) == 0 {
+		return nil
+	}
+
+	// Resolve each output reference
+	for paramName, outRef := range node.OutputsUsed {
+		// Get the child installation name for the dependency that provides the output
+		eb := cnab.ExtendedBundle{}
+
+		// Check if the referenced dependency uses sharing mode
+		refNode := e.dependencyGraph.Nodes[outRef.DependencyName]
+		var depInstallationName string
+		if refNode.Lock.SharingMode {
+			// For sharing mode, use the alias directly
+			depInstallationName = outRef.DependencyName
+		} else {
+			// For v1 dependencies, use parent+dep naming
+			depInstallationName = eb.BuildPrerequisiteInstallationName(e.parentOpts.Name, outRef.DependencyName)
+		}
+
+		span.Debugf("Resolving output %s from dependency %s (installation: %s)", outRef.OutputName, outRef.DependencyName, depInstallationName)
+
+		// Get the output value
+		output, err := e.Installations.GetLastOutput(ctx, e.parentOpts.Namespace, depInstallationName, outRef.OutputName)
+		if err != nil {
+			return span.Error(fmt.Errorf("error getting output %s from dependency %s: %w", outRef.OutputName, outRef.DependencyName, err))
+		}
+
+		// Replace the template with the actual output value
+		if dep.Parameters == nil {
+			dep.Parameters = make(map[string]string)
+		}
+		dep.Parameters[paramName] = string(output.Value)
+		span.Debugf("Resolved parameter %s to output value from %s.%s", paramName, outRef.DependencyName, outRef.OutputName)
+	}
+
+	return nil
+}
+
 func (e *dependencyExecutioner) executeDependency(ctx context.Context, dep *queuedDependency) error {
 	// TODO(carolynvs): We should really switch up how the deperator works so that
 	// even the root bundle uses the execution engine here. This would set up how
@@ -344,6 +460,11 @@ func (e *dependencyExecutioner) executeDependency(ctx context.Context, dep *queu
 	}
 
 	e.depArgs.Installation = depInstallation
+
+	// Resolve output references from other dependencies
+	if err = e.resolveOutputReferences(ctx, dep); err != nil {
+		return err
+	}
 
 	if err = e.getActionArgs(ctx, dep); err != nil {
 		return err
@@ -395,6 +516,11 @@ func (e *dependencyExecutioner) runDependencyv2(ctx context.Context, dep *queued
 			return fmt.Errorf("error executing dependency, dependency must be in installed status or deleted, %s is in  status %s", dep.Alias, depInstallation.Status)
 		}
 
+	}
+
+	// Resolve output references from other dependencies
+	if err = e.resolveOutputReferences(ctx, dep); err != nil {
+		return err
 	}
 
 	if err = e.getActionArgs(ctx, dep); err != nil {
