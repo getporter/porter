@@ -10,7 +10,7 @@ on:
             type: string
             default: ghcr.io
 env:
-    GOVERSION: 1.24.4
+    GOVERSION: 1.24.10
     PORTER_INTEG_FILE: ${{inputs.test_name}}.go
 
 permissions:

@@ -10,7 +10,7 @@ on:
       - main
 
 env:
-  GOVERSION: 1.24.4
+  GOVERSION: 1.24.10
 permissions:
   contents: read
   packages: read
