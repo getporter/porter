@@ -1,0 +1,37 @@
+schemaVersion: 1.0.1
+name: dep-graph-db
+version: 0.1.0
+description: "Test database bundle that outputs a connection string"
+registry: localhost:5000
+
+mixins:
+  - exec
+
+outputs:
+  - name: connstr
+    type: string
+    description: "Database connection string"
+    applyTo:
+      - install
+      - upgrade
+
+install:
+  - exec:
+      description: "Install database"
+      command: bash
+      flags:
+        c: '"echo \"Installing database...\" && echo \"db://localhost:5432/testdb\" > ${CNAB_OUTPUT_DIR}/connstr"'
+
+upgrade:
+  - exec:
+      description: "Upgrade database"
+      command: bash
+      flags:
+        c: '"echo \"Upgrading database...\" && echo \"db://localhost:5432/testdb-upgraded\" > ${CNAB_OUTPUT_DIR}/connstr"'
+
+uninstall:
+  - exec:
+      description: "Uninstall database"
+      command: bash
+      flags:
+        c: '"echo \"Uninstalling database...\""'

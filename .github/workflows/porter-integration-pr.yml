@@ -51,6 +51,11 @@ jobs:
     uses: ./.github/workflows/integ-reuseable-workflow.yml
     with:
       test_name: dependenciesv2_test
+  dependency_graph_integration_test:
+    name: Dependency Graph Integration Test
+    uses: ./.github/workflows/integ-reuseable-workflow.yml
+    with:
+      test_name: dependency_graph_test
   driver_integration_test:
     name: Driver Integration Test
     uses: ./.github/workflows/integ-reuseable-workflow.yml

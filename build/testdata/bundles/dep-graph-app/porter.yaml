@@ -1,0 +1,40 @@
+schemaVersion: 1.0.1
+name: dep-graph-app
+version: 0.1.0
+description: "Test app bundle that depends on database bundle"
+registry: localhost:5000
+
+mixins:
+  - exec
+
+dependencies:
+  requires:
+    - name: database
+      bundle:
+        reference: localhost:5000/dep-graph-db:v0.1.0
+
+parameters:
+  - name: db-connection
+    type: string
+    description: "Database connection string from dependency"
+
+install:
+  - exec:
+      description: "Install app with database connection"
+      command: bash
+      flags:
+        c: '"echo \"Installing app...\" && echo \"Database connection: {{ bundle.parameters.db-connection }}\" && [ \"{{ bundle.parameters.db-connection }}\" = \"db://localhost:5432/testdb\" ] && echo \"SUCCESS: Received correct database connection string\" || (echo \"FAIL: Expected db://localhost:5432/testdb but got {{ bundle.parameters.db-connection }}\" && exit 1)"'
+
+upgrade:
+  - exec:
+      description: "Upgrade app"
+      command: bash
+      flags:
+        c: '"echo \"Upgrading app...\" && echo \"Database connection: {{ bundle.parameters.db-connection }}\" && [ \"{{ bundle.parameters.db-connection }}\" = \"db://localhost:5432/testdb-upgraded\" ] && echo \"SUCCESS: Received correct upgraded database connection string\" || (echo \"FAIL: Expected db://localhost:5432/testdb-upgraded but got {{ bundle.parameters.db-connection }}\" && exit 1)"'
+
+uninstall:
+  - exec:
+      description: "Uninstall app"
+      command: bash
+      flags:
+        c: '"echo \"Uninstalling app...\""'

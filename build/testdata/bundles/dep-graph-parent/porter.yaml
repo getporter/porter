@@ -1,0 +1,40 @@
+schemaVersion: 1.0.1
+name: dep-graph-parent
+version: 0.1.0
+description: "Test parent bundle with cross-dependency output references"
+registry: localhost:5000
+
+mixins:
+  - exec
+
+dependencies:
+  requires:
+    - name: database
+      bundle:
+        reference: localhost:5000/dep-graph-db:v0.1.0
+    - name: app
+      bundle:
+        reference: localhost:5000/dep-graph-app:v0.1.0
+      parameters:
+        db-connection: ${bundle.dependencies.database.outputs.connstr}
+
+install:
+  - exec:
+      description: "Install parent"
+      command: bash
+      flags:
+        c: '"echo \"Parent bundle installed successfully\""'
+
+upgrade:
+  - exec:
+      description: "Upgrade parent"
+      command: bash
+      flags:
+        c: '"echo \"Parent bundle upgraded successfully\""'
+
+uninstall:
+  - exec:
+      description: "Uninstall parent"
+      command: bash
+      flags:
+        c: '"echo \"Parent bundle uninstalled successfully\""'
