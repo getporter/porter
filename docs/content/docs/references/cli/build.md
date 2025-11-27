@@ -38,7 +38,7 @@ porter build [flags]
 
 ```
       --build-arg stringArray       Set build arguments in the template Dockerfile (format: NAME=VALUE). May be specified multiple times. Max length is 5,000 characters.
-      --build-context stringArray   Define additional build context with specified contents (format: NAME=PATH). May be specified multiple times.
+      --build-context stringArray   Define additional build context with specified contents (format: NAME=PATH). May be specified multiple times. Porter automatically provides a 'userfiles' named context pointing to your bundle directory.
       --builder string              Set the name of the buildkit builder to use.
       --cache-from stringArray      Add cache source images to the build cache. May be specified multiple times.
       --cache-to stringArray        Add cache target images to the build cache.

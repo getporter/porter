@@ -3,6 +3,7 @@
 package smoke
 
 import (
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -16,11 +17,52 @@ import (
 
 // Test desired state workflows used by the porter operator
 func TestDesiredState(t *testing.T) {
+	testcases := []struct {
+		name                 string
+		enableOptimizedBuild bool
+	}{
+		{name: "default build", enableOptimizedBuild: false},
+		{name: "optimized build", enableOptimizedBuild: true},
+	}
+
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			runDesiredStateTest(t, tc.enableOptimizedBuild)
+		})
+	}
+}
+
+func runDesiredStateTest(t *testing.T, enableOptimizedBuild bool) {
 	// I am always using require, so that we stop immediately upon an error
 	// A long test is hard to debug when it fails in the middle and keeps going
 	test, err := tester.NewTest(t)
 	defer test.Close()
 	require.NoError(t, err, "test setup failed")
+
+	// Enable optimized build if requested
+	if enableOptimizedBuild {
+		os.Setenv("PORTER_EXPERIMENTAL", "optimized-bundle-build")
+		defer os.Unsetenv("PORTER_EXPERIMENTAL")
+
+		// Switch mybuns to use the optimized Dockerfile
+		mybunsYaml := filepath.Join(test.RepoRoot, "tests/testdata/mybuns/porter.yaml")
+		originalDockerfile := ""
+		test.EditYaml(mybunsYaml, func(yq *yaml.Editor) error {
+			val, err := yq.GetValue("dockerfile")
+			if err == nil {
+				originalDockerfile = val
+			}
+			return yq.SetValue("dockerfile", "Dockerfile-optimized.tmpl")
+		})
+		defer func() {
+			if originalDockerfile != "" {
+				test.EditYaml(mybunsYaml, func(yq *yaml.Editor) error {
+					return yq.SetValue("dockerfile", originalDockerfile)
+				})
+			}
+		}()
+	}
 
 	test.PrepareTestBundle()
 	test.Chdir(test.TestDir)
