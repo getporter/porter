@@ -556,7 +556,7 @@ func chmodRecursive(name string, mode os.FileMode) error {
 
 // Run integration tests (slow).
 func TestIntegration() {
-	mg.Deps(tests.EnsureTestCluster, copySchema, TryRegisterLocalHostAlias, BuildTestMixin, BuildTestPlugin, EnsureCosign, EnsureNotation)
+	mg.Deps(copySchema, TryRegisterLocalHostAlias, docker.RestartDockerRegistry, BuildTestMixin, BuildTestPlugin, EnsureCosign, EnsureNotation)
 
 	var run string
 	runTest := os.Getenv("PORTER_RUN_TEST")
