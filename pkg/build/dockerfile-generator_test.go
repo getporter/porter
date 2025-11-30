@@ -370,3 +370,68 @@ func TestPorter_GenerateDockerfile_WithExperimentalFlagFullControlDockerfile_Doc
 
 	require.EqualError(t, err, "error reading the Dockerfile: the Dockerfile specified in the manifest doesn't exist: \"this-file-does-not-exist.dockerfile\"")
 }
+
+func TestPorter_buildDockerfile_WithOptimizedBuild(t *testing.T) {
+	t.Parallel()
+
+	c := config.NewTestConfig(t)
+	c.Data.BuildDriver = config.BuildDriverBuildkit
+
+	// Enable the optimized build experimental feature
+	c.SetExperimentalFlags(experimental.FlagOptimizedBundleBuild)
+
+	tmpl := templates.NewTemplates(c.Config)
+	configTpl, err := tmpl.GetManifest()
+	require.Nil(t, err)
+	require.NoError(t, c.TestContext.AddTestFileContents(configTpl, config.Name))
+
+	m, err := manifest.LoadManifestFrom(context.Background(), c.Config, config.Name)
+	require.NoError(t, err, "could not load manifest")
+
+	// Add another mixin to ensure we are consistently sorting the results
+	m.Mixins = append(m.Mixins, manifest.MixinDeclaration{Name: "testmixin"})
+
+	mp := mixin.NewTestMixinProvider()
+	g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
+	gotlines, err := g.buildDockerfile(context.Background())
+	require.NoError(t, err)
+	gotDockerfile := strings.Join(gotlines, "\n")
+
+	wantDockerfilePath := "testdata/buildkit-optimized.Dockerfile"
+	test.CompareGoldenFile(t, wantDockerfilePath, gotDockerfile)
+}
+
+func TestPorter_buildCustomDockerfile_WithOptimizedBuild(t *testing.T) {
+	t.Parallel()
+
+	c := config.NewTestConfig(t)
+
+	// Enable the optimized build experimental feature
+	c.SetExperimentalFlags(experimental.FlagOptimizedBundleBuild)
+
+	tmpl := templates.NewTemplates(c.Config)
+	configTpl, err := tmpl.GetManifest()
+	require.Nil(t, err)
+	require.NoError(t, c.TestContext.AddTestFileContents(configTpl, config.Name))
+
+	m, err := manifest.LoadManifestFrom(context.Background(), c.Config, config.Name)
+	require.NoError(t, err, "could not load manifest")
+
+	// Use a custom dockerfile template
+	m.Dockerfile = "Dockerfile.template"
+	customFrom := `FROM ubuntu:latest
+# stuff
+# PORTER_INIT
+COPY mybin /cnab/app/
+
+`
+	err = c.TestContext.AddTestFileContents([]byte(customFrom), "Dockerfile.template")
+	require.NoError(t, err)
+
+	mp := mixin.NewTestMixinProvider()
+	g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
+	gotlines, err := g.buildDockerfile(context.Background())
+
+	require.NoError(t, err)
+	test.CompareGoldenFile(t, "testdata/custom-dockerfile-optimized-expected-output.Dockerfile", strings.Join(gotlines, "\n"))
+}
