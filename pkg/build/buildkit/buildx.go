@@ -150,8 +150,13 @@ func (b *Builder) BuildBundleImage(ctx context.Context, manifest *manifest.Manif
 
 	// Use optimized build context when feature flag is enabled
 	if b.IsFeatureEnabled(experimental.FlagOptimizedBundleBuild) {
+		// Validate that user hasn't defined a "porter-internal-userfiles" named context
+		if _, exists := buildContexts["porter-internal-userfiles"]; exists {
+			return span.Error(fmt.Errorf("the named context 'porter-internal-userfiles' is reserved by Porter when using the optimized-bundle-build experimental feature; please rename your build context"))
+		}
+
 		// Build from .cnab directory as context, add parent dir as named context for user files
-		namedContexts["userfiles"] = buildx.NamedContext{Path: b.Getwd()}
+		namedContexts["porter-internal-userfiles"] = buildx.NamedContext{Path: b.Getwd()}
 		contextPath = filepath.Join(b.Getwd(), build.LOCAL_CNAB)
 	} else {
 		// Legacy behavior: build from project root

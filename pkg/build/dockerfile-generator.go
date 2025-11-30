@@ -168,10 +168,10 @@ func (g *DockerfileGenerator) getBaseDockerfile(ctx context.Context) ([]string, 
 
 func (g *DockerfileGenerator) buildPorterSection() []string {
 	if g.IsFeatureEnabled(experimental.FlagOptimizedBundleBuild) {
-		// Optimized build: Copy user files from the userfiles named context
+		// Optimized build: Copy user files from the porter-internal-userfiles named context
 		copyUserFiles := "COPY . ${BUNDLE_DIR}"
 		if g.GetBuildDriver() == config.BuildDriverBuildkit {
-			copyUserFiles = "COPY --from=userfiles --link . ${BUNDLE_DIR}/"
+			copyUserFiles = "COPY --from=porter-internal-userfiles --link . ${BUNDLE_DIR}/"
 		}
 		return []string{
 			// Copy user files from the bundle source directory (excludes .cnab and porter.yaml via .dockerignore)

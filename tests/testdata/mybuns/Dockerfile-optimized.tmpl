@@ -13,8 +13,8 @@ ENV USERNAME=root
 # PORTER_MIXINS
 
 # Use the BUNDLE_DIR build argument to copy files into the bundle
-# This version uses the userfiles named context for optimized builds
-COPY --from=userfiles --link . ${BUNDLE_DIR}
+# This version uses the porter-internal-userfiles named context for optimized builds
+COPY --from=porter-internal-userfiles --link . ${BUNDLE_DIR}
 
 ARG CACHEBUST
 ARG CUSTOM_APP_VERSION

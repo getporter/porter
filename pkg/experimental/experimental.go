@@ -11,7 +11,7 @@ const (
 	FullControlDockerfile = "full-control-dockerfile"
 
 	// OptimizedBundleBuild is the name of the experimental feature flag for optimized bundle builds
-	// When enabled, uses .cnab directory as build context with userfiles named context for 54% smaller images
+	// When enabled, uses .cnab directory as build context with porter-internal-userfiles named context for 54% smaller images
 	OptimizedBundleBuild = "optimized-bundle-build"
 )
 

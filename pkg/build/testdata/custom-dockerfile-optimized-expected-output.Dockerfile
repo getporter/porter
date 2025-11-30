@@ -10,7 +10,7 @@ COPY mybin /cnab/app/
 
 # exec mixin has no buildtime dependencies
 
-COPY --from=userfiles --link . ${BUNDLE_DIR}/
+COPY --from=porter-internal-userfiles --link . ${BUNDLE_DIR}/
 COPY --link --chown=${BUNDLE_UID}:${BUNDLE_GID} --chmod=775 . /cnab
 USER ${BUNDLE_UID}
 WORKDIR ${BUNDLE_DIR}

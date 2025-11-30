@@ -35,8 +35,8 @@ RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/
 # PORTER_MIXINS
 
 # Copy user files from the bundle source directory into the bundle's working directory
-# Porter provides a 'userfiles' named build context that points to your bundle directory
-COPY --from=userfiles --link . ${BUNDLE_DIR}
+# Porter provides a 'porter-internal-userfiles' named build context that points to your bundle directory
+COPY --from=porter-internal-userfiles --link . ${BUNDLE_DIR}
 ```
 
 Add the following line to your **porter.yaml** file to instruct porter to use the template, instead of generating one from scratch:
@@ -74,8 +74,8 @@ experimental = ["optimized-bundle-build"]
 
 With this flag enabled:
 - Build context: The `.cnab` directory (generated during the build)
-- Your bundle's source files are made available through a named build context called `userfiles`
-- User files are copied with `COPY --from=userfiles` to avoid duplication
+- Your bundle's source files are made available through a named build context called `porter-internal-userfiles`
+- User files are copied with `COPY --from=porter-internal-userfiles` to avoid duplication
 - Permissions are set during COPY using `--chown` and `--chmod` flags
 - Eliminates redundant RUN commands and duplicate layers
 
@@ -85,28 +85,28 @@ With this flag enabled:
 - More efficient builds
 
 **Migration Required:**
-If you have a custom Dockerfile, you need to update it to use the `userfiles` named context:
+If you have a custom Dockerfile, you need to update it to use the `porter-internal-userfiles` named context:
 
 ```diff
 - COPY --link . ${BUNDLE_DIR}
-+ COPY --from=userfiles --link . ${BUNDLE_DIR}
++ COPY --from=porter-internal-userfiles --link . ${BUNDLE_DIR}
 ```
 
 ## Copying Files from Your Bundle Directory
 
 ### With Optimized Build (Experimental)
 
-When using the `optimized-bundle-build` feature flag, copy files from the `userfiles` named context:
+When using the `optimized-bundle-build` feature flag, copy files from the `porter-internal-userfiles` named context:
 
 ```Dockerfile
 # Copy all user files (recommended)
-COPY --from=userfiles --link . ${BUNDLE_DIR}
+COPY --from=porter-internal-userfiles --link . ${BUNDLE_DIR}
 
 # Copy a specific file
-COPY --from=userfiles --link myconfig.yaml /etc/app/config.yaml
+COPY --from=porter-internal-userfiles --link myconfig.yaml /etc/app/config.yaml
 
 # Copy a directory
-COPY --from=userfiles --link scripts/ ${BUNDLE_DIR}/scripts/
+COPY --from=porter-internal-userfiles --link scripts/ ${BUNDLE_DIR}/scripts/
 ```
 
 Files excluded by `.dockerignore` in your bundle directory will not be copied.
@@ -277,8 +277,8 @@ We strongly recommend that you always use this variable and do not copy files in
 If you do, you are responsible for setting the file permissions so that the bundle's user ([BUNDLE_USER](#bundle_user)) and the bundle's group (root) have the same permissions.
 
 ```Dockerfile
-# Copy files from your bundle directory using the userfiles named context
-COPY --from=userfiles --link . ${BUNDLE_DIR}
+# Copy files from your bundle directory using the porter-internal-userfiles named context
+COPY --from=porter-internal-userfiles --link . ${BUNDLE_DIR}
 ```
 
 ## See Also
