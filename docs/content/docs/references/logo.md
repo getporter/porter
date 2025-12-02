@@ -27,7 +27,7 @@ Here are some hints on how to use the logo and Porter brand and ensure that the
 colors and font are consistent, the logo does not look blurry, and of course
 everything looks darn cute.
 
-![example images of the Porter brand: Abril font, twitter card, color palette, badge, cat full, logo vertical stack, scaling the icon, logo horizontal](https://raw.githubusercontent.com/getporter/community/main/art/styleguide/overview.png)
+![example images of the Porter brand: Abril font, social media card, color palette, badge, cat full, logo vertical stack, scaling the icon, logo horizontal](https://raw.githubusercontent.com/getporter/community/main/art/styleguide/overview.png)
 
 All of our art assets are in our [community repository in the art/][art] directory.
 That's the best place to get a copy of any picture that you need to work with.
