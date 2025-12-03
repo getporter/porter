@@ -15,7 +15,7 @@ concurrency:
   cancel-in-progress: false
 permissions:
   contents: write
-  packages: read
+  packages: write
 
 jobs:
   build_pipelinesrelease_template:
