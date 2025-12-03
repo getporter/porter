@@ -24,10 +24,6 @@ dependencies:
         mysql-user: wordpress
         namespace: wordpress
 
-credentials:
-- name: kubeconfig
-  path: /home/nonroot/.kube/config
-
 parameters:
 - name: wordpress-name
   type: string
