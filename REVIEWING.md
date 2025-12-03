@@ -124,7 +124,7 @@ of Porter. When you are asked to cut a new release, here is the process:
    - Email the [mailing list](https://porter.sh/mailing-list) to announce the release. In your email, call out any breaking or notable changes.
    - Post a message in [Porter's slack channel](https://porter.sh/community/#slack).
 1. If there are any issues fixed in the release and someone is waiting for the fix, comment on the issue to let them know and link to the release.
-1. If the release contains new features, it should be announced through a [blog](https://porter.sh/blog/) post and on Porter's twitter account.
+1. If the release contains new features, it should be announced through a [blog](https://porter.sh/blog/) post.
 
 [maintainers]: https://github.com/orgs/getporter/teams/maintainers
 [admins]: https://github.com/orgs/getporter/teams/admins
