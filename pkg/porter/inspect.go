@@ -63,11 +63,14 @@ func generateInspectableBundle(ctx context.Context, bundleRef cnab.BundleReferen
 	}
 	ib.InvocationImages, ib.Images = handleInspectRelocate(bundleRef)
 
-	// Stub implementation: populate dependencies when flag is set
-	if opts.ShowDependencies {
-		// Phase 1: Empty dependencies list
-		// Phase 2+ will populate this with actual dependency tree
-		ib.Dependencies = []InspectableDependency{}
+	// Build dependency tree when flag is set
+	if opts.ShowDependencies && (bundleRef.Definition.HasDependenciesV1() || bundleRef.Definition.HasDependenciesV2()) {
+		builder := NewDependencyTreeBuilder(opts.MaxDependencyDepth)
+		deps, err := builder.BuildDependencyTree(ctx, bundleRef.Definition)
+		if err != nil {
+			return nil, fmt.Errorf("failed to build dependency tree: %w", err)
+		}
+		ib.Dependencies = deps
 	}
 
 	return ib, nil
@@ -127,6 +130,10 @@ func (p *Porter) printBundleInspectTable(bun *InspectableBundle) error {
 	if err != nil {
 		return err
 	}
+	err = p.printDependenciesInspectBlock(bun)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -177,4 +184,49 @@ func (p *Porter) printImagesInspectTable(bun *InspectableBundle) error {
 			return []string{pi.Name, pi.ImageType, pi.Image.Image, pi.Digest, pi.Original}
 		}
 	return printer.PrintTable(p.Out, bun.Images, printImageRow, "Name", "Type", "Image", "Digest", "Original Image")
+}
+
+func (p *Porter) printDependenciesInspectBlock(bun *InspectableBundle) error {
+	if len(bun.Dependencies) == 0 {
+		return nil
+	}
+
+	fmt.Fprintln(p.Out, "Dependencies:")
+	err := p.printDependenciesInspectTable(bun)
+	if err != nil {
+		return fmt.Errorf("unable to print dependencies table: %w", err)
+	}
+	fmt.Fprintln(p.Out, "") // force a blank line after this block
+
+	return nil
+}
+
+func (p *Porter) printDependenciesInspectTable(bun *InspectableBundle) error {
+	// Flatten the tree for table display
+	flatDeps := flattenDependencyTree(bun.Dependencies)
+
+	printDependencyRow :=
+		func(v interface{}) []string {
+			dep, ok := v.(InspectableDependency)
+			if !ok {
+				return nil
+			}
+
+			// Add indentation based on depth
+			indent := ""
+			for i := 0; i < dep.Depth; i++ {
+				indent += "  "
+			}
+			alias := indent + dep.Alias
+
+			// Format sharing info
+			sharing := ""
+			if dep.SharingMode && dep.SharingGroup != "" {
+				sharing = fmt.Sprintf("[shared:%s]", dep.SharingGroup)
+			}
+
+			return []string{alias, dep.Reference, dep.Version, sharing}
+		}
+
+	return printer.PrintTable(p.Out, flatDeps, printDependencyRow, "Alias", "Reference", "Version", "Sharing")
 }
