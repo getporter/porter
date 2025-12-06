@@ -15,6 +15,20 @@ type InspectableBundle struct {
 	Version          string                     `json:"version" yaml:"version"`
 	InvocationImages []PrintableInvocationImage `json:"invocationImages" yaml:"invocationImages"`
 	Images           []PrintableImage           `json:"images,omitempty" yaml:"images,omitempty"`
+	Dependencies     []InspectableDependency    `json:"dependencies,omitempty" yaml:"dependencies,omitempty"`
+}
+
+type InspectableDependency struct {
+	Alias        string                  `json:"alias" yaml:"alias"`
+	Reference    string                  `json:"reference" yaml:"reference"`
+	Version      string                  `json:"version,omitempty" yaml:"version,omitempty"`
+	Depth        int                     `json:"depth" yaml:"depth"`
+	SharingMode  bool                    `json:"sharingMode,omitempty" yaml:"sharingMode,omitempty"`
+	SharingGroup string                  `json:"sharingGroup,omitempty" yaml:"sharingGroup,omitempty"`
+	Parameters   map[string]string       `json:"parameters,omitempty" yaml:"parameters,omitempty"`
+	Credentials  map[string]string       `json:"credentials,omitempty" yaml:"credentials,omitempty"`
+	Outputs      map[string]string       `json:"outputs,omitempty" yaml:"outputs,omitempty"`
+	Dependencies []InspectableDependency `json:"dependencies,omitempty" yaml:"dependencies,omitempty"`
 }
 
 type PrintableInvocationImage struct {
@@ -34,20 +48,28 @@ func (p *Porter) Inspect(ctx context.Context, o ExplainOpts) error {
 		return err
 	}
 
-	ib, err := generateInspectableBundle(bundleRef)
+	ib, err := generateInspectableBundle(ctx, bundleRef, o)
 	if err != nil {
 		return fmt.Errorf("unable to inspect bundle: %w", err)
 	}
 	return p.printBundleInspect(o, ib)
 }
 
-func generateInspectableBundle(bundleRef cnab.BundleReference) (*InspectableBundle, error) {
+func generateInspectableBundle(ctx context.Context, bundleRef cnab.BundleReference, opts ExplainOpts) (*InspectableBundle, error) {
 	ib := &InspectableBundle{
 		Name:        bundleRef.Definition.Name,
 		Description: bundleRef.Definition.Description,
 		Version:     bundleRef.Definition.Version,
 	}
 	ib.InvocationImages, ib.Images = handleInspectRelocate(bundleRef)
+
+	// Stub implementation: populate dependencies when flag is set
+	if opts.ShowDependencies {
+		// Phase 1: Empty dependencies list
+		// Phase 2+ will populate this with actual dependency tree
+		ib.Dependencies = []InspectableDependency{}
+	}
+
 	return ib, nil
 }
 

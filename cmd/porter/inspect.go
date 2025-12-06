@@ -32,6 +32,10 @@ like parameters, credentials, outputs and custom actions available.
 	addBundleDefinitionFlags(f, &opts.BundleDefinitionOptions)
 	f.StringVarP(&opts.RawFormat, "output", "o", "plaintext",
 		"Specify an output format.  Allowed values: plaintext, json, yaml")
+	f.BoolVar(&opts.ShowDependencies, "show-dependencies", false,
+		"Show the full dependency tree of the bundle")
+	f.IntVar(&opts.MaxDependencyDepth, "max-dependency-depth", 10,
+		"Maximum depth to traverse when showing dependencies")
 	addBundlePullFlags(f, &opts.BundlePullOptions)
 	return &cmd
 }
