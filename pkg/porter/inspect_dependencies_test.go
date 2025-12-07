@@ -107,8 +107,14 @@ func TestBuildDependencyTree_V1(t *testing.T) {
 		},
 	}
 
-	builder := NewDependencyTreeBuilder(10)
-	deps, err := builder.BuildDependencyTree(context.Background(), bun)
+	p := NewTestPorter(t)
+	defer p.Close()
+
+	builder := NewDependencyTreeBuilder(p.Porter, 10)
+	opts := ExplainOpts{
+		MaxDependencyDepth: 10,
+	}
+	deps, err := builder.BuildDependencyTree(context.Background(), bun, opts)
 
 	require.NoError(t, err)
 	require.Len(t, deps, 1)
@@ -162,8 +168,14 @@ func TestBuildDependencyTree_V2(t *testing.T) {
 		},
 	}
 
-	builder := NewDependencyTreeBuilder(10)
-	deps, err := builder.BuildDependencyTree(context.Background(), bun)
+	p := NewTestPorter(t)
+	defer p.Close()
+
+	builder := NewDependencyTreeBuilder(p.Porter, 10)
+	opts := ExplainOpts{
+		MaxDependencyDepth: 10,
+	}
+	deps, err := builder.BuildDependencyTree(context.Background(), bun, opts)
 
 	require.NoError(t, err)
 	require.Len(t, deps, 1)
@@ -187,8 +199,14 @@ func TestBuildDependencyTree_NoDependencies(t *testing.T) {
 		},
 	}
 
-	builder := NewDependencyTreeBuilder(10)
-	deps, err := builder.BuildDependencyTree(context.Background(), bun)
+	p := NewTestPorter(t)
+	defer p.Close()
+
+	builder := NewDependencyTreeBuilder(p.Porter, 10)
+	opts := ExplainOpts{
+		MaxDependencyDepth: 10,
+	}
+	deps, err := builder.BuildDependencyTree(context.Background(), bun, opts)
 
 	require.NoError(t, err)
 	assert.Nil(t, deps)

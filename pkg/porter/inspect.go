@@ -48,14 +48,14 @@ func (p *Porter) Inspect(ctx context.Context, o ExplainOpts) error {
 		return err
 	}
 
-	ib, err := generateInspectableBundle(ctx, bundleRef, o)
+	ib, err := generateInspectableBundle(ctx, p, bundleRef, o)
 	if err != nil {
 		return fmt.Errorf("unable to inspect bundle: %w", err)
 	}
 	return p.printBundleInspect(o, ib)
 }
 
-func generateInspectableBundle(ctx context.Context, bundleRef cnab.BundleReference, opts ExplainOpts) (*InspectableBundle, error) {
+func generateInspectableBundle(ctx context.Context, p *Porter, bundleRef cnab.BundleReference, opts ExplainOpts) (*InspectableBundle, error) {
 	ib := &InspectableBundle{
 		Name:        bundleRef.Definition.Name,
 		Description: bundleRef.Definition.Description,
@@ -65,8 +65,8 @@ func generateInspectableBundle(ctx context.Context, bundleRef cnab.BundleReferen
 
 	// Build dependency tree when flag is set
 	if opts.ShowDependencies && (bundleRef.Definition.HasDependenciesV1() || bundleRef.Definition.HasDependenciesV2()) {
-		builder := NewDependencyTreeBuilder(opts.MaxDependencyDepth)
-		deps, err := builder.BuildDependencyTree(ctx, bundleRef.Definition)
+		builder := NewDependencyTreeBuilder(p, opts.MaxDependencyDepth)
+		deps, err := builder.BuildDependencyTree(ctx, bundleRef.Definition, opts)
 		if err != nil {
 			return nil, fmt.Errorf("failed to build dependency tree: %w", err)
 		}
