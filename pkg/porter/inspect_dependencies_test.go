@@ -211,3 +211,72 @@ func TestBuildDependencyTree_NoDependencies(t *testing.T) {
 	require.NoError(t, err)
 	assert.Nil(t, deps)
 }
+
+func TestHasFailedDependencies(t *testing.T) {
+	tests := []struct {
+		name     string
+		deps     []InspectableDependency
+		expected bool
+	}{
+		{
+			name:     "no dependencies",
+			deps:     []InspectableDependency{},
+			expected: false,
+		},
+		{
+			name: "all successful",
+			deps: []InspectableDependency{
+				{Alias: "dep1", ResolutionFailed: false},
+				{Alias: "dep2", ResolutionFailed: false},
+			},
+			expected: false,
+		},
+		{
+			name: "one failed",
+			deps: []InspectableDependency{
+				{Alias: "dep1", ResolutionFailed: true},
+				{Alias: "dep2", ResolutionFailed: false},
+			},
+			expected: true,
+		},
+		{
+			name: "nested failure",
+			deps: []InspectableDependency{
+				{
+					Alias:            "dep1",
+					ResolutionFailed: false,
+					Dependencies: []InspectableDependency{
+						{Alias: "dep2", ResolutionFailed: true},
+					},
+				},
+			},
+			expected: true,
+		},
+		{
+			name: "deeply nested failure",
+			deps: []InspectableDependency{
+				{
+					Alias:            "dep1",
+					ResolutionFailed: false,
+					Dependencies: []InspectableDependency{
+						{
+							Alias:            "dep2",
+							ResolutionFailed: false,
+							Dependencies: []InspectableDependency{
+								{Alias: "dep3", ResolutionFailed: true},
+							},
+						},
+					},
+				},
+			},
+			expected: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := hasFailedDependencies(tt.deps)
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}

@@ -82,7 +82,9 @@ func (b *DependencyTreeBuilder) buildTreeRecursive(
 		// Pull dependency bundle and recurse
 		childBun, err := b.pullDependencyBundle(ctx, lock.Reference, opts)
 		if err != nil {
-			fmt.Fprintf(b.porter.Err, "warning: failed to pull dependency %s: %v\n", lock.Reference, err)
+			// Mark dependency as failed and store error for verbose output
+			dep.ResolutionFailed = true
+			dep.ResolutionError = err.Error()
 			// Continue with empty nested dependencies
 			dep.Dependencies = []InspectableDependency{}
 		} else {
@@ -254,12 +256,14 @@ func cloneDependencyTree(deps []InspectableDependency) []InspectableDependency {
 	cloned := make([]InspectableDependency, len(deps))
 	for i, dep := range deps {
 		cloned[i] = InspectableDependency{
-			Alias:        dep.Alias,
-			Reference:    dep.Reference,
-			Version:      dep.Version,
-			Depth:        dep.Depth,
-			SharingMode:  dep.SharingMode,
-			SharingGroup: dep.SharingGroup,
+			Alias:            dep.Alias,
+			Reference:        dep.Reference,
+			Version:          dep.Version,
+			Depth:            dep.Depth,
+			SharingMode:      dep.SharingMode,
+			SharingGroup:     dep.SharingGroup,
+			ResolutionFailed: dep.ResolutionFailed,
+			ResolutionError:  dep.ResolutionError,
 		}
 
 		// Clone maps

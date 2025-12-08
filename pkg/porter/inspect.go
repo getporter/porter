@@ -19,16 +19,18 @@ type InspectableBundle struct {
 }
 
 type InspectableDependency struct {
-	Alias        string                  `json:"alias" yaml:"alias"`
-	Reference    string                  `json:"reference" yaml:"reference"`
-	Version      string                  `json:"version,omitempty" yaml:"version,omitempty"`
-	Depth        int                     `json:"depth" yaml:"depth"`
-	SharingMode  bool                    `json:"sharingMode,omitempty" yaml:"sharingMode,omitempty"`
-	SharingGroup string                  `json:"sharingGroup,omitempty" yaml:"sharingGroup,omitempty"`
-	Parameters   map[string]string       `json:"parameters,omitempty" yaml:"parameters,omitempty"`
-	Credentials  map[string]string       `json:"credentials,omitempty" yaml:"credentials,omitempty"`
-	Outputs      map[string]string       `json:"outputs,omitempty" yaml:"outputs,omitempty"`
-	Dependencies []InspectableDependency `json:"dependencies,omitempty" yaml:"dependencies,omitempty"`
+	Alias            string                  `json:"alias" yaml:"alias"`
+	Reference        string                  `json:"reference" yaml:"reference"`
+	Version          string                  `json:"version,omitempty" yaml:"version,omitempty"`
+	Depth            int                     `json:"depth" yaml:"depth"`
+	SharingMode      bool                    `json:"sharingMode,omitempty" yaml:"sharingMode,omitempty"`
+	SharingGroup     string                  `json:"sharingGroup,omitempty" yaml:"sharingGroup,omitempty"`
+	Parameters       map[string]string       `json:"parameters,omitempty" yaml:"parameters,omitempty"`
+	Credentials      map[string]string       `json:"credentials,omitempty" yaml:"credentials,omitempty"`
+	Outputs          map[string]string       `json:"outputs,omitempty" yaml:"outputs,omitempty"`
+	Dependencies     []InspectableDependency `json:"dependencies,omitempty" yaml:"dependencies,omitempty"`
+	ResolutionError  string                  `json:"resolutionError,omitempty" yaml:"resolutionError,omitempty"`
+	ResolutionFailed bool                    `json:"-" yaml:"-"`
 }
 
 type PrintableInvocationImage struct {
@@ -196,6 +198,13 @@ func (p *Porter) printDependenciesInspectBlock(bun *InspectableBundle) error {
 	if err != nil {
 		return fmt.Errorf("unable to print dependencies table: %w", err)
 	}
+
+	// Check if any dependencies failed to resolve
+	if hasFailedDependencies(bun.Dependencies) {
+		fmt.Fprintln(p.Out, "")
+		fmt.Fprintln(p.Out, "Some dependencies failed to resolve. Use --output json or --output yaml to see detailed error messages.")
+	}
+
 	fmt.Fprintln(p.Out, "") // force a blank line after this block
 
 	return nil
@@ -217,7 +226,13 @@ func (p *Porter) printDependenciesInspectTable(bun *InspectableBundle) error {
 			for i := 0; i < dep.Depth; i++ {
 				indent += "  "
 			}
-			alias := indent + dep.Alias
+
+			// Add warning emoji for failed dependencies
+			prefix := ""
+			if dep.ResolutionFailed {
+				prefix = "⚠️ "
+			}
+			alias := indent + prefix + dep.Alias
 
 			// Format sharing info
 			sharing := ""
@@ -229,4 +244,17 @@ func (p *Porter) printDependenciesInspectTable(bun *InspectableBundle) error {
 		}
 
 	return printer.PrintTable(p.Out, flatDeps, printDependencyRow, "Alias", "Reference", "Version", "Sharing")
+}
+
+// hasFailedDependencies recursively checks if any dependency in the tree failed to resolve
+func hasFailedDependencies(deps []InspectableDependency) bool {
+	for _, dep := range deps {
+		if dep.ResolutionFailed {
+			return true
+		}
+		if hasFailedDependencies(dep.Dependencies) {
+			return true
+		}
+	}
+	return false
 }

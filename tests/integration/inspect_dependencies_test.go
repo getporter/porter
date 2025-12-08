@@ -229,3 +229,39 @@ uninstall:
 	err = p.Publish(ctx, publishOpts)
 	require.NoError(p.T(), err)
 }
+
+// TestInspectDependenciesWithFailures verifies that failed dependencies are marked with warning emoji
+func TestInspectDependenciesWithFailures(t *testing.T) {
+	t.Parallel()
+	p := porter.NewTestPorter(t)
+	defer p.Close()
+	ctx := p.SetupIntegrationTest()
+
+	// Publish wordpress bundle (but NOT mysql, so wordpress's dependency will fail)
+	publishWordpressForInspect(ctx, p)
+
+	// Inspect wordpress with --show-dependencies (mysql dep should fail to resolve)
+	opts := porter.ExplainOpts{}
+	opts.Reference = "localhost:5000/wordpress:v0.1.4"
+	opts.ShowDependencies = true
+	opts.MaxDependencyDepth = 10
+
+	err := opts.Validate(nil, p.Context)
+	require.NoError(t, err)
+
+	// Capture output
+	output, err := p.GetInspectOutput(ctx, opts)
+	require.NoError(t, err)
+
+	// Verify that we have dependencies
+	require.NotNil(t, output.Dependencies)
+	require.Len(t, output.Dependencies, 1, "should have 1 direct dependency (mysql)")
+
+	// Verify mysql dependency failed
+	mysqlDep := output.Dependencies[0]
+	assert.Equal(t, "mysql", mysqlDep.Alias)
+	assert.Equal(t, "localhost:5000/mysql:v0.1.4", mysqlDep.Reference)
+	assert.True(t, mysqlDep.ResolutionFailed, "mysql dependency should have failed to resolve")
+	assert.NotEmpty(t, mysqlDep.ResolutionError, "should have error message")
+	assert.Len(t, mysqlDep.Dependencies, 0, "failed dependency should have no nested dependencies")
+}
