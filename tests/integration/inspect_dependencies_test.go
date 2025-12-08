@@ -177,6 +177,55 @@ func publishWordpressForInspect(ctx context.Context, p *porter.TestPorter) {
 	require.NoError(p.T(), err)
 }
 
+func publishWordpressWithMissingDependency(ctx context.Context, p *porter.TestPorter) {
+	bunDir, err := os.MkdirTemp("", "porter-wordpress-fail")
+	require.NoError(p.T(), err)
+	defer os.RemoveAll(bunDir)
+
+	// Create porter.yaml with non-existent mysql dependency
+	manifest := `schemaVersion: 1.0.1
+name: wordpress-fail-test
+version: 0.1.0
+registry: "localhost:5000"
+
+mixins:
+  - exec
+
+dependencies:
+  requires:
+    - name: mysql
+      bundle:
+        reference: localhost:5000/mysql-nonexistent:v99.99.99
+
+install:
+  - exec:
+      command: echo
+      arguments:
+        - "installed wordpress"
+
+uninstall:
+  - exec:
+      command: echo
+      arguments:
+        - "uninstalled wordpress"
+`
+
+	err = os.WriteFile(filepath.Join(bunDir, "porter.yaml"), []byte(manifest), 0644)
+	require.NoError(p.T(), err)
+
+	pwd := p.Getwd()
+	p.Chdir(bunDir)
+	defer p.Chdir(pwd)
+
+	publishOpts := porter.PublishOptions{}
+	publishOpts.Force = true
+	err = publishOpts.Validate(p.Config)
+	require.NoError(p.T(), err)
+
+	err = p.Publish(ctx, publishOpts)
+	require.NoError(p.T(), err)
+}
+
 func publishTopLevelBundle(ctx context.Context, p *porter.TestPorter) {
 	// Create a simple bundle that depends on wordpress
 	bunDir, err := os.MkdirTemp("", "porter-toplevel")
@@ -237,12 +286,12 @@ func TestInspectDependenciesWithFailures(t *testing.T) {
 	defer p.Close()
 	ctx := p.SetupIntegrationTest()
 
-	// Publish wordpress bundle (but NOT mysql, so wordpress's dependency will fail)
-	publishWordpressForInspect(ctx, p)
+	// Publish wordpress bundle with non-existent mysql dependency
+	publishWordpressWithMissingDependency(ctx, p)
 
 	// Inspect wordpress with --show-dependencies (mysql dep should fail to resolve)
 	opts := porter.ExplainOpts{}
-	opts.Reference = "localhost:5000/wordpress:v0.1.4"
+	opts.Reference = "localhost:5000/wordpress-fail-test:v0.1.0"
 	opts.ShowDependencies = true
 	opts.MaxDependencyDepth = 10
 
@@ -260,7 +309,7 @@ func TestInspectDependenciesWithFailures(t *testing.T) {
 	// Verify mysql dependency failed
 	mysqlDep := output.Dependencies[0]
 	assert.Equal(t, "mysql", mysqlDep.Alias)
-	assert.Equal(t, "localhost:5000/mysql:v0.1.4", mysqlDep.Reference)
+	assert.Equal(t, "localhost:5000/mysql-nonexistent:v99.99.99", mysqlDep.Reference)
 	assert.True(t, mysqlDep.ResolutionFailed, "mysql dependency should have failed to resolve")
 	assert.NotEmpty(t, mysqlDep.ResolutionError, "should have error message")
 	assert.Len(t, mysqlDep.Dependencies, 0, "failed dependency should have no nested dependencies")
