@@ -21,6 +21,8 @@ These are the members of the [maintainers team](https://github.com/orgs/getporte
     * Porter Operator Lead
 * [Kim Christensen](https://github.com/kichristensen) [SimCorp]
     * Porter Core
+* [David Gannon](https://github.com/dgannon991) [CACI]
+    * Porter Core
 
 ## Emeritus Maintainers
 
