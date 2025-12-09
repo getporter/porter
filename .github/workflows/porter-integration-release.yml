@@ -68,6 +68,12 @@ jobs:
     with:
       test_name: install_test
       registry: ${{inputs.registry}}
+  inspect_dependencies_integration_test:
+    name: Inspect Dependencies Integration Test
+    uses: getporter/porter/.github/workflows/integ-reuseable-workflow.yml@main
+    with:
+      test_name: inspect_dependencies_test
+      registry: ${{inputs.registry}}
   invoke_integration_test:
     name: Invoke Integration Test
     uses: getporter/porter/.github/workflows/integ-reuseable-workflow.yml@main

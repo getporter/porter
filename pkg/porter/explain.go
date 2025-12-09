@@ -18,7 +18,9 @@ type ExplainOpts struct {
 	BundleReferenceOptions
 	printer.PrintOptions
 
-	Action string
+	Action               string
+	ShowDependencies     bool
+	MaxDependencyDepth   int
 }
 
 // PrintableBundle holds a subset of pertinent values to be explained from a bundle

@@ -15,6 +15,22 @@ type InspectableBundle struct {
 	Version          string                     `json:"version" yaml:"version"`
 	InvocationImages []PrintableInvocationImage `json:"invocationImages" yaml:"invocationImages"`
 	Images           []PrintableImage           `json:"images,omitempty" yaml:"images,omitempty"`
+	Dependencies     []InspectableDependency    `json:"dependencies,omitempty" yaml:"dependencies,omitempty"`
+}
+
+type InspectableDependency struct {
+	Alias            string                  `json:"alias" yaml:"alias"`
+	Reference        string                  `json:"reference" yaml:"reference"`
+	Version          string                  `json:"version,omitempty" yaml:"version,omitempty"`
+	Depth            int                     `json:"depth" yaml:"depth"`
+	SharingMode      bool                    `json:"sharingMode,omitempty" yaml:"sharingMode,omitempty"`
+	SharingGroup     string                  `json:"sharingGroup,omitempty" yaml:"sharingGroup,omitempty"`
+	Parameters       map[string]string       `json:"parameters,omitempty" yaml:"parameters,omitempty"`
+	Credentials      map[string]string       `json:"credentials,omitempty" yaml:"credentials,omitempty"`
+	Outputs          map[string]string       `json:"outputs,omitempty" yaml:"outputs,omitempty"`
+	Dependencies     []InspectableDependency `json:"dependencies,omitempty" yaml:"dependencies,omitempty"`
+	ResolutionError  string                  `json:"resolutionError,omitempty" yaml:"resolutionError,omitempty"`
+	ResolutionFailed bool                    `json:"-" yaml:"-"`
 }
 
 type PrintableInvocationImage struct {
@@ -34,20 +50,31 @@ func (p *Porter) Inspect(ctx context.Context, o ExplainOpts) error {
 		return err
 	}
 
-	ib, err := generateInspectableBundle(bundleRef)
+	ib, err := generateInspectableBundle(ctx, p, bundleRef, o)
 	if err != nil {
 		return fmt.Errorf("unable to inspect bundle: %w", err)
 	}
 	return p.printBundleInspect(o, ib)
 }
 
-func generateInspectableBundle(bundleRef cnab.BundleReference) (*InspectableBundle, error) {
+func generateInspectableBundle(ctx context.Context, p *Porter, bundleRef cnab.BundleReference, opts ExplainOpts) (*InspectableBundle, error) {
 	ib := &InspectableBundle{
 		Name:        bundleRef.Definition.Name,
 		Description: bundleRef.Definition.Description,
 		Version:     bundleRef.Definition.Version,
 	}
 	ib.InvocationImages, ib.Images = handleInspectRelocate(bundleRef)
+
+	// Build dependency tree when flag is set
+	if opts.ShowDependencies && (bundleRef.Definition.HasDependenciesV1() || bundleRef.Definition.HasDependenciesV2()) {
+		builder := NewDependencyTreeBuilder(p, opts.MaxDependencyDepth)
+		deps, err := builder.BuildDependencyTree(ctx, bundleRef.Definition, opts)
+		if err != nil {
+			return nil, fmt.Errorf("failed to build dependency tree: %w", err)
+		}
+		ib.Dependencies = deps
+	}
+
 	return ib, nil
 }
 
@@ -105,6 +132,10 @@ func (p *Porter) printBundleInspectTable(bun *InspectableBundle) error {
 	if err != nil {
 		return err
 	}
+	err = p.printDependenciesInspectBlock(bun)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -155,4 +186,75 @@ func (p *Porter) printImagesInspectTable(bun *InspectableBundle) error {
 			return []string{pi.Name, pi.ImageType, pi.Image.Image, pi.Digest, pi.Original}
 		}
 	return printer.PrintTable(p.Out, bun.Images, printImageRow, "Name", "Type", "Image", "Digest", "Original Image")
+}
+
+func (p *Porter) printDependenciesInspectBlock(bun *InspectableBundle) error {
+	if len(bun.Dependencies) == 0 {
+		return nil
+	}
+
+	fmt.Fprintln(p.Out, "Dependencies:")
+	err := p.printDependenciesInspectTable(bun)
+	if err != nil {
+		return fmt.Errorf("unable to print dependencies table: %w", err)
+	}
+
+	// Check if any dependencies failed to resolve
+	if hasFailedDependencies(bun.Dependencies) {
+		fmt.Fprintln(p.Out, "")
+		fmt.Fprintln(p.Out, "Some dependencies failed to resolve. Use --output json or --output yaml to see detailed error messages.")
+	}
+
+	fmt.Fprintln(p.Out, "") // force a blank line after this block
+
+	return nil
+}
+
+func (p *Porter) printDependenciesInspectTable(bun *InspectableBundle) error {
+	// Flatten the tree for table display
+	flatDeps := flattenDependencyTree(bun.Dependencies)
+
+	printDependencyRow :=
+		func(v interface{}) []string {
+			dep, ok := v.(InspectableDependency)
+			if !ok {
+				return nil
+			}
+
+			// Add indentation based on depth
+			indent := ""
+			for i := 0; i < dep.Depth; i++ {
+				indent += "  "
+			}
+
+			// Add warning emoji for failed dependencies
+			prefix := ""
+			if dep.ResolutionFailed {
+				prefix = "⚠️ "
+			}
+			alias := indent + prefix + dep.Alias
+
+			// Format sharing info
+			sharing := ""
+			if dep.SharingMode && dep.SharingGroup != "" {
+				sharing = fmt.Sprintf("[shared:%s]", dep.SharingGroup)
+			}
+
+			return []string{alias, dep.Reference, dep.Version, sharing}
+		}
+
+	return printer.PrintTable(p.Out, flatDeps, printDependencyRow, "Alias", "Reference", "Version", "Sharing")
+}
+
+// hasFailedDependencies recursively checks if any dependency in the tree failed to resolve
+func hasFailedDependencies(deps []InspectableDependency) bool {
+	for _, dep := range deps {
+		if dep.ResolutionFailed {
+			return true
+		}
+		if hasFailedDependencies(dep.Dependencies) {
+			return true
+		}
+	}
+	return false
 }

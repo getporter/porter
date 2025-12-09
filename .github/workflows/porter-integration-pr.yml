@@ -61,6 +61,11 @@ jobs:
     uses: ./.github/workflows/integ-reuseable-workflow.yml
     with:
       test_name: install_test
+  inspect_dependencies_integration_test:
+    name: Inspect Dependencies Integration Test
+    uses: ./.github/workflows/integ-reuseable-workflow.yml
+    with:
+      test_name: inspect_dependencies_test
   invoke_integration_test:
     name: Invoke Integration Test
     uses: ./.github/workflows/integ-reuseable-workflow.yml
