@@ -314,7 +314,9 @@ func (r *Registry) headRemote(ctx context.Context, refStr string, opts RegistryO
 	return remote.Head(ref, opts.toRemoteOptions()...)
 }
 
-// copyImageRemote wraps remote image copy operations
+// copyImageRemote copies an image from source to destination preserving the original digest.
+// Uses Puller/Pusher to copy the descriptor directly without reserializing, which maintains
+// the exact manifest bytes and thus the content digest.
 func (r *Registry) copyImageRemote(ctx context.Context, srcRefStr, dstRefStr string, opts RegistryOptions) error {
 	srcRef, err := name.ParseReference(srcRefStr)
 	if err != nil {
@@ -325,20 +327,28 @@ func (r *Registry) copyImageRemote(ctx context.Context, srcRefStr, dstRefStr str
 		return fmt.Errorf("invalid destination reference %s: %w", dstRefStr, err)
 	}
 
-	// Get the image from source
-	desc, err := remote.Get(srcRef, opts.toRemoteOptions()...)
+	remoteOpts := opts.toRemoteOptions()
+
+	// Create puller to fetch from source
+	puller, err := remote.NewPuller(remoteOpts...)
+	if err != nil {
+		return fmt.Errorf("failed to create puller: %w", err)
+	}
+
+	// Get the descriptor from source
+	desc, err := puller.Get(ctx, srcRef)
 	if err != nil {
 		return fmt.Errorf("failed to get source image: %w", err)
 	}
 
-	// Convert descriptor to image
-	img, err := desc.Image()
+	// Create pusher to write to destination
+	pusher, err := remote.NewPusher(remoteOpts...)
 	if err != nil {
-		return fmt.Errorf("failed to convert descriptor to image: %w", err)
+		return fmt.Errorf("failed to create pusher: %w", err)
 	}
 
-	// Write to destination
-	return remote.Write(dstRef, img, opts.toRemoteOptions()...)
+	// Push descriptor directly to preserve digest
+	return pusher.Push(ctx, dstRef, desc)
 }
 
 // GetCachedImage returns information about an image from local docker cache.
