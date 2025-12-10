@@ -21,7 +21,9 @@ import (
 	"github.com/docker/docker/api/types/image"
 	registrytypes "github.com/docker/docker/api/types/registry"
 	"github.com/docker/docker/pkg/jsonmessage"
-	"github.com/google/go-containerregistry/pkg/crane"
+	"github.com/google/go-containerregistry/pkg/name"
+	v1 "github.com/google/go-containerregistry/pkg/v1"
+	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/google/go-containerregistry/pkg/v1/remote/transport"
 	"github.com/moby/term"
 	"github.com/opencontainers/go-digest"
@@ -164,7 +166,7 @@ func (r *Registry) PushBundle(ctx context.Context, bundleRef cnab.BundleReferenc
 		return cnab.BundleReference{}, log.Errorf("error loading stamp from bundle: %w", err)
 	}
 	if stamp.PreserveTags {
-		err = preserveRelocatedImageTags(ctx, bundleRef, opts)
+		err = r.preserveRelocatedImageTags(ctx, bundleRef, opts)
 		if err != nil {
 			return cnab.BundleReference{}, log.Error(fmt.Errorf("error preserving tags on relocated images: %w", err))
 		}
@@ -283,6 +285,62 @@ func (r *Registry) displayEvent(ev remotes.FixupEvent) {
 	}
 }
 
+// Private helper methods for remote operations
+
+// listTagsRemote wraps remote.List with reference parsing and error handling
+func (r *Registry) listTagsRemote(ctx context.Context, repository string, opts RegistryOptions) ([]string, error) {
+	repo, err := name.NewRepository(repository)
+	if err != nil {
+		return nil, fmt.Errorf("invalid repository %s: %w", repository, err)
+	}
+	return remote.List(repo, opts.toRemoteOptions()...)
+}
+
+// getRemoteDescriptor wraps remote.Get with reference parsing
+func (r *Registry) getRemoteDescriptor(ctx context.Context, refStr string, opts RegistryOptions) (*remote.Descriptor, error) {
+	ref, err := name.ParseReference(refStr)
+	if err != nil {
+		return nil, fmt.Errorf("invalid reference %s: %w", refStr, err)
+	}
+	return remote.Get(ref, opts.toRemoteOptions()...)
+}
+
+// headRemote wraps remote.Head with reference parsing
+func (r *Registry) headRemote(ctx context.Context, refStr string, opts RegistryOptions) (*v1.Descriptor, error) {
+	ref, err := name.ParseReference(refStr)
+	if err != nil {
+		return nil, fmt.Errorf("invalid reference %s: %w", refStr, err)
+	}
+	return remote.Head(ref, opts.toRemoteOptions()...)
+}
+
+// copyImageRemote wraps remote image copy operations
+func (r *Registry) copyImageRemote(ctx context.Context, srcRefStr, dstRefStr string, opts RegistryOptions) error {
+	srcRef, err := name.ParseReference(srcRefStr)
+	if err != nil {
+		return fmt.Errorf("invalid source reference %s: %w", srcRefStr, err)
+	}
+	dstRef, err := name.ParseReference(dstRefStr)
+	if err != nil {
+		return fmt.Errorf("invalid destination reference %s: %w", dstRefStr, err)
+	}
+
+	// Get the image from source
+	desc, err := remote.Get(srcRef, opts.toRemoteOptions()...)
+	if err != nil {
+		return fmt.Errorf("failed to get source image: %w", err)
+	}
+
+	// Convert descriptor to image
+	img, err := desc.Image()
+	if err != nil {
+		return fmt.Errorf("failed to convert descriptor to image: %w", err)
+	}
+
+	// Write to destination
+	return remote.Write(dstRef, img, opts.toRemoteOptions()...)
+}
+
 // GetCachedImage returns information about an image from local docker cache.
 func (r *Registry) GetCachedImage(ctx context.Context, ref cnab.OCIReference) (ImageMetadata, error) {
 	image := ref.String()
@@ -311,13 +369,13 @@ func (r *Registry) GetCachedImage(ctx context.Context, ref cnab.OCIReference) (I
 }
 
 func (r *Registry) ListTags(ctx context.Context, ref cnab.OCIReference, opts RegistryOptions) ([]string, error) {
-	// Get the fully-qualified repository name, including docker.io (required by crane)
+	// Get the fully-qualified repository name, including docker.io
 	repository := ref.Named.Name()
 
 	_, span := tracing.StartSpan(ctx, attribute.String("repository", repository))
 	defer span.EndSpan()
 
-	tags, err := crane.ListTags(repository, opts.toCraneOptions()...)
+	tags, err := r.listTagsRemote(ctx, repository, opts)
 	if err != nil {
 		if notFoundErr := asNotFoundError(err, ref); notFoundErr != nil {
 			return nil, span.Error(notFoundErr)
@@ -334,13 +392,14 @@ func (r *Registry) GetBundleMetadata(ctx context.Context, ref cnab.OCIReference,
 	_, span := tracing.StartSpan(ctx, attribute.String("reference", ref.String()))
 	defer span.EndSpan()
 
-	bundleDigest, err := crane.Digest(ref.String(), opts.toCraneOptions()...)
+	desc, err := r.getRemoteDescriptor(ctx, ref.String(), opts)
 	if err != nil {
 		if notFoundErr := asNotFoundError(err, ref); notFoundErr != nil {
 			return BundleMetadata{}, span.Error(notFoundErr)
 		}
 		return BundleMetadata{}, span.Errorf("error retrieving bundle metadata for %s: %w", ref.String(), err)
 	}
+	bundleDigest := desc.Digest.String()
 
 	return BundleMetadata{
 		BundleReference: cnab.BundleReference{
@@ -371,7 +430,7 @@ func (r *Registry) GetImageMetadata(ctx context.Context, ref cnab.OCIReference, 
 	}
 
 	// Do a HEAD against the registry to retrieve image metadata without pulling the entire image contents
-	desc, err := crane.Head(ref.String(), opts.toCraneOptions()...)
+	desc, err := r.headRemote(ctx, ref.String(), opts)
 	if err != nil {
 		if notFoundErr := asNotFoundError(err, ref); notFoundErr != nil {
 			return ImageMetadata{}, span.Error(notFoundErr)
@@ -479,7 +538,7 @@ func GetInsecureRegistryTransport() *http.Transport {
 	return skipTLS
 }
 
-func preserveRelocatedImageTags(ctx context.Context, bundleRef cnab.BundleReference, opts RegistryOptions) error {
+func (r *Registry) preserveRelocatedImageTags(ctx context.Context, bundleRef cnab.BundleReference, opts RegistryOptions) error {
 	_, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
 
@@ -508,7 +567,7 @@ func preserveRelocatedImageTags(ctx context.Context, bundleRef cnab.BundleRefere
 
 			dstRef := fmt.Sprintf("%s/%s:%s", relocRef.Registry(), imageRef.Repository(), imageRef.Tag())
 			log.Debugf("Copying image %s to %s", relocRef, dstRef)
-			err = crane.Copy(relocRef.String(), dstRef, opts.toCraneOptions()...)
+			err = r.copyImageRemote(ctx, relocRef.String(), dstRef, opts)
 			if err != nil {
 				return log.Errorf("error copying image %s to %s: %w", relocRef, dstRef, err)
 			}

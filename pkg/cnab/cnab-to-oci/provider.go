@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"get.porter.sh/porter/pkg/cnab"
-	"github.com/google/go-containerregistry/pkg/crane"
+	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/opencontainers/go-digest"
 )
 
@@ -46,11 +46,13 @@ type RegistryOptions struct {
 	InsecureRegistry bool
 }
 
-func (o RegistryOptions) toCraneOptions() []crane.Option {
-	var result []crane.Option
+func (o RegistryOptions) toRemoteOptions() []remote.Option {
+	var result []remote.Option
 	if o.InsecureRegistry {
 		transport := GetInsecureRegistryTransport()
-		result = []crane.Option{crane.Insecure, crane.WithTransport(transport)}
+		result = []remote.Option{
+			remote.WithTransport(transport),
+		}
 	}
 	return result
 }
