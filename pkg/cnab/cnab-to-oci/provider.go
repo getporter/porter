@@ -5,6 +5,7 @@ import (
 
 	"get.porter.sh/porter/pkg/cnab"
 	"github.com/google/go-containerregistry/pkg/authn"
+	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/opencontainers/go-digest"
 )
@@ -45,6 +46,13 @@ type RegistryProvider interface {
 type RegistryOptions struct {
 	// InsecureRegistry allows connecting to an unsecured registry or one without verifiable certificates.
 	InsecureRegistry bool
+}
+
+func (o RegistryOptions) toNameOptions() []name.Option {
+	if o.InsecureRegistry {
+		return []name.Option{name.Insecure}
+	}
+	return nil
 }
 
 func (o RegistryOptions) toRemoteOptions() []remote.Option {

@@ -289,7 +289,7 @@ func (r *Registry) displayEvent(ev remotes.FixupEvent) {
 
 // listTagsRemote wraps remote.List with reference parsing and error handling
 func (r *Registry) listTagsRemote(ctx context.Context, repository string, opts RegistryOptions) ([]string, error) {
-	repo, err := name.NewRepository(repository)
+	repo, err := name.NewRepository(repository, opts.toNameOptions()...)
 	if err != nil {
 		return nil, fmt.Errorf("invalid repository %s: %w", repository, err)
 	}
@@ -298,7 +298,7 @@ func (r *Registry) listTagsRemote(ctx context.Context, repository string, opts R
 
 // getRemoteDescriptor wraps remote.Get with reference parsing
 func (r *Registry) getRemoteDescriptor(ctx context.Context, refStr string, opts RegistryOptions) (*remote.Descriptor, error) {
-	ref, err := name.ParseReference(refStr)
+	ref, err := name.ParseReference(refStr, opts.toNameOptions()...)
 	if err != nil {
 		return nil, fmt.Errorf("invalid reference %s: %w", refStr, err)
 	}
@@ -307,7 +307,7 @@ func (r *Registry) getRemoteDescriptor(ctx context.Context, refStr string, opts 
 
 // headRemote wraps remote.Head with reference parsing
 func (r *Registry) headRemote(ctx context.Context, refStr string, opts RegistryOptions) (*v1.Descriptor, error) {
-	ref, err := name.ParseReference(refStr)
+	ref, err := name.ParseReference(refStr, opts.toNameOptions()...)
 	if err != nil {
 		return nil, fmt.Errorf("invalid reference %s: %w", refStr, err)
 	}
@@ -318,11 +318,12 @@ func (r *Registry) headRemote(ctx context.Context, refStr string, opts RegistryO
 // Uses Puller/Pusher to copy the descriptor directly without reserializing, which maintains
 // the exact manifest bytes and thus the content digest.
 func (r *Registry) copyImageRemote(ctx context.Context, srcRefStr, dstRefStr string, opts RegistryOptions) error {
-	srcRef, err := name.ParseReference(srcRefStr)
+	nameOpts := opts.toNameOptions()
+	srcRef, err := name.ParseReference(srcRefStr, nameOpts...)
 	if err != nil {
 		return fmt.Errorf("invalid source reference %s: %w", srcRefStr, err)
 	}
-	dstRef, err := name.ParseReference(dstRefStr)
+	dstRef, err := name.ParseReference(dstRefStr, nameOpts...)
 	if err != nil {
 		return fmt.Errorf("invalid destination reference %s: %w", dstRefStr, err)
 	}
