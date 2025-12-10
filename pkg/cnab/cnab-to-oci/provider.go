@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"get.porter.sh/porter/pkg/cnab"
+	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/opencontainers/go-digest"
 )
@@ -47,13 +48,15 @@ type RegistryOptions struct {
 }
 
 func (o RegistryOptions) toRemoteOptions() []remote.Option {
-	var result []remote.Option
+	result := []remote.Option{
+		remote.WithAuthFromKeychain(authn.DefaultKeychain),
+	}
+
 	if o.InsecureRegistry {
 		transport := GetInsecureRegistryTransport()
-		result = []remote.Option{
-			remote.WithTransport(transport),
-		}
+		result = append(result, remote.WithTransport(transport))
 	}
+
 	return result
 }
 
