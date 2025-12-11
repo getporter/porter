@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"get.porter.sh/porter/pkg/cnab"
+	cnabtooci "get.porter.sh/porter/pkg/cnab/cnab-to-oci"
 	cnabprovider "get.porter.sh/porter/pkg/cnab/provider"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/manifest"
@@ -202,7 +203,11 @@ func (e *dependencyExecutioner) identifyDependencies(ctx context.Context) error 
 		// If we hit here, there is a bug somewhere
 		return span.Error(errors.New("identifyDependencies failed to load the bundle because no bundle was specified. Please report this bug to https://github.com/getporter/porter/issues/new/choose"))
 	}
-	locks, err := bun.ResolveDependencies(bun)
+
+	// Inject registry provider for dependency resolution
+	regOpts := cnabtooci.RegistryOptions{InsecureRegistry: e.parentOpts.InsecureRegistry}
+	eb := bun.WithRegistry(e.Resolver.Registry, regOpts)
+	locks, err := eb.ResolveDependencies(ctx, bun)
 	if err != nil {
 		return span.Error(err)
 	}

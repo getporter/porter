@@ -8,11 +8,13 @@ import (
 	"path"
 	"testing"
 
+	cnabtooci "get.porter.sh/porter/pkg/cnab/cnab-to-oci"
 	"get.porter.sh/porter/pkg/yaml"
 	"get.porter.sh/porter/tests"
 	"get.porter.sh/porter/tests/testdata"
 	"get.porter.sh/porter/tests/tester"
-	"github.com/google/go-containerregistry/pkg/crane"
+	"github.com/google/go-containerregistry/pkg/name"
+	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/stretchr/testify/require"
 )
 
@@ -63,8 +65,11 @@ func TestPublish_PreserveTags(t *testing.T) {
 	ref := fmt.Sprintf("%s/embeddedimg:v0.1.1", reg)
 	test.MakeTestBundle(testdata.EmbeddedImg, ref, tester.PreserveTags)
 
-	taggedDigest, err := crane.Digest(fmt.Sprintf("%s/alpine:3.20.3", reg), crane.Insecure)
+	nameRef, err := name.ParseReference(fmt.Sprintf("%s/alpine:3.20.3", reg), name.Insecure)
 	require.NoError(t, err)
+	desc, err := remote.Get(nameRef, remote.WithTransport(cnabtooci.GetInsecureRegistryTransport()))
+	require.NoError(t, err)
+	taggedDigest := desc.Digest.String()
 
 	// Confirm that the digest is the same
 	output, _ := test.RequirePorter("inspect", ref, "-o", "json", "--verbosity", "info")
@@ -89,11 +94,15 @@ func TestPublish_PreserveTagsChanged(t *testing.T) {
 
 	ref := fmt.Sprintf("%s/embeddedimg:v0.1.1", reg)
 	test.MakeTestBundle(testdata.EmbeddedImg, ref)
-	_, err = crane.Digest(fmt.Sprintf("%s/alpine:3.20.3", reg), crane.Insecure)
+	nameRef, err := name.ParseReference(fmt.Sprintf("%s/alpine:3.20.3", reg), name.Insecure)
+	require.NoError(t, err)
+	_, err = remote.Get(nameRef, remote.WithTransport(cnabtooci.GetInsecureRegistryTransport()))
 	require.Error(t, err)
 
 	ref = fmt.Sprintf("%s/embeddedimg:v0.1.2", reg)
 	test.MakeTestBundle(testdata.EmbeddedImg, ref, tester.PreserveTags)
-	_, err = crane.Digest(fmt.Sprintf("%s/alpine:3.20.3", reg), crane.Insecure)
+	nameRef, err = name.ParseReference(fmt.Sprintf("%s/alpine:3.20.3", reg), name.Insecure)
+	require.NoError(t, err)
+	_, err = remote.Get(nameRef, remote.WithTransport(cnabtooci.GetInsecureRegistryTransport()))
 	require.NoError(t, err)
 }

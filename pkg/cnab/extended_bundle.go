@@ -1,6 +1,7 @@
 package cnab
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"sort"
@@ -13,7 +14,6 @@ import (
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/cnabio/cnab-go/claim"
-	"github.com/google/go-containerregistry/pkg/crane"
 )
 
 const SupportedVersion = "1.0.0 || 1.1.0 || 1.2.0"
@@ -24,6 +24,16 @@ var DefaultSchemaVersion = semver.MustParse(string(BundleSchemaVersion()))
 // allowing quick type-safe access to custom extensions from the CNAB spec.
 type ExtendedBundle struct {
 	bundle.Bundle
+
+	// registry for accessing OCI registries when resolving dependencies
+	// Stored as interface{} to avoid circular dependency with cnab-to-oci package
+	registry interface{}
+	regOpts  interface{}
+}
+
+// registryListTags is an interface method to avoid circular dependencies
+type registryListTags interface {
+	ListTags(ctx context.Context, repo OCIReference, opts interface{}) ([]string, error)
 }
 
 type DependencyLock struct {
@@ -35,7 +45,14 @@ type DependencyLock struct {
 
 // NewBundle creates an ExtendedBundle from a given bundle.
 func NewBundle(bundle bundle.Bundle) ExtendedBundle {
-	return ExtendedBundle{bundle}
+	return ExtendedBundle{Bundle: bundle}
+}
+
+// WithRegistry sets the registry provider for dependency resolution.
+func (b ExtendedBundle) WithRegistry(registry interface{}, opts interface{}) ExtendedBundle {
+	b.registry = registry
+	b.regOpts = opts
+	return b
 }
 
 // LoadBundle from the specified filepath.
@@ -226,9 +243,9 @@ func (b ExtendedBundle) GetReferencedRegistries() ([]string, error) {
 	return regs, nil
 }
 
-func (b *ExtendedBundle) ResolveDependencies(bun ExtendedBundle) ([]DependencyLock, error) {
+func (b *ExtendedBundle) ResolveDependencies(ctx context.Context, bun ExtendedBundle) ([]DependencyLock, error) {
 	if bun.HasDependenciesV2() {
-		return b.ResolveSharedDeps(bun)
+		return b.ResolveSharedDeps(ctx, bun)
 	}
 
 	if !bun.HasDependenciesV1() {
@@ -244,7 +261,7 @@ func (b *ExtendedBundle) ResolveDependencies(bun ExtendedBundle) ([]DependencyLo
 
 	q := make([]DependencyLock, 0, len(orderedDeps))
 	for _, dep := range orderedDeps {
-		ref, err := b.ResolveVersion(dep.Name, dep)
+		ref, err := b.ResolveVersion(ctx, dep.Name, dep)
 		if err != nil {
 			return nil, err
 		}
@@ -261,7 +278,7 @@ func (b *ExtendedBundle) ResolveDependencies(bun ExtendedBundle) ([]DependencyLo
 }
 
 // ResolveSharedDeps only works with depsv2
-func (b *ExtendedBundle) ResolveSharedDeps(bun ExtendedBundle) ([]DependencyLock, error) {
+func (b *ExtendedBundle) ResolveSharedDeps(ctx context.Context, bun ExtendedBundle) ([]DependencyLock, error) {
 	v2, err := bun.ReadDependenciesV2()
 	if err != nil {
 		return nil, fmt.Errorf("error reading dependencies v2 for %s", bun.Name)
@@ -278,7 +295,7 @@ func (b *ExtendedBundle) ResolveSharedDeps(bun ExtendedBundle) ([]DependencyLock
 			return nil, fmt.Errorf("empty sharing mode, sharing mode boolean set to `true` to be active")
 		}
 
-		ref, err := b.ResolveVersionv2(d.Name, d)
+		ref, err := b.ResolveVersionv2(ctx, d.Name, d)
 		if err != nil {
 			return nil, err
 		}
@@ -295,7 +312,7 @@ func (b *ExtendedBundle) ResolveSharedDeps(bun ExtendedBundle) ([]DependencyLock
 }
 
 // ResolveVersion returns the bundle name, its version and any error.
-func (b *ExtendedBundle) ResolveVersion(name string, dep depsv1ext.Dependency) (OCIReference, error) {
+func (b *ExtendedBundle) ResolveVersion(ctx context.Context, name string, dep depsv1ext.Dependency) (OCIReference, error) {
 	ref, err := ParseOCIReference(dep.Bundle)
 	if err != nil {
 		return OCIReference{}, fmt.Errorf("error parsing dependency (%s) bundle %q as OCI reference: %w", name, dep.Bundle, err)
@@ -308,7 +325,7 @@ func (b *ExtendedBundle) ResolveVersion(name string, dep depsv1ext.Dependency) (
 			return ref, nil
 		}
 
-		tag, err := b.determineDefaultTag(dep)
+		tag, err := b.determineDefaultTag(ctx, dep)
 		if err != nil {
 			return OCIReference{}, err
 		}
@@ -319,8 +336,23 @@ func (b *ExtendedBundle) ResolveVersion(name string, dep depsv1ext.Dependency) (
 	return OCIReference{}, fmt.Errorf("not implemented: dependency version range specified for %s: %w", name, err)
 }
 
-func (b *ExtendedBundle) determineDefaultTag(dep depsv1ext.Dependency) (string, error) {
-	tags, err := crane.ListTags(dep.Bundle)
+func (b *ExtendedBundle) determineDefaultTag(ctx context.Context, dep depsv1ext.Dependency) (string, error) {
+	if b.registry == nil {
+		return "", fmt.Errorf("registry provider not set for dependency resolution")
+	}
+
+	ref, err := ParseOCIReference(dep.Bundle)
+	if err != nil {
+		return "", fmt.Errorf("error parsing bundle reference %s: %w", dep.Bundle, err)
+	}
+
+	// Type assert to access ListTags method
+	reg, ok := b.registry.(registryListTags)
+	if !ok {
+		return "", fmt.Errorf("registry does not implement ListTags method")
+	}
+
+	tags, err := reg.ListTags(ctx, ref, b.regOpts)
 	if err != nil {
 		return "", fmt.Errorf("error listing tags for %s: %w", dep.Bundle, err)
 	}
@@ -330,6 +362,17 @@ func (b *ExtendedBundle) determineDefaultTag(dep depsv1ext.Dependency) (string, 
 		allowPrereleases = true
 	}
 
+	return b.filterAndSelectTag(tags, allowPrereleases, dep.Bundle)
+}
+
+// BuildPrerequisiteInstallationName generates the name of a prerequisite dependency installation.
+func (b *ExtendedBundle) BuildPrerequisiteInstallationName(installation string, dependency string) string {
+	return fmt.Sprintf("%s-%s", installation, dependency)
+}
+
+// filterAndSelectTag filters tags and selects the best match.
+// Returns "latest" tag if found and no semver tags match, or highest semver version.
+func (b *ExtendedBundle) filterAndSelectTag(tags []string, allowPrereleases bool, bundleRef string) (string, error) {
 	var hasLatest bool
 	versions := make(semver.Collection, 0, len(tags))
 	for _, tag := range tags {
@@ -350,26 +393,19 @@ func (b *ExtendedBundle) determineDefaultTag(dep depsv1ext.Dependency) (string, 
 	if len(versions) == 0 {
 		if hasLatest {
 			return "latest", nil
-		} else {
-			return "", fmt.Errorf("no tag was specified for %s and none of the tags defined in the registry meet the criteria: semver formatted or 'latest'", dep.Bundle)
 		}
+		return "", fmt.Errorf("no tag was specified for %s and none of the tags defined in the registry meet the criteria: semver formatted or 'latest'", bundleRef)
 	}
 
 	sort.Sort(sort.Reverse(versions))
-
 	return versions[0].Original(), nil
-}
-
-// BuildPrerequisiteInstallationName generates the name of a prerequisite dependency installation.
-func (b *ExtendedBundle) BuildPrerequisiteInstallationName(installation string, dependency string) string {
-	return fmt.Sprintf("%s-%s", installation, dependency)
 }
 
 // this is all copied v2 stuff
 // todo(schristoff): in the future, we should clean this up
 
 // ResolveVersion returns the bundle name, its version and any error.
-func (b *ExtendedBundle) ResolveVersionv2(name string, dep v2.Dependency) (OCIReference, error) {
+func (b *ExtendedBundle) ResolveVersionv2(ctx context.Context, name string, dep v2.Dependency) (OCIReference, error) {
 	ref, err := ParseOCIReference(dep.Bundle)
 	if err != nil {
 		return OCIReference{}, fmt.Errorf("error parsing dependency (%s) bundle %q as OCI reference: %w", name, dep.Bundle, err)
@@ -381,7 +417,7 @@ func (b *ExtendedBundle) ResolveVersionv2(name string, dep v2.Dependency) (OCIRe
 			return ref, nil
 		}
 
-		tag, err := b.determineDefaultTagv2(dep)
+		tag, err := b.determineDefaultTagv2(ctx, dep)
 		if err != nil {
 			return OCIReference{}, err
 		}
@@ -396,28 +432,27 @@ func (b *ExtendedBundle) ResolveVersionv2(name string, dep v2.Dependency) (OCIRe
 	return OCIReference{}, fmt.Errorf("not implemented: dependency version range specified for %s: %w", name, err)
 }
 
-func (b *ExtendedBundle) determineDefaultTagv2(dep v2.Dependency) (string, error) {
-	tags, err := crane.ListTags(dep.Bundle)
+func (b *ExtendedBundle) determineDefaultTagv2(ctx context.Context, dep v2.Dependency) (string, error) {
+	if b.registry == nil {
+		return "", fmt.Errorf("registry provider not set for dependency resolution")
+	}
+
+	ref, err := ParseOCIReference(dep.Bundle)
+	if err != nil {
+		return "", fmt.Errorf("error parsing bundle reference %s: %w", dep.Bundle, err)
+	}
+
+	// Type assert to access ListTags method
+	reg, ok := b.registry.(registryListTags)
+	if !ok {
+		return "", fmt.Errorf("registry does not implement ListTags method")
+	}
+
+	tags, err := reg.ListTags(ctx, ref, b.regOpts)
 	if err != nil {
 		return "", fmt.Errorf("error listing tags for %s: %w", dep.Bundle, err)
 	}
 
-	var hasLatest bool
-	versions := make(semver.Collection, 0, len(tags))
-	for _, tag := range tags {
-		if tag == "latest" {
-			hasLatest = true
-			continue
-		}
-
-	}
-	if len(versions) == 0 {
-		if hasLatest {
-			return "latest", nil
-		} else {
-			return "", fmt.Errorf("no tag was specified for %s and none of the tags defined in the registry meet the criteria: semver formatted or 'latest'", dep.Bundle)
-		}
-	}
-
-	return versions[0].Original(), nil
+	// v2 dependencies don't have allowPrereleases field, so default to false
+	return b.filterAndSelectTag(tags, false, dep.Bundle)
 }

@@ -8,9 +8,11 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg/cnab"
+	cnabtooci "get.porter.sh/porter/pkg/cnab/cnab-to-oci"
 	"get.porter.sh/porter/tests/testdata"
 	"get.porter.sh/porter/tests/tester"
-	"github.com/google/go-containerregistry/pkg/crane"
+	"github.com/google/go-containerregistry/pkg/name"
+	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/stretchr/testify/require"
 )
 
@@ -100,7 +102,9 @@ func TestCopy_PreserveTags(t *testing.T) {
 			reg1.Close()
 
 			// Get the original image from the relocation map
-			_, err = crane.Digest(fmt.Sprintf("%s/alpine:3.20.3", reg2), crane.Insecure)
+			nameRef, err := name.ParseReference(fmt.Sprintf("%s/alpine:3.20.3", reg2), name.Insecure)
+			require.NoError(t, err)
+			_, err = remote.Get(nameRef, remote.WithTransport(cnabtooci.GetInsecureRegistryTransport()))
 			if tc.preserveTags {
 				require.NoError(t, err)
 			} else {

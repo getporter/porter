@@ -1,6 +1,7 @@
 package porter
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -54,7 +55,7 @@ func TestExplain_generateTable(t *testing.T) {
 	b, err := p.CNAB.LoadBundle("params-bundle.json")
 	require.NoError(t, err)
 
-	pb, err := generatePrintable(b, "")
+	pb, err := generatePrintable(context.Background(), b, "", nil, nil)
 	require.NoError(t, err)
 	opts := ExplainOpts{}
 	opts.RawFormat = "plaintext"
@@ -77,7 +78,7 @@ func TestExplain_generateTableRequireDockerHostAccess(t *testing.T) {
 	b, err := p.CNAB.LoadBundle("bundle-docker.json")
 	require.NoError(t, err)
 
-	pb, err := generatePrintable(b, "")
+	pb, err := generatePrintable(context.Background(), b, "", nil, nil)
 	require.NoError(t, err)
 	opts := ExplainOpts{}
 	opts.RawFormat = "plaintext"
@@ -99,7 +100,7 @@ func TestExplain_generateJSON(t *testing.T) {
 	b, err := p.CNAB.LoadBundle("params-bundle.json")
 	require.NoError(t, err)
 
-	pb, err := generatePrintable(b, "")
+	pb, err := generatePrintable(context.Background(), b, "", nil, nil)
 	require.NoError(t, err)
 	opts := ExplainOpts{}
 	opts.RawFormat = "json"
@@ -121,7 +122,7 @@ func TestExplain_generateYAML(t *testing.T) {
 	b, err := p.CNAB.LoadBundle("params-bundle.json")
 	require.NoError(t, err)
 
-	pb, err := generatePrintable(b, "")
+	pb, err := generatePrintable(context.Background(), b, "", nil, nil)
 	require.NoError(t, err)
 
 	opts := ExplainOpts{}
@@ -169,7 +170,7 @@ func TestExplain_generatePrintableBundleParams(t *testing.T) {
 		},
 	})
 
-	pb, err := generatePrintable(bun, "")
+	pb, err := generatePrintable(context.Background(), bun, "", nil, nil)
 	require.NoError(t, err)
 
 	require.Equal(t, 2, len(pb.Parameters), "expected 2 parameters")
@@ -221,7 +222,7 @@ func TestExplain_generatePrintableBundleParamsWithAction(t *testing.T) {
 	})
 
 	t.Run("action applies", func(t *testing.T) {
-		pb, err := generatePrintable(bun, "install")
+		pb, err := generatePrintable(context.Background(), bun, "install", nil, nil)
 		require.NoError(t, err)
 
 		require.Equal(t, 2, len(pb.Parameters), "expected 2 parameters")
@@ -236,7 +237,7 @@ func TestExplain_generatePrintableBundleParamsWithAction(t *testing.T) {
 	})
 
 	t.Run("action does not apply", func(t *testing.T) {
-		pb, err := generatePrintable(bun, "upgrade")
+		pb, err := generatePrintable(context.Background(), bun, "upgrade", nil, nil)
 		require.NoError(t, err)
 
 		require.Equal(t, 1, len(pb.Parameters), "expected only 1 parameter since debug parameter doesn't apply to upgrade command")
@@ -244,7 +245,7 @@ func TestExplain_generatePrintableBundleParamsWithAction(t *testing.T) {
 	})
 
 	t.Run("all actions", func(t *testing.T) {
-		pb, err := generatePrintable(bun, "")
+		pb, err := generatePrintable(context.Background(), bun, "", nil, nil)
 		require.NoError(t, err)
 
 		require.Equal(t, 2, len(pb.Parameters), "expected 2 parameters")
@@ -285,7 +286,7 @@ func TestExplain_generatePrintableBundleOutputs(t *testing.T) {
 		},
 	})
 
-	pb, err := generatePrintable(bun, "")
+	pb, err := generatePrintable(context.Background(), bun, "", nil, nil)
 	require.NoError(t, err)
 
 	require.Equal(t, 2, len(pb.Outputs), "expected someoutput to be included because the action is unset")
@@ -304,12 +305,12 @@ func TestExplain_generatePrintableBundleOutputs(t *testing.T) {
 	assert.Equal(t, 0, len(pb.Actions))
 
 	// Check outputs for install action
-	pb, err = generatePrintable(bun, "install")
+	pb, err = generatePrintable(context.Background(), bun, "install", nil, nil)
 	require.NoError(t, err)
 	assert.Equal(t, 2, len(pb.Outputs), "expected someoutput to be included")
 
 	// Check outputs for upgrade action action (someoutput doesn't apply)
-	pb, err = generatePrintable(bun, "upgrade")
+	pb, err = generatePrintable(context.Background(), bun, "upgrade", nil, nil)
 	require.NoError(t, err)
 	assert.Equal(t, 1, len(pb.Outputs), "expected someoutput to be excluded by its applyTo")
 }
@@ -336,7 +337,7 @@ func TestExplain_generatePrintableBundleCreds(t *testing.T) {
 	})
 
 	t.Run("action applies", func(t *testing.T) {
-		pb, err := generatePrintable(bun, "install")
+		pb, err := generatePrintable(context.Background(), bun, "install", nil, nil)
 		require.NoError(t, err)
 
 		require.Equal(t, 2, len(pb.Credentials), "expected 2 credentials")
@@ -351,7 +352,7 @@ func TestExplain_generatePrintableBundleCreds(t *testing.T) {
 	})
 
 	t.Run("action does not apply", func(t *testing.T) {
-		pb, err := generatePrintable(bun, "upgrade")
+		pb, err := generatePrintable(context.Background(), bun, "upgrade", nil, nil)
 		require.NoError(t, err)
 
 		require.Equal(t, 1, len(pb.Credentials), "expected only 1 credential since kubeconfig credential doesn't apply to upgrade command")
@@ -359,7 +360,7 @@ func TestExplain_generatePrintableBundleCreds(t *testing.T) {
 	})
 
 	t.Run("all actions", func(t *testing.T) {
-		pb, err := generatePrintable(bun, "")
+		pb, err := generatePrintable(context.Background(), bun, "", nil, nil)
 		require.NoError(t, err)
 
 		require.Equal(t, 2, len(pb.Credentials), "expected 2 credentials")
@@ -391,7 +392,7 @@ func TestExplain_generatePrintableBundlePorterVersion(t *testing.T) {
 		},
 	})
 
-	pb, err := generatePrintable(bun, "")
+	pb, err := generatePrintable(context.Background(), bun, "", nil, nil)
 	assert.NoError(t, err)
 
 	assert.Equal(t, "v0.30.0", pb.PorterVersion)
@@ -407,7 +408,7 @@ func TestExplain_generatePrintableBundlePorterVersionNonPorterBundle(t *testing.
 		},
 	})
 
-	pb, err := generatePrintable(bun, "")
+	pb, err := generatePrintable(context.Background(), bun, "", nil, nil)
 	assert.NoError(t, err)
 
 	assert.Equal(t, "", pb.PorterVersion)
@@ -442,7 +443,7 @@ func TestExplain_generatePrintableBundleDependencies(t *testing.T) {
 		},
 	})
 
-	pd, err := generatePrintable(bun, "")
+	pd, err := generatePrintable(context.Background(), bun, "", nil, nil)
 	assert.NoError(t, err)
 	assert.Equal(t, 3, len(pd.Dependencies))
 	assert.Equal(t, 0, len(pd.Parameters))
@@ -460,7 +461,7 @@ func TestExplain_generateJSONForDependencies(t *testing.T) {
 	b, err := p.CNAB.LoadBundle("dependencies-bundle.json")
 	require.NoError(t, err)
 
-	pb, err := generatePrintable(b, "")
+	pb, err := generatePrintable(context.Background(), b, "", nil, nil)
 	require.NoError(t, err)
 	opts := ExplainOpts{}
 	opts.RawFormat = "json"
@@ -483,7 +484,7 @@ func TestExplain_generateTableNonPorterBundle(t *testing.T) {
 	b, err := p.CNAB.LoadBundle("params-bundle.json")
 	require.NoError(t, err)
 
-	pb, err := generatePrintable(b, "")
+	pb, err := generatePrintable(context.Background(), b, "", nil, nil)
 	require.NoError(t, err)
 	opts := ExplainOpts{}
 	opts.RawFormat = "plaintext"
@@ -506,7 +507,7 @@ func TestExplain_generateTableBundleWithNoMixins(t *testing.T) {
 	b, err := p.CNAB.LoadBundle("params-bundle.json")
 	require.NoError(t, err)
 
-	pb, err := generatePrintable(b, "")
+	pb, err := generatePrintable(context.Background(), b, "", nil, nil)
 	require.NoError(t, err)
 	opts := ExplainOpts{}
 	opts.RawFormat = "plaintext"
