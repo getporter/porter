@@ -9,7 +9,7 @@ on:
     paths-ignore:
       - 'docs/**'
 env:
-  GOVERSION: 1.24.10
+  GOVERSION: 1.24.11
 permissions:
   contents: read
 
