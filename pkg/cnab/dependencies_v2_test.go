@@ -18,7 +18,7 @@ func TestReadDependencyV2Properties(t *testing.T) {
 	b, err := bundle.Unmarshal(data)
 	require.NoError(t, err, "could not unmarshal the bundle")
 
-	bun := ExtendedBundle{*b}
+	bun := ExtendedBundle{Bundle: *b}
 	assert.True(t, bun.HasDependenciesV2())
 
 	deps, err := bun.ReadDependenciesV2()
@@ -43,7 +43,7 @@ func TestSupportsDependenciesV2(t *testing.T) {
 	t.Parallel()
 
 	t.Run("supported", func(t *testing.T) {
-		b := ExtendedBundle{bundle.Bundle{
+		b := ExtendedBundle{Bundle: bundle.Bundle{
 			RequiredExtensions: []string{DependenciesV2ExtensionKey}}}
 
 		assert.True(t, b.SupportsDependenciesV2())
@@ -59,7 +59,7 @@ func TestHasDependenciesV2(t *testing.T) {
 	t.Parallel()
 
 	t.Run("has dependencies", func(t *testing.T) {
-		b := ExtendedBundle{bundle.Bundle{
+		b := ExtendedBundle{Bundle: bundle.Bundle{
 			RequiredExtensions: []string{DependenciesV2ExtensionKey},
 			Custom: map[string]interface{}{
 				DependenciesV2ExtensionKey: struct{}{}}}}
@@ -67,7 +67,7 @@ func TestHasDependenciesV2(t *testing.T) {
 		assert.True(t, b.HasDependenciesV2())
 	})
 	t.Run("no dependencies", func(t *testing.T) {
-		b := ExtendedBundle{bundle.Bundle{
+		b := ExtendedBundle{Bundle: bundle.Bundle{
 			RequiredExtensions: []string{DependenciesV2ExtensionKey}}}
 
 		assert.False(t, b.HasDependenciesV2())
