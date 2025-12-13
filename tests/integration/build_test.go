@@ -313,3 +313,38 @@ func TestBuild_BuildxBuilder(t *testing.T) {
 	// Validate that a custom builder has been used
 	tests.RequireOutputContains(t, output, "importing to docker")
 }
+
+func TestBuild_SkipWhenUpToDate(t *testing.T) {
+	test, err := tester.NewTest(t)
+	defer test.Close()
+	require.NoError(t, err, "test setup failed")
+
+	// Create a bundle
+	test.Chdir(test.TestDir)
+	test.RequirePorter("create")
+
+	// Build the bundle for the first time
+	_, output := test.RequirePorter("build")
+	require.NotContains(t, output, "Bundle is up-to-date!", "first build should not be skipped")
+
+	// Build again without any changes - should skip the build
+	_, output = test.RequirePorter("build")
+	tests.RequireOutputContains(t, output, "Bundle is up-to-date!", "second build should be skipped when nothing changed")
+}
+
+func TestBuild_ForceRebuild(t *testing.T) {
+	test, err := tester.NewTest(t)
+	defer test.Close()
+	require.NoError(t, err, "test setup failed")
+
+	bunPath := filepath.Join(test.RepoRoot, "tests/testdata/mybuns/*")
+	require.NoError(t, shx.Copy(bunPath, test.TestDir, shx.CopyRecursive))
+	test.Chdir(test.TestDir)
+
+	// Build the bundle
+	test.RequirePorter("build", "--name=porter-test-force-rebuild")
+
+	// Build again with --force, should rebuild
+	_, output := test.RequirePorter("build", "--force", "--name=porter-test-force-rebuild")
+	require.NotContains(t, output, "Bundle is up-to-date!", "build with --force should not skip the build")
+}

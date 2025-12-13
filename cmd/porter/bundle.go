@@ -103,6 +103,8 @@ The docker driver builds the bundle image using the local Docker host. To use a 
 		"Secret file to expose to the build (format: id=mysecret,src=/local/secret). Custom values are accessible as build arguments in the template Dockerfile and in the manifest using template variables. May be specified multiple times.")
 	f.BoolVar(&opts.NoCache, "no-cache", false,
 		"Do not use the Docker cache when building the bundle image.")
+	f.BoolVar(&opts.Force, "force", false,
+		"Force a full rebuild from scratch, ignoring any cached data.")
 	f.StringArrayVar(&opts.Customs, "custom", nil,
 		"Define an individual key-value pair for the custom section in the form of NAME=VALUE. Use dot notation to specify a nested custom field. May be specified multiple times. Max length is 5,000 characters when used as a build argument.")
 	f.BoolVar(&opts.InsecureRegistry, "insecure-registry", false,
