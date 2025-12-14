@@ -280,6 +280,11 @@ func TestBuild_CacheExportImport(t *testing.T) {
 	require.Equal(t, 1, len(bun.InvocationImages))
 	iiRef := bun.InvocationImages[0].Image
 
+	// Make a small change to trigger rebuild while testing cache import
+	test.EditYaml("porter.yaml", func(yq *yaml.Editor) error {
+		return yq.SetValue("description", "modified description for cache test")
+	})
+
 	// Rebuild the bundle using the already built image as cache source
 	_, output = test.RequirePorter("build", "--cache-from=type=registry,ref="+iiRef, "--name=porter-test-build")
 
