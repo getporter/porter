@@ -38,7 +38,7 @@ jobs:
       run: mage build
       shell: bash
     - name: Publish Native Binaries
-      uses: actions/upload-artifact@v5.0.0
+      uses: actions/upload-artifact@v6.0.0
       with:
         name: build-bin
         path: "${{ github.workspace }}/bin"
@@ -59,7 +59,7 @@ jobs:
       run: mage XBuildAll
       shell: bash
     - name: Publish Release Binaries
-      uses: actions/upload-artifact@v5.0.0
+      uses: actions/upload-artifact@v6.0.0
       with:
         name: xbuild-bin
         path: "${{ github.workspace }}/bin"
