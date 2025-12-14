@@ -325,6 +325,13 @@ func (c *Context) CommandContext(ctx context.Context, name string, arg ...string
 	if filepath.Base(name) == name {
 		if lp, ok := c.LookPath(name); ok {
 			name = lp
+		} else {
+			// Not in PATH - check if it exists in current directory
+			// If so, prepend ./ to make it a relative path so exec.Command will find it
+			localPath := filepath.Join(c.Getwd(), name)
+			if exists, _ := c.FileSystem.Exists(localPath); exists {
+				name = "./" + name
+			}
 		}
 	}
 
