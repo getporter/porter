@@ -115,7 +115,7 @@ jobs:
       with:
         go-version: ${{ inputs.goVersion }}
     - name: Download Cross-Compiled Porter Binaries
-      uses: actions/download-artifact@v6.0.0
+      uses: actions/download-artifact@v7.0.0
       with:
         name: xbuild-bin
         path: bin
@@ -169,7 +169,7 @@ jobs:
       with:
         go-version: ${{ inputs.goVersion }}
     - name: Download Cross-Compiled Porter Binaries
-      uses: actions/download-artifact@v6.0.0
+      uses: actions/download-artifact@v7.0.0
       with:
         name: xbuild-bin
         path: bin
@@ -212,7 +212,7 @@ jobs:
       with:
         go-version: ${{ inputs.goVersion }}
     - name: Download Cross-Compiled Porter Binaries
-      uses: actions/download-artifact@v6.0.0
+      uses: actions/download-artifact@v7.0.0
       with:
         name: xbuild-bin
         path: bin
