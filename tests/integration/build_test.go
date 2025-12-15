@@ -352,4 +352,8 @@ func TestBuild_ForceRebuild(t *testing.T) {
 	// Build again with --force, should rebuild
 	_, output := test.RequirePorter("build", "--force", "--name=porter-test-force-rebuild")
 	require.NotContains(t, output, "Bundle is up-to-date!", "build with --force should not skip the build")
+
+	// Verify no cache is used when --force is specified
+	require.NotContains(t, output, "importing cache manifest", "build with --force should not import cache")
+	require.NotContains(t, output, "preparing layers for inline cache", "build with --force should not export cache")
 }
