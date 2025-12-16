@@ -10,9 +10,11 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg/cnab"
+	cnabtooci "get.porter.sh/porter/pkg/cnab/cnab-to-oci"
 	"get.porter.sh/porter/tests/tester"
 	"github.com/distribution/reference"
-	"github.com/google/go-containerregistry/pkg/crane"
+	"github.com/google/go-containerregistry/pkg/name"
+	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/opencontainers/go-digest"
 	"github.com/stretchr/testify/require"
 	"github.com/uwu-tools/magex/shx"
@@ -262,7 +264,9 @@ func cleanupNotation(t *testing.T) {
 }
 
 func toRefWithDigest(t *testing.T, ref cnab.OCIReference) cnab.OCIReference {
-	desc, err := crane.Head(ref.String(), crane.Insecure)
+	nameRef, err := name.ParseReference(ref.String(), name.Insecure)
+	require.NoError(t, err)
+	desc, err := remote.Head(nameRef, remote.WithTransport(cnabtooci.GetInsecureRegistryTransport()))
 	require.NoError(t, err)
 	ref.Named = reference.TrimNamed(ref.Named)
 	ref, err = ref.WithDigest(digest.Digest(desc.Digest.String()))
@@ -275,7 +279,9 @@ func resolveBundleImageDigest(t *testing.T, output string, imageName string) cna
 	matches := r.FindAllStringSubmatch(output, -1)
 	require.Len(t, matches, 1)
 	invocationImageRefString := matches[0][1]
-	desc, err := crane.Head(invocationImageRefString, crane.Insecure)
+	nameRef, err := name.ParseReference(invocationImageRefString, name.Insecure)
+	require.NoError(t, err)
+	desc, err := remote.Head(nameRef, remote.WithTransport(cnabtooci.GetInsecureRegistryTransport()))
 	require.NoError(t, err)
 	ref := cnab.MustParseOCIReference(invocationImageRefString)
 	ref.Named = reference.TrimNamed(ref.Named)
