@@ -38,6 +38,9 @@ type BuildOptions struct {
 	// InsecureRegistry allows connecting to an unsecured registry or one without verifiable certificates.
 	InsecureRegistry bool
 
+	// Force indicates if a full rebuild should be performed, ignoring cached data.
+	Force bool
+
 	// parsedCustoms is the parsed set of custom inputs from Customs.
 	parsedCustoms map[string]string
 }
@@ -109,6 +112,23 @@ func (p *Porter) Build(ctx context.Context, opts BuildOptions) error {
 	defer span.EndSpan()
 
 	span.Debugf("Using %s build driver", p.GetBuildDriver())
+
+	// If --force is specified, enable --no-cache for docker build
+	if opts.Force {
+		opts.NoCache = true
+	}
+
+	// Check if the bundle is up-to-date before building (unless --force is specified)
+	if !opts.Force {
+		upToDate, err := p.IsBundleUpToDate(ctx, opts.BundleDefinitionOptions)
+		if err != nil {
+			span.Warnf("WARNING: %w", err)
+		}
+		if upToDate {
+			span.Info("Bundle is up-to-date!")
+			return nil
+		}
+	}
 
 	// Start with a fresh .cnab directory before building
 	err := p.FileSystem.RemoveAll(build.LOCAL_CNAB)
