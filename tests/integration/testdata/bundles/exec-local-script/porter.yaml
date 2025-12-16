@@ -1,0 +1,29 @@
+schemaVersion: 1.0.1
+name: exec-local-script
+version: 0.1.0
+description: "Test bundle for exec mixin with local script without ./ prefix"
+registry: localhost:5000
+
+mixins:
+  - exec
+
+install:
+  - exec:
+      description: "Run local script without ./ prefix"
+      command: helper.sh
+      arguments:
+        - install
+
+upgrade:
+  - exec:
+      description: "Run local script without ./ prefix"
+      command: helper.sh
+      arguments:
+        - upgrade
+
+uninstall:
+  - exec:
+      description: "Run local script without ./ prefix"
+      command: helper.sh
+      arguments:
+        - uninstall

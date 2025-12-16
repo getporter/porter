@@ -62,6 +62,12 @@ jobs:
     with:
       test_name: driver_test
       registry: ${{inputs.registry}}
+  exec_local_script_integration_test:
+    name: Exec Local Script Integration Test
+    uses: getporter/porter/.github/workflows/integ-reuseable-workflow.yml@main
+    with:
+      test_name: exec_local_script_test
+      registry: ${{inputs.registry}}
   install_integration_test:
     name: Install Integration Test
     uses: getporter/porter/.github/workflows/integ-reuseable-workflow.yml@main

@@ -56,6 +56,11 @@ jobs:
     uses: ./.github/workflows/integ-reuseable-workflow.yml
     with:
       test_name: driver_test
+  exec_local_script_integration_test:
+    name: Exec Local Script Integration Test
+    uses: ./.github/workflows/integ-reuseable-workflow.yml
+    with:
+      test_name: exec_local_script_test
   install_integration_test:
     name: Install Integration Test
     uses: ./.github/workflows/integ-reuseable-workflow.yml
