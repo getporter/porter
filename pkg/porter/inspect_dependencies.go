@@ -45,7 +45,7 @@ func (b *DependencyTreeBuilder) buildTreeRecursive(
 	}
 
 	// Resolve direct dependencies
-	locks, err := bun.ResolveDependencies(bun)
+	locks, err := bun.ResolveDependencies(ctx, bun)
 	if err != nil {
 		return nil, fmt.Errorf("failed to resolve dependencies: %w", err)
 	}
