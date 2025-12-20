@@ -260,6 +260,16 @@ func (p *TestPorter) CreateOutput(o storage.Output, bun cnab.ExtendedBundle) sto
 	})
 }
 
+// GetInspectOutput returns the inspectable bundle for testing
+func (p *TestPorter) GetInspectOutput(ctx context.Context, opts ExplainOpts) (*InspectableBundle, error) {
+	bundleRef, err := opts.GetBundleReference(ctx, p.Porter)
+	if err != nil {
+		return nil, err
+	}
+
+	return generateInspectableBundle(ctx, p.Porter, bundleRef, opts)
+}
+
 type TestBuildProvider struct {
 }
 

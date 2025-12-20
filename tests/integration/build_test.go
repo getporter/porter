@@ -280,6 +280,11 @@ func TestBuild_CacheExportImport(t *testing.T) {
 	require.Equal(t, 1, len(bun.InvocationImages))
 	iiRef := bun.InvocationImages[0].Image
 
+	// Make a small change to trigger rebuild while testing cache import
+	test.EditYaml("porter.yaml", func(yq *yaml.Editor) error {
+		return yq.SetValue("description", "modified description for cache test")
+	})
+
 	// Rebuild the bundle using the already built image as cache source
 	_, output = test.RequirePorter("build", "--cache-from=type=registry,ref="+iiRef, "--name=porter-test-build")
 
@@ -312,4 +317,43 @@ func TestBuild_BuildxBuilder(t *testing.T) {
 
 	// Validate that a custom builder has been used
 	tests.RequireOutputContains(t, output, "importing to docker")
+}
+
+func TestBuild_SkipWhenUpToDate(t *testing.T) {
+	test, err := tester.NewTest(t)
+	defer test.Close()
+	require.NoError(t, err, "test setup failed")
+
+	// Create a bundle
+	test.Chdir(test.TestDir)
+	test.RequirePorter("create")
+
+	// Build the bundle for the first time
+	_, output := test.RequirePorter("build")
+	require.NotContains(t, output, "Bundle is up-to-date!", "first build should not be skipped")
+
+	// Build again without any changes - should skip the build
+	_, output = test.RequirePorter("build")
+	tests.RequireOutputContains(t, output, "Bundle is up-to-date!", "second build should be skipped when nothing changed")
+}
+
+func TestBuild_ForceRebuild(t *testing.T) {
+	test, err := tester.NewTest(t)
+	defer test.Close()
+	require.NoError(t, err, "test setup failed")
+
+	bunPath := filepath.Join(test.RepoRoot, "tests/testdata/mybuns/*")
+	require.NoError(t, shx.Copy(bunPath, test.TestDir, shx.CopyRecursive))
+	test.Chdir(test.TestDir)
+
+	// Build the bundle
+	test.RequirePorter("build", "--name=porter-test-force-rebuild")
+
+	// Build again with --force, should rebuild
+	_, output := test.RequirePorter("build", "--force", "--name=porter-test-force-rebuild")
+	require.NotContains(t, output, "Bundle is up-to-date!", "build with --force should not skip the build")
+
+	// Verify no cache is used when --force is specified
+	require.NotContains(t, output, "importing cache manifest", "build with --force should not import cache")
+	require.NotContains(t, output, "preparing layers for inline cache", "build with --force should not export cache")
 }

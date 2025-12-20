@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"get.porter.sh/porter/pkg/cnab"
+	cnabtooci "get.porter.sh/porter/pkg/cnab/cnab-to-oci"
 	configadapter "get.porter.sh/porter/pkg/cnab/config-adapter"
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/printer"
@@ -18,7 +19,9 @@ type ExplainOpts struct {
 	BundleReferenceOptions
 	printer.PrintOptions
 
-	Action string
+	Action               string
+	ShowDependencies     bool
+	MaxDependencyDepth   int
 }
 
 // PrintableBundle holds a subset of pertinent values to be explained from a bundle
@@ -163,7 +166,8 @@ func (p *Porter) Explain(ctx context.Context, o ExplainOpts) error {
 		return err
 	}
 
-	pb, err := generatePrintable(bundleRef.Definition, o.Action)
+	regOpts := cnabtooci.RegistryOptions{InsecureRegistry: o.InsecureRegistry}
+	pb, err := generatePrintable(ctx, bundleRef.Definition, o.Action, p.Registry, regOpts)
 	if err != nil {
 		return fmt.Errorf("unable to print bundle: %w", err)
 	}
@@ -183,7 +187,7 @@ func (p *Porter) printBundleExplain(o ExplainOpts, pb *PrintableBundle, bun cnab
 	}
 }
 
-func generatePrintable(bun cnab.ExtendedBundle, action string) (*PrintableBundle, error) {
+func generatePrintable(ctx context.Context, bun cnab.ExtendedBundle, action string, registry interface{}, regOpts interface{}) (*PrintableBundle, error) {
 	var stamp configadapter.Stamp
 
 	stamp, err := configadapter.LoadStamp(bun)
@@ -191,7 +195,9 @@ func generatePrintable(bun cnab.ExtendedBundle, action string) (*PrintableBundle
 		stamp = configadapter.Stamp{}
 	}
 
-	deps, err := bun.ResolveDependencies(bun)
+	// Inject registry for dependency resolution
+	eb := bun.WithRegistry(registry, regOpts)
+	deps, err := eb.ResolveDependencies(ctx, bun)
 	if err != nil {
 		return nil, fmt.Errorf("error resolving bundle dependencies: %w", err)
 	}

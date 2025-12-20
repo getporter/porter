@@ -19,7 +19,6 @@ The Porter website has a number of useful short links defined to help you quickl
 - /src/FILE_PATH: Links to a source file in Porter's main repository.
   - [/src/CONTRIBUTING.md](/src/CONTRIBUTING.md): Links to Porter's new contributors guide.
   - [/src/CONTRIBUTORS.md](/src/CONTRIBUTORS.md): Links to Porter's list of contributors.
-- [/twitter](/twitter/): The Porter Twitter account.
 - [/slack](/slack/): The #porter Slack channel.
 - [/mailing-list](/mailing-list/): The Porter mailing list.
 - [/zoom/dev](/zoom/dev/): The Porter Community Meeting zoom link.

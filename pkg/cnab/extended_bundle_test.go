@@ -1,6 +1,7 @@
 package cnab
 
 import (
+	"context"
 	"testing"
 
 	depsv1ext "get.porter.sh/porter/pkg/cnab/extensions/dependencies/v1"
@@ -262,7 +263,7 @@ func TestExtendedBundle_ResolveDependencies(t *testing.T) {
 	})
 
 	eb := ExtendedBundle{}
-	locks, err := eb.ResolveDependencies(bun)
+	locks, err := eb.ResolveDependencies(context.Background(), bun)
 	require.NoError(t, err)
 	require.Len(t, locks, 2)
 
@@ -279,6 +280,23 @@ func TestExtendedBundle_ResolveDependencies(t *testing.T) {
 
 	assert.Equal(t, "getporter/mysql:5.7", mysql.Reference)
 	assert.Equal(t, "localhost:5000/nginx:1.19", nginx.Reference)
+}
+
+// mockRegistryProvider mocks the registry for testing
+type mockRegistryProvider struct {
+	tags map[string][]string // map repository to tags
+	err  error
+}
+
+func (m *mockRegistryProvider) ListTags(ctx context.Context, ref OCIReference, opts interface{}) ([]string, error) {
+	if m.err != nil {
+		return nil, m.err
+	}
+	repo := ref.Repository()
+	if tags, ok := m.tags[repo]; ok {
+		return tags, nil
+	}
+	return []string{}, nil
 }
 
 func TestExtendedBundle_ResolveVersion(t *testing.T) {
@@ -313,13 +331,22 @@ func TestExtendedBundle_ResolveVersion(t *testing.T) {
 			wantVersion: "v1.2"},
 	}
 
+	// Create mock registry with test data
+	mockReg := &mockRegistryProvider{
+		tags: map[string][]string{
+			"getporterci/porter-test-only-latest":      {"latest"},
+			"getporterci/porter-test-no-default-tag":   {"not-a-semver"},
+			"getporterci/porter-test-with-versions":    {"latest", "v1.0", "v1.1", "v1.2", "v1.3-beta1"},
+		},
+	}
+
 	for _, tc := range testcases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			eb := ExtendedBundle{}
-			version, err := eb.ResolveVersion("mysql", tc.dep)
+			eb := ExtendedBundle{}.WithRegistry(mockReg, nil)
+			version, err := eb.ResolveVersion(context.Background(), "mysql", tc.dep)
 			if tc.wantError != "" {
 				require.Error(t, err, "ResolveVersion should have returned an error")
 				assert.Contains(t, err.Error(), tc.wantError)

@@ -45,6 +45,7 @@ porter bundles build [flags]
       --custom stringArray          Define an individual key-value pair for the custom section in the form of NAME=VALUE. Use dot notation to specify a nested custom field. May be specified multiple times. Max length is 5,000 characters when used as a build argument.
   -d, --dir string                  Path to the build context directory where all bundle assets are located. Defaults to the current directory.
   -f, --file string                 Path to the Porter manifest. The path is relative to the build context directory. Defaults to porter.yaml in the current directory.
+      --force                       Force a full rebuild from scratch, ignoring any cached data.
   -h, --help                        help for build
       --insecure-registry           Don't require TLS when pulling referenced images
       --name string                 Override the bundle name

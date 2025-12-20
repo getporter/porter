@@ -10,7 +10,7 @@ on:
       - main
 
 env:
-  GOVERSION: 1.24.10
+  GOVERSION: 1.24.11
 permissions:
   contents: read
   packages: read
@@ -56,11 +56,21 @@ jobs:
     uses: ./.github/workflows/integ-reuseable-workflow.yml
     with:
       test_name: driver_test
+  exec_local_script_integration_test:
+    name: Exec Local Script Integration Test
+    uses: ./.github/workflows/integ-reuseable-workflow.yml
+    with:
+      test_name: exec_local_script_test
   install_integration_test:
     name: Install Integration Test
     uses: ./.github/workflows/integ-reuseable-workflow.yml
     with:
       test_name: install_test
+  inspect_dependencies_integration_test:
+    name: Inspect Dependencies Integration Test
+    uses: ./.github/workflows/integ-reuseable-workflow.yml
+    with:
+      test_name: inspect_dependencies_test
   invoke_integration_test:
     name: Invoke Integration Test
     uses: ./.github/workflows/integ-reuseable-workflow.yml

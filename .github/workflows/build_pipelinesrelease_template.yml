@@ -5,7 +5,7 @@ on:
     inputs:
       goVersion:
         required: false
-        default: 1.24.10
+        default: 1.24.11
         type: string
       registry:
         required: false
@@ -38,7 +38,7 @@ jobs:
       run: mage build
       shell: bash
     - name: Publish Native Binaries
-      uses: actions/upload-artifact@v5.0.0
+      uses: actions/upload-artifact@v6.0.0
       with:
         name: build-bin
         path: "${{ github.workspace }}/bin"
@@ -59,7 +59,7 @@ jobs:
       run: mage XBuildAll
       shell: bash
     - name: Publish Release Binaries
-      uses: actions/upload-artifact@v5.0.0
+      uses: actions/upload-artifact@v6.0.0
       with:
         name: xbuild-bin
         path: "${{ github.workspace }}/bin"
@@ -115,12 +115,36 @@ jobs:
       with:
         go-version: ${{ inputs.goVersion }}
     - name: Download Cross-Compiled Porter Binaries
-      uses: actions/download-artifact@v6.0.0
+      uses: actions/download-artifact@v7.0.0
       with:
         name: xbuild-bin
         path: bin
     - name: Setup Bin
       run: go run mage.go ConfigureAgent UseXBuildBinaries
+    - name: Aggressive cleanup
+      run: |
+        df -h
+        # Remove Java (JDKs)
+        sudo rm -rf /usr/lib/jvm
+        # Remove .NET SDKs
+        sudo rm -rf /usr/share/dotnet
+        # Remove Swift toolchain
+        sudo rm -rf /usr/share/swift
+        # Remove Haskell (GHC)
+        sudo rm -rf /usr/local/.ghcup
+        # Remove Julia
+        sudo rm -rf /usr/local/julia*
+        # Remove Android SDKs
+        sudo rm -rf /usr/local/lib/android
+        # Remove Chromium (optional if not using for browser tests)
+        sudo rm -rf /usr/local/share/chromium
+        # Remove Microsoft/Edge and Google Chrome builds
+        sudo rm -rf /opt/microsoft /opt/google
+        # Remove Azure CLI
+        sudo rm -rf /opt/az
+        # Remove PowerShell
+        sudo rm -rf /usr/local/share/powershell
+        df -h
     - name: Run Smoke Tests
       run: mage -v TestSmoke
   publish_binaries:
@@ -145,7 +169,7 @@ jobs:
       with:
         go-version: ${{ inputs.goVersion }}
     - name: Download Cross-Compiled Porter Binaries
-      uses: actions/download-artifact@v6.0.0
+      uses: actions/download-artifact@v7.0.0
       with:
         name: xbuild-bin
         path: bin
@@ -188,7 +212,7 @@ jobs:
       with:
         go-version: ${{ inputs.goVersion }}
     - name: Download Cross-Compiled Porter Binaries
-      uses: actions/download-artifact@v6.0.0
+      uses: actions/download-artifact@v7.0.0
       with:
         name: xbuild-bin
         path: bin

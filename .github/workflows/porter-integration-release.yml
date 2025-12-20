@@ -8,7 +8,7 @@ on:
         default: ghcr.io
 
 env:
-  GOVERSION: 1.24.10
+  GOVERSION: 1.24.11
 permissions:
   contents: read
   packages: read
@@ -62,11 +62,23 @@ jobs:
     with:
       test_name: driver_test
       registry: ${{inputs.registry}}
+  exec_local_script_integration_test:
+    name: Exec Local Script Integration Test
+    uses: getporter/porter/.github/workflows/integ-reuseable-workflow.yml@main
+    with:
+      test_name: exec_local_script_test
+      registry: ${{inputs.registry}}
   install_integration_test:
     name: Install Integration Test
     uses: getporter/porter/.github/workflows/integ-reuseable-workflow.yml@main
     with:
       test_name: install_test
+      registry: ${{inputs.registry}}
+  inspect_dependencies_integration_test:
+    name: Inspect Dependencies Integration Test
+    uses: getporter/porter/.github/workflows/integ-reuseable-workflow.yml@main
+    with:
+      test_name: inspect_dependencies_test
       registry: ${{inputs.registry}}
   invoke_integration_test:
     name: Invoke Integration Test

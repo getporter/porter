@@ -14,7 +14,8 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
 permissions:
-  contents: read
+  contents: write
+  packages: write
 
 jobs:
   build_pipelinesrelease_template:
