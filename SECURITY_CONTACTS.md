@@ -12,6 +12,5 @@ INSTRUCTIONS AT [VULNERABILITY REPORTING FORM](https://github.com/getporter/port
 
 Security Contacts:
 
-* [Sarah Christoff](https://github.com/schristoff)
-* [Steven Gettys](https://github.com/sgettys)
-* [Brian DeGeeter](https://github.com/bdegeeter)
+* [Kim Christensen](https://github.com/kichristensen)
+* [David Gannon](https://github.com/dgannon991)
