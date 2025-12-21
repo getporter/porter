@@ -7,6 +7,7 @@ import (
 
 	"get.porter.sh/porter/pkg/build"
 	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/experimental"
 	"get.porter.sh/porter/pkg/manifest"
 	buildx "github.com/docker/buildx/build"
 	"github.com/moby/buildkit/client"
@@ -390,4 +391,42 @@ func TestBuilder_parseOutput(t *testing.T) {
 			assert.Equal(t, tc.want, got[0])
 		})
 	}
+}
+
+func TestBuilder_BuildBundleImage_ReservedNamedContext(t *testing.T) {
+	ctx := context.Background()
+	c := config.NewTestConfig(t)
+	c.SetExperimentalFlags(experimental.FlagOptimizedBundleBuild)
+
+	b := NewBuilder(c.Config)
+	m := &manifest.Manifest{
+		Image: "test-bundle:v0.1.0",
+	}
+	m.ManifestPath = "/test/porter.yaml"
+
+	c.TestContext.AddTestFileFromRoot("pkg/templates/templates/create/template.buildkit.Dockerfile", "/.cnab/Dockerfile")
+
+	t.Run("user-defined porter-internal-userfiles context", func(t *testing.T) {
+		opts := build.BuildImageOptions{
+			BuildContexts: []string{"porter-internal-userfiles=/some/path"},
+		}
+
+		err := b.BuildBundleImage(ctx, m, opts)
+		require.Error(t, err)
+		assert.ErrorContains(t, err, "the named context 'porter-internal-userfiles' is reserved by Porter")
+	})
+
+	t.Run("user-defined other named context", func(t *testing.T) {
+		// This should not error as we're using a different context name
+		opts := build.BuildImageOptions{
+			BuildContexts: []string{"mycontext=/some/path"},
+		}
+
+		// Note: This will still fail with other errors in the test environment
+		// but we're specifically checking it doesn't fail on the reserved name validation
+		err := b.BuildBundleImage(ctx, m, opts)
+		if err != nil {
+			assert.NotContains(t, err.Error(), "reserved by Porter")
+		}
+	})
 }

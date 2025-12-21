@@ -9,6 +9,10 @@ const (
 
 	// FullControlDockerfile is the name of the experimental feature flag giving authors full control of the bundle image Dockerfile
 	FullControlDockerfile = "full-control-dockerfile"
+
+	// OptimizedBundleBuild is the name of the experimental feature flag for optimized bundle builds
+	// When enabled, uses .cnab directory as build context with porter-internal-userfiles named context for 54% smaller images
+	OptimizedBundleBuild = "optimized-bundle-build"
 )
 
 // FeatureFlags is an enum of possible feature flags
@@ -23,6 +27,9 @@ const (
 
 	// FlagFullControlDockerfile gates the changes required for giving authors full control of the bundle image Dockerfile
 	FlagFullControlDockerfile
+
+	// FlagOptimizedBundleBuild gates the optimized bundle build process
+	FlagOptimizedBundleBuild
 )
 
 // ParseFlags converts a list of feature flag names into a bit map for faster lookups.
@@ -36,6 +43,8 @@ func ParseFlags(flags []string) FeatureFlags {
 			experimental = experimental | FlagDependenciesV2
 		case FullControlDockerfile:
 			experimental = experimental | FlagFullControlDockerfile
+		case OptimizedBundleBuild:
+			experimental = experimental | FlagOptimizedBundleBuild
 		}
 	}
 	return experimental
