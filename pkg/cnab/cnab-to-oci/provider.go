@@ -55,7 +55,8 @@ func (o RegistryOptions) toNameOptions() []name.Option {
 	return nil
 }
 
-func (o RegistryOptions) toRemoteOptions() []remote.Option {
+// ToRemoteOptions converts RegistryOptions to go-containerregistry remote options
+func (o RegistryOptions) ToRemoteOptions() []remote.Option {
 	result := []remote.Option{
 		remote.WithAuthFromKeychain(authn.DefaultKeychain),
 	}

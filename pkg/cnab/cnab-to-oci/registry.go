@@ -293,7 +293,7 @@ func (r *Registry) listTagsRemote(ctx context.Context, repository string, opts R
 	if err != nil {
 		return nil, fmt.Errorf("invalid repository %s: %w", repository, err)
 	}
-	return remote.List(repo, opts.toRemoteOptions()...)
+	return remote.List(repo, opts.ToRemoteOptions()...)
 }
 
 // getRemoteDescriptor wraps remote.Get with reference parsing
@@ -302,7 +302,7 @@ func (r *Registry) getRemoteDescriptor(ctx context.Context, refStr string, opts 
 	if err != nil {
 		return nil, fmt.Errorf("invalid reference %s: %w", refStr, err)
 	}
-	return remote.Get(ref, opts.toRemoteOptions()...)
+	return remote.Get(ref, opts.ToRemoteOptions()...)
 }
 
 // headRemote wraps remote.Head with reference parsing
@@ -311,7 +311,7 @@ func (r *Registry) headRemote(ctx context.Context, refStr string, opts RegistryO
 	if err != nil {
 		return nil, fmt.Errorf("invalid reference %s: %w", refStr, err)
 	}
-	return remote.Head(ref, opts.toRemoteOptions()...)
+	return remote.Head(ref, opts.ToRemoteOptions()...)
 }
 
 // copyImageRemote copies an image from source to destination preserving the original digest.
@@ -328,7 +328,7 @@ func (r *Registry) copyImageRemote(ctx context.Context, srcRefStr, dstRefStr str
 		return fmt.Errorf("invalid destination reference %s: %w", dstRefStr, err)
 	}
 
-	remoteOpts := opts.toRemoteOptions()
+	remoteOpts := opts.ToRemoteOptions()
 
 	// Create puller to fetch from source
 	puller, err := remote.NewPuller(remoteOpts...)
