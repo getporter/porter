@@ -48,7 +48,8 @@ type RegistryOptions struct {
 	InsecureRegistry bool
 }
 
-func (o RegistryOptions) toNameOptions() []name.Option {
+// ToNameOptions converts RegistryOptions to go-containerregistry name options
+func (o RegistryOptions) ToNameOptions() []name.Option {
 	if o.InsecureRegistry {
 		return []name.Option{name.Insecure}
 	}

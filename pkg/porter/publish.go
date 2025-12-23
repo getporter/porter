@@ -474,7 +474,7 @@ func (p *Porter) pushImageFromLayout(ctx context.Context, layoutPath layout.Path
 
 // getNewImageNameFromBundleReference derives a new image reference from the provided original
 // image (string) using the provided bundleTag to clean registry/org/etc.
-func getNewImageNameFromBundleReference(origImg, bundleTag string) (name.Reference, error) {
+func getNewImageNameFromBundleReference(origImg, bundleTag string, regOpts cnabtooci.RegistryOptions) (name.Reference, error) {
 	origImgRef, err := cnab.ParseOCIReference(origImg)
 	if err != nil {
 		return nil, err
@@ -503,8 +503,8 @@ func getNewImageNameFromBundleReference(origImg, bundleTag string) (name.Referen
 		return nil, err
 	}
 
-	// Parse the reference string into a name.Reference
-	return name.ParseReference(newImgRef.String())
+	// Parse the reference string into a name.Reference with registry options
+	return name.ParseReference(newImgRef.String(), regOpts.ToNameOptions()...)
 }
 
 func (p *Porter) rewriteBundleWithBundleImageDigest(ctx context.Context, m *manifest.Manifest, digest digest.Digest, preserveTags bool) (cnab.ExtendedBundle, error) {
@@ -529,7 +529,7 @@ func (p *Porter) rewriteBundleWithBundleImageDigest(ctx context.Context, m *mani
 }
 
 func (p *Porter) relocateImage(ctx context.Context, relocationMap relocation.ImageRelocationMap, layoutPath layout.Path, originImg string, newReference string, opts cnabtooci.RegistryOptions) (relocation.ImageRelocationMap, error) {
-	newImgRef, err := getNewImageNameFromBundleReference(originImg, newReference)
+	newImgRef, err := getNewImageNameFromBundleReference(originImg, newReference, opts)
 	if err != nil {
 		return nil, err
 	}
