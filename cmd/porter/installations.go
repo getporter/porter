@@ -2,6 +2,7 @@ package main
 
 import (
 	"get.porter.sh/porter/pkg/porter"
+	"get.porter.sh/porter/pkg/tracing"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
@@ -55,7 +56,13 @@ Optional output formats include json and yaml.`,
 			return opts.Validate()
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.PrintInstallations(cmd.Context(), opts)
+			ctx := cmd.Context()
+			log := tracing.GetLogger(ctx)
+
+			if err := p.PrintInstallations(ctx, opts); err != nil {
+				return log.RecordError(err)
+			}
+			return nil
 		},
 	}
 
@@ -95,7 +102,13 @@ Optional output formats include json and yaml.
 			return opts.Validate(args, p.Context)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.ShowInstallation(cmd.Context(), opts)
+			ctx := cmd.Context()
+			log := tracing.GetLogger(ctx)
+
+			if err := p.ShowInstallation(ctx, opts); err != nil {
+				return log.RecordError(err)
+			}
+			return nil
 		},
 	}
 
@@ -129,7 +142,13 @@ You can use the show command to create the initial file:
 			return opts.Validate(p.Context, args)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.InstallationApply(cmd.Context(), opts)
+			ctx := cmd.Context()
+			log := tracing.GetLogger(ctx)
+
+			if err := p.InstallationApply(ctx, opts); err != nil {
+				return log.RecordError(err)
+			}
+			return nil
 		},
 	}
 
@@ -158,7 +177,13 @@ func buildInstallationDeleteCommand(p *porter.Porter) *cobra.Command {
 			return opts.Validate(args, p.Context)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.DeleteInstallation(cmd.Context(), opts)
+			ctx := cmd.Context()
+			log := tracing.GetLogger(ctx)
+
+			if err := p.DeleteInstallation(ctx, opts); err != nil {
+				return log.RecordError(err)
+			}
+			return nil
 		},
 	}
 
@@ -200,7 +225,13 @@ func buildInstallationRunsListCommand(p *porter.Porter) *cobra.Command {
 			return opts.Validate(args, p.Context)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.PrintInstallationRuns(cmd.Context(), opts)
+			ctx := cmd.Context()
+			log := tracing.GetLogger(ctx)
+
+			if err := p.PrintInstallationRuns(ctx, opts); err != nil {
+				return log.RecordError(err)
+			}
+			return nil
 		},
 	}
 
@@ -246,7 +277,13 @@ The docker driver runs the bundle container using the local Docker host. To use 
 			return opts.Validate(cmd.Context(), args, p)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.InstallBundle(cmd.Context(), opts)
+			ctx := cmd.Context()
+			log := tracing.GetLogger(ctx)
+
+			if err := p.InstallBundle(ctx, opts); err != nil {
+				return log.RecordError(err)
+			}
+			return nil
 		},
 	}
 
@@ -296,7 +333,13 @@ The docker driver runs the bundle container using the local Docker host. To use 
 			return opts.Validate(cmd.Context(), args, p)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.UpgradeBundle(cmd.Context(), opts)
+			ctx := cmd.Context()
+			log := tracing.GetLogger(ctx)
+
+			if err := p.UpgradeBundle(ctx, opts); err != nil {
+				return log.RecordError(err)
+			}
+			return nil
 		},
 	}
 
@@ -347,7 +390,13 @@ The docker driver runs the bundle container using the local Docker host. To use 
 			return opts.Validate(cmd.Context(), args, p)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.InvokeBundle(cmd.Context(), opts)
+			ctx := cmd.Context()
+			log := tracing.GetLogger(ctx)
+
+			if err := p.InvokeBundle(ctx, opts); err != nil {
+				return log.RecordError(err)
+			}
+			return nil
 		},
 	}
 
@@ -397,7 +446,13 @@ The docker driver runs the bundle container using the local Docker host. To use 
 			return opts.Validate(cmd.Context(), args, p)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.UninstallBundle(cmd.Context(), opts)
+			ctx := cmd.Context()
+			log := tracing.GetLogger(ctx)
+
+			if err := p.UninstallBundle(ctx, opts); err != nil {
+				return log.RecordError(err)
+			}
+			return nil
 		},
 	}
 
