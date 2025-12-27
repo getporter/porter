@@ -18,7 +18,7 @@ type LogConfig struct {
 	// Structured indicates if the logs sent to the console should include timestamp and log levels
 	Structured bool     `mapstructure:"structured" toml:"structured" yaml:"structured" json:"structured"`
 	LogToFile  bool     `mapstructure:"log-to-file" toml:"log-to-file" yaml:"log-to-file" json:"log-to-file"`
-	Level      LogLevel `mapstructure:"level" toml:"level" yaml:"level" json:"level"`
+	Level      LogLevel `mapstructure:"level" toml:"level" yaml:"level" json:"level" validate:"oneof=debug info warn warning error"`
 }
 
 // TelemetryConfig specifies how to connect to an open telemetry collector.
@@ -26,12 +26,12 @@ type LogConfig struct {
 type TelemetryConfig struct {
 	Enabled     bool              `mapstructure:"enabled" toml:"enabled" yaml:"enabled" json:"enabled"`
 	Endpoint    string            `mapstructure:"endpoint" toml:"endpoint" yaml:"endpoint" json:"endpoint"`
-	Protocol    string            `mapstructure:"protocol" toml:"protocol" yaml:"protocol" json:"protocol"`
+	Protocol    string            `mapstructure:"protocol" toml:"protocol" yaml:"protocol" json:"protocol" validate:"oneof=grpc http/protobuf"`
 	Insecure    bool              `mapstructure:"insecure" toml:"insecure" yaml:"insecure" json:"insecure"`
 	Certificate string            `mapstructure:"certificate" toml:"certificate" yaml:"certificate" json:"certificate"`
 	Headers     map[string]string `mapstructure:"headers" toml:"headers" yaml:"headers" json:"headers"`
 	Timeout     string            `mapstructure:"timeout" toml:"timeout" yaml:"timeout" json:"timeout"`
-	Compression string            `mapstructure:"compression" toml:"compression" yaml:"compression" json:"compression"`
+	Compression string            `mapstructure:"compression" toml:"compression" yaml:"compression" json:"compression" validate:"oneof=gzip none"`
 
 	// RedirectToFile instructs Porter to write telemetry data to a file in
 	// PORTER_HOME/traces instead of exporting it to a collector
