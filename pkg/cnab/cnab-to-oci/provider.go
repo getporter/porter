@@ -48,14 +48,16 @@ type RegistryOptions struct {
 	InsecureRegistry bool
 }
 
-func (o RegistryOptions) toNameOptions() []name.Option {
+// ToNameOptions converts RegistryOptions to go-containerregistry name options
+func (o RegistryOptions) ToNameOptions() []name.Option {
 	if o.InsecureRegistry {
 		return []name.Option{name.Insecure}
 	}
 	return nil
 }
 
-func (o RegistryOptions) toRemoteOptions() []remote.Option {
+// ToRemoteOptions converts RegistryOptions to go-containerregistry remote options
+func (o RegistryOptions) ToRemoteOptions() []remote.Option {
 	result := []remote.Option{
 		remote.WithAuthFromKeychain(authn.DefaultKeychain),
 	}

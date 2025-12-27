@@ -159,6 +159,7 @@ func (m mockCollectingImageStore) Add(img string) (contentDigest string, err err
 }
 
 func (m mockCollectingImageStore) Push(dig image.Digest, src image.Name, dst image.Name) error {
+	// Not used in tests, just satisfies imagestore.Store interface from cnab-go
 	return nil
 }
 
@@ -173,5 +174,6 @@ func (m mockImageStore) Add(img string) (contentDigest string, err error) {
 }
 
 func (m mockImageStore) Push(dig image.Digest, src image.Name, dst image.Name) error {
+	// Not used in tests, just satisfies imagestore.Store interface from cnab-go
 	return nil
 }

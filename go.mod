@@ -17,7 +17,6 @@ require (
 	github.com/cbroglie/mustache v1.4.0
 	github.com/cnabio/cnab-go v0.25.5
 	github.com/cnabio/cnab-to-oci v0.5.1
-	github.com/cnabio/image-relocation v0.9.1
 	github.com/containerd/containerd v1.7.29
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
 	github.com/distribution/reference v0.6.1-0.20240718132515-8c942b0459df
@@ -104,6 +103,7 @@ require (
 	github.com/clipperhouse/displaywidth v0.6.0 // indirect
 	github.com/clipperhouse/stringish v0.1.1 // indirect
 	github.com/clipperhouse/uax29/v2 v2.3.0 // indirect
+	github.com/cnabio/image-relocation v0.9.1 // indirect
 	github.com/containerd/console v1.0.5 // indirect
 	github.com/containerd/containerd/api v1.10.0 // indirect
 	github.com/containerd/containerd/v2 v2.2.1-0.20251115011841-efd86f2b0bc2 // indirect
