@@ -24,18 +24,18 @@ type Data struct {
 	// BuildDriver is the driver to use when building bundles.
 	// Available values are: buildkit.
 	// Do not use directly, use Config.GetBuildDriver.
-	BuildDriver string `mapstructure:"build-driver"`
+	BuildDriver string `mapstructure:"build-driver" toml:"build-driver" yaml:"build-driver" json:"build-driver"`
 
 	// RuntimeDriver is the driver to use when executing bundles.
 	// Available values are: docker, kubernetes.
 	// It is both a global variable and a command flag because some of our commands, like porter installation apply,
 	// do not expose all the bundle execution flags. This allows us to later manually use the global config value
 	// to ensure that the global config value works even for those commands.
-	RuntimeDriver string `mapstructure:"runtime-driver"`
+	RuntimeDriver string `mapstructure:"runtime-driver" toml:"runtime-driver" yaml:"runtime-driver" json:"runtime-driver"`
 
 	// ForceOverwrite specifies OCI artifacts can be overwritten when pushed.
 	// By default, Porter requires the --force flag to be specified to overwrite a bundle or image.
-	ForceOverwrite bool `mapstructure:"force-overwrite"`
+	ForceOverwrite bool `mapstructure:"force-overwrite" toml:"force-overwrite" yaml:"force-overwrite" json:"force-overwrite"`
 
 	// AllowDockerHostAccess grants bundles access to the underlying docker host
 	// upon which it is running so that it can do things like build and run containers.
@@ -43,57 +43,57 @@ type Data struct {
 	// It is both a global variable and a command flag because some of our commands, like porter installation apply,
 	// do not expose all the bundle execution flags. This allows us to later manually use the global config value
 	// to ensure that the global config value works even for those commands.
-	AllowDockerHostAccess bool `mapstructure:"allow-docker-host-access"`
+	AllowDockerHostAccess bool `mapstructure:"allow-docker-host-access" toml:"allow-docker-host-access" yaml:"allow-docker-host-access" json:"allow-docker-host-access"`
 
 	// DefaultStoragePlugin is the storage plugin to use when no named storage is specified.
-	DefaultStoragePlugin string `mapstructure:"default-storage-plugin"`
+	DefaultStoragePlugin string `mapstructure:"default-storage-plugin" toml:"default-storage-plugin" yaml:"default-storage-plugin" json:"default-storage-plugin"`
 
 	// DefaultStorage to use when a named storage is not specified by a flag.
-	DefaultStorage string `mapstructure:"default-storage"`
+	DefaultStorage string `mapstructure:"default-storage" toml:"default-storage" yaml:"default-storage" json:"default-storage"`
 
 	// ExperimentalFlags is a list of enabled experimental.FeatureFlags.
 	// Use Config.IsFeatureEnabled instead of parsing directly.
-	ExperimentalFlags []string `mapstructure:"experimental"`
+	ExperimentalFlags []string `mapstructure:"experimental" toml:"experimental" yaml:"experimental" json:"experimental"`
 
 	// StoragePlugins defined in the configuration file.
-	StoragePlugins []StoragePlugin `mapstructure:"storage"`
+	StoragePlugins []StoragePlugin `mapstructure:"storage" toml:"storage" yaml:"storage" json:"storage"`
 
 	// DefaultSecretsPlugin is the plugin to use when no plugin is specified.
-	DefaultSecretsPlugin string `mapstructure:"default-secrets-plugin"`
+	DefaultSecretsPlugin string `mapstructure:"default-secrets-plugin" toml:"default-secrets-plugin" yaml:"default-secrets-plugin" json:"default-secrets-plugin"`
 
 	// DefaultSecrets to use when one is not specified by a flag.
-	DefaultSecrets string `mapstructure:"default-secrets"`
+	DefaultSecrets string `mapstructure:"default-secrets" toml:"default-secrets" yaml:"default-secrets" json:"default-secrets"`
 
 	// DefaultSigningPlugin is the plugin to use when no plugin is specified.
-	DefaultSigningPlugin string `mapstructure:"default-signing-plugin"`
+	DefaultSigningPlugin string `mapstructure:"default-signing-plugin" toml:"default-signing-plugin" yaml:"default-signing-plugin" json:"default-signing-plugin"`
 
 	// DefaultSigning to use when one is not specified by a flag.
-	DefaultSigning string `mapstructure:"default-signer"`
+	DefaultSigning string `mapstructure:"default-signer" toml:"default-signer" yaml:"default-signer" json:"default-signer"`
 
 	// Namespace is the default namespace for commands that do not override it with a flag.
-	Namespace string `mapstructure:"namespace"`
+	Namespace string `mapstructure:"namespace" toml:"namespace" yaml:"namespace" json:"namespace"`
 
 	// SecretsPlugin defined in the configuration file.
-	SecretsPlugin []SecretsPlugin `mapstructure:"secrets"`
+	SecretsPlugin []SecretsPlugin `mapstructure:"secrets" toml:"secrets" yaml:"secrets" json:"secrets"`
 
 	// SigningPlugin defined in the configuration file.
-	SigningPlugin []SigningPlugin `mapstructure:"signers"`
+	SigningPlugin []SigningPlugin `mapstructure:"signers" toml:"signers" yaml:"signers" json:"signers"`
 
 	// Logs are settings related to Porter's log files.
-	Logs LogConfig `mapstructure:"logs"`
+	Logs LogConfig `mapstructure:"logs" toml:"logs" yaml:"logs" json:"logs"`
 
 	// Telemetry are settings related to Porter's tracing with open telemetry.
-	Telemetry TelemetryConfig `mapstructure:"telemetry"`
+	Telemetry TelemetryConfig `mapstructure:"telemetry" toml:"telemetry" yaml:"telemetry" json:"telemetry"`
 
 	// SchemaCheck specifies how strict Porter should be when comparing the
 	// schemaVersion field on a resource with the supported schemaVersion.
 	// Supported values are: exact, minor, major, none.
-	SchemaCheck string `mapstructure:"schema-check"`
+	SchemaCheck string `mapstructure:"schema-check" toml:"schema-check" yaml:"schema-check" json:"schema-check"`
 
 	// Verbosity controls the level of messages output to the console.
 	// Use Logs.LogLevel if you want to change what is output to the logfile.
 	// Traces sent to an OpenTelemetry collector always include all levels of messages.
-	Verbosity string `mapstructure:"verbosity"`
+	Verbosity string `mapstructure:"verbosity" toml:"verbosity" yaml:"verbosity" json:"verbosity"`
 }
 
 // DefaultDataStore used when no config file is found.
@@ -127,9 +127,9 @@ type StoragePlugin struct {
 // PluginConfig is a standardized config stanza that defines which plugin to
 // use and its custom configuration.
 type PluginConfig struct {
-	Name         string                 `mapstructure:"name"`
-	PluginSubKey string                 `mapstructure:"plugin"`
-	Config       map[string]interface{} `mapstructure:"config"`
+	Name         string                 `mapstructure:"name" toml:"name" yaml:"name" json:"name"`
+	PluginSubKey string                 `mapstructure:"plugin" toml:"plugin" yaml:"plugin" json:"plugin"`
+	Config       map[string]interface{} `mapstructure:"config" toml:"config" yaml:"config" json:"config"`
 }
 
 func (p PluginConfig) GetName() string {

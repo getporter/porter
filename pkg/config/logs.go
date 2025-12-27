@@ -16,30 +16,30 @@ const (
 // LogConfig are settings related to Porter's log files.
 type LogConfig struct {
 	// Structured indicates if the logs sent to the console should include timestamp and log levels
-	Structured bool     `mapstructure:"structured"`
-	LogToFile  bool     `mapstructure:"log-to-file"`
-	Level      LogLevel `mapstructure:"level"`
+	Structured bool     `mapstructure:"structured" toml:"structured" yaml:"structured" json:"structured"`
+	LogToFile  bool     `mapstructure:"log-to-file" toml:"log-to-file" yaml:"log-to-file" json:"log-to-file"`
+	Level      LogLevel `mapstructure:"level" toml:"level" yaml:"level" json:"level"`
 }
 
 // TelemetryConfig specifies how to connect to an open telemetry collector.
 // See https://github.com/open-telemetry/opentelemetry-go/tree/main/exporters/otlp/otlptrace
 type TelemetryConfig struct {
-	Enabled     bool              `mapstructure:"enabled"`
-	Endpoint    string            `mapstructure:"endpoint"`
-	Protocol    string            `mapstructure:"protocol"`
-	Insecure    bool              `mapstructure:"insecure"`
-	Certificate string            `mapstructure:"certificate"`
-	Headers     map[string]string `mapstructure:"headers"`
-	Timeout     string            `mapstructure:"timeout"`
-	Compression string            `mapstructure:"compression"`
+	Enabled     bool              `mapstructure:"enabled" toml:"enabled" yaml:"enabled" json:"enabled"`
+	Endpoint    string            `mapstructure:"endpoint" toml:"endpoint" yaml:"endpoint" json:"endpoint"`
+	Protocol    string            `mapstructure:"protocol" toml:"protocol" yaml:"protocol" json:"protocol"`
+	Insecure    bool              `mapstructure:"insecure" toml:"insecure" yaml:"insecure" json:"insecure"`
+	Certificate string            `mapstructure:"certificate" toml:"certificate" yaml:"certificate" json:"certificate"`
+	Headers     map[string]string `mapstructure:"headers" toml:"headers" yaml:"headers" json:"headers"`
+	Timeout     string            `mapstructure:"timeout" toml:"timeout" yaml:"timeout" json:"timeout"`
+	Compression string            `mapstructure:"compression" toml:"compression" yaml:"compression" json:"compression"`
 
 	// RedirectToFile instructs Porter to write telemetry data to a file in
 	// PORTER_HOME/traces instead of exporting it to a collector
-	RedirectToFile bool `mapstructure:"redirect-to-file"`
+	RedirectToFile bool `mapstructure:"redirect-to-file" toml:"redirect-to-file" yaml:"redirect-to-file" json:"redirect-to-file"`
 
 	// StartTimeout sets the amount of time to wait while establishing a connection
 	// to the OpenTelemetry collector.
-	StartTimeout string `mapstructure:"start-timeout"`
+	StartTimeout string `mapstructure:"start-timeout" toml:"start-timeout" yaml:"start-timeout" json:"start-timeout"`
 }
 
 // GetStartTimeout returns the amount of time to wait for the collector to start
