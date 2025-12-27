@@ -252,6 +252,88 @@ func TestPorter_ShowConfig_FormatConversion(t *testing.T) {
 	}
 }
 
+func TestConfigEditOptions_Validate(t *testing.T) {
+	testcases := []struct {
+		name        string
+		args        []string
+		expectError bool
+		errorMsg    string
+	}{
+		{
+			name:        "valid with no args",
+			args:        []string{},
+			expectError: false,
+		},
+		{
+			name:        "invalid with args",
+			args:        []string{"somefile"},
+			expectError: true,
+			errorMsg:    "does not accept arguments",
+		},
+		{
+			name:        "invalid with multiple args",
+			args:        []string{"file1", "file2"},
+			expectError: true,
+			errorMsg:    "does not accept arguments",
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			opts := ConfigEditOptions{}
+
+			err := opts.Validate(tc.args)
+
+			if tc.expectError {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tc.errorMsg)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestPorter_EditConfig_CreatesDefaultWhenMissing(t *testing.T) {
+	// This test verifies that EditConfig creates a default config file
+	// when none exists. We skip the actual editor interaction.
+	p := NewTestPorter(t)
+	defer p.Close()
+
+	// Get config path
+	configPath, err := p.Config.GetConfigPath()
+	require.NoError(t, err)
+
+	// Verify no config exists
+	exists, err := p.Config.FileSystem.Exists(configPath)
+	require.NoError(t, err)
+	require.False(t, exists)
+
+	// Note: We can't easily test the full EditConfig flow without mocking
+	// the editor interaction. The editor.Run() call would block waiting for
+	// user input. This is better tested via integration tests or manual testing.
+	// Here we just verify the preconditions and that CreateDefaultConfig works.
+
+	// Create default config (this is what EditConfig would do)
+	err = p.Config.CreateDefaultConfig(context.Background(), configPath)
+	require.NoError(t, err)
+
+	// Verify config was created
+	exists, err = p.Config.FileSystem.Exists(configPath)
+	require.NoError(t, err)
+	require.True(t, exists)
+
+	// Verify it contains valid toml
+	contents, err := p.Config.FileSystem.ReadFile(configPath)
+	require.NoError(t, err)
+	require.NotEmpty(t, contents)
+
+	// Verify we can parse it
+	var data config.Data
+	err = encoding.UnmarshalFile(p.Config.FileSystem, configPath, &data)
+	require.NoError(t, err)
+}
+
 func TestPorter_ShowConfig_PreservesFormat(t *testing.T) {
 	// When no explicit format is requested, existing file format should be used
 	testcases := []struct {

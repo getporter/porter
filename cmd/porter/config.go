@@ -14,6 +14,7 @@ func buildConfigCommand(p *porter.Porter) *cobra.Command {
 	}
 
 	cmd.AddCommand(buildConfigShowCommand(p))
+	cmd.AddCommand(buildConfigEditCommand(p))
 
 	return cmd
 }
@@ -40,6 +41,26 @@ func buildConfigShowCommand(p *porter.Porter) *cobra.Command {
 	f := cmd.Flags()
 	f.StringVarP(&opts.RawFormat, "output", "o", "",
 		"Output format (json, yaml, toml)")
+
+	return cmd
+}
+
+func buildConfigEditCommand(p *porter.Porter) *cobra.Command {
+	opts := porter.ConfigEditOptions{}
+
+	cmd := &cobra.Command{
+		Use:   "edit",
+		Short: "Edit Porter configuration",
+		Long:  "Edit the Porter configuration in your default editor. If no config file exists, creates a default configuration file.",
+		Example: `  porter config edit
+  EDITOR=vim porter config edit`,
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			return opts.Validate(args)
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return p.EditConfig(cmd.Context(), opts)
+		},
+	}
 
 	return cmd
 }

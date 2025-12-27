@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/editor"
 	"get.porter.sh/porter/pkg/encoding"
 	"get.porter.sh/porter/pkg/printer"
 	"get.porter.sh/porter/pkg/tracing"
@@ -99,6 +100,85 @@ func (p *Porter) ShowConfig(ctx context.Context, opts ConfigShowOptions) error {
 
 	// Write to stdout
 	fmt.Fprintln(p.Out, string(output))
+
+	return nil
+}
+
+// ConfigEditOptions represents options for editing the Porter config
+type ConfigEditOptions struct {
+	// No special options needed
+}
+
+// Validate validates the options for the config edit command
+func (o *ConfigEditOptions) Validate(args []string) error {
+	if len(args) > 0 {
+		return fmt.Errorf("config edit does not accept arguments")
+	}
+	return nil
+}
+
+// EditConfig opens the Porter configuration in the user's editor
+func (p *Porter) EditConfig(ctx context.Context, opts ConfigEditOptions) error {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
+	// Get the config path
+	configPath, err := p.Config.GetConfigPath()
+	if err != nil {
+		return span.Error(err)
+	}
+
+	// Check if config exists
+	exists, err := p.Config.FileSystem.Exists(configPath)
+	if err != nil {
+		return span.Error(fmt.Errorf("error checking if config exists: %w", err))
+	}
+
+	// If config doesn't exist, create default
+	if !exists {
+		err = p.Config.CreateDefaultConfig(ctx, configPath)
+		if err != nil {
+			return span.Error(fmt.Errorf("error creating default config: %w", err))
+		}
+	}
+
+	// Read the current config file
+	contents, err := p.Config.FileSystem.ReadFile(configPath)
+	if err != nil {
+		return span.Error(fmt.Errorf("error reading config file: %w", err))
+	}
+
+	// Detect the format from the file path
+	format := config.DetectConfigFormat(configPath)
+
+	// Determine file extension for temp file
+	ext := "." + format
+	if format == "yaml" {
+		// Use .yaml for consistency even though .yml is also valid
+		ext = ".yaml"
+	}
+
+	// Open in editor
+	ed := editor.New(p.Context, "porter-config"+ext, contents)
+	editedContents, err := ed.Run(ctx)
+	if err != nil {
+		return span.Error(fmt.Errorf("error opening editor: %w", err))
+	}
+
+	// Validate the edited content by trying to unmarshal it
+	var validatedData config.Data
+	err = encoding.Unmarshal(format, editedContents, &validatedData)
+	if err != nil {
+		return span.Error(fmt.Errorf("invalid config syntax: %w", err))
+	}
+
+	// Save the validated content back to the file
+	err = p.Config.FileSystem.WriteFile(configPath, editedContents, 0644)
+	if err != nil {
+		return span.Error(fmt.Errorf("error saving config: %w", err))
+	}
+
+	fmt.Fprintf(p.Out, "Configuration saved to %s\n", configPath)
 
 	return nil
 }
