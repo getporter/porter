@@ -181,3 +181,70 @@ func (p *Porter) EditConfig(ctx context.Context, opts ConfigEditOptions) error {
 
 	return nil
 }
+
+// ConfigSetOptions represents options for setting a config value
+type ConfigSetOptions struct {
+	Key   string
+	Value string
+}
+
+// Validate validates the options for the config set command
+func (o *ConfigSetOptions) Validate(args []string) error {
+	if len(args) != 2 {
+		return fmt.Errorf("config set requires exactly 2 arguments: KEY VALUE")
+	}
+	o.Key = args[0]
+	o.Value = args[1]
+	return nil
+}
+
+// SetConfig sets an individual config value
+func (p *Porter) SetConfig(ctx context.Context, opts ConfigSetOptions) error {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
+	// Get the config path
+	configPath, err := p.Config.GetConfigPath()
+	if err != nil {
+		return span.Error(err)
+	}
+
+	// Check if config exists
+	exists, err := p.Config.FileSystem.Exists(configPath)
+	if err != nil {
+		return span.Error(fmt.Errorf("error checking if config exists: %w", err))
+	}
+
+	var data config.Data
+
+	if !exists {
+		// Create default config
+		defaultData := config.DefaultDataStore()
+		data = defaultData
+	} else {
+		// Load existing config
+		err = encoding.UnmarshalFile(p.Config.FileSystem, configPath, &data)
+		if err != nil {
+			return span.Error(fmt.Errorf("error loading config from %s: %w", configPath, err))
+		}
+	}
+
+	// Set the value using the setter
+	err = config.SetConfigValue(&data, opts.Key, opts.Value)
+	if err != nil {
+		return span.Error(err)
+	}
+
+	// Update the config data in memory
+	p.Config.Data = data
+
+	// Save the config (format is auto-detected from path extension)
+	err = p.Config.SaveConfig(ctx, configPath)
+	if err != nil {
+		return span.Error(fmt.Errorf("error saving config: %w", err))
+	}
+
+	fmt.Fprintf(p.Out, "Set %s = %s\n", opts.Key, opts.Value)
+
+	return nil
+}

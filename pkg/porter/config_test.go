@@ -406,3 +406,275 @@ func TestPorter_ShowConfig_PreservesFormat(t *testing.T) {
 		})
 	}
 }
+
+func TestConfigSetOptions_Validate(t *testing.T) {
+	testcases := []struct {
+		name        string
+		args        []string
+		expectError bool
+		errorMsg    string
+		expectedKey string
+		expectedVal string
+	}{
+		{
+			name:        "valid with key and value",
+			args:        []string{"verbosity", "debug"},
+			expectError: false,
+			expectedKey: "verbosity",
+			expectedVal: "debug",
+		},
+		{
+			name:        "valid with nested key",
+			args:        []string{"logs.level", "info"},
+			expectError: false,
+			expectedKey: "logs.level",
+			expectedVal: "info",
+		},
+		{
+			name:        "invalid with no args",
+			args:        []string{},
+			expectError: true,
+			errorMsg:    "requires exactly 2 arguments",
+		},
+		{
+			name:        "invalid with one arg",
+			args:        []string{"verbosity"},
+			expectError: true,
+			errorMsg:    "requires exactly 2 arguments",
+		},
+		{
+			name:        "invalid with three args",
+			args:        []string{"verbosity", "debug", "extra"},
+			expectError: true,
+			errorMsg:    "requires exactly 2 arguments",
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			opts := ConfigSetOptions{}
+
+			err := opts.Validate(tc.args)
+
+			if tc.expectError {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tc.errorMsg)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tc.expectedKey, opts.Key)
+				require.Equal(t, tc.expectedVal, opts.Value)
+			}
+		})
+	}
+}
+
+func TestPorter_SetConfig_StringField(t *testing.T) {
+	p := NewTestPorter(t)
+	defer p.Close()
+
+	// Ensure no config exists
+	configPath, err := p.Config.GetConfigPath()
+	require.NoError(t, err)
+	exists, err := p.Config.FileSystem.Exists(configPath)
+	require.NoError(t, err)
+	require.False(t, exists)
+
+	opts := ConfigSetOptions{
+		Key:   "verbosity",
+		Value: "debug",
+	}
+
+	// Set the value
+	err = p.SetConfig(context.Background(), opts)
+	require.NoError(t, err)
+
+	// Verify output message
+	output := p.TestConfig.TestContext.GetOutput()
+	require.Contains(t, output, "Set verbosity = debug")
+
+	// Verify config file was created
+	exists, err = p.Config.FileSystem.Exists(configPath)
+	require.NoError(t, err)
+	require.True(t, exists)
+
+	// Verify the value was set
+	var data config.Data
+	err = encoding.UnmarshalFile(p.Config.FileSystem, configPath, &data)
+	require.NoError(t, err)
+	require.Equal(t, "debug", data.Verbosity)
+}
+
+func TestPorter_SetConfig_BoolField(t *testing.T) {
+	p := NewTestPorter(t)
+	defer p.Close()
+
+	opts := ConfigSetOptions{
+		Key:   "telemetry.enabled",
+		Value: "true",
+	}
+
+	// Set the value
+	err := p.SetConfig(context.Background(), opts)
+	require.NoError(t, err)
+
+	// Verify the value was set
+	configPath, err := p.Config.GetConfigPath()
+	require.NoError(t, err)
+	var data config.Data
+	err = encoding.UnmarshalFile(p.Config.FileSystem, configPath, &data)
+	require.NoError(t, err)
+	require.True(t, data.Telemetry.Enabled)
+}
+
+func TestPorter_SetConfig_NestedField(t *testing.T) {
+	p := NewTestPorter(t)
+	defer p.Close()
+
+	opts := ConfigSetOptions{
+		Key:   "logs.level",
+		Value: "info",
+	}
+
+	// Set the value
+	err := p.SetConfig(context.Background(), opts)
+	require.NoError(t, err)
+
+	// Verify the value was set
+	configPath, err := p.Config.GetConfigPath()
+	require.NoError(t, err)
+	var data config.Data
+	err = encoding.UnmarshalFile(p.Config.FileSystem, configPath, &data)
+	require.NoError(t, err)
+	require.Equal(t, config.LogLevel("info"), data.Logs.Level)
+}
+
+func TestPorter_SetConfig_InvalidKey(t *testing.T) {
+	p := NewTestPorter(t)
+	defer p.Close()
+
+	opts := ConfigSetOptions{
+		Key:   "invalid.key",
+		Value: "value",
+	}
+
+	// Set the value
+	err := p.SetConfig(context.Background(), opts)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "unknown config field")
+}
+
+func TestPorter_SetConfig_InvalidValue(t *testing.T) {
+	p := NewTestPorter(t)
+	defer p.Close()
+
+	opts := ConfigSetOptions{
+		Key:   "logs.level",
+		Value: "invalid-level",
+	}
+
+	// Set the value
+	err := p.SetConfig(context.Background(), opts)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "invalid value")
+}
+
+func TestPorter_SetConfig_PreservesFormat(t *testing.T) {
+	testcases := []struct {
+		name       string
+		configFile string
+		content    string
+		format     string
+	}{
+		{
+			name:       "toml config",
+			configFile: "config.toml",
+			content:    `verbosity = "info"`,
+			format:     "toml",
+		},
+		{
+			name:       "yaml config",
+			configFile: "config.yaml",
+			content:    "verbosity: info\n",
+			format:     "yaml",
+		},
+		{
+			name:       "json config",
+			configFile: "config.json",
+			content:    `{"verbosity":"info"}`,
+			format:     "json",
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			p := NewTestPorter(t)
+			defer p.Close()
+
+			// Write existing config file
+			home, err := p.Config.GetHomeDir()
+			require.NoError(t, err)
+			configPath := filepath.Join(home, tc.configFile)
+			err = p.Config.FileSystem.WriteFile(configPath, []byte(tc.content), 0644)
+			require.NoError(t, err)
+
+			// Reload config
+			_, err = p.Config.Load(context.Background(), nil)
+			require.NoError(t, err)
+
+			// Set a new value
+			opts := ConfigSetOptions{
+				Key:   "namespace",
+				Value: "myapp",
+			}
+			err = p.SetConfig(context.Background(), opts)
+			require.NoError(t, err)
+
+			// Verify format is preserved
+			detectedFormat := config.DetectConfigFormat(configPath)
+			require.Equal(t, tc.format, detectedFormat)
+
+			// Verify the value was set
+			var data config.Data
+			err = encoding.UnmarshalFile(p.Config.FileSystem, configPath, &data)
+			require.NoError(t, err)
+			require.Equal(t, "myapp", data.Namespace)
+		})
+	}
+}
+
+func TestPorter_SetConfig_MultipleValues(t *testing.T) {
+	p := NewTestPorter(t)
+	defer p.Close()
+
+	// Set multiple values
+	values := []struct {
+		key   string
+		value string
+	}{
+		{"verbosity", "debug"},
+		{"namespace", "test"},
+		{"logs.level", "info"},
+		{"telemetry.enabled", "true"},
+	}
+
+	for _, v := range values {
+		opts := ConfigSetOptions{
+			Key:   v.key,
+			Value: v.value,
+		}
+		err := p.SetConfig(context.Background(), opts)
+		require.NoError(t, err)
+	}
+
+	// Verify all values were set
+	configPath, err := p.Config.GetConfigPath()
+	require.NoError(t, err)
+	var data config.Data
+	err = encoding.UnmarshalFile(p.Config.FileSystem, configPath, &data)
+	require.NoError(t, err)
+
+	require.Equal(t, "debug", data.Verbosity)
+	require.Equal(t, "test", data.Namespace)
+	require.Equal(t, config.LogLevel("info"), data.Logs.Level)
+	require.True(t, data.Telemetry.Enabled)
+}

@@ -15,6 +15,7 @@ func buildConfigCommand(p *porter.Porter) *cobra.Command {
 
 	cmd.AddCommand(buildConfigShowCommand(p))
 	cmd.AddCommand(buildConfigEditCommand(p))
+	cmd.AddCommand(buildConfigSetCommand(p))
 
 	return cmd
 }
@@ -59,6 +60,28 @@ func buildConfigEditCommand(p *porter.Porter) *cobra.Command {
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return p.EditConfig(cmd.Context(), opts)
+		},
+	}
+
+	return cmd
+}
+
+func buildConfigSetCommand(p *porter.Porter) *cobra.Command {
+	opts := porter.ConfigSetOptions{}
+
+	cmd := &cobra.Command{
+		Use:   "set KEY VALUE",
+		Short: "Set a config value",
+		Long:  "Set an individual Porter configuration value. Creates a config file if none exists.",
+		Example: `  porter config set verbosity debug
+  porter config set logs.level info
+  porter config set telemetry.enabled true
+  porter config set namespace myapp`,
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			return opts.Validate(args)
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return p.SetConfig(cmd.Context(), opts)
 		},
 	}
 

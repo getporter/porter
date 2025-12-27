@@ -33,5 +33,6 @@ Most commands require a Docker daemon, either local or remote.
 Try our QuickStart https://porter.sh/quickstart to learn how to use Porter.
 
 * [porter config edit](/cli/porter_config_edit/)	 - Edit Porter configuration
+* [porter config set](/cli/porter_config_set/)	 - Set a config value
 * [porter config show](/cli/porter_config_show/)	 - Show Porter configuration
 
