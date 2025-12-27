@@ -393,12 +393,13 @@ func TestPorter_ShowConfig_PreservesFormat(t *testing.T) {
 			require.NotEmpty(t, output)
 
 			// Simple format detection by checking output structure
-			if tc.expected == "json" {
+			switch tc.expected {
+			case "json":
 				require.True(t, strings.HasPrefix(output, "{"))
-			} else if tc.expected == "yaml" {
+			case "yaml":
 				// YAML typically has key: value format
 				require.Contains(t, output, "verbosity: debug")
-			} else if tc.expected == "toml" {
+			case "toml":
 				// TOML typically has key = "value" format
 				require.Contains(t, output, `verbosity = "debug"`)
 			}

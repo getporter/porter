@@ -55,7 +55,7 @@ func DetectConfigFormat(path string) string {
 // SaveConfig marshals the config data to the specified path using the format
 // determined from the file extension. Creates parent directories if needed.
 func (c *Config) SaveConfig(ctx context.Context, path string) error {
-	ctx, log := tracing.StartSpan(ctx)
+	_, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
 
 	// Ensure parent directory exists

@@ -3,6 +3,7 @@ package porter
 import (
 	"context"
 	"fmt"
+	"slices"
 
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/editor"
@@ -38,11 +39,9 @@ func (o *ConfigShowOptions) Validate(args []string) error {
 
 	// Validate format
 	format := printer.Format(o.RawFormat)
-	for _, f := range allowedFormats {
-		if f == format {
-			o.Format = format
-			return nil
-		}
+	if slices.Contains(allowedFormats, format) {
+		o.Format = format
+		return nil
 	}
 
 	return fmt.Errorf("invalid format: %s. Allowed formats are: json, yaml, toml", o.RawFormat)
@@ -50,7 +49,7 @@ func (o *ConfigShowOptions) Validate(args []string) error {
 
 // ShowConfig displays the current Porter configuration
 func (p *Porter) ShowConfig(ctx context.Context, opts ConfigShowOptions) error {
-	ctx, span := tracing.StartSpan(ctx)
+	_, span := tracing.StartSpan(ctx)
 	defer span.EndSpan()
 
 	// Get the config path
