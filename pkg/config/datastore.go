@@ -24,14 +24,14 @@ type Data struct {
 	// BuildDriver is the driver to use when building bundles.
 	// Available values are: buildkit.
 	// Do not use directly, use Config.GetBuildDriver.
-	BuildDriver string `mapstructure:"build-driver" toml:"build-driver" yaml:"build-driver" json:"build-driver"`
+	BuildDriver string `mapstructure:"build-driver" toml:"build-driver" yaml:"build-driver" json:"build-driver" validate:"oneof=buildkit"`
 
 	// RuntimeDriver is the driver to use when executing bundles.
 	// Available values are: docker, kubernetes.
 	// It is both a global variable and a command flag because some of our commands, like porter installation apply,
 	// do not expose all the bundle execution flags. This allows us to later manually use the global config value
 	// to ensure that the global config value works even for those commands.
-	RuntimeDriver string `mapstructure:"runtime-driver" toml:"runtime-driver" yaml:"runtime-driver" json:"runtime-driver"`
+	RuntimeDriver string `mapstructure:"runtime-driver" toml:"runtime-driver" yaml:"runtime-driver" json:"runtime-driver" validate:"oneof=docker kubernetes"`
 
 	// ForceOverwrite specifies OCI artifacts can be overwritten when pushed.
 	// By default, Porter requires the --force flag to be specified to overwrite a bundle or image.
@@ -88,12 +88,12 @@ type Data struct {
 	// SchemaCheck specifies how strict Porter should be when comparing the
 	// schemaVersion field on a resource with the supported schemaVersion.
 	// Supported values are: exact, minor, major, none.
-	SchemaCheck string `mapstructure:"schema-check" toml:"schema-check" yaml:"schema-check" json:"schema-check"`
+	SchemaCheck string `mapstructure:"schema-check" toml:"schema-check" yaml:"schema-check" json:"schema-check" validate:"oneof=exact minor major none"`
 
 	// Verbosity controls the level of messages output to the console.
 	// Use Logs.LogLevel if you want to change what is output to the logfile.
 	// Traces sent to an OpenTelemetry collector always include all levels of messages.
-	Verbosity string `mapstructure:"verbosity" toml:"verbosity" yaml:"verbosity" json:"verbosity"`
+	Verbosity string `mapstructure:"verbosity" toml:"verbosity" yaml:"verbosity" json:"verbosity" validate:"oneof=debug info warn warning error"`
 }
 
 // DefaultDataStore used when no config file is found.
