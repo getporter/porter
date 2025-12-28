@@ -24,7 +24,7 @@ const (
 	// DefaultDockerfileSyntax is the default syntax for Dockerfiles used by Porter
 	// either when generating a Dockerfile from scratch, or when a template does
 	// not define a syntax
-	DefaultDockerfileSyntax = "docker/dockerfile-upstream:1.4.0"
+	DefaultDockerfileSyntax = "docker/dockerfile:1"
 )
 
 type DockerfileGenerator struct {

@@ -12,7 +12,7 @@ Sometimes you may want to full control over your bundle image, for example to in
 When you run porter create, a template Dockerfile is created for you in the current directory named **template.Dockerfile**:
 
 ```Dockerfile
-# syntax=docker/dockerfile-upstream:1.4.0
+# syntax=docker/dockerfile:1
 # This is a template Dockerfile for the bundle image
 # You can customize it to use different base images, install tools and copy configuration files.
 #
@@ -86,7 +86,7 @@ Porter automatically builds with Docker [buildkit] enabled.
 The following docker flags are supported on the [porter build] command: \--ssh, \--secret, \--build-arg.
 With these you can take advantage of Docker's support for using SSH connections, mounting secrets, and specifying custom build arguments.
 
-By default, Porter uses the [1.4.0 dockerfile syntax](https://docs.docker.com/engine/reference/builder/#syntax), but you can modify this line to use new versions as they are released.
+By default, Porter uses the [dockerfile:1 syntax](https://docs.docker.com/engine/reference/builder/#syntax), but you can modify this line to use new versions as they are released.
 
 [buildkit]: https://docs.docker.com/develop/develop-images/build_enhancements/
 [porter build]: /cli/porter_build/
