@@ -95,6 +95,20 @@ jobs:
     - name: Unit Test
       run: mage TestUnit
       shell: bash
+  Validate-unit_test-windows:
+    name: Unit Test (Windows)
+    runs-on: windows-latest
+    if: ${{inputs.skipTests == false}}
+    steps:
+    - name: checkout
+      uses: actions/checkout@v6
+    - uses: actions/setup-go@v6
+      with:
+        go-version: ${{ inputs.goVersion }}
+    - name: Configure Agent
+      run: go run mage.go ConfigureAgent
+    - name: Unit Test
+      run: mage TestUnit
   Validate-integration_test:
     name: Integration Test
     needs:
@@ -147,6 +161,27 @@ jobs:
         df -h
     - name: Run Smoke Tests
       run: mage -v TestSmoke
+  Validate-smoke_test-windows:
+    name: Run smoke tests (Windows)
+    needs:
+    - Validate-xbuild
+    runs-on: windows-latest
+    if: success() && ${{inputs.skipTests == false}}
+    steps:
+    - name: checkout
+      uses: actions/checkout@v6
+    - uses: actions/setup-go@v6
+      with:
+        go-version: ${{ inputs.goVersion }}
+    - name: Download Cross-Compiled Porter Binaries
+      uses: actions/download-artifact@v7.0.0
+      with:
+        name: xbuild-bin
+        path: bin
+    - name: Setup Bin
+      run: go run mage.go ConfigureAgent UseXBuildBinaries
+    - name: Run Smoke Tests
+      run: mage -v TestSmoke
   publish_binaries:
     name: Publish Binaries
     needs:
@@ -154,8 +189,10 @@ jobs:
     - Validate-xbuild
     - Validate-VetLint
     - Validate-unit_test
+    - Validate-unit_test-windows
     - Validate-integration_test
     - Validate-smoke_test
+    - Validate-smoke_test-windows
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -196,8 +233,10 @@ jobs:
     - Validate-xbuild
     - Validate-VetLint
     - Validate-unit_test
+    - Validate-unit_test-windows
     - Validate-integration_test
     - Validate-smoke_test
+    - Validate-smoke_test-windows
     runs-on: ubuntu-latest
     permissions:
       contents: write
