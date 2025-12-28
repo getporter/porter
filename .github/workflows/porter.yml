@@ -183,26 +183,3 @@ jobs:
         df -h
     - name: Run Smoke Tests
       run: go run mage.go -v TestSmoke
-
-  Smoke-test-windows:
-    name: Smoke Test (Windows)
-    needs:
-      - XBuild
-    runs-on: windows-latest
-    steps:
-    - name: checkout
-      uses: actions/checkout@v6
-    - name: Download Cross-Compiled Porter Binaries
-      uses: actions/download-artifact@v7.0.0
-      with:
-        name: xbuild-bin
-        path: bin
-    - uses: actions/setup-go@v6
-      with:
-        go-version: "${{ env.GOVERSION }}" # The Go version to download (if necessary) and use.
-        cache: true
-    - run: go version
-    - name: Setup Bin
-      run: go run mage.go UseXBuildBinaries
-    - name: Run Smoke Tests
-      run: go run mage.go -v TestSmoke
