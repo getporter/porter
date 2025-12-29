@@ -302,3 +302,109 @@ func TestFindFieldByTagWithMeta_NonStructValue(t *testing.T) {
 		})
 	}
 }
+
+func TestSetConfigValue_NonPrimitiveFields(t *testing.T) {
+	// Test that attempting to set non-primitive types returns descriptive errors
+	tests := []struct {
+		name          string
+		path          string
+		value         string
+		expectedError string
+	}{
+		{
+			name:          "slice field",
+			path:          "experimental",
+			value:         "value",
+			expectedError: "unsupported type slice",
+		},
+		{
+			name:          "slice of structs",
+			path:          "storage",
+			value:         "value",
+			expectedError: "unsupported type slice",
+		},
+		{
+			name:          "map field",
+			path:          "telemetry.headers",
+			value:         "value",
+			expectedError: "unsupported type map",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			data := &Data{}
+			err := SetConfigValue(data, tt.path, tt.value)
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), tt.expectedError)
+		})
+	}
+}
+
+// Test types for named type validation
+type testNamedString string
+type testNamedInt int
+type testNamedBool bool
+
+type testNamedStruct struct {
+	StringField testNamedString `toml:"string-field" yaml:"string-field" json:"string-field"`
+	IntField    testNamedInt    `toml:"int-field" yaml:"int-field" json:"int-field"`
+	BoolField   testNamedBool   `toml:"bool-field" yaml:"bool-field" json:"bool-field"`
+}
+
+func TestSetConfigValue_NamedTypes(t *testing.T) {
+	// Test that SetString/SetInt/SetBool work correctly with named types
+	// This validates that reflection-based setters work on named types, not just primitives
+	tests := []struct {
+		name     string
+		path     string
+		value    string
+		validate func(*testing.T, *testNamedStruct)
+	}{
+		{
+			name:  "named string type",
+			path:  "string-field",
+			value: "test-value",
+			validate: func(t *testing.T, d *testNamedStruct) {
+				assert.Equal(t, testNamedString("test-value"), d.StringField)
+				assert.IsType(t, testNamedString(""), d.StringField)
+			},
+		},
+		{
+			name:  "named int type",
+			path:  "int-field",
+			value: "42",
+			validate: func(t *testing.T, d *testNamedStruct) {
+				assert.Equal(t, testNamedInt(42), d.IntField)
+				assert.IsType(t, testNamedInt(0), d.IntField)
+			},
+		},
+		{
+			name:  "named bool type",
+			path:  "bool-field",
+			value: "true",
+			validate: func(t *testing.T, d *testNamedStruct) {
+				assert.Equal(t, testNamedBool(true), d.BoolField)
+				assert.IsType(t, testNamedBool(false), d.BoolField)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			data := &testNamedStruct{}
+			err := setFieldByPath(reflect.ValueOf(data).Elem(), []string{tt.path}, tt.value)
+			require.NoError(t, err)
+			tt.validate(t, data)
+		})
+	}
+}
+
+func TestSetConfigValue_NamedTypes_RealConfig(t *testing.T) {
+	// Test named types in actual config (LogLevel)
+	data := &Data{}
+	err := SetConfigValue(data, "logs.level", "debug")
+	require.NoError(t, err)
+	assert.Equal(t, LogLevel("debug"), data.Logs.Level)
+	assert.IsType(t, LogLevel(""), data.Logs.Level)
+}
