@@ -236,6 +236,7 @@ Try our QuickStart https://porter.sh/quickstart to learn how to use Porter.
 	cmd.AddCommand(buildPluginsCommands(p))
 	cmd.AddCommand(buildCredentialsCommands(p))
 	cmd.AddCommand(buildParametersCommands(p))
+	cmd.AddCommand(buildConfigCommand(p))
 	cmd.AddCommand(buildCompletionCommand(p))
 	//use -ldflags "-X main.includeGRPCServer=true" during build to include
 	grpcServer, _ := strconv.ParseBool(includeGRPCServer)
