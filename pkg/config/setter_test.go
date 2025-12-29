@@ -408,3 +408,36 @@ func TestSetConfigValue_NamedTypes_RealConfig(t *testing.T) {
 	assert.Equal(t, LogLevel("debug"), data.Logs.Level)
 	assert.IsType(t, LogLevel(""), data.Logs.Level)
 }
+
+func TestSetConfigValue_CaseInsensitive(t *testing.T) {
+	tests := []struct {
+		name     string
+		path     string
+		input    string
+		expected string
+	}{
+		{"uppercase", "verbosity", "DEBUG", "debug"},
+		{"mixed case", "runtime-driver", "Docker", "docker"},
+		{"nested field uppercase", "logs.level", "INFO", "info"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			data := &Data{}
+			err := SetConfigValue(data, tt.path, tt.input)
+			require.NoError(t, err)
+
+			// Verify the value was normalized to lowercase
+			var actual string
+			switch tt.path {
+			case "verbosity":
+				actual = data.Verbosity
+			case "runtime-driver":
+				actual = data.RuntimeDriver
+			case "logs.level":
+				actual = string(data.Logs.Level)
+			}
+			assert.Equal(t, tt.expected, actual)
+		})
+	}
+}

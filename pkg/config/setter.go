@@ -11,12 +11,14 @@ import (
 // Supports simple fields and nested fields like "logs.level" or "telemetry.enabled".
 // Uses reflection to dynamically set fields based on struct tags.
 func SetConfigValue(data *Data, path string, value string) error {
-	if err := ValidateConfigValue(data, path, value); err != nil {
+	// Validate and normalize the value (validation also normalizes case for oneof fields)
+	normalizedValue, err := ValidateAndNormalizeConfigValue(data, path, value)
+	if err != nil {
 		return err
 	}
 
 	parts := strings.Split(path, ".")
-	return setFieldByPath(reflect.ValueOf(data).Elem(), parts, value)
+	return setFieldByPath(reflect.ValueOf(data).Elem(), parts, normalizedValue)
 }
 
 // setFieldByPath recursively navigates and sets a field using the path segments
@@ -124,12 +126,18 @@ func setFieldValue(field reflect.Value, value string) error {
 
 // ValidateConfigValue validates that a config path exists and the value is valid for its type
 func ValidateConfigValue(data *Data, path string, value string) error {
+	_, err := ValidateAndNormalizeConfigValue(data, path, value)
+	return err
+}
+
+// ValidateAndNormalizeConfigValue validates and normalizes (case) the value for oneof fields
+func ValidateAndNormalizeConfigValue(data *Data, path string, value string) (string, error) {
 	if path == "" {
-		return fmt.Errorf("config path cannot be empty")
+		return "", fmt.Errorf("config path cannot be empty")
 	}
 
 	if value == "" {
-		return fmt.Errorf("config value cannot be empty")
+		return "", fmt.Errorf("config value cannot be empty")
 	}
 
 	parts := strings.Split(path, ".")
@@ -143,83 +151,83 @@ func ValidateConfigValue(data *Data, path string, value string) error {
 		if err != nil {
 			// Provide helpful context about where we are in the path
 			if i > 0 {
-				return fmt.Errorf("invalid config path %s: %w (at level %d)", path, err, i+1)
+				return "", fmt.Errorf("invalid config path %s: %w (at level %d)", path, err, i+1)
 			}
-			return err
+			return "", err
 		}
 
-		// If this is the last part, validate the value can be set
+		// If this is the last part, validate and normalize the value
 		if i == len(parts)-1 {
-			return validateValueForTypeWithTag(field, sf, value, path)
+			return validateAndNormalizeValueForTypeWithTag(field, sf, value, path)
 		}
 
 		// Navigate to nested struct
 		if field.Kind() != reflect.Struct {
-			return fmt.Errorf("field %s is not a struct, cannot navigate to %s", part, parts[i+1])
+			return "", fmt.Errorf("field %s is not a struct, cannot navigate to %s", part, parts[i+1])
 		}
 
 		v = field
 		t = field.Type()
 	}
 
-	return nil
+	return value, nil
 }
 
-// validateValueForTypeWithTag checks if a value can be converted to the field's type
-// and validates against any constraints defined in the validate tag
-func validateValueForTypeWithTag(field reflect.Value, sf reflect.StructField, value string, path string) error {
+// validateAndNormalizeValueForTypeWithTag validates and normalizes the value
+func validateAndNormalizeValueForTypeWithTag(field reflect.Value, sf reflect.StructField, value string, path string) (string, error) {
 	// First check type conversion
 	switch field.Kind() {
 	case reflect.String:
-		// Check validate tag for string constraints
-		return validateWithTag(sf, value, path)
+		// Check validate tag for string constraints and normalize if oneof
+		return validateAndNormalizeWithTag(sf, value, path)
 
 	case reflect.Bool:
 		if _, err := strconv.ParseBool(value); err != nil {
-			return fmt.Errorf("invalid boolean value for %s: %s (valid values: true, false, 1, 0)", path, value)
+			return "", fmt.Errorf("invalid boolean value for %s: %s (valid values: true, false, 1, 0)", path, value)
 		}
-		return nil
+		return value, nil
 
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		if _, err := strconv.ParseInt(value, 10, 64); err != nil {
-			return fmt.Errorf("invalid integer value for %s: %s", path, value)
+			return "", fmt.Errorf("invalid integer value for %s: %s", path, value)
 		}
-		return nil
+		return value, nil
 
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 		if _, err := strconv.ParseUint(value, 10, 64); err != nil {
-			return fmt.Errorf("invalid unsigned integer value for %s: %s", path, value)
+			return "", fmt.Errorf("invalid unsigned integer value for %s: %s", path, value)
 		}
-		return nil
+		return value, nil
 
 	case reflect.Float32, reflect.Float64:
 		if _, err := strconv.ParseFloat(value, 64); err != nil {
-			return fmt.Errorf("invalid float value for %s: %s", path, value)
+			return "", fmt.Errorf("invalid float value for %s: %s", path, value)
 		}
-		return nil
+		return value, nil
 
 	default:
-		return fmt.Errorf("field %s has unsupported type %s (only string, bool, and numeric types can be set)", path, field.Kind())
+		return "", fmt.Errorf("field %s has unsupported type %s (only string, bool, and numeric types can be set)", path, field.Kind())
 	}
 }
 
-// validateWithTag validates a value against the validate struct tag
-func validateWithTag(sf reflect.StructField, value string, path string) error {
+// validateAndNormalizeWithTag validates and normalizes a value against the validate struct tag
+func validateAndNormalizeWithTag(sf reflect.StructField, value string, path string) (string, error) {
 	validateTag := sf.Tag.Get("validate")
 	if validateTag == "" {
-		return nil // No validation tag
+		return value, nil // No validation tag
 	}
 
 	// Parse the validate tag - currently only support "oneof=value1 value2 ..."
 	if strings.HasPrefix(validateTag, "oneof=") {
 		validValues := strings.Split(strings.TrimPrefix(validateTag, "oneof="), " ")
+		// Case-insensitive comparison, return correctly-cased value from tag
 		for _, valid := range validValues {
-			if value == valid {
-				return nil
+			if strings.EqualFold(value, valid) {
+				return valid, nil // Return normalized value
 			}
 		}
-		return fmt.Errorf("invalid value for %s: %s (valid values: %s)", path, value, strings.Join(validValues, ", "))
+		return "", fmt.Errorf("invalid value for %s: %s (valid values: %s)", path, value, strings.Join(validValues, ", "))
 	}
 
-	return nil
+	return value, nil
 }
