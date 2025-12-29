@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile-upstream:1.4.0
+# syntax=docker/dockerfile:1
 # This is a template Dockerfile for the bundle image
 # You can customize it to use different base images, install tools and copy configuration files.
 #
