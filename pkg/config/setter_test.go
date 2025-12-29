@@ -1,6 +1,7 @@
 package config
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -273,6 +274,31 @@ func TestSetConfigValue_DomainValidation_Verbosity(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 			}
+		})
+	}
+}
+
+func TestFindFieldByTagWithMeta_NonStructValue(t *testing.T) {
+	// Test that findFieldByTagWithMeta returns an error when given a non-struct value
+	// This prevents a panic from calling NumField() on non-struct types
+	tests := []struct {
+		name  string
+		value interface{}
+	}{
+		{"string", "test"},
+		{"int", 42},
+		{"bool", true},
+		{"slice", []string{"a", "b"}},
+		{"map", map[string]string{"key": "value"}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			v := reflect.ValueOf(tt.value)
+			typ := v.Type()
+			_, _, err := findFieldByTagWithMeta(v, typ, "anyfield")
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), "expected struct")
 		})
 	}
 }

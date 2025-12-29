@@ -52,6 +52,10 @@ func findFieldByTag(v reflect.Value, name string) (reflect.Value, error) {
 
 // findFieldByTagWithMeta finds a struct field and returns both the value and StructField metadata
 func findFieldByTagWithMeta(v reflect.Value, t reflect.Type, name string) (reflect.Value, reflect.StructField, error) {
+	if v.Kind() != reflect.Struct {
+		return reflect.Value{}, reflect.StructField{}, fmt.Errorf("expected struct, got %s", v.Kind())
+	}
+
 	for i := 0; i < v.NumField(); i++ {
 		field := t.Field(i)
 
