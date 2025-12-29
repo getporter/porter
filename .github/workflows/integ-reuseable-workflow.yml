@@ -9,6 +9,9 @@ on:
         registry:
             type: string
             default: ghcr.io
+        os:
+            type: string
+            default: ubuntu-latest
 env:
     GOVERSION: 1.24.11
     PORTER_INTEG_FILE: ${{inputs.test_name}}.go
@@ -19,7 +22,7 @@ permissions:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.os }}
     steps:
     - name: checkout
       uses: actions/checkout@v6
@@ -42,8 +45,8 @@ jobs:
         password: ${{ secrets.GITHUB_TOKEN }}
     - name: Configure Agent
       run: go run mage.go build
-      shell: bash
     - name: Aggressive cleanup
+      if: runner.os == 'Linux'
       run: |
         df -h
         # Remove Java (JDKs)
@@ -67,7 +70,5 @@ jobs:
         # Remove PowerShell
         sudo rm -rf /usr/local/share/powershell
         df -h
-      shell: bash
     - name: Integration Test
       run: go run mage.go -v TestIntegration
-      shell: bash

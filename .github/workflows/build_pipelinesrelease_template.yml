@@ -95,6 +95,20 @@ jobs:
     - name: Unit Test
       run: mage TestUnit
       shell: bash
+  Validate-unit_test-windows:
+    name: Unit Test (Windows)
+    runs-on: windows-latest
+    if: ${{inputs.skipTests == false}}
+    steps:
+    - name: checkout
+      uses: actions/checkout@v6
+    - uses: actions/setup-go@v6
+      with:
+        go-version: ${{ inputs.goVersion }}
+    - name: Configure Agent
+      run: go run mage.go ConfigureAgent
+    - name: Unit Test
+      run: mage TestUnit
   Validate-integration_test:
     name: Integration Test
     needs:
@@ -154,6 +168,7 @@ jobs:
     - Validate-xbuild
     - Validate-VetLint
     - Validate-unit_test
+    - Validate-unit_test-windows
     - Validate-integration_test
     - Validate-smoke_test
     runs-on: ubuntu-latest
@@ -196,6 +211,7 @@ jobs:
     - Validate-xbuild
     - Validate-VetLint
     - Validate-unit_test
+    - Validate-unit_test-windows
     - Validate-integration_test
     - Validate-smoke_test
     runs-on: ubuntu-latest
