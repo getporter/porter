@@ -167,23 +167,58 @@ func (g *DockerfileGenerator) getBaseDockerfile(ctx context.Context) ([]string, 
 }
 
 func (g *DockerfileGenerator) buildPorterSection() []string {
+	if g.IsFeatureEnabled(experimental.FlagOptimizedBundleBuild) {
+		// Optimized build: Copy user files from the porter-internal-userfiles named context
+		copyUserFiles := "COPY . ${BUNDLE_DIR}"
+		if g.GetBuildDriver() == config.BuildDriverBuildkit {
+			copyUserFiles = "COPY --from=porter-internal-userfiles --link . ${BUNDLE_DIR}/"
+		}
+		return []string{
+			// Copy user files from the bundle source directory (excludes .cnab and porter.yaml via .dockerignore)
+			copyUserFiles,
+		}
+	}
+
+	// Legacy build: Copy all files from build context, then clean up
+	copyUserFiles := "COPY . ${BUNDLE_DIR}"
+	if g.GetBuildDriver() == config.BuildDriverBuildkit {
+		copyUserFiles = "COPY --link . ${BUNDLE_DIR}"
+	}
+
+	lines := []string{copyUserFiles}
+
 	// The user-provided manifest may be located separate from the build context directory.
-	// Therefore, we only need to add lines if the relative manifest path exists inside of
-	// the current working directory.
+	// Only remove it if the manifest path exists inside the current working directory.
 	manifestPath := g.FileSystem.Abs(g.Manifest.ManifestPath)
 	if relManifestPath, err := filepath.Rel(g.Getwd(), manifestPath); err == nil {
 		if !strings.Contains(relManifestPath, "..") {
-			return []string{
-				// Remove the user-provided Porter manifest as the canonical version
-				// will migrate via its location in .cnab
-				fmt.Sprintf(`RUN rm ${BUNDLE_DIR}/%s`, relManifestPath),
-			}
+			lines = append(lines, fmt.Sprintf(`RUN rm ${BUNDLE_DIR}/%s`, relManifestPath))
 		}
 	}
-	return []string{}
+
+	return lines
 }
 
 func (g *DockerfileGenerator) buildCNABSection() []string {
+	if g.IsFeatureEnabled(experimental.FlagOptimizedBundleBuild) {
+		// Optimized build: Build context is .cnab directory, so copy current directory to /cnab
+		// Use --chown and --chmod to set permissions during COPY to avoid creating an extra layer
+		copyCNAB := "COPY . /cnab"
+		if g.GetBuildDriver() == config.BuildDriverBuildkit {
+			copyCNAB = "COPY --link --chown=${BUNDLE_UID}:${BUNDLE_GID} --chmod=775 . /cnab"
+		}
+
+		return []string{
+			// Copy .cnab directory contents (build context is .cnab) into the bundle
+			// Set ownership and permissions during copy to avoid extra layer
+			copyCNAB,
+			// default to running as the nonroot user that the porter agent uses.
+			// When running in kubernetes, if you specify a different UID, make sure to set fsGroup to the same UID, and runasGroup to 0
+			`USER ${BUNDLE_UID}`,
+		}
+	}
+
+	// Legacy build: Build context is project root
 	copyCNAB := "COPY .cnab /cnab"
 	if g.GetBuildDriver() == config.BuildDriverBuildkit {
 		copyCNAB = "COPY --link .cnab /cnab"

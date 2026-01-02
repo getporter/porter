@@ -9,6 +9,7 @@ ARG BUNDLE_DIR
 COPY mybin /cnab/app/
 # exec mixin has no buildtime dependencies
 
+COPY --link . ${BUNDLE_DIR}
 RUN rm ${BUNDLE_DIR}/porter.yaml
 RUN rm -fr ${BUNDLE_DIR}/.cnab
 COPY --link .cnab /cnab

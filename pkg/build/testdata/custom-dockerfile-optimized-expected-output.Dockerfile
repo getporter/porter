@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1
+# syntax=docker/dockerfile-upstream:1.4.0
 FROM ubuntu:latest
 # stuff
 ARG BUNDLE_DIR
@@ -10,11 +10,8 @@ COPY mybin /cnab/app/
 
 # exec mixin has no buildtime dependencies
 
-COPY --link . ${BUNDLE_DIR}
-RUN rm ${BUNDLE_DIR}/porter.yaml
-RUN rm -fr ${BUNDLE_DIR}/.cnab
-COPY --link .cnab /cnab
-RUN chgrp -R ${BUNDLE_GID} /cnab && chmod -R g=u /cnab
+COPY --from=porter-internal-userfiles --link . ${BUNDLE_DIR}/
+COPY --link --chown=${BUNDLE_UID}:${BUNDLE_GID} --chmod=775 . /cnab
 USER ${BUNDLE_UID}
 WORKDIR ${BUNDLE_DIR}
 CMD ["/cnab/app/run"]
