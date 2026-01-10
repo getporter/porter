@@ -3,11 +3,19 @@ on:
   push:
     branches:
     - main
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
+      - 'LICENSE'
+      - 'netlify.toml'
   pull_request:
     branches:
     - main
     paths-ignore:
       - 'docs/**'
+      - '**/*.md'
+      - 'LICENSE'
+      - 'netlify.toml'
 env:
   GOVERSION: 1.24.11
 permissions:

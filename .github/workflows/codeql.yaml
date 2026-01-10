@@ -11,6 +11,9 @@ on:
   pull_request_target:
     paths-ignore:
       - 'docs/**'
+      - '**/*.md'
+      - 'LICENSE'
+      - 'netlify.toml'
 
 permissions:
   contents: read
