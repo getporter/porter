@@ -49,9 +49,13 @@ spec, and work on upstream libraries such as cnab-go and docker-to-oci.
 
 ## Dev Meeting
 
+**Note: The community meeting is cancelled until further notice.**
+
+Please reach out on [Slack][slack] if you need to discuss something with the community or maintainers. If needed, we can setup a meeting to address specific topics.
+
 We meet every other week to discuss [Porter Enhancement Proposals], demo new features and help other contributors. The agenda is open, anyone can edit to add an agenda item.
 
-* [Zoom](/zoom/dev/) code `77777`
+* ~~[Zoom](/zoom/dev/) code `77777`~~
 * [Agenda](/dev-meeting)
 * [Calendar](/calendar/)
 
