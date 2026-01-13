@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/build"
@@ -82,6 +83,16 @@ func (o *BuildOptions) Validate(p *Porter) error {
 
 	if o.File == "" {
 		return fmt.Errorf("could not find porter.yaml in the current directory %s, make sure you are in the right directory or specify the porter manifest with --file", o.Dir)
+	}
+
+	// Check for conflicting 'porter' file or directory
+	porterPath := filepath.Join(o.Dir, "porter")
+	exists, err := p.FileSystem.Exists(porterPath)
+	if err != nil {
+		return fmt.Errorf("error checking for porter file/directory: %w", err)
+	}
+	if exists {
+		return fmt.Errorf("a file or directory named \"porter\" exists in %s, which will conflict with Porter's internal directory structure. Please rename or remove it, or add it to .dockerignore", o.Dir)
 	}
 
 	return nil

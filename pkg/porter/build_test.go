@@ -64,3 +64,49 @@ func TestPorter_NoErrorWhenPorterYamlIsPresent(t *testing.T) {
 	err = o.Validate(p.Porter)
 	require.NoError(t, err, "validate BuildOptions failed")
 }
+
+func TestBuildOptions_Validate_PorterFileConflict(t *testing.T) {
+	t.Run("porter file exists", func(t *testing.T) {
+		p := NewTestPorter(t)
+		defer p.Close()
+
+		// Create porter.yaml first to pass that validation
+		err := p.FileSystem.WriteFile("porter.yaml", []byte(""), pkg.FileModeWritable)
+		require.NoError(t, err)
+
+		// Create a file named "porter"
+		err = p.FileSystem.WriteFile("porter", []byte(""), pkg.FileModeWritable)
+		require.NoError(t, err)
+
+		o := BuildOptions{
+			BundleDefinitionOptions: BundleDefinitionOptions{},
+		}
+
+		err = o.Validate(p.Porter)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "a file or directory named \"porter\" exists")
+		require.ErrorContains(t, err, "will conflict with Porter's internal directory structure")
+	})
+
+	t.Run("porter directory exists", func(t *testing.T) {
+		p := NewTestPorter(t)
+		defer p.Close()
+
+		// Create porter.yaml first to pass that validation
+		err := p.FileSystem.WriteFile("porter.yaml", []byte(""), pkg.FileModeWritable)
+		require.NoError(t, err)
+
+		// Create a directory named "porter"
+		err = p.FileSystem.Mkdir("porter", pkg.FileModeDirectory)
+		require.NoError(t, err)
+
+		o := BuildOptions{
+			BundleDefinitionOptions: BundleDefinitionOptions{},
+		}
+
+		err = o.Validate(p.Porter)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "a file or directory named \"porter\" exists")
+		require.ErrorContains(t, err, "will conflict with Porter's internal directory structure")
+	})
+}
