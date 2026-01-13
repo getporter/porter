@@ -4,6 +4,11 @@ on:
     branches:
       - main
       - release/*
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
+      - 'LICENSE'
+      - 'netlify.toml'
 
 # This configuration ensures that multiple canary releases don't run at the same time:
 # - The 'group' combines the workflow name and git reference to create a unique identifier
