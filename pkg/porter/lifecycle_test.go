@@ -18,6 +18,7 @@ import (
 	"get.porter.sh/porter/tests"
 	"github.com/cnabio/cnab-go/secrets/host"
 	"github.com/cnabio/cnab-to-oci/relocation"
+	"github.com/docker/docker/api/types/mount"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -608,6 +609,7 @@ func TestBundleExecutionOptions_GetHostVolumeMounts(t *testing.T) {
 				"/host/path:/target/path:ro",
 				"/host/path:/target/path:rw",
 				"/host/path:/target/path",
+				"myvolume:/target/path:ro:volume",
 			},
 		}
 
@@ -616,16 +618,25 @@ func TestBundleExecutionOptions_GetHostVolumeMounts(t *testing.T) {
 				Source:   "/host/path",
 				Target:   "/target/path",
 				ReadOnly: true,
+				Type:     mount.TypeBind,
 			},
 			{
 				Source:   "/host/path",
 				Target:   "/target/path",
 				ReadOnly: false,
+				Type:     mount.TypeBind,
 			},
 			{
 				Source:   "/host/path",
 				Target:   "/target/path",
 				ReadOnly: true,
+				Type:     mount.TypeBind,
+			},
+			{
+				Source:   "myvolume",
+				Target:   "/target/path",
+				ReadOnly: true,
+				Type:     mount.TypeVolume,
 			},
 		}
 
@@ -644,6 +655,7 @@ func TestBundleExecutionOptions_GetHostVolumeMounts(t *testing.T) {
 			if expected[i].ReadOnly != actual[i].ReadOnly {
 				t.Errorf("expected %v but got %v", expected[i].ReadOnly, actual[i].ReadOnly)
 			}
+
 		}
 	})
 
@@ -676,6 +688,18 @@ func TestBundleExecutionOptions_GetHostVolumeMounts(t *testing.T) {
 			t.Errorf("expected ReadOnly to be true but got %v", actual[0].ReadOnly)
 		}
 
+	})
+
+	t.Run("invalid host volume mount type option value", func(t *testing.T) {
+		opts := &BundleExecutionOptions{
+			HostVolumeMounts: []string{
+				"/host/path:/target/path:ro:invalid-option",
+			},
+		}
+
+		actual := opts.GetHostVolumeMounts()
+
+		assert.Equal(t, 0, len(actual), "expected no host volume mounts")
 	})
 }
 
