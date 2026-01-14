@@ -51,7 +51,7 @@ func TestFlag_ToSlice(t *testing.T) {
 	t.Run("long flag", func(t *testing.T) {
 		f := NewFlag("full", "abc")
 		args := f.ToSlice(testStep.GetDashes())
-		assert.Equal(t, []string{"--full", "abc"}, args)
+		assert.Equal(t, []string{"--full=abc"}, args)
 	})
 
 	t.Run("valueless flag", func(t *testing.T) {
@@ -67,7 +67,7 @@ func TestFlag_ToSlice(t *testing.T) {
 	t.Run("flag with non-default dashes", func(t *testing.T) {
 		f := NewFlag("full", "abc")
 		args := f.ToSlice(dashes)
-		assert.Equal(t, []string{"---full", "abc"}, args)
+		assert.Equal(t, []string{"---full=abc"}, args)
 	})
 }
 
@@ -80,7 +80,7 @@ func TestFlags_ToSlice(t *testing.T) {
 	args := flags.ToSlice(testStep.GetDashes())
 
 	// Flags should be sorted and sliced up on a platter
-	assert.Equal(t, []string{"-a", "1", "--bull", "2"}, args)
+	assert.Equal(t, []string{"-a", "1", "--bull=2"}, args)
 }
 
 func TestFlags_NonStringKeys(t *testing.T) {
