@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"get.porter.sh/porter/pkg/porter"
+	"get.porter.sh/porter/pkg/tracing"
 	"github.com/spf13/cobra"
 )
 
@@ -72,7 +73,13 @@ The docker driver builds the bundle image using the local Docker host. To use a 
 			return opts.Validate(p)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.Build(cmd.Context(), opts)
+			ctx := cmd.Context()
+			log := tracing.GetLogger(ctx)
+
+			if err := p.Build(ctx, opts); err != nil {
+				return log.RecordError(err)
+			}
+			return nil
 		},
 	}
 

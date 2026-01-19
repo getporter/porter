@@ -65,14 +65,14 @@ func (p *Porter) InstallBundle(ctx context.Context, opts InstallOptions) error {
 		// Validate that we are not overwriting an existing installation
 		if i.IsInstalled() && !opts.Force {
 			err = errors.New("The installation has already been successfully installed and as a protection against accidentally overwriting existing installations, porter install cannot be repeated. Verify the installation name and namespace, and if correct, use porter upgrade. You can skip this check by using the --force flag.")
-			return log.Error(err)
+			return log.RecordError(err)
 		}
 	} else if errors.Is(err, storage.ErrNotFound{}) {
 		// Create the installation record
 		i = storage.NewInstallation(opts.Namespace, opts.Name)
 	} else {
 		err = fmt.Errorf("could not retrieve the installation record: %w", err)
-		return log.Error(err)
+		return log.RecordError(err)
 	}
 
 	// Apply labels that were specified as flags to the installation record
@@ -95,17 +95,17 @@ func (p *Porter) InstallBundle(ctx context.Context, opts InstallOptions) error {
 		}
 		log.Debugf("verifying bundle signature for %s", ref.String())
 		if !ok {
-			return log.Errorf("unable to get reference for bundle %s: %w", ref.String(), err)
+			return log.RecordErrorf("unable to get reference for bundle %s: %w", ref.String(), err)
 		}
 		err = p.Signer.Verify(ctx, ref.String())
 		if err != nil {
-			return log.Errorf("unable to verify signature: %w", err)
+			return log.RecordErrorf("unable to verify signature: %w", err)
 		}
 		log.Debugf("bundle signature verified for %s", ref.String())
 
 		bun, err := opts.GetOptions().GetBundleReference(ctx, p)
 		if err != nil {
-			return log.Errorf("unable to get bundle reference")
+			return log.RecordErrorf("unable to get bundle reference")
 		}
 
 		invocationImage := bun.Definition.InvocationImages[0].Image
@@ -115,7 +115,7 @@ func (p *Porter) InstallBundle(ctx context.Context, opts InstallOptions) error {
 		log.Debugf("verifying bundle image signature for %s", invocationImage)
 		err = p.Signer.Verify(ctx, invocationImage)
 		if err != nil {
-			return log.Errorf("unable to verify signature: %w", err)
+			return log.RecordErrorf("unable to verify signature: %w", err)
 		}
 		log.Debugf("bundle image signature verified for %s", invocationImage)
 	}
