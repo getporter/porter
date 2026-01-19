@@ -191,7 +191,12 @@ func (r *Runtime) Execute(ctx context.Context, args ActionArguments) error {
 		log.SetSensitiveAttributes(
 			tracing.ObjectAttribute("cnab-claim", cnabClaim),
 			tracing.ObjectAttribute("cnab-credentials", cnabCreds))
-		opResult, result, err := a.Run(cnabClaim, cnabCreds, r.ApplyConfig(ctx, args)...)
+		opResult, result, err := a.Run(ctx, cnabClaim, cnabCreds, r.ApplyConfig(ctx, args)...)
+
+		// if the error was due to context, just stop and return the context error
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
 
 		if currentRun.ShouldRecord() {
 			if err != nil {
