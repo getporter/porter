@@ -18,9 +18,10 @@ import (
 	"github.com/cnabio/cnab-go/bundle/loader"
 	"github.com/cnabio/cnab-go/packager"
 	"github.com/cnabio/cnab-to-oci/relocation"
-	"github.com/cnabio/image-relocation/pkg/image"
-	"github.com/cnabio/image-relocation/pkg/registry"
-	"github.com/cnabio/image-relocation/pkg/registry/ggcr"
+	"github.com/google/go-containerregistry/pkg/name"
+	v1 "github.com/google/go-containerregistry/pkg/v1"
+	"github.com/google/go-containerregistry/pkg/v1/layout"
+	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/opencontainers/go-digest"
 )
 
@@ -294,15 +295,9 @@ func (p *Porter) publishFromArchive(ctx context.Context, opts PublishOptions) er
 
 	log.Infof("Beginning bundle publish to %s. This may take some time.", opts.Reference)
 
-	// Use the ggcr client to read the extracted OCI Layout
+	// Read the extracted OCI Layout
 	extractedDir := filepath.Join(tmpDir, strings.TrimSuffix(filepath.Base(source), ".tgz"))
-	var clientOpts []ggcr.Option
-	if opts.InsecureRegistry {
-		skipTLS := cnabtooci.GetInsecureRegistryTransport()
-		clientOpts = append(clientOpts, ggcr.WithTransport(skipTLS))
-	}
-	client := ggcr.NewRegistryClient(clientOpts...)
-	layout, err := client.ReadLayout(filepath.Join(extractedDir, "artifacts/layout"))
+	layoutPath, err := layout.FromPath(filepath.Join(extractedDir, "artifacts/layout"))
 	if err != nil {
 		return log.Errorf("failed to parse OCI Layout from archive %s: %w", opts.ArchiveFile, err)
 	}
@@ -310,7 +305,7 @@ func (p *Porter) publishFromArchive(ctx context.Context, opts PublishOptions) er
 	// Push updated images (renamed based on provided bundle tag) with same digests
 	// then update the bundle with new values (image name, digest)
 	for _, invImg := range bundleRef.Definition.InvocationImages {
-		relocMap, err := p.relocateImage(bundleRef.RelocationMap, layout, invImg.Image, opts.Reference)
+		relocMap, err := p.relocateImage(ctx, bundleRef.RelocationMap, layoutPath, invImg.Image, opts.Reference, regOpts)
 		if err != nil {
 			return log.Error(err)
 		}
@@ -331,7 +326,7 @@ func (p *Porter) publishFromArchive(ctx context.Context, opts PublishOptions) er
 		}
 	}
 	for _, img := range bundleRef.Definition.Images {
-		relocMap, err := p.relocateImage(bundleRef.RelocationMap, layout, img.Image, opts.Reference)
+		relocMap, err := p.relocateImage(ctx, bundleRef.RelocationMap, layoutPath, img.Image, opts.Reference, regOpts)
 		if err != nil {
 			return log.Error(err)
 		}
@@ -390,36 +385,104 @@ func (p *Porter) extractBundle(ctx context.Context, tmpDir, source string) (cnab
 
 // pushUpdatedImage uses the provided layout to find the provided origImg,
 // gathers the pre-existing digest and then pushes this digest using the newImgName
-func pushUpdatedImage(layout registry.Layout, origImg string, newImgName image.Name) (image.Digest, error) {
-	origImgName, err := image.NewName(origImg)
+func (p *Porter) pushUpdatedImage(ctx context.Context, layoutPath layout.Path, origImg string, destRef name.Reference, opts cnabtooci.RegistryOptions) (v1.Hash, error) {
+	// Find image in layout
+	digest, err := findImageInLayout(layoutPath, origImg)
 	if err != nil {
-		return image.EmptyDigest, fmt.Errorf("unable to parse image %q into domain/path components: %w", origImg, err)
+		return v1.Hash{}, fmt.Errorf("unable to find image %s in archived OCI Layout: %w", origImg, err)
 	}
 
-	digest, err := layout.Find(origImgName)
+	// Push to new location
+	err = p.pushImageFromLayout(ctx, layoutPath, digest, destRef, opts)
 	if err != nil {
-		return image.EmptyDigest, fmt.Errorf("unable to find image %s in archived OCI Layout: %w", origImgName.String(), err)
-	}
-
-	err = layout.Push(digest, newImgName)
-	if err != nil {
-		return image.EmptyDigest, fmt.Errorf("unable to push image %s: %w", newImgName.String(), err)
+		return v1.Hash{}, err
 	}
 
 	return digest, nil
 }
 
-// getNewImageNameFromBundleReference derives a new image.Name object from the provided original
+// findImageInLayout searches for an image in the OCI layout by matching the image name.
+// It returns the digest of the matching image.
+func findImageInLayout(layoutPath layout.Path, imageName string) (v1.Hash, error) {
+	// Get the image index from the layout
+	index, err := layoutPath.ImageIndex()
+	if err != nil {
+		return v1.Hash{}, fmt.Errorf("unable to read image index from layout: %w", err)
+	}
+
+	// Get the index manifest
+	indexManifest, err := index.IndexManifest()
+	if err != nil {
+		return v1.Hash{}, fmt.Errorf("unable to read index manifest: %w", err)
+	}
+
+	// Search through descriptors for a matching image
+	// Try to match by annotation org.opencontainers.image.ref.name
+	for _, desc := range indexManifest.Manifests {
+		if desc.Annotations != nil {
+			if annotName, ok := desc.Annotations["org.opencontainers.image.ref.name"]; ok {
+				// Try exact match first
+				if annotName == imageName {
+					return desc.Digest, nil
+				}
+
+				// Try matching without registry (e.g., "myorg/myapp:v1.0" matches "registry.io/myorg/myapp:v1.0")
+				annotRef, err := name.ParseReference(annotName, name.WeakValidation)
+				if err == nil {
+					// Compare repository and tag/digest parts
+					searchRef, searchErr := name.ParseReference(imageName, name.WeakValidation)
+					if searchErr == nil {
+						// Check if the repository paths match (ignoring registry)
+						annotCtx := annotRef.Context()
+						searchCtx := searchRef.Context()
+						if annotCtx.RepositoryStr() == searchCtx.RepositoryStr() {
+							// Also check tag/digest if present
+							annotID := annotRef.Identifier()
+							searchID := searchRef.Identifier()
+							if annotID == searchID {
+								return desc.Digest, nil
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return v1.Hash{}, fmt.Errorf("image %s not found in layout", imageName)
+}
+
+// pushImageFromLayout retrieves an image from the OCI layout by digest and pushes it to a destination registry
+func (p *Porter) pushImageFromLayout(ctx context.Context, layoutPath layout.Path, digest v1.Hash, destRef name.Reference, opts cnabtooci.RegistryOptions) error {
+	// Get image from layout by digest
+	img, err := layoutPath.Image(digest)
+	if err != nil {
+		return fmt.Errorf("unable to get image from layout: %w", err)
+	}
+
+	// Build remote options (includes auth and insecure registry settings)
+	remoteOpts := opts.ToRemoteOptions()
+
+	// Push to destination registry
+	err = remote.Write(destRef, img, remoteOpts...)
+	if err != nil {
+		return fmt.Errorf("unable to push image to %s: %w", destRef.String(), err)
+	}
+
+	return nil
+}
+
+// getNewImageNameFromBundleReference derives a new image reference from the provided original
 // image (string) using the provided bundleTag to clean registry/org/etc.
-func getNewImageNameFromBundleReference(origImg, bundleTag string) (image.Name, error) {
+func getNewImageNameFromBundleReference(origImg, bundleTag string, regOpts cnabtooci.RegistryOptions) (name.Reference, error) {
 	origImgRef, err := cnab.ParseOCIReference(origImg)
 	if err != nil {
-		return image.EmptyName, err
+		return nil, err
 	}
 
 	bundleRef, err := cnab.ParseOCIReference(bundleTag)
 	if err != nil {
-		return image.EmptyName, err
+		return nil, err
 	}
 
 	// Calculate a unique tag based on the original referenced image. It is safe to
@@ -431,17 +494,17 @@ func getNewImageNameFromBundleReference(origImg, bundleTag string) (image.Name, 
 	// the same temporary tag because the content is the same.
 	tmpImage, err := cnab.CalculateTemporaryImageTag(origImgRef)
 	if err != nil {
-		return image.EmptyName, err
+		return nil, err
 	}
 
 	// Apply the temporary tag to the current bundle to determine the new location for the image
 	newImgRef, err := bundleRef.WithTag(tmpImage.Tag())
 	if err != nil {
-		return image.EmptyName, err
+		return nil, err
 	}
 
-	// Convert it to the relocation library's representation of an image reference
-	return image.NewName(newImgRef.String())
+	// Parse the reference string into a name.Reference with registry options
+	return name.ParseReference(newImgRef.String(), regOpts.ToNameOptions()...)
 }
 
 func (p *Porter) rewriteBundleWithBundleImageDigest(ctx context.Context, m *manifest.Manifest, digest digest.Digest, preserveTags bool) (cnab.ExtendedBundle, error) {
@@ -465,8 +528,8 @@ func (p *Porter) rewriteBundleWithBundleImageDigest(ctx context.Context, m *mani
 	return bun, nil
 }
 
-func (p *Porter) relocateImage(relocationMap relocation.ImageRelocationMap, layout registry.Layout, originImg string, newReference string) (relocation.ImageRelocationMap, error) {
-	newImgName, err := getNewImageNameFromBundleReference(originImg, newReference)
+func (p *Porter) relocateImage(ctx context.Context, relocationMap relocation.ImageRelocationMap, layoutPath layout.Path, originImg string, newReference string, opts cnabtooci.RegistryOptions) (relocation.ImageRelocationMap, error) {
+	newImgRef, err := getNewImageNameFromBundleReference(originImg, newReference, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -475,14 +538,14 @@ func (p *Porter) relocateImage(relocationMap relocation.ImageRelocationMap, layo
 	if relocatedImage, ok := relocationMap[originImg]; ok {
 		originImgRef = relocatedImage
 	}
-	digest, err := pushUpdatedImage(layout, originImgRef, newImgName)
+	digest, err := p.pushUpdatedImage(ctx, layoutPath, originImgRef, newImgRef, opts)
 	if err != nil {
 		return nil, fmt.Errorf("unable to push updated image: %w", err)
 	}
 
-	taggedImage, err := p.rewriteImageWithDigest(newImgName.String(), digest.String())
+	taggedImage, err := p.rewriteImageWithDigest(newImgRef.String(), digest.String())
 	if err != nil {
-		return nil, fmt.Errorf("unable to update image reference for %s: %w", newImgName.String(), err)
+		return nil, fmt.Errorf("unable to update image reference for %s: %w", newImgRef.String(), err)
 	}
 
 	// update relocation map

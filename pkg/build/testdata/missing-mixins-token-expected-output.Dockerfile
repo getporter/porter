@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile-upstream:1.4.0
+# syntax=docker/dockerfile:1
 FROM ubuntu:light
 ARG BUNDLE_DIR
 ARG BUNDLE_UID=65532

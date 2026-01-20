@@ -21,7 +21,7 @@ The Porter website has a number of useful short links defined to help you quickl
   - [/src/CONTRIBUTORS.md](/src/CONTRIBUTORS.md): Links to Porter's list of contributors.
 - [/slack](/slack/): The #porter Slack channel.
 - [/mailing-list](/mailing-list/): The Porter mailing list.
-- [/zoom/dev](/zoom/dev/): The Porter Community Meeting zoom link.
+- ~~[/zoom/dev](/zoom/dev/): The Porter Community Meeting zoom link.~~ (Cancelled until further notice. Please reach out on Slack instead; meetings can be setup if needed.)
 - [/dev-meeting](/dev-meeting/): The Porter Community Meeting agenda and notes document.
 - [/forum](/forum/): The Porter discussion forum.
 - [/devstats](/devstats/): The Porter project stats on the CNCF DevStats site.
