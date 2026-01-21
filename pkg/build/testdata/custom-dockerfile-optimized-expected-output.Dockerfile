@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile-upstream:1.4.0
+# syntax=docker/dockerfile:1
 FROM ubuntu:latest
 # stuff
 ARG BUNDLE_DIR
