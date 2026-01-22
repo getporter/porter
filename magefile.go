@@ -758,3 +758,30 @@ func EnsureNotation() {
 	err := archive.DownloadToGopathBin(opts)
 	mgx.Must(err)
 }
+
+func EnsureSyft() {
+	if ok, _ := magepkg.IsCommandAvailable("syft", "version", "1.40.1"); ok {
+		return
+	}
+
+	target := "syft{{.EXT}}"
+	if runtime.GOOS == "windows" {
+		target = "syft.exe"
+	}
+
+	opts := archive.DownloadArchiveOptions{
+		DownloadOptions: downloads.DownloadOptions{
+			UrlTemplate: "https://github.com/anchore/syft/releases/download/v{{.VERSION}}/syft_{{.VERSION}}_{{.GOOS}}_{{.GOARCH}}{{.EXT}}",
+			Name:        "syft",
+			Version:     "1.40.1",
+		},
+		ArchiveExtensions: map[string]string{
+			"linux":   ".tar.gz",
+			"darwin":  ".tar.gz",
+			"windows": ".zip",
+		},
+		TargetFileTemplate: target,
+	}
+	err := archive.DownloadToGopathBin(opts)
+	mgx.Must(err)
+}
