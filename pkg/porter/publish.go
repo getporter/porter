@@ -249,7 +249,7 @@ func (p *Porter) publishFromFile(ctx context.Context, opts PublishOptions) error
 	}
 
 	// Generate SBOM if requested
-	if opts.SBOMPath != "" && p.SBOMGenerator != nil {
+	if opts.SBOMPath != "" {
 		log.Infof("Generating SBOM at %s...", opts.SBOMPath)
 		if err := p.SBOMGenerator.Generate(ctx, bundleRef.String(), opts.SBOMPath); err != nil {
 			return log.Error(err)
@@ -368,7 +368,7 @@ func (p *Porter) publishFromArchive(ctx context.Context, opts PublishOptions) er
 	}
 
 	// Generate SBOM if requested
-	if opts.SBOMPath != "" && p.SBOMGenerator != nil {
+	if opts.SBOMPath != "" {
 		log.Infof("Generating SBOM at %s...", opts.SBOMPath)
 		if err := p.SBOMGenerator.Generate(ctx, bundleRef.String(), opts.SBOMPath); err != nil {
 			return log.Error(err)

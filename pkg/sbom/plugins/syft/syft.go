@@ -35,7 +35,7 @@ func (s *Syft) Connect(ctx context.Context) error {
 }
 
 func (s *Syft) Generate(ctx context.Context, bundleRef string, sbomPath string) (err error) {
-	ctx, log := tracing.StartSpan(ctx)
+	_, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
 
 	log.Infof("Generating SBOM for bundle %s...", bundleRef)
