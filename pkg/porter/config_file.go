@@ -53,7 +53,7 @@ func (p *Porter) GetConfigFilePath() (string, bool, error) {
 
 // ConfigShow displays the contents of the porter config file.
 func (p *Porter) ConfigShow(ctx context.Context, opts ConfigShowOptions) error {
-	ctx, span := tracing.StartSpan(ctx)
+	_, span := tracing.StartSpan(ctx)
 	defer span.EndSpan()
 
 	path, exists, err := p.GetConfigFilePath()
