@@ -151,7 +151,7 @@ func (b *Builder) BuildBundleImage(ctx context.Context, manifest *manifest.Manif
 	// Use optimized build context when feature flag is enabled
 	if b.IsFeatureEnabled(experimental.FlagOptimizedBundleBuild) {
 		// Validate that user hasn't defined a "porter-internal-userfiles" named context
-		if _, exists := buildContexts["porter-internal-userfiles"]; exists {
+		if _, exists := namedContexts["porter-internal-userfiles"]; exists {
 			return span.Error(fmt.Errorf("the named context 'porter-internal-userfiles' is reserved by Porter when using the optimized-bundle-build experimental feature; please rename your build context"))
 		}
 
