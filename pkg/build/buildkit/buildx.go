@@ -13,6 +13,7 @@ import (
 	"get.porter.sh/porter/pkg/build"
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/experimental"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/tracing"
 	"github.com/cnabio/cnab-go/driver/docker"
@@ -144,14 +145,32 @@ func (b *Builder) BuildBundleImage(ctx context.Context, manifest *manifest.Manif
 		return span.Errorf("error parsing the --output flag: %w", err)
 	}
 
+	namedContexts := toNamedContexts(buildContexts)
+	var contextPath string
+
+	// Use optimized build context when feature flag is enabled
+	if b.IsFeatureEnabled(experimental.FlagOptimizedBundleBuild) {
+		// Validate that user hasn't defined a "porter-internal-userfiles" named context
+		if _, exists := namedContexts["porter-internal-userfiles"]; exists {
+			return span.Error(fmt.Errorf("the named context 'porter-internal-userfiles' is reserved by Porter when using the optimized-bundle-build experimental feature; please rename your build context"))
+		}
+
+		// Build from .cnab directory as context, add parent dir as named context for user files
+		namedContexts["porter-internal-userfiles"] = buildx.NamedContext{Path: b.Getwd()}
+		contextPath = filepath.Join(b.Getwd(), build.LOCAL_CNAB)
+	} else {
+		// Legacy behavior: build from project root
+		contextPath = b.Getwd()
+	}
+
 	buildxOpts := map[string]buildx.Options{
 		"default": {
 			Tags: []string{manifest.Image},
 			Inputs: buildx.Inputs{
-				ContextPath:    b.Getwd(),
+				ContextPath:    contextPath,
 				DockerfilePath: b.getDockerfilePath(),
 				InStream:       buildx.NewSyncMultiReader(b.In),
-				NamedContexts:  toNamedContexts(buildContexts),
+				NamedContexts:  namedContexts,
 			},
 			BuildArgs: args,
 			Exports:   exports,
