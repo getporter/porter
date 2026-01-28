@@ -195,7 +195,19 @@ func (c *Config) GetSigningPlugin(name string) (SigningPlugin, error) {
 		}
 	}
 
-	return SigningPlugin{}, errors.New("signing %q not defined")
+	return SigningPlugin{}, fmt.Errorf("signing %s not defined", name)
+}
+
+func (c *Config) GetSBOMGeneratorPlugin(name string) (SBOMGeneratorPlugin, error) {
+	if c != nil {
+		for _, cs := range c.Data.SBOMGeneratorPlugin {
+			if cs.Name == name {
+				return cs, nil
+			}
+		}
+	}
+
+	return SBOMGeneratorPlugin{}, fmt.Errorf("sbom generator %s not defined", name)
 }
 
 // GetHomeDir determines the absolute path to the porter home directory.
