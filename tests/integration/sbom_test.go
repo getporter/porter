@@ -14,7 +14,7 @@ import (
 )
 
 func TestSyft(t *testing.T) {
-	test, err := tester.NewTestWithConfig(t, "tests/integration/testdata/sbom/config.yaml")
+	test, err := tester.NewTestWithConfig(t, "tests/integration/testdata/porter-sbom-config.yaml")
 	require.NoError(t, err, "tester.NewTest failed")
 	defer test.Close()
 
