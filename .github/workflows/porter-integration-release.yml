@@ -158,6 +158,12 @@ jobs:
     with:
       test_name: uninstall_test
       registry: ${{inputs.registry}}
+  sbom_test_integ:
+    name: SBOM Integration Test
+    uses: getporter/porter/.github/workflows/integ-reuseable-workflow.yml@main
+    with:
+      test_name: sbom_test
+      registry: ${{inputs.registry}}
   signing_test_integ:
     name: Signing Integration Test
     uses: getporter/porter/.github/workflows/integ-reuseable-workflow.yml@main

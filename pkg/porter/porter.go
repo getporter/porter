@@ -15,6 +15,8 @@ import (
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/mixin"
 	"get.porter.sh/porter/pkg/plugins"
+	"get.porter.sh/porter/pkg/sbom"
+	sbomplugin "get.porter.sh/porter/pkg/sbom/pluginstore"
 	"get.porter.sh/porter/pkg/secrets"
 	secretsplugin "get.porter.sh/porter/pkg/secrets/pluginstore"
 	"get.porter.sh/porter/pkg/signing"
@@ -49,6 +51,7 @@ type Porter struct {
 	Secrets       secrets.Store
 	Storage       storage.Provider
 	Signer        signing.Signer
+	SBOMGenerator sbom.SBOMGenerator
 }
 
 // New porter client, initialized with useful defaults.
@@ -57,10 +60,11 @@ func New() *Porter {
 	storage := storage.NewPluginAdapter(storageplugin.NewStore(c))
 	secretStorage := secrets.NewPluginAdapter(secretsplugin.NewStore(c))
 	signer := signing.NewPluginAdapter(signingplugin.NewSigner(c))
-	return NewFor(c, storage, secretStorage, signer)
+	sbomGenerator := sbom.NewPluginAdapter(sbomplugin.NewSBOMGenerator(c))
+	return NewFor(c, storage, secretStorage, signer, sbomGenerator)
 }
 
-func NewFor(c *config.Config, store storage.Store, secretStorage secrets.Store, signer signing.Signer) *Porter {
+func NewFor(c *config.Config, store storage.Store, secretStorage secrets.Store, signer signing.Signer, sbomGenerator sbom.SBOMGenerator) *Porter {
 	cache := cache.New(c)
 
 	storageManager := migrations.NewManager(c, store)
@@ -86,6 +90,7 @@ func NewFor(c *config.Config, store storage.Store, secretStorage secrets.Store, 
 		CNAB:          cnabprovider.NewRuntime(c, installationStorage, credStorage, paramStorage, secretStorage, sanitizerService),
 		Sanitizer:     sanitizerService,
 		Signer:        signer,
+		SBOMGenerator: sbomGenerator,
 	}
 }
 
@@ -140,6 +145,11 @@ func (p *Porter) Close() error {
 	}
 
 	err = p.Signer.Close()
+	if err != nil {
+		bigErr = multierror.Append(bigErr, err)
+	}
+
+	err = p.SBOMGenerator.Close()
 	if err != nil {
 		bigErr = multierror.Append(bigErr, err)
 	}

@@ -1,0 +1,6 @@
+default-sbom-generator: syft
+default-storage: testdb
+
+sbom-generators:
+  - name: "syft"
+    plugin: "syft"

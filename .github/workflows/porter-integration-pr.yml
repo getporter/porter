@@ -144,6 +144,11 @@ jobs:
     uses: ./.github/workflows/integ-reuseable-workflow.yml
     with:
       test_name: uninstall_test
+  sbom_test_integ:
+    name: SBOM Integration Test
+    uses: ./.github/workflows/integ-reuseable-workflow.yml
+    with:
+      test_name: sbom_test
   signing_test_integ:
     name: Signing Integration Test
     uses: ./.github/workflows/integ-reuseable-workflow.yml
