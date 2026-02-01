@@ -219,7 +219,7 @@ jobs:
     - name: Setup Bin
       run: go run mage.go ConfigureAgent UseXBuildBinaries
     - name: Login to Container Registry
-      uses: docker/login-action@v3.6.0
+      uses: docker/login-action@v3.7.0
       with:
         registry: "${{inputs.registry}}"
         username: "${{ github.actor }}"
