@@ -40,7 +40,7 @@ func (s *Syft) Generate(ctx context.Context, bundleRef string, sbomPath string, 
 	defer log.EndSpan()
 
 	log.Infof("Generating SBOM for bundle %s...", bundleRef)
-	args := []string{"-o", fmt.Sprintf("spdx-json=%s", sbomPath), bundleRef}
+	args := []string{"-o", fmt.Sprintf("spdx-json=%s", sbomPath), fmt.Sprintf("registry:%s", bundleRef)}
 	cmd := exec.Command("syft", args...)
 	cmd.Env = append(cmd.Env, os.Environ()...)
 	if insecureRegistry {
