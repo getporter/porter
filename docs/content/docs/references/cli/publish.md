@@ -43,6 +43,7 @@ porter publish [flags]
       --preserve-tags        Preserve the original tag name on referenced images
   -r, --reference string     Use a bundle in an OCI registry specified by the given reference.
       --registry string      Override the registry portion of the bundle reference, e.g. docker.io, myregistry.com/myorg
+      --sbom-file string     Generate a Software Bill of Materials (SBOM) for the bundle at this location.
       --sign-bundle          Sign the bundle using the configured signing plugin
       --tag string           Override the Docker tag portion of the bundle reference, e.g. latest, v0.1.1
 ```

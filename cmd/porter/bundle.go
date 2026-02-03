@@ -190,6 +190,7 @@ Note: if overrides for registry/tag/reference are provided, this command only re
 	f.BoolVar(&opts.AutoBuildDisabled, "autobuild-disabled", false, "Do not automatically build the bundle from source when the last build is out-of-date.")
 	f.BoolVar(&opts.SignBundle, "sign-bundle", false, "Sign the bundle using the configured signing plugin")
 	f.BoolVar(&opts.PreserveTags, "preserve-tags", false, "Preserve the original tag name on referenced images")
+	f.StringVar(&opts.SBOMPath, "sbom-file", "", "Generate a Software Bill of Materials (SBOM) for the bundle at this location.")
 
 	return &cmd
 }
