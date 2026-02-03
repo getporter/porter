@@ -70,6 +70,12 @@ type Data struct {
 	// DefaultSigning to use when one is not specified by a flag.
 	DefaultSigning string `mapstructure:"default-signer"`
 
+	// DefaultSBOMGeneratorPlugin is the plugin to use when no plugin is specified.
+	DefaultSBOMGeneratorPlugin string `mapstructure:"default-sbom-generator-plugin"`
+
+	// DefaultSBOMGenerator to use when one is not specified by a flag.
+	DefaultSBOMGenerator string `mapstructure:"default-sbom-generator"`
+
 	// Namespace is the default namespace for commands that do not override it with a flag.
 	Namespace string `mapstructure:"namespace"`
 
@@ -78,6 +84,9 @@ type Data struct {
 
 	// SigningPlugin defined in the configuration file.
 	SigningPlugin []SigningPlugin `mapstructure:"signers"`
+
+	// SigningPlugin defined in the configuration file.
+	SBOMGeneratorPlugin []SBOMGeneratorPlugin `mapstructure:"sbom-generators"`
 
 	// Logs are settings related to Porter's log files.
 	Logs LogConfig `mapstructure:"logs"`
@@ -99,13 +108,14 @@ type Data struct {
 // DefaultDataStore used when no config file is found.
 func DefaultDataStore() Data {
 	return Data{
-		BuildDriver:          BuildDriverBuildkit,
-		RuntimeDriver:        RuntimeDriverDocker,
-		DefaultStoragePlugin: "mongodb-docker",
-		DefaultSecretsPlugin: "host",
-		DefaultSigningPlugin: "",
-		Logs:                 LogConfig{Level: "info"},
-		Verbosity:            DefaultVerbosity,
+		BuildDriver:                BuildDriverBuildkit,
+		RuntimeDriver:              RuntimeDriverDocker,
+		DefaultStoragePlugin:       "mongodb-docker",
+		DefaultSecretsPlugin:       "host",
+		DefaultSigningPlugin:       "",
+		DefaultSBOMGeneratorPlugin: "",
+		Logs:                       LogConfig{Level: "info"},
+		Verbosity:                  DefaultVerbosity,
 	}
 }
 
@@ -121,6 +131,10 @@ type SecretsPlugin struct {
 
 // StoragePlugin is the plugin stanza for storage.
 type StoragePlugin struct {
+	PluginConfig `mapstructure:",squash"`
+}
+
+type SBOMGeneratorPlugin struct {
 	PluginConfig `mapstructure:",squash"`
 }
 

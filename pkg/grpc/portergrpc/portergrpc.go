@@ -6,6 +6,8 @@ import (
 	pGRPC "get.porter.sh/porter/gen/proto/go/porterapis/porter/v1alpha1"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/porter"
+	"get.porter.sh/porter/pkg/sbom"
+	sbomplugin "get.porter.sh/porter/pkg/sbom/pluginstore"
 	"get.porter.sh/porter/pkg/secrets"
 	secretsplugin "get.porter.sh/porter/pkg/secrets/pluginstore"
 	"get.porter.sh/porter/pkg/signing"
@@ -33,7 +35,8 @@ func (s *PorterServer) NewConnectionInterceptor(ctx context.Context, req interfa
 	storage := storage.NewPluginAdapter(storageplugin.NewStore(s.PorterConfig))
 	secretStorage := secrets.NewPluginAdapter(secretsplugin.NewStore(s.PorterConfig))
 	signer := signing.NewPluginAdapter(signingplugin.NewSigner(s.PorterConfig))
-	p := porter.NewFor(s.PorterConfig, storage, secretStorage, signer)
+	sbomGenerator := sbom.NewPluginAdapter(sbomplugin.NewSBOMGenerator(s.PorterConfig))
+	p := porter.NewFor(s.PorterConfig, storage, secretStorage, signer, sbomGenerator)
 	if _, err := p.Connect(ctx); err != nil {
 		return nil, err
 	}

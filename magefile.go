@@ -556,7 +556,7 @@ func chmodRecursive(name string, mode os.FileMode) error {
 
 // Run integration tests (slow).
 func TestIntegration() {
-	mg.Deps(copySchema, TryRegisterLocalHostAlias, docker.RestartDockerRegistry, BuildTestMixin, BuildTestPlugin, EnsureCosign, EnsureNotation)
+	mg.Deps(copySchema, TryRegisterLocalHostAlias, docker.RestartDockerRegistry, BuildTestMixin, BuildTestPlugin, EnsureCosign, EnsureNotation, EnsureSyft)
 
 	var run string
 	runTest := os.Getenv("PORTER_RUN_TEST")
@@ -747,6 +747,33 @@ func EnsureNotation() {
 			UrlTemplate: "https://github.com/notaryproject/notation/releases/download/v{{.VERSION}}/notation_{{.VERSION}}_{{.GOOS}}_{{.GOARCH}}{{.EXT}}",
 			Name:        "notation",
 			Version:     "1.1.0",
+		},
+		ArchiveExtensions: map[string]string{
+			"linux":   ".tar.gz",
+			"darwin":  ".tar.gz",
+			"windows": ".zip",
+		},
+		TargetFileTemplate: target,
+	}
+	err := archive.DownloadToGopathBin(opts)
+	mgx.Must(err)
+}
+
+func EnsureSyft() {
+	if ok, _ := magepkg.IsCommandAvailable("syft", "version", "1.40.1"); ok {
+		return
+	}
+
+	target := "syft{{.EXT}}"
+	if runtime.GOOS == "windows" {
+		target = "syft.exe"
+	}
+
+	opts := archive.DownloadArchiveOptions{
+		DownloadOptions: downloads.DownloadOptions{
+			UrlTemplate: "https://github.com/anchore/syft/releases/download/v{{.VERSION}}/syft_{{.VERSION}}_{{.GOOS}}_{{.GOARCH}}{{.EXT}}",
+			Name:        "syft",
+			Version:     "1.40.1",
 		},
 		ArchiveExtensions: map[string]string{
 			"linux":   ".tar.gz",
