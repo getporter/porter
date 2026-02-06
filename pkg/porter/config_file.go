@@ -72,7 +72,7 @@ func (p *Porter) ConfigShow(ctx context.Context, opts ConfigShowOptions) error {
 		return span.Error(fmt.Errorf("could not read config file %s: %w", path, err))
 	}
 
-	fmt.Fprint(p.Out, string(contents))
+	fmt.Fprintln(p.Out, string(contents))
 	return nil
 }
 
