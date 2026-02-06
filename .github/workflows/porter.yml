@@ -150,7 +150,6 @@ jobs:
     - run: go version
     - name: Setup Bin
       run: go run mage.go UseXBuildBinaries
-
     - name: Aggressive cleanup
       run: |
         df -h

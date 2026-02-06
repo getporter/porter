@@ -34,8 +34,9 @@ RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/
 
 # PORTER_MIXINS
 
-# Use the BUNDLE_DIR build argument to copy files into the bundle's working directory
-COPY --link . ${BUNDLE_DIR}
+# Copy user files from the bundle source directory into the bundle's working directory
+# Porter provides a 'porter-internal-userfiles' named build context that points to your bundle directory
+COPY --from=porter-internal-userfiles --link . ${BUNDLE_DIR}
 ```
 
 Add the following line to your **porter.yaml** file to instruct porter to use the template, instead of generating one from scratch:
@@ -49,6 +50,83 @@ It is your responsibility to provide a suitable base image, for example one that
 Mixins assume that apt is available to install packages.
 Porter only supports targeting a single os/architecture when the bundle is built. By default, Porter targets linux/amd64.
 You can change the platform used in the Dockerfile.
+
+# Build Context
+
+Porter supports two build modes that affect how bundle images are built. The mode is controlled by the experimental `optimized-bundle-build` feature flag.
+
+## Default Build Context (Legacy)
+
+By default (when the feature flag is **not** enabled), Porter builds from your bundle's root directory:
+- Build context: Your bundle directory (project root)
+- User files are copied with `COPY . ${BUNDLE_DIR}` and then cleaned up
+- The `.cnab` directory is copied separately into `/cnab`
+- Works with existing custom Dockerfiles without modification
+
+## Optimized Build Context (Experimental)
+
+When you enable the `optimized-bundle-build` experimental feature flag, Porter uses an optimized build approach that reduces bundle image size by ~54%:
+
+```toml
+# ~/.porter/config.toml
+experimental = ["optimized-bundle-build"]
+```
+
+With this flag enabled:
+- Build context: The `.cnab` directory (generated during the build)
+- Your bundle's source files are made available through a named build context called `porter-internal-userfiles`
+- User files are copied with `COPY --from=porter-internal-userfiles` to avoid duplication
+- Permissions are set during COPY using `--chown` and `--chmod` flags
+- Eliminates redundant RUN commands and duplicate layers
+
+**Benefits:**
+- ~54% smaller bundle images (e.g., 446MB → 204MB)
+- Fewer image layers
+- More efficient builds
+
+**Migration Required:**
+If you have a custom Dockerfile, you need to update it to use the `porter-internal-userfiles` named context:
+
+```diff
+- COPY --link . ${BUNDLE_DIR}
++ COPY --from=porter-internal-userfiles --link . ${BUNDLE_DIR}
+```
+
+## Copying Files from Your Bundle Directory
+
+### With Optimized Build (Experimental)
+
+When using the `optimized-bundle-build` feature flag, copy files from the `porter-internal-userfiles` named context:
+
+```Dockerfile
+# Copy all user files (recommended)
+COPY --from=porter-internal-userfiles --link . ${BUNDLE_DIR}
+
+# Copy a specific file
+COPY --from=porter-internal-userfiles --link myconfig.yaml /etc/app/config.yaml
+
+# Copy a directory
+COPY --from=porter-internal-userfiles --link scripts/ ${BUNDLE_DIR}/scripts/
+```
+
+Files excluded by `.dockerignore` in your bundle directory will not be copied.
+
+### With Default Build (Legacy)
+
+When **not** using the experimental flag, copy files directly from the build context:
+
+```Dockerfile
+# Copy all files from bundle directory
+COPY --link . ${BUNDLE_DIR}
+
+# Copy a specific file
+COPY --link myconfig.yaml /etc/app/config.yaml
+
+# Copy a directory
+COPY --link scripts/ ${BUNDLE_DIR}/scripts/
+```
+
+**Note:** Porter will automatically remove `porter.yaml` and `.cnab` directory after copying.
 
 # Custom Build Arguments
 
@@ -194,12 +272,13 @@ COPY myfile /home/${BUNDLE_USER}/
 ## BUNDLE_DIR
 
 The **BUNDLE_DIR** argument is declared in the [PORTER_INIT](#porter_init) section is the path to the bundle directory inside the bundle image.
-You may then use this when copying files from the local filesystem to the bundle's working directory.
+You may then use this when copying files from your bundle source directory to the bundle's working directory.
 We strongly recommend that you always use this variable and do not copy files into directories outside BUNDLE_DIR.
 If you do, you are responsible for setting the file permissions so that the bundle's user ([BUNDLE_USER](#bundle_user)) and the bundle's group (root) have the same permissions.
 
 ```Dockerfile
-COPY . ${BUNDLE_DIR}
+# Copy files from your bundle directory using the porter-internal-userfiles named context
+COPY --from=porter-internal-userfiles --link . ${BUNDLE_DIR}
 ```
 
 ## See Also
