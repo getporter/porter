@@ -32,6 +32,12 @@ jobs:
     with:
       test_name: cli_test
       registry: ${{inputs.registry}}
+  config_integration_test:
+    name: Config Integration Test
+    uses: getporter/porter/.github/workflows/integ-reuseable-workflow.yml@main
+    with:
+      test_name: config_test
+      registry: ${{inputs.registry}}
   connection_nix_integration_test:
     name: Connection Integration Test
     uses: getporter/porter/.github/workflows/integ-reuseable-workflow.yml@main

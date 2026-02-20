@@ -1,21 +1,30 @@
 ---
-title: "porter mixins list"
-slug: porter_mixins_list
-url: /cli/porter_mixins_list/
+title: "porter config context use"
+slug: porter_config_context_use
+url: /cli/porter_config_context_use/
 ---
-## porter mixins list
+## porter config context use
 
-List installed mixins
+Set the current configuration context
+
+### Synopsis
+
+Set the current-context in the porter configuration file.
 
 ```
-porter mixins list [flags]
+porter config context use <name> [flags]
+```
+
+### Examples
+
+```
+  porter config context use prod
 ```
 
 ### Options
 
 ```
-  -h, --help            help for list
-  -o, --output string   Output format, allowed values are: plaintext, json, yaml (default "plaintext")
+  -h, --help   help for use
 ```
 
 ### Options inherited from parent commands
@@ -28,5 +37,5 @@ porter mixins list [flags]
 
 ### SEE ALSO
 
-* [porter mixins](/cli/porter_mixins/)	 - Mixin commands. Mixins assist with authoring bundles.
+* [porter config context](/cli/porter_config_context/)	 - Context commands
 

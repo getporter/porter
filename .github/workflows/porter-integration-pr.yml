@@ -39,6 +39,11 @@ jobs:
     uses: ./.github/workflows/integ-reuseable-workflow.yml
     with:
       test_name: cli_test
+  config_integration_test:
+    name: Config Integration Test
+    uses: ./.github/workflows/integ-reuseable-workflow.yml
+    with:
+      test_name: config_test
   connection_nix_integration_test:
     name: Connection Integration Test
     uses: ./.github/workflows/integ-reuseable-workflow.yml

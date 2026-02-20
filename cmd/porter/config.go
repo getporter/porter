@@ -15,8 +15,47 @@ func buildConfigCommands(p *porter.Porter) *cobra.Command {
 
 	cmd.AddCommand(buildConfigShowCommand(p))
 	cmd.AddCommand(buildConfigEditCommand(p))
+	cmd.AddCommand(buildConfigContextCommands(p))
 
 	return cmd
+}
+
+func buildConfigContextCommands(p *porter.Porter) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "context",
+		Short: "Context commands",
+		Long:  "Commands for managing porter configuration contexts.",
+	}
+
+	cmd.AddCommand(buildConfigContextListCommand(p))
+	cmd.AddCommand(buildConfigContextUseCommand(p))
+
+	return cmd
+}
+
+func buildConfigContextListCommand(p *porter.Porter) *cobra.Command {
+	return &cobra.Command{
+		Use:     "list",
+		Short:   "List configuration contexts",
+		Long:    "List all contexts defined in the porter configuration file. The active context is marked with *.",
+		Example: "  porter config context list",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return p.ConfigContextList(cmd.Context())
+		},
+	}
+}
+
+func buildConfigContextUseCommand(p *porter.Porter) *cobra.Command {
+	return &cobra.Command{
+		Use:     "use <name>",
+		Short:   "Set the current configuration context",
+		Long:    "Set the current-context in the porter configuration file.",
+		Example: "  porter config context use prod",
+		Args:    cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return p.ConfigContextUse(cmd.Context(), args[0])
+		},
+	}
 }
 
 func buildConfigShowCommand(p *porter.Porter) *cobra.Command {

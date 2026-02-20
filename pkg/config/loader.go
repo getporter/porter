@@ -150,14 +150,99 @@ func LoadFromViper(viperCfg func(v *viper.Viper), cobraCfg func(v *viper.Viper))
 			cobraCfg(v)
 		}
 
-		// Bind viper back to the configuration data only after all viper and cobra setup is completed
-		if err := v.Unmarshal(&cfg.Data); err != nil {
-			return fmt.Errorf("error unmarshaling viper config as porter config: %w", err)
+		// Read PORTER_CONTEXT env var as fallback when --context flag wasn't set
+		if cfg.ContextName == "" {
+			cfg.ContextName = v.GetString("context")
 		}
 
-		cfg.viper = v
+		rawMap := v.AllSettings()
+		if _, isMultiContext := rawMap["schemaversion"]; isMultiContext {
+			// New multi-context format: extract the selected context's config
+			// sub-map and load it into a fresh viper so that env vars and
+			// cobra flags can still override individual values.
+			selected := cfg.ContextName
+			if selected == "" {
+				// Fall back to current-context from the file, then "default"
+				if cc, _ := rawMap["current-context"].(string); cc != "" {
+					selected = cc
+				} else {
+					selected = "default"
+				}
+			}
+
+			contextConfigMap, err := extractContextConfig(rawMap, selected)
+			if err != nil {
+				return log.Error(err)
+			}
+
+			ctxViper := viper.New()
+			ctxViper.SetFs(cfg.FileSystem)
+			if err := setDefaultsFrom(ctxViper, cfg.Data); err != nil {
+				return log.Error(err)
+			}
+			if err := ctxViper.MergeConfigMap(contextConfigMap); err != nil {
+				return log.Error(fmt.Errorf("error merging context config: %w", err))
+			}
+			if viperCfg != nil {
+				viperCfg(ctxViper)
+			}
+			if cobraCfg != nil {
+				cobraCfg(ctxViper)
+			}
+			if err := ctxViper.Unmarshal(&cfg.Data); err != nil {
+				return log.Error(fmt.Errorf("error loading context config: %w", err))
+			}
+			cfg.viper = ctxViper
+		} else {
+			// Legacy flat format — existing path unchanged.
+			if cfg.ContextName != "" {
+				return log.Error(fmt.Errorf("--context flag requires a versioned config file; add schemaVersion: %q and wrap settings under contexts", ConfigSchemaVersion))
+			}
+			if err := v.Unmarshal(&cfg.Data); err != nil {
+				return fmt.Errorf("error unmarshaling viper config as porter config: %w", err)
+			}
+			cfg.viper = v
+		}
+
 		return nil
 	}
+}
+
+// extractContextConfig finds the named context in the raw viper settings map
+// and returns its "config" sub-map. Returns an empty map (not an error) when
+// the context exists but has no config block. Returns an error when the context
+// is not found at all.
+func extractContextConfig(rawMap map[string]interface{}, name string) (map[string]interface{}, error) {
+	contextsRaw, ok := rawMap["contexts"]
+	if !ok {
+		return map[string]interface{}{}, nil
+	}
+	contexts, ok := contextsRaw.([]interface{})
+	if !ok {
+		return nil, fmt.Errorf("invalid 'contexts' field in config file")
+	}
+
+	var availableNames []string
+	for _, c := range contexts {
+		ctxMap, ok := c.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		ctxName, _ := ctxMap["name"].(string)
+		if ctxName == "" {
+			continue
+		}
+		availableNames = append(availableNames, ctxName)
+		if ctxName == name {
+			if configMap, ok := ctxMap["config"].(map[string]interface{}); ok {
+				return configMap, nil
+			}
+			return map[string]interface{}{}, nil
+		}
+	}
+
+	return nil, fmt.Errorf("context %q not found in config file; available: %s",
+		name, strings.Join(availableNames, ", "))
 }
 
 func setDefaultsFrom(v *viper.Viper, val interface{}) error {

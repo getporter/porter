@@ -222,6 +222,7 @@ Try our QuickStart https://porter.sh/quickstart to learn how to use Porter.
 	globalFlags := cmd.PersistentFlags()
 	globalFlags.StringVar(&p.Data.Verbosity, "verbosity", config.DefaultVerbosity, "Threshold for printing messages to the console. Available values are: debug, info, warning, error.")
 	globalFlags.StringSliceVar(&p.Data.ExperimentalFlags, "experimental", nil, "Comma separated list of experimental features to enable. See https://porter.sh/configuration/#experimental-feature-flags for available feature flags.")
+	globalFlags.StringVar(&p.Config.ContextName, "context", "", "Name of the configuration context to use. Defaults to the context named \"default\".")
 
 	// Flags for just the porter command only, does not apply to sub-commands
 	cmd.Flags().BoolVarP(&printVersion, "version", "v", false, "Print the application version")

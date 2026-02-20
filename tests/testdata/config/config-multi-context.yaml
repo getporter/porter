@@ -1,0 +1,41 @@
+schemaVersion: "2.0.0"
+current-context: default
+contexts:
+  - name: default
+    config:
+      namespace: dev
+      verbosity: debug
+      default-storage: testdb
+      default-secrets-plugin: filesystem
+      allow-docker-host-access: true
+      logs:
+        enabled: true
+        level: debug
+      telemetry:
+        enabled: ${env.PORTER_TEST_TELEMETRY_ENABLED}
+        protocol: grpc
+        insecure: true
+      storage:
+        - name: testdb
+          plugin: mongodb
+          config:
+            url: mongodb://localhost:27017/${env.PORTER_TEST_DB_NAME}?connect=direct
+  - name: prod
+    config:
+      namespace: prod
+      verbosity: debug
+      default-storage: testdb
+      default-secrets-plugin: filesystem
+      allow-docker-host-access: true
+      logs:
+        enabled: true
+        level: debug
+      telemetry:
+        enabled: ${env.PORTER_TEST_TELEMETRY_ENABLED}
+        protocol: grpc
+        insecure: true
+      storage:
+        - name: testdb
+          plugin: mongodb
+          config:
+            url: mongodb://localhost:27017/${env.PORTER_TEST_DB_NAME}?connect=direct
