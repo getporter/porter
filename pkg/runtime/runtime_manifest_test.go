@@ -1228,12 +1228,14 @@ func TestResolveInstallation(t *testing.T) {
 	testConfig := config.NewTestConfig(t)
 	testConfig.Setenv(config.EnvPorterInstallationNamespace, "mynamespace")
 	testConfig.Setenv(config.EnvPorterInstallationName, "mybun")
+	testConfig.Setenv(config.EnvPorterInstallationID, "myid")
 
 	mContent := `schemaVersion: 1.0.0
 install:
 - mymixin:
     ns: ${ installation.namespace }
     release: ${ installation.name }
+    id: ${ installation.id }
 `
 	rm := runtimeManifestFromStepYaml(t, testConfig, mContent)
 	s := rm.Install[0]
@@ -1246,6 +1248,7 @@ install:
 
 	assert.Equal(t, "mynamespace", mixin["ns"], "installation.namespace was not rendered")
 	assert.Equal(t, "mybun", mixin["release"], "installation.name was not rendered")
+	assert.Equal(t, "myid", mixin["id"], "installation.id was not rendered")
 }
 
 func TestResolveCustomMetadata(t *testing.T) {

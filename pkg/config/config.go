@@ -55,6 +55,10 @@ const (
 	// bundle image, containing the name of the installation.
 	EnvPorterInstallationName = "PORTER_INSTALLATION_NAME"
 
+	// EnvPorterInstallationID is the name of the environment variable which is injected into the
+	// bundle image, containing the unique ID of the installation.
+	EnvPorterInstallationID = "PORTER_INSTALLATION_ID"
+
 	// DefaultVerbosity is the default value for the --verbosity flag.
 	DefaultVerbosity = "info"
 )
