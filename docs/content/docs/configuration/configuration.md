@@ -57,7 +57,19 @@ Instead, use templates to inject environment variables or secrets in the configu
 Environment variables are specified with ${env.NAME}, where name is case-sensitive.
 Secrets are specified with ${secret.KEY} and case sensitivity depends upon the secrets plugin used.
 
-Below is an example configuration file in yaml:
+### Multiple environments
+
+Porter supports defining multiple named environments (contexts) in a single
+config file, similar to how `kubectl` handles multiple clusters.
+See [Multiple Configuration Environments](/docs/configuration/multi-context/) for details.
+
+### Flat config file (legacy)
+
+The flat format places all settings at the top level of the config file.
+This format is still supported but is considered legacy.
+Use `porter config migrate` to convert it to the multi-context format.
+
+Below is a full example in YAML:
 
 ```yaml
 # ~/.porter/config.yaml
