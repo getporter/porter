@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"regexp"
+	"strings"
 
 	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/config"
@@ -178,6 +179,85 @@ func (p *Porter) ConfigContextList(ctx context.Context) error {
 		fmt.Fprintf(p.Out, "%s%s\n", marker, name)
 	}
 	return nil
+}
+
+// migrationHeader is prepended to the existing config content when migrating
+// from the legacy flat format to the multi-context format.
+const migrationHeader = `schemaVersion: "2.0.0"
+current-context: default
+contexts:
+  - name: default
+    config:
+`
+
+// ConfigMigrate converts a legacy flat config file to the multi-context format.
+// The existing settings are wrapped in a context named "default".
+// Only YAML config files are supported; other formats return an error with
+// guidance for manual migration.
+func (p *Porter) ConfigMigrate(ctx context.Context) error {
+	_, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
+	path, exists, err := p.GetConfigFilePath()
+	if err != nil {
+		return span.Error(err)
+	}
+	if !exists {
+		fmt.Fprintln(p.Out, "No configuration file found.")
+		fmt.Fprintln(p.Out, "Use 'porter config edit' to create one.")
+		return nil
+	}
+
+	contents, err := p.FileSystem.ReadFile(path)
+	if err != nil {
+		return span.Error(fmt.Errorf("could not read config file %s: %w", path, err))
+	}
+
+	if bytes.Contains(contents, []byte("schemaVersion:")) {
+		fmt.Fprintln(p.Out, "Config file is already using the multi-context format.")
+		return nil
+	}
+
+	ext := strings.ToLower(strings.TrimPrefix(filepath.Ext(path), "."))
+	if ext != "yaml" && ext != "yml" {
+		return span.Error(fmt.Errorf(
+			"automatic migration is only supported for YAML config files; "+
+				"your %s config must be migrated manually by wrapping your settings under:\n\n"+
+				"  schemaVersion: \"2.0.0\"\n"+
+				"  current-context: default\n"+
+				"  contexts:\n"+
+				"    - name: default\n"+
+				"      config:\n"+
+				"        # your existing settings here",
+			ext,
+		))
+	}
+
+	// Normalize line endings, then indent each non-empty line by 6 spaces so
+	// the existing settings sit correctly under "contexts[0].config".
+	contents = bytes.ReplaceAll(contents, []byte("\r\n"), []byte("\n"))
+	indented := indentLines(bytes.TrimRight(contents, "\n"), 6)
+	migrated := append([]byte(migrationHeader), indented...)
+	migrated = append(migrated, '\n')
+
+	if err := p.FileSystem.WriteFile(path, migrated, pkg.FileModeWritable); err != nil {
+		return span.Error(fmt.Errorf("could not write migrated config file %s: %w", path, err))
+	}
+
+	fmt.Fprintf(p.Out, "Migrated %s to multi-context format. Use 'porter config show' to review.\n", filepath.Base(path))
+	return nil
+}
+
+// indentLines prepends spaces to every non-empty line in content.
+func indentLines(content []byte, spaces int) []byte {
+	prefix := strings.Repeat(" ", spaces)
+	lines := strings.Split(string(content), "\n")
+	for i, line := range lines {
+		if strings.TrimSpace(line) != "" {
+			lines[i] = prefix + line
+		}
+	}
+	return []byte(strings.Join(lines, "\n"))
 }
 
 // currentContextRe matches the current-context line in a YAML config file.

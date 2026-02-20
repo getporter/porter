@@ -234,6 +234,92 @@ func TestConfigContextUse_NoFile(t *testing.T) {
 	require.ErrorContains(t, err, "no config file found")
 }
 
+func TestConfigMigrate(t *testing.T) {
+	t.Parallel()
+
+	p := NewTestPorter(t)
+	defer p.Close()
+
+	home, _ := p.GetHomeDir()
+	configPath := filepath.Join(home, "config.yaml")
+	legacy := `namespace: dev
+verbosity: debug
+storage:
+  - name: testdb
+    plugin: mongodb
+    config:
+      url: mongodb://localhost:27017/${env.PORTER_TEST_DB_NAME}?connect=direct
+`
+	require.NoError(t, p.FileSystem.WriteFile(configPath, []byte(legacy), 0600))
+
+	err := p.ConfigMigrate(context.Background())
+	require.NoError(t, err)
+
+	result, err := p.FileSystem.ReadFile(configPath)
+	require.NoError(t, err)
+	content := string(result)
+
+	assert.Contains(t, content, `schemaVersion: "2.0.0"`)
+	assert.Contains(t, content, "current-context: default")
+	assert.Contains(t, content, "- name: default")
+	assert.Contains(t, content, "      namespace: dev")           // indented 6 spaces
+	assert.Contains(t, content, "${env.PORTER_TEST_DB_NAME}")    // template var preserved
+	assert.NotContains(t, content, "\nnamespace: dev")           // top-level key must be gone
+
+	output := p.TestConfig.TestContext.GetOutput()
+	assert.Contains(t, output, "Migrated")
+}
+
+func TestConfigMigrate_AlreadyMigrated(t *testing.T) {
+	t.Parallel()
+
+	p := NewTestPorter(t)
+	defer p.Close()
+
+	home, _ := p.GetHomeDir()
+	configPath := filepath.Join(home, "config.yaml")
+	require.NoError(t, p.FileSystem.WriteFile(configPath, []byte(`schemaVersion: "2.0.0"
+current-context: default
+contexts:
+  - name: default
+    config: {}
+`), 0600))
+
+	err := p.ConfigMigrate(context.Background())
+	require.NoError(t, err)
+
+	output := p.TestConfig.TestContext.GetOutput()
+	assert.Contains(t, output, "already using the multi-context format")
+}
+
+func TestConfigMigrate_NoFile(t *testing.T) {
+	t.Parallel()
+
+	p := NewTestPorter(t)
+	defer p.Close()
+
+	err := p.ConfigMigrate(context.Background())
+	require.NoError(t, err)
+
+	output := p.TestConfig.TestContext.GetOutput()
+	assert.Contains(t, output, "No configuration file found")
+}
+
+func TestConfigMigrate_NonYAML(t *testing.T) {
+	t.Parallel()
+
+	p := NewTestPorter(t)
+	defer p.Close()
+
+	home, _ := p.GetHomeDir()
+	configPath := filepath.Join(home, "config.toml")
+	require.NoError(t, p.FileSystem.WriteFile(configPath, []byte(`namespace = "dev"`), 0600))
+
+	err := p.ConfigMigrate(context.Background())
+	require.ErrorContains(t, err, "toml")
+	require.ErrorContains(t, err, "manually")
+}
+
 func TestConfigContextUse_LegacyFile(t *testing.T) {
 	t.Parallel()
 

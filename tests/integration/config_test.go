@@ -152,3 +152,49 @@ func TestMultiContextConfig_TOML(t *testing.T) {
 	assert.Contains(t, output, "  default", "default should be listed as an inactive context")
 	assert.Contains(t, output, "* prod", "prod should be marked active (matches current-context in file)")
 }
+
+// legacyYAMLWithTemplateVars is a flat config that contains Liquid template
+// variables, used to verify they survive migration intact.
+const legacyYAMLWithTemplateVars = `namespace: dev
+verbosity: debug
+default-storage: testdb
+default-secrets-plugin: filesystem
+storage:
+  - name: testdb
+    plugin: mongodb
+    config:
+      url: mongodb://localhost:27017/${env.PORTER_TEST_DB_NAME}?connect=direct
+`
+
+// TestConfigMigrate verifies that a legacy flat YAML config is correctly
+// migrated to the multi-context format on the real filesystem, and that
+// Liquid template variables are preserved verbatim.
+func TestConfigMigrate(t *testing.T) {
+	p := porter.NewTestPorter(t)
+	ctx := p.SetupIntegrationTest()
+	defer p.Close()
+
+	home, _ := p.GetHomeDir()
+	configPath := filepath.Join(home, "config.yaml")
+	require.NoError(t, os.WriteFile(configPath, []byte(legacyYAMLWithTemplateVars), pkg.FileModeWritable))
+
+	err := p.ConfigMigrate(ctx)
+	require.NoError(t, err)
+
+	result, err := os.ReadFile(configPath)
+	require.NoError(t, err)
+	content := string(result)
+
+	assert.Contains(t, content, `schemaVersion: "2.0.0"`, "migrated file should have schemaVersion")
+	assert.Contains(t, content, "current-context: default", "migrated file should have current-context")
+	assert.Contains(t, content, "- name: default", "migrated file should have a default context")
+	assert.Contains(t, content, "      namespace: dev", "existing settings should be indented under config")
+	assert.Contains(t, content, "${env.PORTER_TEST_DB_NAME}", "Liquid template variables should be preserved")
+	assert.NotContains(t, content, "\nnamespace: dev", "top-level keys must not remain unindented")
+
+	// Verify the migrated file can be subsequently loaded and context-listed
+	err = p.ConfigContextList(ctx)
+	require.NoError(t, err)
+	listOutput := p.TestConfig.TestContext.GetOutput()
+	assert.Contains(t, listOutput, "* default", "migrated config should have 'default' as the active context")
+}

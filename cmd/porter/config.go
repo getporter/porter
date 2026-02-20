@@ -15,6 +15,7 @@ func buildConfigCommands(p *porter.Porter) *cobra.Command {
 
 	cmd.AddCommand(buildConfigShowCommand(p))
 	cmd.AddCommand(buildConfigEditCommand(p))
+	cmd.AddCommand(buildConfigMigrateCommand(p))
 	cmd.AddCommand(buildConfigContextCommands(p))
 
 	return cmd
@@ -54,6 +55,24 @@ func buildConfigContextUseCommand(p *porter.Porter) *cobra.Command {
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return p.ConfigContextUse(cmd.Context(), args[0])
+		},
+	}
+}
+
+func buildConfigMigrateCommand(p *porter.Porter) *cobra.Command {
+	return &cobra.Command{
+		Use:   "migrate",
+		Short: "Migrate the config file to the multi-context format",
+		Long: `Migrate the porter config file from the legacy flat format to the
+multi-context format (schemaVersion: "2.0.0"). The existing settings are
+preserved under a context named "default".
+
+Only YAML config files are supported for automatic migration. For TOML,
+JSON, or HCL files, the required structure is printed so you can apply
+the changes manually.`,
+		Example: "  porter config migrate",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return p.ConfigMigrate(cmd.Context())
 		},
 	}
 }
