@@ -29,10 +29,11 @@ Variables are grouped by the source of its data:
 
 The installation variable contains data related to the execution of the bundle.
 
-| Variable               | Description                        |
-| ---------------------- | ---------------------------------- |
-| installation.name      | The name of the installation.      |
-| installation.namespace | The namespace of the installation. |
+| Variable               | Description                                                                           |
+| ---------------------- | ------------------------------------------------------------------------------------- |
+| installation.name      | The name of the installation.                                                         |
+| installation.namespace | The namespace of the installation.                                                    |
+| installation.id        | A globally unique identifier for the installation, suitable for naming cloud resources. |
 
 In the example below, we install a helm chart and set the release name to the installation name of the bundle:
 
@@ -54,6 +55,27 @@ install:
     manifests:
       - manifests
 ```
+
+Use `installation.id` when you need a value that is globally unique across Porter data stores and namespaces, for example to tag cloud resources so they can be traced back to a specific installation:
+
+```yaml
+install:
+  exec:
+    description: Create storage account
+    command: az
+    arguments:
+      - storage
+      - account
+      - create
+      - --name
+      - myapp-storage
+      - --tags
+      - porter-installation-id=${ installation.id }
+```
+
+The ID is stable across all runs of the same installation record (install, upgrade, uninstall).
+It changes only if the installation is deleted and recreated.
+The `PORTER_INSTALLATION_ID` environment variable provides the same value for use in scripts.
 
 ### bundle
 

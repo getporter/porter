@@ -20,8 +20,15 @@ In the Porter manifest, you can declare both parameters and credentials. In addi
 
 ## Wiring Installation Metadata
 
-The installation name is available at runtime as `${ installation.name }`. In the example below, we install a helm chart
-and set the release name to the installation name of the bundle:
+Installation metadata is available at runtime via template variables and environment variables:
+
+| Template variable      | Environment variable          | Description                              |
+| ---------------------- | ----------------------------- | ---------------------------------------- |
+| installation.name      | PORTER_INSTALLATION_NAME      | The name of the installation.            |
+| installation.namespace | PORTER_INSTALLATION_NAMESPACE | The namespace of the installation.       |
+| installation.id        | PORTER_INSTALLATION_ID        | A globally unique ID for the installation, stable across all runs of the same installation record. |
+
+In the example below, we install a helm chart and set the release name to the installation name of the bundle:
 
 ```yaml
 install:
@@ -29,6 +36,23 @@ install:
     description: Install myapp
     name: ${ installation.name }
     chart: charts/myapp
+```
+
+Use `installation.id` when you need a value that is globally unique across Porter data stores and namespaces, for example to tag cloud resources so they can be traced back to a specific installation:
+
+```yaml
+install:
+  exec:
+    description: Create storage account
+    command: az
+    arguments:
+      - storage
+      - account
+      - create
+      - --name
+      - myapp-storage
+      - --tags
+      - porter-installation-id=${ installation.id }
 ```
 
 ## Parameters
