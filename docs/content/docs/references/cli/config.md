@@ -35,5 +35,6 @@ Try our QuickStart https://porter.sh/quickstart to learn how to use Porter.
 
 * [porter config context](/cli/porter_config_context/)	 - Context commands
 * [porter config edit](/cli/porter_config_edit/)	 - Edit the config file
+* [porter config migrate](/cli/porter_config_migrate/)	 - Migrate the config file to the multi-context format
 * [porter config show](/cli/porter_config_show/)	 - Show the config file
 
