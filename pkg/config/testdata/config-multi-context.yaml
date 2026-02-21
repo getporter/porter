@@ -1,0 +1,25 @@
+schemaVersion: "2.0.0"
+current-context: default
+contexts:
+  - name: default
+    config:
+      namespace: dev
+      verbosity: debug
+      default-storage: localdb
+      default-secrets-plugin: filesystem
+      storage:
+        - name: localdb
+          plugin: mongodb
+          config:
+            url: mongodb://localhost:27017/porter
+  - name: prod
+    config:
+      namespace: prod
+      verbosity: warn
+      default-storage: proddb
+      default-secrets-plugin: azure.keyvault
+      storage:
+        - name: proddb
+          plugin: mongodb
+          config:
+            url: mongodb://prod.example.com:27017/porter

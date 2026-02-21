@@ -1,30 +1,36 @@
 ---
-title: "porter config show"
-slug: porter_config_show
-url: /cli/porter_config_show/
+title: "porter config migrate"
+slug: porter_config_migrate
+url: /cli/porter_config_migrate/
 ---
-## porter config show
+## porter config migrate
 
-Show the config file
+Migrate the config file to the multi-context format
 
 ### Synopsis
 
-Show the contents of the porter configuration file.
+Migrate the porter config file from the legacy flat format to the
+multi-context format (schemaVersion: "2.0.0"). The existing settings are
+preserved under a context named "default".
+
+Only YAML config files are supported for automatic migration. For TOML,
+JSON, or HCL files, the required structure is printed so you can apply
+the changes manually.
 
 ```
-porter config show [flags]
+porter config migrate [flags]
 ```
 
 ### Examples
 
 ```
-  porter config show
+  porter config migrate
 ```
 
 ### Options
 
 ```
-  -h, --help   help for show
+  -h, --help   help for migrate
 ```
 
 ### Options inherited from parent commands

@@ -66,6 +66,88 @@ func TestData_Marshal(t *testing.T) {
 	assert.Equal(t, map[string]interface{}{"token": "topsecret-token", "vault": "teamsekrets"}, teamSource.Config, "SecretsPlugins.Config was not loaded properly")
 }
 
+func TestLoadMultiContext_DefaultContext(t *testing.T) {
+	t.Parallel()
+
+	c := NewTestConfig(t)
+	c.SetHomeDir("/home/myuser/.porter")
+	c.TestContext.AddTestFile("testdata/config-multi-context.yaml", "/home/myuser/.porter/config.yaml")
+
+	c.DataLoader = LoadFromFilesystem()
+	_, err := c.Load(context.Background(), nil)
+	require.NoError(t, err)
+
+	assert.Equal(t, "dev", c.Data.Namespace)
+	assert.Equal(t, "debug", c.Data.Verbosity)
+	assert.Equal(t, "localdb", c.Data.DefaultStorage)
+	assert.Equal(t, "filesystem", c.Data.DefaultSecretsPlugin)
+	require.Len(t, c.Data.StoragePlugins, 1)
+	assert.Equal(t, "localdb", c.Data.StoragePlugins[0].Name)
+}
+
+func TestLoadMultiContext_FlagOverridesDefault(t *testing.T) {
+	t.Parallel()
+
+	c := NewTestConfig(t)
+	c.SetHomeDir("/home/myuser/.porter")
+	c.TestContext.AddTestFile("testdata/config-multi-context.yaml", "/home/myuser/.porter/config.yaml")
+	c.ContextName = "prod"
+
+	c.DataLoader = LoadFromFilesystem()
+	_, err := c.Load(context.Background(), nil)
+	require.NoError(t, err)
+
+	assert.Equal(t, "prod", c.Data.Namespace)
+	assert.Equal(t, "warn", c.Data.Verbosity)
+	assert.Equal(t, "proddb", c.Data.DefaultStorage)
+	assert.Equal(t, "azure.keyvault", c.Data.DefaultSecretsPlugin)
+	require.Len(t, c.Data.StoragePlugins, 1)
+	assert.Equal(t, "proddb", c.Data.StoragePlugins[0].Name)
+}
+
+func TestLoadMultiContext_EnvVarSelectsContext(t *testing.T) {
+	// Do not run in parallel — sets environment variables
+	os.Setenv("PORTER_CONTEXT", "prod")
+	defer os.Unsetenv("PORTER_CONTEXT")
+
+	c := NewTestConfig(t)
+	c.SetHomeDir("/home/myuser/.porter")
+	c.TestContext.AddTestFile("testdata/config-multi-context.yaml", "/home/myuser/.porter/config.yaml")
+
+	c.DataLoader = LoadFromEnvironment()
+	_, err := c.Load(context.Background(), nil)
+	require.NoError(t, err)
+
+	assert.Equal(t, "prod", c.Data.Namespace)
+	assert.Equal(t, "proddb", c.Data.DefaultStorage)
+}
+
+func TestLoadMultiContext_ContextNotFound(t *testing.T) {
+	t.Parallel()
+
+	c := NewTestConfig(t)
+	c.SetHomeDir("/home/myuser/.porter")
+	c.TestContext.AddTestFile("testdata/config-multi-context.yaml", "/home/myuser/.porter/config.yaml")
+	c.ContextName = "staging"
+
+	c.DataLoader = LoadFromFilesystem()
+	_, err := c.Load(context.Background(), nil)
+	require.ErrorContains(t, err, `context "staging" not found`)
+}
+
+func TestLoadMultiContext_LegacyFlagError(t *testing.T) {
+	t.Parallel()
+
+	c := NewTestConfig(t)
+	c.SetHomeDir("/home/myuser/.porter")
+	c.TestContext.AddTestFile("testdata/config.toml", "/home/myuser/.porter/config.toml")
+	c.ContextName = "prod"
+
+	c.DataLoader = LoadFromFilesystem()
+	_, err := c.Load(context.Background(), nil)
+	require.ErrorContains(t, err, "--context")
+}
+
 func TestListTemplateVariables(t *testing.T) {
 	eng := liquid.NewEngine()
 	tmpl, err := eng.ParseString(`not a variable {{secrets.foo}} more non variable junk{{env.var}}{{env.var}}`)

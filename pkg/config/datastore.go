@@ -1,6 +1,9 @@
 package config
 
 const (
+	// ConfigSchemaVersion is the schemaVersion value for multi-context config files.
+	ConfigSchemaVersion = "2.0.0"
+
 	// BuildDriverDocker is no longer supported.
 	BuildDriverDocker = "docker"
 
@@ -142,4 +145,19 @@ func (p PluginConfig) GetPluginSubKey() string {
 
 func (p PluginConfig) GetConfig() interface{} {
 	return p.Config
+}
+
+// ContextConfig pairs a name with a full Data configuration block.
+type ContextConfig struct {
+	Name   string `mapstructure:"name"   yaml:"name"`
+	Config Data   `mapstructure:"config" yaml:"config"`
+}
+
+// MultiContextFile is the top-level structure of a versioned multi-context
+// config file. After loading, the selected context's Data is placed into
+// Config.Data; this struct is not stored on Config after load.
+type MultiContextFile struct {
+	SchemaVersion  string          `mapstructure:"schemaVersion"   yaml:"schemaVersion"`
+	CurrentContext string          `mapstructure:"current-context" yaml:"current-context"`
+	Contexts       []ContextConfig `mapstructure:"contexts"        yaml:"contexts"`
 }

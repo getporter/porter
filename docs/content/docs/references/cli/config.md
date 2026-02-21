@@ -20,6 +20,7 @@ Commands for managing Porter's configuration file.
 ### Options inherited from parent commands
 
 ```
+      --context string         Name of the configuration context to use. Defaults to the context named "default".
       --experimental strings   Comma separated list of experimental features to enable. See https://porter.sh/configuration/#experimental-feature-flags for available feature flags.
       --verbosity string       Threshold for printing messages to the console. Available values are: debug, info, warning, error. (default "info")
 ```
@@ -32,6 +33,8 @@ Most commands require a Docker daemon, either local or remote.
 
 Try our QuickStart https://porter.sh/quickstart to learn how to use Porter.
 
+* [porter config context](/cli/porter_config_context/)	 - Context commands
 * [porter config edit](/cli/porter_config_edit/)	 - Edit the config file
+* [porter config migrate](/cli/porter_config_migrate/)	 - Migrate the config file to the multi-context format
 * [porter config show](/cli/porter_config_show/)	 - Show the config file
 
