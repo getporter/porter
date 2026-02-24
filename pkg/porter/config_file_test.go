@@ -354,3 +354,43 @@ func TestConfigContextUse_LegacyFile(t *testing.T) {
 	err := p.ConfigContextUse(context.Background(), "prod")
 	require.ErrorContains(t, err, "not a versioned multi-context file")
 }
+
+func TestConfigContextUse_NonexistentContext(t *testing.T) {
+	t.Parallel()
+
+	p := NewTestPorter(t)
+	defer p.Close()
+
+	home, _ := p.GetHomeDir()
+	configPath := filepath.Join(home, "config.yaml")
+	configContent := `schemaVersion: "` + config.ConfigSchemaVersion + `"
+current-context: default
+contexts:
+  - name: default
+    config: {}
+`
+	require.NoError(t, p.FileSystem.WriteFile(configPath, []byte(configContent), 0600))
+
+	err := p.ConfigContextUse(context.Background(), "nonexistent")
+	require.ErrorContains(t, err, `"nonexistent" not found`)
+}
+
+func TestConfigContextUse_InvalidName(t *testing.T) {
+	t.Parallel()
+
+	p := NewTestPorter(t)
+	defer p.Close()
+
+	home, _ := p.GetHomeDir()
+	configPath := filepath.Join(home, "config.yaml")
+	configContent := `schemaVersion: "` + config.ConfigSchemaVersion + `"
+current-context: default
+contexts:
+  - name: default
+    config: {}
+`
+	require.NoError(t, p.FileSystem.WriteFile(configPath, []byte(configContent), 0600))
+
+	err := p.ConfigContextUse(context.Background(), "bad\nname")
+	require.ErrorContains(t, err, "newline")
+}

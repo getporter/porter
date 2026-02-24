@@ -289,8 +289,35 @@ func (p *Porter) ConfigContextUse(ctx context.Context, name string) error {
 		return span.Error(fmt.Errorf("could not read config file %s: %w", path, err))
 	}
 
+	if strings.ContainsAny(name, "\n\r") {
+		return span.Error(fmt.Errorf("context name must not contain newline characters"))
+	}
+
 	if !schemaVersionRe.Match(contents) {
 		return span.Error(fmt.Errorf("config file is not a versioned multi-context file (schemaVersion: %q required)", config.ConfigSchemaVersion))
+	}
+
+	v := viper.New()
+	v.SetFs(p.FileSystem)
+	v.SetConfigFile(path)
+	if err := v.ReadInConfig(); err != nil {
+		return span.Error(fmt.Errorf("could not read config file %s: %w", path, err))
+	}
+	rawMap := v.AllSettings()
+	contexts, _ := rawMap["contexts"].([]interface{})
+	found := false
+	for _, c := range contexts {
+		ctxMap, ok := c.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		if ctxName, _ := ctxMap["name"].(string); ctxName == name {
+			found = true
+			break
+		}
+	}
+	if !found {
+		return span.Error(fmt.Errorf("context %q not found; use 'porter config context list' to see available contexts", name))
 	}
 
 	replacement := []byte("current-context: " + name)
