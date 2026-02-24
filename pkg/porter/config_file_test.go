@@ -197,6 +197,27 @@ func TestConfigContextList_LegacyFile(t *testing.T) {
 	assert.Contains(t, output, "legacy flat format")
 }
 
+func TestConfigContextList_EmptyContexts(t *testing.T) {
+	t.Parallel()
+
+	p := NewTestPorter(t)
+	defer p.Close()
+
+	home, _ := p.GetHomeDir()
+	configPath := filepath.Join(home, "config.yaml")
+	configContent := `schemaVersion: "` + config.ConfigSchemaVersion + `"
+current-context: default
+contexts: []
+`
+	require.NoError(t, p.FileSystem.WriteFile(configPath, []byte(configContent), 0600))
+
+	err := p.ConfigContextList(context.Background())
+	require.NoError(t, err)
+
+	output := p.TestConfig.TestContext.GetOutput()
+	assert.Contains(t, output, "No contexts defined")
+}
+
 func TestConfigContextUse(t *testing.T) {
 	t.Parallel()
 

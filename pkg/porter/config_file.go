@@ -163,6 +163,10 @@ func (p *Porter) ConfigContextList(ctx context.Context) error {
 	}
 
 	contexts, _ := rawMap["contexts"].([]interface{})
+	if len(contexts) == 0 {
+		fmt.Fprintln(p.Out, "No contexts defined. Add a context to your config file.")
+		return nil
+	}
 	for _, c := range contexts {
 		ctxMap, ok := c.(map[string]interface{})
 		if !ok {
