@@ -98,6 +98,7 @@ func (r *Runtime) AddEnvironment(args ActionArguments) cnabaction.OperationConfi
 	return func(op *driver.Operation) error {
 		op.Environment[config.EnvPorterInstallationNamespace] = args.Installation.Namespace
 		op.Environment[config.EnvPorterInstallationName] = args.Installation.Name
+		op.Environment[config.EnvPorterInstallationID] = args.Installation.ID
 
 		// Pass the verbosity from porter's local config into the bundle
 		op.Environment[verbosityEnv] = r.Config.GetVerbosity().Level().String()

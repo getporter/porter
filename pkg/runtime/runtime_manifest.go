@@ -113,6 +113,10 @@ func (m *RuntimeManifest) GetInstallationName() string {
 	return m.config.Getenv(config.EnvPorterInstallationName)
 }
 
+func (m *RuntimeManifest) GetInstallationID() string {
+	return m.config.Getenv(config.EnvPorterInstallationID)
+}
+
 func (m *RuntimeManifest) loadDependencyDefinitions() error {
 	m.bundles = make(map[string]cnab.ExtendedBundle, len(m.Dependencies.Requires))
 	for _, dep := range m.Dependencies.Requires {
@@ -326,6 +330,7 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 	data["installation"] = inst
 	inst["namespace"] = m.GetInstallationNamespace()
 	inst["name"] = m.GetInstallationName()
+	inst["id"] = m.GetInstallationID()
 
 	bun := make(map[string]interface{})
 	data["bundle"] = bun
