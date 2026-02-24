@@ -394,3 +394,34 @@ contexts:
 	err := p.ConfigContextUse(context.Background(), "bad\nname")
 	require.ErrorContains(t, err, "newline")
 }
+
+// TestConfigContextList_TOMLMultiContext verifies that ConfigContextList works
+// with a manually-created TOML multi-context file. Auto-migration is YAML-only,
+// but TOML (and other viper-supported formats) remain fully supported for reading.
+func TestConfigContextList_TOMLMultiContext(t *testing.T) {
+	t.Parallel()
+
+	p := NewTestPorter(t)
+	defer p.Close()
+
+	home, _ := p.GetHomeDir()
+	configPath := filepath.Join(home, "config.toml")
+	// TOML equivalent of the multi-context format, written manually.
+	configContent := `schemaVersion = "` + config.ConfigSchemaVersion + `"
+current-context = "prod"
+
+[[contexts]]
+name = "default"
+
+[[contexts]]
+name = "prod"
+`
+	require.NoError(t, p.FileSystem.WriteFile(configPath, []byte(configContent), 0600))
+
+	err := p.ConfigContextList(context.Background())
+	require.NoError(t, err)
+
+	output := p.TestConfig.TestContext.GetOutput()
+	assert.Contains(t, output, "* prod")
+	assert.Contains(t, output, "  default")
+}
