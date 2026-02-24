@@ -213,7 +213,7 @@ func (p *Porter) ConfigMigrate(ctx context.Context) error {
 		return span.Error(fmt.Errorf("could not read config file %s: %w", path, err))
 	}
 
-	if bytes.Contains(contents, []byte("schemaVersion:")) {
+	if schemaVersionRe.Match(contents) {
 		fmt.Fprintln(p.Out, "Config file is already using the multi-context format.")
 		return nil
 	}
@@ -260,6 +260,10 @@ func indentLines(content []byte, spaces int) []byte {
 	return []byte(strings.Join(lines, "\n"))
 }
 
+// schemaVersionRe matches the schemaVersion declaration at line start,
+// so YAML comments containing "schemaVersion:" are never mistaken for it.
+var schemaVersionRe = regexp.MustCompile(`(?m)^schemaVersion:\s+"` + config.ConfigSchemaVersion + `"`)
+
 // currentContextRe matches the current-context line in a YAML config file.
 var currentContextRe = regexp.MustCompile(`(?m)^current-context:.*$`)
 
@@ -281,7 +285,7 @@ func (p *Porter) ConfigContextUse(ctx context.Context, name string) error {
 		return span.Error(fmt.Errorf("could not read config file %s: %w", path, err))
 	}
 
-	if !bytes.Contains(contents, []byte("schemaVersion: \""+config.ConfigSchemaVersion+"\"")) {
+	if !schemaVersionRe.Match(contents) {
 		return span.Error(fmt.Errorf("config file is not a versioned multi-context file (schemaVersion: %q required)", config.ConfigSchemaVersion))
 	}
 
