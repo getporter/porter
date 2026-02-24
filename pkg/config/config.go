@@ -97,7 +97,7 @@ type Config struct {
 	viper *viper.Viper
 
 	// ContextName is the name of the configuration context to load.
-	// Set by --configuration flag or PORTER_CONFIGURATION env var.
+	// Set by --context flag or PORTER_CONTEXT env var.
 	// When empty, falls back to the context named "default".
 	ContextName string
 }
