@@ -212,12 +212,13 @@ func (p *Porter) ConfigMigrate(ctx context.Context) error {
 		return nil
 	}
 
-	contents, err := p.FileSystem.ReadFile(path)
-	if err != nil {
+	v := viper.New()
+	v.SetFs(p.FileSystem)
+	v.SetConfigFile(path)
+	if err := v.ReadInConfig(); err != nil {
 		return span.Error(fmt.Errorf("could not read config file %s: %w", path, err))
 	}
-
-	if schemaVersionRe.Match(contents) {
+	if _, isMultiContext := v.AllSettings()["schemaversion"]; isMultiContext {
 		fmt.Fprintln(p.Out, "Config file is already using the multi-context format.")
 		return nil
 	}
@@ -235,6 +236,11 @@ func (p *Porter) ConfigMigrate(ctx context.Context) error {
 				"        # your existing settings here",
 			ext,
 		))
+	}
+
+	contents, err := p.FileSystem.ReadFile(path)
+	if err != nil {
+		return span.Error(fmt.Errorf("could not read config file %s: %w", path, err))
 	}
 
 	// Normalize line endings, then indent each non-empty line by 6 spaces so
@@ -264,12 +270,35 @@ func indentLines(content []byte, spaces int) []byte {
 	return []byte(strings.Join(lines, "\n"))
 }
 
-// schemaVersionRe matches the schemaVersion declaration at line start,
-// so YAML comments containing "schemaVersion:" are never mistaken for it.
-var schemaVersionRe = regexp.MustCompile(`(?m)^schemaVersion:\s+"` + config.ConfigSchemaVersion + `"`)
+// replaceCurrentContext updates the current-context value in raw config file
+// bytes. It uses a format-specific pattern so that comments and Liquid
+// template variables elsewhere in the file are preserved.
+// Returns an error if the current-context field is absent or the format is
+// not supported.
+func replaceCurrentContext(contents []byte, ext, name string) ([]byte, error) {
+	var re *regexp.Regexp
+	var replacement []byte
 
-// currentContextRe matches the current-context line in a YAML config file.
-var currentContextRe = regexp.MustCompile(`(?m)^current-context:.*$`)
+	switch ext {
+	case "yaml", "yml":
+		re = regexp.MustCompile(`(?m)^current-context:.*$`)
+		replacement = []byte("current-context: " + name)
+	case "toml", "hcl":
+		re = regexp.MustCompile(`(?m)^current-context\s*=.*$`)
+		replacement = []byte(`current-context = "` + name + `"`)
+	case "json":
+		// Match key+value only so any trailing comma stays intact.
+		re = regexp.MustCompile(`"current-context"\s*:\s*"[^"]*"`)
+		replacement = []byte(`"current-context": "` + name + `"`)
+	default:
+		return nil, fmt.Errorf("unsupported config format %q; update current-context manually", ext)
+	}
+
+	if !re.Match(contents) {
+		return nil, fmt.Errorf("current-context field not found in config file; add it before running context use")
+	}
+	return re.ReplaceAll(contents, replacement), nil
+}
 
 // ConfigContextUse sets the current-context in the porter config file.
 func (p *Porter) ConfigContextUse(ctx context.Context, name string) error {
@@ -284,17 +313,8 @@ func (p *Porter) ConfigContextUse(ctx context.Context, name string) error {
 		return span.Error(fmt.Errorf("no config file found; use 'porter config edit' to create one"))
 	}
 
-	contents, err := p.FileSystem.ReadFile(path)
-	if err != nil {
-		return span.Error(fmt.Errorf("could not read config file %s: %w", path, err))
-	}
-
 	if strings.ContainsAny(name, "\n\r") {
 		return span.Error(fmt.Errorf("context name must not contain newline characters"))
-	}
-
-	if !schemaVersionRe.Match(contents) {
-		return span.Error(fmt.Errorf("config file is not a versioned multi-context file (schemaVersion: %q required)", config.ConfigSchemaVersion))
 	}
 
 	v := viper.New()
@@ -304,6 +324,10 @@ func (p *Porter) ConfigContextUse(ctx context.Context, name string) error {
 		return span.Error(fmt.Errorf("could not read config file %s: %w", path, err))
 	}
 	rawMap := v.AllSettings()
+	if _, isMultiContext := rawMap["schemaversion"]; !isMultiContext {
+		return span.Error(fmt.Errorf("config file is not a versioned multi-context file (schemaVersion: %q required)", config.ConfigSchemaVersion))
+	}
+
 	contexts, _ := rawMap["contexts"].([]interface{})
 	found := false
 	for _, c := range contexts {
@@ -320,18 +344,17 @@ func (p *Porter) ConfigContextUse(ctx context.Context, name string) error {
 		return span.Error(fmt.Errorf("context %q not found; use 'porter config context list' to see available contexts", name))
 	}
 
-	replacement := []byte("current-context: " + name)
-	if currentContextRe.Match(contents) {
-		contents = currentContextRe.ReplaceAll(contents, replacement)
-	} else {
-		// Insert after the schemaVersion line
-		contents = bytes.Replace(contents,
-			[]byte("schemaVersion: \""+config.ConfigSchemaVersion+"\""),
-			[]byte("schemaVersion: \""+config.ConfigSchemaVersion+"\"\ncurrent-context: "+name),
-			1)
+	ext := strings.ToLower(strings.TrimPrefix(filepath.Ext(path), "."))
+	contents, err := p.FileSystem.ReadFile(path)
+	if err != nil {
+		return span.Error(fmt.Errorf("could not read config file %s: %w", path, err))
+	}
+	updated, err := replaceCurrentContext(contents, ext, name)
+	if err != nil {
+		return span.Error(err)
 	}
 
-	if err := p.FileSystem.WriteFile(path, contents, pkg.FileModeWritable); err != nil {
+	if err := p.FileSystem.WriteFile(path, updated, pkg.FileModeWritable); err != nil {
 		return span.Error(fmt.Errorf("could not write config file %s: %w", path, err))
 	}
 
