@@ -270,6 +270,11 @@ func indentLines(content []byte, spaces int) []byte {
 	return []byte(strings.Join(lines, "\n"))
 }
 
+// contextNameRe restricts context names to characters that are safe across
+// all supported config formats (YAML, TOML, JSON, HCL) without quoting or
+// escaping. Matches Kubernetes context name conventions.
+var contextNameRe = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9_.-]*$`)
+
 // replaceCurrentContext updates the current-context value in raw config file
 // bytes. It uses a format-specific pattern so that comments and Liquid
 // template variables elsewhere in the file are preserved.
@@ -313,8 +318,8 @@ func (p *Porter) ConfigContextUse(ctx context.Context, name string) error {
 		return span.Error(fmt.Errorf("no config file found; use 'porter config edit' to create one"))
 	}
 
-	if strings.ContainsAny(name, "\n\r") {
-		return span.Error(fmt.Errorf("context name must not contain newline characters"))
+	if !contextNameRe.MatchString(name) {
+		return span.Error(fmt.Errorf("invalid context name %q: must start with a letter or digit and contain only letters, digits, hyphens, underscores, or periods", name))
 	}
 
 	v := viper.New()

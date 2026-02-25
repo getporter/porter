@@ -391,8 +391,16 @@ contexts:
 `
 	require.NoError(t, p.FileSystem.WriteFile(configPath, []byte(configContent), 0600))
 
-	err := p.ConfigContextUse(context.Background(), "bad\nname")
-	require.ErrorContains(t, err, "newline")
+	for _, name := range []string{
+		"bad\nname",  // newline
+		"bad name",  // space
+		"bad#name",  // hash (comment in YAML)
+		"bad\"name", // double-quote (breaks TOML/JSON)
+		"#leading",  // must start with letter/digit
+	} {
+		err := p.ConfigContextUse(context.Background(), name)
+		require.ErrorContains(t, err, "invalid context name", "expected error for name %q", name)
+	}
 }
 
 func TestConfigContextUse_TOML(t *testing.T) {
