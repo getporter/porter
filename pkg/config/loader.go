@@ -210,12 +210,12 @@ func LoadFromViper(viperCfg func(v *viper.Viper), cobraCfg func(v *viper.Viper))
 
 // extractContextConfig finds the named context in the raw viper settings map
 // and returns its "config" sub-map. Returns an empty map (not an error) when
-// the context exists but has no config block. Returns an error when the context
-// is not found at all.
+// the context exists but has no config block. Returns an error when the
+// contexts key is missing entirely or the named context is not found.
 func extractContextConfig(rawMap map[string]interface{}, name string) (map[string]interface{}, error) {
 	contextsRaw, ok := rawMap["contexts"]
 	if !ok {
-		return map[string]interface{}{}, nil
+		return nil, fmt.Errorf("versioned config file is missing required 'contexts' key")
 	}
 	contexts, ok := contextsRaw.([]interface{})
 	if !ok {

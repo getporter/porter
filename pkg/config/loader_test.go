@@ -148,6 +148,23 @@ func TestLoadMultiContext_LegacyFlagError(t *testing.T) {
 	require.ErrorContains(t, err, "--context")
 }
 
+func TestLoadMultiContext_MissingContextsKey(t *testing.T) {
+	t.Parallel()
+
+	c := NewTestConfig(t)
+	c.SetHomeDir("/home/myuser/.porter")
+
+	cfg := `schemaVersion: "` + ConfigSchemaVersion + `"
+current-context: default
+`
+	require.NoError(t, c.TestContext.FileSystem.WriteFile(
+		"/home/myuser/.porter/config.yaml", []byte(cfg), 0600))
+
+	c.DataLoader = LoadFromFilesystem()
+	_, err := c.Load(context.Background(), nil)
+	require.ErrorContains(t, err, "missing required 'contexts' key")
+}
+
 func TestListTemplateVariables(t *testing.T) {
 	eng := liquid.NewEngine()
 	tmpl, err := eng.ParseString(`not a variable {{secrets.foo}} more non variable junk{{env.var}}{{env.var}}`)
