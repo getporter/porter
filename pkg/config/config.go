@@ -98,7 +98,8 @@ type Config struct {
 
 	// ContextName is the name of the configuration context to load.
 	// Set by --context flag or PORTER_CONTEXT env var.
-	// When empty, falls back to the context named "default".
+	// When empty, uses current-context from the config file,
+	// then falls back to the context named "default".
 	ContextName string
 }
 

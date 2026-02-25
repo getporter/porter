@@ -196,7 +196,7 @@ func LoadFromViper(viperCfg func(v *viper.Viper), cobraCfg func(v *viper.Viper))
 		} else {
 			// Legacy flat format — existing path unchanged.
 			if cfg.ContextName != "" {
-				return log.Error(fmt.Errorf("--context flag requires a versioned config file; add schemaVersion: %q and wrap settings under contexts", ConfigSchemaVersion))
+				return log.Error(fmt.Errorf("--context/PORTER_CONTEXT requires a versioned config file; add schemaVersion: %q and wrap settings under contexts", ConfigSchemaVersion))
 			}
 			if err := v.Unmarshal(&cfg.Data); err != nil {
 				return fmt.Errorf("error unmarshaling viper config as porter config: %w", err)
