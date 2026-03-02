@@ -378,8 +378,8 @@ func ensureVPrefix(opts *BundleReferenceOptions, out io.Writer) error {
 		ociRef = &ref
 	}
 
-	// Do nothing for empty tags, tags that do not start with a number and non-semver tags
-	if !tagStartsWithNumber(ociRef) || !ociRef.HasVersion() {
+	// Do nothing for empty tags, tags that do not contain at least major and minor versions and non-semver tags
+	if !tagIsSemverLike(ociRef) || !ociRef.HasVersion() {
 		return nil
 	}
 
@@ -397,8 +397,9 @@ func ensureVPrefix(opts *BundleReferenceOptions, out io.Writer) error {
 	return nil
 }
 
-func tagStartsWithNumber(ociRef *cnab.OCIReference) bool {
-	return ociRef.HasTag() && ociRef.Tag()[0] >= '0' && ociRef.Tag()[0] <= '9'
+func tagIsSemverLike(ociRef *cnab.OCIReference) bool {
+	tag := ociRef.Tag()
+	return tag != "" && tag[0] >= '0' && tag[0] <= '9' && strings.Contains(tag, ".")
 }
 
 // prepullBundleByReference handles calling the bundle pull operation and updating

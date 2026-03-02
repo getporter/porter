@@ -548,6 +548,12 @@ func Test_ensureVPrefix(t *testing.T) {
 			want:      "registry/bundle:v1.2.3",
 		},
 		{
+			name:      "adds v prefix to semver-like reference",
+			reference: "registry/bundle:1.2",
+			ref:       nil,
+			want:      "registry/bundle:v1.2",
+		},
+		{
 			name:       "updates _ref if present",
 			reference:  "registry/bundle:1.2.3",
 			ref:        &ref,
@@ -571,6 +577,12 @@ func Test_ensureVPrefix(t *testing.T) {
 			reference: "registry/bundle",
 			ref:       nil,
 			want:      "registry/bundle",
+		},
+		{
+			name:      "ignores tags with only digits",
+			reference: "registry/bundle:123",
+			ref:       nil,
+			want:      "registry/bundle:123",
 		},
 	}
 
