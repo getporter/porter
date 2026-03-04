@@ -4,6 +4,18 @@ const (
 	// ConfigSchemaVersion is the schemaVersion value for multi-context config files.
 	ConfigSchemaVersion = "2.0.0"
 
+	// DependencyVersionStrategyExact uses the exact tag; errors if only a range is given.
+	DependencyVersionStrategyExact = "exact"
+
+	// DependencyVersionStrategyMaxPatch picks the highest semver matching the constraint.
+	DependencyVersionStrategyMaxPatch = "max-patch"
+
+	// DependencyVersionStrategyMaxMinor picks the highest semver matching the constraint.
+	DependencyVersionStrategyMaxMinor = "max-minor"
+
+	// DependencyVersionStrategyMin picks the lowest semver matching the constraint.
+	DependencyVersionStrategyMin = "min"
+
 	// BuildDriverDocker is no longer supported.
 	BuildDriverDocker = "docker"
 
@@ -17,6 +29,14 @@ const (
 	// RuntimeDriverKubernetes specifies that the bundle image should be executed on kubernetes.
 	RuntimeDriverKubernetes = "kubernetes"
 )
+
+// DependenciesConfig holds configuration for bundle dependency resolution.
+type DependenciesConfig struct {
+	// VersionStrategy controls how Porter selects a version when a dependency
+	// specifies only a version range.
+	// Allowed values: exact, max-patch, max-minor, min.
+	VersionStrategy string `mapstructure:"version-strategy"`
+}
 
 // Data is the data stored in PORTER_HOME/porter.toml|yaml|json.
 // Use the accessor functions to ensure default values are handled properly.
@@ -87,6 +107,10 @@ type Data struct {
 
 	// Telemetry are settings related to Porter's tracing with open telemetry.
 	Telemetry TelemetryConfig `mapstructure:"telemetry"`
+
+	// Dependencies are settings related to bundle dependency resolution.
+	// Do not use directly, use Config.GetDependenciesVersionStrategy.
+	Dependencies DependenciesConfig `mapstructure:"dependencies"`
 
 	// SchemaCheck specifies how strict Porter should be when comparing the
 	// schemaVersion field on a resource with the supported schemaVersion.
