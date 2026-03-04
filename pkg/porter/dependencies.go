@@ -204,9 +204,13 @@ func (e *dependencyExecutioner) identifyDependencies(ctx context.Context) error 
 		return span.Error(errors.New("identifyDependencies failed to load the bundle because no bundle was specified. Please report this bug to https://github.com/getporter/porter/issues/new/choose"))
 	}
 
-	// Inject registry provider for dependency resolution
+	// Inject registry provider for dependency resolution.
+	// registryListTagsAdapter bridges the cnabtooci.RegistryProvider
+	// (concrete opts) and the registryListTags interface in the cnab
+	// package (opts interface{}) to avoid a circular import.
 	regOpts := cnabtooci.RegistryOptions{InsecureRegistry: e.parentOpts.InsecureRegistry}
-	eb := bun.WithRegistry(e.Resolver.Registry, regOpts)
+	adapter := &registryListTagsAdapter{reg: e.Resolver.Registry, opts: regOpts}
+	eb := bun.WithRegistry(adapter, regOpts)
 
 	// Determine version strategy: flag overrides global config
 	strategy := e.parentOpts.DependenciesVersionStrategy
@@ -475,4 +479,17 @@ func (e *dependencyExecutioner) finalizeExecute(ctx context.Context, dep *queued
 		return e.Installations.RemoveInstallation(ctx, e.depArgs.Installation.Namespace, e.depArgs.Installation.Name)
 	}
 	return nil
+}
+
+// registryListTagsAdapter bridges cnabtooci.RegistryProvider (concrete
+// RegistryOptions parameter) and the cnab.registryListTags interface
+// (opts interface{}) so that real registries satisfy the interface used
+// by ExtendedBundle.determineDefaultTag without creating a circular import.
+type registryListTagsAdapter struct {
+	reg  cnabtooci.RegistryProvider
+	opts cnabtooci.RegistryOptions
+}
+
+func (a *registryListTagsAdapter) ListTags(ctx context.Context, ref cnab.OCIReference, _ interface{}) ([]string, error) {
+	return a.reg.ListTags(ctx, ref, a.opts)
 }
