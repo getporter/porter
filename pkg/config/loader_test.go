@@ -165,6 +165,62 @@ current-context: default
 	require.ErrorContains(t, err, "missing required 'contexts' key")
 }
 
+func TestLoad_DependenciesVersionStrategy_FromConfigFile(t *testing.T) {
+	t.Parallel()
+
+	c := NewTestConfig(t)
+	c.SetHomeDir("/home/myuser/.porter")
+
+	cfg := `dependencies:
+  version-strategy: max-minor
+`
+	require.NoError(t, c.TestContext.FileSystem.WriteFile(
+		"/home/myuser/.porter/config.yaml", []byte(cfg), 0600))
+
+	c.DataLoader = LoadFromFilesystem()
+	_, err := c.Load(context.Background(), nil)
+	require.NoError(t, err)
+
+	assert.Equal(t, DependencyVersionStrategyMaxMinor, c.GetDependenciesVersionStrategy())
+}
+
+func TestLoad_DependenciesVersionStrategy_FromEnvVar(t *testing.T) {
+	// Do not run in parallel — sets environment variables
+	os.Setenv("PORTER_DEPENDENCIES_VERSION_STRATEGY", DependencyVersionStrategyMin)
+	defer os.Unsetenv("PORTER_DEPENDENCIES_VERSION_STRATEGY")
+
+	c := NewTestConfig(t)
+	c.SetHomeDir("/home/myuser/.porter")
+
+	c.DataLoader = LoadFromEnvironment()
+	_, err := c.Load(context.Background(), nil)
+	require.NoError(t, err)
+
+	assert.Equal(t, DependencyVersionStrategyMin, c.GetDependenciesVersionStrategy())
+}
+
+func TestLoad_DependenciesVersionStrategy_EnvVarOverridesFile(t *testing.T) {
+	// Do not run in parallel — sets environment variables
+	os.Setenv("PORTER_DEPENDENCIES_VERSION_STRATEGY", DependencyVersionStrategyMin)
+	defer os.Unsetenv("PORTER_DEPENDENCIES_VERSION_STRATEGY")
+
+	c := NewTestConfig(t)
+	c.SetHomeDir("/home/myuser/.porter")
+
+	cfg := `dependencies:
+  version-strategy: max-patch
+`
+	require.NoError(t, c.TestContext.FileSystem.WriteFile(
+		"/home/myuser/.porter/config.yaml", []byte(cfg), 0600))
+
+	c.DataLoader = LoadFromEnvironment()
+	_, err := c.Load(context.Background(), nil)
+	require.NoError(t, err)
+
+	assert.Equal(t, DependencyVersionStrategyMin, c.GetDependenciesVersionStrategy(),
+		"env var should override config file")
+}
+
 func TestListTemplateVariables(t *testing.T) {
 	eng := liquid.NewEngine()
 	tmpl, err := eng.ParseString(`not a variable {{secrets.foo}} more non variable junk{{env.var}}{{env.var}}`)
