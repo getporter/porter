@@ -5,8 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 var _ Document = TestDocument{}
@@ -87,7 +86,7 @@ func TestListOptions_ToFindOptions(t *testing.T) {
 		Sort:  []string{"namespace", "name"},
 		Skip:  1,
 		Limit: 1,
-		Filter: primitive.M{
+		Filter: bson.M{
 			"labels.key": "value",
 			"name":       map[string]interface{}{"$regex": "name"},
 			"namespace":  "dev",
