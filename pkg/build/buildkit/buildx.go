@@ -30,6 +30,7 @@ import (
 	"github.com/moby/buildkit/session"
 	"github.com/moby/buildkit/session/auth/authprovider"
 	"github.com/moby/buildkit/util/progress/progressui"
+	mobyClient "github.com/moby/moby/client"
 	"go.opentelemetry.io/otel/attribute"
 )
 
@@ -92,8 +93,8 @@ func (b *Builder) BuildBundleImage(ctx context.Context, manifest *manifest.Manif
 	}
 
 	currentSession := []session.Attachable{authprovider.NewDockerAuthProvider(authprovider.DockerAuthProviderConfig{
-		ConfigFile: dockerconfig.LoadDefaultConfigFile(b.Err),
-		TLSConfigs: make(map[string]*authprovider.AuthTLSConfig),
+		AuthConfigProvider: authprovider.LoadAuthConfig(dockerconfig.LoadDefaultConfigFile(b.Err)),
+		TLSConfigs:         make(map[string]*authprovider.AuthTLSConfig),
 	})}
 
 	ssh, err := buildflags.ParseSSHSpecs(opts.SSH)
@@ -387,7 +388,10 @@ func (b *Builder) TagBundleImage(ctx context.Context, origTag, newTag string) er
 		return log.Error(err)
 	}
 
-	if err := cli.Client().ImageTag(ctx, origTag, newTag); err != nil {
+	if _, err := cli.Client().ImageTag(ctx, mobyClient.ImageTagOptions{
+		Source: origTag,
+		Target: newTag,
+	}); err != nil {
 		return log.Errorf("could not tag image %s with value %s: %w", origTag, newTag, err)
 	}
 	return nil

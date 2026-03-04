@@ -5,7 +5,8 @@ import (
 	"fmt"
 
 	"get.porter.sh/porter/pkg/cnab"
-	"github.com/docker/docker/api/types/image"
+	"github.com/moby/moby/api/types/image"
+	"github.com/moby/moby/client"
 	"github.com/opencontainers/go-digest"
 )
 
@@ -33,7 +34,7 @@ func (t TestRegistry) PullBundle(ctx context.Context, ref cnab.OCIReference, opt
 	if t.MockPullBundle != nil {
 		return t.MockPullBundle(ctx, ref, opts)
 	}
-	sum, _ := NewImageSummaryFromInspect(ref, image.InspectResponse{ID: cnab.NewULID()})
+	sum, _ := NewImageSummaryFromInspect(ref, client.ImageInspectResult{InspectResponse: image.InspectResponse{ID: cnab.NewULID()}})
 	t.cache[ref.String()] = sum
 
 	return cnab.BundleReference{Reference: ref}, nil
@@ -97,10 +98,11 @@ func (t *TestRegistry) PullImage(ctx context.Context, ref cnab.OCIReference, opt
 	}
 
 	image_hash := ref.String()
-	sum, err := NewImageSummaryFromInspect(ref, image.InspectResponse{
-		ID:          cnab.NewULID(),
-		RepoDigests: []string{fmt.Sprintf("%s@sha256:75c495e5ce9c428d482973d72e3ce9925e1db304a97946c9aa0b540d7537e041", image_hash)},
-	})
+	sum, err := NewImageSummaryFromInspect(ref, client.ImageInspectResult{
+		InspectResponse: image.InspectResponse{
+			ID:          cnab.NewULID(),
+			RepoDigests: []string{fmt.Sprintf("%s@sha256:75c495e5ce9c428d482973d72e3ce9925e1db304a97946c9aa0b540d7537e041", image_hash)},
+		}})
 	if err != nil {
 		return err
 	}

@@ -5,8 +5,9 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg/cnab"
-	"github.com/docker/docker/api/types/image"
 	"github.com/google/go-containerregistry/pkg/v1/remote/transport"
+	"github.com/moby/moby/api/types/image"
+	"github.com/moby/moby/client"
 	"github.com/opencontainers/go-digest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -56,7 +57,7 @@ func TestImageSummary(t *testing.T) {
 	for _, tt := range testcases {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			sum, err := NewImageSummaryFromInspect(cnab.MustParseOCIReference(tt.imgRef), tt.imageSummary)
+			sum, err := NewImageSummaryFromInspect(cnab.MustParseOCIReference(tt.imgRef), client.ImageInspectResult{InspectResponse: tt.imageSummary})
 			if tt.expected.hasInitErr {
 				require.ErrorContains(t, err, tt.expectedErr)
 				return

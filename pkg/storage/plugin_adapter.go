@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"get.porter.sh/porter/pkg/storage/plugins"
-	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 var _ Store = PluginAdapter{}

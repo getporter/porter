@@ -24,7 +24,7 @@ import (
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/cnabio/cnab-go/secrets/host"
-	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 // ParameterShowOptions represent options for Porter's parameter show command

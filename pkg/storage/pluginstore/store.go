@@ -9,7 +9,7 @@ import (
 	"get.porter.sh/porter/pkg/plugins/pluggable"
 	"get.porter.sh/porter/pkg/storage/plugins"
 	"get.porter.sh/porter/pkg/tracing"
-	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.opentelemetry.io/otel/attribute"
 )
 

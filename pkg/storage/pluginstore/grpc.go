@@ -6,7 +6,7 @@ import (
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/storage/plugins"
 	"get.porter.sh/porter/pkg/storage/plugins/proto"
-	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/v2/bson"
 	"google.golang.org/protobuf/types/known/structpb"
 )
 

@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"get.porter.sh/porter/pkg/storage/plugins"
-	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 // AggregateOptions is the set of options available to the Aggregate operation on any

@@ -8,7 +8,6 @@ import (
 
 	"github.com/Masterminds/semver/v3"
 	"github.com/distribution/reference"
-	"github.com/docker/docker/registry"
 	"github.com/opencontainers/go-digest"
 )
 
@@ -225,14 +224,6 @@ func (r OCIReference) WithDigest(digest digest.Digest) (OCIReference, error) {
 		return OCIReference{}, err
 	}
 	return OCIReference{Named: newRef}, nil
-}
-
-// ParseRepositoryInfo returns additional metadata about the repository portion of the reference.
-func (r OCIReference) ParseRepositoryInfo() (*registry.RepositoryInfo, error) {
-	if r.Named == nil {
-		return nil, errors.New("OCIReference has not been initialized")
-	}
-	return registry.ParseRepositoryInfo(r.Named)
 }
 
 func semverFromTag(tag string) (*semver.Version, error) {
