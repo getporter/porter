@@ -207,6 +207,14 @@ func (e *dependencyExecutioner) identifyDependencies(ctx context.Context) error 
 	// Inject registry provider for dependency resolution
 	regOpts := cnabtooci.RegistryOptions{InsecureRegistry: e.parentOpts.InsecureRegistry}
 	eb := bun.WithRegistry(e.Resolver.Registry, regOpts)
+
+	// Determine version strategy: flag overrides global config
+	strategy := e.parentOpts.DependenciesVersionStrategy
+	if strategy == "" {
+		strategy = e.Config.GetDependenciesVersionStrategy()
+	}
+	eb = eb.WithVersionStrategy(strategy)
+
 	locks, err := eb.ResolveDependencies(ctx, bun)
 	if err != nil {
 		return span.Error(err)

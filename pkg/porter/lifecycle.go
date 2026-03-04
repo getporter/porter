@@ -81,6 +81,11 @@ type BundleExecutionOptions struct {
 	finalParams map[string]interface{}
 
 	VerifyBundleBeforeExecution bool
+
+	// DependenciesVersionStrategy controls how dependency version ranges are resolved.
+	// Allowed values: exact, max-patch, max-minor, min.
+	// Defaults to the global config value (dependencies.version-strategy).
+	DependenciesVersionStrategy string
 }
 
 func NewBundleExecutionOptions() *BundleExecutionOptions {
