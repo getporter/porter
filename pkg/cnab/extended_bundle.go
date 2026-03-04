@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
+	"strings"
 
 	depsv1ext "get.porter.sh/porter/pkg/cnab/extensions/dependencies/v1"
 	v2 "get.porter.sh/porter/pkg/cnab/extensions/dependencies/v2"
@@ -29,6 +30,10 @@ type ExtendedBundle struct {
 	// Stored as interface{} to avoid circular dependency with cnab-to-oci package
 	registry interface{}
 	regOpts  interface{}
+
+	// versionStrategy controls how version ranges are resolved.
+	// See config.DependencyVersionStrategy* constants.
+	versionStrategy string
 }
 
 // registryListTags is an interface method to avoid circular dependencies
@@ -52,6 +57,12 @@ func NewBundle(bundle bundle.Bundle) ExtendedBundle {
 func (b ExtendedBundle) WithRegistry(registry interface{}, opts interface{}) ExtendedBundle {
 	b.registry = registry
 	b.regOpts = opts
+	return b
+}
+
+// WithVersionStrategy sets the version strategy used when resolving dependency ranges.
+func (b ExtendedBundle) WithVersionStrategy(s string) ExtendedBundle {
+	b.versionStrategy = s
 	return b
 }
 
@@ -325,7 +336,7 @@ func (b *ExtendedBundle) ResolveVersion(ctx context.Context, name string, dep de
 			return ref, nil
 		}
 
-		tag, err := b.determineDefaultTag(ctx, dep)
+		tag, err := b.determineDefaultTag(ctx, dep, "")
 		if err != nil {
 			return OCIReference{}, err
 		}
@@ -333,10 +344,20 @@ func (b *ExtendedBundle) ResolveVersion(ctx context.Context, name string, dep de
 		return ref.WithTag(tag)
 	}
 
-	return OCIReference{}, fmt.Errorf("not implemented: dependency version range specified for %s: %w", name, err)
+	// Version ranges are specified
+	if b.versionStrategy == "" || b.versionStrategy == "exact" {
+		return OCIReference{}, fmt.Errorf("dependency %s specifies a version range but the version strategy is %q; set dependencies.version-strategy to max-patch, max-minor, or min to resolve ranges", name, b.versionStrategy)
+	}
+
+	constraint := strings.Join(dep.Version.Ranges, " || ")
+	tag, err := b.determineDefaultTag(ctx, dep, constraint)
+	if err != nil {
+		return OCIReference{}, err
+	}
+	return ref.WithTag(tag)
 }
 
-func (b *ExtendedBundle) determineDefaultTag(ctx context.Context, dep depsv1ext.Dependency) (string, error) {
+func (b *ExtendedBundle) determineDefaultTag(ctx context.Context, dep depsv1ext.Dependency, versionConstraint string) (string, error) {
 	if b.registry == nil {
 		return "", fmt.Errorf("registry provider not set for dependency resolution")
 	}
@@ -359,7 +380,7 @@ func (b *ExtendedBundle) determineDefaultTag(ctx context.Context, dep depsv1ext.
 
 	allowPrereleases := dep.Version != nil && dep.Version.AllowPrereleases
 
-	return b.filterAndSelectTag(tags, allowPrereleases, dep.Bundle)
+	return b.filterAndSelectTag(tags, allowPrereleases, dep.Bundle, versionConstraint)
 }
 
 // BuildPrerequisiteInstallationName generates the name of a prerequisite dependency installation.
@@ -368,8 +389,19 @@ func (b *ExtendedBundle) BuildPrerequisiteInstallationName(installation string, 
 }
 
 // filterAndSelectTag filters tags and selects the best match.
-// Returns "latest" tag if found and no semver tags match, or highest semver version.
-func (b *ExtendedBundle) filterAndSelectTag(tags []string, allowPrereleases bool, bundleRef string) (string, error) {
+// When versionConstraint is non-empty, only tags satisfying the constraint are
+// considered; the "latest" fallback is skipped.
+// The b.versionStrategy field controls ascending (min) vs. descending (all others) order.
+func (b *ExtendedBundle) filterAndSelectTag(tags []string, allowPrereleases bool, bundleRef, versionConstraint string) (string, error) {
+	var constraint *semver.Constraints
+	if versionConstraint != "" {
+		var err error
+		constraint, err = semver.NewConstraint(versionConstraint)
+		if err != nil {
+			return "", fmt.Errorf("invalid version constraint %q for %s: %w", versionConstraint, bundleRef, err)
+		}
+	}
+
 	var hasLatest bool
 	versions := make(semver.Collection, 0, len(tags))
 	for _, tag := range tags {
@@ -383,18 +415,25 @@ func (b *ExtendedBundle) filterAndSelectTag(tags []string, allowPrereleases bool
 			if !allowPrereleases && version.Prerelease() != "" {
 				continue
 			}
+			if constraint != nil && !constraint.Check(version) {
+				continue
+			}
 			versions = append(versions, version)
 		}
 	}
 
 	if len(versions) == 0 {
-		if hasLatest {
+		if hasLatest && constraint == nil {
 			return "latest", nil
 		}
 		return "", fmt.Errorf("no tag was specified for %s and none of the tags defined in the registry meet the criteria: semver formatted or 'latest'", bundleRef)
 	}
 
-	sort.Sort(sort.Reverse(versions))
+	if b.versionStrategy == "min" {
+		sort.Sort(versions)
+	} else {
+		sort.Sort(sort.Reverse(versions))
+	}
 	return versions[0].Original(), nil
 }
 
@@ -414,22 +453,27 @@ func (b *ExtendedBundle) ResolveVersionv2(ctx context.Context, name string, dep 
 			return ref, nil
 		}
 
-		tag, err := b.determineDefaultTagv2(ctx, dep)
+		tag, err := b.determineDefaultTagv2(ctx, dep, "")
 		if err != nil {
 			return OCIReference{}, err
 		}
 
 		return ref.WithTag(tag)
 	}
-	//I think this is going to need to be smarter
-	if dep.Version != "" {
-		return ref, nil
+
+	// dep.Version is a semver constraint string
+	if b.versionStrategy == "" || b.versionStrategy == "exact" {
+		return OCIReference{}, fmt.Errorf("dependency %s specifies a version constraint but the version strategy is %q; set dependencies.version-strategy to max-patch, max-minor, or min to resolve ranges", name, b.versionStrategy)
 	}
 
-	return OCIReference{}, fmt.Errorf("not implemented: dependency version range specified for %s: %w", name, err)
+	tag, err := b.determineDefaultTagv2(ctx, dep, dep.Version)
+	if err != nil {
+		return OCIReference{}, err
+	}
+	return ref.WithTag(tag)
 }
 
-func (b *ExtendedBundle) determineDefaultTagv2(ctx context.Context, dep v2.Dependency) (string, error) {
+func (b *ExtendedBundle) determineDefaultTagv2(ctx context.Context, dep v2.Dependency, versionConstraint string) (string, error) {
 	if b.registry == nil {
 		return "", fmt.Errorf("registry provider not set for dependency resolution")
 	}
@@ -451,5 +495,5 @@ func (b *ExtendedBundle) determineDefaultTagv2(ctx context.Context, dep v2.Depen
 	}
 
 	// v2 dependencies don't have allowPrereleases field, so default to false
-	return b.filterAndSelectTag(tags, false, dep.Bundle)
+	return b.filterAndSelectTag(tags, false, dep.Bundle, versionConstraint)
 }

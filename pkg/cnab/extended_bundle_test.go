@@ -303,17 +303,30 @@ func TestExtendedBundle_ResolveVersion(t *testing.T) {
 	t.Parallel()
 
 	testcases := []struct {
-		name        string
-		dep         depsv1ext.Dependency
-		wantVersion string
-		wantError   string
+		name            string
+		dep             depsv1ext.Dependency
+		versionStrategy string
+		wantVersion     string
+		wantError       string
 	}{
 		{name: "pinned version",
 			dep:         depsv1ext.Dependency{Bundle: "mysql:5.7"},
 			wantVersion: "5.7"},
-		{name: "unimplemented range",
-			dep:       depsv1ext.Dependency{Bundle: "mysql", Version: &depsv1ext.DependencyVersion{Ranges: []string{"1 - 1.5"}}},
-			wantError: "not implemented"},
+		{name: "range without strategy errors",
+			dep:       depsv1ext.Dependency{Bundle: "mysql", Version: &depsv1ext.DependencyVersion{Ranges: []string{">=1.0 <1.5"}}},
+			wantError: "version strategy is"},
+		{name: "range max-patch picks highest",
+			dep:             depsv1ext.Dependency{Bundle: "getporterci/porter-test-with-versions", Version: &depsv1ext.DependencyVersion{Ranges: []string{">=1.0 <1.3"}}},
+			versionStrategy: "max-patch",
+			wantVersion:     "v1.2"},
+		{name: "range max-minor picks highest",
+			dep:             depsv1ext.Dependency{Bundle: "getporterci/porter-test-with-versions", Version: &depsv1ext.DependencyVersion{Ranges: []string{">=1.0 <1.3"}}},
+			versionStrategy: "max-minor",
+			wantVersion:     "v1.2"},
+		{name: "range min picks lowest",
+			dep:             depsv1ext.Dependency{Bundle: "getporterci/porter-test-with-versions", Version: &depsv1ext.DependencyVersion{Ranges: []string{">=1.0 <1.3"}}},
+			versionStrategy: "min",
+			wantVersion:     "v1.0"},
 		{name: "default tag to latest",
 			dep:         depsv1ext.Dependency{Bundle: "getporterci/porter-test-only-latest"},
 			wantVersion: "latest"},
@@ -334,9 +347,9 @@ func TestExtendedBundle_ResolveVersion(t *testing.T) {
 	// Create mock registry with test data
 	mockReg := &mockRegistryProvider{
 		tags: map[string][]string{
-			"getporterci/porter-test-only-latest":      {"latest"},
-			"getporterci/porter-test-no-default-tag":   {"not-a-semver"},
-			"getporterci/porter-test-with-versions":    {"latest", "v1.0", "v1.1", "v1.2", "v1.3-beta1"},
+			"getporterci/porter-test-only-latest":   {"latest"},
+			"getporterci/porter-test-no-default-tag": {"not-a-semver"},
+			"getporterci/porter-test-with-versions":  {"latest", "v1.0", "v1.1", "v1.2", "v1.3-beta1"},
 		},
 	}
 
@@ -345,7 +358,7 @@ func TestExtendedBundle_ResolveVersion(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			eb := ExtendedBundle{}.WithRegistry(mockReg, nil)
+			eb := ExtendedBundle{}.WithRegistry(mockReg, nil).WithVersionStrategy(tc.versionStrategy)
 			version, err := eb.ResolveVersion(context.Background(), "mysql", tc.dep)
 			if tc.wantError != "" {
 				require.Error(t, err, "ResolveVersion should have returned an error")
