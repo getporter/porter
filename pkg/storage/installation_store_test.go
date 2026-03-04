@@ -30,38 +30,43 @@ var exampleBundle = bundle.Bundle{
 // it returns a InstallationStorageProvider, and a test cleanup function.
 //
 // installations/
-//   foo/
-//     CLAIM_ID_1 (install)
-//     CLAIM_ID_2 (upgrade)
-//     CLAIM_ID_3 (invoke - test)
-//     CLAIM_ID_4 (uninstall)
-//   bar/
-//     CLAIM_ID_10 (install)
-//   baz/
-//     CLAIM_ID_20 (install)
-//     CLAIM_ID_21 (install)
+//
+//	foo/
+//	  CLAIM_ID_1 (install)
+//	  CLAIM_ID_2 (upgrade)
+//	  CLAIM_ID_3 (invoke - test)
+//	  CLAIM_ID_4 (uninstall)
+//	bar/
+//	  CLAIM_ID_10 (install)
+//	baz/
+//	  CLAIM_ID_20 (install)
+//	  CLAIM_ID_21 (install)
+//
 // results/
-//   CLAIM_ID_1/
-//     RESULT_ID_1 (success)
-//   CLAIM_ID_2/
-//     RESULT_ID 2 (success)
-//   CLAIM_ID_3/
-//     RESULT_ID_3 (failed)
-//   CLAIM_ID_4/
-//     RESULT_ID_4 (success)
-//   CLAIM_ID_10/
-//     RESULT_ID_10 (running)
-//     RESULT_ID_11 (success)
-//   CLAIM_ID_20/
-//     RESULT_ID_20 (failed)
-//   CLAIM_ID_21/
-//     NO RESULT YET
+//
+//	CLAIM_ID_1/
+//	  RESULT_ID_1 (success)
+//	CLAIM_ID_2/
+//	  RESULT_ID 2 (success)
+//	CLAIM_ID_3/
+//	  RESULT_ID_3 (failed)
+//	CLAIM_ID_4/
+//	  RESULT_ID_4 (success)
+//	CLAIM_ID_10/
+//	  RESULT_ID_10 (running)
+//	  RESULT_ID_11 (success)
+//	CLAIM_ID_20/
+//	  RESULT_ID_20 (failed)
+//	CLAIM_ID_21/
+//	  NO RESULT YET
+//
 // outputs/
-//   RESULT_ID_1/
-//     RESULT_ID_1_OUTPUT_1
-//   RESULT_ID_2/
-//     RESULT_ID_2_OUTPUT_1
-//     RESULT_ID_2_OUTPUT_2
+//
+//	RESULT_ID_1/
+//	  RESULT_ID_1_OUTPUT_1
+//	RESULT_ID_2/
+//	  RESULT_ID_2_OUTPUT_1
+//	  RESULT_ID_2_OUTPUT_2
 func generateInstallationData(t *testing.T) *TestInstallationProvider {
 	cp := NewTestInstallationProvider(t)
 

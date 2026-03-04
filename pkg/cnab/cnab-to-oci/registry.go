@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"strings"
 
 	"get.porter.sh/porter/pkg/cnab"
@@ -16,19 +17,33 @@ import (
 	"github.com/cnabio/cnab-to-oci/relocation"
 	"github.com/cnabio/cnab-to-oci/remotes"
 	containerdRemotes "github.com/containerd/containerd/remotes"
-	"github.com/docker/cli/cli/command"
-	dockerconfig "github.com/docker/cli/cli/config"
-	"github.com/docker/docker/api/types/image"
-	registrytypes "github.com/docker/docker/api/types/registry"
-	"github.com/docker/docker/pkg/jsonmessage"
+	"github.com/distribution/reference"
+	"github.com/docker/cli/cli/config"
+	"github.com/docker/cli/cli/config/credentials"
+	configtypes "github.com/docker/cli/cli/config/types"
 	"github.com/google/go-containerregistry/pkg/name"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/google/go-containerregistry/pkg/v1/remote/transport"
+	"github.com/moby/moby/api/pkg/authconfig"
+	registrytypes "github.com/moby/moby/api/types/registry"
+	"github.com/moby/moby/client"
+	"github.com/moby/moby/client/pkg/jsonmessage"
 	"github.com/moby/term"
 	"github.com/opencontainers/go-digest"
 	"go.opentelemetry.io/otel/attribute"
 	"go.uber.org/zap/zapcore"
+)
+
+const (
+	// DefaultDomain is the default domain used for images on Docker Hub
+	defaultDomain = "docker.io"
+
+	// LegacyDefaultDomain is the legacy domain for Docker Hub
+	legacyDefaultDomain = "index.docker.io"
+
+	// DefaultRegistryHost is the actual host for Docker Hub registry
+	defaultRegistryHost = "registry-1.docker.io"
 )
 
 // ErrNoContentDigest represents an error due to an image not having a
@@ -176,6 +191,34 @@ func (r *Registry) PushBundle(ctx context.Context, bundleRef cnab.BundleReferenc
 	return bundleRef, nil
 }
 
+func resolveAuthConfig(targetRef cnab.OCIReference) configtypes.AuthConfig {
+	cfg := config.LoadDefaultConfigFile(os.Stderr)
+
+	hostName := reference.Domain(targetRef.Named)
+	if hostName == defaultDomain || hostName == legacyDefaultDomain || hostName == defaultRegistryHost {
+		hostName = legacyDefaultDomain
+	}
+
+	configs, err := cfg.GetAllCredentials()
+	if err != nil {
+		return configtypes.AuthConfig{}
+	}
+
+	// See https://github.com/docker/cli/blob/23446275646041f9b598d64c51be24d5d0e49376/cli/config/credentials/file_store.go#L32-L47
+	// We are looking for the hostname in the configuration, and if not we are trying with a pure hostname (so without
+	// http/https).
+	authConfig, ok := configs[hostName]
+	if !ok {
+		for reg, config := range configs {
+			if hostName == credentials.ConvertToHostname(reg) {
+				return config
+			}
+		}
+		return configtypes.AuthConfig{}
+	}
+	return authConfig
+}
+
 // PushImage pushes the image from the Docker image cache to the specified location
 // the expected format of the image is REGISTRY/NAME:TAG.
 // Returns the image digest from the registry.
@@ -189,21 +232,23 @@ func (r *Registry) PushImage(ctx context.Context, ref cnab.OCIReference, opts Re
 	}
 
 	// Resolve the Repository name from fqn to RepositoryInfo
-	repoInfo, err := ref.ParseRepositoryInfo()
+	authConfig := resolveAuthConfig(ref)
+	encodedAuth, err := authconfig.Encode(registrytypes.AuthConfig{
+		Username:      authConfig.Username,
+		Password:      authConfig.Password,
+		ServerAddress: authConfig.ServerAddress,
+		Auth:          authConfig.Auth,
+		IdentityToken: authConfig.IdentityToken,
+		RegistryToken: authConfig.RegistryToken,
+	})
 	if err != nil {
-		return "", log.Errorf("error parsing the repository potion of the image reference %s: %w", ref, err)
-	}
-	authConfig := command.ResolveAuthConfig(cli.ConfigFile(), repoInfo.Index)
-	encodedAuth, err := registrytypes.EncodeAuthConfig(authConfig)
-	if err != nil {
-		return "", log.Errorf("error encoding authentication information for the docker client: %w", err)
-	}
-	options := image.PushOptions{
-		RegistryAuth: encodedAuth,
+		return "", log.Error(fmt.Errorf("failed to serialize docker auth config: %w", err))
 	}
 
 	log.Info("Pushing bundle image...")
-	pushResponse, err := cli.Client().ImagePush(ctx, ref.String(), options)
+	pushResponse, err := cli.Client().ImagePush(ctx, ref.String(), client.ImagePushOptions{
+		RegistryAuth: encodedAuth,
+	})
 	if err != nil {
 		return "", log.Errorf("docker push failed: %w", err)
 	}
@@ -220,7 +265,9 @@ func (r *Registry) PushImage(ctx context.Context, ref cnab.OCIReference, opts Re
 		}
 		return "", log.Errorf("failed to stream docker push stdout: %w", err)
 	}
-	dist, err := cli.Client().DistributionInspect(ctx, ref.String(), encodedAuth)
+	dist, err := cli.Client().DistributionInspect(ctx, ref.String(), client.DistributionInspectOptions{
+		EncodedRegistryAuth: encodedAuth,
+	})
 	if err != nil {
 		return "", log.Errorf("unable to inspect docker image: %w", err)
 	}
@@ -238,22 +285,23 @@ func (r *Registry) PullImage(ctx context.Context, ref cnab.OCIReference, opts Re
 	}
 
 	// Resolve the Repository name from fqn to RepositoryInfo
-	repoInfo, err := ref.ParseRepositoryInfo()
-	if err != nil {
-		return log.Error(err)
-	}
-	cli.ConfigFile()
-	authConfig := command.ResolveAuthConfig(cli.ConfigFile(), repoInfo.Index)
-	encodedAuth, err := registrytypes.EncodeAuthConfig(authConfig)
+	authConfig := resolveAuthConfig(ref)
+	encodedAuth, err := authconfig.Encode(registrytypes.AuthConfig{
+		Username:      authConfig.Username,
+		Password:      authConfig.Password,
+		ServerAddress: authConfig.ServerAddress,
+		Auth:          authConfig.Auth,
+		IdentityToken: authConfig.IdentityToken,
+		RegistryToken: authConfig.RegistryToken,
+	})
 	if err != nil {
 		return log.Error(fmt.Errorf("failed to serialize docker auth config: %w", err))
 	}
-	options := image.PullOptions{
-		RegistryAuth: encodedAuth,
-	}
 
 	imgRef := ref.String()
-	rd, err := cli.Client().ImagePull(ctx, imgRef, options)
+	rd, err := cli.Client().ImagePull(ctx, imgRef, client.ImagePullOptions{
+		RegistryAuth: encodedAuth,
+	})
 	if err != nil {
 		return log.Error(fmt.Errorf("docker pull for image %s failed: %w", imgRef, err))
 	}
@@ -269,7 +317,7 @@ func (r *Registry) PullImage(ctx context.Context, ref cnab.OCIReference, opts Re
 }
 
 func (r *Registry) createResolver(insecureRegistries []string) containerdRemotes.Resolver {
-	return remotes.CreateResolver(dockerconfig.LoadDefaultConfigFile(r.Out), insecureRegistries...)
+	return remotes.CreateResolver(config.LoadDefaultConfigFile(r.Out), insecureRegistries...)
 }
 
 func (r *Registry) displayEvent(ev remotes.FixupEvent) {
@@ -473,7 +521,7 @@ type ImageMetadata struct {
 	RepoDigests []string
 }
 
-func NewImageSummaryFromInspect(ref cnab.OCIReference, sum image.InspectResponse) (ImageMetadata, error) {
+func NewImageSummaryFromInspect(ref cnab.OCIReference, sum client.ImageInspectResult) (ImageMetadata, error) {
 	img := ImageMetadata{
 		Reference:   ref,
 		RepoDigests: sum.RepoDigests,

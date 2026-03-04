@@ -55,7 +55,7 @@ func (s *Store) Connect(ctx context.Context) error {
 		return nil
 	}
 
-	ctx, span := tracing.StartSpan(ctx)
+	_, span := tracing.StartSpan(ctx)
 	defer span.EndSpan()
 
 	connStr, err := connstring.ParseAndValidate(s.url)
@@ -305,7 +305,7 @@ func (s *Store) Update(ctx context.Context, opts plugins.UpdateOptions) error {
 	cxt, cancel := context.WithTimeout(ctx, s.timeout)
 	defer cancel()
 
-	_, err := c.ReplaceOne(cxt, opts.Filter, opts.Document, &options.ReplaceOptions{Upsert: &opts.Upsert})
+	_, err := c.ReplaceOne(cxt, opts.Filter, opts.Document, options.Replace().SetUpsert(opts.Upsert))
 	return span.Error(err)
 }
 

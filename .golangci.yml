@@ -1,0 +1,20 @@
+version: "2"
+linters:
+  exclusions:
+    rules:
+      # Exclude some `staticcheck` messages.
+      - linters:
+          - staticcheck
+        text: "QF1008: " # could remove embedded field "" from selector
+      - linters:
+          - staticcheck
+        text: "ST1005: " #  error strings should not be capitalized
+      - linters:
+          - staticcheck
+        text: "QF1004: " #   could use strings/bytes.ReplaceAll instead
+      - linters:
+          - staticcheck
+        text: "QF1001: could apply De Morgan's law"
+      - linters:
+          - errcheck
+        text: "Error return value of `.*` is not checked"
