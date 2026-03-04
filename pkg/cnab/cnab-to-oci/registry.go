@@ -19,7 +19,6 @@ import (
 	containerdRemotes "github.com/containerd/containerd/remotes"
 	"github.com/distribution/reference"
 	"github.com/docker/cli/cli/config"
-	dockerconfig "github.com/docker/cli/cli/config"
 	"github.com/docker/cli/cli/config/credentials"
 	configtypes "github.com/docker/cli/cli/config/types"
 	"github.com/google/go-containerregistry/pkg/name"
@@ -243,7 +242,7 @@ func (r *Registry) PushImage(ctx context.Context, ref cnab.OCIReference, opts Re
 		RegistryToken: authConfig.RegistryToken,
 	})
 	if err != nil {
-		return "", err
+		return "", log.Error(fmt.Errorf("failed to serialize docker auth config: %w", err))
 	}
 
 	log.Info("Pushing bundle image...")
@@ -298,7 +297,7 @@ func (r *Registry) PullImage(ctx context.Context, ref cnab.OCIReference, opts Re
 	if err != nil {
 		return log.Error(fmt.Errorf("failed to serialize docker auth config: %w", err))
 	}
-	
+
 	imgRef := ref.String()
 	rd, err := cli.Client().ImagePull(ctx, imgRef, client.ImagePullOptions{
 		RegistryAuth: encodedAuth,
@@ -318,7 +317,7 @@ func (r *Registry) PullImage(ctx context.Context, ref cnab.OCIReference, opts Re
 }
 
 func (r *Registry) createResolver(insecureRegistries []string) containerdRemotes.Resolver {
-	return remotes.CreateResolver(dockerconfig.LoadDefaultConfigFile(r.Out), insecureRegistries...)
+	return remotes.CreateResolver(config.LoadDefaultConfigFile(r.Out), insecureRegistries...)
 }
 
 func (r *Registry) displayEvent(ev remotes.FixupEvent) {

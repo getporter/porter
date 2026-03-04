@@ -266,9 +266,10 @@ func TestPorter_ListBundleOutputs_WithRunID(t *testing.T) {
 		// Find outputs by name since order might vary
 		var barOutput, fooOutput *DisplayValue
 		for i := range outputs {
-			if outputs[i].Name == "bar" {
+			switch outputs[i].Name {
+			case "bar":
 				barOutput = &outputs[i]
-			} else if outputs[i].Name == "foo" {
+			case "foo":
 				fooOutput = &outputs[i]
 			}
 		}

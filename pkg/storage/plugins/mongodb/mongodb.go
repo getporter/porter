@@ -11,11 +11,11 @@ import (
 	"get.porter.sh/porter/pkg/storage/plugins"
 	"get.porter.sh/porter/pkg/tracing"
 	"github.com/davecgh/go-spew/spew"
-	"go.mongodb.org/mongo-driver/v2/bson"
-	"go.mongodb.org/mongo-driver/v2/mongo"
-	"go.mongodb.org/mongo-driver/v2/mongo/options"
-	"go.mongodb.org/mongo-driver/v2/mongo/readpref"
-	"go.mongodb.org/mongo-driver/v2/x/mongo/driver/connstring"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/mongo/readpref"
+	"go.mongodb.org/mongo-driver/x/mongo/driver/connstring"
 	"go.opentelemetry.io/otel/attribute"
 )
 
@@ -55,7 +55,7 @@ func (s *Store) Connect(ctx context.Context) error {
 		return nil
 	}
 
-	ctx, span := tracing.StartSpan(ctx)
+	_, span := tracing.StartSpan(ctx)
 	defer span.EndSpan()
 
 	connStr, err := connstring.ParseAndValidate(s.url)
@@ -70,8 +70,11 @@ func (s *Store) Connect(ctx context.Context) error {
 		s.database = strings.TrimSuffix(connStr.Database, "/")
 	}
 	span.SetAttributes(attribute.String("database", s.database))
-	
-	client, err := mongo.Connect(options.Client().ApplyURI(s.url).SetConnectTimeout(s.timeout))
+
+	cxt, cancel := context.WithTimeout(ctx, s.timeout)
+	defer cancel()
+
+	client, err := mongo.Connect(cxt, options.Client().ApplyURI(s.url))
 	if err != nil {
 		return span.Error(err)
 	}
@@ -208,7 +211,7 @@ func (s *Store) Find(ctx context.Context, opts plugins.FindOptions) ([]bson.Raw,
 	return results, span.Error(err)
 }
 
-func (s *Store) buildFindOptions(opts plugins.FindOptions) (*options.FindOptionsBuilder, error) {
+func (s *Store) buildFindOptions(opts plugins.FindOptions) (*options.FindOptions, error) {
 	query := options.Find()
 
 	if opts.Select != nil {

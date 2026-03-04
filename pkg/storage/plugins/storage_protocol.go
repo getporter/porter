@@ -3,7 +3,7 @@ package plugins
 import (
 	"context"
 
-	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 // StorageProtocol is the interface that storage plugins must implement.
