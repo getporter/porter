@@ -15,4 +15,3 @@ linters:
       - linters:
           - staticcheck
         text: "ST1005:"
-

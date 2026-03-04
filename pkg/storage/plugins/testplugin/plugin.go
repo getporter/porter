@@ -10,7 +10,7 @@ import (
 	"get.porter.sh/porter/pkg/storage/plugins/mongodb_docker"
 	"get.porter.sh/porter/tests"
 	"github.com/hashicorp/go-multierror"
-	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 var (

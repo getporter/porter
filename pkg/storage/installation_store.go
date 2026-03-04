@@ -5,7 +5,7 @@ import (
 	"errors"
 
 	"get.porter.sh/porter/pkg/tracing"
-	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 const (
