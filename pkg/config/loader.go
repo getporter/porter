@@ -15,6 +15,7 @@ import (
 	"github.com/osteele/liquid/render"
 	"github.com/spf13/viper"
 	"go.opentelemetry.io/otel/attribute"
+	"gopkg.in/yaml.v3"
 )
 
 var _ DataStoreLoaderFunc = NoopDataLoader
@@ -112,32 +113,32 @@ func LoadFromViper(viperCfg func(v *viper.Viper), cobraCfg func(v *viper.Viper))
 			}
 		}
 
+		var (
+			cfgContents []byte
+			cfgEngine   *liquid.Engine
+			cfgTmpl     *liquid.Template
+		)
+
 		cfgFile := v.ConfigFileUsed()
 		if cfgFile != "" {
 			log.SetAttributes(attribute.String("porter.PORTER_CONFIG", cfgFile))
 
-			cfgContents, err := cfg.FileSystem.ReadFile(cfgFile)
+			cfgContents, err = cfg.FileSystem.ReadFile(cfgFile)
 			if err != nil {
 				return log.Error(fmt.Errorf("error reading config file template: %w", err))
 			}
 
 			// Render any template variables used in the config file
-			engine := liquid.NewEngine()
-			engine.Delims("${", "}", "${%", "%}")
-			tmpl, err := engine.ParseTemplate(cfgContents)
+			cfgEngine = liquid.NewEngine()
+			cfgEngine.Delims("${", "}", "${%", "%}")
+			cfgTmpl, err = cfgEngine.ParseTemplate(cfgContents)
 			if err != nil {
 				return log.Error(fmt.Errorf("error parsing config file as a liquid template:\n%s\n\n: %w", cfgContents, err))
 			}
 
-			finalCfg, err := tmpl.Render(templateData)
+			finalCfg, err := cfgTmpl.Render(templateData)
 			if err != nil {
 				return log.Error(fmt.Errorf("error rendering config file as a liquid template:\n%s\n\n: %w", cfgContents, err))
-			}
-
-			// Remember what variables are used in the template
-			// we use this to resolve variables in the second pass over the config file
-			if len(cfg.templateVariables) == 0 {
-				cfg.templateVariables = listTemplateVariables(tmpl)
 			}
 
 			if err := v.ReadConfig(bytes.NewReader(finalCfg)); err != nil {
@@ -170,6 +171,16 @@ func LoadFromViper(viperCfg func(v *viper.Viper), cobraCfg func(v *viper.Viper))
 				}
 			}
 
+			// Collect template variables only from the selected context so
+			// secrets in other contexts are never resolved unnecessarily.
+			if len(cfg.templateVariables) == 0 && cfgEngine != nil && cfgContents != nil {
+				vars, err := listContextTemplateVariables(cfgEngine, cfgContents, selected)
+				if err != nil {
+					return log.Error(fmt.Errorf("error scanning config template variables: %w", err))
+				}
+				cfg.templateVariables = vars
+			}
+
 			contextConfigMap, err := extractContextConfig(rawMap, selected)
 			if err != nil {
 				return log.Error(err)
@@ -197,6 +208,10 @@ func LoadFromViper(viperCfg func(v *viper.Viper), cobraCfg func(v *viper.Viper))
 			// Legacy flat format — existing path unchanged.
 			if cfg.ContextName != "" {
 				return log.Error(fmt.Errorf("--context/PORTER_CONTEXT requires a versioned config file; add schemaVersion: %q and wrap settings under contexts", ConfigSchemaVersion))
+			}
+			// Collect template variables from the full config file.
+			if len(cfg.templateVariables) == 0 && cfgTmpl != nil {
+				cfg.templateVariables = listTemplateVariables(cfgTmpl)
 			}
 			if err := v.Unmarshal(&cfg.Data); err != nil {
 				return fmt.Errorf("error unmarshaling viper config as porter config: %w", err)
@@ -273,6 +288,51 @@ func listTemplateVariables(tmpl *liquid.Template) []string {
 	sort.Strings(results)
 
 	return results
+}
+
+// listContextTemplateVariables returns template variables referenced only
+// within the named context's config block. The raw config bytes are parsed
+// as YAML (template syntax is treated as plain strings), the matching context
+// is located, its config block is re-serialised, and finally parsed by the
+// liquid engine so that only relevant variables are returned.
+func listContextTemplateVariables(engine *liquid.Engine, cfgContents []byte, contextName string) ([]string, error) {
+	var rawCfg map[string]interface{}
+	if err := yaml.Unmarshal(cfgContents, &rawCfg); err != nil {
+		return nil, err
+	}
+
+	contextsRaw, ok := rawCfg["contexts"]
+	if !ok {
+		return nil, nil
+	}
+	contexts, ok := contextsRaw.([]interface{})
+	if !ok {
+		return nil, nil
+	}
+
+	for _, c := range contexts {
+		ctxMap, ok := c.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		if ctxMap["name"] != contextName {
+			continue
+		}
+		configBlock, ok := ctxMap["config"]
+		if !ok {
+			return nil, nil
+		}
+		configYAML, err := yaml.Marshal(configBlock)
+		if err != nil {
+			return nil, err
+		}
+		tmpl, err := engine.ParseTemplate(configYAML)
+		if err != nil {
+			return nil, err
+		}
+		return listTemplateVariables(tmpl), nil
+	}
+	return nil, nil
 }
 
 // findTemplateVariables looks at the template's abstract syntax tree (AST)

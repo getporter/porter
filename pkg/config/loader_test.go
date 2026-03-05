@@ -165,6 +165,45 @@ current-context: default
 	require.ErrorContains(t, err, "missing required 'contexts' key")
 }
 
+// TestLoadMultiContext_SecretsScopedToSelectedContext verifies that secrets
+// referenced in unselected contexts are not resolved, fixing issue #3558.
+func TestLoadMultiContext_SecretsScopedToSelectedContext(t *testing.T) {
+	t.Parallel()
+
+	c := NewTestConfig(t)
+	c.SetHomeDir("/home/myuser/.porter")
+
+	cfg := `schemaVersion: "` + ConfigSchemaVersion + `"
+current-context: local
+contexts:
+  - name: local
+    config:
+      default-secrets-plugin: "filesystem"
+  - name: prod
+    config:
+      default-storage: "prod-db"
+      storage:
+        - name: "prod-db"
+          plugin: "mongodb"
+          config:
+            url: "${secret.prodMongoConnectionString}"
+`
+	require.NoError(t, c.TestContext.FileSystem.WriteFile(
+		"/home/myuser/.porter/config.yaml", []byte(cfg), 0600))
+
+	// resolveSecret should never be called since the selected context (local)
+	// has no secret references.
+	resolveSecret := func(ctx context.Context, key string) (string, error) {
+		t.Errorf("unexpected secret resolution for key %q", key)
+		return "", nil
+	}
+
+	c.DataLoader = LoadFromFilesystem()
+	_, err := c.Load(context.Background(), resolveSecret)
+	require.NoError(t, err)
+	assert.Equal(t, "filesystem", c.Data.DefaultSecretsPlugin)
+}
+
 func TestListTemplateVariables(t *testing.T) {
 	eng := liquid.NewEngine()
 	tmpl, err := eng.ParseString(`not a variable {{secrets.foo}} more non variable junk{{env.var}}{{env.var}}`)
