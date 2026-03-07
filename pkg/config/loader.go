@@ -180,14 +180,19 @@ func LoadFromViper(viperCfg func(v *viper.Viper), cobraCfg func(v *viper.Viper))
 
 			// Collect template variables only from the selected context so
 			// secrets in other contexts are never resolved unnecessarily.
-			// preRenderMap holds viper settings captured before liquid
-			// rendering, so ${secret.X} values are still plain strings.
+			// rawMap supplies the resolved context name for index lookup;
+			// preRenderMap supplies unrendered values (${secret.X} intact).
 			if len(cfg.templateVariables) == 0 && cfgEngine != nil && preRenderMap != nil {
-				vars, err := listContextTemplateVariables(cfgEngine, preRenderMap, selected)
+				vars, found, err := listContextTemplateVariables(cfgEngine, rawMap, preRenderMap, selected)
 				if err != nil {
 					return log.Error(fmt.Errorf("error scanning config template variables: %w", err))
 				}
-				cfg.templateVariables = vars
+				if found {
+					cfg.templateVariables = vars
+				}
+				// !found means the context does not exist in the config.
+				// extractContextConfig below will surface the error; no
+				// need to fall back or collect template variables here.
 			}
 
 			contextConfigMap, err := extractContextConfig(rawMap, selected)
@@ -299,29 +304,56 @@ func listTemplateVariables(tmpl *liquid.Template) []string {
 	return results
 }
 
-// listContextTemplateVariables returns template variables referenced only
-// within the named context's config block. rawMap must be a pre-render
-// viper snapshot (captured before liquid rendering) so that template
-// syntax such as ${secret.X} is still present as plain string values.
-// Using the already-parsed viper map makes this format-agnostic: TOML,
-// JSON, HCL and YAML configs are all handled correctly by viper before
-// this function is called.
-func listContextTemplateVariables(engine *liquid.Engine, rawMap map[string]interface{}, contextName string) ([]string, error) {
-	configBlock, err := extractContextConfig(rawMap, contextName)
-	if err != nil {
-		// Context not found in pre-render map; the error will be surfaced
-		// again by the extractContextConfig call in the main load path.
-		return nil, nil
+// contextIndex returns the 0-based position of the named context in the
+// contexts list of rawMap, or -1 when not found. rawMap is typically the
+// post-render viper snapshot where all template expressions are resolved,
+// so the name comparison is against concrete values.
+func contextIndex(rawMap map[string]interface{}, name string) int {
+	contexts, _ := rawMap["contexts"].([]interface{})
+	for i, c := range contexts {
+		ctxMap, ok := c.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		if ctxMap["name"] == name {
+			return i
+		}
 	}
-	configYAML, err := yaml.Marshal(configBlock)
+	return -1
+}
+
+// listContextTemplateVariables returns template variables referenced only
+// within the named context's config block, and reports whether the context
+// was found.
+//
+// rawMap is the post-render viper snapshot used to locate the context by
+// its resolved name; preRenderMap is the pre-render snapshot where template
+// syntax such as ${secret.X} is still present as a plain string value.
+// The same positional index is used in both maps, so the lookup is correct
+// even when context names are themselves template expressions.
+// Using viper snapshots rather than raw file bytes makes this format-agnostic:
+// TOML, JSON, HCL and YAML are all normalised by viper before this is called.
+func listContextTemplateVariables(engine *liquid.Engine, rawMap, preRenderMap map[string]interface{}, contextName string) ([]string, bool, error) {
+	idx := contextIndex(rawMap, contextName)
+	if idx < 0 {
+		return nil, false, nil
+	}
+
+	contexts, _ := preRenderMap["contexts"].([]interface{})
+	if idx >= len(contexts) {
+		return nil, false, nil
+	}
+	ctxMap, _ := contexts[idx].(map[string]interface{})
+
+	configYAML, err := yaml.Marshal(ctxMap["config"])
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 	tmpl, err := engine.ParseTemplate(configYAML)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
-	return listTemplateVariables(tmpl), nil
+	return listTemplateVariables(tmpl), true, nil
 }
 
 // findTemplateVariables looks at the template's abstract syntax tree (AST)

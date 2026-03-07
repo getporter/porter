@@ -2,6 +2,7 @@ package config
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"testing"
 
@@ -243,6 +244,47 @@ default-storage-plugin = "${secret.prodStoragePlugin}"
 	_, err := c.Load(context.Background(), resolveSecret)
 	require.NoError(t, err)
 	assert.Equal(t, "filesystem", c.Data.DefaultSecretsPlugin)
+}
+
+// TestLoadMultiContext_TemplatedContextName verifies that when the context
+// name itself is a template expression (${env.*}), secret resolution still
+// works for the selected context rather than being silently skipped.
+func TestLoadMultiContext_TemplatedContextName(t *testing.T) {
+	// Do not run in parallel — sets environment variables.
+	os.Setenv("PORTER_CONTEXT_NAME", "prod")
+	defer os.Unsetenv("PORTER_CONTEXT_NAME")
+
+	c := NewTestConfig(t)
+	c.SetHomeDir("/home/myuser/.porter")
+
+	cfg := `schemaVersion: "` + ConfigSchemaVersion + `"
+current-context: "${env.PORTER_CONTEXT_NAME}"
+contexts:
+  - name: local
+    config:
+      default-secrets-plugin: "filesystem"
+  - name: prod
+    config:
+      default-secrets-plugin: "azure.keyvault"
+      default-storage-plugin: "${secret.prodPlugin}"
+`
+	require.NoError(t, c.TestContext.FileSystem.WriteFile(
+		"/home/myuser/.porter/config.yaml", []byte(cfg), 0600))
+
+	resolved := false
+	resolveSecret := func(_ context.Context, key string) (string, error) {
+		if key == "prodPlugin" {
+			resolved = true
+			return "mongodb", nil
+		}
+		return "", fmt.Errorf("unexpected secret key %q", key)
+	}
+
+	c.DataLoader = LoadFromEnvironment()
+	_, err := c.Load(context.Background(), resolveSecret)
+	require.NoError(t, err)
+	assert.True(t, resolved, "secret in selected context should have been resolved")
+	assert.Equal(t, "mongodb", c.Data.DefaultStoragePlugin)
 }
 
 func TestListTemplateVariables(t *testing.T) {
