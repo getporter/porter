@@ -204,6 +204,47 @@ contexts:
 	assert.Equal(t, "filesystem", c.Data.DefaultSecretsPlugin)
 }
 
+// TestLoadMultiContext_SecretsScopedToSelectedContext_TOML is the same
+// scenario as TestLoadMultiContext_SecretsScopedToSelectedContext but uses
+// a TOML config file to verify that the format-agnostic viper-based scan
+// works for non-YAML configs.
+func TestLoadMultiContext_SecretsScopedToSelectedContext_TOML(t *testing.T) {
+	t.Parallel()
+
+	c := NewTestConfig(t)
+	c.SetHomeDir("/home/myuser/.porter")
+
+	cfg := `schemaVersion = "` + ConfigSchemaVersion + `"
+current-context = "local"
+
+[[contexts]]
+name = "local"
+
+[contexts.config]
+default-secrets-plugin = "filesystem"
+
+[[contexts]]
+name = "prod"
+
+[contexts.config]
+default-storage-plugin = "${secret.prodStoragePlugin}"
+`
+	require.NoError(t, c.TestContext.FileSystem.WriteFile(
+		"/home/myuser/.porter/config.toml", []byte(cfg), 0600))
+
+	// resolveSecret must never fire: the selected context (local) has no
+	// secret references, even though the unselected prod context does.
+	resolveSecret := func(ctx context.Context, key string) (string, error) {
+		t.Errorf("unexpected secret resolution for key %q", key)
+		return "", nil
+	}
+
+	c.DataLoader = LoadFromFilesystem()
+	_, err := c.Load(context.Background(), resolveSecret)
+	require.NoError(t, err)
+	assert.Equal(t, "filesystem", c.Data.DefaultSecretsPlugin)
+}
+
 func TestListTemplateVariables(t *testing.T) {
 	eng := liquid.NewEngine()
 	tmpl, err := eng.ParseString(`not a variable {{secrets.foo}} more non variable junk{{env.var}}{{env.var}}`)

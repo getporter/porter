@@ -155,6 +155,49 @@ func TestMultiContextConfig_TOML(t *testing.T) {
 	assert.Contains(t, output, "* prod", "prod should be marked active (matches current-context in file)")
 }
 
+// TestMultiContextConfig_SecretsOnlyScopedToSelectedContext_TOML is the same
+// scenario as TestMultiContextConfig_SecretsOnlyScopedToSelectedContext but
+// uses a TOML config to exercise the format-agnostic pre-render map path.
+func TestMultiContextConfig_SecretsOnlyScopedToSelectedContext_TOML(t *testing.T) {
+	p := porter.NewTestPorter(t)
+	ctx := p.SetupIntegrationTest()
+	defer p.Close()
+
+	home, _ := p.GetHomeDir()
+
+	const cfg = `schemaVersion = "2.0.0"
+current-context = "local"
+
+[[contexts]]
+name = "local"
+
+[contexts.config]
+default-secrets-plugin = "filesystem"
+
+[[contexts]]
+name = "prod"
+
+[contexts.config]
+default-storage-plugin = "${secret.prodStoragePlugin}"
+`
+	require.NoError(t, os.WriteFile(
+		filepath.Join(home, "config.toml"),
+		[]byte(cfg),
+		pkg.FileModeWritable,
+	))
+
+	p.Config.DataLoader = config.LoadFromFilesystem()
+
+	// resolveSecret must never fire: "local" has no secret references.
+	resolveSecret := func(_ context.Context, key string) (string, error) {
+		return "", fmt.Errorf("unexpected secret resolution for key %q", key)
+	}
+
+	_, err := p.Config.Load(ctx, resolveSecret)
+	require.NoError(t, err, "loading TOML config should not resolve secrets from unselected contexts")
+	assert.Equal(t, "filesystem", p.Config.Data.DefaultSecretsPlugin)
+}
+
 // legacyYAMLWithTemplateVars is a flat config that contains Liquid template
 // variables, used to verify they survive migration intact.
 const legacyYAMLWithTemplateVars = `namespace: dev

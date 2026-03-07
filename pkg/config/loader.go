@@ -114,9 +114,10 @@ func LoadFromViper(viperCfg func(v *viper.Viper), cobraCfg func(v *viper.Viper))
 		}
 
 		var (
-			cfgContents []byte
-			cfgEngine   *liquid.Engine
-			cfgTmpl     *liquid.Template
+			cfgContents  []byte
+			cfgEngine    *liquid.Engine
+			cfgTmpl      *liquid.Template
+			preRenderMap map[string]interface{}
 		)
 
 		cfgFile := v.ConfigFileUsed()
@@ -135,6 +136,12 @@ func LoadFromViper(viperCfg func(v *viper.Viper), cobraCfg func(v *viper.Viper))
 			if err != nil {
 				return log.Error(fmt.Errorf("error parsing config file as a liquid template:\n%s\n\n: %w", cfgContents, err))
 			}
+
+			// Snapshot viper settings before rendering so that template
+			// syntax (e.g. ${secret.X}) is preserved as plain strings.
+			// This snapshot is used later to detect which secrets belong
+			// to the selected context without re-parsing the raw bytes.
+			preRenderMap = v.AllSettings()
 
 			finalCfg, err := cfgTmpl.Render(templateData)
 			if err != nil {
@@ -173,8 +180,10 @@ func LoadFromViper(viperCfg func(v *viper.Viper), cobraCfg func(v *viper.Viper))
 
 			// Collect template variables only from the selected context so
 			// secrets in other contexts are never resolved unnecessarily.
-			if len(cfg.templateVariables) == 0 && cfgEngine != nil && cfgContents != nil {
-				vars, err := listContextTemplateVariables(cfgEngine, cfgContents, selected)
+			// preRenderMap holds viper settings captured before liquid
+			// rendering, so ${secret.X} values are still plain strings.
+			if len(cfg.templateVariables) == 0 && cfgEngine != nil && preRenderMap != nil {
+				vars, err := listContextTemplateVariables(cfgEngine, preRenderMap, selected)
 				if err != nil {
 					return log.Error(fmt.Errorf("error scanning config template variables: %w", err))
 				}
@@ -291,48 +300,28 @@ func listTemplateVariables(tmpl *liquid.Template) []string {
 }
 
 // listContextTemplateVariables returns template variables referenced only
-// within the named context's config block. The raw config bytes are parsed
-// as YAML (template syntax is treated as plain strings), the matching context
-// is located, its config block is re-serialised, and finally parsed by the
-// liquid engine so that only relevant variables are returned.
-func listContextTemplateVariables(engine *liquid.Engine, cfgContents []byte, contextName string) ([]string, error) {
-	var rawCfg map[string]interface{}
-	if err := yaml.Unmarshal(cfgContents, &rawCfg); err != nil {
+// within the named context's config block. rawMap must be a pre-render
+// viper snapshot (captured before liquid rendering) so that template
+// syntax such as ${secret.X} is still present as plain string values.
+// Using the already-parsed viper map makes this format-agnostic: TOML,
+// JSON, HCL and YAML configs are all handled correctly by viper before
+// this function is called.
+func listContextTemplateVariables(engine *liquid.Engine, rawMap map[string]interface{}, contextName string) ([]string, error) {
+	configBlock, err := extractContextConfig(rawMap, contextName)
+	if err != nil {
+		// Context not found in pre-render map; the error will be surfaced
+		// again by the extractContextConfig call in the main load path.
+		return nil, nil
+	}
+	configYAML, err := yaml.Marshal(configBlock)
+	if err != nil {
 		return nil, err
 	}
-
-	contextsRaw, ok := rawCfg["contexts"]
-	if !ok {
-		return nil, nil
+	tmpl, err := engine.ParseTemplate(configYAML)
+	if err != nil {
+		return nil, err
 	}
-	contexts, ok := contextsRaw.([]interface{})
-	if !ok {
-		return nil, nil
-	}
-
-	for _, c := range contexts {
-		ctxMap, ok := c.(map[string]interface{})
-		if !ok {
-			continue
-		}
-		if ctxMap["name"] != contextName {
-			continue
-		}
-		configBlock, ok := ctxMap["config"]
-		if !ok {
-			return nil, nil
-		}
-		configYAML, err := yaml.Marshal(configBlock)
-		if err != nil {
-			return nil, err
-		}
-		tmpl, err := engine.ParseTemplate(configYAML)
-		if err != nil {
-			return nil, err
-		}
-		return listTemplateVariables(tmpl), nil
-	}
-	return nil, nil
+	return listTemplateVariables(tmpl), nil
 }
 
 // findTemplateVariables looks at the template's abstract syntax tree (AST)
