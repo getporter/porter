@@ -15,6 +15,7 @@ import (
 	"github.com/osteele/liquid/render"
 	"github.com/spf13/viper"
 	"go.opentelemetry.io/otel/attribute"
+	"gopkg.in/yaml.v3"
 )
 
 var _ DataStoreLoaderFunc = NoopDataLoader
@@ -175,6 +176,10 @@ func LoadFromViper(viperCfg func(v *viper.Viper), cobraCfg func(v *viper.Viper))
 				return log.Error(err)
 			}
 
+			// Scope template variables to the selected context only so that
+			// `${secret.*}` from other contexts are not resolved.
+			cfg.templateVariables = listTemplateVariablesForContext(contextConfigMap)
+
 			ctxViper := viper.New()
 			ctxViper.SetFs(cfg.FileSystem)
 			if err := setDefaultsFrom(ctxViper, cfg.Data); err != nil {
@@ -273,6 +278,26 @@ func listTemplateVariables(tmpl *liquid.Template) []string {
 	sort.Strings(results)
 
 	return results
+}
+
+func listTemplateVariablesForContext(contextConfigMap map[string]interface{}) []string {
+	if len(contextConfigMap) == 0 {
+		return nil
+	}
+
+	cfgContents, err := yaml.Marshal(contextConfigMap)
+	if err != nil {
+		return nil
+	}
+
+	engine := liquid.NewEngine()
+	engine.Delims("${", "}", "${%", "%}")
+	tmpl, err := engine.ParseTemplate(cfgContents)
+	if err != nil {
+		return nil
+	}
+
+	return listTemplateVariables(tmpl)
 }
 
 // findTemplateVariables looks at the template's abstract syntax tree (AST)
