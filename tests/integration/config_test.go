@@ -3,6 +3,7 @@
 package integration
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -97,6 +98,43 @@ func TestMultiContextConfig_ContextSelectsNamespace(t *testing.T) {
 	_, err = p.Config.Load(ctx, nil)
 	require.NoError(t, err)
 	assert.Equal(t, "prod", p.Config.Data.Namespace, "--context prod should set namespace to 'prod'")
+}
+
+func TestMultiContextConfig_OnlyResolvesSelectedContextSecrets(t *testing.T) {
+	p := porter.NewTestPorter(t)
+	ctx := p.SetupIntegrationTest()
+	defer p.Close()
+
+	home, _ := p.GetHomeDir()
+	cfg := `schemaVersion: "2.0.0"
+current-context: local
+contexts:
+  - name: local
+    config:
+      default-secrets-plugin: filesystem
+  - name: prod
+    config:
+      default-storage: proddb
+      storage:
+        - name: proddb
+          plugin: mongodb
+          config:
+            url: "${secret.prodMongoConnectionString}"
+`
+	require.NoError(t, os.WriteFile(
+		filepath.Join(home, "config.yaml"),
+		[]byte(cfg),
+		pkg.FileModeWritable,
+	))
+
+	p.Config.DataLoader = config.LoadFromFilesystem()
+
+	_, err := p.Config.Load(ctx, func(ctx context.Context, secretKey string) (string, error) {
+		t.Fatalf("unexpected secret resolution for unselected context: %s", secretKey)
+		return "", nil
+	})
+	require.NoError(t, err)
+	assert.Equal(t, "filesystem", p.Config.Data.DefaultSecretsPlugin)
 }
 
 // legacyConfigYAML is a flat (pre-2.0.0) config file with no schemaVersion.
