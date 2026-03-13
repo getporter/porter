@@ -29,6 +29,9 @@ func IsTraceSensitiveAttributesEnabled() bool {
 
 // TraceLogger how porter emits traces and logs to any configured listeners.
 type TraceLogger interface {
+	ErrorTracer // Provides RecordError, RecordErrorf
+	ErrorLogger // Provides Error, Errorf
+
 	// StartSpan retrieves a logger from the current context and starts a new span
 	// named after the current function.
 	StartSpan(attrs ...attribute.KeyValue) (context.Context, TraceLogger)
@@ -63,16 +66,6 @@ type TraceLogger interface {
 
 	// Warnf formats a message and prints it at the warning level.
 	Warnf(format string, args ...interface{})
-
-	// Error logs a message at the error level, when the specified error is not nil,
-	// and marks the current span as failed.
-	// Example: return log.Error(err)
-	// Only log it in the function that generated the error, not when bubbling
-	// it up the call stack.
-	Error(err error, attrs ...attribute.KeyValue) error
-
-	// Errorf logs a message at the error level and marks the current span as failed.
-	Errorf(format string, arg ...interface{}) error
 
 	// ShouldLog returns if the current log level includes the specified level.
 	ShouldLog(level zapcore.Level) bool
@@ -222,36 +215,51 @@ func (l traceLogger) Warnf(format string, args ...interface{}) {
 	l.Warn(fmt.Sprintf(format, args...))
 }
 
-func (l traceLogger) Errorf(format string, args ...interface{}) error {
-	return l.Error(fmt.Errorf(format, args...))
-}
-
-// Error logs a message at the error level, when the specified error is not nil.
-func (l traceLogger) Error(err error, attrs ...attribute.KeyValue) error {
+// RecordError records an error to the span WITHOUT logging to console.
+// This is the method that intermediate functions should use.
+func (l traceLogger) RecordError(err error, attrs ...attribute.KeyValue) error {
 	if err == nil {
 		return err
 	}
 
-	msg := err.Error()
-	l.logger.Error(msg, convertAttributesToFields(attrs)...)
-
+	// Record to span only (no console output)
 	attrs = append(attrs, attribute.String("level", "error"))
-
-	// Try to include the stack trace
-	// I'm not using trace.WithStackTrace because it records the stack trace from _here_
-	// and not the one attached to the error...
 	errOpts := []trace.EventOption{
 		trace.WithAttributes(attrs...),
+		trace.WithAttributes(
+			semconv.ExceptionStacktraceKey.String(fmt.Sprintf("%+v", err)),
+		),
 	}
-
-	errOpts = append(errOpts, trace.WithAttributes(
-		semconv.ExceptionStacktraceKey.String(fmt.Sprintf("%+v", err)),
-	))
 
 	l.span.RecordError(err, errOpts...)
 	l.span.SetStatus(codes.Error, err.Error())
 
 	return err
+}
+
+// RecordErrorf formats an error and records it to span only.
+func (l traceLogger) RecordErrorf(format string, args ...interface{}) error {
+	return l.RecordError(fmt.Errorf(format, args...))
+}
+
+// Error logs an error to console AND records it to the span.
+// This should ONLY be called by top-level command handlers.
+func (l traceLogger) Error(err error, attrs ...attribute.KeyValue) error {
+	if err == nil {
+		return err
+	}
+
+	// Log to console
+	msg := err.Error()
+	l.logger.Error(msg, convertAttributesToFields(attrs)...)
+
+	// ALSO record to span (reuse RecordError to avoid duplication)
+	return l.RecordError(err, attrs...)
+}
+
+// Errorf formats and logs an error to the console AND records it to the span.
+func (l traceLogger) Errorf(format string, args ...interface{}) error {
+	return l.Error(fmt.Errorf(format, args...))
 }
 
 // appends logs to a otel span as events
