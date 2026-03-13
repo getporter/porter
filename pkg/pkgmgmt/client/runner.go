@@ -66,8 +66,8 @@ func (r *Runner) Run(ctx context.Context, commandOpts pkgmgmt.CommandOptions) er
 
 	// Pipe the output to porter and capture the error in case it fails
 	cmdStderr := &bytes.Buffer{}
-	cmd.Stdout = r.Context.Out
-	cmd.Stderr = io.MultiWriter(cmdStderr, r.Context.Err)
+	cmd.Stdout = r.Out
+	cmd.Stderr = io.MultiWriter(cmdStderr, r.Err)
 
 	if commandOpts.PreRun != nil {
 		commandOpts.PreRun(command, cmd)

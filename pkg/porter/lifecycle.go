@@ -177,7 +177,7 @@ func (o *BundleExecutionOptions) defaultDriver(p *Porter) {
 	// Apply global config to the --allow-docker-host-access flag
 	if !o.AllowDockerHostAccess {
 		// Only apply the config setting if they didn't specify the flag (i.e. it's porter installation apply which doesn't have that flag)
-		o.AllowDockerHostAccess = p.Config.Data.AllowDockerHostAccess
+		o.AllowDockerHostAccess = p.Data.AllowDockerHostAccess
 	}
 }
 

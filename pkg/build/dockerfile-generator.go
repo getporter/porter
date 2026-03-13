@@ -49,7 +49,7 @@ func (g *DockerfileGenerator) GenerateDockerFile(ctx context.Context) error {
 
 	var lines []string
 	var err error
-	if g.Config.IsFeatureEnabled(experimental.FlagFullControlDockerfile) {
+	if g.IsFeatureEnabled(experimental.FlagFullControlDockerfile) {
 		span.Warnf("WARNING: Experimental feature \"%s\" enabled: Dockerfile will be used without changes by Porter",
 			experimental.FullControlDockerfile)
 		lines, err = g.readRawDockerfile(ctx)
@@ -77,18 +77,18 @@ func (g *DockerfileGenerator) GenerateDockerFile(ctx context.Context) error {
 }
 
 func (g *DockerfileGenerator) readRawDockerfile(ctx context.Context) ([]string, error) {
-	if g.Manifest.Dockerfile == "" {
+	if g.Dockerfile == "" {
 		return nil, errors.New("no Dockerfile specified in the manifest")
 	}
-	exists, err := g.FileSystem.Exists(g.Manifest.Dockerfile)
+	exists, err := g.FileSystem.Exists(g.Dockerfile)
 	if err != nil {
-		return nil, fmt.Errorf("error checking if Dockerfile exists: %q: %w", g.Manifest.Dockerfile, err)
+		return nil, fmt.Errorf("error checking if Dockerfile exists: %q: %w", g.Dockerfile, err)
 	}
 	if !exists {
-		return nil, fmt.Errorf("the Dockerfile specified in the manifest doesn't exist: %q", g.Manifest.Dockerfile)
+		return nil, fmt.Errorf("the Dockerfile specified in the manifest doesn't exist: %q", g.Dockerfile)
 	}
 
-	file, err := g.FileSystem.Open(g.Manifest.Dockerfile)
+	file, err := g.FileSystem.Open(g.Dockerfile)
 	if err != nil {
 		return nil, err
 	}
@@ -124,23 +124,23 @@ func (g *DockerfileGenerator) getBaseDockerfile(ctx context.Context) ([]string, 
 	log := tracing.LoggerFromContext(ctx)
 
 	var reader io.Reader
-	if g.Manifest.Dockerfile != "" {
-		exists, err := g.FileSystem.Exists(g.Manifest.Dockerfile)
+	if g.Dockerfile != "" {
+		exists, err := g.FileSystem.Exists(g.Dockerfile)
 		if err != nil {
-			return nil, fmt.Errorf("error checking if Dockerfile exists: %q: %w", g.Manifest.Dockerfile, err)
+			return nil, fmt.Errorf("error checking if Dockerfile exists: %q: %w", g.Dockerfile, err)
 		}
 		if !exists {
-			return nil, fmt.Errorf("the Dockerfile specified in the manifest doesn't exist: %q", g.Manifest.Dockerfile)
+			return nil, fmt.Errorf("the Dockerfile specified in the manifest doesn't exist: %q", g.Dockerfile)
 		}
 
-		file, err := g.FileSystem.Open(g.Manifest.Dockerfile)
+		file, err := g.FileSystem.Open(g.Dockerfile)
 		if err != nil {
 			return nil, err
 		}
 		defer file.Close()
 		reader = file
 	} else {
-		contents, err := g.Templates.GetDockerfile()
+		contents, err := g.GetDockerfile()
 		if err != nil {
 			return nil, fmt.Errorf("error loading default Dockerfile template: %w", err)
 		}
@@ -189,7 +189,7 @@ func (g *DockerfileGenerator) buildPorterSection() []string {
 
 	// The user-provided manifest may be located separate from the build context directory.
 	// Only remove it if the manifest path exists inside the current working directory.
-	manifestPath := g.FileSystem.Abs(g.Manifest.ManifestPath)
+	manifestPath := g.FileSystem.Abs(g.ManifestPath)
 	if relManifestPath, err := filepath.Rel(g.Getwd(), manifestPath); err == nil {
 		if !strings.Contains(relManifestPath, "..") {
 			lines = append(lines, fmt.Sprintf(`RUN rm ${BUNDLE_DIR}/%s`, relManifestPath))
@@ -277,7 +277,7 @@ func (g *DockerfileGenerator) buildInitSection() []string {
 func (g *DockerfileGenerator) PrepareFilesystem() error {
 	fmt.Fprintf(g.Out, "Copying porter runtime ===> \n")
 
-	runTmpl, err := g.Templates.GetRunScript()
+	runTmpl, err := g.GetRunScript()
 	if err != nil {
 		return err
 	}
@@ -296,7 +296,7 @@ func (g *DockerfileGenerator) PrepareFilesystem() error {
 	if err != nil {
 		return err
 	}
-	err = g.Context.CopyDirectory(filepath.Join(homeDir, "runtimes"), filepath.Join(LOCAL_APP, "runtimes"), false)
+	err = g.CopyDirectory(filepath.Join(homeDir, "runtimes"), filepath.Join(LOCAL_APP, "runtimes"), false)
 	if err != nil {
 		return err
 	}
@@ -319,7 +319,7 @@ func (g *DockerfileGenerator) copyMixin(mixin string) error {
 		return err
 	}
 
-	err = g.Context.CopyDirectory(mixinDir, LOCAL_MIXINS, true)
+	err = g.CopyDirectory(mixinDir, LOCAL_MIXINS, true)
 	if err != nil {
 		return fmt.Errorf("could not copy mixin directory contents for %s: %w", mixin, err)
 	}

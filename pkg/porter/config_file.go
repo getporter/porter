@@ -152,7 +152,7 @@ func (p *Porter) ConfigContextList(ctx context.Context) error {
 	}
 
 	// Determine the active context: flag/env > current-context in file > "default"
-	active := p.Config.ContextName
+	active := p.ContextName
 	if active == "" {
 		if cc, _ := rawMap["current-context"].(string); cc != "" {
 			active = cc

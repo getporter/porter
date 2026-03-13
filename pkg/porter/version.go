@@ -41,7 +41,7 @@ func (mixins Mixins) PrintMixinsTable() string {
 			if !ok {
 				return nil
 			}
-			return []string{m.Name, m.VersionInfo.Version, m.VersionInfo.Author}
+			return []string{m.Name, m.Version, m.Author}
 		}
 	err := printer.PrintTable(buffer, mixins, printMixinRow, "Name", "Version", "Author")
 	if err != nil {

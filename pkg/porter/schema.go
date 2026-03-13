@@ -135,7 +135,7 @@ func (p *Porter) injectMixinSchemas(ctx context.Context, manifestSchema jsonSche
 		}
 
 		// Update relative refs with the new location and reload
-		mixinSchema = strings.Replace(mixinSchema, "#/", fmt.Sprintf("#/mixin.%s/", mixin), -1)
+		mixinSchema = strings.ReplaceAll(mixinSchema, "#/", fmt.Sprintf("#/mixin.%s/", mixin))
 
 		mixinSchemaMap := make(jsonSchema)
 		err = json.Unmarshal([]byte(mixinSchema), &mixinSchemaMap)

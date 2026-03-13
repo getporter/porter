@@ -69,7 +69,7 @@ func (p TestParameterSetProvider) AddTestParameters(path string) {
 		p.T.Fatal(fmt.Errorf("could not read test parameters from %s: %w", path, err))
 	}
 
-	err = p.ParameterStore.InsertParameterSet(context.Background(), ps)
+	err = p.InsertParameterSet(context.Background(), ps)
 	if err != nil {
 		p.T.Fatal(fmt.Errorf("could not load test parameters: %w", err))
 	}

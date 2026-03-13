@@ -39,7 +39,7 @@ func (p *Porter) PrintMixins(ctx context.Context, opts PrintMixinsOptions) error
 				if !ok {
 					return nil
 				}
-				return []string{m.Name, m.VersionInfo.Version, m.VersionInfo.Author}
+				return []string{m.Name, m.Version, m.Author}
 			}
 		return printer.PrintTable(p.Out, mixins, printMixinRow, "Name", "Version", "Author")
 	case printer.FormatJson:
@@ -204,7 +204,7 @@ func replaceStringInDir(dir, replaced, replacement string) error {
 				return err
 			}
 
-			err = os.WriteFile(path, bytes.Replace(content, []byte(replaced), []byte(replacement), -1), info.Mode().Perm())
+			err = os.WriteFile(path, bytes.ReplaceAll(content, []byte(replaced), []byte(replacement)), info.Mode().Perm())
 			if err != nil {
 				return err
 			}

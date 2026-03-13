@@ -159,7 +159,7 @@ func TestExecuteStep_SpecifiesCustomWorkingDirectory(t *testing.T) {
 	}
 
 	if runtime.GOOS == "windows" {
-		step.TestStep.Command = "cmd.exe"
+		step.Command = "cmd.exe"
 		step.Arguments = []string{"/c", "cd"}
 	}
 

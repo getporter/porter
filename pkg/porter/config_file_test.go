@@ -157,7 +157,7 @@ contexts:
     config: {}
 `
 	require.NoError(t, p.FileSystem.WriteFile(configPath, []byte(configContent), 0600))
-	p.Config.ContextName = "default"
+	p.ContextName = "default"
 
 	err := p.ConfigContextList(context.Background())
 	require.NoError(t, err)
@@ -283,9 +283,9 @@ storage:
 	assert.Contains(t, content, `schemaVersion: "2.0.0"`)
 	assert.Contains(t, content, "current-context: default")
 	assert.Contains(t, content, "- name: default")
-	assert.Contains(t, content, "      namespace: dev")           // indented 6 spaces
-	assert.Contains(t, content, "${env.PORTER_TEST_DB_NAME}")    // template var preserved
-	assert.NotContains(t, content, "\nnamespace: dev")           // top-level key must be gone
+	assert.Contains(t, content, "      namespace: dev")       // indented 6 spaces
+	assert.Contains(t, content, "${env.PORTER_TEST_DB_NAME}") // template var preserved
+	assert.NotContains(t, content, "\nnamespace: dev")        // top-level key must be gone
 
 	output := p.TestConfig.TestContext.GetOutput()
 	assert.Contains(t, output, "Migrated")
@@ -392,7 +392,7 @@ contexts:
 	require.NoError(t, p.FileSystem.WriteFile(configPath, []byte(configContent), 0600))
 
 	for _, name := range []string{
-		"bad\nname",  // newline
+		"bad\nname", // newline
 		"bad name",  // space
 		"bad#name",  // hash (comment in YAML)
 		"bad\"name", // double-quote (breaks TOML/JSON)

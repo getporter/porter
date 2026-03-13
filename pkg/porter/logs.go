@@ -16,7 +16,7 @@ type LogsShowOptions struct {
 
 // Installation name passed to the command.
 func (o *LogsShowOptions) Installation() string {
-	return o.installationOptions.Name
+	return o.Name
 }
 
 // Validate validates the provided args, using the provided context,
@@ -27,7 +27,7 @@ func (o *LogsShowOptions) Validate(cxt *portercontext.Context) error {
 	}
 
 	// Attempt to derive installation name from context
-	err := o.installationOptions.defaultBundleFiles(cxt)
+	err := o.defaultBundleFiles(cxt)
 	if err != nil {
 		return err
 	}
@@ -60,7 +60,7 @@ func (p *Porter) GetInstallationLogs(ctx context.Context, opts *LogsShowOptions)
 	if err != nil {
 		return "", false, err
 	}
-	installation := opts.installationOptions.Name
+	installation := opts.Name
 
 	if opts.RunID != "" {
 		return p.Installations.GetLogs(ctx, opts.RunID)

@@ -14,6 +14,6 @@ func TestCreateTemplate(t *testing.T) {
 	err := CreateTemplate(tc.Context)
 
 	require.NoError(t, err)
-	success, _ := tc.Context.FileSystem.Exists("atom-template.xml")
+	success, _ := tc.FileSystem.Exists("atom-template.xml")
 	assert.True(t, success)
 }

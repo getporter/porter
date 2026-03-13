@@ -5,7 +5,7 @@ on:
     inputs:
       goVersion:
         required: false
-        default: 1.24.13
+        default: 1.25.8
         type: string
       registry:
         required: false
@@ -27,164 +27,164 @@ jobs:
     name: Native Compile
     runs-on: ubuntu-latest
     steps:
-    - name: checkout
-      uses: actions/checkout@v6
-    - uses: actions/setup-go@v6
-      with:
-        go-version: ${{ inputs.goVersion }}
-    - name: Configure Agent
-      run: go run mage.go ConfigureAgent
-    - name: Native Build
-      run: mage build
-      shell: bash
-    - name: Publish Native Binaries
-      uses: actions/upload-artifact@v7.0.0
-      with:
-        name: build-bin
-        path: "${{ github.workspace }}/bin"
+      - name: checkout
+        uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version: ${{ inputs.goVersion }}
+      - name: Configure Agent
+        run: go run mage.go ConfigureAgent
+      - name: Native Build
+        run: mage build
+        shell: bash
+      - name: Publish Native Binaries
+        uses: actions/upload-artifact@v7.0.0
+        with:
+          name: build-bin
+          path: "${{ github.workspace }}/bin"
   Validate-xbuild:
     name: Cross Compile
     runs-on: ubuntu-latest
     steps:
-    - name: checkout
-      uses: actions/checkout@v6
-      with:
-        fetch-depth: 0
-    - uses: actions/setup-go@v6
-      with:
-        go-version: ${{ inputs.goVersion }}
-    - name: Configure Agent
-      run: go run mage.go ConfigureAgent
-    - name: Cross Compile
-      run: mage XBuildAll
-      shell: bash
-    - name: Publish Release Binaries
-      uses: actions/upload-artifact@v7.0.0
-      with:
-        name: xbuild-bin
-        path: "${{ github.workspace }}/bin"
+      - name: checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v6
+        with:
+          go-version: ${{ inputs.goVersion }}
+      - name: Configure Agent
+        run: go run mage.go ConfigureAgent
+      - name: Cross Compile
+        run: mage XBuildAll
+        shell: bash
+      - name: Publish Release Binaries
+        uses: actions/upload-artifact@v7.0.0
+        with:
+          name: xbuild-bin
+          path: "${{ github.workspace }}/bin"
   Validate-VetLint:
     name: Vet and Lint
     runs-on: ubuntu-latest
     steps:
-    - name: checkout
-      uses: actions/checkout@v6
-    - uses: actions/setup-go@v6
-      with:
-        go-version: ${{ inputs.goVersion }}
-    - name: Configure Agent
-      run: go run mage.go ConfigureAgent
-    - name: Vet
-      run: mage Vet
-      shell: bash
-    - name: Lint
-      run: mage Lint
-      shell: bash
+      - name: checkout
+        uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version: ${{ inputs.goVersion }}
+      - name: Configure Agent
+        run: go run mage.go ConfigureAgent
+      - name: Vet
+        run: mage Vet
+        shell: bash
+      - name: Lint
+        run: mage Lint
+        shell: bash
   Validate-unit_test:
     name: Unit Test
     runs-on: ubuntu-latest
     if: ${{inputs.skipTests == false}}
     steps:
-    - name: checkout
-      uses: actions/checkout@v6
-    - uses: actions/setup-go@v6
-      with:
-        go-version: ${{ inputs.goVersion }}
-    - name: Configure Agent
-      run: go run mage.go ConfigureAgent
-    - name: Unit Test
-      run: mage TestUnit
-      shell: bash
+      - name: checkout
+        uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version: ${{ inputs.goVersion }}
+      - name: Configure Agent
+        run: go run mage.go ConfigureAgent
+      - name: Unit Test
+        run: mage TestUnit
+        shell: bash
   Validate-integration_test:
     name: Integration Test
     needs:
-    - Validate-build
+      - Validate-build
     uses: "./.github/workflows/porter-integration-release.yml"
     with:
       registry: ${{inputs.registry}}
   Validate-smoke_test:
     name: Run smoke tests on
     needs:
-    - Validate-xbuild
+      - Validate-xbuild
     runs-on: ubuntu-latest
     if: success() && ${{inputs.skipTests == false}}
     steps:
-    - name: checkout
-      uses: actions/checkout@v6
-    - uses: actions/setup-go@v6
-      with:
-        go-version: ${{ inputs.goVersion }}
-    - name: Download Cross-Compiled Porter Binaries
-      uses: actions/download-artifact@v8.0.0
-      with:
-        name: xbuild-bin
-        path: bin
-    - name: Setup Bin
-      run: go run mage.go ConfigureAgent UseXBuildBinaries
-    - name: Aggressive cleanup
-      run: |
-        df -h
-        # Remove Java (JDKs)
-        sudo rm -rf /usr/lib/jvm
-        # Remove .NET SDKs
-        sudo rm -rf /usr/share/dotnet
-        # Remove Swift toolchain
-        sudo rm -rf /usr/share/swift
-        # Remove Haskell (GHC)
-        sudo rm -rf /usr/local/.ghcup
-        # Remove Julia
-        sudo rm -rf /usr/local/julia*
-        # Remove Android SDKs
-        sudo rm -rf /usr/local/lib/android
-        # Remove Chromium (optional if not using for browser tests)
-        sudo rm -rf /usr/local/share/chromium
-        # Remove Microsoft/Edge and Google Chrome builds
-        sudo rm -rf /opt/microsoft /opt/google
-        # Remove Azure CLI
-        sudo rm -rf /opt/az
-        # Remove PowerShell
-        sudo rm -rf /usr/local/share/powershell
-        df -h
-    - name: Run Smoke Tests
-      run: mage -v TestSmoke
+      - name: checkout
+        uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version: ${{ inputs.goVersion }}
+      - name: Download Cross-Compiled Porter Binaries
+        uses: actions/download-artifact@v8.0.0
+        with:
+          name: xbuild-bin
+          path: bin
+      - name: Setup Bin
+        run: go run mage.go ConfigureAgent UseXBuildBinaries
+      - name: Aggressive cleanup
+        run: |
+          df -h
+          # Remove Java (JDKs)
+          sudo rm -rf /usr/lib/jvm
+          # Remove .NET SDKs
+          sudo rm -rf /usr/share/dotnet
+          # Remove Swift toolchain
+          sudo rm -rf /usr/share/swift
+          # Remove Haskell (GHC)
+          sudo rm -rf /usr/local/.ghcup
+          # Remove Julia
+          sudo rm -rf /usr/local/julia*
+          # Remove Android SDKs
+          sudo rm -rf /usr/local/lib/android
+          # Remove Chromium (optional if not using for browser tests)
+          sudo rm -rf /usr/local/share/chromium
+          # Remove Microsoft/Edge and Google Chrome builds
+          sudo rm -rf /opt/microsoft /opt/google
+          # Remove Azure CLI
+          sudo rm -rf /opt/az
+          # Remove PowerShell
+          sudo rm -rf /usr/local/share/powershell
+          df -h
+      - name: Run Smoke Tests
+        run: mage -v TestSmoke
   publish_binaries:
     name: Publish Binaries
     needs:
-    - Validate-build
-    - Validate-xbuild
-    - Validate-VetLint
-    - Validate-unit_test
-    - Validate-integration_test
-    - Validate-smoke_test
+      - Validate-build
+      - Validate-xbuild
+      - Validate-VetLint
+      - Validate-unit_test
+      - Validate-integration_test
+      - Validate-smoke_test
     runs-on: ubuntu-latest
     permissions:
       contents: write
     if: success() && ${{ inputs.shouldPublish == true }}
     steps:
-    - name: checkout
-      uses: actions/checkout@v6
-      with:
-        fetch-depth: 0
-    - uses: actions/setup-go@v6
-      with:
-        go-version: ${{ inputs.goVersion }}
-    - name: Download Cross-Compiled Porter Binaries
-      uses: actions/download-artifact@v8.0.0
-      with:
-        name: xbuild-bin
-        path: bin
-    - name: Setup Bin
-      run: go run mage.go ConfigureAgent UseXBuildBinaries
-    - name: Publish Porter Binaries
-      env:
-        GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-        VERSION: ${{github.ref_name}}
-      run: mage PublishPorter
-    - name: Publish Porter Mixins
-      env:
-        GITHUB_TOKEN: "${{ secrets.PUBLISH_TOKEN }}"
-        VERSION: ${{github.ref_name}}
-      run: mage PublishMixins
+      - name: checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v6
+        with:
+          go-version: ${{ inputs.goVersion }}
+      - name: Download Cross-Compiled Porter Binaries
+        uses: actions/download-artifact@v8.0.0
+        with:
+          name: xbuild-bin
+          path: bin
+      - name: Setup Bin
+        run: go run mage.go ConfigureAgent UseXBuildBinaries
+      - name: Publish Porter Binaries
+        env:
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+          VERSION: ${{github.ref_name}}
+        run: mage PublishPorter
+      - name: Publish Porter Mixins
+        env:
+          GITHUB_TOKEN: "${{ secrets.PUBLISH_TOKEN }}"
+          VERSION: ${{github.ref_name}}
+        run: mage PublishMixins
   publish-ghcr:
     env:
       DOCKER_REGISTRY: ${{inputs.registry}}
@@ -192,38 +192,37 @@ jobs:
       VERSION: ${{github.ref_name}}
     name: Publish Docker Images
     needs:
-    - Validate-build
-    - Validate-xbuild
-    - Validate-VetLint
-    - Validate-unit_test
-    - Validate-integration_test
-    - Validate-smoke_test
+      - Validate-build
+      - Validate-xbuild
+      - Validate-VetLint
+      - Validate-unit_test
+      - Validate-integration_test
+      - Validate-smoke_test
     runs-on: ubuntu-latest
     permissions:
       contents: write
       packages: write
     if: success() && ${{inputs.shouldPublish == true}}
     steps:
-    - name: checkout
-      uses: actions/checkout@v6
-      with:
-        fetch-depth: 0
-    - uses: actions/setup-go@v6
-      with:
-        go-version: ${{ inputs.goVersion }}
-    - name: Download Cross-Compiled Porter Binaries
-      uses: actions/download-artifact@v8.0.0
-      with:
-        name: xbuild-bin
-        path: bin
-    - name: Setup Bin
-      run: go run mage.go ConfigureAgent UseXBuildBinaries
-    - name: Login to Container Registry
-      uses: docker/login-action@v4.0.0
-      with:
-        registry: "${{inputs.registry}}"
-        username: "${{ github.actor }}"
-        password: "${{ secrets.GITHUB_TOKEN }}"
-    - name: Publish Docker Images to ${{inputs.registry}}
-      run: PORTER_REGISTRY=${{inputs.registry}} mage PublishImages PublishServerMultiArchImages
-
+      - name: checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v6
+        with:
+          go-version: ${{ inputs.goVersion }}
+      - name: Download Cross-Compiled Porter Binaries
+        uses: actions/download-artifact@v8.0.0
+        with:
+          name: xbuild-bin
+          path: bin
+      - name: Setup Bin
+        run: go run mage.go ConfigureAgent UseXBuildBinaries
+      - name: Login to Container Registry
+        uses: docker/login-action@v4.0.0
+        with:
+          registry: "${{inputs.registry}}"
+          username: "${{ github.actor }}"
+          password: "${{ secrets.GITHUB_TOKEN }}"
+      - name: Publish Docker Images to ${{inputs.registry}}
+        run: PORTER_REGISTRY=${{inputs.registry}} mage PublishImages PublishServerMultiArchImages

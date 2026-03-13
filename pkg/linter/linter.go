@@ -70,7 +70,7 @@ type Result struct {
 
 func (r Result) String() string {
 	var buffer strings.Builder
-	buffer.WriteString(fmt.Sprintf("%s(%s) - %s\n", r.Level, r.Code, r.Title))
+	fmt.Fprintf(&buffer, "%s(%s) - %s\n", r.Level, r.Code, r.Title)
 	if r.Location.Mixin != "" {
 		buffer.WriteString(r.Location.String() + "\n")
 	}
@@ -80,7 +80,7 @@ func (r Result) String() string {
 	}
 
 	if r.URL != "" {
-		buffer.WriteString(fmt.Sprintf("See %s for more information\n", r.URL))
+		fmt.Fprintf(&buffer, "See %s for more information\n", r.URL)
 	}
 
 	buffer.WriteString("---\n")

@@ -18,7 +18,7 @@ func TestPorter_GetUsedMixins(t *testing.T) {
 
 	// Add an extra mixin that isn't used by the bundle
 	testMixins := p.Mixins.(*mixin.TestMixinProvider)
-	testMixins.TestPackageManager.Packages = append(testMixins.TestPackageManager.Packages, &pkgmgmt.Metadata{
+	testMixins.Packages = append(testMixins.Packages, &pkgmgmt.Metadata{
 		Name: "mymixin",
 		VersionInfo: pkgmgmt.VersionInfo{
 			Version: "v0.1.0",

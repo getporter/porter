@@ -29,7 +29,7 @@ func buildAliasCommands(p *porter.Porter) []*cobra.Command {
 
 func buildCreateAlias(p *porter.Porter) *cobra.Command {
 	cmd := buildBundleCreateCommand(p)
-	cmd.Example = strings.Replace(cmd.Example, "porter bundle create", "porter create", -1)
+	cmd.Example = strings.ReplaceAll(cmd.Example, "porter bundle create", "porter create")
 	cmd.Annotations = map[string]string{
 		"group": "alias",
 	}
@@ -38,7 +38,7 @@ func buildCreateAlias(p *porter.Porter) *cobra.Command {
 
 func buildBuildAlias(p *porter.Porter) *cobra.Command {
 	cmd := buildBundleBuildCommand(p)
-	cmd.Example = strings.Replace(cmd.Example, "porter bundle build", "porter build", -1)
+	cmd.Example = strings.ReplaceAll(cmd.Example, "porter bundle build", "porter build")
 	cmd.Annotations = map[string]string{
 		"group": "alias",
 	}
@@ -47,7 +47,7 @@ func buildBuildAlias(p *porter.Porter) *cobra.Command {
 
 func buildLintAlias(p *porter.Porter) *cobra.Command {
 	cmd := buildBundleLintCommand(p)
-	cmd.Example = strings.Replace(cmd.Example, "porter bundle lint", "porter lint", -1)
+	cmd.Example = strings.ReplaceAll(cmd.Example, "porter bundle lint", "porter lint")
 	cmd.Annotations = map[string]string{
 		"group": "alias",
 	}
@@ -56,7 +56,7 @@ func buildLintAlias(p *porter.Porter) *cobra.Command {
 
 func buildInstallAlias(p *porter.Porter) *cobra.Command {
 	cmd := buildInstallationInstallCommand(p)
-	cmd.Example = strings.Replace(cmd.Example, "porter installation install", "porter install", -1)
+	cmd.Example = strings.ReplaceAll(cmd.Example, "porter installation install", "porter install")
 	cmd.Annotations = map[string]string{
 		"group": "alias",
 	}
@@ -65,7 +65,7 @@ func buildInstallAlias(p *porter.Porter) *cobra.Command {
 
 func buildUpgradeAlias(p *porter.Porter) *cobra.Command {
 	cmd := buildInstallationUpgradeCommand(p)
-	cmd.Example = strings.Replace(cmd.Example, "porter installation upgrade", "porter upgrade", -1)
+	cmd.Example = strings.ReplaceAll(cmd.Example, "porter installation upgrade", "porter upgrade")
 	cmd.Annotations = map[string]string{
 		"group": "alias",
 	}
@@ -74,7 +74,7 @@ func buildUpgradeAlias(p *porter.Porter) *cobra.Command {
 
 func buildInvokeAlias(p *porter.Porter) *cobra.Command {
 	cmd := buildInstallationInvokeCommand(p)
-	cmd.Example = strings.Replace(cmd.Example, "porter installation invoke", "porter invoke", -1)
+	cmd.Example = strings.ReplaceAll(cmd.Example, "porter installation invoke", "porter invoke")
 	cmd.Annotations = map[string]string{
 		"group": "alias",
 	}
@@ -83,7 +83,7 @@ func buildInvokeAlias(p *porter.Porter) *cobra.Command {
 
 func buildUninstallAlias(p *porter.Porter) *cobra.Command {
 	cmd := buildInstallationUninstallCommand(p)
-	cmd.Example = strings.Replace(cmd.Example, "porter installation uninstall", "porter uninstall", -1)
+	cmd.Example = strings.ReplaceAll(cmd.Example, "porter installation uninstall", "porter uninstall")
 	cmd.Annotations = map[string]string{
 		"group": "alias",
 	}
@@ -92,7 +92,7 @@ func buildUninstallAlias(p *porter.Porter) *cobra.Command {
 
 func buildPublishAlias(p *porter.Porter) *cobra.Command {
 	cmd := buildBundlePublishCommand(p)
-	cmd.Example = strings.Replace(cmd.Example, "porter bundle publish", "porter publish", -1)
+	cmd.Example = strings.ReplaceAll(cmd.Example, "porter bundle publish", "porter publish")
 	cmd.Annotations = map[string]string{
 		"group": "alias",
 	}
@@ -101,7 +101,7 @@ func buildPublishAlias(p *porter.Porter) *cobra.Command {
 
 func buildShowAlias(p *porter.Porter) *cobra.Command {
 	cmd := buildInstallationShowCommand(p)
-	cmd.Example = strings.Replace(cmd.Example, "porter installation show", "porter show", -1)
+	cmd.Example = strings.ReplaceAll(cmd.Example, "porter installation show", "porter show")
 	cmd.Annotations = map[string]string{
 		"group": "alias",
 	}
@@ -110,7 +110,7 @@ func buildShowAlias(p *porter.Porter) *cobra.Command {
 
 func buildListAlias(p *porter.Porter) *cobra.Command {
 	cmd := buildInstallationsListCommand(p)
-	cmd.Example = strings.Replace(cmd.Example, "porter installations list", "porter list", -1)
+	cmd.Example = strings.ReplaceAll(cmd.Example, "porter installations list", "porter list")
 	cmd.Annotations = map[string]string{
 		"group": "alias",
 	}
@@ -119,7 +119,7 @@ func buildListAlias(p *porter.Porter) *cobra.Command {
 
 func buildArchiveAlias(p *porter.Porter) *cobra.Command {
 	cmd := buildBundleArchiveCommand(p)
-	cmd.Example = strings.Replace(cmd.Example, "porter bundle archive", "porter archive", -1)
+	cmd.Example = strings.ReplaceAll(cmd.Example, "porter bundle archive", "porter archive")
 	cmd.Annotations = map[string]string{
 		"group": "alias",
 	}
@@ -128,7 +128,7 @@ func buildArchiveAlias(p *porter.Porter) *cobra.Command {
 
 func buildExplainAlias(p *porter.Porter) *cobra.Command {
 	cmd := buildBundleExplainCommand(p)
-	cmd.Example = strings.Replace(cmd.Example, "porter bundle explain", "porter explain", -1)
+	cmd.Example = strings.ReplaceAll(cmd.Example, "porter bundle explain", "porter explain")
 	cmd.Annotations = map[string]string{
 		"group": "alias",
 	}
@@ -137,7 +137,7 @@ func buildExplainAlias(p *porter.Porter) *cobra.Command {
 
 func buildCopyAlias(p *porter.Porter) *cobra.Command {
 	cmd := buildBundleCopyCommand(p)
-	cmd.Example = strings.Replace(cmd.Example, "porter bundle copy", "porter copy", -1)
+	cmd.Example = strings.ReplaceAll(cmd.Example, "porter bundle copy", "porter copy")
 	cmd.Annotations = map[string]string{
 		"group": "alias",
 	}
@@ -146,7 +146,7 @@ func buildCopyAlias(p *porter.Porter) *cobra.Command {
 
 func buildInspectAlias(p *porter.Porter) *cobra.Command {
 	cmd := buildBundleInspectCommand(p)
-	cmd.Example = strings.Replace(cmd.Example, "porter bundle inspect", "porter inspect", -1)
+	cmd.Example = strings.ReplaceAll(cmd.Example, "porter bundle inspect", "porter inspect")
 	cmd.Annotations = map[string]string{
 		"group": "alias",
 	}
@@ -157,7 +157,7 @@ func buildLogsAlias(p *porter.Porter) *cobra.Command {
 	cmd := buildInstallationLogShowCommand(p)
 	cmd.Use = "logs"
 	cmd.Aliases = []string{"log"}
-	cmd.Example = strings.Replace(cmd.Example, "porter installation logs show", "porter logs", -1)
+	cmd.Example = strings.ReplaceAll(cmd.Example, "porter installation logs show", "porter logs")
 	cmd.Annotations = map[string]string{
 		"group": "alias",
 	}
