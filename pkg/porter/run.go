@@ -83,7 +83,7 @@ func (p *Porter) Run(ctx context.Context, opts RunOptions) error {
 	// Once the bundle has been built, we shouldn't check the schemaVersion again when running it.
 	// If the author built it with the rules loosened, then it should execute regardless of the version matching.
 	// A warning is printed if it doesn't match.
-	p.Config.Data.SchemaCheck = string(schema.CheckStrategyNone)
+	p.Data.SchemaCheck = string(schema.CheckStrategyNone)
 
 	m, err := manifest.LoadManifestFrom(ctx, p.Config, opts.File)
 	if err != nil {

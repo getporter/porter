@@ -357,10 +357,7 @@ func (b *ExtendedBundle) determineDefaultTag(ctx context.Context, dep depsv1ext.
 		return "", fmt.Errorf("error listing tags for %s: %w", dep.Bundle, err)
 	}
 
-	allowPrereleases := false
-	if dep.Version != nil && dep.Version.AllowPrereleases {
-		allowPrereleases = true
-	}
+	allowPrereleases := dep.Version != nil && dep.Version.AllowPrereleases
 
 	return b.filterAndSelectTag(tags, allowPrereleases, dep.Bundle)
 }

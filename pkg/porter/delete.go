@@ -28,12 +28,12 @@ type DeleteOptions struct {
 // Validate prepares for an installation delete action and validates the args/options.
 func (o *DeleteOptions) Validate(args []string, cxt *portercontext.Context) error {
 	// Ensure only one argument exists (installation name) if args length non-zero
-	err := o.installationOptions.validateInstallationName(args)
+	err := o.validateInstallationName(args)
 	if err != nil {
 		return err
 	}
 
-	return o.installationOptions.defaultBundleFiles(cxt)
+	return o.defaultBundleFiles(cxt)
 }
 
 // DeleteInstallation handles deletion of an installation

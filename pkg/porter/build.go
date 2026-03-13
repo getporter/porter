@@ -276,7 +276,7 @@ func (p *Porter) buildBundle(ctx context.Context, m *manifest.Manifest, digest d
 }
 
 func (p Porter) writeBundle(b cnab.ExtendedBundle) error {
-	f, err := p.Config.FileSystem.OpenFile(build.LOCAL_BUNDLE, os.O_RDWR|os.O_CREATE|os.O_TRUNC, pkg.FileModeWritable)
+	f, err := p.FileSystem.OpenFile(build.LOCAL_BUNDLE, os.O_RDWR|os.O_CREATE|os.O_TRUNC, pkg.FileModeWritable)
 	if err != nil {
 		return fmt.Errorf("error creating %s: %w", build.LOCAL_BUNDLE, err)
 	}

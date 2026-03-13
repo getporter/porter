@@ -487,7 +487,7 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 				m.outputs[ps.OutputName] = val
 				bun["outputs"] = m.outputs
 
-				outputDef := m.Manifest.Outputs[ps.OutputName]
+				outputDef := m.Outputs[ps.OutputName]
 				if outputDef.Sensitive {
 					m.setSensitiveValue(val)
 				}

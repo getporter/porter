@@ -27,12 +27,12 @@ type ShowOptions struct {
 // Validate prepares for a show bundle action and validates the args/options.
 func (so *ShowOptions) Validate(args []string, cxt *portercontext.Context) error {
 	// Ensure only one argument exists (installation name) if args length non-zero
-	err := so.installationOptions.validateInstallationName(args)
+	err := so.validateInstallationName(args)
 	if err != nil {
 		return err
 	}
 
-	err = so.installationOptions.defaultBundleFiles(cxt)
+	err = so.defaultBundleFiles(cxt)
 	if err != nil {
 		return err
 	}

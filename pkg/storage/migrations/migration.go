@@ -517,7 +517,7 @@ func convertCredentialSet(namespace string, data []byte) (storage.CredentialSet,
 	}
 
 	for i, cred := range src.Credentials {
-		dest.CredentialSetSpec.Credentials[i] = secrets.SourceMap{
+		dest.Credentials[i] = secrets.SourceMap{
 			Name: cred.Name,
 			Source: secrets.Source{
 				Strategy: cred.Source.Key,

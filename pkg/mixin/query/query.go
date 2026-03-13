@@ -82,7 +82,7 @@ func (q *MixinQuery) Execute(ctx context.Context, cmd string, inputGenerator Mix
 			mixinContext.Out = mixinStdout // mixin stdout -> mixin result
 
 			if q.LogMixinErrors {
-				mixinContext.Err = q.Context.Out // mixin stderr -> porter logs
+				mixinContext.Err = q.Out // mixin stderr -> porter logs
 			} else {
 				mixinContext.Err = io.Discard
 			}

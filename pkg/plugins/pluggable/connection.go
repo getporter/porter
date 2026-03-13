@@ -266,7 +266,7 @@ func (c *PluginConnection) setUpDebugger(ctx context.Context, client *plugin.Cli
 	log := tracing.LoggerFromContext(ctx)
 
 	debugContext := c.config.PlugInDebugContext
-	if !(len(debugContext.RunPlugInInDebugger) > 0 && strings.ToLower(c.key.String()) == strings.TrimSpace(strings.ToLower(debugContext.RunPlugInInDebugger))) {
+	if len(debugContext.RunPlugInInDebugger) <= 0 || strings.ToLower(c.key.String()) != strings.TrimSpace(strings.ToLower(debugContext.RunPlugInInDebugger)) {
 		return nil
 	}
 

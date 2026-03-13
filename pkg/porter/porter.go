@@ -107,7 +107,7 @@ func (p *Porter) Connect(ctx context.Context) (context.Context, error) {
 	})
 
 	// Load the config file and replace any referenced secrets
-	return p.Config.Load(ctx, func(innerCtx context.Context, secret string) (string, error) {
+	return p.Load(ctx, func(innerCtx context.Context, secret string) (string, error) {
 		value, err := p.Secrets.Resolve(innerCtx, "secret", secret)
 		if err != nil {
 			if strings.Contains(err.Error(), "invalid value source: secret") {

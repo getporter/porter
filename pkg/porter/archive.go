@@ -91,7 +91,7 @@ func (p *Porter) Archive(ctx context.Context, opts ArchiveOptions) error {
 	defer log.EndSpan()
 
 	dir := filepath.Dir(opts.ArchiveFile)
-	if _, err := p.Config.FileSystem.Stat(dir); os.IsNotExist(err) {
+	if _, err := p.FileSystem.Stat(dir); os.IsNotExist(err) {
 		return log.Error(fmt.Errorf("parent directory %q does not exist", filepath.ToSlash(dir)))
 	}
 
@@ -106,15 +106,15 @@ func (p *Porter) Archive(ctx context.Context, opts ArchiveOptions) error {
 		return log.Error(err)
 	}
 
-	dest, err := p.Config.FileSystem.OpenFile(opts.ArchiveFile, os.O_RDWR|os.O_CREATE|os.O_TRUNC, pkg.FileModeWritable)
+	dest, err := p.FileSystem.OpenFile(opts.ArchiveFile, os.O_RDWR|os.O_CREATE|os.O_TRUNC, pkg.FileModeWritable)
 	if err != nil {
 		return log.Error(err)
 	}
 
 	exp := &exporter{
-		fs:                    p.Config.FileSystem,
-		out:                   p.Config.Out,
-		logs:                  p.Config.Out,
+		fs:                    p.FileSystem,
+		out:                   p.Out,
+		logs:                  p.Out,
 		bundle:                bundleRef.Definition,
 		relocationMap:         bundleRef.RelocationMap,
 		destination:           dest,

@@ -121,7 +121,7 @@ func TestMixin_Install(t *testing.T) {
 
 	assert.Len(t, action.Steps, 1)
 	step := action.Steps[0]
-	assert.Equal(t, "gcloud", step.Instruction.Command)
+	assert.Equal(t, "gcloud", step.Command)
 	require.Len(t, step.Outputs, 1)
 	assert.Equal(t, "$[*].id", step.Outputs[0].JsonPath)
 }
@@ -136,7 +136,7 @@ func TestMixin_Upgrade(t *testing.T) {
 
 	assert.Len(t, action.Steps, 1)
 	step := action.Steps[0]
-	assert.Equal(t, "bash", step.Instruction.Command)
+	assert.Equal(t, "bash", step.Command)
 	require.Len(t, step.Outputs, 1)
 	assert.Equal(t, "config/kube.yaml", step.Outputs[0].FilePath)
 }
@@ -151,7 +151,7 @@ func TestMixin_CustomAction(t *testing.T) {
 
 	assert.Len(t, action.Steps, 1)
 	step := action.Steps[0]
-	assert.Equal(t, "bash", step.Instruction.Command)
+	assert.Equal(t, "bash", step.Command)
 	require.Len(t, step.Outputs, 1)
 	assert.Equal(t, "Hello (.*)", step.Outputs[0].Regex)
 }
@@ -166,7 +166,7 @@ func TestMixin_Uninstall(t *testing.T) {
 
 	assert.Len(t, action.Steps, 1)
 	step := action.Steps[0]
-	assert.Equal(t, "bash", step.Instruction.Command)
+	assert.Equal(t, "bash", step.Command)
 }
 
 func TestMixin_SuffixArgs(t *testing.T) {
