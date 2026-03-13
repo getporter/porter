@@ -100,7 +100,7 @@ func TestExperimentalFlags(t *testing.T) {
 		err := cmd.Execute()
 		require.Error(t, err)
 
-		assert.False(t, p.Config.IsFeatureEnabled(experimental.FlagNoopFeature))
+		assert.False(t, p.IsFeatureEnabled(experimental.FlagNoopFeature))
 	})
 
 	t.Run("flag set", func(t *testing.T) {
@@ -112,7 +112,7 @@ func TestExperimentalFlags(t *testing.T) {
 		err := cmd.Execute()
 		require.Error(t, err)
 
-		assert.True(t, p.Config.IsFeatureEnabled(experimental.FlagNoopFeature))
+		assert.True(t, p.IsFeatureEnabled(experimental.FlagNoopFeature))
 	})
 
 	t.Run("env set", func(t *testing.T) {
@@ -127,7 +127,7 @@ func TestExperimentalFlags(t *testing.T) {
 		err := cmd.Execute()
 		require.Error(t, err)
 
-		assert.True(t, p.Config.IsFeatureEnabled(experimental.FlagNoopFeature))
+		assert.True(t, p.IsFeatureEnabled(experimental.FlagNoopFeature))
 	})
 
 	t.Run("cfg set", func(t *testing.T) {
@@ -141,7 +141,7 @@ func TestExperimentalFlags(t *testing.T) {
 		err := cmd.Execute()
 		require.Error(t, err)
 
-		assert.True(t, p.Config.IsFeatureEnabled(experimental.FlagNoopFeature))
+		assert.True(t, p.IsFeatureEnabled(experimental.FlagNoopFeature))
 	})
 
 	t.Run("flag set, cfg set", func(t *testing.T) {
@@ -155,7 +155,7 @@ func TestExperimentalFlags(t *testing.T) {
 		err := cmd.Execute()
 		require.Error(t, err)
 
-		assert.True(t, p.Config.IsFeatureEnabled(experimental.FlagNoopFeature))
+		assert.True(t, p.IsFeatureEnabled(experimental.FlagNoopFeature))
 	})
 
 	t.Run("flag set, env set", func(t *testing.T) {
@@ -170,7 +170,7 @@ func TestExperimentalFlags(t *testing.T) {
 		err := cmd.Execute()
 		require.Error(t, err)
 
-		assert.True(t, p.Config.IsFeatureEnabled(experimental.FlagNoopFeature))
+		assert.True(t, p.IsFeatureEnabled(experimental.FlagNoopFeature))
 	})
 
 	t.Run("env set, cfg set", func(t *testing.T) {
@@ -187,7 +187,7 @@ func TestExperimentalFlags(t *testing.T) {
 		err := cmd.Execute()
 		require.Error(t, err)
 
-		assert.False(t, p.Config.IsFeatureEnabled(experimental.FlagNoopFeature))
+		assert.False(t, p.IsFeatureEnabled(experimental.FlagNoopFeature))
 	})
 }
 
@@ -209,7 +209,7 @@ func TestVerbosity(t *testing.T) {
 		err := cmd.Execute()
 		require.Error(t, err)
 
-		assert.Equal(t, config.LogLevelInfo, p.Config.GetVerbosity())
+		assert.Equal(t, config.LogLevelInfo, p.GetVerbosity())
 	})
 
 	t.Run("flag set", func(t *testing.T) {
@@ -221,7 +221,7 @@ func TestVerbosity(t *testing.T) {
 		err := cmd.Execute()
 		require.Error(t, err)
 
-		assert.Equal(t, config.LogLevelDebug, p.Config.GetVerbosity())
+		assert.Equal(t, config.LogLevelDebug, p.GetVerbosity())
 	})
 
 	t.Run("env set", func(t *testing.T) {
@@ -236,7 +236,7 @@ func TestVerbosity(t *testing.T) {
 		err := cmd.Execute()
 		require.Error(t, err)
 
-		assert.Equal(t, config.LogLevelError, p.Config.GetVerbosity())
+		assert.Equal(t, config.LogLevelError, p.GetVerbosity())
 	})
 
 	t.Run("cfg set", func(t *testing.T) {
@@ -250,7 +250,7 @@ func TestVerbosity(t *testing.T) {
 		err := cmd.Execute()
 		require.Error(t, err)
 
-		assert.Equal(t, config.LogLevelWarn, p.Config.GetVerbosity())
+		assert.Equal(t, config.LogLevelWarn, p.GetVerbosity())
 	})
 
 	t.Run("flag set, cfg set", func(t *testing.T) {
@@ -264,7 +264,7 @@ func TestVerbosity(t *testing.T) {
 		err := cmd.Execute()
 		require.Error(t, err)
 
-		assert.Equal(t, config.LogLevelWarn, p.Config.GetVerbosity())
+		assert.Equal(t, config.LogLevelWarn, p.GetVerbosity())
 	})
 
 	t.Run("flag set, env set", func(t *testing.T) {
@@ -279,7 +279,7 @@ func TestVerbosity(t *testing.T) {
 		err := cmd.Execute()
 		require.Error(t, err)
 
-		assert.Equal(t, config.LogLevelDebug, p.Config.GetVerbosity())
+		assert.Equal(t, config.LogLevelDebug, p.GetVerbosity())
 	})
 
 	t.Run("env set, cfg set", func(t *testing.T) {
@@ -296,7 +296,7 @@ func TestVerbosity(t *testing.T) {
 		err := cmd.Execute()
 		require.Error(t, err)
 
-		assert.Equal(t, config.LogLevelWarn, p.Config.GetVerbosity())
+		assert.Equal(t, config.LogLevelWarn, p.GetVerbosity())
 	})
 }
 

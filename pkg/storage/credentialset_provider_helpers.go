@@ -76,7 +76,7 @@ func (p TestCredentialSetProvider) AddTestCredentials(path string) {
 		p.T.Fatal(fmt.Errorf("could not read test credentials from %s: %w", path, err))
 	}
 
-	err = p.CredentialStore.InsertCredentialSet(context.Background(), cs)
+	err = p.InsertCredentialSet(context.Background(), cs)
 	if err != nil {
 		p.T.Fatal(fmt.Errorf("could not load test credentials into in memory credential storage: %w", err))
 	}

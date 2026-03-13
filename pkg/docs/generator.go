@@ -50,7 +50,7 @@ func GenerateCliDocs(opts *DocsOptions) error {
 	}
 
 	for _, i := range items {
-		inew := strings.Replace(i, "porter_", "", -1)
+		inew := strings.ReplaceAll(i, "porter_", "")
 		err := os.Rename(i, inew)
 		if err != nil {
 			return fmt.Errorf("unable to rename markdown file: %w", err)
@@ -71,7 +71,7 @@ url: %s
 		name := filepath.Base(filename)
 		base := strings.TrimSuffix(name, path.Ext(name))
 		url := "/cli/" + strings.ToLower(base) + "/"
-		return fmt.Sprintf(fmTemplate, strings.Replace(base, "_", " ", -1), base, url)
+		return fmt.Sprintf(fmTemplate, strings.ReplaceAll(base, "_", " "), base, url)
 	}
 	return filePrepender
 }

@@ -26,7 +26,7 @@ func TestFindBundleCacheExists(t *testing.T) {
 	t.Parallel()
 
 	cfg := config.NewTestConfig(t)
-	home, err := cfg.Config.GetHomeDir()
+	home, err := cfg.GetHomeDir()
 	require.NoError(t, err, "should have had a porter home dir")
 	cacheDir := filepath.Join(home, "cache")
 	cfg.TestContext.AddTestDirectory("testdata", cacheDir)
@@ -41,7 +41,7 @@ func TestFindBundleCacheDoesNotExist(t *testing.T) {
 	t.Parallel()
 
 	cfg := config.NewTestConfig(t)
-	home, err := cfg.Config.GetHomeDir()
+	home, err := cfg.GetHomeDir()
 	require.NoError(t, err, "should have had a porter home dir")
 	cacheDir := filepath.Join(home, "cache")
 	cfg.TestContext.AddTestDirectory("testdata", cacheDir)
@@ -56,14 +56,14 @@ func TestFindBundleBundleCached(t *testing.T) {
 	t.Parallel()
 
 	cfg := config.NewTestConfig(t)
-	home, err := cfg.Config.GetHomeDir()
+	home, err := cfg.GetHomeDir()
 	require.NoError(t, err, "should have had a porter home dir")
 	cacheDir := filepath.Join(home, "cache")
 	cfg.TestContext.AddTestDirectory("testdata", cacheDir)
 	expectedCacheDirectory := filepath.Join(cacheDir, kahn1dot0Hash)
 	expectedCacheCNABDirectory := filepath.Join(expectedCacheDirectory, "cnab")
 	expectedCacheFile := filepath.Join(expectedCacheCNABDirectory, "bundle.json")
-	foundIt, err := cfg.Config.FileSystem.Exists(expectedCacheFile)
+	foundIt, err := cfg.FileSystem.Exists(expectedCacheFile)
 	require.NoError(t, err, "the cache dir should exist, no error should have happened")
 	require.True(t, foundIt, "test data not loaded")
 	c := New(cfg.Config)
@@ -97,7 +97,7 @@ func TestCacheWriteNoCacheDir(t *testing.T) {
 	cb, err := c.StoreBundle(cnab.BundleReference{Reference: kahn1dot01, Definition: bun})
 	assert.NoError(t, err, "storing bundle should have succeeded")
 
-	home, err := cfg.Config.GetHomeDir()
+	home, err := cfg.GetHomeDir()
 	require.NoError(t, err, "should have had a porter home dir")
 	cacheDir := filepath.Join(home, "cache")
 	expectedCacheDirectory := filepath.Join(cacheDir, kahn1dot0Hash)
@@ -111,7 +111,7 @@ func TestCacheWriteCacheDirExists(t *testing.T) {
 	t.Parallel()
 
 	cfg := config.NewTestConfig(t)
-	home, err := cfg.Config.GetHomeDir()
+	home, err := cfg.GetHomeDir()
 	require.NoError(t, err, "should have had a porter home dir")
 	cacheDir := filepath.Join(home, "cache")
 	cfg.TestContext.AddTestFile("testdata/cnab/bundle.json", "/cnab/bundle.json")
@@ -232,7 +232,7 @@ func TestStoreManifest(t *testing.T) {
 			t.Parallel()
 
 			cfg := config.NewTestConfig(t)
-			home, _ := cfg.Config.GetHomeDir()
+			home, _ := cfg.GetHomeDir()
 			cacheDir := filepath.Join(home, "cache")
 			cfg.TestContext.AddTestDirectory("testdata", cacheDir)
 			c := New(cfg.Config)
@@ -256,7 +256,7 @@ func TestCache_StoreBundle_Overwrite(t *testing.T) {
 	t.Parallel()
 	var err error
 	cfg := config.NewTestConfig(t)
-	home, _ := cfg.Config.GetHomeDir()
+	home, _ := cfg.GetHomeDir()
 	cacheDir := filepath.Join(home, "cache")
 	cfg.TestContext.AddTestDirectory("testdata", cacheDir)
 	c := New(cfg.Config)

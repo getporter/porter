@@ -103,7 +103,7 @@ func (r *PorterRuntime) executeStep(ctx context.Context, stepIndex int, step *ma
 	}
 
 	// Hand over values needing masking in config output streams
-	r.config.Context.SetSensitiveValues(r.RuntimeManifest.GetSensitiveValues())
+	r.config.SetSensitiveValues(r.RuntimeManifest.GetSensitiveValues())
 
 	input := &ActionInput{
 		action: r.RuntimeManifest.Action,

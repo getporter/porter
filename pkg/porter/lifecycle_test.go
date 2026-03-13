@@ -222,7 +222,7 @@ func TestBundleExecutionOptions_defaultDriver(t *testing.T) {
 	t.Run("allow docker host access defaults to config", func(t *testing.T) {
 		p := NewTestPorter(t)
 		defer p.Close()
-		p.Config.Data.AllowDockerHostAccess = true
+		p.Data.AllowDockerHostAccess = true
 
 		opts := NewBundleExecutionOptions()
 
@@ -234,7 +234,7 @@ func TestBundleExecutionOptions_defaultDriver(t *testing.T) {
 	t.Run("allow docker host access flag set", func(t *testing.T) {
 		p := NewTestPorter(t)
 		defer p.Close()
-		p.Config.Data.AllowDockerHostAccess = false
+		p.Data.AllowDockerHostAccess = false
 
 		opts := NewBundleExecutionOptions()
 		opts.AllowDockerHostAccess = true
@@ -334,7 +334,7 @@ func TestPorter_applyActionOptionsToInstallation_FollowsParameterHierarchy(t *te
 
 	makeOpts := func() InstallOptions {
 		opts := NewInstallOptions()
-		opts.BundleReferenceOptions.bundleRef = &cnab.BundleReference{
+		opts.bundleRef = &cnab.BundleReference{
 			Reference:  kahnlatest,
 			Definition: bun,
 		}
@@ -434,7 +434,7 @@ func TestPorter_applyActionOptionsToInstallation_sanitizesParameters(t *testing.
 	nonsensitiveParamName := "my-first-param"
 	nonsensitiveParamValue := "1"
 	opts := NewInstallOptions()
-	opts.BundleReferenceOptions.bundleRef = &cnab.BundleReference{
+	opts.bundleRef = &cnab.BundleReference{
 		Reference:  kahnlatest,
 		Definition: bun,
 	}
@@ -460,7 +460,7 @@ func TestPorter_applyActionOptionsToInstallation_sanitizesParameters(t *testing.
 	// When no parameter override specified, installation record should be updated
 	// as well
 	opts = NewInstallOptions()
-	opts.BundleReferenceOptions.bundleRef = &cnab.BundleReference{
+	opts.bundleRef = &cnab.BundleReference{
 		Reference:  kahnlatest,
 		Definition: bun,
 	}
@@ -498,7 +498,7 @@ func TestPorter_applyActionOptionsToInstallation_PreservesExistingParams(t *test
 	nonsensitiveParamName := "my-first-param"
 	nonsensitiveParamValue := "3"
 	opts := NewUpgradeOptions()
-	opts.BundleReferenceOptions.bundleRef = &cnab.BundleReference{
+	opts.bundleRef = &cnab.BundleReference{
 		Reference:  kahnlatest,
 		Definition: bun,
 	}
@@ -601,13 +601,13 @@ func Test_ensureVPrefix(t *testing.T) {
 
 			err = ensureVPrefix(&opts, io.Discard)
 
-			assert.Equal(t, tc.want, opts.BundlePullOptions.Reference)
+			assert.Equal(t, tc.want, opts.Reference)
 			assert.NoError(t, err)
 			if tc.wantRefTag == "" {
-				assert.Nil(t, opts.BundlePullOptions._ref)
+				assert.Nil(t, opts._ref)
 			} else {
-				require.NotNil(t, opts.BundlePullOptions._ref)
-				assert.Equal(t, tc.wantRefTag, opts.BundlePullOptions._ref.Tag())
+				require.NotNil(t, opts._ref)
+				assert.Equal(t, tc.wantRefTag, opts._ref.Tag())
 			}
 		})
 	}

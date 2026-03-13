@@ -211,7 +211,7 @@ func (c *ManifestConverter) generateOutputDefinition(ctx context.Context, defs *
 	}
 
 	if sourceOutput.Sensitive {
-		sourceOutput.Schema.WriteOnly = toBool(true)
+		sourceOutput.WriteOnly = toBool(true)
 	}
 
 	if sourceOutput.Type == nil {
@@ -259,7 +259,7 @@ func (c *ManifestConverter) generateParameterDefinition(ctx context.Context, def
 	}
 
 	if sourceParam.Sensitive {
-		sourceParam.Schema.WriteOnly = toBool(true)
+		sourceParam.WriteOnly = toBool(true)
 	}
 
 	if !sourceParam.Destination.IsEmpty() {

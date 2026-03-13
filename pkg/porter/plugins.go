@@ -63,7 +63,7 @@ func (p *Porter) PrintPlugins(ctx context.Context, opts PrintPluginsOptions) err
 				if !ok {
 					return nil
 				}
-				return []string{m.Name, m.VersionInfo.Version, m.VersionInfo.Author}
+				return []string{m.Name, m.Version, m.Author}
 			}
 		return printer.PrintTable(p.Out, installedPlugins, printRow, "Name", "Version", "Author")
 	case printer.FormatJson:

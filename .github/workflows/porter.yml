@@ -2,22 +2,22 @@ name: porter
 on:
   push:
     branches:
-    - main
+      - main
     paths-ignore:
-      - 'docs/**'
-      - '**/*.md'
-      - 'LICENSE'
-      - 'netlify.toml'
+      - "docs/**"
+      - "**/*.md"
+      - "LICENSE"
+      - "netlify.toml"
   pull_request:
     branches:
-    - main
+      - main
     paths-ignore:
-      - 'docs/**'
-      - '**/*.md'
-      - 'LICENSE'
-      - 'netlify.toml'
+      - "docs/**"
+      - "**/*.md"
+      - "LICENSE"
+      - "netlify.toml"
 env:
-  GOVERSION: 1.24.13
+  GOVERSION: 1.25.8
 permissions:
   contents: read
 
@@ -26,109 +26,109 @@ jobs:
     name: Native Compile
     runs-on: ubuntu-latest
     steps:
-    - name: checkout
-      uses: actions/checkout@v6
-    - uses: actions/setup-go@v6
-      with:
-        go-version: "${{ env.GOVERSION }}" # The Go version to download (if necessary) and use.
-        cache: true
-    - run: go version
-    - name: Native Build
-      run: go run mage.go build
-      shell: bash
-    - name: Check if all doc changes have been pushed
-      run: |
-        if [ "$(git status --porcelain docs/)" ];
-        then
-          echo "There are changes to the documentation that have not been pushed! Please push the following files after build"
-          git status -s docs/
-          exit 1
-        else
-          echo "All documentation changes have been pushed"
-        fi
-      shell: bash
-    - name: Publish Native Binaries
-      uses: actions/upload-artifact@v7.0.0
-      with:
-        name: build-bin
-        path: "${{ github.workspace }}/bin"
+      - name: checkout
+        uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version: "${{ env.GOVERSION }}" # The Go version to download (if necessary) and use.
+          cache: true
+      - run: go version
+      - name: Native Build
+        run: go run mage.go build
+        shell: bash
+      - name: Check if all doc changes have been pushed
+        run: |
+          if [ "$(git status --porcelain docs/)" ];
+          then
+            echo "There are changes to the documentation that have not been pushed! Please push the following files after build"
+            git status -s docs/
+            exit 1
+          else
+            echo "All documentation changes have been pushed"
+          fi
+        shell: bash
+      - name: Publish Native Binaries
+        uses: actions/upload-artifact@v7.0.0
+        with:
+          name: build-bin
+          path: "${{ github.workspace }}/bin"
 
   XBuild:
     name: Cross Compile
     runs-on: ubuntu-latest
     steps:
-    - name: checkout
-      uses: actions/checkout@v6
-    - uses: actions/setup-go@v6
-      with:
-        go-version: "${{ env.GOVERSION }}" # The Go version to download (if necessary) and use.
-        cache: true
-    - run: go version
-    - name: Cross Compile
-      run: go run mage.go -v XBuildAll
-      shell: bash
-    - name: Publish Release Binaries
-      uses: actions/upload-artifact@v7.0.0
-      with:
-        name: xbuild-bin
-        path: "${{ github.workspace }}/bin"
+      - name: checkout
+        uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version: "${{ env.GOVERSION }}" # The Go version to download (if necessary) and use.
+          cache: true
+      - run: go version
+      - name: Cross Compile
+        run: go run mage.go -v XBuildAll
+        shell: bash
+      - name: Publish Release Binaries
+        uses: actions/upload-artifact@v7.0.0
+        with:
+          name: xbuild-bin
+          path: "${{ github.workspace }}/bin"
 
   Unit_test:
     name: Unit Test
     runs-on: ubuntu-latest
     steps:
-    - name: checkout
-      uses: actions/checkout@v6
-    - uses: actions/setup-go@v6
-      with:
-        go-version: "${{ env.GOVERSION }}" # The Go version to download (if necessary) and use.
-        cache: true
-    - run: go version
-    - name: Unit Test
-      run: go run mage.go -v TestUnit
-      shell: bash
+      - name: checkout
+        uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version: "${{ env.GOVERSION }}" # The Go version to download (if necessary) and use.
+          cache: true
+      - run: go version
+      - name: Unit Test
+        run: go run mage.go -v TestUnit
+        shell: bash
 
   VetLint:
     name: Vet and Lint
     runs-on: ubuntu-latest
     steps:
-    - name: checkout
-      uses: actions/checkout@v6
-    - uses: actions/setup-go@v6
-      with:
-        go-version: "${{ env.GOVERSION }}" # The Go version to download (if necessary) and use.
-        cache: true
-    - run: go version
-    - name: Vet
-      run: go run mage.go Vet
-      shell: bash
-    - name: Lint
-      run: go run mage.go Lint
-      shell: bash
+      - name: checkout
+        uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version: "${{ env.GOVERSION }}" # The Go version to download (if necessary) and use.
+          cache: true
+      - run: go version
+      - name: Vet
+        run: go run mage.go Vet
+        shell: bash
+      - name: Lint
+        run: go run mage.go Lint
+        shell: bash
 
   Build-docker-images:
     name: Build Docker Images
     needs:
-    - XBuild
+      - XBuild
     runs-on: ubuntu-latest
     if: success()
     steps:
-    - name: checkout
-      uses: actions/checkout@v6
-    - uses: actions/setup-go@v6
-      with:
-        go-version: "${{ env.GOVERSION }}" # The Go version to download (if necessary) and use.
-        cache: true
-    - run: go version
-    - name: Download Cross-Compiled Porter Binaries
-      uses: actions/download-artifact@v8.0.0
-      with:
-        name: xbuild-bin
-        path: bin
-    - name: Setup Bin
-      run: go run mage.go UseXBuildBinaries
-    - name: Build Docker Images
-      run: go run mage.go BuildImages
+      - name: checkout
+        uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version: "${{ env.GOVERSION }}" # The Go version to download (if necessary) and use.
+          cache: true
+      - run: go version
+      - name: Download Cross-Compiled Porter Binaries
+        uses: actions/download-artifact@v8.0.0
+        with:
+          name: xbuild-bin
+          path: bin
+      - name: Setup Bin
+        run: go run mage.go UseXBuildBinaries
+      - name: Build Docker Images
+        run: go run mage.go BuildImages
 
   Smoke-test:
     name: Smoke Test
@@ -136,43 +136,43 @@ jobs:
       - XBuild
     runs-on: ubuntu-latest
     steps:
-    - name: checkout
-      uses: actions/checkout@v6
-    - name: Download Cross-Compiled Porter Binaries
-      uses: actions/download-artifact@v8.0.0
-      with:
-        name: xbuild-bin
-        path: bin
-    - uses: actions/setup-go@v6
-      with:
-        go-version: "${{ env.GOVERSION }}" # The Go version to download (if necessary) and use.
-        cache: true
-    - run: go version
-    - name: Setup Bin
-      run: go run mage.go UseXBuildBinaries
-    - name: Aggressive cleanup
-      run: |
-        df -h
-        # Remove Java (JDKs)
-        sudo rm -rf /usr/lib/jvm
-        # Remove .NET SDKs
-        sudo rm -rf /usr/share/dotnet
-        # Remove Swift toolchain
-        sudo rm -rf /usr/share/swift
-        # Remove Haskell (GHC)
-        sudo rm -rf /usr/local/.ghcup
-        # Remove Julia
-        sudo rm -rf /usr/local/julia*
-        # Remove Android SDKs
-        sudo rm -rf /usr/local/lib/android
-        # Remove Chromium (optional if not using for browser tests)
-        sudo rm -rf /usr/local/share/chromium
-        # Remove Microsoft/Edge and Google Chrome builds
-        sudo rm -rf /opt/microsoft /opt/google
-        # Remove Azure CLI
-        sudo rm -rf /opt/az
-        # Remove PowerShell
-        sudo rm -rf /usr/local/share/powershell
-        df -h
-    - name: Run Smoke Tests
-      run: go run mage.go -v TestSmoke
+      - name: checkout
+        uses: actions/checkout@v6
+      - name: Download Cross-Compiled Porter Binaries
+        uses: actions/download-artifact@v8.0.0
+        with:
+          name: xbuild-bin
+          path: bin
+      - uses: actions/setup-go@v6
+        with:
+          go-version: "${{ env.GOVERSION }}" # The Go version to download (if necessary) and use.
+          cache: true
+      - run: go version
+      - name: Setup Bin
+        run: go run mage.go UseXBuildBinaries
+      - name: Aggressive cleanup
+        run: |
+          df -h
+          # Remove Java (JDKs)
+          sudo rm -rf /usr/lib/jvm
+          # Remove .NET SDKs
+          sudo rm -rf /usr/share/dotnet
+          # Remove Swift toolchain
+          sudo rm -rf /usr/share/swift
+          # Remove Haskell (GHC)
+          sudo rm -rf /usr/local/.ghcup
+          # Remove Julia
+          sudo rm -rf /usr/local/julia*
+          # Remove Android SDKs
+          sudo rm -rf /usr/local/lib/android
+          # Remove Chromium (optional if not using for browser tests)
+          sudo rm -rf /usr/local/share/chromium
+          # Remove Microsoft/Edge and Google Chrome builds
+          sudo rm -rf /opt/microsoft /opt/google
+          # Remove Azure CLI
+          sudo rm -rf /opt/az
+          # Remove PowerShell
+          sudo rm -rf /usr/local/share/powershell
+          df -h
+      - name: Run Smoke Tests
+        run: go run mage.go -v TestSmoke

@@ -71,7 +71,7 @@ func (t *Templates) GetRunScript() ([]byte, error) {
 // GetSchema returns the template manifest schema for the porter manifest.
 // Note that it is incomplete and does not include the mixins' schemas.
 func (t *Templates) GetSchema() ([]byte, error) {
-	if t.Config.IsFeatureEnabled(experimental.FlagDependenciesV2) {
+	if t.IsFeatureEnabled(experimental.FlagDependenciesV2) {
 		return t.fs.ReadFile("templates/v1.1.0.schema.json")
 	}
 	return t.fs.ReadFile("templates/schema.json")

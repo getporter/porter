@@ -95,7 +95,7 @@ func TestFileSystem_InstallFromFeedUrl(t *testing.T) {
 		if strings.HasSuffix(r.RequestURI, "atom.xml") {
 			// swap out the urls in the test atom feed to match the test http server here so that porter downloads
 			// the package binaries from the fake server
-			testAtom := strings.Replace(string(feed), "https://cdn.porter.sh", testURL, -1)
+			testAtom := strings.ReplaceAll(string(feed), "https://cdn.porter.sh", testURL)
 			fmt.Fprintln(w, testAtom)
 		} else {
 			fmt.Fprintf(w, "#!/usr/bin/env bash\necho i am helm\n")

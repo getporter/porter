@@ -455,7 +455,7 @@ func (cw *CensoredWriter) Write(b []byte) (int, error) {
 	auditedBytes := b
 	for _, val := range cw.sensitiveValues {
 		if strings.TrimSpace(val) != "" {
-			auditedBytes = bytes.Replace(auditedBytes, []byte(val), []byte("*******"), -1)
+			auditedBytes = bytes.ReplaceAll(auditedBytes, []byte(val), []byte("*******"))
 		}
 	}
 
@@ -466,7 +466,7 @@ func (cw *CensoredWriter) Write(b []byte) (int, error) {
 func (cw *CensoredWriter) Censor(b []byte) []byte {
 	for _, val := range cw.sensitiveValues {
 		if strings.TrimSpace(val) != "" {
-			b = bytes.Replace(b, []byte(val), []byte("*******"), -1)
+			b = bytes.ReplaceAll(b, []byte(val), []byte("*******"))
 		}
 	}
 
