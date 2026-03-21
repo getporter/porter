@@ -1,0 +1,18 @@
+version: "2"
+
+linters:
+  exclusions:
+    rules:
+      # Restore errcheck exclusions for patterns that are industry-standard to ignore:
+      # fmt.Print* writes to stdout/stderr where errors are unactionable, Close/Flush
+      # errors are often unrecoverable, and os.Setenv/Unsetenv/Remove only fail on
+      # programming errors (invalid names or permissions) that are caught in testing.
+      - linters:
+          - errcheck
+        text: "Error return value of `.*(Close|Flush|fmt\\.F(print|println|printf)|os\\.(Setenv|Unsetenv|Remove|RemoveAll)).*` is not checked"
+      # Porter is a user-facing CLI so error messages intentionally use capital letters
+      # and terminal punctuation for readability. Disable ST1005 style enforcement.
+      - linters:
+          - staticcheck
+        text: "ST1005:"
+

@@ -515,7 +515,7 @@ func (pd *ParameterDefinition) Validate() error {
 	}
 
 	// Validate the Parameter Definition schema itself
-	if _, err := pdCopy.Schema.ValidateSchema(); err != nil {
+	if _, err := pdCopy.ValidateSchema(); err != nil {
 		return multierror.Append(result, fmt.Errorf("encountered an error while validating definition for parameter %q: %w", pdCopy.Name, err))
 	}
 
@@ -1059,7 +1059,7 @@ func (od *OutputDefinition) Validate() error {
 	}
 
 	// Validate the Output Definition schema itself
-	if _, err := odCopy.Schema.ValidateSchema(); err != nil {
+	if _, err := odCopy.ValidateSchema(); err != nil {
 		return multierror.Append(result, fmt.Errorf("encountered an error while validating definition for output %q: %w", odCopy.Name, err))
 	}
 

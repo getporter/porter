@@ -467,7 +467,7 @@ func PublishPorter() {
 
 	porterVersionDir := filepath.Join("bin", info.Version)
 	execVersionDir := filepath.Join("bin/mixins/exec", info.Version)
-	var repo = os.Getenv("PORTER_RELEASE_REPOSITORY")
+	repo := os.Getenv("PORTER_RELEASE_REPOSITORY")
 	if repo == "" {
 		repo = "github.com/getporter/porter"
 	}
@@ -690,7 +690,7 @@ func Vet() {
 
 // Run golangci-lint on the project
 func Lint() {
-	mg.Deps(tools.EnsureGolangCILint)
+	mg.Deps(func() { tools.EnsureGolangCILintAt("2.11.3") })
 	must.RunV("golangci-lint", "run", "--max-issues-per-linter", "0", "--max-same-issues", "0", "./...")
 }
 

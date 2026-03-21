@@ -131,7 +131,7 @@ func (e *dependencyExecutioner) PrepareRootActionArguments(ctx context.Context) 
 		if err != nil {
 			return cnabprovider.ActionArguments{}, err
 		}
-		target := runtime.GetDependencyDefinitionPath(dep.DependencyLock.Alias)
+		target := runtime.GetDependencyDefinitionPath(dep.Alias)
 		args.Files[target] = string(dep.cnabFileContents)
 	}
 	return args, nil

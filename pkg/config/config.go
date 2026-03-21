@@ -151,7 +151,7 @@ func (c *Config) loadData(ctx context.Context, templateData map[string]interface
 	}
 
 	// Now that we have completely loaded our config, configure our final logging/tracing
-	ctx = c.Context.ConfigureLogging(ctx, c.NewLogConfiguration())
+	ctx = c.ConfigureLogging(ctx, c.NewLogConfiguration())
 	return ctx, nil
 }
 

@@ -84,7 +84,7 @@ func (p *Porter) CopyTemplate(getTemplate func() ([]byte, error), dest string) e
 		return err
 	}
 
-	var mode os.FileMode = pkg.FileModeWritable
+	var mode = pkg.FileModeWritable
 	if filepath.Ext(dest) == ".sh" {
 		mode = pkg.FileModeExecutable
 	}

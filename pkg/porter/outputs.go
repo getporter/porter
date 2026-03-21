@@ -43,7 +43,7 @@ func (o *OutputShowOptions) Validate(args []string, cxt *portercontext.Context) 
 	}
 
 	// Attempt to derive installation name from context
-	err := o.installationOptions.defaultBundleFiles(cxt)
+	err := o.defaultBundleFiles(cxt)
 	if err != nil {
 		return err
 	}
@@ -59,7 +59,7 @@ func (o *OutputShowOptions) Validate(args []string, cxt *portercontext.Context) 
 // setting attributes of OutputListOptions as applicable
 func (o *OutputListOptions) Validate(args []string, cxt *portercontext.Context) error {
 	// Ensure only one argument exists (installation name) if args length non-zero
-	err := o.installationOptions.validateInstallationName(args)
+	err := o.validateInstallationName(args)
 	if err != nil {
 		return err
 	}
@@ -69,7 +69,7 @@ func (o *OutputListOptions) Validate(args []string, cxt *portercontext.Context) 
 	}
 
 	// Attempt to derive installation name from context
-	err = o.installationOptions.defaultBundleFiles(cxt)
+	err = o.defaultBundleFiles(cxt)
 	if err != nil {
 		return err
 	}

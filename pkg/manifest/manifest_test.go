@@ -1065,7 +1065,7 @@ func TestParameterDefinition_UpdateApplyTo(t *testing.T) {
 			}
 
 			if tc.defaultValue != "" {
-				pd.Schema.Default = tc.defaultValue
+				pd.Default = tc.defaultValue
 			}
 
 			pd.UpdateApplyTo(m)
