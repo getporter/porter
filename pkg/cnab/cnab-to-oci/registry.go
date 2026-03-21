@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 	"strings"
 
 	"get.porter.sh/porter/pkg/cnab"
@@ -191,8 +190,8 @@ func (r *Registry) PushBundle(ctx context.Context, bundleRef cnab.BundleReferenc
 	return bundleRef, nil
 }
 
-func resolveAuthConfig(targetRef cnab.OCIReference) configtypes.AuthConfig {
-	cfg := config.LoadDefaultConfigFile(os.Stderr)
+func (r *Registry) resolveAuthConfig(targetRef cnab.OCIReference) configtypes.AuthConfig {
+	cfg := config.LoadDefaultConfigFile(r.Err)
 
 	hostName := reference.Domain(targetRef.Named)
 	if hostName == defaultDomain || hostName == legacyDefaultDomain || hostName == defaultRegistryHost {
@@ -231,8 +230,8 @@ func (r *Registry) PushImage(ctx context.Context, ref cnab.OCIReference, opts Re
 		return "", log.Errorf("error creating a docker client: %w", err)
 	}
 
-	// Resolve the Repository name from fqn to RepositoryInfo
-	authConfig := resolveAuthConfig(ref)
+	// Load registry auth for the image reference and encode it for the Docker API
+	authConfig := r.resolveAuthConfig(ref)
 	encodedAuth, err := authconfig.Encode(registrytypes.AuthConfig{
 		Username:      authConfig.Username,
 		Password:      authConfig.Password,
@@ -284,8 +283,8 @@ func (r *Registry) PullImage(ctx context.Context, ref cnab.OCIReference, opts Re
 		return log.Error(err)
 	}
 
-	// Resolve the Repository name from fqn to RepositoryInfo
-	authConfig := resolveAuthConfig(ref)
+	// Resolve auth for the image reference and encode it for the Docker client
+	authConfig := r.resolveAuthConfig(ref)
 	encodedAuth, err := authconfig.Encode(registrytypes.AuthConfig{
 		Username:      authConfig.Username,
 		Password:      authConfig.Password,
