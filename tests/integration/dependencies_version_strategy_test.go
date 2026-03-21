@@ -126,6 +126,77 @@ func TestInstall_DependencyVersionStrategy_MaxPatchSelectsHighest(t *testing.T) 
 		"max-patch should select the highest matching tag")
 }
 
+// TestInstall_DependencyVersionStrategy_MaxPatchRestrictsToPatch verifies that
+// --dependencies-version-strategy=max-patch limits version selection to the
+// same major.minor as the default tag encoded in the dependency reference,
+// even when the bundle's stated version range would allow higher minor/major
+// versions.
+func TestInstall_DependencyVersionStrategy_MaxPatchRestrictsToPatch(t *testing.T) {
+	t.Parallel()
+
+	p := porter.NewTestPorter(t)
+	ctx := p.SetupIntegrationTest()
+	defer p.Close()
+
+	p.Registry = p.TestRegistry
+	// v1.2.4 and v1.2.5 are patch upgrades of the default v1.2.3.
+	// v1.3.0 and v2.0.0 are outside the max-patch window.
+	p.TestRegistry.MockListTags = mockTags([]string{"v1.2.4", "v1.2.5", "v1.3.0", "v2.0.0"})
+
+	var pulledRef string
+	p.TestRegistry.MockPullBundle = func(_ context.Context, ref cnab.OCIReference, _ cnabtooci.RegistryOptions) (cnab.BundleReference, error) {
+		pulledRef = ref.String()
+		return cnab.BundleReference{Reference: ref}, nil
+	}
+
+	// Default ref contains the version tag v1.2.3; range is broad (>=1.0.0).
+	bundlePath := depBundleJSON(t, p.Getwd(), "example.com/mysql:v1.2.3", []string{">=1.0.0"})
+
+	opts := porter.NewInstallOptions()
+	opts.CNABFile = bundlePath
+	opts.DependenciesVersionStrategy = config.DependencyVersionStrategyMaxPatch
+	require.NoError(t, opts.Validate(ctx, []string{}, p.Porter))
+
+	_ = p.InstallBundle(ctx, opts)
+
+	assert.Equal(t, "example.com/mysql:v1.2.5", pulledRef,
+		"max-patch should stay within major.minor of the default version")
+}
+
+// TestInstall_DependencyVersionStrategy_MaxMinorRestrictsToMajor verifies
+// that --dependencies-version-strategy=max-minor limits version selection
+// to the same major as the default tag, allowing minor upgrades but blocking
+// major upgrades even when the bundle's stated range permits them.
+func TestInstall_DependencyVersionStrategy_MaxMinorRestrictsToMajor(t *testing.T) {
+	t.Parallel()
+
+	p := porter.NewTestPorter(t)
+	ctx := p.SetupIntegrationTest()
+	defer p.Close()
+
+	p.Registry = p.TestRegistry
+	// v1.3.0 is a minor upgrade of the default v1.2.3; v2.0.0 is a major upgrade.
+	p.TestRegistry.MockListTags = mockTags([]string{"v1.2.4", "v1.3.0", "v2.0.0"})
+
+	var pulledRef string
+	p.TestRegistry.MockPullBundle = func(_ context.Context, ref cnab.OCIReference, _ cnabtooci.RegistryOptions) (cnab.BundleReference, error) {
+		pulledRef = ref.String()
+		return cnab.BundleReference{Reference: ref}, nil
+	}
+
+	bundlePath := depBundleJSON(t, p.Getwd(), "example.com/mysql:v1.2.3", []string{">=1.0.0"})
+
+	opts := porter.NewInstallOptions()
+	opts.CNABFile = bundlePath
+	opts.DependenciesVersionStrategy = config.DependencyVersionStrategyMaxMinor
+	require.NoError(t, opts.Validate(ctx, []string{}, p.Porter))
+
+	_ = p.InstallBundle(ctx, opts)
+
+	assert.Equal(t, "example.com/mysql:v1.3.0", pulledRef,
+		"max-minor should stay within the major of the default version")
+}
+
 // TestUpgrade_DependencyVersionStrategy_MinSelectsLowest verifies that
 // --dependencies-version-strategy=min selects the lowest matching semver
 // tag from the registry during upgrade, tested through the real
