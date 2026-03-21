@@ -336,7 +336,7 @@ func (b *ExtendedBundle) ResolveVersion(ctx context.Context, name string, dep de
 			return ref, nil
 		}
 
-		tag, err := b.determineDefaultTag(ctx, dep, "")
+		tag, err := b.determineDefaultTag(ctx, dep, "", "")
 		if err != nil {
 			return OCIReference{}, err
 		}
@@ -350,14 +350,15 @@ func (b *ExtendedBundle) ResolveVersion(ctx context.Context, name string, dep de
 	}
 
 	constraint := strings.Join(dep.Version.Ranges, " || ")
-	tag, err := b.determineDefaultTag(ctx, dep, constraint)
+	sc := b.strategyConstraintFromRef(ref)
+	tag, err := b.determineDefaultTag(ctx, dep, constraint, sc)
 	if err != nil {
 		return OCIReference{}, err
 	}
 	return ref.WithTag(tag)
 }
 
-func (b *ExtendedBundle) determineDefaultTag(ctx context.Context, dep depsv1ext.Dependency, versionConstraint string) (string, error) {
+func (b *ExtendedBundle) determineDefaultTag(ctx context.Context, dep depsv1ext.Dependency, versionConstraint, strategyConstraint string) (string, error) {
 	if b.registry == nil {
 		return "", fmt.Errorf("registry provider not set for dependency resolution")
 	}
@@ -380,7 +381,40 @@ func (b *ExtendedBundle) determineDefaultTag(ctx context.Context, dep depsv1ext.
 
 	allowPrereleases := dep.Version != nil && dep.Version.AllowPrereleases
 
-	return b.filterAndSelectTag(tags, allowPrereleases, dep.Bundle, versionConstraint)
+	return b.filterAndSelectTag(tags, allowPrereleases, dep.Bundle, versionConstraint, strategyConstraint)
+}
+
+// strategyConstraintFromRef derives an additional semver constraint from the
+// default version encoded in ref and the current versionStrategy. Returns ""
+// when no narrowing is needed (e.g. strategy is "min", or ref has no version).
+func (b *ExtendedBundle) strategyConstraintFromRef(ref OCIReference) string {
+	if !ref.HasVersion() {
+		return ""
+	}
+	defaultVer, err := semver.NewVersion(ref.Tag())
+	if err != nil {
+		return ""
+	}
+	return computeStrategyConstraint(defaultVer, b.versionStrategy)
+}
+
+// computeStrategyConstraint returns a semver constraint string that narrows a
+// version range to patch-level or minor-level upgrades relative to defaultVer:
+//   - max-patch: same major.minor (>=M.N.0, <M.(N+1).0)
+//   - max-minor: same major      (>=M.0.0, <(M+1).0.0)
+//   - anything else: "" (no additional constraint)
+func computeStrategyConstraint(defaultVer *semver.Version, strategy string) string {
+	switch strategy {
+	case "max-patch":
+		return fmt.Sprintf(">= %d.%d.0, < %d.%d.0",
+			defaultVer.Major(), defaultVer.Minor(),
+			defaultVer.Major(), defaultVer.Minor()+1)
+	case "max-minor":
+		return fmt.Sprintf(">= %d.0.0, < %d.0.0",
+			defaultVer.Major(), defaultVer.Major()+1)
+	default:
+		return ""
+	}
 }
 
 // BuildPrerequisiteInstallationName generates the name of a prerequisite dependency installation.
@@ -391,14 +425,26 @@ func (b *ExtendedBundle) BuildPrerequisiteInstallationName(installation string, 
 // filterAndSelectTag filters tags and selects the best match.
 // When versionConstraint is non-empty, only tags satisfying the constraint are
 // considered; the "latest" fallback is skipped.
+// When strategyConstraint is non-empty, it is applied as an additional filter
+// on top of versionConstraint (used by max-patch/max-minor to narrow the range
+// relative to the default version).
 // The b.versionStrategy field controls ascending (min) vs. descending (all others) order.
-func (b *ExtendedBundle) filterAndSelectTag(tags []string, allowPrereleases bool, bundleRef, versionConstraint string) (string, error) {
+func (b *ExtendedBundle) filterAndSelectTag(tags []string, allowPrereleases bool, bundleRef, versionConstraint, strategyConstraint string) (string, error) {
 	var constraint *semver.Constraints
 	if versionConstraint != "" {
 		var err error
 		constraint, err = semver.NewConstraint(versionConstraint)
 		if err != nil {
 			return "", fmt.Errorf("invalid version constraint %q for %s: %w", versionConstraint, bundleRef, err)
+		}
+	}
+
+	var sConstraint *semver.Constraints
+	if strategyConstraint != "" {
+		var err error
+		sConstraint, err = semver.NewConstraint(strategyConstraint)
+		if err != nil {
+			return "", fmt.Errorf("invalid strategy constraint %q for %s: %w", strategyConstraint, bundleRef, err)
 		}
 	}
 
@@ -416,6 +462,9 @@ func (b *ExtendedBundle) filterAndSelectTag(tags []string, allowPrereleases bool
 				continue
 			}
 			if constraint != nil && !constraint.Check(version) {
+				continue
+			}
+			if sConstraint != nil && !sConstraint.Check(version) {
 				continue
 			}
 			versions = append(versions, version)
@@ -453,7 +502,7 @@ func (b *ExtendedBundle) ResolveVersionv2(ctx context.Context, name string, dep 
 			return ref, nil
 		}
 
-		tag, err := b.determineDefaultTagv2(ctx, dep, "")
+		tag, err := b.determineDefaultTagv2(ctx, dep, "", "")
 		if err != nil {
 			return OCIReference{}, err
 		}
@@ -466,14 +515,15 @@ func (b *ExtendedBundle) ResolveVersionv2(ctx context.Context, name string, dep 
 		return OCIReference{}, fmt.Errorf("dependency %s specifies a version constraint but the version strategy is %q; set dependencies.version-strategy to max-patch, max-minor, or min to resolve ranges", name, b.versionStrategy)
 	}
 
-	tag, err := b.determineDefaultTagv2(ctx, dep, dep.Version)
+	sc := b.strategyConstraintFromRef(ref)
+	tag, err := b.determineDefaultTagv2(ctx, dep, dep.Version, sc)
 	if err != nil {
 		return OCIReference{}, err
 	}
 	return ref.WithTag(tag)
 }
 
-func (b *ExtendedBundle) determineDefaultTagv2(ctx context.Context, dep v2.Dependency, versionConstraint string) (string, error) {
+func (b *ExtendedBundle) determineDefaultTagv2(ctx context.Context, dep v2.Dependency, versionConstraint, strategyConstraint string) (string, error) {
 	if b.registry == nil {
 		return "", fmt.Errorf("registry provider not set for dependency resolution")
 	}
@@ -495,5 +545,5 @@ func (b *ExtendedBundle) determineDefaultTagv2(ctx context.Context, dep v2.Depen
 	}
 
 	// v2 dependencies don't have allowPrereleases field, so default to false
-	return b.filterAndSelectTag(tags, false, dep.Bundle, versionConstraint)
+	return b.filterAndSelectTag(tags, false, dep.Bundle, versionConstraint, strategyConstraint)
 }

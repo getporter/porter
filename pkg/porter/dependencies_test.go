@@ -203,3 +203,48 @@ func TestIdentifyDependencies_UpgradeUsesStrategy(t *testing.T) {
 	assert.Equal(t, "example.com/mysql:v1.2", e.deps[0].Reference,
 		"upgrade with max-minor should pick highest matching version")
 }
+
+func TestIdentifyDependencies_MaxPatchRestrictsToPatchLevel(t *testing.T) {
+	t.Parallel()
+
+	p := NewTestPorter(t)
+	defer p.Close()
+	// v1.2.4 and v1.2.5 are patch upgrades of v1.2.3; v1.3.0 and v2.0.0 are not.
+	p.TestRegistry.MockListTags = staticTags([]string{"v1.2.4", "v1.2.5", "v1.3.0", "v2.0.0"})
+
+	// Default ref includes the version tag; range is broad (>=1.0.0).
+	bunData := bundleWithV1Ranges(t, "example.com/mysql:v1.2.3", []string{">=1.0.0"})
+	require.NoError(t, p.FileSystem.WriteFile("/bundle.json", bunData, 0600))
+
+	opts := NewInstallOptions()
+	opts.DependenciesVersionStrategy = config.DependencyVersionStrategyMaxPatch
+
+	e := newExecWithCNABFile(p, "/bundle.json", &opts)
+	err := e.identifyDependencies(context.Background())
+	require.NoError(t, err)
+	require.Len(t, e.deps, 1)
+	assert.Equal(t, "example.com/mysql:v1.2.5", e.deps[0].Reference,
+		"max-patch should stay within the same major.minor as the default version")
+}
+
+func TestIdentifyDependencies_MaxMinorRestrictsToMinorLevel(t *testing.T) {
+	t.Parallel()
+
+	p := NewTestPorter(t)
+	defer p.Close()
+	// v1.3.0 is a minor upgrade of v1.2.3; v2.0.0 is a major upgrade.
+	p.TestRegistry.MockListTags = staticTags([]string{"v1.2.4", "v1.3.0", "v2.0.0"})
+
+	bunData := bundleWithV1Ranges(t, "example.com/mysql:v1.2.3", []string{">=1.0.0"})
+	require.NoError(t, p.FileSystem.WriteFile("/bundle.json", bunData, 0600))
+
+	opts := NewInstallOptions()
+	opts.DependenciesVersionStrategy = config.DependencyVersionStrategyMaxMinor
+
+	e := newExecWithCNABFile(p, "/bundle.json", &opts)
+	err := e.identifyDependencies(context.Background())
+	require.NoError(t, err)
+	require.Len(t, e.deps, 1)
+	assert.Equal(t, "example.com/mysql:v1.3.0", e.deps[0].Reference,
+		"max-minor should stay within the same major as the default version")
+}
