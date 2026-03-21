@@ -96,6 +96,11 @@ experimental:
 # Use Docker buildkit to build the bundle
 build-driver: "buildkit"
 
+# Control how Porter selects a version when a dependency specifies a version range.
+# Allowed values: exact (default), max-patch, max-minor, min.
+dependencies:
+  version-strategy: "max-minor"
+
 # Do not automatically build a bundle from source
 # before running the requested command when Porter detects that it is out-of-date.
 # Porter detects changes to porter.yaml, mixins, Porter version, and all files in the bundle directory
@@ -359,6 +364,25 @@ You should trust any bundles that you execute with this setting enabled as it gi
 
 ⚠️️ This configuration setting is only available when you are in an environment that provides access to the local docker daemon.
 Therefore, it does not work with the Azure Cloud Shell driver.
+
+### Dependency Version Strategy
+
+The `dependencies.version-strategy` setting controls how Porter selects a bundle version when a dependency declares a [version range](#version-ranges) instead of a pinned tag.
+
+It can be set in the config file, overridden with the `PORTER_DEPENDENCIES_VERSION_STRATEGY` environment variable, or per-command with `--dependencies-version-strategy`.
+
+| Value | Behaviour |
+|---|---|
+| `exact` | Default. Refuse to resolve ranges; error if the dependency specifies only a range and no pinned tag. |
+| `max-patch` | Pick the highest patch release within the same `major.minor` as the default tag in the dependency reference. |
+| `max-minor` | Pick the highest minor+patch release within the same major as the default tag in the dependency reference. |
+| `min` | Pick the lowest release that satisfies the stated version range. |
+
+```yaml
+# ~/.porter/config.yaml
+dependencies:
+  version-strategy: "max-minor"
+```
 
 ### Schema Check
 
