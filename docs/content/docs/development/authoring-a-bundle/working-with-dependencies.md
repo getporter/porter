@@ -76,6 +76,37 @@ There are some safeguards in place to make it so other bundles depending on the 
 **Uninstall**: The parent bundle will be uninstalled, but the existing dependency will not be and needs to be uninstalled in a separate command.
 
 
+## Version Ranges
+
+A dependency can specify a default bundle reference that includes a pinned version tag, plus a semver constraint that describes acceptable alternative versions:
+
+```yaml
+dependencies:
+  requires:
+    - name: mysql
+      bundle:
+        reference: example.com/mysql:v1.2.3
+        version: ">=1.0.0"
+```
+
+When a version range is present Porter needs to query the registry for all available tags and select one.
+The selection strategy is controlled by the `dependencies.version-strategy` [configuration setting](/docs/configuration/configuration/#dependency-version-strategy) (and the corresponding `--dependencies-version-strategy` flag):
+
+| Strategy | Behaviour |
+|---|---|
+| `exact` | Default. Refuse to resolve ranges; use the pinned tag from the reference as-is. |
+| `max-patch` | Pick the highest patch release within the same `major.minor` as the default tag (`v1.2.3` → restricts to `1.2.*`). |
+| `max-minor` | Pick the highest minor+patch release within the same major as the default tag (`v1.2.3` → restricts to `1.*.*`). |
+| `min` | Pick the lowest release that satisfies the stated version range. |
+
+For example, with default tag `v1.2.3`, range `>=1.0.0`, and available tags `v1.2.4`, `v1.3.0`, `v2.0.0`:
+
+- `max-patch` resolves to `v1.2.4`
+- `max-minor` resolves to `v1.3.0`
+- `min` resolves to `v1.2.4` (lowest satisfying `>=1.0.0`)
+
+If no version tag is present in the default reference (e.g. `example.com/mysql` with no tag), `max-patch` and `max-minor` fall back to picking the highest tag that satisfies the stated range, identical to each other.
+
 ## Ordering of dependencies
 
 If more than one dependency is declared, they will be installed in the order they are listed. For example, if both the `mysql` and
