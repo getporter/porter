@@ -1229,3 +1229,151 @@ func TestManifest_DetermineDependenciesExtensionUsed(t *testing.T) {
 		assert.Equal(t, cnab.DependenciesV2ExtensionKey, depsExt)
 	})
 }
+
+func TestExpandPersistentParameters(t *testing.T) {
+	newCfg := func(t *testing.T, flags ...experimental.FeatureFlags) *config.Config {
+		cfg := config.NewTestConfig(t)
+		for _, f := range flags {
+			cfg.SetExperimentalFlags(f)
+		}
+		return cfg.Config
+	}
+
+	newManifest := func(pds ...ParameterDefinition) *Manifest {
+		params := make(ParameterDefinitions, len(pds))
+		for _, pd := range pds {
+			params[pd.Name] = pd
+		}
+		return &Manifest{Parameters: params}
+	}
+
+	t.Run("happy path", func(t *testing.T) {
+		cfg := newCfg(t, experimental.FlagPersistentParameters)
+		m := newManifest(ParameterDefinition{Name: "rg", Persistent: true})
+
+		require.NoError(t, m.expandPersistentParameters(cfg))
+
+		pd := m.Parameters["rg"]
+		assert.Equal(t, "/cnab/app/rg", pd.Destination.Path)
+		assert.Equal(t, "rg", pd.Source.Output)
+		assert.Contains(t, pd.ApplyTo, cnab.ActionInstall)
+		assert.Contains(t, pd.ApplyTo, cnab.ActionUninstall)
+
+		od, exists := m.Outputs["rg"]
+		require.True(t, exists, "output should be auto-created")
+		assert.Equal(t, "/cnab/app/rg", od.Path)
+	})
+
+	t.Run("with upgrade action", func(t *testing.T) {
+		cfg := newCfg(t, experimental.FlagPersistentParameters)
+		m := newManifest(ParameterDefinition{Name: "rg", Persistent: true})
+		m.Upgrade = Steps{}
+
+		require.NoError(t, m.expandPersistentParameters(cfg))
+		assert.Contains(t, m.Parameters["rg"].ApplyTo, cnab.ActionUpgrade)
+	})
+
+	t.Run("with custom actions", func(t *testing.T) {
+		cfg := newCfg(t, experimental.FlagPersistentParameters)
+		m := newManifest(ParameterDefinition{Name: "rg", Persistent: true})
+		m.CustomActions = map[string]Steps{"status": {}}
+
+		require.NoError(t, m.expandPersistentParameters(cfg))
+		assert.Contains(t, m.Parameters["rg"].ApplyTo, "status")
+	})
+
+	t.Run("flag not enabled", func(t *testing.T) {
+		cfg := newCfg(t)
+		m := newManifest(ParameterDefinition{Name: "rg", Persistent: true})
+
+		err := m.expandPersistentParameters(cfg)
+		require.ErrorContains(t, err, experimental.PersistentParameters)
+	})
+
+	t.Run("conflict with source.output", func(t *testing.T) {
+		cfg := newCfg(t, experimental.FlagPersistentParameters)
+		m := newManifest(ParameterDefinition{
+			Name:      "rg",
+			Persistent: true,
+			Source:    ParameterSource{Output: "other"},
+		})
+		require.ErrorContains(t, m.expandPersistentParameters(cfg), "source.output")
+	})
+
+	t.Run("conflict with path", func(t *testing.T) {
+		cfg := newCfg(t, experimental.FlagPersistentParameters)
+		m := newManifest(ParameterDefinition{
+			Name:        "rg",
+			Persistent:  true,
+			Destination: Location{Path: "/some/path"},
+		})
+		require.ErrorContains(t, m.expandPersistentParameters(cfg), "path/env")
+	})
+
+	t.Run("conflict with applyTo", func(t *testing.T) {
+		cfg := newCfg(t, experimental.FlagPersistentParameters)
+		m := newManifest(ParameterDefinition{
+			Name:       "rg",
+			Persistent: true,
+			ApplyTo:    []string{cnab.ActionInstall},
+		})
+		require.ErrorContains(t, m.expandPersistentParameters(cfg), "applyTo")
+	})
+
+	t.Run("output already declared", func(t *testing.T) {
+		cfg := newCfg(t, experimental.FlagPersistentParameters)
+		m := newManifest(ParameterDefinition{Name: "rg", Persistent: true})
+		m.Outputs = OutputDefinitions{
+			"rg": {Name: "rg", Path: "/custom/path"},
+		}
+
+		require.NoError(t, m.expandPersistentParameters(cfg))
+		// The user's output is preserved
+		assert.Equal(t, "/custom/path", m.Outputs["rg"].Path)
+	})
+
+	t.Run("non-persistent params unchanged", func(t *testing.T) {
+		cfg := newCfg(t, experimental.FlagPersistentParameters)
+		m := newManifest(ParameterDefinition{Name: "rg", Persistent: false})
+
+		require.NoError(t, m.expandPersistentParameters(cfg))
+		assert.Empty(t, m.Parameters["rg"].Source.Output)
+	})
+}
+
+func TestManifest_Validate_SchemaVersion_PersistentParameters(t *testing.T) {
+	t.Run("schema 1.2.0 requires persistent-parameters flag", func(t *testing.T) {
+		ctx := context.Background()
+		cfg := config.NewTestConfig(t)
+		cfg.TestContext.AddTestFile("testdata/porter-with-persistent-params.yaml", "porter.yaml")
+		cfg.Data.SchemaCheck = string(schema.CheckStrategyExact)
+
+		m, err := ReadManifest(cfg.Context, "porter.yaml", cfg.Config)
+		require.NoError(t, err)
+
+		err = m.Validate(ctx, cfg.Config)
+		require.ErrorContains(t, err, "invalid schema version")
+
+		cfg.SetExperimentalFlags(experimental.FlagPersistentParameters)
+		err = m.Validate(ctx, cfg.Config)
+		require.NoError(t, err)
+	})
+
+	t.Run("schema 1.2.0 with flag loads persistent params", func(t *testing.T) {
+		ctx := context.Background()
+		cfg := config.NewTestConfig(t)
+		cfg.TestContext.AddTestFile("testdata/porter-with-persistent-params.yaml", "porter.yaml")
+		cfg.SetExperimentalFlags(experimental.FlagPersistentParameters)
+
+		m, err := ReadManifest(cfg.Context, "porter.yaml", cfg.Config)
+		require.NoError(t, err)
+		require.NoError(t, m.Validate(ctx, cfg.Config))
+
+		pd := m.Parameters["resource-group"]
+		assert.Equal(t, "/cnab/app/resource-group", pd.Destination.Path)
+		assert.Equal(t, "resource-group", pd.Source.Output)
+
+		_, hasOutput := m.Outputs["resource-group"]
+		assert.True(t, hasOutput, "output should be auto-created")
+	})
+}
