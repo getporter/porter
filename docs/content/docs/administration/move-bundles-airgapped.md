@@ -22,5 +22,6 @@ At a high level, this involves the following steps:
 
 ## Next Steps
 
+- [How to reference images in your bundle](/docs/best-practices/bundle-images/)
 - [Example: Airgapped Environments](/examples/airgap/)
 - [Understand how Porter publishes archived bundles to a registry](/archive-bundles/)

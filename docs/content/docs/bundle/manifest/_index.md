@@ -554,10 +554,18 @@ dependencies:
 ## Images
 
 The `images` section of the Porter manifest corresponds to the [Image Map](https://github.com/cnabio/cnab-spec/blob/master/103-bundle-runtime.md#image-maps)
-section of the CNAB Spec. These are images used in the bundle and declaring them enables Porter to manage the following for you:
+section of the CNAB Spec. Declaring an image here tells Porter to manage its location for you:
 
 * publishing the bundle [copies referenced images into the published bundle](/docs/development/authoring-a-bundle/distribute-bundles/#image-references-after-publishing).
 * [archiving the bundle](/archive-bundles/) includes the referenced images in the archive.
+
+This is required when you need to deploy in an [airgapped environment] or move a bundle between registries.
+If your bundle always runs against a registry it can reach directly and you do not need relocation support,
+you can omit this section and reference images directly in your bundle steps instead.
+
+See [How to reference images in your bundle](/docs/best-practices/bundle-images/) for guidance on choosing the right approach.
+
+[airgapped environment]: /docs/administration/move-bundles-airgapped/
 
 Here is an example:
 
