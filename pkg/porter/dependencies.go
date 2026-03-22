@@ -215,7 +215,7 @@ func (e *dependencyExecutioner) identifyDependencies(ctx context.Context) error 
 	// Determine version strategy: flag overrides global config
 	strategy := e.parentOpts.DependenciesVersionStrategy
 	if strategy == "" {
-		strategy = e.Config.GetDependenciesVersionStrategy()
+		strategy = e.GetDependenciesVersionStrategy()
 	}
 	eb = eb.WithVersionStrategy(strategy)
 

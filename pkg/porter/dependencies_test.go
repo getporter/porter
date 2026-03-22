@@ -140,7 +140,7 @@ func TestIdentifyDependencies_StrategyFromConfig(t *testing.T) {
 
 	p := NewTestPorter(t)
 	defer p.Close()
-	p.Config.Data.Dependencies.VersionStrategy = config.DependencyVersionStrategyMin
+	p.Data.Dependencies.VersionStrategy = config.DependencyVersionStrategyMin
 	p.TestRegistry.MockListTags = staticTags([]string{"v1.0", "v1.1", "v1.2"})
 
 	bunData := bundleWithV1Ranges(t, "example.com/mysql", []string{">=1.0 <1.3"})
@@ -163,7 +163,7 @@ func TestIdentifyDependencies_FlagOverridesConfig(t *testing.T) {
 	p := NewTestPorter(t)
 	defer p.Close()
 	// Config says max-minor (would pick v1.2)
-	p.Config.Data.Dependencies.VersionStrategy = config.DependencyVersionStrategyMaxMinor
+	p.Data.Dependencies.VersionStrategy = config.DependencyVersionStrategyMaxMinor
 	p.TestRegistry.MockListTags = staticTags([]string{"v1.0", "v1.1", "v1.2"})
 
 	bunData := bundleWithV1Ranges(t, "example.com/mysql", []string{">=1.0 <1.3"})
