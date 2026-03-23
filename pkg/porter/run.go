@@ -86,8 +86,9 @@ func (p *Porter) Run(ctx context.Context, opts RunOptions) error {
 	// A warning is printed if it doesn't match.
 	p.Data.SchemaCheck = string(schema.CheckStrategyNone)
 
-	// Enable all experimental features at runtime. The bundle was validated at build time,
-	// so we should trust that any experimental features used are valid for this bundle.
+	// Enable FlagPersistentParameters at runtime. The bundle was already validated
+	// at build time, so persistent parameters are safe to use even if the flag is
+	// not set in the container's config.
 	p.SetExperimentalFlags(p.GetFeatureFlags() | experimental.FlagPersistentParameters)
 
 	m, err := manifest.LoadManifestFrom(ctx, p.Config, opts.File)
