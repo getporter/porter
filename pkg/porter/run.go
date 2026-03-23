@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/experimental"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/runtime"
 	"get.porter.sh/porter/pkg/schema"
@@ -84,6 +85,10 @@ func (p *Porter) Run(ctx context.Context, opts RunOptions) error {
 	// If the author built it with the rules loosened, then it should execute regardless of the version matching.
 	// A warning is printed if it doesn't match.
 	p.Data.SchemaCheck = string(schema.CheckStrategyNone)
+
+	// Enable all experimental features at runtime. The bundle was validated at build time,
+	// so we should trust that any experimental features used are valid for this bundle.
+	p.Config.SetExperimentalFlags(p.Config.GetFeatureFlags() | experimental.FlagPersistentParameters)
 
 	m, err := manifest.LoadManifestFrom(ctx, p.Config, opts.File)
 	if err != nil {
