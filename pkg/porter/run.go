@@ -88,7 +88,7 @@ func (p *Porter) Run(ctx context.Context, opts RunOptions) error {
 
 	// Enable all experimental features at runtime. The bundle was validated at build time,
 	// so we should trust that any experimental features used are valid for this bundle.
-	p.Config.SetExperimentalFlags(p.Config.GetFeatureFlags() | experimental.FlagPersistentParameters)
+	p.SetExperimentalFlags(p.GetFeatureFlags() | experimental.FlagPersistentParameters)
 
 	m, err := manifest.LoadManifestFrom(ctx, p.Config, opts.File)
 	if err != nil {
