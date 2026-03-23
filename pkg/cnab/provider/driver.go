@@ -7,7 +7,7 @@ import (
 	"get.porter.sh/porter/pkg/cnab/drivers"
 	"github.com/cnabio/cnab-go/driver"
 	"github.com/cnabio/cnab-go/driver/docker"
-	"github.com/docker/docker/api/types/container"
+	"github.com/moby/moby/api/types/container"
 )
 
 const (
