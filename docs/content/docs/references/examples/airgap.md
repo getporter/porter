@@ -42,7 +42,8 @@ follow along with.
 
 ### Declare Images
 
-Add an [images] section and declare every image that your application relies upon:
+Add an [images] section and declare every image that your application relies upon.
+See [How to reference images in your bundle](/docs/best-practices/bundle-images/) for guidance on when to use this section.
 
 ```yaml
 images:
