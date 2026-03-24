@@ -9,7 +9,7 @@ go 1.25.8
 replace github.com/hashicorp/go-plugin => github.com/getporter/go-plugin v1.4.4-porter.1
 
 require (
-	get.porter.sh/magefiles v0.6.13
+	get.porter.sh/magefiles v0.6.14
 	github.com/Masterminds/semver/v3 v3.4.0
 	github.com/PaesslerAG/jsonpath v0.1.1
 	github.com/carolynvs/aferox v0.3.0
