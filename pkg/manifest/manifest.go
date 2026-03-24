@@ -220,8 +220,9 @@ func (m *Manifest) validateMetadata(ctx context.Context, cfg *config.Config) err
 		return span.Errorf("invalid schemaType %s, expected %s", m.SchemaType, SchemaTypeBundle)
 	}
 
-	// Build the supported schema version constraint based on enabled feature flags
-	constraint := "1.0.0-alpha.1 || 1.0.0 - 1.0.1"
+	// Build the supported schema version constraint based on enabled feature flags,
+	// starting from the global SupportedSchemaVersions to avoid duplication/drift.
+	constraint := SupportedSchemaVersions.String()
 	if cfg.IsFeatureEnabled(experimental.FlagDependenciesV2) {
 		constraint += " || 1.1.0"
 	}
