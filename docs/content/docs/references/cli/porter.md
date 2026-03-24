@@ -53,6 +53,7 @@ porter [flags]
 * [porter lint](/cli/porter_lint/)	 - Lint a bundle
 * [porter list](/cli/porter_list/)	 - List installed bundles
 * [porter logs](/cli/porter_logs/)	 - Show the logs from an installation
+* [porter mcp](/cli/porter_mcp/)	 - Start an MCP server over stdio
 * [porter mixins](/cli/porter_mixins/)	 - Mixin commands. Mixins assist with authoring bundles.
 * [porter parameters](/cli/porter_parameters/)	 - Parameter set commands
 * [porter plugins](/cli/porter_plugins/)	 - Plugin commands. Plugins enable Porter to work on different cloud providers and systems.
