@@ -599,6 +599,10 @@ func (m *Manifest) expandPersistentParameters(cfg *config.Config) error {
 			return fmt.Errorf("parameter %q uses persistent: true which requires the %s experimental feature",
 				name, experimental.PersistentParameters)
 		}
+		schemaVersion, err := semver.NewVersion(m.SchemaVersion)
+		if err != nil || schemaVersion.LessThan(semver.MustParse("1.2.0")) {
+			return fmt.Errorf("parameter %q uses persistent: true which requires schemaVersion 1.2.0", name)
+		}
 		if pd.Source.Output != "" {
 			return fmt.Errorf("parameter %q cannot combine persistent with source.output", name)
 		}

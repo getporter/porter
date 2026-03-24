@@ -1244,7 +1244,7 @@ func TestExpandPersistentParameters(t *testing.T) {
 		for _, pd := range pds {
 			params[pd.Name] = pd
 		}
-		return &Manifest{Parameters: params}
+		return &Manifest{SchemaVersion: "1.2.0", Parameters: params}
 	}
 
 	t.Run("happy path", func(t *testing.T) {
@@ -1288,6 +1288,15 @@ func TestExpandPersistentParameters(t *testing.T) {
 
 		err := m.expandPersistentParameters(cfg)
 		require.ErrorContains(t, err, experimental.PersistentParameters)
+	})
+
+	t.Run("wrong schema version", func(t *testing.T) {
+		cfg := newCfg(t, experimental.FlagPersistentParameters)
+		m := newManifest(ParameterDefinition{Name: "rg", Persistent: true})
+		m.SchemaVersion = "1.0.1"
+
+		err := m.expandPersistentParameters(cfg)
+		require.ErrorContains(t, err, "schemaVersion 1.2.0")
 	})
 
 	t.Run("conflict with source.output", func(t *testing.T) {
