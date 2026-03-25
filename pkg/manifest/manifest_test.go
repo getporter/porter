@@ -294,6 +294,27 @@ func TestManifest_Validate_SchemaVersion(t *testing.T) {
 		assert.NotContains(t, cfg.TestContext.GetError(), invalidVersionErr)
 	})
 
+	t.Run("schemaVersion 1.2.0 valid for dependencies-v2", func(t *testing.T) {
+		ctx := context.Background()
+		cfg := config.NewTestConfig(t)
+		cfg.TestContext.AddTestFile("testdata/porter.yaml", "porter.yaml")
+		cfg.Data.SchemaCheck = string(schema.CheckStrategyExact)
+
+		cfg.TestContext.EditYaml("porter.yaml", func(yq *yaml.Editor) error {
+			return yq.SetValue("schemaVersion", "1.2.0")
+		})
+		m, err := ReadManifest(cfg.Context, "porter.yaml", cfg.Config)
+		require.NoError(t, err)
+
+		err = m.Validate(ctx, cfg.Config)
+		require.ErrorContains(t, err, "invalid schema version")
+
+		cfg.SetExperimentalFlags(experimental.FlagDependenciesV2)
+		err = m.Validate(ctx, cfg.Config)
+		require.NoError(t, err)
+		assert.NotContains(t, cfg.TestContext.GetError(), invalidVersionErr)
+	})
+
 	t.Run("schemaVersion missing, not required", func(t *testing.T) {
 		cfg := config.NewTestConfig(t)
 		cfg.TestContext.UseFilesystem()

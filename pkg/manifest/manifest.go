@@ -224,7 +224,7 @@ func (m *Manifest) validateMetadata(ctx context.Context, cfg *config.Config) err
 	// starting from the global SupportedSchemaVersions to avoid duplication/drift.
 	constraint := SupportedSchemaVersions.String()
 	if cfg.IsFeatureEnabled(experimental.FlagDependenciesV2) {
-		constraint += " || 1.1.0"
+		constraint += " || >= 1.1.0"
 	}
 	if cfg.IsFeatureEnabled(experimental.FlagPersistentParameters) {
 		constraint += " || 1.2.0"
