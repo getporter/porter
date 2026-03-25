@@ -34,4 +34,4 @@ jobs:
       - name: Check licenses
         run: |
           go-licenses check ./... \
-            --ignore github.com/xi2/xz,golang.org/x/sys/unix # https://github.com/xi2/xz/blob/master/LICENSE
+            --ignore github.com/xi2/xz,golang.org/x/sys/unix,github.com/segmentio/asm # https://github.com/xi2/xz/blob/master/LICENSE
