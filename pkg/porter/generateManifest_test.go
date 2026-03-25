@@ -14,7 +14,8 @@ import (
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/experimental"
 	"get.porter.sh/porter/pkg/test"
-	"github.com/docker/docker/api/types/image"
+	"github.com/moby/moby/api/types/image"
+	"github.com/moby/moby/client"
 	"github.com/stretchr/testify/require"
 )
 
@@ -106,19 +107,19 @@ func mockGetImageMetadataFailure(ctx context.Context, ref cnab.OCIReference, opt
 }
 
 func mockGetCachedImage(ctx context.Context, ref cnab.OCIReference) (cnabtooci.ImageMetadata, error) {
-	sum := image.InspectResponse{
+	sum := client.ImageInspectResult{InspectResponse: image.InspectResponse{
 		ID:          "test-id",
 		RepoDigests: []string{"test/whalesayd@sha256:8b92b7269f59e3ed824e811a1ff1ee64f0d44c0218efefada57a4bebc2d7ef6f"},
-	}
+	}}
 	return cnabtooci.NewImageSummaryFromInspect(ref, sum)
 }
 
 func Test_getImageLatestDigest(t *testing.T) {
 	defaultMockGetCachedImage := func(ctx context.Context, ref cnab.OCIReference) (cnabtooci.ImageMetadata, error) {
-		sum := image.InspectResponse{
+		sum := client.ImageInspectResult{InspectResponse: image.InspectResponse{
 			ID:          "test-id",
 			RepoDigests: []string{"test/repo@sha256:8b92b7269f59e3ed824e811a1ff1ee64f0d44c0218efefada57a4bebc2d7ef6f"},
-		}
+		}}
 		return cnabtooci.NewImageSummaryFromInspect(ref, sum)
 	}
 
