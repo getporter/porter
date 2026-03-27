@@ -50,6 +50,9 @@ func (s *MCPServer) listOutputs(_ context.Context, req *sdkmcp.CallToolRequest) 
 	if err := unmarshalArgs(req, &args); err != nil {
 		return toolErr(err), nil
 	}
+	if args.Installation == "" {
+		return toolErr(errors.New("installation is required")), nil
+	}
 
 	opts := &porter.OutputListOptions{}
 	opts.Name = args.Installation

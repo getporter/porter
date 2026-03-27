@@ -3,6 +3,7 @@ package mcp
 import (
 	"context"
 	"encoding/json"
+	"errors"
 
 	"get.porter.sh/porter/pkg/porter"
 	sdkmcp "github.com/modelcontextprotocol/go-sdk/mcp"
@@ -44,6 +45,9 @@ func (s *MCPServer) listRuns(_ context.Context, req *sdkmcp.CallToolRequest) (*s
 	if err := unmarshalArgs(req, &args); err != nil {
 		return toolErr(err), nil
 	}
+	if args.Installation == "" {
+		return toolErr(errors.New("installation is required")), nil
+	}
 
 	opts := porter.RunListOptions{}
 	opts.Name = args.Installation
@@ -64,6 +68,13 @@ func (s *MCPServer) getLogs(_ context.Context, req *sdkmcp.CallToolRequest) (*sd
 	}
 	if err := unmarshalArgs(req, &args); err != nil {
 		return toolErr(err), nil
+	}
+
+	if args.Installation == "" && args.RunID == "" {
+		return toolErr(errors.New("either installation or run_id is required")), nil
+	}
+	if args.Installation != "" && args.RunID != "" {
+		return toolErr(errors.New("specify either installation or run_id, not both")), nil
 	}
 
 	opts := &porter.LogsShowOptions{}

@@ -56,6 +56,12 @@ func (s *MCPServer) analyzeFailure(_ context.Context, req *sdkmcp.CallToolReques
 		if targetRun.Status != cnab.StatusFailed {
 			return toolErr(fmt.Errorf("run %s has status %q, not %q", args.RunID, targetRun.Status, cnab.StatusFailed)), nil
 		}
+		if args.Installation != "" && args.Installation != run.Installation {
+			return toolErr(fmt.Errorf("run %s does not belong to installation %q", args.RunID, args.Installation)), nil
+		}
+		if args.Namespace != "" && args.Namespace != run.Namespace {
+			return toolErr(fmt.Errorf("run %s does not belong to namespace %q", args.RunID, args.Namespace)), nil
+		}
 	} else {
 		// Find the most recent failed run.
 		listOpts := porter.RunListOptions{}
@@ -82,7 +88,10 @@ func (s *MCPServer) analyzeFailure(_ context.Context, req *sdkmcp.CallToolReques
 	// Fetch logs.
 	logsOpts := &porter.LogsShowOptions{}
 	logsOpts.RunID = targetRun.ID
-	logs, _, logsErr := s.porter.GetInstallationLogs(s.ctx, logsOpts)
+	logs, ok, logsErr := s.porter.GetInstallationLogs(s.ctx, logsOpts)
+	if !ok && logsErr == nil {
+		logsErr = errors.New("no logs found")
+	}
 
 	// Fetch outputs.
 	outputOpts := &porter.OutputListOptions{}
