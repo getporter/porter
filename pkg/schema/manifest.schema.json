@@ -110,6 +110,10 @@
               "description": "Indicates whether this parameter's value is sensitive and should not be logged.",
               "type": "boolean"
             },
+            "persistent": {
+              "description": "When true, automatically wires up a matching output so the parameter value is remembered across bundle executions. Requires schema version 1.2.0 and the persistent-parameters experimental feature.",
+              "type": "boolean"
+            },
             "source": {
               "description": "Indicates that the parameter should get its value from an external source.",
               "type": "object",

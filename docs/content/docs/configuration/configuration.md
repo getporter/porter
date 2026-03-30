@@ -23,6 +23,7 @@ You may set a default value for a configuration value in the config file, overri
   - [Structured Logs](#structured-logs)
   - [Dependencies v2](#dependencies-v2)
   - [Full control Dockerfile](#full-control-dockerfile)
+  - [Persistent Parameters](#persistent-parameters)
 - [Common Configuration Settings](#common-configuration-settings)
   - [Set Current Namespace](#namespace)
   - [Output Formatting](#output)
@@ -321,6 +322,14 @@ The `full-control-dockerfile` experimental flag disables all Dockerfile generati
 When enabled Porter will use the file referenced by `dockerfile` in the Porter manifest when building the bundle image *without modifying* it in any way.
 Ie. Porter will not process `# PORTER_x` placeholders, nor inject any user configuration and `CMD` statements.
 It is up to the bundle author to ensure that the contents of the Dockerfile contains the necessary tools for any mixins to function and a layout that can be executed as a Porter bundle.
+
+### Persistent Parameters
+
+The `persistent-parameters` experimental flag enables the `persistent: true` shorthand on parameter definitions.
+When set, Porter automatically wires up a matching output so the parameter value is remembered across bundle executions (install → upgrade, install → uninstall), without manually configuring outputs and parameter sources.
+Requires `schemaVersion: 1.2.0` in the bundle manifest.
+
+See [Persisting Data Between Bundle Actions](/docs/development/authoring-a-bundle/persisting-data/) for a full guide.
 
 ## Common Configuration Settings
 

@@ -218,3 +218,9 @@ jobs:
     with:
       test_name: state_test
       registry: ${{inputs.registry}}
+  persistent_params_test:
+    name: Persistent Parameters Integration Test
+    uses: getporter/porter/.github/workflows/integ-reuseable-workflow.yml@main
+    with:
+      test_name: persistent_params_test
+      registry: ${{inputs.registry}}

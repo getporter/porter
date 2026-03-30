@@ -237,6 +237,10 @@
               "description": "The path inside of the bundle image where parameter data is mounted",
               "type": "string"
             },
+            "persistent": {
+              "description": "When true, automatically wires up a matching output so the parameter value is remembered across bundle executions. Requires schema version 1.2.0 and the persistent-parameters experimental feature.",
+              "type": "boolean"
+            },
             "sensitive": {
               "description": "Indicates whether this parameter's value is sensitive and should not be logged.",
               "type": "boolean"
