@@ -13,6 +13,9 @@ const (
 	// OptimizedBundleBuild is the name of the experimental feature flag for optimized bundle builds
 	// When enabled, uses .cnab directory as build context with porter-internal-userfiles named context for 54% smaller images
 	OptimizedBundleBuild = "optimized-bundle-build"
+
+	// PersistentParameters is the name of the experimental feature flag for persistent parameters.
+	PersistentParameters = "persistent-parameters"
 )
 
 // FeatureFlags is an enum of possible feature flags
@@ -30,6 +33,9 @@ const (
 
 	// FlagOptimizedBundleBuild gates the optimized bundle build process
 	FlagOptimizedBundleBuild
+
+	// FlagPersistentParameters gates persistent parameter shorthand (persistent: true).
+	FlagPersistentParameters
 )
 
 // ParseFlags converts a list of feature flag names into a bit map for faster lookups.
@@ -45,6 +51,8 @@ func ParseFlags(flags []string) FeatureFlags {
 			experimental = experimental | FlagFullControlDockerfile
 		case OptimizedBundleBuild:
 			experimental = experimental | FlagOptimizedBundleBuild
+		case PersistentParameters:
+			experimental = experimental | FlagPersistentParameters
 		}
 	}
 	return experimental

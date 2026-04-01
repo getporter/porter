@@ -1067,6 +1067,44 @@ func TestManifestConverter_generatedMaintainers(t *testing.T) {
 	}
 }
 
+func TestManifestConverter_ToBundle_PersistentParameter(t *testing.T) {
+	t.Parallel()
+
+	c := config.NewTestConfig(t)
+	c.TestContext.AddTestFileFromRoot("pkg/manifest/testdata/porter-with-persistent-params.yaml", config.Name)
+	c.SetExperimentalFlags(experimental.FlagPersistentParameters)
+
+	ctx := context.Background()
+	m, err := manifest.LoadManifestFrom(ctx, c.Config, config.Name)
+	require.NoError(t, err, "could not load manifest")
+
+	a := NewManifestConverter(c.Config, m, nil, nil, false)
+	bun, err := a.ToBundle(ctx)
+	require.NoError(t, err, "ToBundle failed")
+
+	// Parameter exists and is required on install
+	param, ok := bun.Parameters["resource-group"]
+	require.True(t, ok, "parameter resource-group should exist")
+	assert.True(t, param.Required, "persistent parameter should be required")
+	require.NotNil(t, param.Destination)
+	assert.Equal(t, "/cnab/app/resource-group", param.Destination.Path)
+
+	// Matching output is generated
+	_, ok = bun.Outputs["resource-group"]
+	assert.True(t, ok, "output resource-group should be auto-generated")
+
+	// Parameter source wires output → parameter
+	sources, err := bun.ReadParameterSources()
+	require.NoError(t, err)
+	ps, ok := sources["resource-group"]
+	require.True(t, ok, "parameter source for resource-group should exist")
+	require.Len(t, ps.Sources, 1)
+	assert.Equal(t, cnab.ParameterSourceTypeOutput, ps.Priority[0])
+	src, ok := ps.Sources[cnab.ParameterSourceTypeOutput]
+	require.True(t, ok)
+	assert.Equal(t, "resource-group", src.(cnab.OutputParameterSource).OutputName)
+}
+
 func getMaintainerByName(source []bundle.Maintainer, name string) (bundle.Maintainer, error) {
 	for _, m := range source {
 		if m.Name == name {

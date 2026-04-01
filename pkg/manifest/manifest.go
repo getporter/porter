@@ -134,6 +134,10 @@ func (m *Manifest) Validate(ctx context.Context, cfg *config.Config) error {
 		return span.Error(err)
 	}
 
+	if err = m.expandPersistentParameters(cfg); err != nil {
+		return span.Error(err)
+	}
+
 	if strings.ToLower(m.Dockerfile) == "dockerfile" {
 		return span.Error(errors.New("Dockerfile template cannot be named 'Dockerfile' because that is the filename generated during porter build"))
 	}
@@ -216,11 +220,16 @@ func (m *Manifest) validateMetadata(ctx context.Context, cfg *config.Config) err
 		return span.Errorf("invalid schemaType %s, expected %s", m.SchemaType, SchemaTypeBundle)
 	}
 
-	// Check what the supported schema version is based on if depsv2 is enabled
-	supportedVersions := SupportedSchemaVersions
+	// Build the supported schema version constraint based on enabled feature flags,
+	// starting from the global SupportedSchemaVersions to avoid duplication/drift.
+	constraint := SupportedSchemaVersions.String()
 	if cfg.IsFeatureEnabled(experimental.FlagDependenciesV2) {
-		supportedVersions, _ = semver.NewConstraint("1.0.0-alpha.1 || 1.0.0 - 1.0.1 || 1.1.0")
+		constraint += " || >= 1.1.0"
 	}
+	if cfg.IsFeatureEnabled(experimental.FlagPersistentParameters) {
+		constraint += " || 1.2.0"
+	}
+	supportedVersions, _ := semver.NewConstraint(constraint)
 
 	if warnOnly, err := schema.ValidateSchemaVersion(strategy, supportedVersions, m.SchemaVersion, DefaultSchemaVersion); err != nil {
 		if warnOnly {
@@ -476,6 +485,11 @@ type ParameterDefinition struct {
 
 	// IsState identifies if the parameter was generated from a state variable
 	IsState bool `yaml:"-"`
+
+	// Persistent, when true, auto-wires a matching output so the value is
+	// remembered across bundle executions. Requires schema 1.2.0 and the
+	// persistent-parameters experimental feature flag.
+	Persistent bool `yaml:"persistent,omitempty"`
 }
 
 func (pd *ParameterDefinition) GetApplyTo() []string {
@@ -571,6 +585,63 @@ func (pd *ParameterDefinition) UpdateApplyTo(m *Manifest) {
 		sort.Strings(applyTo)
 		pd.ApplyTo = applyTo
 	}
+}
+
+// expandPersistentParameters expands parameters with persistent: true into
+// the longhand form: sets path, source.output, and applyTo, and creates a
+// matching output definition. Requires schema 1.2.0 and the
+// persistent-parameters experimental feature flag.
+func (m *Manifest) expandPersistentParameters(cfg *config.Config) error {
+	for name, pd := range m.Parameters {
+		if !pd.Persistent {
+			continue
+		}
+		if !cfg.IsFeatureEnabled(experimental.FlagPersistentParameters) {
+			return fmt.Errorf("parameter %q uses persistent: true which requires the %s experimental feature",
+				name, experimental.PersistentParameters)
+		}
+		schemaVersion, err := semver.NewVersion(m.SchemaVersion)
+		if err != nil || schemaVersion.LessThan(semver.MustParse("1.2.0")) {
+			return fmt.Errorf("parameter %q uses persistent: true which requires schemaVersion 1.2.0", name)
+		}
+		if pd.Source.Output != "" {
+			return fmt.Errorf("parameter %q cannot combine persistent with source.output", name)
+		}
+		if !pd.Destination.IsEmpty() {
+			return fmt.Errorf("parameter %q cannot combine persistent with path/env", name)
+		}
+		if pd.ApplyTo != nil {
+			return fmt.Errorf("parameter %q cannot combine persistent with applyTo", name)
+		}
+
+		pd.Destination.Path = "/cnab/app/" + name
+		pd.Source.Output = name
+
+		applyTo := []string{cnab.ActionInstall, cnab.ActionUninstall}
+		if m.Upgrade != nil {
+			applyTo = append(applyTo, cnab.ActionUpgrade)
+		}
+		for action := range m.CustomActions {
+			applyTo = append(applyTo, action)
+		}
+		sort.Strings(applyTo)
+		pd.ApplyTo = applyTo
+
+		m.Parameters[name] = pd
+
+		if _, exists := m.Outputs[name]; !exists {
+			if m.Outputs == nil {
+				m.Outputs = make(OutputDefinitions)
+			}
+			m.Outputs[name] = OutputDefinition{
+				Name:      name,
+				Path:      "/cnab/app/" + name,
+				Sensitive: pd.Sensitive,
+				Schema:    pd.Schema,
+			}
+		}
+	}
+	return nil
 }
 
 type ParameterSource struct {
