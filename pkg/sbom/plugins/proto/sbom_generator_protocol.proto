@@ -1,0 +1,21 @@
+syntax = "proto3";
+package plugins;
+
+option go_package = "get.porter.sh/porter/pkg/sbom/plugins/proto";
+
+message GenerateRequest {
+  string bundleRef = 1;
+  string sbomPath = 2;
+  bool insecureRegistry = 3;
+}
+
+message GenerateResponse {}
+
+message SBOMConnectRequest {}
+
+message SBOMConnectResponse {}
+
+service SBOMGeneratorProtocol {
+  rpc Generate(GenerateRequest) returns (GenerateResponse);
+  rpc Connect(SBOMConnectRequest) returns (SBOMConnectResponse);
+}

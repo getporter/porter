@@ -86,7 +86,13 @@ func (t Tester) StartTestRegistry(opts TestRegistryOptions) *TestRegistry {
 	t.T.Cleanup(reg.Close)
 
 	// Get the port that it is running on
-	reg.port, err = shx.OutputE("docker", "inspect", reg.containerID, "--format", `{{ (index (index .NetworkSettings.Ports "5000/tcp") 0).HostPort }}`)
+	reg.port, err = shx.OutputE(
+		"docker",
+		"inspect",
+		reg.containerID,
+		"--format",
+		`{{ (index (index .NetworkSettings.Ports "5000/tcp") 0).HostPort }}`,
+	)
 	require.NoError(t.T, err, "Could not get the published port of the temporary registry")
 
 	// Determine if we have a hostname alias set up for the registry

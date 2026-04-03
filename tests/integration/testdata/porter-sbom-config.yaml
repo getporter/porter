@@ -1,0 +1,13 @@
+default-sbom-generator: syft
+
+sbom-generators:
+  - name: "syft"
+    plugin: "syft"
+
+mixins:
+  - exec
+
+install:
+  - exec:
+      description: "Install Hello World"
+      command: echo Hello World

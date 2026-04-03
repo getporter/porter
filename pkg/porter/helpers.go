@@ -21,6 +21,7 @@ import (
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/mixin"
 	"get.porter.sh/porter/pkg/plugins"
+	"get.porter.sh/porter/pkg/sbom"
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/signing"
 	"get.porter.sh/porter/pkg/storage"
@@ -65,13 +66,14 @@ func NewTestPorter(t *testing.T) *TestPorter {
 	testStore := storage.NewTestStore(tc)
 	testSecrets := secrets.NewTestSecretsProvider()
 	testSigner := signing.NewTestSigningProvider()
+	testSbomGenerator := sbom.NewTestSBOMGeneratorProvider()
 	testCredentials := storage.NewTestCredentialProviderFor(t, testStore, testSecrets)
 	testParameters := storage.NewTestParameterProviderFor(t, testStore, testSecrets)
 	testCache := cache.NewTestCache(cache.New(tc.Config))
 	testInstallations := storage.NewTestInstallationProviderFor(t, testStore)
 	testRegistry := cnabtooci.NewTestRegistry()
 
-	p := NewFor(tc.Config, testStore, testSecrets, testSigner)
+	p := NewFor(tc.Config, testStore, testSecrets, testSigner, testSbomGenerator)
 	p.Config = tc.Config
 	p.Mixins = mixin.NewTestMixinProvider()
 	p.Plugins = plugins.NewTestPluginProvider()
@@ -115,7 +117,7 @@ func (p *TestPorter) SetupIntegrationTest() context.Context {
 	t := p.TestConfig.TestContext.T
 
 	// Undo changes above to make a unit test friendly Porter, so we hit the host
-	p.Porter = NewFor(p.Config, p.TestStore, p.TestSecrets, p.Signer)
+	p.Porter = NewFor(p.Config, p.TestStore, p.TestSecrets, p.Signer, p.SBOMGenerator)
 
 	// Run the test in a temp directory
 	ctx, testDir, _ := p.TestConfig.SetupIntegrationTest()
