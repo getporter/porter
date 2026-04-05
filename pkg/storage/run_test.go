@@ -107,6 +107,27 @@ func TestRun_ShouldRecord(t *testing.T) {
 		assert.True(t, r.ShouldRecord())
 	})
 
+	t.Run("modifies false, stateful, with applyTo output", func(t *testing.T) {
+		// Stateful + modifies:false + user output: run and outputs are recorded.
+		// porter-state isolation is enforced separately in Finalize(), not here.
+		b := bundle.Bundle{
+			Actions: map[string]bundle.Action{
+				"dry-run": {
+					Modifies:  false,
+					Stateless: false,
+				},
+			},
+			Outputs: map[string]bundle.Output{
+				"diff": {
+					ApplyTo: []string{"dry-run"},
+				},
+			},
+		}
+
+		r := Run{Bundle: b, Action: "dry-run"}
+		assert.True(t, r.ShouldRecord())
+	})
+
 	t.Run("has only internal bundle level output", func(t *testing.T) {
 		b := bundle.Bundle{
 			Definitions: definition.Definitions{
