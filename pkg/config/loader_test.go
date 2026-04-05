@@ -165,6 +165,39 @@ current-context: default
 	require.ErrorContains(t, err, "missing required 'contexts' key")
 }
 
+func TestLoadMultiContext_OnlyResolvesSelectedContextSecrets(t *testing.T) {
+	t.Parallel()
+
+	c := NewTestConfig(t)
+	c.SetHomeDir("/home/myuser/.porter")
+
+	cfg := `schemaVersion: "` + ConfigSchemaVersion + `"
+current-context: local
+contexts:
+  - name: local
+    config:
+      default-secrets-plugin: filesystem
+  - name: prod
+    config:
+      default-storage: proddb
+      storage:
+        - name: proddb
+          plugin: mongodb
+          config:
+            url: "${secret.prodMongoConnectionString}"
+`
+	require.NoError(t, c.TestContext.FileSystem.WriteFile(
+		"/home/myuser/.porter/config.yaml", []byte(cfg), 0600))
+
+	c.DataLoader = LoadFromFilesystem()
+	_, err := c.Load(context.Background(), func(ctx context.Context, secretKey string) (string, error) {
+		t.Fatalf("unexpected secret resolution: %s", secretKey)
+		return "", nil
+	})
+	require.NoError(t, err)
+	assert.Equal(t, "filesystem", c.Data.DefaultSecretsPlugin)
+}
+
 func TestListTemplateVariables(t *testing.T) {
 	eng := liquid.NewEngine()
 	tmpl, err := eng.ParseString(`not a variable {{secrets.foo}} more non variable junk{{env.var}}{{env.var}}`)
