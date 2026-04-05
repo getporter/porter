@@ -62,3 +62,51 @@ func TestInvokeCustomAction(t *testing.T) {
 	require.NoError(t, err, "GetLastClaim failed")
 	assert.Equal(t, "zombies", c.Action, "the custom action wasn't recorded in the installation")
 }
+
+func TestInvoke_ModifiesFalse_DoesNotPersistState(t *testing.T) {
+	t.Parallel()
+
+	p := porter.NewTestPorter(t)
+	defer p.Close()
+	ctx := p.SetupIntegrationTest()
+
+	err := p.Create()
+	require.NoError(t, err)
+
+	bundleName := p.AddTestBundleDir("testdata/bundles/bundle-with-modifies-false-action", true)
+
+	// Install to establish initial porter-state
+	installOpts := porter.NewInstallOptions()
+	err = installOpts.Validate(ctx, []string{}, p.Porter)
+	require.NoError(t, err)
+	err = p.InstallBundle(ctx, installOpts)
+	require.NoError(t, err, "install should have succeeded")
+
+	// Capture the porter-state output written during install
+	stateAfterInstall, err := p.Installations.GetLastOutput(ctx, "", bundleName, "porter-state")
+	require.NoError(t, err, "porter-state output should exist after install")
+
+	// Invoke the modifies:false dry-run action
+	invokeOpts := porter.NewInvokeOptions()
+	invokeOpts.Action = "dry-run"
+	err = invokeOpts.Validate(ctx, []string{}, p.Porter)
+	require.NoError(t, err)
+	err = p.InvokeBundle(ctx, invokeOpts)
+	require.NoError(t, err, "dry-run invoke should have succeeded")
+
+	// porter-state must not have been updated by the dry-run
+	stateAfterDryRun, err := p.Installations.GetLastOutput(ctx, "", bundleName, "porter-state")
+	require.NoError(t, err, "porter-state output should still exist after dry-run")
+	assert.Equal(t, stateAfterInstall.ResultID, stateAfterDryRun.ResultID,
+		"porter-state should not have been updated by a modifies:false action")
+
+	// The dry-run run record must exist
+	lastRun, err := p.Installations.GetLastRun(ctx, "", bundleName)
+	require.NoError(t, err, "GetLastRun failed")
+	assert.Equal(t, "dry-run", lastRun.Action, "dry-run should have been recorded")
+
+	// The user-defined output from dry-run must have been saved
+	dryRunOutput, err := p.Installations.GetOutput(ctx, lastRun.ID, "dry-run-result")
+	require.NoError(t, err, "dry-run-result output should have been saved")
+	assert.Contains(t, string(dryRunOutput.Value), "dry-run-ok")
+}
