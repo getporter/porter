@@ -198,3 +198,95 @@ func TestConfigMigrate(t *testing.T) {
 	listOutput := p.TestConfig.TestContext.GetOutput()
 	assert.Contains(t, listOutput, "* default", "migrated config should have 'default' as the active context")
 }
+
+// TestDependenciesVersionStrategy_FromConfigFile verifies that
+// dependencies.version-strategy is read from the config file and surfaced
+// through GetDependenciesVersionStrategy.
+func TestDependenciesVersionStrategy_FromConfigFile(t *testing.T) {
+	p := porter.NewTestPorter(t)
+	ctx := p.SetupIntegrationTest()
+	defer p.Close()
+
+	home, _ := p.GetHomeDir()
+	require.NoError(t, os.WriteFile(
+		filepath.Join(home, "config.yaml"),
+		[]byte("dependencies:\n  version-strategy: max-patch\n"),
+		pkg.FileModeWritable,
+	))
+
+	p.Config.DataLoader = config.LoadFromFilesystem()
+	_, err := p.Config.Load(ctx, nil)
+	require.NoError(t, err)
+	assert.Equal(t, config.DependencyVersionStrategyMaxPatch,
+		p.Config.GetDependenciesVersionStrategy(),
+		"version strategy should be loaded from config file")
+}
+
+// TestDependenciesVersionStrategy_FromEnvVar verifies that
+// PORTER_DEPENDENCIES_VERSION_STRATEGY overrides the config-file setting.
+func TestDependenciesVersionStrategy_FromEnvVar(t *testing.T) {
+	t.Setenv("PORTER_DEPENDENCIES_VERSION_STRATEGY", config.DependencyVersionStrategyMin)
+
+	p := porter.NewTestPorter(t)
+	ctx := p.SetupIntegrationTest()
+	defer p.Close()
+
+	home, _ := p.GetHomeDir()
+	// config file sets max-patch; env var should win
+	require.NoError(t, os.WriteFile(
+		filepath.Join(home, "config.yaml"),
+		[]byte("dependencies:\n  version-strategy: max-patch\n"),
+		pkg.FileModeWritable,
+	))
+
+	p.Config.DataLoader = config.LoadFromEnvironment()
+	_, err := p.Config.Load(ctx, nil)
+	require.NoError(t, err)
+	assert.Equal(t, config.DependencyVersionStrategyMin,
+		p.Config.GetDependenciesVersionStrategy(),
+		"env var should override config file")
+}
+
+// TestDependenciesVersionStrategy_MultiContextConfig verifies that
+// dependencies.version-strategy is loaded from the active context in a
+// multi-context config file.
+func TestDependenciesVersionStrategy_MultiContextConfig(t *testing.T) {
+	const multiCtxCfg = `schemaVersion: "2.0.0"
+current-context: default
+contexts:
+  - name: default
+    config:
+      dependencies:
+        version-strategy: max-minor
+  - name: prod
+    config:
+      dependencies:
+        version-strategy: min
+`
+	p := porter.NewTestPorter(t)
+	ctx := p.SetupIntegrationTest()
+	defer p.Close()
+
+	home, _ := p.GetHomeDir()
+	require.NoError(t, os.WriteFile(
+		filepath.Join(home, "config.yaml"),
+		[]byte(multiCtxCfg),
+		pkg.FileModeWritable,
+	))
+
+	p.Config.DataLoader = config.LoadFromFilesystem()
+
+	p.Config.ContextName = ""
+	_, err := p.Config.Load(ctx, nil)
+	require.NoError(t, err)
+	assert.Equal(t, config.DependencyVersionStrategyMaxMinor,
+		p.Config.GetDependenciesVersionStrategy(),
+		"default context should use max-minor")
+
+	p.Config.ContextName = "prod"
+	_, err = p.Config.Load(ctx, nil)
+	require.NoError(t, err)
+	assert.Equal(t, config.DependencyVersionStrategyMin,
+		p.Config.GetDependenciesVersionStrategy(),
+		"prod context should use min")
+}

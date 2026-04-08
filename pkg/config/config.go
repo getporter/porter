@@ -338,6 +338,15 @@ func (c *Config) GetBuildDriver() string {
 	return BuildDriverBuildkit
 }
 
+// GetDependenciesVersionStrategy returns the configured version strategy for
+// resolving dependency version ranges, defaulting to "exact".
+func (c *Config) GetDependenciesVersionStrategy() string {
+	if s := c.Data.Dependencies.VersionStrategy; s != "" {
+		return s
+	}
+	return DependencyVersionStrategyExact
+}
+
 // GetVerbosity converts the user-specified verbosity flag into a LogLevel enum.
 func (c *Config) GetVerbosity() LogLevel {
 	return ParseLogLevel(c.Data.Verbosity)
