@@ -3,6 +3,8 @@
 package integration
 
 import (
+	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -153,6 +155,49 @@ func TestMultiContextConfig_TOML(t *testing.T) {
 	assert.Contains(t, output, "* prod", "prod should be marked active (matches current-context in file)")
 }
 
+// TestMultiContextConfig_SecretsOnlyScopedToSelectedContext_TOML is the same
+// scenario as TestMultiContextConfig_SecretsOnlyScopedToSelectedContext but
+// uses a TOML config to exercise the format-agnostic pre-render map path.
+func TestMultiContextConfig_SecretsOnlyScopedToSelectedContext_TOML(t *testing.T) {
+	p := porter.NewTestPorter(t)
+	ctx := p.SetupIntegrationTest()
+	defer p.Close()
+
+	home, _ := p.GetHomeDir()
+
+	const cfg = `schemaVersion = "2.0.0"
+current-context = "local"
+
+[[contexts]]
+name = "local"
+
+[contexts.config]
+default-secrets-plugin = "filesystem"
+
+[[contexts]]
+name = "prod"
+
+[contexts.config]
+default-storage-plugin = "${secret.prodStoragePlugin}"
+`
+	require.NoError(t, os.WriteFile(
+		filepath.Join(home, "config.toml"),
+		[]byte(cfg),
+		pkg.FileModeWritable,
+	))
+
+	p.Config.DataLoader = config.LoadFromFilesystem()
+
+	// resolveSecret must never fire: "local" has no secret references.
+	resolveSecret := func(_ context.Context, key string) (string, error) {
+		return "", fmt.Errorf("unexpected secret resolution for key %q", key)
+	}
+
+	_, err := p.Config.Load(ctx, resolveSecret)
+	require.NoError(t, err, "loading TOML config should not resolve secrets from unselected contexts")
+	assert.Equal(t, "filesystem", p.Config.Data.DefaultSecretsPlugin)
+}
+
 // legacyYAMLWithTemplateVars is a flat config that contains Liquid template
 // variables, used to verify they survive migration intact.
 const legacyYAMLWithTemplateVars = `namespace: dev
@@ -165,6 +210,94 @@ storage:
     config:
       url: mongodb://localhost:27017/${env.PORTER_TEST_DB_NAME}?connect=direct
 `
+
+// TestMultiContextConfig_SecretsOnlyScopedToSelectedContext is an integration
+// test for issue #3558: secrets in unselected contexts must not be resolved.
+func TestMultiContextConfig_SecretsOnlyScopedToSelectedContext(t *testing.T) {
+	p := porter.NewTestPorter(t)
+	ctx := p.SetupIntegrationTest()
+	defer p.Close()
+
+	home, _ := p.GetHomeDir()
+
+	// Config where "local" is selected but only "prod" references a secret.
+	const cfg = `schemaVersion: "2.0.0"
+current-context: local
+contexts:
+  - name: local
+    config:
+      default-secrets-plugin: "filesystem"
+  - name: prod
+    config:
+      default-storage: "prod-db"
+      storage:
+        - name: "prod-db"
+          plugin: "mongodb"
+          config:
+            url: "${secret.prodMongoConnectionString}"
+`
+	require.NoError(t, os.WriteFile(
+		filepath.Join(home, "config.yaml"),
+		[]byte(cfg),
+		pkg.FileModeWritable,
+	))
+
+	p.Config.DataLoader = config.LoadFromFilesystem()
+
+	// resolveSecret must never be called: "local" has no secret references.
+	resolveSecret := func(_ context.Context, key string) (string, error) {
+		return "", fmt.Errorf("unexpected secret resolution for key %q: only the selected context's secrets should be resolved", key)
+	}
+
+	_, err := p.Config.Load(ctx, resolveSecret)
+	require.NoError(t, err, "loading config should not attempt to resolve secrets from unselected contexts")
+	assert.Equal(t, "filesystem", p.Config.Data.DefaultSecretsPlugin)
+}
+
+// TestMultiContextConfig_SecretsResolvedForSelectedContext verifies that when
+// the selected context does reference a secret it is resolved correctly.
+func TestMultiContextConfig_SecretsResolvedForSelectedContext(t *testing.T) {
+	p := porter.NewTestPorter(t)
+	ctx := p.SetupIntegrationTest()
+	defer p.Close()
+
+	home, _ := p.GetHomeDir()
+
+	const cfg = `schemaVersion: "2.0.0"
+current-context: prod
+contexts:
+  - name: local
+    config:
+      default-secrets-plugin: "filesystem"
+  - name: prod
+    config:
+      default-storage: "prod-db"
+      storage:
+        - name: "prod-db"
+          plugin: "mongodb"
+          config:
+            url: "${secret.prodMongoConnectionString}"
+`
+	require.NoError(t, os.WriteFile(
+		filepath.Join(home, "config.yaml"),
+		[]byte(cfg),
+		pkg.FileModeWritable,
+	))
+
+	p.Config.DataLoader = config.LoadFromFilesystem()
+
+	resolveSecret := func(_ context.Context, key string) (string, error) {
+		if key == "prodMongoConnectionString" {
+			return "mongodb://prod.example.com/porter", nil
+		}
+		return "", fmt.Errorf("unexpected secret key %q", key)
+	}
+
+	_, err := p.Config.Load(ctx, resolveSecret)
+	require.NoError(t, err)
+	require.Len(t, p.Config.Data.StoragePlugins, 1)
+	assert.Equal(t, map[string]interface{}{"url": "mongodb://prod.example.com/porter"}, p.Config.Data.StoragePlugins[0].Config)
+}
 
 // TestConfigMigrate verifies that a legacy flat YAML config is correctly
 // migrated to the multi-context format on the real filesystem, and that
