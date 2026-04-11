@@ -31,7 +31,7 @@ func NewSBOMGenerator(c *config.Config) *SBOMGenerator {
 	}
 }
 
-// NewSBOMGeneratorPluginConfig for signing sources.
+// NewSBOMGeneratorPluginConfig for generating SBOMs
 func NewSBOMGeneratorPluginConfig() pluggable.PluginTypeConfig {
 	return pluggable.PluginTypeConfig{
 		Interface: plugins.PluginInterface,

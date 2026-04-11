@@ -3,22 +3,22 @@ package syft
 import (
 	"fmt"
 
+	"github.com/hashicorp/go-plugin"
+	"github.com/mitchellh/mapstructure"
+
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/sbom"
 	"get.porter.sh/porter/pkg/sbom/plugins"
 	"get.porter.sh/porter/pkg/sbom/pluginstore"
-	"github.com/hashicorp/go-plugin"
-	"github.com/mitchellh/mapstructure"
 )
 
 const PluginKey = plugins.PluginInterface + ".porter.syft"
 
 var _ plugins.SBOMGeneratorProtocol = &Plugin{}
 
-type PluginConfig struct {
-}
+type PluginConfig struct{}
 
-// Plugin is the plugin wrapper for accessing secrets from a local filesystem.
+// Plugin is the plugin wrapper for the SBOM generator
 type Plugin struct {
 	sbom.SBOMGenerator
 }

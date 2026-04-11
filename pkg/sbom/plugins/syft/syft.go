@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/sbom/plugins"
@@ -32,42 +33,47 @@ func (s *Syft) Connect(ctx context.Context) error {
 	return nil
 }
 
+func (s *Syft) runSyft(
+	ctx context.Context,
+	bundleRef string,
+	sbomPath string,
+	insecureRegistry bool,
+) ([]byte, error) {
+	args := []string{"-o", fmt.Sprintf("spdx-json=%s", sbomPath), bundleRef}
+	cmd := exec.CommandContext(ctx, "syft", args...)
+	if insecureRegistry {
+		cmd.Env = append(os.Environ(), "SYFT_REGISTRY_INSECURE_SKIP_TLS_VERIFY=true")
+	}
+
+	return cmd.CombinedOutput()
+}
+
 func (s *Syft) Generate(
 	ctx context.Context,
 	bundleRef string,
 	sbomPath string,
 	insecureRegistry bool,
 ) (err error) {
-	_, log := tracing.StartSpan(ctx)
+	ctx, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
 
 	log.Infof("Generating SBOM for bundle %s...", bundleRef)
 
-	// Pre-pull the image into the local Docker daemon so syft can find it immediately.
-	// Without this, syft's first attempt pulls the image as a side effect but fails
-	// because the image isn't available in the daemon until after that pull completes.
-	pullCmd := exec.Command("docker", "pull", bundleRef)
-	if insecureRegistry {
-		pullCmd.Env = append(os.Environ(), "DOCKER_TLS_VERIFY=0")
-	}
-	if pullOut, err := pullCmd.CombinedOutput(); err != nil {
-		log.Warnf("Failed to pre-pull image %s before SBOM generation: %s: %v", bundleRef, string(pullOut), err)
-	}
+	out, err := s.runSyft(ctx, bundleRef, sbomPath, insecureRegistry)
 
-	args := []string{"-o", fmt.Sprintf("spdx-json=%s", sbomPath), bundleRef}
-	cmd := exec.Command("syft", args...)
-	if insecureRegistry {
-		log.Info(
-			"Setting Syft environment variable to skip TLS verification for insecure registries",
+	// there seems to be a bug in syft/docker which means that the first attempt to run the command fails, but subsequent attempts work
+	// as a work around, if the first attempt fails with a specific error, we should just attempt to re-run it!
+	if err != nil && strings.Contains(string(out), "errors occurred attempting to resolve") {
+		log.Warnf(
+			"Initial attempt to run syft has failed with a known error, retrying. Error message: %s",
+			err.Error(),
 		)
-		cmd.Env = append(os.Environ(), "SYFT_REGISTRY_INSECURE_SKIP_TLS_VERIFY=true")
+		out, err = s.runSyft(ctx, bundleRef, sbomPath, insecureRegistry)
 	}
-
-	out, err := cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("%s: %w", string(out), err)
 	}
-	log.Infof("%s", out)
+	log.Debug(string(out))
 
 	log.Infof("SBOM for bundle %s written to %s", bundleRef, sbomPath)
 	return err
