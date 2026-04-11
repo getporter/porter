@@ -760,14 +760,9 @@ func (m *RuntimeManifest) Finalize(ctx context.Context) error {
 		bigErr = multierror.Append(bigErr, err)
 	}
 
-	// Skip state persistence for modifies: false actions. Such actions declare
-	// they do not change bundle-managed resources, so writing porter-state back
-	// would contradict that contract.
-	if action, err := m.bundle.GetAction(m.Action); err != nil || action.Modifies {
-		// Always try to persist state, even when errors occur
-		if err := m.packStateBag(ctx); err != nil {
-			bigErr = multierror.Append(bigErr, err)
-		}
+	// Always try to persist state, even when errors occur
+	if err := m.packStateBag(ctx); err != nil {
+		bigErr = multierror.Append(bigErr, err)
 	}
 
 	return bigErr.ErrorOrNil()
