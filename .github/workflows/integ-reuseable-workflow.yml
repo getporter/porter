@@ -27,6 +27,9 @@ jobs:
         with:
           go-version: "${{ env.GOVERSION }}"
           cache: true
+      - name: Docker version debug
+        run: docker version || echo "Docker not installed"
+        shell: bash
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
       - name: Cache Docker layers
@@ -67,6 +70,9 @@ jobs:
           # Remove PowerShell
           sudo rm -rf /usr/local/share/powershell
           df -h
+        shell: bash
+      - name: Docker version debug
+        run: docker version || echo "Docker not installed"
         shell: bash
       - name: Integration Test
         run: go run mage.go -v TestIntegration
