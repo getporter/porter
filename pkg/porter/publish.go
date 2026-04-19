@@ -8,13 +8,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"get.porter.sh/porter/pkg/build"
-	"get.porter.sh/porter/pkg/cnab"
-	cnabtooci "get.porter.sh/porter/pkg/cnab/cnab-to-oci"
-	configadapter "get.porter.sh/porter/pkg/cnab/config-adapter"
-	"get.porter.sh/porter/pkg/config"
-	"get.porter.sh/porter/pkg/manifest"
-	"get.porter.sh/porter/pkg/tracing"
 	"github.com/cnabio/cnab-go/bundle/loader"
 	"github.com/cnabio/cnab-go/packager"
 	"github.com/cnabio/cnab-to-oci/relocation"
@@ -23,6 +16,14 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/layout"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/opencontainers/go-digest"
+
+	"get.porter.sh/porter/pkg/build"
+	"get.porter.sh/porter/pkg/cnab"
+	cnabtooci "get.porter.sh/porter/pkg/cnab/cnab-to-oci"
+	configadapter "get.porter.sh/porter/pkg/cnab/config-adapter"
+	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/manifest"
+	"get.porter.sh/porter/pkg/tracing"
 )
 
 // PublishOptions are options that may be specified when publishing a bundle.
@@ -34,6 +35,7 @@ type PublishOptions struct {
 	Registry    string
 	ArchiveFile string
 	SignBundle  bool
+	SBOMPath    string
 }
 
 // Validate performs validation on the publish options
@@ -45,7 +47,9 @@ func (o *PublishOptions) Validate(cfg *config.Config) error {
 		}
 
 		if o.Reference == "" {
-			return errors.New("must provide a value for --reference of the form REGISTRY/bundle:tag")
+			return errors.New(
+				"must provide a value for --reference of the form REGISTRY/bundle:tag",
+			)
 		}
 	} else {
 		// Proceed with publishing from the resolved build context directory
@@ -55,7 +59,10 @@ func (o *PublishOptions) Validate(cfg *config.Config) error {
 		}
 
 		if o.File == "" {
-			return fmt.Errorf("could not find porter.yaml in the current directory %s, make sure you are in the right directory or specify the porter manifest with --file", o.Dir)
+			return fmt.Errorf(
+				"could not find porter.yaml in the current directory %s, make sure you are in the right directory or specify the porter manifest with --file",
+				o.Dir,
+			)
 		}
 	}
 
@@ -81,7 +88,9 @@ func (o *PublishOptions) Validate(cfg *config.Config) error {
 // explanation
 func (o *PublishOptions) validateTag() error {
 	if strings.Contains(o.Tag, ":") || strings.Contains(o.Tag, "@") {
-		return errors.New("the --tag flag has been updated to designate just the Docker tag portion of the bundle reference; use --reference for the full bundle reference instead")
+		return errors.New(
+			"the --tag flag has been updated to designate just the Docker tag portion of the bundle reference; use --reference for the full bundle reference instead",
+		)
 	}
 	return nil
 }
@@ -171,7 +180,9 @@ func (p *Porter) publishFromFile(ctx context.Context, opts PublishOptions) error
 	}
 
 	if m.Reference == "" {
-		return log.Errorf("porter.yaml is missing registry or reference values needed for publishing")
+		return log.Errorf(
+			"porter.yaml is missing registry or reference values needed for publishing",
+		)
 	}
 
 	// var bundleRef cnab.BundleReference
@@ -196,10 +207,17 @@ func (p *Porter) publishFromFile(ctx context.Context, opts PublishOptions) error
 		_, err := p.Registry.GetBundleMetadata(ctx, bundleRef.Reference, regOpts)
 		if err != nil {
 			if !errors.Is(err, cnabtooci.ErrNotFound{}) {
-				return log.Errorf("Publish stopped because detection of %s in the destination registry failed. To overwrite it, repeat the command with --force specified: %w", bundleRef, err)
+				return log.Errorf(
+					"Publish stopped because detection of %s in the destination registry failed. To overwrite it, repeat the command with --force specified: %w",
+					bundleRef,
+					err,
+				)
 			}
 		} else {
-			return log.Errorf("Publish stopped because %s already exists in the destination registry. To overwrite it, repeat the command with --force specified.", bundleRef)
+			return log.Errorf(
+				"Publish stopped because %s already exists in the destination registry. To overwrite it, repeat the command with --force specified.",
+				bundleRef,
+			)
 		}
 	}
 
@@ -212,7 +230,12 @@ func (p *Porter) publishFromFile(ctx context.Context, opts PublishOptions) error
 	if err != nil {
 		return log.Errorf("failed to load stamp from bundle definition: %w", err)
 	}
-	bundleRef.Definition, err = p.rewriteBundleWithBundleImageDigest(ctx, m, bundleRef.Digest, stamp.PreserveTags)
+	bundleRef.Definition, err = p.rewriteBundleWithBundleImageDigest(
+		ctx,
+		m,
+		bundleRef.Digest,
+		stamp.PreserveTags,
+	)
 	if err != nil {
 		return err
 	}
@@ -243,7 +266,25 @@ func (p *Porter) publishFromFile(ctx context.Context, opts PublishOptions) error
 	// Perhaps we have a cached version of a bundle with the same reference, previously pulled
 	// If so, replace it, as it is most likely out-of-date per this publish
 	err = p.refreshCachedBundle(bundleRef)
-	return log.Error(err)
+	if err != nil {
+		return log.Error(err)
+	}
+
+	// Generate SBOM if requested
+	if opts.SBOMPath != "" {
+		log.Infof("Generating SBOM of %s at %s...", imgRef.String(), opts.SBOMPath)
+		log.Infof("Bundle details are: %+v", bundleRef)
+		if err := p.SBOMGenerator.Generate(
+			ctx,
+			bundleRef.String(),
+			opts.SBOMPath,
+			opts.InsecureRegistry,
+		); err != nil {
+			return log.Error(err)
+		}
+	}
+
+	return nil
 }
 
 // publishFromArchive (re-)publishes a bundle, provided by the archive file, using the provided tag.
@@ -270,10 +311,17 @@ func (p *Porter) publishFromArchive(ctx context.Context, opts PublishOptions) er
 		_, err := p.Registry.GetBundleMetadata(ctx, ref, regOpts)
 		if err != nil {
 			if !errors.Is(err, cnabtooci.ErrNotFound{}) {
-				return log.Errorf("Publish stopped because detection of %s in the destination registry failed. To overwrite it, repeat the command with --force specified: %w", ref, err)
+				return log.Errorf(
+					"Publish stopped because detection of %s in the destination registry failed. To overwrite it, repeat the command with --force specified: %w",
+					ref,
+					err,
+				)
 			}
 		} else {
-			return log.Errorf("Publish stopped because %s already exists in the destination registry. To overwrite it, repeat the command with --force specified.", ref)
+			return log.Errorf(
+				"Publish stopped because %s already exists in the destination registry. To overwrite it, repeat the command with --force specified.",
+				ref,
+			)
 		}
 	}
 
@@ -305,7 +353,14 @@ func (p *Porter) publishFromArchive(ctx context.Context, opts PublishOptions) er
 	// Push updated images (renamed based on provided bundle tag) with same digests
 	// then update the bundle with new values (image name, digest)
 	for _, invImg := range bundleRef.Definition.InvocationImages {
-		relocMap, err := p.relocateImage(ctx, bundleRef.RelocationMap, layoutPath, invImg.Image, opts.Reference, regOpts)
+		relocMap, err := p.relocateImage(
+			ctx,
+			bundleRef.RelocationMap,
+			layoutPath,
+			invImg.Image,
+			opts.Reference,
+			regOpts,
+		)
 		if err != nil {
 			return log.Error(err)
 		}
@@ -326,7 +381,14 @@ func (p *Porter) publishFromArchive(ctx context.Context, opts PublishOptions) er
 		}
 	}
 	for _, img := range bundleRef.Definition.Images {
-		relocMap, err := p.relocateImage(ctx, bundleRef.RelocationMap, layoutPath, img.Image, opts.Reference, regOpts)
+		relocMap, err := p.relocateImage(
+			ctx,
+			bundleRef.RelocationMap,
+			layoutPath,
+			img.Image,
+			opts.Reference,
+			regOpts,
+		)
 		if err != nil {
 			return log.Error(err)
 		}
@@ -350,11 +412,31 @@ func (p *Porter) publishFromArchive(ctx context.Context, opts PublishOptions) er
 	// Perhaps we have a cached version of a bundle with the same tag, previously pulled
 	// If so, replace it, as it is most likely out-of-date per this publish
 	err = p.refreshCachedBundle(bundleRef)
-	return log.Error(err)
+	if err != nil {
+		return log.Error(err)
+	}
+
+	// Generate SBOM if requested
+	if opts.SBOMPath != "" {
+		log.Infof("Generating SBOM at %s...", opts.SBOMPath)
+		if err := p.SBOMGenerator.Generate(
+			ctx,
+			bundleRef.String(),
+			opts.SBOMPath,
+			opts.InsecureRegistry,
+		); err != nil {
+			return log.Error(err)
+		}
+	}
+
+	return nil
 }
 
 // extractBundle extracts a bundle using the provided opts and returns the extracted bundle
-func (p *Porter) extractBundle(ctx context.Context, tmpDir, source string) (cnab.BundleReference, error) {
+func (p *Porter) extractBundle(
+	ctx context.Context,
+	tmpDir, source string,
+) (cnab.BundleReference, error) {
 	_, span := tracing.StartSpan(ctx)
 	defer span.EndSpan()
 
@@ -363,33 +445,62 @@ func (p *Porter) extractBundle(ctx context.Context, tmpDir, source string) (cnab
 	imp := packager.NewImporter(source, tmpDir, l)
 	err := imp.Import()
 	if err != nil {
-		return cnab.BundleReference{}, span.Error(fmt.Errorf("failed to extract bundle from archive %s: %w", source, err))
+		return cnab.BundleReference{}, span.Error(
+			fmt.Errorf("failed to extract bundle from archive %s: %w", source, err),
+		)
 	}
 
-	bun, err := l.Load(filepath.Join(tmpDir, strings.TrimSuffix(filepath.Base(source), ".tgz"), "bundle.json"))
+	bun, err := l.Load(
+		filepath.Join(tmpDir, strings.TrimSuffix(filepath.Base(source), ".tgz"), "bundle.json"),
+	)
 	if err != nil {
-		return cnab.BundleReference{}, span.Error(fmt.Errorf("failed to load bundle from archive %s: %w", source, err))
+		return cnab.BundleReference{}, span.Error(
+			fmt.Errorf("failed to load bundle from archive %s: %w", source, err),
+		)
 	}
-	data, err := p.FileSystem.ReadFile(filepath.Join(tmpDir, strings.TrimSuffix(filepath.Base(source), ".tgz"), "relocation-mapping.json"))
+	data, err := p.FileSystem.ReadFile(
+		filepath.Join(
+			tmpDir,
+			strings.TrimSuffix(filepath.Base(source), ".tgz"),
+			"relocation-mapping.json",
+		),
+	)
 	if err != nil {
-		return cnab.BundleReference{}, span.Error(fmt.Errorf("failed to load relocation-mapping.json from archive %s: %w", source, err))
+		return cnab.BundleReference{}, span.Error(
+			fmt.Errorf("failed to load relocation-mapping.json from archive %s: %w", source, err),
+		)
 	}
 	var reloMap relocation.ImageRelocationMap
 	err = json.Unmarshal(data, &reloMap)
 	if err != nil {
-		return cnab.BundleReference{}, span.Error(fmt.Errorf("failed to parse relocation-mapping.json from archive %s: %w", source, err))
+		return cnab.BundleReference{}, span.Error(
+			fmt.Errorf("failed to parse relocation-mapping.json from archive %s: %w", source, err),
+		)
 	}
 
-	return cnab.BundleReference{Definition: cnab.ExtendedBundle{Bundle: *bun}, RelocationMap: reloMap}, nil
+	return cnab.BundleReference{
+		Definition:    cnab.ExtendedBundle{Bundle: *bun},
+		RelocationMap: reloMap,
+	}, nil
 }
 
 // pushUpdatedImage uses the provided layout to find the provided origImg,
 // gathers the pre-existing digest and then pushes this digest using the newImgName
-func (p *Porter) pushUpdatedImage(ctx context.Context, layoutPath layout.Path, origImg string, destRef name.Reference, opts cnabtooci.RegistryOptions) (v1.Hash, error) {
+func (p *Porter) pushUpdatedImage(
+	ctx context.Context,
+	layoutPath layout.Path,
+	origImg string,
+	destRef name.Reference,
+	opts cnabtooci.RegistryOptions,
+) (v1.Hash, error) {
 	// Find image in layout
 	digest, err := findImageInLayout(layoutPath, origImg)
 	if err != nil {
-		return v1.Hash{}, fmt.Errorf("unable to find image %s in archived OCI Layout: %w", origImg, err)
+		return v1.Hash{}, fmt.Errorf(
+			"unable to find image %s in archived OCI Layout: %w",
+			origImg,
+			err,
+		)
 	}
 
 	// Push to new location
@@ -453,7 +564,13 @@ func findImageInLayout(layoutPath layout.Path, imageName string) (v1.Hash, error
 }
 
 // pushImageFromLayout retrieves an image from the OCI layout by digest and pushes it to a destination registry
-func (p *Porter) pushImageFromLayout(ctx context.Context, layoutPath layout.Path, digest v1.Hash, destRef name.Reference, opts cnabtooci.RegistryOptions) error {
+func (p *Porter) pushImageFromLayout(
+	ctx context.Context,
+	layoutPath layout.Path,
+	digest v1.Hash,
+	destRef name.Reference,
+	opts cnabtooci.RegistryOptions,
+) error {
 	// Get image from layout by digest
 	img, err := layoutPath.Image(digest)
 	if err != nil {
@@ -474,7 +591,10 @@ func (p *Porter) pushImageFromLayout(ctx context.Context, layoutPath layout.Path
 
 // getNewImageNameFromBundleReference derives a new image reference from the provided original
 // image (string) using the provided bundleTag to clean registry/org/etc.
-func getNewImageNameFromBundleReference(origImg, bundleTag string, regOpts cnabtooci.RegistryOptions) (name.Reference, error) {
+func getNewImageNameFromBundleReference(
+	origImg, bundleTag string,
+	regOpts cnabtooci.RegistryOptions,
+) (name.Reference, error) {
 	origImgRef, err := cnab.ParseOCIReference(origImg)
 	if err != nil {
 		return nil, err
@@ -507,7 +627,12 @@ func getNewImageNameFromBundleReference(origImg, bundleTag string, regOpts cnabt
 	return name.ParseReference(newImgRef.String(), regOpts.ToNameOptions()...)
 }
 
-func (p *Porter) rewriteBundleWithBundleImageDigest(ctx context.Context, m *manifest.Manifest, digest digest.Digest, preserveTags bool) (cnab.ExtendedBundle, error) {
+func (p *Porter) rewriteBundleWithBundleImageDigest(
+	ctx context.Context,
+	m *manifest.Manifest,
+	digest digest.Digest,
+	preserveTags bool,
+) (cnab.ExtendedBundle, error) {
 	taggedImage, err := p.rewriteImageWithDigest(m.Image, digest.String())
 	if err != nil {
 		return cnab.ExtendedBundle{}, fmt.Errorf("unable to update bundle image reference: %w", err)
@@ -517,7 +642,10 @@ func (p *Porter) rewriteBundleWithBundleImageDigest(ctx context.Context, m *mani
 	fmt.Fprintln(p.Out, "\nRewriting CNAB bundle.json...")
 	err = p.buildBundle(ctx, m, digest, preserveTags)
 	if err != nil {
-		return cnab.ExtendedBundle{}, fmt.Errorf("unable to rewrite CNAB bundle.json with updated bundle image digest: %w", err)
+		return cnab.ExtendedBundle{}, fmt.Errorf(
+			"unable to rewrite CNAB bundle.json with updated bundle image digest: %w",
+			err,
+		)
 	}
 
 	bun, err := cnab.LoadBundle(p.Context, build.LOCAL_BUNDLE)
@@ -528,7 +656,14 @@ func (p *Porter) rewriteBundleWithBundleImageDigest(ctx context.Context, m *mani
 	return bun, nil
 }
 
-func (p *Porter) relocateImage(ctx context.Context, relocationMap relocation.ImageRelocationMap, layoutPath layout.Path, originImg string, newReference string, opts cnabtooci.RegistryOptions) (relocation.ImageRelocationMap, error) {
+func (p *Porter) relocateImage(
+	ctx context.Context,
+	relocationMap relocation.ImageRelocationMap,
+	layoutPath layout.Path,
+	originImg string,
+	newReference string,
+	opts cnabtooci.RegistryOptions,
+) (relocation.ImageRelocationMap, error) {
 	newImgRef, err := getNewImageNameFromBundleReference(originImg, newReference, opts)
 	if err != nil {
 		return nil, err
@@ -545,7 +680,11 @@ func (p *Porter) relocateImage(ctx context.Context, relocationMap relocation.Ima
 
 	taggedImage, err := p.rewriteImageWithDigest(newImgRef.String(), digest.String())
 	if err != nil {
-		return nil, fmt.Errorf("unable to update image reference for %s: %w", newImgRef.String(), err)
+		return nil, fmt.Errorf(
+			"unable to update image reference for %s: %w",
+			newImgRef.String(),
+			err,
+		)
 	}
 
 	// update relocation map
@@ -575,7 +714,12 @@ func (p *Porter) refreshCachedBundle(bundleRef cnab.BundleReference) error {
 	if _, found, _ := p.Cache.FindBundle(bundleRef.Reference); found {
 		_, err := p.Cache.StoreBundle(bundleRef)
 		if err != nil {
-			fmt.Fprintf(p.Err, "warning: unable to update cache for bundle %s: %s\n", bundleRef.Reference, err)
+			fmt.Fprintf(
+				p.Err,
+				"warning: unable to update cache for bundle %s: %s\n",
+				bundleRef.Reference,
+				err,
+			)
 		}
 	}
 	return nil

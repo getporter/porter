@@ -1,0 +1,12 @@
+default-storage: testdb
+default-sbom-generator: syft
+
+sbom-generators:
+  - name: "syft"
+    plugin: "syft"
+
+storage:
+  - name: testdb
+    plugin: mongodb
+    config:
+      url: mongodb://localhost:27017/${env.PORTER_TEST_DB_NAME}?connect=direct

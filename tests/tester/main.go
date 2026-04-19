@@ -10,11 +10,12 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+	"github.com/uwu-tools/magex/shx"
+
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/storage/plugins/mongodb_docker"
 	"get.porter.sh/porter/tests"
-	"github.com/stretchr/testify/require"
-	"github.com/uwu-tools/magex/shx"
 )
 
 type Tester struct {
@@ -124,7 +125,9 @@ func (t Tester) RunPorter(args ...string) (stdout string, combinedoutput string,
 }
 
 // RunPorterWith works like RunPorter, but you can customize the command before it's run.
-func (t Tester) RunPorterWith(opts ...func(*shx.PreparedCommand)) (stdout string, combinedoutput string, err error) {
+func (t Tester) RunPorterWith(
+	opts ...func(*shx.PreparedCommand),
+) (stdout string, combinedoutput string, err error) {
 	t.T.Helper()
 
 	cmd := t.buildPorterCommand(opts...)
@@ -151,7 +154,11 @@ func (t Tester) buildPorterCommand(opts ...func(*shx.PreparedCommand)) shx.Prepa
 	debugCmdPrefix := os.Getenv("PORTER_RUN_IN_DEBUGGER")
 
 	configureCommand := func(cmd shx.PreparedCommand) {
-		cmd.Env("PORTER_HOME="+t.PorterHomeDir, "PORTER_TEST_DB_NAME="+t.dbName, "PORTER_VERBOSITY=debug")
+		cmd.Env(
+			"PORTER_HOME="+t.PorterHomeDir,
+			"PORTER_TEST_DB_NAME="+t.dbName,
+			"PORTER_VERBOSITY=debug",
+		)
 		for _, opt := range opts {
 			opt(&cmd)
 		}
@@ -167,7 +174,16 @@ func (t Tester) buildPorterCommand(opts ...func(*shx.PreparedCommand)) shx.Prepa
 			port = "55942"
 		}
 		porterPath := filepath.Join(t.RepoRoot, "bin/porter")
-		cmd = shx.Command("dlv", "exec", porterPath, "--listen=:"+port, "--headless=true", "--api-version=2", "--accept-multiclient", "--")
+		cmd = shx.Command(
+			"dlv",
+			"exec",
+			porterPath,
+			"--listen=:"+port,
+			"--headless=true",
+			"--api-version=2",
+			"--accept-multiclient",
+			"--",
+		)
 		configureCommand(cmd)
 	}
 
@@ -204,12 +220,24 @@ func (t *Tester) createPorterHome(configFilePath string) error {
 
 	require.NoError(t.T, shx.Copy(filepath.Join(binDir, "porter*"), t.PorterHomeDir),
 		"could not copy porter binaries into test PORTER_HOME")
-	require.NoError(t.T, shx.Copy(filepath.Join(binDir, "runtimes"), t.PorterHomeDir, shx.CopyRecursive),
-		"could not copy runtimes/ into test PORTER_HOME")
-	require.NoError(t.T, shx.Copy(filepath.Join(binDir, "mixins"), t.PorterHomeDir, shx.CopyRecursive),
-		"could not copy mixins/ into test PORTER_HOME")
-	require.NoError(t.T, shx.Copy(configFilePath, filepath.Join(t.PorterHomeDir, "config"+filepath.Ext(configFilePath))),
-		"error copying config file to PORTER_HOME")
+	require.NoError(
+		t.T,
+		shx.Copy(filepath.Join(binDir, "runtimes"), t.PorterHomeDir, shx.CopyRecursive),
+		"could not copy runtimes/ into test PORTER_HOME",
+	)
+	require.NoError(
+		t.T,
+		shx.Copy(filepath.Join(binDir, "mixins"), t.PorterHomeDir, shx.CopyRecursive),
+		"could not copy mixins/ into test PORTER_HOME",
+	)
+	require.NoError(
+		t.T,
+		shx.Copy(
+			configFilePath,
+			filepath.Join(t.PorterHomeDir, "config"+filepath.Ext(configFilePath)),
+		),
+		"error copying config file to PORTER_HOME",
+	)
 
 	return nil
 }

@@ -10,6 +10,8 @@ import (
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/plugins"
 	"get.porter.sh/porter/pkg/portercontext"
+	sbomplugins "get.porter.sh/porter/pkg/sbom/plugins"
+	"get.porter.sh/porter/pkg/sbom/plugins/syft"
 	secretsplugins "get.porter.sh/porter/pkg/secrets/plugins"
 	"get.porter.sh/porter/pkg/secrets/plugins/filesystem"
 	"get.porter.sh/porter/pkg/secrets/plugins/host"
@@ -158,6 +160,13 @@ func getInternalPlugins() map[string]InternalPlugin {
 			ProtocolVersion: signingplugins.PluginProtocolVersion,
 			Create: func(c *config.Config, pluginCfg interface{}) (plugin.Plugin, error) {
 				return cosign.NewPlugin(c.Context, pluginCfg)
+			},
+		},
+		syft.PluginKey: {
+			Interface:       sbomplugins.PluginInterface,
+			ProtocolVersion: sbomplugins.PluginProtocolVersion,
+			Create: func(c *config.Config, pluginCfg interface{}) (plugin.Plugin, error) {
+				return syft.NewPlugin(c.Context, pluginCfg)
 			},
 		},
 	}
