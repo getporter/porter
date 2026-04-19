@@ -1404,6 +1404,60 @@ func createTestStateArchive(t *testing.T, stateName, content string) []byte {
 	return buf.Bytes()
 }
 
+func TestFinalize_PackStateBag(t *testing.T) {
+	mContent := `schemaVersion: 1.0.0-alpha.2
+state:
+- name: mystate
+  path: /path/to/mystate
+
+install:
+- mymixin:
+    Parameters:
+      Thing: test
+`
+	setup := func(t *testing.T, action string, modifies bool, isBuiltin bool) (*RuntimeManifest, *config.TestConfig) {
+		testConfig := config.NewTestConfig(t)
+		rm := runtimeManifestFromStepYaml(t, testConfig, mContent)
+		rm.Action = action
+
+		actions := map[string]bundle.Action{}
+		if !isBuiltin {
+			actions[action] = bundle.Action{Modifies: modifies}
+		}
+		rm.bundle = cnab.NewBundle(bundle.Bundle{Actions: actions})
+
+		require.NoError(t, testConfig.FileSystem.MkdirAll(config.BundleOutputsDir, pkg.FileModeDirectory))
+		return rm, testConfig
+	}
+
+	t.Run("modifies false still writes porter-state", func(t *testing.T) {
+		// packStateBag always runs so the CNAB driver can collect the output.
+		// Skipping the save on the host side is what prevents state from being
+		// persisted for modifies:false actions.
+		rm, testConfig := setup(t, "dry-run", false, false)
+		require.NoError(t, rm.Finalize(context.Background()))
+		exists, err := testConfig.FileSystem.Exists("/cnab/app/outputs/porter-state")
+		require.NoError(t, err)
+		assert.True(t, exists, "porter-state must be written so the CNAB driver can collect it")
+	})
+
+	t.Run("modifies true writes porter-state", func(t *testing.T) {
+		rm, testConfig := setup(t, "rotate-creds", true, false)
+		require.NoError(t, rm.Finalize(context.Background()))
+		exists, err := testConfig.FileSystem.Exists("/cnab/app/outputs/porter-state")
+		require.NoError(t, err)
+		assert.True(t, exists, "porter-state should be written for modifies: true actions")
+	})
+
+	t.Run("built-in action writes porter-state", func(t *testing.T) {
+		rm, testConfig := setup(t, cnab.ActionInstall, false, true)
+		require.NoError(t, rm.Finalize(context.Background()))
+		exists, err := testConfig.FileSystem.Exists("/cnab/app/outputs/porter-state")
+		require.NoError(t, err)
+		assert.True(t, exists, "porter-state should be written for built-in actions")
+	})
+}
+
 func TestResolveInvocationImage(t *testing.T) {
 	testcases := []struct {
 		name                string

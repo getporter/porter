@@ -1,0 +1,59 @@
+schemaVersion: 1.0.0-alpha.1
+name: bundle-with-modifies-false-action
+version: 0.1.0
+description: "Bundle for testing that modifies:false actions do not persist porter-state"
+registry: "localhost:5000"
+
+mixins:
+  - exec
+
+state:
+  - name: some_state
+    path: /path/to/some_state
+
+customActions:
+  dry-run:
+    description: "Dry run - does not modify resources"
+    stateless: false
+    modifies: false
+
+install:
+  - exec:
+      description: "Install"
+      command: sh
+      arguments:
+        - -c
+        - |
+          mkdir -p /path/to
+          echo "installed" > /path/to/some_state
+
+dry-run:
+  - exec:
+      description: "Dry run"
+      command: sh
+      arguments:
+        - -c
+        - echo "dry-run-ok" > /cnab/app/outputs/dry-run-result
+
+upgrade:
+  - exec:
+      description: "Upgrade"
+      command: sh
+      arguments:
+        - -c
+        - echo "upgraded"
+
+uninstall:
+  - exec:
+      description: "Uninstall"
+      command: sh
+      arguments:
+        - -c
+        - echo "uninstalled"
+
+outputs:
+  - name: dry-run-result
+    type: string
+    path: /cnab/app/outputs/dry-run-result
+    applyTo:
+      - dry-run
