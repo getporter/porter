@@ -17,10 +17,7 @@ Read-only tools are always available. Mutating tools (install, upgrade,
 uninstall, invoke) require the --allow-write flag.
 
 Configure your MCP client (e.g. Claude Desktop) with:
-
-```json
-{"command": "porter", "args": ["mcp"]}
-```
+  {"command": "porter", "args": ["mcp"]}
 
 
 ```
