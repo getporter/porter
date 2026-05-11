@@ -194,3 +194,8 @@ jobs:
     uses: ./.github/workflows/integ-reuseable-workflow.yml
     with:
       test_name: state_test
+  persistent_params_test:
+    name: Persistent Parameters Integration Test
+    uses: ./.github/workflows/integ-reuseable-workflow.yml
+    with:
+      test_name: persistent_params_test

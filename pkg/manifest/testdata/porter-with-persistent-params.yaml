@@ -1,0 +1,33 @@
+schemaVersion: 1.2.0
+name: persistent-params-test
+version: 0.1.0
+registry: localhost:5000
+
+parameters:
+  - name: resource-group
+    type: string
+    persistent: true
+
+mixins:
+  - exec
+
+install:
+  - exec:
+      description: Install
+      command: bash
+      flags:
+        c: echo hello
+
+upgrade:
+  - exec:
+      description: Upgrade
+      command: bash
+      flags:
+        c: echo hello
+
+uninstall:
+  - exec:
+      description: Uninstall
+      command: bash
+      flags:
+        c: echo goodbye

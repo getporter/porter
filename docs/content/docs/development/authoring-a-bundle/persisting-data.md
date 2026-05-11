@@ -8,22 +8,24 @@ When you create a bundle, you often need to preserve data generated during one a
 for use in subsequent actions (like `upgrade` or `uninstall`). For example, you might create a virtual
 machine during installation and need its ID to delete it during uninstallation.
 
-Porter provides two mechanisms to persist data between bundle actions:
+Porter provides three mechanisms to persist data between bundle actions:
 
-1. **Parameter Sources** - Reference outputs from previous actions as parameter values
+1. **Parameter Sources** - Full control over wiring outputs back as parameters
 2. **State Files** - Automatically persist and restore files between bundle runs
+3. **Persistent Parameters** - Shorthand for remembering a simple parameter value across runs (requires schemaVersion 1.2.0 + `persistent-parameters` experimental flag)
 
 This guide helps you understand when to use each approach and how to implement them.
 
 ## Quick Comparison
 
-| Feature | Parameter Sources | State Files |
-|---------|-------------------|-------------|
-| **Access in templates** | ✅ Yes (`bundle.parameters.X`) | ❌ No (file-only access) |
-| **User can override** | ✅ Yes | ❌ No |
-| **Transparency** | ✅ Visible in parameter sets | ⚠️ Hidden from users |
-| **Best for** | IDs, connection strings, config values | Tool state files (terraform.tfstate, kubeconfig) |
-| **Data types** | string, number, boolean, file, object | file only |
+| Feature | Parameter Sources | State Files | Persistent Parameters |
+|---------|-------------------|-------------|-----------------------|
+| **Access in templates** | ✅ Yes (`bundle.parameters.X`) | ❌ No (file-only access) | ✅ Yes (`bundle.parameters.X`) |
+| **User can override** | ✅ Yes | ❌ No | ✅ Yes |
+| **Transparency** | ✅ Visible in parameter sets | ⚠️ Hidden from users | ✅ Visible in parameter sets |
+| **Best for** | Outputs captured by steps | Tool state files | Simple remembered inputs |
+| **Data types** | string, number, boolean, file, object | file only | string, number, boolean, object |
+| **Requires experimental flag** | ❌ No | ❌ No | ✅ Yes (`persistent-parameters`) |
 
 ## Approach 1: Parameter Sources
 
@@ -223,6 +225,87 @@ Porter saves state files when:
 Porter restores state files:
 - Before each bundle action runs (except the first install)
 
+## Approach 3: Persistent Parameters (Experimental)
+
+The `persistent: true` shorthand is the simplest way to remember a parameter value across bundle
+executions. It is ideal when:
+
+- The value is provided by the user on `install` (e.g., a resource group name, region, or prefix)
+- The exact same value must be used on every subsequent `upgrade` and `uninstall`
+
+### Requirements
+
+- `schemaVersion: 1.2.0` in your porter.yaml
+- The `persistent-parameters` [experimental feature flag] enabled
+
+```console
+export PORTER_EXPERIMENTAL=persistent-parameters
+```
+
+### How It Works
+
+When you set `persistent: true` on a parameter, Porter automatically:
+
+1. Stores the parameter value in a file at `/cnab/app/<name>` (same path serves as both parameter
+   destination and output source)
+2. Creates a matching bundle output with the same name
+3. Wires the output back to the parameter so subsequent runs receive the saved value without user
+   input
+
+### Example: Remembering a Resource Group
+
+```yaml
+schemaVersion: 1.2.0
+name: my-bundle
+version: 0.1.0
+registry: localhost:5000
+
+mixins:
+  - exec
+
+parameters:
+  - name: resource-group
+    type: string
+    persistent: true
+    description: Azure resource group name, remembered after install
+
+install:
+  - exec:
+      description: "Deploy to ${bundle.parameters.resource-group}"
+      command: deploy.sh
+      arguments:
+        - "${bundle.parameters.resource-group}"
+
+upgrade:
+  - exec:
+      description: "Upgrade"
+      command: upgrade.sh
+      arguments:
+        - "${bundle.parameters.resource-group}"  # auto-populated from install
+
+uninstall:
+  - exec:
+      description: "Remove resources"
+      command: teardown.sh
+      arguments:
+        - "${bundle.parameters.resource-group}"  # auto-populated from install
+```
+
+On `install`, the user must provide `--param resource-group=my-rg`. On subsequent `upgrade` and
+`uninstall` runs, Porter automatically injects the saved value — no user input required.
+
+Users can still override the value at any time:
+
+```console
+porter upgrade mybundle --param resource-group=other-rg
+```
+
+### Restrictions
+
+`persistent: true` cannot be combined with `source`, `path`/`env`, or `applyTo`. Use the
+[Approach 1: Parameter Sources](#approach-1-parameter-sources) longhand if you need that
+flexibility.
+
 ## Choosing the Right Approach
 
 Use this decision guide to choose the appropriate mechanism:
@@ -245,6 +328,14 @@ Use this decision guide to choose the appropriate mechanism:
 - ✅ The tool reads the file directly from a specific path
 
 **Examples:** `terraform.tfstate`, `kubeconfig`, `.terraform.lock.hcl`, SSH keys, certificate files
+
+### Use Persistent Parameters When:
+
+- ✅ The value is a simple user-provided input remembered across runs
+- ✅ You want minimal boilerplate (no manual output wiring)
+- ✅ You can enable the `persistent-parameters` experimental flag
+
+**Examples:** resource group names, regions, name prefixes, environment names
 
 ## Combining Both Approaches
 
@@ -351,3 +442,5 @@ variables. If you need template/variable access, use parameter sources instead.
 - [State](/docs/bundle/manifest/#state) - State configuration
 - [Using Templates](/docs/development/authoring-a-bundle/using-templates/) - Template syntax and functions
 - [Working with Dependencies](/docs/development/authoring-a-bundle/working-with-dependencies/) - Sourcing outputs from dependencies
+
+[experimental feature flag]: /docs/configuration/configuration/#experimental

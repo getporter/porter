@@ -1,0 +1,35 @@
+schemaVersion: 1.2.0
+name: bundle-with-persistent-params
+version: 0.1.0
+registry: localhost:5000
+
+parameters:
+  - name: resource-group
+    type: string
+    persistent: true
+
+mixins:
+  - exec
+
+install:
+  - exec:
+      description: "Install"
+      command: sh
+      arguments:
+        - -c
+        - cat /cnab/app/resource-group
+
+upgrade:
+  - exec:
+      description: "Upgrade"
+      command: sh
+      arguments:
+        - -c
+        - cat /cnab/app/resource-group
+
+uninstall:
+  - exec:
+      description: "Uninstall"
+      command: echo
+      arguments:
+        - bye

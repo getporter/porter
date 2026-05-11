@@ -350,6 +350,12 @@ func (c *Config) Load(ctx context.Context, resolveSecret func(ctx context.Contex
 	ctx, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
 
+	// Reset so repeated Load calls (e.g. different selected context) never
+	// reuse a stale variable list from a previous load. The len==0 guard in
+	// LoadFromViper still prevents redundant scanning within the two passes
+	// of a single Load call.
+	c.templateVariables = nil
+
 	ctx, err := c.loadFirstPass(ctx)
 	if err != nil {
 		return ctx, err

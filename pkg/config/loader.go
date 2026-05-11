@@ -15,6 +15,7 @@ import (
 	"github.com/osteele/liquid/render"
 	"github.com/spf13/viper"
 	"go.opentelemetry.io/otel/attribute"
+	"gopkg.in/yaml.v3"
 )
 
 var _ DataStoreLoaderFunc = NoopDataLoader
@@ -112,32 +113,39 @@ func LoadFromViper(viperCfg func(v *viper.Viper), cobraCfg func(v *viper.Viper))
 			}
 		}
 
+		var (
+			cfgContents  []byte
+			cfgEngine    *liquid.Engine
+			cfgTmpl      *liquid.Template
+			preRenderMap map[string]interface{}
+		)
+
 		cfgFile := v.ConfigFileUsed()
 		if cfgFile != "" {
 			log.SetAttributes(attribute.String("porter.PORTER_CONFIG", cfgFile))
 
-			cfgContents, err := cfg.FileSystem.ReadFile(cfgFile)
+			cfgContents, err = cfg.FileSystem.ReadFile(cfgFile)
 			if err != nil {
 				return log.Error(fmt.Errorf("error reading config file template: %w", err))
 			}
 
 			// Render any template variables used in the config file
-			engine := liquid.NewEngine()
-			engine.Delims("${", "}", "${%", "%}")
-			tmpl, err := engine.ParseTemplate(cfgContents)
+			cfgEngine = liquid.NewEngine()
+			cfgEngine.Delims("${", "}", "${%", "%}")
+			cfgTmpl, err = cfgEngine.ParseTemplate(cfgContents)
 			if err != nil {
 				return log.Error(fmt.Errorf("error parsing config file as a liquid template:\n%s\n\n: %w", cfgContents, err))
 			}
 
-			finalCfg, err := tmpl.Render(templateData)
+			// Snapshot viper settings before rendering so that template
+			// syntax (e.g. ${secret.X}) is preserved as plain strings.
+			// This snapshot is used later to detect which secrets belong
+			// to the selected context without re-parsing the raw bytes.
+			preRenderMap = v.AllSettings()
+
+			finalCfg, err := cfgTmpl.Render(templateData)
 			if err != nil {
 				return log.Error(fmt.Errorf("error rendering config file as a liquid template:\n%s\n\n: %w", cfgContents, err))
-			}
-
-			// Remember what variables are used in the template
-			// we use this to resolve variables in the second pass over the config file
-			if len(cfg.templateVariables) == 0 {
-				cfg.templateVariables = listTemplateVariables(tmpl)
 			}
 
 			if err := v.ReadConfig(bytes.NewReader(finalCfg)); err != nil {
@@ -170,6 +178,23 @@ func LoadFromViper(viperCfg func(v *viper.Viper), cobraCfg func(v *viper.Viper))
 				}
 			}
 
+			// Collect template variables only from the selected context so
+			// secrets in other contexts are never resolved unnecessarily.
+			// rawMap supplies the resolved context name for index lookup;
+			// preRenderMap supplies unrendered values (${secret.X} intact).
+			if len(cfg.templateVariables) == 0 && cfgEngine != nil && preRenderMap != nil {
+				vars, found, err := listContextTemplateVariables(cfgEngine, rawMap, preRenderMap, selected)
+				if err != nil {
+					return log.Error(fmt.Errorf("error scanning config template variables: %w", err))
+				}
+				if found {
+					cfg.templateVariables = vars
+				}
+				// !found means the context does not exist in the config.
+				// extractContextConfig below will surface the error; no
+				// need to fall back or collect template variables here.
+			}
+
 			contextConfigMap, err := extractContextConfig(rawMap, selected)
 			if err != nil {
 				return log.Error(err)
@@ -197,6 +222,10 @@ func LoadFromViper(viperCfg func(v *viper.Viper), cobraCfg func(v *viper.Viper))
 			// Legacy flat format — existing path unchanged.
 			if cfg.ContextName != "" {
 				return log.Error(fmt.Errorf("--context/PORTER_CONTEXT requires a versioned config file; add schemaVersion: %q and wrap settings under contexts", ConfigSchemaVersion))
+			}
+			// Collect template variables from the full config file.
+			if len(cfg.templateVariables) == 0 && cfgTmpl != nil {
+				cfg.templateVariables = listTemplateVariables(cfgTmpl)
 			}
 			if err := v.Unmarshal(&cfg.Data); err != nil {
 				return fmt.Errorf("error unmarshaling viper config as porter config: %w", err)
@@ -273,6 +302,58 @@ func listTemplateVariables(tmpl *liquid.Template) []string {
 	sort.Strings(results)
 
 	return results
+}
+
+// contextIndex returns the 0-based position of the named context in the
+// contexts list of rawMap, or -1 when not found. rawMap is typically the
+// post-render viper snapshot where all template expressions are resolved,
+// so the name comparison is against concrete values.
+func contextIndex(rawMap map[string]interface{}, name string) int {
+	contexts, _ := rawMap["contexts"].([]interface{})
+	for i, c := range contexts {
+		ctxMap, ok := c.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		if ctxMap["name"] == name {
+			return i
+		}
+	}
+	return -1
+}
+
+// listContextTemplateVariables returns template variables referenced only
+// within the named context's config block, and reports whether the context
+// was found.
+//
+// rawMap is the post-render viper snapshot used to locate the context by
+// its resolved name; preRenderMap is the pre-render snapshot where template
+// syntax such as ${secret.X} is still present as a plain string value.
+// The same positional index is used in both maps, so the lookup is correct
+// even when context names are themselves template expressions.
+// Using viper snapshots rather than raw file bytes makes this format-agnostic:
+// TOML, JSON, HCL and YAML are all normalised by viper before this is called.
+func listContextTemplateVariables(engine *liquid.Engine, rawMap, preRenderMap map[string]interface{}, contextName string) ([]string, bool, error) {
+	idx := contextIndex(rawMap, contextName)
+	if idx < 0 {
+		return nil, false, nil
+	}
+
+	contexts, _ := preRenderMap["contexts"].([]interface{})
+	if idx >= len(contexts) {
+		return nil, false, nil
+	}
+	ctxMap, _ := contexts[idx].(map[string]interface{})
+
+	configYAML, err := yaml.Marshal(ctxMap["config"])
+	if err != nil {
+		return nil, false, err
+	}
+	tmpl, err := engine.ParseTemplate(configYAML)
+	if err != nil {
+		return nil, false, err
+	}
+	return listTemplateVariables(tmpl), true, nil
 }
 
 // findTemplateVariables looks at the template's abstract syntax tree (AST)
