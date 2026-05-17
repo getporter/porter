@@ -44,6 +44,8 @@ func main() {
 		}()
 
 		if err := cmd.ExecuteContext(ctx); err != nil {
+			_ = log.Error(err)
+			fmt.Fprintln(os.Stderr, err)
 			return cli.ExitCodeErr
 		}
 		return cli.ExitCodeSuccess

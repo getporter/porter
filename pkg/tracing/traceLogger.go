@@ -64,11 +64,9 @@ type TraceLogger interface {
 	// Warnf formats a message and prints it at the warning level.
 	Warnf(format string, args ...interface{})
 
-	// Error logs a message at the error level, when the specified error is not nil,
-	// and marks the current span as failed.
+	// Error records the error to the current span and marks it as failed.
+	// It does NOT print to the console; the final error is printed once by main.
 	// Example: return log.Error(err)
-	// Only log it in the function that generated the error, not when bubbling
-	// it up the call stack.
 	Error(err error, attrs ...attribute.KeyValue) error
 
 	// Errorf logs a message at the error level and marks the current span as failed.
@@ -226,14 +224,12 @@ func (l traceLogger) Errorf(format string, args ...interface{}) error {
 	return l.Error(fmt.Errorf(format, args...))
 }
 
-// Error logs a message at the error level, when the specified error is not nil.
+// Error records the error to the current span and marks it as failed.
+// It does NOT write to the console logger.
 func (l traceLogger) Error(err error, attrs ...attribute.KeyValue) error {
 	if err == nil {
 		return err
 	}
-
-	msg := err.Error()
-	l.logger.Error(msg, convertAttributesToFields(attrs)...)
 
 	attrs = append(attrs, attribute.String("level", "error"))
 
