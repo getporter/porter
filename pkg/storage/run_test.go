@@ -109,7 +109,7 @@ func TestRun_ShouldRecord(t *testing.T) {
 
 	t.Run("modifies false, stateful, with applyTo output", func(t *testing.T) {
 		// Stateful + modifies:false + user output: run and outputs are recorded.
-		// porter-state isolation is enforced separately in Finalize(), not here.
+		// porter-state isolation is enforced separately in SaveOperationResult(), not here.
 		b := bundle.Bundle{
 			Actions: map[string]bundle.Action{
 				"dry-run": {
