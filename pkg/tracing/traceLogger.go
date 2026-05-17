@@ -225,11 +225,13 @@ func (l traceLogger) Errorf(format string, args ...interface{}) error {
 }
 
 // Error records the error to the current span and marks it as failed.
-// It does NOT write to the console logger.
+// It does NOT write to the console; errors are printed once by main.go.
 func (l traceLogger) Error(err error, attrs ...attribute.KeyValue) error {
 	if err == nil {
 		return err
 	}
+
+	l.logger.Error(err.Error(), convertAttributesToFields(attrs)...)
 
 	attrs = append(attrs, attribute.String("level", "error"))
 

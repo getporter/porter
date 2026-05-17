@@ -246,7 +246,7 @@ func (c *Context) makeConsoleLogger() zapcore.Core {
 	}
 	stdoutEnabler := zap.LevelEnablerFunc(isInformational)
 	stderrEnabler := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
-		return !isInformational(lvl) && lvl >= zapcore.ErrorLevel
+		return false // errors printed once by main.go
 	})
 
 	return zapcore.NewTee(
