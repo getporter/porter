@@ -346,6 +346,9 @@ func (b *ExtendedBundle) ResolveVersion(ctx context.Context, name string, dep de
 
 	// Version ranges are specified
 	if b.versionStrategy == "" || b.versionStrategy == "exact" {
+		if ref.HasTag() || ref.HasDigest() {
+			return ref, nil
+		}
 		return OCIReference{}, fmt.Errorf("dependency %s specifies a version range but the version strategy is %q; set dependencies.version-strategy to max-patch, max-minor, or min to resolve ranges", name, b.versionStrategy)
 	}
 
@@ -512,6 +515,9 @@ func (b *ExtendedBundle) ResolveVersionv2(ctx context.Context, name string, dep 
 
 	// dep.Version is a semver constraint string
 	if b.versionStrategy == "" || b.versionStrategy == "exact" {
+		if ref.HasTag() || ref.HasDigest() {
+			return ref, nil
+		}
 		return OCIReference{}, fmt.Errorf("dependency %s specifies a version constraint but the version strategy is %q; set dependencies.version-strategy to max-patch, max-minor, or min to resolve ranges", name, b.versionStrategy)
 	}
 
