@@ -187,7 +187,7 @@ func (p *Porter) printBundleExplain(o ExplainOpts, pb *PrintableBundle, bun cnab
 	}
 }
 
-func generatePrintable(ctx context.Context, bun cnab.ExtendedBundle, action string, registry interface{}, regOpts interface{}) (*PrintableBundle, error) {
+func generatePrintable(ctx context.Context, bun cnab.ExtendedBundle, action string, registry cnabtooci.RegistryProvider, regOpts cnabtooci.RegistryOptions) (*PrintableBundle, error) {
 	var stamp configadapter.Stamp
 
 	stamp, err := configadapter.LoadStamp(bun)
@@ -195,8 +195,11 @@ func generatePrintable(ctx context.Context, bun cnab.ExtendedBundle, action stri
 		stamp = configadapter.Stamp{}
 	}
 
-	// Inject registry for dependency resolution
-	eb := bun.WithRegistry(registry, regOpts)
+	var wrappedRegistry interface{}
+	if registry != nil {
+		wrappedRegistry = &registryListTagsAdapter{reg: registry, opts: regOpts}
+	}
+	eb := bun.WithRegistry(wrappedRegistry, regOpts)
 	deps, err := eb.ResolveDependencies(ctx, bun)
 	if err != nil {
 		return nil, fmt.Errorf("error resolving bundle dependencies: %w", err)

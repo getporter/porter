@@ -159,6 +159,14 @@ func (o *BundleExecutionOptions) Validate(ctx context.Context, args []string, p 
 		return err
 	}
 
+	if s := o.DependenciesVersionStrategy; s != "" {
+		switch s {
+		case "exact", "max-patch", "max-minor", "min":
+		default:
+			return fmt.Errorf("invalid dependencies-version-strategy %q: allowed values are exact, max-patch, max-minor, min", s)
+		}
+	}
+
 	return nil
 }
 

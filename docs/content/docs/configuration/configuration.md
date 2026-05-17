@@ -376,7 +376,7 @@ Therefore, it does not work with the Azure Cloud Shell driver.
 
 ### Dependency Version Strategy
 
-The `dependencies.version-strategy` setting controls how Porter selects a bundle version when a dependency declares a [version range](#version-ranges) instead of a pinned tag.
+The `dependencies.version-strategy` setting controls how Porter selects a bundle version when a dependency declares a [version range](/docs/development/authoring-a-bundle/working-with-dependencies/#version-ranges) instead of a pinned tag.
 
 It can be set in the config file, overridden with the `PORTER_DEPENDENCIES_VERSION_STRATEGY` environment variable, or per-command with `--dependencies-version-strategy`.
 

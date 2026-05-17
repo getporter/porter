@@ -391,7 +391,7 @@ func (b *ExtendedBundle) strategyConstraintFromRef(ref OCIReference) string {
 	if !ref.HasVersion() {
 		return ""
 	}
-	defaultVer, err := semver.NewVersion(ref.Tag())
+	defaultVer, err := semverFromTag(ref.Tag())
 	if err != nil {
 		return ""
 	}
@@ -456,7 +456,7 @@ func (b *ExtendedBundle) filterAndSelectTag(tags []string, allowPrereleases bool
 			continue
 		}
 
-		version, err := semver.NewVersion(tag)
+		version, err := semverFromTag(tag)
 		if err == nil {
 			if !allowPrereleases && version.Prerelease() != "" {
 				continue
