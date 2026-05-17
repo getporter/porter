@@ -271,16 +271,12 @@ func (r *Runtime) SaveOperationResult(ctx context.Context, opResult driver.Opera
 	}
 
 	extBun := cnab.ExtendedBundle{Bundle: run.Bundle}
-	actionModifies := true
-	if action, err := run.Bundle.GetAction(run.Action); err == nil {
-		actionModifies = action.Modifies
-	}
 
 	for outputName, outputValue := range opResult.Outputs {
 		// porter-state tracks bundle-managed resource state. Skip persisting it
 		// for modifies:false actions so that a read-only invoke cannot overwrite
 		// the installation's state record.
-		if !actionModifies && extBun.IsInternalOutput(outputName) {
+		if !run.ActionModifies() && extBun.IsInternalOutput(outputName) {
 			continue
 		}
 

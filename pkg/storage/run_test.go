@@ -154,6 +154,33 @@ func TestRun_ShouldRecord(t *testing.T) {
 
 }
 
+func TestRun_ActionModifies(t *testing.T) {
+	t.Run("modifies true", func(t *testing.T) {
+		b := bundle.Bundle{
+			Actions: map[string]bundle.Action{
+				"install": {Modifies: true},
+			},
+		}
+		r := Run{Bundle: b, Action: "install"}
+		assert.True(t, r.ActionModifies())
+	})
+
+	t.Run("modifies false", func(t *testing.T) {
+		b := bundle.Bundle{
+			Actions: map[string]bundle.Action{
+				"dry-run": {Modifies: false},
+			},
+		}
+		r := Run{Bundle: b, Action: "dry-run"}
+		assert.False(t, r.ActionModifies())
+	})
+
+	t.Run("missing definition defaults to true", func(t *testing.T) {
+		r := Run{Bundle: bundle.Bundle{}, Action: "missing"}
+		assert.True(t, r.ActionModifies())
+	})
+}
+
 func TestRun_TypedParameterValues(t *testing.T) {
 	sensitive := true
 	bun := bundle.Bundle{
