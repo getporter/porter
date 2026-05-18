@@ -8,5 +8,6 @@ description: ""
 
 {{< cards >}}
 {{< card link="custom-dockerfile/" title="Custom Dockerfile" >}}
+{{< card link="dockerignore/" title=".dockerignore" >}}
 {{< card link="manifest/" title="Manifest" >}}
 {{< /cards >}}
