@@ -530,6 +530,51 @@ func TestPorter_applyActionOptionsToInstallation_PreservesExistingParams(t *test
 	}, params, "Incorrect parameter values were persisted on the installationß")
 }
 
+// Regression test for https://github.com/getporter/porter/issues/3599
+// When a parameter was previously set via --param and persisted on the installation,
+// a parameter set specified on a subsequent upgrade should take precedence over the
+// old persisted value.
+func TestPorter_applyActionOptionsToInstallation_ParamSetOverridesPreviousParam(t *testing.T) {
+	t.Parallel()
+
+	p := NewTestPorter(t)
+	defer p.Close()
+	ctx := context.Background()
+
+	p.TestConfig.TestContext.AddTestFile("testdata/porter.yaml", config.Name)
+	m, err := manifest.LoadManifestFrom(context.Background(), p.Config, config.Name)
+	require.NoError(t, err)
+	bun, err := configadapter.ConvertToTestBundle(ctx, p.Config, m)
+	require.NoError(t, err)
+
+	// Create a parameter set with a new value for my-second-param
+	err = p.TestParameters.InsertParameterSet(ctx, storage.NewParameterSet("", "newps",
+		storage.ValueStrategy("my-second-param", "paramset_value")))
+	require.NoError(t, err)
+
+	opts := NewUpgradeOptions()
+	opts.bundleRef = &cnab.BundleReference{
+		Reference:  kahnlatest,
+		Definition: bun,
+	}
+	opts.ParameterSets = []string{"newps"}
+	// No --param flags: relying entirely on the parameter set
+
+	// Simulate installation that previously had my-second-param set via --param
+	i := storage.NewInstallation("", bun.Name)
+	i.ParameterSets = []string{"newps"}
+	i.Parameters = storage.NewParameterSet("", "internal-ps",
+		storage.ValueStrategy("my-second-param", "old_value"),
+	)
+
+	err = p.applyActionOptionsToInstallation(ctx, opts, &i)
+	require.NoError(t, err)
+
+	finalParams := opts.GetParameters()
+	require.Equal(t, "paramset_value", finalParams["my-second-param"],
+		"parameter set value should override old persisted --param value")
+}
+
 func Test_ensureVPrefix(t *testing.T) {
 	ref, err := cnab.ParseOCIReference("registry/bundle:1.2.3")
 	require.NoError(t, err)
