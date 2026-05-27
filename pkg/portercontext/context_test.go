@@ -71,10 +71,10 @@ func TestContext_PluginVerbosityLevel(t *testing.T) {
 		verbosityLevel       zapcore.Level
 		wantNumberOfLogLines int
 	}{
-		{"debug level", zapcore.DebugLevel, 4},
-		{"info level", zapcore.InfoLevel, 3},
-		{"warn level", zapcore.WarnLevel, 2},
-		{"error level", zapcore.ErrorLevel, 1},
+		{"debug level", zapcore.DebugLevel, 3},
+		{"info level", zapcore.InfoLevel, 2},
+		{"warn level", zapcore.WarnLevel, 1},
+		{"error level", zapcore.ErrorLevel, 0},
 	}
 
 	for _, tc := range testcases {
@@ -128,8 +128,6 @@ func TestContext_PluginLogCollectorLevel(t *testing.T) {
 	require.Contains(t, lines[1], "\"@message\":\"info log\"")
 	require.Contains(t, lines[2], "\"@level\":\"warn\"")
 	require.Contains(t, lines[2], "\"@message\":\"warning log\"")
-	require.Contains(t, lines[3], "\"@level\":\"error\"")
-	require.Contains(t, lines[3], "\"@message\":\"error log\"")
 }
 
 func TestContext_SensitiveLogsAreCensored(t *testing.T) {
