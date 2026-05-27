@@ -10,7 +10,7 @@ on:
         type: string
         default: ghcr.io
 env:
-  GOVERSION: 1.25.8
+  GOVERSION: 1.25.10
   PORTER_INTEG_FILE: ${{inputs.test_name}}.go
 
 permissions:
@@ -35,7 +35,7 @@ jobs:
           path: /tmp/.buildx-cache
           key: ${{ runner.os }}-buildx-${{ github.sha }}
       - name: Docker Login
-        uses: docker/login-action@v4.1.0
+        uses: docker/login-action@v4.2.0
         with:
           registry: ${{inputs.registry}}
           username: ${{ github.actor }}
