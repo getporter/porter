@@ -61,6 +61,11 @@ type BundleExecutionOptions struct {
 	// Params is the unparsed list of NAME=VALUE parameters set on the command line.
 	Params []string
 
+	// CurrentParamOverrides are structured parameter overrides that carry the same
+	// precedence as Params (current-invocation overrides). Used by ReconcileInstallation
+	// to pass inline YAML params without round-tripping through string serialization.
+	CurrentParamOverrides secrets.StrategyList
+
 	// ParameterSets is a list of parameter sets containing parameter sources
 	ParameterSets []string
 

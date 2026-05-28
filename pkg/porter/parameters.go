@@ -918,13 +918,21 @@ func (p *Porter) applyActionOptionsToInstallation(ctx context.Context, ba Bundle
 
 	//
 	// 3. Resolve named parameter sets
-	// Only skip parameters that are explicitly overridden in the current invocation via
-	// --param flags. Old persisted values must not suppress parameter set resolution so
-	// that parameter sets take precedence over previously-persisted --param values.
+	// Only skip parameters that are explicitly overridden in the current invocation
+	// (via --param flags or CurrentParamOverrides). Old persisted values must not
+	// suppress parameter set resolution so that parameter sets take precedence over
+	// previously-persisted values.
 	//
-	cliOverridesList := make(secrets.StrategyList, 0, len(parsedOverrides))
+	currentOverrideNames := make(map[string]struct{}, len(parsedOverrides)+len(o.CurrentParamOverrides))
+	for name := range parsedOverrides {
+		currentOverrideNames[name] = struct{}{}
+	}
+	for _, param := range o.CurrentParamOverrides {
+		currentOverrideNames[param.Name] = struct{}{}
+	}
+	cliOverridesList := make(secrets.StrategyList, 0, len(currentOverrideNames))
 	for _, param := range inst.Parameters.Parameters {
-		if _, isCurrentOverride := parsedOverrides[param.Name]; isCurrentOverride {
+		if _, isCurrentOverride := currentOverrideNames[param.Name]; isCurrentOverride {
 			cliOverridesList = append(cliOverridesList, param)
 		}
 	}
@@ -952,7 +960,7 @@ func (p *Porter) applyActionOptionsToInstallation(ctx context.Context, ba Bundle
 	// already covered by a parameter set.
 	//
 	for k, v := range resolvedOverrides {
-		_, isCurrentOverride := parsedOverrides[k]
+		_, isCurrentOverride := currentOverrideNames[k]
 		_, inParamSet := resolvedParams[k]
 		if isCurrentOverride || !inParamSet {
 			resolvedParams[k] = v

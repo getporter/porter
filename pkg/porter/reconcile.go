@@ -10,7 +10,6 @@ import (
 	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/tracing"
 	"get.porter.sh/porter/pkg/yaml"
-	"github.com/cnabio/cnab-go/secrets/host"
 	"github.com/google/go-cmp/cmp"
 	"go.opentelemetry.io/otel/attribute"
 )
@@ -79,14 +78,10 @@ func (p *Porter) ReconcileInstallation(ctx context.Context, opts ReconcileOption
 
 	// Parameters specified inline in the installation YAML are the user's current
 	// explicit desired values and must override param set resolution — just like
-	// --param flags do. Add them to Params so applyActionOptionsToInstallation
-	// treats them as current overrides rather than old persisted values.
-	for _, param := range opts.Installation.Parameters.Parameters {
-		if param.Source.Strategy == host.SourceValue {
-			lifecycleOpts.Params = append(lifecycleOpts.Params,
-				fmt.Sprintf("%s=%s", param.Name, param.Source.Hint))
-		}
-	}
+	// --param flags do. Pass them as CurrentParamOverrides so that
+	// applyActionOptionsToInstallation treats them as current overrides rather
+	// than old persisted values, without any string round-trip.
+	lifecycleOpts.CurrentParamOverrides = opts.Installation.Parameters.Parameters
 
 	if err = p.applyActionOptionsToInstallation(ctx, actionOpts, &opts.Installation); err != nil {
 		return err
