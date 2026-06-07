@@ -63,6 +63,7 @@ func (r *Runner) Run(ctx context.Context, commandOpts pkgmgmt.CommandOptions) er
 	cmdArgs := strings.Split(commandOpts.Command, " ")
 	command := cmdArgs[0]
 	cmd := r.NewCommand(ctx, pkgPath, cmdArgs...)
+	configureGracefulShutdown(cmd)
 
 	// Pipe the output to porter and capture the error in case it fails
 	cmdStderr := &bytes.Buffer{}
