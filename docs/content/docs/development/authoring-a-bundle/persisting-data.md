@@ -22,7 +22,7 @@ This guide helps you understand when to use each approach and how to implement t
 |---------|-------------------|-------------|-----------------------|
 | **Access in templates** | ✅ Yes (`bundle.parameters.X`) | ❌ No (file-only access) | ✅ Yes (`bundle.parameters.X`) |
 | **User can override** | ✅ Yes | ❌ No | ✅ Yes |
-| **Transparency** | ✅ Visible in parameter sets | ⚠️ Hidden from users | ✅ Visible in parameter sets |
+| **Transparency** | ✅ Visible in `porter explain` and parameter sets | ⚠️ Hidden from users | ✅ Visible in `porter explain` and parameter sets |
 | **Best for** | Outputs captured by steps | Tool state files | Simple remembered inputs |
 | **Data types** | string, number, boolean, file, object | file only | string, number, boolean, object |
 | **Requires experimental flag** | ❌ No | ❌ No | ✅ Yes (`persistent-parameters`) |
@@ -41,6 +41,10 @@ allow users to override the value if needed.
 4. During `upgrade` or `uninstall`, Porter automatically provides the output's last value
 5. You reference the value using `${bundle.parameters.PARAM_NAME}` in your steps
 6. If the output doesn't exist yet (first install), users can provide it via the parameter
+
+`porter explain` shows these parameters with `(injected)` as the default value, indicating Porter
+will populate them automatically from a prior run. For `install` (where no prior run exists), the
+parameter is shown without the `(injected)` label so users know they may need to provide it.
 
 ### Example: Virtual Machine ID
 
