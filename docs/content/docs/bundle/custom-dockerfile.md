@@ -109,7 +109,7 @@ COPY --from=porter-internal-userfiles --link myconfig.yaml /etc/app/config.yaml
 COPY --from=porter-internal-userfiles --link scripts/ ${BUNDLE_DIR}/scripts/
 ```
 
-Files excluded by `.dockerignore` in your bundle directory will not be copied.
+Files excluded by [`.dockerignore`](/docs/bundle/dockerignore/) in your bundle directory will not be copied.
 
 ### With Default Build (Legacy)
 
@@ -283,6 +283,7 @@ COPY --from=porter-internal-userfiles --link . ${BUNDLE_DIR}
 
 ## See Also
 
+* [.dockerignore](/docs/bundle/dockerignore/)
 * [Why you do not want to run containers as root](https://medium.com/@mccode/processes-in-containers-should-not-run-as-root-2feae3f0df3b)
 * [Security Features](/security-features/)
 
