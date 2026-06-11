@@ -95,6 +95,7 @@ type PrintableParameter struct {
 	Description string      `json:"description" yaml:"description"`
 	Required    bool        `json:"required" yaml:"required"`
 	Sensitive   bool        `json:"sensitive" yaml:"sensitive"`
+	Injected    bool        `json:"injected" yaml:"injected"`
 }
 
 type SortPrintableParameter []PrintableParameter
@@ -241,7 +242,7 @@ func generatePrintable(ctx context.Context, bun cnab.ExtendedBundle, action stri
 
 	for p, v := range bun.Parameters {
 		v := v // Go closures are funny like that
-		if bun.IsInternalParameter(p) || bun.ParameterHasSource(p) {
+		if bun.IsInternalParameter(p) {
 			continue
 		}
 
@@ -260,6 +261,9 @@ func generatePrintable(ctx context.Context, bun cnab.ExtendedBundle, action stri
 		pp.Required = v.Required
 		pp.Description = v.Description
 		pp.Sensitive = bun.IsSensitiveParameter((p))
+		if bun.ParameterHasSource(p) {
+			pp.Injected = !isInstallOrStatelessAction(bun, action)
+		}
 
 		if shouldIncludeInExplainOutput(&v, action) {
 			pb.Parameters = append(pb.Parameters, pp)
@@ -312,6 +316,19 @@ func generatePrintable(ctx context.Context, bun cnab.ExtendedBundle, action stri
 	}
 
 	return &pb, nil
+}
+
+// isInstallOrStatelessAction returns true when Porter cannot inject parameter
+// values from previous outputs (install has no prior run; stateless actions
+// don't track state).
+func isInstallOrStatelessAction(bun cnab.ExtendedBundle, action string) bool {
+	if action == cnab.ActionInstall {
+		return true
+	}
+	if a, ok := bun.Actions[action]; ok && a.Stateless {
+		return true
+	}
+	return false
 }
 
 // shouldIncludeInExplainOutput determine if a scoped item such as a credential, parameter or output
@@ -443,7 +460,11 @@ func (p *Porter) printParametersExplainTable(bun *PrintableBundle) error {
 			if !ok {
 				return nil
 			}
-			return []string{p.Name, p.Description, fmt.Sprintf("%v", p.Type), fmt.Sprintf("%v", p.Default), strconv.FormatBool(p.Required), p.ApplyTo}
+			defaultVal := fmt.Sprintf("%v", p.Default)
+			if p.Injected && (defaultVal == "<nil>" || defaultVal == "") {
+				defaultVal = "(injected)"
+			}
+			return []string{p.Name, p.Description, fmt.Sprintf("%v", p.Type), defaultVal, strconv.FormatBool(p.Required), p.ApplyTo}
 		}
 	return printer.PrintTable(p.Out, bun.Parameters, printParamRow, "Name", "Description", "Type", "Default", "Required", "Applies To")
 }

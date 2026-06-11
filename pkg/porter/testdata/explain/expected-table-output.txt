@@ -4,12 +4,13 @@ Version: 0.1.0
 Porter Version: v0.30.0
 
 Parameters:
-─────────────────────────────────────────────────────────────────
- Name       Description  Type     Default  Required  Applies To  
-─────────────────────────────────────────────────────────────────
- namespace               string   <nil>    false     upgrade     
- region                  string   mars     false     All Actions 
- seed                    boolean  <nil>    true      All Actions 
+─────────────────────────────────────────────────────────────────────
+ Name        Description  Type     Default     Required  Applies To  
+─────────────────────────────────────────────────────────────────────
+ mysql_user               string   (injected)  false     All Actions 
+ namespace                string   <nil>       false     upgrade     
+ region                   string   mars        false     All Actions 
+ seed                     boolean  <nil>       true      All Actions 
 
 This bundle uses the following tools: helm, terraform.
 
