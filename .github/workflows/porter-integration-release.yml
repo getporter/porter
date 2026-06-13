@@ -50,6 +50,12 @@ jobs:
     with:
       test_name: copy_test
       registry: ${{inputs.registry}}
+  dependencies_version_strategy_integration_test:
+    name: Dependencies Version Strategy Integration Test
+    uses: getporter/porter/.github/workflows/integ-reuseable-workflow.yml@main
+    with:
+      test_name: dependencies_version_strategy_test
+      registry: ${{inputs.registry}}
   dependenciesv1_integration_test:
     name: Dependencies V1 Integration Test
     uses: getporter/porter/.github/workflows/integ-reuseable-workflow.yml@main
