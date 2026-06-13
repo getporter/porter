@@ -15,7 +15,7 @@ func configureGracefulShutdown(cmd *exec.Cmd) {
 	cmd.WaitDelay = 30 * time.Second
 	cmd.Cancel = func() error {
 		if cmd.Process != nil {
-			return cmd.Process.Signal(syscall.SIGTERM)
+			_ = cmd.Process.Signal(syscall.SIGTERM) // best-effort; process may have already exited
 		}
 		return nil
 	}

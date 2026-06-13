@@ -29,5 +29,7 @@ func SetupSignalHandler() (stopCh <-chan struct{}) {
 // InterruptSignals returns the OS signals that should trigger a graceful shutdown.
 // On POSIX systems this includes both SIGINT and SIGTERM; on Windows only SIGINT.
 func InterruptSignals() []os.Signal {
-	return shutdownSignals
+	cp := make([]os.Signal, len(shutdownSignals))
+	copy(cp, shutdownSignals)
+	return cp
 }

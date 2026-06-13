@@ -351,9 +351,13 @@ install:
 	testMixin := r.mixins.(*mixin.TestMixinProvider)
 	testMixin.RunAssertions = []func(*portercontext.Context, string, pkgmgmt.CommandOptions) error{
 		func(pkgCtx *portercontext.Context, _ string, _ pkgmgmt.CommandOptions) error {
-			_ = pkgCtx.FileSystem.MkdirAll(portercontext.MixinOutputsDir, pkg.FileModeDirectory)
+			if err := pkgCtx.FileSystem.MkdirAll(portercontext.MixinOutputsDir, pkg.FileModeDirectory); err != nil {
+				return err
+			}
 			outputPath := filepath.Join(portercontext.MixinOutputsDir, "mystate")
-			_ = pkgCtx.FileSystem.WriteFile(outputPath, []byte("important-state"), pkg.FileModeWritable)
+			if err := pkgCtx.FileSystem.WriteFile(outputPath, []byte("important-state"), pkg.FileModeWritable); err != nil {
+				return err
+			}
 			return errors.New("mixin interrupted")
 		},
 	}
