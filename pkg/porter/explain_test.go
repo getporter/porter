@@ -521,3 +521,64 @@ func TestExplain_generateTableBundleWithNoMixins(t *testing.T) {
 	gotOutput := p.TestConfig.TestContext.GetOutput()
 	test.CompareGoldenFile(t, "testdata/explain/expected-table-output-no-mixins.txt", gotOutput)
 }
+
+func TestExplain_sourcedParamInjectedForStatelessAction(t *testing.T) {
+	var ps cnab.ParameterSources
+	ps.SetParameterFromOutput("myParam", "myOutput")
+
+	bun := cnab.NewBundle(bundle.Bundle{
+		Definitions: definition.Definitions{
+			"myParam": &definition.Schema{Type: "string"},
+		},
+		Parameters: map[string]bundle.Parameter{
+			"myParam": {Definition: "myParam"},
+		},
+		Actions: map[string]bundle.Action{
+			"dry-run": {Stateless: true},
+		},
+		Custom: map[string]interface{}{
+			cnab.ParameterSourcesExtensionKey: ps,
+		},
+	})
+
+	pb, err := generatePrintable(context.Background(), bun, "dry-run", nil, nil)
+	require.NoError(t, err)
+	require.Equal(t, 1, len(pb.Parameters))
+	assert.True(t, pb.Parameters[0].Injected, "sourced param should be injected even for stateless actions")
+}
+
+func TestExplain_sourcedParamPreservesEmptyStringDefault(t *testing.T) {
+	var ps cnab.ParameterSources
+	ps.SetParameterFromOutput("myParam", "myOutput")
+
+	emptyDefault := ""
+	bun := cnab.NewBundle(bundle.Bundle{
+		Definitions: definition.Definitions{
+			"myParam": &definition.Schema{Type: "string", Default: emptyDefault},
+		},
+		Parameters: map[string]bundle.Parameter{
+			"myParam": {Definition: "myParam"},
+		},
+		Custom: map[string]interface{}{
+			cnab.ParameterSourcesExtensionKey: ps,
+		},
+	})
+
+	p := NewTestPorter(t)
+	defer p.Close()
+
+	pb, err := generatePrintable(context.Background(), bun, "upgrade", nil, nil)
+	require.NoError(t, err)
+	require.Equal(t, 1, len(pb.Parameters))
+	assert.True(t, pb.Parameters[0].Injected)
+
+	opts := ExplainOpts{}
+	opts.RawFormat = "plaintext"
+	require.NoError(t, opts.Validate([]string{}, p.Context))
+
+	err = p.printBundleExplain(opts, pb, bun)
+	require.NoError(t, err)
+
+	output := p.TestConfig.TestContext.GetOutput()
+	assert.NotContains(t, output, "(injected)", "empty string default should not be replaced with (injected)")
+}

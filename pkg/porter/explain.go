@@ -240,6 +240,7 @@ func generatePrintable(ctx context.Context, bun cnab.ExtendedBundle, action stri
 	}
 	sort.Sort(SortPrintableCredential(pb.Credentials))
 
+	paramSources, _ := bun.ReadParameterSources()
 	for p, v := range bun.Parameters {
 		v := v // Go closures are funny like that
 		if bun.IsInternalParameter(p) {
@@ -261,8 +262,8 @@ func generatePrintable(ctx context.Context, bun cnab.ExtendedBundle, action stri
 		pp.Required = v.Required
 		pp.Description = v.Description
 		pp.Sensitive = bun.IsSensitiveParameter((p))
-		if bun.ParameterHasSource(p) {
-			pp.Injected = !isInstallOrStatelessAction(bun, action)
+		if _, hasSource := paramSources[p]; hasSource {
+			pp.Injected = action != cnab.ActionInstall
 		}
 
 		if shouldIncludeInExplainOutput(&v, action) {
@@ -318,18 +319,6 @@ func generatePrintable(ctx context.Context, bun cnab.ExtendedBundle, action stri
 	return &pb, nil
 }
 
-// isInstallOrStatelessAction returns true when Porter cannot inject parameter
-// values from previous outputs (install has no prior run; stateless actions
-// don't track state).
-func isInstallOrStatelessAction(bun cnab.ExtendedBundle, action string) bool {
-	if action == cnab.ActionInstall {
-		return true
-	}
-	if a, ok := bun.Actions[action]; ok && a.Stateless {
-		return true
-	}
-	return false
-}
 
 // shouldIncludeInExplainOutput determine if a scoped item such as a credential, parameter or output
 // should be included in the explain output.
@@ -461,7 +450,7 @@ func (p *Porter) printParametersExplainTable(bun *PrintableBundle) error {
 				return nil
 			}
 			defaultVal := fmt.Sprintf("%v", p.Default)
-			if p.Injected && (defaultVal == "<nil>" || defaultVal == "") {
+			if p.Injected && p.Default == nil {
 				defaultVal = "(injected)"
 			}
 			return []string{p.Name, p.Description, fmt.Sprintf("%v", p.Type), defaultVal, strconv.FormatBool(p.Required), p.ApplyTo}
