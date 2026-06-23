@@ -1,0 +1,6 @@
+- name: aname
+  value: stuff
+- name: bname
+  value: things
+- name: aname
+  value: duplicate stuff
