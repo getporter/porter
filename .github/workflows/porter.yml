@@ -27,7 +27,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - uses: actions/setup-go@v6
         with:
           go-version: "${{ env.GOVERSION }}" # The Go version to download (if necessary) and use.
@@ -58,7 +58,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - uses: actions/setup-go@v6
         with:
           go-version: "${{ env.GOVERSION }}" # The Go version to download (if necessary) and use.
@@ -78,7 +78,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - uses: actions/setup-go@v6
         with:
           go-version: "${{ env.GOVERSION }}" # The Go version to download (if necessary) and use.
@@ -93,7 +93,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - uses: actions/setup-go@v6
         with:
           go-version: "${{ env.GOVERSION }}" # The Go version to download (if necessary) and use.
@@ -114,7 +114,7 @@ jobs:
     if: success()
     steps:
       - name: checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - uses: actions/setup-go@v6
         with:
           go-version: "${{ env.GOVERSION }}" # The Go version to download (if necessary) and use.
@@ -137,7 +137,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Download Cross-Compiled Porter Binaries
         uses: actions/download-artifact@v8.0.1
         with:
