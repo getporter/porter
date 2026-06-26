@@ -542,7 +542,7 @@ func TestExplain_sourcedParamInjectedForStatelessAction(t *testing.T) {
 		},
 	})
 
-	pb, err := generatePrintable(context.Background(), bun, "dry-run", nil, nil)
+	pb, err := generatePrintable(context.Background(), bun, "dry-run", nil, cnabtooci.RegistryOptions{})
 	require.NoError(t, err)
 	require.Equal(t, 1, len(pb.Parameters))
 	assert.True(t, pb.Parameters[0].Injected, "sourced param should be injected even for stateless actions")
@@ -568,7 +568,7 @@ func TestExplain_sourcedParamPreservesEmptyStringDefault(t *testing.T) {
 	p := NewTestPorter(t)
 	defer p.Close()
 
-	pb, err := generatePrintable(context.Background(), bun, "upgrade", nil, nil)
+	pb, err := generatePrintable(context.Background(), bun, "upgrade", nil, cnabtooci.RegistryOptions{})
 	require.NoError(t, err)
 	require.Equal(t, 1, len(pb.Parameters))
 	assert.True(t, pb.Parameters[0].Injected)
