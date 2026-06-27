@@ -3,6 +3,14 @@ description: An example Porter configuration
 version: 0.1.0
 porterVersion: v0.30.0
 parameters:
+  - name: mysql_user
+    type: string
+    default: null
+    applyTo: All Actions
+    description: ""
+    required: false
+    sensitive: false
+    injected: true
   - name: namespace
     type: string
     default: null
@@ -10,6 +18,7 @@ parameters:
     description: ""
     required: false
     sensitive: false
+    injected: false
   - name: region
     type: string
     default: mars
@@ -17,6 +26,7 @@ parameters:
     description: ""
     required: false
     sensitive: false
+    injected: false
   - name: seed
     type: boolean
     default: null
@@ -24,6 +34,7 @@ parameters:
     description: ""
     required: true
     sensitive: true
+    injected: false
 mixins:
   - helm
   - terraform

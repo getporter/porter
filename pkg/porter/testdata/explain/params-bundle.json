@@ -1,6 +1,16 @@
 {
   "custom": {
     "io.cnab.dependencies": null,
+    "io.cnab.parameter-sources": {
+      "mysql_user": {
+        "priority": ["output"],
+        "sources": {
+          "output": {
+            "name": "test"
+          }
+        }
+      }
+    },
     "sh.porter": {
       "manifestDigest": "5040d45d0c44e7632563966c33f5e8980e83cfa7c0485f725b623b7604f072f0",
       "version": "v0.30.0",
@@ -33,6 +43,9 @@
       "writeOnly": true
     },
     "namespace": {
+      "type": "string"
+    },
+    "mysql_user": {
       "type": "string"
     }
   },
@@ -72,6 +85,12 @@
       ],
       "destination": {
         "env": "NAMESPACE"
+      }
+    },
+    "mysql_user": {
+      "definition": "mysql_user",
+      "destination": {
+        "env": "MYSQL_USER"
       }
     }
   },
