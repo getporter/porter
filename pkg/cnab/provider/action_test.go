@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/cnabio/cnab-go/bundle"
+	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/cnabio/cnab-go/driver"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -72,4 +73,94 @@ func TestAddFiles(t *testing.T) {
 	// Check that we injected a CNAB claim and not our Run representation, they aren't exactly 1:1 the same format
 	require.Contains(t, op.Files, config.ClaimFilepath, "The claim should have been injected into the bundle")
 	test.CompareGoldenFile(t, "testdata/want-claim.json", op.Files[config.ClaimFilepath])
+}
+
+func TestSaveOperationResult_ModifiesFalse_SkipsPorterState(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	d := NewTestRuntime(t)
+	defer d.Close()
+
+	instName := "mybuns"
+	bun := bundle.Bundle{
+		Actions: map[string]bundle.Action{
+			"dry-run": {Modifies: false},
+		},
+		Outputs: map[string]bundle.Output{
+			"porter-state": {Definition: "porter-state", Path: "/cnab/app/outputs/porter-state.tgz"},
+			"user-output":  {Definition: "user-output", Path: "/cnab/app/outputs/user-output"},
+		},
+		Definitions: map[string]*definition.Schema{
+			"porter-state": {Comment: cnab.PorterInternal},
+			"user-output":  {Type: "string"},
+		},
+	}
+	i := d.TestInstallations.CreateInstallation(storage.NewInstallation("", instName), d.TestInstallations.SetMutableInstallationValues)
+	run := storage.NewRun("", instName)
+	run.Bundle = bun
+	run.Action = "dry-run"
+	run = d.TestInstallations.CreateRun(run, d.TestInstallations.SetMutableRunValues)
+	result := run.NewResult(cnab.StatusSucceeded)
+
+	opResult := driver.OperationResult{
+		Outputs: map[string]string{
+			"porter-state": "state-data",
+			"user-output":  "hello",
+		},
+	}
+
+	err := d.SaveOperationResult(ctx, opResult, i, run, result)
+	require.NoError(t, err)
+
+	outputs, err := d.TestInstallations.GetOutputs(ctx, run.ID)
+	require.NoError(t, err)
+
+	_, hasPorterState := outputs.GetByName("porter-state")
+	assert.False(t, hasPorterState, "porter-state should not be saved for modifies:false actions")
+
+	_, hasUserOutput := outputs.GetByName("user-output")
+	assert.True(t, hasUserOutput, "user-defined outputs should still be saved")
+}
+
+func TestSaveOperationResult_ModifiesTrue_SavesPorterState(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	d := NewTestRuntime(t)
+	defer d.Close()
+
+	instName := "mybuns"
+	bun := bundle.Bundle{
+		Actions: map[string]bundle.Action{
+			"rotate-creds": {Modifies: true},
+		},
+		Outputs: map[string]bundle.Output{
+			"porter-state": {Definition: "porter-state", Path: "/cnab/app/outputs/porter-state.tgz"},
+		},
+		Definitions: map[string]*definition.Schema{
+			"porter-state": {Comment: cnab.PorterInternal},
+		},
+	}
+	i := d.TestInstallations.CreateInstallation(storage.NewInstallation("", instName), d.TestInstallations.SetMutableInstallationValues)
+	run := storage.NewRun("", instName)
+	run.Bundle = bun
+	run.Action = "rotate-creds"
+	run = d.TestInstallations.CreateRun(run, d.TestInstallations.SetMutableRunValues)
+	result := run.NewResult(cnab.StatusSucceeded)
+
+	opResult := driver.OperationResult{
+		Outputs: map[string]string{
+			"porter-state": "state-data",
+		},
+	}
+
+	err := d.SaveOperationResult(ctx, opResult, i, run, result)
+	require.NoError(t, err)
+
+	outputs, err := d.TestInstallations.GetOutputs(ctx, run.ID)
+	require.NoError(t, err)
+
+	_, hasPorterState := outputs.GetByName("porter-state")
+	assert.True(t, hasPorterState, "porter-state should be saved for modifies:true actions")
 }
