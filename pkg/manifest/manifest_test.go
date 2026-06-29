@@ -1460,3 +1460,39 @@ func TestManifest_Validate_SchemaVersion_FileSources(t *testing.T) {
 		require.NoError(t, err, "1.2.0 should continue to be accepted")
 	})
 }
+
+func TestFileSource_MarshalUnmarshal(t *testing.T) {
+	t.Run("manifest with files block round-trips correctly", func(t *testing.T) {
+		want := &Manifest{
+			SchemaVersion: "1.0.1",
+			Name:          "mybuns",
+			Registry:      "localhost:5000",
+			Files: []FileSource{
+				{URL: "https://example.com/tool.tar.gz", Destination: "tool.tar.gz"},
+				{URL: "https://example.com/config.json", Destination: "config/defaults.json"},
+			},
+		}
+
+		data, err := yaml.Marshal(want)
+		require.NoError(t, err)
+
+		got := &Manifest{}
+		err = yaml.Unmarshal(data, got)
+		require.NoError(t, err)
+
+		require.Len(t, got.Files, 2)
+		assert.Equal(t, want.Files[0], got.Files[0])
+		assert.Equal(t, want.Files[1], got.Files[1])
+	})
+
+	t.Run("manifest without files block has nil Files", func(t *testing.T) {
+		data := []byte(`schemaVersion: "1.0.1"
+name: mybuns
+registry: localhost:5000
+`)
+		m := &Manifest{}
+		err := yaml.Unmarshal(data, m)
+		require.NoError(t, err)
+		assert.Nil(t, m.Files)
+	})
+}

@@ -116,6 +116,18 @@ type Manifest struct {
 	ImageMap map[string]MappedImage `yaml:"images,omitempty"`
 
 	Required []RequiredExtension `yaml:"required,omitempty"`
+
+	// Files is a list of files to download during porter build.
+	Files []FileSource `yaml:"files,omitempty"`
+}
+
+// FileSource declares a file to be downloaded during porter build.
+type FileSource struct {
+	// URL is the http/https URL to download the file from.
+	URL string `yaml:"url"`
+	// Destination is the path relative to the bundle directory where the
+	// file is written.
+	Destination string `yaml:"destination"`
 }
 
 func (m *Manifest) Validate(ctx context.Context, cfg *config.Config) error {
