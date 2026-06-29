@@ -1317,7 +1317,7 @@ func TestExpandPersistentParameters(t *testing.T) {
 		m.SchemaVersion = "1.0.1"
 
 		err := m.expandPersistentParameters(cfg)
-		require.ErrorContains(t, err, "schemaVersion 1.2.0")
+		require.ErrorContains(t, err, "schemaVersion >= 1.2.0")
 	})
 
 	t.Run("conflict with source.output", func(t *testing.T) {
@@ -1405,5 +1405,58 @@ func TestManifest_Validate_SchemaVersion_PersistentParameters(t *testing.T) {
 
 		_, hasOutput := m.Outputs["resource-group"]
 		assert.True(t, hasOutput, "output should be auto-created")
+	})
+}
+
+func TestManifest_Validate_SchemaVersion_FileSources(t *testing.T) {
+	newManifest := func(schemaVersion string) Manifest {
+		return Manifest{
+			SchemaVersion: schemaVersion,
+			Name:          "mybuns",
+			Registry:      "localhost:5000",
+		}
+	}
+
+	t.Run("schemaVersion 1.3.0 accepted when FlagFileSources enabled", func(t *testing.T) {
+		ctx := context.Background()
+		cfg := config.NewTestConfig(t)
+		cfg.Data.SchemaCheck = string(schema.CheckStrategyExact)
+		cfg.SetExperimentalFlags(experimental.FlagFileSources)
+
+		m := newManifest("1.3.0")
+		err := m.validateMetadata(ctx, cfg.Config)
+		require.NoError(t, err)
+	})
+
+	t.Run("schemaVersion 1.3.0 rejected when no flag enabled", func(t *testing.T) {
+		ctx := context.Background()
+		cfg := config.NewTestConfig(t)
+		cfg.Data.SchemaCheck = string(schema.CheckStrategyExact)
+
+		m := newManifest("1.3.0")
+		err := m.validateMetadata(ctx, cfg.Config)
+		require.ErrorContains(t, err, "invalid schema version")
+	})
+
+	t.Run("schemaVersion 1.3.0 accepted with FlagPersistentParameters only", func(t *testing.T) {
+		ctx := context.Background()
+		cfg := config.NewTestConfig(t)
+		cfg.Data.SchemaCheck = string(schema.CheckStrategyExact)
+		cfg.SetExperimentalFlags(experimental.FlagPersistentParameters)
+
+		m := newManifest("1.3.0")
+		err := m.validateMetadata(ctx, cfg.Config)
+		require.NoError(t, err, "1.3.0 satisfies >= 1.2.0 constraint from FlagPersistentParameters")
+	})
+
+	t.Run("schemaVersion 1.2.0 still accepted with FlagPersistentParameters", func(t *testing.T) {
+		ctx := context.Background()
+		cfg := config.NewTestConfig(t)
+		cfg.Data.SchemaCheck = string(schema.CheckStrategyExact)
+		cfg.SetExperimentalFlags(experimental.FlagPersistentParameters)
+
+		m := newManifest("1.2.0")
+		err := m.validateMetadata(ctx, cfg.Config)
+		require.NoError(t, err, "1.2.0 should continue to be accepted")
 	})
 }

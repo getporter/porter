@@ -227,7 +227,10 @@ func (m *Manifest) validateMetadata(ctx context.Context, cfg *config.Config) err
 		constraint += " || >= 1.1.0"
 	}
 	if cfg.IsFeatureEnabled(experimental.FlagPersistentParameters) {
-		constraint += " || 1.2.0"
+		constraint += " || >= 1.2.0"
+	}
+	if cfg.IsFeatureEnabled(experimental.FlagFileSources) {
+		constraint += " || 1.3.0"
 	}
 	supportedVersions, _ := semver.NewConstraint(constraint)
 
@@ -602,7 +605,7 @@ func (m *Manifest) expandPersistentParameters(cfg *config.Config) error {
 		}
 		schemaVersion, err := semver.NewVersion(m.SchemaVersion)
 		if err != nil || schemaVersion.LessThan(semver.MustParse("1.2.0")) {
-			return fmt.Errorf("parameter %q uses persistent: true which requires schemaVersion 1.2.0", name)
+			return fmt.Errorf("parameter %q uses persistent: true which requires schemaVersion >= 1.2.0", name)
 		}
 		if pd.Source.Output != "" {
 			return fmt.Errorf("parameter %q cannot combine persistent with source.output", name)
