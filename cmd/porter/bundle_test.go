@@ -203,3 +203,49 @@ func TestBuildValidate_Driver(t *testing.T) {
 		})
 	}
 }
+
+func TestBuildValidate_AllowFileDownloads(t *testing.T) {
+	// Do not run in parallel since we use os.Setenv
+
+	testcases := []struct {
+		name        string
+		args        string
+		configValue string // value set via env var (simulates config file)
+		wantValue   bool
+	}{
+		{name: "default off", wantValue: false},
+		{name: "flag sets true", args: "--allow-file-downloads", wantValue: true},
+		{name: "config sets true", configValue: "true", wantValue: true},
+		{name: "flag overrides config", args: "--allow-file-downloads", configValue: "false", wantValue: true},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			if tc.configValue != "" {
+				os.Setenv("PORTER_ALLOW_FILE_DOWNLOADS", tc.configValue)
+				defer os.Unsetenv("PORTER_ALLOW_FILE_DOWNLOADS")
+			}
+
+			p := porter.NewTestPorter(t)
+			defer p.Close()
+
+			rootCmd := buildRootCommandFrom(p.Porter)
+
+			fullArgs := []string{"build"}
+			if tc.args != "" {
+				fullArgs = append(fullArgs, tc.args)
+			}
+			rootCmd.SetArgs(fullArgs)
+			buildCmd, _, _ := rootCmd.Find(fullArgs)
+			buildCmd.RunE = func(cmd *cobra.Command, args []string) error {
+				return nil
+			}
+			err := p.FileSystem.WriteFile("porter.yaml", []byte(""), pkg.FileModeWritable)
+			require.NoError(t, err)
+
+			err = rootCmd.Execute()
+			require.NoError(t, err)
+			assert.Equal(t, tc.wantValue, p.Data.AllowFileDownloads)
+		})
+	}
+}

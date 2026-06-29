@@ -42,6 +42,10 @@ type BuildOptions struct {
 	// Force indicates if a full rebuild should be performed, ignoring cached data.
 	Force bool
 
+	// AllowFileDownloads permits downloading files declared in the manifest's
+	// `files` section during build. Requires the file-sources experimental flag.
+	AllowFileDownloads bool
+
 	// parsedCustoms is the parsed set of custom inputs from Customs.
 	parsedCustoms map[string]string
 }
@@ -70,6 +74,13 @@ func (o *BuildOptions) Validate(p *Porter) error {
 	// to determine the driver
 	// This would be less awkward if we didn't do an automatic build during publish
 	p.Data.BuildDriver = o.Driver
+
+	// Apply global config to the --allow-file-downloads flag, then sync back so
+	// that the generator can read it directly from p.Config.
+	if !o.AllowFileDownloads {
+		o.AllowFileDownloads = p.Data.AllowFileDownloads
+	}
+	p.Data.AllowFileDownloads = o.AllowFileDownloads
 
 	err := o.parseCustomInputs()
 	if err != nil {
