@@ -23,6 +23,7 @@ Below are schema versions for the Porter manifest, and the corresponding Porter 
 | Bundle      | [1.0.1](./1.0.1/)                 | v1.0.9+          |                             |
 | Bundle      | [1.1.0](./1.1.0/)                 | unreleased       | `dependencies-v2`           |
 | Bundle      | [1.2.0](./1.2.0/)                 | unreleased       | `persistent-parameters`     |
+| Bundle      | [1.3.0](./1.3.0/)                 | unreleased       | `file-sources`              |
 
 Sometimes you may want to work with a different version of a resource than what is supported by Porter, especially when migrating from one version of Porter to another.
 The [schema-check] configuration setting allows you to change how Porter behaves when the schemaVersion of a resource doesn't match Porter's supported version.

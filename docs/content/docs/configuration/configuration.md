@@ -24,10 +24,12 @@ You may set a default value for a configuration value in the config file, overri
   - [Dependencies v2](#dependencies-v2)
   - [Full control Dockerfile](#full-control-dockerfile)
   - [Persistent Parameters](#persistent-parameters)
+  - [File Sources](#file-sources)
 - [Common Configuration Settings](#common-configuration-settings)
   - [Set Current Namespace](#namespace)
   - [Output Formatting](#output)
 - [Allow Docker Host Access](#allow-docker-host-access)
+- [Allow File Downloads](#allow-file-downloads)
 
 ## Flags
 
@@ -88,6 +90,9 @@ output: "json"
 
 # Allow all bundles access to the Docker Host
 allow-docker-host-access: true
+
+# Allow porter build to download files declared in the manifest's files section
+allow-file-downloads: false
 
 # Enable experimental features
 experimental:
@@ -331,6 +336,14 @@ Requires `schemaVersion: 1.2.0` in the bundle manifest.
 
 See [Persisting Data Between Bundle Actions](/docs/development/authoring-a-bundle/persisting-data/) for a full guide.
 
+### File Sources
+
+The `file-sources` experimental flag enables the `files` section in porter.yaml for automatically downloading files during `porter build`.
+Each entry specifies a URL (HTTP/HTTPS only) and a relative destination path within the bundle directory.
+Requires `schemaVersion: 1.3.0` in the bundle manifest and the `allow-file-downloads` configuration setting.
+
+See [Files](/docs/bundle/manifest/#files) for full documentation.
+
 ## Common Configuration Settings
 
 Some configuration settings are applicable to many of Porter's commands and to save time you may want to set these values in the configuration file or with environment variables.
@@ -368,6 +381,26 @@ You should trust any bundles that you execute with this setting enabled as it gi
 
 ⚠️️ This configuration setting is only available when you are in an environment that provides access to the local docker daemon.
 Therefore, it does not work with the Azure Cloud Shell driver.
+
+### Allow File Downloads
+
+\--allow-file-downloads controls whether Porter is permitted to download files declared in the manifest's `files` section during `porter build`.
+It is set with the PORTER_ALLOW_FILE_DOWNLOADS environment variable.
+
+This is a permanent security boundary that remains in effect after the `file-sources` experimental flag is stabilised.
+Downloads are blocked by default; you must explicitly opt in by setting this to `true`.
+
+🚨 **Only enable this setting if you trust the URLs declared in the bundles you build.**
+
+```yaml
+allow-file-downloads: true
+```
+
+This flag is also available on the `porter build` command:
+
+```console
+porter build --allow-file-downloads
+```
 
 ### Schema Check
 
