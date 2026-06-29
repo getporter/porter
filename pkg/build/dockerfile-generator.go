@@ -7,6 +7,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -325,6 +327,61 @@ func (g *DockerfileGenerator) copyMixin(mixin string) error {
 	}
 
 	return nil
+}
+
+// DownloadFiles downloads each file declared in the manifest's `files` section
+// into the bundle directory. It must be called before PrepareFilesystem.
+// Returns immediately when no files are declared.
+// Returns an error listing all URLs when allow-file-downloads is not set.
+func (g *DockerfileGenerator) DownloadFiles(ctx context.Context) error {
+	if len(g.Manifest.Files) == 0 {
+		return nil
+	}
+
+	if !g.Data.AllowFileDownloads {
+		var sb strings.Builder
+		sb.WriteString("porter build --allow-file-downloads is required to download files declared in the manifest:\n")
+		for _, f := range g.Manifest.Files {
+			fmt.Fprintf(&sb, "  - %s => %s\n", f.URL, f.Destination)
+		}
+		return fmt.Errorf("%s", sb.String())
+	}
+
+	for _, f := range g.Manifest.Files {
+		fmt.Fprintf(g.Out, "Downloading %s => %s\n", f.URL, f.Destination)
+
+		if err := g.downloadFile(ctx, f.URL, f.Destination); err != nil {
+			return fmt.Errorf("failed to download %s: %w", f.URL, err)
+		}
+	}
+
+	return nil
+}
+
+func (g *DockerfileGenerator) downloadFile(_ context.Context, url, destination string) error {
+	resp, err := http.Get(url) //nolint:gosec // URL is validated by manifest.validateFiles
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("server returned %s", resp.Status)
+	}
+
+	destPath := filepath.Join(g.Getwd(), destination)
+	if err := g.FileSystem.MkdirAll(filepath.Dir(destPath), os.ModeDir|0755); err != nil {
+		return fmt.Errorf("failed to create destination directory: %w", err)
+	}
+
+	f, err := g.FileSystem.Create(destPath)
+	if err != nil {
+		return fmt.Errorf("failed to create destination file: %w", err)
+	}
+	defer f.Close()
+
+	_, err = io.Copy(f, resp.Body)
+	return err
 }
 
 func (g *DockerfileGenerator) getIndexOfToken(lines []string, token string) int {

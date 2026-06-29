@@ -191,6 +191,10 @@ func (p *Porter) Build(ctx context.Context, opts BuildOptions) error {
 
 	generator := build.NewDockerfileGenerator(p.Config, m, p.Templates, p.Mixins)
 
+	if err := generator.DownloadFiles(ctx); err != nil {
+		return span.Error(err)
+	}
+
 	if err := generator.PrepareFilesystem(); err != nil {
 		return span.Error(fmt.Errorf("unable to copy run script, runtimes or mixins: %s", err))
 	}
