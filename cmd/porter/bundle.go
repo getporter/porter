@@ -113,11 +113,6 @@ The docker driver builds the bundle image using the local Docker host. To use a 
 	f.BoolVar(&opts.AllowFileDownloads, "allow-file-downloads", false,
 		"Allow Porter to download files declared in the manifest's files section during build. See https://porter.sh/configuration/#allow-file-downloads for more information.")
 
-	// Allow configuring --allow-file-downloads from the config file
-	cmd.Flag("allow-file-downloads").Annotations = map[string][]string{
-		"viper-key": {"allow-file-downloads"},
-	}
-
 	// Allow configuring the --driver flag with build-driver, to avoid conflicts with other commands
 	cmd.Flag("driver").Annotations = map[string][]string{
 		"viper-key": {"build-driver"},
