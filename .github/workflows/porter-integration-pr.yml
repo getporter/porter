@@ -199,3 +199,9 @@ jobs:
     uses: ./.github/workflows/integ-reuseable-workflow.yml
     with:
       test_name: persistent_params_test
+
+  file_sources_integration_test:
+    name: File Sources Integration Test
+    uses: ./.github/workflows/integ-reuseable-workflow.yml
+    with:
+      test_name: file_sources_test
