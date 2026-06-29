@@ -1496,3 +1496,92 @@ registry: localhost:5000
 		assert.Nil(t, m.Files)
 	})
 }
+
+func TestValidateFiles(t *testing.T) {
+	newCfg := func(t *testing.T, flags ...experimental.FeatureFlags) *config.Config {
+		cfg := config.NewTestConfig(t)
+		for _, f := range flags {
+			cfg.SetExperimentalFlags(f)
+		}
+		return cfg.Config
+	}
+
+	newManifest := func(files ...FileSource) *Manifest {
+		return &Manifest{
+			SchemaVersion: "1.3.0",
+			Files:         files,
+		}
+	}
+
+	t.Run("happy path", func(t *testing.T) {
+		cfg := newCfg(t, experimental.FlagFileSources)
+		m := newManifest(FileSource{URL: "https://example.com/tool.tar.gz", Destination: "tool.tar.gz"})
+		require.NoError(t, m.validateFiles(cfg))
+	})
+
+	t.Run("empty files skips all checks", func(t *testing.T) {
+		cfg := newCfg(t) // no flag
+		m := newManifest() // no files
+		require.NoError(t, m.validateFiles(cfg))
+	})
+
+	t.Run("missing file-sources flag", func(t *testing.T) {
+		cfg := newCfg(t)
+		m := newManifest(FileSource{URL: "https://example.com/tool.tar.gz", Destination: "tool.tar.gz"})
+		err := m.validateFiles(cfg)
+		require.ErrorContains(t, err, experimental.FileSources)
+	})
+
+	t.Run("schemaVersion below 1.3.0", func(t *testing.T) {
+		cfg := newCfg(t, experimental.FlagFileSources)
+		m := newManifest(FileSource{URL: "https://example.com/tool.tar.gz", Destination: "tool.tar.gz"})
+		m.SchemaVersion = "1.2.0"
+		err := m.validateFiles(cfg)
+		require.ErrorContains(t, err, "schemaVersion >= 1.3.0")
+	})
+
+	t.Run("empty url", func(t *testing.T) {
+		cfg := newCfg(t, experimental.FlagFileSources)
+		m := newManifest(FileSource{URL: "", Destination: "tool.tar.gz"})
+		err := m.validateFiles(cfg)
+		require.ErrorContains(t, err, "files[0].url is required")
+	})
+
+	t.Run("ftp url scheme rejected", func(t *testing.T) {
+		cfg := newCfg(t, experimental.FlagFileSources)
+		m := newManifest(FileSource{URL: "ftp://example.com/tool.tar.gz", Destination: "tool.tar.gz"})
+		err := m.validateFiles(cfg)
+		require.ErrorContains(t, err, "http://")
+	})
+
+	t.Run("empty destination", func(t *testing.T) {
+		cfg := newCfg(t, experimental.FlagFileSources)
+		m := newManifest(FileSource{URL: "https://example.com/tool.tar.gz", Destination: ""})
+		err := m.validateFiles(cfg)
+		require.ErrorContains(t, err, "files[0].destination is required")
+	})
+
+	t.Run("absolute destination rejected", func(t *testing.T) {
+		cfg := newCfg(t, experimental.FlagFileSources)
+		m := newManifest(FileSource{URL: "https://example.com/tool.tar.gz", Destination: "/etc/passwd"})
+		err := m.validateFiles(cfg)
+		require.ErrorContains(t, err, "relative path")
+	})
+
+	t.Run("path traversal rejected", func(t *testing.T) {
+		cfg := newCfg(t, experimental.FlagFileSources)
+		m := newManifest(FileSource{URL: "https://example.com/tool.tar.gz", Destination: "../../secrets"})
+		err := m.validateFiles(cfg)
+		require.ErrorContains(t, err, "must not escape")
+	})
+
+	t.Run("second entry invalid identifies correct index", func(t *testing.T) {
+		cfg := newCfg(t, experimental.FlagFileSources)
+		m := newManifest(
+			FileSource{URL: "https://example.com/tool.tar.gz", Destination: "tool.tar.gz"},
+			FileSource{URL: "ftp://example.com/bad.tar.gz", Destination: "bad.tar.gz"},
+		)
+		err := m.validateFiles(cfg)
+		require.ErrorContains(t, err, "files[1]")
+	})
+}

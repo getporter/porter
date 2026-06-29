@@ -216,6 +216,10 @@ func (m *Manifest) Validate(ctx context.Context, cfg *config.Config) error {
 		}
 	}
 
+	if err = m.validateFiles(cfg); err != nil {
+		result = multierror.Append(result, err)
+	}
+
 	return span.Error(result)
 }
 
@@ -653,6 +657,44 @@ func (m *Manifest) expandPersistentParameters(cfg *config.Config) error {
 				Path:      "/cnab/app/" + name,
 				Sensitive: pd.Sensitive,
 				Schema:    pd.Schema,
+			}
+		}
+	}
+	return nil
+}
+
+// validateFiles checks that the `files` section of the manifest is valid.
+// It requires the file-sources experimental flag and schemaVersion >= 1.3.0.
+func (m *Manifest) validateFiles(cfg *config.Config) error {
+	if len(m.Files) == 0 {
+		return nil
+	}
+
+	if !cfg.IsFeatureEnabled(experimental.FlagFileSources) {
+		return fmt.Errorf("the files section requires the %s experimental feature", experimental.FileSources)
+	}
+
+	schemaVersion, err := semver.NewVersion(m.SchemaVersion)
+	if err != nil || schemaVersion.LessThan(semver.MustParse("1.3.0")) {
+		return fmt.Errorf("the files section requires schemaVersion >= 1.3.0")
+	}
+
+	for i, f := range m.Files {
+		if f.URL == "" {
+			return fmt.Errorf("files[%d].url is required", i)
+		}
+		if !strings.HasPrefix(f.URL, "http://") && !strings.HasPrefix(f.URL, "https://") {
+			return fmt.Errorf("files[%d].url must begin with http:// or https://, got %q", i, f.URL)
+		}
+		if f.Destination == "" {
+			return fmt.Errorf("files[%d].destination is required", i)
+		}
+		if path.IsAbs(f.Destination) {
+			return fmt.Errorf("files[%d].destination must be a relative path, got %q", i, f.Destination)
+		}
+		for _, segment := range strings.Split(f.Destination, "/") {
+			if segment == ".." {
+				return fmt.Errorf("files[%d].destination must not escape the bundle directory, got %q", i, f.Destination)
 			}
 		}
 	}
