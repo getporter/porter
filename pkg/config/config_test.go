@@ -117,3 +117,34 @@ func TestConfig_ExportRemoteConfigAsEnvironmentVariables(t *testing.T) {
 	}
 	assert.Equal(t, wantEnvVars, gotEnvVars)
 }
+
+func TestConfig_AllowFileDownloads(t *testing.T) {
+	t.Run("defaults to false when absent", func(t *testing.T) {
+		c := Config{}
+		assert.False(t, c.Data.AllowFileDownloads)
+	})
+
+	t.Run("parsed from environment variable", func(t *testing.T) {
+		// Do not run in parallel since we use os.Setenv
+		os.Setenv("PORTER_ALLOW_FILE_DOWNLOADS", "true")
+		defer os.Unsetenv("PORTER_ALLOW_FILE_DOWNLOADS")
+
+		c := New()
+		defer c.Close()
+		c.DataLoader = LoadFromEnvironment()
+
+		_, err := c.Load(context.Background(), nil)
+		require.NoError(t, err, "Load failed")
+		assert.True(t, c.Data.AllowFileDownloads)
+	})
+
+	t.Run("parsed from config file", func(t *testing.T) {
+		c := NewTestConfig(t)
+		c.DataLoader = LoadFromFilesystem()
+		c.TestContext.AddTestFileContents([]byte("allow-file-downloads = true\n"), "/home/myuser/.porter/config.toml")
+
+		_, err := c.Load(context.Background(), nil)
+		require.NoError(t, err, "Load failed")
+		assert.True(t, c.Data.AllowFileDownloads)
+	})
+}
