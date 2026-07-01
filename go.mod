@@ -1,6 +1,6 @@
 module get.porter.sh/porter
 
-go 1.26.4
+go 1.26.0
 
 // See https://github.com/hashicorp/go-plugin/pull/127 and
 // https://github.com/hashicorp/go-plugin/pull/163
