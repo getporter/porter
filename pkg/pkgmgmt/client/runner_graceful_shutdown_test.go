@@ -38,7 +38,7 @@ while true; do sleep 0.05; done`
 	time.Sleep(150 * time.Millisecond)
 
 	cancel()
-	_ = cmd.Wait()
+	require.ErrorIs(t, cmd.Wait(), context.Canceled)
 
 	_, statErr := os.Stat(sentinelFile)
 	assert.NoError(t, statErr, "sentinel file must exist: the child process must receive SIGTERM, not SIGKILL")
