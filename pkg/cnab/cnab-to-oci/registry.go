@@ -414,7 +414,7 @@ func (r *Registry) GetCachedImage(ctx context.Context, ref cnab.OCIReference) (I
 	if err != nil {
 		err = fmt.Errorf("failed to find image in docker cache: %w", ErrNotFound{Reference: ref})
 		// log as debug because this isn't a terminal error
-		log.Debugf(err.Error())
+		log.Debug(err.Error())
 		return ImageMetadata{}, err
 	}
 
