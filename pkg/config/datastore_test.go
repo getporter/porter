@@ -36,6 +36,37 @@ func TestData_StorageAccessors(t *testing.T) {
 	assert.Equal(t, "hashicorp.vault", store.PluginSubKey, "StoragePlugin.PluginSubKey returned the wrong value")
 }
 
+func TestGetDependenciesVersionStrategy(t *testing.T) {
+	t.Parallel()
+
+	t.Run("defaults to exact", func(t *testing.T) {
+		t.Parallel()
+		c := Config{}
+		assert.Equal(t, DependencyVersionStrategyExact, c.GetDependenciesVersionStrategy())
+	})
+
+	t.Run("respects configured strategy", func(t *testing.T) {
+		t.Parallel()
+		for _, strategy := range []string{
+			DependencyVersionStrategyExact,
+			DependencyVersionStrategyMaxPatch,
+			DependencyVersionStrategyMaxMinor,
+			DependencyVersionStrategyMin,
+		} {
+			strategy := strategy
+			t.Run(strategy, func(t *testing.T) {
+				t.Parallel()
+				c := Config{
+					Data: Data{
+						Dependencies: DependenciesConfig{VersionStrategy: strategy},
+					},
+				}
+				assert.Equal(t, strategy, c.GetDependenciesVersionStrategy())
+			})
+		}
+	})
+}
+
 func TestData_GetDefaultSecretsPlugin(t *testing.T) {
 	c := New()
 	assert.Equal(t, "host", c.Data.DefaultSecretsPlugin, "Built-in host plugin should be used when config is missing")

@@ -5,13 +5,24 @@
   "porterVersion": "v0.30.0",
   "parameters": [
     {
+      "name": "mysql_user",
+      "type": "string",
+      "default": null,
+      "applyTo": "All Actions",
+      "description": "",
+      "required": false,
+      "sensitive": false,
+      "injected": true
+    },
+    {
       "name": "namespace",
       "type": "string",
       "default": null,
       "applyTo": "upgrade",
       "description": "",
       "required": false,
-      "sensitive": false
+      "sensitive": false,
+      "injected": false
     },
     {
       "name": "region",
@@ -20,7 +31,8 @@
       "applyTo": "All Actions",
       "description": "",
       "required": false,
-      "sensitive": false
+      "sensitive": false,
+      "injected": false
     },
     {
       "name": "seed",
@@ -29,7 +41,8 @@
       "applyTo": "All Actions",
       "description": "",
       "required": true,
-      "sensitive": true
+      "sensitive": true,
+      "injected": false
     }
   ],
   "mixins": [
