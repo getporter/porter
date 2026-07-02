@@ -35,7 +35,7 @@ func (p *Porter) GetManifestSchema(ctx context.Context) (jsonSchema, error) {
 
 	replacementSchema, err := p.GetReplacementSchema()
 	if err != nil {
-		span.Debugf("ignoring replacement schema: %w", err)
+		span.Debugf("ignoring replacement schema: %v", err)
 	}
 	if replacementSchema != nil {
 		return replacementSchema, nil
@@ -130,7 +130,7 @@ func (p *Porter) injectMixinSchemas(ctx context.Context, manifestSchema jsonSche
 		mixinSchema, err := p.Mixins.GetSchema(ctx, mixin)
 		if err != nil {
 			// if a mixin can't report its schema, don't include it and keep going
-			span.Debugf("could not query mixin %s for its schema: %w", mixin, err)
+			span.Debugf("could not query mixin %s for its schema: %v", mixin, err)
 			continue
 		}
 
@@ -140,7 +140,7 @@ func (p *Porter) injectMixinSchemas(ctx context.Context, manifestSchema jsonSche
 		mixinSchemaMap := make(jsonSchema)
 		err = json.Unmarshal([]byte(mixinSchema), &mixinSchemaMap)
 		if err != nil {
-			span.Debugf("could not unmarshal mixin schema for %s, %q: %w", mixin, mixinSchema, err)
+			span.Debugf("could not unmarshal mixin schema for %s, %q: %v", mixin, mixinSchema, err)
 			continue
 		}
 

@@ -2,13 +2,17 @@ package runtime
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"path/filepath"
 	"testing"
 
+	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/manifest"
+	"get.porter.sh/porter/pkg/mixin"
+	"get.porter.sh/porter/pkg/pkgmgmt"
 	"get.porter.sh/porter/pkg/portercontext"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
@@ -319,4 +323,54 @@ func TestLoadImageMappingFilesGoodFiles(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotEmpty(t, reloMap)
 	assert.Equal(t, "mysql", bun.Name)
+}
+
+// TestExecuteStep_CapturesOutputsAfterMixinFailure verifies that mixin outputs
+// written before a failure (or graceful SIGTERM shutdown) are still captured and
+// applied to the bundle even when the mixin exits with a non-zero status.
+func TestExecuteStep_CapturesOutputsAfterMixinFailure(t *testing.T) {
+	ctx := context.Background()
+	r := NewTestPorterRuntime(t)
+
+	rm := runtimeManifestFromStepYaml(t, r.TestConfig, `schemaVersion: 1.0.0-alpha.2
+outputs:
+- name: mystate
+  type: string
+
+install:
+- exec:
+    description: "Save state then fail"
+    command: echo
+    arguments:
+    - hello
+`)
+	r.RuntimeManifest = rm
+
+	// Override the mixin: write an output file, then return an error as if the
+	// step was interrupted mid-way (e.g. received SIGTERM and flushed state).
+	testMixin := r.mixins.(*mixin.TestMixinProvider)
+	testMixin.RunAssertions = []func(*portercontext.Context, string, pkgmgmt.CommandOptions) error{
+		func(pkgCtx *portercontext.Context, _ string, _ pkgmgmt.CommandOptions) error {
+			if err := pkgCtx.FileSystem.MkdirAll(portercontext.MixinOutputsDir, pkg.FileModeDirectory); err != nil {
+				return err
+			}
+			outputPath := filepath.Join(portercontext.MixinOutputsDir, "mystate")
+			if err := pkgCtx.FileSystem.WriteFile(outputPath, []byte("important-state"), pkg.FileModeWritable); err != nil {
+				return err
+			}
+			return errors.New("mixin interrupted")
+		},
+	}
+
+	require.NoError(t, r.config.FileSystem.MkdirAll(portercontext.MixinOutputsDir, pkg.FileModeDirectory))
+
+	step := rm.Install[0]
+	err := r.executeStep(ctx, 0, step)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "mixin execution failed")
+
+	// The bundle output should have been written despite the mixin failure.
+	contents, readErr := r.config.FileSystem.ReadFile(filepath.Join(config.BundleOutputsDir, "mystate"))
+	require.NoError(t, readErr, "bundle output should be written even when the mixin exits with an error")
+	assert.Equal(t, "important-state", string(contents))
 }

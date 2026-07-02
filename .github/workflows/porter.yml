@@ -17,7 +17,7 @@ on:
       - "LICENSE"
       - "netlify.toml"
 env:
-  GOVERSION: 1.25.10
+  GOVERSION: 1.26.4
 permissions:
   contents: read
 

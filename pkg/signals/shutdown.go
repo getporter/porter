@@ -40,13 +40,13 @@ func (s *Shutdown) Graceful(stopCh <-chan struct{}, grpcServer *grpc.Server, ctx
 	// stop OpenTelemetry tracer provider
 	if s.tracerProvider != nil {
 		if err := s.tracerProvider.Shutdown(ctx); err != nil {
-			log.Warnf("stopping tracer provider: ", err)
+			log.Warnf("stopping tracer provider: %v", err)
 		}
 	}
 
 	// determine if the GRPC was started
 	if grpcServer != nil {
-		log.Infof("Shutting down GRPC server: ", s.serverShutdownTimeout)
+		log.Infof("Shutting down GRPC server: %v", s.serverShutdownTimeout)
 		grpcServer.GracefulStop()
 	}
 

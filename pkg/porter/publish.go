@@ -118,7 +118,7 @@ func (p *Porter) publishFromFile(ctx context.Context, opts PublishOptions) error
 	canonicalManifest := filepath.Join(opts.Dir, build.LOCAL_MANIFEST)
 	canonicalExists, err := p.FileSystem.Exists(canonicalManifest)
 	if err != nil {
-		return log.Errorf("error reading manifest %s: %w", canonicalManifest)
+		return log.Errorf("error reading manifest %s: %w", canonicalManifest, err)
 	}
 
 	var m *manifest.Manifest

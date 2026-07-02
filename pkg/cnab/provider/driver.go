@@ -10,6 +10,11 @@ import (
 	"github.com/moby/moby/api/types/container"
 )
 
+// gracefulStopTimeoutSeconds is the number of seconds Docker waits after
+// sending SIGTERM to the container before sending SIGKILL. This window lets
+// bundle steps (e.g. terraform) flush state on cancellation.
+const gracefulStopTimeoutSeconds = 30
+
 const (
 	// DriverNameDocker is the name of the CNAB Docker driver.
 	DriverNameDocker = "docker"
@@ -90,6 +95,16 @@ func (r *Runtime) newDriver(driverName string, args ActionArguments) (driver.Dri
 		if err != nil {
 			return nil, err
 		}
+	}
+
+	// Give Docker containers a grace period on stop so that bundle steps (e.g.
+	// terraform) can flush state after receiving SIGTERM before SIGKILL is sent.
+	if dockerDriver, ok := driverImpl.(*docker.Driver); ok {
+		timeout := gracefulStopTimeoutSeconds
+		dockerDriver.AddConfigurationOptions(func(cfg *container.Config, _ *container.HostConfig) error {
+			cfg.StopTimeout = &timeout
+			return nil
+		})
 	}
 
 	return driverImpl, nil
