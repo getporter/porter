@@ -384,7 +384,7 @@ Therefore, it does not work with the Azure Cloud Shell driver.
 
 ### Allow File Downloads
 
-\--allow-file-downloads controls whether Porter is permitted to download files declared in the manifest's `files` section during `porter build`.
+`--allow-file-downloads` controls whether Porter is permitted to download files declared in the manifest's `files` section during `porter build`.
 It is set with the PORTER_ALLOW_FILE_DOWNLOADS environment variable.
 
 This is a permanent security boundary that remains in effect after the `file-sources` experimental flag is stabilised.
