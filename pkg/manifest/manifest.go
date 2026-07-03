@@ -689,7 +689,10 @@ func (m *Manifest) validateFiles(cfg *config.Config) error {
 		if f.Destination == "" {
 			return fmt.Errorf("files[%d].destination is required", i)
 		}
-		if path.IsAbs(f.Destination) {
+		if strings.ContainsRune(f.Destination, '\\') {
+			return fmt.Errorf("files[%d].destination must use forward slashes, got %q", i, f.Destination)
+		}
+		if path.IsAbs(f.Destination) || windowsDriveLetterPattern.MatchString(f.Destination) {
 			return fmt.Errorf("files[%d].destination must be a relative path, got %q", i, f.Destination)
 		}
 		for _, segment := range strings.Split(f.Destination, "/") {
@@ -700,6 +703,10 @@ func (m *Manifest) validateFiles(cfg *config.Config) error {
 	}
 	return nil
 }
+
+// windowsDriveLetterPattern matches a Windows drive letter prefix, e.g. "C:",
+// which path.IsAbs does not recognize as an absolute path.
+var windowsDriveLetterPattern = regexp.MustCompile(`^[A-Za-z]:`)
 
 type ParameterSource struct {
 	Dependency string `yaml:"dependency,omitempty"`

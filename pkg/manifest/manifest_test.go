@@ -1575,6 +1575,20 @@ func TestValidateFiles(t *testing.T) {
 		require.ErrorContains(t, err, "must not escape")
 	})
 
+	t.Run("backslash destination rejected", func(t *testing.T) {
+		cfg := newCfg(t, experimental.FlagFileSources)
+		m := newManifest(FileSource{URL: "https://example.com/tool.tar.gz", Destination: "..\\..\\secrets"})
+		err := m.validateFiles(cfg)
+		require.ErrorContains(t, err, "forward slashes")
+	})
+
+	t.Run("windows drive letter destination rejected", func(t *testing.T) {
+		cfg := newCfg(t, experimental.FlagFileSources)
+		m := newManifest(FileSource{URL: "https://example.com/tool.tar.gz", Destination: "C:/secrets"})
+		err := m.validateFiles(cfg)
+		require.ErrorContains(t, err, "relative path")
+	})
+
 	t.Run("second entry invalid identifies correct index", func(t *testing.T) {
 		cfg := newCfg(t, experimental.FlagFileSources)
 		m := newManifest(
