@@ -102,6 +102,11 @@ experimental:
 # Use Docker buildkit to build the bundle
 build-driver: "buildkit"
 
+# Control how Porter selects a version when a dependency specifies a version range.
+# Allowed values: exact (default), max-patch, max-minor, min.
+dependencies:
+  version-strategy: "max-minor"
+
 # Do not automatically build a bundle from source
 # before running the requested command when Porter detects that it is out-of-date.
 # Porter detects changes to porter.yaml, mixins, Porter version, and all files in the bundle directory
@@ -400,6 +405,25 @@ This flag is also available on the `porter build` command:
 
 ```console
 porter build --allow-file-downloads
+```
+
+### Dependency Version Strategy
+
+The `dependencies.version-strategy` setting controls how Porter selects a bundle version when a dependency declares a [version range](/docs/development/authoring-a-bundle/working-with-dependencies/#version-ranges) instead of a pinned tag.
+
+It can be set in the config file, overridden with the `PORTER_DEPENDENCIES_VERSION_STRATEGY` environment variable, or per-command with `--dependencies-version-strategy`.
+
+| Value | Behaviour |
+|---|---|
+| `exact` | Default. Refuse to resolve ranges; error if the dependency specifies only a range and no pinned tag. |
+| `max-patch` | Pick the highest patch release within the same `major.minor` as the default tag in the dependency reference. |
+| `max-minor` | Pick the highest minor+patch release within the same major as the default tag in the dependency reference. |
+| `min` | Pick the lowest release that satisfies the stated version range. |
+
+```yaml
+# ~/.porter/config.yaml
+dependencies:
+  version-strategy: "max-minor"
 ```
 
 ### Schema Check

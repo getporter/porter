@@ -95,6 +95,7 @@ type PrintableParameter struct {
 	Description string      `json:"description" yaml:"description"`
 	Required    bool        `json:"required" yaml:"required"`
 	Sensitive   bool        `json:"sensitive" yaml:"sensitive"`
+	Injected    bool        `json:"injected" yaml:"injected"`
 }
 
 type SortPrintableParameter []PrintableParameter
@@ -187,7 +188,7 @@ func (p *Porter) printBundleExplain(o ExplainOpts, pb *PrintableBundle, bun cnab
 	}
 }
 
-func generatePrintable(ctx context.Context, bun cnab.ExtendedBundle, action string, registry interface{}, regOpts interface{}) (*PrintableBundle, error) {
+func generatePrintable(ctx context.Context, bun cnab.ExtendedBundle, action string, registry cnabtooci.RegistryProvider, regOpts cnabtooci.RegistryOptions) (*PrintableBundle, error) {
 	var stamp configadapter.Stamp
 
 	stamp, err := configadapter.LoadStamp(bun)
@@ -195,8 +196,11 @@ func generatePrintable(ctx context.Context, bun cnab.ExtendedBundle, action stri
 		stamp = configadapter.Stamp{}
 	}
 
-	// Inject registry for dependency resolution
-	eb := bun.WithRegistry(registry, regOpts)
+	var wrappedRegistry interface{}
+	if registry != nil {
+		wrappedRegistry = &registryListTagsAdapter{reg: registry, opts: regOpts}
+	}
+	eb := bun.WithRegistry(wrappedRegistry, regOpts)
 	deps, err := eb.ResolveDependencies(ctx, bun)
 	if err != nil {
 		return nil, fmt.Errorf("error resolving bundle dependencies: %w", err)
@@ -239,9 +243,10 @@ func generatePrintable(ctx context.Context, bun cnab.ExtendedBundle, action stri
 	}
 	sort.Sort(SortPrintableCredential(pb.Credentials))
 
+	paramSources, _ := bun.ReadParameterSources()
 	for p, v := range bun.Parameters {
 		v := v // Go closures are funny like that
-		if bun.IsInternalParameter(p) || bun.ParameterHasSource(p) {
+		if bun.IsInternalParameter(p) {
 			continue
 		}
 
@@ -260,6 +265,9 @@ func generatePrintable(ctx context.Context, bun cnab.ExtendedBundle, action stri
 		pp.Required = v.Required
 		pp.Description = v.Description
 		pp.Sensitive = bun.IsSensitiveParameter((p))
+		if _, hasSource := paramSources[p]; hasSource {
+			pp.Injected = action != cnab.ActionInstall
+		}
 
 		if shouldIncludeInExplainOutput(&v, action) {
 			pb.Parameters = append(pb.Parameters, pp)
@@ -313,6 +321,7 @@ func generatePrintable(ctx context.Context, bun cnab.ExtendedBundle, action stri
 
 	return &pb, nil
 }
+
 
 // shouldIncludeInExplainOutput determine if a scoped item such as a credential, parameter or output
 // should be included in the explain output.
@@ -443,7 +452,11 @@ func (p *Porter) printParametersExplainTable(bun *PrintableBundle) error {
 			if !ok {
 				return nil
 			}
-			return []string{p.Name, p.Description, fmt.Sprintf("%v", p.Type), fmt.Sprintf("%v", p.Default), strconv.FormatBool(p.Required), p.ApplyTo}
+			defaultVal := fmt.Sprintf("%v", p.Default)
+			if p.Injected && p.Default == nil {
+				defaultVal = "(injected)"
+			}
+			return []string{p.Name, p.Description, fmt.Sprintf("%v", p.Type), defaultVal, strconv.FormatBool(p.Required), p.ApplyTo}
 		}
 	return printer.PrintTable(p.Out, bun.Parameters, printParamRow, "Name", "Description", "Type", "Default", "Required", "Applies To")
 }

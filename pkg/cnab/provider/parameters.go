@@ -31,7 +31,7 @@ func (r *Runtime) loadParameters(ctx context.Context, b cnab.ExtendedBundle, run
 	if err = run.SetParametersDigest(); err != nil {
 		// Just warn since the digest isn't critical for running the bundle
 		// If it's not set properly, we will recalculate as needed
-		span.Warnf("WARNING: unable to set the run's parameters digest: %w", err)
+		span.Warnf("WARNING: unable to set the run's parameters digest: %v", err)
 	}
 
 	return nil

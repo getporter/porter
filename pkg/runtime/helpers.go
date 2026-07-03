@@ -11,6 +11,7 @@ import (
 type TestPorterRuntime struct {
 	*PorterRuntime
 	TestContext *portercontext.TestContext
+	TestConfig  *config.TestConfig
 }
 
 func NewTestPorterRuntime(t *testing.T) *TestPorterRuntime {
@@ -23,6 +24,7 @@ func NewTestPorterRuntime(t *testing.T) *TestPorterRuntime {
 
 	return &TestPorterRuntime{
 		TestContext:   testConfig.TestContext,
+		TestConfig:    testConfig,
 		PorterRuntime: pr,
 	}
 }

@@ -126,7 +126,7 @@ func (q *MixinQuery) Execute(ctx context.Context, cmd string, inputGenerator Mix
 		// This is a debug because we expect not all mixins to implement some
 		// optional commands, like lint and don't want to print their error
 		// message when we query them with a command they don't support.
-		span.Debugf(fmt.Errorf("not all mixins responded successfully: %w", runErr).Error())
+		span.Debug(fmt.Errorf("not all mixins responded successfully: %w", runErr).Error())
 	}
 
 	return results, nil

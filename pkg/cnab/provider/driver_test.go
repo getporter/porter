@@ -9,6 +9,54 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// TestNewDriver_Docker_StopTimeout verifies that every Docker driver produced by
+// newDriver is configured with a graceful stop timeout so that Docker waits
+// before sending SIGKILL after SIGTERM.
+func TestNewDriver_Docker_StopTimeout(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name string
+		args ActionArguments
+		// mockDockerSock sets up /var/run/docker.sock and the docker group stub
+		// required when AllowDockerHostAccess is true.
+		mockDockerSock bool
+	}{
+		{name: "vanilla docker", args: ActionArguments{}},
+		{name: "docker with host access", args: ActionArguments{AllowDockerHostAccess: true}, mockDockerSock: true},
+	}
+
+	for _, tc := range cases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			r := NewTestRuntime(t)
+			if tc.mockDockerSock {
+				r.MockGetDockerGroupId()
+				_, err := r.FileSystem.Create("/var/run/docker.sock")
+				require.NoError(t, err)
+			}
+			defer r.Close()
+
+			drv, err := r.newDriver(DriverNameDocker, tc.args)
+			require.NoError(t, err)
+
+			dockerish, ok := drv.(*docker.Driver)
+			require.True(t, ok)
+
+			err = dockerish.ApplyConfigurationOptions()
+			require.NoError(t, err)
+
+			containerCfg, err := dockerish.GetContainerConfig()
+			require.NoError(t, err)
+
+			require.NotNil(t, containerCfg.StopTimeout, "StopTimeout should be set on the container config")
+			assert.Equal(t, gracefulStopTimeoutSeconds, *containerCfg.StopTimeout)
+		})
+	}
+}
+
 func TestNewDriver_Docker(t *testing.T) {
 	t.Parallel()
 

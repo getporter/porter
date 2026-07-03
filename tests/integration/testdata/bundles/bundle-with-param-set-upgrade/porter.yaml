@@ -1,0 +1,38 @@
+schemaVersion: 1.0.0-alpha.1
+name: porter-paramset-upgrade
+version: 0.1.0
+description: "Bundle for testing parameter set precedence over persisted params on upgrade"
+registry: getporter
+
+mixins:
+  - exec
+
+parameters:
+  - name: name
+    description: A string parameter used to verify resolution order
+    type: string
+    default: default-name
+
+install:
+  - exec:
+      description: "Install"
+      command: ./helpers.sh
+      arguments:
+        - install
+        - "{{ bundle.parameters.name }}"
+
+upgrade:
+  - exec:
+      description: "Upgrade"
+      command: ./helpers.sh
+      arguments:
+        - upgrade
+        - "{{ bundle.parameters.name }}"
+
+uninstall:
+  - exec:
+      description: "Uninstall"
+      command: ./helpers.sh
+      arguments:
+        - uninstall
+        - "{{ bundle.parameters.name }}"

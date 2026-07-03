@@ -80,7 +80,9 @@ func (r *PorterRuntime) Execute(ctx context.Context, rm *RuntimeManifest) error 
 		}
 	}
 
-	err = r.RuntimeManifest.Finalize(ctx)
+	// Always run Finalize (packs state bag) even when the context is cancelled,
+	// so state written by a gracefully-stopped step is preserved.
+	err = r.RuntimeManifest.Finalize(context.WithoutCancel(ctx))
 	if err != nil {
 		bigErr = multierror.Append(bigErr, err)
 	}
@@ -115,23 +117,28 @@ func (r *PorterRuntime) executeStep(ctx context.Context, stepIndex int, step *ma
 		Input:   string(inputBytes),
 		Runtime: true,
 	}
-	err = r.mixins.Run(ctx, r.config.Context, step.GetMixinName(), cmd)
-	if err != nil {
-		return fmt.Errorf("mixin execution failed: %w", err)
-	}
+	mixinErr := r.mixins.Run(ctx, r.config.Context, step.GetMixinName(), cmd)
 
+	// Read any outputs the mixin managed to write, even if it was cancelled or
+	// exited with an error, so that state (e.g. terraform state) is not lost.
 	outputs, err := r.readMixinOutputs()
 	if err != nil {
 		return fmt.Errorf("could not read step outputs: %w", err)
 	}
 
-	err = r.RuntimeManifest.ApplyStepOutputs(outputs)
-	if err != nil {
+	if err = r.RuntimeManifest.ApplyStepOutputs(outputs); err != nil {
 		return err
 	}
 
 	// Apply any Bundle Outputs declared in this step
-	return r.applyStepOutputsToBundle(outputs)
+	if err = r.applyStepOutputsToBundle(outputs); err != nil {
+		return err
+	}
+
+	if mixinErr != nil {
+		return fmt.Errorf("mixin execution failed: %w", mixinErr)
+	}
+	return nil
 }
 
 // applyStepOutputsToBundle writes the provided step outputs to the proper location

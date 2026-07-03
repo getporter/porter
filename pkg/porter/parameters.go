@@ -918,8 +918,25 @@ func (p *Porter) applyActionOptionsToInstallation(ctx context.Context, ba Bundle
 
 	//
 	// 3. Resolve named parameter sets
+	// Only skip parameters that are explicitly overridden in the current invocation
+	// (via --param flags or CurrentParamOverrides). Old persisted values must not
+	// suppress parameter set resolution so that parameter sets take precedence over
+	// previously-persisted values.
 	//
-	resolvedParams, err := p.loadParameterSets(ctx, bun, o.Namespace, inst.ParameterSets, inst.Parameters.Parameters)
+	currentOverrideNames := make(map[string]struct{}, len(parsedOverrides)+len(o.CurrentParamOverrides))
+	for name := range parsedOverrides {
+		currentOverrideNames[name] = struct{}{}
+	}
+	for _, param := range o.CurrentParamOverrides {
+		currentOverrideNames[param.Name] = struct{}{}
+	}
+	cliOverridesList := make(secrets.StrategyList, 0, len(currentOverrideNames))
+	for _, param := range inst.Parameters.Parameters {
+		if _, isCurrentOverride := currentOverrideNames[param.Name]; isCurrentOverride {
+			cliOverridesList = append(cliOverridesList, param)
+		}
+	}
+	resolvedParams, err := p.loadParameterSets(ctx, bun, o.Namespace, inst.ParameterSets, cliOverridesList)
 	if err != nil {
 		return fmt.Errorf("unable to process provided parameter sets: %w", err)
 	}
@@ -938,10 +955,16 @@ func (p *Porter) applyActionOptionsToInstallation(ctx context.Context, ba Bundle
 	span.SetSensitiveAttributes(tracing.ObjectAttribute("resolved-installation-parameters", inst.Parameters.Parameters))
 
 	//
-	// 5. Apply the overrides on top of the parameter sets
+	// 5. Apply the overrides on top of the parameter sets.
+	// Current CLI overrides always win. Old persisted values only fill in gaps not
+	// already covered by a parameter set.
 	//
 	for k, v := range resolvedOverrides {
-		resolvedParams[k] = v
+		_, isCurrentOverride := currentOverrideNames[k]
+		_, inParamSet := resolvedParams[k]
+		if isCurrentOverride || !inParamSet {
+			resolvedParams[k] = v
+		}
 	}
 
 	for name, value := range parsedOverrides {

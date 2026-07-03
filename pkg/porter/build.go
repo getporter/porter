@@ -144,7 +144,7 @@ func (p *Porter) Build(ctx context.Context, opts BuildOptions) error {
 	if !opts.Force {
 		upToDate, err := p.IsBundleUpToDate(ctx, opts.BundleDefinitionOptions)
 		if err != nil {
-			span.Warnf("WARNING: %w", err)
+			span.Warnf("WARNING: %v", err)
 		}
 		if upToDate {
 			span.Info("Bundle is up-to-date!")
