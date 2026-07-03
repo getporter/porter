@@ -538,4 +538,24 @@ func TestDownloadFiles(t *testing.T) {
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "404")
 	})
+
+	t.Run("aborts download when context is cancelled", func(t *testing.T) {
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte("hello"))
+		}))
+		defer srv.Close()
+
+		files := []manifest.FileSource{
+			{URL: srv.URL + "/tool.tar.gz", Destination: "tool.tar.gz"},
+		}
+		g := newGenerator(t, files, true)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+
+		err := g.DownloadFiles(ctx)
+		require.Error(t, err)
+		assert.ErrorIs(t, err, context.Canceled)
+	})
 }

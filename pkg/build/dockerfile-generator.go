@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 	"path/filepath"
 	"strings"
 
@@ -358,8 +357,13 @@ func (g *DockerfileGenerator) DownloadFiles(ctx context.Context) error {
 	return nil
 }
 
-func (g *DockerfileGenerator) downloadFile(_ context.Context, url, destination string) error {
-	resp, err := http.Get(url) //nolint:gosec // URL is validated by manifest.validateFiles
+func (g *DockerfileGenerator) downloadFile(ctx context.Context, url, destination string) error {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil) //nolint:gosec // URL is validated by manifest.validateFiles
+	if err != nil {
+		return err
+	}
+
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return err
 	}
@@ -370,7 +374,7 @@ func (g *DockerfileGenerator) downloadFile(_ context.Context, url, destination s
 	}
 
 	destPath := filepath.Join(g.Getwd(), destination)
-	if err := g.FileSystem.MkdirAll(filepath.Dir(destPath), os.ModeDir|0755); err != nil {
+	if err := g.FileSystem.MkdirAll(filepath.Dir(destPath), pkg.FileModeDirectory); err != nil {
 		return fmt.Errorf("failed to create destination directory: %w", err)
 	}
 
