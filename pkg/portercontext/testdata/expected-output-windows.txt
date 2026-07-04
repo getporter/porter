@@ -1,4 +1,3 @@
 Writing logs to C:\.porter\logs\0.json
 a thing happened
 a weird thing happened
-a bad thing happened

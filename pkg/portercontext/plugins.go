@@ -23,7 +23,9 @@ func (c *Context) makePluginLogger(pluginKey string, cfg LogConfiguration) zapco
 	enc := zap.NewProductionEncoderConfig()
 	jsonEncoder := zapcore.NewJSONEncoder(enc)
 	censoredEncoder := &CensoredEncoder{Encoder: jsonEncoder, censoredWriter: c.censoredWriter}
-	return zapcore.NewCore(censoredEncoder, zapcore.AddSync(pluginLogger), cfg.Verbosity)
+	return zapcore.NewCore(censoredEncoder, zapcore.AddSync(pluginLogger), zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
+		return lvl < zapcore.ErrorLevel && lvl >= cfg.Verbosity
+	}))
 }
 
 // Accepts zap log commands and translates them to a format that hclog understands

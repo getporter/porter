@@ -61,6 +61,11 @@ type BundleExecutionOptions struct {
 	// Params is the unparsed list of NAME=VALUE parameters set on the command line.
 	Params []string
 
+	// CurrentParamOverrides are structured parameter overrides that carry the same
+	// precedence as Params (current-invocation overrides). Used by ReconcileInstallation
+	// to pass inline YAML params without round-tripping through string serialization.
+	CurrentParamOverrides secrets.StrategyList
+
 	// ParameterSets is a list of parameter sets containing parameter sources
 	ParameterSets []string
 
@@ -81,6 +86,11 @@ type BundleExecutionOptions struct {
 	finalParams map[string]interface{}
 
 	VerifyBundleBeforeExecution bool
+
+	// DependenciesVersionStrategy controls how dependency version ranges are resolved.
+	// Allowed values: exact, max-patch, max-minor, min.
+	// Defaults to the global config value (dependencies.version-strategy).
+	DependenciesVersionStrategy string
 }
 
 func NewBundleExecutionOptions() *BundleExecutionOptions {
@@ -152,6 +162,14 @@ func (o *BundleExecutionOptions) Validate(ctx context.Context, args []string, p 
 	o.defaultDriver(p)
 	if err := o.validateDriver(p.Context); err != nil {
 		return err
+	}
+
+	if s := o.DependenciesVersionStrategy; s != "" {
+		switch s {
+		case "exact", "max-patch", "max-minor", "min":
+		default:
+			return fmt.Errorf("invalid dependencies-version-strategy %q: allowed values are exact, max-patch, max-minor, min", s)
+		}
 	}
 
 	return nil

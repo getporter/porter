@@ -104,7 +104,7 @@ func (b *Builder) BuildBundleImage(ctx context.Context, manifest *manifest.Manif
 
 	pbssh, err := buildx.CreateSSH(ssh)
 	if err != nil {
-		return span.Errorf("error creating ssh ", err)
+		return span.Errorf("error creating ssh: %w", err)
 	}
 
 	currentSession = append(currentSession, pbssh)

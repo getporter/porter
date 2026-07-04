@@ -87,6 +87,11 @@ func (c *PluginConnection) Start(ctx context.Context, pluginCfg io.Reader) error
 		attribute.String("plugin-key", c.key.String()))
 	defer span.EndSpan()
 
+	// Use a non-cancellable context for the plugin subprocess so that
+	// operation context cancellation (e.g. SIGINT) doesn't kill the plugin
+	// before we have a chance to save operation results.
+	pluginCtx := context.WithoutCancel(ctx)
+
 	// Create a command to run the plugin
 	if c.key.IsInternal {
 		porterPath, err := c.config.GetPorterPath(ctx)
@@ -94,7 +99,7 @@ func (c *PluginConnection) Start(ctx context.Context, pluginCfg io.Reader) error
 			return fmt.Errorf("could not determine the path to the porter pluginProtocol: %w", err)
 		}
 
-		c.pluginCmd = c.config.NewCommand(ctx, porterPath, "plugin", "run", c.key.String())
+		c.pluginCmd = c.config.NewCommand(pluginCtx, porterPath, "plugin", "run", c.key.String())
 	} else {
 		pluginPath, err := c.config.GetPluginPath(c.key.Binary)
 		if err != nil {
@@ -102,7 +107,7 @@ func (c *PluginConnection) Start(ctx context.Context, pluginCfg io.Reader) error
 		}
 		span.SetAttributes(attribute.String("plugin-path", pluginPath))
 
-		c.pluginCmd = c.config.NewCommand(ctx, pluginPath, "run", c.key.String())
+		c.pluginCmd = c.config.NewCommand(pluginCtx, pluginPath, "run", c.key.String())
 	}
 	span.SetAttributes(attribute.String("plugin-path", c.pluginCmd.Path))
 

@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg/cnab"
+	cnabtooci "get.porter.sh/porter/pkg/cnab/cnab-to-oci"
 	depsv1ext "get.porter.sh/porter/pkg/cnab/extensions/dependencies/v1"
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/test"
@@ -55,7 +56,7 @@ func TestExplain_generateTable(t *testing.T) {
 	b, err := p.CNAB.LoadBundle("params-bundle.json")
 	require.NoError(t, err)
 
-	pb, err := generatePrintable(context.Background(), b, "", nil, nil)
+	pb, err := generatePrintable(context.Background(), b, "", nil, cnabtooci.RegistryOptions{})
 	require.NoError(t, err)
 	opts := ExplainOpts{}
 	opts.RawFormat = "plaintext"
@@ -78,7 +79,7 @@ func TestExplain_generateTableRequireDockerHostAccess(t *testing.T) {
 	b, err := p.CNAB.LoadBundle("bundle-docker.json")
 	require.NoError(t, err)
 
-	pb, err := generatePrintable(context.Background(), b, "", nil, nil)
+	pb, err := generatePrintable(context.Background(), b, "", nil, cnabtooci.RegistryOptions{})
 	require.NoError(t, err)
 	opts := ExplainOpts{}
 	opts.RawFormat = "plaintext"
@@ -100,7 +101,7 @@ func TestExplain_generateJSON(t *testing.T) {
 	b, err := p.CNAB.LoadBundle("params-bundle.json")
 	require.NoError(t, err)
 
-	pb, err := generatePrintable(context.Background(), b, "", nil, nil)
+	pb, err := generatePrintable(context.Background(), b, "", nil, cnabtooci.RegistryOptions{})
 	require.NoError(t, err)
 	opts := ExplainOpts{}
 	opts.RawFormat = "json"
@@ -122,7 +123,7 @@ func TestExplain_generateYAML(t *testing.T) {
 	b, err := p.CNAB.LoadBundle("params-bundle.json")
 	require.NoError(t, err)
 
-	pb, err := generatePrintable(context.Background(), b, "", nil, nil)
+	pb, err := generatePrintable(context.Background(), b, "", nil, cnabtooci.RegistryOptions{})
 	require.NoError(t, err)
 
 	opts := ExplainOpts{}
@@ -170,7 +171,7 @@ func TestExplain_generatePrintableBundleParams(t *testing.T) {
 		},
 	})
 
-	pb, err := generatePrintable(context.Background(), bun, "", nil, nil)
+	pb, err := generatePrintable(context.Background(), bun, "", nil, cnabtooci.RegistryOptions{})
 	require.NoError(t, err)
 
 	require.Equal(t, 2, len(pb.Parameters), "expected 2 parameters")
@@ -222,7 +223,7 @@ func TestExplain_generatePrintableBundleParamsWithAction(t *testing.T) {
 	})
 
 	t.Run("action applies", func(t *testing.T) {
-		pb, err := generatePrintable(context.Background(), bun, "install", nil, nil)
+		pb, err := generatePrintable(context.Background(), bun, "install", nil, cnabtooci.RegistryOptions{})
 		require.NoError(t, err)
 
 		require.Equal(t, 2, len(pb.Parameters), "expected 2 parameters")
@@ -237,7 +238,7 @@ func TestExplain_generatePrintableBundleParamsWithAction(t *testing.T) {
 	})
 
 	t.Run("action does not apply", func(t *testing.T) {
-		pb, err := generatePrintable(context.Background(), bun, "upgrade", nil, nil)
+		pb, err := generatePrintable(context.Background(), bun, "upgrade", nil, cnabtooci.RegistryOptions{})
 		require.NoError(t, err)
 
 		require.Equal(t, 1, len(pb.Parameters), "expected only 1 parameter since debug parameter doesn't apply to upgrade command")
@@ -245,7 +246,7 @@ func TestExplain_generatePrintableBundleParamsWithAction(t *testing.T) {
 	})
 
 	t.Run("all actions", func(t *testing.T) {
-		pb, err := generatePrintable(context.Background(), bun, "", nil, nil)
+		pb, err := generatePrintable(context.Background(), bun, "", nil, cnabtooci.RegistryOptions{})
 		require.NoError(t, err)
 
 		require.Equal(t, 2, len(pb.Parameters), "expected 2 parameters")
@@ -286,7 +287,7 @@ func TestExplain_generatePrintableBundleOutputs(t *testing.T) {
 		},
 	})
 
-	pb, err := generatePrintable(context.Background(), bun, "", nil, nil)
+	pb, err := generatePrintable(context.Background(), bun, "", nil, cnabtooci.RegistryOptions{})
 	require.NoError(t, err)
 
 	require.Equal(t, 2, len(pb.Outputs), "expected someoutput to be included because the action is unset")
@@ -305,12 +306,12 @@ func TestExplain_generatePrintableBundleOutputs(t *testing.T) {
 	assert.Equal(t, 0, len(pb.Actions))
 
 	// Check outputs for install action
-	pb, err = generatePrintable(context.Background(), bun, "install", nil, nil)
+	pb, err = generatePrintable(context.Background(), bun, "install", nil, cnabtooci.RegistryOptions{})
 	require.NoError(t, err)
 	assert.Equal(t, 2, len(pb.Outputs), "expected someoutput to be included")
 
 	// Check outputs for upgrade action action (someoutput doesn't apply)
-	pb, err = generatePrintable(context.Background(), bun, "upgrade", nil, nil)
+	pb, err = generatePrintable(context.Background(), bun, "upgrade", nil, cnabtooci.RegistryOptions{})
 	require.NoError(t, err)
 	assert.Equal(t, 1, len(pb.Outputs), "expected someoutput to be excluded by its applyTo")
 }
@@ -337,7 +338,7 @@ func TestExplain_generatePrintableBundleCreds(t *testing.T) {
 	})
 
 	t.Run("action applies", func(t *testing.T) {
-		pb, err := generatePrintable(context.Background(), bun, "install", nil, nil)
+		pb, err := generatePrintable(context.Background(), bun, "install", nil, cnabtooci.RegistryOptions{})
 		require.NoError(t, err)
 
 		require.Equal(t, 2, len(pb.Credentials), "expected 2 credentials")
@@ -352,7 +353,7 @@ func TestExplain_generatePrintableBundleCreds(t *testing.T) {
 	})
 
 	t.Run("action does not apply", func(t *testing.T) {
-		pb, err := generatePrintable(context.Background(), bun, "upgrade", nil, nil)
+		pb, err := generatePrintable(context.Background(), bun, "upgrade", nil, cnabtooci.RegistryOptions{})
 		require.NoError(t, err)
 
 		require.Equal(t, 1, len(pb.Credentials), "expected only 1 credential since kubeconfig credential doesn't apply to upgrade command")
@@ -360,7 +361,7 @@ func TestExplain_generatePrintableBundleCreds(t *testing.T) {
 	})
 
 	t.Run("all actions", func(t *testing.T) {
-		pb, err := generatePrintable(context.Background(), bun, "", nil, nil)
+		pb, err := generatePrintable(context.Background(), bun, "", nil, cnabtooci.RegistryOptions{})
 		require.NoError(t, err)
 
 		require.Equal(t, 2, len(pb.Credentials), "expected 2 credentials")
@@ -392,7 +393,7 @@ func TestExplain_generatePrintableBundlePorterVersion(t *testing.T) {
 		},
 	})
 
-	pb, err := generatePrintable(context.Background(), bun, "", nil, nil)
+	pb, err := generatePrintable(context.Background(), bun, "", nil, cnabtooci.RegistryOptions{})
 	assert.NoError(t, err)
 
 	assert.Equal(t, "v0.30.0", pb.PorterVersion)
@@ -408,7 +409,7 @@ func TestExplain_generatePrintableBundlePorterVersionNonPorterBundle(t *testing.
 		},
 	})
 
-	pb, err := generatePrintable(context.Background(), bun, "", nil, nil)
+	pb, err := generatePrintable(context.Background(), bun, "", nil, cnabtooci.RegistryOptions{})
 	assert.NoError(t, err)
 
 	assert.Equal(t, "", pb.PorterVersion)
@@ -443,7 +444,7 @@ func TestExplain_generatePrintableBundleDependencies(t *testing.T) {
 		},
 	})
 
-	pd, err := generatePrintable(context.Background(), bun, "", nil, nil)
+	pd, err := generatePrintable(context.Background(), bun, "", nil, cnabtooci.RegistryOptions{})
 	assert.NoError(t, err)
 	assert.Equal(t, 3, len(pd.Dependencies))
 	assert.Equal(t, 0, len(pd.Parameters))
@@ -461,7 +462,7 @@ func TestExplain_generateJSONForDependencies(t *testing.T) {
 	b, err := p.CNAB.LoadBundle("dependencies-bundle.json")
 	require.NoError(t, err)
 
-	pb, err := generatePrintable(context.Background(), b, "", nil, nil)
+	pb, err := generatePrintable(context.Background(), b, "", nil, cnabtooci.RegistryOptions{})
 	require.NoError(t, err)
 	opts := ExplainOpts{}
 	opts.RawFormat = "json"
@@ -484,7 +485,7 @@ func TestExplain_generateTableNonPorterBundle(t *testing.T) {
 	b, err := p.CNAB.LoadBundle("params-bundle.json")
 	require.NoError(t, err)
 
-	pb, err := generatePrintable(context.Background(), b, "", nil, nil)
+	pb, err := generatePrintable(context.Background(), b, "", nil, cnabtooci.RegistryOptions{})
 	require.NoError(t, err)
 	opts := ExplainOpts{}
 	opts.RawFormat = "plaintext"
@@ -507,7 +508,7 @@ func TestExplain_generateTableBundleWithNoMixins(t *testing.T) {
 	b, err := p.CNAB.LoadBundle("params-bundle.json")
 	require.NoError(t, err)
 
-	pb, err := generatePrintable(context.Background(), b, "", nil, nil)
+	pb, err := generatePrintable(context.Background(), b, "", nil, cnabtooci.RegistryOptions{})
 	require.NoError(t, err)
 	opts := ExplainOpts{}
 	opts.RawFormat = "plaintext"
@@ -520,4 +521,65 @@ func TestExplain_generateTableBundleWithNoMixins(t *testing.T) {
 
 	gotOutput := p.TestConfig.TestContext.GetOutput()
 	test.CompareGoldenFile(t, "testdata/explain/expected-table-output-no-mixins.txt", gotOutput)
+}
+
+func TestExplain_sourcedParamInjectedForStatelessAction(t *testing.T) {
+	var ps cnab.ParameterSources
+	ps.SetParameterFromOutput("myParam", "myOutput")
+
+	bun := cnab.NewBundle(bundle.Bundle{
+		Definitions: definition.Definitions{
+			"myParam": &definition.Schema{Type: "string"},
+		},
+		Parameters: map[string]bundle.Parameter{
+			"myParam": {Definition: "myParam"},
+		},
+		Actions: map[string]bundle.Action{
+			"dry-run": {Stateless: true},
+		},
+		Custom: map[string]interface{}{
+			cnab.ParameterSourcesExtensionKey: ps,
+		},
+	})
+
+	pb, err := generatePrintable(context.Background(), bun, "dry-run", nil, cnabtooci.RegistryOptions{})
+	require.NoError(t, err)
+	require.Equal(t, 1, len(pb.Parameters))
+	assert.True(t, pb.Parameters[0].Injected, "sourced param should be injected even for stateless actions")
+}
+
+func TestExplain_sourcedParamPreservesEmptyStringDefault(t *testing.T) {
+	var ps cnab.ParameterSources
+	ps.SetParameterFromOutput("myParam", "myOutput")
+
+	emptyDefault := ""
+	bun := cnab.NewBundle(bundle.Bundle{
+		Definitions: definition.Definitions{
+			"myParam": &definition.Schema{Type: "string", Default: emptyDefault},
+		},
+		Parameters: map[string]bundle.Parameter{
+			"myParam": {Definition: "myParam"},
+		},
+		Custom: map[string]interface{}{
+			cnab.ParameterSourcesExtensionKey: ps,
+		},
+	})
+
+	p := NewTestPorter(t)
+	defer p.Close()
+
+	pb, err := generatePrintable(context.Background(), bun, "upgrade", nil, cnabtooci.RegistryOptions{})
+	require.NoError(t, err)
+	require.Equal(t, 1, len(pb.Parameters))
+	assert.True(t, pb.Parameters[0].Injected)
+
+	opts := ExplainOpts{}
+	opts.RawFormat = "plaintext"
+	require.NoError(t, opts.Validate([]string{}, p.Context))
+
+	err = p.printBundleExplain(opts, pb, bun)
+	require.NoError(t, err)
+
+	output := p.TestConfig.TestContext.GetOutput()
+	assert.NotContains(t, output, "(injected)", "empty string default should not be replaced with (injected)")
 }

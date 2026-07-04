@@ -76,6 +76,13 @@ func (p *Porter) ReconcileInstallation(ctx context.Context, opts ReconcileOption
 	lifecycleOpts.CredentialIdentifiers = opts.Installation.CredentialSets
 	lifecycleOpts.ParameterSets = opts.Installation.ParameterSets
 
+	// Parameters specified inline in the installation YAML are the user's current
+	// explicit desired values and must override param set resolution — just like
+	// --param flags do. Pass them as CurrentParamOverrides so that
+	// applyActionOptionsToInstallation treats them as current overrides rather
+	// than old persisted values, without any string round-trip.
+	lifecycleOpts.CurrentParamOverrides = opts.Installation.Parameters.Parameters
+
 	if err = p.applyActionOptionsToInstallation(ctx, actionOpts, &opts.Installation); err != nil {
 		return err
 	}

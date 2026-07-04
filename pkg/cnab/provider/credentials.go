@@ -32,7 +32,7 @@ func (r *Runtime) loadCredentials(ctx context.Context, b cnab.ExtendedBundle, ru
 	if err != nil {
 		// Just warn since the digest isn't critical for running the bundle
 		// If it's not set properly, we will recalculate as needed
-		span.Warnf("WARNING: unable to set the run's credentials digest: %w", err)
+		span.Warnf("WARNING: unable to set the run's credentials digest: %v", err)
 	}
 
 	return nil

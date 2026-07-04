@@ -194,8 +194,13 @@ func (r *Runtime) Execute(ctx context.Context, args ActionArguments) error {
 			tracing.ObjectAttribute("cnab-credentials", cnabCreds))
 		opResult, result, err := a.Run(ctx, cnabClaim, cnabCreds, r.ApplyConfig(ctx, args)...)
 
-		// if the error was due to context, just stop and return the context error
+		// if the error was due to context cancellation, make a best-effort attempt
+		// to save any outputs the bundle wrote before being stopped, then return.
 		if ctx.Err() != nil {
+			if currentRun.ShouldRecord() && len(opResult.Outputs) > 0 {
+				saveCtx := context.WithoutCancel(ctx)
+				_ = r.SaveOperationResult(saveCtx, opResult, args.Installation, currentRun, currentRun.NewResultFrom(result))
+			}
 			return ctx.Err()
 		}
 

@@ -258,10 +258,15 @@ The docker driver runs the bundle container using the local Docker host. To use 
 		"Associate the specified labels with the installation. May be specified multiple times.")
 	f.BoolVar(&opts.VerifyBundleBeforeExecution, "verify-bundle", false, "Verify the bundle signature before executing")
 	addBundleActionFlags(f, opts)
+	f.StringVar(&opts.DependenciesVersionStrategy, "dependencies-version-strategy", "",
+		"Strategy for resolving dependency version ranges. Allowed values: exact, max-patch, max-minor, min.")
 
 	// Allow configuring the --driver flag with runtime-driver, to avoid conflicts with other commands
 	cmd.Flag("driver").Annotations = map[string][]string{
 		"viper-key": {"runtime-driver"},
+	}
+	cmd.Flag("dependencies-version-strategy").Annotations = map[string][]string{
+		"viper-key": {"dependencies.version-strategy"},
 	}
 	return cmd
 }
@@ -309,10 +314,15 @@ The docker driver runs the bundle container using the local Docker host. To use 
 	f.BoolVar(&opts.ForceUpgrade, "force-upgrade", false,
 		"Force the upgrade to run even if the current installation is marked as failed.")
 	addBundleActionFlags(f, opts)
+	f.StringVar(&opts.DependenciesVersionStrategy, "dependencies-version-strategy", "",
+		"Strategy for resolving dependency version ranges. Allowed values: exact, max-patch, max-minor, min.")
 
 	// Allow configuring the --driver flag with runtime-driver, to avoid conflicts with other commands
 	cmd.Flag("driver").Annotations = map[string][]string{
 		"viper-key": {"runtime-driver"},
+	}
+	cmd.Flag("dependencies-version-strategy").Annotations = map[string][]string{
+		"viper-key": {"dependencies.version-strategy"},
 	}
 	return cmd
 }

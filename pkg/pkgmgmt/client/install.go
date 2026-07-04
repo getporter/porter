@@ -220,7 +220,7 @@ func (fs *FileSystem) downloadFile(ctx context.Context, url url.URL, destPath st
 		if resp.StatusCode != 200 {
 			resp.Body.Close()
 			err := fmt.Errorf("bad status returned when downloading %s (%d) %s", url.String(), resp.StatusCode, resp.Status)
-			log.Debugf(err.Error()) // Only debug log this since higher up on the stack we may handle this error
+			log.Debug(err.Error()) // Only debug log this since higher up on the stack we may handle this error
 			return err
 		}
 

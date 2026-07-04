@@ -13,6 +13,7 @@ import (
 	"get.porter.sh/porter/pkg/cli"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/porter"
+	signalpkg "get.porter.sh/porter/pkg/signals"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"go.opentelemetry.io/otel/attribute"
@@ -82,9 +83,8 @@ func main() {
 		}()
 
 		if err := rootCmd.ExecuteContext(ctx); err != nil {
-			// Ideally we log all errors in the span that generated it,
-			// but as a failsafe, always log the error at the root span as well
 			_ = log.Error(err)
+			fmt.Fprintln(os.Stderr, err)
 			return cli.ExitCodeErr
 		}
 		return cli.ExitCodeSuccess
@@ -100,7 +100,7 @@ func main() {
 func handleInterrupt(ctx context.Context, p *porter.Porter) (context.Context, func()) {
 	ctx, cancel := context.WithCancel(ctx)
 	signalChan := make(chan os.Signal, 1)
-	signal.Notify(signalChan, os.Interrupt)
+	signal.Notify(signalChan, signalpkg.InterruptSignals()...)
 
 	go func() {
 		select {

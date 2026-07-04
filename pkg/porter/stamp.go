@@ -30,7 +30,7 @@ func (p *Porter) ensureLocalBundleIsUpToDate(ctx context.Context, opts BuildOpti
 
 	upToDate, err := p.IsBundleUpToDate(ctx, opts.BundleDefinitionOptions)
 	if err != nil {
-		log.Warnf("WARNING: %w", err)
+		log.Warnf("WARNING: %v", err)
 	}
 
 	if !upToDate {
@@ -83,7 +83,7 @@ func (p *Porter) IsBundleUpToDate(ctx context.Context, opts BundleDefinitionOpti
 	m, err := manifest.LoadManifestFrom(ctx, p.Config, opts.File)
 	if err != nil {
 		err = fmt.Errorf("the current bundle could not be read: %w", err)
-		span.Debugf("%s: %w", rebuildMessagePrefix, err)
+		span.Debugf("%s: %v", rebuildMessagePrefix, err)
 		return false, span.Error(err)
 	}
 
@@ -91,7 +91,7 @@ func (p *Porter) IsBundleUpToDate(ctx context.Context, opts BundleDefinitionOpti
 		bun, err := cnab.LoadBundle(p.Context, opts.CNABFile)
 		if err != nil {
 			err = fmt.Errorf("the previously built bundle at %s could not be read: %w", opts.CNABFile, err)
-			span.Debugf("%s: %w", rebuildMessagePrefix, err)
+			span.Debugf("%s: %v", rebuildMessagePrefix, err)
 			return false, span.Error(err)
 		}
 
@@ -100,14 +100,14 @@ func (p *Porter) IsBundleUpToDate(ctx context.Context, opts BundleDefinitionOpti
 			// if the invocationImage is built before using a random string tag,
 			// we should rebuild it with the new format
 			if strings.HasSuffix(invocationImage.Image, "-installer") {
-				span.Debugf("%s because it uses the old -installer suffixed image name (%s)", invocationImage.Image)
+				span.Debugf("%s because it uses the old -installer suffixed image name (%s)", rebuildMessagePrefix, invocationImage.Image)
 				return false, nil
 			}
 
 			imgRef, err := cnab.ParseOCIReference(invocationImage.Image)
 			if err != nil {
 				err = fmt.Errorf("error parsing %s as an OCI image reference: %w", invocationImage.Image, err)
-				span.Debugf("%s: %w", rebuildMessagePrefix, err)
+				span.Debugf("%s: %v", rebuildMessagePrefix, err)
 				return false, span.Error(err)
 			}
 
@@ -118,7 +118,7 @@ func (p *Porter) IsBundleUpToDate(ctx context.Context, opts BundleDefinitionOpti
 					return false, nil
 				}
 				err = fmt.Errorf("an error occurred checking the Docker cache for the bundle image: %w", err)
-				span.Debugf("%s: %w", rebuildMessagePrefix, err)
+				span.Debugf("%s: %v", rebuildMessagePrefix, err)
 				return false, span.Error(err)
 			}
 		}
@@ -126,14 +126,14 @@ func (p *Porter) IsBundleUpToDate(ctx context.Context, opts BundleDefinitionOpti
 		oldStamp, err := configadapter.LoadStamp(bun)
 		if err != nil {
 			err = fmt.Errorf("could not load stamp from %s: %w", opts.CNABFile, err)
-			span.Debugf("%s: %w", rebuildMessagePrefix)
+			span.Debugf("%s: %v", rebuildMessagePrefix, err)
 			return false, span.Error(err)
 		}
 
 		mixins, err := p.getUsedMixins(ctx, m)
 		if err != nil {
 			err = fmt.Errorf("an error occurred while listing used mixins: %w", err)
-			span.Debugf("%s: %w", rebuildMessagePrefix, err)
+			span.Debugf("%s: %v", rebuildMessagePrefix, err)
 			return false, span.Error(err)
 		}
 
@@ -141,7 +141,7 @@ func (p *Porter) IsBundleUpToDate(ctx context.Context, opts BundleDefinitionOpti
 		newDigest, err := converter.DigestManifest()
 		if err != nil {
 			err = fmt.Errorf("the current manifest digest cannot be calculated: %w", err)
-			span.Debugf("%s: %w", rebuildMessagePrefix, err)
+			span.Debugf("%s: %v", rebuildMessagePrefix, err)
 			return false, span.Error(err)
 		}
 

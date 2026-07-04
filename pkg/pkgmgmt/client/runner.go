@@ -63,6 +63,7 @@ func (r *Runner) Run(ctx context.Context, commandOpts pkgmgmt.CommandOptions) er
 	cmdArgs := strings.Split(commandOpts.Command, " ")
 	command := cmdArgs[0]
 	cmd := r.NewCommand(ctx, pkgPath, cmdArgs...)
+	configureGracefulShutdown(cmd)
 
 	// Pipe the output to porter and capture the error in case it fails
 	cmdStderr := &bytes.Buffer{}
@@ -104,7 +105,7 @@ func (r *Runner) Run(ctx context.Context, commandOpts pkgmgmt.CommandOptions) er
 		err = fmt.Errorf("package command failed %s\n%s", prettyCmd, cmdStderr)
 		// Do not flag this as an error in the logs because we often call mixins to see if they support a command
 		// and if they don't it's not an error, e.g. not all mixins support lint or schema
-		span.Debugf(err.Error())
+		span.Debug(err.Error())
 		return err
 	}
 
