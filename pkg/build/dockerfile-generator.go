@@ -333,20 +333,20 @@ func (g *DockerfileGenerator) copyMixin(mixin string) error {
 // Returns immediately when no files are declared.
 // Returns an error listing all URLs when allow-file-downloads is not set.
 func (g *DockerfileGenerator) DownloadFiles(ctx context.Context) error {
-	if len(g.Manifest.Files) == 0 {
+	if len(g.Files) == 0 {
 		return nil
 	}
 
 	if !g.Data.AllowFileDownloads {
 		var sb strings.Builder
 		sb.WriteString("porter build --allow-file-downloads is required to download files declared in the manifest:\n")
-		for _, f := range g.Manifest.Files {
+		for _, f := range g.Files {
 			fmt.Fprintf(&sb, "  - %s => %s\n", f.URL, f.Destination)
 		}
 		return fmt.Errorf("%s", sb.String())
 	}
 
-	for _, f := range g.Manifest.Files {
+	for _, f := range g.Files {
 		fmt.Fprintf(g.Out, "Downloading %s => %s\n", f.URL, f.Destination)
 
 		if err := g.downloadFile(ctx, f.URL, f.Destination); err != nil {

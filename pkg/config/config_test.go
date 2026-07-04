@@ -141,9 +141,10 @@ func TestConfig_AllowFileDownloads(t *testing.T) {
 	t.Run("parsed from config file", func(t *testing.T) {
 		c := NewTestConfig(t)
 		c.DataLoader = LoadFromFilesystem()
-		c.TestContext.AddTestFileContents([]byte("allow-file-downloads = true\n"), "/home/myuser/.porter/config.toml")
+		err := c.TestContext.AddTestFileContents([]byte("allow-file-downloads = true\n"), "/home/myuser/.porter/config.toml")
+		require.NoError(t, err)
 
-		_, err := c.Load(context.Background(), nil)
+		_, err = c.Load(context.Background(), nil)
 		require.NoError(t, err, "Load failed")
 		assert.True(t, c.Data.AllowFileDownloads)
 	})
