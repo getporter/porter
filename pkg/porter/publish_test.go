@@ -3,7 +3,10 @@ package porter
 import (
 	"context"
 	"errors"
+	"fmt"
+	"net/http/httptest"
 	"runtime"
+	"strings"
 	"testing"
 	"time"
 
@@ -14,8 +17,13 @@ import (
 	"get.porter.sh/porter/tests"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-to-oci/relocation"
+	"github.com/google/go-containerregistry/pkg/name"
+	"github.com/google/go-containerregistry/pkg/registry"
 	"github.com/google/go-containerregistry/pkg/v1/empty"
 	"github.com/google/go-containerregistry/pkg/v1/layout"
+	"github.com/google/go-containerregistry/pkg/v1/random"
+	"github.com/google/go-containerregistry/pkg/v1/remote"
+	"github.com/google/go-containerregistry/pkg/v1/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -160,15 +168,15 @@ func TestPublish_FindImageInLayout(t *testing.T) {
 	require.NoError(t, err, "failed to create test OCI layout")
 
 	t.Run("finds image by exact name", func(t *testing.T) {
-		digest, err := findImageInLayout(layoutPath, testImage)
+		desc, err := findImageInLayout(layoutPath, testImage)
 		require.NoError(t, err)
-		require.NotEmpty(t, digest)
+		require.NotEmpty(t, desc.Digest)
 	})
 
 	t.Run("finds image by name without registry", func(t *testing.T) {
-		digest, err := findImageInLayout(layoutPath, "myorg/myapp:v1.0")
+		desc, err := findImageInLayout(layoutPath, "myorg/myapp:v1.0")
 		require.NoError(t, err)
-		require.NotEmpty(t, digest)
+		require.NotEmpty(t, desc.Digest)
 	})
 
 	t.Run("returns error for non-existent image", func(t *testing.T) {
@@ -187,9 +195,9 @@ func TestPublish_RelocateImage(t *testing.T) {
 		originImg := "myorg/myinvimg"
 
 		// Verify image can be found in layout (first step of relocateImage)
-		digest, err := findImageInLayout(layoutPath, originImg)
+		desc, err := findImageInLayout(layoutPath, originImg)
 		require.NoError(t, err, "should find image in layout")
-		require.NotEmpty(t, digest, "digest should not be empty")
+		require.NotEmpty(t, desc.Digest, "digest should not be empty")
 
 		// Verify relocated image name is calculated correctly
 		tag := "localhost:5000/myneworg/mynewbuns:v1.0"
@@ -209,9 +217,9 @@ func TestPublish_RelocateImage(t *testing.T) {
 		}
 
 		relocatedName := "private/myinvimg"
-		digest, err := findImageInLayout(layoutPath, relocatedName)
+		desc, err := findImageInLayout(layoutPath, relocatedName)
 		require.NoError(t, err, "should find relocated image in layout")
-		require.NotEmpty(t, digest)
+		require.NotEmpty(t, desc.Digest)
 
 		// Verify relocation map lookup works
 		if relocatedImage, ok := existingMap["myorg/myinvimg"]; ok {
@@ -242,6 +250,87 @@ func createTestOCILayout(t *testing.T, layoutDir string, imageName string) (layo
 	}
 
 	return layoutPath, nil
+}
+
+// createTestOCILayoutWithIndex creates a test OCI layout whose top-level manifest
+// entry is an image index wrapping multiple manifests, mirroring the invocation
+// images produced by Docker's containerd image store (a platform image manifest
+// plus a buildkit attestation manifest), rather than a single plain image manifest.
+// See https://github.com/getporter/porter/issues/3615.
+func createTestOCILayoutWithIndex(t *testing.T, layoutDir string, imageName string) (layout.Path, error) {
+	t.Helper()
+
+	// Create OCI layout structure
+	layoutPath, err := layout.Write(layoutDir, empty.Index)
+	if err != nil {
+		return "", err
+	}
+
+	// Build a nested index with multiple manifests (e.g. image manifest + attestation manifest)
+	idx, err := random.Index(1024, 1, 2)
+	if err != nil {
+		return "", err
+	}
+
+	// Add the index to the layout with an annotation for the image name
+	err = layoutPath.AppendIndex(idx, layout.WithAnnotations(map[string]string{
+		"org.opencontainers.image.ref.name": imageName,
+	}))
+	if err != nil {
+		return "", err
+	}
+
+	return layoutPath, nil
+}
+
+func TestPublish_PushUpdatedImage_ImageIndex(t *testing.T) {
+	// Regression test for https://github.com/getporter/porter/issues/3615.
+	//
+	// Bundles built with Docker's containerd image store produce invocation
+	// images whose top-level OCI layout manifest entry is an image index
+	// (wrapping a platform-specific image manifest and a buildkit attestation
+	// manifest) instead of a plain image manifest. Before the fix, publishing
+	// such an archive failed with:
+	//   unable to get image from layout: unexpected media type for sha256:...: application/vnd.oci.image.index.v1+json
+	p := NewTestPorter(t)
+	defer p.Close()
+
+	// Spin up an in-memory registry to push to.
+	regSrv := httptest.NewServer(registry.New())
+	defer regSrv.Close()
+	regHost := strings.TrimPrefix(regSrv.URL, "http://")
+
+	testImage := "myorg/myapp:v1.0"
+	layoutDir := t.TempDir()
+	layoutPath, err := createTestOCILayoutWithIndex(t, layoutDir, testImage)
+	require.NoError(t, err, "failed to create test OCI layout with an index entry")
+
+	regOpts := cnabtooci.RegistryOptions{InsecureRegistry: true}
+	destRef, err := name.ParseReference(regHost+"/myorg/myapp:published", regOpts.ToNameOptions()...)
+	require.NoError(t, err)
+
+	digest, err := p.pushUpdatedImage(context.Background(), layoutPath, testImage, destRef, regOpts)
+	require.NoError(t, err, "pushUpdatedImage should succeed when the layout entry is an image index")
+	require.NotEmpty(t, digest)
+
+	// Verify the index -- and its child manifests -- were actually pushed.
+	pushedRef, err := name.ParseReference(fmt.Sprintf("%s/myorg/myapp@%s", regHost, digest.String()), regOpts.ToNameOptions()...)
+	require.NoError(t, err)
+
+	remoteIdx, err := remote.Index(pushedRef, regOpts.ToRemoteOptions()...)
+	require.NoError(t, err, "should be able to fetch the pushed index back from the registry")
+
+	mt, err := remoteIdx.MediaType()
+	require.NoError(t, err)
+	assert.Equal(t, types.OCIImageIndex, mt)
+
+	idxManifest, err := remoteIdx.IndexManifest()
+	require.NoError(t, err)
+	require.NotEmpty(t, idxManifest.Manifests, "pushed index should have child manifests")
+
+	// Prove the recursive push actually uploaded a child manifest's blobs too.
+	_, err = remoteIdx.Image(idxManifest.Manifests[0].Digest)
+	require.NoError(t, err, "child image manifest should be fetchable from the pushed index")
 }
 
 func TestPublish_RefreshCachedBundle(t *testing.T) {

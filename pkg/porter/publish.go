@@ -387,33 +387,35 @@ func (p *Porter) extractBundle(ctx context.Context, tmpDir, source string) (cnab
 // gathers the pre-existing digest and then pushes this digest using the newImgName
 func (p *Porter) pushUpdatedImage(ctx context.Context, layoutPath layout.Path, origImg string, destRef name.Reference, opts cnabtooci.RegistryOptions) (v1.Hash, error) {
 	// Find image in layout
-	digest, err := findImageInLayout(layoutPath, origImg)
+	desc, err := findImageInLayout(layoutPath, origImg)
 	if err != nil {
 		return v1.Hash{}, fmt.Errorf("unable to find image %s in archived OCI Layout: %w", origImg, err)
 	}
 
 	// Push to new location
-	err = p.pushImageFromLayout(ctx, layoutPath, digest, destRef, opts)
+	err = p.pushImageFromLayout(ctx, layoutPath, desc, destRef, opts)
 	if err != nil {
 		return v1.Hash{}, err
 	}
 
-	return digest, nil
+	return desc.Digest, nil
 }
 
 // findImageInLayout searches for an image in the OCI layout by matching the image name.
-// It returns the digest of the matching image.
-func findImageInLayout(layoutPath layout.Path, imageName string) (v1.Hash, error) {
+// It returns the descriptor (digest and media type) of the matching manifest entry, which
+// may be either a plain image manifest or an image index (e.g. when the archive was built
+// with a Docker/containerd image store that produces a multi-manifest invocation image).
+func findImageInLayout(layoutPath layout.Path, imageName string) (v1.Descriptor, error) {
 	// Get the image index from the layout
 	index, err := layoutPath.ImageIndex()
 	if err != nil {
-		return v1.Hash{}, fmt.Errorf("unable to read image index from layout: %w", err)
+		return v1.Descriptor{}, fmt.Errorf("unable to read image index from layout: %w", err)
 	}
 
 	// Get the index manifest
 	indexManifest, err := index.IndexManifest()
 	if err != nil {
-		return v1.Hash{}, fmt.Errorf("unable to read index manifest: %w", err)
+		return v1.Descriptor{}, fmt.Errorf("unable to read index manifest: %w", err)
 	}
 
 	// Search through descriptors for a matching image
@@ -423,7 +425,7 @@ func findImageInLayout(layoutPath layout.Path, imageName string) (v1.Hash, error
 			if annotName, ok := desc.Annotations["org.opencontainers.image.ref.name"]; ok {
 				// Try exact match first
 				if annotName == imageName {
-					return desc.Digest, nil
+					return desc, nil
 				}
 
 				// Try matching without registry (e.g., "myorg/myapp:v1.0" matches "registry.io/myorg/myapp:v1.0")
@@ -440,7 +442,7 @@ func findImageInLayout(layoutPath layout.Path, imageName string) (v1.Hash, error
 							annotID := annotRef.Identifier()
 							searchID := searchRef.Identifier()
 							if annotID == searchID {
-								return desc.Digest, nil
+								return desc, nil
 							}
 						}
 					}
@@ -449,19 +451,43 @@ func findImageInLayout(layoutPath layout.Path, imageName string) (v1.Hash, error
 		}
 	}
 
-	return v1.Hash{}, fmt.Errorf("image %s not found in layout", imageName)
+	return v1.Descriptor{}, fmt.Errorf("image %s not found in layout", imageName)
 }
 
-// pushImageFromLayout retrieves an image from the OCI layout by digest and pushes it to a destination registry
-func (p *Porter) pushImageFromLayout(ctx context.Context, layoutPath layout.Path, digest v1.Hash, destRef name.Reference, opts cnabtooci.RegistryOptions) error {
+// pushImageFromLayout retrieves an image (or image index) from the OCI layout by descriptor
+// and pushes it to a destination registry. Newer Docker/containerd image store builds can
+// produce invocation images whose top-level layout entry is an OCI image index (wrapping a
+// platform-specific image manifest and a buildkit attestation manifest) rather than a plain
+// image manifest, so we branch on the descriptor's media type to push the right shape.
+func (p *Porter) pushImageFromLayout(ctx context.Context, layoutPath layout.Path, desc v1.Descriptor, destRef name.Reference, opts cnabtooci.RegistryOptions) error {
+	// Build remote options (includes auth and insecure registry settings)
+	remoteOpts := opts.ToRemoteOptions()
+
+	if desc.MediaType.IsIndex() {
+		// Get the nested image index from the layout by digest
+		rootIndex, err := layoutPath.ImageIndex()
+		if err != nil {
+			return fmt.Errorf("unable to read image index from layout: %w", err)
+		}
+		imgIndex, err := rootIndex.ImageIndex(desc.Digest)
+		if err != nil {
+			return fmt.Errorf("unable to get image index from layout: %w", err)
+		}
+
+		// Push the index and all of its child manifests/layers to the destination registry
+		err = remote.WriteIndex(destRef, imgIndex, remoteOpts...)
+		if err != nil {
+			return fmt.Errorf("unable to push image index to %s: %w", destRef.String(), err)
+		}
+
+		return nil
+	}
+
 	// Get image from layout by digest
-	img, err := layoutPath.Image(digest)
+	img, err := layoutPath.Image(desc.Digest)
 	if err != nil {
 		return fmt.Errorf("unable to get image from layout: %w", err)
 	}
-
-	// Build remote options (includes auth and insecure registry settings)
-	remoteOpts := opts.ToRemoteOptions()
 
 	// Push to destination registry
 	err = remote.Write(destRef, img, remoteOpts...)
