@@ -275,9 +275,18 @@ func (r *Runtime) SaveOperationResult(ctx context.Context, opResult driver.Opera
 		bigerr = multierror.Append(bigerr, fmt.Errorf("error updating installation record for %s\n%#v: %w", installation, installation, err))
 	}
 
+	extBun := cnab.ExtendedBundle{Bundle: run.Bundle}
+
 	for outputName, outputValue := range opResult.Outputs {
+		// porter-state tracks bundle-managed resource state. Skip persisting it
+		// for modifies:false actions so that a read-only invoke cannot overwrite
+		// the installation's state record.
+		if !run.ActionModifies() && extBun.IsInternalOutput(outputName) {
+			continue
+		}
+
 		output := result.NewOutput(outputName, []byte(outputValue))
-		output, err = r.sanitizer.CleanOutput(ctx, output, cnab.ExtendedBundle{Bundle: run.Bundle})
+		output, err = r.sanitizer.CleanOutput(ctx, output, extBun)
 		if err != nil {
 			bigerr = multierror.Append(bigerr, fmt.Errorf("error sanitizing sensitive %s output for %s run of installation %s\n%#v: %w", output.Name, run.Action, installation, output, err))
 		}
