@@ -2,6 +2,8 @@ package build
 
 import (
 	"context"
+	"net/http"
+	"net/http/httptest"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -434,4 +436,126 @@ COPY mybin /cnab/app/
 
 	require.NoError(t, err)
 	test.CompareGoldenFile(t, "testdata/custom-dockerfile-optimized-expected-output.Dockerfile", strings.Join(gotlines, "\n"))
+}
+
+func TestDownloadFiles(t *testing.T) {
+	newGenerator := func(t *testing.T, files []manifest.FileSource, allowDownloads bool) *DockerfileGenerator {
+		t.Helper()
+		c := config.NewTestConfig(t)
+		c.Data.AllowFileDownloads = allowDownloads
+		m := &manifest.Manifest{Files: files}
+		mp := mixin.NewTestMixinProvider()
+		tmpl := templates.NewTemplates(c.Config)
+		return NewDockerfileGenerator(c.Config, m, tmpl, mp)
+	}
+
+	t.Run("returns immediately when Files is empty", func(t *testing.T) {
+		g := newGenerator(t, nil, false)
+		require.NoError(t, g.DownloadFiles(context.Background()))
+	})
+
+	t.Run("returns error listing URLs when allow-file-downloads not set", func(t *testing.T) {
+		files := []manifest.FileSource{
+			{URL: "https://example.com/tool.tar.gz", Destination: "tool.tar.gz"},
+			{URL: "https://example.com/config.json", Destination: "config/defaults.json"},
+		}
+		g := newGenerator(t, files, false)
+		err := g.DownloadFiles(context.Background())
+		require.Error(t, err)
+		errMsg := err.Error()
+		assert.Contains(t, errMsg, "--allow-file-downloads")
+		assert.Contains(t, errMsg, "https://example.com/tool.tar.gz")
+		assert.Contains(t, errMsg, "https://example.com/config.json")
+	})
+
+	t.Run("downloads files to correct destinations", func(t *testing.T) {
+		const content = "hello from server"
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte(content))
+		}))
+		defer srv.Close()
+
+		files := []manifest.FileSource{
+			{URL: srv.URL + "/tool.tar.gz", Destination: "tool.tar.gz"},
+		}
+		g := newGenerator(t, files, true)
+		require.NoError(t, g.DownloadFiles(context.Background()))
+
+		expected := filepath.Join(g.Getwd(), "tool.tar.gz")
+		got, err := g.FileSystem.ReadFile(expected)
+		require.NoError(t, err)
+		assert.Equal(t, content, string(got))
+	})
+
+	t.Run("creates intermediate directories", func(t *testing.T) {
+		const content = "config content"
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			_, _ = w.Write([]byte(content))
+		}))
+		defer srv.Close()
+
+		files := []manifest.FileSource{
+			{URL: srv.URL + "/config.json", Destination: "config/subdir/defaults.json"},
+		}
+		g := newGenerator(t, files, true)
+		require.NoError(t, g.DownloadFiles(context.Background()))
+
+		expected := filepath.Join(g.Getwd(), "config", "subdir", "defaults.json")
+		exists, err := g.FileSystem.DirExists(filepath.Join(g.Getwd(), "config", "subdir"))
+		require.NoError(t, err)
+		assert.True(t, exists, "intermediate directories should be created")
+		got, err := g.FileSystem.ReadFile(expected)
+		require.NoError(t, err)
+		assert.Equal(t, content, string(got))
+	})
+
+	t.Run("returns error when HTTP request fails", func(t *testing.T) {
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+		srvURL := srv.URL
+		srv.Close() // close immediately so the request fails
+
+		files := []manifest.FileSource{
+			{URL: srvURL + "/tool.tar.gz", Destination: "tool.tar.gz"},
+		}
+		g := newGenerator(t, files, true)
+		err := g.DownloadFiles(context.Background())
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), srvURL+"/tool.tar.gz")
+	})
+
+	t.Run("returns error when server returns non-200 status", func(t *testing.T) {
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusNotFound)
+		}))
+		defer srv.Close()
+
+		files := []manifest.FileSource{
+			{URL: srv.URL + "/missing.tar.gz", Destination: "missing.tar.gz"},
+		}
+		g := newGenerator(t, files, true)
+		err := g.DownloadFiles(context.Background())
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "404")
+	})
+
+	t.Run("aborts download when context is cancelled", func(t *testing.T) {
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte("hello"))
+		}))
+		defer srv.Close()
+
+		files := []manifest.FileSource{
+			{URL: srv.URL + "/tool.tar.gz", Destination: "tool.tar.gz"},
+		}
+		g := newGenerator(t, files, true)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+
+		err := g.DownloadFiles(ctx)
+		require.Error(t, err)
+		assert.ErrorIs(t, err, context.Canceled)
+	})
 }

@@ -155,18 +155,24 @@ func NewRun(namespace string, installation string) Run {
 	}
 }
 
+// ActionModifies returns whether the action modifies bundle resources.
+// Defaults to true when the action is not explicitly declared.
+func (r Run) ActionModifies() bool {
+	if action, err := r.Bundle.GetAction(r.Action); err == nil {
+		return action.Modifies
+	}
+	return true
+}
+
 // ShouldRecord the current run in the Installation history.
 // Runs are only recorded for actions that modify the bundle resources,
 // or for stateful actions. Stateless actions do not require an existing
 // installation or credentials, and are for actions such as documentation, dry-run, etc.
 func (r Run) ShouldRecord() bool {
-	// Assume all actions modify bundle resources, and should be recorded.
 	stateful := true
-	modifies := true
 	hasOutput := false
 
 	if action, err := r.Bundle.GetAction(r.Action); err == nil {
-		modifies = action.Modifies
 		stateful = !action.Stateless
 	}
 
@@ -178,7 +184,7 @@ func (r Run) ShouldRecord() bool {
 		}
 	}
 
-	return modifies || stateful || hasOutput
+	return r.ActionModifies() || stateful || hasOutput
 }
 
 // ToCNAB associated with the Run.

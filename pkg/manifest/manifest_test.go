@@ -1317,7 +1317,7 @@ func TestExpandPersistentParameters(t *testing.T) {
 		m.SchemaVersion = "1.0.1"
 
 		err := m.expandPersistentParameters(cfg)
-		require.ErrorContains(t, err, "schemaVersion 1.2.0")
+		require.ErrorContains(t, err, "schemaVersion >= 1.2.0")
 	})
 
 	t.Run("conflict with source.output", func(t *testing.T) {
@@ -1405,5 +1405,197 @@ func TestManifest_Validate_SchemaVersion_PersistentParameters(t *testing.T) {
 
 		_, hasOutput := m.Outputs["resource-group"]
 		assert.True(t, hasOutput, "output should be auto-created")
+	})
+}
+
+func TestManifest_Validate_SchemaVersion_FileSources(t *testing.T) {
+	newManifest := func(schemaVersion string) Manifest {
+		return Manifest{
+			SchemaVersion: schemaVersion,
+			Name:          "mybuns",
+			Registry:      "localhost:5000",
+		}
+	}
+
+	t.Run("schemaVersion 1.3.0 accepted when FlagFileSources enabled", func(t *testing.T) {
+		ctx := context.Background()
+		cfg := config.NewTestConfig(t)
+		cfg.Data.SchemaCheck = string(schema.CheckStrategyExact)
+		cfg.SetExperimentalFlags(experimental.FlagFileSources)
+
+		m := newManifest("1.3.0")
+		err := m.validateMetadata(ctx, cfg.Config)
+		require.NoError(t, err)
+	})
+
+	t.Run("schemaVersion 1.3.0 rejected when no flag enabled", func(t *testing.T) {
+		ctx := context.Background()
+		cfg := config.NewTestConfig(t)
+		cfg.Data.SchemaCheck = string(schema.CheckStrategyExact)
+
+		m := newManifest("1.3.0")
+		err := m.validateMetadata(ctx, cfg.Config)
+		require.ErrorContains(t, err, "invalid schema version")
+	})
+
+	t.Run("schemaVersion 1.3.0 accepted with FlagPersistentParameters only", func(t *testing.T) {
+		ctx := context.Background()
+		cfg := config.NewTestConfig(t)
+		cfg.Data.SchemaCheck = string(schema.CheckStrategyExact)
+		cfg.SetExperimentalFlags(experimental.FlagPersistentParameters)
+
+		m := newManifest("1.3.0")
+		err := m.validateMetadata(ctx, cfg.Config)
+		require.NoError(t, err, "1.3.0 satisfies >= 1.2.0 constraint from FlagPersistentParameters")
+	})
+
+	t.Run("schemaVersion 1.2.0 still accepted with FlagPersistentParameters", func(t *testing.T) {
+		ctx := context.Background()
+		cfg := config.NewTestConfig(t)
+		cfg.Data.SchemaCheck = string(schema.CheckStrategyExact)
+		cfg.SetExperimentalFlags(experimental.FlagPersistentParameters)
+
+		m := newManifest("1.2.0")
+		err := m.validateMetadata(ctx, cfg.Config)
+		require.NoError(t, err, "1.2.0 should continue to be accepted")
+	})
+}
+
+func TestFileSource_MarshalUnmarshal(t *testing.T) {
+	t.Run("manifest with files block round-trips correctly", func(t *testing.T) {
+		want := &Manifest{
+			SchemaVersion: "1.0.1",
+			Name:          "mybuns",
+			Registry:      "localhost:5000",
+			Files: []FileSource{
+				{URL: "https://example.com/tool.tar.gz", Destination: "tool.tar.gz"},
+				{URL: "https://example.com/config.json", Destination: "config/defaults.json"},
+			},
+		}
+
+		data, err := yaml.Marshal(want)
+		require.NoError(t, err)
+
+		got := &Manifest{}
+		err = yaml.Unmarshal(data, got)
+		require.NoError(t, err)
+
+		require.Len(t, got.Files, 2)
+		assert.Equal(t, want.Files[0], got.Files[0])
+		assert.Equal(t, want.Files[1], got.Files[1])
+	})
+
+	t.Run("manifest without files block has nil Files", func(t *testing.T) {
+		data := []byte(`schemaVersion: "1.0.1"
+name: mybuns
+registry: localhost:5000
+`)
+		m := &Manifest{}
+		err := yaml.Unmarshal(data, m)
+		require.NoError(t, err)
+		assert.Nil(t, m.Files)
+	})
+}
+
+func TestValidateFiles(t *testing.T) {
+	newCfg := func(t *testing.T, flags ...experimental.FeatureFlags) *config.Config {
+		cfg := config.NewTestConfig(t)
+		for _, f := range flags {
+			cfg.SetExperimentalFlags(f)
+		}
+		return cfg.Config
+	}
+
+	newManifest := func(files ...FileSource) *Manifest {
+		return &Manifest{
+			SchemaVersion: "1.3.0",
+			Files:         files,
+		}
+	}
+
+	t.Run("happy path", func(t *testing.T) {
+		cfg := newCfg(t, experimental.FlagFileSources)
+		m := newManifest(FileSource{URL: "https://example.com/tool.tar.gz", Destination: "tool.tar.gz"})
+		require.NoError(t, m.validateFiles(cfg))
+	})
+
+	t.Run("empty files skips all checks", func(t *testing.T) {
+		cfg := newCfg(t) // no flag
+		m := newManifest() // no files
+		require.NoError(t, m.validateFiles(cfg))
+	})
+
+	t.Run("missing file-sources flag", func(t *testing.T) {
+		cfg := newCfg(t)
+		m := newManifest(FileSource{URL: "https://example.com/tool.tar.gz", Destination: "tool.tar.gz"})
+		err := m.validateFiles(cfg)
+		require.ErrorContains(t, err, experimental.FileSources)
+	})
+
+	t.Run("schemaVersion below 1.3.0", func(t *testing.T) {
+		cfg := newCfg(t, experimental.FlagFileSources)
+		m := newManifest(FileSource{URL: "https://example.com/tool.tar.gz", Destination: "tool.tar.gz"})
+		m.SchemaVersion = "1.2.0"
+		err := m.validateFiles(cfg)
+		require.ErrorContains(t, err, "schemaVersion >= 1.3.0")
+	})
+
+	t.Run("empty url", func(t *testing.T) {
+		cfg := newCfg(t, experimental.FlagFileSources)
+		m := newManifest(FileSource{URL: "", Destination: "tool.tar.gz"})
+		err := m.validateFiles(cfg)
+		require.ErrorContains(t, err, "files[0].url is required")
+	})
+
+	t.Run("ftp url scheme rejected", func(t *testing.T) {
+		cfg := newCfg(t, experimental.FlagFileSources)
+		m := newManifest(FileSource{URL: "ftp://example.com/tool.tar.gz", Destination: "tool.tar.gz"})
+		err := m.validateFiles(cfg)
+		require.ErrorContains(t, err, "http://")
+	})
+
+	t.Run("empty destination", func(t *testing.T) {
+		cfg := newCfg(t, experimental.FlagFileSources)
+		m := newManifest(FileSource{URL: "https://example.com/tool.tar.gz", Destination: ""})
+		err := m.validateFiles(cfg)
+		require.ErrorContains(t, err, "files[0].destination is required")
+	})
+
+	t.Run("absolute destination rejected", func(t *testing.T) {
+		cfg := newCfg(t, experimental.FlagFileSources)
+		m := newManifest(FileSource{URL: "https://example.com/tool.tar.gz", Destination: "/etc/passwd"})
+		err := m.validateFiles(cfg)
+		require.ErrorContains(t, err, "relative path")
+	})
+
+	t.Run("path traversal rejected", func(t *testing.T) {
+		cfg := newCfg(t, experimental.FlagFileSources)
+		m := newManifest(FileSource{URL: "https://example.com/tool.tar.gz", Destination: "../../secrets"})
+		err := m.validateFiles(cfg)
+		require.ErrorContains(t, err, "must not escape")
+	})
+
+	t.Run("backslash destination rejected", func(t *testing.T) {
+		cfg := newCfg(t, experimental.FlagFileSources)
+		m := newManifest(FileSource{URL: "https://example.com/tool.tar.gz", Destination: "..\\..\\secrets"})
+		err := m.validateFiles(cfg)
+		require.ErrorContains(t, err, "forward slashes")
+	})
+
+	t.Run("windows drive letter destination rejected", func(t *testing.T) {
+		cfg := newCfg(t, experimental.FlagFileSources)
+		m := newManifest(FileSource{URL: "https://example.com/tool.tar.gz", Destination: "C:/secrets"})
+		err := m.validateFiles(cfg)
+		require.ErrorContains(t, err, "relative path")
+	})
+
+	t.Run("second entry invalid identifies correct index", func(t *testing.T) {
+		cfg := newCfg(t, experimental.FlagFileSources)
+		m := newManifest(
+			FileSource{URL: "https://example.com/tool.tar.gz", Destination: "tool.tar.gz"},
+			FileSource{URL: "ftp://example.com/bad.tar.gz", Destination: "bad.tar.gz"},
+		)
+		err := m.validateFiles(cfg)
+		require.ErrorContains(t, err, "files[1]")
 	})
 }

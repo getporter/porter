@@ -110,6 +110,8 @@ The docker driver builds the bundle image using the local Docker host. To use a 
 	f.BoolVar(&opts.InsecureRegistry, "insecure-registry", false,
 		"Don't require TLS when pulling referenced images")
 	f.BoolVar(&opts.PreserveTags, "preserve-tags", false, "Preserve the original tag name on referenced images")
+	f.BoolVar(&opts.AllowFileDownloads, "allow-file-downloads", false,
+		"Allow Porter to download files declared in the manifest's files section during build. See https://porter.sh/configuration/#allow-file-downloads for more information.")
 
 	// Allow configuring the --driver flag with build-driver, to avoid conflicts with other commands
 	cmd.Flag("driver").Annotations = map[string][]string{
