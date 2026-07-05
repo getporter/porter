@@ -68,6 +68,12 @@ type Data struct {
 	// to ensure that the global config value works even for those commands.
 	AllowDockerHostAccess bool `mapstructure:"allow-docker-host-access"`
 
+	// AllowFileDownloads permits Porter to download files declared in the
+	// manifest's `files` section during `porter build`. This is an explicit
+	// opt-in security boundary that persists after the file-sources
+	// experimental flag is removed.
+	AllowFileDownloads bool `mapstructure:"allow-file-downloads"`
+
 	// DefaultStoragePlugin is the storage plugin to use when no named storage is specified.
 	DefaultStoragePlugin string `mapstructure:"default-storage-plugin"`
 

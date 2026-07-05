@@ -673,6 +673,48 @@ required:
       privileged: true
 ```
 
+## Files
+
+The `files` section lets bundle authors declare files that Porter should download automatically during `porter build`, instead of requiring them to be manually pre-placed in the bundle directory. Only HTTP/HTTPS URLs are supported.
+
+```yaml
+schemaVersion: 1.3.0
+files:
+  - url: https://github.com/cli/cli/releases/download/v2.40.0/gh_2.40.0_linux_amd64.tar.gz
+    destination: gh.tar.gz
+  - url: https://example.com/config/defaults.json
+    destination: config/defaults.json
+```
+
+| Field            | Required | Description                                                                                  |
+|------------------|----------|----------------------------------------------------------------------------------------------|
+| files            | false    | A list of files to download during `porter build`.                                           |
+| files.url        | true     | The HTTP or HTTPS URL to download the file from. Local paths are not supported.              |
+| files.destination| true     | The relative path within the bundle directory where the downloaded file is written. Must not be an absolute path or contain `..` segments. |
+
+### Requirements
+
+* `schemaVersion: 1.3.0` must be set in the manifest.
+* The `file-sources` [experimental feature flag] must be enabled.
+* The `allow-file-downloads` configuration setting must be set to `true`, or the `--allow-file-downloads` flag must be passed to `porter build`.
+
+### Enabling File Sources
+
+Enable the feature with the `--experimental` flag and pass `--allow-file-downloads`:
+
+```console
+porter build --experimental file-sources --allow-file-downloads
+```
+
+Or set both in `~/.porter/config.toml`:
+
+```toml
+experimental = ["file-sources"]
+allow-file-downloads = true
+```
+
+[experimental feature flag]: /docs/configuration/configuration/#experimental
+
 ## Generated Files
 
 In addition to the porter manifest, Porter generates a few files for you to create a compliant CNAB Spec bundle.

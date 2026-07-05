@@ -16,6 +16,9 @@ const (
 
 	// PersistentParameters is the name of the experimental feature flag for persistent parameters.
 	PersistentParameters = "persistent-parameters"
+
+	// FileSources is the name of the experimental feature flag for file sources.
+	FileSources = "file-sources"
 )
 
 // FeatureFlags is an enum of possible feature flags
@@ -36,6 +39,9 @@ const (
 
 	// FlagPersistentParameters gates persistent parameter shorthand (persistent: true).
 	FlagPersistentParameters
+
+	// FlagFileSources gates the files section in porter.yaml for downloading files during porter build.
+	FlagFileSources
 )
 
 // ParseFlags converts a list of feature flag names into a bit map for faster lookups.
@@ -53,6 +59,8 @@ func ParseFlags(flags []string) FeatureFlags {
 			experimental = experimental | FlagOptimizedBundleBuild
 		case PersistentParameters:
 			experimental = experimental | FlagPersistentParameters
+		case FileSources:
+			experimental = experimental | FlagFileSources
 		}
 	}
 	return experimental

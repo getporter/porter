@@ -230,3 +230,10 @@ jobs:
     with:
       test_name: persistent_params_test
       registry: ${{inputs.registry}}
+
+  file_sources_integration_test:
+    name: File Sources Integration Test
+    uses: getporter/porter/.github/workflows/integ-reuseable-workflow.yml@main
+    with:
+      test_name: file_sources_test
+      registry: ${{inputs.registry}}

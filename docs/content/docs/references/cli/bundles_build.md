@@ -37,6 +37,7 @@ porter bundles build [flags]
 ### Options
 
 ```
+      --allow-file-downloads        Allow Porter to download files declared in the manifest's files section during build. See https://porter.sh/configuration/#allow-file-downloads for more information.
       --build-arg stringArray       Set build arguments in the template Dockerfile (format: NAME=VALUE). May be specified multiple times. Max length is 5,000 characters.
       --build-context stringArray   Define additional build context with specified contents (format: NAME=PATH). May be specified multiple times. Porter automatically provides a 'porter-internal-userfiles' named context pointing to your bundle directory.
       --builder string              Set the name of the buildkit builder to use.
