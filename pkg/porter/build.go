@@ -2,7 +2,6 @@ package porter
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -234,10 +233,24 @@ func (p *Porter) preLint(ctx context.Context, file string) error {
 
 	if results.HasError() {
 		// An error was found during linting, stop and let the user correct it
-		return errors.New("lint errors were detected. Rerun with --no-lint ignore the errors")
+		return ErrLintFailed{}
 	}
 
 	return nil
+}
+
+// ErrLintFailed indicates that linting the bundle found errors that must be
+// fixed, or explicitly ignored with --no-lint, before building.
+// Test for this error using errors.Is(err, ErrLintFailed{}).
+type ErrLintFailed struct{}
+
+func (e ErrLintFailed) Error() string {
+	return "lint errors were detected. Rerun with --no-lint to ignore the errors"
+}
+
+func (e ErrLintFailed) Is(err error) bool {
+	_, ok := err.(ErrLintFailed)
+	return ok
 }
 
 func (p *Porter) getUsedMixins(ctx context.Context, m *manifest.Manifest) ([]mixin.Metadata, error) {
