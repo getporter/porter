@@ -9,6 +9,7 @@ With any porter error, it can really help to re-run the command again with the `
 - [Examine Previous Logs](#examine-previous-logs)
 - [Mapping values are not allowed in this context](#mapping-values-are-not-allowed-in-this-context)
 - [You see apt errors when you use a custom Dockerfile](#you-see-apt-errors-when-you-use-a-custom-dockerfile)
+- [I want to inspect the container after a bundle action runs](#i-want-to-inspect-the-container-after-a-bundle-action-runs)
 
 ## Examine Previous Logs
 
@@ -102,3 +103,11 @@ Error: unable to build CNAB bundle image: failed to stream docker build output: 
 ```
 
 For now you must base your custom Dockerfile on debian or ubuntu.
+
+## I want to inspect the container after a bundle action runs
+
+Porter removes the container it used to run a bundle action once the action
+finishes. To leave the container behind so you can inspect its filesystem,
+see [Inspect the container after a bundle action runs][cleanup-containers].
+
+[cleanup-containers]: /operations/connect-to-docker/#inspect-the-container-after-a-bundle-action-runs
