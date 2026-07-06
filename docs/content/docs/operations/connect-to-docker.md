@@ -68,8 +68,29 @@ container behind, then use Docker to look around:
 
 ```bash
 CLEANUP_CONTAINERS=false porter install --reference ghcr.io/getporter/examples/porter-hello:v0.2.0
+```
 
-docker ps -a
+Find the container. Since it was just created, `docker ps -l` shows only the
+most recently created container, which avoids having to scan through
+unrelated containers on your machine:
+
+```bash
+docker ps -l
+```
+
+If something else was created after it, `docker ps -l` won't show the right
+one. `docker ps -a` lists containers newest-first, so filter for the
+`COMMAND` every CNAB invocation image runs, `/cnab/app/run` (Docker's
+`--filter` flag doesn't support filtering by command, so filter client-side),
+and take the first match:
+
+```bash
+docker ps -a --format '{{.ID}}\t{{.Command}}' | grep '/cnab/app/run' | head -n 1
+```
+
+Then commit it to an image and start a shell in it:
+
+```bash
 docker commit <container-id> porter-debug
 docker run --rm -it --entrypoint bash porter-debug
 ```
