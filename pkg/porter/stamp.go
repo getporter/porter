@@ -48,7 +48,7 @@ func (p *Porter) ensureLocalBundleIsUpToDate(ctx context.Context, opts BuildOpti
 			}
 			err := p.Build(ctx, buildOpts)
 			if errors.Is(err, ErrLintFailed{}) {
-				return cnab.BundleReference{}, log.Errorf("lint errors were detected while building the bundle. Run 'porter build --no-lint' to skip linting, or fix the errors and try again: %w", err)
+				return cnab.BundleReference{}, log.Errorf("lint errors were detected while building the bundle. Run 'porter build --no-lint' to skip linting, or fix the errors and try again")
 			} else if err != nil {
 				return cnab.BundleReference{}, err
 			}
