@@ -9,6 +9,8 @@ import (
 	"get.porter.sh/porter/pkg/printer"
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
+	"github.com/cnabio/cnab-go/bundle"
+	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -54,6 +56,29 @@ func TestNewDisplayInstallation(t *testing.T) {
 		require.Empty(t, displayInstall.Status.Action, "invalid last action")
 		require.Empty(t, displayInstall.Status.ResultStatus, "invalid last status")
 	})
+}
+
+func TestNewDisplayRun(t *testing.T) {
+	// Regression test for #2199: a Run read back from storage never has
+	// ResolvedValue populated (it's not persisted), so DisplayRun.Parameters
+	// must stay nil rather than show misleading blank values.
+	bun := cnab.NewBundle(bundle.Bundle{
+		Parameters: map[string]bundle.Parameter{
+			"name": {Definition: "name"},
+		},
+		Definitions: map[string]*definition.Schema{
+			"name": {Type: "string"},
+		},
+	})
+
+	run := storage.NewRun("", "wordpress")
+	run.Bundle = bun.Bundle
+	run.Parameters = storage.NewParameterSet(run.Namespace, run.Installation,
+		secrets.SourceMap{Name: "name", Source: secrets.Source{Strategy: secrets.SourceSecret, Hint: "name"}})
+
+	displayRun := NewDisplayRun(run)
+
+	assert.Nil(t, displayRun.Parameters, "Parameters should be nil since resolved values are never available on a stored Run")
 }
 
 func TestPorter_ListInstallations(t *testing.T) {
