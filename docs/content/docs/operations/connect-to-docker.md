@@ -55,9 +55,45 @@ Porter supports additional Docker environment variables that may be useful to yo
 
 - **DOCKER_NETWORK**: Specifies the name of an existing [Docker network] that Porter should use when running Docker containers.
 - **DOCKER_CONTEXT**: Specifies the name of an existing [Docker context] that Porter should use when running Docker containers.
+- **CLEANUP_CONTAINERS**: Controls whether Porter removes the Docker container used to run a bundle action once it finishes. Defaults to `true`. Set to `false` to leave the stopped container behind so you can inspect its filesystem, for example while authoring or debugging a bundle.
 
 [Docker context]: https://docs.docker.com/engine/context/working-with-contexts/
 [Docker network]: https://docs.docker.com/engine/reference/commandline/network/
+
+### Inspect the container after a bundle action runs
+
+By default Porter removes the container it used to run a bundle action once
+the action finishes. Set `CLEANUP_CONTAINERS=false` to leave the stopped
+container behind, then use Docker to look around:
+
+```bash
+CLEANUP_CONTAINERS=false porter install --reference ghcr.io/getporter/examples/porter-hello:v0.2.0
+```
+
+Find the container. Since it was just created, `docker ps -l` shows only the
+most recently created container, which avoids having to scan through
+unrelated containers on your machine:
+
+```bash
+docker ps -l
+```
+
+If something else was created after it, `docker ps -l` won't show the right
+one. `docker ps -a` lists containers newest-first, so filter for the
+`COMMAND` every CNAB invocation image runs, `/cnab/app/run` (Docker's
+`--filter` flag doesn't support filtering by command, so filter client-side),
+and take the first match:
+
+```bash
+docker ps -a --format '{{.ID}}\t{{.Command}}' | grep '/cnab/app/run' | head -n 1
+```
+
+Then commit it to an image and start a shell in it:
+
+```bash
+docker commit <container-id> porter-debug
+docker run --rm -it --entrypoint bash porter-debug
+```
 
 ## Next Steps
 
