@@ -45,4 +45,41 @@ spring-music   docker   jrrporter.azurecr.io/do-porter-from-archive@sha256:8f113
 
 Here, we can see the original image reference and our newly created archive reference. We can compare the two in order to ensure that they are indeed the same.
 
+### Column Reference
+
+The **Bundle Images** and **Images** tables share the same set of columns:
+
+- **Name** (Images table only): The alias given to the image in the bundle definition, e.g. `spring-music`.
+- **Image**: The image reference that will actually be pulled and used. If the bundle was published, copied, or archived, this reflects the relocated reference.
+- **Type**: The image type, e.g. `docker`.
+- **Digest**: The content digest of the image.
+- **Original Image**: The image reference that the current image was copied from. This is only populated when the image has been relocated, such as after a publish, copy, or archive operation. Comparing **Image**/**Digest** against **Original Image** lets you confirm that a republished or archived bundle's images still match their source.
+
+## Inspecting Dependencies
+
+If the bundle declares dependencies, you can view its full dependency tree with the `--show-dependencies` flag:
+
+```console
+$ porter inspect ghcr.io/getporter/examples/porter-hello:v0.2.0 --show-dependencies
+...
+Dependencies:
+Alias         Reference                                    Version   Sharing
+mysql           ghcr.io/getporter/examples/mysql:v0.1.0     0.1.0
+  logging       ghcr.io/getporter/examples/logging:v0.2.0   0.2.0     [shared:logging-group]
+```
+
+The **Dependencies** table has the following columns:
+
+- **Alias**: The dependency's alias as declared in the bundle. Nested dependencies are indented to show their position in the dependency tree. A ⚠️ prefix indicates the dependency failed to resolve.
+- **Reference**: The bundle reference used for the dependency.
+- **Version**: The resolved version of the dependency.
+- **Sharing**: Shows `[shared:<group>]` when the dependency participates in a shared instance group, otherwise blank.
+
+If any dependency fails to resolve, a note is printed below the table telling you to rerun with `--output json` or `--output yaml` to see the detailed error message.
+
+Other flags that affect dependency resolution:
+
+- `--max-dependency-depth`: Limits how deep the dependency tree is traversed. Defaults to `10`.
+- `--dependencies-version-strategy`: Controls how dependency version ranges are resolved. Allowed values are `exact`, `max-patch`, `max-minor`, and `min`.
+
 `porter inspect` can be used with a published bundle, as show above, or with a local bundle. The command even works with bundles that were not built with Porter, through the use of the `--cnab-file` flag. You can view the output in tabular form, as above, JSON or YAML. For all the options, run the command `porter inspect --help`.
