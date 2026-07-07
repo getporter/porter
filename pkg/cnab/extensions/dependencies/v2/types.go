@@ -88,15 +88,9 @@ type DependencySource struct {
 // ignore template syntax, ${...}, if found
 var dependencySourceWiringRegex = regexp.MustCompile(`(\s*\$\{\s*)?bundle(\.dependencies\.([^.]+))?\.([^.]+)\.([^\s\}]+)(\s*\}\s*)?`)
 
-// ParseDependencySource identifies the components specified in a template variable.
-func ParseDependencySource(templateVariable string) (DependencySource, error) {
-	matches := dependencySourceWiringRegex.FindStringSubmatch(templateVariable)
-
-	// If it doesn't match our wiring syntax, assume that it is a hard coded value
-	if len(matches) < 5 {
-		return DependencySource{Value: templateVariable}, nil
-	}
-
+// dependencySourceFromMatch converts a single regex match (as produced by
+// dependencySourceWiringRegex) into a DependencySource.
+func dependencySourceFromMatch(matches []string) (DependencySource, error) {
 	dependencyName := matches[3] // bundle.dependencies.DEPENDENCY_NAME
 	itemType := matches[4]       // bundle.dependencies.dependency_name.PARAMETERS.name or bundle.OUTPUTS.name
 	itemName := matches[5]       // bundle.dependencies.dependency_name.parameters.NAME or bundle.outputs.NAME
@@ -116,6 +110,45 @@ func ParseDependencySource(templateVariable string) (DependencySource, error) {
 		result.Output = itemName
 	}
 	return result, nil
+}
+
+// ParseDependencySource identifies the components specified in a template variable.
+func ParseDependencySource(templateVariable string) (DependencySource, error) {
+	matches := dependencySourceWiringRegex.FindStringSubmatch(templateVariable)
+
+	// If it doesn't match our wiring syntax, assume that it is a hard coded value
+	if len(matches) < 5 {
+		return DependencySource{Value: templateVariable}, nil
+	}
+
+	return dependencySourceFromMatch(matches)
+}
+
+// ParseAllDependencySources scans a template value for every embedded wiring
+// reference. A value may combine multiple references with literal text, e.g.
+// "https://${bundle.dependencies.infra.outputs.ip}:${outputs.port}/myapp",
+// so each bundle.* reference found is returned as its own DependencySource.
+// A value with no wiring references returns an empty slice, unlike
+// ParseDependencySource which treats the whole string as a hardcoded value
+// in that case. Matches that would be an error in ParseDependencySource
+// (referencing the root bundle's own output) are returned separately in
+// invalid, as the raw matched text, rather than being silently dropped --
+// callers should surface these as authoring warnings.
+func ParseAllDependencySources(templateVariable string) (sources []DependencySource, invalid []string) {
+	allMatches := dependencySourceWiringRegex.FindAllStringSubmatch(templateVariable, -1)
+	sources = make([]DependencySource, 0, len(allMatches))
+	for _, matches := range allMatches {
+		if len(matches) < 5 {
+			continue
+		}
+		src, err := dependencySourceFromMatch(matches)
+		if err != nil {
+			invalid = append(invalid, matches[0])
+			continue
+		}
+		sources = append(sources, src)
+	}
+	return sources, invalid
 }
 
 // AsBundleWiring is the wiring string representation in the bundle definition.

@@ -103,3 +103,51 @@ func TestDependencySource(t *testing.T) {
 		})
 	}
 }
+
+func TestParseAllDependencySources(t *testing.T) {
+	t.Parallel()
+
+	testcases := []struct {
+		name         string
+		bundleWiring string
+		want         []DependencySource
+		wantInvalid  []string
+	}{
+		{
+			name:         "hardcoded value",
+			bundleWiring: "myenvdb",
+			want:         []DependencySource{},
+		},
+		{
+			name:         "own bundle parameter, not a dependency reference",
+			bundleWiring: "${bundle.parameters.logLevel}",
+			want:         []DependencySource{{Parameter: "logLevel"}},
+		},
+		{
+			name:         "single dependency output reference",
+			bundleWiring: "${bundle.dependencies.infra.outputs.mysql-connstr}",
+			want:         []DependencySource{{Dependency: "infra", Output: "mysql-connstr"}},
+		},
+		{
+			name:         "composite value with a cross-dependency ref and a same-dependency shorthand ref",
+			bundleWiring: "https://${bundle.dependencies.infra.outputs.ip}:${outputs.port}/myapp",
+			want:         []DependencySource{{Dependency: "infra", Output: "ip"}},
+		},
+		{
+			name:         "root bundle output reference is reported as invalid, not silently dropped",
+			bundleWiring: "${bundle.outputs.port}",
+			want:         []DependencySource{},
+			wantInvalid:  []string{"${bundle.outputs.port}"},
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			got, gotInvalid := ParseAllDependencySources(tc.bundleWiring)
+			require.Equal(t, tc.want, got, "incorrect DependencySources were parsed")
+			require.Equal(t, tc.wantInvalid, gotInvalid, "incorrect invalid matches were reported")
+		})
+	}
+}
