@@ -221,14 +221,17 @@ type DisplayRun struct {
 	Status     string                 `json:"status" yaml:"status"`
 }
 
+// NewDisplayRun converts a stored Run into its display form. Parameters is
+// left nil: resolving the real values requires secret/file lookups that a
+// stored Run doesn't carry (ResolvedValue is never persisted), so populating
+// it here would just show misleading blank values.
 func NewDisplayRun(run storage.Run) DisplayRun {
 	return DisplayRun{
-		ID:         run.ID,
-		Action:     run.Action,
-		Parameters: run.TypedParameterValues(),
-		Started:    run.Created,
-		Bundle:     run.BundleReference,
-		Version:    run.Bundle.Version,
+		ID:      run.ID,
+		Action:  run.Action,
+		Started: run.Created,
+		Bundle:  run.BundleReference,
+		Version: run.Bundle.Version,
 	}
 }
 
