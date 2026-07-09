@@ -8,6 +8,7 @@ import (
 
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/experimental"
 	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/tracing"
 	cnabaction "github.com/cnabio/cnab-go/action"
@@ -48,6 +49,10 @@ type ActionArguments struct {
 
 	// PersistLogs specifies if the bundle image output should be saved as an output.
 	PersistLogs bool
+
+	// ForceRun bypasses the check that prevents starting a new run for an
+	// installation that already has an incomplete run.
+	ForceRun bool
 }
 
 func (r *Runtime) ApplyConfig(ctx context.Context, args ActionArguments) cnabaction.OperationConfigs {
@@ -180,6 +185,12 @@ func (r *Runtime) Execute(ctx context.Context, args ActionArguments) error {
 		}
 
 		if currentRun.ShouldRecord() {
+			if r.IsFeatureEnabled(experimental.FlagDependenciesV2) && !args.ForceRun {
+				if err := r.checkForActiveRun(ctx, args.Installation, currentRun.ID); err != nil {
+					return err
+				}
+			}
+
 			err = r.SaveRun(ctx, args.Installation, currentRun, cnab.StatusRunning)
 			if err != nil {
 				return log.Errorf("could not save the pending action's status, the bundle was not executed: %w", err)
@@ -218,6 +229,43 @@ func (r *Runtime) Execute(ctx context.Context, args ActionArguments) error {
 
 		return nil
 	}
+}
+
+// checkForActiveRun returns an error if the installation already has a run,
+// other than currentRunID, that has not reached a terminal status yet.
+func (r *Runtime) checkForActiveRun(ctx context.Context, installation storage.Installation, currentRunID string) error {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
+	activeRuns, err := r.installations.GetActiveRuns(ctx, installation.Namespace, installation.Name)
+	if err != nil {
+		return span.Error(fmt.Errorf("could not check installation %s for an active run: %w", installation, err))
+	}
+
+	for _, run := range activeRuns {
+		if run.ID == currentRunID {
+			continue
+		}
+		return span.Error(ErrInstallationLocked{Installation: installation.String(), RunID: run.ID})
+	}
+	return nil
+}
+
+// ErrInstallationLocked indicates that the installation already has an
+// incomplete run and cannot start another one concurrently.
+// Test for this error using errors.Is(err, ErrInstallationLocked{}).
+type ErrInstallationLocked struct {
+	Installation string
+	RunID        string
+}
+
+func (e ErrInstallationLocked) Error() string {
+	return fmt.Sprintf("installation %s already has an incomplete run (%s); wait for it to finish before starting another, or use --force-run to skip this check", e.Installation, e.RunID)
+}
+
+func (e ErrInstallationLocked) Is(err error) bool {
+	_, ok := err.(ErrInstallationLocked)
+	return ok
 }
 
 // SaveRun with the specified status.

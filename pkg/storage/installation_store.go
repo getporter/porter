@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/tracing"
 	"go.mongodb.org/mongo-driver/bson"
 )
@@ -108,6 +109,39 @@ func (s InstallationStore) ListRuns(ctx context.Context, namespace string, insta
 	}
 
 	return runs, resultsMap, err
+}
+
+// GetActiveRuns returns runs for the installation that have not yet reached
+// a terminal status (succeeded, failed, canceled), for example a run with no
+// result yet, or whose last result is pending/running/unknown.
+func (s InstallationStore) GetActiveRuns(ctx context.Context, namespace string, installation string) ([]Run, error) {
+	var runs []Run
+	opts := AggregateOptions{
+		Pipeline: []bson.D{
+			{{Key: "$match", Value: bson.M{
+				"namespace":    namespace,
+				"installation": installation,
+			}}},
+			{{Key: "$lookup", Value: bson.M{
+				"from":         CollectionResults,
+				"localField":   "_id",
+				"foreignField": "runId",
+				"as":           "results",
+			}}},
+			// A run is still active if none of its results (including zero
+			// results, i.e. not yet started) has reached a terminal status.
+			// Once a terminal result is recorded, no further results follow,
+			// so "has a terminal result" and "is complete" are equivalent.
+			{{Key: "$match", Value: bson.M{
+				"results.status": bson.M{"$nin": []string{
+					cnab.StatusSucceeded, cnab.StatusFailed, cnab.StatusCanceled,
+				}},
+			}}},
+			{{Key: "$project", Value: bson.M{"results": 0}}},
+		},
+	}
+	err := s.store.Aggregate(ctx, CollectionRuns, opts, &runs)
+	return runs, err
 }
 
 func (s InstallationStore) ListResults(ctx context.Context, runID string) ([]Result, error) {

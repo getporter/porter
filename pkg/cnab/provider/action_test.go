@@ -3,8 +3,10 @@ package cnabprovider
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/experimental"
 	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/test"
 	"os"
@@ -163,4 +165,91 @@ func TestSaveOperationResult_ModifiesTrue_SavesPorterState(t *testing.T) {
 
 	_, hasPorterState := outputs.GetByName("porter-state")
 	assert.True(t, hasPorterState, "porter-state should be saved for modifies:true actions")
+}
+
+func TestCheckForActiveRun(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	d := NewTestRuntime(t)
+	defer d.Close()
+
+	instName := "mybuns"
+	i := d.TestInstallations.CreateInstallation(storage.NewInstallation("", instName), d.TestInstallations.SetMutableInstallationValues)
+
+	t.Run("no runs yet", func(t *testing.T) {
+		err := d.checkForActiveRun(ctx, i, "")
+		require.NoError(t, err)
+	})
+
+	blockingRun := d.TestInstallations.CreateRun(storage.NewRun("", instName), d.TestInstallations.SetMutableRunValues)
+	d.TestInstallations.CreateResult(blockingRun.NewResult(cnab.StatusRunning))
+
+	t.Run("an incomplete run blocks", func(t *testing.T) {
+		err := d.checkForActiveRun(ctx, i, "")
+		require.Error(t, err)
+		assert.True(t, errors.Is(err, ErrInstallationLocked{}))
+	})
+
+	t.Run("the run itself is excluded from the check", func(t *testing.T) {
+		err := d.checkForActiveRun(ctx, i, blockingRun.ID)
+		require.NoError(t, err)
+	})
+
+	d.TestInstallations.CreateResult(blockingRun.NewResult(cnab.StatusSucceeded))
+
+	t.Run("a completed run does not block", func(t *testing.T) {
+		err := d.checkForActiveRun(ctx, i, "")
+		require.NoError(t, err)
+	})
+}
+
+func TestExecute_InstallationLocked(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	d := NewTestRuntime(t)
+	defer d.Close()
+
+	instName := "mybuns"
+	bun := d.LoadTestBundle("testdata/bundle.json")
+
+	i := d.TestInstallations.CreateInstallation(storage.NewInstallation("", instName), d.TestInstallations.SetMutableInstallationValues)
+
+	blockingRun := d.TestInstallations.CreateRun(storage.NewRun("", instName), d.TestInstallations.SetMutableRunValues)
+	d.TestInstallations.CreateResult(blockingRun.NewResult(cnab.StatusRunning))
+
+	newArgs := func() ActionArguments {
+		run := i.NewRun("zombies", bun)
+		run.Bundle = bun.Bundle
+		return ActionArguments{
+			Run:             run,
+			Installation:    i,
+			BundleReference: cnab.BundleReference{Definition: bun},
+		}
+	}
+
+	t.Run("flag disabled: proceeds despite the active run", func(t *testing.T) {
+		err := d.Execute(ctx, newArgs())
+		require.NoError(t, err)
+	})
+
+	t.Run("flag enabled: blocked by the active run", func(t *testing.T) {
+		d.TestConfig.SetExperimentalFlags(experimental.FlagDependenciesV2)
+		defer d.TestConfig.SetExperimentalFlags(0)
+
+		err := d.Execute(ctx, newArgs())
+		require.Error(t, err)
+		assert.True(t, errors.Is(err, ErrInstallationLocked{}))
+	})
+
+	t.Run("flag enabled and force-run: bypasses the lock", func(t *testing.T) {
+		d.TestConfig.SetExperimentalFlags(experimental.FlagDependenciesV2)
+		defer d.TestConfig.SetExperimentalFlags(0)
+
+		args := newArgs()
+		args.ForceRun = true
+		err := d.Execute(ctx, args)
+		require.NoError(t, err)
+	})
 }
