@@ -58,10 +58,10 @@ func extractWiringRefs(requires map[string]v2.Dependency) (refs []wiringRef, dan
 	}
 
 	sort.Slice(refs, func(i, j int) bool {
-		return wiringRefLess(refs[i].FromAlias, refs[i].Detail, refs[j].FromAlias, refs[j].Detail)
+		return wiringRefLess(refs[i].FromAlias, refs[i].ToAlias, refs[i].Detail, refs[j].FromAlias, refs[j].ToAlias, refs[j].Detail)
 	})
 	sort.Slice(dangling, func(i, j int) bool {
-		return wiringRefLess(dangling[i].FromAlias, dangling[i].Detail, dangling[j].FromAlias, dangling[j].Detail)
+		return wiringRefLess(dangling[i].FromAlias, dangling[i].ToAlias, dangling[i].Detail, dangling[j].FromAlias, dangling[j].ToAlias, dangling[j].Detail)
 	})
 	sort.Slice(invalid, func(i, j int) bool {
 		if invalid[i].FromAlias != invalid[j].FromAlias {
@@ -76,16 +76,26 @@ func extractWiringRefs(requires map[string]v2.Dependency) (refs []wiringRef, dan
 	return refs, dangling, invalid
 }
 
-// wiringRefLess orders by (FromAlias, Field, FieldName), the fields common
-// to wiringRef and danglingWiringRef, for a stable sort.
-func wiringRefLess(fromAliasA string, detailA WiringDetail, fromAliasB string, detailB WiringDetail) bool {
+// wiringRefLess orders by (FromAlias, Field, FieldName, ToAlias,
+// SourceOutput). The first three alone can tie -- a single field value can
+// embed multiple cross-dependency references (ParseAllDependencySources) --
+// so ToAlias/SourceOutput are included to give every distinct ref a unique
+// sort position; without them, sort.Slice's lack of stability could still
+// flap the order of same-tuple refs between runs.
+func wiringRefLess(fromAliasA, toAliasA string, detailA WiringDetail, fromAliasB, toAliasB string, detailB WiringDetail) bool {
 	if fromAliasA != fromAliasB {
 		return fromAliasA < fromAliasB
 	}
 	if detailA.Field != detailB.Field {
 		return detailA.Field < detailB.Field
 	}
-	return detailA.FieldName < detailB.FieldName
+	if detailA.FieldName != detailB.FieldName {
+		return detailA.FieldName < detailB.FieldName
+	}
+	if toAliasA != toAliasB {
+		return toAliasA < toAliasB
+	}
+	return detailA.SourceOutput < detailB.SourceOutput
 }
 
 // extractDependencyWiringRefs scans a single dependency's wiring maps for

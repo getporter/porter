@@ -61,12 +61,49 @@ func TestGraphBuilder_NodeDedup(t *testing.T) {
 
 	leaf := leafTestBundle("mysql")
 
-	t.Run("same reference and parameters collapse to one node", func(t *testing.T) {
+	t.Run("v2 non-shareable dependencies never collapse, even with identical content", func(t *testing.T) {
 		t.Parallel()
 
+		// Neither declares a sharing block, so SharingMode defaults to
+		// false: per the dependencies v2 extension, "the dependency cannot
+		// be shared, even within the same dependency graph" -- so db1 and
+		// db2 must each get their own node despite matching content.
 		root := v2TestBundle("root", map[string]v2.Dependency{
 			"db1": {Bundle: "localhost:5000/mysql:v1.0.0", Parameters: map[string]string{"db-name": "app"}},
 			"db2": {Bundle: "localhost:5000/mysql:v1.0.0", Parameters: map[string]string{"db-name": "app"}},
+		})
+
+		p := NewTestPorter(t)
+		defer p.Close()
+		p.TestRegistry.MockPullBundle = newMockPullBundle(map[string]cnab.ExtendedBundle{
+			"localhost:5000/mysql:v1.0.0": leaf,
+		})
+
+		builder := NewGraphBuilder(p.Porter, 10)
+		graph, err := builder.BuildDependencyGraph(context.Background(), root, ExplainOpts{MaxDependencyDepth: 10})
+		require.NoError(t, err)
+
+		// root + two distinct (never-shared) mysql nodes
+		assert.Len(t, graph.Nodes, 3)
+		assert.Equal(t, 2, countEdges(graph.Edges, EdgeKindRequires))
+
+		deps := graphToInspectableDependencies(graph, graph.Root, 0)
+		require.Len(t, deps, 2)
+		aliases := []string{deps[0].Alias, deps[1].Alias}
+		assert.ElementsMatch(t, []string{"db1", "db2"}, aliases)
+		assert.Equal(t, deps[0].Reference, deps[1].Reference)
+	})
+
+	t.Run("v2 shareable dependencies with matching group collapse to one node", func(t *testing.T) {
+		t.Parallel()
+
+		// Both opt into sharing, with the same group name, so per spec
+		// they're the same instance despite being declared under two
+		// different aliases.
+		shared := v2.SharingCriteria{Mode: true, Group: v2.SharingGroup{Name: "app-db"}}
+		root := v2TestBundle("root", map[string]v2.Dependency{
+			"db1": {Bundle: "localhost:5000/mysql:v1.0.0", Parameters: map[string]string{"db-name": "app"}, Sharing: shared},
+			"db2": {Bundle: "localhost:5000/mysql:v1.0.0", Parameters: map[string]string{"db-name": "app"}, Sharing: shared},
 		})
 
 		p := NewTestPorter(t)
@@ -91,6 +128,28 @@ func TestGraphBuilder_NodeDedup(t *testing.T) {
 		assert.Equal(t, deps[0].Reference, deps[1].Reference)
 	})
 
+	t.Run("v2 shareable dependencies with different groups produce distinct nodes", func(t *testing.T) {
+		t.Parallel()
+
+		root := v2TestBundle("root", map[string]v2.Dependency{
+			"db1": {Bundle: "localhost:5000/mysql:v1.0.0", Parameters: map[string]string{"db-name": "app"}, Sharing: v2.SharingCriteria{Mode: true, Group: v2.SharingGroup{Name: "group-a"}}},
+			"db2": {Bundle: "localhost:5000/mysql:v1.0.0", Parameters: map[string]string{"db-name": "app"}, Sharing: v2.SharingCriteria{Mode: true, Group: v2.SharingGroup{Name: "group-b"}}},
+		})
+
+		p := NewTestPorter(t)
+		defer p.Close()
+		p.TestRegistry.MockPullBundle = newMockPullBundle(map[string]cnab.ExtendedBundle{
+			"localhost:5000/mysql:v1.0.0": leaf,
+		})
+
+		builder := NewGraphBuilder(p.Porter, 10)
+		graph, err := builder.BuildDependencyGraph(context.Background(), root, ExplainOpts{MaxDependencyDepth: 10})
+		require.NoError(t, err)
+
+		// root + two distinct mysql nodes (different sharing groups)
+		assert.Len(t, graph.Nodes, 3)
+	})
+
 	t.Run("different parameters produce distinct nodes", func(t *testing.T) {
 		t.Parallel()
 
@@ -111,6 +170,29 @@ func TestGraphBuilder_NodeDedup(t *testing.T) {
 
 		// root + two distinct mysql nodes (different parameters)
 		assert.Len(t, graph.Nodes, 3)
+	})
+
+	t.Run("v1 dependencies always dedupe by content (no sharing concept)", func(t *testing.T) {
+		t.Parallel()
+
+		root := v1TestBundle("root", map[string]depsv1.Dependency{
+			"db1": {Bundle: "localhost:5000/mysql:v1.0.0"},
+			"db2": {Bundle: "localhost:5000/mysql:v1.0.0"},
+		})
+
+		p := NewTestPorter(t)
+		defer p.Close()
+		p.TestRegistry.MockPullBundle = newMockPullBundle(map[string]cnab.ExtendedBundle{
+			"localhost:5000/mysql:v1.0.0": leaf,
+		})
+
+		builder := NewGraphBuilder(p.Porter, 10)
+		graph, err := builder.BuildDependencyGraph(context.Background(), root, ExplainOpts{MaxDependencyDepth: 10})
+		require.NoError(t, err)
+
+		// root + one deduped mysql node
+		assert.Len(t, graph.Nodes, 2)
+		assert.Equal(t, 2, countEdges(graph.Edges, EdgeKindRequires))
 	})
 }
 
@@ -222,6 +304,42 @@ func TestGraphBuilder_CycleDetection_Requires(t *testing.T) {
 	assert.ElementsMatch(t, []string{"localhost:5000/a:v1.0.0", "localhost:5000/b:v1.0.0", "root"}, cycleErr.Remaining)
 }
 
+// TestGraphBuilder_CycleDetection_NonShareableSelfReference covers a mutual
+// requires cycle built entirely from v2 dependencies with SharingMode=false
+// (the default): a and b requiring each other must never collapse onto a
+// shared node by content (see TestGraphBuilder_NodeDedup), yet the recursion
+// still needs to recognize b's "a" as the *same* content already being
+// expanded by an in-progress ancestor -- otherwise this would recurse
+// forever (bounded only by silently hitting maxDepth) instead of reporting
+// ErrDependencyCycle.
+func TestGraphBuilder_CycleDetection_NonShareableSelfReference(t *testing.T) {
+	t.Parallel()
+
+	aBun := v2TestBundle("a", map[string]v2.Dependency{
+		"b": {Bundle: "localhost:5000/b:v1.0.0"},
+	})
+	bBun := v2TestBundle("b", map[string]v2.Dependency{
+		"a": {Bundle: "localhost:5000/a:v1.0.0"},
+	})
+	root := v2TestBundle("root", map[string]v2.Dependency{
+		"a": {Bundle: "localhost:5000/a:v1.0.0"},
+	})
+
+	p := NewTestPorter(t)
+	defer p.Close()
+	p.TestRegistry.MockPullBundle = newMockPullBundle(map[string]cnab.ExtendedBundle{
+		"localhost:5000/a:v1.0.0": aBun,
+		"localhost:5000/b:v1.0.0": bBun,
+	})
+
+	builder := NewGraphBuilder(p.Porter, 10)
+	_, err := builder.BuildDependencyGraph(context.Background(), root, ExplainOpts{MaxDependencyDepth: 10})
+	require.Error(t, err)
+	var cycleErr ErrDependencyCycle
+	require.ErrorAs(t, err, &cycleErr)
+	assert.ElementsMatch(t, []string{"localhost:5000/a:v1.0.0", "localhost:5000/b:v1.0.0", "root"}, cycleErr.Remaining)
+}
+
 // TestGraphBuilder_SelfReferentialWiringIsAWarningNotACycle covers a
 // dependency's own field referencing its own alias (a plausible copy-paste
 // typo) -- this must not be treated as a valid wiring edge (which would
@@ -321,9 +439,17 @@ func TestGraphBuilder_WiringEdgesAreDeterministicallyOrdered(t *testing.T) {
 func TestGraphBuilder_CycleDetection_Wiring(t *testing.T) {
 	t.Parallel()
 
+	// Mode=true with a matching group makes x's and z's "y" entries the
+	// same shareable instance, so z's own requirement of "y" collapses back
+	// onto the "y" node reached from x -- that's what manufactures the
+	// cycle below. Without an explicit shared group, SharingMode defaults
+	// to false and the two "y" declarations would correctly stay separate,
+	// non-shareable instances (see TestGraphBuilder_NodeDedup), and there
+	// would be no cycle at all.
 	yEntry := v2.Dependency{
 		Bundle:      "localhost:5000/y:v1.0.0",
 		Credentials: map[string]string{"conn": "${bundle.dependencies.z.outputs.out}"},
+		Sharing:     v2.SharingCriteria{Mode: true, Group: v2.SharingGroup{Name: "y-shared"}},
 	}
 
 	xBun := v2TestBundle("x", map[string]v2.Dependency{

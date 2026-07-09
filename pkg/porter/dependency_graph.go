@@ -10,10 +10,16 @@ import (
 	"get.porter.sh/porter/pkg/cnab"
 )
 
-// NodeKey uniquely identifies a node in a Graph. Two dependency declarations
-// that resolve to the same bundle reference, with the same parameters,
-// credentials, and sharing group, are considered the same instance and
-// collapse to a single node, regardless of the alias(es) used to reach them.
+// NodeKey uniquely identifies a node in a Graph. For dependencies that are
+// allowed to share an instance -- v1 dependencies, which have no sharing
+// concept at all, and v2 dependencies declared with SharingMode=true -- two
+// declarations that resolve to the same bundle reference, with the same
+// parameters, credentials, and sharing group, are considered the same
+// instance and collapse to a single node, regardless of the alias(es) used
+// to reach them. v2 dependencies declared with SharingMode=false (the
+// default) can never collapse with any other node, even one with identical
+// content, because the extension defines that as "cannot be shared, even
+// within the same dependency graph" -- see Instance below.
 type NodeKey struct {
 	// IsRoot is true only for the single node representing the bundle whose
 	// graph is being resolved.
@@ -31,6 +37,13 @@ type NodeKey struct {
 
 	// SharingGroup is the dependency's sharing group name, if any.
 	SharingGroup string
+
+	// Instance is zero for every shareable node (v1; v2 with
+	// SharingMode=true), so those continue to dedupe by content alone. It is
+	// a graph-unique, non-zero value for a v2 node declared with
+	// SharingMode=false, guaranteeing the resulting key can never equal any
+	// other node's key -- see Graph.newInstanceKey.
+	Instance int
 }
 
 func (k NodeKey) String() string {
@@ -38,6 +51,29 @@ func (k NodeKey) String() string {
 		return "root"
 	}
 	return k.Reference
+}
+
+// less gives NodeKey a total order across every field, not just Reference
+// (which String() reduces to), so sorting by it stays deterministic even
+// when distinct nodes share a reference but differ by parameters,
+// credentials, or sharing group.
+func (k NodeKey) less(other NodeKey) bool {
+	if k.IsRoot != other.IsRoot {
+		return !k.IsRoot
+	}
+	if k.Reference != other.Reference {
+		return k.Reference < other.Reference
+	}
+	if k.ParametersHash != other.ParametersHash {
+		return k.ParametersHash < other.ParametersHash
+	}
+	if k.CredentialsHash != other.CredentialsHash {
+		return k.CredentialsHash < other.CredentialsHash
+	}
+	if k.SharingGroup != other.SharingGroup {
+		return k.SharingGroup < other.SharingGroup
+	}
+	return k.Instance < other.Instance
 }
 
 // EdgeKind distinguishes why an edge exists in the graph.
@@ -122,14 +158,38 @@ type Graph struct {
 	// be O(nodes*edges) over the whole graph.
 	edgesFrom map[NodeKey][]Edge
 	edgesTo   map[NodeKey][]Edge
+
+	// sharedByContent maps a dependency's contentKey to the NodeKey already
+	// assigned to it, for dependencies allowed to share an instance across
+	// the graph (v1; v2 with SharingMode=true). Populated once such a node
+	// has been successfully pulled, so a later encounter of the same content
+	// on a different branch (a diamond) reuses the existing node instead of
+	// re-pulling/re-expanding it. Never populated for v2 SharingMode=false
+	// dependencies, since those must never be reused.
+	sharedByContent map[NodeKey]NodeKey
+
+	// nextInstance is a counter used by newInstanceKey to mint a graph-unique
+	// Instance value for each v2 SharingMode=false dependency.
+	nextInstance int
 }
 
 func newGraph() *Graph {
 	return &Graph{
-		Nodes:     make(map[NodeKey]*Node),
-		edgesFrom: make(map[NodeKey][]Edge),
-		edgesTo:   make(map[NodeKey][]Edge),
+		Nodes:           make(map[NodeKey]*Node),
+		edgesFrom:       make(map[NodeKey][]Edge),
+		edgesTo:         make(map[NodeKey][]Edge),
+		sharedByContent: make(map[NodeKey]NodeKey),
 	}
+}
+
+// newInstanceKey returns ck with a freshly allocated, graph-unique Instance
+// set, so the result can never equal any other node's key -- used for v2
+// dependencies declared with SharingMode=false, which must never collapse
+// with another instance even when content matches exactly.
+func (g *Graph) newInstanceKey(ck NodeKey) NodeKey {
+	g.nextInstance++
+	ck.Instance = g.nextInstance
+	return ck
 }
 
 func (g *Graph) addEdge(e Edge) {
@@ -187,7 +247,7 @@ func (g *Graph) TopologicalOrder() ([]*Node, error) {
 			ready = append(ready, k)
 		}
 	}
-	sort.Slice(ready, func(i, j int) bool { return ready[i].String() < ready[j].String() })
+	sort.Slice(ready, func(i, j int) bool { return ready[i].less(ready[j]) })
 
 	order := make([]*Node, 0, len(g.Nodes))
 	for len(ready) > 0 {
@@ -196,7 +256,7 @@ func (g *Graph) TopologicalOrder() ([]*Node, error) {
 		order = append(order, g.Nodes[k])
 
 		next := dependents[k]
-		sort.Slice(next, func(i, j int) bool { return next[i].String() < next[j].String() })
+		sort.Slice(next, func(i, j int) bool { return next[i].less(next[j]) })
 		for _, from := range next {
 			inDegree[from]--
 			if inDegree[from] == 0 {
@@ -219,9 +279,14 @@ func (g *Graph) TopologicalOrder() ([]*Node, error) {
 	return order, nil
 }
 
-// computeNodeKey builds the dedup key for a dependency given its resolved
-// reference and the wiring configuration that will be applied to it.
-func computeNodeKey(reference string, parameters, credentials map[string]string, sharingGroup string) NodeKey {
+// contentKey builds the dedup key for a dependency's content: its resolved
+// reference and the wiring configuration that will be applied to it, plus
+// its sharing group. Instance is left zero. Two dependencies with equal
+// contentKeys are the same declared dependency regardless of which alias(es)
+// reach them -- used directly as the NodeKey for shareable dependencies, and
+// used to recognize a genuine self-referential cycle (an ancestor still
+// being expanded with matching content) regardless of sharing mode.
+func contentKey(reference string, parameters, credentials map[string]string, sharingGroup string) NodeKey {
 	return NodeKey{
 		Reference:       reference,
 		ParametersHash:  hashStringMap(parameters),

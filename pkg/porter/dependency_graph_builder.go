@@ -3,6 +3,7 @@ package porter
 import (
 	"context"
 	"fmt"
+	"sort"
 
 	"get.porter.sh/porter/pkg/cnab"
 	cnabtooci "get.porter.sh/porter/pkg/cnab/cnab-to-oci"
@@ -35,7 +36,8 @@ func (b *GraphBuilder) BuildDependencyGraph(ctx context.Context, bun cnab.Extend
 	g.Root = root
 	g.Nodes[root] = &Node{Key: root, Bundle: bun}
 
-	if err := b.expandNode(ctx, g, root, bun, opts, 0); err != nil {
+	ancestors := make(map[NodeKey]NodeKey)
+	if err := b.expandNode(ctx, g, root, bun, opts, 0, ancestors); err != nil {
 		return nil, err
 	}
 
@@ -51,13 +53,18 @@ func (b *GraphBuilder) BuildDependencyGraph(ctx context.Context, bun cnab.Extend
 // dependencies, 1 for their dependencies, and so on, matching how
 // InspectableDependency.Depth has always been reported), and recurses.
 //
-// A node is added to g.Nodes before its own dependencies are expanded, so a
-// cycle (a dependency that transitively requires or is wired back to an
-// ancestor still being expanded) always finds that ancestor already present
-// and simply stops recursing there rather than looping forever; the full
-// cycle -- spanning both requires and wiring edges, with every participating
-// node -- is then reported in one place by BuildDependencyGraph's final
-// TopologicalOrder call, instead of duplicating a partial check here.
+// ancestors maps the contentKey of every node currently being expanded (on
+// this call's recursion stack) to the NodeKey it was assigned, regardless of
+// whether that node is shareable. A dependency whose content matches an
+// ancestor is a genuine self-referential cycle -- it must reuse the
+// ancestor's key (closing a real cycle for TopologicalOrder to catch,
+// instead of minting a new node and recursing forever) even if it's a v2
+// dependency declared SharingMode=false, since sharing intent is moot when
+// it's structurally pointing back to itself. A node is added to ancestors
+// before its own dependencies are expanded and removed once expansion
+// returns, so this only ever matches a still-in-progress ancestor, not an
+// already-completed sibling elsewhere in the graph (that case is handled by
+// g.sharedByContent instead, for shareable dependencies only).
 func (b *GraphBuilder) expandNode(
 	ctx context.Context,
 	g *Graph,
@@ -65,13 +72,15 @@ func (b *GraphBuilder) expandNode(
 	bun cnab.ExtendedBundle,
 	opts ExplainOpts,
 	depth int,
+	ancestors map[NodeKey]NodeKey,
 ) error {
 	if depth >= b.maxDepth {
 		fmt.Fprintf(b.porter.Err, "warning: dependency graph exceeds max depth of %d, stopping traversal\n", b.maxDepth)
 		return nil
 	}
 
-	if !bun.HasDependenciesV1() && !bun.HasDependenciesV2() {
+	isV2 := bun.HasDependenciesV2()
+	if !bun.HasDependenciesV1() && !isV2 {
 		return nil
 	}
 
@@ -91,10 +100,18 @@ func (b *GraphBuilder) expandNode(
 		return fmt.Errorf("failed to resolve dependencies: %w", err)
 	}
 
+	// v2 resolution iterates a map (ExtendedBundle.ResolveSharedDeps), so
+	// locks come back in random order; sort by alias so requires-edges (and
+	// therefore inspect's rendered order) are deterministic across runs. v1
+	// locks are already ordered by sequence, which sorting would disturb.
+	if isV2 {
+		sort.Slice(locks, func(i, j int) bool { return locks[i].Alias < locks[j].Alias })
+	}
+
 	// Gather each dependency's wiring configuration (v2 only) up front, so
 	// dedup keys and wiring edges can both be computed per-lock.
 	var v2Requires map[string]v2.Dependency
-	if bun.HasDependenciesV2() {
+	if isV2 {
 		v2Deps, err := bun.ReadDependenciesV2()
 		if err != nil {
 			return fmt.Errorf("failed to read v2 dependencies: %w", err)
@@ -113,7 +130,25 @@ func (b *GraphBuilder) expandNode(
 			credentials = dep.Credentials
 		}
 
-		childKey := computeNodeKey(lock.Reference, parameters, credentials, lock.SharingGroup)
+		// v1 has no sharing concept and always dedupes by content; v2 only
+		// shares an instance when the dependency itself opts in.
+		shareable := !isV2 || lock.SharingMode
+		ck := contentKey(lock.Reference, parameters, credentials, lock.SharingGroup)
+
+		var childKey NodeKey
+		if ancestorKey, onStack := ancestors[ck]; onStack {
+			childKey = ancestorKey
+		} else if shareable {
+			if existing, ok := g.sharedByContent[ck]; ok {
+				childKey = existing
+			} else {
+				childKey = ck
+			}
+		} else {
+			// v2, SharingMode=false, and not a cycle: must never collapse
+			// with any other instance, even one with identical content.
+			childKey = g.newInstanceKey(ck)
+		}
 		aliasToKey[lock.Alias] = childKey
 
 		g.addEdge(Edge{
@@ -125,9 +160,10 @@ func (b *GraphBuilder) expandNode(
 			SharingGroup: lock.SharingGroup,
 		})
 
-		// A node already present means either a diamond (fully expanded
-		// elsewhere) or a cycle back to an ancestor still being expanded --
-		// either way, don't re-pull or re-recurse; see the doc comment above.
+		// A node already present means either a shareable dependency fully
+		// expanded elsewhere (a diamond) or a cycle back to an ancestor
+		// still being expanded (childKey resolved to that ancestor's key,
+		// above) -- either way, don't re-pull or re-recurse.
 		if _, ok := g.Nodes[childKey]; ok {
 			continue
 		}
@@ -143,7 +179,14 @@ func (b *GraphBuilder) expandNode(
 		}
 		node.Bundle = childBun
 
-		if err := b.expandNode(ctx, g, childKey, childBun, opts, depth+1); err != nil {
+		if shareable {
+			g.sharedByContent[ck] = childKey
+		}
+
+		ancestors[ck] = childKey
+		err = b.expandNode(ctx, g, childKey, childBun, opts, depth+1, ancestors)
+		delete(ancestors, ck)
+		if err != nil {
 			return err
 		}
 	}
