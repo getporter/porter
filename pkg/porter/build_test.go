@@ -1,6 +1,7 @@
 package porter
 
 import (
+	"errors"
 	"fmt"
 	"testing"
 
@@ -109,4 +110,10 @@ func TestBuildOptions_Validate_PorterFileConflict(t *testing.T) {
 		require.ErrorContains(t, err, "a file or directory named \"porter\" exists")
 		require.ErrorContains(t, err, "will conflict with Porter's internal directory structure")
 	})
+}
+
+func TestErrLintFailed_Is(t *testing.T) {
+	err := fmt.Errorf("wrapped: %w", ErrLintFailed{})
+	assert.True(t, errors.Is(err, ErrLintFailed{}))
+	assert.ErrorContains(t, err, "Rerun with --no-lint to ignore the errors")
 }
