@@ -61,8 +61,22 @@ type Tester struct {
 	// Useful for constructing paths that won't break when the test is moved.
 	RepoRoot string
 
+	// extraEnv holds additional environment variables set via SetEnv, applied
+	// to every porter subprocess this Tester runs. It's a plain map (not a
+	// pointer) because map values already have reference semantics, so
+	// mutations through a value-receiver method are visible to every copy of
+	// this Tester.
+	extraEnv map[string]string
+
 	// T is the test helper.
 	T *testing.T
+}
+
+// SetEnv sets an environment variable that is passed to every porter command
+// this Tester runs afterward. Unlike os.Setenv, this only affects this
+// Tester's own subprocesses, so it's safe to use from parallel tests.
+func (t Tester) SetEnv(key, value string) {
+	t.extraEnv[key] = value
 }
 
 // NewTest sets up for a smoke test.
@@ -79,7 +93,7 @@ func NewTest(t *testing.T) (Tester, error) {
 // Always defer Tester.Close(), even when an error is returned.
 func NewTestWithConfig(t *testing.T, configFilePath string) (Tester, error) {
 	var err error
-	test := &Tester{T: t}
+	test := &Tester{T: t, extraEnv: make(map[string]string)}
 
 	test.TestContext = portercontext.NewTestContext(t)
 	test.TestContext.UseFilesystem()
@@ -182,10 +196,10 @@ func (t Tester) buildPorterCommand(opts ...func(*shx.PreparedCommand)) shx.Prepa
 			"PORTER_HOME="+t.PorterHomeDir,
 			"PORTER_TEST_DB_NAME="+t.dbName,
 			"PORTER_VERBOSITY=debug",
-			// These are environment variables referenced by the mybuns credential set.
-			"USER=porterci",
-			"ALT_USER=porterci2",
 		)
+		for k, v := range t.extraEnv {
+			cmd.Env(k + "=" + v)
+		}
 		for _, opt := range opts {
 			opt(&cmd)
 		}
