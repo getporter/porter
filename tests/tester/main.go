@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 
 	"get.porter.sh/porter/pkg/portercontext"
@@ -17,9 +18,33 @@ import (
 	"github.com/uwu-tools/magex/shx"
 )
 
-type Tester struct {
-	originalPwd string
+// mongoBootstrapMu serializes the "does the shared mongo container exist,
+// if not create it" check so that parallel tests don't race to `docker run`
+// the same fixed container name. Each test still creates/removes its own
+// database inside that shared container concurrently.
+var mongoBootstrapMu sync.Mutex
 
+// syncBuffer is a bytes.Buffer safe for concurrent writes. Needed anywhere a
+// buffer is shared between a command's stdout and stderr, since exec.Cmd
+// copies each of those streams in its own concurrent goroutine.
+type syncBuffer struct {
+	mu  sync.Mutex
+	buf bytes.Buffer
+}
+
+func (b *syncBuffer) Write(p []byte) (int, error) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	return b.buf.Write(p)
+}
+
+func (b *syncBuffer) String() string {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	return b.buf.String()
+}
+
+type Tester struct {
 	// unique database name assigned to the test
 	dbName string
 
@@ -54,8 +79,7 @@ func NewTest(t *testing.T) (Tester, error) {
 // Always defer Tester.Close(), even when an error is returned.
 func NewTestWithConfig(t *testing.T, configFilePath string) (Tester, error) {
 	var err error
-	pwd, _ := os.Getwd()
-	test := &Tester{T: t, originalPwd: pwd}
+	test := &Tester{T: t}
 
 	test.TestContext = portercontext.NewTestContext(t)
 	test.TestContext.UseFilesystem()
@@ -73,9 +97,6 @@ func NewTestWithConfig(t *testing.T, configFilePath string) (Tester, error) {
 		return *test, err
 	}
 
-	os.Setenv("PORTER_HOME", test.PorterHomeDir)
-	os.Setenv("PATH", test.PorterHomeDir+string(os.PathListSeparator)+os.Getenv("PATH"))
-
 	return *test, test.startMongo(context.Background())
 }
 
@@ -85,6 +106,7 @@ func (t Tester) CurrentNamespace() string {
 }
 
 func (t Tester) startMongo(ctx context.Context) error {
+	mongoBootstrapMu.Lock()
 	conn, err := mongodb_docker.EnsureMongoIsRunning(ctx,
 		t.TestContext.Context,
 		"porter-smoke-test-mongodb-plugin",
@@ -93,6 +115,7 @@ func (t Tester) startMongo(ctx context.Context) error {
 		t.dbName,
 		10,
 	)
+	mongoBootstrapMu.Unlock()
 	if err != nil {
 		return err
 	}
@@ -129,10 +152,13 @@ func (t Tester) RunPorterWith(opts ...func(*shx.PreparedCommand)) (stdout string
 
 	cmd := t.buildPorterCommand(opts...)
 
-	// Copy stderr to stdout so we can return the "full" output printed to the console
+	// Copy stderr to stdout so we can return the "full" output printed to the console.
+	// exec.Cmd copies stdout and stderr concurrently in separate goroutines, so the
+	// buffer they both write into (output) needs its own synchronization; stdoutBuf
+	// and stderrBuf are each only ever written by a single goroutine and don't.
 	stdoutBuf := &bytes.Buffer{}
 	stderrBuf := &bytes.Buffer{}
-	output := &bytes.Buffer{}
+	output := &syncBuffer{}
 	cmd.Stdout(io.MultiWriter(stdoutBuf, output)).Stderr(io.MultiWriter(stderrBuf, output))
 
 	t.T.Log(cmd.String())
@@ -151,13 +177,26 @@ func (t Tester) buildPorterCommand(opts ...func(*shx.PreparedCommand)) shx.Prepa
 	debugCmdPrefix := os.Getenv("PORTER_RUN_IN_DEBUGGER")
 
 	configureCommand := func(cmd shx.PreparedCommand) {
-		cmd.Env("PORTER_HOME="+t.PorterHomeDir, "PORTER_TEST_DB_NAME="+t.dbName, "PORTER_VERBOSITY=debug")
+		cmd.In(t.TestContext.Getwd())
+		cmd.Env(
+			"PORTER_HOME="+t.PorterHomeDir,
+			"PORTER_TEST_DB_NAME="+t.dbName,
+			"PORTER_VERBOSITY=debug",
+			// These are environment variables referenced by the mybuns credential set.
+			"USER=porterci",
+			"ALT_USER=porterci2",
+		)
 		for _, opt := range opts {
 			opt(&cmd)
 		}
 	}
 
-	cmd := shx.Command("porter")
+	// Invoke the copied porter binary by its absolute path so that we never
+	// depend on (or race on) the real process PATH/LookPath.
+	cmd := shx.Command(filepath.Join(t.PorterHomeDir, "porter"))
+	// Keep Args[0]/display output as "porter" so PORTER_RUN_IN_DEBUGGER prefix
+	// matching below, and log output, still read as "porter ...".
+	cmd.Cmd.Args[0] = "porter"
 	configureCommand(cmd)
 
 	prettyCmd := cmd.String()
@@ -180,9 +219,6 @@ func (t Tester) Close() {
 
 	t.T.Log("Removing temp test directory")
 	os.RemoveAll(t.TestDir)
-
-	// Reset the current directory for the next test
-	t.Chdir(t.originalPwd)
 }
 
 // Create a test PORTER_HOME directory with the optional config file.
@@ -216,5 +252,4 @@ func (t *Tester) createPorterHome(configFilePath string) error {
 
 func (t Tester) Chdir(dir string) {
 	t.TestContext.Chdir(dir)
-	require.NoError(t.T, os.Chdir(dir))
 }

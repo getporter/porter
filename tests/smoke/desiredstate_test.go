@@ -87,7 +87,7 @@ func runDesiredStateTest(t *testing.T, enableOptimizedBuild bool) {
 	test.RequirePorter("credentials", "apply", filepath.Join(test.RepoRoot, "tests/testdata/creds/mybuns.yaml"), "--namespace=")
 	test.RequirePorter("credentials", "apply", filepath.Join(test.RepoRoot, "tests/testdata/creds/alt-mybuns.yaml"), "--namespace=")
 
-	mgx.Must(shx.Copy(filepath.Join(test.RepoRoot, "tests/testdata/installations/mybuns.yaml"), "mybuns.yaml"))
+	mgx.Must(shx.Copy(filepath.Join(test.RepoRoot, "tests/testdata/installations/mybuns.yaml"), filepath.Join(test.TestDir, "mybuns.yaml")))
 
 	// Import an installation with uninstalled=true, should do nothing
 	test.EditYaml("mybuns.yaml", func(yq *yaml.Editor) error {
