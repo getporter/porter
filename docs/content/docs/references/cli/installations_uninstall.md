@@ -54,6 +54,7 @@ porter installations uninstall [INSTALLATION] [flags]
   -f, --file porter.yaml                Path to the Porter manifest. Defaults to porter.yaml in the current directory.
       --force                           Force a fresh pull of the bundle
       --force-delete                    UNSAFE. Delete all records associated with the installation, even if uninstall fails. This is intended for cleaning up test data and is not recommended for production environments.
+      --force-run                       Run the bundle even if the installation has another incomplete run in progress.
   -h, --help                            help for uninstall
       --insecure-registry               Don't require TLS for the registry
       --mount-host-volume stringArray   Mount a host volume into the bundle. Format is <host path>:<container path>[:<option>]. May be specified multiple times. Option can be ro (read-only), rw (read-write), default is ro.
