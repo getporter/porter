@@ -19,9 +19,15 @@ type ExplainOpts struct {
 	BundleReferenceOptions
 	printer.PrintOptions
 
-	Action               string
-	ShowDependencies     bool
-	MaxDependencyDepth   int
+	Action             string
+	ShowDependencies   bool
+	MaxDependencyDepth int
+
+	// DependenciesVersionStrategy controls how dependency version ranges are
+	// resolved when building the dependency graph. Allowed values: exact,
+	// max-patch, max-minor, min. Defaults to the global config value
+	// (dependencies.version-strategy).
+	DependenciesVersionStrategy string
 }
 
 // PrintableBundle holds a subset of pertinent values to be explained from a bundle
@@ -152,6 +158,15 @@ func (o *ExplainOpts) Validate(args []string, pctx *portercontext.Context) error
 	if err != nil {
 		return err
 	}
+
+	if s := o.DependenciesVersionStrategy; s != "" {
+		switch s {
+		case "exact", "max-patch", "max-minor", "min":
+		default:
+			return fmt.Errorf("invalid dependencies-version-strategy %q: allowed values are exact, max-patch, max-minor, min", s)
+		}
+	}
+
 	if o.Reference != "" {
 		o.File = ""
 		o.CNABFile = ""
@@ -321,7 +336,6 @@ func generatePrintable(ctx context.Context, bun cnab.ExtendedBundle, action stri
 
 	return &pb, nil
 }
-
 
 // shouldIncludeInExplainOutput determine if a scoped item such as a credential, parameter or output
 // should be included in the explain output.
