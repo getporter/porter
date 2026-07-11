@@ -18,9 +18,8 @@ import (
 	"github.com/uwu-tools/magex/shx"
 )
 
-// mongoBootstrapMu serializes the "does the shared mongo container exist,
-// if not create it" check so that parallel tests don't race to `docker run`
-// the same fixed container name. Each test still creates/removes its own
+// mongoBootstrapMu serializes calls to EnsureMongoIsRunning so that parallel tests
+// don't race to `docker run` the same fixed container name. Each test still creates/removes its own
 // database inside that shared container concurrently.
 var mongoBootstrapMu sync.Mutex
 
