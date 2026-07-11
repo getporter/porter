@@ -88,7 +88,7 @@ func TestFlattenDependencyTree(t *testing.T) {
 	assert.Equal(t, 0, flattened[2].Depth)
 }
 
-func TestBuildDependencyTree_V1(t *testing.T) {
+func TestBuildDependencyGraph_V1(t *testing.T) {
 	// Create a bundle with v1 dependencies
 	// Note: Using explicit tag in bundle reference to avoid version resolution
 	bun := cnab.ExtendedBundle{
@@ -110,13 +110,14 @@ func TestBuildDependencyTree_V1(t *testing.T) {
 	p := NewTestPorter(t)
 	defer p.Close()
 
-	builder := NewDependencyTreeBuilder(p.Porter, 10)
+	builder := NewGraphBuilder(p.Porter, 10)
 	opts := ExplainOpts{
 		MaxDependencyDepth: 10,
 	}
-	deps, err := builder.BuildDependencyTree(context.Background(), bun, opts)
-
+	graph, err := builder.BuildDependencyGraph(context.Background(), bun, opts)
 	require.NoError(t, err)
+
+	deps := graphToInspectableDependencies(graph, graph.Root, 0)
 	require.Len(t, deps, 1)
 
 	assert.Equal(t, "mysql", deps[0].Alias)
@@ -124,7 +125,7 @@ func TestBuildDependencyTree_V1(t *testing.T) {
 	assert.Equal(t, 0, deps[0].Depth)
 }
 
-func TestBuildDependencyTree_V2(t *testing.T) {
+func TestBuildDependencyGraph_V2(t *testing.T) {
 	// Create v2 dependencies
 	// Note: Using explicit tag in bundle reference to avoid version resolution
 	v2Deps := depsv2.Dependencies{
@@ -171,13 +172,14 @@ func TestBuildDependencyTree_V2(t *testing.T) {
 	p := NewTestPorter(t)
 	defer p.Close()
 
-	builder := NewDependencyTreeBuilder(p.Porter, 10)
+	builder := NewGraphBuilder(p.Porter, 10)
 	opts := ExplainOpts{
 		MaxDependencyDepth: 10,
 	}
-	deps, err := builder.BuildDependencyTree(context.Background(), bun, opts)
-
+	graph, err := builder.BuildDependencyGraph(context.Background(), bun, opts)
 	require.NoError(t, err)
+
+	deps := graphToInspectableDependencies(graph, graph.Root, 0)
 	require.Len(t, deps, 1)
 
 	assert.Equal(t, "nginx", deps[0].Alias)
@@ -190,7 +192,7 @@ func TestBuildDependencyTree_V2(t *testing.T) {
 	assert.Equal(t, "nginx-endpoint", deps[0].Outputs["endpoint"])
 }
 
-func TestBuildDependencyTree_NoDependencies(t *testing.T) {
+func TestBuildDependencyGraph_NoDependencies(t *testing.T) {
 	// Create a bundle without dependencies
 	bun := cnab.ExtendedBundle{
 		Bundle: bundle.Bundle{
@@ -202,13 +204,14 @@ func TestBuildDependencyTree_NoDependencies(t *testing.T) {
 	p := NewTestPorter(t)
 	defer p.Close()
 
-	builder := NewDependencyTreeBuilder(p.Porter, 10)
+	builder := NewGraphBuilder(p.Porter, 10)
 	opts := ExplainOpts{
 		MaxDependencyDepth: 10,
 	}
-	deps, err := builder.BuildDependencyTree(context.Background(), bun, opts)
-
+	graph, err := builder.BuildDependencyGraph(context.Background(), bun, opts)
 	require.NoError(t, err)
+
+	deps := graphToInspectableDependencies(graph, graph.Root, 0)
 	assert.Nil(t, deps)
 }
 

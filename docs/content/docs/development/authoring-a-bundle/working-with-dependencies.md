@@ -220,8 +220,15 @@ For example:
 
 ## Dependency Graph
 
-At this time Porter only supports direct dependencies. Dependencies of dependencies, a.k.a.
-transitive dependencies, are ignored. See [Design: Dependency Graph Resolution](https://github.com/getporter/porter/issues/69)
+`porter inspect --show-dependencies` resolves and displays the bundle's full transitive
+dependency graph, not just its direct dependencies. Dependencies shared by more than one
+parent are deduplicated to a single node, and, for dependencies v2 (shared) bundles,
+output-wiring relationships between sibling dependencies are detected and shown. Traversal
+stops at `--max-dependency-depth` levels (10 by default).
+
+Execution is more limited: `install`, `upgrade`, and `uninstall` only resolve and run a
+bundle's **direct** dependencies. Transitive dependencies are not automatically installed at
+this time. See [Design: Dependency Graph Resolution](https://github.com/getporter/porter/issues/69)
 for our backlog item tracking this feature. We do plan to support it!
 
 [example]: /src/build/testdata/bundles/wordpress/porter.yaml

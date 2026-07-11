@@ -36,6 +36,12 @@ like parameters, credentials, outputs and custom actions available.
 		"Show the full dependency tree of the bundle")
 	f.IntVar(&opts.MaxDependencyDepth, "max-dependency-depth", 10,
 		"Maximum depth to traverse when showing dependencies")
+	f.StringVar(&opts.DependenciesVersionStrategy, "dependencies-version-strategy", "",
+		"Strategy for resolving dependency version ranges. Allowed values: exact, max-patch, max-minor, min.")
 	addBundlePullFlags(f, &opts.BundlePullOptions)
+
+	cmd.Flag("dependencies-version-strategy").Annotations = map[string][]string{
+		"viper-key": {"dependencies.version-strategy"},
+	}
 	return &cmd
 }

@@ -5,7 +5,6 @@ package smoke
 import (
 	"encoding/json"
 	"fmt"
-	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -45,6 +44,7 @@ func TestAirgappedEnvironment(t *testing.T) {
 	for _, tc := range testcases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			insecureFlag := fmt.Sprintf("--insecure-registry=%t", tc.insecure)
 
 			test, err := tester.NewTest(t)
@@ -53,8 +53,7 @@ func TestAirgappedEnvironment(t *testing.T) {
 
 			// Enable optimized build if requested
 			if tc.enableOptimizedBuild {
-				os.Setenv("PORTER_EXPERIMENTAL", "optimized-bundle-build")
-				defer os.Unsetenv("PORTER_EXPERIMENTAL")
+				test.SetEnv("PORTER_EXPERIMENTAL", "optimized-bundle-build")
 			}
 
 			test.Chdir(test.TestDir)

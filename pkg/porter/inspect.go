@@ -19,18 +19,39 @@ type InspectableBundle struct {
 }
 
 type InspectableDependency struct {
-	Alias            string                  `json:"alias" yaml:"alias"`
-	Reference        string                  `json:"reference" yaml:"reference"`
-	Version          string                  `json:"version,omitempty" yaml:"version,omitempty"`
-	Depth            int                     `json:"depth" yaml:"depth"`
-	SharingMode      bool                    `json:"sharingMode,omitempty" yaml:"sharingMode,omitempty"`
-	SharingGroup     string                  `json:"sharingGroup,omitempty" yaml:"sharingGroup,omitempty"`
-	Parameters       map[string]string       `json:"parameters,omitempty" yaml:"parameters,omitempty"`
-	Credentials      map[string]string       `json:"credentials,omitempty" yaml:"credentials,omitempty"`
-	Outputs          map[string]string       `json:"outputs,omitempty" yaml:"outputs,omitempty"`
+	Alias        string            `json:"alias" yaml:"alias"`
+	Reference    string            `json:"reference" yaml:"reference"`
+	Version      string            `json:"version,omitempty" yaml:"version,omitempty"`
+	Depth        int               `json:"depth" yaml:"depth"`
+	SharingMode  bool              `json:"sharingMode,omitempty" yaml:"sharingMode,omitempty"`
+	SharingGroup string            `json:"sharingGroup,omitempty" yaml:"sharingGroup,omitempty"`
+	Parameters   map[string]string `json:"parameters,omitempty" yaml:"parameters,omitempty"`
+	Credentials  map[string]string `json:"credentials,omitempty" yaml:"credentials,omitempty"`
+	Outputs      map[string]string `json:"outputs,omitempty" yaml:"outputs,omitempty"`
+	// WiringEdges lists the other dependencies (siblings under the same
+	// parent) that this dependency's parameters, credentials, or outputs
+	// are sourced from, i.e. that this dependency requires to run first.
+	WiringEdges []WiringEdgeSummary `json:"wiringEdges,omitempty" yaml:"wiringEdges,omitempty"`
+	// Warnings holds non-fatal authoring problems found on this dependency,
+	// such as a wiring reference naming a sibling that doesn't exist.
+	Warnings         []string                `json:"warnings,omitempty" yaml:"warnings,omitempty"`
 	Dependencies     []InspectableDependency `json:"dependencies,omitempty" yaml:"dependencies,omitempty"`
 	ResolutionError  string                  `json:"resolutionError,omitempty" yaml:"resolutionError,omitempty"`
 	ResolutionFailed bool                    `json:"-" yaml:"-"`
+}
+
+// WiringEdgeSummary describes one data-flow dependency between two sibling
+// dependencies: a parameter, credential, or output value on this dependency
+// is sourced from another dependency's output.
+type WiringEdgeSummary struct {
+	// Field is the map the reference was found in: "parameters", "credentials", or "outputs".
+	Field string `json:"field" yaml:"field"`
+	// FieldName is the key within that map.
+	FieldName string `json:"fieldName" yaml:"fieldName"`
+	// SourceDependencyAlias is the alias of the sibling dependency being referenced.
+	SourceDependencyAlias string `json:"sourceDependencyAlias" yaml:"sourceDependencyAlias"`
+	// SourceOutput is the name of the output on the sibling dependency being referenced.
+	SourceOutput string `json:"sourceOutput" yaml:"sourceOutput"`
 }
 
 type PrintableInvocationImage struct {
@@ -65,14 +86,14 @@ func generateInspectableBundle(ctx context.Context, p *Porter, bundleRef cnab.Bu
 	}
 	ib.InvocationImages, ib.Images = handleInspectRelocate(bundleRef)
 
-	// Build dependency tree when flag is set
+	// Build the dependency graph when flag is set
 	if opts.ShowDependencies && (bundleRef.Definition.HasDependenciesV1() || bundleRef.Definition.HasDependenciesV2()) {
-		builder := NewDependencyTreeBuilder(p, opts.MaxDependencyDepth)
-		deps, err := builder.BuildDependencyTree(ctx, bundleRef.Definition, opts)
+		builder := NewGraphBuilder(p, opts.MaxDependencyDepth)
+		graph, err := builder.BuildDependencyGraph(ctx, bundleRef.Definition, opts)
 		if err != nil {
-			return nil, fmt.Errorf("failed to build dependency tree: %w", err)
+			return nil, fmt.Errorf("failed to build dependency graph: %w", err)
 		}
-		ib.Dependencies = deps
+		ib.Dependencies = graphToInspectableDependencies(graph, graph.Root, 0)
 	}
 
 	return ib, nil

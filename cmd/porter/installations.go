@@ -434,6 +434,8 @@ func addBundleActionFlags(f *pflag.FlagSet, actionOpts porter.BundleAction) {
 	addBundlePullFlags(f, &opts.BundlePullOptions)
 	f.BoolVar(&opts.AllowDockerHostAccess, "allow-docker-host-access", false,
 		"Controls if the bundle should have access to the host's Docker daemon with elevated privileges. See https://porter.sh/configuration/#allow-docker-host-access for the full implications of this flag.")
+	f.BoolVar(&opts.ForceRun, "force-run", false,
+		"Run the bundle even if the installation has another incomplete run in progress.")
 	f.StringArrayVar(&opts.HostVolumeMounts, "mount-host-volume", nil, "Mount a host volume into the bundle. Format is <host path>:<container path>[:<option>]. May be specified multiple times. Option can be ro (read-only), rw (read-write), default is ro.")
 	f.BoolVar(&opts.NoLogs, "no-logs", false,
 		"Do not persist the bundle execution logs")

@@ -9,7 +9,9 @@ import (
 	"path/filepath"
 	"testing"
 
+	"get.porter.sh/porter/pkg/experimental"
 	"get.porter.sh/porter/pkg/porter"
+	"get.porter.sh/porter/pkg/yaml"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -279,6 +281,114 @@ uninstall:
 	require.NoError(p.T(), err)
 }
 
+// TestInspectDiamondDependencyIsResolvedOnce verifies that a dependency
+// shared by two different parents (a diamond: diamond-top requires both
+// diamond-app-a and diamond-app-b, and both of those require the same
+// mysql bundle) is resolved consistently under each branch -- same
+// reference, correct depth, no resolution errors -- confirming transitive
+// resolution reaches the shared dependency correctly from both paths.
+func TestInspectDiamondDependencyIsResolvedOnce(t *testing.T) {
+	t.Parallel()
+	p := porter.NewTestPorter(t)
+	defer p.Close()
+	ctx := p.SetupIntegrationTest()
+
+	publishMySQLForInspect(ctx, p)
+	publishDiamondAppForInspect(ctx, p, "diamond-app-a")
+	publishDiamondAppForInspect(ctx, p, "diamond-app-b")
+	publishDiamondTopForInspect(ctx, p)
+
+	opts := porter.ExplainOpts{}
+	opts.Reference = "localhost:5000/diamond-top:v0.1.0"
+	opts.ShowDependencies = true
+	opts.MaxDependencyDepth = 10
+
+	err := opts.Validate(nil, p.Context)
+	require.NoError(t, err)
+
+	output, err := p.GetInspectOutput(ctx, opts)
+	require.NoError(t, err)
+
+	require.Len(t, output.Dependencies, 2, "should have 2 direct dependencies (diamond-app-a, diamond-app-b)")
+
+	deps := map[string]porter.InspectableDependency{}
+	for _, dep := range output.Dependencies {
+		deps[dep.Alias] = dep
+	}
+	appA, ok := deps["diamond-app-a"]
+	require.True(t, ok, "expected a diamond-app-a dependency")
+	appB, ok := deps["diamond-app-b"]
+	require.True(t, ok, "expected a diamond-app-b dependency")
+
+	assert.Equal(t, 0, appA.Depth)
+	assert.Equal(t, 0, appB.Depth)
+
+	require.Len(t, appA.Dependencies, 1, "diamond-app-a should have 1 dependency (mysql)")
+	require.Len(t, appB.Dependencies, 1, "diamond-app-b should have 1 dependency (mysql)")
+
+	mysqlUnderA := appA.Dependencies[0]
+	mysqlUnderB := appB.Dependencies[0]
+
+	assert.Equal(t, "mysql", mysqlUnderA.Alias)
+	assert.Equal(t, "mysql", mysqlUnderB.Alias)
+	assert.Equal(t, 1, mysqlUnderA.Depth, "mysql should be at depth 1 under diamond-app-a")
+	assert.Equal(t, 1, mysqlUnderB.Depth, "mysql should be at depth 1 under diamond-app-b")
+	assert.False(t, mysqlUnderA.ResolutionFailed)
+	assert.False(t, mysqlUnderB.ResolutionFailed)
+
+	require.Equal(t, "localhost:5000/mysql:v0.1.4", mysqlUnderA.Reference)
+	assert.Equal(t, mysqlUnderA.Reference, mysqlUnderB.Reference,
+		"a dependency shared by two parents must resolve to the same reference under both branches")
+}
+
+// publishDiamondAppForInspect publishes the diamond-app fixture bundle under
+// the given name (diamond-app-a or diamond-app-b), so the same template can
+// back both branches of the diamond.
+func publishDiamondAppForInspect(ctx context.Context, p *porter.TestPorter, name string) {
+	bunDir, err := os.MkdirTemp("", "porter-"+name)
+	require.NoError(p.T(), err)
+	defer os.RemoveAll(bunDir)
+
+	p.TestConfig.TestContext.AddTestDirectory(filepath.Join(p.RepoRoot, "build/testdata/bundles/diamond-app"), bunDir)
+
+	manifestPath := filepath.Join(bunDir, "porter.yaml")
+	e := yaml.NewEditor(p.FileSystem)
+	require.NoError(p.T(), e.ReadFile(manifestPath))
+	require.NoError(p.T(), e.SetValue("name", name))
+	require.NoError(p.T(), e.WriteFile(manifestPath))
+
+	pwd := p.Getwd()
+	p.Chdir(bunDir)
+	defer p.Chdir(pwd)
+
+	publishOpts := porter.PublishOptions{}
+	publishOpts.Force = true
+	err = publishOpts.Validate(p.Config)
+	require.NoError(p.T(), err)
+
+	err = p.Publish(ctx, publishOpts)
+	require.NoError(p.T(), err)
+}
+
+func publishDiamondTopForInspect(ctx context.Context, p *porter.TestPorter) {
+	bunDir, err := os.MkdirTemp("", "porter-diamond-top")
+	require.NoError(p.T(), err)
+	defer os.RemoveAll(bunDir)
+
+	p.TestConfig.TestContext.AddTestDirectory(filepath.Join(p.RepoRoot, "build/testdata/bundles/diamond-top"), bunDir)
+	pwd := p.Getwd()
+	p.Chdir(bunDir)
+	defer p.Chdir(pwd)
+
+	publishOpts := porter.PublishOptions{}
+	publishOpts.Force = true
+	err = publishOpts.Validate(p.Config)
+	require.NoError(p.T(), err)
+
+	err = p.Publish(ctx, publishOpts)
+	require.NoError(p.T(), err)
+}
+
 // TestInspectDependenciesWithFailures verifies that failed dependencies are marked with warning emoji
 func TestInspectDependenciesWithFailures(t *testing.T) {
 	t.Parallel()
@@ -313,4 +423,114 @@ func TestInspectDependenciesWithFailures(t *testing.T) {
 	assert.True(t, mysqlDep.ResolutionFailed, "mysql dependency should have failed to resolve")
 	assert.NotEmpty(t, mysqlDep.ResolutionError, "should have error message")
 	assert.Len(t, mysqlDep.Dependencies, 0, "failed dependency should have no nested dependencies")
+}
+
+// TestInspectWiringEdgeIsResolved verifies that porter inspect --show-dependencies
+// detects a DependenciesV2 wiring reference: wiring-top requires both "infra"
+// and "app", and app's "connstr" parameter is wired from infra's "ip"
+// output. This checks that the wiring edge is correctly resolved from the
+// published bundle.json (not just from an in-memory manifest), proving
+// output-wiring is part of what "resolved correctly" means for a
+// transitively-published dependency graph.
+func TestInspectWiringEdgeIsResolved(t *testing.T) {
+	t.Parallel()
+	p := porter.NewTestPorter(t)
+	defer p.Close()
+	ctx := p.SetupIntegrationTest()
+
+	p.Config.SetExperimentalFlags(experimental.FlagDependenciesV2)
+
+	publishWiringInfraForInspect(ctx, p)
+	publishWiringAppForInspect(ctx, p)
+	publishWiringTopForInspect(ctx, p)
+
+	opts := porter.ExplainOpts{}
+	opts.Reference = "localhost:5000/wiring-top:v0.1.0"
+	opts.ShowDependencies = true
+	opts.MaxDependencyDepth = 10
+
+	err := opts.Validate(nil, p.Context)
+	require.NoError(t, err)
+
+	output, err := p.GetInspectOutput(ctx, opts)
+	require.NoError(t, err)
+
+	require.Len(t, output.Dependencies, 2, "should have 2 direct dependencies (infra, app)")
+
+	deps := map[string]porter.InspectableDependency{}
+	for _, dep := range output.Dependencies {
+		deps[dep.Alias] = dep
+	}
+	infra, ok := deps["infra"]
+	require.True(t, ok, "expected an infra dependency")
+	app, ok := deps["app"]
+	require.True(t, ok, "expected an app dependency")
+
+	assert.Equal(t, 0, infra.Depth)
+	assert.Equal(t, 0, app.Depth)
+	assert.Empty(t, infra.WiringEdges, "infra doesn't wire from anything")
+
+	require.Len(t, app.WiringEdges, 1, "app's connstr parameter should be wired from infra's output")
+	wiring := app.WiringEdges[0]
+	assert.Equal(t, "parameters", wiring.Field)
+	assert.Equal(t, "connstr", wiring.FieldName)
+	assert.Equal(t, "infra", wiring.SourceDependencyAlias)
+	assert.Equal(t, "ip", wiring.SourceOutput)
+}
+
+func publishWiringInfraForInspect(ctx context.Context, p *porter.TestPorter) {
+	bunDir, err := os.MkdirTemp("", "porter-wiring-infra")
+	require.NoError(p.T(), err)
+	defer os.RemoveAll(bunDir)
+
+	p.TestConfig.TestContext.AddTestDirectory(filepath.Join(p.RepoRoot, "build/testdata/bundles/wiring-infra"), bunDir)
+	pwd := p.Getwd()
+	p.Chdir(bunDir)
+	defer p.Chdir(pwd)
+
+	publishOpts := porter.PublishOptions{}
+	publishOpts.Force = true
+	err = publishOpts.Validate(p.Config)
+	require.NoError(p.T(), err)
+
+	err = p.Publish(ctx, publishOpts)
+	require.NoError(p.T(), err)
+}
+
+func publishWiringAppForInspect(ctx context.Context, p *porter.TestPorter) {
+	bunDir, err := os.MkdirTemp("", "porter-wiring-app")
+	require.NoError(p.T(), err)
+	defer os.RemoveAll(bunDir)
+
+	p.TestConfig.TestContext.AddTestDirectory(filepath.Join(p.RepoRoot, "build/testdata/bundles/wiring-app"), bunDir)
+	pwd := p.Getwd()
+	p.Chdir(bunDir)
+	defer p.Chdir(pwd)
+
+	publishOpts := porter.PublishOptions{}
+	publishOpts.Force = true
+	err = publishOpts.Validate(p.Config)
+	require.NoError(p.T(), err)
+
+	err = p.Publish(ctx, publishOpts)
+	require.NoError(p.T(), err)
+}
+
+func publishWiringTopForInspect(ctx context.Context, p *porter.TestPorter) {
+	bunDir, err := os.MkdirTemp("", "porter-wiring-top")
+	require.NoError(p.T(), err)
+	defer os.RemoveAll(bunDir)
+
+	p.TestConfig.TestContext.AddTestDirectory(filepath.Join(p.RepoRoot, "build/testdata/bundles/wiring-top"), bunDir)
+	pwd := p.Getwd()
+	p.Chdir(bunDir)
+	defer p.Chdir(pwd)
+
+	publishOpts := porter.PublishOptions{}
+	publishOpts.Force = true
+	err = publishOpts.Validate(p.Config)
+	require.NoError(p.T(), err)
+
+	err = p.Publish(ctx, publishOpts)
+	require.NoError(p.T(), err)
 }
