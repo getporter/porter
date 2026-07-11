@@ -12,6 +12,7 @@ import (
 )
 
 func TestLint(t *testing.T) {
+	t.Parallel()
 	test, err := tester.NewTest(t)
 	defer test.Close()
 	require.NoError(t, err, "test setup failed")
@@ -37,6 +38,7 @@ func TestLint(t *testing.T) {
 }
 
 func TestLint_ApplyToParam(t *testing.T) {
+	t.Parallel()
 	test, err := tester.NewTest(t)
 	defer test.Close()
 	require.NoError(t, err, "test setup failed")
@@ -49,6 +51,7 @@ func TestLint_ApplyToParam(t *testing.T) {
 }
 
 func TestLint_DependenciesSameName(t *testing.T) {
+	t.Parallel()
 	test, err := tester.NewTest(t)
 	defer test.Close()
 	require.NoError(t, err, "test setup failed")

@@ -3,7 +3,6 @@
 package integration
 
 import (
-	"os"
 	"path/filepath"
 	"testing"
 
@@ -17,6 +16,7 @@ import (
 // Validate that we can use PORTER_RUNTIME_DRIVER with
 // porter commands and have that set the --driver flag.
 func TestBindRuntimeDriverConfiguration(t *testing.T) {
+	t.Parallel()
 	test, err := tester.NewTest(t)
 	defer test.Close()
 	require.NoError(t, err, "test setup failed")
@@ -25,8 +25,7 @@ func TestBindRuntimeDriverConfiguration(t *testing.T) {
 	test.Chdir(test.TestDir)
 
 	// Set the driver to something that will fail validation so we know it was picked up
-	os.Setenv("PORTER_RUNTIME_DRIVER", "fake")
-	defer os.Unsetenv("PORTER_RUNTIME_DRIVER")
+	test.SetEnv("PORTER_RUNTIME_DRIVER", "fake")
 
 	// Check that the imperative commands are using this environment variable
 	_, _, err = test.RunPorter("install", testdata.MyBuns)
@@ -49,13 +48,13 @@ func TestBindRuntimeDriverConfiguration(t *testing.T) {
 // Validate that we can use PORTER_BUILD_DRIVER with
 // porter build and have that set the --driver flag.
 func TestBindBuildDriverConfiguration(t *testing.T) {
+	t.Parallel()
 	test, err := tester.NewTest(t)
 	defer test.Close()
 	require.NoError(t, err, "test setup failed")
 
 	// Set the driver to something that will fail validation so we know it was picked up
-	os.Setenv("PORTER_BUILD_DRIVER", "fake")
-	defer os.Unsetenv("PORTER_BUILD_DRIVER")
+	test.SetEnv("PORTER_BUILD_DRIVER", "fake")
 
 	t.Run("build", func(t *testing.T) {
 		_, _, err = test.RunPorter("build")

@@ -34,9 +34,11 @@ func (t Tester) PrepareTestBundle() {
 
 // ApplyTestBundlePrerequisites ensures that anything required by the test bundle, mybuns, is ready to use.
 func (t Tester) ApplyTestBundlePrerequisites() {
-	// These are environment variables referenced by the mybuns credential set
-	os.Setenv("USER", "porterci")
-	os.Setenv("ALT_USER", "porterci2")
+	// These are environment variables referenced by the mybuns credential set.
+	// Set via SetEnv (not os.Setenv) so they're scoped to this Tester's own
+	// subprocesses and stick around for any later command that resolves them.
+	t.SetEnv("USER", "porterci")
+	t.SetEnv("ALT_USER", "porterci2")
 
 	t.RequirePorter("parameters", "apply", filepath.Join(t.RepoRoot, "tests/testdata/params/mybuns.yaml"), "--namespace=")
 	t.RequirePorter("credentials", "apply", filepath.Join(t.RepoRoot, "tests/testdata/creds/mybuns.yaml"), "--namespace=")
@@ -51,7 +53,7 @@ func (t Tester) MakeTestBundle(name string, ref string, options ...func(*TestBun
 	if _, _, err := t.RunPorter("explain", ref); err == nil {
 		return
 	}
-	pwd, _ := os.Getwd()
+	pwd := t.TestContext.Getwd()
 	defer t.Chdir(pwd)
 	t.Chdir(filepath.Join(t.RepoRoot, "tests/testdata/", name))
 	output, err := shx.OutputS("docker", "inspect", strings.Replace(ref, name, name+"-installer", 1))
