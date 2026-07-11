@@ -40,6 +40,11 @@ type InstallationProvider interface {
 	// ListRuns returns Run documents sorted in ascending order by ID.
 	ListRuns(ctx context.Context, namespace string, installation string) ([]Run, map[string][]Result, error)
 
+	// GetActiveRuns returns runs for the installation that have not yet
+	// reached a terminal status (succeeded, failed, canceled), for example a
+	// run with no result yet, or whose last result is pending/running/unknown.
+	GetActiveRuns(ctx context.Context, namespace string, installation string) ([]Run, error)
+
 	// ListResults returns Result documents sorted in ascending order by ID.
 	ListResults(ctx context.Context, runID string) ([]Result, error)
 

@@ -91,6 +91,10 @@ type BundleExecutionOptions struct {
 	// Allowed values: exact, max-patch, max-minor, min.
 	// Defaults to the global config value (dependencies.version-strategy).
 	DependenciesVersionStrategy string
+
+	// ForceRun bypasses the check that prevents starting a new run for an
+	// installation that already has an incomplete run.
+	ForceRun bool
 }
 
 func NewBundleExecutionOptions() *BundleExecutionOptions {
@@ -376,6 +380,7 @@ func (p *Porter) BuildActionArgs(ctx context.Context, installation storage.Insta
 		AllowDockerHostAccess: opts.AllowDockerHostAccess,
 		HostVolumeMounts:      opts.GetHostVolumeMounts(),
 		PersistLogs:           !opts.NoLogs,
+		ForceRun:              opts.ForceRun,
 	}
 	return args, nil
 }

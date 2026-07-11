@@ -55,6 +55,7 @@ porter installations install [INSTALLATION] [flags]
   -d, --driver string                          Specify a driver to use. Allowed values: docker, debug (default "docker")
   -f, --file porter.yaml                       Path to the Porter manifest. Defaults to porter.yaml in the current directory.
       --force                                  Force a fresh pull of the bundle
+      --force-run                              Run the bundle even if the installation has another incomplete run in progress.
   -h, --help                                   help for install
       --insecure-registry                      Don't require TLS for the registry
   -l, --label strings                          Associate the specified labels with the installation. May be specified multiple times.

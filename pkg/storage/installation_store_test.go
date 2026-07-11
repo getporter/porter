@@ -324,6 +324,49 @@ func TestInstallationStorageProvider_Run(t *testing.T) {
 	})
 }
 
+func TestInstallationStorageProvider_GetActiveRuns(t *testing.T) {
+	cp := generateInstallationData(t)
+	defer cp.Close()
+
+	t.Run("all runs terminal", func(t *testing.T) {
+		// foo's install/upgrade/test/uninstall runs all have a terminal result (succeeded, succeeded, failed, succeeded)
+		activeRuns, err := cp.GetActiveRuns(context.Background(), "dev", "foo")
+		require.NoError(t, err, "GetActiveRuns failed")
+		assert.Empty(t, activeRuns, "no runs should be active once every run has a terminal result")
+	})
+
+	t.Run("run with a running result followed by a terminal result", func(t *testing.T) {
+		// bar's only run went from running to succeeded, so it's no longer active
+		activeRuns, err := cp.GetActiveRuns(context.Background(), "dev", "bar")
+		require.NoError(t, err, "GetActiveRuns failed")
+		assert.Empty(t, activeRuns, "a run with a terminal result should not be active, even if it also has a running result")
+	})
+
+	t.Run("run stuck on a non-terminal result", func(t *testing.T) {
+		// baz has two install runs: the first failed (terminal), the second is still running (not terminal)
+		activeRuns, err := cp.GetActiveRuns(context.Background(), "dev", "baz")
+		require.NoError(t, err, "GetActiveRuns failed")
+		require.Len(t, activeRuns, 1, "expected only the still-running run to be active")
+		assert.Equal(t, cnab.ActionInstall, activeRuns[0].Action)
+	})
+
+	t.Run("run with no result yet", func(t *testing.T) {
+		pending := cp.CreateInstallation(NewInstallation("dev", "pending"))
+		run := cp.CreateRun(pending.NewRun(cnab.ActionInstall, cnab.ExtendedBundle{Bundle: exampleBundle}))
+
+		activeRuns, err := cp.GetActiveRuns(context.Background(), "dev", "pending")
+		require.NoError(t, err, "GetActiveRuns failed")
+		require.Len(t, activeRuns, 1, "a run without any result yet should be considered active")
+		assert.Equal(t, run.ID, activeRuns[0].ID)
+	})
+
+	t.Run("no runs for the installation", func(t *testing.T) {
+		activeRuns, err := cp.GetActiveRuns(context.Background(), "dev", "missing")
+		require.NoError(t, err, "GetActiveRuns failed")
+		assert.Empty(t, activeRuns)
+	})
+}
+
 func TestInstallationStorageProvider_Results(t *testing.T) {
 	cp := generateInstallationData(t)
 	defer cp.Close()
