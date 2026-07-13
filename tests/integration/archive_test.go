@@ -34,13 +34,13 @@ func TestArchive(t *testing.T) {
 		archive1Opts.Reference = reference
 		archiveFile1 := "mybuns1.tgz"
 		err := archive1Opts.Validate(ctx, []string{archiveFile1}, p.Porter)
-		require.NoError(p.T(), err, "validation of archive opts for bundle failed")
+		require.NoError(t, err, "validation of archive opts for bundle failed")
 
 		err = p.Archive(ctx, archive1Opts)
-		require.NoError(p.T(), err, "archival of bundle failed")
+		require.NoError(t, err, "archival of bundle failed")
 
 		info, err := p.FileSystem.Stat(archiveFile1)
-		require.NoError(p.T(), err)
+		require.NoError(t, err)
 		if runtime.GOOS != "windows" {
 			// permission bits make no sense on windows
 			tests.AssertFilePermissionsEqual(t, archiveFile1, pkg.FileModeWritable, info.Mode())
@@ -53,19 +53,16 @@ func TestArchive(t *testing.T) {
 		archive2Opts.Reference = reference
 		archiveFile2 := "mybuns2.tgz"
 		err = archive2Opts.Validate(ctx, []string{archiveFile2}, p.Porter)
-		require.NoError(p.T(), err, "validation of archive opts for bundle failed")
-
-		err = archive1Opts.Validate(ctx, []string{archiveFile2}, p.Porter)
-		require.NoError(t, err, "Second validate failed")
+		require.NoError(t, err, "validation of archive opts for bundle failed")
 
 		err = p.Archive(ctx, archive2Opts)
 		require.NoError(t, err, "Second archive failed")
-		assert.Equal(p.T(), hash1, getHash(p, archiveFile2), "shasum of archive did not stay the same on the second call to archive")
+		assert.Equal(t, hash1, getHash(p, archiveFile2), "shasum of archive did not stay the same on the second call to archive")
 
 		// the archive should match the hash below regardless of OS architecture, user and execution time
 		// regenerate if a dependency bump changes OCI layout JSON serialization (e.g. go-containerregistry)
 		consistentHash := "4e77cfd3dbfed032c4d938c9febaa5b55e5ca2fa40e159e79e42073f55a10f73"
-		assert.Equal(p.T(), consistentHash, hash1, "shasum of archive did not match expected hash")
+		assert.Equal(t, consistentHash, hash1, "shasum of archive did not match expected hash")
 
 		// Publish bundle from archive, with new reference
 		localReference := "localhost:5000/archived-whalegap:v0.2.0"
@@ -76,17 +73,17 @@ func TestArchive(t *testing.T) {
 			},
 		}
 		err = publishFromArchiveOpts.Validate(p.Config)
-		require.NoError(p.T(), err, "validation of publish opts for bundle failed")
+		require.NoError(t, err, "validation of publish opts for bundle failed")
 
 		err = p.Publish(ctx, publishFromArchiveOpts)
-		require.NoError(p.T(), err, "publish of bundle from archive failed")
+		require.NoError(t, err, "publish of bundle from archive failed")
 
 		// Archive from the newly published bundle in local registry
 		archive3Opts := porter.ArchiveOptions{}
 		archive3Opts.Reference = localReference
 		archiveFile3 := "mybuns3.tgz"
 		err = archive3Opts.Validate(ctx, []string{archiveFile3}, p.Porter)
-		require.NoError(p.T(), err, "validation of archive opts for bundle failed")
+		require.NoError(t, err, "validation of archive opts for bundle failed")
 		err = p.Archive(ctx, archive3Opts)
 		require.NoError(t, err, "archive from the published bundle in local registry failed")
 	})
@@ -98,17 +95,17 @@ func TestArchive(t *testing.T) {
 		archiveOpts.CompressionLevel = "NoCompression"
 		archiveFile := "mybuns1nocomp.tgz"
 		err := archiveOpts.Validate(ctx, []string{archiveFile}, p.Porter)
-		require.NoError(p.T(), err, "validation of archive opts for bundle failed")
+		require.NoError(t, err, "validation of archive opts for bundle failed")
 
 		err = p.Archive(ctx, archiveOpts)
-		require.NoError(p.T(), err, "archival of bundle failed")
+		require.NoError(t, err, "archival of bundle failed")
 
 		hash := getHash(p, archiveFile)
 
 		// different compressions yields different (but consistent) hashes
 		// regenerate if a dependency bump changes OCI layout JSON serialization (e.g. go-containerregistry)
 		consistentHash := "f07e870ca81ca4d5d0018d39c34f42731de4404712cb736dcd68af63797b37ec"
-		assert.Equal(p.T(), consistentHash, hash, "shasum of archive did not match expected hash")
+		assert.Equal(t, consistentHash, hash, "shasum of archive did not match expected hash")
 
 		// Publish bundle from archive, with new reference
 		localReference := "localhost:5000/archived-nocompression-whalegap:v0.2.0"
@@ -119,10 +116,10 @@ func TestArchive(t *testing.T) {
 			},
 		}
 		err = publishFromArchiveOpts.Validate(p.Config)
-		require.NoError(p.T(), err, "validation of publish opts for bundle failed")
+		require.NoError(t, err, "validation of publish opts for bundle failed")
 
 		err = p.Publish(ctx, publishFromArchiveOpts)
-		require.NoError(p.T(), err, "publish of bundle from archive failed")
+		require.NoError(t, err, "publish of bundle from archive failed")
 	})
 }
 
