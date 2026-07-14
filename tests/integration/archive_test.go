@@ -46,7 +46,7 @@ func TestArchive(t *testing.T) {
 			tests.AssertFilePermissionsEqual(t, archiveFile1, pkg.FileModeWritable, info.Mode())
 		}
 
-		hash1 := getHash(p, archiveFile1)
+		hash1 := getHash(t, p, archiveFile1)
 
 		// Check to be sure the shasum is stable after archiving a second time
 		archive2Opts := porter.ArchiveOptions{}
@@ -57,7 +57,7 @@ func TestArchive(t *testing.T) {
 
 		err = p.Archive(ctx, archive2Opts)
 		require.NoError(t, err, "Second archive failed")
-		assert.Equal(t, hash1, getHash(p, archiveFile2), "shasum of archive did not stay the same on the second call to archive")
+		assert.Equal(t, hash1, getHash(t, p, archiveFile2), "shasum of archive did not stay the same on the second call to archive")
 
 		// the archive should match the hash below regardless of OS architecture, user and execution time
 		// regenerate if a dependency bump changes OCI layout JSON serialization (e.g. go-containerregistry)
@@ -100,7 +100,7 @@ func TestArchive(t *testing.T) {
 		err = p.Archive(ctx, archiveOpts)
 		require.NoError(t, err, "archival of bundle failed")
 
-		hash := getHash(p, archiveFile)
+		hash := getHash(t, p, archiveFile)
 
 		// different compressions yields different (but consistent) hashes
 		// regenerate if a dependency bump changes OCI layout JSON serialization (e.g. go-containerregistry)
@@ -123,14 +123,14 @@ func TestArchive(t *testing.T) {
 	})
 }
 
-func getHash(p *porter.TestPorter, path string) string {
+func getHash(t *testing.T, p *porter.TestPorter, path string) string {
 	f, err := p.FileSystem.Open(path)
-	require.NoError(p.T(), err, "opening archive failed")
+	require.NoError(t, err, "opening archive failed")
 	defer f.Close()
 
 	h := sha256.New()
 	_, err = io.Copy(h, f)
-	require.NoError(p.T(), err, "hashing of archive failed")
+	require.NoError(t, err, "hashing of archive failed")
 
 	return fmt.Sprintf("%x", h.Sum(nil))
 }
