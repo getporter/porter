@@ -224,6 +224,9 @@ func (m *Migration) migrateInstallation(ctx context.Context, installationName st
 
 	// Sort the claims earliest to latest and assign the installation id
 	// to the earliest claim id. This gives us a consistent installation id when the migration is repeated.
+	if len(claimIDs) == 0 {
+		return fmt.Errorf("installation %s has no claims to derive a stable id from", installationName)
+	}
 	sort.Strings(claimIDs)
 	inst.ID = claimIDs[0]
 
