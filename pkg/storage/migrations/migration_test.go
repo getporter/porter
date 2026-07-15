@@ -126,9 +126,12 @@ func TestMigration_Migrate(t *testing.T) {
 	err = m.Connect(ctx)
 	require.NoError(t, err, "connect failed")
 
-	updatedSchema, err := m.Migrate(ctx)
-	require.NoError(t, err, "migrate installations failed")
-	assert.Equal(t, storage.NewSchema(), updatedSchema, "incorrect schema was applied after the migration")
+	// An installation without any claims (e.g. installations/noclaims with no
+	// matching claims/noclaims dir) cannot derive a stable id, so Migrate must
+	// surface that as an error instead of panicking on an empty claim list.
+	_, err = m.Migrate(ctx)
+	require.Error(t, err, "migrate should fail when an installation has no claims")
+	assert.Contains(t, err.Error(), "has no claims to derive a stable id from")
 
 	validateMigratedInstallations(ctx, t, c, destStore, opts)
 	validateMigratedCredentialSets(ctx, t, destStore, opts)
