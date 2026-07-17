@@ -4,11 +4,13 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	"get.porter.sh/porter/pkg/cnab"
 	cnabtooci "get.porter.sh/porter/pkg/cnab/cnab-to-oci"
 	depsv1 "get.porter.sh/porter/pkg/cnab/extensions/dependencies/v1"
 	v2 "get.porter.sh/porter/pkg/cnab/extensions/dependencies/v2"
+	"get.porter.sh/porter/pkg/storage"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -739,4 +741,197 @@ func TestGraphBuilder_DiamondAtDifferentDepthsIsRelabeledCorrectly(t *testing.T)
 	dUnderE := cUnderE.Dependencies[0]
 	assert.Equal(t, "d", dUnderE.Alias)
 	assert.Equal(t, 2, dUnderE.Depth)
+}
+
+// TestGraphBuilder_ExistingInstallation covers #2627: resolving a v2
+// dependency to an already-installed installation instead of pulling a new
+// instance of its bundle, scoped (per the current implementation) to
+// dependencies that don't declare a bundle Interface.
+func TestGraphBuilder_ExistingInstallation(t *testing.T) {
+	t.Parallel()
+
+	const dbRef = "localhost:5000/mysql:v1.0.0"
+	shared := v2.SharingCriteria{Mode: true, Group: v2.SharingGroup{Name: "app-db"}}
+
+	// newCandidate builds an installed installation that matches dbRef and
+	// the "app-db" sharing group, for tests to adjust via transform.
+	newCandidate := func(namespace string, transform func(i *storage.Installation)) storage.Installation {
+		i := storage.NewInstallation(namespace, "db")
+		i.Bundle = storage.OCIReferenceParts{Repository: "localhost:5000/mysql", Tag: "v1.0.0"}
+		installedAt := time.Now()
+		i.Status.Installed = &installedAt
+		i.SetLabel(sharingGroupLabel, "app-db")
+		if transform != nil {
+			transform(&i)
+		}
+		return i
+	}
+
+	t.Run("matches and reuses an existing installation", func(t *testing.T) {
+		t.Parallel()
+
+		// db promotes its own "connstr" output to the parent, so a
+		// candidate must have that output recorded to be reusable.
+		root := v2TestBundle("root", map[string]v2.Dependency{
+			"db": {Bundle: dbRef, Sharing: shared, Outputs: map[string]string{"connstr": "${outputs.connstr}"}},
+		})
+
+		p := NewTestPorter(t)
+		defer p.Close()
+
+		candidate := p.TestInstallations.CreateInstallation(newCandidate("", nil))
+		p.TestInstallations.CreateOutput(storage.Output{Namespace: candidate.Namespace, Installation: candidate.Name, Name: "connstr", ResultID: "1"})
+
+		// Deliberately no mock registered for dbRef: TestRegistry.PullBundle
+		// falls back to returning an empty bundle rather than erroring when
+		// unmocked, so ResolvedInstallation being set below (rather than
+		// ResolutionFailed) is what actually proves the pull was skipped.
+		builder := NewGraphBuilder(p.Porter, 10)
+		graph, err := builder.BuildDependencyGraph(context.Background(), root, ExplainOpts{MaxDependencyDepth: 10})
+		require.NoError(t, err)
+
+		assert.Len(t, graph.Nodes, 2) // root + db
+		deps := graphToInspectableDependencies(graph, graph.Root, 0)
+		require.Len(t, deps, 1)
+		assert.False(t, deps[0].ResolutionFailed)
+		assert.Equal(t, "/db", deps[0].ResolvedInstallation)
+		assert.Empty(t, deps[0].Dependencies)
+	})
+
+	t.Run("dependency declaring an interface always pulls", func(t *testing.T) {
+		t.Parallel()
+
+		root := v2TestBundle("root", map[string]v2.Dependency{
+			"db": {Bundle: dbRef, Sharing: shared, Interface: &v2.DependencyInterface{ID: "mysql"}},
+		})
+
+		p := NewTestPorter(t)
+		defer p.Close()
+		p.TestInstallations.CreateInstallation(newCandidate("", nil))
+		p.TestRegistry.MockPullBundle = newMockPullBundle(map[string]cnab.ExtendedBundle{dbRef: leafTestBundle("mysql")})
+
+		builder := NewGraphBuilder(p.Porter, 10)
+		graph, err := builder.BuildDependencyGraph(context.Background(), root, ExplainOpts{MaxDependencyDepth: 10})
+		require.NoError(t, err)
+
+		deps := graphToInspectableDependencies(graph, graph.Root, 0)
+		require.Len(t, deps, 1)
+		assert.False(t, deps[0].ResolutionFailed)
+		assert.Empty(t, deps[0].ResolvedInstallation)
+	})
+
+	t.Run("non-shareable dependency always pulls", func(t *testing.T) {
+		t.Parallel()
+
+		root := v2TestBundle("root", map[string]v2.Dependency{
+			"db": {Bundle: dbRef},
+		})
+
+		p := NewTestPorter(t)
+		defer p.Close()
+		p.TestInstallations.CreateInstallation(newCandidate("", func(i *storage.Installation) {
+			i.SetLabel(sharingGroupLabel, "")
+		}))
+		p.TestRegistry.MockPullBundle = newMockPullBundle(map[string]cnab.ExtendedBundle{dbRef: leafTestBundle("mysql")})
+
+		builder := NewGraphBuilder(p.Porter, 10)
+		graph, err := builder.BuildDependencyGraph(context.Background(), root, ExplainOpts{MaxDependencyDepth: 10})
+		require.NoError(t, err)
+
+		deps := graphToInspectableDependencies(graph, graph.Root, 0)
+		require.Len(t, deps, 1)
+		assert.False(t, deps[0].ResolutionFailed)
+		assert.Empty(t, deps[0].ResolvedInstallation)
+	})
+
+	t.Run("mismatched sharing group falls back to pull", func(t *testing.T) {
+		t.Parallel()
+
+		root := v2TestBundle("root", map[string]v2.Dependency{
+			"db": {Bundle: dbRef, Sharing: v2.SharingCriteria{Mode: true, Group: v2.SharingGroup{Name: "other-group"}}},
+		})
+
+		p := NewTestPorter(t)
+		defer p.Close()
+		p.TestInstallations.CreateInstallation(newCandidate("", nil)) // labeled "app-db", not "other-group"
+		p.TestRegistry.MockPullBundle = newMockPullBundle(map[string]cnab.ExtendedBundle{dbRef: leafTestBundle("mysql")})
+
+		builder := NewGraphBuilder(p.Porter, 10)
+		graph, err := builder.BuildDependencyGraph(context.Background(), root, ExplainOpts{MaxDependencyDepth: 10})
+		require.NoError(t, err)
+
+		deps := graphToInspectableDependencies(graph, graph.Root, 0)
+		require.Len(t, deps, 1)
+		assert.False(t, deps[0].ResolutionFailed)
+		assert.Empty(t, deps[0].ResolvedInstallation)
+	})
+
+	t.Run("missing required output falls back to pull", func(t *testing.T) {
+		t.Parallel()
+
+		root := v2TestBundle("root", map[string]v2.Dependency{
+			"db": {Bundle: dbRef, Sharing: shared, Outputs: map[string]string{"connstr": "${outputs.connstr}"}},
+		})
+
+		p := NewTestPorter(t)
+		defer p.Close()
+		p.TestInstallations.CreateInstallation(newCandidate("", nil)) // no "connstr" output recorded
+		p.TestRegistry.MockPullBundle = newMockPullBundle(map[string]cnab.ExtendedBundle{dbRef: leafTestBundle("mysql")})
+
+		builder := NewGraphBuilder(p.Porter, 10)
+		graph, err := builder.BuildDependencyGraph(context.Background(), root, ExplainOpts{MaxDependencyDepth: 10})
+		require.NoError(t, err)
+
+		deps := graphToInspectableDependencies(graph, graph.Root, 0)
+		require.Len(t, deps, 1)
+		assert.False(t, deps[0].ResolutionFailed)
+		assert.Empty(t, deps[0].ResolvedInstallation)
+	})
+
+	t.Run("local namespace candidate preferred over a global match", func(t *testing.T) {
+		t.Parallel()
+
+		root := v2TestBundle("root", map[string]v2.Dependency{
+			"db": {Bundle: dbRef, Sharing: shared},
+		})
+
+		p := NewTestPorter(t)
+		defer p.Close()
+		p.TestInstallations.CreateInstallation(newCandidate("", nil))
+		p.TestInstallations.CreateInstallation(newCandidate("ns1", nil))
+
+		opts := ExplainOpts{MaxDependencyDepth: 10}
+		opts.Namespace = "ns1"
+
+		builder := NewGraphBuilder(p.Porter, 10)
+		graph, err := builder.BuildDependencyGraph(context.Background(), root, opts)
+		require.NoError(t, err)
+
+		deps := graphToInspectableDependencies(graph, graph.Root, 0)
+		require.Len(t, deps, 1)
+		assert.Equal(t, "ns1/db", deps[0].ResolvedInstallation)
+	})
+
+	t.Run("falls back to global namespace when no local match exists", func(t *testing.T) {
+		t.Parallel()
+
+		root := v2TestBundle("root", map[string]v2.Dependency{
+			"db": {Bundle: dbRef, Sharing: shared},
+		})
+
+		p := NewTestPorter(t)
+		defer p.Close()
+		p.TestInstallations.CreateInstallation(newCandidate("", nil))
+
+		opts := ExplainOpts{MaxDependencyDepth: 10}
+		opts.Namespace = "ns1"
+
+		builder := NewGraphBuilder(p.Porter, 10)
+		graph, err := builder.BuildDependencyGraph(context.Background(), root, opts)
+		require.NoError(t, err)
+
+		deps := graphToInspectableDependencies(graph, graph.Root, 0)
+		require.Len(t, deps, 1)
+		assert.Equal(t, "/db", deps[0].ResolvedInstallation)
+	})
 }

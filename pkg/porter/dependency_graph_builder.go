@@ -109,14 +109,27 @@ func (b *GraphBuilder) expandNode(
 	}
 
 	// Gather each dependency's wiring configuration (v2 only) up front, so
-	// dedup keys and wiring edges can both be computed per-lock.
+	// dedup keys and wiring edges can both be computed per-lock. Wiring refs
+	// are also indexed by target alias here (refsByToAlias) so that, further
+	// down, existing-installation matching can determine which of a
+	// dependency's own outputs are required by its siblings before deciding
+	// whether to reuse an installation for it.
 	var v2Requires map[string]v2.Dependency
+	var wiringRefs []wiringRef
+	var wiringDangling []danglingWiringRef
+	var wiringInvalid []invalidWiringRef
+	refsByToAlias := make(map[string][]wiringRef)
 	if isV2 {
 		v2Deps, err := bun.ReadDependenciesV2()
 		if err != nil {
 			return fmt.Errorf("failed to read v2 dependencies: %w", err)
 		}
 		v2Requires = v2Deps.Requires
+
+		wiringRefs, wiringDangling, wiringInvalid = extractWiringRefs(v2Requires)
+		for _, ref := range wiringRefs {
+			refsByToAlias[ref.ToAlias] = append(refsByToAlias[ref.ToAlias], ref)
+		}
 	}
 
 	// alias -> NodeKey, for resolving wiring refs (which are alias-scoped to
@@ -124,8 +137,9 @@ func (b *GraphBuilder) expandNode(
 	aliasToKey := make(map[string]NodeKey, len(locks))
 
 	for _, lock := range locks {
+		dep, hasDep := v2Requires[lock.Alias]
 		var parameters, credentials map[string]string
-		if dep, ok := v2Requires[lock.Alias]; ok {
+		if hasDep {
 			parameters = dep.Parameters
 			credentials = dep.Credentials
 		}
@@ -171,6 +185,25 @@ func (b *GraphBuilder) expandNode(
 		node := &Node{Key: childKey, Depth: depth}
 		g.Nodes[childKey] = node
 
+		// Prefer reusing an already-installed installation over pulling a
+		// new instance of the dependency's bundle -- but only for the plain
+		// pinned-version case (no declared bundle interface): matching a
+		// candidate against a declared interface needs #2626, which isn't
+		// implemented yet, so a dependency that declares one always falls
+		// through to the pull below. A lookup error is treated the same as
+		// "no match found" rather than aborting the node, so this is purely
+		// a best-effort optimization on top of the existing pull path.
+		if hasDep && dep.Interface == nil {
+			required := requiredOutputNames(lock.Alias, dep, refsByToAlias)
+			if inst, err := findExistingInstallation(ctx, b.porter, opts.Namespace, lock, required); err == nil && inst != nil {
+				node.ResolvedInstallation = inst
+				if shareable {
+					g.sharedByContent[ck] = childKey
+				}
+				continue
+			}
+		}
+
 		childBun, err := b.pullDependencyBundle(ctx, lock.Reference, opts)
 		if err != nil {
 			node.ResolutionFailed = true
@@ -192,8 +225,7 @@ func (b *GraphBuilder) expandNode(
 	}
 
 	if v2Requires != nil {
-		refs, dangling, invalid := extractWiringRefs(v2Requires)
-		for _, ref := range refs {
+		for _, ref := range wiringRefs {
 			fromKey, ok := aliasToKey[ref.FromAlias]
 			if !ok {
 				continue
@@ -205,7 +237,7 @@ func (b *GraphBuilder) expandNode(
 			detail := ref.Detail
 			g.addEdge(Edge{From: fromKey, To: toKey, Kind: EdgeKindWiring, ToAlias: ref.ToAlias, Detail: &detail})
 		}
-		for _, d := range dangling {
+		for _, d := range wiringDangling {
 			fromKey, ok := aliasToKey[d.FromAlias]
 			if !ok {
 				continue
@@ -224,7 +256,7 @@ func (b *GraphBuilder) expandNode(
 				"dependency %q references output %q of unknown dependency %q",
 				d.FromAlias, d.Detail.SourceOutput, d.ToAlias))
 		}
-		for _, inv := range invalid {
+		for _, inv := range wiringInvalid {
 			fromKey, ok := aliasToKey[inv.FromAlias]
 			if !ok {
 				continue
@@ -321,8 +353,11 @@ func renderInspectableDependencies(g *Graph, parentKey NodeKey, depth int, cache
 		dep.ResolutionError = child.ResolutionError
 		dep.Warnings = child.Warnings
 		dep.WiringEdges = wiringEdgeSummaries(g, child.Key)
+		if child.ResolvedInstallation != nil {
+			dep.ResolvedInstallation = child.ResolvedInstallation.Namespace + "/" + child.ResolvedInstallation.Name
+		}
 
-		if !child.ResolutionFailed {
+		if !child.ResolutionFailed && child.ResolvedInstallation == nil {
 			if cached, ok := cache[child.Key]; ok {
 				dep.Dependencies = relabelInspectableDependencies(cached, depth+1)
 			} else {

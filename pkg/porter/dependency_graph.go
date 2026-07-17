@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"get.porter.sh/porter/pkg/cnab"
+	"get.porter.sh/porter/pkg/storage"
 )
 
 // NodeKey uniquely identifies a node in a Graph. For dependencies that are
@@ -140,6 +141,13 @@ type Node struct {
 	// Warnings holds non-fatal authoring problems found on this node, such
 	// as a wiring reference naming a sibling dependency that doesn't exist.
 	Warnings []string
+
+	// ResolvedInstallation is set when this node was satisfied by reusing an
+	// existing installation (see dependency_installation_resolver.go)
+	// instead of pulling and resolving the dependency's bundle. When set,
+	// Bundle is the zero value and this node's own dependencies are not
+	// expanded, since the installation is already deployed.
+	ResolvedInstallation *storage.Installation
 }
 
 // Graph is the resolved dependency graph for a bundle: every transitively

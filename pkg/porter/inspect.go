@@ -34,10 +34,16 @@ type InspectableDependency struct {
 	WiringEdges []WiringEdgeSummary `json:"wiringEdges,omitempty" yaml:"wiringEdges,omitempty"`
 	// Warnings holds non-fatal authoring problems found on this dependency,
 	// such as a wiring reference naming a sibling that doesn't exist.
-	Warnings         []string                `json:"warnings,omitempty" yaml:"warnings,omitempty"`
-	Dependencies     []InspectableDependency `json:"dependencies,omitempty" yaml:"dependencies,omitempty"`
-	ResolutionError  string                  `json:"resolutionError,omitempty" yaml:"resolutionError,omitempty"`
-	ResolutionFailed bool                    `json:"-" yaml:"-"`
+	Warnings     []string                `json:"warnings,omitempty" yaml:"warnings,omitempty"`
+	Dependencies []InspectableDependency `json:"dependencies,omitempty" yaml:"dependencies,omitempty"`
+	// ResolvedInstallation is set to "namespace/name" when this dependency
+	// was satisfied by reusing an existing installation instead of pulling
+	// and installing a new instance of its bundle. When set, Dependencies is
+	// always empty: the installation is already deployed, so its own
+	// dependency subtree isn't re-resolved or shown.
+	ResolvedInstallation string `json:"resolvedInstallation,omitempty" yaml:"resolvedInstallation,omitempty"`
+	ResolutionError      string `json:"resolutionError,omitempty" yaml:"resolutionError,omitempty"`
+	ResolutionFailed     bool   `json:"-" yaml:"-"`
 }
 
 // WiringEdgeSummary describes one data-flow dependency between two sibling
