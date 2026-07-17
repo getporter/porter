@@ -15,6 +15,7 @@ parameters:
       - add-user
       - get-users
       - test
+      - upgrade
       - uninstall
     path: /home/nonroot/.kube/config
     source:
@@ -24,6 +25,7 @@ parameters:
     applyTo:
       - add-user
       - get-users
+      - upgrade
     path: /cnab/app/users.json
     source:
       output: users.json
@@ -85,7 +87,32 @@ get-users:
         - name: user-names
           jsonPath: '$.users'
 
+upgrade:
+  - exec:
+      description: "Add another user during upgrade"
+      command: ./cluster.sh
+      arguments:
+        - add-user
+        - wei-upgraded
+  - exec:
+      description: "Produce a bundle-level output during upgrade"
+      command: ./cluster.sh
+      arguments:
+        - last-user
+        - wei-upgraded
+      outputs:
+        - name: upgraded-user
+          jsonPath: '$.lastUser'
+
 uninstall:
+  # This step tests successful interpolation of a bundle-level output across actions
+  - exec:
+      description: "Validate the bundle-level output produced during upgrade"
+      command: ./cluster.sh
+      arguments:
+        - assert-output-value
+        - "{{ bundle.outputs.upgraded-user }}"
+        - "wei-upgraded"
   - exec:
       description: "Uninstall bundle"
       command: ./cluster.sh
@@ -107,6 +134,10 @@ outputs:
     type: string
     applyTo:
       - get-users
+  - name: upgraded-user
+    type: string
+    applyTo:
+      - upgrade
   - name: kubeconfig
     type: file
     path: /home/nonroot/.kube/config

@@ -66,6 +66,18 @@ func TestExecOutputs(t *testing.T) {
 	testOutputs, err := p.ReadBundleOutput(ctx, "failed-tests", bundleName, "")
 	require.NoError(t, err, "could not read failed-tests output")
 	assert.Equal(t, "TestInstall\nTestUpgrade", testOutputs, "expected the failed-tests output to be populated correctly")
+
+	// Upgrade the bundle, producing a bundle-level output
+	upgradeExecOutputsBundle(ctx, p)
+
+	// Verify that the bundle-level output produced during upgrade was captured
+	upgradedUserOutput, err := p.ReadBundleOutput(ctx, "upgraded-user", bundleName, "")
+	require.NoError(t, err, "could not read upgraded-user output")
+	assert.Equal(t, "wei-upgraded", upgradedUserOutput, "expected the upgraded-user output to be populated correctly")
+
+	// The deferred CleanupCurrentBundle call uninstalls the bundle, whose
+	// uninstall action asserts that the bundle-level output produced during
+	// upgrade is still readable in a later action.
 }
 
 func CleanupCurrentBundle(ctx context.Context, p *porter.TestPorter) {
@@ -102,36 +114,10 @@ func invokeExecOutputsBundle(ctx context.Context, p *porter.TestPorter, action s
 	require.NoError(p.T(), err, "invoke %s should have succeeded", action)
 }
 
-func TestStepLevelAndBundleLevelOutputs(t *testing.T) {
-	t.Parallel()
-
-	p := porter.NewTestPorter(t)
-	defer p.Close()
-	ctx := p.SetupIntegrationTest()
-
-	p.AddTestBundleDir("testdata/bundles/outputs-example", true)
-
-	// Install the bundle
-	// A step-level output will be used during this action
-	installOpts := porter.NewInstallOptions()
-	err := installOpts.Validate(ctx, []string{}, p.Porter)
-	require.NoError(t, err)
-	err = p.InstallBundle(ctx, installOpts)
-	require.NoError(t, err, "install should have succeeded")
-
-	// Upgrade the bundle
-	// A bundle-level output will be produced during this action
+func upgradeExecOutputsBundle(ctx context.Context, p *porter.TestPorter) {
 	upgradeOpts := porter.NewUpgradeOptions()
-	err = upgradeOpts.Validate(ctx, []string{}, p.Porter)
-	require.NoError(t, err)
+	err := upgradeOpts.Validate(ctx, []string{}, p.Porter)
+	require.NoError(p.T(), err)
 	err = p.UpgradeBundle(ctx, upgradeOpts)
-	require.NoError(t, err, "upgrade should have succeeded")
-
-	// Uninstall the bundle
-	// A bundle-level output will be used during this action
-	uninstallOpts := porter.NewUninstallOptions()
-	err = uninstallOpts.Validate(ctx, []string{}, p.Porter)
-	require.NoError(t, err)
-	err = p.UninstallBundle(ctx, uninstallOpts)
-	require.NoError(t, err, "uninstall should have succeeded")
+	require.NoError(p.T(), err, "upgrade should have succeeded")
 }

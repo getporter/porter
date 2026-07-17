@@ -16,8 +16,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// Validate that archiving a bundle twice results in the same digest
-func TestArchive_StableDigest(t *testing.T) {
+// Validate archive behavior, sharing one TestPorter/SetupIntegrationTest
+// across subtests since they all archive the same fixed bundle reference.
+func TestArchive(t *testing.T) {
 	t.Parallel()
 	p := porter.NewTestPorter(t)
 	defer p.Close()
@@ -26,119 +27,110 @@ func TestArchive_StableDigest(t *testing.T) {
 	// Use a fixed bundle to work with so that we can rely on the registry and layer digests
 	const reference = "ghcr.io/getporter/examples/whalegap:v0.2.0"
 
-	// Archive bundle
-	archive1Opts := porter.ArchiveOptions{}
-	archive1Opts.Reference = reference
-	archiveFile1 := "mybuns1.tgz"
-	err := archive1Opts.Validate(ctx, []string{archiveFile1}, p.Porter)
-	require.NoError(p.T(), err, "validation of archive opts for bundle failed")
+	// Archiving a bundle twice should result in the same digest
+	t.Run("stable digest across repeated archives", func(t *testing.T) {
+		// Archive bundle
+		archive1Opts := porter.ArchiveOptions{}
+		archive1Opts.Reference = reference
+		archiveFile1 := "mybuns1.tgz"
+		err := archive1Opts.Validate(ctx, []string{archiveFile1}, p.Porter)
+		require.NoError(t, err, "validation of archive opts for bundle failed")
 
-	err = p.Archive(ctx, archive1Opts)
-	require.NoError(p.T(), err, "archival of bundle failed")
+		err = p.Archive(ctx, archive1Opts)
+		require.NoError(t, err, "archival of bundle failed")
 
-	info, err := p.FileSystem.Stat(archiveFile1)
-	require.NoError(p.T(), err)
-	if runtime.GOOS != "windows" {
-		// permission bits make no sense on windows
-		tests.AssertFilePermissionsEqual(t, archiveFile1, pkg.FileModeWritable, info.Mode())
-	}
+		info, err := p.FileSystem.Stat(archiveFile1)
+		require.NoError(t, err)
+		if runtime.GOOS != "windows" {
+			// permission bits make no sense on windows
+			tests.AssertFilePermissionsEqual(t, archiveFile1, pkg.FileModeWritable, info.Mode())
+		}
 
-	hash1 := getHash(p, archiveFile1)
+		hash1 := getHash(t, p, archiveFile1)
 
-	// Check to be sure the shasum is stable after archiving a second time
-	archive2Opts := porter.ArchiveOptions{}
-	archive2Opts.Reference = reference
-	archiveFile2 := "mybuns2.tgz"
-	err = archive2Opts.Validate(ctx, []string{archiveFile2}, p.Porter)
-	require.NoError(p.T(), err, "validation of archive opts for bundle failed")
+		// Check to be sure the shasum is stable after archiving a second time
+		archive2Opts := porter.ArchiveOptions{}
+		archive2Opts.Reference = reference
+		archiveFile2 := "mybuns2.tgz"
+		err = archive2Opts.Validate(ctx, []string{archiveFile2}, p.Porter)
+		require.NoError(t, err, "validation of archive opts for bundle failed")
 
-	err = archive1Opts.Validate(ctx, []string{archiveFile2}, p.Porter)
-	require.NoError(t, err, "Second validate failed")
+		err = p.Archive(ctx, archive2Opts)
+		require.NoError(t, err, "Second archive failed")
+		assert.Equal(t, hash1, getHash(t, p, archiveFile2), "shasum of archive did not stay the same on the second call to archive")
 
-	err = p.Archive(ctx, archive2Opts)
-	require.NoError(t, err, "Second archive failed")
-	assert.Equal(p.T(), hash1, getHash(p, archiveFile2), "shasum of archive did not stay the same on the second call to archive")
+		// the archive should match the hash below regardless of OS architecture, user and execution time
+		// regenerate if a dependency bump changes OCI layout JSON serialization (e.g. go-containerregistry)
+		consistentHash := "4e77cfd3dbfed032c4d938c9febaa5b55e5ca2fa40e159e79e42073f55a10f73"
+		assert.Equal(t, consistentHash, hash1, "shasum of archive did not match expected hash")
 
-	// the archive should match the hash below regardless of OS architecture, user and execution time
-	// regenerate if a dependency bump changes OCI layout JSON serialization (e.g. go-containerregistry)
-	consistentHash := "4e77cfd3dbfed032c4d938c9febaa5b55e5ca2fa40e159e79e42073f55a10f73"
-	assert.Equal(p.T(), consistentHash, hash1, "shasum of archive did not match expected hash")
+		// Publish bundle from archive, with new reference
+		localReference := "localhost:5000/archived-whalegap:v0.2.0"
+		publishFromArchiveOpts := porter.PublishOptions{
+			ArchiveFile: archiveFile1,
+			BundlePullOptions: porter.BundlePullOptions{
+				Reference: localReference,
+			},
+		}
+		err = publishFromArchiveOpts.Validate(p.Config)
+		require.NoError(t, err, "validation of publish opts for bundle failed")
 
-	// Publish bundle from archive, with new reference
-	localReference := "localhost:5000/archived-whalegap:v0.2.0"
-	publishFromArchiveOpts := porter.PublishOptions{
-		ArchiveFile: archiveFile1,
-		BundlePullOptions: porter.BundlePullOptions{
-			Reference: localReference,
-		},
-	}
-	err = publishFromArchiveOpts.Validate(p.Config)
-	require.NoError(p.T(), err, "validation of publish opts for bundle failed")
+		err = p.Publish(ctx, publishFromArchiveOpts)
+		require.NoError(t, err, "publish of bundle from archive failed")
 
-	err = p.Publish(ctx, publishFromArchiveOpts)
-	require.NoError(p.T(), err, "publish of bundle from archive failed")
+		// Archive from the newly published bundle in local registry
+		archive3Opts := porter.ArchiveOptions{}
+		archive3Opts.Reference = localReference
+		archiveFile3 := "mybuns3.tgz"
+		err = archive3Opts.Validate(ctx, []string{archiveFile3}, p.Porter)
+		require.NoError(t, err, "validation of archive opts for bundle failed")
+		err = p.Archive(ctx, archive3Opts)
+		require.NoError(t, err, "archive from the published bundle in local registry failed")
+	})
 
-	// Archive from the newly published bundle in local registry
-	archive3Opts := porter.ArchiveOptions{}
-	archive3Opts.Reference = localReference
-	archiveFile3 := "mybuns3.tgz"
-	err = archive3Opts.Validate(ctx, []string{archiveFile3}, p.Porter)
-	require.NoError(p.T(), err, "validation of archive opts for bundle failed")
-	err = p.Archive(ctx, archive3Opts)
-	require.NoError(t, err, "archive from the published bundle in local registry failed")
+	// A bundle archived with NoCompression should still be publishable
+	t.Run("no compression", func(t *testing.T) {
+		archiveOpts := porter.ArchiveOptions{}
+		archiveOpts.Reference = reference
+		archiveOpts.CompressionLevel = "NoCompression"
+		archiveFile := "mybuns1nocomp.tgz"
+		err := archiveOpts.Validate(ctx, []string{archiveFile}, p.Porter)
+		require.NoError(t, err, "validation of archive opts for bundle failed")
+
+		err = p.Archive(ctx, archiveOpts)
+		require.NoError(t, err, "archival of bundle failed")
+
+		hash := getHash(t, p, archiveFile)
+
+		// different compressions yields different (but consistent) hashes
+		// regenerate if a dependency bump changes OCI layout JSON serialization (e.g. go-containerregistry)
+		consistentHash := "f07e870ca81ca4d5d0018d39c34f42731de4404712cb736dcd68af63797b37ec"
+		assert.Equal(t, consistentHash, hash, "shasum of archive did not match expected hash")
+
+		// Publish bundle from archive, with new reference
+		localReference := "localhost:5000/archived-nocompression-whalegap:v0.2.0"
+		publishFromArchiveOpts := porter.PublishOptions{
+			ArchiveFile: archiveFile,
+			BundlePullOptions: porter.BundlePullOptions{
+				Reference: localReference,
+			},
+		}
+		err = publishFromArchiveOpts.Validate(p.Config)
+		require.NoError(t, err, "validation of publish opts for bundle failed")
+
+		err = p.Publish(ctx, publishFromArchiveOpts)
+		require.NoError(t, err, "publish of bundle from archive failed")
+	})
 }
 
-func getHash(p *porter.TestPorter, path string) string {
+func getHash(t *testing.T, p *porter.TestPorter, path string) string {
 	f, err := p.FileSystem.Open(path)
-	require.NoError(p.T(), err, "opening archive failed")
+	require.NoError(t, err, "opening archive failed")
 	defer f.Close()
 
 	h := sha256.New()
 	_, err = io.Copy(h, f)
-	require.NoError(p.T(), err, "hashing of archive failed")
+	require.NoError(t, err, "hashing of archive failed")
 
 	return fmt.Sprintf("%x", h.Sum(nil))
-}
-
-// Validate that a bundle archived with NoCompression can be published
-func TestArchive_WithNoCompression(t *testing.T) {
-	t.Parallel()
-	p := porter.NewTestPorter(t)
-	defer p.Close()
-	ctx := p.SetupIntegrationTest()
-
-	// Use a fixed bundle to work with so that we can rely on the registry and layer digests
-	const reference = "ghcr.io/getporter/examples/whalegap:v0.2.0"
-
-	// Archive bundle
-	archiveOpts := porter.ArchiveOptions{}
-	archiveOpts.Reference = reference
-	archiveOpts.CompressionLevel = "NoCompression"
-	archiveFile := "mybuns1nocomp.tgz"
-	err := archiveOpts.Validate(ctx, []string{archiveFile}, p.Porter)
-	require.NoError(p.T(), err, "validation of archive opts for bundle failed")
-
-	err = p.Archive(ctx, archiveOpts)
-	require.NoError(p.T(), err, "archival of bundle failed")
-
-	hash := getHash(p, archiveFile)
-
-	// different compressions yields different (but consistent) hashes
-	// regenerate if a dependency bump changes OCI layout JSON serialization (e.g. go-containerregistry)
-	consistentHash := "f07e870ca81ca4d5d0018d39c34f42731de4404712cb736dcd68af63797b37ec"
-	assert.Equal(p.T(), consistentHash, hash, "shasum of archive did not match expected hash")
-
-	// Publish bundle from archive, with new reference
-	localReference := "localhost:5000/archived-nocompression-whalegap:v0.2.0"
-	publishFromArchiveOpts := porter.PublishOptions{
-		ArchiveFile: archiveFile,
-		BundlePullOptions: porter.BundlePullOptions{
-			Reference: localReference,
-		},
-	}
-	err = publishFromArchiveOpts.Validate(p.Config)
-	require.NoError(p.T(), err, "validation of publish opts for bundle failed")
-
-	err = p.Publish(ctx, publishFromArchiveOpts)
-	require.NoError(p.T(), err, "publish of bundle from archive failed")
 }
