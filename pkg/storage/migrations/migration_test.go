@@ -136,8 +136,8 @@ func TestMigration_Migrate(t *testing.T) {
 	require.NoError(t, os.WriteFile(filepath.Join(noclaimsDir, ".gitkeep"), nil, 0600), "could not write no-claims marker")
 
 	_, err = m.Migrate(ctx)
-	require.Error(t, err, "migrate should fail when an installation has no claims")
-	assert.Contains(t, err.Error(), "has no claims to derive a stable id from")
+	require.ErrorContains(t, err, "has no claims to derive a stable id from",
+		"migrate should fail with the no-claims error when an installation has no claims")
 
 	validateMigratedInstallations(ctx, t, c, destStore, opts)
 	validateMigratedCredentialSets(ctx, t, destStore, opts)
