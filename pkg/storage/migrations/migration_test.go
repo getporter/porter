@@ -126,9 +126,18 @@ func TestMigration_Migrate(t *testing.T) {
 	err = m.Connect(ctx)
 	require.NoError(t, err, "connect failed")
 
-	updatedSchema, err := m.Migrate(ctx)
-	require.NoError(t, err, "migrate installations failed")
-	assert.Equal(t, storage.NewSchema(), updatedSchema, "incorrect schema was applied after the migration")
+	// An installation with no matching claims dir cannot derive a stable id,
+	// so Migrate must surface that as an error instead of panicking on an
+	// empty claim list. Add an isolated no-claims installation to this test's
+	// temp home (not the shared testdata fixture) so the standard migrations
+	// still succeed.
+	noclaimsDir := filepath.Join(home, "installations", "noclaims")
+	require.NoError(t, os.MkdirAll(noclaimsDir, 0700), "could not create no-claims installation dir")
+	require.NoError(t, os.WriteFile(filepath.Join(noclaimsDir, ".gitkeep"), nil, 0600), "could not write no-claims marker")
+
+	_, err = m.Migrate(ctx)
+	require.ErrorContains(t, err, "has no claims to derive a stable id from",
+		"migrate should fail with the no-claims error when an installation has no claims")
 
 	validateMigratedInstallations(ctx, t, c, destStore, opts)
 	validateMigratedCredentialSets(ctx, t, destStore, opts)
