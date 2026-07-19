@@ -12,6 +12,7 @@ Learn how to configure Porter to connect with various Docker configurations.
 - [Connect to the local Docker engine](#connect-to-the-local-docker-engine)
 - [Connect to a remote Docker engine](#connect-to-a-remote-docker-engine)
 - [Additional Supported Docker Settings](#additional-supported-docker-settings)
+- [Access the Docker host's network from a bundle](#access-the-docker-hosts-network-from-a-bundle)
 
 ## Connect to the local Docker engine
 
@@ -53,7 +54,7 @@ porter install --reference ghcr.io/getporter/examples/porter-hello:v0.2.0
 
 Porter supports additional Docker environment variables that may be useful to you:
 
-- **DOCKER_NETWORK**: Specifies the name of an existing [Docker network] that Porter should use when running Docker containers.
+- **DOCKER_NETWORK**: Specifies the name of an existing [Docker network] that Porter should use when running Docker containers. Set this to `host` to give the bundle access to the [Docker host's network](#access-the-docker-hosts-network-from-a-bundle).
 - **DOCKER_CONTEXT**: Specifies the name of an existing [Docker context] that Porter should use when running Docker containers.
 - **CLEANUP_CONTAINERS**: Controls whether Porter removes the Docker container used to run a bundle action once it finishes. Defaults to `true`. Set to `false` to leave the stopped container behind so you can inspect its filesystem, for example while authoring or debugging a bundle.
 
@@ -94,6 +95,25 @@ Then commit it to an image and start a shell in it:
 docker commit <container-id> porter-debug
 docker run --rm -it --entrypoint bash porter-debug
 ```
+
+### Access the Docker host's network from a bundle
+
+A bundle's invocation image runs in its own container, so by default it can't resolve
+hostnames or reach services that are only known to the Docker host, such as an entry in the
+host's `/etc/hosts` or an internal DNS server that only the host (or CI runner) can reach.
+
+Set `DOCKER_NETWORK=host` to run the bundle with the same network namespace as the Docker host,
+giving it access to whatever hostnames and services the host itself can resolve:
+
+```bash
+DOCKER_NETWORK=host porter install --reference ghcr.io/getporter/examples/porter-hello:v0.2.0
+```
+
+⚠️️ Host networking is only supported on Linux Docker Engine. It does not work the same way on
+Docker Desktop for Mac or Windows, since those run Docker inside a VM. See the
+[troubleshooting guide][resolve-host-hostname] for alternatives that work everywhere.
+
+[resolve-host-hostname]: /troubleshooting/#how-do-i-let-my-bundle-resolve-a-hostname-only-known-to-the-docker-host
 
 ## Next Steps
 
