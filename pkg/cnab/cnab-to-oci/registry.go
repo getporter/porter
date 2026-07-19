@@ -15,7 +15,7 @@ import (
 	"github.com/cnabio/cnab-go/driver/docker"
 	"github.com/cnabio/cnab-to-oci/relocation"
 	"github.com/cnabio/cnab-to-oci/remotes"
-	containerdRemotes "github.com/containerd/containerd/remotes"
+	containerdRemotes "github.com/containerd/containerd/v2/core/remotes"
 	"github.com/distribution/reference"
 	"github.com/docker/cli/cli/config"
 	"github.com/docker/cli/cli/config/credentials"
