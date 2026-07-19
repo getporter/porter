@@ -16,6 +16,7 @@
   * [Magefile explained](#magefile-explained)
   * [Test Porter](#test-porter)
   * [Install mixins](#install-mixins)
+  * [Debugging a bundle locally](#debugging-a-bundle-locally)
   * [Plugin Debugging](#plugin-debugging)
   * [Preview documentation](#preview-documentation)
   * [Write a blog post](#write-a-blog-post)
@@ -388,6 +389,28 @@ installed into your bin directory in the root of the repository. You can use
 `porter mixin install NAME` to install the latest released version of a mixin.
 
 \* canary = most recent successful build of the "main" branch
+
+### Debugging a bundle locally
+
+Here are some tips for figuring out why a bundle isn't working the way you expect:
+
+* Pass `--debug` to a porter command such as `porter install --debug`. This sets
+  the `porter-debug` bundle parameter, which causes the Porter runtime and
+  mixins running inside the bundle to print a lot more output about what
+  they are doing.
+* Porter's local data, such as installation records, credentials and
+  configuration, is stored in `$PORTER_HOME` (`~/.porter` by default). If
+  there isn't a porter command yet that shows you the data you're after,
+  looking directly in that directory is a good next step.
+* After running `porter build`, use `docker run --rm -it INVOCATIONIMAGE bash`
+  (using the invocation image reference printed at the end of the build, also
+  in `porter.yaml`) to poke around inside the built image and see what's
+  actually there.
+* Pass `--debug` to `porter build` to see the full output of the underlying
+  `docker build`, which is useful when the image itself fails to build.
+* After a build, the generated `.cnab/Dockerfile` shows exactly what Porter
+  and the mixins injected into your bundle's Dockerfile, which is helpful for
+  understanding unexpected build behavior.
 
 ### Plugin Debugging
 
