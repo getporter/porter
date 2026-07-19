@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"sync"
 
 	"get.porter.sh/porter/pkg/cnab"
 	configadapter "get.porter.sh/porter/pkg/cnab/config-adapter"
@@ -20,6 +21,7 @@ import (
 	"github.com/docker/cli/cli/config"
 	"github.com/docker/cli/cli/config/credentials"
 	configtypes "github.com/docker/cli/cli/config/types"
+	"github.com/dustin/go-humanize"
 	"github.com/google/go-containerregistry/pkg/name"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
@@ -59,6 +61,18 @@ var _ RegistryProvider = &Registry{}
 
 type Registry struct {
 	*portercontext.Context
+
+	// progressMu serializes displayEvent calls, which cnab-to-oci makes
+	// concurrently from multiple goroutines while copying image layers.
+	progressMu sync.Mutex
+
+	// progressLineLen tracks the length of the last in-place progress line
+	// printed, so it can be cleared before printing a shorter one.
+	progressLineLen int
+
+	// progressLastDone tracks the last reported done-count, so that
+	// non-terminal output only prints a line when progress actually changes.
+	progressLastDone int
 }
 
 func NewRegistry(c *portercontext.Context) *Registry {
@@ -320,16 +334,84 @@ func (r *Registry) createResolver(insecureRegistries []string) containerdRemotes
 }
 
 func (r *Registry) displayEvent(ev remotes.FixupEvent) {
+	r.progressMu.Lock()
+	defer r.progressMu.Unlock()
+
+	_, isTerm := term.GetFdInfo(r.Out)
+
 	switch ev.EventType {
 	case remotes.FixupEventTypeCopyImageStart:
+		r.progressLineLen = 0
+		r.progressLastDone = 0
 		fmt.Fprintf(r.Out, "Starting to copy image %s...\n", ev.SourceImage)
+	case remotes.FixupEventTypeProgress:
+		line, done, total := formatProgressLine(ev.Progress)
+		if isTerm {
+			r.writeTermProgress(line)
+			return
+		}
+
+		if total == 0 || done == r.progressLastDone {
+			return
+		}
+		r.progressLastDone = done
+		fmt.Fprintln(r.Out, line)
 	case remotes.FixupEventTypeCopyImageEnd:
+		if isTerm && r.progressLineLen > 0 {
+			fmt.Fprintln(r.Out)
+			r.progressLineLen = 0
+		}
 		if ev.Error != nil {
 			fmt.Fprintf(r.Out, "Failed to copy image %s: %s\n", ev.SourceImage, ev.Error)
 		} else {
 			fmt.Fprintf(r.Out, "Completed image %s copy\n", ev.SourceImage)
 		}
 	}
+}
+
+// writeTermProgress overwrites the current terminal line in place with the
+// given progress text, padding with spaces to erase any leftover characters
+// from a longer previous line. Callers must hold progressMu.
+func (r *Registry) writeTermProgress(line string) {
+	pad := max(r.progressLineLen-len(line), 0)
+	fmt.Fprintf(r.Out, "\r%s%s", line, strings.Repeat(" ", pad))
+	r.progressLineLen = len(line)
+}
+
+// flattenProgress walks a ProgressSnapshot tree (roots + nested children)
+// into a flat list of descriptors.
+func flattenProgress(snapshot remotes.ProgressSnapshot) []remotes.DescriptorProgressSnapshot {
+	var flat []remotes.DescriptorProgressSnapshot
+	var walk func(descs []remotes.DescriptorProgressSnapshot)
+	walk = func(descs []remotes.DescriptorProgressSnapshot) {
+		for _, desc := range descs {
+			flat = append(flat, desc)
+			if len(desc.Children) > 0 {
+				walk(desc.Children)
+			}
+		}
+	}
+	walk(snapshot.Roots)
+	return flat
+}
+
+// formatProgressLine renders a human-readable summary of a ProgressSnapshot,
+// e.g. "  layers: 4/9 copied (12.3 MB/58.0 MB)", along with the descriptor
+// done/total counts it was computed from.
+func formatProgressLine(snapshot remotes.ProgressSnapshot) (line string, done, total int) {
+	var doneBytes, totalBytes uint64
+	for _, desc := range flattenProgress(snapshot) {
+		total++
+		totalBytes += uint64(desc.Size)
+		if desc.Done {
+			done++
+			doneBytes += uint64(desc.Size)
+		}
+	}
+
+	line = fmt.Sprintf("  layers: %d/%d copied (%s/%s)",
+		done, total, humanize.Bytes(doneBytes), humanize.Bytes(totalBytes))
+	return line, done, total
 }
 
 // Private helper methods for remote operations
