@@ -74,15 +74,25 @@ func findExistingInstallation(ctx context.Context, p *Porter, namespace string, 
 	// into a nested field (it would be read as labels.sh.porter.SharingGroup,
 	// a 3-level-deep path, not the flat key "sh.porter.SharingGroup") -- so
 	// the label match happens in Go below instead of in the query filter.
-	query := storage.FindOptions{
-		Sort: []string{"-namespace"}, // prefer the local namespace match over the global ("") one
-		Filter: bson.M{
-			"uninstalled": bson.M{"$ne": true},
-			"$or": []bson.M{
-				{"namespace": ""},
-				{"namespace": namespace},
-			},
+	filter := bson.M{
+		"uninstalled":       bson.M{"$ne": true},
+		"bundle.repository": ref.Repository(),
+		"$or": []bson.M{
+			{"namespace": ""},
+			{"namespace": namespace},
 		},
+	}
+	// lock.Reference is normally digest-pinned (see candidateMatchesBundle),
+	// so filtering on the recorded digest narrows candidates at the query
+	// level in the common case instead of loading every installation of the
+	// bundle to compare in Go.
+	if ref.HasDigest() {
+		filter["status.bundleDigest"] = ref.Digest().String()
+	}
+
+	query := storage.FindOptions{
+		Sort:   []string{"-namespace"}, // prefer the local namespace match over the global ("") one
+		Filter: filter,
 	}
 
 	candidates, err := p.Installations.FindInstallations(ctx, query)
