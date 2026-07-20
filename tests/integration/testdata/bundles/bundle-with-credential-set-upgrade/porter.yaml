@@ -1,0 +1,49 @@
+schemaVersion: 1.0.0-alpha.1
+name: porter-credset-upgrade
+version: 0.1.0
+description: "Bundle for testing that a credential value change triggers reconciliation"
+registry: getporter
+
+credentials:
+  - name: token
+    env: TOKEN
+
+mixins:
+  - exec
+
+install:
+  - exec:
+      description: "Install"
+      command: ./helpers.sh
+      arguments:
+        - install
+        - "{{ bundle.credentials.token }}"
+      outputs:
+        - name: token-used
+          regex: "install: (.*)"
+
+upgrade:
+  - exec:
+      description: "Upgrade"
+      command: ./helpers.sh
+      arguments:
+        - upgrade
+        - "{{ bundle.credentials.token }}"
+      outputs:
+        - name: token-used
+          regex: "upgrade: (.*)"
+
+uninstall:
+  - exec:
+      description: "Uninstall"
+      command: ./helpers.sh
+      arguments:
+        - uninstall
+        - "{{ bundle.credentials.token }}"
+
+outputs:
+  - name: token-used
+    type: string
+    applyTo:
+      - install
+      - upgrade

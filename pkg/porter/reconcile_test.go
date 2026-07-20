@@ -127,16 +127,28 @@ func TestPorter_IsInstallationInSync(t *testing.T) {
 
 	})
 
-	t.Run("installed - credential set changed", func(t *testing.T) {
+	t.Run("installed - credential set name changed, values changed", func(t *testing.T) {
 		ctx := context.Background()
 		p := NewTestPorter(t)
 		defer p.Close()
+
+		oldCreds := storage.NewCredentialSet("", "oldcreds",
+			storage.ValueStrategy("my-first-cred", "old-value-1"),
+			storage.ValueStrategy("my-second-cred", "old-value-2"))
+		require.NoError(t, p.Credentials.InsertCredentialSet(ctx, oldCreds))
+
+		newCreds := storage.NewCredentialSet("", "newcreds",
+			storage.ValueStrategy("my-first-cred", "new-value-1"),
+			storage.ValueStrategy("my-second-cred", "old-value-2"))
+		require.NoError(t, p.Credentials.InsertCredentialSet(ctx, newCreds))
 
 		i := storage.NewInstallation("", "mybuns")
 		i.Status.Installed = &now
 		i.CredentialSets = []string{"newcreds"}
 		run := i.NewRun(cnab.ActionUpgrade, bun)
 		run.CredentialSets = []string{"oldcreds"}
+		run.Credentials = storage.NewInternalCredentialSet(oldCreds.Credentials...)
+		require.NoError(t, run.SetCredentialsDigest())
 		// Use the default values from the bundle.json so they don't trigger the reconciliation
 		run.Parameters.Parameters = []secrets.SourceMap{storage.ValueStrategy("my-second-param", "spring-music-demo")}
 		upgradeOpts := NewUpgradeOptions()
@@ -146,8 +158,41 @@ func TestPorter_IsInstallationInSync(t *testing.T) {
 		insync, err := p.IsInstallationInSync(p.RootContext, i, &run, upgradeOpts)
 		require.NoError(t, err)
 		assert.False(t, insync)
-		assert.Contains(t, p.TestConfig.TestContext.GetOutput(), "Triggering because the credential set names have changed")
+		assert.Contains(t, p.TestConfig.TestContext.GetOutput(), "Triggering because the credentials have changed")
+	})
 
+	t.Run("installed - credential set name changed, values unchanged", func(t *testing.T) {
+		ctx := context.Background()
+		p := NewTestPorter(t)
+		defer p.Close()
+
+		oldCreds := storage.NewCredentialSet("", "oldcreds",
+			storage.ValueStrategy("my-first-cred", "same-value-1"),
+			storage.ValueStrategy("my-second-cred", "same-value-2"))
+		require.NoError(t, p.Credentials.InsertCredentialSet(ctx, oldCreds))
+
+		// A different credential set name, but resolving to the exact same values.
+		newCreds := storage.NewCredentialSet("", "newcreds",
+			storage.ValueStrategy("my-first-cred", "same-value-1"),
+			storage.ValueStrategy("my-second-cred", "same-value-2"))
+		require.NoError(t, p.Credentials.InsertCredentialSet(ctx, newCreds))
+
+		i := storage.NewInstallation("", "mybuns")
+		i.Status.Installed = &now
+		i.CredentialSets = []string{"newcreds"}
+		run := i.NewRun(cnab.ActionUpgrade, bun)
+		run.CredentialSets = []string{"oldcreds"}
+		run.Credentials = storage.NewInternalCredentialSet(oldCreds.Credentials...)
+		require.NoError(t, run.SetCredentialsDigest())
+		// Use the default values from the bundle.json so they don't trigger the reconciliation
+		run.Parameters.Parameters = []secrets.SourceMap{storage.ValueStrategy("my-second-param", "spring-music-demo")}
+		upgradeOpts := NewUpgradeOptions()
+		upgradeOpts.bundleRef = &cnab.BundleReference{Definition: bun}
+		require.NoError(t, p.applyActionOptionsToInstallation(ctx, upgradeOpts, &i))
+
+		insync, err := p.IsInstallationInSync(p.RootContext, i, &run, upgradeOpts)
+		require.NoError(t, err)
+		assert.True(t, insync)
 	})
 
 	t.Run("installed - uninstalled change to true", func(t *testing.T) {

@@ -258,3 +258,85 @@ func TestRun_MarshalJSON(t *testing.T) {
 
 	assert.Equal(t, r1, r2, "The run did not survive the round trip")
 }
+
+func TestRun_SetParametersDigest(t *testing.T) {
+	t.Run("digest changes when the resolved value changes", func(t *testing.T) {
+		r1 := Run{Parameters: ParameterSet{ParameterSetSpec: ParameterSetSpec{
+			Parameters: secrets.StrategyList{ValueStrategy("my-param", "value1")},
+		}}}
+		require.NoError(t, r1.SetParametersDigest())
+		require.NotEmpty(t, r1.ParametersDigest)
+
+		r2 := Run{Parameters: ParameterSet{ParameterSetSpec: ParameterSetSpec{
+			Parameters: secrets.StrategyList{ValueStrategy("my-param", "value2")},
+		}}}
+		require.NoError(t, r2.SetParametersDigest())
+
+		assert.NotEqual(t, r1.ParametersDigest, r2.ParametersDigest,
+			"expected the digest to change when the resolved value changes, even though the source strategy did not")
+	})
+
+	t.Run("digest is stable regardless of slice order", func(t *testing.T) {
+		r1 := Run{Parameters: ParameterSet{ParameterSetSpec: ParameterSetSpec{
+			Parameters: secrets.StrategyList{
+				ValueStrategy("param-a", "a"),
+				ValueStrategy("param-b", "b"),
+			},
+		}}}
+		require.NoError(t, r1.SetParametersDigest())
+
+		r2 := Run{Parameters: ParameterSet{ParameterSetSpec: ParameterSetSpec{
+			Parameters: secrets.StrategyList{
+				ValueStrategy("param-b", "b"),
+				ValueStrategy("param-a", "a"),
+			},
+		}}}
+		require.NoError(t, r2.SetParametersDigest())
+
+		assert.Equal(t, r1.ParametersDigest, r2.ParametersDigest,
+			"expected the digest to be independent of the order of the resolved parameters")
+	})
+
+	t.Run("empty parameters produce an empty digest", func(t *testing.T) {
+		r := Run{}
+		require.NoError(t, r.SetParametersDigest())
+		assert.Empty(t, r.ParametersDigest)
+	})
+}
+
+func TestRun_SetCredentialsDigest(t *testing.T) {
+	t.Run("digest changes when the resolved value changes", func(t *testing.T) {
+		r1 := Run{Credentials: NewInternalCredentialSet(ValueStrategy("my-cred", "value1"))}
+		require.NoError(t, r1.SetCredentialsDigest())
+		require.NotEmpty(t, r1.CredentialsDigest)
+
+		r2 := Run{Credentials: NewInternalCredentialSet(ValueStrategy("my-cred", "value2"))}
+		require.NoError(t, r2.SetCredentialsDigest())
+
+		assert.NotEqual(t, r1.CredentialsDigest, r2.CredentialsDigest,
+			"expected the digest to change when the resolved value changes, even though the source strategy did not")
+	})
+
+	t.Run("digest is stable regardless of slice order", func(t *testing.T) {
+		r1 := Run{Credentials: NewInternalCredentialSet(
+			ValueStrategy("cred-a", "a"),
+			ValueStrategy("cred-b", "b"),
+		)}
+		require.NoError(t, r1.SetCredentialsDigest())
+
+		r2 := Run{Credentials: NewInternalCredentialSet(
+			ValueStrategy("cred-b", "b"),
+			ValueStrategy("cred-a", "a"),
+		)}
+		require.NoError(t, r2.SetCredentialsDigest())
+
+		assert.Equal(t, r1.CredentialsDigest, r2.CredentialsDigest,
+			"expected the digest to be independent of the order of the resolved credentials")
+	})
+
+	t.Run("empty credentials produce an empty digest", func(t *testing.T) {
+		r := Run{}
+		require.NoError(t, r.SetCredentialsDigest())
+		assert.Empty(t, r.CredentialsDigest)
+	})
+}

@@ -18,6 +18,7 @@ import (
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/tracing"
+	"github.com/cnabio/cnab-go/bundle"
 	"github.com/opencontainers/go-digest"
 	"go.mongodb.org/mongo-driver/bson"
 )
@@ -479,8 +480,30 @@ func (p *Porter) createRun(ctx context.Context, bundleRef cnab.BundleReference, 
 	currentRun.CredentialSets = inst.CredentialSets
 
 	// Combine the credential sets above into a single credential set we can resolve just-in-time (JIT) before running the bundle.
-	finalCreds := make(map[string]secrets.SourceMap, len(currentRun.Bundle.Credentials))
-	for _, csName := range currentRun.CredentialSets {
+	composedCreds, err := p.resolveCredentialSets(ctx, currentRun.Namespace, currentRun.CredentialSets, currentRun.Bundle, currentRun.Action)
+	if err != nil {
+		return storage.Run{}, err
+	}
+	if len(composedCreds.Credentials) > 0 {
+		// Store the composite credential set on the run, so that the runtime can later resolve them in a single step
+		currentRun.Credentials = composedCreds
+	}
+
+	return currentRun, nil
+}
+
+// resolveCredentialSets combines the named credential sets into a single
+// composite credential set, filtered down to only the credentials the
+// bundle action actually uses. When a credential is mapped in more than one
+// set, the strategy from the last set specified "wins". The returned
+// credential set's values are not resolved; use storage.CredentialSetProvider.ResolveAll
+// to fetch their current values.
+func (p *Porter) resolveCredentialSets(ctx context.Context, namespace string, credSetNames []string, bun bundle.Bundle, action string) (storage.CredentialSet, error) {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
+	finalCreds := make(map[string]secrets.SourceMap, len(bun.Credentials))
+	for _, csName := range credSetNames {
 		var cs storage.CredentialSet
 		// Try to get the creds in the local namespace first, fallback to the global creds
 		query := storage.FindOptions{
@@ -489,19 +512,19 @@ func (p *Porter) createRun(ctx context.Context, bundleRef cnab.BundleReference, 
 				"name": csName,
 				"$or": []bson.M{
 					{"namespace": ""},
-					{"namespace": currentRun.Namespace},
+					{"namespace": namespace},
 				},
 			},
 		}
 		store := p.Credentials.GetDataStore()
 		err := store.FindOne(ctx, storage.CollectionCredentials, query, &cs)
 		if err != nil {
-			return storage.Run{}, span.Errorf("could not find credential set named %s in the %s namespace or global namespace: %w", csName, inst.Namespace, err)
+			return storage.CredentialSet{}, span.Errorf("could not find credential set named %s in the %s namespace or global namespace: %w", csName, namespace, err)
 		}
 
 		for _, cred := range cs.Credentials {
-			credDef, ok := currentRun.Bundle.Credentials[cred.Name]
-			if !ok || !credDef.AppliesTo(currentRun.Action) {
+			credDef, ok := bun.Credentials[cred.Name]
+			if !ok || !credDef.AppliesTo(action) {
 				// ignore extra credential mappings in the set that are not defined by the bundle or used by the current action
 				// it's okay to over specify so that people can reuse sets better
 				continue
@@ -512,13 +535,9 @@ func (p *Porter) createRun(ctx context.Context, bundleRef cnab.BundleReference, 
 		}
 	}
 
-	if len(finalCreds) > 0 {
-		// Store the composite credential set on the run, so that the runtime can later resolve them in a single step
-		currentRun.Credentials = storage.NewInternalCredentialSet()
-		for _, cred := range finalCreds {
-			currentRun.Credentials.Credentials = append(currentRun.Credentials.Credentials, cred)
-		}
+	composite := storage.NewInternalCredentialSet()
+	for _, cred := range finalCreds {
+		composite.Credentials = append(composite.Credentials, cred)
 	}
-
-	return currentRun, nil
+	return composite, nil
 }
