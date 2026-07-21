@@ -4,9 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"net/http/httptest"
 	"runtime"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -229,6 +231,89 @@ func TestPublish_RelocateImage(t *testing.T) {
 			require.Equal(t, "private/myinvimg", relocatedImage)
 		}
 	})
+}
+
+// writeCounter wraps an http.Handler and counts non-idempotent (write) requests,
+// so tests can assert that no blob/manifest upload traffic occurred.
+type writeCounter struct {
+	inner http.Handler
+	count atomic.Int64
+}
+
+func (w *writeCounter) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodPost, http.MethodPut, http.MethodPatch:
+		w.count.Add(1)
+	}
+	w.inner.ServeHTTP(rw, r)
+}
+
+func TestPublish_PushUpdatedImage_SkipsWhenAlreadyPublished(t *testing.T) {
+	p := NewTestPorter(t)
+	defer p.Close()
+
+	counter := &writeCounter{inner: registry.New()}
+	regSrv := httptest.NewServer(counter)
+	defer regSrv.Close()
+	regHost := strings.TrimPrefix(regSrv.URL, "http://")
+
+	testImage := "myorg/myapp"
+	layoutDir := t.TempDir()
+	layoutPath, err := createTestOCILayout(t, layoutDir, testImage)
+	require.NoError(t, err)
+
+	desc, err := findImageInLayout(layoutPath, testImage)
+	require.NoError(t, err)
+
+	regOpts := cnabtooci.RegistryOptions{InsecureRegistry: true}
+	destRef, err := name.ParseReference(regHost+"/myorg/myapp:published", regOpts.ToNameOptions()...)
+	require.NoError(t, err)
+
+	// Pre-publish the exact same content to the destination.
+	img, err := layoutPath.Image(desc.Digest)
+	require.NoError(t, err)
+	require.NoError(t, remote.Write(destRef, img, regOpts.ToRemoteOptions()...))
+
+	counter.count.Store(0)
+
+	gotDigest, err := p.pushUpdatedImage(context.Background(), layoutPath, testImage, destRef, regOpts)
+	require.NoError(t, err, "pushUpdatedImage should succeed when the content is already published")
+	assert.Equal(t, desc.Digest, gotDigest)
+	assert.Zero(t, counter.count.Load(), "expected no write requests when content is already published at the destination")
+}
+
+func TestPublish_PushUpdatedImage_PushesWhenDigestDiffers(t *testing.T) {
+	p := NewTestPorter(t)
+	defer p.Close()
+
+	counter := &writeCounter{inner: registry.New()}
+	regSrv := httptest.NewServer(counter)
+	defer regSrv.Close()
+	regHost := strings.TrimPrefix(regSrv.URL, "http://")
+
+	testImage := "myorg/myapp"
+	layoutDir := t.TempDir()
+	layoutPath, err := createTestOCILayout(t, layoutDir, testImage)
+	require.NoError(t, err)
+
+	desc, err := findImageInLayout(layoutPath, testImage)
+	require.NoError(t, err)
+
+	regOpts := cnabtooci.RegistryOptions{InsecureRegistry: true}
+	destRef, err := name.ParseReference(regHost+"/myorg/myapp:published", regOpts.ToNameOptions()...)
+	require.NoError(t, err)
+
+	// Publish different content to the destination tag first.
+	otherImg, err := random.Image(1024, 1)
+	require.NoError(t, err)
+	require.NoError(t, remote.Write(destRef, otherImg, regOpts.ToRemoteOptions()...))
+
+	counter.count.Store(0)
+
+	gotDigest, err := p.pushUpdatedImage(context.Background(), layoutPath, testImage, destRef, regOpts)
+	require.NoError(t, err)
+	assert.Equal(t, desc.Digest, gotDigest)
+	assert.NotZero(t, counter.count.Load(), "expected write requests when the destination content differs")
 }
 
 // createTestOCILayout creates a test OCI layout with a dummy image

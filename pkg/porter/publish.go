@@ -433,6 +433,12 @@ func (p *Porter) pushUpdatedImage(ctx context.Context, layoutPath layout.Path, o
 		return v1.Hash{}, fmt.Errorf("unable to find image %s in archived OCI Layout: %w", origImg, err)
 	}
 
+	// The digest we're about to push is known exactly from the archive's OCI layout, so
+	// if the destination already has content with that same digest, there's nothing to do.
+	if p.imageAlreadyPublished(ctx, destRef, desc.Digest, opts) {
+		return desc.Digest, nil
+	}
+
 	// Push to new location
 	err = p.pushImageFromLayout(ctx, layoutPath, desc, destRef, opts)
 	if err != nil {
@@ -440,6 +446,22 @@ func (p *Porter) pushUpdatedImage(ctx context.Context, layoutPath layout.Path, o
 	}
 
 	return desc.Digest, nil
+}
+
+// imageAlreadyPublished reports whether destRef already has the exact content identified
+// by wantDigest published at it, determined via a HEAD request without pulling.
+func (p *Porter) imageAlreadyPublished(ctx context.Context, destRef name.Reference, wantDigest v1.Hash, opts cnabtooci.RegistryOptions) bool {
+	ref, err := cnab.ParseOCIReference(destRef.String())
+	if err != nil {
+		return false
+	}
+
+	remoteDigest, err := p.Registry.GetRemoteImageDigest(ctx, ref, opts)
+	if err != nil {
+		return false
+	}
+
+	return remoteDigest.String() == wantDigest.String()
 }
 
 // findImageInLayout searches for an image in the OCI layout by matching the image name.
