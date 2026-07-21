@@ -37,6 +37,11 @@ type RegistryProvider interface {
 	// Use ErrNotFound to detect if the error is because the image is not in the registry.
 	GetImageMetadata(ctx context.Context, ref cnab.OCIReference, opts RegistryOptions) (ImageMetadata, error)
 
+	// GetRemoteImageDigest returns the digest of the image currently published
+	// at ref, without pulling it.
+	// Use ErrNotFound to detect if the error is because the image is not in the registry.
+	GetRemoteImageDigest(ctx context.Context, ref cnab.OCIReference, opts RegistryOptions) (digest.Digest, error)
+
 	// GetBundleMetadata returns information about a bundle in a registry
 	// Use ErrNotFound to detect if the error is because the bundle is not in the registry.
 	GetBundleMetadata(ctx context.Context, ref cnab.OCIReference, opts RegistryOptions) (BundleMetadata, error)

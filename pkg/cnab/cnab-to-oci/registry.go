@@ -502,6 +502,24 @@ func (r *Registry) GetImageMetadata(ctx context.Context, ref cnab.OCIReference, 
 	return NewImageSummaryFromDigest(ref, repoDigest)
 }
 
+// GetRemoteImageDigest returns the digest of the image currently published at
+// ref, determined via a HEAD request without pulling the image.
+// Use ErrNotFound to detect if the error is because the image is not in the registry.
+func (r *Registry) GetRemoteImageDigest(ctx context.Context, ref cnab.OCIReference, opts RegistryOptions) (digest.Digest, error) {
+	_, span := tracing.StartSpan(ctx, attribute.String("reference", ref.String()))
+	defer span.EndSpan()
+
+	desc, err := r.headRemote(ctx, ref.String(), opts)
+	if err != nil {
+		if notFoundErr := asNotFoundError(err, ref); notFoundErr != nil {
+			return "", span.Error(notFoundErr)
+		}
+		return "", span.Errorf("error fetching remote digest for %s: %w", ref.String(), err)
+	}
+
+	return digest.NewDigestFromHex(desc.Digest.Algorithm, desc.Digest.Hex), nil
+}
+
 // asNotFoundError checks if the error is an HTTP 404 not found error, and if so returns a corresponding ErrNotFound instance.
 func asNotFoundError(err error, ref cnab.OCIReference) error {
 	var httpError *transport.Error

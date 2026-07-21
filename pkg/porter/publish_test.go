@@ -24,6 +24,9 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/random"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/google/go-containerregistry/pkg/v1/types"
+	"github.com/moby/moby/api/types/image"
+	"github.com/moby/moby/client"
+	"github.com/opencontainers/go-digest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -456,6 +459,154 @@ func TestPublish_ForceOverwrite(t *testing.T) {
 			} else {
 				tests.RequireErrorContains(t, err, tc.wantErr)
 			}
+		})
+	}
+}
+
+func TestPublish_SkipImagePush(t *testing.T) {
+	t.Parallel()
+
+	matchingDigest := digest.Digest("sha256:6b5a28ccbb76f12ce771a23757880c6083234255c5ba191fca1c5db1f71c1687")
+	otherDigest := digest.Digest("sha256:75c495e5ce9c428d482973d72e3ce9925e1db304a97946c9aa0b540d7537e04")
+
+	testcases := []struct {
+		name           string
+		cachedNotFound bool
+		cachedDigests  []string
+		remoteDigest   digest.Digest
+		remoteNotFound bool
+		wantSkip       bool
+	}{
+		{
+			name:          "local and remote digests match",
+			cachedDigests: []string{"example.com/mybuns@" + matchingDigest.String()},
+			remoteDigest:  matchingDigest,
+			wantSkip:      true,
+		},
+		{
+			name:           "image not in local cache",
+			cachedNotFound: true,
+			remoteDigest:   matchingDigest,
+			wantSkip:       false,
+		},
+		{
+			name:          "local cache has no digest for this repo",
+			cachedDigests: []string{"example.com/some-other-repo@" + matchingDigest.String()},
+			remoteDigest:  matchingDigest,
+			wantSkip:      false,
+		},
+		{
+			name:          "local and remote digests differ",
+			cachedDigests: []string{"example.com/mybuns@" + matchingDigest.String()},
+			remoteDigest:  otherDigest,
+			wantSkip:      false,
+		},
+		{
+			name:           "image not yet published remotely",
+			cachedDigests:  []string{"example.com/mybuns@" + matchingDigest.String()},
+			remoteNotFound: true,
+			wantSkip:       false,
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			ctx := context.Background()
+			p := NewTestPorter(t)
+			defer p.Close()
+
+			ref := cnab.MustParseOCIReference("example.com/mybuns:v0.1.2")
+
+			p.TestRegistry.MockGetCachedImage = func(ctx context.Context, ref cnab.OCIReference) (cnabtooci.ImageMetadata, error) {
+				if tc.cachedNotFound {
+					return cnabtooci.ImageMetadata{}, cnabtooci.ErrNotFound{Reference: ref}
+				}
+				sum, err := cnabtooci.NewImageSummaryFromInspect(ref, client.ImageInspectResult{
+					InspectResponse: image.InspectResponse{ID: "test", RepoDigests: tc.cachedDigests},
+				})
+				require.NoError(t, err)
+				return sum, nil
+			}
+
+			p.TestRegistry.MockGetRemoteImageDigest = func(ctx context.Context, ref cnab.OCIReference, opts cnabtooci.RegistryOptions) (digest.Digest, error) {
+				if tc.remoteNotFound {
+					return "", cnabtooci.ErrNotFound{Reference: ref}
+				}
+				return tc.remoteDigest, nil
+			}
+
+			gotDigest, skip := p.skipImagePush(ctx, ref, cnabtooci.RegistryOptions{})
+			assert.Equal(t, tc.wantSkip, skip)
+			if tc.wantSkip {
+				assert.Equal(t, matchingDigest, gotDigest)
+			}
+		})
+	}
+}
+
+func TestPublish_SkipsImagePushWhenAlreadyUpToDate(t *testing.T) {
+	t.Parallel()
+
+	testcases := []struct {
+		name          string
+		force         bool
+		digestsMatch  bool
+		wantPushImage bool
+	}{
+		{name: "digests match, no force", digestsMatch: true, force: false, wantPushImage: false},
+		{name: "digests differ, no force", digestsMatch: false, force: false, wantPushImage: true},
+		{name: "digests match, force set", digestsMatch: true, force: true, wantPushImage: true},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			ctx := context.Background()
+			p := NewTestPorter(t)
+			defer p.Close()
+
+			localDigest := digest.Digest("sha256:6b5a28ccbb76f12ce771a23757880c6083234255c5ba191fca1c5db1f71c1687")
+			remoteDigest := localDigest
+			if !tc.digestsMatch {
+				remoteDigest = "sha256:75c495e5ce9c428d482973d72e3ce9925e1db304a97946c9aa0b540d7537e04"
+			}
+
+			p.TestRegistry.MockGetBundleMetadata = func(ctx context.Context, ref cnab.OCIReference, opts cnabtooci.RegistryOptions) (cnabtooci.BundleMetadata, error) {
+				return cnabtooci.BundleMetadata{}, cnabtooci.ErrNotFound{Reference: ref}
+			}
+
+			p.TestRegistry.MockGetCachedImage = func(ctx context.Context, ref cnab.OCIReference) (cnabtooci.ImageMetadata, error) {
+				sum, err := cnabtooci.NewImageSummaryFromInspect(ref, client.ImageInspectResult{
+					InspectResponse: image.InspectResponse{ID: "test", RepoDigests: []string{ref.Repository() + "@" + localDigest.String()}},
+				})
+				require.NoError(t, err)
+				return sum, nil
+			}
+
+			p.TestRegistry.MockGetRemoteImageDigest = func(ctx context.Context, ref cnab.OCIReference, opts cnabtooci.RegistryOptions) (digest.Digest, error) {
+				return remoteDigest, nil
+			}
+
+			pushImageCalled := false
+			p.TestRegistry.MockPushImage = func(ctx context.Context, ref cnab.OCIReference, opts cnabtooci.RegistryOptions) (digest.Digest, error) {
+				pushImageCalled = true
+				return remoteDigest, nil
+			}
+
+			p.TestConfig.TestContext.AddTestDirectoryFromRoot("tests/testdata/mybuns", p.BundleDir)
+
+			opts := PublishOptions{}
+			opts.Force = tc.force
+
+			require.NoError(t, opts.Validate(p.Config))
+
+			err := p.Publish(ctx, opts)
+			require.NoError(t, err, "Publish failed")
+
+			assert.Equal(t, tc.wantPushImage, pushImageCalled)
 		})
 	}
 }
