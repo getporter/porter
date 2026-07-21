@@ -224,11 +224,16 @@ func (p *Porter) IsInstallationInSync(ctx context.Context, i storage.Installatio
 		return false, nil
 	}
 
-	// Resolve the credentials that would be used if we ran now, and compare
-	// their digest against the last run's, so that we can detect a changed
-	// credential value (e.g. a rotated secret) even when the attached
-	// credential set names haven't changed.
-	composedCreds, err := p.resolveCredentialSets(ctx, i.Namespace, i.CredentialSets, newRef.Definition.Bundle, action.GetAction())
+	// Resolve the credentials that would have been used for the last run, and
+	// compare their current digest against the last run's, so that we can
+	// detect a changed credential value (e.g. a rotated secret) even when the
+	// attached credential set names haven't changed. Compose using
+	// lastRun.Action rather than the action we're about to run - some
+	// credentials may only apply to specific actions (see Credential.AppliesTo),
+	// so comparing against a differently-scoped set (e.g. right after an
+	// install, when the next action under consideration is upgrade) would
+	// otherwise report a mismatch even though nothing has actually changed.
+	composedCreds, err := p.resolveCredentialSets(ctx, i.Namespace, i.CredentialSets, newRef.Definition.Bundle, lastRun.Action)
 	if err != nil {
 		return false, err
 	}

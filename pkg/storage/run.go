@@ -293,7 +293,23 @@ func digestResolvedValues(entries secrets.StrategyList) (string, error) {
 			ResolvedValue: entry.ResolvedValue,
 		})
 	}
-	sort.Slice(sortable, func(i, j int) bool { return sortable[i].Name < sortable[j].Name })
+	// Sort on every field, not just Name, so the digest stays deterministic
+	// even if two entries ever share a name (sort.Slice is not stable, so
+	// ties broken on Name alone could otherwise order differently across
+	// calls with the same logical content but a different starting order).
+	sort.Slice(sortable, func(i, j int) bool {
+		a, b := sortable[i], sortable[j]
+		if a.Name != b.Name {
+			return a.Name < b.Name
+		}
+		if a.Strategy != b.Strategy {
+			return a.Strategy < b.Strategy
+		}
+		if a.Hint != b.Hint {
+			return a.Hint < b.Hint
+		}
+		return a.ResolvedValue < b.ResolvedValue
+	})
 
 	data, err := json.Marshal(sortable)
 	if err != nil {
