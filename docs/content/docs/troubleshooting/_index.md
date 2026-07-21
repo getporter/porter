@@ -10,6 +10,7 @@ With any porter error, it can really help to re-run the command again with the `
 - [Mapping values are not allowed in this context](#mapping-values-are-not-allowed-in-this-context)
 - [You see apt errors when you use a custom Dockerfile](#you-see-apt-errors-when-you-use-a-custom-dockerfile)
 - [I want to inspect the container after a bundle action runs](#i-want-to-inspect-the-container-after-a-bundle-action-runs)
+- [How do I let my bundle resolve a hostname only known to the Docker host?](#how-do-i-let-my-bundle-resolve-a-hostname-only-known-to-the-docker-host)
 
 ## Examine Previous Logs
 
@@ -111,3 +112,30 @@ finishes. To leave the container behind so you can inspect its filesystem,
 see [Inspect the container after a bundle action runs][cleanup-containers].
 
 [cleanup-containers]: /operations/connect-to-docker/#inspect-the-container-after-a-bundle-action-runs
+
+## How do I let my bundle resolve a hostname only known to the Docker host?
+
+A bundle's invocation image runs in its own container, so it can't resolve hostnames or reach
+services that only the Docker host (or CI runner) knows about, such as a name mapped in the
+host's `/etc/hosts` or resolvable only through the host's internal DNS.
+
+**On Linux**, run the bundle with [`DOCKER_NETWORK=host`][access-host-network] so it shares the
+host's network namespace and can resolve anything the host can.
+
+**On Docker Desktop for Mac or Windows**, use `host.docker.internal` inside the bundle to reach
+the Docker host's own IP address directly. This isn't available on Linux Docker Engine.
+
+You can't work around this by writing custom entries into the bundle's own `/etc/hosts`:
+
+- A `file`-type parameter (see [File Parameters][file-parameters]) can't be mapped directly to
+  `/etc/hosts` — Docker manages that path as a special bind-mounted file, so Porter can't
+  pre-populate it that way, and the bundle fails to start with `unable to decode parameter:
+  illegal base64 data`.
+- Appending to `/etc/hosts` yourself in an install step (`echo ... >> /etc/hosts`) requires the
+  container to run as root, which isn't possible either: Porter always runs the bundle's
+  invocation image as a non-root user, even with a [custom Dockerfile][custom-dockerfile] — it's
+  not something a bundle can opt out of.
+
+[access-host-network]: /operations/connect-to-docker/#access-the-docker-hosts-network-from-a-bundle
+[file-parameters]: /bundle/manifest/#file-parameters
+[custom-dockerfile]: /bundle/custom-dockerfile/
