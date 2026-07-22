@@ -203,9 +203,19 @@ func (p *Porter) publishFromFile(ctx context.Context, opts PublishOptions) error
 		}
 	}
 
-	bundleRef.Digest, err = p.Registry.PushImage(ctx, imgRef, regOpts)
-	if err != nil {
-		return log.Errorf("unable to push bundle image %q: %w", m.Image, err)
+	skipPush := false
+	var existingDigest digest.Digest
+	if !opts.Force {
+		existingDigest, skipPush = p.skipImagePush(ctx, imgRef, regOpts)
+	}
+	if skipPush {
+		log.Infof("Bundle image %s already published with matching content, skipping image push", imgRef)
+		bundleRef.Digest = existingDigest
+	} else {
+		bundleRef.Digest, err = p.Registry.PushImage(ctx, imgRef, regOpts)
+		if err != nil {
+			return log.Errorf("unable to push bundle image %q: %w", m.Image, err)
+		}
 	}
 
 	stamp, err := configadapter.LoadStamp(bundleRef.Definition)
@@ -244,6 +254,37 @@ func (p *Porter) publishFromFile(ctx context.Context, opts PublishOptions) error
 	// If so, replace it, as it is most likely out-of-date per this publish
 	err = p.refreshCachedBundle(bundleRef)
 	return log.Error(err)
+}
+
+// skipImagePush determines whether the bundle image at ref is already published
+// with the exact content Porter would otherwise push, so the push can be skipped.
+// It only returns true when the local Docker cache has a repository digest for ref
+// (meaning this exact content was previously pushed to/pulled from that repo from
+// this machine) and that digest matches what's currently published at ref.
+func (p *Porter) skipImagePush(ctx context.Context, ref cnab.OCIReference, opts cnabtooci.RegistryOptions) (digest.Digest, bool) {
+	ctx, log := tracing.StartSpan(ctx)
+	defer log.EndSpan()
+
+	localImg, err := p.Registry.GetCachedImage(ctx, ref)
+	if err != nil {
+		return "", false
+	}
+
+	localDigest, err := localImg.GetRepositoryDigest()
+	if err != nil {
+		return "", false
+	}
+
+	remoteDigest, err := p.Registry.GetRemoteImageDigest(ctx, ref, opts)
+	if err != nil {
+		return "", false
+	}
+
+	if localDigest != remoteDigest {
+		return "", false
+	}
+
+	return localDigest, true
 }
 
 // publishFromArchive (re-)publishes a bundle, provided by the archive file, using the provided tag.
@@ -392,6 +433,12 @@ func (p *Porter) pushUpdatedImage(ctx context.Context, layoutPath layout.Path, o
 		return v1.Hash{}, fmt.Errorf("unable to find image %s in archived OCI Layout: %w", origImg, err)
 	}
 
+	// The digest we're about to push is known exactly from the archive's OCI layout, so
+	// if the destination already has content with that same digest, there's nothing to do.
+	if p.imageAlreadyPublished(ctx, destRef, desc.Digest, opts) {
+		return desc.Digest, nil
+	}
+
 	// Push to new location
 	err = p.pushImageFromLayout(ctx, layoutPath, desc, destRef, opts)
 	if err != nil {
@@ -399,6 +446,22 @@ func (p *Porter) pushUpdatedImage(ctx context.Context, layoutPath layout.Path, o
 	}
 
 	return desc.Digest, nil
+}
+
+// imageAlreadyPublished reports whether destRef already has the exact content identified
+// by wantDigest published at it, determined via a HEAD request without pulling.
+func (p *Porter) imageAlreadyPublished(ctx context.Context, destRef name.Reference, wantDigest v1.Hash, opts cnabtooci.RegistryOptions) bool {
+	ref, err := cnab.ParseOCIReference(destRef.String())
+	if err != nil {
+		return false
+	}
+
+	remoteDigest, err := p.Registry.GetRemoteImageDigest(ctx, ref, opts)
+	if err != nil {
+		return false
+	}
+
+	return remoteDigest.String() == wantDigest.String()
 }
 
 // findImageInLayout searches for an image in the OCI layout by matching the image name.
