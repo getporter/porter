@@ -5,6 +5,8 @@ package integration
 import (
 	"encoding/json"
 	"fmt"
+	"regexp"
+	"strconv"
 	"testing"
 
 	"get.porter.sh/porter/pkg/cnab"
@@ -60,6 +62,46 @@ func TestCopy_UsesRelocationMap(t *testing.T) {
 	images := inspectRaw["invocationImages"].([]interface{})
 	invocationImage := images[0].(map[string]interface{})
 	require.Contains(t, invocationImage["originalImage"].(string), fmt.Sprintf("%s/orig-mydb", reg1))
+}
+
+// TestCopy_ShowsLayerProgress is a regression test for #748: copy should
+// report layer-copy progress instead of appearing to hang while it pushes
+// image layers to the destination registry.
+func TestCopy_ShowsLayerProgress(t *testing.T) {
+	test, err := tester.NewTest(t)
+	defer test.Close()
+	require.NoError(t, err, "test setup failed")
+
+	// Start a temporary registry, that uses plain http (no TLS)
+	reg1 := test.StartTestRegistry(tester.TestRegistryOptions{UseTLS: false})
+	defer reg1.Close()
+
+	// Publish a bundle that embeds a multi-layer image (alpine), so that the
+	// copy below has to transfer more than a single descriptor.
+	origRef := fmt.Sprintf("%s/orig-embeddedimg:v0.1.1", reg1)
+	test.MakeTestBundle(testdata.EmbeddedImg, origRef)
+
+	// Start a second temporary registry to copy the bundle to
+	reg2 := test.StartTestRegistry(tester.TestRegistryOptions{UseTLS: false})
+	defer reg2.Close()
+
+	copiedRef := fmt.Sprintf("%s/copy-embeddedimg:v0.1.1", reg2)
+	_, output := test.RequirePorter("copy", "--source", origRef, "--destination", copiedRef)
+
+	progressLine := regexp.MustCompile(`layers: (\d+)/(\d+) copied \([^)]+\)`)
+	matches := progressLine.FindAllStringSubmatch(output, -1)
+	require.NotEmpty(t, matches, "expected copy to print layer-copy progress, got:\n%s", output)
+
+	// The bundle has multiple descriptors to copy (manifests, configs and
+	// layers for both the invocation image and the embedded alpine image),
+	// so progress should be reported for more than just a single descriptor.
+	last := matches[len(matches)-1]
+	done, err := strconv.Atoi(last[1])
+	require.NoError(t, err)
+	total, err := strconv.Atoi(last[2])
+	require.NoError(t, err)
+	require.Equal(t, total, done, "expected the final progress update to show all descriptors copied")
+	require.Greater(t, total, 1, "expected more than a single descriptor to be reported")
 }
 
 func TestCopy_PreserveTags(t *testing.T) {

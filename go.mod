@@ -47,6 +47,7 @@ require (
 	github.com/modelcontextprotocol/go-sdk v1.6.1
 	github.com/olekukonko/tablewriter v1.1.4
 	github.com/opencontainers/go-digest v1.0.0
+	github.com/opencontainers/image-spec v1.1.1
 	github.com/osteele/liquid v1.8.1
 	github.com/pelletier/go-toml v1.9.5
 	github.com/prometheus/client_golang v1.23.2
@@ -220,7 +221,6 @@ require (
 	github.com/olekukonko/errors v1.2.0 // indirect
 	github.com/olekukonko/ll v0.1.7 // indirect
 	github.com/open-policy-agent/opa v1.14.1 // indirect
-	github.com/opencontainers/image-spec v1.1.1 // indirect
 	github.com/osteele/tuesday v1.0.4 // indirect
 	github.com/package-url/packageurl-go v0.1.5 // indirect
 	github.com/pelletier/go-toml/v2 v2.3.1 // indirect
