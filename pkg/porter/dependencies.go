@@ -17,6 +17,13 @@ import (
 	"github.com/hashicorp/go-multierror"
 )
 
+// sharingGroupLabel is the installation label used to record the sharing
+// group a dependency installation was created for, so a later run can tell
+// whether it's still safe to reuse. Set on dependency installations created
+// by runDependencyv2 below, and read by GraphBuilder's existing-installation
+// matching (dependency_installation_resolver.go).
+const sharingGroupLabel = "sh.porter.SharingGroup"
+
 type dependencyExecutioner struct {
 	*config.Config
 	porter *Porter
@@ -158,7 +165,7 @@ func (e *dependencyExecutioner) sharedActionResolver(ctx context.Context, dep *q
 
 	//We're real, let's check if this is in the installation the parent
 	// is referencing
-	if dep.SharingGroup == depInstallation.Labels["sh.porter.SharingGroup"] {
+	if dep.SharingGroup == depInstallation.Labels[sharingGroupLabel] {
 		if e.parentAction.GetAction() == "install" {
 			return false
 		}
@@ -381,7 +388,7 @@ func (e *dependencyExecutioner) runDependencyv2(ctx context.Context, dep *queued
 		if errors.Is(err, storage.ErrNotFound{}) {
 			depInstallation = storage.NewInstallation(e.parentOpts.Namespace, dep.Alias)
 			depInstallation.SetLabel("sh.porter.parentInstallation", e.parentArgs.Installation.String())
-			depInstallation.SetLabel("sh.porter.SharingGroup", dep.SharingGroup)
+			depInstallation.SetLabel(sharingGroupLabel, dep.SharingGroup)
 
 			// For now, assume it's okay to give the dependency the same credentials as the parent
 			depInstallation.CredentialSets = e.parentInstallation.CredentialSets
@@ -400,7 +407,7 @@ func (e *dependencyExecutioner) runDependencyv2(ctx context.Context, dep *queued
 	// Upgrade: Unsupported
 	// Invoke: At your own risk
 	//todo(schristoff): this is kind of icky, can be it less so?
-	if dep.SharingGroup == depInstallation.Labels["sh.porter.SharingGroup"] {
+	if dep.SharingGroup == depInstallation.Labels[sharingGroupLabel] {
 		if depInstallation.IsInstalled() {
 
 			action := e.parentAction.GetAction()
