@@ -104,12 +104,12 @@ func TestEvaluateInterfaceMatch(t *testing.T) {
 		},
 	}
 
-	for _, tc := range testcases {
-		t.Run(tc.name, func(t *testing.T) {
+	for _, test := range testcases {
+		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
-			got := EvaluateInterfaceMatch(tc.candidate, tc.required, tc.mode)
-			require.Equal(t, tc.want, got)
+			got := EvaluateInterfaceMatch(test.candidate, test.required, test.mode)
+			require.Equal(t, test.want, got)
 		})
 	}
 }
