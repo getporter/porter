@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 
+	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/mixin/query"
@@ -162,7 +163,7 @@ type action struct {
 	steps manifest.Steps
 }
 
-func (l *Linter) Lint(ctx context.Context, m *manifest.Manifest, config *config.Config) (Results, error) {
+func (l *Linter) Lint(ctx context.Context, m *manifest.Manifest, config *config.Config, depBundles map[string]cnab.ExtendedBundle) (Results, error) {
 	// Check for reserved porter prefix on parameter names
 	reservedPrefixes := []string{"porter-", "porter_"}
 	params := m.Parameters
@@ -233,6 +234,37 @@ func (l *Linter) Lint(ctx context.Context, m *manifest.Manifest, config *config.
 			results = append(results, res)
 		} else {
 			deps[dep.Name] = nil
+		}
+
+		depBundle, ok := depBundles[dep.Name]
+		if !ok {
+			// Either the dependency has no bundle resolved for it, or resolution
+			// failed and was already reported by the caller.
+			continue
+		}
+
+		for paramName := range dep.Parameters {
+			if _, ok := depBundle.Parameters[paramName]; !ok {
+				results = append(results, Result{
+					Level:   LevelError,
+					Code:    "porter-103",
+					Title:   "Dependency error",
+					Message: fmt.Sprintf("dependencies.%s.parameters.%s is not defined as a parameter on the dependency bundle", dep.Name, paramName),
+					URL:     "https://porter.sh/reference/linter/#porter-103",
+				})
+			}
+		}
+
+		for credName := range dep.Credentials {
+			if _, ok := depBundle.Credentials[credName]; !ok {
+				results = append(results, Result{
+					Level:   LevelError,
+					Code:    "porter-104",
+					Title:   "Dependency error",
+					Message: fmt.Sprintf("dependencies.%s.credentials.%s is not defined as a credential on the dependency bundle", dep.Name, credName),
+					URL:     "https://porter.sh/reference/linter/#porter-104",
+				})
+			}
 		}
 	}
 

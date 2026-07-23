@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/linter"
 	"get.porter.sh/porter/pkg/manifest"
@@ -16,6 +17,10 @@ type LintOptions struct {
 
 	// File path to the porter manifest. Defaults to the bundle in the current directory.
 	File string
+
+	// InsecureRegistry allows connecting to an unsecured registry or one without verifiable certificates,
+	// when resolving dependency bundles to validate their parameter/credential mappings.
+	InsecureRegistry bool
 }
 
 var (
@@ -60,8 +65,50 @@ func (p *Porter) Lint(ctx context.Context, opts LintOptions) (linter.Results, er
 		return nil, err
 	}
 
+	depBundles, depResults := p.resolveDependencyBundlesForLint(ctx, manifest, opts)
+
 	l := linter.New(p.Context, p.Mixins)
-	return l.Lint(ctx, manifest, p.Config)
+	results, err := l.Lint(ctx, manifest, p.Config, depBundles)
+	if err != nil {
+		return nil, err
+	}
+
+	return append(depResults, results...), nil
+}
+
+// resolveDependencyBundlesForLint pulls (from cache, or the registry) the bundle definition for
+// each dependency so that the linter can validate that mapped parameters and credentials are
+// actually defined on the dependency. Dependencies whose bundle cannot be resolved are reported
+// as a warning and omitted from the returned map, so the linter simply skips validating them.
+func (p *Porter) resolveDependencyBundlesForLint(ctx context.Context, m *manifest.Manifest, opts LintOptions) (map[string]cnab.ExtendedBundle, linter.Results) {
+	if len(m.Dependencies.Requires) == 0 {
+		return nil, nil
+	}
+
+	depBundles := make(map[string]cnab.ExtendedBundle, len(m.Dependencies.Requires))
+	var results linter.Results
+	for _, dep := range m.Dependencies.Requires {
+		pullOpts := BundlePullOptions{
+			Reference:        dep.Bundle.Reference,
+			InsecureRegistry: opts.InsecureRegistry,
+		}
+		if err := pullOpts.Validate(); err == nil {
+			if cachedBundle, err := p.PullBundle(ctx, pullOpts); err == nil {
+				depBundles[dep.Name] = cachedBundle.Definition
+				continue
+			}
+		}
+
+		results = append(results, linter.Result{
+			Level:   linter.LevelWarning,
+			Code:    "porter-105",
+			Title:   "Dependency error",
+			Message: fmt.Sprintf("unable to resolve dependency %s (%s), so its parameter and credential mappings could not be validated", dep.Name, dep.Bundle.Reference),
+			URL:     "https://porter.sh/reference/linter/#porter-105",
+		})
+	}
+
+	return depBundles, results
 }
 
 // PrintLintResults lints the manifest and prints the results to the attached output.
