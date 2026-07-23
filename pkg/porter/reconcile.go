@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"sort"
 
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/storage"
@@ -225,15 +224,37 @@ func (p *Porter) IsInstallationInSync(ctx context.Context, i storage.Installatio
 		return false, nil
 	}
 
-	// Check only if the names of the associated credential sets have changed
-	// This is a "good enough for now" decision that can be revisited if we
-	// get use cases for needing to diff the actual credentials.
-	sort.Strings(lastRun.CredentialSets)
-	sort.Strings(i.CredentialSets)
-	if !cmp.Equal(lastRun.CredentialSets, i.CredentialSets) {
-		diff := cmp.Diff(lastRun.CredentialSets, i.CredentialSets)
-		log.Info("Triggering because the credential set names have changed",
-			attribute.String("diff", diff))
+	// Resolve the credentials that would have been used for the last run, and
+	// compare their current digest against the last run's, so that we can
+	// detect a changed credential value (e.g. a rotated secret) even when the
+	// attached credential set names haven't changed. Compose using
+	// lastRun.Action rather than the action we're about to run - some
+	// credentials may only apply to specific actions (see Credential.AppliesTo),
+	// so comparing against a differently-scoped set (e.g. right after an
+	// install, when the next action under consideration is upgrade) would
+	// otherwise report a mismatch even though nothing has actually changed.
+	composedCreds, err := p.resolveCredentialSets(ctx, i.Namespace, i.CredentialSets, newRef.Definition.Bundle, lastRun.Action)
+	if err != nil {
+		return false, err
+	}
+
+	resolvedCreds, err := p.Credentials.ResolveAll(ctx, composedCreds, composedCreds.Keys())
+	if err != nil {
+		return false, err
+	}
+	for idx, cred := range composedCreds.Credentials {
+		composedCreds.Credentials[idx].ResolvedValue = resolvedCreds[cred.Name]
+	}
+
+	newCredsRun := storage.Run{Credentials: composedCreds}
+	if err := newCredsRun.SetCredentialsDigest(); err != nil {
+		return false, err
+	}
+
+	if lastRun.CredentialsDigest != newCredsRun.CredentialsDigest {
+		log.Info("Triggering because the credentials have changed",
+			attribute.String("oldDigest", lastRun.CredentialsDigest),
+			attribute.String("newDigest", newCredsRun.CredentialsDigest))
 		return false, nil
 	}
 	return true, nil

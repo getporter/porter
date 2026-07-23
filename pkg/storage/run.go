@@ -4,9 +4,11 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+	"sort"
 	"time"
 
 	"get.porter.sh/porter/pkg/cnab"
+	"get.porter.sh/porter/pkg/secrets"
 	"github.com/cnabio/cnab-go/bundle"
 )
 
@@ -236,30 +238,85 @@ func (r Run) TypedParameterValues() map[string]interface{} {
 // quickly tell if the parameters between runs were different without
 // re-resolving them.
 func (r *Run) SetParametersDigest() error {
-	// Calculate a hash of the resolved parameters
-	paramB, err := json.Marshal(r.Parameters.Parameters)
+	digest, err := digestResolvedValues(r.Parameters.Parameters)
 	if err != nil {
 		r.ParametersDigest = ""
 		return fmt.Errorf("error calculating the digest of the run parameters: %w", err)
 	}
 
-	r.ParametersDigest = fmt.Sprintf("sha256:%x", sha256.Sum256(paramB))
+	r.ParametersDigest = digest
 	return nil
 }
 
 // SetCredentialsDigest records the hash of the resolved credentials, so we can
-// quickly tell if the parameters between runs were different without
+// quickly tell if the credentials between runs were different without
 // re-resolving them.
 func (r *Run) SetCredentialsDigest() error {
-	// Calculate a hash of the resolved credentials
-	credB, err := json.Marshal(r.Credentials.Credentials)
+	digest, err := digestResolvedValues(r.Credentials.Credentials)
 	if err != nil {
 		r.CredentialsDigest = ""
 		return fmt.Errorf("error calculating the digest of the run credentials: %w", err)
 	}
 
-	r.CredentialsDigest = fmt.Sprintf("sha256:%x", sha256.Sum256(credB))
+	r.CredentialsDigest = digest
 	return nil
+}
+
+// resolvedValueDigestEntry is a hashable projection of a secrets.SourceMap
+// that, unlike secrets.SourceMap itself, includes the resolved value.
+// secrets.SourceMap.ResolvedValue is tagged json:"-" so that it's never
+// accidentally persisted to storage; digesting requires a separate type
+// that intentionally includes it.
+type resolvedValueDigestEntry struct {
+	Name          string `json:"name"`
+	Strategy      string `json:"strategy"`
+	Hint          string `json:"hint"`
+	ResolvedValue string `json:"resolvedValue"`
+}
+
+// digestResolvedValues hashes the resolved values of a set of parameters or
+// credentials, so that we can detect when the underlying values change
+// (e.g. a secret is rotated) without storing or re-exposing the values
+// themselves. The entries are sorted by name first so the digest doesn't
+// depend on the incoming slice's order.
+func digestResolvedValues(entries secrets.StrategyList) (string, error) {
+	if len(entries) == 0 {
+		return "", nil
+	}
+
+	sortable := make([]resolvedValueDigestEntry, 0, len(entries))
+	for _, entry := range entries {
+		sortable = append(sortable, resolvedValueDigestEntry{
+			Name:          entry.Name,
+			Strategy:      entry.Source.Strategy,
+			Hint:          entry.Source.Hint,
+			ResolvedValue: entry.ResolvedValue,
+		})
+	}
+	// Sort on every field, not just Name, so the digest stays deterministic
+	// even if two entries ever share a name (sort.Slice is not stable, so
+	// ties broken on Name alone could otherwise order differently across
+	// calls with the same logical content but a different starting order).
+	sort.Slice(sortable, func(i, j int) bool {
+		a, b := sortable[i], sortable[j]
+		if a.Name != b.Name {
+			return a.Name < b.Name
+		}
+		if a.Strategy != b.Strategy {
+			return a.Strategy < b.Strategy
+		}
+		if a.Hint != b.Hint {
+			return a.Hint < b.Hint
+		}
+		return a.ResolvedValue < b.ResolvedValue
+	})
+
+	data, err := json.Marshal(sortable)
+	if err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("sha256:%x", sha256.Sum256(data)), nil
 }
 
 // NewRun creates a result for the current Run.

@@ -50,7 +50,7 @@ func TestRuntime_loadCredentials(t *testing.T) {
 	}
 	err := r.loadCredentials(context.Background(), b, &run)
 	require.NoError(t, err, "loadCredentials failed")
-	require.Equal(t, "sha256:2d6d3c91ef272afeef2bb29b2fb4b1670c756c623195e71916b8ee138fba60cb",
+	require.Equal(t, "sha256:6ca37d097c96a2bc48f0e258df4b350f849b32ff71502aceaf9ead0481455971",
 		run.CredentialsDigest, "expected loadCredentials to set the digest of resolved credentials")
 	require.NotEmpty(t, run.Credentials.Credentials[0].ResolvedValue, "expected loadCredentials to set the resolved value of the credentials on the Run")
 
@@ -137,7 +137,7 @@ func TestRuntime_loadCredentials_WithApplyTo(t *testing.T) {
 		}
 		err := r.loadCredentials(context.Background(), b, run)
 		require.NoError(t, err, "loadCredentials failed")
-		require.Equal(t, "sha256:2d6d3c91ef272afeef2bb29b2fb4b1670c756c623195e71916b8ee138fba60cb",
+		require.Equal(t, "sha256:6ca37d097c96a2bc48f0e258df4b350f849b32ff71502aceaf9ead0481455971",
 			run.CredentialsDigest, "expected loadCredentials to set the digest of resolved credentials")
 		require.NotEmpty(t, run.Credentials.Credentials[0].ResolvedValue, "expected loadCredentials to set the resolved value of the credentials on the Run")
 
@@ -175,7 +175,7 @@ func TestRuntime_nonSecretValue_loadCredentials(t *testing.T) {
 	}
 	err := r.loadCredentials(context.Background(), b, &run)
 	require.NoError(t, err, "loadCredentials failed")
-	require.Equal(t, "sha256:9b6063069a6d911421cf53b30b91836b70957c30eddc70a760eff4765b8cede5",
+	require.Equal(t, "sha256:08cc18df8fe3c13c9d70c1346248638bd3653120aaa53593e959dae7afcf2733",
 		run.CredentialsDigest, "expected loadCredentials to set the digest of resolved credentials")
 	require.NotEmpty(t, run.Credentials.Credentials[0].ResolvedValue, "expected loadCredentials to set the resolved value of the credentials on the Run")
 

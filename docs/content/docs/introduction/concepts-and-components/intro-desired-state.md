@@ -15,7 +15,7 @@ The following will result in Porter executing the bundle:
 - The installation has not completed successfully yet.
 - The bundle reference has changed. The bundle reference is resolved using the repository, version, digest, and tag fields.
 - The resolved parameter values have changed, either because an associated parameter set has changed, the parameters defined on the bundle have changed, or the values resolved by any parameter sets have changed.
-- The list of credential set names have changed. Currently, Porter does not compare resolved credential values.
+- The resolved credential values have changed, either because the attached credential set names have changed, or because a value resolved by an attached credential set has changed (for example, a secret was rotated).
 - The porter installation apply command was run with the --force.
 
 Allowing Porter to manage reconciling the state of the installation is how the [Porter Operator] will work when it is ready, and is well suited for use with GitOps.
