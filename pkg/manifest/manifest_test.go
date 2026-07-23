@@ -1251,6 +1251,38 @@ func TestManifest_DetermineDependenciesExtensionUsed(t *testing.T) {
 	})
 }
 
+func TestDependency_Validate_BundleInterfaceReferenceAndDocument(t *testing.T) {
+	cxt := portercontext.NewTestContext(t)
+
+	d := &Dependency{
+		Name:   "mysql",
+		Bundle: BundleCriteria{Reference: "mysql:5.7"},
+	}
+
+	t.Run("reference only is valid", func(t *testing.T) {
+		d.Bundle.Interface = &BundleInterface{Reference: "mysql-interface:5.7"}
+		require.NoError(t, d.Validate(cxt.Context))
+	})
+
+	t.Run("document only is valid", func(t *testing.T) {
+		d.Bundle.Interface = &BundleInterface{Document: &BundleInterfaceDocument{
+			Outputs: OutputDefinitions{"connstr": {Name: "connstr"}},
+		}}
+		require.NoError(t, d.Validate(cxt.Context))
+	})
+
+	t.Run("both reference and document is rejected", func(t *testing.T) {
+		d.Bundle.Interface = &BundleInterface{
+			Reference: "mysql-interface:5.7",
+			Document: &BundleInterfaceDocument{
+				Outputs: OutputDefinitions{"connstr": {Name: "connstr"}},
+			},
+		}
+		err := d.Validate(cxt.Context)
+		require.ErrorContains(t, err, "bundle interface for dependency \"mysql\" can specify only a reference or a document, not both")
+	})
+}
+
 func TestExpandPersistentParameters(t *testing.T) {
 	newCfg := func(t *testing.T, flags ...experimental.FeatureFlags) *config.Config {
 		cfg := config.NewTestConfig(t)

@@ -52,10 +52,14 @@ func requiredOutputNames(alias string, dep v2.Dependency, refsByToAlias map[stri
 // instead of pulling and installing a new instance of its bundle. Returns
 // nil (no error) when no candidate satisfies every rule.
 //
-// This only handles the "default implementation, no bundle interface
-// declared" case (see dependency_graph_builder.go's caller) -- matching a
-// candidate against a declared bundle interface is out of scope until #2626
-// lands.
+// required may include names contributed by a declared bundle interface
+// (see composeRequiredInterface), but only outputs are ever checked here
+// regardless of what the interface declares -- this is the "existing
+// installation" resolution context from PEP003 (see #2686), where
+// credentials/parameters aren't re-evaluated because the installation is
+// already running. Whether that should also hold for upgrade/uninstall/
+// custom actions against an existing installation is an open question
+// tracked by #2686, not resolved here.
 func findExistingInstallation(ctx context.Context, p *Porter, namespace string, lock cnab.DependencyLock, required []string) (*storage.Installation, error) {
 	if !lock.SharingMode {
 		// A dependency with sharing disabled must never reuse an
@@ -162,11 +166,15 @@ func hasRequiredOutputs(ctx context.Context, p *Porter, candidate storage.Instal
 		return false
 	}
 
-	for _, name := range required {
-		if _, ok := outputs.GetByName(name); !ok {
-			return false
-		}
+	available := make([]string, 0, outputs.Len())
+	for _, o := range outputs.Value() {
+		available = append(available, o.Name)
 	}
 
-	return true
+	result := cnab.EvaluateInterfaceMatch(
+		cnab.InterfaceCandidate{Outputs: available},
+		cnab.InterfaceRequirement{Outputs: required},
+		cnab.InterfaceMatchOutputsOnly,
+	)
+	return result.Satisfied
 }

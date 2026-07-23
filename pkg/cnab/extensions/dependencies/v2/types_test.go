@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/tests"
+	"github.com/cnabio/cnab-go/bundle"
 	"github.com/stretchr/testify/require"
 )
 
@@ -150,4 +151,48 @@ func TestParseAllDependencySources(t *testing.T) {
 			require.Equal(t, tc.wantInvalid, gotInvalid, "incorrect invalid matches were reported")
 		})
 	}
+}
+
+func TestDependencyInterfaceDocument_IsEmpty(t *testing.T) {
+	t.Parallel()
+
+	require.True(t, DependencyInterfaceDocument{}.IsEmpty(), "a zero-value document should be empty")
+
+	require.False(t, DependencyInterfaceDocument{
+		Outputs: map[string]bundle.Output{"connstr": {}},
+	}.IsEmpty(), "a document with an output should not be empty")
+
+	require.False(t, DependencyInterfaceDocument{
+		Parameters: map[string]bundle.Parameter{"logLevel": {}},
+	}.IsEmpty(), "a document with a parameter should not be empty")
+
+	require.False(t, DependencyInterfaceDocument{
+		Credentials: map[string]bundle.Credential{"token": {}},
+	}.IsEmpty(), "a document with a credential should not be empty")
+}
+
+func TestDependencyInterfaceDocument_Names(t *testing.T) {
+	t.Parallel()
+
+	doc := DependencyInterfaceDocument{
+		Outputs: map[string]bundle.Output{
+			"connstr": {}, "port": {},
+		},
+		Parameters: map[string]bundle.Parameter{
+			"logLevel": {},
+		},
+		Credentials: map[string]bundle.Credential{
+			"token": {}, "apiKey": {},
+		},
+	}
+
+	outputs, parameters, credentials := doc.Names()
+	require.Equal(t, []string{"connstr", "port"}, outputs)
+	require.Equal(t, []string{"logLevel"}, parameters)
+	require.Equal(t, []string{"apiKey", "token"}, credentials)
+
+	emptyOutputs, emptyParameters, emptyCredentials := DependencyInterfaceDocument{}.Names()
+	require.Empty(t, emptyOutputs)
+	require.Empty(t, emptyParameters)
+	require.Empty(t, emptyCredentials)
 }
