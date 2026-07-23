@@ -71,8 +71,8 @@ func (b *GraphBuilder) composeRequiredInterface(ctx context.Context, alias strin
 
 // unionSorted returns the sorted, deduplicated union of a and b.
 func unionSorted(a, b []string) []string {
-	if len(b) == 0 {
-		return a
+	if len(a) == 0 && len(b) == 0 {
+		return nil
 	}
 
 	seen := make(map[string]bool, len(a)+len(b))
