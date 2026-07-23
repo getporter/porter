@@ -1,0 +1,29 @@
+schemaVersion: 1.0.1
+name: mysql-interface
+version: 0.1.0
+registry: "localhost:5000"
+
+# This bundle is never installed -- it exists only to be published and
+# referenced via interface.reference by a dependency elsewhere (see #2626),
+# declaring the outputs a bundle must provide to satisfy the mysql
+# interface.
+
+mixins:
+  - exec
+
+install:
+  - exec:
+      command: echo
+      arguments:
+        - "installed mysql-interface"
+
+uninstall:
+  - exec:
+      command: echo
+      arguments:
+        - "uninstalled mysql-interface"
+
+outputs:
+  - name: mysql-password
+    description: "The mysql database password"
+    type: string
