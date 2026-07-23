@@ -280,12 +280,7 @@ func (b *GraphBuilder) pullDependencyBundle(ctx context.Context, ref string, opt
 		Force:            false,
 	}
 
-	resolver := BundleResolver{
-		Cache:    b.porter.Cache,
-		Registry: b.porter.Registry,
-	}
-
-	cachedBundle, err := resolver.Resolve(ctx, pullOpts)
+	cachedBundle, err := b.porter.PullBundle(ctx, pullOpts)
 	if err != nil {
 		return cnab.ExtendedBundle{}, fmt.Errorf("failed to pull bundle %s: %w", ref, err)
 	}

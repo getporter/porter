@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"testing"
 
+	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/mixin"
@@ -12,6 +13,7 @@ import (
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/tests"
 	"github.com/Masterminds/semver/v3"
+	"github.com/cnabio/cnab-go/bundle"
 	"github.com/stretchr/testify/require"
 )
 
@@ -32,7 +34,7 @@ func TestLinter_Lint(t *testing.T) {
 		}
 		mixins.LintResults = nil
 
-		results, err := l.Lint(ctx, m, testConfig)
+		results, err := l.Lint(ctx, m, testConfig, nil)
 		require.NoError(t, err, "Lint failed")
 		require.Len(t, results, 0, "linter should have returned 0 results")
 	})
@@ -56,7 +58,7 @@ func TestLinter_Lint(t *testing.T) {
 			},
 		}
 
-		results, err := l.Lint(ctx, m, testConfig)
+		results, err := l.Lint(ctx, m, testConfig, nil)
 		require.NoError(t, err, "Lint failed")
 		require.Len(t, results, 1, "linter should have returned 1 result")
 		require.Equal(t, mixins.LintResults, results, "unexpected lint results")
@@ -74,7 +76,7 @@ func TestLinter_Lint(t *testing.T) {
 			},
 		}
 
-		results, err := l.Lint(ctx, m, testConfig)
+		results, err := l.Lint(ctx, m, testConfig, nil)
 		require.NoError(t, err, "Lint failed")
 		require.Len(t, results, 0, "linter should ignore mixins that doesn't support the lint command")
 	})
@@ -127,7 +129,7 @@ func TestLinter_Lint(t *testing.T) {
 				},
 			}
 
-			results, err := l.Lint(ctx, m, testConfig)
+			results, err := l.Lint(ctx, m, testConfig, nil)
 			require.NoError(t, err, "Lint failed")
 			require.Len(t, results, 1, "linter should have returned 1 result")
 			require.Equal(t, mixins.LintResults, results, "unexpected lint results")
@@ -155,7 +157,7 @@ func TestLinter_Lint(t *testing.T) {
 			},
 		}
 
-		results, err := l.Lint(ctx, m, testConfig)
+		results, err := l.Lint(ctx, m, testConfig, nil)
 		require.NoError(t, err, "Lint failed")
 		require.Len(t, results, 0, "linter should have returned 1 result")
 	})
@@ -174,7 +176,7 @@ func TestLinter_Lint(t *testing.T) {
 			Parameters: param,
 		}
 
-		results, err := l.Lint(ctx, m, testConfig)
+		results, err := l.Lint(ctx, m, testConfig, nil)
 		require.NoError(t, err, "Lint failed")
 		require.Len(t, results, 1, "linter should have returned 1 result")
 		require.NotContains(t, results[0].String(), ": 0th step in the mixin ()")
@@ -243,7 +245,7 @@ func TestLinter_Lint_ParameterDoesNotApplyTo(t *testing.T) {
 					URL:     "https://porter.sh/docs/references/linter/#porter-101",
 				},
 			}
-			results, err := l.Lint(ctx, m, testConfig)
+			results, err := l.Lint(ctx, m, testConfig, nil)
 			require.NoError(t, err, "Lint failed")
 			require.Len(t, results, 1, "linter should have returned 1 result")
 			require.Equal(t, lintResults, results, "unexpected lint results")
@@ -298,7 +300,7 @@ func TestLinter_Lint_ParameterAppliesTo(t *testing.T) {
 			}
 			tc.setSteps(m, steps)
 
-			results, err := l.Lint(ctx, m, testConfig)
+			results, err := l.Lint(ctx, m, testConfig, nil)
 			require.NoError(t, err, "Lint failed")
 			require.Len(t, results, 0, "linter should have returned 1 result")
 		})
@@ -331,7 +333,7 @@ func TestLinter_DependencyMultipleTimes(t *testing.T) {
 			},
 		}
 
-		results, err := l.Lint(context.Background(), m, testConfig)
+		results, err := l.Lint(context.Background(), m, testConfig, nil)
 		require.NoError(t, err, "Lint failed")
 		require.Len(t, results, 1, "linter should have returned 1 result")
 		require.Equal(t, expectedResult, results, "unexpected lint results")
@@ -350,7 +352,7 @@ func TestLinter_DependencyMultipleTimes(t *testing.T) {
 			},
 		}
 
-		results, err := l.Lint(context.Background(), m, testConfig)
+		results, err := l.Lint(context.Background(), m, testConfig, nil)
 		require.NoError(t, err, "Lint failed")
 		require.Len(t, results, 0, "linter should have returned 0 result")
 	})
@@ -361,9 +363,121 @@ func TestLinter_DependencyMultipleTimes(t *testing.T) {
 
 		m := &manifest.Manifest{}
 
-		results, err := l.Lint(context.Background(), m, testConfig)
+		results, err := l.Lint(context.Background(), m, testConfig, nil)
 		require.NoError(t, err, "Lint failed")
 		require.Len(t, results, 0, "linter should have returned 0 result")
+	})
+}
+
+func TestLinter_DependencyMappings(t *testing.T) {
+	testConfig := config.NewTestConfig(t).Config
+
+	newDepBundle := func() cnab.ExtendedBundle {
+		return cnab.ExtendedBundle{Bundle: bundle.Bundle{
+			Parameters: map[string]bundle.Parameter{
+				"PARAM_A": {Definition: "param-a"},
+			},
+			Credentials: map[string]bundle.Credential{
+				"CRED_A": {},
+			},
+		}}
+	}
+
+	t.Run("undefined parameter mapping", func(t *testing.T) {
+		cxt := portercontext.NewTestContext(t)
+		mixins := mixin.NewTestMixinProvider()
+		l := New(cxt.Context, mixins)
+
+		m := &manifest.Manifest{
+			Dependencies: manifest.Dependencies{
+				Requires: []*manifest.Dependency{
+					{Name: "mysql", Parameters: map[string]string{"NOT_DEFINED": "value"}},
+				},
+			},
+		}
+		depBundles := map[string]cnab.ExtendedBundle{"mysql": newDepBundle()}
+
+		expectedResult := Results{
+			{
+				Code:    "porter-103",
+				Title:   "Dependency error",
+				Message: "dependencies.mysql.parameters.NOT_DEFINED is not defined as a parameter on the dependency bundle",
+				URL:     "https://porter.sh/reference/linter/#porter-103",
+			},
+		}
+
+		results, err := l.Lint(context.Background(), m, testConfig, depBundles)
+		require.NoError(t, err, "Lint failed")
+		require.Equal(t, expectedResult, results, "unexpected lint results")
+	})
+
+	t.Run("undefined credential mapping", func(t *testing.T) {
+		cxt := portercontext.NewTestContext(t)
+		mixins := mixin.NewTestMixinProvider()
+		l := New(cxt.Context, mixins)
+
+		m := &manifest.Manifest{
+			Dependencies: manifest.Dependencies{
+				Requires: []*manifest.Dependency{
+					{Name: "mysql", Credentials: map[string]string{"NOT_DEFINED": "value"}},
+				},
+			},
+		}
+		depBundles := map[string]cnab.ExtendedBundle{"mysql": newDepBundle()}
+
+		expectedResult := Results{
+			{
+				Code:    "porter-104",
+				Title:   "Dependency error",
+				Message: "dependencies.mysql.credentials.NOT_DEFINED is not defined as a credential on the dependency bundle",
+				URL:     "https://porter.sh/reference/linter/#porter-104",
+			},
+		}
+
+		results, err := l.Lint(context.Background(), m, testConfig, depBundles)
+		require.NoError(t, err, "Lint failed")
+		require.Equal(t, expectedResult, results, "unexpected lint results")
+	})
+
+	t.Run("valid mappings", func(t *testing.T) {
+		cxt := portercontext.NewTestContext(t)
+		mixins := mixin.NewTestMixinProvider()
+		l := New(cxt.Context, mixins)
+
+		m := &manifest.Manifest{
+			Dependencies: manifest.Dependencies{
+				Requires: []*manifest.Dependency{
+					{
+						Name:        "mysql",
+						Parameters:  map[string]string{"PARAM_A": "value"},
+						Credentials: map[string]string{"CRED_A": "value"},
+					},
+				},
+			},
+		}
+		depBundles := map[string]cnab.ExtendedBundle{"mysql": newDepBundle()}
+
+		results, err := l.Lint(context.Background(), m, testConfig, depBundles)
+		require.NoError(t, err, "Lint failed")
+		require.Len(t, results, 0, "linter should have returned 0 results")
+	})
+
+	t.Run("unresolved dependency is skipped", func(t *testing.T) {
+		cxt := portercontext.NewTestContext(t)
+		mixins := mixin.NewTestMixinProvider()
+		l := New(cxt.Context, mixins)
+
+		m := &manifest.Manifest{
+			Dependencies: manifest.Dependencies{
+				Requires: []*manifest.Dependency{
+					{Name: "mysql", Parameters: map[string]string{"NOT_DEFINED": "value"}},
+				},
+			},
+		}
+
+		results, err := l.Lint(context.Background(), m, testConfig, nil)
+		require.NoError(t, err, "Lint failed")
+		require.Len(t, results, 0, "linter should skip validation for unresolved dependencies")
 	})
 }
 
@@ -387,7 +501,7 @@ func TestLinter_Lint_MissingMixin(t *testing.T) {
 		return fmt.Errorf("%s not installed", mixinName)
 	})
 
-	_, err := l.Lint(context.Background(), m, testConfig)
+	_, err := l.Lint(context.Background(), m, testConfig, nil)
 	require.Error(t, err, "Linting should return an error")
 	tests.RequireOutputContains(t, err.Error(), fmt.Sprintf("%s is not currently installed", mixinName))
 }
@@ -451,7 +565,7 @@ func TestLinter_Lint_MixinVersions(t *testing.T) {
 			m := &manifest.Manifest{
 				Mixins: testCase.mixins,
 			}
-			results, err := l.Lint(context.Background(), m, testConfig)
+			results, err := l.Lint(context.Background(), m, testConfig, nil)
 			if testCase.errExpected {
 				require.Error(t, err, "Linting should return an error")
 				tests.RequireOutputContains(t, err.Error(), fmt.Sprintf(
