@@ -88,6 +88,13 @@ func (p *Porter) resolveDependencyBundlesForLint(ctx context.Context, m *manifes
 	depBundles := make(map[string]cnab.ExtendedBundle, len(m.Dependencies.Requires))
 	var results linter.Results
 	for _, dep := range m.Dependencies.Requires {
+		// Only resolve the dependency's bundle when there is something to validate.
+		// Otherwise we'd be doing unnecessary cache/registry I/O, and could report
+		// a porter-105 warning for a dependency that has no mappings to check.
+		if len(dep.Parameters) == 0 && len(dep.Credentials) == 0 {
+			continue
+		}
+
 		pullOpts := BundlePullOptions{
 			Reference:        dep.Bundle.Reference,
 			InsecureRegistry: opts.InsecureRegistry,

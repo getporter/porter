@@ -145,6 +145,8 @@ dependencies:
     - name: unresolvable
       bundle:
         reference: localhost:5000/unresolvable:v1.0.0
+      parameters:
+        SOME_PARAM: "value"
 
 mixins:
   - exec

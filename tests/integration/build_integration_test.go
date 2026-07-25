@@ -10,6 +10,8 @@ import (
 
 	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/build"
+	"get.porter.sh/porter/pkg/cnab"
+	cnabtooci "get.porter.sh/porter/pkg/cnab/cnab-to-oci"
 	configadapter "get.porter.sh/porter/pkg/cnab/config-adapter"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/linter"
@@ -109,6 +111,19 @@ func TestPorter_Build_ChecksManifestSchemaVersion(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			p := porter.NewTestPorter(t)
 			defer p.Close()
+
+			// mybuns depends on this bundle and maps a "database" parameter into it, so
+			// resolving it during lint needs it to actually define that parameter.
+			p.TestRegistry.MockPullBundle = func(ctx context.Context, ref cnab.OCIReference, opts cnabtooci.RegistryOptions) (cnab.BundleReference, error) {
+				return cnab.BundleReference{
+					Reference: ref,
+					Definition: cnab.ExtendedBundle{Bundle: bundle.Bundle{
+						Parameters: map[string]bundle.Parameter{
+							"database": {Definition: "database"},
+						},
+					}},
+				}, nil
+			}
 
 			// Make a bundle with the specified schemaVersion
 			p.TestConfig.TestContext.AddTestDirectoryFromRoot("tests/testdata/mybuns", "/")

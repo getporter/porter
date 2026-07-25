@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg/cnab"
+	cnabtooci "get.porter.sh/porter/pkg/cnab/cnab-to-oci"
 	"get.porter.sh/porter/pkg/porter"
 	"get.porter.sh/porter/pkg/storage"
 	"github.com/cnabio/cnab-go/bundle"
@@ -27,6 +28,19 @@ func TestResolveBundleReference(t *testing.T) {
 
 		p := porter.NewTestPorter(t)
 		defer p.Close()
+
+		// mybuns depends on this bundle and maps a "database" parameter into it, so
+		// resolving it during lint needs it to actually define that parameter.
+		p.TestRegistry.MockPullBundle = func(ctx context.Context, ref cnab.OCIReference, opts cnabtooci.RegistryOptions) (cnab.BundleReference, error) {
+			return cnab.BundleReference{
+				Reference: ref,
+				Definition: cnab.ExtendedBundle{Bundle: bundle.Bundle{
+					Parameters: map[string]bundle.Parameter{
+						"database": {Definition: "database"},
+					},
+				}},
+			}, nil
+		}
 
 		p.AddTestBundleDir(filepath.Join(p.RepoRoot, "tests/testdata/mybuns"), true)
 
