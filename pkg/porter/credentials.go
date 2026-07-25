@@ -316,6 +316,14 @@ func (p *Porter) DeleteCredential(ctx context.Context, opts CredentialDeleteOpti
 	)
 	defer span.EndSpan()
 
+	if _, err := p.Credentials.GetCredentialSet(ctx, opts.Namespace, opts.Name); err != nil {
+		if errors.Is(err, storage.ErrNotFound{}) {
+			span.Debug("Cannot remove credential set because it already doesn't exist")
+			return nil
+		}
+		return span.Error(fmt.Errorf("unable to get credential set: %w", err))
+	}
+
 	if !opts.Force {
 		installations, err := p.findInstallationsUsingCredentialSet(ctx, opts.Namespace, opts.Name)
 		if err != nil {
@@ -332,7 +340,7 @@ func (p *Porter) DeleteCredential(ctx context.Context, opts CredentialDeleteOpti
 
 	err := p.Credentials.RemoveCredentialSet(ctx, opts.Namespace, opts.Name)
 	if errors.Is(err, storage.ErrNotFound{}) {
-		span.Debug("nothing to remove, credential already does not exist")
+		span.Debug("Cannot remove credential set because it already doesn't exist")
 		return nil
 	}
 	if err != nil {

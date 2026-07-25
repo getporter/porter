@@ -407,6 +407,18 @@ func TestCredentialsDelete_InUse(t *testing.T) {
 		assert.ErrorIs(t, err, storage.ErrNotFound{})
 	})
 
+	t.Run("missing set is idempotent even if name is referenced", func(t *testing.T) {
+		p := NewTestPorter(t)
+		defer p.Close()
+
+		i := storage.NewInstallation("dev", "wordpress")
+		i.CredentialSets = []string{"kool-kreds"}
+		p.TestInstallations.CreateInstallation(i)
+
+		err := p.DeleteCredential(ctx, CredentialDeleteOptions{Namespace: "dev", Name: "kool-kreds"})
+		require.NoError(t, err, "deleting an already-missing set should not require --force")
+	})
+
 	t.Run("global set shadowed by local set is not in use", func(t *testing.T) {
 		p := NewTestPorter(t)
 		defer p.Close()

@@ -1181,6 +1181,18 @@ func TestParametersDelete(t *testing.T) {
 		assert.ErrorIs(t, err, storage.ErrNotFound{})
 	})
 
+	t.Run("missing set is idempotent even if name is referenced", func(t *testing.T) {
+		p := NewTestPorter(t)
+		defer p.Close()
+
+		i := storage.NewInstallation("dev", "wordpress")
+		i.ParameterSets = []string{"kool-params"}
+		p.TestInstallations.CreateInstallation(i)
+
+		err := p.DeleteParameter(ctx, ParameterDeleteOptions{Namespace: "dev", Name: "kool-params"})
+		require.NoError(t, err, "deleting an already-missing set should not require --force")
+	})
+
 	t.Run("global set shadowed by local set is not in use", func(t *testing.T) {
 		p := NewTestPorter(t)
 		defer p.Close()

@@ -309,6 +309,14 @@ func (p *Porter) DeleteParameter(ctx context.Context, opts ParameterDeleteOption
 	ctx, span := tracing.StartSpan(ctx)
 	defer span.EndSpan()
 
+	if _, err := p.Parameters.GetParameterSet(ctx, opts.Namespace, opts.Name); err != nil {
+		if errors.Is(err, storage.ErrNotFound{}) {
+			span.Debug("Cannot remove parameter set because it already doesn't exist")
+			return nil
+		}
+		return span.Error(fmt.Errorf("unable to get parameter set: %w", err))
+	}
+
 	if !opts.Force {
 		installations, err := p.findInstallationsUsingParameterSet(ctx, opts.Namespace, opts.Name)
 		if err != nil {
