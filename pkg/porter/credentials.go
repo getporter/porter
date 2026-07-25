@@ -16,6 +16,7 @@ import (
 	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/tracing"
 	dtprinter "github.com/carolynvs/datetime-printer"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.opentelemetry.io/otel/attribute"
 )
 
@@ -303,6 +304,7 @@ func (p *Porter) ShowCredential(ctx context.Context, opts CredentialShowOptions)
 type CredentialDeleteOptions struct {
 	Name      string
 	Namespace string
+	Force     bool
 }
 
 // DeleteCredential deletes the credential set corresponding to the provided
@@ -314,6 +316,20 @@ func (p *Porter) DeleteCredential(ctx context.Context, opts CredentialDeleteOpti
 	)
 	defer span.EndSpan()
 
+	if !opts.Force {
+		installations, err := p.findInstallationsUsingCredentialSet(ctx, opts.Namespace, opts.Name)
+		if err != nil {
+			return span.Error(fmt.Errorf("unable to check if credential set %s is in use: %w", opts.Name, err))
+		}
+		if len(installations) > 0 {
+			names := make([]string, 0, len(installations))
+			for _, inst := range installations {
+				names = append(names, fmt.Sprintf("%s/%s", inst.Namespace, inst.Name))
+			}
+			return span.Error(fmt.Errorf("credential set %s is in use by the following installation(s): %s; if you are sure it should be deleted, retry the last command with the --force flag", opts.Name, strings.Join(names, ", ")))
+		}
+	}
+
 	err := p.Credentials.RemoveCredentialSet(ctx, opts.Namespace, opts.Name)
 	if errors.Is(err, storage.ErrNotFound{}) {
 		span.Debug("nothing to remove, credential already does not exist")
@@ -324,6 +340,49 @@ func (p *Porter) DeleteCredential(ctx context.Context, opts CredentialDeleteOpti
 	}
 
 	return nil
+}
+
+// findInstallationsUsingCredentialSet returns the installations that resolve
+// the named credential set, following the same namespace fallback rule used
+// by resolveCredentialSets: a namespaced set is only visible to
+// installations in that namespace, while a global set (namespace == "") is
+// visible to installations in any namespace, unless that namespace defines
+// its own set with the same name, which shadows the global one.
+func (p *Porter) findInstallationsUsingCredentialSet(ctx context.Context, namespace string, name string) ([]storage.Installation, error) {
+	filter := bson.M{"credentialSets": name}
+	if namespace != "" {
+		filter["namespace"] = namespace
+	}
+
+	candidates, err := p.Installations.FindInstallations(ctx, storage.FindOptions{Filter: filter})
+	if err != nil || namespace != "" {
+		return candidates, err
+	}
+
+	shadowed := map[string]bool{}
+	var inUse []storage.Installation
+	for _, inst := range candidates {
+		if inst.Namespace == "" {
+			inUse = append(inUse, inst)
+			continue
+		}
+
+		shadows, ok := shadowed[inst.Namespace]
+		if !ok {
+			_, getErr := p.Credentials.GetCredentialSet(ctx, inst.Namespace, name)
+			if getErr != nil && !errors.Is(getErr, storage.ErrNotFound{}) {
+				return nil, getErr
+			}
+			shadows = getErr == nil
+			shadowed[inst.Namespace] = shadows
+		}
+
+		if !shadows {
+			inUse = append(inUse, inst)
+		}
+	}
+
+	return inUse, nil
 }
 
 // Validate validates the args provided Porter's credential delete command

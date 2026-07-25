@@ -300,6 +300,7 @@ func (p *Porter) ShowParameter(ctx context.Context, opts ParameterShowOptions) e
 type ParameterDeleteOptions struct {
 	Name      string
 	Namespace string
+	Force     bool
 }
 
 // DeleteParameter deletes the parameter set corresponding to the provided
@@ -307,6 +308,20 @@ type ParameterDeleteOptions struct {
 func (p *Porter) DeleteParameter(ctx context.Context, opts ParameterDeleteOptions) error {
 	ctx, span := tracing.StartSpan(ctx)
 	defer span.EndSpan()
+
+	if !opts.Force {
+		installations, err := p.findInstallationsUsingParameterSet(ctx, opts.Namespace, opts.Name)
+		if err != nil {
+			return span.Error(fmt.Errorf("unable to check if parameter set %s is in use: %w", opts.Name, err))
+		}
+		if len(installations) > 0 {
+			names := make([]string, 0, len(installations))
+			for _, inst := range installations {
+				names = append(names, fmt.Sprintf("%s/%s", inst.Namespace, inst.Name))
+			}
+			return span.Error(fmt.Errorf("parameter set %s is in use by the following installation(s): %s; if you are sure it should be deleted, retry the last command with the --force flag", opts.Name, strings.Join(names, ", ")))
+		}
+	}
 
 	err := p.Parameters.RemoveParameterSet(ctx, opts.Namespace, opts.Name)
 	if errors.Is(err, storage.ErrNotFound{}) {
@@ -318,6 +333,49 @@ func (p *Porter) DeleteParameter(ctx context.Context, opts ParameterDeleteOption
 	}
 
 	return nil
+}
+
+// findInstallationsUsingParameterSet returns the installations that resolve
+// the named parameter set, following the same namespace fallback rule used
+// by loadParameterSets: a namespaced set is only visible to installations
+// in that namespace, while a global set (namespace == "") is visible to
+// installations in any namespace, unless that namespace defines its own set
+// with the same name, which shadows the global one.
+func (p *Porter) findInstallationsUsingParameterSet(ctx context.Context, namespace string, name string) ([]storage.Installation, error) {
+	filter := bson.M{"parameterSets": name}
+	if namespace != "" {
+		filter["namespace"] = namespace
+	}
+
+	candidates, err := p.Installations.FindInstallations(ctx, storage.FindOptions{Filter: filter})
+	if err != nil || namespace != "" {
+		return candidates, err
+	}
+
+	shadowed := map[string]bool{}
+	var inUse []storage.Installation
+	for _, inst := range candidates {
+		if inst.Namespace == "" {
+			inUse = append(inUse, inst)
+			continue
+		}
+
+		shadows, ok := shadowed[inst.Namespace]
+		if !ok {
+			_, getErr := p.Parameters.GetParameterSet(ctx, inst.Namespace, name)
+			if getErr != nil && !errors.Is(getErr, storage.ErrNotFound{}) {
+				return nil, getErr
+			}
+			shadows = getErr == nil
+			shadowed[inst.Namespace] = shadows
+		}
+
+		if !shadows {
+			inUse = append(inUse, inst)
+		}
+	}
+
+	return inUse, nil
 }
 
 // Validate the args provided to the delete parameter command

@@ -188,6 +188,8 @@ func buildCredentialsDeleteCommand(p *porter.Porter) *cobra.Command {
 	f := cmd.Flags()
 	f.StringVarP(&opts.Namespace, "namespace", "n", "",
 		"Namespace in which the credential set is defined. Defaults to the global namespace.")
+	f.BoolVar(&opts.Force, "force", false,
+		"Force the delete even if the credential set is in use by an installation")
 
 	return cmd
 }

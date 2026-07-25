@@ -1126,6 +1126,82 @@ func TestParametersCreate(t *testing.T) {
 	}
 }
 
+func TestParametersDelete(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("not in use", func(t *testing.T) {
+		p := NewTestPorter(t)
+		defer p.Close()
+
+		ps := storage.NewParameterSet("dev", "kool-params")
+		require.NoError(t, p.Parameters.InsertParameterSet(ctx, ps))
+
+		err := p.DeleteParameter(ctx, ParameterDeleteOptions{Namespace: "dev", Name: "kool-params"})
+		require.NoError(t, err)
+
+		_, err = p.Parameters.GetParameterSet(ctx, "dev", "kool-params")
+		assert.ErrorIs(t, err, storage.ErrNotFound{})
+	})
+
+	t.Run("blocked without force", func(t *testing.T) {
+		p := NewTestPorter(t)
+		defer p.Close()
+
+		ps := storage.NewParameterSet("dev", "kool-params")
+		require.NoError(t, p.Parameters.InsertParameterSet(ctx, ps))
+
+		i := storage.NewInstallation("dev", "wordpress")
+		i.ParameterSets = []string{"kool-params"}
+		p.TestInstallations.CreateInstallation(i)
+
+		err := p.DeleteParameter(ctx, ParameterDeleteOptions{Namespace: "dev", Name: "kool-params"})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "dev/wordpress")
+		assert.Contains(t, err.Error(), "--force")
+
+		_, err = p.Parameters.GetParameterSet(ctx, "dev", "kool-params")
+		require.NoError(t, err, "expected parameter set to remain")
+	})
+
+	t.Run("force deletes despite use", func(t *testing.T) {
+		p := NewTestPorter(t)
+		defer p.Close()
+
+		ps := storage.NewParameterSet("dev", "kool-params")
+		require.NoError(t, p.Parameters.InsertParameterSet(ctx, ps))
+
+		i := storage.NewInstallation("dev", "wordpress")
+		i.ParameterSets = []string{"kool-params"}
+		p.TestInstallations.CreateInstallation(i)
+
+		err := p.DeleteParameter(ctx, ParameterDeleteOptions{Namespace: "dev", Name: "kool-params", Force: true})
+		require.NoError(t, err)
+
+		_, err = p.Parameters.GetParameterSet(ctx, "dev", "kool-params")
+		assert.ErrorIs(t, err, storage.ErrNotFound{})
+	})
+
+	t.Run("global set shadowed by local set is not in use", func(t *testing.T) {
+		p := NewTestPorter(t)
+		defer p.Close()
+
+		globalPS := storage.NewParameterSet("", "shared-params")
+		require.NoError(t, p.Parameters.InsertParameterSet(ctx, globalPS))
+		localPS := storage.NewParameterSet("dev", "shared-params")
+		require.NoError(t, p.Parameters.InsertParameterSet(ctx, localPS))
+
+		i := storage.NewInstallation("dev", "wordpress")
+		i.ParameterSets = []string{"shared-params"}
+		p.TestInstallations.CreateInstallation(i)
+
+		err := p.DeleteParameter(ctx, ParameterDeleteOptions{Namespace: "", Name: "shared-params"})
+		require.NoError(t, err, "the global set is shadowed by the local one, so it should not be considered in use")
+
+		_, err = p.Parameters.GetParameterSet(ctx, "", "shared-params")
+		assert.ErrorIs(t, err, storage.ErrNotFound{})
+	})
+}
+
 func TestPorter_ParametersApply(t *testing.T) {
 	t.Run("invalid schemaType", func(t *testing.T) {
 		// Make sure that we are validating the display parameter set values, and not just the underlying stored parameter set

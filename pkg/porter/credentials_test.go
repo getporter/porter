@@ -366,6 +366,68 @@ func TestCredentialsDelete(t *testing.T) {
 	}
 }
 
+func TestCredentialsDelete_InUse(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("blocked without force", func(t *testing.T) {
+		p := NewTestPorter(t)
+		defer p.Close()
+
+		cs := storage.NewCredentialSet("dev", "kool-kreds")
+		require.NoError(t, p.Credentials.InsertCredentialSet(ctx, cs))
+
+		i := storage.NewInstallation("dev", "wordpress")
+		i.CredentialSets = []string{"kool-kreds"}
+		p.TestInstallations.CreateInstallation(i)
+
+		err := p.DeleteCredential(ctx, CredentialDeleteOptions{Namespace: "dev", Name: "kool-kreds"})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "dev/wordpress")
+		assert.Contains(t, err.Error(), "--force")
+
+		_, err = p.Credentials.GetCredentialSet(ctx, "dev", "kool-kreds")
+		require.NoError(t, err, "expected credential set to remain")
+	})
+
+	t.Run("force deletes despite use", func(t *testing.T) {
+		p := NewTestPorter(t)
+		defer p.Close()
+
+		cs := storage.NewCredentialSet("dev", "kool-kreds")
+		require.NoError(t, p.Credentials.InsertCredentialSet(ctx, cs))
+
+		i := storage.NewInstallation("dev", "wordpress")
+		i.CredentialSets = []string{"kool-kreds"}
+		p.TestInstallations.CreateInstallation(i)
+
+		err := p.DeleteCredential(ctx, CredentialDeleteOptions{Namespace: "dev", Name: "kool-kreds", Force: true})
+		require.NoError(t, err)
+
+		_, err = p.Credentials.GetCredentialSet(ctx, "dev", "kool-kreds")
+		assert.ErrorIs(t, err, storage.ErrNotFound{})
+	})
+
+	t.Run("global set shadowed by local set is not in use", func(t *testing.T) {
+		p := NewTestPorter(t)
+		defer p.Close()
+
+		globalCS := storage.NewCredentialSet("", "shared-creds")
+		require.NoError(t, p.Credentials.InsertCredentialSet(ctx, globalCS))
+		localCS := storage.NewCredentialSet("dev", "shared-creds")
+		require.NoError(t, p.Credentials.InsertCredentialSet(ctx, localCS))
+
+		i := storage.NewInstallation("dev", "wordpress")
+		i.CredentialSets = []string{"shared-creds"}
+		p.TestInstallations.CreateInstallation(i)
+
+		err := p.DeleteCredential(ctx, CredentialDeleteOptions{Namespace: "", Name: "shared-creds"})
+		require.NoError(t, err, "the global set is shadowed by the local one, so it should not be considered in use")
+
+		_, err = p.Credentials.GetCredentialSet(ctx, "", "shared-creds")
+		assert.ErrorIs(t, err, storage.ErrNotFound{})
+	})
+}
+
 func TestApplyOptions_Validate(t *testing.T) {
 	t.Run("no file specified", func(t *testing.T) {
 		tc := portercontext.NewTestContext(t)
