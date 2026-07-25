@@ -28,6 +28,7 @@
   * [What is the general code layout?](#what-is-the-general-code-layout)
   * [Logging](#logging)
     * [Tracing Sensitive Data](#tracing-sensitive-data)
+  * [Error Handling](#error-handling)
   * [Breaking Changes](#breaking-changes)
 * [Infrastructure](#infrastructure)
   * [CDN Setup](#cdn-setup)
@@ -674,6 +675,63 @@ In order to debug your code and see the sensitive data, you need to:
 1. Compile a build of porter with sensitive tracing turned on, `go build -tags traceSensitiveAttributes -o bin/porter ./cmd/porter`.
 2. [Enable tracing with Jaeger](#view-a-trace-of-a-porter-command)
 3. Run a porter command and then view the sensitive attributes in the trace data sent to Jaeger.
+
+### Error Handling
+
+Porter used to use [pkg/errors] but has since fully migrated to Go's standard
+[errors] package and `fmt.Errorf`. Don't reintroduce `pkg/errors` in new code.
+
+[pkg/errors]: https://pkg.go.dev/github.com/pkg/errors
+[errors]: https://pkg.go.dev/errors
+
+**Wrap an error when it adds context that helps whoever sees the message
+understand what failed.**
+
+```go
+return fmt.Errorf("unable to get metadata from mixin %s: %w", mixin.Name, err)
+```
+
+Don't wrap just for the sake of it. If the underlying error message already
+says what happened, and you have nothing useful to add, return it unwrapped.
+
+**Define a typed error when calling code needs to check the error kind**, not
+just print it. Implement `Error() string` and `Is(err error) bool` so callers
+can use `errors.Is`:
+
+```go
+type ErrNotFound struct {
+	Collection string
+	Item       string
+}
+
+func (e ErrNotFound) Error() string { ... }
+
+func (e ErrNotFound) Is(err error) bool {
+	_, ok := err.(ErrNotFound)
+	return ok
+}
+```
+
+```go
+if errors.Is(err, storage.ErrNotFound{}) {
+    // handle a missing record
+}
+```
+
+See `storage.ErrNotFound` (`pkg/storage/plugin_adapter.go`) and
+`cnabtooci.ErrNotFound` (`pkg/cnab/cnab-to-oci/errors.go`) for existing
+examples.
+
+**Record errors on the trace span when you return them from a function that
+has one.** Use `span.Error(err)`, which logs the error and attaches it to the
+current span so it shows up in traces, then return the result:
+
+```go
+return span.Error(fmt.Errorf("invalid regular expression %q for output %q: %w", outputRegex, outputName, err))
+```
+
+Only do this once per error, at the point it's first handled/returned, so it
+isn't recorded multiple times as it bubbles up the call stack.
 
 ### Breaking Changes
 
