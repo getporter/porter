@@ -1,10 +1,18 @@
 package cnabtooci
 
 import (
+	"context"
 	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"get.porter.sh/porter/pkg/cnab"
+	"get.porter.sh/porter/pkg/portercontext"
+	"github.com/google/go-containerregistry/pkg/name"
+	"github.com/google/go-containerregistry/pkg/registry"
+	"github.com/google/go-containerregistry/pkg/v1/random"
+	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/google/go-containerregistry/pkg/v1/remote/transport"
 	"github.com/moby/moby/api/types/image"
 	"github.com/moby/moby/client"
@@ -102,5 +110,38 @@ func TestAsNotFoundError(t *testing.T) {
 		}
 		result := asNotFoundError(srcErr, ref)
 		require.Nil(t, result)
+	})
+}
+
+func TestRegistry_GetRemoteImageDigest(t *testing.T) {
+	regSrv := httptest.NewServer(registry.New())
+	defer regSrv.Close()
+	regHost := strings.TrimPrefix(regSrv.URL, "http://")
+
+	regOpts := RegistryOptions{InsecureRegistry: true}
+	r := NewRegistry(portercontext.New())
+	ctx := context.Background()
+
+	t.Run("image exists", func(t *testing.T) {
+		pushRef, err := name.ParseReference(regHost+"/myorg/myapp:v1.0", regOpts.ToNameOptions()...)
+		require.NoError(t, err)
+
+		img, err := random.Image(1024, 1)
+		require.NoError(t, err)
+		require.NoError(t, remote.Write(pushRef, img, regOpts.ToRemoteOptions()...))
+
+		wantDigest, err := img.Digest()
+		require.NoError(t, err)
+
+		ref := cnab.MustParseOCIReference(regHost + "/myorg/myapp:v1.0")
+		gotDigest, err := r.GetRemoteImageDigest(ctx, ref, regOpts)
+		require.NoError(t, err)
+		assert.Equal(t, wantDigest.String(), gotDigest.String())
+	})
+
+	t.Run("image does not exist", func(t *testing.T) {
+		ref := cnab.MustParseOCIReference(regHost + "/myorg/missing:v1.0")
+		_, err := r.GetRemoteImageDigest(ctx, ref, regOpts)
+		require.ErrorIs(t, err, ErrNotFound{})
 	})
 }
