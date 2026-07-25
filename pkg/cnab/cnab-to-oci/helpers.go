@@ -13,15 +13,16 @@ import (
 var _ RegistryProvider = &TestRegistry{}
 
 type TestRegistry struct {
-	MockPullBundle        func(ctx context.Context, ref cnab.OCIReference, opts RegistryOptions) (cnab.BundleReference, error)
-	MockPushBundle        func(ctx context.Context, ref cnab.BundleReference, opts RegistryOptions) (bundleReference cnab.BundleReference, err error)
-	MockPushImage         func(ctx context.Context, ref cnab.OCIReference, opts RegistryOptions) (imageDigest digest.Digest, err error)
-	MockGetCachedImage    func(ctx context.Context, ref cnab.OCIReference) (ImageMetadata, error)
-	MockListTags          func(ctx context.Context, ref cnab.OCIReference, opts RegistryOptions) ([]string, error)
-	MockPullImage         func(ctx context.Context, ref cnab.OCIReference, opts RegistryOptions) error
-	MockGetBundleMetadata func(ctx context.Context, ref cnab.OCIReference, opts RegistryOptions) (BundleMetadata, error)
-	MockGetImageMetadata  func(ctx context.Context, ref cnab.OCIReference, opts RegistryOptions) (ImageMetadata, error)
-	cache                 map[string]ImageMetadata
+	MockPullBundle           func(ctx context.Context, ref cnab.OCIReference, opts RegistryOptions) (cnab.BundleReference, error)
+	MockPushBundle           func(ctx context.Context, ref cnab.BundleReference, opts RegistryOptions) (bundleReference cnab.BundleReference, err error)
+	MockPushImage            func(ctx context.Context, ref cnab.OCIReference, opts RegistryOptions) (imageDigest digest.Digest, err error)
+	MockGetCachedImage       func(ctx context.Context, ref cnab.OCIReference) (ImageMetadata, error)
+	MockListTags             func(ctx context.Context, ref cnab.OCIReference, opts RegistryOptions) ([]string, error)
+	MockPullImage            func(ctx context.Context, ref cnab.OCIReference, opts RegistryOptions) error
+	MockGetBundleMetadata    func(ctx context.Context, ref cnab.OCIReference, opts RegistryOptions) (BundleMetadata, error)
+	MockGetImageMetadata     func(ctx context.Context, ref cnab.OCIReference, opts RegistryOptions) (ImageMetadata, error)
+	MockGetRemoteImageDigest func(ctx context.Context, ref cnab.OCIReference, opts RegistryOptions) (digest.Digest, error)
+	cache                    map[string]ImageMetadata
 }
 
 func NewTestRegistry() *TestRegistry {
@@ -116,4 +117,12 @@ func (t TestRegistry) GetBundleMetadata(ctx context.Context, ref cnab.OCIReferen
 	}
 
 	return BundleMetadata{}, ErrNotFound{Reference: ref}
+}
+
+func (t TestRegistry) GetRemoteImageDigest(ctx context.Context, ref cnab.OCIReference, opts RegistryOptions) (digest.Digest, error) {
+	if t.MockGetRemoteImageDigest != nil {
+		return t.MockGetRemoteImageDigest(ctx, ref, opts)
+	}
+
+	return "", ErrNotFound{Reference: ref}
 }
