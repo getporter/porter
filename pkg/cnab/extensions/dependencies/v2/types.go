@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"sort"
 
 	"github.com/cnabio/cnab-go/bundle"
 )
@@ -250,4 +251,28 @@ type DependencyInterfaceDocument struct {
 	Parameters map[string]bundle.Parameter `json:"parameters,omitempty" mapstructure:"parameters,omitempty"`
 	// Credentials defined on the bundle interface
 	Credentials map[string]bundle.Credential `json:"credentials,omitempty" mapstructure:"credentials,omitempty"`
+}
+
+// IsEmpty reports whether the document defines no outputs, parameters, or
+// credentials.
+func (d DependencyInterfaceDocument) IsEmpty() bool {
+	return len(d.Outputs) == 0 && len(d.Parameters) == 0 && len(d.Credentials) == 0
+}
+
+// Names returns the sorted names of the outputs, parameters, and
+// credentials defined on this document.
+func (d DependencyInterfaceDocument) Names() (outputs, parameters, credentials []string) {
+	outputs = mapKeys(d.Outputs)
+	parameters = mapKeys(d.Parameters)
+	credentials = mapKeys(d.Credentials)
+	return outputs, parameters, credentials
+}
+
+func mapKeys[V any](m map[string]V) []string {
+	names := make([]string, 0, len(m))
+	for name := range m {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	return names
 }

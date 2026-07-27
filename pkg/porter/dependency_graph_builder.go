@@ -2,12 +2,14 @@ package porter
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sort"
 
 	"get.porter.sh/porter/pkg/cnab"
 	cnabtooci "get.porter.sh/porter/pkg/cnab/cnab-to-oci"
 	v2 "get.porter.sh/porter/pkg/cnab/extensions/dependencies/v2"
+	"get.porter.sh/porter/pkg/experimental"
 )
 
 // GraphBuilder resolves the full, transitive dependency graph for a bundle.
@@ -186,21 +188,39 @@ func (b *GraphBuilder) expandNode(
 		g.Nodes[childKey] = node
 
 		// Prefer reusing an already-installed installation over pulling a
-		// new instance of the dependency's bundle -- but only for the plain
-		// pinned-version case (no declared bundle interface): matching a
-		// candidate against a declared interface needs #2626, which isn't
-		// implemented yet, so a dependency that declares one always falls
-		// through to the pull below. A lookup error is treated the same as
-		// "no match found" rather than aborting the node, so this is purely
-		// a best-effort optimization on top of the existing pull path.
-		if hasDep && dep.Interface == nil {
-			required := requiredOutputNames(lock.Alias, dep, refsByToAlias)
-			if inst, err := findExistingInstallation(ctx, b.porter, opts.Namespace, lock, required); err == nil && inst != nil {
-				node.ResolvedInstallation = inst
-				if shareable {
-					g.sharedByContent[ck] = childKey
-				}
+		// new instance of the dependency's bundle. A declared bundle
+		// interface no longer unconditionally blocks this (#2626): a
+		// dependency with no declared interface is always eligible;
+		// composeRequiredInterface folds in whatever outputs
+		// interface.reference/interface.document add on top of the outputs
+		// the parent bundle actually uses -- gated behind
+		// FlagDependenciesV2 so a dependency declaring an interface still
+		// always falls through to the pull below when the experimental
+		// flag is disabled, exactly as it did before #2626.
+		//
+		// composeRequiredInterface returning an error is handled two ways:
+		// errInterfaceReferenceAndDocument (both reference and document
+		// set on the interface) is an authoring bug, not a transient
+		// failure, so it aborts the node the same way a pull failure does,
+		// below. Any other error (e.g. a failed interface.Reference pull)
+		// is treated the same as "no match found" rather than aborting the
+		// node, so this remains a best-effort optimization on top of the
+		// existing pull path.
+		if hasDep && (dep.Interface == nil || b.porter.IsFeatureEnabled(experimental.FlagDependenciesV2)) {
+			required, err := b.composeRequiredInterface(ctx, lock.Alias, dep, refsByToAlias, opts)
+			if err != nil && errors.Is(err, errInterfaceReferenceAndDocument) {
+				node.ResolutionFailed = true
+				node.ResolutionError = err.Error()
 				continue
+			}
+			if err == nil {
+				if inst, err := findExistingInstallation(ctx, b.porter, opts.Namespace, lock, required.Outputs); err == nil && inst != nil {
+					node.ResolvedInstallation = inst
+					if shareable {
+						g.sharedByContent[ck] = childKey
+					}
+					continue
+				}
 			}
 		}
 

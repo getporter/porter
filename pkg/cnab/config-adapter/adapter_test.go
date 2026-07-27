@@ -677,8 +677,7 @@ func TestManifestConverter_generateDependenciesv2(t *testing.T) {
 			Bundle:  "getporter/azure-mysql:5.7",
 			Version: "5.7.x",
 			Interface: &depsv2ext.DependencyInterface{
-				ID:        "https://porter.sh/interfaces/#mysql",
-				Reference: "getporter/mysql-spec:5.7",
+				ID: "https://porter.sh/interfaces/#mysql",
 				Document: depsv2ext.DependencyInterfaceDocument{
 					Outputs: map[string]bundle.Output{
 						"myoutput": {

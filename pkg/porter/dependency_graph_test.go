@@ -10,6 +10,7 @@ import (
 	cnabtooci "get.porter.sh/porter/pkg/cnab/cnab-to-oci"
 	depsv1 "get.porter.sh/porter/pkg/cnab/extensions/dependencies/v1"
 	v2 "get.porter.sh/porter/pkg/cnab/extensions/dependencies/v2"
+	"get.porter.sh/porter/pkg/experimental"
 	"get.porter.sh/porter/pkg/storage"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/stretchr/testify/assert"
@@ -798,7 +799,7 @@ func TestGraphBuilder_ExistingInstallation(t *testing.T) {
 		assert.Empty(t, deps[0].Dependencies)
 	})
 
-	t.Run("dependency declaring an interface always pulls", func(t *testing.T) {
+	t.Run("dependency declaring an interface always pulls when the experimental flag is disabled", func(t *testing.T) {
 		t.Parallel()
 
 		root := v2TestBundle("root", map[string]v2.Dependency{
@@ -818,6 +819,188 @@ func TestGraphBuilder_ExistingInstallation(t *testing.T) {
 		require.Len(t, deps, 1)
 		assert.False(t, deps[0].ResolutionFailed)
 		assert.Empty(t, deps[0].ResolvedInstallation)
+	})
+
+	t.Run("dependency declaring an ID-only interface reuses when the experimental flag is enabled", func(t *testing.T) {
+		t.Parallel()
+
+		// db declares an interface but promotes no outputs to the parent
+		// and nothing is wired from it, so composeRequiredInterface (#2626)
+		// contributes nothing beyond the empty requiredOutputNames -- the
+		// candidate's exact bundle content already guarantees it satisfies
+		// whatever ID the dependency declares (findExistingInstallation
+		// only ever considers candidates running that same content), so
+		// this reuses instead of pulling once the flag is on.
+		root := v2TestBundle("root", map[string]v2.Dependency{
+			"db": {Bundle: dbRef, Sharing: shared, Interface: &v2.DependencyInterface{ID: "mysql"}},
+		})
+
+		p := NewTestPorter(t)
+		p.SetExperimentalFlags(experimental.FlagDependenciesV2)
+		defer p.Close()
+		p.TestInstallations.CreateInstallation(newCandidate("", nil))
+
+		builder := NewGraphBuilder(p.Porter, 10)
+		graph, err := builder.BuildDependencyGraph(context.Background(), root, ExplainOpts{MaxDependencyDepth: 10})
+		require.NoError(t, err)
+
+		deps := graphToInspectableDependencies(graph, graph.Root, 0)
+		require.Len(t, deps, 1)
+		assert.False(t, deps[0].ResolutionFailed)
+		assert.Equal(t, "/db", deps[0].ResolvedInstallation)
+	})
+
+	t.Run("dependency with interface.document requiring an output the candidate lacks falls back to pull", func(t *testing.T) {
+		t.Parallel()
+
+		root := v2TestBundle("root", map[string]v2.Dependency{
+			"db": {
+				Bundle:  dbRef,
+				Sharing: shared,
+				Interface: &v2.DependencyInterface{
+					Document: v2.DependencyInterfaceDocument{
+						Outputs: map[string]bundle.Output{"port": {}},
+					},
+				},
+			},
+		})
+
+		p := NewTestPorter(t)
+		p.SetExperimentalFlags(experimental.FlagDependenciesV2)
+		defer p.Close()
+		// candidate never recorded "port", the output interface.document requires
+		p.TestInstallations.CreateInstallation(newCandidate("", nil))
+		p.TestRegistry.MockPullBundle = newMockPullBundle(map[string]cnab.ExtendedBundle{dbRef: leafTestBundle("mysql")})
+
+		builder := NewGraphBuilder(p.Porter, 10)
+		graph, err := builder.BuildDependencyGraph(context.Background(), root, ExplainOpts{MaxDependencyDepth: 10})
+		require.NoError(t, err)
+
+		deps := graphToInspectableDependencies(graph, graph.Root, 0)
+		require.Len(t, deps, 1)
+		assert.False(t, deps[0].ResolutionFailed)
+		assert.Empty(t, deps[0].ResolvedInstallation)
+	})
+
+	t.Run("dependency with interface.document reuses when the candidate has all required outputs", func(t *testing.T) {
+		t.Parallel()
+
+		root := v2TestBundle("root", map[string]v2.Dependency{
+			"db": {
+				Bundle:  dbRef,
+				Sharing: shared,
+				Interface: &v2.DependencyInterface{
+					Document: v2.DependencyInterfaceDocument{
+						Outputs: map[string]bundle.Output{"port": {}},
+					},
+				},
+			},
+		})
+
+		p := NewTestPorter(t)
+		p.SetExperimentalFlags(experimental.FlagDependenciesV2)
+		defer p.Close()
+		candidate := p.TestInstallations.CreateInstallation(newCandidate("", nil))
+		p.TestInstallations.CreateOutput(storage.Output{Namespace: candidate.Namespace, Installation: candidate.Name, Name: "port", ResultID: "1"})
+
+		builder := NewGraphBuilder(p.Porter, 10)
+		graph, err := builder.BuildDependencyGraph(context.Background(), root, ExplainOpts{MaxDependencyDepth: 10})
+		require.NoError(t, err)
+
+		deps := graphToInspectableDependencies(graph, graph.Root, 0)
+		require.Len(t, deps, 1)
+		assert.False(t, deps[0].ResolutionFailed)
+		assert.Equal(t, "/db", deps[0].ResolvedInstallation)
+	})
+
+	t.Run("dependency with interface.reference pulls the reference to determine required outputs", func(t *testing.T) {
+		t.Parallel()
+
+		const interfaceRef = "localhost:5000/mysql-interface:v1.0.0"
+
+		root := v2TestBundle("root", map[string]v2.Dependency{
+			"db": {
+				Bundle:    dbRef,
+				Sharing:   shared,
+				Interface: &v2.DependencyInterface{Reference: interfaceRef},
+			},
+		})
+
+		p := NewTestPorter(t)
+		p.SetExperimentalFlags(experimental.FlagDependenciesV2)
+		defer p.Close()
+		candidate := p.TestInstallations.CreateInstallation(newCandidate("", nil))
+		p.TestInstallations.CreateOutput(storage.Output{Namespace: candidate.Namespace, Installation: candidate.Name, Name: "port", ResultID: "1"})
+		p.TestRegistry.MockPullBundle = newMockPullBundle(map[string]cnab.ExtendedBundle{
+			interfaceRef: {Bundle: bundle.Bundle{Name: "mysql-interface", Version: "1.0.0", Outputs: map[string]bundle.Output{"port": {}}}},
+		})
+
+		builder := NewGraphBuilder(p.Porter, 10)
+		graph, err := builder.BuildDependencyGraph(context.Background(), root, ExplainOpts{MaxDependencyDepth: 10})
+		require.NoError(t, err)
+
+		deps := graphToInspectableDependencies(graph, graph.Root, 0)
+		require.Len(t, deps, 1)
+		assert.False(t, deps[0].ResolutionFailed)
+		assert.Equal(t, "/db", deps[0].ResolvedInstallation)
+	})
+
+	t.Run("composeRequiredInterface pull error falls back to the normal dependency pull", func(t *testing.T) {
+		t.Parallel()
+
+		root := v2TestBundle("root", map[string]v2.Dependency{
+			"db": {
+				Bundle:    dbRef,
+				Sharing:   shared,
+				Interface: &v2.DependencyInterface{Reference: "localhost:5000/missing-interface:v1.0.0"},
+			},
+		})
+
+		p := NewTestPorter(t)
+		p.SetExperimentalFlags(experimental.FlagDependenciesV2)
+		defer p.Close()
+		p.TestInstallations.CreateInstallation(newCandidate("", nil))
+		// dbRef itself resolves fine; only the interface reference is unmocked and errors.
+		p.TestRegistry.MockPullBundle = newMockPullBundle(map[string]cnab.ExtendedBundle{dbRef: leafTestBundle("mysql")})
+
+		builder := NewGraphBuilder(p.Porter, 10)
+		graph, err := builder.BuildDependencyGraph(context.Background(), root, ExplainOpts{MaxDependencyDepth: 10})
+		require.NoError(t, err)
+
+		deps := graphToInspectableDependencies(graph, graph.Root, 0)
+		require.Len(t, deps, 1)
+		assert.False(t, deps[0].ResolutionFailed)
+		assert.Empty(t, deps[0].ResolvedInstallation)
+	})
+
+	t.Run("interface.reference and interface.document both set fails the node, no fallback pull attempted", func(t *testing.T) {
+		t.Parallel()
+
+		root := v2TestBundle("root", map[string]v2.Dependency{
+			"db": {
+				Bundle:  dbRef,
+				Sharing: shared,
+				Interface: &v2.DependencyInterface{
+					Reference: "localhost:5000/mysql-interface:v1.0.0",
+					Document:  v2.DependencyInterfaceDocument{Outputs: map[string]bundle.Output{"port": {}}},
+				},
+			},
+		})
+
+		p := NewTestPorter(t)
+		p.SetExperimentalFlags(experimental.FlagDependenciesV2)
+		defer p.Close()
+		p.TestInstallations.CreateInstallation(newCandidate("", nil))
+		p.TestRegistry.MockPullBundle = failIfPulled(t)
+
+		builder := NewGraphBuilder(p.Porter, 10)
+		graph, err := builder.BuildDependencyGraph(context.Background(), root, ExplainOpts{MaxDependencyDepth: 10})
+		require.NoError(t, err)
+
+		deps := graphToInspectableDependencies(graph, graph.Root, 0)
+		require.Len(t, deps, 1)
+		assert.True(t, deps[0].ResolutionFailed)
+		assert.Contains(t, deps[0].ResolutionError, "reference and a document")
 	})
 
 	t.Run("non-shareable dependency always pulls", func(t *testing.T) {

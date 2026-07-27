@@ -1086,6 +1086,10 @@ func (d *Dependency) Validate(cxt *portercontext.Context) error {
 		return fmt.Errorf("reference for dependency %q can specify only a repository, without a digest or tag, when a version constraint is specified", d.Name)
 	}
 
+	if iface := d.Bundle.Interface; iface != nil && iface.Reference != "" && iface.Document != nil {
+		return fmt.Errorf("bundle interface for dependency %q can specify only a reference or a document, not both", d.Name)
+	}
+
 	return nil
 }
 
