@@ -29,9 +29,10 @@ porter lint [flags]
 ### Options
 
 ```
-  -f, --file string     Path to the porter manifest file. Defaults to the bundle in the current directory.
-  -h, --help            help for lint
-  -o, --output string   Specify an output format.  Allowed values: plaintext, json (default "plaintext")
+  -f, --file string         Path to the porter manifest file. Defaults to the bundle in the current directory.
+  -h, --help                help for lint
+      --insecure-registry   Don't require TLS for registries
+  -o, --output string       Specify an output format.  Allowed values: plaintext, json (default "plaintext")
 ```
 
 ### Options inherited from parent commands

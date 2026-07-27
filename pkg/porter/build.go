@@ -173,7 +173,7 @@ func (p *Porter) Build(ctx context.Context, opts BuildOptions) error {
 	m.ManifestPath = opts.File
 
 	if !opts.NoLint {
-		if err := p.preLint(ctx, opts.File); err != nil {
+		if err := p.preLint(ctx, opts.File, opts.InsecureRegistry); err != nil {
 			return err
 		}
 	}
@@ -211,10 +211,11 @@ func (p *Porter) Build(ctx context.Context, opts BuildOptions) error {
 	return nil
 }
 
-func (p *Porter) preLint(ctx context.Context, file string) error {
+func (p *Porter) preLint(ctx context.Context, file string, insecureRegistry bool) error {
 	lintOpts := LintOptions{
-		PrintOptions: printer.PrintOptions{},
-		File:         file,
+		PrintOptions:     printer.PrintOptions{},
+		File:             file,
+		InsecureRegistry: insecureRegistry,
 	}
 	lintOpts.RawFormat = string(printer.FormatPlaintext)
 	err := lintOpts.Validate(p.Context)
