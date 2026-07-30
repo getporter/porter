@@ -383,8 +383,8 @@ func validateDependencyTemplateVariables(m *manifest.Manifest, dep *manifest.Dep
 
 					// Other bundle.* variables, e.g. bundle.outputs.X or bundle.name, are allowed without further checking.
 
-				case strings.HasPrefix(v, "installation."):
-					// Allowed: installation.name, installation.namespace, installation.id.
+				case v == "installation.name" || v == "installation.namespace" || v == "installation.id":
+					// Allowed.
 
 				case strings.HasPrefix(v, "outputs."):
 					if !field.allowOutputs {

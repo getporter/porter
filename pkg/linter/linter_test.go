@@ -532,6 +532,49 @@ func TestLinter_DependencyTemplateVariables(t *testing.T) {
 		require.Equal(t, Code("porter-106"), results[0].Code)
 	})
 
+	t.Run("unsupported installation field", func(t *testing.T) {
+		cxt := portercontext.NewTestContext(t)
+		mixins := mixin.NewTestMixinProvider()
+		l := New(cxt.Context, mixins)
+
+		m := &manifest.Manifest{
+			SchemaVersion: "1.0.1",
+			Dependencies: manifest.Dependencies{
+				Requires: []*manifest.Dependency{
+					{Name: "mysql", Parameters: map[string]string{"dbstuff": "${installation.foo}"}},
+				},
+			},
+		}
+
+		results, err := l.Lint(context.Background(), m, testConfig, nil)
+		require.NoError(t, err, "Lint failed")
+		require.Len(t, results, 1)
+		require.Equal(t, Code("porter-106"), results[0].Code)
+	})
+
+	t.Run("valid installation fields", func(t *testing.T) {
+		cxt := portercontext.NewTestContext(t)
+		mixins := mixin.NewTestMixinProvider()
+		l := New(cxt.Context, mixins)
+
+		m := &manifest.Manifest{
+			SchemaVersion: "1.0.1",
+			Dependencies: manifest.Dependencies{
+				Requires: []*manifest.Dependency{
+					{Name: "mysql", Parameters: map[string]string{
+						"a": "${installation.name}",
+						"b": "${installation.namespace}",
+						"c": "${installation.id}",
+					}},
+				},
+			},
+		}
+
+		results, err := l.Lint(context.Background(), m, testConfig, nil)
+		require.NoError(t, err, "Lint failed")
+		require.Len(t, results, 0)
+	})
+
 	t.Run("undefined parent parameter", func(t *testing.T) {
 		cxt := portercontext.NewTestContext(t)
 		mixins := mixin.NewTestMixinProvider()
