@@ -1,6 +1,6 @@
 ---
 title: "Porter 1.6.0: Porter Now Speaks MCP"
-date: 2026-07-30
+date: 2026-07-29
 tags: [release, mcp, dependencies]
 ---
 
@@ -55,6 +55,7 @@ MCP is the headline, but this release carries a handful of other improvements wo
 **Graceful shutdown.** Hitting Ctrl+C during a Porter operation now forwards a proper SIGTERM with a grace period, instead of killing things abruptly. If your bundle has cleanup steps or outputs that need to finish writing, this means far less risk of losing them to an interrupted run.
 
 **Reliability fixes**, including:
+- `porter publish --archive` now works correctly for bundles built with Docker 29.x's containerd image store, whose invocation image layout can be an OCI image index rather than a plain manifest — if you'd hit publish failures after upgrading Docker, this should resolve them
 - Correct parameter-set precedence when running an upgrade
 - `porter explain` now shows parameters that were injected automatically, not just the ones you specified
 - A fix for `porter-state` corruption that could occur with custom actions marked `modifies: false`
