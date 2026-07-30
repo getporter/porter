@@ -1003,6 +1003,79 @@ func TestGraphBuilder_ExistingInstallation(t *testing.T) {
 		assert.Contains(t, deps[0].ResolutionError, "reference and a document")
 	})
 
+	t.Run("dependency with interface.document overlapping a base-wired output name still reuses", func(t *testing.T) {
+		t.Parallel()
+
+		// db promotes "connstr" via wiring (the base interface, inferred from
+		// usage) AND interface.document separately declares an output of the
+		// same name with a real definition -- exercising
+		// composeRequiredInterface's declared-on-top-of-base merge (#2685)
+		// where the same name appears on both sides. The merge must still
+		// produce a single "connstr" requirement (not error, not a
+		// duplicate-key problem) and resolve exactly as it would if only
+		// wiring had produced it.
+		root := v2TestBundle("root", map[string]v2.Dependency{
+			"db": {
+				Bundle:  dbRef,
+				Sharing: shared,
+				Outputs: map[string]string{"connstr": "${outputs.connstr}"},
+				Interface: &v2.DependencyInterface{
+					Document: v2.DependencyInterfaceDocument{
+						Outputs: map[string]bundle.Output{"connstr": {Definition: "connstrDef", Path: "/cnab/app/outputs/connstr"}},
+					},
+				},
+			},
+		})
+
+		p := NewTestPorter(t)
+		p.SetExperimentalFlags(experimental.FlagDependenciesV2)
+		defer p.Close()
+		candidate := p.TestInstallations.CreateInstallation(newCandidate("", nil))
+		p.TestInstallations.CreateOutput(storage.Output{Namespace: candidate.Namespace, Installation: candidate.Name, Name: "connstr", ResultID: "1"})
+
+		builder := NewGraphBuilder(p.Porter, 10)
+		graph, err := builder.BuildDependencyGraph(context.Background(), root, ExplainOpts{MaxDependencyDepth: 10})
+		require.NoError(t, err)
+
+		deps := graphToInspectableDependencies(graph, graph.Root, 0)
+		require.Len(t, deps, 1)
+		assert.False(t, deps[0].ResolutionFailed)
+		assert.Equal(t, "/db", deps[0].ResolvedInstallation)
+	})
+
+	t.Run("dependency with interface.document overlapping a base-wired output name still falls back to pull when the candidate lacks it", func(t *testing.T) {
+		t.Parallel()
+
+		root := v2TestBundle("root", map[string]v2.Dependency{
+			"db": {
+				Bundle:  dbRef,
+				Sharing: shared,
+				Outputs: map[string]string{"connstr": "${outputs.connstr}"},
+				Interface: &v2.DependencyInterface{
+					Document: v2.DependencyInterfaceDocument{
+						Outputs: map[string]bundle.Output{"connstr": {Definition: "connstrDef", Path: "/cnab/app/outputs/connstr"}},
+					},
+				},
+			},
+		})
+
+		p := NewTestPorter(t)
+		p.SetExperimentalFlags(experimental.FlagDependenciesV2)
+		defer p.Close()
+		// candidate never recorded "connstr"
+		p.TestInstallations.CreateInstallation(newCandidate("", nil))
+		p.TestRegistry.MockPullBundle = newMockPullBundle(map[string]cnab.ExtendedBundle{dbRef: leafTestBundle("mysql")})
+
+		builder := NewGraphBuilder(p.Porter, 10)
+		graph, err := builder.BuildDependencyGraph(context.Background(), root, ExplainOpts{MaxDependencyDepth: 10})
+		require.NoError(t, err)
+
+		deps := graphToInspectableDependencies(graph, graph.Root, 0)
+		require.Len(t, deps, 1)
+		assert.False(t, deps[0].ResolutionFailed)
+		assert.Empty(t, deps[0].ResolvedInstallation)
+	})
+
 	t.Run("non-shareable dependency always pulls", func(t *testing.T) {
 		t.Parallel()
 

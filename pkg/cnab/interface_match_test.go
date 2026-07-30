@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/cnabio/cnab-go/bundle"
+	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/stretchr/testify/require"
 )
 
@@ -25,15 +26,15 @@ func TestEvaluateInterfaceMatch(t *testing.T) {
 		},
 		{
 			name:      "outputs only: candidate has the required output",
-			candidate: InterfaceCandidate{Outputs: []string{"connstr"}},
-			required:  InterfaceRequirement{Outputs: []string{"connstr"}},
+			candidate: InterfaceCandidate{Outputs: map[string]bundle.Output{"connstr": {}}},
+			required:  InterfaceRequirement{Outputs: map[string]bundle.Output{"connstr": {}}},
 			mode:      InterfaceMatchOutputsOnly,
 			want:      InterfaceMatchResult{Satisfied: true},
 		},
 		{
 			name:      "outputs only: candidate is missing the required output",
-			candidate: InterfaceCandidate{Outputs: []string{"port"}},
-			required:  InterfaceRequirement{Outputs: []string{"connstr"}},
+			candidate: InterfaceCandidate{Outputs: map[string]bundle.Output{"port": {}}},
+			required:  InterfaceRequirement{Outputs: map[string]bundle.Output{"connstr": {}}},
 			mode:      InterfaceMatchOutputsOnly,
 			want: InterfaceMatchResult{
 				Satisfied:      false,
@@ -43,12 +44,12 @@ func TestEvaluateInterfaceMatch(t *testing.T) {
 		{
 			name: "outputs only: missing parameters and credentials are ignored",
 			candidate: InterfaceCandidate{
-				Outputs: []string{"connstr"},
+				Outputs: map[string]bundle.Output{"connstr": {}},
 			},
 			required: InterfaceRequirement{
-				Outputs:     []string{"connstr"},
-				Parameters:  []string{"logLevel"},
-				Credentials: []string{"token"},
+				Outputs:     map[string]bundle.Output{"connstr": {}},
+				Parameters:  map[string]bundle.Parameter{"logLevel": {}},
+				Credentials: map[string]bundle.Credential{"token": {}},
 			},
 			mode: InterfaceMatchOutputsOnly,
 			want: InterfaceMatchResult{Satisfied: true},
@@ -56,14 +57,14 @@ func TestEvaluateInterfaceMatch(t *testing.T) {
 		{
 			name: "full mode: all present",
 			candidate: InterfaceCandidate{
-				Outputs:     []string{"connstr"},
-				Parameters:  []string{"logLevel"},
-				Credentials: []string{"token"},
+				Outputs:     map[string]bundle.Output{"connstr": {}},
+				Parameters:  map[string]bundle.Parameter{"logLevel": {}},
+				Credentials: map[string]bundle.Credential{"token": {}},
 			},
 			required: InterfaceRequirement{
-				Outputs:     []string{"connstr"},
-				Parameters:  []string{"logLevel"},
-				Credentials: []string{"token"},
+				Outputs:     map[string]bundle.Output{"connstr": {}},
+				Parameters:  map[string]bundle.Parameter{"logLevel": {}},
+				Credentials: map[string]bundle.Credential{"token": {}},
 			},
 			mode: InterfaceMatchFull,
 			want: InterfaceMatchResult{Satisfied: true},
@@ -71,13 +72,13 @@ func TestEvaluateInterfaceMatch(t *testing.T) {
 		{
 			name: "full mode: missing parameter fails the match",
 			candidate: InterfaceCandidate{
-				Outputs:     []string{"connstr"},
-				Credentials: []string{"token"},
+				Outputs:     map[string]bundle.Output{"connstr": {}},
+				Credentials: map[string]bundle.Credential{"token": {}},
 			},
 			required: InterfaceRequirement{
-				Outputs:     []string{"connstr"},
-				Parameters:  []string{"logLevel"},
-				Credentials: []string{"token"},
+				Outputs:     map[string]bundle.Output{"connstr": {}},
+				Parameters:  map[string]bundle.Parameter{"logLevel": {}},
+				Credentials: map[string]bundle.Credential{"token": {}},
 			},
 			mode: InterfaceMatchFull,
 			want: InterfaceMatchResult{
@@ -88,19 +89,34 @@ func TestEvaluateInterfaceMatch(t *testing.T) {
 		{
 			name: "full mode: missing credential fails the match",
 			candidate: InterfaceCandidate{
-				Outputs:    []string{"connstr"},
-				Parameters: []string{"logLevel"},
+				Outputs:    map[string]bundle.Output{"connstr": {}},
+				Parameters: map[string]bundle.Parameter{"logLevel": {}},
 			},
 			required: InterfaceRequirement{
-				Outputs:     []string{"connstr"},
-				Parameters:  []string{"logLevel"},
-				Credentials: []string{"token"},
+				Outputs:     map[string]bundle.Output{"connstr": {}},
+				Parameters:  map[string]bundle.Parameter{"logLevel": {}},
+				Credentials: map[string]bundle.Credential{"token": {}},
 			},
 			mode: InterfaceMatchFull,
 			want: InterfaceMatchResult{
 				Satisfied:          false,
 				MissingCredentials: []string{"token"},
 			},
+		},
+		{
+			name: "full mode: shared name with differing definitions still matches -- matching is key-presence only, not value comparison",
+			candidate: InterfaceCandidate{
+				Outputs:     map[string]bundle.Output{"connstr": {Definition: "candidateDef", Path: "/cnab/app/outputs/connstr"}},
+				Parameters:  map[string]bundle.Parameter{"logLevel": {Definition: "candidateDef", Required: false}},
+				Credentials: map[string]bundle.Credential{"token": {Description: "candidate token"}},
+			},
+			required: InterfaceRequirement{
+				Outputs:     map[string]bundle.Output{"connstr": {Definition: "requiredDef"}},
+				Parameters:  map[string]bundle.Parameter{"logLevel": {Definition: "requiredDef", Required: true}},
+				Credentials: map[string]bundle.Credential{"token": {Description: "required token"}},
+			},
+			mode: InterfaceMatchFull,
+			want: InterfaceMatchResult{Satisfied: true},
 		},
 	}
 
@@ -117,22 +133,35 @@ func TestEvaluateInterfaceMatch(t *testing.T) {
 func TestNewInterfaceCandidateFromBundle(t *testing.T) {
 	t.Parallel()
 
+	defs := definition.Definitions{
+		"connstrDef": &definition.Schema{Type: "string"},
+	}
 	bun := ExtendedBundle{Bundle: bundle.Bundle{
 		Outputs: map[string]bundle.Output{
-			"port": {}, "connstr": {},
+			"port":    {},
+			"connstr": {Definition: "connstrDef", Path: "/cnab/app/outputs/connstr"},
 		},
 		Parameters: map[string]bundle.Parameter{
-			"logLevel": {},
+			"logLevel": {Required: true},
 		},
 		Credentials: map[string]bundle.Credential{
 			"token": {}, "apiKey": {},
 		},
+		Definitions: defs,
 	}}
 
 	got := NewInterfaceCandidateFromBundle(bun)
 	require.Equal(t, InterfaceCandidate{
-		Outputs:     []string{"connstr", "port"},
-		Parameters:  []string{"logLevel"},
-		Credentials: []string{"apiKey", "token"},
+		Outputs: map[string]bundle.Output{
+			"port":    {},
+			"connstr": {Definition: "connstrDef", Path: "/cnab/app/outputs/connstr"},
+		},
+		Parameters: map[string]bundle.Parameter{
+			"logLevel": {Required: true},
+		},
+		Credentials: map[string]bundle.Credential{
+			"token": {}, "apiKey": {},
+		},
+		Definitions: defs,
 	}, got)
 }

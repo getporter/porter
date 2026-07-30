@@ -172,8 +172,8 @@ func hasRequiredOutputs(ctx context.Context, p *Porter, candidate storage.Instal
 	}
 
 	result := cnab.EvaluateInterfaceMatch(
-		cnab.InterfaceCandidate{Outputs: available},
-		cnab.InterfaceRequirement{Outputs: required},
+		cnab.InterfaceCandidate{Outputs: zeroOutputs(available)},
+		cnab.InterfaceRequirement{Outputs: zeroOutputs(required)},
 		cnab.InterfaceMatchOutputsOnly,
 	)
 	return result.Satisfied

@@ -214,7 +214,7 @@ func (b *GraphBuilder) expandNode(
 				continue
 			}
 			if err == nil {
-				if inst, err := findExistingInstallation(ctx, b.porter, opts.Namespace, lock, required.Outputs); err == nil && inst != nil {
+				if inst, err := findExistingInstallation(ctx, b.porter, opts.Namespace, lock, cnab.SortedKeys(required.Outputs)); err == nil && inst != nil {
 					node.ResolvedInstallation = inst
 					if shareable {
 						g.sharedByContent[ck] = childKey
