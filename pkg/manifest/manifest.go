@@ -338,6 +338,26 @@ func (m *Manifest) GetTemplateParameterName(value string) (string, bool) {
 	return parameterName, true
 }
 
+var templatedCredentialRegex = regexp.MustCompile(`^bundle\.credentials\.(.+)$`)
+
+// GetTemplateCredentialName returns the credential name from the template variable.
+func (m *Manifest) GetTemplateCredentialName(value string) (string, bool) {
+	matches := templatedCredentialRegex.FindStringSubmatch(value)
+	if len(matches) < 2 {
+		return "", false
+	}
+
+	credentialName := matches[1]
+	return credentialName, true
+}
+
+// GetTemplateDependencyOutputName returns the dependency and output name from
+// a long-form dependency output template variable, e.g.
+// bundle.dependencies.DEP.outputs.NAME.
+func (m *Manifest) GetTemplateDependencyOutputName(value string) (string, string, bool) {
+	return m.getTemplateDependencyOutputName(value)
+}
+
 // GetTemplatedOutputs returns the output definitions for any bundle level outputs
 // that have been templated, keyed by the output name.
 func (m *Manifest) GetTemplatedOutputs() OutputDefinitions {
@@ -1594,6 +1614,12 @@ func (m *Manifest) deduplicateAndFilterShortOutputVariables(shortOutputVars []st
 	for _, shortHandVar := range shortOutputVars {
 		vars[shortHandVar] = struct{}{}
 	}
+}
+
+// GetTemplateVariables returns the raw template variables referenced in data,
+// without any dependency-output shorthand rewriting.
+func (m *Manifest) GetTemplateVariables(data string) (map[string]struct{}, error) {
+	return m.getTemplateVariables(data)
 }
 
 func (m *Manifest) getTemplateVariables(data string) (map[string]struct{}, error) {

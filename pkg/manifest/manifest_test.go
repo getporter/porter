@@ -1631,3 +1631,42 @@ func TestValidateFiles(t *testing.T) {
 		require.ErrorContains(t, err, "files[1]")
 	})
 }
+
+func TestManifest_GetTemplateCredentialName(t *testing.T) {
+	m := &Manifest{}
+
+	t.Run("matches bundle.credentials.NAME", func(t *testing.T) {
+		name, ok := m.GetTemplateCredentialName("bundle.credentials.token")
+		require.True(t, ok)
+		require.Equal(t, "token", name)
+	})
+
+	t.Run("does not match other variables", func(t *testing.T) {
+		_, ok := m.GetTemplateCredentialName("bundle.parameters.stuff")
+		require.False(t, ok)
+	})
+}
+
+func TestManifest_GetTemplateDependencyOutputName(t *testing.T) {
+	m := &Manifest{}
+
+	t.Run("matches long-form dependency output variable", func(t *testing.T) {
+		dep, output, ok := m.GetTemplateDependencyOutputName("bundle.dependencies.mysql.outputs.connstr")
+		require.True(t, ok)
+		require.Equal(t, "mysql", dep)
+		require.Equal(t, "connstr", output)
+	})
+
+	t.Run("does not match other variables", func(t *testing.T) {
+		_, _, ok := m.GetTemplateDependencyOutputName("bundle.outputs.msg")
+		require.False(t, ok)
+	})
+}
+
+func TestManifest_GetTemplateVariables(t *testing.T) {
+	m := &Manifest{SchemaVersion: "1.0.1"}
+
+	vars, err := m.GetTemplateVariables("${bundle.parameters.stuff}")
+	require.NoError(t, err)
+	require.Contains(t, vars, "bundle.parameters.stuff")
+}

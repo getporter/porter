@@ -4,10 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sort"
 	"strings"
 
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/experimental"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/mixin/query"
 	"get.porter.sh/porter/pkg/pkgmgmt"
@@ -236,35 +238,38 @@ func (l *Linter) Lint(ctx context.Context, m *manifest.Manifest, config *config.
 			deps[dep.Name] = nil
 		}
 
-		depBundle, ok := depBundles[dep.Name]
-		if !ok {
-			// Either the dependency has no bundle resolved for it, or resolution
-			// failed and was already reported by the caller.
-			continue
-		}
+		if depBundle, hasDepBundle := depBundles[dep.Name]; hasDepBundle {
+			for paramName := range dep.Parameters {
+				if _, ok := depBundle.Parameters[paramName]; !ok {
+					results = append(results, Result{
+						Level:   LevelError,
+						Code:    "porter-103",
+						Title:   "Dependency error",
+						Message: fmt.Sprintf("dependencies.%s.parameters.%s is not defined as a parameter on the dependency bundle", dep.Name, paramName),
+						URL:     "https://porter.sh/reference/linter/#porter-103",
+					})
+				}
+			}
 
-		for paramName := range dep.Parameters {
-			if _, ok := depBundle.Parameters[paramName]; !ok {
-				results = append(results, Result{
-					Level:   LevelError,
-					Code:    "porter-103",
-					Title:   "Dependency error",
-					Message: fmt.Sprintf("dependencies.%s.parameters.%s is not defined as a parameter on the dependency bundle", dep.Name, paramName),
-					URL:     "https://porter.sh/reference/linter/#porter-103",
-				})
+			for credName := range dep.Credentials {
+				if _, ok := depBundle.Credentials[credName]; !ok {
+					results = append(results, Result{
+						Level:   LevelError,
+						Code:    "porter-104",
+						Title:   "Dependency error",
+						Message: fmt.Sprintf("dependencies.%s.credentials.%s is not defined as a credential on the dependency bundle", dep.Name, credName),
+						URL:     "https://porter.sh/reference/linter/#porter-104",
+					})
+				}
 			}
 		}
 
-		for credName := range dep.Credentials {
-			if _, ok := depBundle.Credentials[credName]; !ok {
-				results = append(results, Result{
-					Level:   LevelError,
-					Code:    "porter-104",
-					Title:   "Dependency error",
-					Message: fmt.Sprintf("dependencies.%s.credentials.%s is not defined as a credential on the dependency bundle", dep.Name, credName),
-					URL:     "https://porter.sh/reference/linter/#porter-104",
-				})
+		if config.IsFeatureEnabled(experimental.FlagDependenciesV2) {
+			depVarResults, err := validateDependencyTemplateVariables(m, dep, depBundles)
+			if err != nil {
+				return nil, span.Error(err)
 			}
+			results = append(results, depVarResults...)
 		}
 	}
 
@@ -304,6 +309,169 @@ func (l *Linter) Lint(ctx context.Context, m *manifest.Manifest, config *config.
 	}
 
 	return results, nil
+}
+
+// validateDependencyTemplateVariables checks that the template variables
+// used in a dependency's parameters, credentials, and outputs mappings are
+// supported (bundle.*, installation.*, and the outputs.* shorthand only
+// within the dependency's own outputs mapping), and that the referenced
+// parameter, credential, and dependency output names actually exist.
+func validateDependencyTemplateVariables(m *manifest.Manifest, dep *manifest.Dependency, depBundles map[string]cnab.ExtendedBundle) (Results, error) {
+	var results Results
+
+	fields := []struct {
+		name         string
+		values       map[string]string
+		allowOutputs bool
+	}{
+		{"parameters", dep.Parameters, false},
+		{"credentials", dep.Credentials, false},
+		{"outputs", dep.Outputs, true},
+	}
+
+	for _, field := range fields {
+		keys := make([]string, 0, len(field.values))
+		for key := range field.values {
+			keys = append(keys, key)
+		}
+		sort.Strings(keys)
+
+		for _, key := range keys {
+			vars, err := m.GetTemplateVariables(field.values[key])
+			if err != nil {
+				return nil, fmt.Errorf("error parsing the templating used for dependencies.%s.%s.%s: %w", dep.Name, field.name, key, err)
+			}
+
+			varNames := make([]string, 0, len(vars))
+			for v := range vars {
+				varNames = append(varNames, v)
+			}
+			sort.Strings(varNames)
+
+			for _, v := range varNames {
+				switch {
+				case strings.HasPrefix(v, "bundle."):
+					if paramName, ok := m.GetTemplateParameterName(v); ok {
+						if _, defined := m.Parameters[paramName]; !defined {
+							results = append(results, Result{
+								Level:   LevelError,
+								Code:    "porter-107",
+								Title:   "Dependency error",
+								Message: fmt.Sprintf("dependencies.%s.%s.%s references %s, which is not defined as a parameter on the bundle", dep.Name, field.name, key, v),
+								URL:     "https://porter.sh/reference/linter/#porter-107",
+							})
+						}
+						continue
+					}
+
+					if credName, ok := m.GetTemplateCredentialName(v); ok {
+						if _, defined := m.Credentials[credName]; !defined {
+							results = append(results, Result{
+								Level:   LevelError,
+								Code:    "porter-108",
+								Title:   "Dependency error",
+								Message: fmt.Sprintf("dependencies.%s.%s.%s references %s, which is not defined as a credential on the bundle", dep.Name, field.name, key, v),
+								URL:     "https://porter.sh/reference/linter/#porter-108",
+							})
+						}
+						continue
+					}
+
+					if refDepName, outputName, ok := m.GetTemplateDependencyOutputName(v); ok {
+						if res, flagged := checkDependencyOutput(m, depBundles, dep.Name, field.name, key, v, refDepName, outputName); flagged {
+							results = append(results, res)
+						}
+						continue
+					}
+
+					// Other bundle.* variables, e.g. bundle.outputs.X or bundle.name, are allowed without further checking.
+
+				case v == "installation.name" || v == "installation.namespace" || v == "installation.id":
+					// Allowed.
+
+				case strings.HasPrefix(v, "outputs."):
+					if !field.allowOutputs {
+						results = append(results, Result{
+							Level:   LevelError,
+							Code:    "porter-106",
+							Title:   "Dependency error",
+							Message: fmt.Sprintf("dependencies.%s.%s.%s references %s, but the outputs variable can only be used within a dependency's output mappings", dep.Name, field.name, key, v),
+							URL:     "https://porter.sh/reference/linter/#porter-106",
+						})
+						continue
+					}
+
+					outputName := strings.TrimPrefix(v, "outputs.")
+					if res, flagged := checkDependencyOutput(m, depBundles, dep.Name, field.name, key, v, dep.Name, outputName); flagged {
+						results = append(results, res)
+					}
+
+				default:
+					results = append(results, Result{
+						Level:   LevelError,
+						Code:    "porter-106",
+						Title:   "Dependency error",
+						Message: fmt.Sprintf("dependencies.%s.%s.%s references %s, which is not a supported template variable in the dependencies section (supported: bundle.*, installation.*, and outputs.* inside a dependency's output mappings)", dep.Name, field.name, key, v),
+						URL:     "https://porter.sh/reference/linter/#porter-106",
+					})
+				}
+			}
+		}
+	}
+
+	return results, nil
+}
+
+// checkDependencyOutput validates that outputName is defined for refDepName,
+// either as a key in refDepName's own outputs mapping (declared directly in
+// porter.yaml) or as an output on refDepName's resolved bundle. sourceDep,
+// fieldName, key, and v identify where the reference was made, for the
+// resulting porter-109 message.
+func checkDependencyOutput(m *manifest.Manifest, depBundles map[string]cnab.ExtendedBundle, sourceDep, fieldName, key, v, refDepName, outputName string) (Result, bool) {
+	refDep := findDependency(m, refDepName)
+	if refDep == nil {
+		return Result{
+			Level:   LevelError,
+			Code:    "porter-109",
+			Title:   "Dependency error",
+			Message: fmt.Sprintf("dependencies.%s.%s.%s references %s, but %s is not declared under dependencies.requires", sourceDep, fieldName, key, v, refDepName),
+			URL:     "https://porter.sh/reference/linter/#porter-109",
+		}, true
+	}
+
+	if _, ok := refDep.Outputs[outputName]; ok {
+		return Result{}, false
+	}
+
+	if depBundle, ok := depBundles[refDepName]; ok {
+		if _, ok := depBundle.Outputs[outputName]; ok {
+			return Result{}, false
+		}
+
+		return Result{
+			Level:   LevelError,
+			Code:    "porter-109",
+			Title:   "Dependency error",
+			Message: fmt.Sprintf("dependencies.%s.%s.%s references %s, which is not defined as an output on the %s dependency", sourceDep, fieldName, key, v, refDepName),
+			URL:     "https://porter.sh/reference/linter/#porter-109",
+		}, true
+	}
+
+	// refDepName's bundle wasn't resolved and it doesn't declare outputName
+	// itself, so this can't be validated here; porter-105 already warns that
+	// the dependency couldn't be resolved.
+	return Result{}, false
+}
+
+// findDependency returns the dependency definition with the given name, or
+// nil if it isn't declared under dependencies.requires.
+func findDependency(m *manifest.Manifest, name string) *manifest.Dependency {
+	for _, dep := range m.Dependencies.Requires {
+		if dep.Name == name {
+			return dep
+		}
+	}
+	return nil
 }
 
 func (l *Linter) validateVersionNumberConstraints(ctx context.Context, m *manifest.Manifest) error {

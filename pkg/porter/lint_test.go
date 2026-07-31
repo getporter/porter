@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg/cnab"
+	"get.porter.sh/porter/pkg/experimental"
 	"get.porter.sh/porter/pkg/linter"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/mixin"
@@ -204,6 +205,97 @@ uninstall:
 		case "porter-105":
 			assert.Equal(t, linter.LevelWarning, r.Level)
 			assert.Contains(t, r.Message, "unresolvable")
+		}
+	}
+}
+
+func TestPorter_Lint_DependencyTemplateVariables(t *testing.T) {
+	const manifestYaml = `schemaVersion: 1.0.0
+name: has-deps
+version: 0.1.0
+registry: "localhost:5000"
+
+parameters:
+  - name: host
+    type: string
+
+dependencies:
+  requires:
+    - name: mysql
+      bundle:
+        reference: localhost:5000/mysql:v1.0.0
+      outputs:
+        connstr: "https://${outputs.user}:${outputs.password}@${bundle.parameters.host}:${outputs.wrongName}"
+    - name: cache
+      bundle:
+        reference: localhost:5000/cache:v1.0.0
+    - name: web
+      bundle:
+        reference: localhost:5000/web:v1.0.0
+      parameters:
+        DB_HOST: "${bundle.dependencies.mysql.outputs.connstr}"
+        CACHE_HOST: "${bundle.dependencies.cache.outputs.host}"
+
+mixins:
+  - exec
+
+install:
+  - exec:
+      description: "Install"
+      command: echo
+      arguments:
+        - "hello"
+
+uninstall:
+  - exec:
+      description: "Uninstall"
+      command: echo
+      arguments:
+        - "goodbye"
+`
+
+	p := NewTestPorter(t)
+	p.SetExperimentalFlags(experimental.FlagDependenciesV2)
+	defer p.Close()
+
+	require.NoError(t, p.TestConfig.TestContext.AddTestFileContents([]byte(manifestYaml), "porter.yaml"))
+
+	// mysql is the only dependency registered in the mock registry: cache and
+	// web have no mock bundle, so they're expected to be unresolvable (porter-105).
+	p.TestRegistry.MockPullBundle = newMockPullBundle(map[string]cnab.ExtendedBundle{
+		"localhost:5000/mysql:v1.0.0": {Bundle: bundle.Bundle{
+			Name:    "mysql",
+			Version: "1.0.0",
+			Outputs: map[string]bundle.Output{
+				"user":     {Definition: "user"},
+				"password": {Definition: "password"},
+			},
+		}},
+	})
+
+	results, err := p.Lint(context.Background(), LintOptions{File: "porter.yaml"})
+	require.NoError(t, err, "Lint failed")
+
+	codes := make([]linter.Code, 0, len(results))
+	for _, r := range results {
+		codes = append(codes, r.Code)
+	}
+	// porter-105 fires for "cache", even though it has no mappings of its own,
+	// proving it was resolved because "web" references its output by name.
+	// porter-105 also fires for "web" itself (its own bundle can't be resolved).
+	// porter-109 fires for mysql's outputs.wrongName, which isn't declared as
+	// an output on mysql's mocked bundle nor as a key in mysql's own outputs
+	// mapping.
+	assert.ElementsMatch(t, []linter.Code{"porter-105", "porter-105", "porter-109"}, codes, "unexpected lint results: %v", results)
+
+	for _, r := range results {
+		switch r.Code {
+		case "porter-105":
+			assert.Equal(t, linter.LevelWarning, r.Level)
+		case "porter-109":
+			assert.Equal(t, linter.LevelError, r.Level)
+			assert.Contains(t, r.Message, "dependencies.mysql.outputs.connstr")
+			assert.Contains(t, r.Message, "outputs.wrongName")
 		}
 	}
 }

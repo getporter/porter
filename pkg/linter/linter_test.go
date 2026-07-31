@@ -7,6 +7,7 @@ import (
 
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/experimental"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/mixin"
 	"get.porter.sh/porter/pkg/pkgmgmt"
@@ -478,6 +479,310 @@ func TestLinter_DependencyMappings(t *testing.T) {
 		results, err := l.Lint(context.Background(), m, testConfig, nil)
 		require.NoError(t, err, "Lint failed")
 		require.Len(t, results, 0, "linter should skip validation for unresolved dependencies")
+	})
+}
+
+func TestLinter_DependencyTemplateVariables(t *testing.T) {
+	testConfig := config.NewTestConfig(t).Config
+	testConfig.SetExperimentalFlags(experimental.FlagDependenciesV2)
+
+	newDepBundle := func(outputs ...string) cnab.ExtendedBundle {
+		outputDefs := make(map[string]bundle.Output, len(outputs))
+		for _, o := range outputs {
+			outputDefs[o] = bundle.Output{Definition: o}
+		}
+		return cnab.ExtendedBundle{Bundle: bundle.Bundle{Outputs: outputDefs}}
+	}
+
+	t.Run("unsupported prefix in parameters mapping", func(t *testing.T) {
+		cxt := portercontext.NewTestContext(t)
+		mixins := mixin.NewTestMixinProvider()
+		l := New(cxt.Context, mixins)
+
+		m := &manifest.Manifest{
+			SchemaVersion: "1.0.1",
+			Dependencies: manifest.Dependencies{
+				Requires: []*manifest.Dependency{
+					{Name: "mysql", Parameters: map[string]string{"dbstuff": "${env.FOO}"}},
+				},
+			},
+		}
+
+		results, err := l.Lint(context.Background(), m, testConfig, nil)
+		require.NoError(t, err, "Lint failed")
+		require.Len(t, results, 1)
+		require.Equal(t, Code("porter-106"), results[0].Code)
+	})
+
+	t.Run("outputs shorthand used outside output mapping", func(t *testing.T) {
+		cxt := portercontext.NewTestContext(t)
+		mixins := mixin.NewTestMixinProvider()
+		l := New(cxt.Context, mixins)
+
+		m := &manifest.Manifest{
+			SchemaVersion: "1.0.1",
+			Dependencies: manifest.Dependencies{
+				Requires: []*manifest.Dependency{
+					{Name: "mysql", Credentials: map[string]string{"token": "${outputs.port}"}},
+				},
+			},
+		}
+
+		results, err := l.Lint(context.Background(), m, testConfig, nil)
+		require.NoError(t, err, "Lint failed")
+		require.Len(t, results, 1)
+		require.Equal(t, Code("porter-106"), results[0].Code)
+	})
+
+	t.Run("unsupported installation field", func(t *testing.T) {
+		cxt := portercontext.NewTestContext(t)
+		mixins := mixin.NewTestMixinProvider()
+		l := New(cxt.Context, mixins)
+
+		m := &manifest.Manifest{
+			SchemaVersion: "1.0.1",
+			Dependencies: manifest.Dependencies{
+				Requires: []*manifest.Dependency{
+					{Name: "mysql", Parameters: map[string]string{"dbstuff": "${installation.foo}"}},
+				},
+			},
+		}
+
+		results, err := l.Lint(context.Background(), m, testConfig, nil)
+		require.NoError(t, err, "Lint failed")
+		require.Len(t, results, 1)
+		require.Equal(t, Code("porter-106"), results[0].Code)
+	})
+
+	t.Run("valid installation fields", func(t *testing.T) {
+		cxt := portercontext.NewTestContext(t)
+		mixins := mixin.NewTestMixinProvider()
+		l := New(cxt.Context, mixins)
+
+		m := &manifest.Manifest{
+			SchemaVersion: "1.0.1",
+			Dependencies: manifest.Dependencies{
+				Requires: []*manifest.Dependency{
+					{Name: "mysql", Parameters: map[string]string{
+						"a": "${installation.name}",
+						"b": "${installation.namespace}",
+						"c": "${installation.id}",
+					}},
+				},
+			},
+		}
+
+		results, err := l.Lint(context.Background(), m, testConfig, nil)
+		require.NoError(t, err, "Lint failed")
+		require.Len(t, results, 0)
+	})
+
+	t.Run("undefined parent parameter", func(t *testing.T) {
+		cxt := portercontext.NewTestContext(t)
+		mixins := mixin.NewTestMixinProvider()
+		l := New(cxt.Context, mixins)
+
+		m := &manifest.Manifest{
+			SchemaVersion: "1.0.1",
+			Dependencies: manifest.Dependencies{
+				Requires: []*manifest.Dependency{
+					{Name: "mysql", Parameters: map[string]string{"dbstuff": "${bundle.parameters.stuff}"}},
+				},
+			},
+		}
+
+		results, err := l.Lint(context.Background(), m, testConfig, nil)
+		require.NoError(t, err, "Lint failed")
+		require.Len(t, results, 1)
+		require.Equal(t, Code("porter-107"), results[0].Code)
+	})
+
+	t.Run("undefined parent credential", func(t *testing.T) {
+		cxt := portercontext.NewTestContext(t)
+		mixins := mixin.NewTestMixinProvider()
+		l := New(cxt.Context, mixins)
+
+		m := &manifest.Manifest{
+			SchemaVersion: "1.0.1",
+			Dependencies: manifest.Dependencies{
+				Requires: []*manifest.Dependency{
+					{Name: "mysql", Credentials: map[string]string{"token": "${bundle.credentials.token}"}},
+				},
+			},
+		}
+
+		results, err := l.Lint(context.Background(), m, testConfig, nil)
+		require.NoError(t, err, "Lint failed")
+		require.Len(t, results, 1)
+		require.Equal(t, Code("porter-108"), results[0].Code)
+	})
+
+	t.Run("valid parameter and credential references", func(t *testing.T) {
+		cxt := portercontext.NewTestContext(t)
+		mixins := mixin.NewTestMixinProvider()
+		l := New(cxt.Context, mixins)
+
+		m := &manifest.Manifest{
+			SchemaVersion: "1.0.1",
+			Parameters:    manifest.ParameterDefinitions{"stuff": manifest.ParameterDefinition{Name: "stuff"}},
+			Credentials:   manifest.CredentialDefinitions{"token": manifest.CredentialDefinition{Name: "token"}},
+			Dependencies: manifest.Dependencies{
+				Requires: []*manifest.Dependency{
+					{
+						Name:        "mysql",
+						Parameters:  map[string]string{"dbstuff": "${bundle.parameters.stuff}"},
+						Credentials: map[string]string{"token": "${bundle.credentials.token}"},
+					},
+				},
+			},
+		}
+
+		results, err := l.Lint(context.Background(), m, testConfig, nil)
+		require.NoError(t, err, "Lint failed")
+		require.Len(t, results, 0)
+	})
+
+	t.Run("undefined output on self via shorthand", func(t *testing.T) {
+		cxt := portercontext.NewTestContext(t)
+		mixins := mixin.NewTestMixinProvider()
+		l := New(cxt.Context, mixins)
+
+		m := &manifest.Manifest{
+			SchemaVersion: "1.0.1",
+			Dependencies: manifest.Dependencies{
+				Requires: []*manifest.Dependency{
+					{Name: "mysql", Outputs: map[string]string{"connstr": "${outputs.port}"}},
+				},
+			},
+		}
+		depBundles := map[string]cnab.ExtendedBundle{"mysql": newDepBundle("user", "password")}
+
+		results, err := l.Lint(context.Background(), m, testConfig, depBundles)
+		require.NoError(t, err, "Lint failed")
+		require.Len(t, results, 1)
+		require.Equal(t, Code("porter-109"), results[0].Code)
+	})
+
+	t.Run("valid output on self via shorthand", func(t *testing.T) {
+		cxt := portercontext.NewTestContext(t)
+		mixins := mixin.NewTestMixinProvider()
+		l := New(cxt.Context, mixins)
+
+		m := &manifest.Manifest{
+			SchemaVersion: "1.0.1",
+			Dependencies: manifest.Dependencies{
+				Requires: []*manifest.Dependency{
+					{Name: "mysql", Outputs: map[string]string{"connstr": "${outputs.port}"}},
+				},
+			},
+		}
+		depBundles := map[string]cnab.ExtendedBundle{"mysql": newDepBundle("port")}
+
+		results, err := l.Lint(context.Background(), m, testConfig, depBundles)
+		require.NoError(t, err, "Lint failed")
+		require.Len(t, results, 0)
+	})
+
+	t.Run("long-form reference to a different dependency's undefined output", func(t *testing.T) {
+		cxt := portercontext.NewTestContext(t)
+		mixins := mixin.NewTestMixinProvider()
+		l := New(cxt.Context, mixins)
+
+		m := &manifest.Manifest{
+			SchemaVersion: "1.0.1",
+			Dependencies: manifest.Dependencies{
+				Requires: []*manifest.Dependency{
+					{Name: "mysql"},
+					{Name: "web", Parameters: map[string]string{"dbHost": "${bundle.dependencies.mysql.outputs.host}"}},
+				},
+			},
+		}
+		depBundles := map[string]cnab.ExtendedBundle{"mysql": newDepBundle("port")}
+
+		results, err := l.Lint(context.Background(), m, testConfig, depBundles)
+		require.NoError(t, err, "Lint failed")
+		require.Len(t, results, 1)
+		require.Equal(t, Code("porter-109"), results[0].Code)
+	})
+
+	t.Run("long-form reference to an unknown dependency", func(t *testing.T) {
+		cxt := portercontext.NewTestContext(t)
+		mixins := mixin.NewTestMixinProvider()
+		l := New(cxt.Context, mixins)
+
+		m := &manifest.Manifest{
+			SchemaVersion: "1.0.1",
+			Dependencies: manifest.Dependencies{
+				Requires: []*manifest.Dependency{
+					{Name: "web", Parameters: map[string]string{"dbHost": "${bundle.dependencies.unknown.outputs.host}"}},
+				},
+			},
+		}
+
+		results, err := l.Lint(context.Background(), m, testConfig, nil)
+		require.NoError(t, err, "Lint failed")
+		require.Len(t, results, 1)
+		require.Equal(t, Code("porter-109"), results[0].Code)
+	})
+
+	t.Run("long-form reference satisfied by the other dependency's own outputs mapping", func(t *testing.T) {
+		cxt := portercontext.NewTestContext(t)
+		mixins := mixin.NewTestMixinProvider()
+		l := New(cxt.Context, mixins)
+
+		m := &manifest.Manifest{
+			SchemaVersion: "1.0.1",
+			Dependencies: manifest.Dependencies{
+				Requires: []*manifest.Dependency{
+					{Name: "mysql", Outputs: map[string]string{"connstr": "${outputs.port}"}},
+					{Name: "web", Parameters: map[string]string{"dbConn": "${bundle.dependencies.mysql.outputs.connstr}"}},
+				},
+			},
+		}
+		// mysql's bundle isn't resolved here; "connstr" is only known from mysql's own outputs mapping keys.
+
+		results, err := l.Lint(context.Background(), m, testConfig, nil)
+		require.NoError(t, err, "Lint failed")
+		require.Len(t, results, 0)
+	})
+
+	t.Run("unresolved dependency is skipped", func(t *testing.T) {
+		cxt := portercontext.NewTestContext(t)
+		mixins := mixin.NewTestMixinProvider()
+		l := New(cxt.Context, mixins)
+
+		m := &manifest.Manifest{
+			SchemaVersion: "1.0.1",
+			Dependencies: manifest.Dependencies{
+				Requires: []*manifest.Dependency{
+					{Name: "mysql", Outputs: map[string]string{"connstr": "${outputs.port}"}},
+				},
+			},
+		}
+
+		results, err := l.Lint(context.Background(), m, testConfig, nil)
+		require.NoError(t, err, "Lint failed")
+		require.Len(t, results, 0, "linter should skip output validation for unresolved dependencies")
+	})
+
+	t.Run("not enforced when dependencies v2 is disabled", func(t *testing.T) {
+		cxt := portercontext.NewTestContext(t)
+		mixins := mixin.NewTestMixinProvider()
+		l := New(cxt.Context, mixins)
+		v1Config := config.NewTestConfig(t).Config
+
+		m := &manifest.Manifest{
+			SchemaVersion: "1.0.1",
+			Dependencies: manifest.Dependencies{
+				Requires: []*manifest.Dependency{
+					{Name: "mysql", Parameters: map[string]string{"dbstuff": "${env.FOO}"}},
+				},
+			},
+		}
+
+		results, err := l.Lint(context.Background(), m, v1Config, nil)
+		require.NoError(t, err, "Lint failed")
+		require.Len(t, results, 0, "dependency template variable checks should be skipped without FlagDependenciesV2")
 	})
 }
 
