@@ -209,6 +209,80 @@ uninstall:
 	}
 }
 
+func TestPorter_Lint_DependencyRequiredMappings(t *testing.T) {
+	const manifestYaml = `schemaVersion: 1.0.0
+name: has-deps
+version: 0.1.0
+registry: "localhost:5000"
+
+dependencies:
+  requires:
+    - name: mysql
+      bundle:
+        reference: localhost:5000/mysql:v1.0.0
+
+mixins:
+  - exec
+
+install:
+  - exec:
+      description: "Install"
+      command: echo
+      arguments:
+        - "hello"
+
+uninstall:
+  - exec:
+      description: "Uninstall"
+      command: echo
+      arguments:
+        - "goodbye"
+`
+
+	p := NewTestPorter(t)
+	p.SetExperimentalFlags(experimental.FlagDependenciesV2)
+	defer p.Close()
+
+	require.NoError(t, p.TestConfig.TestContext.AddTestFileContents([]byte(manifestYaml), "porter.yaml"))
+
+	// mysql has no parameter/credential mappings at all in porter.yaml, proving its
+	// bundle is still resolved so the required-but-unmapped checks can run against it.
+	p.TestRegistry.MockPullBundle = newMockPullBundle(map[string]cnab.ExtendedBundle{
+		"localhost:5000/mysql:v1.0.0": {Bundle: bundle.Bundle{
+			Name:    "mysql",
+			Version: "1.0.0",
+			Parameters: map[string]bundle.Parameter{
+				"REQUIRED_PARAM": {Definition: "required-param", Required: true},
+				"OPTIONAL_PARAM": {Definition: "optional-param"},
+			},
+			Credentials: map[string]bundle.Credential{
+				"REQUIRED_CRED": {Required: true},
+				"OPTIONAL_CRED": {},
+			},
+		}},
+	})
+
+	results, err := p.Lint(context.Background(), LintOptions{File: "porter.yaml"})
+	require.NoError(t, err, "Lint failed")
+
+	codes := make([]linter.Code, 0, len(results))
+	for _, r := range results {
+		codes = append(codes, r.Code)
+	}
+	assert.ElementsMatch(t, []linter.Code{"porter-110", "porter-111"}, codes, "unexpected lint results: %v", results)
+
+	for _, r := range results {
+		switch r.Code {
+		case "porter-110":
+			assert.Equal(t, linter.LevelWarning, r.Level)
+			assert.Contains(t, r.Message, "dependencies.mysql.parameters.REQUIRED_PARAM")
+		case "porter-111":
+			assert.Equal(t, linter.LevelWarning, r.Level)
+			assert.Contains(t, r.Message, "dependencies.mysql.credentials.REQUIRED_CRED")
+		}
+	}
+}
+
 func TestPorter_Lint_DependencyTemplateVariables(t *testing.T) {
 	const manifestYaml = `schemaVersion: 1.0.0
 name: has-deps
@@ -261,7 +335,8 @@ uninstall:
 	require.NoError(t, p.TestConfig.TestContext.AddTestFileContents([]byte(manifestYaml), "porter.yaml"))
 
 	// mysql is the only dependency registered in the mock registry: cache and
-	// web have no mock bundle, so they're expected to be unresolvable (porter-105).
+	// web are resolved too (every dependency is), but have no mock bundle, so
+	// they're expected to be unresolvable (porter-105).
 	p.TestRegistry.MockPullBundle = newMockPullBundle(map[string]cnab.ExtendedBundle{
 		"localhost:5000/mysql:v1.0.0": {Bundle: bundle.Bundle{
 			Name:    "mysql",
@@ -281,7 +356,7 @@ uninstall:
 		codes = append(codes, r.Code)
 	}
 	// porter-105 fires for "cache", even though it has no mappings of its own,
-	// proving it was resolved because "web" references its output by name.
+	// since every dependency's bundle is resolved unconditionally.
 	// porter-105 also fires for "web" itself (its own bundle can't be resolved).
 	// porter-109 fires for mysql's outputs.wrongName, which isn't declared as
 	// an output on mysql's mocked bundle nor as a key in mysql's own outputs

@@ -482,6 +482,128 @@ func TestLinter_DependencyMappings(t *testing.T) {
 	})
 }
 
+func TestLinter_DependencyRequiredMappings(t *testing.T) {
+	newDepBundle := func() cnab.ExtendedBundle {
+		return cnab.ExtendedBundle{Bundle: bundle.Bundle{
+			Parameters: map[string]bundle.Parameter{
+				"REQUIRED_PARAM": {Definition: "required-param", Required: true},
+				"OPTIONAL_PARAM": {Definition: "optional-param"},
+			},
+			Credentials: map[string]bundle.Credential{
+				"REQUIRED_CRED": {Required: true},
+				"OPTIONAL_CRED": {},
+			},
+		}}
+	}
+
+	t.Run("required parameter not mapped", func(t *testing.T) {
+		testConfig := config.NewTestConfig(t).Config
+		testConfig.SetExperimentalFlags(experimental.FlagDependenciesV2)
+		cxt := portercontext.NewTestContext(t)
+		mixins := mixin.NewTestMixinProvider()
+		l := New(cxt.Context, mixins)
+
+		m := &manifest.Manifest{
+			Dependencies: manifest.Dependencies{
+				Requires: []*manifest.Dependency{
+					{Name: "mysql", Credentials: map[string]string{"REQUIRED_CRED": "value"}},
+				},
+			},
+		}
+		depBundles := map[string]cnab.ExtendedBundle{"mysql": newDepBundle()}
+
+		expectedResult := Results{
+			{
+				Level:   LevelWarning,
+				Code:    "porter-110",
+				Title:   "Dependency warning",
+				Message: "dependencies.mysql.parameters.REQUIRED_PARAM is required by the dependency bundle but is not mapped",
+				URL:     "https://porter.sh/reference/linter/#porter-110",
+			},
+		}
+
+		results, err := l.Lint(context.Background(), m, testConfig, depBundles)
+		require.NoError(t, err, "Lint failed")
+		require.Equal(t, expectedResult, results, "unexpected lint results")
+	})
+
+	t.Run("required credential not mapped", func(t *testing.T) {
+		testConfig := config.NewTestConfig(t).Config
+		testConfig.SetExperimentalFlags(experimental.FlagDependenciesV2)
+		cxt := portercontext.NewTestContext(t)
+		mixins := mixin.NewTestMixinProvider()
+		l := New(cxt.Context, mixins)
+
+		m := &manifest.Manifest{
+			Dependencies: manifest.Dependencies{
+				Requires: []*manifest.Dependency{
+					{Name: "mysql", Parameters: map[string]string{"REQUIRED_PARAM": "value"}},
+				},
+			},
+		}
+		depBundles := map[string]cnab.ExtendedBundle{"mysql": newDepBundle()}
+
+		expectedResult := Results{
+			{
+				Level:   LevelWarning,
+				Code:    "porter-111",
+				Title:   "Dependency warning",
+				Message: "dependencies.mysql.credentials.REQUIRED_CRED is required by the dependency bundle but is not mapped",
+				URL:     "https://porter.sh/reference/linter/#porter-111",
+			},
+		}
+
+		results, err := l.Lint(context.Background(), m, testConfig, depBundles)
+		require.NoError(t, err, "Lint failed")
+		require.Equal(t, expectedResult, results, "unexpected lint results")
+	})
+
+	t.Run("optional unmapped values produce no warning", func(t *testing.T) {
+		testConfig := config.NewTestConfig(t).Config
+		testConfig.SetExperimentalFlags(experimental.FlagDependenciesV2)
+		cxt := portercontext.NewTestContext(t)
+		mixins := mixin.NewTestMixinProvider()
+		l := New(cxt.Context, mixins)
+
+		m := &manifest.Manifest{
+			Dependencies: manifest.Dependencies{
+				Requires: []*manifest.Dependency{
+					{
+						Name:        "mysql",
+						Parameters:  map[string]string{"REQUIRED_PARAM": "value"},
+						Credentials: map[string]string{"REQUIRED_CRED": "value"},
+					},
+				},
+			},
+		}
+		depBundles := map[string]cnab.ExtendedBundle{"mysql": newDepBundle()}
+
+		results, err := l.Lint(context.Background(), m, testConfig, depBundles)
+		require.NoError(t, err, "Lint failed")
+		require.Len(t, results, 0, "unmapped optional parameters/credentials should not be reported")
+	})
+
+	t.Run("skipped without FlagDependenciesV2", func(t *testing.T) {
+		testConfig := config.NewTestConfig(t).Config
+		cxt := portercontext.NewTestContext(t)
+		mixins := mixin.NewTestMixinProvider()
+		l := New(cxt.Context, mixins)
+
+		m := &manifest.Manifest{
+			Dependencies: manifest.Dependencies{
+				Requires: []*manifest.Dependency{
+					{Name: "mysql"},
+				},
+			},
+		}
+		depBundles := map[string]cnab.ExtendedBundle{"mysql": newDepBundle()}
+
+		results, err := l.Lint(context.Background(), m, testConfig, depBundles)
+		require.NoError(t, err, "Lint failed")
+		require.Len(t, results, 0, "required-mapping checks should be skipped without FlagDependenciesV2")
+	})
+}
+
 func TestLinter_DependencyTemplateVariables(t *testing.T) {
 	testConfig := config.NewTestConfig(t).Config
 	testConfig.SetExperimentalFlags(experimental.FlagDependenciesV2)
