@@ -9,6 +9,7 @@ import (
 
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/experimental"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/mixin/query"
 	"get.porter.sh/porter/pkg/pkgmgmt"
@@ -263,11 +264,13 @@ func (l *Linter) Lint(ctx context.Context, m *manifest.Manifest, config *config.
 			}
 		}
 
-		depVarResults, err := validateDependencyTemplateVariables(m, dep, depBundles)
-		if err != nil {
-			return nil, span.Error(err)
+		if config.IsFeatureEnabled(experimental.FlagDependenciesV2) {
+			depVarResults, err := validateDependencyTemplateVariables(m, dep, depBundles)
+			if err != nil {
+				return nil, span.Error(err)
+			}
+			results = append(results, depVarResults...)
 		}
-		results = append(results, depVarResults...)
 	}
 
 	span.Debug("Running linters for each mixin used in the manifest...")

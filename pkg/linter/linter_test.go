@@ -7,6 +7,7 @@ import (
 
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/experimental"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/mixin"
 	"get.porter.sh/porter/pkg/pkgmgmt"
@@ -483,6 +484,7 @@ func TestLinter_DependencyMappings(t *testing.T) {
 
 func TestLinter_DependencyTemplateVariables(t *testing.T) {
 	testConfig := config.NewTestConfig(t).Config
+	testConfig.SetExperimentalFlags(experimental.FlagDependenciesV2)
 
 	newDepBundle := func(outputs ...string) cnab.ExtendedBundle {
 		outputDefs := make(map[string]bundle.Output, len(outputs))
@@ -761,6 +763,26 @@ func TestLinter_DependencyTemplateVariables(t *testing.T) {
 		results, err := l.Lint(context.Background(), m, testConfig, nil)
 		require.NoError(t, err, "Lint failed")
 		require.Len(t, results, 0, "linter should skip output validation for unresolved dependencies")
+	})
+
+	t.Run("not enforced when dependencies v2 is disabled", func(t *testing.T) {
+		cxt := portercontext.NewTestContext(t)
+		mixins := mixin.NewTestMixinProvider()
+		l := New(cxt.Context, mixins)
+		v1Config := config.NewTestConfig(t).Config
+
+		m := &manifest.Manifest{
+			SchemaVersion: "1.0.1",
+			Dependencies: manifest.Dependencies{
+				Requires: []*manifest.Dependency{
+					{Name: "mysql", Parameters: map[string]string{"dbstuff": "${env.FOO}"}},
+				},
+			},
+		}
+
+		results, err := l.Lint(context.Background(), m, v1Config, nil)
+		require.NoError(t, err, "Lint failed")
+		require.Len(t, results, 0, "dependency template variable checks should be skipped without FlagDependenciesV2")
 	})
 }
 
