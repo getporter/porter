@@ -57,7 +57,7 @@ func (b *GraphBuilder) composeRequiredInterface(ctx context.Context, alias strin
 		required.Definitions = mergeDefinitions(required.Definitions, candidate.Definitions)
 
 	case hasDocument:
-		// The document's own outputs/parameters/credentions already carry
+		// The document's own outputs/parameters/credentials already carry
 		// real bundle.Output/Parameter/Credential definitions -- merge them
 		// directly instead of reducing to names. Definitions is left as-is
 		// (nil unless a reference also contributed one): a
