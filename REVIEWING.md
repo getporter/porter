@@ -28,6 +28,21 @@ project that doesn't burn out our authors or our reviewers. 😅
 
 # How to review a pull request
 
+Always use a pull request, and never push directly to `main` or a release
+branch. Only [maintainers][maintainers] can merge code.
+
+We are a small project and don't have enough maintainers/reviewers to
+require 2 reviews on everything, so we've settled on this to avoid being
+blocked for long stretches of time:
+
+* Pull requests from maintainers are optionally reviewed by another
+  maintainer.
+* Changes to the functionality of Porter should always be reviewed.
+* At a maintainer's discretion, a review from someone who is not a
+  maintainer can count toward merging a pull request. We're working on a
+  formal process for recognizing people as reviewers who aren't
+  maintainers.
+
 1. Do not start reviewing a pull request if it is in WIP or is a draft pull
    request. Wait until they have marked it ready for review.
 1. Assign yourself to the pull request. This gives the author feedback that
@@ -52,7 +67,17 @@ what we expect a pull request to feel like for everyone involved.
 
 * Unit Tests
 * Documentation Updated
-* Passing CI
+* Passing CI:
+  * The `porter` build must pass.
+  * The `porter-integration` build must pass to merge. If a test is flaky,
+    create an issue for it and retrigger the build until it's green.
+  * The docs build must pass if the pull request changed the website.
+  * Do not skip the DCO check. Coach a committer on fixing their commit
+    instead. When a committer has signed off some but not all of their
+    commits (this often happens when they accept a suggested change through
+    the GH UI), squashing the commits fixes it.
+  * Code coverage is something we strive for, but at a maintainer's
+    discretion a failing codecov check can be ignored.
 
 When a pull request impacts code, i.e. it's not a documentation-only change,
 the reviewer should run the manual integration tests after reviewing the code.
@@ -62,10 +87,15 @@ The tests are triggered with a comment:
 /azp run porter-integration
 ```
 
+CVEs identified during a pull request should be fixed in a separate pull
+request first and merged, unless they are relevant to the pull request at
+hand.
+
 [Admins][admins] are allowed, at their discretion, to merge administrative pull
 requests without review and before the full CI suite has passed. This is
-sometimes used for typo fixes, updates to markdown files, etc. This is a
-judgement call based on the type of change, risk, and availability of other
+sometimes used for typo fixes, updates to markdown files, or other changes to
+Porter's infrastructure needed to keep the project running smoothly. This is
+a judgement call based on the type of change, risk, and availability of other
 reviewers.
 
 ## Giving feedback
