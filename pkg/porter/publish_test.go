@@ -274,11 +274,20 @@ func TestPublish_PushUpdatedImage_SkipsWhenAlreadyPublished(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, remote.Write(destRef, img, regOpts.ToRemoteOptions()...))
 
+	p.TestRegistry.MockGetRemoteImageDigest = func(ctx context.Context, ref cnab.OCIReference, opts cnabtooci.RegistryOptions) (digest.Digest, error) {
+		nameRef, err := name.ParseReference(ref.String(), opts.ToNameOptions()...)
+		require.NoError(t, err)
+		d, err := remote.Head(nameRef, opts.ToRemoteOptions()...)
+		require.NoError(t, err)
+		return digest.Digest(d.Digest.String()), nil
+	}
+
 	counter.count.Store(0)
 
-	gotDigest, err := p.pushUpdatedImage(context.Background(), layoutPath, testImage, destRef, regOpts)
+	gotDigest, pushed, err := p.pushUpdatedImage(context.Background(), layoutPath, testImage, destRef, regOpts)
 	require.NoError(t, err, "pushUpdatedImage should succeed when the content is already published")
 	assert.Equal(t, desc.Digest, gotDigest)
+	assert.False(t, pushed, "expected no push when content is already published at the destination")
 	assert.Zero(t, counter.count.Load(), "expected no write requests when content is already published at the destination")
 }
 
@@ -310,9 +319,10 @@ func TestPublish_PushUpdatedImage_PushesWhenDigestDiffers(t *testing.T) {
 
 	counter.count.Store(0)
 
-	gotDigest, err := p.pushUpdatedImage(context.Background(), layoutPath, testImage, destRef, regOpts)
+	gotDigest, pushed, err := p.pushUpdatedImage(context.Background(), layoutPath, testImage, destRef, regOpts)
 	require.NoError(t, err)
 	assert.Equal(t, desc.Digest, gotDigest)
+	assert.True(t, pushed, "expected a push when the destination content differs")
 	assert.NotZero(t, counter.count.Load(), "expected write requests when the destination content differs")
 }
 
@@ -359,6 +369,52 @@ func TestPublish_RelocateImage_DeletesTemporaryTag(t *testing.T) {
 	require.NoError(t, err)
 	_, err = remote.Head(nameRef, regOpts.ToRemoteOptions()...)
 	require.Error(t, err, "expected the temporary tag to have been deleted from the registry")
+}
+
+func TestPublish_RelocateImage_SkipsDeleteWhenImageAlreadyPublished(t *testing.T) {
+	p := NewTestPorter(t)
+	defer p.Close()
+
+	regSrv := httptest.NewServer(registry.New())
+	defer regSrv.Close()
+	regHost := strings.TrimPrefix(regSrv.URL, "http://")
+
+	testImage := "myorg/myapp"
+	layoutDir := t.TempDir()
+	layoutPath, err := createTestOCILayout(t, layoutDir, testImage)
+	require.NoError(t, err)
+
+	desc, err := findImageInLayout(layoutPath, testImage)
+	require.NoError(t, err)
+
+	regOpts := cnabtooci.RegistryOptions{InsecureRegistry: true}
+
+	// Pre-publish the exact same content at the temporary tag pushUpdatedImage would use,
+	// so that relocateImage finds it already published and skips pushing.
+	newImgRef, err := getNewImageNameFromBundleReference(testImage, regHost+"/myneworg/mynewbuns:v1.0", regOpts)
+	require.NoError(t, err)
+	img, err := layoutPath.Image(desc.Digest)
+	require.NoError(t, err)
+	require.NoError(t, remote.Write(newImgRef, img, regOpts.ToRemoteOptions()...))
+
+	p.TestRegistry.MockGetRemoteImageDigest = func(ctx context.Context, ref cnab.OCIReference, opts cnabtooci.RegistryOptions) (digest.Digest, error) {
+		nameRef, err := name.ParseReference(ref.String(), opts.ToNameOptions()...)
+		require.NoError(t, err)
+		d, err := remote.Head(nameRef, opts.ToRemoteOptions()...)
+		require.NoError(t, err)
+		return digest.Digest(d.Digest.String()), nil
+	}
+
+	deleteTagCalled := false
+	p.TestRegistry.MockDeleteImageTag = func(ctx context.Context, ref cnab.OCIReference, opts cnabtooci.RegistryOptions) error {
+		deleteTagCalled = true
+		return nil
+	}
+
+	_, err = p.relocateImage(context.Background(), relocation.ImageRelocationMap{}, layoutPath, testImage, regHost+"/myneworg/mynewbuns:v1.0", regOpts)
+	require.NoError(t, err)
+
+	assert.False(t, deleteTagCalled, "the temporary tag should not be deleted when relocateImage didn't push it this run")
 }
 
 // createTestOCILayout creates a test OCI layout with a dummy image
@@ -442,9 +498,10 @@ func TestPublish_PushUpdatedImage_ImageIndex(t *testing.T) {
 	destRef, err := name.ParseReference(regHost+"/myorg/myapp:published", regOpts.ToNameOptions()...)
 	require.NoError(t, err)
 
-	digest, err := p.pushUpdatedImage(context.Background(), layoutPath, testImage, destRef, regOpts)
+	digest, pushed, err := p.pushUpdatedImage(context.Background(), layoutPath, testImage, destRef, regOpts)
 	require.NoError(t, err, "pushUpdatedImage should succeed when the layout entry is an image index")
 	require.NotEmpty(t, digest)
+	assert.True(t, pushed, "expected a push for the new image index content")
 
 	// Verify the index -- and its child manifests -- were actually pushed.
 	pushedRef, err := name.ParseReference(fmt.Sprintf("%s/myorg/myapp@%s", regHost, digest.String()), regOpts.ToNameOptions()...)

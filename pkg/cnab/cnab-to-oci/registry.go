@@ -647,13 +647,21 @@ func (r *Registry) DeleteImageTag(ctx context.Context, ref cnab.OCIReference, op
 	_, span := tracing.StartSpan(ctx, attribute.String("reference", ref.String()))
 	defer span.EndSpan()
 
+	if !ref.HasTag() || ref.HasDigest() {
+		return fmt.Errorf("invalid reference %s: DeleteImageTag requires a tag-based reference", ref.String())
+	}
+
 	nameRef, err := name.ParseReference(ref.String(), opts.ToNameOptions()...)
 	if err != nil {
 		return fmt.Errorf("invalid reference %s: %w", ref.String(), err)
 	}
 
-	if err := remote.Delete(nameRef, opts.ToRemoteOptions()...); err == nil {
+	deleteErr := remote.Delete(nameRef, opts.ToRemoteOptions()...)
+	if deleteErr == nil {
 		return nil
+	}
+	if !isDigestInvalidError(deleteErr) {
+		return fmt.Errorf("failed deleting tag %s: %w", ref, deleteErr)
 	}
 
 	placeholder, err := newPlaceholderManifest(ref.Tag())
@@ -676,6 +684,29 @@ func (r *Registry) DeleteImageTag(ctx context.Context, ref cnab.OCIReference, op
 	}
 
 	return nil
+}
+
+// isDigestInvalidError reports whether err is the HTTP 400 DIGEST_INVALID
+// error that the reference distribution/distribution registry
+// implementation returns when asked to DELETE a manifest by tag instead of
+// by digest. This is the only failure mode that's safe to treat as "tag
+// deletion isn't supported here, fall back to the overwrite workaround" --
+// any other error (auth failures, delete disabled, network errors, etc.)
+// must be returned as-is instead, since the fallback pushes a placeholder
+// manifest over the tag first.
+func isDigestInvalidError(err error) bool {
+	httpError, ok := errors.AsType[*transport.Error](err)
+	if !ok || httpError.StatusCode != http.StatusBadRequest {
+		return false
+	}
+
+	for _, d := range httpError.Errors {
+		if d.Code == transport.DigestInvalidErrorCode {
+			return true
+		}
+	}
+
+	return false
 }
 
 // asNotFoundError checks if the error is an HTTP 404 not found error, and if so returns a corresponding ErrNotFound instance.

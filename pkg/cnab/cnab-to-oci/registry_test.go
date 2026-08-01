@@ -225,4 +225,54 @@ func TestRegistry_DeleteImageTag(t *testing.T) {
 		require.NoError(t, err, "the original manifest should still be reachable by digest")
 		assert.Equal(t, wantDigest.String(), desc.Digest.String())
 	})
+
+	t.Run("rejects a digest-based reference", func(t *testing.T) {
+		ref := cnab.MustParseOCIReference("example.com/myorg/myapp@sha256:6b5a28ccbb76f12ce771a23757880c6083234255c5ba191fca1c5db1f71c1687")
+		err := r.DeleteImageTag(ctx, ref, regOpts)
+		require.Error(t, err, "DeleteImageTag should refuse a digest-based reference")
+	})
+
+	t.Run("does not overwrite the tag when the registry rejects delete for a reason other than DIGEST_INVALID", func(t *testing.T) {
+		regSrv := httptest.NewServer(&rejectAllDeleteHandler{inner: registry.New(), statusCode: http.StatusForbidden})
+		defer regSrv.Close()
+		regHost := strings.TrimPrefix(regSrv.URL, "http://")
+
+		pushRef, err := name.ParseReference(regHost+"/myorg/myapp:v1.0", regOpts.ToNameOptions()...)
+		require.NoError(t, err)
+		img, err := random.Image(1024, 1)
+		require.NoError(t, err)
+		require.NoError(t, remote.Write(pushRef, img, regOpts.ToRemoteOptions()...))
+		wantDigest, err := img.Digest()
+		require.NoError(t, err)
+
+		ref := cnab.MustParseOCIReference(regHost + "/myorg/myapp:v1.0")
+		err = r.DeleteImageTag(ctx, ref, regOpts)
+		require.Error(t, err, "expected DeleteImageTag to surface the original error instead of falling back")
+
+		// The tag must still point at the original content: since the failure
+		// wasn't the known DIGEST_INVALID case, DeleteImageTag must not have
+		// attempted the overwrite workaround.
+		desc, err := remote.Head(pushRef, regOpts.ToRemoteOptions()...)
+		require.NoError(t, err)
+		assert.Equal(t, wantDigest.String(), desc.Digest.String(), "the tag should be untouched when the fallback isn't attempted")
+	})
+}
+
+// rejectAllDeleteHandler wraps a registry handler and rejects every DELETE
+// request with the given status code, mimicking a registry that denies
+// manifest deletion outright (e.g. due to permissions or the feature being
+// disabled), as opposed to the specific DIGEST_INVALID response used by
+// rejectTagDeleteHandler to mimic unsupported DELETE-by-tag.
+type rejectAllDeleteHandler struct {
+	inner      http.Handler
+	statusCode int
+}
+
+func (h *rejectAllDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodDelete {
+		w.WriteHeader(h.statusCode)
+		_, _ = w.Write([]byte(`{"errors":[{"code":"DENIED","message":"access denied"}]}`))
+		return
+	}
+	h.inner.ServeHTTP(w, r)
 }
