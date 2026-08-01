@@ -262,6 +262,42 @@ func (l *Linter) Lint(ctx context.Context, m *manifest.Manifest, config *config.
 					})
 				}
 			}
+
+			if config.IsFeatureEnabled(experimental.FlagDependenciesV2) {
+				var unmappedParams []string
+				for paramName, paramDef := range depBundle.Parameters {
+					if _, ok := dep.Parameters[paramName]; !ok && paramDef.Required {
+						unmappedParams = append(unmappedParams, paramName)
+					}
+				}
+				sort.Strings(unmappedParams)
+				for _, paramName := range unmappedParams {
+					results = append(results, Result{
+						Level:   LevelWarning,
+						Code:    "porter-110",
+						Title:   "Dependency warning",
+						Message: fmt.Sprintf("dependencies.%s.parameters.%s is required by the dependency bundle but is not mapped", dep.Name, paramName),
+						URL:     "https://porter.sh/reference/linter/#porter-110",
+					})
+				}
+
+				var unmappedCreds []string
+				for credName, credDef := range depBundle.Credentials {
+					if _, ok := dep.Credentials[credName]; !ok && credDef.Required {
+						unmappedCreds = append(unmappedCreds, credName)
+					}
+				}
+				sort.Strings(unmappedCreds)
+				for _, credName := range unmappedCreds {
+					results = append(results, Result{
+						Level:   LevelWarning,
+						Code:    "porter-111",
+						Title:   "Dependency warning",
+						Message: fmt.Sprintf("dependencies.%s.credentials.%s is required by the dependency bundle but is not mapped", dep.Name, credName),
+						URL:     "https://porter.sh/reference/linter/#porter-111",
+					})
+				}
+			}
 		}
 
 		if config.IsFeatureEnabled(experimental.FlagDependenciesV2) {

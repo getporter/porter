@@ -77,32 +77,22 @@ func (p *Porter) Lint(ctx context.Context, opts LintOptions) (linter.Results, er
 }
 
 // resolveDependencyBundlesForLint pulls (from cache, or the registry) the bundle definition for
-// each dependency so that the linter can validate that mapped parameters, credentials, and
-// outputs are actually defined on the dependency. Dependencies whose bundle cannot be resolved
-// are reported as a warning and omitted from the returned map, so the linter simply skips
-// validating them (falling back, for output references, to what's declared directly in
-// porter.yaml).
+// every dependency so that the linter can validate that mapped parameters, credentials, and
+// outputs are actually defined on the dependency, and that any parameter or credential the
+// dependency requires has been mapped. Resolution is unconditional (not just for dependencies
+// with existing mappings) because the latter check needs to see dependencies with no mappings
+// at all. Dependencies whose bundle cannot be resolved are reported as a warning and omitted
+// from the returned map, so the linter simply skips validating them: mapping/output-reference
+// checks fall back to what's declared directly in porter.yaml, but the required-parameter and
+// required-credential checks (porter-110/111) have no such fallback and are skipped entirely.
 func (p *Porter) resolveDependencyBundlesForLint(ctx context.Context, m *manifest.Manifest, opts LintOptions) (map[string]cnab.ExtendedBundle, linter.Results) {
 	if len(m.Dependencies.Requires) == 0 {
 		return nil, nil
 	}
 
-	neededDeps := neededDependencyBundles(m)
-	if len(neededDeps) == 0 {
-		return nil, nil
-	}
-
-	depBundles := make(map[string]cnab.ExtendedBundle, len(neededDeps))
+	depBundles := make(map[string]cnab.ExtendedBundle, len(m.Dependencies.Requires))
 	var results linter.Results
 	for _, dep := range m.Dependencies.Requires {
-		// Only resolve the dependency's bundle when it's actually referenced by a
-		// mapping or a template variable. Otherwise we'd be doing unnecessary
-		// cache/registry I/O, and could report a porter-105 warning for a
-		// dependency that has nothing to validate.
-		if !neededDeps[dep.Name] {
-			continue
-		}
-
 		pullOpts := BundlePullOptions{
 			Reference:        dep.Bundle.Reference,
 			InsecureRegistry: opts.InsecureRegistry,
@@ -124,35 +114,6 @@ func (p *Porter) resolveDependencyBundlesForLint(ctx context.Context, m *manifes
 	}
 
 	return depBundles, results
-}
-
-// neededDependencyBundles returns the set of dependency names whose bundle
-// definition is needed to lint the dependencies section: dependencies with
-// their own parameter, credential, or output mappings, plus any dependency
-// referenced by name in a long-form bundle.dependencies.DEP.outputs.NAME
-// template variable used anywhere in the dependencies section.
-func neededDependencyBundles(m *manifest.Manifest) map[string]bool {
-	needed := make(map[string]bool, len(m.Dependencies.Requires))
-	for _, dep := range m.Dependencies.Requires {
-		if len(dep.Parameters) > 0 || len(dep.Credentials) > 0 || len(dep.Outputs) > 0 {
-			needed[dep.Name] = true
-		}
-
-		for _, values := range []map[string]string{dep.Parameters, dep.Credentials, dep.Outputs} {
-			for _, value := range values {
-				vars, err := m.GetTemplateVariables(value)
-				if err != nil {
-					continue
-				}
-				for v := range vars {
-					if refDepName, _, ok := m.GetTemplateDependencyOutputName(v); ok {
-						needed[refDepName] = true
-					}
-				}
-			}
-		}
-	}
-	return needed
 }
 
 // PrintLintResults lints the manifest and prints the results to the attached output.
