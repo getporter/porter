@@ -316,6 +316,51 @@ func TestPublish_PushUpdatedImage_PushesWhenDigestDiffers(t *testing.T) {
 	assert.NotZero(t, counter.count.Load(), "expected write requests when the destination content differs")
 }
 
+func TestPublish_RelocateImage_DeletesTemporaryTag(t *testing.T) {
+	p := NewTestPorter(t)
+	defer p.Close()
+
+	regSrv := httptest.NewServer(registry.New())
+	defer regSrv.Close()
+	regHost := strings.TrimPrefix(regSrv.URL, "http://")
+
+	testImage := "myorg/myapp"
+	layoutDir := t.TempDir()
+	layoutPath, err := createTestOCILayout(t, layoutDir, testImage)
+	require.NoError(t, err)
+
+	regOpts := cnabtooci.RegistryOptions{InsecureRegistry: true}
+
+	var deletedRef cnab.OCIReference
+	deleteTagCalled := false
+	p.TestRegistry.MockDeleteImageTag = func(ctx context.Context, ref cnab.OCIReference, opts cnabtooci.RegistryOptions) error {
+		deleteTagCalled = true
+		deletedRef = ref
+
+		// Delegate to the real registry so we can confirm the tag is actually gone.
+		nameRef, err := name.ParseReference(ref.String(), opts.ToNameOptions()...)
+		require.NoError(t, err)
+		return remote.Delete(nameRef, opts.ToRemoteOptions()...)
+	}
+
+	relocationMap, err := p.relocateImage(context.Background(), relocation.ImageRelocationMap{}, layoutPath, testImage, regHost+"/myneworg/mynewbuns:v1.0", regOpts)
+	require.NoError(t, err)
+
+	require.True(t, deleteTagCalled, "expected the temporary tag to be deleted after relocating the image")
+	assert.Contains(t, deletedRef.String(), "myneworg/mynewbuns:porter-", "the deleted reference should be the porter-<hash> temporary tag, not the final digest reference")
+
+	// The relocation map should reference the image by digest, not by the temporary tag.
+	relocated, ok := relocationMap[testImage]
+	require.True(t, ok)
+	assert.Contains(t, relocated, "@sha256:", "relocated image should be referenced by digest")
+
+	// The temporary tag should no longer resolve on the registry.
+	nameRef, err := name.ParseReference(deletedRef.String(), regOpts.ToNameOptions()...)
+	require.NoError(t, err)
+	_, err = remote.Head(nameRef, regOpts.ToRemoteOptions()...)
+	require.Error(t, err, "expected the temporary tag to have been deleted from the registry")
+}
+
 // createTestOCILayout creates a test OCI layout with a dummy image
 func createTestOCILayout(t *testing.T, layoutDir string, imageName string) (layout.Path, error) {
 	t.Helper()
@@ -648,14 +693,17 @@ func TestPublish_SkipsImagePushWhenAlreadyUpToDate(t *testing.T) {
 	t.Parallel()
 
 	testcases := []struct {
-		name          string
-		force         bool
-		digestsMatch  bool
-		wantPushImage bool
+		name            string
+		force           bool
+		digestsMatch    bool
+		wantPushImage   bool
+		wantDeleteTag   bool
+		deleteTagErrors bool
 	}{
-		{name: "digests match, no force", digestsMatch: true, force: false, wantPushImage: false},
-		{name: "digests differ, no force", digestsMatch: false, force: false, wantPushImage: true},
-		{name: "digests match, force set", digestsMatch: true, force: true, wantPushImage: true},
+		{name: "digests match, no force", digestsMatch: true, force: false, wantPushImage: false, wantDeleteTag: false},
+		{name: "digests differ, no force", digestsMatch: false, force: false, wantPushImage: true, wantDeleteTag: true},
+		{name: "digests match, force set", digestsMatch: true, force: true, wantPushImage: true, wantDeleteTag: true},
+		{name: "delete tag fails, publish still succeeds", digestsMatch: true, force: true, wantPushImage: true, wantDeleteTag: true, deleteTagErrors: true},
 	}
 
 	for _, tc := range testcases {
@@ -689,9 +737,22 @@ func TestPublish_SkipsImagePushWhenAlreadyUpToDate(t *testing.T) {
 			}
 
 			pushImageCalled := false
+			var pushedRef cnab.OCIReference
 			p.TestRegistry.MockPushImage = func(ctx context.Context, ref cnab.OCIReference, opts cnabtooci.RegistryOptions) (digest.Digest, error) {
 				pushImageCalled = true
+				pushedRef = ref
 				return remoteDigest, nil
+			}
+
+			deleteTagCalled := false
+			var deletedRef cnab.OCIReference
+			p.TestRegistry.MockDeleteImageTag = func(ctx context.Context, ref cnab.OCIReference, opts cnabtooci.RegistryOptions) error {
+				deleteTagCalled = true
+				deletedRef = ref
+				if tc.deleteTagErrors {
+					return errors.New("registry does not support deleting tags")
+				}
+				return nil
 			}
 
 			// mybuns depends on this bundle and maps a "database" parameter into it, so
@@ -715,9 +776,13 @@ func TestPublish_SkipsImagePushWhenAlreadyUpToDate(t *testing.T) {
 			require.NoError(t, opts.Validate(p.Config))
 
 			err := p.Publish(ctx, opts)
-			require.NoError(t, err, "Publish failed")
+			require.NoError(t, err, "Publish failed, even if the tag delete itself failed")
 
 			assert.Equal(t, tc.wantPushImage, pushImageCalled)
+			assert.Equal(t, tc.wantDeleteTag, deleteTagCalled, "temporary tag deletion should only be attempted when Porter pushed the image itself")
+			if tc.wantDeleteTag {
+				assert.Equal(t, pushedRef, deletedRef, "the deleted tag should be the same temporary tag that was pushed")
+			}
 		})
 	}
 }

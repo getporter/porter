@@ -25,6 +25,11 @@ type TestRegistryOptions struct {
 	// UseAlias indicates that when the TestRegistryAlias environment variable is set,
 	// the registry address use the hostname alias, and not localhost.
 	UseAlias bool
+
+	// EnableDelete starts the registry with tag/manifest deletion enabled
+	// (REGISTRY_STORAGE_DELETE_ENABLED=true). The reference registry image
+	// has this disabled by default.
+	EnableDelete bool
 }
 
 // TestRegistry is a temporary registry that is stopped when the test completes.
@@ -72,6 +77,10 @@ func (t Tester) StartTestRegistry(opts TestRegistryOptions) *TestRegistry {
 			"-e", "REGISTRY_HTTP_TLS_CERTIFICATE=/certs/registry_auth.crt",
 			"-e", "REGISTRY_HTTP_TLS_KEY=/certs/registry_auth.key",
 		)
+	}
+
+	if opts.EnableDelete {
+		cmd.Args("-e", "REGISTRY_STORAGE_DELETE_ENABLED=true")
 	}
 
 	// The docker image name must go last

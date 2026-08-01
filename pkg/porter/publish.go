@@ -250,6 +250,13 @@ func (p *Porter) publishFromFile(ctx context.Context, opts PublishOptions) error
 		}
 	}
 
+	// The temporary tag is no longer needed now that the bundle references the
+	// image by digest (and signing, if any, is done with it). Only delete it
+	// when we pushed it ourselves this run.
+	if !skipPush {
+		p.deleteTemporaryImageTag(ctx, imgRef, regOpts)
+	}
+
 	// Perhaps we have a cached version of a bundle with the same reference, previously pulled
 	// If so, replace it, as it is most likely out-of-date per this publish
 	err = p.refreshCachedBundle(bundleRef)
@@ -637,9 +644,28 @@ func (p *Porter) relocateImage(ctx context.Context, relocationMap relocation.Ima
 		return nil, fmt.Errorf("unable to update image reference for %s: %w", newImgRef.String(), err)
 	}
 
+	if tempImgRef, err := cnab.ParseOCIReference(newImgRef.String()); err == nil {
+		p.deleteTemporaryImageTag(ctx, tempImgRef, opts)
+	}
+
 	// update relocation map
 	relocationMap[originImg] = taggedImage
 	return relocationMap, nil
+}
+
+// deleteTemporaryImageTag removes a tag that Porter applied to an image
+// solely to push it and resolve its repository digest. Deletion is
+// best-effort: many registries don't support deleting a single tag (e.g.
+// Docker Hub, GHCR), so a failure here just reproduces today's behavior of
+// leaving the tag in place, and is logged at debug level rather than failing
+// the publish.
+func (p *Porter) deleteTemporaryImageTag(ctx context.Context, ref cnab.OCIReference, opts cnabtooci.RegistryOptions) {
+	ctx, log := tracing.StartSpan(ctx)
+	defer log.EndSpan()
+
+	if err := p.Registry.DeleteImageTag(ctx, ref, opts); err != nil {
+		log.Debugf("unable to delete temporary tag %s: %v", ref, err)
+	}
 }
 
 func (p *Porter) rewriteImageWithDigest(image string, imgDigest string) (string, error) {

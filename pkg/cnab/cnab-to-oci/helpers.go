@@ -22,6 +22,7 @@ type TestRegistry struct {
 	MockGetBundleMetadata    func(ctx context.Context, ref cnab.OCIReference, opts RegistryOptions) (BundleMetadata, error)
 	MockGetImageMetadata     func(ctx context.Context, ref cnab.OCIReference, opts RegistryOptions) (ImageMetadata, error)
 	MockGetRemoteImageDigest func(ctx context.Context, ref cnab.OCIReference, opts RegistryOptions) (digest.Digest, error)
+	MockDeleteImageTag       func(ctx context.Context, ref cnab.OCIReference, opts RegistryOptions) error
 	cache                    map[string]ImageMetadata
 }
 
@@ -125,4 +126,12 @@ func (t TestRegistry) GetRemoteImageDigest(ctx context.Context, ref cnab.OCIRefe
 	}
 
 	return "", ErrNotFound{Reference: ref}
+}
+
+func (t TestRegistry) DeleteImageTag(ctx context.Context, ref cnab.OCIReference, opts RegistryOptions) error {
+	if t.MockDeleteImageTag != nil {
+		return t.MockDeleteImageTag(ctx, ref, opts)
+	}
+
+	return nil
 }
