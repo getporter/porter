@@ -82,8 +82,9 @@ func (p *Porter) Lint(ctx context.Context, opts LintOptions) (linter.Results, er
 // dependency requires has been mapped. Resolution is unconditional (not just for dependencies
 // with existing mappings) because the latter check needs to see dependencies with no mappings
 // at all. Dependencies whose bundle cannot be resolved are reported as a warning and omitted
-// from the returned map, so the linter simply skips validating them (falling back, for output
-// references, to what's declared directly in porter.yaml).
+// from the returned map, so the linter simply skips validating them: mapping/output-reference
+// checks fall back to what's declared directly in porter.yaml, but the required-parameter and
+// required-credential checks (porter-110/111) have no such fallback and are skipped entirely.
 func (p *Porter) resolveDependencyBundlesForLint(ctx context.Context, m *manifest.Manifest, opts LintOptions) (map[string]cnab.ExtendedBundle, linter.Results) {
 	if len(m.Dependencies.Requires) == 0 {
 		return nil, nil
