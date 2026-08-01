@@ -1,25 +1,43 @@
 package cnab
 
-import "sort"
+import (
+	"sort"
 
-// InterfaceRequirement is the set of capability names, by name only (v1 --
-// no schema/type checking, no well-known-identifier matching, see #2650),
-// that a candidate must provide to satisfy a bundle interface.
+	"github.com/cnabio/cnab-go/bundle"
+	"github.com/cnabio/cnab-go/bundle/definition"
+)
+
+// InterfaceRequirement is the set of capabilities, keyed by name, that a
+// candidate must provide to satisfy a bundle interface. Matching itself is
+// still name-only (v1 -- no schema/type checking, no well-known-identifier
+// matching, see #2650); the definitions are carried through so that future
+// work has real data to check against instead of bare names.
+//
+// Definitions is only ever populated from an interface.reference (the
+// pulled bundle's own Definitions map) -- interface.document has no
+// Definitions of its own to carry, since its schema references, if any, are
+// only resolvable against the parent bundle's Definitions map, which isn't
+// threaded through here (see #2685 follow-up).
 type InterfaceRequirement struct {
-	Outputs     []string
-	Parameters  []string
-	Credentials []string
+	Outputs     map[string]bundle.Output
+	Parameters  map[string]bundle.Parameter
+	Credentials map[string]bundle.Credential
+	Definitions definition.Definitions
 }
 
-// InterfaceCandidate is the set of capability names a candidate actually
-// offers. It may be built from a real bundle definition
+// InterfaceCandidate is the set of capabilities a candidate actually offers.
+// It may be built from a real bundle definition
 // (NewInterfaceCandidateFromBundle) or, when no bundle definition is
 // available (e.g. matching against an already-installed installation's
 // recorded outputs), constructed directly from whatever names are known.
+//
+// The maps returned by NewInterfaceCandidateFromBundle are borrowed from the
+// source bundle, not copied -- callers must not mutate them.
 type InterfaceCandidate struct {
-	Outputs     []string
-	Parameters  []string
-	Credentials []string
+	Outputs     map[string]bundle.Output
+	Parameters  map[string]bundle.Parameter
+	Credentials map[string]bundle.Credential
+	Definitions definition.Definitions
 }
 
 // InterfaceMatchMode controls which capability categories must match,
@@ -57,13 +75,15 @@ type InterfaceMatchResult struct {
 // bundle definition's own outputs, parameters, and credentials.
 func NewInterfaceCandidateFromBundle(b ExtendedBundle) InterfaceCandidate {
 	return InterfaceCandidate{
-		Outputs:     mapKeys(b.Outputs),
-		Parameters:  mapKeys(b.Parameters),
-		Credentials: mapKeys(b.Credentials),
+		Outputs:     b.Outputs,
+		Parameters:  b.Parameters,
+		Credentials: b.Credentials,
+		Definitions: b.Definitions,
 	}
 }
 
-func mapKeys[V any](m map[string]V) []string {
+// SortedKeys returns the sorted keys of m.
+func SortedKeys[V any](m map[string]V) []string {
 	names := make([]string, 0, len(m))
 	for name := range m {
 		names = append(names, name)
@@ -92,23 +112,21 @@ func EvaluateInterfaceMatch(candidate InterfaceCandidate, required InterfaceRequ
 	return result
 }
 
-// missingNames returns the entries in required that are absent from
-// available, or nil when none are missing.
-func missingNames(required, available []string) []string {
+// missingNames returns the keys of required that are absent from available,
+// or nil when none are missing. Only key presence is compared -- values are
+// never inspected, so matching stays name-only regardless of what richer
+// data a definition carries (see #2650 for value/schema comparison).
+func missingNames[T any](required map[string]T, available map[string]T) []string {
 	if len(required) == 0 {
 		return nil
 	}
 
-	availableSet := make(map[string]bool, len(available))
-	for _, name := range available {
-		availableSet[name] = true
-	}
-
 	var missing []string
-	for _, name := range required {
-		if !availableSet[name] {
+	for name := range required {
+		if _, ok := available[name]; !ok {
 			missing = append(missing, name)
 		}
 	}
+	sort.Strings(missing)
 	return missing
 }

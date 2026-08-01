@@ -3,10 +3,11 @@ package porter
 import (
 	"context"
 	"errors"
-	"sort"
+	"maps"
 
 	"get.porter.sh/porter/pkg/cnab"
 	v2 "get.porter.sh/porter/pkg/cnab/extensions/dependencies/v2"
+	"github.com/cnabio/cnab-go/bundle"
 )
 
 // errInterfaceReferenceAndDocument is returned by composeRequiredInterface
@@ -30,7 +31,7 @@ var errInterfaceReferenceAndDocument = errors.New("dependency interface declares
 // experimental behavior at the call site (see dependency_graph_builder.go).
 func (b *GraphBuilder) composeRequiredInterface(ctx context.Context, alias string, dep v2.Dependency, refsByToAlias map[string][]wiringRef, opts ExplainOpts) (cnab.InterfaceRequirement, error) {
 	required := cnab.InterfaceRequirement{
-		Outputs: requiredOutputNames(alias, dep, refsByToAlias),
+		Outputs: zeroOutputs(requiredOutputNames(alias, dep, refsByToAlias)),
 	}
 
 	if dep.Interface == nil {
@@ -50,15 +51,23 @@ func (b *GraphBuilder) composeRequiredInterface(ctx context.Context, alias strin
 			return cnab.InterfaceRequirement{}, err
 		}
 		candidate := cnab.NewInterfaceCandidateFromBundle(referenceBun)
-		required.Outputs = unionSorted(required.Outputs, candidate.Outputs)
-		required.Parameters = unionSorted(required.Parameters, candidate.Parameters)
-		required.Credentials = unionSorted(required.Credentials, candidate.Credentials)
+		required.Outputs = mergeDefinitions(required.Outputs, candidate.Outputs)
+		required.Parameters = mergeDefinitions(required.Parameters, candidate.Parameters)
+		required.Credentials = mergeDefinitions(required.Credentials, candidate.Credentials)
+		required.Definitions = mergeDefinitions(required.Definitions, candidate.Definitions)
 
 	case hasDocument:
-		outputs, parameters, credentials := dep.Interface.Document.Names()
-		required.Outputs = unionSorted(required.Outputs, outputs)
-		required.Parameters = unionSorted(required.Parameters, parameters)
-		required.Credentials = unionSorted(required.Credentials, credentials)
+		// The document's own outputs/parameters/credentials already carry
+		// real bundle.Output/Parameter/Credential definitions -- merge them
+		// directly instead of reducing to names. Definitions is left as-is
+		// (nil unless a reference also contributed one): a
+		// DependencyInterfaceDocument has no Definitions map of its own, and
+		// resolving its Definition name references would require the parent
+		// bundle's own Definitions map, which isn't threaded through here
+		// (see #2685 follow-up).
+		required.Outputs = mergeDefinitions(required.Outputs, dep.Interface.Document.Outputs)
+		required.Parameters = mergeDefinitions(required.Parameters, dep.Interface.Document.Parameters)
+		required.Credentials = mergeDefinitions(required.Credentials, dep.Interface.Document.Credentials)
 	}
 
 	// ID-only (neither Reference nor Document set): nothing structural to
@@ -69,27 +78,34 @@ func (b *GraphBuilder) composeRequiredInterface(ctx context.Context, alias strin
 	return required, nil
 }
 
-// unionSorted returns the sorted, deduplicated union of a and b.
-func unionSorted(a, b []string) []string {
-	if len(a) == 0 && len(b) == 0 {
+// zeroOutputs wraps names (the base interface, inferred from wiring/usage)
+// as zero-value bundle.Output entries -- there is no schema to attach on the
+// base side, only the fact that an output with this name must exist. Returns
+// nil, not an empty map, when names is empty, so composing with no declared
+// interface still produces the exact same value as before this type widened.
+func zeroOutputs(names []string) map[string]bundle.Output {
+	if len(names) == 0 {
 		return nil
 	}
 
-	seen := make(map[string]bool, len(a)+len(b))
-	merged := make([]string, 0, len(a)+len(b))
-	for _, name := range a {
-		if !seen[name] {
-			seen[name] = true
-			merged = append(merged, name)
-		}
+	m := make(map[string]bundle.Output, len(names))
+	for _, name := range names {
+		m[name] = bundle.Output{}
 	}
-	for _, name := range b {
-		if !seen[name] {
-			seen[name] = true
-			merged = append(merged, name)
-		}
+	return m
+}
+
+// mergeDefinitions merges overlay on top of base: overlay's definitions win
+// on a name collision, per PEP003's "declared interface merged on top of
+// the base interface" (see #2685). The returned maps -- and the values
+// within them -- are borrowed from base/overlay, not deep-copied.
+func mergeDefinitions[T any](base, overlay map[string]T) map[string]T {
+	if len(base) == 0 && len(overlay) == 0 {
+		return nil
 	}
 
-	sort.Strings(merged)
+	merged := make(map[string]T, len(base)+len(overlay))
+	maps.Copy(merged, base)
+	maps.Copy(merged, overlay)
 	return merged
 }

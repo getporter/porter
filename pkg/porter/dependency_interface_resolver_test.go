@@ -9,6 +9,7 @@ import (
 	cnabtooci "get.porter.sh/porter/pkg/cnab/cnab-to-oci"
 	v2 "get.porter.sh/porter/pkg/cnab/extensions/dependencies/v2"
 	"github.com/cnabio/cnab-go/bundle"
+	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/stretchr/testify/require"
 )
 
@@ -46,10 +47,10 @@ func TestGraphBuilder_ComposeRequiredInterface(t *testing.T) {
 		builder := NewGraphBuilder(p.Porter, 10)
 		got, err := builder.composeRequiredInterface(context.Background(), "db", baseDep(nil), nil, ExplainOpts{})
 		require.NoError(t, err)
-		require.Equal(t, cnab.InterfaceRequirement{Outputs: []string{"connstr"}}, got)
+		require.Equal(t, cnab.InterfaceRequirement{Outputs: map[string]bundle.Output{"connstr": {}}}, got)
 	})
 
-	t.Run("document only: unions document names, no pull attempted", func(t *testing.T) {
+	t.Run("document only: merges document definitions, no pull attempted", func(t *testing.T) {
 		t.Parallel()
 
 		p := NewTestPorter(t)
@@ -68,13 +69,34 @@ func TestGraphBuilder_ComposeRequiredInterface(t *testing.T) {
 		got, err := builder.composeRequiredInterface(context.Background(), "db", dep, nil, ExplainOpts{})
 		require.NoError(t, err)
 		require.Equal(t, cnab.InterfaceRequirement{
-			Outputs:     []string{"connstr", "port"},
-			Parameters:  []string{"logLevel"},
-			Credentials: []string{"token"},
+			Outputs:     map[string]bundle.Output{"connstr": {}, "port": {}},
+			Parameters:  map[string]bundle.Parameter{"logLevel": {}},
+			Credentials: map[string]bundle.Credential{"token": {}},
 		}, got)
 	})
 
-	t.Run("reference only: pulls the referenced bundle and unions its names", func(t *testing.T) {
+	t.Run("document only: declared definition wins over the base's zero-value entry on a name collision", func(t *testing.T) {
+		t.Parallel()
+
+		p := NewTestPorter(t)
+		defer p.Close()
+		p.TestRegistry.MockPullBundle = failIfPulled(t)
+
+		dep := baseDep(func(d *v2.Dependency) {
+			d.Interface = &v2.DependencyInterface{Document: v2.DependencyInterfaceDocument{
+				Outputs: map[string]bundle.Output{"connstr": {Definition: "connstrDef", Path: "/cnab/app/outputs/connstr"}},
+			}}
+		})
+
+		builder := NewGraphBuilder(p.Porter, 10)
+		got, err := builder.composeRequiredInterface(context.Background(), "db", dep, nil, ExplainOpts{})
+		require.NoError(t, err)
+		require.Equal(t, cnab.InterfaceRequirement{
+			Outputs: map[string]bundle.Output{"connstr": {Definition: "connstrDef", Path: "/cnab/app/outputs/connstr"}},
+		}, got)
+	})
+
+	t.Run("reference only: pulls the referenced bundle and merges its definitions", func(t *testing.T) {
 		t.Parallel()
 
 		const interfaceRef = "localhost:5000/mysql-interface:v1.0.0"
@@ -97,7 +119,40 @@ func TestGraphBuilder_ComposeRequiredInterface(t *testing.T) {
 		got, err := builder.composeRequiredInterface(context.Background(), "db", dep, nil, ExplainOpts{})
 		require.NoError(t, err)
 		require.Equal(t, cnab.InterfaceRequirement{
-			Outputs: []string{"connstr", "port"},
+			Outputs: map[string]bundle.Output{"connstr": {}, "port": {}},
+		}, got)
+	})
+
+	t.Run("reference only: referenced bundle's definition wins over the base's zero-value entry, and its Definitions map is carried through", func(t *testing.T) {
+		t.Parallel()
+
+		const interfaceRef = "localhost:5000/mysql-interface:v1.0.0"
+
+		defs := definition.Definitions{
+			"connstrDef": &definition.Schema{Type: "string"},
+		}
+
+		p := NewTestPorter(t)
+		defer p.Close()
+		p.TestRegistry.MockPullBundle = newMockPullBundle(map[string]cnab.ExtendedBundle{
+			interfaceRef: {Bundle: bundle.Bundle{
+				Name:        "mysql-interface",
+				Version:     "1.0.0",
+				Outputs:     map[string]bundle.Output{"connstr": {Definition: "connstrDef", Path: "/cnab/app/outputs/connstr"}},
+				Definitions: defs,
+			}},
+		})
+
+		dep := baseDep(func(d *v2.Dependency) {
+			d.Interface = &v2.DependencyInterface{Reference: interfaceRef}
+		})
+
+		builder := NewGraphBuilder(p.Porter, 10)
+		got, err := builder.composeRequiredInterface(context.Background(), "db", dep, nil, ExplainOpts{})
+		require.NoError(t, err)
+		require.Equal(t, cnab.InterfaceRequirement{
+			Outputs:     map[string]bundle.Output{"connstr": {Definition: "connstrDef", Path: "/cnab/app/outputs/connstr"}},
+			Definitions: defs,
 		}, got)
 	})
 
@@ -134,7 +189,7 @@ func TestGraphBuilder_ComposeRequiredInterface(t *testing.T) {
 		builder := NewGraphBuilder(p.Porter, 10)
 		got, err := builder.composeRequiredInterface(context.Background(), "db", dep, nil, ExplainOpts{})
 		require.NoError(t, err)
-		require.Equal(t, cnab.InterfaceRequirement{Outputs: []string{"connstr"}}, got)
+		require.Equal(t, cnab.InterfaceRequirement{Outputs: map[string]bundle.Output{"connstr": {}}}, got)
 	})
 
 	t.Run("reference pull failure propagates as a plain error, not the sentinel", func(t *testing.T) {
