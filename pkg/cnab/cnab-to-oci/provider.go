@@ -45,6 +45,11 @@ type RegistryProvider interface {
 	// GetBundleMetadata returns information about a bundle in a registry
 	// Use ErrNotFound to detect if the error is because the bundle is not in the registry.
 	GetBundleMetadata(ctx context.Context, ref cnab.OCIReference, opts RegistryOptions) (BundleMetadata, error)
+
+	// DeleteImageTag removes a tag from a registry. This is best-effort: not
+	// all registries support deleting a tag (e.g. Docker Hub, GHCR), so
+	// callers should treat a failure here as non-fatal.
+	DeleteImageTag(ctx context.Context, ref cnab.OCIReference, opts RegistryOptions) error
 }
 
 // RegistryOptions is the set of options for interacting with an OCI registry.

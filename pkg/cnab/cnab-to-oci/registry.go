@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strings"
 	"sync"
+	"time"
 
 	"get.porter.sh/porter/pkg/cnab"
 	configadapter "get.porter.sh/porter/pkg/cnab/config-adapter"
@@ -24,6 +25,8 @@ import (
 	"github.com/dustin/go-humanize"
 	"github.com/google/go-containerregistry/pkg/name"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
+	"github.com/google/go-containerregistry/pkg/v1/empty"
+	"github.com/google/go-containerregistry/pkg/v1/mutate"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/google/go-containerregistry/pkg/v1/remote/transport"
 	"github.com/moby/moby/api/pkg/authconfig"
@@ -443,6 +446,30 @@ func (r *Registry) headRemote(ctx context.Context, refStr string, opts RegistryO
 	return remote.Head(ref, opts.ToRemoteOptions()...)
 }
 
+// newPlaceholderManifest builds a minimal, unique, throwaway image. Its
+// manifest can be pushed to a tag and then deleted by digest, to remove the
+// tag without touching whatever manifest it originally pointed to (which may
+// still be referenced elsewhere by digest, e.g. by a bundle we just
+// published). See https://github.com/getporter/porter/issues/2329, and the
+// equivalent implementation in regclient:
+// https://github.com/regclient/regclient/blob/206f39478efa656811702050daab773051de2cb1/scheme/reg/tag.go
+func newPlaceholderManifest(tag string) (v1.Image, error) {
+	cfg, err := empty.Image.ConfigFile()
+	if err != nil {
+		return nil, err
+	}
+	cfg = cfg.DeepCopy()
+
+	now := time.Now().UTC()
+	cfg.Created = v1.Time{Time: now}
+	cfg.Config.Labels = map[string]string{
+		"sh.porter.delete-tag":  tag,
+		"sh.porter.delete-date": now.Format(time.RFC3339Nano),
+	}
+
+	return mutate.ConfigFile(empty.Image, cfg)
+}
+
 // copyImageRemote copies an image from source to destination preserving the original digest.
 // Uses Puller/Pusher to copy the descriptor directly without reserializing, which maintains
 // the exact manifest bytes and thus the content digest.
@@ -600,6 +627,86 @@ func (r *Registry) GetRemoteImageDigest(ctx context.Context, ref cnab.OCIReferen
 	}
 
 	return digest.NewDigestFromHex(desc.Digest.Algorithm, desc.Digest.Hex), nil
+}
+
+// DeleteImageTag removes a tag from a registry. This is best-effort: not all
+// registries support deleting a tag, so callers should treat a failure here
+// as non-fatal and log it accordingly, rather than as an unexpected error.
+//
+// Many registries (including the reference distribution/distribution
+// implementation most self-hosted registries run) don't implement the OCI
+// distribution spec's DELETE-by-tag endpoint, or only delete by digest,
+// which would remove the manifest itself -- not safe here, since that
+// manifest/digest may still be in active use (e.g. it's what a bundle we
+// just published now references). So this first tries deleting the tag
+// directly, and if that's not supported, falls back to overwriting the tag
+// with a small unique throwaway manifest and deleting that new manifest by
+// digest, which removes the tag as a side effect without touching the
+// original manifest.
+func (r *Registry) DeleteImageTag(ctx context.Context, ref cnab.OCIReference, opts RegistryOptions) error {
+	_, span := tracing.StartSpan(ctx, attribute.String("reference", ref.String()))
+	defer span.EndSpan()
+
+	if !ref.HasTag() || ref.HasDigest() {
+		return fmt.Errorf("invalid reference %s: DeleteImageTag requires a tag-based reference", ref.String())
+	}
+
+	nameRef, err := name.ParseReference(ref.String(), opts.ToNameOptions()...)
+	if err != nil {
+		return fmt.Errorf("invalid reference %s: %w", ref.String(), err)
+	}
+
+	deleteErr := remote.Delete(nameRef, opts.ToRemoteOptions()...)
+	if deleteErr == nil {
+		return nil
+	}
+	if !isDigestInvalidError(deleteErr) {
+		return fmt.Errorf("failed deleting tag %s: %w", ref, deleteErr)
+	}
+
+	placeholder, err := newPlaceholderManifest(ref.Tag())
+	if err != nil {
+		return fmt.Errorf("failed building placeholder manifest to delete tag %s: %w", ref, err)
+	}
+
+	if err := remote.Write(nameRef, placeholder, opts.ToRemoteOptions()...); err != nil {
+		return fmt.Errorf("failed pushing placeholder manifest to delete tag %s: %w", ref, err)
+	}
+
+	placeholderDigest, err := placeholder.Digest()
+	if err != nil {
+		return fmt.Errorf("failed computing placeholder manifest digest for tag %s: %w", ref, err)
+	}
+
+	digestRef := nameRef.Context().Digest(placeholderDigest.String())
+	if err := remote.Delete(digestRef, opts.ToRemoteOptions()...); err != nil {
+		return fmt.Errorf("failed deleting placeholder manifest for tag %s: %w", ref, err)
+	}
+
+	return nil
+}
+
+// isDigestInvalidError reports whether err is the HTTP 400 DIGEST_INVALID
+// error that the reference distribution/distribution registry
+// implementation returns when asked to DELETE a manifest by tag instead of
+// by digest. This is the only failure mode that's safe to treat as "tag
+// deletion isn't supported here, fall back to the overwrite workaround" --
+// any other error (auth failures, delete disabled, network errors, etc.)
+// must be returned as-is instead, since the fallback pushes a placeholder
+// manifest over the tag first.
+func isDigestInvalidError(err error) bool {
+	httpError, ok := errors.AsType[*transport.Error](err)
+	if !ok || httpError.StatusCode != http.StatusBadRequest {
+		return false
+	}
+
+	for _, d := range httpError.Errors {
+		if d.Code == transport.DigestInvalidErrorCode {
+			return true
+		}
+	}
+
+	return false
 }
 
 // asNotFoundError checks if the error is an HTTP 404 not found error, and if so returns a corresponding ErrNotFound instance.

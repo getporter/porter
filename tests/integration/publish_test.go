@@ -53,6 +53,40 @@ func TestPublish(t *testing.T) {
 	tests.RequireOutputContains(t, output, fmt.Sprintf("Bundle %s/porter-hello:v0.0.0 pushed successfully", reg))
 }
 
+// TestPublish_DeletesTemporaryTag is a regression test for
+// https://github.com/getporter/porter/issues/2329. Publish pushes the
+// invocation image under a temporary "porter-<hash>" tag so it can resolve
+// the image's repository digest, then rewrites the bundle to reference that
+// digest directly. Once that's done the temporary tag serves no purpose and
+// should be deleted, on registries that support deleting a tag.
+func TestPublish_DeletesTemporaryTag(t *testing.T) {
+	test, err := tester.NewTest(t)
+	defer test.Close()
+	require.NoError(t, err, "test setup failed")
+
+	test.Chdir(test.TestDir)
+	test.RequirePorter("create")
+	test.RequirePorter("build", "--version=0.0.0")
+
+	// The reference registry image disables tag deletion by default, so
+	// enable it explicitly to exercise the cleanup path.
+	reg := test.StartTestRegistry(tester.TestRegistryOptions{UseTLS: false, EnableDelete: true})
+	defer reg.Close()
+
+	_, output := test.RequirePorter("publish", "--registry", reg.String(), "--insecure-registry")
+	tests.RequireOutputContains(t, output, fmt.Sprintf("Bundle %s/porter-hello:v0.0.0 pushed successfully", reg))
+
+	repo, err := name.NewRepository(fmt.Sprintf("%s/porter-hello", reg), name.Insecure)
+	require.NoError(t, err)
+	tags, err := remote.List(repo, remote.WithTransport(cnabtooci.GetInsecureRegistryTransport()))
+	require.NoError(t, err, "failed to list tags on the test registry")
+
+	require.Contains(t, tags, "v0.0.0", "the published bundle tag should still exist")
+	for _, tag := range tags {
+		require.NotContains(t, tag, "porter-", "temporary porter-<hash> tag should have been deleted after publish, found tag %q", tag)
+	}
+}
+
 func TestPublish_PreserveTags(t *testing.T) {
 	test, err := tester.NewTest(t)
 	defer test.Close()

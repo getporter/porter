@@ -250,6 +250,13 @@ func (p *Porter) publishFromFile(ctx context.Context, opts PublishOptions) error
 		}
 	}
 
+	// The temporary tag is no longer needed now that the bundle references the
+	// image by digest (and signing, if any, is done with it). Only delete it
+	// when we pushed it ourselves this run.
+	if !skipPush {
+		p.deleteTemporaryImageTag(ctx, imgRef, regOpts)
+	}
+
 	// Perhaps we have a cached version of a bundle with the same reference, previously pulled
 	// If so, replace it, as it is most likely out-of-date per this publish
 	err = p.refreshCachedBundle(bundleRef)
@@ -425,27 +432,29 @@ func (p *Porter) extractBundle(ctx context.Context, tmpDir, source string) (cnab
 }
 
 // pushUpdatedImage uses the provided layout to find the provided origImg,
-// gathers the pre-existing digest and then pushes this digest using the newImgName
-func (p *Porter) pushUpdatedImage(ctx context.Context, layoutPath layout.Path, origImg string, destRef name.Reference, opts cnabtooci.RegistryOptions) (v1.Hash, error) {
+// gathers the pre-existing digest and then pushes this digest using the newImgName.
+// The returned bool reports whether an image was actually pushed to destRef in this
+// call (false when the destination already had the desired content).
+func (p *Porter) pushUpdatedImage(ctx context.Context, layoutPath layout.Path, origImg string, destRef name.Reference, opts cnabtooci.RegistryOptions) (v1.Hash, bool, error) {
 	// Find image in layout
 	desc, err := findImageInLayout(layoutPath, origImg)
 	if err != nil {
-		return v1.Hash{}, fmt.Errorf("unable to find image %s in archived OCI Layout: %w", origImg, err)
+		return v1.Hash{}, false, fmt.Errorf("unable to find image %s in archived OCI Layout: %w", origImg, err)
 	}
 
 	// The digest we're about to push is known exactly from the archive's OCI layout, so
 	// if the destination already has content with that same digest, there's nothing to do.
 	if p.imageAlreadyPublished(ctx, destRef, desc.Digest, opts) {
-		return desc.Digest, nil
+		return desc.Digest, false, nil
 	}
 
 	// Push to new location
 	err = p.pushImageFromLayout(ctx, layoutPath, desc, destRef, opts)
 	if err != nil {
-		return v1.Hash{}, err
+		return v1.Hash{}, false, err
 	}
 
-	return desc.Digest, nil
+	return desc.Digest, true, nil
 }
 
 // imageAlreadyPublished reports whether destRef already has the exact content identified
@@ -627,7 +636,7 @@ func (p *Porter) relocateImage(ctx context.Context, relocationMap relocation.Ima
 	if relocatedImage, ok := relocationMap[originImg]; ok {
 		originImgRef = relocatedImage
 	}
-	digest, err := p.pushUpdatedImage(ctx, layoutPath, originImgRef, newImgRef, opts)
+	digest, pushed, err := p.pushUpdatedImage(ctx, layoutPath, originImgRef, newImgRef, opts)
 	if err != nil {
 		return nil, fmt.Errorf("unable to push updated image: %w", err)
 	}
@@ -637,9 +646,32 @@ func (p *Porter) relocateImage(ctx context.Context, relocationMap relocation.Ima
 		return nil, fmt.Errorf("unable to update image reference for %s: %w", newImgRef.String(), err)
 	}
 
+	// The temporary tag is no longer needed now that the relocation map references the
+	// image by digest. Only delete it when we pushed it ourselves this run.
+	if pushed {
+		if tempImgRef, err := cnab.ParseOCIReference(newImgRef.String()); err == nil {
+			p.deleteTemporaryImageTag(ctx, tempImgRef, opts)
+		}
+	}
+
 	// update relocation map
 	relocationMap[originImg] = taggedImage
 	return relocationMap, nil
+}
+
+// deleteTemporaryImageTag removes a tag that Porter applied to an image
+// solely to push it and resolve its repository digest. Deletion is
+// best-effort: many registries don't support deleting a single tag (e.g.
+// Docker Hub, GHCR), so a failure here just reproduces today's behavior of
+// leaving the tag in place, and is logged at debug level rather than failing
+// the publish.
+func (p *Porter) deleteTemporaryImageTag(ctx context.Context, ref cnab.OCIReference, opts cnabtooci.RegistryOptions) {
+	ctx, log := tracing.StartSpan(ctx)
+	defer log.EndSpan()
+
+	if err := p.Registry.DeleteImageTag(ctx, ref, opts); err != nil {
+		log.Debugf("unable to delete temporary tag %s: %v", ref, err)
+	}
 }
 
 func (p *Porter) rewriteImageWithDigest(image string, imgDigest string) (string, error) {
