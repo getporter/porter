@@ -253,6 +253,11 @@ type ErrDanglingWiringReference struct {
 	// doesn't exist or is a self-reference. Empty when RootOutput is true.
 	TargetAlias string
 
+	// SourceOutput is the output name being referenced on TargetAlias (or on
+	// the dependency itself, when SelfReference is true). Empty when
+	// RootOutput is true; RawMatch carries the equivalent detail there.
+	SourceOutput string
+
 	// SelfReference is true when the dependency references its own output.
 	SelfReference bool
 
@@ -269,14 +274,14 @@ type ErrDanglingWiringReference struct {
 func (e ErrDanglingWiringReference) Error() string {
 	switch {
 	case e.SelfReference:
-		return fmt.Sprintf("dependency %q references its own output in %s.%s, which is not available until after it runs",
-			e.DependencyAlias, e.Field, e.FieldName)
+		return fmt.Sprintf("dependency %q references its own output %q in %s.%s, which is not available until after it runs",
+			e.DependencyAlias, e.SourceOutput, e.Field, e.FieldName)
 	case e.RootOutput:
 		return fmt.Sprintf("dependency %q %s.%s references the root bundle's own output (%s), which cannot be used as a dependency's source",
 			e.DependencyAlias, e.Field, e.FieldName, e.RawMatch)
 	default:
-		return fmt.Sprintf("dependency %q references output of unknown dependency %q in %s.%s",
-			e.DependencyAlias, e.TargetAlias, e.Field, e.FieldName)
+		return fmt.Sprintf("dependency %q references output %q of unknown dependency %q in %s.%s",
+			e.DependencyAlias, e.SourceOutput, e.TargetAlias, e.Field, e.FieldName)
 	}
 }
 

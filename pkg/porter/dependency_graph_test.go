@@ -697,6 +697,7 @@ func TestGraphBuilder_StrictMode_DanglingWiringReferenceFails(t *testing.T) {
 	assert.Equal(t, "credentials", wiringErr.Field)
 	assert.Equal(t, "conn", wiringErr.FieldName)
 	assert.Equal(t, "doesnotexist", wiringErr.TargetAlias)
+	assert.Equal(t, "foo", wiringErr.SourceOutput)
 	assert.False(t, wiringErr.SelfReference)
 	assert.False(t, wiringErr.RootOutput)
 }
@@ -729,6 +730,7 @@ func TestGraphBuilder_StrictMode_SelfReferenceFails(t *testing.T) {
 	require.ErrorAs(t, err, &wiringErr)
 	assert.True(t, wiringErr.SelfReference)
 	assert.Equal(t, "app", wiringErr.DependencyAlias)
+	assert.Equal(t, "foo", wiringErr.SourceOutput)
 }
 
 // TestGraphBuilder_StrictMode_RootOutputReferenceFails covers the same
@@ -794,6 +796,7 @@ func TestGraphBuilder_StrictMode_NestedDanglingReferenceFails(t *testing.T) {
 	require.ErrorAs(t, err, &wiringErr)
 	assert.Equal(t, "inner", wiringErr.DependencyAlias)
 	assert.Equal(t, "doesnotexist", wiringErr.TargetAlias)
+	assert.Equal(t, "foo", wiringErr.SourceOutput)
 }
 
 // TestGraphBuilder_StrictMode_NonStrictUnaffected proves strict mode is
@@ -828,9 +831,11 @@ func TestGraphBuilder_StrictMode_NonStrictUnaffected(t *testing.T) {
 	assert.Contains(t, deps[0].Warnings[0], "doesnotexist")
 }
 
-// TestGraphBuilder_StrictMode_V1BundleNeverFails confirms strict mode is a
-// no-op for v1 bundles, which structurally have no wiring fields to be
-// dangling in the first place.
+// TestGraphBuilder_StrictMode_V1BundleNeverFails confirms strict mode's
+// wiring validation is a no-op for v1 bundles, which structurally have no
+// wiring fields to be dangling in the first place. Strict mode's max-depth
+// enforcement is unrelated to v1/v2 and still applies to v1 graphs -- see
+// TestGraphBuilder_StrictMode_MaxDepthExceededFails, which uses v1 fixtures.
 func TestGraphBuilder_StrictMode_V1BundleNeverFails(t *testing.T) {
 	t.Parallel()
 

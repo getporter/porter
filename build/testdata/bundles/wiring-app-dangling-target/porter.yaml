@@ -1,0 +1,26 @@
+schemaVersion: 1.1.0
+name: wiring-app-dangling-target
+version: 0.1.0
+registry: "localhost:5000"
+
+# A minimal leaf bundle, dedicated to TestInstall_DanglingWiringReferenceFailsFast
+# in tests/integration/dependenciesv2_test.go. porter build needs to resolve
+# wiring-top-dangling's "app" dependency to generate its manifest, so this
+# has to actually be publishable -- but it's published under its own tag,
+# never shared with any other test, so no parallel test can race a
+# concurrent push to the same tag.
+
+mixins:
+  - exec
+
+install:
+  - exec:
+      command: echo
+      arguments:
+        - "installed wiring-app-dangling-target"
+
+uninstall:
+  - exec:
+      command: echo
+      arguments:
+        - "uninstalled wiring-app-dangling-target"

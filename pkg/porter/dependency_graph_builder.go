@@ -295,6 +295,7 @@ func (b *GraphBuilder) expandNode(
 					Field:           d.Detail.Field,
 					FieldName:       d.Detail.FieldName,
 					TargetAlias:     d.ToAlias,
+					SourceOutput:    d.Detail.SourceOutput,
 					SelfReference:   d.SelfReference,
 				}
 			}
@@ -340,7 +341,7 @@ func (b *GraphBuilder) pullDependencyBundle(ctx context.Context, ref string, opt
 	pullOpts := BundlePullOptions{
 		Reference:        ref,
 		InsecureRegistry: opts.InsecureRegistry,
-		Force:            false,
+		Force:            opts.Force,
 	}
 
 	cachedBundle, err := b.porter.PullBundle(ctx, pullOpts)

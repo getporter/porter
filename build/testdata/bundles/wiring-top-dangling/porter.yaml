@@ -14,22 +14,20 @@ mixins:
 # simulating a bundle built by an older Porter (or with --no-lint) that
 # never ran the porter-109 static lint check for this. It exists to prove
 # install-time enforcement catches what lint didn't.
+#
+# app resolves to wiring-app-dangling-target, a minimal leaf bundle
+# published under its own dedicated tag (not one shared with other
+# parallel integration tests) purely because porter build needs to pull a
+# dependency's bundle to generate a manifest. The install-time
+# dangling-wiring check itself doesn't depend on app resolving -- it fires
+# purely from parsing this bundle's own Requires map -- see
+# TestGraphBuilder_SoftResolutionFailurePreserved for why a dependency pull
+# failure alone would never have blocked that check anyway.
 dependencies:
   requires:
-    - name: infra
-      bundle:
-        reference: localhost:5000/wiring-infra:v0.1.0
-      sharing:
-        mode: true
-        group:
-          name: wiring-top-dangling
     - name: app
       bundle:
-        reference: localhost:5000/wiring-app:v0.1.0
-      sharing:
-        mode: true
-        group:
-          name: wiring-top-dangling
+        reference: localhost:5000/wiring-app-dangling-target:v0.1.0
       parameters:
         connstr: ${bundle.dependencies.doesnotexist.outputs.ip}
 

@@ -243,6 +243,15 @@ func uninstallWordpressBundle_v2(ctx context.Context, p *porter.TestPorter, name
 // bypassing lint (see publishWiringTopDangling), simulating a bundle.json
 // built by an older Porter, or with --no-lint, that never ran the
 // porter-109 static check for this same condition.
+//
+// wiring-top-dangling's "app" dependency resolves to
+// wiring-app-dangling-target, a minimal leaf bundle dedicated to this test
+// (porter build needs to actually pull a dependency's bundle to generate a
+// manifest, even though the later install-time wiring validation itself
+// tolerates a dependency failing to resolve). It's published under its own
+// tag rather than reusing wiring-infra/wiring-app, which
+// TestInspectWiringEdgeIsResolved (also t.Parallel()) publishes at the same
+// tags -- avoiding a race between concurrent pushes to a shared tag.
 func TestInstall_DanglingWiringReferenceFailsFast(t *testing.T) {
 	t.Parallel()
 	p := porter.NewTestPorter(t)
@@ -253,8 +262,7 @@ func TestInstall_DanglingWiringReferenceFailsFast(t *testing.T) {
 
 	namespace := p.RandomString(10)
 
-	publishWiringInfraForDependenciesV2(ctx, p)
-	publishWiringAppForDependenciesV2(ctx, p)
+	publishWiringAppDanglingTarget(ctx, p)
 	publishWiringTopDangling(ctx, p)
 
 	installOpts := porter.NewInstallOptions()
@@ -273,44 +281,23 @@ func TestInstall_DanglingWiringReferenceFailsFast(t *testing.T) {
 	// (see pkg/porter/install.go), so the root installation record itself is
 	// expected to exist -- what proves the action never partially executed
 	// is that it has no recorded run (the root bundle's CNAB.Execute is only
-	// reached after dependency wiring validation passes) and that neither
-	// dependency was ever installed.
+	// reached after dependency wiring validation passes) and that the
+	// dependency was never installed.
 	i, err := p.Installations.GetInstallation(ctx, namespace, installOpts.Name)
 	require.NoError(t, err, "the root installation record should exist: porter install always records an attempt before executing")
 	_, err = p.Installations.GetLastRun(ctx, i.Namespace, i.Name)
 	assert.ErrorIs(t, err, storage.ErrNotFound{}, "no run should have been recorded: the root bundle must not execute when wiring validation fails")
 
-	_, err = p.Installations.GetInstallation(ctx, namespace, "infra")
-	assert.ErrorIs(t, err, storage.ErrNotFound{}, "the infra dependency must never be installed")
 	_, err = p.Installations.GetInstallation(ctx, namespace, "app")
 	assert.ErrorIs(t, err, storage.ErrNotFound{}, "the app dependency must never be installed")
 }
 
-func publishWiringInfraForDependenciesV2(ctx context.Context, p *porter.TestPorter) {
-	bunDir, err := os.MkdirTemp("", "porter-wiring-infra")
+func publishWiringAppDanglingTarget(ctx context.Context, p *porter.TestPorter) {
+	bunDir, err := os.MkdirTemp("", "porter-wiring-app-dangling-target")
 	require.NoError(p.T(), err)
 	defer os.RemoveAll(bunDir)
 
-	p.TestConfig.TestContext.AddTestDirectory(filepath.Join(p.RepoRoot, "build/testdata/bundles/wiring-infra"), bunDir)
-	pwd := p.Getwd()
-	p.Chdir(bunDir)
-	defer p.Chdir(pwd)
-
-	publishOpts := porter.PublishOptions{}
-	publishOpts.Force = true
-	err = publishOpts.Validate(p.Config)
-	require.NoError(p.T(), err)
-
-	err = p.Publish(ctx, publishOpts)
-	require.NoError(p.T(), err)
-}
-
-func publishWiringAppForDependenciesV2(ctx context.Context, p *porter.TestPorter) {
-	bunDir, err := os.MkdirTemp("", "porter-wiring-app")
-	require.NoError(p.T(), err)
-	defer os.RemoveAll(bunDir)
-
-	p.TestConfig.TestContext.AddTestDirectory(filepath.Join(p.RepoRoot, "build/testdata/bundles/wiring-app"), bunDir)
+	p.TestConfig.TestContext.AddTestDirectory(filepath.Join(p.RepoRoot, "build/testdata/bundles/wiring-app-dangling-target"), bunDir)
 	pwd := p.Getwd()
 	p.Chdir(bunDir)
 	defer p.Chdir(pwd)
