@@ -229,6 +229,72 @@ func (e ErrDependencyCycle) Error() string {
 	return fmt.Sprintf("circular dependency detected involving: %s", strings.Join(e.Remaining, ", "))
 }
 
+// ErrDanglingWiringReference is returned by GraphBuilder in strict mode (see
+// GraphBuilder.WithStrictWiring) when a v2 dependency's parameter,
+// credential, or output value references another dependency's output that
+// can never be resolved: either the referenced alias doesn't exist in the
+// same Requires map, the dependency references its own not-yet-produced
+// output, or the reference points at the root bundle's own output (which
+// isn't available until after every dependency has already run). In
+// non-strict mode (inspect/explain) the same condition is recorded as a
+// Node.Warnings entry instead.
+type ErrDanglingWiringReference struct {
+	// DependencyAlias is the alias, within its parent's Requires map, of the
+	// dependency whose field contains the unresolvable reference.
+	DependencyAlias string
+
+	// Field is "parameters", "credentials", or "outputs".
+	Field string
+
+	// FieldName is the key within Field that contains the reference.
+	FieldName string
+
+	// TargetAlias is the alias the reference names, when it names one that
+	// doesn't exist or is a self-reference. Empty when RootOutput is true.
+	TargetAlias string
+
+	// SelfReference is true when the dependency references its own output.
+	SelfReference bool
+
+	// RootOutput is true when the reference names the root bundle's own
+	// output (long-form `${bundle.outputs.X}`) rather than a sibling
+	// dependency's.
+	RootOutput bool
+
+	// RawMatch is the raw `${...}` template expression, set only when
+	// RootOutput is true.
+	RawMatch string
+}
+
+func (e ErrDanglingWiringReference) Error() string {
+	switch {
+	case e.SelfReference:
+		return fmt.Sprintf("dependency %q references its own output in %s.%s, which is not available until after it runs",
+			e.DependencyAlias, e.Field, e.FieldName)
+	case e.RootOutput:
+		return fmt.Sprintf("dependency %q %s.%s references the root bundle's own output (%s), which cannot be used as a dependency's source",
+			e.DependencyAlias, e.Field, e.FieldName, e.RawMatch)
+	default:
+		return fmt.Sprintf("dependency %q references output of unknown dependency %q in %s.%s",
+			e.DependencyAlias, e.TargetAlias, e.Field, e.FieldName)
+	}
+}
+
+// ErrMaxDependencyDepthExceeded is returned by GraphBuilder in strict mode
+// (see GraphBuilder.WithStrictWiring) when traversal hits the configured
+// --max-dependency-depth before the graph has been fully resolved. In
+// non-strict mode (inspect/explain) the same condition is only printed as a
+// warning and traversal simply stops early, since inspect can usefully show
+// a partial tree; install/upgrade/invoke/reconcile cannot proceed with a
+// dependency graph that wasn't fully resolved.
+type ErrMaxDependencyDepthExceeded struct {
+	MaxDepth int
+}
+
+func (e ErrMaxDependencyDepthExceeded) Error() string {
+	return fmt.Sprintf("dependency graph exceeds max depth of %d and could not be fully resolved", e.MaxDepth)
+}
+
 // TopologicalOrder returns the graph's nodes ordered so that every node
 // appears after all of the nodes it depends on (via either requires or
 // wiring edges) — i.e. a valid execution/build order, root last. Returns

@@ -666,6 +666,253 @@ func TestGraphBuilder_RootOutputReferenceIsAWarning(t *testing.T) {
 	assert.Contains(t, deps[0].Warnings[0], "root bundle's own output")
 }
 
+// TestGraphBuilder_StrictMode_DanglingWiringReferenceFails covers the same
+// fixture as TestGraphBuilder_DanglingWiringReference, but with strict mode
+// enabled: the dangling reference must become a hard ErrDanglingWiringReference
+// instead of a Node.Warnings entry.
+func TestGraphBuilder_StrictMode_DanglingWiringReferenceFails(t *testing.T) {
+	t.Parallel()
+
+	root := v2TestBundle("root", map[string]v2.Dependency{
+		"app": {
+			Bundle: "localhost:5000/myapp:v1.0.0",
+			Credentials: map[string]string{
+				"conn": "${bundle.dependencies.doesnotexist.outputs.foo}",
+			},
+		},
+	})
+
+	p := NewTestPorter(t)
+	defer p.Close()
+	p.TestRegistry.MockPullBundle = newMockPullBundle(map[string]cnab.ExtendedBundle{
+		"localhost:5000/myapp:v1.0.0": leafTestBundle("app"),
+	})
+
+	builder := NewGraphBuilder(p.Porter, 10).WithStrictWiring()
+	_, err := builder.BuildDependencyGraph(context.Background(), root, ExplainOpts{MaxDependencyDepth: 10})
+	require.Error(t, err)
+	var wiringErr ErrDanglingWiringReference
+	require.ErrorAs(t, err, &wiringErr)
+	assert.Equal(t, "app", wiringErr.DependencyAlias)
+	assert.Equal(t, "credentials", wiringErr.Field)
+	assert.Equal(t, "conn", wiringErr.FieldName)
+	assert.Equal(t, "doesnotexist", wiringErr.TargetAlias)
+	assert.False(t, wiringErr.SelfReference)
+	assert.False(t, wiringErr.RootOutput)
+}
+
+// TestGraphBuilder_StrictMode_SelfReferenceFails covers the same fixture as
+// TestGraphBuilder_SelfReferentialWiringIsAWarningNotACycle, but with strict
+// mode enabled.
+func TestGraphBuilder_StrictMode_SelfReferenceFails(t *testing.T) {
+	t.Parallel()
+
+	root := v2TestBundle("root", map[string]v2.Dependency{
+		"app": {
+			Bundle: "localhost:5000/myapp:v1.0.0",
+			Credentials: map[string]string{
+				"conn": "${bundle.dependencies.app.outputs.foo}",
+			},
+		},
+	})
+
+	p := NewTestPorter(t)
+	defer p.Close()
+	p.TestRegistry.MockPullBundle = newMockPullBundle(map[string]cnab.ExtendedBundle{
+		"localhost:5000/myapp:v1.0.0": leafTestBundle("app"),
+	})
+
+	builder := NewGraphBuilder(p.Porter, 10).WithStrictWiring()
+	_, err := builder.BuildDependencyGraph(context.Background(), root, ExplainOpts{MaxDependencyDepth: 10})
+	require.Error(t, err)
+	var wiringErr ErrDanglingWiringReference
+	require.ErrorAs(t, err, &wiringErr)
+	assert.True(t, wiringErr.SelfReference)
+	assert.Equal(t, "app", wiringErr.DependencyAlias)
+}
+
+// TestGraphBuilder_StrictMode_RootOutputReferenceFails covers the same
+// fixture as TestGraphBuilder_RootOutputReferenceIsAWarning, but with strict
+// mode enabled.
+func TestGraphBuilder_StrictMode_RootOutputReferenceFails(t *testing.T) {
+	t.Parallel()
+
+	root := v2TestBundle("root", map[string]v2.Dependency{
+		"app": {
+			Bundle: "localhost:5000/myapp:v1.0.0",
+			Parameters: map[string]string{
+				"x": "${bundle.outputs.foo}",
+			},
+		},
+	})
+
+	p := NewTestPorter(t)
+	defer p.Close()
+	p.TestRegistry.MockPullBundle = newMockPullBundle(map[string]cnab.ExtendedBundle{
+		"localhost:5000/myapp:v1.0.0": leafTestBundle("app"),
+	})
+
+	builder := NewGraphBuilder(p.Porter, 10).WithStrictWiring()
+	_, err := builder.BuildDependencyGraph(context.Background(), root, ExplainOpts{MaxDependencyDepth: 10})
+	require.Error(t, err)
+	var wiringErr ErrDanglingWiringReference
+	require.ErrorAs(t, err, &wiringErr)
+	assert.True(t, wiringErr.RootOutput)
+	assert.Contains(t, wiringErr.RawMatch, "bundle.outputs.foo")
+}
+
+// TestGraphBuilder_StrictMode_NestedDanglingReferenceFails confirms strict
+// mode validates wiring at every level of the tree, not just the root
+// bundle's own Requires map: the dangling reference here belongs to "svc",
+// a dependency of the root, not to the root itself.
+func TestGraphBuilder_StrictMode_NestedDanglingReferenceFails(t *testing.T) {
+	t.Parallel()
+
+	svcBun := v2TestBundle("svc", map[string]v2.Dependency{
+		"inner": {
+			Bundle: "localhost:5000/inner:v1.0.0",
+			Credentials: map[string]string{
+				"conn": "${bundle.dependencies.doesnotexist.outputs.foo}",
+			},
+		},
+	})
+	root := v2TestBundle("root", map[string]v2.Dependency{
+		"svc": {Bundle: "localhost:5000/svc:v1.0.0"},
+	})
+
+	p := NewTestPorter(t)
+	defer p.Close()
+	p.TestRegistry.MockPullBundle = newMockPullBundle(map[string]cnab.ExtendedBundle{
+		"localhost:5000/svc:v1.0.0":   svcBun,
+		"localhost:5000/inner:v1.0.0": leafTestBundle("inner"),
+	})
+
+	builder := NewGraphBuilder(p.Porter, 10).WithStrictWiring()
+	_, err := builder.BuildDependencyGraph(context.Background(), root, ExplainOpts{MaxDependencyDepth: 10})
+	require.Error(t, err)
+	var wiringErr ErrDanglingWiringReference
+	require.ErrorAs(t, err, &wiringErr)
+	assert.Equal(t, "inner", wiringErr.DependencyAlias)
+	assert.Equal(t, "doesnotexist", wiringErr.TargetAlias)
+}
+
+// TestGraphBuilder_StrictMode_NonStrictUnaffected proves strict mode is
+// fully opt-in: the exact same dangling-reference fixture, without
+// WithStrictWiring, must still just warn (inspect/explain's existing
+// behavior, byte-for-byte unchanged).
+func TestGraphBuilder_StrictMode_NonStrictUnaffected(t *testing.T) {
+	t.Parallel()
+
+	root := v2TestBundle("root", map[string]v2.Dependency{
+		"app": {
+			Bundle: "localhost:5000/myapp:v1.0.0",
+			Credentials: map[string]string{
+				"conn": "${bundle.dependencies.doesnotexist.outputs.foo}",
+			},
+		},
+	})
+
+	p := NewTestPorter(t)
+	defer p.Close()
+	p.TestRegistry.MockPullBundle = newMockPullBundle(map[string]cnab.ExtendedBundle{
+		"localhost:5000/myapp:v1.0.0": leafTestBundle("app"),
+	})
+
+	builder := NewGraphBuilder(p.Porter, 10)
+	graph, err := builder.BuildDependencyGraph(context.Background(), root, ExplainOpts{MaxDependencyDepth: 10})
+	require.NoError(t, err)
+
+	deps := graphToInspectableDependencies(graph, graph.Root, 0)
+	require.Len(t, deps, 1)
+	require.Len(t, deps[0].Warnings, 1)
+	assert.Contains(t, deps[0].Warnings[0], "doesnotexist")
+}
+
+// TestGraphBuilder_StrictMode_V1BundleNeverFails confirms strict mode is a
+// no-op for v1 bundles, which structurally have no wiring fields to be
+// dangling in the first place.
+func TestGraphBuilder_StrictMode_V1BundleNeverFails(t *testing.T) {
+	t.Parallel()
+
+	root := v1TestBundle("root", map[string]depsv1.Dependency{
+		"mysql": {Bundle: "localhost:5000/mysql:v1.0.0"},
+	})
+
+	p := NewTestPorter(t)
+	defer p.Close()
+	p.TestRegistry.MockPullBundle = newMockPullBundle(map[string]cnab.ExtendedBundle{
+		"localhost:5000/mysql:v1.0.0": leafTestBundle("mysql"),
+	})
+
+	builder := NewGraphBuilder(p.Porter, 10).WithStrictWiring()
+	_, err := builder.BuildDependencyGraph(context.Background(), root, ExplainOpts{MaxDependencyDepth: 10})
+	require.NoError(t, err)
+}
+
+// TestGraphBuilder_StrictMode_ValidWiringSucceeds confirms a well-formed
+// wiring graph is entirely unaffected by strict mode.
+func TestGraphBuilder_StrictMode_ValidWiringSucceeds(t *testing.T) {
+	t.Parallel()
+
+	root := v2TestBundle("root", map[string]v2.Dependency{
+		"app": {
+			Bundle: "localhost:5000/myapp:v1.2.3",
+			Credentials: map[string]string{
+				"db-connstr": "${bundle.dependencies.infra.outputs.mysql-connstr}",
+			},
+		},
+		"infra": {
+			Bundle: "localhost:5000/myinfra:v0.1.0",
+		},
+	})
+
+	p := NewTestPorter(t)
+	defer p.Close()
+	leaf := leafTestBundle("leaf")
+	p.TestRegistry.MockPullBundle = newMockPullBundle(map[string]cnab.ExtendedBundle{
+		"localhost:5000/myapp:v1.2.3":   leaf,
+		"localhost:5000/myinfra:v0.1.0": leaf,
+	})
+
+	builder := NewGraphBuilder(p.Porter, 10).WithStrictWiring()
+	graph, err := builder.BuildDependencyGraph(context.Background(), root, ExplainOpts{MaxDependencyDepth: 10})
+	require.NoError(t, err)
+	assert.Equal(t, 1, countEdges(graph.Edges, EdgeKindWiring))
+}
+
+// TestGraphBuilder_StrictMode_MaxDepthExceededFails covers the same fixture
+// as TestGraphBuilder_MaxDepth, but with strict mode enabled: a dependency
+// graph that can't be fully resolved within the depth bound must hard-fail
+// install/upgrade rather than silently truncate.
+func TestGraphBuilder_StrictMode_MaxDepthExceededFails(t *testing.T) {
+	t.Parallel()
+
+	bBun := v1TestBundle("b", map[string]depsv1.Dependency{
+		"c": {Bundle: "localhost:5000/c:v1.0.0"},
+	})
+	aBun := v1TestBundle("a", map[string]depsv1.Dependency{
+		"b": {Bundle: "localhost:5000/b:v1.0.0"},
+	})
+	root := v1TestBundle("root", map[string]depsv1.Dependency{
+		"a": {Bundle: "localhost:5000/a:v1.0.0"},
+	})
+
+	p := NewTestPorter(t)
+	defer p.Close()
+	p.TestRegistry.MockPullBundle = newMockPullBundle(map[string]cnab.ExtendedBundle{
+		"localhost:5000/a:v1.0.0": aBun,
+		"localhost:5000/b:v1.0.0": bBun,
+		"localhost:5000/c:v1.0.0": leafTestBundle("c"),
+	})
+
+	builder := NewGraphBuilder(p.Porter, 2).WithStrictWiring()
+	_, err := builder.BuildDependencyGraph(context.Background(), root, ExplainOpts{MaxDependencyDepth: 2})
+	require.Error(t, err)
+	var depthErr ErrMaxDependencyDepthExceeded
+	require.ErrorAs(t, err, &depthErr)
+	assert.Equal(t, 2, depthErr.MaxDepth)
+}
+
 // TestGraphBuilder_DiamondAtDifferentDepthsIsRelabeledCorrectly reuses a
 // cached (memoized) subtree for the same shared dependency reached at two
 // DIFFERENT depths, and checks that the depth-relabeling on reuse is

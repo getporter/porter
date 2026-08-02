@@ -12,15 +12,35 @@ import (
 	"get.porter.sh/porter/pkg/experimental"
 )
 
+// defaultMaxDependencyDepth is the traversal depth bound used when building
+// a dependency graph outside of porter inspect/explain (which take their own
+// --max-dependency-depth flag). It matches inspect's own default (see
+// cmd/porter/inspect.go), and exists as a correctness bound rather than
+// something install/upgrade users need to tune.
+const defaultMaxDependencyDepth = 10
+
 // GraphBuilder resolves the full, transitive dependency graph for a bundle.
 type GraphBuilder struct {
 	porter   *Porter
 	maxDepth int
+	strict   bool
 }
 
 // NewGraphBuilder creates a new GraphBuilder.
 func NewGraphBuilder(porter *Porter, maxDepth int) *GraphBuilder {
 	return &GraphBuilder{porter: porter, maxDepth: maxDepth}
+}
+
+// WithStrictWiring enables strict mode: a dangling, self-referential, or
+// root-output v2 wiring reference becomes a hard ErrDanglingWiringReference
+// (and hitting the max depth becomes a hard ErrMaxDependencyDepthExceeded)
+// instead of a Node.Warnings entry / stderr warning. Used by
+// install/upgrade/invoke/reconcile to fail fast before running a bundle with
+// broken or incompletely-resolved wiring; inspect/explain never call this,
+// preserving their existing lenient, warning-based behavior.
+func (b *GraphBuilder) WithStrictWiring() *GraphBuilder {
+	b.strict = true
+	return b
 }
 
 // BuildDependencyGraph resolves bun's full dependency graph: recursively
@@ -77,6 +97,9 @@ func (b *GraphBuilder) expandNode(
 	ancestors map[NodeKey]NodeKey,
 ) error {
 	if depth >= b.maxDepth {
+		if b.strict {
+			return ErrMaxDependencyDepthExceeded{MaxDepth: b.maxDepth}
+		}
 		fmt.Fprintf(b.porter.Err, "warning: dependency graph exceeds max depth of %d, stopping traversal\n", b.maxDepth)
 		return nil
 	}
@@ -266,6 +289,15 @@ func (b *GraphBuilder) expandNode(
 			if node == nil {
 				continue
 			}
+			if b.strict {
+				return ErrDanglingWiringReference{
+					DependencyAlias: d.FromAlias,
+					Field:           d.Detail.Field,
+					FieldName:       d.Detail.FieldName,
+					TargetAlias:     d.ToAlias,
+					SelfReference:   d.SelfReference,
+				}
+			}
 			if d.SelfReference {
 				node.Warnings = append(node.Warnings, fmt.Sprintf(
 					"dependency %q references its own output %q, which is not available until after it runs",
@@ -281,11 +313,22 @@ func (b *GraphBuilder) expandNode(
 			if !ok {
 				continue
 			}
-			if node := g.Nodes[fromKey]; node != nil {
-				node.Warnings = append(node.Warnings, fmt.Sprintf(
-					"dependency %q %s.%s references the root bundle's own output (%s), which cannot be used as a dependency's source",
-					inv.FromAlias, inv.Field, inv.FieldName, inv.RawMatch))
+			node := g.Nodes[fromKey]
+			if node == nil {
+				continue
 			}
+			if b.strict {
+				return ErrDanglingWiringReference{
+					DependencyAlias: inv.FromAlias,
+					Field:           inv.Field,
+					FieldName:       inv.FieldName,
+					RootOutput:      true,
+					RawMatch:        inv.RawMatch,
+				}
+			}
+			node.Warnings = append(node.Warnings, fmt.Sprintf(
+				"dependency %q %s.%s references the root bundle's own output (%s), which cannot be used as a dependency's source",
+				inv.FromAlias, inv.Field, inv.FieldName, inv.RawMatch))
 		}
 	}
 

@@ -1,0 +1,46 @@
+schemaVersion: 1.1.0
+name: wiring-top-dangling
+version: 0.1.0
+registry: "localhost:5000"
+
+mixins:
+  - exec
+
+# app's connstr parameter references a dependency alias ("doesnotexist")
+# that isn't declared under dependencies.requires -- a dangling wiring
+# reference. This fixture is deliberately built with --no-lint (see
+# publishWiringTopDangling in tests/integration/dependenciesv2_test.go) so
+# the published bundle.json carries this authoring mistake unfixed,
+# simulating a bundle built by an older Porter (or with --no-lint) that
+# never ran the porter-109 static lint check for this. It exists to prove
+# install-time enforcement catches what lint didn't.
+dependencies:
+  requires:
+    - name: infra
+      bundle:
+        reference: localhost:5000/wiring-infra:v0.1.0
+      sharing:
+        mode: true
+        group:
+          name: wiring-top-dangling
+    - name: app
+      bundle:
+        reference: localhost:5000/wiring-app:v0.1.0
+      sharing:
+        mode: true
+        group:
+          name: wiring-top-dangling
+      parameters:
+        connstr: ${bundle.dependencies.doesnotexist.outputs.ip}
+
+install:
+  - exec:
+      command: echo
+      arguments:
+        - "should never run: dependency wiring validation must fail first"
+
+uninstall:
+  - exec:
+      command: echo
+      arguments:
+        - "should never run"

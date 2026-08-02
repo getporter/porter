@@ -211,6 +211,19 @@ func (e *dependencyExecutioner) identifyDependencies(ctx context.Context) error 
 		return span.Error(errors.New("identifyDependencies failed to load the bundle because no bundle was specified. Please report this bug to https://github.com/getporter/porter/issues/new/choose"))
 	}
 
+	// V2 dependency wiring (a parameter/credential/output sourced from a
+	// sibling dependency's output) is only checked for resolvability today
+	// during porter inspect/explain, where it's a non-fatal warning so the
+	// dependency tree can still be viewed. Here, before any dependency or the
+	// root bundle actually runs, an unresolvable reference must be a hard
+	// failure -- a bundle can't run correctly with broken wiring. v1 bundles
+	// have no wiring concept, so this is skipped entirely for them.
+	if bun.HasDependenciesV2() {
+		if err := e.porter.validateDependencyWiring(ctx, bun, e.parentOpts); err != nil {
+			return span.Error(err)
+		}
+	}
+
 	// Inject registry provider for dependency resolution.
 	// registryListTagsAdapter bridges the cnabtooci.RegistryProvider
 	// (concrete opts) and the registryListTags interface in the cnab
