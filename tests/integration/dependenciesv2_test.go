@@ -233,3 +233,115 @@ func uninstallWordpressBundle_v2(ctx context.Context, p *porter.TestPorter, name
 	assert.Equal(p.T(), "ci", i.CredentialSets[0], "expected to use the alternate credential set")
 
 }
+
+// TestInstall_DanglingWiringReferenceFailsFast verifies that porter install
+// hard-fails, before any dependency or the root bundle runs, when a v2
+// bundle's wiring declares a reference to a dependency alias that doesn't
+// exist -- the runtime counterpart to TestInspectWiringEdgeIsResolved in
+// inspect_dependencies_test.go, which shows the same condition only warns
+// during porter inspect. wiring-top-dangling is deliberately published
+// bypassing lint (see publishWiringTopDangling), simulating a bundle.json
+// built by an older Porter, or with --no-lint, that never ran the
+// porter-109 static check for this same condition.
+//
+// wiring-top-dangling's "app" dependency resolves to
+// wiring-app-dangling-target, a minimal leaf bundle dedicated to this test
+// (porter build needs to actually pull a dependency's bundle to generate a
+// manifest, even though the later install-time wiring validation itself
+// tolerates a dependency failing to resolve). It's published under its own
+// tag rather than reusing wiring-infra/wiring-app, which
+// TestInspectWiringEdgeIsResolved (also t.Parallel()) publishes at the same
+// tags -- avoiding a race between concurrent pushes to a shared tag.
+func TestInstall_DanglingWiringReferenceFailsFast(t *testing.T) {
+	t.Parallel()
+	p := porter.NewTestPorter(t)
+	defer p.Close()
+	ctx := p.SetupIntegrationTest()
+
+	p.Config.SetExperimentalFlags(experimental.FlagDependenciesV2)
+
+	namespace := p.RandomString(10)
+
+	publishWiringAppDanglingTarget(ctx, p)
+	publishWiringTopDangling(ctx, p)
+
+	installOpts := porter.NewInstallOptions()
+	installOpts.Namespace = namespace
+	installOpts.Name = "wiring-top-dangling"
+	installOpts.Reference = "localhost:5000/wiring-top-dangling:v0.1.0"
+
+	err := installOpts.Validate(ctx, []string{}, p.Porter)
+	require.NoError(p.T(), err, "validation of install opts failed")
+
+	err = p.InstallBundle(ctx, installOpts)
+	require.Error(t, err, "install must fail fast on an unresolvable v2 wiring reference")
+	assert.Contains(t, err.Error(), "doesnotexist")
+
+	// InstallBundle records an installation stub before executing anything
+	// (see pkg/porter/install.go), so the root installation record itself is
+	// expected to exist -- what proves the action never partially executed
+	// is that it has no recorded run (the root bundle's CNAB.Execute is only
+	// reached after dependency wiring validation passes) and that the
+	// dependency was never installed.
+	i, err := p.Installations.GetInstallation(ctx, namespace, installOpts.Name)
+	require.NoError(t, err, "the root installation record should exist: porter install always records an attempt before executing")
+	_, err = p.Installations.GetLastRun(ctx, i.Namespace, i.Name)
+	assert.ErrorIs(t, err, storage.ErrNotFound{}, "no run should have been recorded: the root bundle must not execute when wiring validation fails")
+
+	_, err = p.Installations.GetInstallation(ctx, namespace, "app")
+	assert.ErrorIs(t, err, storage.ErrNotFound{}, "the app dependency must never be installed")
+}
+
+func publishWiringAppDanglingTarget(ctx context.Context, p *porter.TestPorter) {
+	bunDir, err := os.MkdirTemp("", "porter-wiring-app-dangling-target")
+	require.NoError(p.T(), err)
+	defer os.RemoveAll(bunDir)
+
+	p.TestConfig.TestContext.AddTestDirectory(filepath.Join(p.RepoRoot, "build/testdata/bundles/wiring-app-dangling-target"), bunDir)
+	pwd := p.Getwd()
+	p.Chdir(bunDir)
+	defer p.Chdir(pwd)
+
+	publishOpts := porter.PublishOptions{}
+	publishOpts.Force = true
+	err = publishOpts.Validate(p.Config)
+	require.NoError(p.T(), err)
+
+	err = p.Publish(ctx, publishOpts)
+	require.NoError(p.T(), err)
+}
+
+// publishWiringTopDangling builds wiring-top-dangling directly with lint
+// disabled, rather than through the normal p.Publish auto-build path (which
+// runs lint by default and would correctly refuse to build a bundle
+// declaring an unresolvable wiring reference). This reproduces a bundle.json
+// that reached a registry without ever being caught by the porter-109 static
+// check -- exactly the scenario install-time enforcement exists to catch.
+// p.Publish, called afterward, sees the bundle is already up to date and
+// publishes it as-is without re-linting.
+func publishWiringTopDangling(ctx context.Context, p *porter.TestPorter) {
+	bunDir, err := os.MkdirTemp("", "porter-wiring-top-dangling")
+	require.NoError(p.T(), err)
+	defer os.RemoveAll(bunDir)
+
+	p.TestConfig.TestContext.AddTestDirectory(filepath.Join(p.RepoRoot, "build/testdata/bundles/wiring-top-dangling"), bunDir)
+	pwd := p.Getwd()
+	p.Chdir(bunDir)
+	defer p.Chdir(pwd)
+
+	buildOpts := porter.BuildOptions{}
+	buildOpts.NoLint = true
+	err = buildOpts.Validate(p.Porter)
+	require.NoError(p.T(), err)
+
+	err = p.Build(ctx, buildOpts)
+	require.NoError(p.T(), err)
+
+	publishOpts := porter.PublishOptions{}
+	publishOpts.Force = true
+	err = publishOpts.Validate(p.Config)
+	require.NoError(p.T(), err)
+
+	err = p.Publish(ctx, publishOpts)
+	require.NoError(p.T(), err)
+}

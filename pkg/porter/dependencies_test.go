@@ -8,6 +8,7 @@ import (
 	"get.porter.sh/porter/pkg/cnab"
 	cnabtooci "get.porter.sh/porter/pkg/cnab/cnab-to-oci"
 	depsv1ext "get.porter.sh/porter/pkg/cnab/extensions/dependencies/v1"
+	v2ext "get.porter.sh/porter/pkg/cnab/extensions/dependencies/v2"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/storage"
 	"github.com/cnabio/cnab-go/bundle"
@@ -37,6 +38,38 @@ func bundleWithV1Ranges(t *testing.T, depRepo string, ranges []string) []byte {
 		RequiredExtensions: []string{cnab.DependenciesV1ExtensionKey},
 		Custom: map[string]interface{}{
 			cnab.DependenciesV1ExtensionKey: deps,
+		},
+	}
+	data, err := json.Marshal(bun)
+	require.NoError(t, err)
+	return data
+}
+
+// bundleWithV2DanglingWiring marshals a minimal bundle.Bundle that declares
+// a single v2 dependency whose credentials mapping references a sibling
+// alias that doesn't exist, into JSON.
+func bundleWithV2DanglingWiring(t *testing.T, depRepo string) []byte {
+	t.Helper()
+	deps := v2ext.Dependencies{
+		Requires: map[string]v2ext.Dependency{
+			"app": {
+				Bundle: depRepo,
+				Credentials: map[string]string{
+					"conn": "${bundle.dependencies.doesnotexist.outputs.foo}",
+				},
+			},
+		},
+	}
+	bun := bundle.Bundle{
+		SchemaVersion: "1.2.0",
+		Name:          "testbundle",
+		Version:       "0.1.0",
+		InvocationImages: []bundle.InvocationImage{
+			{BaseImage: bundle.BaseImage{Image: "test/testbundle-installer:0.1.0", ImageType: "docker"}},
+		},
+		RequiredExtensions: []string{cnab.DependenciesV2ExtensionKey},
+		Custom: map[string]interface{}{
+			cnab.DependenciesV2ExtensionKey: deps,
 		},
 	}
 	data, err := json.Marshal(bun)
@@ -247,4 +280,33 @@ func TestIdentifyDependencies_MaxMinorRestrictsToMinorLevel(t *testing.T) {
 	require.Len(t, e.deps, 1)
 	assert.Equal(t, "example.com/mysql:v1.3.0", e.deps[0].Reference,
 		"max-minor should stay within the same major as the default version")
+}
+
+// TestIdentifyDependencies_V2DanglingWiringFailsBeforePull confirms
+// identifyDependencies -- the first step of Prepare(), itself the first step
+// of ExecuteAction(), shared by install/upgrade/invoke/reconcile -- hard
+// fails a v2 bundle with an unresolvable wiring reference before e.deps is
+// ever populated, i.e. before any dependency (or the root bundle) could run.
+func TestIdentifyDependencies_V2DanglingWiringFailsBeforePull(t *testing.T) {
+	t.Parallel()
+
+	p := NewTestPorter(t)
+	defer p.Close()
+	p.TestRegistry.MockPullBundle = newMockPullBundle(map[string]cnab.ExtendedBundle{
+		// intentionally empty: the dangling wiring reference must be caught
+		// before any dependency bundle needs to be pulled.
+	})
+
+	bunData := bundleWithV2DanglingWiring(t, "example.com/myapp:v1.0.0")
+	require.NoError(t, p.FileSystem.WriteFile("/bundle.json", bunData, 0600))
+
+	opts := NewInstallOptions()
+
+	e := newExecWithCNABFile(p, "/bundle.json", &opts)
+	err := e.identifyDependencies(context.Background())
+	require.Error(t, err)
+	var wiringErr ErrDanglingWiringReference
+	require.ErrorAs(t, err, &wiringErr)
+	assert.Equal(t, "app", wiringErr.DependencyAlias)
+	assert.Nil(t, e.deps, "deps must not be populated when wiring validation fails")
 }
