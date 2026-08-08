@@ -126,7 +126,7 @@ func TestLinter_Lint(t *testing.T) {
 					Code:    "porter-100",
 					Title:   "Reserved name error",
 					Message: tc.ParameterName + " has a reserved prefix. Parameters cannot start with porter- or porter_",
-					URL:     "https://porter.sh/reference/linter/#porter-100",
+					URL:     "https://porter.sh/docs/references/linter/#porter-100",
 				},
 			}
 
@@ -330,7 +330,7 @@ func TestLinter_DependencyMultipleTimes(t *testing.T) {
 				Code:    "porter-102",
 				Title:   "Dependency error",
 				Message: "The dependency mysql is defined multiple times",
-				URL:     "https://porter.sh/reference/linter/#porter-102",
+				URL:     "https://porter.sh/docs/references/linter/#porter-102",
 			},
 		}
 
@@ -403,7 +403,7 @@ func TestLinter_DependencyMappings(t *testing.T) {
 				Code:    "porter-103",
 				Title:   "Dependency error",
 				Message: "dependencies.mysql.parameters.NOT_DEFINED is not defined as a parameter on the dependency bundle",
-				URL:     "https://porter.sh/reference/linter/#porter-103",
+				URL:     "https://porter.sh/docs/references/linter/#porter-103",
 			},
 		}
 
@@ -431,7 +431,7 @@ func TestLinter_DependencyMappings(t *testing.T) {
 				Code:    "porter-104",
 				Title:   "Dependency error",
 				Message: "dependencies.mysql.credentials.NOT_DEFINED is not defined as a credential on the dependency bundle",
-				URL:     "https://porter.sh/reference/linter/#porter-104",
+				URL:     "https://porter.sh/docs/references/linter/#porter-104",
 			},
 		}
 
@@ -518,7 +518,7 @@ func TestLinter_DependencyRequiredMappings(t *testing.T) {
 				Code:    "porter-110",
 				Title:   "Dependency warning",
 				Message: "dependencies.mysql.parameters.REQUIRED_PARAM is required by the dependency bundle but is not mapped",
-				URL:     "https://porter.sh/reference/linter/#porter-110",
+				URL:     "https://porter.sh/docs/references/linter/#porter-110",
 			},
 		}
 
@@ -549,7 +549,7 @@ func TestLinter_DependencyRequiredMappings(t *testing.T) {
 				Code:    "porter-111",
 				Title:   "Dependency warning",
 				Message: "dependencies.mysql.credentials.REQUIRED_CRED is required by the dependency bundle but is not mapped",
-				URL:     "https://porter.sh/reference/linter/#porter-111",
+				URL:     "https://porter.sh/docs/references/linter/#porter-111",
 			},
 		}
 
@@ -905,6 +905,154 @@ func TestLinter_DependencyTemplateVariables(t *testing.T) {
 		results, err := l.Lint(context.Background(), m, v1Config, nil)
 		require.NoError(t, err, "Lint failed")
 		require.Len(t, results, 0, "dependency template variable checks should be skipped without FlagDependenciesV2")
+	})
+}
+
+func TestLinter_Lint_DependencyOutputNotInActionStep(t *testing.T) {
+	ctx := context.Background()
+	testCases := []struct {
+		action   string
+		setSteps func(*manifest.Manifest, manifest.Steps)
+	}{
+		{"install", func(m *manifest.Manifest, steps manifest.Steps) { m.Install = steps }},
+		{"upgrade", func(m *manifest.Manifest, steps manifest.Steps) { m.Upgrade = steps }},
+		{"uninstall", func(m *manifest.Manifest, steps manifest.Steps) { m.Uninstall = steps }},
+		{"customAction", func(m *manifest.Manifest, steps manifest.Steps) {
+			m.CustomActions = make(map[string]manifest.Steps)
+			m.CustomActions["customAction"] = steps
+		}},
+	}
+	testConfig := config.NewTestConfig(t).Config
+	testConfig.SetExperimentalFlags(experimental.FlagDependenciesV2)
+
+	for _, tc := range testCases {
+		t.Run(tc.action, func(t *testing.T) {
+			cxt := portercontext.NewTestContext(t)
+			mixins := mixin.NewTestMixinProvider()
+			l := New(cxt.Context, mixins)
+
+			steps := manifest.Steps{
+				&manifest.Step{
+					Data: map[string]interface{}{
+						"exec": map[string]interface{}{
+							"description": "exec step",
+							"arguments": []string{
+								"\"${ bundle.dependencies.mysql.outputs.dbCon }\"",
+							},
+						},
+					},
+				},
+			}
+			m := &manifest.Manifest{
+				SchemaVersion: "1.0.1",
+				Dependencies: manifest.Dependencies{
+					Requires: []*manifest.Dependency{
+						{Name: "mysql"},
+					},
+				},
+			}
+			tc.setSteps(m, steps)
+
+			results, err := l.Lint(ctx, m, testConfig, nil)
+			require.NoError(t, err, "Lint failed")
+			require.Len(t, results, 1, "linter should have returned 1 result")
+			require.Equal(t, Code("porter-112"), results[0].Code)
+			require.Equal(t, Location{
+				Action:          tc.action,
+				Mixin:           "exec",
+				StepNumber:      1,
+				StepDescription: "exec step",
+			}, results[0].Location)
+		})
+	}
+
+	t.Run("not enforced when dependencies v2 is disabled", func(t *testing.T) {
+		cxt := portercontext.NewTestContext(t)
+		mixins := mixin.NewTestMixinProvider()
+		l := New(cxt.Context, mixins)
+		v1Config := config.NewTestConfig(t).Config
+
+		m := &manifest.Manifest{
+			SchemaVersion: "1.0.1",
+			Install: manifest.Steps{
+				&manifest.Step{
+					Data: map[string]interface{}{
+						"exec": map[string]interface{}{
+							"description": "exec step",
+							"arguments": []string{
+								"\"${ bundle.dependencies.mysql.outputs.dbCon }\"",
+							},
+						},
+					},
+				},
+			},
+			Dependencies: manifest.Dependencies{
+				Requires: []*manifest.Dependency{
+					{Name: "mysql"},
+				},
+			},
+		}
+
+		results, err := l.Lint(ctx, m, v1Config, nil)
+		require.NoError(t, err, "Lint failed")
+		require.Len(t, results, 0, "check should be skipped without FlagDependenciesV2")
+	})
+
+	t.Run("allows the promoted bundle.outputs form", func(t *testing.T) {
+		cxt := portercontext.NewTestContext(t)
+		mixins := mixin.NewTestMixinProvider()
+		l := New(cxt.Context, mixins)
+
+		m := &manifest.Manifest{
+			SchemaVersion: "1.0.1",
+			Install: manifest.Steps{
+				&manifest.Step{
+					Data: map[string]interface{}{
+						"exec": map[string]interface{}{
+							"description": "exec step",
+							"arguments": []string{
+								"\"${ bundle.outputs.dbCon }\"",
+							},
+						},
+					},
+				},
+			},
+		}
+
+		results, err := l.Lint(ctx, m, testConfig, nil)
+		require.NoError(t, err, "Lint failed")
+		require.Len(t, results, 0, "bundle.outputs.NAME is the correct, promoted form and should not be flagged")
+	})
+
+	t.Run("does not flag unrelated steps due to outputs shorthand used elsewhere", func(t *testing.T) {
+		cxt := portercontext.NewTestContext(t)
+		mixins := mixin.NewTestMixinProvider()
+		l := New(cxt.Context, mixins)
+
+		m := &manifest.Manifest{
+			SchemaVersion: "1.0.1",
+			Install: manifest.Steps{
+				&manifest.Step{
+					Data: map[string]interface{}{
+						"exec": map[string]interface{}{
+							"description": "exec step",
+							"arguments": []string{
+								"\"hello\"",
+							},
+						},
+					},
+				},
+			},
+			Dependencies: manifest.Dependencies{
+				Requires: []*manifest.Dependency{
+					{Name: "mysql", Outputs: map[string]string{"connstr": "${ outputs.port }"}},
+				},
+			},
+		}
+
+		results, err := l.Lint(ctx, m, testConfig, nil)
+		require.NoError(t, err, "Lint failed")
+		require.Len(t, results, 0, "an unrelated install step should not be flagged just because some dependency uses the outputs.NAME shorthand elsewhere")
 	})
 }
 
