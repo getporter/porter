@@ -219,7 +219,7 @@ func (l *Linter) Lint(ctx context.Context, m *manifest.Manifest, config *config.
 		if config.IsFeatureEnabled(experimental.FlagDependenciesV2) {
 			depOutputResults, err := validateDependencyOutputsNotInActionSteps(m, action.steps, action.name)
 			if err != nil {
-				return nil, span.Error(fmt.Errorf("error validating action: %s", action.name))
+				return nil, span.Error(fmt.Errorf("error validating action: %s: %w", action.name, err))
 			}
 			results = append(results, depOutputResults...)
 		}
