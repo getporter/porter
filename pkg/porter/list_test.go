@@ -382,6 +382,16 @@ func TestPorter_getDisplayInstallationStatus(t *testing.T) {
 	installation.Status.Action = "customaction"
 	displayInstallationStatus = getDisplayInstallationStatus(installation)
 	require.Equal(t, "running customaction", displayInstallationStatus)
+
+	installation.Status.OutputPersistFailed = true
+	displayInstallationStatus = getDisplayInstallationStatus(installation)
+	require.Equal(t, "running customaction (output persist failed)", displayInstallationStatus)
+}
+
+func Test_withOutputPersistWarning(t *testing.T) {
+	require.Equal(t, "succeeded", withOutputPersistWarning("succeeded", false))
+	require.Equal(t, "succeeded (output persist failed)", withOutputPersistWarning("succeeded", true))
+	require.Empty(t, withOutputPersistWarning("", true), "no status should still be no status")
 }
 
 func Test_parseFieldSelector(t *testing.T) {

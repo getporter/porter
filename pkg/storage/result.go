@@ -39,6 +39,11 @@ type Result struct {
 
 	// Custom extension data applicable to a given runtime.
 	Custom interface{} `json:"custom,omitempty"`
+
+	// OutputPersistFailed indicates that one or more outputs produced by this
+	// run failed to persist to the secret store. The run itself may still have
+	// succeeded.
+	OutputPersistFailed bool `json:"outputPersistFailed,omitempty"`
 }
 
 func (r Result) DefaultDocumentFilter() map[string]interface{} {

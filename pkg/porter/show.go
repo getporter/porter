@@ -163,6 +163,9 @@ func (p *Porter) ShowInstallation(ctx context.Context, opts ShowOptions) error {
 			fmt.Fprintf(p.Out, "  Last Action: %s\n", displayInstallation.Status.Action)
 			fmt.Fprintf(p.Out, "  Status: %s\n", displayInstallation.Status.ResultStatus)
 			fmt.Fprintf(p.Out, "  Digest: %s\n", displayInstallation.Status.BundleDigest)
+			if displayInstallation.Status.OutputPersistFailed {
+				fmt.Fprintln(p.Out, "  Warning: one or more outputs failed to persist to the secret store; see 'porter installation outputs list' for details")
+			}
 		}
 
 		return nil

@@ -96,6 +96,11 @@ type BundleExecutionOptions struct {
 	// ForceRun bypasses the check that prevents starting a new run for an
 	// installation that already has an incomplete run.
 	ForceRun bool
+
+	// FailOnOutputWarnings causes the command to fail if a sensitive output
+	// could not be persisted to the secret store, even though the bundle
+	// itself ran successfully.
+	FailOnOutputWarnings bool
 }
 
 func NewBundleExecutionOptions() *BundleExecutionOptions {
@@ -382,6 +387,7 @@ func (p *Porter) BuildActionArgs(ctx context.Context, installation storage.Insta
 		HostVolumeMounts:      opts.GetHostVolumeMounts(),
 		PersistLogs:           !opts.NoLogs,
 		ForceRun:              opts.ForceRun,
+		FailOnOutputWarnings:  opts.FailOnOutputWarnings,
 	}
 	return args, nil
 }

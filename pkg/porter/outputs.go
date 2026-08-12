@@ -120,6 +120,9 @@ func NewDisplayValuesFromOutputs(bun cnab.ExtendedBundle, outputs storage.Output
 
 		do := &DisplayValue{Name: output.Name}
 		do.SetValue(output.Value)
+		if output.PersistError != "" {
+			do.Warning = fmt.Sprintf("value unavailable: %s", output.PersistError)
+		}
 		schema, ok := output.GetSchema(bun)
 		if ok {
 			do.Type = bun.GetParameterType(&schema)
@@ -180,9 +183,6 @@ func (p *Porter) ListBundleOutputs(ctx context.Context, opts *OutputListOptions)
 	bun := cnab.NewBundle(c.Bundle)
 
 	displayOutputs := NewDisplayValuesFromOutputs(bun, resolved)
-	if err != nil {
-		return nil, err
-	}
 
 	return displayOutputs, nil
 }
@@ -216,6 +216,9 @@ func (p *Porter) ReadBundleOutput(ctx context.Context, outputName, installation,
 	if err != nil {
 		return "", err
 	}
+	if o.PersistError != "" {
+		return "", fmt.Errorf("output %q failed to persist to the secret store and its value is unavailable: %s", o.Name, o.PersistError)
+	}
 
 	return fmt.Sprintf("%v", string(o.Value)), nil
 }
@@ -230,6 +233,9 @@ func (p *Porter) ReadBundleOutputFromRun(ctx context.Context, outputName, runID 
 	o, err = p.Sanitizer.RestoreOutput(ctx, o)
 	if err != nil {
 		return "", err
+	}
+	if o.PersistError != "" {
+		return "", fmt.Errorf("output %q failed to persist to the secret store and its value is unavailable: %s", o.Name, o.PersistError)
 	}
 
 	return fmt.Sprintf("%v", string(o.Value)), nil

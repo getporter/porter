@@ -7,6 +7,7 @@ import (
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/experimental"
+	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/test"
 	"os"
@@ -18,6 +19,20 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// failingSecretsStore wraps a real secrets.Store, forcing Create to fail, to
+// simulate a secret store outage when persisting a sensitive output.
+type failingSecretsStore struct {
+	secrets.Store
+	createErr error
+}
+
+func (f failingSecretsStore) Create(ctx context.Context, keyName, keyValue, value string) error {
+	if f.createErr != nil {
+		return f.createErr
+	}
+	return f.Store.Create(ctx, keyName, keyValue, value)
+}
 
 func TestAddRelocation(t *testing.T) {
 	t.Parallel()
@@ -112,7 +127,7 @@ func TestSaveOperationResult_ModifiesFalse_SkipsPorterState(t *testing.T) {
 		},
 	}
 
-	err := d.SaveOperationResult(ctx, opResult, i, run, result)
+	err := d.SaveOperationResult(ctx, opResult, i, run, result, false)
 	require.NoError(t, err)
 
 	outputs, err := d.TestInstallations.GetOutputs(ctx, run.ID)
@@ -157,7 +172,7 @@ func TestSaveOperationResult_ModifiesTrue_SavesPorterState(t *testing.T) {
 		},
 	}
 
-	err := d.SaveOperationResult(ctx, opResult, i, run, result)
+	err := d.SaveOperationResult(ctx, opResult, i, run, result, false)
 	require.NoError(t, err)
 
 	outputs, err := d.TestInstallations.GetOutputs(ctx, run.ID)
@@ -165,6 +180,78 @@ func TestSaveOperationResult_ModifiesTrue_SavesPorterState(t *testing.T) {
 
 	_, hasPorterState := outputs.GetByName("porter-state")
 	assert.True(t, hasPorterState, "porter-state should be saved for modifies:true actions")
+}
+
+func TestSaveOperationResult_SensitiveOutputPersistFails(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	tc := config.NewTestConfig(t)
+	testStorage := storage.NewTestStore(tc)
+	testSecrets := secrets.NewTestSecretsProvider()
+	testInstallations := storage.NewTestInstallationProviderFor(tc.TestContext.T, testStorage)
+	testCredentials := storage.NewTestCredentialProviderFor(tc.TestContext.T, testStorage, testSecrets)
+	testParameters := storage.NewTestParameterProviderFor(tc.TestContext.T, testStorage, testSecrets)
+
+	createErr := errors.New("secret store unreachable")
+	failingSecrets := failingSecretsStore{Store: testSecrets, createErr: createErr}
+
+	d := NewTestRuntimeFor(tc, testInstallations, testCredentials, testParameters, failingSecrets)
+	defer d.Close()
+
+	instName := "mybuns"
+	sensitive := true
+	bun := bundle.Bundle{
+		Actions: map[string]bundle.Action{
+			"install": {Modifies: true},
+		},
+		Outputs: map[string]bundle.Output{
+			"secret-output": {Definition: "secret-output", Path: "/cnab/app/outputs/secret-output"},
+		},
+		Definitions: map[string]*definition.Schema{
+			"secret-output": {Type: "string", WriteOnly: &sensitive},
+		},
+	}
+	i := d.TestInstallations.CreateInstallation(storage.NewInstallation("", instName), d.TestInstallations.SetMutableInstallationValues)
+	run := storage.NewRun("", instName)
+	run.Bundle = bun
+	run.Action = "install"
+	run = d.TestInstallations.CreateRun(run, d.TestInstallations.SetMutableRunValues)
+
+	opResult := driver.OperationResult{
+		Outputs: map[string]string{
+			"secret-output": "top-secret-value",
+		},
+	}
+
+	t.Run("default does not fail the command", func(t *testing.T) {
+		result := run.NewResult(cnab.StatusSucceeded)
+		err := d.SaveOperationResult(ctx, opResult, i, run, result, false)
+		require.NoError(t, err, "a secret persist failure should not fail the command by default")
+
+		outputs, err := d.TestInstallations.GetOutputs(ctx, run.ID)
+		require.NoError(t, err)
+		output, ok := outputs.GetByName("secret-output")
+		require.True(t, ok)
+		assert.Empty(t, output.Key, "no dangling key reference should be persisted")
+		assert.Empty(t, output.Value, "the raw sensitive value should never be persisted to the primary store")
+		assert.NotEmpty(t, output.PersistError)
+
+		savedResult, err := d.TestInstallations.GetResult(ctx, result.ID)
+		require.NoError(t, err)
+		assert.True(t, savedResult.OutputPersistFailed)
+
+		savedInstallation, err := d.TestInstallations.GetInstallation(ctx, i.Namespace, i.Name)
+		require.NoError(t, err)
+		assert.True(t, savedInstallation.Status.OutputPersistFailed)
+		assert.Equal(t, cnab.StatusSucceeded, savedInstallation.Status.ResultStatus, "the installation itself should still show as succeeded")
+	})
+
+	t.Run("opt-in flag fails the command", func(t *testing.T) {
+		result := run.NewResult(cnab.StatusSucceeded)
+		err := d.SaveOperationResult(ctx, opResult, i, run, result, true)
+		require.Error(t, err, "a secret persist failure should fail the command when opted in")
+	})
 }
 
 func TestCheckForActiveRun(t *testing.T) {
