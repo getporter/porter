@@ -48,6 +48,9 @@ const (
 	// LevelWarning indicates a lint result is a warning about a best practice or identifies a problem that is not
 	// guaranteed to break the build.
 	LevelWarning Level = 2
+
+	// linterDocsBaseURL is the base URL for linter rule documentation.
+	linterDocsBaseURL = "https://porter.sh/docs/references/linter/"
 )
 
 // Result is a single item identified by the linter.
@@ -188,7 +191,7 @@ func (l *Linter) Lint(ctx context.Context, m *manifest.Manifest, config *config.
 					Code:    "porter-100",
 					Title:   "Reserved name error",
 					Message: param.Name + " has a reserved prefix. Parameters cannot start with porter- or porter_",
-					URL:     "https://porter.sh/docs/references/linter/#porter-100",
+					URL:     linterDocsBaseURL + "#porter-100",
 				}
 				results = append(results, res)
 			}
@@ -239,7 +242,7 @@ func (l *Linter) Lint(ctx context.Context, m *manifest.Manifest, config *config.
 				Code:    "porter-102",
 				Title:   "Dependency error",
 				Message: fmt.Sprintf("The dependency %s is defined multiple times", dep.Name),
-				URL:     "https://porter.sh/docs/references/linter/#porter-102",
+				URL:     linterDocsBaseURL + "#porter-102",
 			}
 			results = append(results, res)
 		} else {
@@ -254,7 +257,7 @@ func (l *Linter) Lint(ctx context.Context, m *manifest.Manifest, config *config.
 						Code:    "porter-103",
 						Title:   "Dependency error",
 						Message: fmt.Sprintf("dependencies.%s.parameters.%s is not defined as a parameter on the dependency bundle", dep.Name, paramName),
-						URL:     "https://porter.sh/docs/references/linter/#porter-103",
+						URL:     linterDocsBaseURL + "#porter-103",
 					})
 				}
 			}
@@ -266,7 +269,7 @@ func (l *Linter) Lint(ctx context.Context, m *manifest.Manifest, config *config.
 						Code:    "porter-104",
 						Title:   "Dependency error",
 						Message: fmt.Sprintf("dependencies.%s.credentials.%s is not defined as a credential on the dependency bundle", dep.Name, credName),
-						URL:     "https://porter.sh/docs/references/linter/#porter-104",
+						URL:     linterDocsBaseURL + "#porter-104",
 					})
 				}
 			}
@@ -285,7 +288,7 @@ func (l *Linter) Lint(ctx context.Context, m *manifest.Manifest, config *config.
 						Code:    "porter-110",
 						Title:   "Dependency warning",
 						Message: fmt.Sprintf("dependencies.%s.parameters.%s is required by the dependency bundle but is not mapped", dep.Name, paramName),
-						URL:     "https://porter.sh/docs/references/linter/#porter-110",
+						URL:     linterDocsBaseURL + "#porter-110",
 					})
 				}
 
@@ -302,7 +305,7 @@ func (l *Linter) Lint(ctx context.Context, m *manifest.Manifest, config *config.
 						Code:    "porter-111",
 						Title:   "Dependency warning",
 						Message: fmt.Sprintf("dependencies.%s.credentials.%s is required by the dependency bundle but is not mapped", dep.Name, credName),
-						URL:     "https://porter.sh/docs/references/linter/#porter-111",
+						URL:     linterDocsBaseURL + "#porter-111",
 					})
 				}
 			}
@@ -402,7 +405,7 @@ func validateDependencyTemplateVariables(m *manifest.Manifest, dep *manifest.Dep
 								Code:    "porter-107",
 								Title:   "Dependency error",
 								Message: fmt.Sprintf("dependencies.%s.%s.%s references %s, which is not defined as a parameter on the bundle", dep.Name, field.name, key, v),
-								URL:     "https://porter.sh/docs/references/linter/#porter-107",
+								URL:     linterDocsBaseURL + "#porter-107",
 							})
 						}
 						continue
@@ -415,7 +418,7 @@ func validateDependencyTemplateVariables(m *manifest.Manifest, dep *manifest.Dep
 								Code:    "porter-108",
 								Title:   "Dependency error",
 								Message: fmt.Sprintf("dependencies.%s.%s.%s references %s, which is not defined as a credential on the bundle", dep.Name, field.name, key, v),
-								URL:     "https://porter.sh/docs/references/linter/#porter-108",
+								URL:     linterDocsBaseURL + "#porter-108",
 							})
 						}
 						continue
@@ -440,7 +443,7 @@ func validateDependencyTemplateVariables(m *manifest.Manifest, dep *manifest.Dep
 							Code:    "porter-106",
 							Title:   "Dependency error",
 							Message: fmt.Sprintf("dependencies.%s.%s.%s references %s, but the outputs variable can only be used within a dependency's output mappings", dep.Name, field.name, key, v),
-							URL:     "https://porter.sh/docs/references/linter/#porter-106",
+							URL:     linterDocsBaseURL + "#porter-106",
 						})
 						continue
 					}
@@ -456,7 +459,7 @@ func validateDependencyTemplateVariables(m *manifest.Manifest, dep *manifest.Dep
 						Code:    "porter-106",
 						Title:   "Dependency error",
 						Message: fmt.Sprintf("dependencies.%s.%s.%s references %s, which is not a supported template variable in the dependencies section (supported: bundle.*, installation.*, and outputs.* inside a dependency's output mappings)", dep.Name, field.name, key, v),
-						URL:     "https://porter.sh/docs/references/linter/#porter-106",
+						URL:     linterDocsBaseURL + "#porter-106",
 					})
 				}
 			}
@@ -479,7 +482,7 @@ func checkDependencyOutput(m *manifest.Manifest, depBundles map[string]cnab.Exte
 			Code:    "porter-109",
 			Title:   "Dependency error",
 			Message: fmt.Sprintf("dependencies.%s.%s.%s references %s, but %s is not declared under dependencies.requires", sourceDep, fieldName, key, v, refDepName),
-			URL:     "https://porter.sh/docs/references/linter/#porter-109",
+			URL:     linterDocsBaseURL + "#porter-109",
 		}, true
 	}
 
@@ -497,7 +500,7 @@ func checkDependencyOutput(m *manifest.Manifest, depBundles map[string]cnab.Exte
 			Code:    "porter-109",
 			Title:   "Dependency error",
 			Message: fmt.Sprintf("dependencies.%s.%s.%s references %s, which is not defined as an output on the %s dependency", sourceDep, fieldName, key, v, refDepName),
-			URL:     "https://porter.sh/docs/references/linter/#porter-109",
+			URL:     linterDocsBaseURL + "#porter-109",
 		}, true
 	}
 
@@ -588,7 +591,7 @@ func validateParamsAppliesToAction(m *manifest.Manifest, steps manifest.Steps, t
 						Code:    "porter-101",
 						Title:   "Parameter does not apply to action",
 						Message: fmt.Sprintf("Parameter %s does not apply to %s action", paramName, actionName),
-						URL:     "https://porter.sh/docs/references/linter/#porter-101",
+						URL:     linterDocsBaseURL + "#porter-101",
 					}
 					results = append(results, res)
 				}
@@ -650,7 +653,7 @@ func validateDependencyOutputsNotInActionSteps(m *manifest.Manifest, steps manif
 				Code:    "porter-112",
 				Title:   "Dependency output referenced directly in an action step",
 				Message: fmt.Sprintf("references %s directly; promote dependencies.%s.outputs.%s via dependencies.requires[].outputs and reference bundle.outputs.%s instead", v, depName, outputName, outputName),
-				URL:     "https://porter.sh/docs/references/linter/#porter-112",
+				URL:     linterDocsBaseURL + "#porter-112",
 			})
 		}
 	}
