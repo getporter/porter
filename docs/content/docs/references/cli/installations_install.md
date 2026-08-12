@@ -53,6 +53,7 @@ porter installations install [INSTALLATION] [flags]
       --debug                                  Run the bundle in debug mode.
       --dependencies-version-strategy string   Strategy for resolving dependency version ranges. Allowed values: exact, max-patch, max-minor, min.
   -d, --driver string                          Specify a driver to use. Allowed values: docker, debug (default "docker")
+      --fail-on-output-warnings                Fail the command if a sensitive output could not be persisted to the secret store, even though the bundle itself installed successfully.
   -f, --file porter.yaml                       Path to the Porter manifest. Defaults to porter.yaml in the current directory.
       --force                                  Force a fresh pull of the bundle
       --force-run                              Run the bundle even if the installation has another incomplete run in progress.
