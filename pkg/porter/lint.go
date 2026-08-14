@@ -109,7 +109,7 @@ func (p *Porter) resolveDependencyBundlesForLint(ctx context.Context, m *manifes
 			Code:    "porter-105",
 			Title:   "Dependency error",
 			Message: fmt.Sprintf("unable to resolve dependency %s (%s), so its parameter, credential, and output mappings could not be validated", dep.Name, dep.Bundle.Reference),
-			URL:     "https://porter.sh/reference/linter/#porter-105",
+			URL:     "https://porter.sh/docs/references/linter/#porter-105",
 		})
 	}
 
