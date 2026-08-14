@@ -437,7 +437,7 @@ func addBundleActionFlags(f *pflag.FlagSet, actionOpts porter.BundleAction) {
 	f.BoolVar(&opts.ForceRun, "force-run", false,
 		"Run the bundle even if the installation has another incomplete run in progress.")
 	f.BoolVar(&opts.FailOnOutputWarnings, "fail-on-output-warnings", false,
-		"Fail the command if a sensitive output could not be persisted to the secret store, even though the bundle itself installed successfully.")
+		"Fail the command if a sensitive output could not be persisted to the secret store, even though the bundle itself ran successfully.")
 	f.StringArrayVar(&opts.HostVolumeMounts, "mount-host-volume", nil, "Mount a host volume into the bundle. Format is <host path>:<container path>[:<option>]. May be specified multiple times. Option can be ro (read-only), rw (read-write), default is ro.")
 	f.BoolVar(&opts.NoLogs, "no-logs", false,
 		"Do not persist the bundle execution logs")

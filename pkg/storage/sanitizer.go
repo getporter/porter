@@ -173,6 +173,7 @@ func (s *Sanitizer) RestoreOutputs(ctx context.Context, o Outputs) (Outputs, err
 	for _, ot := range o.Value() {
 		r, err := s.RestoreOutput(ctx, ot)
 		if err != nil {
+			ot.Key = ""
 			ot.Value = nil
 			ot.PersistError = err.Error()
 			resolved = append(resolved, ot)

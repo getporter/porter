@@ -51,7 +51,7 @@ porter uninstall [INSTALLATION] [flags]
       --debug                           Run the bundle in debug mode.
       --delete                          Delete all records associated with the installation, assuming the uninstall action succeeds
   -d, --driver string                   Specify a driver to use. Allowed values: docker, debug (default "docker")
-      --fail-on-output-warnings         Fail the command if a sensitive output could not be persisted to the secret store, even though the bundle itself installed successfully.
+      --fail-on-output-warnings         Fail the command if a sensitive output could not be persisted to the secret store, even though the bundle itself ran successfully.
   -f, --file porter.yaml                Path to the Porter manifest. Defaults to porter.yaml in the current directory.
       --force                           Force a fresh pull of the bundle
       --force-delete                    UNSAFE. Delete all records associated with the installation, even if uninstall fails. This is intended for cleaning up test data and is not recommended for production environments.

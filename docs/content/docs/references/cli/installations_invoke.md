@@ -50,7 +50,7 @@ porter installations invoke [INSTALLATION] --action ACTION [flags]
   -c, --credential-set stringArray      Credential sets to use when running the bundle. It should be a named set of credentials and may be specified multiple times.
       --debug                           Run the bundle in debug mode.
   -d, --driver string                   Specify a driver to use. Allowed values: docker, debug (default "docker")
-      --fail-on-output-warnings         Fail the command if a sensitive output could not be persisted to the secret store, even though the bundle itself installed successfully.
+      --fail-on-output-warnings         Fail the command if a sensitive output could not be persisted to the secret store, even though the bundle itself ran successfully.
   -f, --file porter.yaml                Path to the Porter manifest. Defaults to porter.yaml in the current directory.
       --force                           Force a fresh pull of the bundle
       --force-run                       Run the bundle even if the installation has another incomplete run in progress.
