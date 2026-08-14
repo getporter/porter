@@ -429,7 +429,7 @@ func (e *dependencyExecutioner) runDependencyv2(ctx context.Context, dep *queued
 			}
 		}
 		if depInstallation.Uninstalled {
-			return fmt.Errorf("error executing dependency, dependency must be in installed status or deleted, %s is in  status %s", dep.Alias, depInstallation.Status)
+			return fmt.Errorf("error executing dependency, dependency must be in installed status or deleted, %s is in  status %s", dep.Alias, depInstallation.Status.ResultStatus)
 		}
 
 	}
