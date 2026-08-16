@@ -18,7 +18,7 @@ require (
 	github.com/cnabio/cnab-go v0.26.4
 	github.com/cnabio/cnab-to-oci v0.6.1
 	github.com/cnabio/image-relocation v0.9.2
-	github.com/containerd/containerd/v2 v2.3.3
+	github.com/containerd/containerd/v2 v2.3.4
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
 	github.com/distribution/reference v0.6.1-0.20240718132515-8c942b0459df
 	github.com/docker/buildx v0.36.1
@@ -39,7 +39,7 @@ require (
 	github.com/mattn/go-isatty v0.0.24
 	github.com/mikefarah/yq/v3 v3.0.0-20201202084205-8846255d1c37
 	github.com/mitchellh/mapstructure v1.5.0
-	github.com/mmcdole/gofeed v1.4.0
+	github.com/mmcdole/gofeed v1.4.1
 	github.com/moby/buildkit v0.32.2
 	github.com/moby/moby/api v1.55.0
 	github.com/moby/moby/client v0.5.1
@@ -48,7 +48,7 @@ require (
 	github.com/olekukonko/tablewriter v1.1.4
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/opencontainers/image-spec v1.1.1
-	github.com/osteele/liquid v1.8.1
+	github.com/osteele/liquid v1.9.1
 	github.com/pelletier/go-toml v1.9.5
 	github.com/prometheus/client_golang v1.24.1
 	github.com/spf13/afero v1.15.0
@@ -296,13 +296,13 @@ require (
 	gopkg.in/evanphx/json-patch.v4 v4.13.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	k8s.io/api v0.36.2 // indirect
-	k8s.io/apimachinery v0.36.2 // indirect
-	k8s.io/client-go v0.36.2 // indirect
+	k8s.io/api v0.36.3 // indirect
+	k8s.io/apimachinery v0.36.3 // indirect
+	k8s.io/client-go v0.36.3 // indirect
 	k8s.io/klog/v2 v2.140.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20260319004828-5883c5ee87b9 // indirect
 	sigs.k8s.io/json v0.0.0-20250730193827-2d320260d730 // indirect
 	sigs.k8s.io/randfill v1.0.0 // indirect
-	sigs.k8s.io/structured-merge-diff/v6 v6.3.2 // indirect
+	sigs.k8s.io/structured-merge-diff/v6 v6.3.3 // indirect
 	sigs.k8s.io/yaml v1.6.0 // indirect
 )
