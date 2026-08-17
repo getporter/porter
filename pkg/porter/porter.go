@@ -41,6 +41,7 @@ type Porter struct {
 	Parameters    storage.ParameterSetProvider
 	Sanitizer     *storage.Sanitizer
 	Installations storage.InstallationProvider
+	Workflows     storage.WorkflowProvider
 	Registry      cnabtooci.RegistryProvider
 	Templates     *templates.Templates
 	Mixins        mixin.MixinProvider
@@ -65,6 +66,7 @@ func NewFor(c *config.Config, store storage.Store, secretStorage secrets.Store, 
 
 	storageManager := migrations.NewManager(c, store)
 	installationStorage := storage.NewInstallationStore(storageManager)
+	workflowStorage := storage.NewWorkflowStore(storageManager)
 	credStorage := storage.NewCredentialStore(storageManager, secretStorage)
 	paramStorage := storage.NewParameterStore(storageManager, secretStorage)
 	sanitizerService := storage.NewSanitizer(paramStorage, secretStorage)
@@ -76,6 +78,7 @@ func NewFor(c *config.Config, store storage.Store, secretStorage secrets.Store, 
 		Cache:         cache,
 		Storage:       storageManager,
 		Installations: installationStorage,
+		Workflows:     workflowStorage,
 		Credentials:   credStorage,
 		Parameters:    paramStorage,
 		Secrets:       secretStorage,

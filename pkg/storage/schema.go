@@ -18,6 +18,9 @@ const (
 	// SchemaTypeParameterSet is the default schemaType value for ParameterSet resources
 	SchemaTypeParameterSet = "ParameterSet"
 
+	// SchemaTypeWorkflow is the default schemaType value for Workflow resources
+	SchemaTypeWorkflow = "Workflow"
+
 	// DefaultCredentialSetSchemaVersion represents the version associated with the schema
 	// credential set documents.
 	DefaultCredentialSetSchemaVersion = cnab.SchemaVersion("1.0.1")
@@ -29,6 +32,11 @@ const (
 	// DefaultParameterSetSchemaVersion represents the version associated with the schema
 	//	// for parameter set documents.
 	DefaultParameterSetSchemaVersion = cnab.SchemaVersion("1.1.0")
+
+	// DefaultWorkflowSchemaVersion represents the version associated with the schema
+	// for workflow documents. This is an alpha version because the Workflow
+	// resource is not yet production ready (PEP003 - Advanced Dependencies).
+	DefaultWorkflowSchemaVersion = cnab.SchemaVersion("1.0.0-alpha.1")
 )
 
 var (
