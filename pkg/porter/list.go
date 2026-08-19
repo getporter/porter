@@ -317,6 +317,16 @@ func getDisplayInstallationState(installation storage.Installation) string {
 	return StateDefined
 }
 
+// withOutputPersistWarning appends a short suffix to a status string when an
+// output from the run that produced it failed to persist to the secret
+// store, so that "succeeded" doesn't read as an unqualified success.
+func withOutputPersistWarning(status string, failed bool) string {
+	if status != "" && failed {
+		return status + " (output persist failed)"
+	}
+	return status
+}
+
 func getDisplayInstallationStatus(installation storage.Installation) string {
 	var status string
 
@@ -337,6 +347,8 @@ func getDisplayInstallationStatus(installation storage.Installation) string {
 			status = fmt.Sprintf("running %s", installation.Status.Action)
 		}
 	}
+
+	status = withOutputPersistWarning(status, installation.Status.OutputPersistFailed)
 
 	return status
 }

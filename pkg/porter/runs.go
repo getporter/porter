@@ -65,7 +65,8 @@ func (p *Porter) ListInstallationRuns(ctx context.Context, opts RunListOptions) 
 		displayRun := NewDisplayRun(run)
 
 		if len(results) > 0 {
-			displayRun.Status = results[len(results)-1].Status
+			lastResult := results[len(results)-1]
+			displayRun.Status = withOutputPersistWarning(lastResult.Status, lastResult.OutputPersistFailed)
 
 			switch len(results) {
 			case 2:

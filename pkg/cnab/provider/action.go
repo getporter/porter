@@ -53,6 +53,11 @@ type ActionArguments struct {
 	// ForceRun bypasses the check that prevents starting a new run for an
 	// installation that already has an incomplete run.
 	ForceRun bool
+
+	// FailOnOutputWarnings causes the command to fail if a sensitive output
+	// could not be persisted to the secret store, even though the bundle
+	// itself ran successfully.
+	FailOnOutputWarnings bool
 }
 
 func (r *Runtime) ApplyConfig(ctx context.Context, args ActionArguments) cnabaction.OperationConfigs {
@@ -210,7 +215,7 @@ func (r *Runtime) Execute(ctx context.Context, args ActionArguments) error {
 		if ctx.Err() != nil {
 			if currentRun.ShouldRecord() && len(opResult.Outputs) > 0 {
 				saveCtx := context.WithoutCancel(ctx)
-				_ = r.SaveOperationResult(saveCtx, opResult, args.Installation, currentRun, currentRun.NewResultFrom(result))
+				_ = r.SaveOperationResult(saveCtx, opResult, args.Installation, currentRun, currentRun.NewResultFrom(result), args.FailOnOutputWarnings)
 			}
 			return ctx.Err()
 		}
@@ -220,7 +225,7 @@ func (r *Runtime) Execute(ctx context.Context, args ActionArguments) error {
 				err = r.appendFailedResult(ctx, err, currentRun)
 				return log.Errorf("failed to record that %s for installation %s failed: %w", currentRun.Action, args.Installation.Name, err)
 			}
-			return r.SaveOperationResult(ctx, opResult, args.Installation, currentRun, currentRun.NewResultFrom(result))
+			return r.SaveOperationResult(ctx, opResult, args.Installation, currentRun, currentRun.NewResultFrom(result), args.FailOnOutputWarnings)
 		}
 
 		if err != nil {
@@ -300,7 +305,15 @@ func (r *Runtime) SaveRun(ctx context.Context, installation storage.Installation
 // SaveOperationResult saves the ClaimResult and Outputs. The caller is
 // responsible for having already persisted the claim itself, for example using
 // SaveRun.
-func (r *Runtime) SaveOperationResult(ctx context.Context, opResult driver.OperationResult, installation storage.Installation, run storage.Run, result storage.Result) error {
+//
+// Outputs are sanitized (and any sensitive values persisted to the secret
+// store) before the Result/Installation are saved, so that if a secret write
+// fails, that fact can be recorded on the Result/Installation status being
+// persisted rather than discovered later. This never fails the bundle run
+// itself - failOnOutputWarnings controls whether a secret persist failure
+// also fails this call (and thus the overall command), or is only logged as
+// a warning.
+func (r *Runtime) SaveOperationResult(ctx context.Context, opResult driver.OperationResult, installation storage.Installation, run storage.Run, result storage.Result, failOnOutputWarnings bool) error {
 	ctx, span := tracing.StartSpan(ctx)
 	defer span.EndSpan()
 
@@ -312,19 +325,10 @@ func (r *Runtime) SaveOperationResult(ctx context.Context, opResult driver.Opera
 	var bigerr *multierror.Error
 	bigerr = multierror.Append(bigerr, opResult.Error)
 
-	err := r.installations.InsertResult(ctx, result)
-	if err != nil {
-		bigerr = multierror.Append(bigerr, fmt.Errorf("error adding %s result for %s run of installation %s\n%#v: %w", result.Status, run.Action, installation, result, err))
-	}
-
-	installation.ApplyResult(run, result)
-	err = r.installations.UpdateInstallation(ctx, installation)
-	if err != nil {
-		bigerr = multierror.Append(bigerr, fmt.Errorf("error updating installation record for %s\n%#v: %w", installation, installation, err))
-	}
-
 	extBun := cnab.ExtendedBundle{Bundle: run.Bundle}
 
+	outputs := make([]storage.Output, 0, len(opResult.Outputs))
+	outputPersistFailed := false
 	for outputName, outputValue := range opResult.Outputs {
 		// porter-state tracks bundle-managed resource state. Skip persisting it
 		// for modifies:false actions so that a read-only invoke cannot overwrite
@@ -334,10 +338,34 @@ func (r *Runtime) SaveOperationResult(ctx context.Context, opResult driver.Opera
 		}
 
 		output := result.NewOutput(outputName, []byte(outputValue))
-		output, err = r.sanitizer.CleanOutput(ctx, output, extBun)
+		output, err := r.sanitizer.CleanOutput(ctx, output, extBun)
 		if err != nil {
-			bigerr = multierror.Append(bigerr, fmt.Errorf("error sanitizing sensitive %s output for %s run of installation %s\n%#v: %w", output.Name, run.Action, installation, output, err))
+			outputPersistFailed = true
+			output.PersistError = fmt.Sprintf("failed to persist output to secret store: %s", err)
+			wrapped := fmt.Errorf("error sanitizing sensitive %s output for %s run of installation %s\n%#v: %w", output.Name, run.Action, installation, output, err)
+			if failOnOutputWarnings {
+				bigerr = multierror.Append(bigerr, wrapped)
+			} else {
+				span.Warnf("WARNING: %s", wrapped)
+			}
 		}
+		outputs = append(outputs, output)
+	}
+
+	result.OutputPersistFailed = outputPersistFailed
+	err := r.installations.InsertResult(ctx, result)
+	if err != nil {
+		bigerr = multierror.Append(bigerr, fmt.Errorf("error adding %s result for %s run of installation %s\n%#v: %w", result.Status, run.Action, installation, result, err))
+	}
+
+	installation.ApplyResult(run, result)
+	installation.Status.OutputPersistFailed = outputPersistFailed
+	err = r.installations.UpdateInstallation(ctx, installation)
+	if err != nil {
+		bigerr = multierror.Append(bigerr, fmt.Errorf("error updating installation record for %s\n%#v: %w", installation, installation, err))
+	}
+
+	for _, output := range outputs {
 		err = r.installations.InsertOutput(ctx, output)
 		if err != nil {
 			bigerr = multierror.Append(bigerr, fmt.Errorf("error adding %s output for %s run of installation %s\n%#v: %w", output.Name, run.Action, installation, output, err))

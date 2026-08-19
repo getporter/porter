@@ -286,6 +286,94 @@ func TestPorter_ListBundleOutputs_WithRunID(t *testing.T) {
 	})
 }
 
+func TestPorter_ListBundleOutputs_ToleratesDanglingSecretReference(t *testing.T) {
+	t.Parallel()
+
+	p := NewTestPorter(t)
+	defer p.Close()
+
+	b := bundle.Bundle{
+		Definitions: definition.Definitions{
+			"good": &definition.Schema{Type: "string"},
+			"bad":  &definition.Schema{Type: "string"},
+		},
+		Outputs: map[string]bundle.Output{
+			"good": {Definition: "good"},
+			"bad":  {Definition: "bad"},
+		},
+	}
+
+	extB := cnab.NewBundle(b)
+	i := p.TestInstallations.CreateInstallation(storage.NewInstallation("", "test"), func(i *storage.Installation) {
+		i.Parameters.Parameters = p.SanitizeParameters(i.Parameters.Parameters, i.ID, extB)
+	})
+	c := p.TestInstallations.CreateRun(i.NewRun(cnab.ActionInstall, extB), func(r *storage.Run) {
+		r.Bundle = b
+		r.ParameterOverrides.Parameters = p.SanitizeParameters(r.ParameterOverrides.Parameters, r.ID, extB)
+	})
+	r := p.TestInstallations.CreateResult(c.NewResult(cnab.StatusSucceeded))
+	p.CreateOutput(r.NewOutput("good", []byte("good-output")), extB)
+
+	// Simulate a dangling reference: a Key that points at a secret that was
+	// never created (or was later deleted), bypassing the sanitizer so the
+	// row lands in storage exactly as a legacy/corrupted record would.
+	p.TestInstallations.CreateOutput(r.NewOutput("bad", nil), func(o *storage.Output) {
+		o.Key = r.ID + "-bad"
+	})
+
+	outputs, err := p.ListBundleOutputs(context.Background(), &OutputListOptions{
+		installationOptions: installationOptions{Name: "test"},
+		PrintOptions:        printer.PrintOptions{Format: printer.FormatPlaintext},
+	})
+	require.NoError(t, err, "one unresolvable output should not fail the whole list")
+	require.Equal(t, 2, len(outputs))
+
+	good, ok := outputs.Get("good")
+	require.True(t, ok)
+	assert.Empty(t, good.Warning)
+	assert.Equal(t, "good-output", good.Value)
+
+	bad, ok := outputs.Get("bad")
+	require.True(t, ok)
+	assert.NotEmpty(t, bad.Warning, "the unresolvable output should carry a warning instead of failing the list")
+}
+
+func TestPorter_ReadBundleOutput_PersistErrorIsActionable(t *testing.T) {
+	t.Parallel()
+
+	p := NewTestPorter(t)
+	defer p.Close()
+
+	b := bundle.Bundle{
+		Definitions: definition.Definitions{
+			"broken": &definition.Schema{Type: "string"},
+		},
+		Outputs: map[string]bundle.Output{
+			"broken": {Definition: "broken"},
+		},
+	}
+
+	extB := cnab.NewBundle(b)
+	i := p.TestInstallations.CreateInstallation(storage.NewInstallation("", "test"), func(i *storage.Installation) {
+		i.Parameters.Parameters = p.SanitizeParameters(i.Parameters.Parameters, i.ID, extB)
+	})
+	c := p.TestInstallations.CreateRun(i.NewRun(cnab.ActionInstall, extB), func(r *storage.Run) {
+		r.Bundle = b
+		r.ParameterOverrides.Parameters = p.SanitizeParameters(r.ParameterOverrides.Parameters, r.ID, extB)
+	})
+	rslt := p.TestInstallations.CreateResult(c.NewResult(cnab.StatusSucceeded))
+
+	// Simulate an output that failed to persist to the secret store at write
+	// time: no Key/Value, but PersistError explains why.
+	p.TestInstallations.CreateOutput(rslt.NewOutput("broken", nil), func(o *storage.Output) {
+		o.PersistError = "failed to persist output to secret store: secret store unreachable"
+	})
+
+	_, err := p.ReadBundleOutput(context.Background(), "broken", "test", "")
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to persist")
+}
+
 func TestPorter_ShowBundleOutput_WithRunID(t *testing.T) {
 	t.Parallel()
 

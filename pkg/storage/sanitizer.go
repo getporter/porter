@@ -145,7 +145,12 @@ func (s *Sanitizer) CleanOutput(ctx context.Context, output Output, bun cnab.Ext
 
 	err = s.secrets.Create(ctx, secrets.SourceSecret, secretOt.Key, string(output.Value))
 	if err != nil {
-		return secretOt, err
+		// The secret was never created, so don't persist a Key that points at
+		// nothing - that produces a dangling reference that fails confusingly
+		// when later resolved.
+		output.Key = ""
+		output.Value = nil
+		return output, err
 	}
 
 	return secretOt, nil
@@ -159,13 +164,20 @@ func sanitizedOutput(output Output) Output {
 }
 
 // RestoreOutputs retrieves all raw output value and return the restored outputs
-// record.
+// record. An output whose value can't be resolved (for example a secret that
+// was deleted, or a dangling reference from before PersistError existed) is
+// kept in the result with PersistError set, instead of failing the whole
+// batch.
 func (s *Sanitizer) RestoreOutputs(ctx context.Context, o Outputs) (Outputs, error) {
 	resolved := make([]Output, 0, o.Len())
 	for _, ot := range o.Value() {
 		r, err := s.RestoreOutput(ctx, ot)
 		if err != nil {
-			return o, fmt.Errorf("failed to resolve output %q using key %q: %w", ot.Name, ot.Key, err)
+			ot.Key = ""
+			ot.Value = nil
+			ot.PersistError = err.Error()
+			resolved = append(resolved, ot)
+			continue
 		}
 		resolved = append(resolved, r)
 	}
@@ -181,7 +193,7 @@ func (s *Sanitizer) RestoreOutput(ctx context.Context, output Output) (Output, e
 	}
 	resolved, err := s.secrets.Resolve(ctx, secrets.SourceSecret, string(output.Key))
 	if err != nil {
-		return output, err
+		return output, fmt.Errorf("failed to resolve output %q from secret store: %w", output.Name, err)
 	}
 
 	output.Value = []byte(resolved)

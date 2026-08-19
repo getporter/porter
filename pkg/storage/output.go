@@ -20,6 +20,11 @@ type Output struct {
 	// Key holds the secret key to retrieve a sensitive output value
 	Key   string `json:"key"`
 	Value []byte `json:"value"`
+
+	// PersistError records why this output's value could not be persisted to
+	// the secret store, or resolved from it later. When set, Key and Value
+	// are empty even though the bundle produced a value for this output.
+	PersistError string `json:"persistError,omitempty"`
 }
 
 func (o Output) DefaultDocumentFilter() map[string]interface{} {

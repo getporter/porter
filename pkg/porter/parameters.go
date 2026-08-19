@@ -486,6 +486,10 @@ type DisplayValue struct {
 	Type      string      `json:"type" yaml:"type"`
 	Sensitive bool        `json:"sensitive" yaml:"sensitive"`
 	Value     interface{} `json:"value" yaml:"value"`
+
+	// Warning explains why Value could not be retrieved, e.g. a sensitive
+	// output that failed to persist to (or resolve from) the secret store.
+	Warning string `json:"warning,omitempty" yaml:"warning,omitempty"`
 }
 
 func (v *DisplayValue) SetValue(value interface{}) {
@@ -498,6 +502,10 @@ func (v *DisplayValue) SetValue(value interface{}) {
 }
 
 func (v DisplayValue) PrintValue() string {
+	if v.Warning != "" {
+		return "⚠ " + v.Warning
+	}
+
 	if v.Sensitive {
 		return "******"
 	}

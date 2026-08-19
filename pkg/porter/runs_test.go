@@ -59,6 +59,26 @@ func TestPorter_ListInstallationRuns(t *testing.T) {
 	})
 }
 
+func TestPorter_ListInstallationRuns_OutputPersistWarning(t *testing.T) {
+	p := NewTestPorter(t)
+	defer p.Close()
+
+	installation := p.TestInstallations.CreateInstallation(storage.NewInstallation("", "mywordpress"), p.TestInstallations.SetMutableInstallationValues)
+	bun := cnab.ExtendedBundle{}
+	run := p.TestInstallations.CreateRun(installation.NewRun(cnab.ActionInstall, bun), p.TestInstallations.SetMutableRunValues)
+	p.TestInstallations.CreateResult(run.NewResult(cnab.StatusSucceeded), p.TestInstallations.SetMutableResultValues, func(r *storage.Result) {
+		r.OutputPersistFailed = true
+	})
+
+	results, err := p.ListInstallationRuns(context.Background(), RunListOptions{installationOptions: installationOptions{
+		Namespace: "",
+		Name:      "mywordpress",
+	}})
+	require.NoError(t, err)
+	require.Len(t, results, 1)
+	assert.Equal(t, "succeeded (output persist failed)", results[0].Status)
+}
+
 func TestPorter_PrintInstallationRunsOutput(t *testing.T) {
 	outputTestcases := []struct {
 		name       string

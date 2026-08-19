@@ -269,6 +269,11 @@ type InstallationStatus struct {
 
 	// BundleDigest is the digest of the bundle that last altered the installation state.
 	BundleDigest string `json:"bundleDigest" yaml:"bundleDigest" toml:"bundleDigest"`
+
+	// OutputPersistFailed indicates that one or more outputs from the run that
+	// last informed this status failed to persist to the secret store. The
+	// installation itself may still have succeeded.
+	OutputPersistFailed bool `json:"outputPersistFailed,omitempty" yaml:"outputPersistFailed,omitempty" toml:"outputPersistFailed,omitempty"`
 }
 
 // IsInstalled checks if the installation is currently installed.
