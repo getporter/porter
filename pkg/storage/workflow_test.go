@@ -20,6 +20,6 @@ func TestNewWorkflow(t *testing.T) {
 }
 
 func TestWorkflow_DefaultDocumentFilter(t *testing.T) {
-	w := Workflow{ID: "abc123"}
-	assert.Equal(t, map[string]any{"_id": "abc123"}, w.DefaultDocumentFilter())
+	w := Workflow{WorkflowSpec: WorkflowSpec{Namespace: "dev"}, ID: "abc123"}
+	assert.Equal(t, map[string]any{"namespace": "dev", "_id": "abc123"}, w.DefaultDocumentFilter())
 }

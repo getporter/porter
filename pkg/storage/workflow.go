@@ -155,7 +155,7 @@ type JobStatus struct {
 }
 
 func (w Workflow) DefaultDocumentFilter() map[string]any {
-	return map[string]any{"_id": w.ID}
+	return map[string]any{"namespace": w.Namespace, "_id": w.ID}
 }
 
 // NewWorkflow creates a workflow document with default values initialized.
