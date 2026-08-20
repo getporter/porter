@@ -219,8 +219,9 @@ func LoadFromViper(viperCfg func(v *viper.Viper), cobraCfg func(v *viper.Viper))
 			}
 			cfg.viper = ctxViper
 		} else {
-			// Legacy flat format — existing path unchanged.
-			if cfg.ContextName != "" {
+			// Legacy flat format — existing path unchanged. Bypass schema version validation for internal
+			// plugins as they do not load the config file.
+			if cfg.ContextName != "" && !cfg.IsInternalPlugin {
 				return log.Error(fmt.Errorf("--context/PORTER_CONTEXT requires a versioned config file; add schemaVersion: %q and wrap settings under contexts", ConfigSchemaVersion))
 			}
 			// Collect template variables from the full config file.

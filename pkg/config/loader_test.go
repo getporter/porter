@@ -149,6 +149,21 @@ func TestLoadMultiContext_LegacyFlagError(t *testing.T) {
 	require.ErrorContains(t, err, "--context")
 }
 
+func TestLoadMultiContext_InternalPluginIgnoresContextEnvVar(t *testing.T) {
+	// Do not run in parallel — sets environment variables
+	os.Setenv("PORTER_CONTEXT", "prod")
+	defer os.Unsetenv("PORTER_CONTEXT")
+
+	c := NewTestConfig(t)
+	c.SetHomeDir("/home/myuser/.porter")
+	c.TestContext.AddTestFile("testdata/config-multi-context.yaml", "/home/myuser/.porter/config.yaml")
+	c.IsInternalPlugin = true
+
+	c.DataLoader = LoadFromEnvironment()
+	_, err := c.Load(context.Background(), nil)
+	require.NoError(t, err, "an internal plugin should ignore PORTER_CONTEXT instead of erroring")
+}
+
 func TestLoadMultiContext_MissingContextsKey(t *testing.T) {
 	t.Parallel()
 
