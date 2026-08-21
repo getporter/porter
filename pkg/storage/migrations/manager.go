@@ -112,6 +112,11 @@ Once your data has been backed up, run the following command to perform the migr
 		if err != nil {
 			return err
 		}
+
+		err = storage.EnsureWorkflowIndices(ctx, m.store)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
