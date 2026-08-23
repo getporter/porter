@@ -99,7 +99,7 @@ func (m *Manager) initCachePath() (string, error) {
 // still valid. Any error reading or parsing the cache file is treated as a
 // cache miss; it is never fatal to the caller.
 func (m *Manager) loadInitCacheEntry(ctx context.Context, hash string) (initCacheEntry, bool) {
-	ctx, span := tracing.StartSpan(ctx)
+	_, span := tracing.StartSpan(ctx)
 	defer span.EndSpan()
 
 	path, err := m.initCachePath()
@@ -130,7 +130,7 @@ func (m *Manager) loadInitCacheEntry(ctx context.Context, hash string) (initCach
 // just verified. Errors are logged and swallowed; failing to persist the
 // cache should never fail the command that triggered the check.
 func (m *Manager) saveInitCacheEntry(ctx context.Context, hash string, schema storage.Schema) {
-	ctx, span := tracing.StartSpan(ctx)
+	_, span := tracing.StartSpan(ctx)
 	defer span.EndSpan()
 
 	path, err := m.initCachePath()
