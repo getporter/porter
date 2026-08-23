@@ -10,6 +10,7 @@ import (
 	"get.porter.sh/porter/pkg/encoding"
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
+	testmigrations "get.porter.sh/porter/pkg/storage/migrations/testhelpers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -247,6 +248,31 @@ func TestParameterStorage_NoMigrationRequiredForEmptyHome(t *testing.T) {
 	assert.Empty(t, names, "Expected an empty list of parameters since porter home is new")
 }
 
+func TestInitCacheEntry_IsValid(t *testing.T) {
+	t.Run("fresh entry", func(t *testing.T) {
+		entry := initCacheEntry{PorterVersion: pkg.Version, CheckedAt: time.Now()}
+		assert.True(t, entry.IsValid())
+	})
+
+	t.Run("expired entry", func(t *testing.T) {
+		entry := initCacheEntry{PorterVersion: pkg.Version, CheckedAt: time.Now().Add(-2 * initCacheTTL)}
+		assert.False(t, entry.IsValid())
+	})
+
+	t.Run("version mismatch", func(t *testing.T) {
+		entry := initCacheEntry{PorterVersion: "some-other-version", CheckedAt: time.Now()}
+		assert.False(t, entry.IsValid())
+	})
+
+	t.Run("future timestamp is not trusted", func(t *testing.T) {
+		// A CheckedAt in the future (e.g. clock skew, or a hand-edited cache
+		// file) must not be treated as valid, since time.Since would be
+		// negative and always less than the TTL.
+		entry := initCacheEntry{PorterVersion: pkg.Version, CheckedAt: time.Now().Add(time.Hour)}
+		assert.False(t, entry.IsValid())
+	})
+}
+
 func TestManager_Connect_WritesInitCache(t *testing.T) {
 	c := config.NewTestConfig(t)
 	m := NewTestManager(c)
@@ -419,4 +445,31 @@ func TestManager_Connect_InitCacheIgnoredOnVersionMismatch(t *testing.T) {
 	err = m.Connect(ctx)
 	require.Error(t, err, "a cache entry from a different Porter version should not be trusted")
 	assert.Contains(t, err.Error(), "older format than supported")
+}
+
+func TestManager_Migrate_WritesInitCache(t *testing.T) {
+	c := testmigrations.CreateLegacyPorterHome(t)
+	defer c.Close()
+	oldHome, err := c.GetHomeDir()
+	require.NoError(t, err, "could not get the home directory")
+	ctx, _, _ := c.SetupIntegrationTest()
+
+	m := NewTestManager(c)
+	defer m.Close()
+
+	opts := storage.MigrateOptions{
+		OldHome:           oldHome,
+		OldStorageAccount: "src",
+		NewNamespace:      "myns",
+	}
+
+	require.NoError(t, m.Migrate(ctx, opts), "Migrate failed")
+
+	hash, err := connectionHash(m.Config)
+	require.NoError(t, err, "connectionHash failed")
+
+	entry, ok := m.loadInitCacheEntry(ctx, hash)
+	require.True(t, ok, "Migrate should have written a cache entry")
+	assert.Equal(t, pkg.Version, entry.PorterVersion)
+	assert.Equal(t, m.schema, entry.Schema)
 }

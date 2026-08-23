@@ -51,7 +51,8 @@ type initCacheEntry struct {
 // IsValid reports whether this entry can still be trusted without
 // re-checking the database.
 func (e initCacheEntry) IsValid() bool {
-	return e.PorterVersion == pkg.Version && time.Since(e.CheckedAt) < initCacheTTL
+	age := time.Since(e.CheckedAt)
+	return e.PorterVersion == pkg.Version && age >= 0 && age < initCacheTTL
 }
 
 // connectionHash returns a stable identifier for the storage connection
@@ -152,6 +153,11 @@ func (m *Manager) saveInitCacheEntry(ctx context.Context, hash string, schema st
 		PorterVersion: pkg.Version,
 		Schema:        schema,
 		CheckedAt:     time.Now(),
+	}
+
+	if err := m.FileSystem.MkdirAll(filepath.Dir(path), pkg.FileModeDirectory); err != nil {
+		span.Debug("Unable to persist storage init cache: " + err.Error())
+		return
 	}
 
 	if err := encoding.MarshalFile(m.FileSystem, path, cacheFile); err != nil {
