@@ -3,6 +3,7 @@ package porter
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"sort"
 	"time"
 
@@ -154,8 +155,11 @@ func (p *Porter) ShowInstallation(ctx context.Context, opts ShowOptions) error {
 			}
 		}
 
-		// Print the status (it may not be present if it's newly created using apply)
-		if installation.Status != (storage.InstallationStatus{}) {
+		// Print the status (it may not be present if it's newly created using apply).
+		// reflect.DeepEqual (rather than ==) is required here because
+		// InstallationStatus now has a slice field (References), which makes
+		// the struct non-comparable with ==.
+		if !reflect.DeepEqual(installation.Status, storage.InstallationStatus{}) {
 			fmt.Fprintln(p.Out)
 			fmt.Fprintln(p.Out, "Status:")
 			fmt.Fprintf(p.Out, "  Reference: %s\n", displayInstallation.Status.BundleReference)
