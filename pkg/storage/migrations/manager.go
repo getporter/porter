@@ -72,6 +72,18 @@ func (m *Manager) Connect(ctx context.Context) error {
 	defer span.EndSpan()
 
 	if !m.initialized {
+		hash, hashErr := connectionHash(m.Config)
+		useCache := !m.allowOutOfDateSchema && hashErr == nil
+
+		if useCache {
+			if entry, ok := m.loadInitCacheEntry(ctx, hash); ok {
+				span.Debug("Using cached storage init check")
+				m.schema = entry.Schema
+				m.initialized = true
+				return nil
+			}
+		}
+
 		span.Debug("Checking database schema")
 
 		if err := m.loadSchema(ctx); err != nil {
@@ -116,6 +128,10 @@ Once your data has been backed up, run the following command to perform the migr
 		err = storage.EnsureWorkflowIndices(ctx, m.store)
 		if err != nil {
 			return err
+		}
+
+		if useCache {
+			m.saveInitCacheEntry(ctx, hash, m.schema)
 		}
 	}
 
@@ -258,6 +274,11 @@ func (m *Manager) Migrate(ctx context.Context, opts storage.MigrateOptions) erro
 	}
 
 	m.schema = newSchema
+
+	if hash, hashErr := connectionHash(m.Config); hashErr == nil {
+		m.saveInitCacheEntry(ctx, hash, m.schema)
+	}
+
 	return nil
 }
 

@@ -3,10 +3,14 @@ package migrations
 import (
 	"context"
 	"testing"
+	"time"
 
+	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/encoding"
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
+	testmigrations "get.porter.sh/porter/pkg/storage/migrations/testhelpers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -242,4 +246,230 @@ func TestParameterStorage_NoMigrationRequiredForEmptyHome(t *testing.T) {
 	names, err := paramStore.ListParameterSets(context.Background(), storage.ListOptions{})
 	require.NoError(t, err, "List failed")
 	assert.Empty(t, names, "Expected an empty list of parameters since porter home is new")
+}
+
+func TestInitCacheEntry_IsValid(t *testing.T) {
+	t.Run("fresh entry", func(t *testing.T) {
+		entry := initCacheEntry{PorterVersion: pkg.Version, CheckedAt: time.Now()}
+		assert.True(t, entry.IsValid())
+	})
+
+	t.Run("expired entry", func(t *testing.T) {
+		entry := initCacheEntry{PorterVersion: pkg.Version, CheckedAt: time.Now().Add(-2 * initCacheTTL)}
+		assert.False(t, entry.IsValid())
+	})
+
+	t.Run("version mismatch", func(t *testing.T) {
+		entry := initCacheEntry{PorterVersion: "some-other-version", CheckedAt: time.Now()}
+		assert.False(t, entry.IsValid())
+	})
+
+	t.Run("future timestamp is not trusted", func(t *testing.T) {
+		// A CheckedAt in the future (e.g. clock skew, or a hand-edited cache
+		// file) must not be treated as valid, since time.Since would be
+		// negative and always less than the TTL.
+		entry := initCacheEntry{PorterVersion: pkg.Version, CheckedAt: time.Now().Add(time.Hour)}
+		assert.False(t, entry.IsValid())
+	})
+}
+
+func TestManager_Connect_WritesInitCache(t *testing.T) {
+	c := config.NewTestConfig(t)
+	m := NewTestManager(c)
+	defer m.Close()
+	ctx := context.Background()
+
+	require.NoError(t, m.Connect(ctx), "Connect failed")
+
+	hash, err := connectionHash(m.Config)
+	require.NoError(t, err, "connectionHash failed")
+
+	entry, ok := m.loadInitCacheEntry(ctx, hash)
+	require.True(t, ok, "Connect should have written a cache entry")
+	assert.Equal(t, pkg.Version, entry.PorterVersion)
+	assert.Equal(t, m.schema, entry.Schema)
+}
+
+func TestManager_Connect_UsesInitCache(t *testing.T) {
+	c := config.NewTestConfig(t)
+	m := NewTestManager(c)
+	defer m.Close()
+	ctx := context.Background()
+
+	require.NoError(t, m.Connect(ctx), "first Connect failed")
+
+	// Make the db schema out-of-date without going through a migration. If a
+	// second Connect performs a live check instead of trusting the cache,
+	// this will cause it to fail.
+	badSchema := storage.NewSchema()
+	badSchema.Installations = "needs-migration"
+	require.NoError(t, m.store.Update(ctx, CollectionConfig, storage.UpdateOptions{Document: badSchema, Upsert: true}))
+
+	// Simulate a subsequent CLI invocation against the same PORTER_HOME and db.
+	m.initialized = false
+
+	err := m.Connect(ctx)
+	require.NoError(t, err, "Connect should have trusted the on-disk init cache instead of re-checking the schema")
+}
+
+func TestConnectionHash_ChangesWithStorageConfig(t *testing.T) {
+	c := config.NewTestConfig(t)
+	c.Data.DefaultStorage = "dev"
+	c.Data.StoragePlugins = []config.StoragePlugin{
+		{PluginConfig: config.PluginConfig{
+			Name:         "dev",
+			PluginSubKey: "mongodb",
+			Config:       map[string]interface{}{"url": "mongodb://localhost:27017"},
+		}},
+	}
+
+	h1, err := connectionHash(c.Config)
+	require.NoError(t, err, "connectionHash failed")
+
+	// Same config should hash the same way.
+	h1Again, err := connectionHash(c.Config)
+	require.NoError(t, err, "connectionHash failed")
+	assert.Equal(t, h1, h1Again, "hash should be stable for an unchanged config")
+
+	// Changing the connection details should change the hash.
+	c.Data.StoragePlugins[0].Config = map[string]interface{}{"url": "mongodb://otherhost:27017"}
+	h2, err := connectionHash(c.Config)
+	require.NoError(t, err, "connectionHash failed")
+	assert.NotEqual(t, h1, h2, "hash should change when the storage connection config changes")
+
+	// Pointing at a different named storage entirely should also change the hash.
+	c.Data.DefaultStorage = "prod"
+	c.Data.StoragePlugins = append(c.Data.StoragePlugins, config.StoragePlugin{
+		PluginConfig: config.PluginConfig{
+			Name:         "prod",
+			PluginSubKey: "mongodb",
+			Config:       map[string]interface{}{"url": "mongodb://prodhost:27017"},
+		},
+	})
+	h3, err := connectionHash(c.Config)
+	require.NoError(t, err, "connectionHash failed")
+	assert.NotEqual(t, h2, h3, "hash should change when the default storage name changes")
+}
+
+func TestManager_Connect_InitCacheMissOnConfigChange(t *testing.T) {
+	c := config.NewTestConfig(t)
+	m := NewTestManager(c)
+	defer m.Close()
+	ctx := context.Background()
+
+	require.NoError(t, m.Connect(ctx), "first Connect failed")
+
+	// Switch to a different named storage connection. This should compute a
+	// different cache key, so the entry written above must not be reused.
+	c.Data.DefaultStorage = "alt"
+	c.Data.StoragePlugins = []config.StoragePlugin{
+		{PluginConfig: config.PluginConfig{
+			Name:         "alt",
+			PluginSubKey: "mongodb",
+			Config:       map[string]interface{}{"url": "mongodb://alt-host:27017"},
+		}},
+	}
+
+	// Make the db schema out-of-date. If the (now-changed) connection hash
+	// still matched the cached entry, Connect would wrongly trust it.
+	badSchema := storage.NewSchema()
+	badSchema.Installations = "needs-migration"
+	require.NoError(t, m.store.Update(ctx, CollectionConfig, storage.UpdateOptions{Document: badSchema, Upsert: true}))
+
+	m.initialized = false
+
+	err := m.Connect(ctx)
+	require.Error(t, err, "a changed storage connection should not reuse another connection's cache entry")
+	assert.Contains(t, err.Error(), "older format than supported")
+}
+
+func TestManager_Connect_InitCacheExpires(t *testing.T) {
+	c := config.NewTestConfig(t)
+	m := NewTestManager(c)
+	defer m.Close()
+	ctx := context.Background()
+
+	require.NoError(t, m.Connect(ctx), "first Connect failed")
+
+	hash, err := connectionHash(m.Config)
+	require.NoError(t, err, "connectionHash failed")
+
+	path, err := m.initCachePath()
+	require.NoError(t, err, "initCachePath failed")
+
+	var cacheFile initCacheFile
+	require.NoError(t, encoding.UnmarshalFile(m.FileSystem, path, &cacheFile))
+	entry := cacheFile.Storage[hash]
+	entry.CheckedAt = time.Now().Add(-2 * initCacheTTL)
+	cacheFile.Storage[hash] = entry
+	require.NoError(t, encoding.MarshalFile(m.FileSystem, path, cacheFile))
+
+	badSchema := storage.NewSchema()
+	badSchema.Installations = "needs-migration"
+	require.NoError(t, m.store.Update(ctx, CollectionConfig, storage.UpdateOptions{Document: badSchema, Upsert: true}))
+
+	m.initialized = false
+
+	err = m.Connect(ctx)
+	require.Error(t, err, "an expired cache entry should not be trusted")
+	assert.Contains(t, err.Error(), "older format than supported")
+}
+
+func TestManager_Connect_InitCacheIgnoredOnVersionMismatch(t *testing.T) {
+	c := config.NewTestConfig(t)
+	m := NewTestManager(c)
+	defer m.Close()
+	ctx := context.Background()
+
+	require.NoError(t, m.Connect(ctx), "first Connect failed")
+
+	hash, err := connectionHash(m.Config)
+	require.NoError(t, err, "connectionHash failed")
+
+	path, err := m.initCachePath()
+	require.NoError(t, err, "initCachePath failed")
+
+	var cacheFile initCacheFile
+	require.NoError(t, encoding.UnmarshalFile(m.FileSystem, path, &cacheFile))
+	entry := cacheFile.Storage[hash]
+	entry.PorterVersion = "some-other-version"
+	cacheFile.Storage[hash] = entry
+	require.NoError(t, encoding.MarshalFile(m.FileSystem, path, cacheFile))
+
+	badSchema := storage.NewSchema()
+	badSchema.Installations = "needs-migration"
+	require.NoError(t, m.store.Update(ctx, CollectionConfig, storage.UpdateOptions{Document: badSchema, Upsert: true}))
+
+	m.initialized = false
+
+	err = m.Connect(ctx)
+	require.Error(t, err, "a cache entry from a different Porter version should not be trusted")
+	assert.Contains(t, err.Error(), "older format than supported")
+}
+
+func TestManager_Migrate_WritesInitCache(t *testing.T) {
+	c := testmigrations.CreateLegacyPorterHome(t)
+	defer c.Close()
+	oldHome, err := c.GetHomeDir()
+	require.NoError(t, err, "could not get the home directory")
+	ctx, _, _ := c.SetupIntegrationTest()
+
+	m := NewTestManager(c)
+	defer m.Close()
+
+	opts := storage.MigrateOptions{
+		OldHome:           oldHome,
+		OldStorageAccount: "src",
+		NewNamespace:      "myns",
+	}
+
+	require.NoError(t, m.Migrate(ctx, opts), "Migrate failed")
+
+	hash, err := connectionHash(m.Config)
+	require.NoError(t, err, "connectionHash failed")
+
+	entry, ok := m.loadInitCacheEntry(ctx, hash)
+	require.True(t, ok, "Migrate should have written a cache entry")
+	assert.Equal(t, pkg.Version, entry.PorterVersion)
+	assert.Equal(t, m.schema, entry.Schema)
 }
