@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"strings"
 
 	"get.porter.sh/porter/pkg/encoding"
 	"get.porter.sh/porter/pkg/pkgmgmt"
@@ -41,7 +40,10 @@ func (o *ShowPluginOptions) validateName(args []string) error {
 	case 0:
 		return fmt.Errorf("no name was specified")
 	case 1:
-		o.Name = strings.ToLower(args[0])
+		if err := pkgmgmt.ValidateName(args[0]); err != nil {
+			return err
+		}
+		o.Name = args[0]
 		return nil
 	default:
 		return fmt.Errorf("only one positional argument may be specified, the name, but multiple were received: %s", args)

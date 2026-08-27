@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/url"
 	"path"
-	"strings"
 )
 
 type InstallOptions struct {
@@ -118,7 +117,10 @@ func (o *InstallOptions) validateName(args []string) error {
 	case 0:
 		return errors.New("no name was specified")
 	case 1:
-		o.Name = strings.ToLower(args[0])
+		if err := ValidateName(args[0]); err != nil {
+			return err
+		}
+		o.Name = args[0]
 		return nil
 	default:
 		return fmt.Errorf("only one positional argument may be specified, the name, but multiple were received: %s", args)

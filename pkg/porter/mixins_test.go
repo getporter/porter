@@ -86,3 +86,15 @@ func TestPorter_CreateMixin(t *testing.T) {
 	gotOutput := p.TestConfig.TestContext.GetOutput()
 	assert.Contains(t, wantOutput, gotOutput)
 }
+
+func TestMixinsCreateOptions_Validate_InvalidName(t *testing.T) {
+	p := NewTestPorter(t)
+	defer p.Close()
+
+	opts := MixinsCreateOptions{
+		AuthorName:     "Author Name",
+		AuthorUsername: "username",
+	}
+	err := opts.Validate([]string{"MyMixin"}, p.Context)
+	require.ErrorContains(t, err, `invalid name "MyMixin"`)
+}
