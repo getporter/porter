@@ -4,7 +4,7 @@ description: Why porter.yaml is declarative, and what that means for how you aut
 weight: 1
 ---
 
-porter.yaml is a **declarative** manifest: you describe the steps you want run and which [mixins] should run them, not imperative control flow like loops, conditionals, or variable assignment.
+porter.yaml is a **declarative** manifest: you describe the steps you want to run and which [mixins] should run them, not imperative control flow like loops, conditionals, or variable assignment.
 Each step names a mixin action and its inputs; the mixin is responsible for figuring out how to make that happen, including handling re-runs safely.
 
 - [Why Porter is declarative](#why-porter-is-declarative)
