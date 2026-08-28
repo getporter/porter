@@ -1,7 +1,7 @@
 ---
 title: Persisting Data Between Bundle Actions
 description: Learn how to save and reuse data across install, upgrade, and uninstall actions
-weight: 6
+weight: 7
 ---
 
 When you create a bundle, you often need to preserve data generated during one action (like `install`)
