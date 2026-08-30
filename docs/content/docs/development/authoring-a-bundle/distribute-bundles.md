@@ -1,7 +1,7 @@
 ---
 title: Distribute Bundles
 description: Share and distribute your bundles with others
-weight: 5
+weight: 6
 aliases:
   - /distributing-bundles/
 ---

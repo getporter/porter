@@ -1,7 +1,7 @@
 ---
 title: Templates
 description: How to use templates inside porter.yaml
-weight: 4
+weight: 5
 aliases:
   - /wiring/
 ---

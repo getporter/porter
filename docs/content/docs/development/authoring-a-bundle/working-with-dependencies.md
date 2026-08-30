@@ -1,7 +1,7 @@
 ---
 title: Dependencies
 description: Dependency Management with Porter
-weight: 3
+weight: 4
 ---
 
 In the Porter manifest you can [define a dependency](#define-a-dependency) on another

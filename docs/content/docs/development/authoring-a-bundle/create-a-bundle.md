@@ -1,7 +1,7 @@
 ---
 title: Create a Bundle
 description: Create a bundle with Porter
-weight: 1
+weight: 2
 aliases:
   - /development/create-a-bundle/
 ---
