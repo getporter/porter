@@ -495,6 +495,95 @@ func TestRunDependencyV2_Uninstall_NotFoundIsANoOp(t *testing.T) {
 	require.ErrorIs(t, err, storage.ErrNotFound{}, "uninstalling should not create a dependency installation record that never existed")
 }
 
+// TestExecute_V2Install_ReusingSharedDependency_RecordsReference confirms
+// that Execute -- the actual production entry point for running
+// dependencies (see action.go, uninstall.go), never runDependencyv2 called
+// directly -- still records a reference when installing a new parent that
+// reuses an already-installed shared v2 dependency. sharedActionResolver
+// makes Execute return before ever reaching runDependencyv2 in this case,
+// since the dependency's own install action must not be re-run.
+func TestExecute_V2Install_ReusingSharedDependency_RecordsReference(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	p := NewTestPorter(t)
+	defer p.Close()
+
+	p.TestInstallations.CreateInstallation(storage.NewInstallation("", "db"), func(i *storage.Installation) {
+		i.SetLabel(sharingGroupLabel, "group1")
+		i.Status.Installed = &now
+	})
+
+	parent := storage.NewInstallation("", "webapp")
+	opts := NewInstallOptions()
+	opts.Namespace = ""
+	opts.Name = "webapp"
+
+	e := newDependencyExecutionerFor(p, parent, opts)
+	e.deps = []*queuedDependency{
+		{
+			DependencyLock: cnab.DependencyLock{
+				Alias:        "db",
+				SharingMode:  true,
+				SharingGroup: "group1",
+			},
+		},
+	}
+
+	err := e.Execute(ctx)
+	require.NoError(t, err)
+
+	depInstallation, err := p.Installations.GetInstallation(ctx, "", "db")
+	require.NoError(t, err)
+	assert.Equal(t,
+		[]storage.InstallationReference{{Installation: "/webapp", Dependency: "db"}},
+		depInstallation.Status.References,
+		"installing a parent that reuses an existing shared dependency should record a reference")
+}
+
+// TestExecute_V2Uninstall_ReleasingSharedDependency_DropsReference confirms
+// that Execute drops a parent's reference to a shared v2 dependency on
+// uninstall, even though sharedActionResolver returns before
+// runDependencyv2 is ever reached (this installation never owns the shared
+// dependency's lifecycle).
+func TestExecute_V2Uninstall_ReleasingSharedDependency_DropsReference(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	p := NewTestPorter(t)
+	defer p.Close()
+
+	p.TestInstallations.CreateInstallation(storage.NewInstallation("", "db"), func(i *storage.Installation) {
+		i.SetLabel(sharingGroupLabel, "group1")
+		i.Status.Installed = &now
+		i.AddReference("/webapp", "db")
+	})
+
+	parent := storage.NewInstallation("", "webapp")
+	opts := NewUninstallOptions()
+	opts.Namespace = ""
+	opts.Name = "webapp"
+
+	e := newDependencyExecutionerFor(p, parent, opts)
+	e.deps = []*queuedDependency{
+		{
+			DependencyLock: cnab.DependencyLock{
+				Alias:        "db",
+				SharingMode:  true,
+				SharingGroup: "group1",
+			},
+		},
+	}
+
+	err := e.Execute(ctx)
+	require.NoError(t, err)
+
+	depInstallation, err := p.Installations.GetInstallation(ctx, "", "db")
+	require.NoError(t, err)
+	assert.True(t, depInstallation.IsInstalled(), "uninstalling a parent must never uninstall a shared dependency it merely references")
+	assert.Empty(t, depInstallation.Status.References, "uninstalling a parent should drop its reference to a shared dependency")
+}
+
 // TestFinalizeExecute_UnconditionalDeleteForV1 confirms finalizeExecute
 // (only ever reached by v1 dependencies -- see runDependencyv2, which
 // handles v2/SharingMode uninstalls itself before finalizeExecute is

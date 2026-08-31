@@ -131,6 +131,16 @@ func (p *Porter) UninstallBundle(ctx context.Context, opts UninstallOptions) err
 	}
 
 	if opts.shouldDelete() {
+		// Re-read rather than trusting the installation snapshot loaded
+		// before Prepare/Execute above: another parent may have added a
+		// reference to this installation while its (potentially long-running)
+		// uninstall and dependency processing were in flight, and the stale
+		// snapshot would otherwise report unreferenced.
+		installation, err = p.Installations.GetInstallation(ctx, opts.Namespace, opts.Name)
+		if err != nil {
+			return fmt.Errorf("could not find installation %s/%s: %w", opts.Namespace, opts.Name, err)
+		}
+
 		if installation.IsReferenced() && !opts.ForceDelete {
 			return ErrInstallationReferencedRetryForceDelete
 		}

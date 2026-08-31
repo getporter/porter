@@ -106,6 +106,18 @@ func (e *dependencyExecutioner) Execute(ctx context.Context) error {
 	// executeDependency the requested action against all the dependencies
 	for _, dep := range e.deps {
 		if !e.sharedActionResolver(ctx, dep) {
+			// sharedActionResolver found a v2 dependency whose own bundle
+			// action must not run here (install: it's already installed
+			// for this SharingGroup; uninstall: this installation never
+			// owns its lifecycle) -- but the parent's use of it still
+			// needs to be reflected in the dependency's reference list,
+			// which runDependencyv2 (never reached below) would otherwise
+			// have handled.
+			if dep.SharingMode {
+				if err := e.recordSharedDependencyReference(ctx, dep); err != nil {
+					return err
+				}
+			}
 			return nil
 		}
 		err := e.executeDependency(ctx, dep)
@@ -177,6 +189,29 @@ func (e *dependencyExecutioner) sharedActionResolver(ctx context.Context, dep *q
 		}
 	}
 	return true
+}
+
+// recordSharedDependencyReference adds or drops this parent's reference to
+// a v2 (SharingMode) dependency for the install/uninstall cases where
+// sharedActionResolver has decided the dependency's own bundle action must
+// not run (it's already installed for this SharingGroup, or this
+// installation never owns its lifecycle). Must be called with
+// e.depArgs.Installation already set to the dependency found by
+// sharedActionResolver.
+func (e *dependencyExecutioner) recordSharedDependencyReference(ctx context.Context, dep *queuedDependency) error {
+	depInstallation := e.depArgs.Installation
+
+	if e.parentAction.GetAction() == cnab.ActionUninstall {
+		if depInstallation.RemoveReference(e.parentArgs.Installation.String()) {
+			return e.Installations.UpdateInstallation(ctx, depInstallation)
+		}
+		return nil
+	}
+
+	if depInstallation.AddReference(e.parentArgs.Installation.String(), dep.Alias) {
+		return e.Installations.UpdateInstallation(ctx, depInstallation)
+	}
+	return nil
 }
 
 func (e *dependencyExecutioner) identifyDependencies(ctx context.Context) error {
