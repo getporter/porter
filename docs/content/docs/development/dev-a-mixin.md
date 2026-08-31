@@ -11,6 +11,11 @@ or by using `porter mixin create` command as exemplified below:
 porter mixin create mymixin --author "My Name" --username mygithubusername [--dir path/to/mymixin]
 ```
 
+> **Note:** We're also developing an official [mixin-sdk-go][mixin-sdk-go] library,
+> meant to eventually replace skeletor as the way to build Go mixins. It's still a
+> work in progress, so skeletor remains the recommended starting point for now. If
+> you'd like to try the SDK early, see its [tutorial][mixin-sdk-go-tutorial].
+
 ## Naming a Mixin
 
 Mixin names are used directly in install URLs and file paths, so Porter enforces a naming **rule**:
@@ -25,5 +30,7 @@ We also ask that you follow these **conventions** when naming a mixin, though th
 This same rule applies to plugin names as well.
 
 [conduct]: /src/CODE_OF_CONDUCT.md
+[mixin-sdk-go]: https://github.com/getporter/mixin-sdk-go
+[mixin-sdk-go-tutorial]: https://github.com/getporter/mixin-sdk-go/blob/main/docs/tutorial.md
 
 ## See Also
