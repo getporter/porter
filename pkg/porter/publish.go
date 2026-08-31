@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -334,21 +335,29 @@ func (p *Porter) publishFromArchive(ctx context.Context, opts PublishOptions) er
 		err = errors.Join(err, p.FileSystem.RemoveAll(tmpDir))
 	}()
 
-	bundleRef, err := p.extractBundle(ctx, tmpDir, source)
-	if err != nil {
-		return err
+	extractedDir := filepath.Join(tmpDir, strings.TrimSuffix(filepath.Base(source), ".tgz"))
+
+	// If every image the bundle references is already published at the
+	// destination, we can avoid extracting artifacts/layout/blobs/ (which
+	// can be many gigabytes) entirely — see issue #2197's follow-up. This
+	// only reads the archive's small metadata files; any failure along the
+	// way just falls back to a full extraction below.
+	bundleRef, layoutPath, ok := p.tryFastPublishFromArchive(ctx, source, extractedDir, opts.Reference, regOpts)
+	if !ok {
+		bundleRef, err = p.extractBundle(ctx, tmpDir, source)
+		if err != nil {
+			return err
+		}
+
+		layoutPath, err = layout.FromPath(filepath.Join(extractedDir, "artifacts/layout"))
+		if err != nil {
+			return log.Errorf("failed to parse OCI Layout from archive %s: %w", opts.ArchiveFile, err)
+		}
 	}
 
 	bundleRef.Reference = ref
 
 	log.Infof("Beginning bundle publish to %s. This may take some time.", opts.Reference)
-
-	// Read the extracted OCI Layout
-	extractedDir := filepath.Join(tmpDir, strings.TrimSuffix(filepath.Base(source), ".tgz"))
-	layoutPath, err := layout.FromPath(filepath.Join(extractedDir, "artifacts/layout"))
-	if err != nil {
-		return log.Errorf("failed to parse OCI Layout from archive %s: %w", opts.ArchiveFile, err)
-	}
 
 	// Push updated images (renamed based on provided bundle tag) with same digests
 	// then update the bundle with new values (image name, digest)
@@ -409,26 +418,122 @@ func (p *Porter) extractBundle(ctx context.Context, tmpDir, source string) (cnab
 	span.Debugf("Extracting bundle from archive %s...", source)
 	l := loader.NewLoader()
 	imp := packager.NewImporter(source, tmpDir, l)
-	err := imp.Import()
-	if err != nil {
+	if err := imp.Import(); err != nil {
 		return cnab.BundleReference{}, span.Error(fmt.Errorf("failed to extract bundle from archive %s: %w", source, err))
 	}
 
-	bun, err := l.Load(filepath.Join(tmpDir, strings.TrimSuffix(filepath.Base(source), ".tgz"), "bundle.json"))
+	extractedDir := filepath.Join(tmpDir, strings.TrimSuffix(filepath.Base(source), ".tgz"))
+	bundleRef, err := loadBundleAndRelocationMap(extractedDir)
 	if err != nil {
 		return cnab.BundleReference{}, span.Error(fmt.Errorf("failed to load bundle from archive %s: %w", source, err))
 	}
-	data, err := p.FileSystem.ReadFile(filepath.Join(tmpDir, strings.TrimSuffix(filepath.Base(source), ".tgz"), "relocation-mapping.json"))
+	return bundleRef, nil
+}
+
+// loadBundleAndRelocationMap loads bundle.json and relocation-mapping.json
+// from a directory populated by either a full archive extraction
+// (extractBundle) or a metadata-only peek (peekArchiveMetadata) — both use
+// the same file names and directory shape. Both files always live on the
+// real local filesystem regardless of the abstract p.FileSystem in use:
+// extraction (cnab-go's Importer) and the peek both write with the raw os
+// package, never through afero.
+func loadBundleAndRelocationMap(dir string) (cnab.BundleReference, error) {
+	l := loader.NewLoader()
+	bun, err := l.Load(filepath.Join(dir, "bundle.json"))
 	if err != nil {
-		return cnab.BundleReference{}, span.Error(fmt.Errorf("failed to load relocation-mapping.json from archive %s: %w", source, err))
+		return cnab.BundleReference{}, fmt.Errorf("failed to load bundle.json: %w", err)
+	}
+
+	data, err := os.ReadFile(filepath.Join(dir, "relocation-mapping.json"))
+	if err != nil {
+		return cnab.BundleReference{}, fmt.Errorf("failed to load relocation-mapping.json: %w", err)
 	}
 	var reloMap relocation.ImageRelocationMap
-	err = json.Unmarshal(data, &reloMap)
-	if err != nil {
-		return cnab.BundleReference{}, span.Error(fmt.Errorf("failed to parse relocation-mapping.json from archive %s: %w", source, err))
+	if err := json.Unmarshal(data, &reloMap); err != nil {
+		return cnab.BundleReference{}, fmt.Errorf("failed to parse relocation-mapping.json: %w", err)
 	}
 
 	return cnab.BundleReference{Definition: cnab.ExtendedBundle{Bundle: *bun}, RelocationMap: reloMap}, nil
+}
+
+// tryFastPublishFromArchive attempts to satisfy a publish using only an
+// archive's small metadata files (bundle.json, relocation-mapping.json,
+// artifacts/layout/{oci-layout,index.json}), without extracting
+// artifacts/layout/blobs/ — which can be many gigabytes. It only succeeds
+// when every image the bundle references is already published at the
+// destination (see allImagesAlreadyPublished); index.json alone is enough to
+// resolve each image's digest for that check; no blob content is needed.
+//
+// Any failure along the way — an archive that doesn't have this ordering
+// (e.g. one written by an older Porter, or another tool), or an image that
+// still needs pushing — is reported as ok=false so the caller falls back to
+// a full extraction. This function never fails a publish on its own.
+func (p *Porter) tryFastPublishFromArchive(ctx context.Context, source, extractedDir, newReference string, opts cnabtooci.RegistryOptions) (bundleRef cnab.BundleReference, layoutPath layout.Path, ok bool) {
+	_, log := tracing.StartSpan(ctx)
+	defer log.EndSpan()
+
+	found, err := peekArchiveMetadata(source, extractedDir)
+	if err != nil || !found {
+		return cnab.BundleReference{}, "", false
+	}
+
+	bundleRef, err = loadBundleAndRelocationMap(extractedDir)
+	if err != nil {
+		log.Debugf("fast publish path: failed to load bundle metadata: %s", err)
+		return cnab.BundleReference{}, "", false
+	}
+
+	layoutPath, err = layout.FromPath(filepath.Join(extractedDir, "artifacts/layout"))
+	if err != nil {
+		log.Debugf("fast publish path: failed to parse OCI layout: %s", err)
+		return cnab.BundleReference{}, "", false
+	}
+
+	if !p.allImagesAlreadyPublished(ctx, bundleRef, layoutPath, newReference, opts) {
+		return cnab.BundleReference{}, "", false
+	}
+
+	log.Debugf("All images already published at %s, skipping full archive extraction", newReference)
+	return bundleRef, layoutPath, true
+}
+
+// allImagesAlreadyPublished reports whether every invocation and application
+// image referenced by bundleRef already exists at its would-be destination
+// in the registry. It mirrors the per-image loop in publishFromArchive, but
+// calls only findImageInLayout (reads layoutPath's index.json) and
+// imageAlreadyPublished (a registry HEAD request) — never
+// pushImageFromLayout — so it never needs any image blob content.
+func (p *Porter) allImagesAlreadyPublished(ctx context.Context, bundleRef cnab.BundleReference, layoutPath layout.Path, newReference string, opts cnabtooci.RegistryOptions) bool {
+	check := func(originImg string) bool {
+		newImgRef, err := getNewImageNameFromBundleReference(originImg, newReference, opts)
+		if err != nil {
+			return false
+		}
+
+		originImgRef := originImg
+		if relocatedImage, ok := bundleRef.RelocationMap[originImg]; ok {
+			originImgRef = relocatedImage
+		}
+
+		desc, err := findImageInLayout(layoutPath, originImgRef)
+		if err != nil {
+			return false
+		}
+
+		return p.imageAlreadyPublished(ctx, newImgRef, desc.Digest, opts)
+	}
+
+	for _, invImg := range bundleRef.Definition.InvocationImages {
+		if !check(invImg.Image) {
+			return false
+		}
+	}
+	for _, img := range bundleRef.Definition.Images {
+		if !check(img.Image) {
+			return false
+		}
+	}
+	return true
 }
 
 // pushUpdatedImage uses the provided layout to find the provided origImg,
