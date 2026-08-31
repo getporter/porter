@@ -283,11 +283,7 @@ func (ex *exporter) CustomTar(ctx context.Context, srcPath string, compressionLe
 			log.EndSpan()
 		}()
 
-		walker := func(path string, finfo os.FileInfo, err error) error {
-			if err != nil {
-				return fmt.Errorf("walk invoked with error: %w", err)
-			}
-
+		writePath := func(path string, finfo os.FileInfo) error {
 			ctx, log := tracing.StartSpanWithName(ctx, "CustomTar.ProcessPath", attribute.String("customTar.path", path))
 			defer log.EndSpan()
 
@@ -325,8 +321,40 @@ func (ex *exporter) CustomTar(ctx context.Context, srcPath string, compressionLe
 			return nil
 		}
 
-		// build tar
-		err = filepath.Walk(cleanSrcPath, walker)
+		walker := func(path string, finfo os.FileInfo, err error) error {
+			if err != nil {
+				return fmt.Errorf("walk invoked with error: %w", err)
+			}
+			return writePath(path, finfo)
+		}
+
+		// Write the root dir, then the small metadata files (bundle.json,
+		// relocation-mapping.json) before walking artifacts/, so a client
+		// streaming the archive can read the bundle manifest without first
+		// reading through the (potentially many-gigabyte) artifacts/ tree.
+		// See https://github.com/getporter/porter/issues/2197.
+		err = func() error {
+			rootInfo, err := os.Stat(cleanSrcPath)
+			if err != nil {
+				return fmt.Errorf("failed to stat %s: %w", cleanSrcPath, err)
+			}
+			if err := writePath(cleanSrcPath, rootInfo); err != nil {
+				return err
+			}
+
+			for _, name := range []string{"bundle.json", "relocation-mapping.json"} {
+				path := filepath.Join(cleanSrcPath, name)
+				finfo, err := os.Stat(path)
+				if err != nil {
+					return fmt.Errorf("failed to stat %s: %w", path, err)
+				}
+				if err := writePath(path, finfo); err != nil {
+					return err
+				}
+			}
+
+			return filepath.Walk(filepath.Join(cleanSrcPath, "artifacts"), walker)
+		}()
 	}()
 
 	return pipeReader, nil

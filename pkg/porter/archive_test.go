@@ -1,7 +1,11 @@
 package porter
 
 import (
+	"archive/tar"
+	"compress/gzip"
 	"context"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"get.porter.sh/porter/pkg"
@@ -74,6 +78,47 @@ func TestArchive_ArchiveDirectory(t *testing.T) {
 	require.Contains(t, dir, "examples-test-bundle-0.2.0")
 
 	tests.AssertDirectoryPermissionsEqual(t, dir, pkg.FileModeDirectory)
+}
+
+// TestArchive_CustomTar_MetadataFirst verifies that bundle.json and
+// relocation-mapping.json come before artifacts/ in the tar stream, so a
+// client streaming the archive can read the bundle manifest without first
+// reading through the (potentially many-gigabyte) artifacts/ tree.
+// See https://github.com/getporter/porter/issues/2197.
+func TestArchive_CustomTar_MetadataFirst(t *testing.T) {
+	dir := t.TempDir()
+
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "bundle.json"), []byte(`{}`), 0644))
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "relocation-mapping.json"), []byte(`{}`), 0644))
+
+	artifactsDir := filepath.Join(dir, "artifacts", "layout", "blobs", "sha256")
+	require.NoError(t, os.MkdirAll(artifactsDir, 0755))
+	require.NoError(t, os.WriteFile(filepath.Join(artifactsDir, "abc123"), []byte("blob"), 0644))
+
+	ex := &exporter{}
+	rc, err := ex.CustomTar(context.Background(), dir, gzip.DefaultCompression)
+	require.NoError(t, err)
+	defer rc.Close()
+
+	gz, err := gzip.NewReader(rc)
+	require.NoError(t, err)
+	defer gz.Close()
+
+	var names []string
+	tr := tar.NewReader(gz)
+	for {
+		hdr, err := tr.Next()
+		if err != nil {
+			break
+		}
+		names = append(names, hdr.Name)
+	}
+
+	require.Equal(t, []string{"./", "./bundle.json", "./relocation-mapping.json"}, names[:3],
+		"expected bundle.json and relocation-mapping.json to be the first entries in the archive")
+	for _, name := range names[3:] {
+		require.Contains(t, name, "artifacts", "expected only artifacts/ entries after the metadata files")
+	}
 }
 
 func TestArchive_AddImage(t *testing.T) {
