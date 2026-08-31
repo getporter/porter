@@ -24,4 +24,9 @@ func TestUninstallOptions_Validate(t *testing.T) {
 		err := opts.Validate([]string{"name1", "name2"})
 		require.EqualError(t, err, "only one positional argument may be specified, the name, but multiple were received: [name1 name2]")
 	})
+	t.Run("invalid name", func(t *testing.T) {
+		opts := UninstallOptions{}
+		err := opts.Validate([]string{"MyMixin"})
+		require.EqualError(t, err, `invalid name "MyMixin": must contain only lowercase letters, numbers, dashes, and underscores`)
+	})
 }

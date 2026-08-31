@@ -134,6 +134,9 @@ func (o *MixinsCreateOptions) Validate(args []string, cxt *portercontext.Context
 		return fmt.Errorf("only one positional argument may be specified, the mixin name, but multiple were received: %s", args)
 	}
 
+	if err := pkgmgmt.ValidateName(args[0]); err != nil {
+		return err
+	}
 	o.MixinName = args[0]
 
 	if o.AuthorName == "" {

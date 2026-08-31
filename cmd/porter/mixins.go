@@ -206,13 +206,14 @@ func buildMixinsCreateCommand(p *porter.Porter) *cobra.Command {
 		Short: "Create a new mixin project based on the getporter/skeletor repository",
 		Long: `Create a new mixin project based on the getporter/skeletor repository.
 The first argument is the name of the mixin to create and is required.
+Mixin names must be lowercase and may only contain letters, numbers, dashes, and underscores.
 
 A flag of --author to declare the author of the mixin is a required input.
 A flag of --username to specify the GitHub's username of the mixin's author is a required input.
 
 You can also specify where to put the mixin directory. It will default to the current directory.`,
-		Example: ` porter mixin create MyMixin --author "My Name" --username mygithubusername
-		porter mixin create MyMixin --author "My Name" --username mygithubusername --dir path/to/mymixin
+		Example: ` porter mixin create mymixin --author "My Name" --username mygithubusername
+		porter mixin create mymixin --author "My Name" --username mygithubusername --dir path/to/mymixin
 		`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate(args, p.Context)

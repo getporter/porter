@@ -37,3 +37,4 @@ Guide](/mixin-dev-guide/) to get started.
 - [Available Mixins](/mixins/)
 - [Available Plugins](/plugins/)
 - [Types of Plugins](/plugins/types/)
+- [Naming a Mixin](/docs/development/dev-a-mixin/#naming-a-mixin)

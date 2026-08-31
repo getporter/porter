@@ -143,6 +143,20 @@ func TestPorter_PrintPlugins(t *testing.T) {
 	})
 }
 
+func TestShowPluginOptions_Validate(t *testing.T) {
+	t.Run("valid name", func(t *testing.T) {
+		opts := ShowPluginOptions{}
+		err := opts.Validate([]string{"plugin1"})
+		require.NoError(t, err)
+		assert.Equal(t, "plugin1", opts.Name)
+	})
+	t.Run("invalid name", func(t *testing.T) {
+		opts := ShowPluginOptions{}
+		err := opts.Validate([]string{"MyPlugin"})
+		require.ErrorContains(t, err, `invalid name "MyPlugin"`)
+	})
+}
+
 func TestPorter_ShowPlugin(t *testing.T) {
 	t.Run("plaintext", func(t *testing.T) {
 		ctx := context.Background()
@@ -303,6 +317,20 @@ func TestPorter_InstallPlugin(t *testing.T) {
 			assert.Contains(t, tc.expected.output, gotOutput)
 		})
 	}
+}
+
+func TestPorter_InstallPlugin_InvalidName(t *testing.T) {
+	p := NewTestPorter(t)
+	defer p.Close()
+
+	p.TestConfig.TestContext.AddTestFile("testdata/plugins-invalid-name.yaml", "/plugins-invalid-name.yaml")
+
+	config := plugins.InstallOptions{File: "plugins-invalid-name.yaml"}
+	err := config.Validate(nil, p.Context)
+	require.NoError(t, err, "Validate failed")
+
+	err = p.InstallPlugin(context.Background(), config)
+	require.ErrorContains(t, err, `invalid name "MyPlugin"`)
 }
 
 func TestPorter_InstallPluginsSchema(t *testing.T) {
