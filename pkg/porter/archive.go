@@ -334,26 +334,53 @@ func (ex *exporter) CustomTar(ctx context.Context, srcPath string, compressionLe
 		// reading through the (potentially many-gigabyte) artifacts/ tree.
 		// See https://github.com/getporter/porter/issues/2197.
 		err = func() error {
-			rootInfo, err := os.Stat(cleanSrcPath)
-			if err != nil {
-				return fmt.Errorf("failed to stat %s: %w", cleanSrcPath, err)
-			}
-			if err := writePath(cleanSrcPath, rootInfo); err != nil {
-				return err
-			}
-
-			for _, name := range []string{"bundle.json", "relocation-mapping.json"} {
-				path := filepath.Join(cleanSrcPath, name)
+			writeNamed := func(path string) error {
 				finfo, err := os.Stat(path)
 				if err != nil {
 					return fmt.Errorf("failed to stat %s: %w", path, err)
 				}
-				if err := writePath(path, finfo); err != nil {
+				return writePath(path, finfo)
+			}
+
+			if err := writeNamed(cleanSrcPath); err != nil {
+				return err
+			}
+
+			for _, name := range []string{"bundle.json", "relocation-mapping.json"} {
+				if err := writeNamed(filepath.Join(cleanSrcPath, name)); err != nil {
 					return err
 				}
 			}
 
-			return filepath.Walk(filepath.Join(cleanSrcPath, "artifacts"), walker)
+			// Same reasoning one level deeper: artifacts/layout/{oci-layout,
+			// index.json} are small, fixed-content files written by
+			// ocilayout.Create up front, and index.json alone is enough to
+			// resolve every image's digest (layout.Path.ImageIndex reads
+			// only index.json) — so write them before artifacts/layout/blobs/,
+			// the large tree that holds the actual image content.
+			artifactsDir := filepath.Join(cleanSrcPath, "artifacts")
+			layoutDir := filepath.Join(artifactsDir, "layout")
+			for _, dir := range []string{artifactsDir, layoutDir} {
+				if err := writeNamed(dir); err != nil {
+					return err
+				}
+			}
+			for _, name := range []string{"oci-layout", "index.json"} {
+				if err := writeNamed(filepath.Join(layoutDir, name)); err != nil {
+					return err
+				}
+			}
+
+			// blobs/ doesn't exist for a bundle with no images.
+			blobsDir := filepath.Join(layoutDir, "blobs")
+			if _, err := os.Stat(blobsDir); err != nil {
+				if os.IsNotExist(err) {
+					return nil
+				}
+				return fmt.Errorf("failed to stat %s: %w", blobsDir, err)
+			}
+
+			return filepath.Walk(blobsDir, walker)
 		}()
 	}()
 
