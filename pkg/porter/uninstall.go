@@ -119,18 +119,32 @@ func (p *Porter) UninstallBundle(ctx context.Context, opts UninstallOptions) err
 		}
 	}
 
-	// TODO(PEP-003): See https://github.com/getporter/porter/issues/465 for flag to allow keeping around the dependencies
-	// Note(schristoff): For now we check if the parentLabel is on the dep
-	// to decide if we delete. We only add the parentLabel on the dep
-	// if they were installed *together*
-	// Users can add a label (for now) if they want to delete it
-	// Label is: sh.porter.parentInstallation: $INSTALLATIONNAME
+	// deperator.Execute drops this installation's reference from each v2
+	// (SharingMode) dependency without touching the dependency's own state --
+	// it's never this installation's to uninstall or delete, even if this
+	// installation happened to be the one that originally created it (see
+	// dependencyExecutioner.runDependencyv2). v1 dependencies are always
+	// deleted, since their name is scoped to this parent and can't be shared.
 	err = opts.handleUninstallErrs(p.Out, deperator.Execute(ctx))
 	if err != nil {
 		return err
 	}
 
 	if opts.shouldDelete() {
+		// Re-read rather than trusting the installation snapshot loaded
+		// before Prepare/Execute above: another parent may have added a
+		// reference to this installation while its (potentially long-running)
+		// uninstall and dependency processing were in flight, and the stale
+		// snapshot would otherwise report unreferenced.
+		installation, err = p.Installations.GetInstallation(ctx, opts.Namespace, opts.Name)
+		if err != nil {
+			return fmt.Errorf("could not find installation %s/%s: %w", opts.Namespace, opts.Name, err)
+		}
+
+		if installation.IsReferenced() && !opts.ForceDelete {
+			return ErrInstallationReferencedRetryForceDelete
+		}
+
 		log.Info("deleting installation records")
 		return p.Installations.RemoveInstallation(ctx, opts.Namespace, opts.Name)
 	}

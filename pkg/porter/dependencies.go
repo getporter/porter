@@ -106,6 +106,18 @@ func (e *dependencyExecutioner) Execute(ctx context.Context) error {
 	// executeDependency the requested action against all the dependencies
 	for _, dep := range e.deps {
 		if !e.sharedActionResolver(ctx, dep) {
+			// sharedActionResolver found a v2 dependency whose own bundle
+			// action must not run here (install: it's already installed
+			// for this SharingGroup; uninstall: this installation never
+			// owns its lifecycle) -- but the parent's use of it still
+			// needs to be reflected in the dependency's reference list,
+			// which runDependencyv2 (never reached below) would otherwise
+			// have handled.
+			if dep.SharingMode {
+				if err := e.recordSharedDependencyReference(ctx, dep); err != nil {
+					return err
+				}
+			}
 			return nil
 		}
 		err := e.executeDependency(ctx, dep)
@@ -177,6 +189,29 @@ func (e *dependencyExecutioner) sharedActionResolver(ctx context.Context, dep *q
 		}
 	}
 	return true
+}
+
+// recordSharedDependencyReference adds or drops this parent's reference to
+// a v2 (SharingMode) dependency for the install/uninstall cases where
+// sharedActionResolver has decided the dependency's own bundle action must
+// not run (it's already installed for this SharingGroup, or this
+// installation never owns its lifecycle). Must be called with
+// e.depArgs.Installation already set to the dependency found by
+// sharedActionResolver.
+func (e *dependencyExecutioner) recordSharedDependencyReference(ctx context.Context, dep *queuedDependency) error {
+	depInstallation := e.depArgs.Installation
+
+	if e.parentAction.GetAction() == cnab.ActionUninstall {
+		if depInstallation.RemoveReference(e.parentArgs.Installation.String()) {
+			return e.Installations.UpdateInstallation(ctx, depInstallation)
+		}
+		return nil
+	}
+
+	if depInstallation.AddReference(e.parentArgs.Installation.String(), dep.Alias) {
+		return e.Installations.UpdateInstallation(ctx, depInstallation)
+	}
+	return nil
 }
 
 func (e *dependencyExecutioner) identifyDependencies(ctx context.Context) error {
@@ -396,12 +431,21 @@ func (e *dependencyExecutioner) executeDependency(ctx context.Context, dep *queu
 // runDependencyv2 will see if the child dependency is already installed
 // and if so, use sharingmode && group to resolve what to do
 func (e *dependencyExecutioner) runDependencyv2(ctx context.Context, dep *queuedDependency) error {
+	action := e.parentAction.GetAction()
+
 	depInstallation, err := e.Installations.GetInstallation(ctx, e.parentOpts.Namespace, dep.Alias)
 	if err != nil {
 		if errors.Is(err, storage.ErrNotFound{}) {
+			// Nothing to reference-drop or uninstall if the dependency was
+			// never created to begin with.
+			if action == cnab.ActionUninstall {
+				return nil
+			}
+
 			depInstallation = storage.NewInstallation(e.parentOpts.Namespace, dep.Alias)
 			depInstallation.SetLabel("sh.porter.parentInstallation", e.parentArgs.Installation.String())
 			depInstallation.SetLabel(sharingGroupLabel, dep.SharingGroup)
+			depInstallation.AddReference(e.parentArgs.Installation.String(), dep.Alias)
 
 			// For now, assume it's okay to give the dependency the same credentials as the parent
 			depInstallation.CredentialSets = e.parentInstallation.CredentialSets
@@ -409,6 +453,41 @@ func (e *dependencyExecutioner) runDependencyv2(ctx context.Context, dep *queued
 				return err
 			}
 
+			// err is nil here (the Insert above succeeded), so this returns
+			// without ever calling getActionArgs/finalizeExecute below --
+			// meaning a newly-created v2 dependency's own install action
+			// never actually runs via this path. Pre-existing behavior,
+			// predates reference tracking; not fixed here to keep this
+			// change scoped to #2608.
+			return err
+		}
+	}
+
+	// This installation being uninstalled never owns a shared dependency's
+	// lifecycle, whether it originally created it or is just referencing one
+	// that already existed -- it only ever borrows it. So uninstalling never
+	// runs the dependency's own uninstall action or deletes its installation
+	// record here; it only drops this installation's reference. Once nothing
+	// references it, actually deleting the shared installation (and, first,
+	// uninstalling it) is left to an explicit, separate action (porter
+	// installations delete / porter uninstall on the dependency itself).
+	// err == nil here means depInstallation was actually found by
+	// GetInstallation above (the not-found case already returned); guarding
+	// on it avoids acting on a zero-value depInstallation if GetInstallation
+	// failed with some other error, a pre-existing gap in this function
+	// unrelated to reference tracking.
+	if err == nil && action == cnab.ActionUninstall {
+		if depInstallation.RemoveReference(e.parentArgs.Installation.String()) {
+			return e.Installations.UpdateInstallation(ctx, depInstallation)
+		}
+		return nil
+	}
+
+	// Record that the parent depends on this installation to satisfy
+	// dep.Alias, whether it was already installed independently or created
+	// by a prior run.
+	if err == nil && depInstallation.AddReference(e.parentArgs.Installation.String(), dep.Alias) {
+		if err := e.Installations.UpdateInstallation(ctx, depInstallation); err != nil {
 			return err
 		}
 	}
@@ -422,9 +501,7 @@ func (e *dependencyExecutioner) runDependencyv2(ctx context.Context, dep *queued
 	//todo(schristoff): this is kind of icky, can be it less so?
 	if dep.SharingGroup == depInstallation.Labels[sharingGroupLabel] {
 		if depInstallation.IsInstalled() {
-
-			action := e.parentAction.GetAction()
-			if action == "upgrade" || action == "uninstall" {
+			if action == "upgrade" {
 				return nil
 			}
 		}
@@ -493,7 +570,15 @@ func (e *dependencyExecutioner) finalizeExecute(ctx context.Context, dep *queued
 	}
 
 	// If uninstallOpts is an empty struct (i.e., action not Uninstall), this
-	// will resolve to false and thus be a no-op
+	// will resolve to false and thus be a no-op.
+	//
+	// Only v1 dependencies reach this: runDependencyv2 handles the v2
+	// (SharingMode) uninstall case itself, before ever calling
+	// getActionArgs/finalizeExecute, since a v2 dependency's lifecycle is
+	// never owned by an installation that merely references it (see
+	// runDependencyv2). v1 dependency names are scoped to this parent
+	// (BuildPrerequisiteInstallationName) and can never be shared, so
+	// deleting one unconditionally here is always safe.
 	if uninstallOpts.shouldDelete() {
 		span.Infof(installationDeleteTmpl, e.depArgs.Installation)
 		return e.Installations.RemoveInstallation(ctx, e.depArgs.Installation.Namespace, e.depArgs.Installation.Name)

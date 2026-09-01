@@ -274,6 +274,66 @@ type InstallationStatus struct {
 	// last informed this status failed to persist to the secret store. The
 	// installation itself may still have succeeded.
 	OutputPersistFailed bool `json:"outputPersistFailed,omitempty" yaml:"outputPersistFailed,omitempty" toml:"outputPersistFailed,omitempty"`
+
+	// References tracks other installations that depend on this installation
+	// to satisfy one of their dependencies, either because it was created for
+	// or reused to satisfy that dependency. Used to determine if it's safe to
+	// delete this installation.
+	References []InstallationReference `json:"references,omitempty" yaml:"references,omitempty" toml:"references,omitempty"`
+}
+
+// InstallationReference records another installation that depends on this
+// installation to satisfy one of its dependencies.
+type InstallationReference struct {
+	// Installation is the "namespace/name" of the referencing installation.
+	Installation string `json:"installation" yaml:"installation" toml:"installation"`
+
+	// Dependency is the alias the referencing installation's bundle uses for this dependency.
+	Dependency string `json:"dependency" yaml:"dependency" toml:"dependency"`
+}
+
+// AddReference records that installation depends on i to satisfy its
+// dependency. Idempotent: upserts by (installation, dependency), returning
+// true only if it actually changed References, so callers can skip a
+// needless persist. Callers are responsible for read-modify-write
+// consistency; there's no built-in optimistic concurrency here, matching
+// the rest of this file.
+func (i *Installation) AddReference(installation string, dependency string) bool {
+	for _, ref := range i.Status.References {
+		if ref.Installation == installation && ref.Dependency == dependency {
+			return false
+		}
+	}
+
+	i.Status.References = append(i.Status.References, InstallationReference{
+		Installation: installation,
+		Dependency:   dependency,
+	})
+	return true
+}
+
+// RemoveReference removes every reference recorded for the given
+// referencing installation (all of its dependency aliases at once), e.g.
+// when that installation is deleted or no longer needs this installation.
+// Returns true only if it actually changed References.
+func (i *Installation) RemoveReference(installation string) bool {
+	kept := i.Status.References[:0]
+	changed := false
+	for _, ref := range i.Status.References {
+		if ref.Installation == installation {
+			changed = true
+			continue
+		}
+		kept = append(kept, ref)
+	}
+	i.Status.References = kept
+	return changed
+}
+
+// IsReferenced reports whether any other installation currently depends on
+// this installation.
+func (i Installation) IsReferenced() bool {
+	return len(i.Status.References) > 0
 }
 
 // IsInstalled checks if the installation is currently installed.

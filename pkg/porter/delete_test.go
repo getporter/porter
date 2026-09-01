@@ -18,6 +18,7 @@ func TestDeleteInstallation(t *testing.T) {
 		lastAction          string
 		lastActionStatus    string
 		force               bool
+		referenced          bool
 		installationRemains bool
 		wantError           string
 	}{
@@ -46,6 +47,23 @@ func TestDeleteInstallation(t *testing.T) {
 			lastAction:       "uninstall",
 			lastActionStatus: cnab.StatusFailed,
 			force:            true,
+		}, {
+			name:             "successful uninstall; no --force",
+			lastAction:       "uninstall",
+			lastActionStatus: cnab.StatusSucceeded,
+		}, {
+			name:                "still referenced; no --force",
+			lastAction:          "uninstall",
+			lastActionStatus:    cnab.StatusSucceeded,
+			referenced:          true,
+			installationRemains: true,
+			wantError:           ErrInstallationReferencedRetryForce.Error(),
+		}, {
+			name:             "still referenced; --force",
+			lastAction:       "uninstall",
+			lastActionStatus: cnab.StatusSucceeded,
+			referenced:       true,
+			force:            true,
 		},
 	}
 
@@ -58,7 +76,13 @@ func TestDeleteInstallation(t *testing.T) {
 
 			// Create test claim
 			if tc.lastAction != "" {
-				i := p.TestInstallations.CreateInstallation(storage.NewInstallation("", "test"))
+				i := p.TestInstallations.CreateInstallation(storage.NewInstallation("", "test"), func(i *storage.Installation) {
+					i.Status.Action = tc.lastAction
+					i.Status.ResultStatus = tc.lastActionStatus
+					if tc.referenced {
+						i.AddReference("/parent", "db")
+					}
+				})
 				c := p.TestInstallations.CreateRun(i.NewRun(tc.lastAction, cnab.ExtendedBundle{}))
 				_ = p.TestInstallations.CreateResult(c.NewResult(tc.lastActionStatus))
 			}
@@ -83,4 +107,37 @@ func TestDeleteInstallation(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TestDeleteInstallation_SweepsReferences verifies that deleting an
+// installation that was itself referencing other installations (to satisfy
+// its own dependencies) removes its reference from those installations, so
+// they don't consider themselves referenced by a record that no longer
+// exists.
+func TestDeleteInstallation_SweepsReferences(t *testing.T) {
+	ctx := context.Background()
+
+	p := NewTestPorter(t)
+	defer p.Close()
+
+	p.TestInstallations.CreateInstallation(storage.NewInstallation("", "mysqldb"), func(i *storage.Installation) {
+		i.AddReference("/myinfra", "db")
+	})
+
+	parent := p.TestInstallations.CreateInstallation(storage.NewInstallation("", "myinfra"), func(i *storage.Installation) {
+		i.Status.Action = cnab.ActionUninstall
+		i.Status.ResultStatus = cnab.StatusSucceeded
+	})
+	c := p.TestInstallations.CreateRun(parent.NewRun(cnab.ActionUninstall, cnab.ExtendedBundle{}))
+	_ = p.TestInstallations.CreateResult(c.NewResult(cnab.StatusSucceeded))
+
+	opts := DeleteOptions{}
+	opts.Name = "myinfra"
+
+	err := p.DeleteInstallation(ctx, opts)
+	require.NoError(t, err, "expected DeleteInstallation to succeed")
+
+	updatedDep, err := p.Installations.GetInstallation(ctx, "", "mysqldb")
+	require.NoError(t, err, "expected the referenced installation to still exist")
+	assert.False(t, updatedDep.IsReferenced(), "expected the deleted installation's reference to be swept from mysqldb")
 }

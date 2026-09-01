@@ -184,6 +184,72 @@ func TestInstallation_ApplyResult(t *testing.T) {
 	})
 }
 
+func TestInstallation_References(t *testing.T) {
+	t.Parallel()
+
+	t.Run("AddReference adds a new reference", func(t *testing.T) {
+		inst := NewInstallation("dev", "mysqldb")
+
+		changed := inst.AddReference("dev/myinfra", "db")
+
+		assert.True(t, changed, "expected AddReference to report a change")
+		assert.Equal(t, []InstallationReference{{Installation: "dev/myinfra", Dependency: "db"}}, inst.Status.References)
+		assert.True(t, inst.IsReferenced())
+	})
+
+	t.Run("AddReference is idempotent", func(t *testing.T) {
+		inst := NewInstallation("dev", "mysqldb")
+		inst.AddReference("dev/myinfra", "db")
+
+		changed := inst.AddReference("dev/myinfra", "db")
+
+		assert.False(t, changed, "expected a duplicate AddReference to report no change")
+		assert.Len(t, inst.Status.References, 1, "expected the duplicate reference to not be added again")
+	})
+
+	t.Run("AddReference tracks multiple referencing installations", func(t *testing.T) {
+		inst := NewInstallation("dev", "mysqldb")
+		inst.AddReference("dev/myinfra", "db")
+
+		changed := inst.AddReference("dev/webapp", "db")
+
+		assert.True(t, changed)
+		assert.Len(t, inst.Status.References, 2)
+	})
+
+	t.Run("RemoveReference removes all aliases for an installation", func(t *testing.T) {
+		inst := NewInstallation("dev", "mysqldb")
+		inst.AddReference("dev/myinfra", "db")
+		inst.AddReference("dev/myinfra", "cache")
+		inst.AddReference("dev/webapp", "db")
+
+		changed := inst.RemoveReference("dev/myinfra")
+
+		assert.True(t, changed)
+		assert.Equal(t, []InstallationReference{{Installation: "dev/webapp", Dependency: "db"}}, inst.Status.References)
+	})
+
+	t.Run("RemoveReference is a no-op when not referenced", func(t *testing.T) {
+		inst := NewInstallation("dev", "mysqldb")
+
+		changed := inst.RemoveReference("dev/myinfra")
+
+		assert.False(t, changed)
+		assert.False(t, inst.IsReferenced())
+	})
+
+	t.Run("IsReferenced reflects the current reference list", func(t *testing.T) {
+		inst := NewInstallation("dev", "mysqldb")
+		assert.False(t, inst.IsReferenced())
+
+		inst.AddReference("dev/myinfra", "db")
+		assert.True(t, inst.IsReferenced())
+
+		inst.RemoveReference("dev/myinfra")
+		assert.False(t, inst.IsReferenced())
+	})
+}
+
 func TestInstallation_Validate(t *testing.T) {
 	t.Parallel()
 
