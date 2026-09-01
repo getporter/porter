@@ -11,6 +11,11 @@ Our [skeleton mixin template][skeletor] demonstrates how to implement each comma
 providing a working implementation, tests, and a Makefile to manage common tasks. If
 you are writing a mixin in Go, we strongly recommend starting from the template.
 
+> **Note:** An official [mixin-sdk-go][mixin-sdk-go] library is also in development
+> as skeletor's eventual replacement. It's still a work in progress, so skeletor
+> remains the recommended starting point for now. If you'd like to try the SDK
+> early, see its [tutorial][mixin-sdk-go-tutorial].
+
 **Required Commands**
 
 * [build](#build)
@@ -339,6 +344,8 @@ $ ~/.porter/mixins/exec/exec version --output json
 
 [jsonschema]: https://json-schema.org/understanding-json-schema/
 [skeletor]: https://github.com/getporter/skeletor
+[mixin-sdk-go]: https://github.com/getporter/mixin-sdk-go
+[mixin-sdk-go-tutorial]: https://github.com/getporter/mixin-sdk-go/blob/main/docs/tutorial.md
 [JSON Schema Validator]: https://www.jsonschemavalidator.net/
 [YAML to JSON converter]: https://www.convertjson.com/yaml-to-json.htm
 [exec mixin schema]: /src/pkg/exec/schema/exec.json
