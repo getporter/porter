@@ -321,9 +321,16 @@ func (ex *exporter) CustomTar(ctx context.Context, srcPath string, compressionLe
 			return nil
 		}
 
+		// Tracks paths already written by name below, so the catch-all walk
+		// at the end doesn't write them twice.
+		written := map[string]bool{}
+
 		walker := func(path string, finfo os.FileInfo, err error) error {
 			if err != nil {
 				return fmt.Errorf("walk invoked with error: %w", err)
+			}
+			if written[path] {
+				return nil
 			}
 			return writePath(path, finfo)
 		}
@@ -339,6 +346,7 @@ func (ex *exporter) CustomTar(ctx context.Context, srcPath string, compressionLe
 				if err != nil {
 					return fmt.Errorf("failed to stat %s: %w", path, err)
 				}
+				written[path] = true
 				return writePath(path, finfo)
 			}
 
@@ -361,26 +369,33 @@ func (ex *exporter) CustomTar(ctx context.Context, srcPath string, compressionLe
 			artifactsDir := filepath.Join(cleanSrcPath, "artifacts")
 			layoutDir := filepath.Join(artifactsDir, "layout")
 			for _, dir := range []string{artifactsDir, layoutDir} {
+				if _, err := os.Stat(dir); err != nil {
+					if os.IsNotExist(err) {
+						continue
+					}
+					return fmt.Errorf("failed to stat %s: %w", dir, err)
+				}
 				if err := writeNamed(dir); err != nil {
 					return err
 				}
 			}
 			for _, name := range []string{"oci-layout", "index.json"} {
-				if err := writeNamed(filepath.Join(layoutDir, name)); err != nil {
+				path := filepath.Join(layoutDir, name)
+				if _, err := os.Stat(path); err != nil {
+					if os.IsNotExist(err) {
+						continue
+					}
+					return fmt.Errorf("failed to stat %s: %w", path, err)
+				}
+				if err := writeNamed(path); err != nil {
 					return err
 				}
 			}
 
-			// blobs/ doesn't exist for a bundle with no images.
-			blobsDir := filepath.Join(layoutDir, "blobs")
-			if _, err := os.Stat(blobsDir); err != nil {
-				if os.IsNotExist(err) {
-					return nil
-				}
-				return fmt.Errorf("failed to stat %s: %w", blobsDir, err)
-			}
-
-			return filepath.Walk(blobsDir, walker)
+			// Catch-all: walk everything else under the archive dir (blobs/,
+			// and anything not explicitly named above) so nothing is
+			// silently dropped from the tar if the staging layout changes.
+			return filepath.Walk(cleanSrcPath, walker)
 		}()
 	}()
 
