@@ -4,6 +4,7 @@ import (
 	"archive/tar"
 	"compress/gzip"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -72,7 +73,10 @@ func peekArchiveMetadata(source, dest string) (found bool, err error) {
 			continue
 		}
 
-		path := filepath.Join(dest, filepath.FromSlash(name))
+		path, err := safeJoin(dest, name)
+		if err != nil {
+			return false, err
+		}
 		if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
 			return false, err
 		}
@@ -84,6 +88,18 @@ func peekArchiveMetadata(source, dest string) (found bool, err error) {
 	}
 
 	return len(remaining) == 0, nil
+}
+
+// safeJoin joins dest with name, an archive entry path, and errors if the
+// resulting path would escape dest (e.g. via ".." components), guarding
+// against zip-slip style path traversal.
+func safeJoin(dest, name string) (string, error) {
+	path := filepath.Join(dest, filepath.FromSlash(name))
+	rel, err := filepath.Rel(dest, path)
+	if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+		return "", fmt.Errorf("archive entry %q escapes destination directory", name)
+	}
+	return path, nil
 }
 
 func writeTarEntry(path string, r io.Reader) error {
