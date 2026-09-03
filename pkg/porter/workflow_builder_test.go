@@ -169,6 +169,49 @@ func TestBuildWorkflowSpec_WiringEdgeCreatesDependency(t *testing.T) {
 	assert.Equal(t, []string{jobIDs[depB]}, depAJob.DependsOn)
 }
 
+func TestBuildWorkflowSpec_DependsOnDedupesRequiresAndWiringToSameTarget(t *testing.T) {
+	t.Parallel()
+
+	// A requires B (structural) and also wires a parameter from B's output
+	// (data-flow) -- both edges target the same node, so DependsOn must
+	// only list B's job ID once, not twice.
+	tg := newTestGraph()
+	depA := tg.addNode("depA")
+	depB := tg.addNode("depB")
+	tg.addRequires(tg.g.Root, depA, "a")
+	tg.addRequires(depA, depB, "b")
+	tg.addWiring(depA, depB, "b", "connstr")
+
+	spec, jobIDs, err := buildWorkflowSpec(tg.g)
+	require.NoError(t, err)
+
+	depAJob := findJob(t, spec.Stages, jobIDs[depA])
+	assert.Equal(t, []string{jobIDs[depB]}, depAJob.DependsOn)
+}
+
+func TestBuildWorkflowSpec_AliasPicksFirstSortedForSharedDependency(t *testing.T) {
+	t.Parallel()
+
+	// root requires A and B; both require C, but under different aliases.
+	// C's Job.Alias must deterministically pick the first alias by sort
+	// order (see nodeAlias), regardless of which parent's edge was added
+	// first.
+	tg := newTestGraph()
+	depA := tg.addNode("depA")
+	depB := tg.addNode("depB")
+	depC := tg.addNode("depC")
+	tg.addRequires(tg.g.Root, depA, "a")
+	tg.addRequires(tg.g.Root, depB, "b")
+	tg.addRequires(depB, depC, "z-alias")
+	tg.addRequires(depA, depC, "a-alias")
+
+	spec, jobIDs, err := buildWorkflowSpec(tg.g)
+	require.NoError(t, err)
+
+	depCJob := findJob(t, spec.Stages, jobIDs[depC])
+	assert.Equal(t, "a-alias", depCJob.Alias)
+}
+
 func TestBuildWorkflowSpec_ResolutionFailedErrors(t *testing.T) {
 	t.Parallel()
 

@@ -28,17 +28,20 @@ func buildJobIDs(order []*Node) map[NodeKey]string {
 // structural and data-flow dependencies, not the transitive closure
 // (TopologicalOrder/buildStages already account for transitive ordering).
 func buildDependsOn(g *Graph, key NodeKey, jobIDs map[NodeKey]string) []string {
-	seen := make(map[string]bool)
+	seen := make(map[string]struct{})
 	var ids []string
 	for _, edge := range g.EdgesFrom(key) {
 		if edge.Kind != EdgeKindRequires && edge.Kind != EdgeKindWiring {
 			continue
 		}
 		id, ok := jobIDs[edge.To]
-		if !ok || seen[id] {
+		if !ok {
 			continue
 		}
-		seen[id] = true
+		if _, ok := seen[id]; ok {
+			continue
+		}
+		seen[id] = struct{}{}
 		ids = append(ids, id)
 	}
 	sort.Strings(ids)
