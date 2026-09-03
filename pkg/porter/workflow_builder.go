@@ -8,9 +8,13 @@ import (
 	"get.porter.sh/porter/pkg/storage"
 )
 
-// buildJobIDs assigns a stable job ID to every node in a topologically
-// ordered node list (see Graph.TopologicalOrder), minted in dependency
-// order so IDs are deterministic for a given graph traversal.
+// buildJobIDs assigns a job ID to every node in a topologically ordered
+// node list (see Graph.TopologicalOrder), minted in dependency order.
+// cnab.NewULID() is random per call, so these IDs are not reproducible
+// across separate builds of the same graph -- they're only stable within
+// the single map this returns, which callers thread through
+// buildDependsOn/buildStages so a given node maps to the same ID
+// throughout one build.
 func buildJobIDs(order []*Node) map[NodeKey]string {
 	ids := make(map[NodeKey]string, len(order))
 	for _, node := range order {
@@ -19,13 +23,17 @@ func buildJobIDs(order []*Node) map[NodeKey]string {
 	return ids
 }
 
-// buildDependsOn returns the deduped, sorted job IDs of every node
-// reachable from key via an outgoing requires or wiring edge -- the
-// combined structural and data-flow dependencies a job must wait on.
+// buildDependsOn returns the deduped, sorted job IDs of the nodes directly
+// targeted by key's outgoing requires or wiring edges -- key's immediate
+// structural and data-flow dependencies, not the transitive closure
+// (TopologicalOrder/buildStages already account for transitive ordering).
 func buildDependsOn(g *Graph, key NodeKey, jobIDs map[NodeKey]string) []string {
 	seen := make(map[string]bool)
 	var ids []string
 	for _, edge := range g.EdgesFrom(key) {
+		if edge.Kind != EdgeKindRequires && edge.Kind != EdgeKindWiring {
+			continue
+		}
 		id, ok := jobIDs[edge.To]
 		if !ok || seen[id] {
 			continue
