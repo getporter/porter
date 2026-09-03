@@ -1,7 +1,11 @@
 package porter
 
 import (
+	"archive/tar"
+	"compress/gzip"
 	"context"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"get.porter.sh/porter/pkg"
@@ -74,6 +78,106 @@ func TestArchive_ArchiveDirectory(t *testing.T) {
 	require.Contains(t, dir, "examples-test-bundle-0.2.0")
 
 	tests.AssertDirectoryPermissionsEqual(t, dir, pkg.FileModeDirectory)
+}
+
+// TestArchive_CustomTar_MetadataFirst verifies that bundle.json,
+// relocation-mapping.json, and artifacts/layout/{oci-layout,index.json} all
+// come before artifacts/layout/blobs/ in the tar stream, so a client
+// streaming the archive can read the bundle manifest and resolve every
+// image's digest (via index.json) without first reading through the
+// (potentially many-gigabyte) blobs/ tree.
+// See https://github.com/getporter/porter/issues/2197.
+func TestArchive_CustomTar_MetadataFirst(t *testing.T) {
+	dir := t.TempDir()
+
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "bundle.json"), []byte(`{}`), 0644))
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "relocation-mapping.json"), []byte(`{}`), 0644))
+
+	layoutDir := filepath.Join(dir, "artifacts", "layout")
+	require.NoError(t, os.MkdirAll(layoutDir, 0755))
+	require.NoError(t, os.WriteFile(filepath.Join(layoutDir, "oci-layout"), []byte(`{"imageLayoutVersion":"1.0.0"}`), 0644))
+	require.NoError(t, os.WriteFile(filepath.Join(layoutDir, "index.json"), []byte(`{"schemaVersion":2,"manifests":[]}`), 0644))
+
+	blobsDir := filepath.Join(layoutDir, "blobs", "sha256")
+	require.NoError(t, os.MkdirAll(blobsDir, 0755))
+	require.NoError(t, os.WriteFile(filepath.Join(blobsDir, "abc123"), []byte("blob"), 0644))
+
+	ex := &exporter{}
+	rc, err := ex.CustomTar(context.Background(), dir, gzip.DefaultCompression)
+	require.NoError(t, err)
+	defer rc.Close()
+
+	gz, err := gzip.NewReader(rc)
+	require.NoError(t, err)
+	defer gz.Close()
+
+	var names []string
+	tr := tar.NewReader(gz)
+	for {
+		hdr, err := tr.Next()
+		if err != nil {
+			break
+		}
+		names = append(names, hdr.Name)
+	}
+
+	wantPrefix := []string{
+		"./",
+		"./bundle.json",
+		"./relocation-mapping.json",
+		"./artifacts/",
+		"./artifacts/layout/",
+		"./artifacts/layout/oci-layout",
+		"./artifacts/layout/index.json",
+	}
+	require.Equal(t, wantPrefix, names[:len(wantPrefix)],
+		"expected bundle.json, relocation-mapping.json, oci-layout and index.json to precede blobs/")
+	for _, name := range names[len(wantPrefix):] {
+		require.Contains(t, name, "artifacts/layout/blobs", "expected only blobs/ entries after the metadata files")
+	}
+}
+
+// TestArchive_CustomTar_NoImages verifies that CustomTar doesn't error when
+// there are no images (and so no artifacts/layout/blobs/ directory at all).
+func TestArchive_CustomTar_NoImages(t *testing.T) {
+	dir := t.TempDir()
+
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "bundle.json"), []byte(`{}`), 0644))
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "relocation-mapping.json"), []byte(`{}`), 0644))
+
+	layoutDir := filepath.Join(dir, "artifacts", "layout")
+	require.NoError(t, os.MkdirAll(layoutDir, 0755))
+	require.NoError(t, os.WriteFile(filepath.Join(layoutDir, "oci-layout"), []byte(`{"imageLayoutVersion":"1.0.0"}`), 0644))
+	require.NoError(t, os.WriteFile(filepath.Join(layoutDir, "index.json"), []byte(`{"schemaVersion":2,"manifests":[]}`), 0644))
+
+	ex := &exporter{}
+	rc, err := ex.CustomTar(context.Background(), dir, gzip.DefaultCompression)
+	require.NoError(t, err)
+	defer rc.Close()
+
+	gz, err := gzip.NewReader(rc)
+	require.NoError(t, err)
+	defer gz.Close()
+
+	var names []string
+	tr := tar.NewReader(gz)
+	for {
+		hdr, err := tr.Next()
+		if err != nil {
+			break
+		}
+		names = append(names, hdr.Name)
+	}
+
+	require.Equal(t, []string{
+		"./",
+		"./bundle.json",
+		"./relocation-mapping.json",
+		"./artifacts/",
+		"./artifacts/layout/",
+		"./artifacts/layout/oci-layout",
+		"./artifacts/layout/index.json",
+	}, names)
 }
 
 func TestArchive_AddImage(t *testing.T) {

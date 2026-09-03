@@ -277,17 +277,15 @@ func (ex *exporter) CustomTar(ctx context.Context, srcPath string, compressionLe
 			if err := gzipWriter.Close(); err != nil {
 				log.Warnf("Can't close gzip writer: %s\n", err)
 			}
-			if err := pipeWriter.Close(); err != nil {
-				log.Warnf("Can't close pipe writer: %s\n", err)
-			}
+			// Propagate the write error (if any) to the reader instead of
+			// closing the pipe cleanly, so callers see a failed read rather
+			// than a silently truncated archive. CloseWithError always
+			// returns nil.
+			_ = pipeWriter.CloseWithError(err)
 			log.EndSpan()
 		}()
 
-		walker := func(path string, finfo os.FileInfo, err error) error {
-			if err != nil {
-				return fmt.Errorf("walk invoked with error: %w", err)
-			}
-
+		writePath := func(path string, finfo os.FileInfo) error {
 			ctx, log := tracing.StartSpanWithName(ctx, "CustomTar.ProcessPath", attribute.String("customTar.path", path))
 			defer log.EndSpan()
 
@@ -325,8 +323,82 @@ func (ex *exporter) CustomTar(ctx context.Context, srcPath string, compressionLe
 			return nil
 		}
 
-		// build tar
-		err = filepath.Walk(cleanSrcPath, walker)
+		// Tracks paths already written by name below, so the catch-all walk
+		// at the end doesn't write them twice.
+		written := map[string]bool{}
+
+		walker := func(path string, finfo os.FileInfo, err error) error {
+			if err != nil {
+				return fmt.Errorf("walk invoked with error: %w", err)
+			}
+			if written[path] {
+				return nil
+			}
+			return writePath(path, finfo)
+		}
+
+		// Write the root dir, then the small metadata files (bundle.json,
+		// relocation-mapping.json) before walking artifacts/, so a client
+		// streaming the archive can read the bundle manifest without first
+		// reading through the (potentially many-gigabyte) artifacts/ tree.
+		// See https://github.com/getporter/porter/issues/2197.
+		err = func() error {
+			writeNamed := func(path string) error {
+				finfo, err := os.Stat(path)
+				if err != nil {
+					return fmt.Errorf("failed to stat %s: %w", path, err)
+				}
+				written[path] = true
+				return writePath(path, finfo)
+			}
+
+			if err := writeNamed(cleanSrcPath); err != nil {
+				return err
+			}
+
+			for _, name := range []string{"bundle.json", "relocation-mapping.json"} {
+				if err := writeNamed(filepath.Join(cleanSrcPath, name)); err != nil {
+					return err
+				}
+			}
+
+			// Same reasoning one level deeper: artifacts/layout/{oci-layout,
+			// index.json} are small, fixed-content files written by
+			// ocilayout.Create up front, and index.json alone is enough to
+			// resolve every image's digest (layout.Path.ImageIndex reads
+			// only index.json) — so write them before artifacts/layout/blobs/,
+			// the large tree that holds the actual image content.
+			artifactsDir := filepath.Join(cleanSrcPath, "artifacts")
+			layoutDir := filepath.Join(artifactsDir, "layout")
+			for _, dir := range []string{artifactsDir, layoutDir} {
+				if _, err := os.Stat(dir); err != nil {
+					if os.IsNotExist(err) {
+						continue
+					}
+					return fmt.Errorf("failed to stat %s: %w", dir, err)
+				}
+				if err := writeNamed(dir); err != nil {
+					return err
+				}
+			}
+			for _, name := range []string{"oci-layout", "index.json"} {
+				path := filepath.Join(layoutDir, name)
+				if _, err := os.Stat(path); err != nil {
+					if os.IsNotExist(err) {
+						continue
+					}
+					return fmt.Errorf("failed to stat %s: %w", path, err)
+				}
+				if err := writeNamed(path); err != nil {
+					return err
+				}
+			}
+
+			// Catch-all: walk everything else under the archive dir (blobs/,
+			// and anything not explicitly named above) so nothing is
+			// silently dropped from the tar if the staging layout changes.
+			return filepath.Walk(cleanSrcPath, walker)
+		}()
 	}()
 
 	return pipeReader, nil

@@ -61,7 +61,7 @@ func TestArchive(t *testing.T) {
 
 		// the archive should match the hash below regardless of OS architecture, user and execution time
 		// regenerate if a dependency bump changes OCI layout JSON serialization (e.g. go-containerregistry)
-		consistentHash := "4e77cfd3dbfed032c4d938c9febaa5b55e5ca2fa40e159e79e42073f55a10f73"
+		consistentHash := "8e7d7504b508ed4bc42e9e3da5c03dc39cb4c64ed90580c16c84a830221b0fb6"
 		assert.Equal(t, consistentHash, hash1, "shasum of archive did not match expected hash")
 
 		// Publish bundle from archive, with new reference
@@ -104,7 +104,7 @@ func TestArchive(t *testing.T) {
 
 		// different compressions yields different (but consistent) hashes
 		// regenerate if a dependency bump changes OCI layout JSON serialization (e.g. go-containerregistry)
-		consistentHash := "f07e870ca81ca4d5d0018d39c34f42731de4404712cb736dcd68af63797b37ec"
+		consistentHash := "6778d06092c975d7ffb3002a3e77b4ba1b2c95bdacc40fc7340ed5cce05036f2"
 		assert.Equal(t, consistentHash, hash, "shasum of archive did not match expected hash")
 
 		// Publish bundle from archive, with new reference

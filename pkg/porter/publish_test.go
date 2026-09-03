@@ -1,11 +1,14 @@
 package porter
 
 import (
+	"compress/gzip"
 	"context"
 	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"sync/atomic"
@@ -289,6 +292,64 @@ func TestPublish_PushUpdatedImage_SkipsWhenAlreadyPublished(t *testing.T) {
 	assert.Equal(t, desc.Digest, gotDigest)
 	assert.False(t, pushed, "expected no push when content is already published at the destination")
 	assert.Zero(t, counter.count.Load(), "expected no write requests when content is already published at the destination")
+}
+
+func TestPublish_AllImagesAlreadyPublished(t *testing.T) {
+	p := NewTestPorter(t)
+	defer p.Close()
+
+	counter := &writeCounter{inner: registry.New()}
+	regSrv := httptest.NewServer(counter)
+	defer regSrv.Close()
+	regHost := strings.TrimPrefix(regSrv.URL, "http://")
+
+	testImage := "myorg/myapp"
+	layoutDir := t.TempDir()
+	layoutPath, err := createTestOCILayout(t, layoutDir, testImage)
+	require.NoError(t, err)
+
+	desc, err := findImageInLayout(layoutPath, testImage)
+	require.NoError(t, err)
+
+	regOpts := cnabtooci.RegistryOptions{InsecureRegistry: true}
+	newReference := regHost + "/myneworg/mynewbuns:v1.0"
+
+	bundleRef := cnab.BundleReference{
+		Definition: cnab.ExtendedBundle{Bundle: bundle.Bundle{
+			InvocationImages: []bundle.InvocationImage{{BaseImage: bundle.BaseImage{Image: testImage}}},
+		}},
+	}
+
+	newImgRef, err := getNewImageNameFromBundleReference(testImage, newReference, regOpts)
+	require.NoError(t, err)
+
+	t.Run("false when not yet published", func(t *testing.T) {
+		p.TestRegistry.MockGetRemoteImageDigest = func(ctx context.Context, ref cnab.OCIReference, opts cnabtooci.RegistryOptions) (digest.Digest, error) {
+			return "", errors.New("not found")
+		}
+
+		require.False(t, p.allImagesAlreadyPublished(context.Background(), bundleRef, layoutPath, newReference, regOpts))
+	})
+
+	t.Run("true when already published, with no blob access", func(t *testing.T) {
+		// Pre-publish the exact same content to the destination.
+		img, err := layoutPath.Image(desc.Digest)
+		require.NoError(t, err)
+		require.NoError(t, remote.Write(newImgRef, img, regOpts.ToRemoteOptions()...))
+
+		p.TestRegistry.MockGetRemoteImageDigest = func(ctx context.Context, ref cnab.OCIReference, opts cnabtooci.RegistryOptions) (digest.Digest, error) {
+			nameRef, err := name.ParseReference(ref.String(), opts.ToNameOptions()...)
+			require.NoError(t, err)
+			d, err := remote.Head(nameRef, opts.ToRemoteOptions()...)
+			require.NoError(t, err)
+			return digest.Digest(d.Digest.String()), nil
+		}
+
+		counter.count.Store(0)
+
+		require.True(t, p.allImagesAlreadyPublished(context.Background(), bundleRef, layoutPath, newReference, regOpts))
+		assert.Zero(t, counter.count.Load(), "expected no write requests when every image is already published")
+	})
 }
 
 func TestPublish_PushUpdatedImage_PushesWhenDigestDiffers(t *testing.T) {
@@ -842,4 +903,98 @@ func TestPublish_SkipsImagePushWhenAlreadyUpToDate(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TestPublish_TryFastPublishFromArchive exercises tryFastPublishFromArchive
+// against a real archive built with exporter.CustomTar (not just mocked
+// pieces), proving the fast path only kicks in once every image is already
+// published, and that it never extracts artifacts/layout/blobs/ when it does.
+func TestPublish_TryFastPublishFromArchive(t *testing.T) {
+	p := NewTestPorter(t)
+	defer p.Close()
+
+	counter := &writeCounter{inner: registry.New()}
+	regSrv := httptest.NewServer(counter)
+	defer regSrv.Close()
+	regHost := strings.TrimPrefix(regSrv.URL, "http://")
+
+	testImage := "myorg/myapp"
+	archiveDir := t.TempDir()
+	layoutPath, err := createTestOCILayout(t, filepath.Join(archiveDir, "artifacts", "layout"), testImage)
+	require.NoError(t, err)
+
+	bun := cnab.NewBundle(bundle.Bundle{
+		SchemaVersion:    "1.2.0",
+		Name:             "test-bundle",
+		Version:          "0.1.0",
+		InvocationImages: []bundle.InvocationImage{{BaseImage: bundle.BaseImage{Image: testImage}}},
+	})
+
+	bundleFile, err := os.Create(filepath.Join(archiveDir, "bundle.json"))
+	require.NoError(t, err)
+	_, err = bun.WriteTo(bundleFile)
+	require.NoError(t, err)
+	require.NoError(t, bundleFile.Close())
+
+	require.NoError(t, os.WriteFile(filepath.Join(archiveDir, "relocation-mapping.json"), []byte(`{}`), 0644))
+
+	ex := &exporter{}
+	rc, err := ex.CustomTar(context.Background(), archiveDir, gzip.DefaultCompression)
+	require.NoError(t, err)
+	defer rc.Close()
+
+	source := filepath.Join(t.TempDir(), "bundle.tgz")
+	out, err := os.Create(source)
+	require.NoError(t, err)
+	_, err = out.ReadFrom(rc)
+	require.NoError(t, err)
+	require.NoError(t, out.Close())
+
+	regOpts := cnabtooci.RegistryOptions{InsecureRegistry: true}
+	newReference := regHost + "/myneworg/mynewbuns:v1.0"
+
+	desc, err := findImageInLayout(layoutPath, testImage)
+	require.NoError(t, err)
+	newImgRef, err := getNewImageNameFromBundleReference(testImage, newReference, regOpts)
+	require.NoError(t, err)
+
+	p.TestRegistry.MockGetRemoteImageDigest = func(ctx context.Context, ref cnab.OCIReference, opts cnabtooci.RegistryOptions) (digest.Digest, error) {
+		// A HEAD 404 is an expected outcome here (the image may not be
+		// published yet in the first subtest below), so this propagates the
+		// error rather than asserting success, matching how
+		// imageAlreadyPublished itself treats any error as "not published".
+		nameRef, err := name.ParseReference(ref.String(), opts.ToNameOptions()...)
+		if err != nil {
+			return "", err
+		}
+		d, err := remote.Head(nameRef, opts.ToRemoteOptions()...)
+		if err != nil {
+			return "", err
+		}
+		return digest.Digest(d.Digest.String()), nil
+	}
+
+	extractedDir := filepath.Join(t.TempDir(), "extracted")
+
+	t.Run("not applicable when the image isn't published yet", func(t *testing.T) {
+		_, _, ok := p.tryFastPublishFromArchive(context.Background(), source, extractedDir, newReference, regOpts)
+		require.False(t, ok)
+	})
+
+	t.Run("applicable once the image is published, without extracting blobs", func(t *testing.T) {
+		img, err := layoutPath.Image(desc.Digest)
+		require.NoError(t, err)
+		require.NoError(t, remote.Write(newImgRef, img, regOpts.ToRemoteOptions()...))
+
+		counter.count.Store(0)
+
+		bundleRef, gotLayoutPath, ok := p.tryFastPublishFromArchive(context.Background(), source, extractedDir, newReference, regOpts)
+		require.True(t, ok)
+		require.NotEmpty(t, gotLayoutPath)
+		require.Len(t, bundleRef.Definition.InvocationImages, 1)
+		assert.Zero(t, counter.count.Load(), "expected no write requests: only index.json should have been read")
+
+		_, err = os.Stat(filepath.Join(extractedDir, "artifacts", "layout", "blobs"))
+		require.True(t, os.IsNotExist(err), "expected the fast path to never extract artifacts/layout/blobs/")
+	})
 }
