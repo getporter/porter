@@ -181,7 +181,7 @@ func (fs *FileSystem) downloadFile(ctx context.Context, url url.URL, destPath st
 	log := tracing.LoggerFromContext(ctx)
 	log.Debugf("Downloading %s to %s\n", url.String(), destPath)
 
-	req, err := http.NewRequest(http.MethodGet, url.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url.String(), nil)
 	if err != nil {
 		return log.Error(fmt.Errorf("error creating web request to %s: %w", url.String(), err))
 	}
@@ -209,6 +209,10 @@ func (fs *FileSystem) downloadFile(ctx context.Context, url url.URL, destPath st
 		resp, err = http.DefaultClient.Do(req)
 		if err != nil {
 			lastErr = err
+			if resp != nil {
+				resp.Body.Close()
+				resp = nil
+			}
 			if pkgmgmt.IsRetryableError(err) {
 				continue // Retry on retryable errors
 			}
@@ -218,6 +222,7 @@ func (fs *FileSystem) downloadFile(ctx context.Context, url url.URL, destPath st
 		if resp.StatusCode != 200 {
 			statusCode := resp.StatusCode
 			statusErr := fmt.Errorf("bad status returned when downloading %s (%d) %s", url.String(), resp.StatusCode, resp.Status)
+			_, _ = io.Copy(io.Discard, resp.Body)
 			resp.Body.Close()
 			resp = nil
 			if pkgmgmt.IsRetryableStatus(statusCode) {

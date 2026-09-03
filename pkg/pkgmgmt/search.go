@@ -62,7 +62,10 @@ func GetPackageListings(url string) (PackageList, error) {
 		resp, err = http.Get(url)
 		if err != nil {
 			lastErr = err
-			resp = nil
+			if resp != nil {
+				resp.Body.Close()
+				resp = nil
+			}
 			if IsRetryableError(err) {
 				continue
 			}
@@ -71,6 +74,7 @@ func GetPackageListings(url string) (PackageList, error) {
 
 		if resp.StatusCode != http.StatusOK {
 			statusCode := resp.StatusCode
+			_, _ = io.Copy(io.Discard, resp.Body)
 			resp.Body.Close()
 			resp = nil
 			lastErr = fmt.Errorf("unable to fetch package list via %s: %s", url, http.StatusText(statusCode))
