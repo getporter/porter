@@ -122,6 +122,7 @@ func (i *Installation) ApplyResult(run Run, result Result) {
 		i.Status.BundleReference = run.BundleReference
 		i.Status.BundleVersion = run.Bundle.Version
 		i.Status.BundleDigest = run.BundleDigest
+		i.Status.InstallationInterfaceHash = cnab.NewInterfaceCandidateFromBundle(cnab.NewBundle(run.Bundle)).OutputsHash()
 		i.Status.RunID = run.ID
 		i.Status.Action = run.Action
 		i.Status.ResultID = result.ID
@@ -269,6 +270,12 @@ type InstallationStatus struct {
 
 	// BundleDigest is the digest of the bundle that last altered the installation state.
 	BundleDigest string `json:"bundleDigest" yaml:"bundleDigest" toml:"bundleDigest"`
+
+	// InstallationInterfaceHash is a digest of the installation's currently
+	// declared bundle output names, generated from the current bundle
+	// definition. Only outputs are considered (see PEP003's installation
+	// interfaces) -- parameters and credentials aren't part of it.
+	InstallationInterfaceHash string `json:"installationInterfaceHash,omitempty" yaml:"installationInterfaceHash,omitempty" toml:"installationInterfaceHash,omitempty"`
 
 	// OutputPersistFailed indicates that one or more outputs from the run that
 	// last informed this status failed to persist to the secret store. The

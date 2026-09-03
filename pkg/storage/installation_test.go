@@ -9,6 +9,7 @@ import (
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/schema"
 	"get.porter.sh/porter/tests"
+	"github.com/cnabio/cnab-go/bundle"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -104,6 +105,33 @@ func TestInstallation_ApplyResult(t *testing.T) {
 
 		assert.True(t, inst.IsInstalled(), "a failed install should not mark the installation as installed")
 		assert.Equal(t, &result.Created, inst.Status.Installed, "the installed timestamp should be set to the result timestamp")
+	})
+
+	t.Run("populates InstallationInterfaceHash from the run's bundle outputs", func(t *testing.T) {
+		inst := NewInstallation("dev", "mybuns")
+		run := inst.NewRun(cnab.ActionInstall, bun)
+		run.Bundle = bundle.Bundle{Outputs: map[string]bundle.Output{"connstr": {}}}
+		result := run.NewResult(cnab.StatusSucceeded)
+
+		inst.ApplyResult(run, result)
+
+		want := cnab.NewInterfaceCandidateFromBundle(cnab.NewBundle(run.Bundle)).OutputsHash()
+		assert.NotEmpty(t, want, "sanity check: the test bundle should produce a non-empty hash")
+		assert.Equal(t, want, inst.Status.InstallationInterfaceHash)
+	})
+
+	t.Run("does not set InstallationInterfaceHash for a non-modifying action", func(t *testing.T) {
+		inst := NewInstallation("dev", "mybuns")
+		run := inst.NewRun("status", bun)
+		run.Bundle = bundle.Bundle{
+			Outputs: map[string]bundle.Output{"connstr": {}},
+			Actions: map[string]bundle.Action{"status": {Modifies: false}},
+		}
+		result := run.NewResult(cnab.StatusSucceeded)
+
+		inst.ApplyResult(run, result)
+
+		assert.Empty(t, inst.Status.InstallationInterfaceHash)
 	})
 
 	t.Run("uninstall failed", func(t *testing.T) {

@@ -165,3 +165,41 @@ func TestNewInterfaceCandidateFromBundle(t *testing.T) {
 		Definitions: defs,
 	}, got)
 }
+
+func TestInterfaceCandidate_OutputsHash(t *testing.T) {
+	t.Parallel()
+
+	t.Run("empty outputs hash to an empty string", func(t *testing.T) {
+		t.Parallel()
+
+		require.Empty(t, InterfaceCandidate{}.OutputsHash())
+	})
+
+	t.Run("stable regardless of map iteration order", func(t *testing.T) {
+		t.Parallel()
+
+		a := InterfaceCandidate{Outputs: map[string]bundle.Output{"connstr": {}, "port": {}}}
+		b := InterfaceCandidate{Outputs: map[string]bundle.Output{"port": {}, "connstr": {}}}
+
+		require.NotEmpty(t, a.OutputsHash())
+		require.Equal(t, a.OutputsHash(), b.OutputsHash())
+	})
+
+	t.Run("changes when the output name set changes", func(t *testing.T) {
+		t.Parallel()
+
+		a := InterfaceCandidate{Outputs: map[string]bundle.Output{"connstr": {}}}
+		b := InterfaceCandidate{Outputs: map[string]bundle.Output{"connstr": {}, "port": {}}}
+
+		require.NotEqual(t, a.OutputsHash(), b.OutputsHash())
+	})
+
+	t.Run("unaffected by output definitions -- name-only, matching EvaluateInterfaceMatch", func(t *testing.T) {
+		t.Parallel()
+
+		a := InterfaceCandidate{Outputs: map[string]bundle.Output{"connstr": {Definition: "defA", Path: "/a"}}}
+		b := InterfaceCandidate{Outputs: map[string]bundle.Output{"connstr": {Definition: "defB", Path: "/b"}}}
+
+		require.Equal(t, a.OutputsHash(), b.OutputsHash())
+	})
+}

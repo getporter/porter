@@ -1,6 +1,9 @@
 package cnab
 
 import (
+	"crypto/sha256"
+	"encoding/json"
+	"fmt"
 	"sort"
 
 	"github.com/cnabio/cnab-go/bundle"
@@ -80,6 +83,20 @@ func NewInterfaceCandidateFromBundle(b ExtendedBundle) InterfaceCandidate {
 		Credentials: b.Credentials,
 		Definitions: b.Definitions,
 	}
+}
+
+// OutputsHash returns a stable sha256 digest of the candidate's output
+// names (sorted, name-only -- matching how EvaluateInterfaceMatch itself
+// compares outputs, not their types/schemas). Empty when there are no
+// outputs, matching the ParametersDigest/CredentialsDigest convention in
+// storage.Run. Suitable for persisting on Installation.Status to cheaply
+// compare installation interfaces later.
+func (c InterfaceCandidate) OutputsHash() string {
+	if len(c.Outputs) == 0 {
+		return ""
+	}
+	data, _ := json.Marshal(SortedKeys(c.Outputs))
+	return fmt.Sprintf("sha256:%x", sha256.Sum256(data))
 }
 
 // SortedKeys returns the sorted keys of m.
