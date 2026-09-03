@@ -14,6 +14,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"time"
 
 	"get.porter.sh/magefiles/ci"
 	"get.porter.sh/magefiles/git"
@@ -228,7 +229,20 @@ func GetMixins() error {
 		} else {
 			source = "--url=" + mixin.url
 		}
-		err := porter("mixin", "install", mixin.name, "--version", mixin.version, source).Run()
+		// Retry, since a freshly published canary build can 404 for a few
+		// seconds while its assets are still propagating on the CDN.
+		const maxAttempts = 3
+		var err error
+		for attempt := 1; attempt <= maxAttempts; attempt++ {
+			err = porter("mixin", "install", mixin.name, "--version", mixin.version, source).Run()
+			if err == nil {
+				break
+			}
+			if attempt < maxAttempts {
+				log.Println("Retrying mixin install for", mixin.name, "after error:", err)
+				time.Sleep(5 * time.Second)
+			}
+		}
 		if err != nil {
 			return err
 		}

@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"sort"
 	"strings"
+	"time"
 )
 
 // Searcher can locate a mixin or plugin from the community feeds.
@@ -47,12 +48,47 @@ func (s *Searcher) Search(name, pkgType string) (PackageList, error) {
 
 // GetPackageListings returns the listings for packages via the provided URL
 func GetPackageListings(url string) (PackageList, error) {
-	resp, err := http.Get(url)
-	if err != nil {
-		return PackageList{}, fmt.Errorf("unable to fetch package list via %s: %w", url, err)
+	const maxRetries = 3
+	const baseDelay = 1 * time.Second
+
+	var lastErr error
+	var resp *http.Response
+	for attempt := 0; attempt < maxRetries; attempt++ {
+		if attempt > 0 {
+			time.Sleep(baseDelay * time.Duration(1<<uint(attempt-1)))
+		}
+
+		var err error
+		resp, err = http.Get(url)
+		if err != nil {
+			lastErr = err
+			if resp != nil {
+				resp.Body.Close()
+				resp = nil
+			}
+			if IsRetryableError(err) {
+				continue
+			}
+			return PackageList{}, fmt.Errorf("unable to fetch package list via %s: %w", url, err)
+		}
+
+		if resp.StatusCode != http.StatusOK {
+			statusCode := resp.StatusCode
+			_, _ = io.Copy(io.Discard, resp.Body)
+			resp.Body.Close()
+			resp = nil
+			lastErr = fmt.Errorf("unable to fetch package list via %s: %s", url, http.StatusText(statusCode))
+			if IsRetryableStatus(statusCode) {
+				continue
+			}
+			return PackageList{}, lastErr
+		}
+
+		break
 	}
-	if resp.StatusCode != http.StatusOK {
-		return PackageList{}, fmt.Errorf("unable to fetch package list via %s: %s", url, http.StatusText(resp.StatusCode))
+
+	if resp == nil {
+		return PackageList{}, fmt.Errorf("failed to fetch package list via %s after %d attempts: %w", url, maxRetries, lastErr)
 	}
 
 	defer resp.Body.Close()

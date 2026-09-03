@@ -161,6 +161,56 @@ func TestFileSystem_Install_RollbackMissingRuntime(t *testing.T) {
 	assert.False(t, dirExists)
 }
 
+func TestFileSystem_Install_RetriesTransientStatus(t *testing.T) {
+	var requestCount int
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requestCount++
+		if requestCount < 2 {
+			w.WriteHeader(http.StatusServiceUnavailable)
+			return
+		}
+		fmt.Fprintf(w, "#!/usr/bin/env bash\necho i am a random package\n")
+	}))
+	defer ts.Close()
+
+	c := config.NewTestConfig(t)
+	p := NewFileSystem(c.Config, "packages")
+
+	opts := pkgmgmt.InstallOptions{
+		PackageType: "mixin",
+		Version:     "latest",
+		URL:         ts.URL,
+	}
+	err := opts.Validate([]string{"mypkg"})
+	require.NoError(t, err, "Validate failed")
+
+	err = p.Install(context.Background(), opts)
+	require.NoError(t, err)
+	assert.GreaterOrEqual(t, requestCount, 2, "expected the client to retry after a 503")
+}
+
+func TestFileSystem_Install_GivesUpAfterPersistentTransientStatus(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusServiceUnavailable)
+	}))
+	defer ts.Close()
+
+	c := config.NewTestConfig(t)
+	p := NewFileSystem(c.Config, "packages")
+
+	opts := pkgmgmt.InstallOptions{
+		PackageType: "mixin",
+		Version:     "latest",
+		URL:         ts.URL,
+	}
+	err := opts.Validate([]string{"mypkg"})
+	require.NoError(t, err, "Validate failed")
+
+	err = p.Install(context.Background(), opts)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to download")
+}
+
 func TestFileSystem_Install_PackageInfoSavedWhenNoFileExists(t *testing.T) {
 	c := config.NewTestConfig(t)
 	p := NewFileSystem(c.Config, "packages")
