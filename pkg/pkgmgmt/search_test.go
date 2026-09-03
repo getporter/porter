@@ -105,6 +105,40 @@ func TestGetPackageListings_UnmarshalErr(t *testing.T) {
 		"unable to unmarshal package list: invalid character 'o' in literal false (expecting 'a')")
 }
 
+func TestGetPackageListings_RetriesTransientStatus(t *testing.T) {
+	packageList := PackageList{
+		{Name: "quokkasay", Author: "Setonix Inc.", URL: "https://cdn.quokkas.au/mixins/atom.xml"},
+	}
+	bytes, err := json.Marshal(packageList)
+	require.NoError(t, err)
+
+	var requestCount int
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requestCount++
+		if requestCount < 2 {
+			w.WriteHeader(http.StatusServiceUnavailable)
+			return
+		}
+		fmt.Fprint(w, string(bytes))
+	}))
+	defer ts.Close()
+
+	list, err := GetPackageListings(ts.URL)
+	require.NoError(t, err)
+	require.Equal(t, packageList, list)
+	require.GreaterOrEqual(t, requestCount, 2, "expected the client to retry after a 503")
+}
+
+func TestGetPackageListings_GivesUpAfterPersistentTransientStatus(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusServiceUnavailable)
+	}))
+	defer ts.Close()
+
+	_, err := GetPackageListings(ts.URL)
+	require.ErrorContains(t, err, "failed to fetch package list")
+}
+
 func TestGetPackageListings_Success(t *testing.T) {
 	packageList := PackageList{
 		{

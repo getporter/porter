@@ -11,7 +11,6 @@ import (
 	"path"
 	"path/filepath"
 	"runtime"
-	"strings"
 	"time"
 
 	"get.porter.sh/porter/pkg"
@@ -210,18 +209,23 @@ func (fs *FileSystem) downloadFile(ctx context.Context, url url.URL, destPath st
 		resp, err = http.DefaultClient.Do(req)
 		if err != nil {
 			lastErr = err
-			// Check for retryable errors
-			if errors.Is(err, io.ErrUnexpectedEOF) || errors.Is(err, io.EOF) || strings.Contains(err.Error(), "TLS handshake timeout") {
+			if pkgmgmt.IsRetryableError(err) {
 				continue // Retry on retryable errors
 			}
 			return log.Error(fmt.Errorf("error downloading %s: %w", url.String(), err))
 		}
 
 		if resp.StatusCode != 200 {
+			statusCode := resp.StatusCode
+			statusErr := fmt.Errorf("bad status returned when downloading %s (%d) %s", url.String(), resp.StatusCode, resp.Status)
 			resp.Body.Close()
-			err := fmt.Errorf("bad status returned when downloading %s (%d) %s", url.String(), resp.StatusCode, resp.Status)
-			log.Debug(err.Error()) // Only debug log this since higher up on the stack we may handle this error
-			return err
+			resp = nil
+			if pkgmgmt.IsRetryableStatus(statusCode) {
+				lastErr = statusErr
+				continue
+			}
+			log.Debug(statusErr.Error()) // Only debug log this since higher up on the stack we may handle this error
+			return statusErr
 		}
 
 		// If we get here, we have a successful response
