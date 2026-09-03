@@ -277,9 +277,11 @@ func (ex *exporter) CustomTar(ctx context.Context, srcPath string, compressionLe
 			if err := gzipWriter.Close(); err != nil {
 				log.Warnf("Can't close gzip writer: %s\n", err)
 			}
-			if err := pipeWriter.Close(); err != nil {
-				log.Warnf("Can't close pipe writer: %s\n", err)
-			}
+			// Propagate the write error (if any) to the reader instead of
+			// closing the pipe cleanly, so callers see a failed read rather
+			// than a silently truncated archive. CloseWithError always
+			// returns nil.
+			_ = pipeWriter.CloseWithError(err)
 			log.EndSpan()
 		}()
 
