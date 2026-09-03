@@ -93,3 +93,20 @@ func TestPeekArchiveMetadata_FallsBackWhenMetadataIsLate(t *testing.T) {
 	require.NoError(t, err)
 	require.False(t, found, "expected peekArchiveMetadata to give up after maxPeekEntries")
 }
+
+func TestSafeJoin(t *testing.T) {
+	dest := filepath.Join(string(filepath.Separator), "dest")
+
+	path, err := safeJoin(dest, "bundle.json")
+	require.NoError(t, err)
+	require.Equal(t, filepath.Join(dest, "bundle.json"), path)
+
+	for _, name := range []string{
+		"../escape",
+		"../../escape",
+		"artifacts/../../escape",
+	} {
+		_, err := safeJoin(dest, name)
+		require.Error(t, err, "expected %q to be rejected as a path traversal attempt", name)
+	}
+}
