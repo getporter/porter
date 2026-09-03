@@ -14,15 +14,20 @@ var _ Document = Workflow{}
 // instance (keyed by ID) rather than a named singleton resource like
 // Installation.
 //
-// A Workflow only records what to run and in what order; it does not resolve
-// or store parameter/credential values. Job.Installation.Parameters and
-// Job.Credentials may reference another job's not-yet-produced output (via
-// the "porter" secrets strategy, hint format
-// workflow.jobs.<jobID>.outputs.<name>, see
+// A Workflow doubles as the execution plan PEP003 describes: once its Stages
+// are fully populated from a resolved dependency graph, WorkflowSpec is the
+// exact, unambiguous instruction set to run, and WorkflowStatus.Jobs tracks
+// each job's associated Run/Result and outcome. There is no separate
+// ExecutionPlan type generated from a Workflow; the two were merged into
+// this one resource to avoid keeping two 1:1 documents in sync.
+//
+// A Workflow does not resolve or store parameter/credential values ahead of
+// time. Job.Installation.Parameters and Job.Credentials may reference
+// another job's not-yet-produced output (via the "porter" secrets strategy,
+// hint format workflow.jobs.<jobID>.outputs.<name>, see
 // v2.DependencySource.AsWorkflowWiring), but those references are only
-// resolved just-in-time when the ExecutionPlan generated from this workflow
-// is run, matching how Run.Parameters/Run.Credentials are resolved JIT
-// before execution.
+// resolved just-in-time when the workflow is run, matching how
+// Run.Parameters/Run.Credentials are resolved JIT before execution.
 type Workflow struct {
 	// ID of the Workflow.
 	ID string `json:"_id"`
