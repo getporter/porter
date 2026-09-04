@@ -9,6 +9,7 @@ import (
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/schema"
 	"get.porter.sh/porter/tests"
+	"github.com/cnabio/cnab-go/bundle"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -104,6 +105,36 @@ func TestInstallation_ApplyResult(t *testing.T) {
 
 		assert.True(t, inst.IsInstalled(), "a failed install should not mark the installation as installed")
 		assert.Equal(t, &result.Created, inst.Status.Installed, "the installed timestamp should be set to the result timestamp")
+	})
+
+	t.Run("populates InstallationInterfaceHash from the run's bundle outputs", func(t *testing.T) {
+		inst := NewInstallation("dev", "mybuns")
+		run := inst.NewRun(cnab.ActionInstall, bun)
+		run.Bundle = bundle.Bundle{Outputs: map[string]bundle.Output{"connstr": {}}}
+		result := run.NewResult(cnab.StatusSucceeded)
+
+		inst.ApplyResult(run, result)
+
+		// A fixed digest, not recomputed via OutputsHash, so this test still
+		// catches a regression if both call sites change together. OutputsHash's
+		// own properties (stability, sensitivity to the name set, ...) are
+		// covered by TestInterfaceCandidate_OutputsHash.
+		want := "sha256:3fe2d404b52d449a125c542f4fb9fefc0acea7fb7eebf47c7b41cbb1b41492b7"
+		assert.Equal(t, want, inst.Status.InstallationInterfaceHash)
+	})
+
+	t.Run("does not set InstallationInterfaceHash for a non-modifying action", func(t *testing.T) {
+		inst := NewInstallation("dev", "mybuns")
+		run := inst.NewRun("status", bun)
+		run.Bundle = bundle.Bundle{
+			Outputs: map[string]bundle.Output{"connstr": {}},
+			Actions: map[string]bundle.Action{"status": {Modifies: false}},
+		}
+		result := run.NewResult(cnab.StatusSucceeded)
+
+		inst.ApplyResult(run, result)
+
+		assert.Empty(t, inst.Status.InstallationInterfaceHash)
 	})
 
 	t.Run("uninstall failed", func(t *testing.T) {
