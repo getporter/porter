@@ -169,7 +169,7 @@ func TestNewInterfaceCandidateFromBundle(t *testing.T) {
 func TestInterfaceCandidate_OutputsHash(t *testing.T) {
 	t.Parallel()
 
-	t.Run("empty outputs hash to an empty string", func(t *testing.T) {
+	t.Run("empty outputs hashes to an empty string", func(t *testing.T) {
 		t.Parallel()
 
 		require.Empty(t, InterfaceCandidate{}.OutputsHash())

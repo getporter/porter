@@ -115,8 +115,11 @@ func TestInstallation_ApplyResult(t *testing.T) {
 
 		inst.ApplyResult(run, result)
 
-		want := cnab.NewInterfaceCandidateFromBundle(cnab.NewBundle(run.Bundle)).OutputsHash()
-		assert.NotEmpty(t, want, "sanity check: the test bundle should produce a non-empty hash")
+		// A fixed digest, not recomputed via OutputsHash, so this test still
+		// catches a regression if both call sites change together. OutputsHash's
+		// own properties (stability, sensitivity to the name set, ...) are
+		// covered by TestInterfaceCandidate_OutputsHash.
+		want := "sha256:3fe2d404b52d449a125c542f4fb9fefc0acea7fb7eebf47c7b41cbb1b41492b7"
 		assert.Equal(t, want, inst.Status.InstallationInterfaceHash)
 	})
 

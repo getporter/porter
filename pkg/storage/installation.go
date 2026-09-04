@@ -271,10 +271,10 @@ type InstallationStatus struct {
 	// BundleDigest is the digest of the bundle that last altered the installation state.
 	BundleDigest string `json:"bundleDigest" yaml:"bundleDigest" toml:"bundleDigest"`
 
-	// InstallationInterfaceHash is a digest of the installation's currently
-	// declared bundle output names, generated from the current bundle
-	// definition. Only outputs are considered (see PEP003's installation
-	// interfaces) -- parameters and credentials aren't part of it.
+	// InstallationInterfaceHash is a digest of the installation's declared
+	// bundle output names, generated from the bundle definition used by the
+	// most recent modifying run. Only outputs are considered (see PEP003's
+	// installation interfaces) -- parameters and credentials aren't part of it.
 	InstallationInterfaceHash string `json:"installationInterfaceHash,omitempty" yaml:"installationInterfaceHash,omitempty" toml:"installationInterfaceHash,omitempty"`
 
 	// OutputPersistFailed indicates that one or more outputs from the run that

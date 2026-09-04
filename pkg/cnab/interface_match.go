@@ -2,9 +2,9 @@ package cnab
 
 import (
 	"crypto/sha256"
-	"encoding/json"
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
@@ -95,8 +95,8 @@ func (c InterfaceCandidate) OutputsHash() string {
 	if len(c.Outputs) == 0 {
 		return ""
 	}
-	data, _ := json.Marshal(SortedKeys(c.Outputs))
-	return fmt.Sprintf("sha256:%x", sha256.Sum256(data))
+	data := strings.Join(SortedKeys(c.Outputs), "\n")
+	return fmt.Sprintf("sha256:%x", sha256.Sum256([]byte(data)))
 }
 
 // SortedKeys returns the sorted keys of m.
