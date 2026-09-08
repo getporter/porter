@@ -17,7 +17,8 @@
       "uninstalled": null,
       "bundleReference": "",
       "bundleVersion": "0.0.1",
-      "bundleDigest": ""
+      "bundleDigest": "",
+      "installationInterfaceHash": "sha256:82a3537ff0dbce7eec35d69edc3a189ee6f17d82f353a553f9aa96cb0be3ce89"
     },
     "_calculated": {
       "resolvedParameters": null,
