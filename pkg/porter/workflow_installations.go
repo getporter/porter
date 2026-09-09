@@ -46,6 +46,13 @@ func buildJobInstallations(g *Graph, order []*Node, namespace string, rootInstal
 			inst = rootInstallation
 		case node.ResolvedInstallation != nil:
 			inst = *node.ResolvedInstallation
+			// Struct copy above shares References' backing array with
+			// node.ResolvedInstallation. If it has spare capacity, a later
+			// AddReference (append) here could write into that shared
+			// array without the source ever seeing its own len change --
+			// silent aliasing. Copy it so this function only ever mutates
+			// its own copy.
+			inst.Status.References = append([]storage.InstallationReference(nil), node.ResolvedInstallation.Status.References...)
 		default:
 			inst = storage.NewInstallation(namespace, nodeAlias(g, key))
 			inst.SetLabel(parentInstallationLabel, rootInstallation.String())
@@ -59,11 +66,11 @@ func buildJobInstallations(g *Graph, order []*Node, namespace string, rootInstal
 			if edge.Kind != EdgeKindRequires {
 				continue
 			}
-			child, ok := built[edge.To]
+			dependency, ok := built[edge.To]
 			if !ok {
 				return nil, fmt.Errorf("cannot build installation records: dependency %s of %s was not yet built (graph wasn't processed in topological order)", edge.To, key)
 			}
-			child.AddReference(inst.String(), edge.ToAlias)
+			dependency.AddReference(inst.String(), edge.ToAlias)
 		}
 	}
 

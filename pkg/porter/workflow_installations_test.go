@@ -94,3 +94,32 @@ func TestBuildJobInstallations_ResolvedInstallationIsCopiedAndReferenced(t *test
 	// must not be mutated -- buildJobInstallations works on a copy.
 	assert.Empty(t, existing.Status.References)
 }
+
+func TestBuildJobInstallations_ResolvedInstallationDoesNotAliasReferences(t *testing.T) {
+	t.Parallel()
+
+	tg := newTestGraph()
+	dep := tg.addNode("localhost:5000/redis@" + testDigestA)
+	existing := storage.NewInstallation("dev", "shared-redis")
+
+	// backing has spare capacity with a sentinel sitting in the unused
+	// slot. A struct-copy-then-append (instead of a defensive copy of
+	// References) would silently overwrite that slot via the shared
+	// backing array, even though existing.Status.References' own len
+	// never changes.
+	backing := make([]storage.InstallationReference, 1, 4)
+	backing[0] = storage.InstallationReference{Installation: "sentinel-do-not-touch", Dependency: "sentinel"}
+	existing.Status.References = backing[:0]
+
+	tg.g.Nodes[dep] = &Node{Key: dep, ResolvedInstallation: &existing}
+	tg.addRequires(tg.g.Root, dep, "cache")
+
+	order, err := tg.g.TopologicalOrder()
+	require.NoError(t, err)
+
+	_, err = buildJobInstallations(tg.g, order, "dev", storage.NewInstallation("dev", "myapp"))
+	require.NoError(t, err)
+
+	assert.Equal(t, "sentinel-do-not-touch", backing[:1][0].Installation,
+		"shared backing array must not be mutated by AddReference on the copy")
+}
