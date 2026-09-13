@@ -55,7 +55,7 @@ If the registry is hosted on a non-loopback ip address or a domain name, the \--
 
 Sometimes you may want to connect to a registry that is secured with an untrusted TLS certificate.
 For example, when you are running a test or development registry that uses a self-signed certificate or when using a custom root certificate that the system does not trust.
-Use the the \--insecure-registry flag to allow connecting to the registry.
+Use the \--insecure-registry flag to allow connecting to the registry.
 
 1. Create a self-signed certificate\*
 
