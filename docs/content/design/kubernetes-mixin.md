@@ -94,7 +94,7 @@ The mixin allows bundle authors to specify the following parameters on delete:
 
 This mixin will leverage the `kubectl get` command in order to populate outputs. Given the wide range of objects that can be created, the mixin will support JSON Path to specify how to retrieve values to populate outputs. Bundle authors will specify the object type, name and provide a JSONPath to obtain the data. The mixin will not attempt further processing of the data, so if a JSONPath expression is given that results in multiple items, the JSON representing that will be stuck into the output as is. Namespace will default to `default` if not specified
 
-For example, to obtain the ClusterIP of a a given service, consider the following porter.yaml excerpt:
+For example, to obtain the ClusterIP of a given service, consider the following porter.yaml excerpt:
 
 ```yaml
 install:
