@@ -41,6 +41,10 @@ func bundleDigestFor(ctx context.Context, p *Porter, key NodeKey, opts ExplainOp
 		}
 	}
 
+	// Never Force here: node.Bundle came from the pull done while building the
+	// graph, so this must read that same cached bundle. A forced re-pull of
+	// a moving tag could resolve a different digest than node.Bundle.
+	opts.Force = false
 	pulled, err := pullBundleForNode(ctx, p, key.Reference, opts)
 	if err != nil {
 		return "", err

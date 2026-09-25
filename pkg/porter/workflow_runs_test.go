@@ -111,3 +111,45 @@ func TestBuildJobRuns(t *testing.T) {
 	assert.Equal(t, testDigestB, upgradeRun.BundleDigest)
 	assert.Equal(t, storage.JobStatus{RunID: upgradeRun.ID, Status: cnab.StatusPending}, statuses[upgradeJobID])
 }
+
+func TestBuildJobRuns_DigestLookupIgnoresForce(t *testing.T) {
+	t.Parallel()
+
+	p := NewTestPorter(t)
+	defer p.Close()
+
+	const ref = "localhost:5000/mysql:v1.0.0"
+	bun := leafTestBundle("mysql")
+	mockPull := newMockPullBundle(map[string]cnab.ExtendedBundle{ref: bun})
+	current := testDigestA
+	p.TestRegistry.MockPullBundle = func(ctx context.Context, r cnab.OCIReference, opts cnabtooci.RegistryOptions) (cnab.BundleReference, error) {
+		bunRef, err := mockPull(ctx, r, opts)
+		bunRef.Digest = digest.Digest(current)
+		return bunRef, err
+	}
+
+	// Graph construction pulls (and caches) the tag-only dependency.
+	_, err := p.PullBundle(context.Background(), BundlePullOptions{Reference: ref})
+	require.NoError(t, err)
+
+	// The moving tag now resolves to a different digest.
+	current = testDigestB
+
+	tg := newTestGraph()
+	dep := tg.addNode(ref)
+	tg.g.Nodes[dep] = &Node{Key: dep, Bundle: bun}
+	tg.addRequires(tg.g.Root, dep, "db")
+	order, err := tg.g.TopologicalOrder()
+	require.NoError(t, err)
+	jobIDs := buildJobIDs(order)
+	installations, err := buildJobInstallations(tg.g, order, "dev", storage.NewInstallation("dev", "myapp"))
+	require.NoError(t, err)
+
+	rootRef := cnab.BundleReference{Reference: cnab.MustParseOCIReference("localhost:5000/myapp:v1.0.0"), Digest: digest.Digest(testDigestA)}
+	actions := map[NodeKey]string{tg.g.Root: cnab.ActionInstall, dep: cnab.ActionInstall}
+
+	// Force must not cause a re-pull that picks up the new digest.
+	runs, _, err := buildJobRuns(context.Background(), p.Porter, tg.g, jobIDs, installations, actions, rootRef, ExplainOpts{BundleReferenceOptions: BundleReferenceOptions{BundlePullOptions: BundlePullOptions{Force: true}}})
+	require.NoError(t, err)
+	assert.Equal(t, testDigestA, runs[jobIDs[dep]].BundleDigest)
+}
