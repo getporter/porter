@@ -27,31 +27,6 @@ func pullBundleForNode(ctx context.Context, p *Porter, ref string, opts ExplainO
 	return cachedBundle.BundleReference, nil
 }
 
-// bundleDigestFor returns the digest to record on a job's Run
-// (Run.BundleDigest), which Installation.ApplyResult later copies to
-// Status.BundleDigest -- what findExistingInstallation matches on to reuse
-// a dependency. Uses a digest already pinned in key.Reference, else the
-// digest of the bundle pulled (from cache, for a graph-pulled node) via
-// pullBundleForNode. Not for the root, whose resolved reference is passed
-// to buildJobRuns.
-func bundleDigestFor(ctx context.Context, p *Porter, key NodeKey, opts ExplainOpts) (string, error) {
-	if key.Reference != "" {
-		if ref, err := cnab.ParseOCIReference(key.Reference); err == nil && ref.HasDigest() {
-			return ref.Digest().String(), nil
-		}
-	}
-
-	// Never Force here: node.Bundle came from the pull done while building the
-	// graph, so this must read that same cached bundle. A forced re-pull of
-	// a moving tag could resolve a different digest than node.Bundle.
-	opts.Force = false
-	pulled, err := pullBundleForNode(ctx, p, key.Reference, opts)
-	if err != nil {
-		return "", err
-	}
-	return pulled.Digest.String(), nil
-}
-
 // buildJobRuns creates a Pending storage.Run for every job whose action
 // requires one (i.e. not JobActionSkip), and a WorkflowStatus.JobStatus
 // entry for every job in the graph, including skipped ones (marked
@@ -110,10 +85,14 @@ func buildJobRuns(
 			bun = pulled.Definition
 			bundleDigest = pulled.Digest.String()
 		} else {
-			var err error
-			bundleDigest, err = bundleDigestFor(ctx, p, key, opts)
-			if err != nil {
-				return nil, nil, fmt.Errorf("cannot build the run for %s: %w", key, err)
+			// Digest resolved by the pull that produced node.Bundle, so the two
+			// always describe the same bundle version (a moving tag isn't
+			// re-resolved here).
+			bundleDigest = node.Digest
+			if bundleDigest == "" {
+				if ref, err := cnab.ParseOCIReference(key.Reference); err == nil && ref.HasDigest() {
+					bundleDigest = ref.Digest().String()
+				}
 			}
 		}
 

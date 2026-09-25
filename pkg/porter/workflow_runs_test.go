@@ -21,11 +21,9 @@ func TestBuildJobRuns(t *testing.T) {
 	installBun := leafTestBundle("mysql")
 	pullDigests := map[string]string{
 		"localhost:5000/redis:v2.0.0": testDigestB,
-		"localhost:5000/mysql:v1.0.0": testDigestA,
 	}
 	mockPull := newMockPullBundle(map[string]cnab.ExtendedBundle{
 		"localhost:5000/redis:v2.0.0": leafTestBundle("redis"),
-		"localhost:5000/mysql:v1.0.0": installBun,
 	})
 	p.TestRegistry.MockPullBundle = func(ctx context.Context, ref cnab.OCIReference, opts cnabtooci.RegistryOptions) (cnab.BundleReference, error) {
 		bunRef, err := mockPull(ctx, ref, opts)
@@ -36,7 +34,7 @@ func TestBuildJobRuns(t *testing.T) {
 	tg := newTestGraph()
 
 	installDep := tg.addNode("localhost:5000/mysql:v1.0.0")
-	tg.g.Nodes[installDep] = &Node{Key: installDep, Bundle: installBun}
+	tg.g.Nodes[installDep] = &Node{Key: installDep, Bundle: installBun, Digest: testDigestA}
 	tg.addRequires(tg.g.Root, installDep, "db")
 
 	skipDep := tg.addNode("localhost:5000/cache@" + testDigestA)
@@ -92,7 +90,7 @@ func TestBuildJobRuns(t *testing.T) {
 	assert.Equal(t, cnab.ActionInstall, installRun.Action)
 	assert.Equal(t, "localhost:5000/mysql:v1.0.0", installRun.BundleReference)
 	assert.Equal(t, "mysql", installRun.Bundle.Name)
-	// Tag-only reference: digest comes from pulling (cached) the bundle.
+	// Tag-only reference: digest is the one recorded on the node by the graph pull.
 	assert.Equal(t, testDigestA, installRun.BundleDigest)
 
 	rootRun, ok := runs[jobIDs[tg.g.Root]]
@@ -112,32 +110,21 @@ func TestBuildJobRuns(t *testing.T) {
 	assert.Equal(t, storage.JobStatus{RunID: upgradeRun.ID, Status: cnab.StatusPending}, statuses[upgradeJobID])
 }
 
-func TestBuildJobRuns_DigestLookupIgnoresForce(t *testing.T) {
+func TestBuildJobRuns_UsesNodeDigestWithoutRepulling(t *testing.T) {
 	t.Parallel()
 
 	p := NewTestPorter(t)
 	defer p.Close()
-
-	const ref = "localhost:5000/mysql:v1.0.0"
-	bun := leafTestBundle("mysql")
-	mockPull := newMockPullBundle(map[string]cnab.ExtendedBundle{ref: bun})
-	current := testDigestA
-	p.TestRegistry.MockPullBundle = func(ctx context.Context, r cnab.OCIReference, opts cnabtooci.RegistryOptions) (cnab.BundleReference, error) {
-		bunRef, err := mockPull(ctx, r, opts)
-		bunRef.Digest = digest.Digest(current)
-		return bunRef, err
+	p.TestRegistry.MockPullBundle = func(context.Context, cnab.OCIReference, cnabtooci.RegistryOptions) (cnab.BundleReference, error) {
+		return cnab.BundleReference{}, assert.AnError
 	}
 
-	// Graph construction pulls (and caches) the tag-only dependency.
-	_, err := p.PullBundle(context.Background(), BundlePullOptions{Reference: ref})
-	require.NoError(t, err)
-
-	// The moving tag now resolves to a different digest.
-	current = testDigestB
-
+	const ref = "localhost:5000/mysql:v1.0.0"
 	tg := newTestGraph()
 	dep := tg.addNode(ref)
-	tg.g.Nodes[dep] = &Node{Key: dep, Bundle: bun}
+	// Two nodes could share a moving tag yet hold different digests; each
+	// run must use its own node's digest, never re-resolve the tag.
+	tg.g.Nodes[dep] = &Node{Key: dep, Bundle: leafTestBundle("mysql"), Digest: testDigestB}
 	tg.addRequires(tg.g.Root, dep, "db")
 	order, err := tg.g.TopologicalOrder()
 	require.NoError(t, err)
@@ -148,8 +135,9 @@ func TestBuildJobRuns_DigestLookupIgnoresForce(t *testing.T) {
 	rootRef := cnab.BundleReference{Reference: cnab.MustParseOCIReference("localhost:5000/myapp:v1.0.0"), Digest: digest.Digest(testDigestA)}
 	actions := map[NodeKey]string{tg.g.Root: cnab.ActionInstall, dep: cnab.ActionInstall}
 
-	// Force must not cause a re-pull that picks up the new digest.
-	runs, _, err := buildJobRuns(context.Background(), p.Porter, tg.g, jobIDs, installations, actions, rootRef, ExplainOpts{BundleReferenceOptions: BundleReferenceOptions{BundlePullOptions: BundlePullOptions{Force: true}}})
+	// Force must have no effect, and no registry call may be made.
+	opts := ExplainOpts{BundleReferenceOptions: BundleReferenceOptions{BundlePullOptions: BundlePullOptions{Force: true}}}
+	runs, _, err := buildJobRuns(context.Background(), p.Porter, tg.g, jobIDs, installations, actions, rootRef, opts)
 	require.NoError(t, err)
-	assert.Equal(t, testDigestA, runs[jobIDs[dep]].BundleDigest)
+	assert.Equal(t, testDigestB, runs[jobIDs[dep]].BundleDigest)
 }

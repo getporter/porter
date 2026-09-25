@@ -132,6 +132,12 @@ type Node struct {
 	Bundle cnab.ExtendedBundle
 	Depth  int
 
+	// Digest is the digest of Bundle as resolved by the pull that populated
+	// it. Empty when Bundle wasn't pulled (root, a reused installation, or a
+	// failed resolution). Recorded here so later steps don't re-resolve a
+	// moving tag and pair Bundle with a different version's digest.
+	Digest string
+
 	// ResolutionFailed is set when the bundle for this node could not be
 	// pulled/resolved; Bundle is the zero value in that case and this node's
 	// own dependencies were not expanded.

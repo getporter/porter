@@ -247,13 +247,15 @@ func (b *GraphBuilder) expandNode(
 			}
 		}
 
-		childBun, err := b.pullDependencyBundle(ctx, lock.Reference, opts)
+		childRef, err := b.pullDependencyBundleReference(ctx, lock.Reference, opts)
 		if err != nil {
 			node.ResolutionFailed = true
 			node.ResolutionError = err.Error()
 			continue
 		}
+		childBun := childRef.Definition
 		node.Bundle = childBun
+		node.Digest = childRef.Digest.String()
 
 		if shareable {
 			g.sharedByContent[ck] = childKey
@@ -338,6 +340,17 @@ func (b *GraphBuilder) expandNode(
 
 // pullDependencyBundle pulls a dependency bundle from the registry.
 func (b *GraphBuilder) pullDependencyBundle(ctx context.Context, ref string, opts ExplainOpts) (cnab.ExtendedBundle, error) {
+	bunRef, err := b.pullDependencyBundleReference(ctx, ref, opts)
+	if err != nil {
+		return cnab.ExtendedBundle{}, err
+	}
+	return bunRef.Definition, nil
+}
+
+// pullDependencyBundleReference pulls a dependency bundle from the
+// registry, returning its resolved reference and digest along with the
+// definition.
+func (b *GraphBuilder) pullDependencyBundleReference(ctx context.Context, ref string, opts ExplainOpts) (cnab.BundleReference, error) {
 	pullOpts := BundlePullOptions{
 		Reference:        ref,
 		InsecureRegistry: opts.InsecureRegistry,
@@ -346,10 +359,10 @@ func (b *GraphBuilder) pullDependencyBundle(ctx context.Context, ref string, opt
 
 	cachedBundle, err := b.porter.PullBundle(ctx, pullOpts)
 	if err != nil {
-		return cnab.ExtendedBundle{}, fmt.Errorf("failed to pull bundle %s: %w", ref, err)
+		return cnab.BundleReference{}, fmt.Errorf("failed to pull bundle %s: %w", ref, err)
 	}
 
-	return cachedBundle.Definition, nil
+	return cachedBundle.BundleReference, nil
 }
 
 // graphToInspectableDependencies renders g as the nested, depth-indented

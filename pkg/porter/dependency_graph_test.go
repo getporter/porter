@@ -13,6 +13,7 @@ import (
 	"get.porter.sh/porter/pkg/experimental"
 	"get.porter.sh/porter/pkg/storage"
 	"github.com/cnabio/cnab-go/bundle"
+	"github.com/opencontainers/go-digest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -1442,4 +1443,34 @@ func TestGraphBuilder_ExistingInstallation(t *testing.T) {
 		require.Len(t, deps, 1)
 		assert.Equal(t, "/db", deps[0].ResolvedInstallation)
 	})
+}
+
+func TestGraphBuilder_RecordsPulledBundleDigest(t *testing.T) {
+	t.Parallel()
+
+	const ref = "localhost:5000/mysql:v1.0.0"
+	root := v2TestBundle("root", map[string]v2.Dependency{"db": {Bundle: ref}})
+
+	p := NewTestPorter(t)
+	defer p.Close()
+	mockPull := newMockPullBundle(map[string]cnab.ExtendedBundle{ref: leafTestBundle("mysql")})
+	p.TestRegistry.MockPullBundle = func(ctx context.Context, r cnab.OCIReference, opts cnabtooci.RegistryOptions) (cnab.BundleReference, error) {
+		bunRef, err := mockPull(ctx, r, opts)
+		bunRef.Digest = digest.Digest(testDigestA)
+		return bunRef, err
+	}
+
+	graph, err := NewGraphBuilder(p.Porter, 10).BuildDependencyGraph(context.Background(), root, ExplainOpts{MaxDependencyDepth: 10})
+	require.NoError(t, err)
+
+	var found bool
+	for key, node := range graph.Nodes {
+		if key.IsRoot {
+			assert.Empty(t, node.Digest)
+			continue
+		}
+		found = true
+		assert.Equal(t, testDigestA, node.Digest)
+	}
+	assert.True(t, found)
 }
