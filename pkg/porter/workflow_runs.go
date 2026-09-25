@@ -12,7 +12,7 @@ import (
 // GraphBuilder.pullDependencyBundle (dependency_graph_builder.go), used
 // here instead of that method because it's only needed for a node
 // GraphBuilder itself never pulled -- see buildJobRuns.
-func pullBundleForNode(ctx context.Context, p *Porter, ref string, opts ExplainOpts) (cnab.ExtendedBundle, error) {
+func pullBundleForNode(ctx context.Context, p *Porter, ref string, opts ExplainOpts) (cnab.BundleReference, error) {
 	pullOpts := BundlePullOptions{
 		Reference:        ref,
 		InsecureRegistry: opts.InsecureRegistry,
@@ -21,10 +21,36 @@ func pullBundleForNode(ctx context.Context, p *Porter, ref string, opts ExplainO
 
 	cachedBundle, err := p.PullBundle(ctx, pullOpts)
 	if err != nil {
-		return cnab.ExtendedBundle{}, fmt.Errorf("failed to pull bundle %s: %w", ref, err)
+		return cnab.BundleReference{}, fmt.Errorf("failed to pull bundle %s: %w", ref, err)
 	}
 
-	return cachedBundle.Definition, nil
+	return cachedBundle.BundleReference, nil
+}
+
+// bundleDigestFor returns the digest to record on a job's Run
+// (Run.BundleDigest), which Installation.ApplyResult later copies to
+// Status.BundleDigest -- what findExistingInstallation matches on to reuse
+// a dependency. Uses, in order: a digest already pinned in key.Reference,
+// the root installation's recorded digest, else the digest of the bundle
+// pulled (from cache, for a graph-pulled node) via pullBundleForNode.
+func bundleDigestFor(ctx context.Context, p *Porter, key NodeKey, inst storage.Installation, opts ExplainOpts) (string, error) {
+	if key.Reference != "" {
+		if ref, err := cnab.ParseOCIReference(key.Reference); err == nil && ref.HasDigest() {
+			return ref.Digest().String(), nil
+		}
+	}
+	if key.IsRoot && inst.Bundle.Digest != "" {
+		return inst.Bundle.Digest, nil
+	}
+	if key.Reference == "" {
+		return "", nil
+	}
+
+	pulled, err := pullBundleForNode(ctx, p, key.Reference, opts)
+	if err != nil {
+		return "", err
+	}
+	return pulled.Digest.String(), nil
 }
 
 // bundleReferenceString returns the bundle reference to record on a job's
@@ -78,19 +104,28 @@ func buildJobRuns(
 		}
 
 		node := g.Nodes[key]
+		inst := installations[key]
 		bun := node.Bundle
+		var bundleDigest string
 		if node.ResolvedInstallation != nil && action == cnab.ActionUpgrade {
 			pulled, err := pullBundleForNode(ctx, p, key.Reference, opts)
 			if err != nil {
 				return nil, nil, fmt.Errorf("cannot build the run for %s: %w", key, err)
 			}
-			bun = pulled
+			bun = pulled.Definition
+			bundleDigest = pulled.Digest.String()
+		} else {
+			var err error
+			bundleDigest, err = bundleDigestFor(ctx, p, key, inst, opts)
+			if err != nil {
+				return nil, nil, fmt.Errorf("cannot build the run for %s: %w", key, err)
+			}
 		}
 
-		inst := installations[key]
 		run := inst.NewRun(action, bun)
 		run.Bundle = bun.Bundle
 		run.BundleReference = bundleReferenceString(key, inst)
+		run.BundleDigest = bundleDigest
 
 		runs[jobID] = run
 		statuses[jobID] = storage.JobStatus{RunID: run.ID, Status: cnab.StatusPending}

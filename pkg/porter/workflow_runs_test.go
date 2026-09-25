@@ -5,7 +5,9 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg/cnab"
+	cnabtooci "get.porter.sh/porter/pkg/cnab/cnab-to-oci"
 	"get.porter.sh/porter/pkg/storage"
+	"github.com/opencontainers/go-digest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -17,9 +19,19 @@ func TestBuildJobRuns(t *testing.T) {
 	defer p.Close()
 
 	installBun := leafTestBundle("mysql")
-	p.TestRegistry.MockPullBundle = newMockPullBundle(map[string]cnab.ExtendedBundle{
+	pullDigests := map[string]string{
+		"localhost:5000/redis:v2.0.0": testDigestB,
+		"localhost:5000/mysql:v1.0.0": testDigestA,
+	}
+	mockPull := newMockPullBundle(map[string]cnab.ExtendedBundle{
 		"localhost:5000/redis:v2.0.0": leafTestBundle("redis"),
+		"localhost:5000/mysql:v1.0.0": installBun,
 	})
+	p.TestRegistry.MockPullBundle = func(ctx context.Context, ref cnab.OCIReference, opts cnabtooci.RegistryOptions) (cnab.BundleReference, error) {
+		bunRef, err := mockPull(ctx, ref, opts)
+		bunRef.Digest = digest.Digest(pullDigests[ref.String()])
+		return bunRef, err
+	}
 
 	tg := newTestGraph()
 
@@ -47,7 +59,9 @@ func TestBuildJobRuns(t *testing.T) {
 	require.NoError(t, err)
 
 	jobIDs := buildJobIDs(order)
-	installations, err := buildJobInstallations(tg.g, order, "dev", storage.NewInstallation("dev", "myapp"))
+	rootInst := storage.NewInstallation("dev", "myapp")
+	rootInst.Bundle = storage.OCIReferenceParts{Repository: "localhost:5000/myapp", Digest: testDigestA}
+	installations, err := buildJobInstallations(tg.g, order, "dev", rootInst)
 	require.NoError(t, err)
 
 	actions := map[NodeKey]string{
@@ -73,6 +87,12 @@ func TestBuildJobRuns(t *testing.T) {
 	assert.Equal(t, cnab.ActionInstall, installRun.Action)
 	assert.Equal(t, "localhost:5000/mysql:v1.0.0", installRun.BundleReference)
 	assert.Equal(t, "mysql", installRun.Bundle.Name)
+	// Tag-only reference: digest comes from pulling (cached) the bundle.
+	assert.Equal(t, testDigestA, installRun.BundleDigest)
+
+	rootRun, ok := runs[jobIDs[tg.g.Root]]
+	require.True(t, ok)
+	assert.Equal(t, testDigestA, rootRun.BundleDigest)
 	assert.Equal(t, storage.JobStatus{RunID: installRun.ID, Status: cnab.StatusPending}, statuses[installJobID])
 
 	// Upgrade job: Node.Bundle was never pulled by the graph builder, so
@@ -82,5 +102,6 @@ func TestBuildJobRuns(t *testing.T) {
 	require.True(t, ok)
 	assert.Equal(t, cnab.ActionUpgrade, upgradeRun.Action)
 	assert.Equal(t, "redis", upgradeRun.Bundle.Name)
+	assert.Equal(t, testDigestB, upgradeRun.BundleDigest)
 	assert.Equal(t, storage.JobStatus{RunID: upgradeRun.ID, Status: cnab.StatusPending}, statuses[upgradeJobID])
 }
