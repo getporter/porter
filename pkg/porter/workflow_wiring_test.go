@@ -35,10 +35,9 @@ func TestWireJobParameters(t *testing.T) {
 			"connstr": "${bundle.dependencies.b.outputs.connstr}",
 		},
 	}
-	rootParameters := secrets.Set{"name": "myapp"}
 
 	job := &storage.Job{}
-	err = wireJobParameters(job, dep, tg.g, depA, jobIDs, rootParameters, nil)
+	err = wireJobParameters(job, dep, tg.g, depA, jobIDs)
 	require.NoError(t, err)
 
 	params := job.Installation.Parameters.Parameters
@@ -52,8 +51,9 @@ func TestWireJobParameters(t *testing.T) {
 	assert.Equal(t, host.SourceValue, byName["env"].Source.Strategy)
 	assert.Equal(t, "prod", byName["env"].Source.Hint)
 
-	assert.Equal(t, host.SourceValue, byName["appName"].Source.Strategy)
-	assert.Equal(t, "myapp", byName["appName"].Source.Hint)
+	// Root parameter is referenced via the root job, never resolved here.
+	assert.Equal(t, wiringStrategy, byName["appName"].Source.Strategy)
+	assert.Equal(t, "workflow.jobs."+jobIDs[tg.g.Root]+".parameters.name", byName["appName"].Source.Hint)
 
 	assert.Equal(t, wiringStrategy, byName["connstr"].Source.Strategy)
 	assert.Equal(t, "workflow.jobs."+jobIDs[depB]+".outputs.connstr", byName["connstr"].Source.Hint)
@@ -75,37 +75,45 @@ func TestWireJobCredentials(t *testing.T) {
 			"apiKey": "${bundle.credentials.masterKey}",
 		},
 	}
-	// Same name as a root parameter: must resolve from credentials.
-	rootParameters := secrets.Set{"masterKey": "wrong"}
-	rootCredentials := secrets.Set{"masterKey": "s3cr3t"}
 
 	job := &storage.Job{}
-	err = wireJobCredentials(job, d, tg.g, dep, jobIDs, rootParameters, rootCredentials)
+	err = wireJobCredentials(job, d, tg.g, dep, jobIDs)
 	require.NoError(t, err)
 
 	require.Len(t, job.Credentials, 1)
 	assert.Equal(t, "apiKey", job.Credentials[0].Name)
-	assert.Equal(t, host.SourceValue, job.Credentials[0].Source.Strategy)
-	assert.Equal(t, "s3cr3t", job.Credentials[0].Source.Hint)
+	// The secret itself must never be written into the (persisted) workflow.
+	assert.Equal(t, wiringStrategy, job.Credentials[0].Source.Strategy)
+	assert.Equal(t, "workflow.jobs."+jobIDs[tg.g.Root]+".credentials.masterKey", job.Credentials[0].Source.Hint)
+	assert.Empty(t, job.Credentials[0].ResolvedValue)
 }
 
-func TestWireJobParameters_MissingRootValueErrors(t *testing.T) {
+func TestWireJobParameters_CompositeTemplateErrors(t *testing.T) {
 	t.Parallel()
 
-	tg := newTestGraph()
-	dep := tg.addNode("dep")
-	tg.addRequires(tg.g.Root, dep, "a")
+	tests := map[string]string{
+		"reference with literal text":    "https://${bundle.dependencies.db.outputs.host}",
+		"two references":                 "${bundle.dependencies.db.outputs.host}:${bundle.parameters.port}",
+		"root reference with text":       "prefix-${bundle.parameters.name}",
+		"root output (never resolvable)": "${bundle.outputs.x}",
+	}
+	for name, value := range tests {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 
-	order, err := tg.g.TopologicalOrder()
-	require.NoError(t, err)
-	jobIDs := buildJobIDs(order)
+			tg := newTestGraph()
+			dep := tg.addNode("dep")
+			tg.addRequires(tg.g.Root, dep, "a")
+			order, err := tg.g.TopologicalOrder()
+			require.NoError(t, err)
+			jobIDs := buildJobIDs(order)
 
-	d := v2.Dependency{Parameters: map[string]string{"env": "${bundle.parameters.missing}"}}
-
-	job := &storage.Job{}
-	err = wireJobParameters(job, d, tg.g, dep, jobIDs, secrets.Set{}, secrets.Set{})
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "missing")
+			job := &storage.Job{}
+			err = wireJobParameters(job, v2.Dependency{Parameters: map[string]string{"env": value}}, tg.g, dep, jobIDs)
+			require.Error(t, err)
+			assert.Empty(t, job.Installation.Parameters.Parameters)
+		})
+	}
 }
 
 func TestPropagateNamedSets(t *testing.T) {
