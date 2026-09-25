@@ -60,7 +60,12 @@ func TestBuildJobRuns(t *testing.T) {
 
 	jobIDs := buildJobIDs(order)
 	rootInst := storage.NewInstallation("dev", "myapp")
-	rootInst.Bundle = storage.OCIReferenceParts{Repository: "localhost:5000/myapp", Digest: testDigestA}
+	// Stale tracked reference/digest: must not leak into the root run.
+	rootInst.Bundle = storage.OCIReferenceParts{Repository: "localhost:5000/myapp", Digest: testDigestB}
+	rootRef := cnab.BundleReference{
+		Reference: cnab.MustParseOCIReference("localhost:5000/myapp:v2.0.0"),
+		Digest:    digest.Digest(testDigestA),
+	}
 	installations, err := buildJobInstallations(tg.g, order, "dev", rootInst)
 	require.NoError(t, err)
 
@@ -71,7 +76,7 @@ func TestBuildJobRuns(t *testing.T) {
 		upgradeDep: cnab.ActionUpgrade,
 	}
 
-	runs, statuses, err := buildJobRuns(context.Background(), p.Porter, tg.g, jobIDs, installations, actions, ExplainOpts{})
+	runs, statuses, err := buildJobRuns(context.Background(), p.Porter, tg.g, jobIDs, installations, actions, rootRef, ExplainOpts{})
 	require.NoError(t, err)
 
 	// Skipped job: no Run, status is immediately succeeded.
@@ -93,6 +98,7 @@ func TestBuildJobRuns(t *testing.T) {
 	rootRun, ok := runs[jobIDs[tg.g.Root]]
 	require.True(t, ok)
 	assert.Equal(t, testDigestA, rootRun.BundleDigest)
+	assert.Equal(t, "localhost:5000/myapp:v2.0.0", rootRun.BundleReference)
 	assert.Equal(t, storage.JobStatus{RunID: installRun.ID, Status: cnab.StatusPending}, statuses[installJobID])
 
 	// Upgrade job: Node.Bundle was never pulled by the graph builder, so

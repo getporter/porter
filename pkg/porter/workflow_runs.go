@@ -30,20 +30,15 @@ func pullBundleForNode(ctx context.Context, p *Porter, ref string, opts ExplainO
 // bundleDigestFor returns the digest to record on a job's Run
 // (Run.BundleDigest), which Installation.ApplyResult later copies to
 // Status.BundleDigest -- what findExistingInstallation matches on to reuse
-// a dependency. Uses, in order: a digest already pinned in key.Reference,
-// the root installation's recorded digest, else the digest of the bundle
-// pulled (from cache, for a graph-pulled node) via pullBundleForNode.
-func bundleDigestFor(ctx context.Context, p *Porter, key NodeKey, inst storage.Installation, opts ExplainOpts) (string, error) {
+// a dependency. Uses a digest already pinned in key.Reference, else the
+// digest of the bundle pulled (from cache, for a graph-pulled node) via
+// pullBundleForNode. Not for the root, whose resolved reference is passed
+// to buildJobRuns.
+func bundleDigestFor(ctx context.Context, p *Porter, key NodeKey, opts ExplainOpts) (string, error) {
 	if key.Reference != "" {
 		if ref, err := cnab.ParseOCIReference(key.Reference); err == nil && ref.HasDigest() {
 			return ref.Digest().String(), nil
 		}
-	}
-	if key.IsRoot && inst.Bundle.Digest != "" {
-		return inst.Bundle.Digest, nil
-	}
-	if key.Reference == "" {
-		return "", nil
 	}
 
 	pulled, err := pullBundleForNode(ctx, p, key.Reference, opts)
@@ -53,27 +48,15 @@ func bundleDigestFor(ctx context.Context, p *Porter, key NodeKey, inst storage.I
 	return pulled.Digest.String(), nil
 }
 
-// bundleReferenceString returns the bundle reference to record on a job's
-// Run: key.Reference for a dependency node (always set, once resolved), or
-// -- for the root node, whose NodeKey carries no reference -- the
-// installation's own recorded bundle reference.
-func bundleReferenceString(key NodeKey, inst storage.Installation) string {
-	if key.Reference != "" {
-		return key.Reference
-	}
-	if ref, ok, err := inst.Bundle.GetBundleReference(); err == nil && ok {
-		return ref.String()
-	}
-	return ""
-}
-
 // buildJobRuns creates a Pending storage.Run for every job whose action
 // requires one (i.e. not JobActionSkip), and a WorkflowStatus.JobStatus
 // entry for every job in the graph, including skipped ones (marked
 // succeeded immediately, since they require no bundle action).
 //
 // installations and actions must be the results of buildJobInstallations
-// and ResolveNodeActions for the same graph/jobIDs.
+// and ResolveNodeActions for the same graph/jobIDs. rootRef is the
+// resolved reference (and digest) of the root bundle, as the normal
+// lifecycle path records; the root Node carries only the definition.
 //
 // For a brand-new dependency node, Node.Bundle is already populated (it
 // was pulled while building the graph). For an existing installation being
@@ -91,6 +74,7 @@ func buildJobRuns(
 	jobIDs map[NodeKey]string,
 	installations map[NodeKey]storage.Installation,
 	actions map[NodeKey]string,
+	rootRef cnab.BundleReference,
 	opts ExplainOpts,
 ) (map[string]storage.Run, map[string]storage.JobStatus, error) {
 	runs := make(map[string]storage.Run)
@@ -106,8 +90,15 @@ func buildJobRuns(
 		node := g.Nodes[key]
 		inst := installations[key]
 		bun := node.Bundle
+		bundleReference := key.Reference
 		var bundleDigest string
-		if node.ResolvedInstallation != nil && action == cnab.ActionUpgrade {
+		if key.IsRoot {
+			// The root's resolved reference/digest, not the installation's
+			// tracked ones, which can be stale until the run's result is
+			// applied (e.g. an upgrade by version).
+			bundleReference = rootRef.Reference.String()
+			bundleDigest = rootRef.Digest.String()
+		} else if node.ResolvedInstallation != nil && action == cnab.ActionUpgrade {
 			pulled, err := pullBundleForNode(ctx, p, key.Reference, opts)
 			if err != nil {
 				return nil, nil, fmt.Errorf("cannot build the run for %s: %w", key, err)
@@ -116,7 +107,7 @@ func buildJobRuns(
 			bundleDigest = pulled.Digest.String()
 		} else {
 			var err error
-			bundleDigest, err = bundleDigestFor(ctx, p, key, inst, opts)
+			bundleDigest, err = bundleDigestFor(ctx, p, key, opts)
 			if err != nil {
 				return nil, nil, fmt.Errorf("cannot build the run for %s: %w", key, err)
 			}
@@ -124,7 +115,7 @@ func buildJobRuns(
 
 		run := inst.NewRun(action, bun)
 		run.Bundle = bun.Bundle
-		run.BundleReference = bundleReferenceString(key, inst)
+		run.BundleReference = bundleReference
 		run.BundleDigest = bundleDigest
 
 		runs[jobID] = run
