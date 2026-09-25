@@ -5,6 +5,7 @@ import (
 
 	"get.porter.sh/porter/tests"
 	"github.com/cnabio/cnab-go/bundle"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -195,4 +196,30 @@ func TestDependencyInterfaceDocument_Names(t *testing.T) {
 	require.Empty(t, emptyOutputs)
 	require.Empty(t, emptyParameters)
 	require.Empty(t, emptyCredentials)
+}
+
+func TestReplaceDependencySources(t *testing.T) {
+	t.Parallel()
+
+	got, err := ReplaceDependencySources("a ${bundle.parameters.x} b ${ bundle.dependencies.db.outputs.host }!", func(s DependencySource) (string, error) {
+		return "<" + s.AsBundleWiring() + ">", nil
+	})
+	require.NoError(t, err)
+	assert.Equal(t, "a <bundle.parameters.x> b <bundle.dependencies.db.outputs.host>!", got)
+
+	got, err = ReplaceDependencySources("no references here", func(DependencySource) (string, error) {
+		return "x", nil
+	})
+	require.NoError(t, err)
+	assert.Equal(t, "no references here", got)
+
+	_, err = ReplaceDependencySources("${bundle.parameters.x}", func(DependencySource) (string, error) {
+		return "", assert.AnError
+	})
+	require.ErrorIs(t, err, assert.AnError)
+
+	_, err = ReplaceDependencySources("${bundle.outputs.x}", func(DependencySource) (string, error) {
+		return "x", nil
+	})
+	require.Error(t, err)
 }

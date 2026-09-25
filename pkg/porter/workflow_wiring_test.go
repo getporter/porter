@@ -88,14 +88,51 @@ func TestWireJobCredentials(t *testing.T) {
 	assert.Empty(t, job.Credentials[0].ResolvedValue)
 }
 
+func TestWireJobParameters_CompositeTemplate(t *testing.T) {
+	t.Parallel()
+
+	tg := newTestGraph()
+	depA := tg.addNode("depA")
+	depB := tg.addNode("depB")
+	tg.addRequires(tg.g.Root, depA, "a")
+	tg.addRequires(tg.g.Root, depB, "b")
+	// The graph builder creates a wiring edge for the sibling reference
+	// inside the composite; it must not produce a second entry.
+	tg.g.addEdge(Edge{
+		From: depA, To: depB, Kind: EdgeKindWiring, ToAlias: "b",
+		Detail: &WiringDetail{Field: "parameters", FieldName: "url", SourceOutput: "host"},
+	})
+	order, err := tg.g.TopologicalOrder()
+	require.NoError(t, err)
+	jobIDs := buildJobIDs(order)
+
+	dep := v2.Dependency{Parameters: map[string]string{
+		"url": "https://${bundle.dependencies.b.outputs.host}:${bundle.parameters.port}/app ${ bundle.credentials.token }",
+	}}
+
+	job := &storage.Job{}
+	require.NoError(t, wireJobParameters(job, dep, tg.g, depA, jobIDs))
+
+	params := job.Installation.Parameters.Parameters
+	require.Len(t, params, 1)
+	assert.Equal(t, "url", params[0].Name)
+	assert.Equal(t, wiringTemplateStrategy, params[0].Source.Strategy)
+	root, sibling := jobIDs[tg.g.Root], jobIDs[depB]
+	// Literal text and whitespace preserved; references rewritten to job
+	// form; no secret value anywhere in the stored hint.
+	assert.Equal(t,
+		"https://${workflow.jobs."+sibling+".outputs.host}:${workflow.jobs."+root+".parameters.port}/app ${workflow.jobs."+root+".credentials.token}",
+		params[0].Source.Hint)
+	assert.Empty(t, params[0].ResolvedValue)
+}
+
 func TestWireJobParameters_CompositeTemplateErrors(t *testing.T) {
 	t.Parallel()
 
 	tests := map[string]string{
-		"reference with literal text":    "https://${bundle.dependencies.db.outputs.host}",
-		"two references":                 "${bundle.dependencies.db.outputs.host}:${bundle.parameters.port}",
-		"root reference with text":       "prefix-${bundle.parameters.name}",
-		"root output (never resolvable)": "${bundle.outputs.x}",
+		"root output (never resolvable)":       "x-${bundle.outputs.x}",
+		"unknown sibling":                      "x-${bundle.dependencies.nope.outputs.host}",
+		"a dependency's parameter, not output": "x-${bundle.dependencies.b.parameters.p}",
 	}
 	for name, value := range tests {
 		t.Run(name, func(t *testing.T) {

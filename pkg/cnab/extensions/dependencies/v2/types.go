@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"regexp"
 	"sort"
+	"strings"
+	"unicode"
 
 	"github.com/cnabio/cnab-go/bundle"
 )
@@ -150,6 +152,43 @@ func ParseAllDependencySources(templateVariable string) (sources []DependencySou
 		sources = append(sources, src)
 	}
 	return sources, invalid
+}
+
+// ReplaceDependencySources rewrites every wiring reference embedded in a
+// template value (the same references ParseAllDependencySources finds),
+// replacing each with the string returned by replace and leaving all other
+// text untouched. Whitespace surrounding a reference (which the wiring
+// pattern would otherwise consume) is preserved. A reference that
+// ParseAllDependencySources reports as invalid, or an error from replace,
+// is returned as an error.
+func ReplaceDependencySources(template string, replace func(DependencySource) (string, error)) (string, error) {
+	var firstErr error
+	result := dependencySourceWiringRegex.ReplaceAllStringFunc(template, func(match string) string {
+		if firstErr != nil {
+			return match
+		}
+
+		src, err := dependencySourceFromMatch(dependencySourceWiringRegex.FindStringSubmatch(match))
+		if err != nil {
+			firstErr = err
+			return match
+		}
+
+		replacement, err := replace(src)
+		if err != nil {
+			firstErr = err
+			return match
+		}
+
+		trimmed := strings.TrimLeftFunc(match, unicode.IsSpace)
+		leading := match[:len(match)-len(trimmed)]
+		trailing := trimmed[len(strings.TrimRightFunc(trimmed, unicode.IsSpace)):]
+		return leading + replacement + trailing
+	})
+	if firstErr != nil {
+		return "", firstErr
+	}
+	return result, nil
 }
 
 // AsBundleWiring is the wiring string representation in the bundle definition.
