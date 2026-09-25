@@ -1,6 +1,6 @@
 module get.porter.sh/porter
 
-go 1.26.6
+go 1.26.8
 
 // See https://github.com/hashicorp/go-plugin/pull/127 and
 // https://github.com/hashicorp/go-plugin/pull/163
@@ -18,7 +18,7 @@ require (
 	github.com/cnabio/cnab-go v0.26.4
 	github.com/cnabio/cnab-to-oci v0.6.1
 	github.com/cnabio/image-relocation v0.9.2
-	github.com/containerd/containerd/v2 v2.3.4
+	github.com/containerd/containerd/v2 v2.3.6
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
 	github.com/distribution/reference v0.6.1-0.20240718132515-8c942b0459df
 	github.com/docker/buildx v0.37.0
