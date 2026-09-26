@@ -56,7 +56,7 @@ maintainers:
 * `schemaVersion`: The version of the schema used by this document.
 * `name`: The name of the bundle
 * `description`: A description of the bundle
-* `version`: The version of the bundle, uses [semver](https://semver.org). A leading v prefix may optionally be used.
+* `version`: The version of the bundle, uses [semver v2.0.0](/docs/references/semver/). A leading v prefix may optionally be used.
 * `registry`: The registry to use for publishing the bundle. The format is `REGISTRY_HOST/ORG`.
     The final bundle reference will be based on this value.
     For example, if the bundle name is `porter-hello`, registry is `getporter` and the version is `0.1.0`,

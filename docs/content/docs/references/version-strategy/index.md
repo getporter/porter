@@ -14,7 +14,7 @@ Porter uses GitHub flow for the most part:
 
 ## Version Schema
 
-Porter's version numbers adhere [semver v2], of `MAJOR.MINOR.PATCH-PRERELEASE.PRERELEASE_NUMBER`.
+Porter's version numbers adhere to [semver v2.0.0], of `MAJOR.MINOR.PATCH-PRERELEASE.PRERELEASE_NUMBER`.
 The version tracks changes to Porter's configuration files, commands, data format, or behavior.
 Porter's library is not yet stable and changes to the underlying Porter code, including breaking changes to downstream consumers, is not encoded in Porter's version number.
 
@@ -25,4 +25,4 @@ Porter's library is not yet stable and changes to the underlying Porter code, in
 - **PRERELEASE_NUMBER** - The number of releases in the specified prerelease phase.
   For example, v1.0.0-alpha.2 is the second v1 alpha release.
 
-[semver v2]: https://semver.org/spec/v2.0.0.html
+[semver v2.0.0]: https://semver.org/spec/v2.0.0.html

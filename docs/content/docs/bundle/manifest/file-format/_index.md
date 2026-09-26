@@ -171,7 +171,7 @@ status:
 | schemaType                             | false    | The type of document.                                                                                                                                                                         |
 | schemaVersion                          | true     | The version of the Bundle schema used in this file.                                                                                                                                           |
 | name                                   | true     | The name of the bundle.                                                                                                                                                                       |
-| version                                | true     | The version of the bundle, must adhere to [semver v2].<br/>The bundle tag defaults to the version with a v prefix, e.g. mybundle:v1.0.0. Use --tag or the reference field to override.        |
+| version                                | true     | The version of the bundle, must adhere to [semver v2.0.0].<br/>The bundle tag defaults to the version with a v prefix, e.g. mybundle:v1.0.0. Use --tag or the reference field to override.        |
 | description                            | false    | A description of the bundle.                                                                                                                                                                  |
 | registry                               | true*    | The OCI registry to use when the bundle is published.<br/> \*Either registry or reference must be specified.                                                                                  |
 | reference                              | true*    | The full reference to use when the bundle is published to an OCI registry.<br/> \*Either registry or reference must be specified.                                                             |
@@ -233,12 +233,12 @@ status:
 | customActions.NAME.modifies            | false    | Specifies if the action will modify resources managed by a bundle in any way.                                                                                                                 |
 | customActions.NAME.stateless           | false    | Specifies that the action could be run before the bundle is installed and does not require credentials.                                                                                       |
 
-[Semver constraint]: https://github.com/Masterminds/semver#basic-comparisons
+[Semver constraint]: /docs/references/semver/#dependencies
 
 ## Next Steps
 
 * [Create a Bundle](/docs/development/authoring-a-bundle/create-a-bundle/)
 
-[semver v2]: https://semver.org/spec/v2.0.0.html
+[semver v2.0.0]: /docs/references/semver/
 [manifest-schema]: https://raw.githubusercontent.com/getporter/porter/main/pkg/schema/manifest.schema.json
 [vscode]: https://marketplace.visualstudio.com/items?itemName=getporter.porter-vscode
