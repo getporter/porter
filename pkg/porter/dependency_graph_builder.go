@@ -173,6 +173,13 @@ func (b *GraphBuilder) expandNode(
 		// shares an instance when the dependency itself opts in.
 		shareable := !isV2 || lock.SharingMode
 		ck := contentKey(lock.Reference, parameters, credentials, lock.SharingGroup)
+		if mappingHasReferences(parameters, credentials) {
+			// bundle.parameters/credentials/dependencies.ALIAS references in a
+			// mapping resolve against the bundle that declares the dependency,
+			// so identical text under two different parents isn't the same
+			// instance and must not collapse into one shared node.
+			ck.ParametersHash = hashStringMap(map[string]string{"mapping": ck.ParametersHash, "parent": fmt.Sprintf("%+v", key)})
+		}
 
 		var childKey NodeKey
 		if ancestorKey, onStack := ancestors[ck]; onStack {

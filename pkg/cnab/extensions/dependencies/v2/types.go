@@ -115,6 +115,14 @@ func dependencySourceFromMatch(matches []string) (DependencySource, error) {
 	return result, nil
 }
 
+// isReference reports whether the source names something that can be
+// resolved. The wiring pattern also matches text such as "bundle.foo.bar"
+// whose item type isn't parameters, credentials or outputs; that leaves
+// every field empty and is really just literal text.
+func (s DependencySource) isReference() bool {
+	return s.Parameter != "" || s.Credential != "" || s.Output != ""
+}
+
 // ParseDependencySource identifies the components specified in a template variable.
 func ParseDependencySource(templateVariable string) (DependencySource, error) {
 	matches := dependencySourceWiringRegex.FindStringSubmatch(templateVariable)
@@ -124,7 +132,14 @@ func ParseDependencySource(templateVariable string) (DependencySource, error) {
 		return DependencySource{Value: templateVariable}, nil
 	}
 
-	return dependencySourceFromMatch(matches)
+	src, err := dependencySourceFromMatch(matches)
+	if err != nil {
+		return DependencySource{}, err
+	}
+	if !src.isReference() {
+		return DependencySource{Value: templateVariable}, nil
+	}
+	return src, nil
 }
 
 // ParseAllDependencySources scans a template value for every embedded wiring
@@ -149,6 +164,9 @@ func ParseAllDependencySources(templateVariable string) (sources []DependencySou
 			invalid = append(invalid, matches[0])
 			continue
 		}
+		if !src.isReference() {
+			continue
+		}
 		sources = append(sources, src)
 	}
 	return sources, invalid
@@ -171,6 +189,10 @@ func ReplaceDependencySources(template string, replace func(DependencySource) (s
 		src, err := dependencySourceFromMatch(dependencySourceWiringRegex.FindStringSubmatch(match))
 		if err != nil {
 			firstErr = err
+			return match
+		}
+
+		if !src.isReference() {
 			return match
 		}
 

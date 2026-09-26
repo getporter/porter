@@ -220,6 +220,26 @@ func TestWireJobParameters_MergesByName(t *testing.T) {
 	assert.Equal(t, "stale", original[0].Source.Hint)
 }
 
+func TestWireJobParameters_LiteralThatLooksLikeAReference(t *testing.T) {
+	t.Parallel()
+
+	tg := newTestGraph()
+	dep := tg.addNode("dep")
+	tg.addRequires(tg.g.Root, dep, "a")
+	order, err := tg.g.TopologicalOrder()
+	require.NoError(t, err)
+	jobIDs := buildJobIDs(order)
+
+	// Not a parameters/credentials/outputs reference, so it's just text.
+	d := v2.Dependency{Parameters: map[string]string{"url": "https://example.com/bundle.foo.bar"}}
+	job := &storage.Job{}
+	require.NoError(t, wireJobParameters(job, d, tg.g, dep, jobIDs, jobIDs[tg.g.Root]))
+
+	require.Len(t, job.Installation.Parameters.Parameters, 1)
+	assert.Equal(t, host.SourceValue, job.Installation.Parameters.Parameters[0].Source.Strategy)
+	assert.Equal(t, "https://example.com/bundle.foo.bar", job.Installation.Parameters.Parameters[0].Source.Hint)
+}
+
 func TestPropagateNamedSets(t *testing.T) {
 	t.Parallel()
 

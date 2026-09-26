@@ -151,3 +151,17 @@ func extractDependencyWiringRefs(depName string, dep v2.Dependency, requires map
 
 	return refs, dangling, invalid
 }
+
+// mappingHasReferences reports whether any value in the given dependency
+// parameter/credential mappings references a bundle parameter, credential
+// or dependency output, as opposed to being a hard-coded value.
+func mappingHasReferences(mappings ...map[string]string) bool {
+	for _, mapping := range mappings {
+		for _, value := range mapping {
+			if refs, _ := v2.ParseAllDependencySources(value); len(refs) > 0 {
+				return true
+			}
+		}
+	}
+	return false
+}

@@ -223,3 +223,21 @@ func TestReplaceDependencySources(t *testing.T) {
 	})
 	require.Error(t, err)
 }
+
+func TestUnrecognizedItemTypeIsLiteral(t *testing.T) {
+	t.Parallel()
+
+	for _, v := range []string{"bundle.foo.bar", "https://example.com/bundle.foo.bar"} {
+		src, err := ParseDependencySource(v)
+		require.NoError(t, err)
+		assert.Equal(t, DependencySource{Value: v}, src, v)
+
+		all, invalid := ParseAllDependencySources(v)
+		assert.Empty(t, all, v)
+		assert.Empty(t, invalid, v)
+
+		got, err := ReplaceDependencySources(v, func(DependencySource) (string, error) { return "X", nil })
+		require.NoError(t, err)
+		assert.Equal(t, v, got, v)
+	}
+}

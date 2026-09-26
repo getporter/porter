@@ -1474,3 +1474,35 @@ func TestGraphBuilder_RecordsPulledBundleDigest(t *testing.T) {
 	}
 	assert.True(t, found)
 }
+
+func TestGraphBuilder_ParentScopedMappingsDoNotShareNodes(t *testing.T) {
+	t.Parallel()
+
+	shared := v2.SharingCriteria{Mode: true, Group: v2.SharingGroup{Name: "app-db"}}
+	build := func(t *testing.T, dbParams map[string]string) *Graph {
+		db := v2.Dependency{Bundle: "localhost:5000/mysql:v1.0.0", Parameters: dbParams, Sharing: shared}
+		root := v2TestBundle("root", map[string]v2.Dependency{
+			"a": {Bundle: "localhost:5000/a:v1.0.0"},
+			"b": {Bundle: "localhost:5000/b:v1.0.0"},
+		})
+		p := NewTestPorter(t)
+		defer p.Close()
+		p.TestRegistry.MockPullBundle = newMockPullBundle(map[string]cnab.ExtendedBundle{
+			"localhost:5000/a:v1.0.0":     v2TestBundle("a", map[string]v2.Dependency{"db": db}),
+			"localhost:5000/b:v1.0.0":     v2TestBundle("b", map[string]v2.Dependency{"db": db}),
+			"localhost:5000/mysql:v1.0.0": leafTestBundle("mysql"),
+		})
+		graph, err := NewGraphBuilder(p.Porter, 10).BuildDependencyGraph(context.Background(), root, ExplainOpts{MaxDependencyDepth: 10})
+		require.NoError(t, err)
+		return graph
+	}
+
+	// Same text, but ${bundle.parameters.name} means a's parameter under a
+	// and b's under b: two instances.
+	graph := build(t, map[string]string{"db-name": "${bundle.parameters.name}"})
+	assert.Len(t, graph.Nodes, 5, "root, a, b and one db per parent")
+
+	// A hard-coded mapping doesn't depend on the parent, so it still shares.
+	graph = build(t, map[string]string{"db-name": "app"})
+	assert.Len(t, graph.Nodes, 4, "root, a, b and one shared db")
+}
