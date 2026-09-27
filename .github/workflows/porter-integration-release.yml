@@ -7,8 +7,6 @@ on:
         required: false
         default: ghcr.io
 
-env:
-  GOVERSION: 1.26.6
 permissions:
   contents: read
   packages: read
