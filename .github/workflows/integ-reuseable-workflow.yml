@@ -10,7 +10,6 @@ on:
         type: string
         default: ghcr.io
 env:
-  GOVERSION: 1.26.6
   PORTER_INTEG_FILE: ${{inputs.test_name}}.go
 
 permissions:
@@ -25,7 +24,7 @@ jobs:
         uses: actions/checkout@v7
       - uses: actions/setup-go@v7
         with:
-          go-version: "${{ env.GOVERSION }}"
+          go-version-file: go.mod
           cache: true
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4

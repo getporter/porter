@@ -16,8 +16,6 @@ on:
       - "**/*.md"
       - "LICENSE"
       - "netlify.toml"
-env:
-  GOVERSION: 1.26.6
 permissions:
   contents: read
 
@@ -30,7 +28,7 @@ jobs:
         uses: actions/checkout@v7
       - uses: actions/setup-go@v7
         with:
-          go-version: "${{ env.GOVERSION }}" # The Go version to download (if necessary) and use.
+          go-version-file: go.mod
           cache: true
       - run: go version
       - name: Native Build
@@ -61,7 +59,7 @@ jobs:
         uses: actions/checkout@v7
       - uses: actions/setup-go@v7
         with:
-          go-version: "${{ env.GOVERSION }}" # The Go version to download (if necessary) and use.
+          go-version-file: go.mod
           cache: true
       - run: go version
       - name: Cross Compile
@@ -81,7 +79,7 @@ jobs:
         uses: actions/checkout@v7
       - uses: actions/setup-go@v7
         with:
-          go-version: "${{ env.GOVERSION }}" # The Go version to download (if necessary) and use.
+          go-version-file: go.mod
           cache: true
       - run: go version
       - name: Unit Test
@@ -96,7 +94,7 @@ jobs:
         uses: actions/checkout@v7
       - uses: actions/setup-go@v7
         with:
-          go-version: "${{ env.GOVERSION }}" # The Go version to download (if necessary) and use.
+          go-version-file: go.mod
           cache: true
       - run: go version
       - name: Vet
@@ -117,7 +115,7 @@ jobs:
         uses: actions/checkout@v7
       - uses: actions/setup-go@v7
         with:
-          go-version: "${{ env.GOVERSION }}" # The Go version to download (if necessary) and use.
+          go-version-file: go.mod
           cache: true
       - run: go version
       - name: Download Cross-Compiled Porter Binaries
@@ -145,7 +143,7 @@ jobs:
           path: bin
       - uses: actions/setup-go@v7
         with:
-          go-version: "${{ env.GOVERSION }}" # The Go version to download (if necessary) and use.
+          go-version-file: go.mod
           cache: true
       - run: go version
       - name: Setup Bin
