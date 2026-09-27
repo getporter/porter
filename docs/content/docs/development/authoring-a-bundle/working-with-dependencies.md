@@ -78,7 +78,7 @@ There are some safeguards in place to make it so other bundles depending on the 
 
 ## Version Ranges
 
-A dependency can specify a default bundle reference that includes a pinned version tag, plus a semver constraint that describes acceptable alternative versions:
+A dependency can specify a default bundle reference that includes a pinned version tag, plus a [semver constraint](/docs/references/semver/#dependencies) that describes acceptable alternative versions:
 
 ```yaml
 dependencies:

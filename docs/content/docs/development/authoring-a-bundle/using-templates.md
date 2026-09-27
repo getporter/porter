@@ -190,7 +190,7 @@ The bundle.dependencies variable contains metadata for the bundle's dependencies
 | ------------------------------------ | ------------------------------------------------------------------------------------------------------ |
 | bundle.dependencies.NAME.name        | The bundle name of the dependency.                                                                     |
 | bundle.dependencies.NAME.description | The bundle description of the dependency.                                                              |
-| bundle.dependencies.NAME.version     | The bundle version of the dependency. This is a semver v2 value, and will not have a leading v prefix. |
+| bundle.dependencies.NAME.version     | The bundle version of the dependency. This is a [semver v2.0.0](/docs/references/semver/) value, and will not have a leading v prefix. |
 
 Outputs are also available, and the format for the dependency outputs variable is `bundle.dependencies.NAME.outputs.OUTPUT`.
 

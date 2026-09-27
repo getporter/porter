@@ -28,7 +28,7 @@ description: "An example Porter bundle using Kubernetes"
 registry: getporter
 ```
 
-This YAML snippet indicates that the bundle will be built and tagged as `getporter/kubernetes:v0.2.0`. This full bundle reference is constructed from the provided `registry`, `name` and `version` fields. We recommend using [semantic versioning](https://semver.org/) for the bundle version.
+This YAML snippet indicates that the bundle will be built and tagged as `getporter/kubernetes:v0.2.0`. This full bundle reference is constructed from the provided `registry`, `name` and `version` fields. The bundle version must be a [semantic version](/docs/references/semver/).
 
 The generated bundle image name will be auto-derived from the same combination of `registry`, `name` and `version`. Using the example above, an bundle image with the name of `getporter/kubernetes:porter-HASH` will be built.
 
