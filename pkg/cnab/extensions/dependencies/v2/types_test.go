@@ -241,3 +241,33 @@ func TestUnrecognizedItemTypeIsLiteral(t *testing.T) {
 		assert.Equal(t, v, got, v)
 	}
 }
+
+func TestMalformedInterpolationDelimiters(t *testing.T) {
+	t.Parallel()
+
+	malformed := []string{
+		"prefix ${bundle.parameters.x",
+		"bundle.parameters.x} suffix",
+		"${bundle.dependencies.db.outputs.host",
+	}
+
+	for _, v := range malformed {
+		t.Run(v, func(t *testing.T) {
+			_, err := ParseDependencySource(v)
+			require.Error(t, err, "ParseDependencySource")
+
+			_, invalid := ParseAllDependencySources(v)
+			assert.NotEmpty(t, invalid, "ParseAllDependencySources should report it as invalid, not silently drop or mismatch it")
+
+			_, err = ReplaceDependencySources(v, func(DependencySource) (string, error) { return "REPLACED", nil })
+			require.Error(t, err, "ReplaceDependencySources")
+		})
+	}
+
+	// Balanced forms (bare and fully wrapped) must still work.
+	for _, v := range []string{"bundle.parameters.x", "${bundle.parameters.x}", "${ bundle.parameters.x }"} {
+		src, err := ParseDependencySource(v)
+		require.NoError(t, err, v)
+		assert.Equal(t, "x", src.Parameter, v)
+	}
+}

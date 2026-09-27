@@ -1,7 +1,6 @@
 package v2
 
 import (
-	"errors"
 	"fmt"
 	"regexp"
 	"sort"
@@ -94,6 +93,16 @@ var dependencySourceWiringRegex = regexp.MustCompile(`(\s*\$\{\s*)?bundle(\.depe
 // dependencySourceFromMatch converts a single regex match (as produced by
 // dependencySourceWiringRegex) into a DependencySource.
 func dependencySourceFromMatch(matches []string) (DependencySource, error) {
+	// matches[1] and matches[6] are the opening "${" and closing "}"
+	// delimiters, each independently optional in the pattern so that both
+	// a bare "bundle.parameters.x" and a wrapped "${bundle.parameters.x}"
+	// match. Exactly one present means a malformed template ("${bundle.
+	// parameters.x" or "bundle.parameters.x}"): reject it rather than
+	// silently matching the reference inside.
+	if (matches[1] == "") != (matches[6] == "") {
+		return DependencySource{}, fmt.Errorf("malformed reference %q: unbalanced ${...} delimiters", matches[0])
+	}
+
 	dependencyName := matches[3] // bundle.dependencies.DEPENDENCY_NAME
 	itemType := matches[4]       // bundle.dependencies.dependency_name.PARAMETERS.name or bundle.OUTPUTS.name
 	itemName := matches[5]       // bundle.dependencies.dependency_name.parameters.NAME or bundle.outputs.NAME
@@ -108,7 +117,7 @@ func dependencySourceFromMatch(matches []string) (DependencySource, error) {
 		// Cannot pass the root bundle's output to a dependency
 		// Check that we are attempting to pass another dependency's output
 		if dependencyName == "" {
-			return DependencySource{}, errors.New("cannot pass the root bundle output to a dependency")
+			return DependencySource{}, fmt.Errorf("cannot pass the root bundle output to a dependency")
 		}
 		result.Output = itemName
 	}
