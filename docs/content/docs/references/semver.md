@@ -49,7 +49,7 @@ registry: example.com/myorg
 | `v1.2.3`         | yes   | `1.2.3`          | The leading `v` is removed.                              |
 | `1.2.3-beta.1`   | yes   | `1.2.3-beta.1`   | Prerelease version.                                      |
 | `1.2.3+20260101` | yes   | `1.2.3+20260101` | Build metadata.                                          |
-| `1.2`            | yes   | `1.2.0`          | Missing parts are filled with zero. Prefer `1.2.0`.      |
+| `1.2`            | shorthand | `1.2.0`       | Not valid semver v2.0.0, but accepted by Porter as shorthand for `1.2.0`. Prefer `1.2.0`. |
 | `1.2.3.4`        | no    |                  | Only three version numbers are allowed.                  |
 | `latest`         | no    |                  | Not a version. Use `porter publish --tag` to set a tag.  |
 
@@ -99,7 +99,9 @@ dependencies:
 | `1.x \|\| 3.x`       | Either `1.x` or `3.x`                     |
 
 Porter reads the tags of the dependency repository, and only considers tags that are semantic versions, such as `v1.2.3`.
-Prerelease versions are not selected when resolving a constraint.
+Prerelease versions are not selected when resolving a constraint, with one exception:
+when the dependency `version` is a single prerelease version, such as `1.2.0-beta.1`, Porter allows prereleases and matches exactly that version.
+With the experimental `dependencies-v2` feature, prerelease versions are never selected.
 Constraints are only resolved when the `dependencies.version-strategy` configuration setting is not `exact`.
 See [Version Ranges](/docs/development/authoring-a-bundle/working-with-dependencies/#version-ranges) for how Porter selects a version.
 

@@ -25,4 +25,4 @@ Porter's library is not yet stable and changes to the underlying Porter code, in
 - **PRERELEASE_NUMBER** - The number of releases in the specified prerelease phase.
   For example, v1.0.0-alpha.2 is the second v1 alpha release.
 
-[semver v2.0.0]: https://semver.org/spec/v2.0.0.html
+[semver v2.0.0]: /docs/references/semver/
