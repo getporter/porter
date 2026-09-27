@@ -5,6 +5,7 @@ import (
 
 	"get.porter.sh/porter/tests"
 	"github.com/cnabio/cnab-go/bundle"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -195,4 +196,78 @@ func TestDependencyInterfaceDocument_Names(t *testing.T) {
 	require.Empty(t, emptyOutputs)
 	require.Empty(t, emptyParameters)
 	require.Empty(t, emptyCredentials)
+}
+
+func TestReplaceDependencySources(t *testing.T) {
+	t.Parallel()
+
+	got, err := ReplaceDependencySources("a ${bundle.parameters.x} b ${ bundle.dependencies.db.outputs.host }!", func(s DependencySource) (string, error) {
+		return "<" + s.AsBundleWiring() + ">", nil
+	})
+	require.NoError(t, err)
+	assert.Equal(t, "a <bundle.parameters.x> b <bundle.dependencies.db.outputs.host>!", got)
+
+	got, err = ReplaceDependencySources("no references here", func(DependencySource) (string, error) {
+		return "x", nil
+	})
+	require.NoError(t, err)
+	assert.Equal(t, "no references here", got)
+
+	_, err = ReplaceDependencySources("${bundle.parameters.x}", func(DependencySource) (string, error) {
+		return "", assert.AnError
+	})
+	require.ErrorIs(t, err, assert.AnError)
+
+	_, err = ReplaceDependencySources("${bundle.outputs.x}", func(DependencySource) (string, error) {
+		return "x", nil
+	})
+	require.Error(t, err)
+}
+
+func TestUnrecognizedItemTypeIsLiteral(t *testing.T) {
+	t.Parallel()
+
+	for _, v := range []string{"bundle.foo.bar", "https://example.com/bundle.foo.bar"} {
+		src, err := ParseDependencySource(v)
+		require.NoError(t, err)
+		assert.Equal(t, DependencySource{Value: v}, src, v)
+
+		all, invalid := ParseAllDependencySources(v)
+		assert.Empty(t, all, v)
+		assert.Empty(t, invalid, v)
+
+		got, err := ReplaceDependencySources(v, func(DependencySource) (string, error) { return "X", nil })
+		require.NoError(t, err)
+		assert.Equal(t, v, got, v)
+	}
+}
+
+func TestMalformedInterpolationDelimiters(t *testing.T) {
+	t.Parallel()
+
+	malformed := []string{
+		"prefix ${bundle.parameters.x",
+		"bundle.parameters.x} suffix",
+		"${bundle.dependencies.db.outputs.host",
+	}
+
+	for _, v := range malformed {
+		t.Run(v, func(t *testing.T) {
+			_, err := ParseDependencySource(v)
+			require.Error(t, err, "ParseDependencySource")
+
+			_, invalid := ParseAllDependencySources(v)
+			assert.NotEmpty(t, invalid, "ParseAllDependencySources should report it as invalid, not silently drop or mismatch it")
+
+			_, err = ReplaceDependencySources(v, func(DependencySource) (string, error) { return "REPLACED", nil })
+			require.Error(t, err, "ReplaceDependencySources")
+		})
+	}
+
+	// Balanced forms (bare and fully wrapped) must still work.
+	for _, v := range []string{"bundle.parameters.x", "${bundle.parameters.x}", "${ bundle.parameters.x }"} {
+		src, err := ParseDependencySource(v)
+		require.NoError(t, err, v)
+		assert.Equal(t, "x", src.Parameter, v)
+	}
 }

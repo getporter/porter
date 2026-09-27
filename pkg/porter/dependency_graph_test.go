@@ -443,38 +443,21 @@ func TestGraphBuilder_WiringEdgesAreDeterministicallyOrdered(t *testing.T) {
 func TestGraphBuilder_CycleDetection_Wiring(t *testing.T) {
 	t.Parallel()
 
-	// Mode=true with a matching group makes x's and z's "y" entries the
-	// same shareable instance, so z's own requirement of "y" collapses back
-	// onto the "y" node reached from x -- that's what manufactures the
-	// cycle below. Without an explicit shared group, SharingMode defaults
-	// to false and the two "y" declarations would correctly stay separate,
-	// non-shareable instances (see TestGraphBuilder_NodeDedup), and there
-	// would be no cycle at all.
-	yEntry := v2.Dependency{
-		Bundle:      "localhost:5000/y:v1.0.0",
-		Credentials: map[string]string{"conn": "${bundle.dependencies.z.outputs.out}"},
-		Sharing:     v2.SharingCriteria{Mode: true, Group: v2.SharingGroup{Name: "y-shared"}},
-	}
-
-	xBun := v2TestBundle("x", map[string]v2.Dependency{
-		"y": yEntry,
-		"z": {Bundle: "localhost:5000/z:v1.0.0"},
-	})
-	zBun := v2TestBundle("z", map[string]v2.Dependency{
-		// Same content as x's "y" entry, so it dedupes to the same node.
-		"y": yEntry,
-	})
+	// Two siblings under the same parent, each sourcing a credential from
+	// the other's output: a cycle made only of wiring edges. (Wiring
+	// references resolve against the declaring bundle, so the same text
+	// under different parents is never the same instance and can't be used
+	// to fold a cycle back onto itself.)
 	root := v2TestBundle("root", map[string]v2.Dependency{
-		"x": {Bundle: "localhost:5000/x:v1.0.0"},
+		"a": {Bundle: "localhost:5000/a:v1.0.0", Credentials: map[string]string{"c": "${bundle.dependencies.b.outputs.o}"}},
+		"b": {Bundle: "localhost:5000/b:v1.0.0", Credentials: map[string]string{"c": "${bundle.dependencies.a.outputs.o}"}},
 	})
 
 	p := NewTestPorter(t)
 	defer p.Close()
-	leaf := leafTestBundle("y")
 	p.TestRegistry.MockPullBundle = newMockPullBundle(map[string]cnab.ExtendedBundle{
-		"localhost:5000/x:v1.0.0": xBun,
-		"localhost:5000/z:v1.0.0": zBun,
-		"localhost:5000/y:v1.0.0": leaf,
+		"localhost:5000/a:v1.0.0": leafTestBundle("a"),
+		"localhost:5000/b:v1.0.0": leafTestBundle("b"),
 	})
 
 	builder := NewGraphBuilder(p.Porter, 10)
@@ -1473,4 +1456,36 @@ func TestGraphBuilder_RecordsPulledBundleDigest(t *testing.T) {
 		assert.Equal(t, testDigestA, node.Digest)
 	}
 	assert.True(t, found)
+}
+
+func TestGraphBuilder_ParentScopedMappingsDoNotShareNodes(t *testing.T) {
+	t.Parallel()
+
+	shared := v2.SharingCriteria{Mode: true, Group: v2.SharingGroup{Name: "app-db"}}
+	build := func(t *testing.T, dbParams map[string]string) *Graph {
+		db := v2.Dependency{Bundle: "localhost:5000/mysql:v1.0.0", Parameters: dbParams, Sharing: shared}
+		root := v2TestBundle("root", map[string]v2.Dependency{
+			"a": {Bundle: "localhost:5000/a:v1.0.0"},
+			"b": {Bundle: "localhost:5000/b:v1.0.0"},
+		})
+		p := NewTestPorter(t)
+		defer p.Close()
+		p.TestRegistry.MockPullBundle = newMockPullBundle(map[string]cnab.ExtendedBundle{
+			"localhost:5000/a:v1.0.0":     v2TestBundle("a", map[string]v2.Dependency{"db": db}),
+			"localhost:5000/b:v1.0.0":     v2TestBundle("b", map[string]v2.Dependency{"db": db}),
+			"localhost:5000/mysql:v1.0.0": leafTestBundle("mysql"),
+		})
+		graph, err := NewGraphBuilder(p.Porter, 10).BuildDependencyGraph(context.Background(), root, ExplainOpts{MaxDependencyDepth: 10})
+		require.NoError(t, err)
+		return graph
+	}
+
+	// Same text, but ${bundle.parameters.name} means a's parameter under a
+	// and b's under b: two instances.
+	graph := build(t, map[string]string{"db-name": "${bundle.parameters.name}"})
+	assert.Len(t, graph.Nodes, 5, "root, a, b and one db per parent")
+
+	// A hard-coded mapping doesn't depend on the parent, so it still shares.
+	graph = build(t, map[string]string{"db-name": "app"})
+	assert.Len(t, graph.Nodes, 4, "root, a, b and one shared db")
 }

@@ -1,10 +1,11 @@
 package v2
 
 import (
-	"errors"
 	"fmt"
 	"regexp"
 	"sort"
+	"strings"
+	"unicode"
 
 	"github.com/cnabio/cnab-go/bundle"
 )
@@ -92,6 +93,16 @@ var dependencySourceWiringRegex = regexp.MustCompile(`(\s*\$\{\s*)?bundle(\.depe
 // dependencySourceFromMatch converts a single regex match (as produced by
 // dependencySourceWiringRegex) into a DependencySource.
 func dependencySourceFromMatch(matches []string) (DependencySource, error) {
+	// matches[1] and matches[6] are the opening "${" and closing "}"
+	// delimiters, each independently optional in the pattern so that both
+	// a bare "bundle.parameters.x" and a wrapped "${bundle.parameters.x}"
+	// match. Exactly one present means a malformed template ("${bundle.
+	// parameters.x" or "bundle.parameters.x}"): reject it rather than
+	// silently matching the reference inside.
+	if (matches[1] == "") != (matches[6] == "") {
+		return DependencySource{}, fmt.Errorf("malformed reference %q: unbalanced ${...} delimiters", matches[0])
+	}
+
 	dependencyName := matches[3] // bundle.dependencies.DEPENDENCY_NAME
 	itemType := matches[4]       // bundle.dependencies.dependency_name.PARAMETERS.name or bundle.OUTPUTS.name
 	itemName := matches[5]       // bundle.dependencies.dependency_name.parameters.NAME or bundle.outputs.NAME
@@ -106,11 +117,19 @@ func dependencySourceFromMatch(matches []string) (DependencySource, error) {
 		// Cannot pass the root bundle's output to a dependency
 		// Check that we are attempting to pass another dependency's output
 		if dependencyName == "" {
-			return DependencySource{}, errors.New("cannot pass the root bundle output to a dependency")
+			return DependencySource{}, fmt.Errorf("cannot pass the root bundle output to a dependency")
 		}
 		result.Output = itemName
 	}
 	return result, nil
+}
+
+// isReference reports whether the source names something that can be
+// resolved. The wiring pattern also matches text such as "bundle.foo.bar"
+// whose item type isn't parameters, credentials or outputs; that leaves
+// every field empty and is really just literal text.
+func (s DependencySource) isReference() bool {
+	return s.Parameter != "" || s.Credential != "" || s.Output != ""
 }
 
 // ParseDependencySource identifies the components specified in a template variable.
@@ -122,7 +141,14 @@ func ParseDependencySource(templateVariable string) (DependencySource, error) {
 		return DependencySource{Value: templateVariable}, nil
 	}
 
-	return dependencySourceFromMatch(matches)
+	src, err := dependencySourceFromMatch(matches)
+	if err != nil {
+		return DependencySource{}, err
+	}
+	if !src.isReference() {
+		return DependencySource{Value: templateVariable}, nil
+	}
+	return src, nil
 }
 
 // ParseAllDependencySources scans a template value for every embedded wiring
@@ -147,9 +173,53 @@ func ParseAllDependencySources(templateVariable string) (sources []DependencySou
 			invalid = append(invalid, matches[0])
 			continue
 		}
+		if !src.isReference() {
+			continue
+		}
 		sources = append(sources, src)
 	}
 	return sources, invalid
+}
+
+// ReplaceDependencySources rewrites every wiring reference embedded in a
+// template value (the same references ParseAllDependencySources finds),
+// replacing each with the string returned by replace and leaving all other
+// text untouched. Whitespace surrounding a reference (which the wiring
+// pattern would otherwise consume) is preserved. A reference that
+// ParseAllDependencySources reports as invalid, or an error from replace,
+// is returned as an error.
+func ReplaceDependencySources(template string, replace func(DependencySource) (string, error)) (string, error) {
+	var firstErr error
+	result := dependencySourceWiringRegex.ReplaceAllStringFunc(template, func(match string) string {
+		if firstErr != nil {
+			return match
+		}
+
+		src, err := dependencySourceFromMatch(dependencySourceWiringRegex.FindStringSubmatch(match))
+		if err != nil {
+			firstErr = err
+			return match
+		}
+
+		if !src.isReference() {
+			return match
+		}
+
+		replacement, err := replace(src)
+		if err != nil {
+			firstErr = err
+			return match
+		}
+
+		trimmed := strings.TrimLeftFunc(match, unicode.IsSpace)
+		leading := match[:len(match)-len(trimmed)]
+		trailing := trimmed[len(strings.TrimRightFunc(trimmed, unicode.IsSpace)):]
+		return leading + replacement + trailing
+	})
+	if firstErr != nil {
+		return "", firstErr
+	}
+	return result, nil
 }
 
 // AsBundleWiring is the wiring string representation in the bundle definition.
