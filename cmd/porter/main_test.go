@@ -47,6 +47,27 @@ func TestCommandWiring(t *testing.T) {
 	}
 }
 
+func TestShouldSkipSecrets(t *testing.T) {
+	testcases := map[string]bool{
+		"plugins install":      true,
+		"plugins list":         true,
+		"mixins install":       true,
+		"mixins feed generate": true,
+		"installation list":    false,
+		"config show":          false,
+	}
+
+	for tc, want := range testcases {
+		t.Run(tc, func(t *testing.T) {
+			rootCmd := buildRootCommand()
+			cmd, _, err := rootCmd.Find(strings.Split(tc, " "))
+			require.NoError(t, err)
+			assert.Equal(t, want, shouldSkipSecrets(cmd))
+			assert.False(t, shouldSkipConfig(cmd), "config should still be loaded")
+		})
+	}
+}
+
 func TestHelp(t *testing.T) {
 	t.Run("no args", func(t *testing.T) {
 		var output bytes.Buffer

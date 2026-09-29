@@ -8,6 +8,7 @@ import (
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/tests"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestPorter_GetBuilder(t *testing.T) {
@@ -49,4 +50,21 @@ func TestPorter_LoadWithSecretResolveError(t *testing.T) {
 
 	// Validate the porter is handling the error
 	tests.RequireErrorContains(t, err, "secret not found")
+}
+
+func TestPorter_ConnectWithoutSecrets(t *testing.T) {
+	ctx := context.Background()
+	p := NewTestPorter(t)
+
+	// Use a config file that has a secret, we aren't setting the secret value so resolve would fail
+	p.TestConfig.TestContext.AddTestFileFromRoot("tests/testdata/config/config-with-storage-secret.yaml", "/home/myuser/.porter/config.yaml")
+
+	// Configure porter to read the config file
+	p.TestConfig.DataLoader = config.LoadFromEnvironment()
+
+	_, err := p.ConnectWithoutSecrets(ctx)
+	require.NoError(t, err)
+
+	// Non-secret values are still loaded
+	assert.Equal(t, "filesystem", p.Data.DefaultSecretsPlugin)
 }

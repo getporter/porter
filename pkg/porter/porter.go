@@ -99,15 +99,7 @@ var initWarnings sync.Once
 // Connect initializes Porter for use and must be called before other Porter methods.
 // It is the responsibility of the caller to also call Close when done with Porter.
 func (p *Porter) Connect(ctx context.Context) (context.Context, error) {
-	initWarnings.Do(func() {
-		// Check if this is a special dev build that will trace sensitive data and strongly warn people
-		if tracing.IsTraceSensitiveAttributesEnabled() {
-			fmt.Fprintln(p.Err, "🚨 WARNING! This is a custom developer build of Porter with the traceSensitiveAttributes build flag set. "+
-				"Porter will include sensitive data, such as parameters and credentials, in the telemetry trace data. "+
-				"This build flag should only be used for local development only. "+
-				"If you didn't intend to use a custom build of Porter with this flag enabled, reinstall Porter using the official builds from https://porter.sh/install.")
-		}
-	})
+	p.printInitWarnings()
 
 	// Load the config file and replace any referenced secrets
 	return p.Load(ctx, func(innerCtx context.Context, secret string) (string, error) {
@@ -119,6 +111,27 @@ func (p *Porter) Connect(ctx context.Context) (context.Context, error) {
 			return "", err
 		}
 		return value, nil
+	})
+}
+
+// ConnectWithoutSecrets initializes Porter like Connect, but does not resolve
+// secrets referenced in the config file, e.g. ${secret.NAME}.
+// Use it for commands that must work even when the secrets plugin is broken,
+// such as managing plugins and mixins.
+func (p *Porter) ConnectWithoutSecrets(ctx context.Context) (context.Context, error) {
+	p.printInitWarnings()
+	return p.Load(ctx, nil)
+}
+
+func (p *Porter) printInitWarnings() {
+	initWarnings.Do(func() {
+		// Check if this is a special dev build that will trace sensitive data and strongly warn people
+		if tracing.IsTraceSensitiveAttributesEnabled() {
+			fmt.Fprintln(p.Err, "🚨 WARNING! This is a custom developer build of Porter with the traceSensitiveAttributes build flag set. "+
+				"Porter will include sensitive data, such as parameters and credentials, in the telemetry trace data. "+
+				"This build flag should only be used for local development only. "+
+				"If you didn't intend to use a custom build of Porter with this flag enabled, reinstall Porter using the official builds from https://porter.sh/install.")
+		}
 	})
 }
 

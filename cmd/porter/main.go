@@ -32,6 +32,12 @@ const (
 	// This is used for commands like help and version which should never
 	// fail, even if porter is misconfigured.
 	skipConfig string = "skipConfig"
+
+	// Indicates that config is loaded, but secrets referenced in the config
+	// file are not resolved. Applies to the annotated command and all of its
+	// sub-commands. This is used for commands like plugin and mixin management
+	// which must work even when the secrets plugin is broken.
+	skipSecrets string = "skipSecrets"
 )
 
 func main() {
@@ -59,7 +65,7 @@ func main() {
 		// fail.
 		if !shouldSkipConfig(cmd) {
 			var err error
-			ctx, err = p.Connect(ctx)
+			ctx, err = connect(ctx, p, cmd)
 			if err != nil {
 				fmt.Fprintln(os.Stderr, err.Error())
 				os.Exit(cli.ExitCodeErr)
@@ -129,6 +135,23 @@ func shouldSkipConfig(cmd *cobra.Command) bool {
 	return skip
 }
 
+func shouldSkipSecrets(cmd *cobra.Command) bool {
+	for c := cmd; c != nil; c = c.Parent() {
+		if _, skip := c.Annotations[skipSecrets]; skip {
+			return true
+		}
+	}
+	return false
+}
+
+// connect loads the config, resolving secrets unless the command opts out.
+func connect(ctx context.Context, p *porter.Porter, cmd *cobra.Command) (context.Context, error) {
+	if shouldSkipSecrets(cmd) {
+		return p.ConnectWithoutSecrets(ctx)
+	}
+	return p.Connect(ctx)
+}
+
 // Returns the porter command called, e.g. porter installation list
 // and also the fully formatted command as passed with arguments/flags.
 func getCalledCommand(cmd *cobra.Command) (*cobra.Command, string, string) {
@@ -188,7 +211,7 @@ Try our QuickStart https://porter.sh/quickstart to learn how to use Porter.
 
 			// Reload configuration with the now parsed cli flags
 			p.DataLoader = cli.LoadHierarchicalConfig(cmd)
-			ctx, err := p.Connect(cmd.Context())
+			ctx, err := connect(cmd.Context(), p, cmd)
 			// Extract the parent span from the main command
 			parentSpan := trace.SpanFromContext(cmd.Context())
 
