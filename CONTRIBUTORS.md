@@ -108,3 +108,4 @@ and we will add you. **All** contributors belong here. 💯
 - [Stephen Augustus](https://github.com/justaugustus)
 - [Erik Cederberg](https://github.com/erikced)
 - [Arunesh Dwivedi](https://github.com/AruneshDwivedi)
+- [Michael Holland](https://github.com/mstephenholl)
