@@ -36,11 +36,30 @@ jobs:
       run: scripts\test\test-windows-install.ps1
       shell: powershell
   macos:
-    runs-on:
-      - macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+        - runner: macos-15-intel
+          arch: x86_64
+        - runner: macos-15
+          arch: arm64
+    runs-on: ${{ matrix.runner }}
     steps:
     - name: checkout
       uses: actions/checkout@v7
+    - name: Check Runner Architecture
+      run: test "$(uname -m)" = "${{ matrix.arch }}"
+      shell: /bin/bash {0}
+    - name: Check Installer Syntax
+      run: |
+        /bin/bash -n scripts/install/install-mac.sh
+        /bin/bash -n scripts/test/test-mac-install-offline.sh
+        /bin/bash -n scripts/test/test-mac-install.sh
+      shell: /bin/bash {0}
+    - name: Test Install Script Offline
+      run: scripts/test/test-mac-install-offline.sh
+      shell: /bin/bash {0}
     - name: Test Install Script
       run: scripts/test/test-mac-install.sh
-      shell: bash
+      shell: /bin/bash {0}
