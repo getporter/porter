@@ -13,7 +13,8 @@ func buildPluginsCommands(p *porter.Porter) *cobra.Command {
 		Aliases: []string{"plugin"},
 		Short:   "Plugin commands. Plugins enable Porter to work on different cloud providers and systems.",
 		Annotations: map[string]string{
-			"group": "resource",
+			"group":     "resource",
+			skipSecrets: "",
 		},
 	}
 
