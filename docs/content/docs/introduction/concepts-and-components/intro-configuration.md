@@ -269,6 +269,15 @@ telemetry:
     owner: "me"
 ```
 
+When telemetry is enabled, Porter passes the following into the bundle when it is run, so that traces from the Porter runtime, mixins and other OpenTelemetry enabled tools inside the bundle are part of the same trace:
+
+* The enabled, protocol, endpoint, insecure, compression, timeout and start-timeout telemetry settings, as PORTER_TELEMETRY_* environment variables.
+* The current span, using the TRACEPARENT, TRACESTATE and BAGGAGE environment variables.
+
+The certificate and headers settings are not passed into the bundle.
+The endpoint is passed as-is and must be reachable from inside the bundle's container.
+For example, with the Docker driver use `host.docker.internal:4317` instead of `127.0.0.1:4317` for a collector running on the host.
+
 [otel]: https://github.com/open-telemetry/opentelemetry-specification/blob/v1.8.0/specification/protocol/exporter.md
 
 ### Dependencies v2

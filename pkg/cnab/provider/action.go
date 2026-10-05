@@ -9,6 +9,7 @@ import (
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/experimental"
+	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/tracing"
 	cnabaction "github.com/cnabio/cnab-go/action"
@@ -64,7 +65,7 @@ func (r *Runtime) ApplyConfig(ctx context.Context, args ActionArguments) cnabact
 	return cnabaction.OperationConfigs{
 		r.SetOutput(),
 		r.AddFiles(ctx, args),
-		r.AddEnvironment(args),
+		r.AddEnvironment(ctx, args),
 		r.AddRelocation(args),
 	}
 }
@@ -102,19 +103,69 @@ func (r *Runtime) AddFiles(ctx context.Context, args ActionArguments) cnabaction
 	}
 }
 
-func (r *Runtime) AddEnvironment(args ActionArguments) cnabaction.OperationConfigFunc {
-	const verbosityEnv = "PORTER_VERBOSITY"
-
+// AddEnvironment passes a limited subset of porter's configuration into the
+// bundle, so that the porter runtime, mixins and other tools inside the
+// bundle log and trace the same way that porter does on the host.
+func (r *Runtime) AddEnvironment(ctx context.Context, args ActionArguments) cnabaction.OperationConfigFunc {
 	return func(op *driver.Operation) error {
+		if op.Environment == nil {
+			op.Environment = make(map[string]string)
+		}
+
 		op.Environment[config.EnvPorterInstallationNamespace] = args.Installation.Namespace
 		op.Environment[config.EnvPorterInstallationName] = args.Installation.Name
 		op.Environment[config.EnvPorterInstallationID] = args.Installation.ID
 
 		// Pass the verbosity from porter's local config into the bundle
-		op.Environment[verbosityEnv] = r.Config.GetVerbosity().Level().String()
+		op.Environment[config.EnvPorterVerbosity] = r.Config.GetVerbosity().Level().String()
+
+		// Tie the logs and traces from inside the bundle back to this run of porter
+		op.Environment[portercontext.EnvCorrelationID] = r.CorrelationID()
+
+		for k, v := range r.telemetryEnvironment(ctx) {
+			op.Environment[k] = v
+		}
 
 		return nil
 	}
+}
+
+// telemetryEnvironment returns the environment variables that configure
+// tracing inside the bundle. Only settings that are safe and meaningful
+// inside the bundle are included: headers may contain sensitive values, the
+// certificate is a path on the host, and traces can't be redirected to a file
+// since the bundle's filesystem isn't persisted.
+func (r *Runtime) telemetryEnvironment(ctx context.Context) map[string]string {
+	env := make(map[string]string)
+
+	telemetry := r.Data.Telemetry
+	if !telemetry.Enabled {
+		return env
+	}
+
+	env["PORTER_TELEMETRY_ENABLED"] = "true"
+	if telemetry.Insecure {
+		env["PORTER_TELEMETRY_INSECURE"] = "true"
+	}
+	settings := map[string]string{
+		"PORTER_TELEMETRY_ENDPOINT":      telemetry.Endpoint,
+		"PORTER_TELEMETRY_PROTOCOL":      telemetry.Protocol,
+		"PORTER_TELEMETRY_COMPRESSION":   telemetry.Compression,
+		"PORTER_TELEMETRY_TIMEOUT":       telemetry.Timeout,
+		"PORTER_TELEMETRY_START_TIMEOUT": telemetry.StartTimeout,
+	}
+	for k, v := range settings {
+		if v != "" {
+			env[k] = v
+		}
+	}
+
+	// Pass the current span so that traces from inside the bundle are children of this span
+	for k, v := range portercontext.TraceEnviron(ctx) {
+		env[k] = v
+	}
+
+	return env
 }
 
 // AddRelocation operates on an ActionArguments and adds any provided relocation mapping

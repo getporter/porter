@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"get.porter.sh/porter/pkg"
@@ -20,10 +21,44 @@ import (
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
+	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/credentials"
 )
+
+// tracePropagator defines how the current span and baggage are passed between
+// processes, using the W3C Trace Context and Baggage formats.
+var tracePropagator = propagation.NewCompositeTextMapPropagator(propagation.TraceContext{}, propagation.Baggage{})
+
+// TraceEnviron returns the environment variables, e.g. TRACEPARENT, that
+// should be set on a child process so that it can continue the trace of the
+// span in the specified context. Returns an empty map when there is no span.
+func TraceEnviron(ctx context.Context) map[string]string {
+	env := make(map[string]string, 3)
+	if !trace.SpanContextFromContext(ctx).IsValid() {
+		return env
+	}
+
+	carrier := propagation.MapCarrier{}
+	tracePropagator.Inject(ctx, carrier)
+	for k, v := range carrier {
+		env[strings.ToUpper(k)] = v
+	}
+	return env
+}
+
+// extractTraceParent reads the environment variables set by TraceEnviron in
+// the parent process, and returns a context containing the parent's span.
+func (c *Context) extractTraceParent(ctx context.Context) context.Context {
+	carrier := propagation.MapCarrier{}
+	for _, field := range tracePropagator.Fields() {
+		if v, ok := c.LookupEnv(strings.ToUpper(field)); ok {
+			carrier[field] = v
+		}
+	}
+	return tracePropagator.Extract(ctx, carrier)
+}
 
 func (c *Context) configureTelemetry(ctx context.Context, cfg LogConfiguration, logger *zap.Logger) error {
 	if cfg.TelemetryServiceName == "" {
@@ -107,7 +142,7 @@ func (c *Context) createTracer(ctx context.Context, cfg LogConfiguration, logger
 		sdktrace.WithBatcher(exporter),
 		sdktrace.WithResource(r),
 	)
-	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(propagation.TraceContext{}, propagation.Baggage{}))
+	otel.SetTextMapPropagator(tracePropagator)
 
 	tracer := provider.Tracer("") // empty tracer name defaults to the underlying trace implementor
 	cleanup := func(ctx context.Context) error {

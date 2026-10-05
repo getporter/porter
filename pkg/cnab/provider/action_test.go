@@ -7,6 +7,7 @@ import (
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/experimental"
+	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/test"
@@ -18,6 +19,7 @@ import (
 	"github.com/cnabio/cnab-go/driver"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 )
 
 // failingSecretsStore wraps a real secrets.Store, forcing Create to fail, to
@@ -338,5 +340,101 @@ func TestExecute_InstallationLocked(t *testing.T) {
 		args.ForceRun = true
 		err := d.Execute(ctx, args)
 		require.NoError(t, err)
+	})
+}
+
+func TestAddEnvironment(t *testing.T) {
+	t.Parallel()
+
+	args := ActionArguments{
+		Installation: storage.Installation{
+			ID: "myid",
+			InstallationSpec: storage.InstallationSpec{
+				Namespace: "myns",
+				Name:      "mybuns",
+			},
+		},
+	}
+
+	// Make a context with a span that can be passed into the bundle
+	provider := sdktrace.NewTracerProvider()
+	spanCtx, span := provider.Tracer("").Start(context.Background(), t.Name())
+	t.Cleanup(func() {
+		span.End()
+		require.NoError(t, provider.Shutdown(context.Background()))
+	})
+
+	t.Run("telemetry disabled", func(t *testing.T) {
+		t.Parallel()
+
+		d := NewTestRuntime(t)
+		defer d.Close()
+		d.Data.Verbosity = "warn"
+
+		op := &driver.Operation{}
+		err := d.AddEnvironment(spanCtx, args)(op)
+		require.NoError(t, err, "AddEnvironment failed")
+
+		want := map[string]string{
+			config.EnvPorterInstallationNamespace: "myns",
+			config.EnvPorterInstallationName:      "mybuns",
+			config.EnvPorterInstallationID:        "myid",
+			config.EnvPorterVerbosity:             "warn",
+			portercontext.EnvCorrelationID:        d.CorrelationID(),
+		}
+		assert.Equal(t, want, op.Environment)
+		assert.NotEmpty(t, d.CorrelationID())
+	})
+
+	t.Run("telemetry enabled", func(t *testing.T) {
+		t.Parallel()
+
+		d := NewTestRuntime(t)
+		defer d.Close()
+		d.Data.Telemetry = config.TelemetryConfig{
+			Enabled:        true,
+			Endpoint:       "collector:4317",
+			Protocol:       "grpc",
+			Insecure:       true,
+			Certificate:    "/home/me/cert.pem",
+			Headers:        map[string]string{"token": "secret"},
+			Timeout:        "3s",
+			RedirectToFile: true,
+		}
+
+		op := &driver.Operation{Environment: map[string]string{}}
+		err := d.AddEnvironment(spanCtx, args)(op)
+		require.NoError(t, err, "AddEnvironment failed")
+
+		want := map[string]string{
+			config.EnvPorterInstallationNamespace: "myns",
+			config.EnvPorterInstallationName:      "mybuns",
+			config.EnvPorterInstallationID:        "myid",
+			config.EnvPorterVerbosity:             "debug",
+			portercontext.EnvCorrelationID:        d.CorrelationID(),
+			"PORTER_TELEMETRY_ENABLED":            "true",
+			"PORTER_TELEMETRY_ENDPOINT":           "collector:4317",
+			"PORTER_TELEMETRY_PROTOCOL":           "grpc",
+			"PORTER_TELEMETRY_INSECURE":           "true",
+			"PORTER_TELEMETRY_TIMEOUT":            "3s",
+			"TRACEPARENT":                         portercontext.TraceEnviron(spanCtx)["TRACEPARENT"],
+		}
+		assert.Equal(t, want, op.Environment, "only the safe subset of the telemetry settings should be passed into the bundle")
+		assert.Contains(t, op.Environment["TRACEPARENT"], span.SpanContext().TraceID().String())
+	})
+
+	t.Run("telemetry enabled, no span", func(t *testing.T) {
+		t.Parallel()
+
+		d := NewTestRuntime(t)
+		defer d.Close()
+		d.Data.Telemetry.Enabled = true
+
+		op := &driver.Operation{}
+		err := d.AddEnvironment(context.Background(), args)(op)
+		require.NoError(t, err, "AddEnvironment failed")
+
+		assert.Equal(t, "true", op.Environment["PORTER_TELEMETRY_ENABLED"])
+		assert.NotContains(t, op.Environment, "TRACEPARENT")
 	})
 }

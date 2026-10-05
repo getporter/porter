@@ -24,9 +24,8 @@ func main() {
 		}
 		cmd := buildRootCommand(m, os.Stdin)
 
-		// We don't have tracing working inside a bundle working currently.
-		// We are using StartRootSpan anyway because it creates a TraceLogger and sets it
-		// on the context, so we can grab it later
+		// StartRootSpan continues the trace of the porter runtime that called us,
+		// and creates a TraceLogger and sets it on the context, so we can grab it later
 		ctx, log := m.Config.StartRootSpan(ctx, "exec")
 		defer func() {
 			// Capture panics and trace them

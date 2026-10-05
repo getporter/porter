@@ -59,6 +59,10 @@ const (
 	// bundle image, containing the unique ID of the installation.
 	EnvPorterInstallationID = "PORTER_INSTALLATION_ID"
 
+	// EnvPorterVerbosity is the name of the environment variable which is injected into the
+	// bundle image, containing the verbosity that porter was run with.
+	EnvPorterVerbosity = "PORTER_VERBOSITY"
+
 	// DefaultVerbosity is the default value for the --verbosity flag.
 	DefaultVerbosity = "info"
 )
