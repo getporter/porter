@@ -326,7 +326,7 @@ When telemetry is enabled, Porter passes the following into the bundle when it i
 
 The certificate and headers settings are not passed into the bundle.
 The endpoint is passed as-is and must be reachable from inside the bundle's container.
-For example, with the Docker driver use `host.docker.internal:4317` instead of `127.0.0.1:4317` for a collector running on the host.
+For example, with the Docker driver and a collector running on the host, instead of `127.0.0.1:4317` use `host.docker.internal:4317` with Docker Desktop, or the address of the Docker bridge gateway, usually `172.17.0.1:4317`, with Docker Engine on Linux.
 
 [otel]: https://github.com/open-telemetry/opentelemetry-specification/blob/v1.8.0/specification/protocol/exporter.md
 
