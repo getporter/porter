@@ -4,16 +4,24 @@ import (
 	"archive/tar"
 	"compress/gzip"
 	"context"
+	"fmt"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/cnab"
+	cnabtooci "get.porter.sh/porter/pkg/cnab/cnab-to-oci"
+	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/tests"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-to-oci/relocation"
-	"github.com/cnabio/image-relocation/pkg/image"
+	"github.com/google/go-containerregistry/pkg/name"
+	"github.com/google/go-containerregistry/pkg/registry"
+	"github.com/google/go-containerregistry/pkg/v1/random"
+	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/stretchr/testify/require"
 )
 
@@ -202,7 +210,7 @@ func TestArchive_AddImage(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			baseImage := bundle.BaseImage{Image: tc.inputImg, Digest: "digest"}
 			ex := exporter{relocationMap: tc.relocationMap, imageStore: mockImageStore{t: t, expected: tc.expectedImg}}
-			err := ex.addImage(baseImage)
+			err := ex.addImage(context.Background(), baseImage)
 			if tc.hasErr {
 				tests.RequireErrorContains(t, err, tc.expectedErrMsg)
 			} else {
@@ -243,7 +251,7 @@ func TestArchive_PrepareArtifacts_Sorting(t *testing.T) {
 			imageStore := mockCollectingImageStore{t: t, addedImages: &collectedImages}
 			ex := exporter{relocationMap: tc.relocationMap, imageStore: imageStore}
 
-			err := ex.prepareArtifacts(b)
+			err := ex.prepareArtifacts(context.Background(), b)
 
 			require.Equal(t, tc.expectedImgs, collectedImages)
 			require.NoError(t, err)
@@ -257,14 +265,9 @@ type mockCollectingImageStore struct {
 	addedImages *[]string
 }
 
-func (m mockCollectingImageStore) Add(img string) (contentDigest string, err error) {
+func (m mockCollectingImageStore) Add(ctx context.Context, img string) (contentDigest string, err error) {
 	*m.addedImages = append(*m.addedImages, img)
 	return "digest", nil
-}
-
-func (m mockCollectingImageStore) Push(dig image.Digest, src image.Name, dst image.Name) error {
-	// Not used in tests, just satisfies imagestore.Store interface from cnab-go
-	return nil
 }
 
 type mockImageStore struct {
@@ -272,12 +275,74 @@ type mockImageStore struct {
 	expected string
 }
 
-func (m mockImageStore) Add(img string) (contentDigest string, err error) {
+func (m mockImageStore) Add(ctx context.Context, img string) (contentDigest string, err error) {
 	require.Equal(m.t, m.expected, img)
 	return "digest", nil
 }
 
-func (m mockImageStore) Push(dig image.Digest, src image.Name, dst image.Name) error {
-	// Not used in tests, just satisfies imagestore.Store interface from cnab-go
-	return nil
+// TestArchive_OCILayoutStore_Add verifies that images and image indexes are
+// pulled into the archive's OCI layout with their digest preserved, and that
+// they can be found again by name, which is how publishing from an archive
+// locates them.
+func TestArchive_OCILayoutStore_Add(t *testing.T) {
+	regSrv := httptest.NewServer(registry.New())
+	defer regSrv.Close()
+	regHost := strings.TrimPrefix(regSrv.URL, "http://")
+	regOpts := cnabtooci.RegistryOptions{InsecureRegistry: true}
+	ctx := context.Background()
+
+	img, err := random.Image(1024, 1)
+	require.NoError(t, err)
+	imgDigest, err := img.Digest()
+	require.NoError(t, err)
+	imgRef, err := name.ParseReference(fmt.Sprintf("%s/myorg/myapp:v1.0", regHost), regOpts.ToNameOptions()...)
+	require.NoError(t, err)
+	require.NoError(t, remote.Write(imgRef, img, regOpts.ToRemoteOptions()...))
+
+	idx, err := random.Index(1024, 1, 2)
+	require.NoError(t, err)
+	idxDigest, err := idx.Digest()
+	require.NoError(t, err)
+	idxRef, err := name.ParseReference(fmt.Sprintf("%s/myorg/myindex:v1.0", regHost), regOpts.ToNameOptions()...)
+	require.NoError(t, err)
+	require.NoError(t, remote.WriteIndex(idxRef, idx, regOpts.ToRemoteOptions()...))
+
+	archiveDir := t.TempDir()
+	store, err := newOCILayoutStore(archiveDir, cnabtooci.NewRegistry(portercontext.New()), regOpts)
+	require.NoError(t, err)
+
+	// Images are referenced by digest in the relocation map
+	imgName := fmt.Sprintf("%s/myorg/myapp@%s", regHost, imgDigest)
+	gotDigest, err := store.Add(ctx, imgName)
+	require.NoError(t, err)
+	require.Equal(t, imgDigest.String(), gotDigest)
+
+	idxName := fmt.Sprintf("%s/myorg/myindex@%s", regHost, idxDigest)
+	gotDigest, err = store.Add(ctx, idxName)
+	require.NoError(t, err)
+	require.Equal(t, idxDigest.String(), gotDigest)
+
+	desc, err := findImageInLayout(store.layoutPath, imgName)
+	require.NoError(t, err)
+	require.Equal(t, imgDigest, desc.Digest)
+	require.False(t, desc.MediaType.IsIndex())
+
+	desc, err = findImageInLayout(store.layoutPath, idxName)
+	require.NoError(t, err)
+	require.Equal(t, idxDigest, desc.Digest)
+	require.True(t, desc.MediaType.IsIndex())
+
+	// The image content is in the layout, not just its manifest
+	layoutIdx, err := store.layoutPath.ImageIndex()
+	require.NoError(t, err)
+	layoutImg, err := layoutIdx.Image(imgDigest)
+	require.NoError(t, err)
+	layers, err := layoutImg.Layers()
+	require.NoError(t, err)
+	require.Len(t, layers, 1)
+	_, err = layers[0].Compressed()
+	require.NoError(t, err, "the image layer should be stored in the layout")
+
+	_, err = store.Add(ctx, fmt.Sprintf("%s/myorg/missing:v1.0", regHost))
+	require.ErrorAs(t, err, &cnabtooci.ErrNotFound{}, "adding an image that does not exist should fail")
 }

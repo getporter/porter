@@ -599,7 +599,7 @@ func findImageInLayout(layoutPath layout.Path, imageName string) (v1.Descriptor,
 	// Try to match by annotation org.opencontainers.image.ref.name
 	for _, desc := range indexManifest.Manifests {
 		if desc.Annotations != nil {
-			if annotName, ok := desc.Annotations["org.opencontainers.image.ref.name"]; ok {
+			if annotName, ok := desc.Annotations[ociRefNameAnnotation]; ok {
 				// Try exact match first
 				if annotName == imageName {
 					return desc, nil

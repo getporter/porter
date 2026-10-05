@@ -533,6 +533,23 @@ func (r *Registry) GetBundleMetadata(ctx context.Context, ref cnab.OCIReference,
 	}, nil
 }
 
+// GetImageDescriptor returns the descriptor of an image, or image index, in a registry.
+// Use ErrNotFound to detect if the error is because the image is not in the registry.
+func (r *Registry) GetImageDescriptor(ctx context.Context, ref cnab.OCIReference, opts RegistryOptions) (*remote.Descriptor, error) {
+	ctx, span := tracing.StartSpan(ctx, attribute.String("reference", ref.String()))
+	defer span.EndSpan()
+
+	desc, err := r.getRemoteDescriptor(ctx, ref.String(), opts)
+	if err != nil {
+		if notFoundErr := asNotFoundError(err, ref); notFoundErr != nil {
+			return nil, span.Error(notFoundErr)
+		}
+		return nil, span.Errorf("error retrieving image descriptor for %s: %w", ref.String(), err)
+	}
+
+	return desc, nil
+}
+
 // GetImageMetadata returns information about an image in a registry
 // Use ErrNotFound to detect if the error is because the image is not in the registry.
 func (r *Registry) GetImageMetadata(ctx context.Context, ref cnab.OCIReference, opts RegistryOptions) (ImageMetadata, error) {
