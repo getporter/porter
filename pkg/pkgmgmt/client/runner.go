@@ -65,6 +65,9 @@ func (r *Runner) Run(ctx context.Context, commandOpts pkgmgmt.CommandOptions) er
 	cmd := r.NewCommand(ctx, pkgPath, cmdArgs...)
 	configureGracefulShutdown(cmd)
 
+	// Let the package mask the sensitive values that it is given in its trace data
+	cmd.Env = append(cmd.Env, r.SensitiveValuesEnviron()...)
+
 	// Pipe the output to porter and capture the error in case it fails
 	cmdStderr := &bytes.Buffer{}
 	cmd.Stdout = r.Out

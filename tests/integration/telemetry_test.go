@@ -63,7 +63,8 @@ func TestTelemetry_SensitiveValuesAreNotTraced(t *testing.T) {
 	defer test.Close()
 	require.NoError(t, err, "test setup failed")
 
-	receiver := test.StartTestOTLPReceiver(tester.OTLPProtocolGRPC)
+	// The sensitive value is used inside the bundle, so we need the traces exported from there as well
+	receiver := test.StartBundleTestOTLPReceiver(tester.OTLPProtocolGRPC)
 
 	bundleDir := filepath.Join(test.RepoRoot, "tests/integration/testdata/bundles/failing-bundle-with-sensitive-data")
 	require.NoError(t, shx.Copy(filepath.Join(bundleDir, "*"), test.TestDir), "error copying the bundle into the test directory")
@@ -82,6 +83,15 @@ func TestTelemetry_SensitiveValuesAreNotTraced(t *testing.T) {
 		}
 	}
 	require.NotZero(t, failedSpans, "expected the failed install to be recorded in the trace data")
+
+	// Validate that we received trace data from the mixin that was given the sensitive value
+	var mixinSpans int
+	for _, span := range receiver.RequireSpans("porter") {
+		if span.GetName() == "exec" {
+			mixinSpans++
+		}
+	}
+	require.NotZero(t, mixinSpans, "expected the exec mixin inside the bundle to have exported trace data")
 
 	receiver.RequireNoSpanContains(sensitiveValue)
 

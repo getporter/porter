@@ -9,10 +9,13 @@ import (
 	"get.porter.sh/porter/tests"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/baggage"
+	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	"go.opentelemetry.io/otel/sdk/trace/tracetest"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -294,4 +297,122 @@ func lastEnv(environ []string, key string) string {
 		}
 	}
 	return found
+}
+
+func TestCensoredExporter(t *testing.T) {
+	stubs := tracetest.SpanStubs{
+		{
+			Name: "run topsecret",
+			Attributes: []attribute.KeyValue{
+				attribute.String("stdin", "arguments: [open_door, topsecret]"),
+				attribute.StringSlice("args", []string{"open_door", "topsecret"}),
+				attribute.Int("count", 1),
+			},
+			Events: []sdktrace.Event{
+				{Name: "fail open_door topsecret", Attributes: []attribute.KeyValue{attribute.String("exception.message", "couldn't run fail open_door topsecret")}},
+			},
+			Status: sdktrace.Status{Code: codes.Error, Description: "couldn't run fail open_door topsecret"},
+		},
+	}
+
+	t.Run("no sensitive values", func(t *testing.T) {
+		inner := tracetest.NewInMemoryExporter()
+		exporter := censoredExporter{SpanExporter: inner, censoredWriter: NewCensoredWriter(nil)}
+
+		require.NoError(t, exporter.ExportSpans(context.Background(), stubs.Snapshots()))
+
+		assert.Equal(t, stubs, inner.GetSpans(), "expected the spans to be exported unchanged")
+	})
+
+	t.Run("sensitive values", func(t *testing.T) {
+		inner := tracetest.NewInMemoryExporter()
+		censoredWriter := NewCensoredWriter(nil)
+		censoredWriter.SetSensitiveValues([]string{"topsecret", " "})
+		exporter := censoredExporter{SpanExporter: inner, censoredWriter: censoredWriter}
+
+		require.NoError(t, exporter.ExportSpans(context.Background(), stubs.Snapshots()))
+
+		got := inner.GetSpans()
+		require.Len(t, got, 1)
+		assert.Equal(t, "run *******", got[0].Name)
+		assert.Equal(t, []attribute.KeyValue{
+			attribute.String("stdin", "arguments: [open_door, *******]"),
+			attribute.StringSlice("args", []string{"open_door", "*******"}),
+			attribute.Int("count", 1),
+		}, got[0].Attributes)
+		require.Len(t, got[0].Events, 1)
+		assert.Equal(t, "fail open_door *******", got[0].Events[0].Name)
+		assert.Equal(t, []attribute.KeyValue{attribute.String("exception.message", "couldn't run fail open_door *******")}, got[0].Events[0].Attributes)
+		assert.Equal(t, sdktrace.Status{Code: codes.Error, Description: "couldn't run fail open_door *******"}, got[0].Status)
+
+		// The original spans must not be modified
+		assert.Equal(t, "run topsecret", stubs[0].Name)
+		assert.Equal(t, "arguments: [open_door, topsecret]", stubs[0].Attributes[0].Value.AsString())
+	})
+}
+
+func TestContext_loadSensitiveValues(t *testing.T) {
+	t.Run("not set", func(t *testing.T) {
+		c := NewTestContext(t)
+		c.Unsetenv(EnvSensitiveValues)
+
+		c.loadSensitiveValues()
+
+		assert.Empty(t, c.censoredWriter.GetSensitiveValues())
+	})
+
+	t.Run("set", func(t *testing.T) {
+		c := NewTestContext(t)
+		c.Setenv(EnvSensitiveValues, `["topsecret","multi\nline"]`)
+
+		c.loadSensitiveValues()
+
+		assert.Equal(t, []string{"topsecret", "multi\nline"}, c.censoredWriter.GetSensitiveValues())
+		_, ok := c.LookupEnv(EnvSensitiveValues)
+		assert.False(t, ok, "expected the sensitive values to not be passed on to the commands that we run")
+	})
+
+	t.Run("invalid", func(t *testing.T) {
+		c := NewTestContext(t)
+		c.Setenv(EnvSensitiveValues, `topsecret`)
+
+		c.loadSensitiveValues()
+
+		assert.Empty(t, c.censoredWriter.GetSensitiveValues())
+		_, ok := c.LookupEnv(EnvSensitiveValues)
+		assert.False(t, ok, "expected the sensitive values to not be passed on to the commands that we run")
+	})
+}
+
+func TestContext_SensitiveValuesEnviron(t *testing.T) {
+	t.Run("telemetry disabled", func(t *testing.T) {
+		c := NewTestContext(t)
+		c.SetSensitiveValues([]string{"topsecret"})
+
+		assert.Empty(t, c.SensitiveValuesEnviron())
+	})
+
+	t.Run("no sensitive values", func(t *testing.T) {
+		c := NewTestContext(t)
+		c.tracerInitalized = true
+
+		assert.Empty(t, c.SensitiveValuesEnviron())
+	})
+
+	t.Run("sensitive values", func(t *testing.T) {
+		c := NewTestContext(t)
+		c.tracerInitalized = true
+		c.SetSensitiveValues([]string{"topsecret", "multi\nline"})
+
+		assert.Equal(t, []string{`PORTER_SENSITIVE_VALUES=["topsecret","multi\nline"]`}, c.SensitiveValuesEnviron())
+	})
+
+	t.Run("too large", func(t *testing.T) {
+		c := NewTestContext(t)
+		c.tracerInitalized = true
+		c.SetSensitiveValues([]string{strings.Repeat("a", maxSensitiveValuesEnvSize)})
+
+		assert.Equal(t, []string{"PORTER_TELEMETRY_ENABLED=false"}, c.SensitiveValuesEnviron(),
+			"expected telemetry to be disabled for the child when the sensitive values can't be passed to it")
+	})
 }

@@ -14,6 +14,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"github.com/uwu-tools/magex/shx"
 	coltracepb "go.opentelemetry.io/proto/otlp/collector/trace/v1"
 	commonpb "go.opentelemetry.io/proto/otlp/common/v1"
 	tracepb "go.opentelemetry.io/proto/otlp/trace/v1"
@@ -66,30 +67,58 @@ func (s ReceivedSpan) TraceID() string {
 // protocol (grpc or http/protobuf) inside the test process, and configures
 // every porter command subsequently run by the Tester to send its traces to it.
 // The receiver is cleaned up by default when the test completes.
+//
+// The receiver listens on localhost, so it does not receive the traces
+// exported from inside a bundle. Use StartBundleTestOTLPReceiver for that.
 func (t Tester) StartTestOTLPReceiver(protocol string) *TestOTLPReceiver {
+	return t.startTestOTLPReceiver(protocol, "127.0.0.1")
+}
+
+// StartBundleTestOTLPReceiver is like StartTestOTLPReceiver, except that the
+// receiver listens on the gateway of the default docker network, so that it
+// also receives the traces exported from inside a bundle.
+// The test is skipped when the host can't listen on that address, e.g. when
+// docker runs in a virtual machine.
+func (t Tester) StartBundleTestOTLPReceiver(protocol string) *TestOTLPReceiver {
+	gateway, err := shx.OutputE("docker", "network", "inspect", "bridge", "--format", "{{(index .IPAM.Config 0).Gateway}}")
+	require.NoError(t.T, err, "Could not determine the gateway of the default docker network")
+
+	lis, err := net.Listen("tcp", net.JoinHostPort(gateway, "0"))
+	if err != nil {
+		t.T.Skipf("Skipping because the host can't listen on the gateway of the default docker network, %s: %s", gateway, err)
+	}
+	require.NoError(t.T, lis.Close())
+
+	return t.startTestOTLPReceiver(protocol, gateway)
+}
+
+func (t Tester) startTestOTLPReceiver(protocol string, host string) *TestOTLPReceiver {
 	r := &TestOTLPReceiver{t: t.T, protocol: protocol}
+
+	lis, err := net.Listen("tcp", net.JoinHostPort(host, "0"))
+	require.NoError(t.T, err, "Could not listen on a port for the temporary otlp receiver")
+	r.endpoint = lis.Addr().String()
 
 	switch protocol {
 	case OTLPProtocolGRPC:
-		lis, err := net.Listen("tcp", "127.0.0.1:0")
-		require.NoError(t.T, err, "Could not listen on a port for the temporary otlp receiver")
-
 		srv := grpc.NewServer()
 		coltracepb.RegisterTraceServiceServer(srv, r)
 		go func() {
 			_ = srv.Serve(lis)
 		}()
 
-		r.endpoint = lis.Addr().String()
 		r.stop = srv.Stop
 	case OTLPProtocolHTTP:
 		mux := http.NewServeMux()
 		mux.HandleFunc("/v1/traces", r.handleHTTPExport)
-		srv := httptest.NewServer(mux)
+		srv := httptest.NewUnstartedServer(mux)
+		_ = srv.Listener.Close()
+		srv.Listener = lis
+		srv.Start()
 
-		r.endpoint = srv.Listener.Addr().String()
 		r.stop = srv.Close
 	default:
+		_ = lis.Close()
 		require.Failf(t.T, "invalid otlp protocol", "unsupported otlp protocol %q", protocol)
 	}
 
