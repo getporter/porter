@@ -322,9 +322,10 @@ telemetry:
 When telemetry is enabled, Porter passes the following into the bundle when it is run, so that traces from the Porter runtime, mixins and other OpenTelemetry enabled tools inside the bundle are part of the same trace:
 
 * The enabled, protocol, endpoint, insecure, compression, timeout and start-timeout telemetry settings, as PORTER_TELEMETRY_* environment variables.
+* The same settings using the standard OTEL_EXPORTER_OTLP_* environment variables, for other OpenTelemetry enabled tools in the bundle.
 * The current span, using the TRACEPARENT, TRACESTATE and BAGGAGE environment variables.
 
-The settings above always use the values from the host, even when the bundle image defines its own with PORTER_TELEMETRY_* or the standard OTEL_EXPORTER_OTLP_* environment variables.
+The settings above always use the values from the host, even when the bundle image defines its own with PORTER_TELEMETRY_* or OTEL_EXPORTER_OTLP_* environment variables.
 For example, a bundle image cannot turn off TLS when the host requires it.
 The certificate and headers settings are not passed into the bundle.
 The endpoint is passed as-is and must be reachable from inside the bundle's container.

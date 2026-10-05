@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"strings"
+	"time"
 
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
@@ -158,14 +160,20 @@ func (r *Runtime) telemetryEnvironment(ctx context.Context) map[string]string {
 	env["PORTER_TELEMETRY_TIMEOUT"] = telemetry.Timeout
 	env["PORTER_TELEMETRY_START_TIMEOUT"] = telemetry.StartTimeout
 
-	// The trace exporter reads the standard OpenTelemetry variables on its own,
-	// and uses them for any setting that porter doesn't explicitly configure.
-	// Clear them so that porter's settings above are the only ones in effect.
-	for _, prefix := range []string{"OTEL_EXPORTER_OTLP_", "OTEL_EXPORTER_OTLP_TRACES_"} {
-		env[prefix+"INSECURE"] = insecure
-		for _, setting := range []string{"ENDPOINT", "PROTOCOL", "COMPRESSION", "TIMEOUT"} {
-			env[prefix+setting] = ""
-		}
+	// Set the standard OpenTelemetry variables to the same settings, so that
+	// other OpenTelemetry enabled tools in the bundle send their traces to the
+	// same place as porter. The trace exporter used by porter also reads them
+	// for any setting that porter doesn't explicitly configure.
+	env["OTEL_EXPORTER_OTLP_INSECURE"] = insecure
+	env["OTEL_EXPORTER_OTLP_ENDPOINT"] = otlpEndpointURL(telemetry.Endpoint, telemetry.Insecure)
+	env["OTEL_EXPORTER_OTLP_PROTOCOL"] = telemetry.Protocol
+	env["OTEL_EXPORTER_OTLP_COMPRESSION"] = telemetry.Compression
+	env["OTEL_EXPORTER_OTLP_TIMEOUT"] = otlpTimeout(telemetry.Timeout)
+
+	// The trace specific variables take precedence over the ones above, clear
+	// them so that they can't be used to override the host's settings
+	for _, setting := range []string{"INSECURE", "ENDPOINT", "PROTOCOL", "COMPRESSION", "TIMEOUT"} {
+		env["OTEL_EXPORTER_OTLP_TRACES_"+setting] = ""
 	}
 
 	// Pass the current span so that traces from inside the bundle are children of this span
@@ -174,6 +182,30 @@ func (r *Runtime) telemetryEnvironment(ctx context.Context) map[string]string {
 	}
 
 	return env
+}
+
+// otlpEndpointURL converts porter's telemetry endpoint, e.g. localhost:4317,
+// into the URL format used by OTEL_EXPORTER_OTLP_ENDPOINT, e.g. https://localhost:4317.
+func otlpEndpointURL(endpoint string, insecure bool) string {
+	if endpoint == "" || strings.Contains(endpoint, "://") {
+		return endpoint
+	}
+
+	if insecure {
+		return "http://" + endpoint
+	}
+	return "https://" + endpoint
+}
+
+// otlpTimeout converts porter's telemetry timeout, e.g. 3s, into the
+// milliseconds used by OTEL_EXPORTER_OTLP_TIMEOUT, e.g. 3000.
+// Returns an empty string when the timeout isn't set or is invalid.
+func otlpTimeout(timeout string) string {
+	d, err := time.ParseDuration(timeout)
+	if err != nil {
+		return ""
+	}
+	return strconv.FormatInt(d.Milliseconds(), 10)
 }
 
 // AddRelocation operates on an ActionArguments and adds any provided relocation mapping
