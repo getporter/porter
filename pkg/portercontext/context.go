@@ -593,6 +593,16 @@ func (c *Context) SetSensitiveValues(vals []string) {
 	}
 }
 
+// Censor masks the sensitive values in the specified string.
+// Use this for text that isn't written to the output/err streams of the
+// context, e.g. an error that includes the output of a command.
+func (c *Context) Censor(s string) string {
+	if c.censoredWriter == nil {
+		return s
+	}
+	return c.censoredWriter.CensorString(s)
+}
+
 type CensoredEncoder struct {
 	zapcore.Encoder
 	censoredWriter *CensoredWriter

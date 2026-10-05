@@ -97,7 +97,8 @@ func main() {
 
 		if err := rootCmd.ExecuteContext(ctx); err != nil {
 			_ = log.Error(err)
-			fmt.Fprintln(os.Stderr, err)
+			// The error may include sensitive values, e.g. from the output of a command run by the bundle
+			fmt.Fprintln(os.Stderr, p.Censor(err.Error()))
 			return cli.ExitCodeErr
 		}
 		return cli.ExitCodeSuccess

@@ -104,8 +104,9 @@ func (r *Runner) Run(ctx context.Context, commandOpts pkgmgmt.CommandOptions) er
 
 	err = cmd.Wait()
 	if err != nil {
-		// Include stderr in the error, otherwise it just includes the exit code
-		err = fmt.Errorf("package command failed %s\n%s", prettyCmd, cmdStderr)
+		// Include stderr in the error, otherwise it just includes the exit code.
+		// The captured stderr isn't censored like r.Err is, and the error is printed by our caller.
+		err = fmt.Errorf("package command failed %s\n%s", prettyCmd, r.Censor(cmdStderr.String()))
 		// Do not flag this as an error in the logs because we often call mixins to see if they support a command
 		// and if they don't it's not an error, e.g. not all mixins support lint or schema
 		span.Debug(err.Error())

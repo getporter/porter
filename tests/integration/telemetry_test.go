@@ -72,8 +72,11 @@ func TestTelemetry_SensitiveValuesAreNotTraced(t *testing.T) {
 
 	// The bundle fails while running a command that has the sensitive parameter as an argument
 	const sensitiveValue = "topsecret"
-	_, _, err = test.RunPorter("install", "--param", "name=mybuns-author", "--param", "password="+sensitiveValue)
+	_, output, err := test.RunPorter("install", "--param", "name=mybuns-author", "--param", "password="+sensitiveValue)
 	require.Error(t, err, "expected the install to fail")
+
+	// The output of the bundle is saved as the logs of the run, which is included in the trace data when it is stored
+	require.NotContains(t, output, sensitiveValue, "expected the sensitive value to be masked in the output")
 
 	// Validate that the failed install was traced, so that we know we are checking relevant trace data
 	var failedSpans int
