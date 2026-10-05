@@ -3,55 +3,89 @@
 package integration
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
-	"time"
 
-	"get.porter.sh/porter/pkg/porter"
 	"get.porter.sh/porter/tests"
 	"get.porter.sh/porter/tests/tester"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/uwu-tools/magex/shx"
+	tracepb "go.opentelemetry.io/proto/otlp/trace/v1"
 )
 
-// Validate that we can configure a live connection to a telemetry endpoint
-func TestTelemetrySetup(t *testing.T) {
+// Test that trace data is sent to the configured telemetry endpoint, both from porter and the plugins
+func TestTelemetry_TracesExported(t *testing.T) {
+	testcases := []struct {
+		name     string
+		protocol string
+	}{
+		{name: "grpc", protocol: tester.OTLPProtocolGRPC},
+		{name: "http", protocol: tester.OTLPProtocolHTTP},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			test, err := tester.NewTest(t)
+			defer test.Close()
+			require.NoError(t, err, "test setup failed")
+
+			receiver := test.StartTestOTLPReceiver(tc.protocol)
+
+			// Make a call that will call a plugin
+			test.RequirePorter("list")
+
+			// Validate we have trace data for porter
+			porterSpans := receiver.RequireSpans("porter")
+			porterTraces := make(map[string]struct{}, len(porterSpans))
+			for _, span := range porterSpans {
+				porterTraces[span.TraceID()] = struct{}{}
+			}
+
+			// Validate we have trace data for the plugin, and that the calls made to it are part of the trace started by porter.
+			// The plugin also exports spans in a separate trace for its own startup, e.g. loading its configuration.
+			var linkedSpans int
+			for _, span := range receiver.RequireSpans("storage.porter.mongodb") {
+				if _, ok := porterTraces[span.TraceID()]; ok {
+					linkedSpans++
+				}
+			}
+			require.NotZero(t, linkedSpans, "expected spans from the plugin to be in the same trace as porter")
+		})
+	}
+}
+
+// Test that sensitive values are not included in the trace data sent to the telemetry endpoint
+func TestTelemetry_SensitiveValuesAreNotTraced(t *testing.T) {
+	// Remove the skip once https://github.com/getporter/porter/issues/3701 is fixed
+	t.Skip("sensitive parameters set with --param are leaked in the command attribute of the root span, see https://github.com/getporter/porter/issues/3701")
+
 	test, err := tester.NewTest(t)
 	defer test.Close()
 	require.NoError(t, err, "test setup failed")
 
-	ctx := context.Background()
-	_, _, err = test.RunPorter("install", "otel-jaeger", "-r=ghcr.io/getporter/examples/otel-jaeger:v0.1.1", "--allow-docker-host-access")
-	require.NoError(t, err)
-	defer test.RunPorter("uninstall", "otel-jaeger", "--allow-docker-host-access")
+	receiver := test.StartTestOTLPReceiver(tester.OTLPProtocolGRPC)
 
-	// Wait until the collection should be up
-	time.Sleep(10 * time.Second)
+	bundleDir := filepath.Join(test.RepoRoot, "tests/integration/testdata/bundles/failing-bundle-with-sensitive-data")
+	require.NoError(t, shx.Copy(filepath.Join(bundleDir, "*"), test.TestDir), "error copying the bundle into the test directory")
+	test.Chdir(test.TestDir)
 
-	// Try to run porter with telemetry enabled
-	p := porter.New()
+	// The bundle fails while running a command that has the sensitive parameter as an argument
+	const sensitiveValue = "topsecret"
+	_, _, err = test.RunPorter("install", "--param", "password="+sensitiveValue)
+	require.Error(t, err, "expected the install to fail")
 
-	defer p.Close()
-	os.Setenv("PORTER_EXPERIMENTAL", "structured-logs")
-	os.Setenv("PORTER_TELEMETRY_ENABLED", "true")
-	os.Setenv("PORTER_TELEMETRY_PROTOCOL", "grpc")
-	os.Setenv("PORTER_TELEMETRY_INSECURE", "true")
-	defer func() {
-		os.Unsetenv("PORTER_EXPERIMENTAL")
-		os.Unsetenv("PORTER_TELEMETRY_ENABLED")
-		os.Unsetenv("PORTER_TELEMETRY_PROTOCOL")
-		os.Unsetenv("PORTER_TELEMETRY_INSECURE")
-	}()
-	ctx, err = p.Connect(ctx)
-	require.NoError(t, err, "error initializing porter")
+	// Validate that the failed install was traced, so that we know we are checking relevant trace data
+	var failedSpans int
+	for _, span := range receiver.RequireSpans("porter") {
+		if span.GetStatus().GetCode() == tracepb.Status_STATUS_CODE_ERROR {
+			failedSpans++
+		}
+	}
+	require.NotZero(t, failedSpans, "expected the failed install to be recorded in the trace data")
 
-	ctx, log := p.StartRootSpan(ctx, t.Name())
-	defer log.Close()
-	assert.True(t, log.IsTracingEnabled())
+	receiver.RequireNoSpanContains(sensitiveValue)
 }
 
 // Test that telemetry data is being exported both from porter and the plugins
