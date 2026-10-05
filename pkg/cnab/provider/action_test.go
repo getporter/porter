@@ -435,6 +435,7 @@ func TestAddEnvironment(t *testing.T) {
 		require.NoError(t, err, "AddEnvironment failed")
 
 		assert.Equal(t, "true", op.Environment["PORTER_TELEMETRY_ENABLED"])
+		assert.Equal(t, "false", op.Environment["PORTER_TELEMETRY_INSECURE"], "insecure should be explicitly disabled so the bundle image can't override it")
 		assert.NotContains(t, op.Environment, "TRACEPARENT")
 	})
 }

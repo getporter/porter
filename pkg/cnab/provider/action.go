@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strconv"
 
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
@@ -144,9 +145,8 @@ func (r *Runtime) telemetryEnvironment(ctx context.Context) map[string]string {
 	}
 
 	env["PORTER_TELEMETRY_ENABLED"] = "true"
-	if telemetry.Insecure {
-		env["PORTER_TELEMETRY_INSECURE"] = "true"
-	}
+	// Always set insecure, so that a value defined in the bundle image can't downgrade a host that requires TLS
+	env["PORTER_TELEMETRY_INSECURE"] = strconv.FormatBool(telemetry.Insecure)
 	settings := map[string]string{
 		"PORTER_TELEMETRY_ENDPOINT":      telemetry.Endpoint,
 		"PORTER_TELEMETRY_PROTOCOL":      telemetry.Protocol,
