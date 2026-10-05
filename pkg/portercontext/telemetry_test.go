@@ -9,6 +9,7 @@ import (
 	"get.porter.sh/porter/tests"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/baggage"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
@@ -168,7 +169,32 @@ func TestTraceEnviron(t *testing.T) {
 		require.Contains(t, env, "TRACEPARENT")
 		assert.Contains(t, env["TRACEPARENT"], sc.TraceID().String())
 		assert.Contains(t, env["TRACEPARENT"], sc.SpanID().String())
+
+		// Always set, so that the child doesn't use a stale value that it inherited
+		require.Contains(t, env, "TRACESTATE")
+		assert.Empty(t, env["TRACESTATE"])
+		require.Contains(t, env, "BAGGAGE")
+		assert.Empty(t, env["BAGGAGE"])
 	})
+
+	t.Run("span with baggage", func(t *testing.T) {
+		c := NewTestContext(t)
+		useTestTracer(c)
+
+		member, err := baggage.NewMember("owner", "me")
+		require.NoError(t, err)
+		bags, err := baggage.New(member)
+		require.NoError(t, err)
+
+		ctx, log := c.StartRootSpan(baggage.ContextWithBaggage(context.Background(), bags), t.Name())
+		defer log.Close()
+
+		assert.Equal(t, "owner=me", TraceEnviron(ctx)["BAGGAGE"])
+	})
+}
+
+func TestTraceEnvironNames(t *testing.T) {
+	assert.ElementsMatch(t, []string{"TRACEPARENT", "TRACESTATE", "BAGGAGE"}, TraceEnvironNames())
 }
 
 func TestContext_StartRootSpan_ContinuesParentTrace(t *testing.T) {
@@ -234,6 +260,21 @@ func TestContext_CommandContext_PassesTrace(t *testing.T) {
 		require.NotEqual(t, inherited, want)
 		// When a variable is repeated, the last value is used
 		assert.Equal(t, want, lastEnv(cmd.Env, "TRACEPARENT"), "the command should be a child of the current span")
+	})
+
+	t.Run("span, stale state in environment", func(t *testing.T) {
+		c := NewTestContext(t)
+		useTestTracer(c)
+
+		// Start the span before the stale values are set, so that they aren't part of the span
+		ctx, log := c.StartRootSpan(context.Background(), t.Name())
+		defer log.Close()
+		c.Setenv("TRACESTATE", "vendor=stale")
+		c.Setenv("BAGGAGE", "owner=stale")
+
+		cmd := c.CommandContext(ctx, "echo")
+		assert.Equal(t, "TRACESTATE=", lastEnv(cmd.Env, "TRACESTATE"), "stale trace state should not be passed with the current span")
+		assert.Equal(t, "BAGGAGE=", lastEnv(cmd.Env, "BAGGAGE"), "stale baggage should not be passed with the current span")
 	})
 
 	t.Run("no span", func(t *testing.T) {

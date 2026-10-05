@@ -176,7 +176,11 @@ func (r *Runtime) telemetryEnvironment(ctx context.Context) map[string]string {
 		env["OTEL_EXPORTER_OTLP_TRACES_"+setting] = ""
 	}
 
-	// Pass the current span so that traces from inside the bundle are children of this span
+	// Pass the current span so that traces from inside the bundle are children of this span.
+	// Clear the variables first, so that values from the bundle image aren't used when there is no span.
+	for _, name := range portercontext.TraceEnvironNames() {
+		env[name] = ""
+	}
 	for k, v := range portercontext.TraceEnviron(ctx) {
 		env[k] = v
 	}

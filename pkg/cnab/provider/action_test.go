@@ -434,6 +434,8 @@ func TestAddEnvironment(t *testing.T) {
 			"OTEL_EXPORTER_OTLP_TRACES_COMPRESSION": "",
 			"OTEL_EXPORTER_OTLP_TRACES_TIMEOUT":     "",
 			"TRACEPARENT":                           portercontext.TraceEnviron(spanCtx)["TRACEPARENT"],
+			"TRACESTATE":                            "",
+			"BAGGAGE":                               "",
 		}
 		assert.Equal(t, want, op.Environment, "only the safe subset of the telemetry settings should be passed into the bundle")
 		assert.Contains(t, op.Environment["TRACEPARENT"], span.SpanContext().TraceID().String())
@@ -452,7 +454,11 @@ func TestAddEnvironment(t *testing.T) {
 
 		assert.Equal(t, "true", op.Environment["PORTER_TELEMETRY_ENABLED"])
 		assert.Equal(t, "false", op.Environment["PORTER_TELEMETRY_INSECURE"], "insecure should be explicitly disabled so the bundle image can't override it")
-		assert.NotContains(t, op.Environment, "TRACEPARENT")
+		// Cleared so that values from the bundle image aren't used
+		for _, name := range []string{"TRACEPARENT", "TRACESTATE", "BAGGAGE"} {
+			require.Contains(t, op.Environment, name)
+			assert.Empty(t, op.Environment[name], "%s should be cleared when there is no span", name)
+		}
 	})
 }
 

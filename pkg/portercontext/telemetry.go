@@ -31,9 +31,24 @@ import (
 // processes, using the W3C Trace Context and Baggage formats.
 var tracePropagator = propagation.NewCompositeTextMapPropagator(propagation.TraceContext{}, propagation.Baggage{})
 
+// TraceEnvironNames returns the names of the environment variables used to
+// pass the current span to a child process: TRACEPARENT, TRACESTATE and BAGGAGE.
+func TraceEnvironNames() []string {
+	fields := tracePropagator.Fields()
+	names := make([]string, len(fields))
+	for i, field := range fields {
+		names[i] = strings.ToUpper(field)
+	}
+	return names
+}
+
 // TraceEnviron returns the environment variables, e.g. TRACEPARENT, that
 // should be set on a child process so that it can continue the trace of the
 // span in the specified context. Returns an empty map when there is no span.
+//
+// All of the variables in TraceEnvironNames are returned, with an empty value
+// when it doesn't apply to the span, so that a stale value that the child
+// would otherwise inherit isn't combined with the span.
 func TraceEnviron(ctx context.Context) map[string]string {
 	env := make(map[string]string, 3)
 	if !trace.SpanContextFromContext(ctx).IsValid() {
@@ -42,8 +57,8 @@ func TraceEnviron(ctx context.Context) map[string]string {
 
 	carrier := propagation.MapCarrier{}
 	tracePropagator.Inject(ctx, carrier)
-	for k, v := range carrier {
-		env[strings.ToUpper(k)] = v
+	for _, name := range TraceEnvironNames() {
+		env[name] = carrier[strings.ToLower(name)]
 	}
 	return env
 }
