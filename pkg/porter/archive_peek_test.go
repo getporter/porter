@@ -94,6 +94,69 @@ func TestPeekArchiveMetadata_FallsBackWhenMetadataIsLate(t *testing.T) {
 	require.False(t, found, "expected peekArchiveMetadata to give up after maxPeekEntries")
 }
 
+func TestExtractArchive(t *testing.T) {
+	srcDir := t.TempDir()
+	require.NoError(t, os.WriteFile(filepath.Join(srcDir, "bundle.json"), []byte(`{"name":"mybun"}`), 0644))
+	require.NoError(t, os.WriteFile(filepath.Join(srcDir, "relocation-mapping.json"), []byte(`{}`), 0644))
+
+	blobsDir := filepath.Join(srcDir, "artifacts", "layout", "blobs", "sha256")
+	require.NoError(t, os.MkdirAll(blobsDir, 0755))
+	require.NoError(t, os.WriteFile(filepath.Join(blobsDir, "abc123"), []byte("a large blob"), 0644))
+	// Empty directories are extracted too
+	require.NoError(t, os.MkdirAll(filepath.Join(srcDir, "artifacts", "empty"), 0755))
+
+	ex := &exporter{}
+	rc, err := ex.CustomTar(context.Background(), srcDir, gzip.DefaultCompression)
+	require.NoError(t, err)
+	defer rc.Close()
+
+	source := filepath.Join(t.TempDir(), "bundle.tgz")
+	out, err := os.Create(source)
+	require.NoError(t, err)
+	_, err = out.ReadFrom(rc)
+	require.NoError(t, err)
+	require.NoError(t, out.Close())
+
+	// The destination does not need to exist yet
+	dest := filepath.Join(t.TempDir(), "bundle")
+	require.NoError(t, extractArchive(source, dest))
+
+	bundleJSON, err := os.ReadFile(filepath.Join(dest, "bundle.json"))
+	require.NoError(t, err)
+	require.Equal(t, `{"name":"mybun"}`, string(bundleJSON))
+
+	blob, err := os.ReadFile(filepath.Join(dest, "artifacts", "layout", "blobs", "sha256", "abc123"))
+	require.NoError(t, err)
+	require.Equal(t, "a large blob", string(blob))
+
+	info, err := os.Stat(filepath.Join(dest, "artifacts", "empty"))
+	require.NoError(t, err)
+	require.True(t, info.IsDir())
+}
+
+func TestExtractArchive_RejectsPathTraversal(t *testing.T) {
+	tmpDir := t.TempDir()
+	source := filepath.Join(tmpDir, "bundle.tgz")
+	out, err := os.Create(source)
+	require.NoError(t, err)
+
+	gz := gzip.NewWriter(out)
+	tw := tar.NewWriter(gz)
+	content := "escaped"
+	require.NoError(t, tw.WriteHeader(&tar.Header{Name: "../escape", Mode: 0644, Size: int64(len(content))}))
+	_, err = tw.Write([]byte(content))
+	require.NoError(t, err)
+	require.NoError(t, tw.Close())
+	require.NoError(t, gz.Close())
+	require.NoError(t, out.Close())
+
+	err = extractArchive(source, filepath.Join(tmpDir, "dest"))
+	require.ErrorContains(t, err, "escapes destination directory")
+
+	_, err = os.Stat(filepath.Join(tmpDir, "escape"))
+	require.True(t, os.IsNotExist(err), "expected nothing to be written outside of the destination")
+}
+
 func TestSafeJoin(t *testing.T) {
 	dest := filepath.Join(string(filepath.Separator), "dest")
 

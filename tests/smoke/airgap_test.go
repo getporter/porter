@@ -3,8 +3,13 @@
 package smoke
 
 import (
+	"archive/tar"
+	"compress/gzip"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -12,8 +17,6 @@ import (
 	"get.porter.sh/porter/pkg/yaml"
 	"get.porter.sh/porter/tests/testdata"
 	"get.porter.sh/porter/tests/tester"
-	"github.com/cnabio/cnab-go/bundle/loader"
-	"github.com/cnabio/cnab-go/packager"
 	"github.com/cnabio/cnab-to-oci/relocation"
 	"github.com/stretchr/testify/require"
 	"github.com/uwu-tools/magex/shx"
@@ -158,15 +161,34 @@ func TestAirgappedEnvironment(t *testing.T) {
 }
 
 func getRelocationMap(test tester.Tester, archiveFilePath string) relocation.ImageRelocationMap {
-	l := loader.NewLoader()
-	imp := packager.NewImporter(archiveFilePath, test.TestDir, l)
-	err := imp.Import()
+	f, err := os.Open(archiveFilePath)
 	require.NoError(test.T, err, "opening archive failed")
+	defer f.Close()
 
-	_, err = test.TestContext.FileSystem.Stat(filepath.Join(test.TestDir, strings.TrimSuffix(filepath.Base(archiveFilePath), ".tgz"), "bundle.json"))
-	require.NoError(test.T, err)
-	relocMapBytes, err := test.TestContext.FileSystem.ReadFile(filepath.Join(test.TestDir, strings.TrimSuffix(filepath.Base(archiveFilePath), ".tgz"), "relocation-mapping.json"))
-	require.NoError(test.T, err)
+	gz, err := gzip.NewReader(f)
+	require.NoError(test.T, err, "opening archive failed")
+	defer gz.Close()
+
+	var hasBundle bool
+	var relocMapBytes []byte
+	tr := tar.NewReader(gz)
+	for {
+		hdr, err := tr.Next()
+		if errors.Is(err, io.EOF) {
+			break
+		}
+		require.NoError(test.T, err, "reading archive failed")
+
+		switch strings.TrimPrefix(hdr.Name, "./") {
+		case "bundle.json":
+			hasBundle = true
+		case "relocation-mapping.json":
+			relocMapBytes, err = io.ReadAll(tr)
+			require.NoError(test.T, err)
+		}
+	}
+	require.True(test.T, hasBundle, "bundle.json not found in archive")
+	require.NotNil(test.T, relocMapBytes, "relocation-mapping.json not found in archive")
 
 	// make sure the relocation map contains the expected image
 	relocMap := relocation.ImageRelocationMap{}

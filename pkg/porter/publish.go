@@ -17,7 +17,6 @@ import (
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/tracing"
 	"github.com/cnabio/cnab-go/bundle/loader"
-	"github.com/cnabio/cnab-go/packager"
 	"github.com/cnabio/cnab-to-oci/relocation"
 	"github.com/google/go-containerregistry/pkg/name"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
@@ -416,13 +415,11 @@ func (p *Porter) extractBundle(ctx context.Context, tmpDir, source string) (cnab
 	defer span.EndSpan()
 
 	span.Debugf("Extracting bundle from archive %s...", source)
-	l := loader.NewLoader()
-	imp := packager.NewImporter(source, tmpDir, l)
-	if err := imp.Import(); err != nil {
+	extractedDir := filepath.Join(tmpDir, strings.TrimSuffix(filepath.Base(source), ".tgz"))
+	if err := extractArchive(source, extractedDir); err != nil {
 		return cnab.BundleReference{}, span.Error(fmt.Errorf("failed to extract bundle from archive %s: %w", source, err))
 	}
 
-	extractedDir := filepath.Join(tmpDir, strings.TrimSuffix(filepath.Base(source), ".tgz"))
 	bundleRef, err := loadBundleAndRelocationMap(extractedDir)
 	if err != nil {
 		return cnab.BundleReference{}, span.Error(fmt.Errorf("failed to load bundle from archive %s: %w", source, err))
@@ -435,8 +432,8 @@ func (p *Porter) extractBundle(ctx context.Context, tmpDir, source string) (cnab
 // (extractBundle) or a metadata-only peek (peekArchiveMetadata) — both use
 // the same file names and directory shape. Both files always live on the
 // real local filesystem regardless of the abstract p.FileSystem in use:
-// extraction (cnab-go's Importer) and the peek both write with the raw os
-// package, never through afero.
+// extraction and the peek both write with the raw os package, never through
+// afero.
 func loadBundleAndRelocationMap(dir string) (cnab.BundleReference, error) {
 	l := loader.NewLoader()
 	bun, err := l.Load(filepath.Join(dir, "bundle.json"))
