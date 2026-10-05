@@ -909,6 +909,9 @@ func (p *Porter) applyActionOptionsToInstallation(ctx context.Context, ba Bundle
 		return err
 	}
 	bun := bundleRef.Definition
+	if o.OnBundleResolved != nil {
+		o.OnBundleResolved(bun)
+	}
 
 	// Update the installation with metadata from the options
 	inst.TrackBundle(bundleRef.Reference)

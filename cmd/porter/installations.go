@@ -1,9 +1,14 @@
 package main
 
 import (
+	"os"
+
+	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/porter"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 func buildInstallationCommands(p *porter.Porter) *cobra.Command {
@@ -246,6 +251,7 @@ The docker driver runs the bundle container using the local Docker host. To use 
 			return opts.Validate(cmd.Context(), args, p)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			traceResolvedParams(cmd, opts)
 			return p.InstallBundle(cmd.Context(), opts)
 		},
 	}
@@ -301,6 +307,7 @@ The docker driver runs the bundle container using the local Docker host. To use 
 			return opts.Validate(cmd.Context(), args, p)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			traceResolvedParams(cmd, opts)
 			return p.UpgradeBundle(cmd.Context(), opts)
 		},
 	}
@@ -357,6 +364,7 @@ The docker driver runs the bundle container using the local Docker host. To use 
 			return opts.Validate(cmd.Context(), args, p)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			traceResolvedParams(cmd, opts)
 			return p.InvokeBundle(cmd.Context(), opts)
 		},
 	}
@@ -407,6 +415,7 @@ The docker driver runs the bundle container using the local Docker host. To use 
 			return opts.Validate(cmd.Context(), args, p)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			traceResolvedParams(cmd, opts)
 			return p.UninstallBundle(cmd.Context(), opts)
 		},
 	}
@@ -428,6 +437,24 @@ The docker driver runs the bundle container using the local Docker host. To use 
 	return cmd
 }
 
+// traceResolvedParams updates the command recorded on the root span once the
+// bundle is resolved, revealing the values of the parameters that are not
+// sensitive. Parameters that are not defined by the bundle remain masked.
+func traceResolvedParams(cmd *cobra.Command, action porter.BundleAction) {
+	action.GetOptions().OnBundleResolved = func(bun cnab.ExtendedBundle) {
+		reveal := func(flag string, name string) bool {
+			if flag != "param" {
+				return false
+			}
+			_, isDefined := bun.Parameters[name]
+			return isDefined && !bun.IsSensitiveParameter(name)
+		}
+
+		span := trace.SpanFromContext(cmd.Context())
+		span.SetAttributes(attribute.String("command", formatCommand(cmd.Root(), os.Args[1:], reveal)))
+	}
+}
+
 // Add flags for command that execute a bundle (install, upgrade, invoke and uninstall)
 func addBundleActionFlags(f *pflag.FlagSet, actionOpts porter.BundleAction) {
 	opts := actionOpts.GetOptions()
@@ -445,6 +472,8 @@ func addBundleActionFlags(f *pflag.FlagSet, actionOpts porter.BundleAction) {
 		"Parameter sets to use when running the bundle. It should be a named set of parameters and may be specified multiple times.")
 	f.StringArrayVar(&opts.Params, "param", nil,
 		"Define an individual parameter in the form NAME=VALUE. Overrides parameters otherwise set via --parameter-set. May be specified multiple times. For object parameters, use @FILEPATH to load JSON from a file (e.g., --param config=@config.json).")
+	// The sensitivity of a parameter isn't known until the bundle is resolved
+	markFlagSensitive(f, "param")
 	f.StringArrayVarP(&opts.CredentialIdentifiers, "credential-set", "c", nil,
 		"Credential sets to use when running the bundle. It should be a named set of credentials and may be specified multiple times.")
 	f.StringVarP(&opts.Driver, "driver", "d", porter.DefaultDriver,

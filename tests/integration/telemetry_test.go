@@ -56,11 +56,9 @@ func TestTelemetry_TracesExported(t *testing.T) {
 	}
 }
 
-// Test that sensitive values are not included in the trace data sent to the telemetry endpoint
+// Test that sensitive values are not included in the trace data sent to the telemetry endpoint,
+// while the values of parameters that are not sensitive are.
 func TestTelemetry_SensitiveValuesAreNotTraced(t *testing.T) {
-	// Remove the skip once https://github.com/getporter/porter/issues/3701 is fixed
-	t.Skip("sensitive parameters set with --param are leaked in the command attribute of the root span, see https://github.com/getporter/porter/issues/3701")
-
 	test, err := tester.NewTest(t)
 	defer test.Close()
 	require.NoError(t, err, "test setup failed")
@@ -73,7 +71,7 @@ func TestTelemetry_SensitiveValuesAreNotTraced(t *testing.T) {
 
 	// The bundle fails while running a command that has the sensitive parameter as an argument
 	const sensitiveValue = "topsecret"
-	_, _, err = test.RunPorter("install", "--param", "password="+sensitiveValue)
+	_, _, err = test.RunPorter("install", "--param", "name=mybuns-author", "--param", "password="+sensitiveValue)
 	require.Error(t, err, "expected the install to fail")
 
 	// Validate that the failed install was traced, so that we know we are checking relevant trace data
@@ -86,6 +84,20 @@ func TestTelemetry_SensitiveValuesAreNotTraced(t *testing.T) {
 	require.NotZero(t, failedSpans, "expected the failed install to be recorded in the trace data")
 
 	receiver.RequireNoSpanContains(sensitiveValue)
+
+	// Validate that only the sensitive parameter was masked in the command recorded on the root span
+	var commands []string
+	for _, span := range receiver.RequireSpans("porter") {
+		if span.GetName() != "porter install" {
+			continue
+		}
+		for _, attr := range span.GetAttributes() {
+			if attr.GetKey() == "command" {
+				commands = append(commands, attr.GetValue().GetStringValue())
+			}
+		}
+	}
+	require.Equal(t, []string{"porter install --param name=mybuns-author --param password=*******"}, commands, "expected the root span to record the command with only the sensitive parameter masked")
 }
 
 // Test that telemetry data is being exported both from porter and the plugins
