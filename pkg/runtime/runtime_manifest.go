@@ -562,17 +562,12 @@ func (m *RuntimeManifest) ResolveStep(ctx context.Context, stepIndex int, step *
 		return log.Error(fmt.Errorf("unable to retrieve original yaml for step %s: %w", stepPath, err))
 	}
 
-	// TODO: add back logging step data after we have a solid way to censor it in https://github.com/getporter/porter/issues/2256
-	//fmt.Fprintf(m.Err, "=== Step Data ===\n%v\n", sourceData)
 	log.Debugf("=== Step Template ===\n%v\n", stepTemplate)
 
 	rendered, err := mustache.RenderRaw(stepTemplate, true, sourceData)
 	if err != nil {
 		return log.Errorf("unable to render step template %s: %w", stepTemplate, err)
 	}
-
-	// TODO: add back logging step data after we have a solid way to censor it in https://github.com/getporter/porter/issues/2256
-	//fmt.Fprintf(m.Err, "=== Rendered Step ===\n%s\n", rendered)
 
 	// Update the step parameter with the result of rendering the template
 	err = yaml.Unmarshal([]byte(rendered), step)
