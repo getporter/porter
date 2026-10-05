@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"strings"
 	"sync"
@@ -288,48 +287,6 @@ func (r *Registry) PushImage(ctx context.Context, ref cnab.OCIReference, opts Re
 		return "", log.Errorf("unable to inspect docker image: %w", err)
 	}
 	return dist.Descriptor.Digest, nil
-}
-
-// PullImage pulls an image from an OCI registry.
-func (r *Registry) PullImage(ctx context.Context, ref cnab.OCIReference, opts RegistryOptions) error {
-	ctx, log := tracing.StartSpan(ctx)
-	defer log.EndSpan()
-
-	cli, err := docker.GetDockerClient()
-	if err != nil {
-		return log.Error(err)
-	}
-
-	// Resolve auth for the image reference and encode it for the Docker client
-	authConfig := r.resolveAuthConfig(ref)
-	encodedAuth, err := authconfig.Encode(registrytypes.AuthConfig{
-		Username:      authConfig.Username,
-		Password:      authConfig.Password,
-		ServerAddress: authConfig.ServerAddress,
-		Auth:          authConfig.Auth,
-		IdentityToken: authConfig.IdentityToken,
-		RegistryToken: authConfig.RegistryToken,
-	})
-	if err != nil {
-		return log.Error(fmt.Errorf("failed to serialize docker auth config: %w", err))
-	}
-
-	imgRef := ref.String()
-	rd, err := cli.Client().ImagePull(ctx, imgRef, client.ImagePullOptions{
-		RegistryAuth: encodedAuth,
-	})
-	if err != nil {
-		return log.Error(fmt.Errorf("docker pull for image %s failed: %w", imgRef, err))
-	}
-	defer rd.Close()
-
-	// save the image to docker cache
-	_, err = io.ReadAll(rd)
-	if err != nil {
-		return fmt.Errorf("failed to save image %s into local cache: %w", imgRef, err)
-	}
-
-	return nil
 }
 
 func (r *Registry) createResolver(insecureRegistries []string) containerdRemotes.Resolver {

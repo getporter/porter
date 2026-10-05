@@ -30,9 +30,6 @@ type RegistryProvider interface {
 	// ListTags returns all tags defined on the specified repository.
 	ListTags(ctx context.Context, repo cnab.OCIReference, opts RegistryOptions) ([]string, error)
 
-	// PullImage pulls an image from an OCI registry and returns the image's digest
-	PullImage(ctx context.Context, image cnab.OCIReference, opts RegistryOptions) error
-
 	// GetImageMetadata returns information about an image in a registry
 	// Use ErrNotFound to detect if the error is because the image is not in the registry.
 	GetImageMetadata(ctx context.Context, ref cnab.OCIReference, opts RegistryOptions) (ImageMetadata, error)
