@@ -439,3 +439,44 @@ func TestAddEnvironment(t *testing.T) {
 		assert.NotContains(t, op.Environment, "TRACEPARENT")
 	})
 }
+
+// A bundle image can define its own telemetry settings. Validate that when the
+// host requires TLS, the bundle does too, even when the image says otherwise.
+func TestAddEnvironment_HostRequiresTLS_OverridesBundleImage(t *testing.T) {
+	// Do not run in parallel since we use t.Setenv
+
+	d := NewTestRuntime(t)
+	defer d.Close()
+	d.Data.Telemetry = config.TelemetryConfig{
+		Enabled:  true,
+		Endpoint: "collector:4317",
+		Insecure: false,
+	}
+
+	op := &driver.Operation{}
+	err := d.AddEnvironment(context.Background(), ActionArguments{})(op)
+	require.NoError(t, err, "AddEnvironment failed")
+
+	// The environment inside the bundle is what was defined in the image,
+	// overridden by what porter passes in when it runs the bundle
+	bundleEnv := map[string]string{
+		"PORTER_TELEMETRY_INSECURE":   "true",
+		"OTEL_EXPORTER_OTLP_INSECURE": "true",
+	}
+	for k, v := range op.Environment {
+		bundleEnv[k] = v
+	}
+	for k, v := range bundleEnv {
+		t.Setenv(k, v)
+	}
+
+	// Load the configuration like the porter runtime and mixins do inside the bundle
+	bundleCfg := config.NewTestConfig(t)
+	bundleCfg.DataLoader = config.LoadFromEnvironment()
+	_, err = bundleCfg.Load(context.Background(), nil)
+	require.NoError(t, err, "Load failed")
+
+	assert.True(t, bundleCfg.Data.Telemetry.Enabled, "telemetry should be enabled inside the bundle")
+	assert.Equal(t, "collector:4317", bundleCfg.Data.Telemetry.Endpoint)
+	assert.False(t, bundleCfg.Data.Telemetry.Insecure, "the bundle image should not be able to turn off TLS when the host requires it")
+}
