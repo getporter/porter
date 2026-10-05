@@ -32,7 +32,7 @@ import (
 const (
 	// EnvSensitiveValues is the name of the environment variable used to pass
 	// the sensitive values to a child porter process, e.g. a mixin, as a json
-	// encoded list, so that the child masks them in its trace data.
+	// list of base64 encoded values, so that the child masks them in its trace data.
 	EnvSensitiveValues = "PORTER_SENSITIVE_VALUES"
 
 	// envTelemetryEnabled is the name of the environment variable that controls if trace data is exported.
@@ -93,19 +93,27 @@ func (c *Context) extractTraceParent(ctx context.Context) context.Context {
 
 // loadSensitiveValues masks the sensitive values passed to us with
 // EnvSensitiveValues by the porter process that called us.
-// The variable is removed so that it isn't passed on to the commands that we run.
+// The variable is removed, also from the environment of our process, so that
+// it isn't passed on to the commands that we run.
 func (c *Context) loadSensitiveValues() {
 	encoded, ok := c.LookupEnv(EnvSensitiveValues)
 	if !ok {
 		return
 	}
 	c.Unsetenv(EnvSensitiveValues)
+	os.Unsetenv(EnvSensitiveValues)
 
-	var vals []string
+	// Each value is base64 encoded, json decodes that into the original bytes
+	var vals [][]byte
 	if err := json.Unmarshal([]byte(encoded), &vals); err != nil {
 		return
 	}
-	c.SetSensitiveValues(vals)
+
+	sensitiveValues := make([]string, len(vals))
+	for i, val := range vals {
+		sensitiveValues[i] = string(val)
+	}
+	c.SetSensitiveValues(sensitiveValues)
 }
 
 // SensitiveValuesEnviron returns the environment variables, in the form
@@ -120,9 +128,16 @@ func (c *Context) SensitiveValuesEnviron() []string {
 		return nil
 	}
 
-	vals := c.censoredWriter.GetSensitiveValues()
-	if len(vals) == 0 {
+	sensitiveValues := c.censoredWriter.GetSensitiveValues()
+	if len(sensitiveValues) == 0 {
 		return nil
+	}
+
+	// Base64 encode each value, which is how json encodes bytes, because a
+	// value isn't always valid UTF-8, e.g. the contents of a binary file.
+	vals := make([][]byte, len(sensitiveValues))
+	for i, val := range sensitiveValues {
+		vals[i] = []byte(val)
 	}
 
 	encoded, err := json.Marshal(vals)

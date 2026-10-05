@@ -2,6 +2,7 @@ package portercontext
 
 import (
 	"context"
+	"os"
 	"strings"
 	"testing"
 
@@ -362,14 +363,19 @@ func TestContext_loadSensitiveValues(t *testing.T) {
 	})
 
 	t.Run("set", func(t *testing.T) {
+		// dG9wc2VjcmV0 is topsecret, bXVsdGkKbGluZQ== is multi\nline
+		const encoded = `["dG9wc2VjcmV0","bXVsdGkKbGluZQ=="]`
+		t.Setenv(EnvSensitiveValues, encoded)
 		c := NewTestContext(t)
-		c.Setenv(EnvSensitiveValues, `["topsecret","multi\nline"]`)
+		c.Setenv(EnvSensitiveValues, encoded)
 
 		c.loadSensitiveValues()
 
 		assert.Equal(t, []string{"topsecret", "multi\nline"}, c.censoredWriter.GetSensitiveValues())
 		_, ok := c.LookupEnv(EnvSensitiveValues)
 		assert.False(t, ok, "expected the sensitive values to not be passed on to the commands that we run")
+		_, ok = os.LookupEnv(EnvSensitiveValues)
+		assert.False(t, ok, "expected the sensitive values to be removed from the environment of the process")
 	})
 
 	t.Run("invalid", func(t *testing.T) {
@@ -404,7 +410,25 @@ func TestContext_SensitiveValuesEnviron(t *testing.T) {
 		c.tracerInitalized = true
 		c.SetSensitiveValues([]string{"topsecret", "multi\nline"})
 
-		assert.Equal(t, []string{`PORTER_SENSITIVE_VALUES=["topsecret","multi\nline"]`}, c.SensitiveValuesEnviron())
+		assert.Equal(t, []string{`PORTER_SENSITIVE_VALUES=["dG9wc2VjcmV0","bXVsdGkKbGluZQ=="]`}, c.SensitiveValuesEnviron())
+	})
+
+	t.Run("round trip", func(t *testing.T) {
+		// Values aren't always valid UTF-8, e.g. the contents of a binary file
+		vals := []string{"topsecret", "multi\nline", `"quoted"`, "\xff\xfe\x00binary"}
+
+		parent := NewTestContext(t)
+		parent.tracerInitalized = true
+		parent.SetSensitiveValues(vals)
+		env := parent.SensitiveValuesEnviron()
+		require.Len(t, env, 1)
+		name, encoded, _ := strings.Cut(env[0], "=")
+
+		child := NewTestContext(t)
+		child.Setenv(name, encoded)
+		child.loadSensitiveValues()
+
+		assert.Equal(t, vals, child.censoredWriter.GetSensitiveValues())
 	})
 
 	t.Run("too large", func(t *testing.T) {
