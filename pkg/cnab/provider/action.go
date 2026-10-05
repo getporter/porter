@@ -159,6 +159,8 @@ func (r *Runtime) telemetryEnvironment(ctx context.Context) map[string]string {
 	env["PORTER_TELEMETRY_COMPRESSION"] = telemetry.Compression
 	env["PORTER_TELEMETRY_TIMEOUT"] = telemetry.Timeout
 	env["PORTER_TELEMETRY_START_TIMEOUT"] = telemetry.StartTimeout
+	// Traces should be sent to the host's collector, a file inside the bundle is lost when the bundle completes
+	env["PORTER_TELEMETRY_REDIRECT_TO_FILE"] = "false"
 
 	// Set the standard OpenTelemetry variables to the same settings, so that
 	// other OpenTelemetry enabled tools in the bundle send their traces to the

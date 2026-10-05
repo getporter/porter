@@ -422,6 +422,8 @@ func TestAddEnvironment(t *testing.T) {
 			// values from the bundle image aren't used
 			"PORTER_TELEMETRY_COMPRESSION":   "",
 			"PORTER_TELEMETRY_START_TIMEOUT": "",
+			// Never redirected to a file inside the bundle, even though it is on the host
+			"PORTER_TELEMETRY_REDIRECT_TO_FILE": "false",
 			// The same settings in the standard OpenTelemetry format
 			"OTEL_EXPORTER_OTLP_INSECURE":           "true",
 			"OTEL_EXPORTER_OTLP_ENDPOINT":           "http://collector:4317",
@@ -476,6 +478,7 @@ func TestAddEnvironment_OverridesBundleImage(t *testing.T) {
 		"PORTER_TELEMETRY_COMPRESSION":          "gzip",
 		"PORTER_TELEMETRY_TIMEOUT":              "1s",
 		"PORTER_TELEMETRY_START_TIMEOUT":        "1s",
+		"PORTER_TELEMETRY_REDIRECT_TO_FILE":     "true",
 		"OTEL_EXPORTER_OTLP_INSECURE":           "true",
 		"OTEL_EXPORTER_OTLP_ENDPOINT":           "http://image-collector:4317",
 		"OTEL_EXPORTER_OTLP_PROTOCOL":           "http/protobuf",
