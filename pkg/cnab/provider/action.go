@@ -136,6 +136,11 @@ func (r *Runtime) AddEnvironment(ctx context.Context, args ActionArguments) cnab
 // inside the bundle are included: headers may contain sensitive values, the
 // certificate is a path on the host, and traces can't be redirected to a file
 // since the bundle's filesystem isn't persisted.
+//
+// The settings that are included are always set, even when empty, so that the
+// host's configuration takes precedence over values defined in the bundle
+// image. Otherwise the image could, for example, turn off TLS on a host that
+// requires it.
 func (r *Runtime) telemetryEnvironment(ctx context.Context) map[string]string {
 	env := make(map[string]string)
 
@@ -144,19 +149,22 @@ func (r *Runtime) telemetryEnvironment(ctx context.Context) map[string]string {
 		return env
 	}
 
+	insecure := strconv.FormatBool(telemetry.Insecure)
 	env["PORTER_TELEMETRY_ENABLED"] = "true"
-	// Always set insecure, so that a value defined in the bundle image can't downgrade a host that requires TLS
-	env["PORTER_TELEMETRY_INSECURE"] = strconv.FormatBool(telemetry.Insecure)
-	settings := map[string]string{
-		"PORTER_TELEMETRY_ENDPOINT":      telemetry.Endpoint,
-		"PORTER_TELEMETRY_PROTOCOL":      telemetry.Protocol,
-		"PORTER_TELEMETRY_COMPRESSION":   telemetry.Compression,
-		"PORTER_TELEMETRY_TIMEOUT":       telemetry.Timeout,
-		"PORTER_TELEMETRY_START_TIMEOUT": telemetry.StartTimeout,
-	}
-	for k, v := range settings {
-		if v != "" {
-			env[k] = v
+	env["PORTER_TELEMETRY_INSECURE"] = insecure
+	env["PORTER_TELEMETRY_ENDPOINT"] = telemetry.Endpoint
+	env["PORTER_TELEMETRY_PROTOCOL"] = telemetry.Protocol
+	env["PORTER_TELEMETRY_COMPRESSION"] = telemetry.Compression
+	env["PORTER_TELEMETRY_TIMEOUT"] = telemetry.Timeout
+	env["PORTER_TELEMETRY_START_TIMEOUT"] = telemetry.StartTimeout
+
+	// The trace exporter reads the standard OpenTelemetry variables on its own,
+	// and uses them for any setting that porter doesn't explicitly configure.
+	// Clear them so that porter's settings above are the only ones in effect.
+	for _, prefix := range []string{"OTEL_EXPORTER_OTLP_", "OTEL_EXPORTER_OTLP_TRACES_"} {
+		env[prefix+"INSECURE"] = insecure
+		for _, setting := range []string{"ENDPOINT", "PROTOCOL", "COMPRESSION", "TIMEOUT"} {
+			env[prefix+setting] = ""
 		}
 	}
 

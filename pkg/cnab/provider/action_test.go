@@ -12,6 +12,7 @@ import (
 	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/test"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/cnabio/cnab-go/bundle"
@@ -417,7 +418,22 @@ func TestAddEnvironment(t *testing.T) {
 			"PORTER_TELEMETRY_PROTOCOL":           "grpc",
 			"PORTER_TELEMETRY_INSECURE":           "true",
 			"PORTER_TELEMETRY_TIMEOUT":            "3s",
-			"TRACEPARENT":                         portercontext.TraceEnviron(spanCtx)["TRACEPARENT"],
+			// Settings that aren't set on the host are passed empty, and the
+			// standard OpenTelemetry variables are cleared, so that values
+			// from the bundle image aren't used
+			"PORTER_TELEMETRY_COMPRESSION":          "",
+			"PORTER_TELEMETRY_START_TIMEOUT":        "",
+			"OTEL_EXPORTER_OTLP_INSECURE":           "true",
+			"OTEL_EXPORTER_OTLP_ENDPOINT":           "",
+			"OTEL_EXPORTER_OTLP_PROTOCOL":           "",
+			"OTEL_EXPORTER_OTLP_COMPRESSION":        "",
+			"OTEL_EXPORTER_OTLP_TIMEOUT":            "",
+			"OTEL_EXPORTER_OTLP_TRACES_INSECURE":    "true",
+			"OTEL_EXPORTER_OTLP_TRACES_ENDPOINT":    "",
+			"OTEL_EXPORTER_OTLP_TRACES_PROTOCOL":    "",
+			"OTEL_EXPORTER_OTLP_TRACES_COMPRESSION": "",
+			"OTEL_EXPORTER_OTLP_TRACES_TIMEOUT":     "",
+			"TRACEPARENT":                           portercontext.TraceEnviron(spanCtx)["TRACEPARENT"],
 		}
 		assert.Equal(t, want, op.Environment, "only the safe subset of the telemetry settings should be passed into the bundle")
 		assert.Contains(t, op.Environment["TRACEPARENT"], span.SpanContext().TraceID().String())
@@ -440,18 +456,16 @@ func TestAddEnvironment(t *testing.T) {
 	})
 }
 
-// A bundle image can define its own telemetry settings. Validate that when the
-// host requires TLS, the bundle does too, even when the image says otherwise.
-func TestAddEnvironment_HostRequiresTLS_OverridesBundleImage(t *testing.T) {
+// A bundle image can define its own telemetry settings. Validate that the
+// host's settings are used inside the bundle, even when the image says
+// otherwise, so that for example the image can't turn off TLS.
+func TestAddEnvironment_OverridesBundleImage(t *testing.T) {
 	// Do not run in parallel since we use t.Setenv
 
+	// Only enabled is set on the host: TLS is required and everything else uses the defaults
 	d := NewTestRuntime(t)
 	defer d.Close()
-	d.Data.Telemetry = config.TelemetryConfig{
-		Enabled:  true,
-		Endpoint: "collector:4317",
-		Insecure: false,
-	}
+	d.Data.Telemetry = config.TelemetryConfig{Enabled: true}
 
 	op := &driver.Operation{}
 	err := d.AddEnvironment(context.Background(), ActionArguments{})(op)
@@ -460,8 +474,26 @@ func TestAddEnvironment_HostRequiresTLS_OverridesBundleImage(t *testing.T) {
 	// The environment inside the bundle is what was defined in the image,
 	// overridden by what porter passes in when it runs the bundle
 	bundleEnv := map[string]string{
-		"PORTER_TELEMETRY_INSECURE":   "true",
-		"OTEL_EXPORTER_OTLP_INSECURE": "true",
+		"PORTER_TELEMETRY_INSECURE":             "true",
+		"PORTER_TELEMETRY_ENDPOINT":             "image-collector:4317",
+		"PORTER_TELEMETRY_PROTOCOL":             "grpc",
+		"PORTER_TELEMETRY_COMPRESSION":          "gzip",
+		"PORTER_TELEMETRY_TIMEOUT":              "1s",
+		"PORTER_TELEMETRY_START_TIMEOUT":        "1s",
+		"OTEL_EXPORTER_OTLP_INSECURE":           "true",
+		"OTEL_EXPORTER_OTLP_ENDPOINT":           "http://image-collector:4317",
+		"OTEL_EXPORTER_OTLP_PROTOCOL":           "grpc",
+		"OTEL_EXPORTER_OTLP_COMPRESSION":        "gzip",
+		"OTEL_EXPORTER_OTLP_TIMEOUT":            "1000",
+		"OTEL_EXPORTER_OTLP_TRACES_INSECURE":    "true",
+		"OTEL_EXPORTER_OTLP_TRACES_ENDPOINT":    "http://image-collector:4317",
+		"OTEL_EXPORTER_OTLP_TRACES_PROTOCOL":    "grpc",
+		"OTEL_EXPORTER_OTLP_TRACES_COMPRESSION": "gzip",
+		"OTEL_EXPORTER_OTLP_TRACES_TIMEOUT":     "1000",
+	}
+	imageEnv := make([]string, 0, len(bundleEnv))
+	for k := range bundleEnv {
+		imageEnv = append(imageEnv, k)
 	}
 	for k, v := range op.Environment {
 		bundleEnv[k] = v
@@ -476,7 +508,19 @@ func TestAddEnvironment_HostRequiresTLS_OverridesBundleImage(t *testing.T) {
 	_, err = bundleCfg.Load(context.Background(), nil)
 	require.NoError(t, err, "Load failed")
 
-	assert.True(t, bundleCfg.Data.Telemetry.Enabled, "telemetry should be enabled inside the bundle")
-	assert.Equal(t, "collector:4317", bundleCfg.Data.Telemetry.Endpoint)
-	assert.False(t, bundleCfg.Data.Telemetry.Insecure, "the bundle image should not be able to turn off TLS when the host requires it")
+	wantCfg := config.TelemetryConfig{Enabled: true}
+	assert.Equal(t, wantCfg, bundleCfg.Data.Telemetry, "the bundle should use the host's telemetry settings, not the image's")
+
+	// The trace exporter reads the standard OpenTelemetry variables directly,
+	// so they must not have the image's values either
+	for _, k := range imageEnv {
+		if !strings.HasPrefix(k, "OTEL_") {
+			continue
+		}
+		want := ""
+		if strings.HasSuffix(k, "_INSECURE") {
+			want = "false"
+		}
+		assert.Equal(t, want, os.Getenv(k), "%s from the bundle image should have been overridden", k)
+	}
 }

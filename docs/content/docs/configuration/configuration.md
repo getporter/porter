@@ -324,6 +324,8 @@ When telemetry is enabled, Porter passes the following into the bundle when it i
 * The enabled, protocol, endpoint, insecure, compression, timeout and start-timeout telemetry settings, as PORTER_TELEMETRY_* environment variables.
 * The current span, using the TRACEPARENT, TRACESTATE and BAGGAGE environment variables.
 
+The settings above always use the values from the host, even when the bundle image defines its own with PORTER_TELEMETRY_* or the standard OTEL_EXPORTER_OTLP_* environment variables.
+For example, a bundle image cannot turn off TLS when the host requires it.
 The certificate and headers settings are not passed into the bundle.
 The endpoint is passed as-is and must be reachable from inside the bundle's container.
 For example, with the Docker driver and a collector running on the host, instead of `127.0.0.1:4317` use `host.docker.internal:4317` with Docker Desktop, or the address of the Docker bridge gateway, usually `172.17.0.1:4317`, with Docker Engine on Linux.
