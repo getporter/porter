@@ -57,7 +57,12 @@ func TestUpgrade_failedInstallation_withForceUpgrade(t *testing.T) {
 	require.NoError(t, err, "Upgrade should succeed, because force-upgrade is true")
 }
 
-func TestUpgrade_DebugModeAppliesToSingleInvocation(t *testing.T) {
+// The porter runtime inside the bundle should use the verbosity of the porter
+// command that ran the bundle, and it should not carry over to later runs.
+func TestUpgrade_VerbosityAppliesToSingleInvocation(t *testing.T) {
+	// this is sentinel output that is only output by the porter runtime when the verbosity is debug
+	const runtimeDebugOutputCheck = "== Step Template ==="
+
 	p := porter.NewTestPorter(t)
 	defer p.Close()
 	ctx := p.SetupIntegrationTest()
@@ -70,27 +75,28 @@ func TestUpgrade_DebugModeAppliesToSingleInvocation(t *testing.T) {
 
 	err = p.InstallBundle(ctx, installOpts)
 	require.NoError(t, err)
+	p.TestConfig.TestContext.ClearOutputs()
 
+	p.Data.Verbosity = "debug"
 	upgradeOpts := porter.NewUpgradeOptions()
-	upgradeOpts.DebugMode = true
 	err = upgradeOpts.Validate(ctx, []string{}, p.Porter)
 	require.NoError(t, err)
 
 	err = p.UpgradeBundle(ctx, upgradeOpts)
 	require.NoError(t, err)
 	output := p.TestConfig.TestContext.GetOutput()
-	require.Contains(t, output, "== Step Template ===")
+	require.Contains(t, output, runtimeDebugOutputCheck, "expected debug output from the porter runtime since the verbosity is debug")
 	p.TestConfig.TestContext.ClearOutputs()
 
+	p.Data.Verbosity = "info"
 	upgradeOpts = porter.NewUpgradeOptions()
-	upgradeOpts.DebugMode = false
 	err = upgradeOpts.Validate(ctx, []string{}, p.Porter)
 	require.NoError(t, err)
 
 	err = p.UpgradeBundle(ctx, upgradeOpts)
 	require.NoError(t, err)
 	output = p.TestConfig.TestContext.GetOutput()
-	require.NotContains(t, output, "== Step Template ===")
+	require.NotContains(t, output, runtimeDebugOutputCheck, "expected no debug output from the porter runtime since the verbosity is info")
 }
 
 // TestUpgrade_paramSetOverridesPreviousParam verifies that a parameter set

@@ -12,7 +12,7 @@ import (
 )
 
 func TestInvokeCustomAction(t *testing.T) {
-	// this is sentinel output that is only output by the porter runtime when in debug mode
+	// this is sentinel output that is only output by the porter runtime when the verbosity is debug
 	const runtimeDebugOutputCheck = "=== Step Template ==="
 
 	t.Parallel()
@@ -28,19 +28,21 @@ func TestInvokeCustomAction(t *testing.T) {
 	bundleName := p.AddTestBundleDir("testdata/bundles/bundle-with-custom-action", true)
 
 	installOpts := porter.NewInstallOptions()
-	// explicitly do not set --debug for install
+	// explicitly do not use debug verbosity for install
+	p.Data.Verbosity = "info"
 	err = installOpts.Validate(ctx, []string{}, p.Porter)
 	require.NoError(t, err)
 	err = p.InstallBundle(ctx, installOpts)
 	require.NoError(t, err)
 
-	// Make sure that when --debug is not passed, we do not output porter runtimes debug lines
-	gotErr := p.TestConfig.TestContext.GetError()
-	require.NotContains(t, gotErr, runtimeDebugOutputCheck, "expected no debug output from the porter runtime since --debug was not passed")
+	// Make sure that when the verbosity is not debug, we do not output porter runtimes debug lines
+	gotInstallOutput := p.TestConfig.TestContext.GetOutput() + p.TestConfig.TestContext.GetError()
+	require.NotContains(t, gotInstallOutput, runtimeDebugOutputCheck, "expected no debug output from the porter runtime since the verbosity is info")
+	p.TestConfig.TestContext.ClearOutputs()
 
 	// Invoke the custom action
+	p.Data.Verbosity = "debug"
 	invokeOpts := porter.NewInvokeOptions()
-	invokeOpts.DebugMode = true
 	invokeOpts.Action = "zombies"
 	err = invokeOpts.Validate(ctx, []string{}, p.Porter)
 	require.NoError(t, err)
@@ -51,7 +53,7 @@ func TestInvokeCustomAction(t *testing.T) {
 	tests.RequireOutputContains(t, gotOutput, "oh noes my brains", "invoke should have printed a cry for halp")
 
 	// Check that debug output from the porter runtime was printed by the bundle and porter collected it
-	// This checks that the PORTER_DEBUG parameter is being properly passed to a bundle when run with porter invoke --debug
+	// This checks that PORTER_VERBOSITY is being properly passed to a bundle when run with porter invoke --verbosity=debug
 	gotStderr := p.TestConfig.TestContext.GetOutput()
 	tests.RequireOutputContains(t, gotStderr, runtimeDebugOutputCheck, "expected debug output from the porter runtime to be output by the bundle")
 
