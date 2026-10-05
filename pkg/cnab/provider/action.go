@@ -5,10 +5,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strconv"
+	"strings"
+	"time"
 
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/experimental"
+	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/tracing"
 	cnabaction "github.com/cnabio/cnab-go/action"
@@ -64,7 +68,7 @@ func (r *Runtime) ApplyConfig(ctx context.Context, args ActionArguments) cnabact
 	return cnabaction.OperationConfigs{
 		r.SetOutput(),
 		r.AddFiles(ctx, args),
-		r.AddEnvironment(args),
+		r.AddEnvironment(ctx, args),
 		r.AddRelocation(args),
 	}
 }
@@ -102,19 +106,112 @@ func (r *Runtime) AddFiles(ctx context.Context, args ActionArguments) cnabaction
 	}
 }
 
-func (r *Runtime) AddEnvironment(args ActionArguments) cnabaction.OperationConfigFunc {
-	const verbosityEnv = "PORTER_VERBOSITY"
-
+// AddEnvironment passes a limited subset of porter's configuration into the
+// bundle, so that the porter runtime, mixins and other tools inside the
+// bundle log and trace the same way that porter does on the host.
+func (r *Runtime) AddEnvironment(ctx context.Context, args ActionArguments) cnabaction.OperationConfigFunc {
 	return func(op *driver.Operation) error {
+		if op.Environment == nil {
+			op.Environment = make(map[string]string)
+		}
+
 		op.Environment[config.EnvPorterInstallationNamespace] = args.Installation.Namespace
 		op.Environment[config.EnvPorterInstallationName] = args.Installation.Name
 		op.Environment[config.EnvPorterInstallationID] = args.Installation.ID
 
 		// Pass the verbosity from porter's local config into the bundle
-		op.Environment[verbosityEnv] = r.Config.GetVerbosity().Level().String()
+		op.Environment[config.EnvPorterVerbosity] = r.Config.GetVerbosity().Level().String()
+
+		// Tie the logs and traces from inside the bundle back to this run of porter
+		op.Environment[portercontext.EnvCorrelationID] = r.CorrelationID()
+
+		for k, v := range r.telemetryEnvironment(ctx) {
+			op.Environment[k] = v
+		}
 
 		return nil
 	}
+}
+
+// telemetryEnvironment returns the environment variables that configure
+// tracing inside the bundle. Only settings that are safe and meaningful
+// inside the bundle are included: headers may contain sensitive values, the
+// certificate is a path on the host, and traces can't be redirected to a file
+// since the bundle's filesystem isn't persisted.
+//
+// The settings that are included are always set, even when empty, so that the
+// host's configuration takes precedence over values defined in the bundle
+// image. Otherwise the image could, for example, turn off TLS on a host that
+// requires it.
+func (r *Runtime) telemetryEnvironment(ctx context.Context) map[string]string {
+	env := make(map[string]string)
+
+	telemetry := r.Data.Telemetry
+	if !telemetry.Enabled {
+		return env
+	}
+
+	insecure := strconv.FormatBool(telemetry.Insecure)
+	env["PORTER_TELEMETRY_ENABLED"] = "true"
+	env["PORTER_TELEMETRY_INSECURE"] = insecure
+	env["PORTER_TELEMETRY_ENDPOINT"] = telemetry.Endpoint
+	env["PORTER_TELEMETRY_PROTOCOL"] = telemetry.Protocol
+	env["PORTER_TELEMETRY_COMPRESSION"] = telemetry.Compression
+	env["PORTER_TELEMETRY_TIMEOUT"] = telemetry.Timeout
+	env["PORTER_TELEMETRY_START_TIMEOUT"] = telemetry.StartTimeout
+	// Traces should be sent to the host's collector, a file inside the bundle is lost when the bundle completes
+	env["PORTER_TELEMETRY_REDIRECT_TO_FILE"] = "false"
+
+	// Set the standard OpenTelemetry variables to the same settings, so that
+	// other OpenTelemetry enabled tools in the bundle send their traces to the
+	// same place as porter. The trace exporter used by porter also reads them
+	// for any setting that porter doesn't explicitly configure.
+	env["OTEL_EXPORTER_OTLP_INSECURE"] = insecure
+	env["OTEL_EXPORTER_OTLP_ENDPOINT"] = otlpEndpointURL(telemetry.Endpoint, telemetry.Insecure)
+	env["OTEL_EXPORTER_OTLP_PROTOCOL"] = telemetry.Protocol
+	env["OTEL_EXPORTER_OTLP_COMPRESSION"] = telemetry.Compression
+	env["OTEL_EXPORTER_OTLP_TIMEOUT"] = otlpTimeout(telemetry.Timeout)
+
+	// The trace specific variables take precedence over the ones above, clear
+	// them so that they can't be used to override the host's settings
+	for _, setting := range []string{"INSECURE", "ENDPOINT", "PROTOCOL", "COMPRESSION", "TIMEOUT"} {
+		env["OTEL_EXPORTER_OTLP_TRACES_"+setting] = ""
+	}
+
+	// Pass the current span so that traces from inside the bundle are children of this span.
+	// Clear the variables first, so that values from the bundle image aren't used when there is no span.
+	for _, name := range portercontext.TraceEnvironNames() {
+		env[name] = ""
+	}
+	for k, v := range portercontext.TraceEnviron(ctx) {
+		env[k] = v
+	}
+
+	return env
+}
+
+// otlpEndpointURL converts porter's telemetry endpoint, e.g. localhost:4317,
+// into the URL format used by OTEL_EXPORTER_OTLP_ENDPOINT, e.g. https://localhost:4317.
+func otlpEndpointURL(endpoint string, insecure bool) string {
+	if endpoint == "" || strings.Contains(endpoint, "://") {
+		return endpoint
+	}
+
+	if insecure {
+		return "http://" + endpoint
+	}
+	return "https://" + endpoint
+}
+
+// otlpTimeout converts porter's telemetry timeout, e.g. 3s, into the
+// milliseconds used by OTEL_EXPORTER_OTLP_TIMEOUT, e.g. 3000.
+// Returns an empty string when the timeout isn't set or is invalid.
+func otlpTimeout(timeout string) string {
+	d, err := time.ParseDuration(timeout)
+	if err != nil {
+		return ""
+	}
+	return strconv.FormatInt(d.Milliseconds(), 10)
 }
 
 // AddRelocation operates on an ActionArguments and adds any provided relocation mapping

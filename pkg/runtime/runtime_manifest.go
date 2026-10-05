@@ -63,13 +63,6 @@ func NewRuntimeManifest(cfg RuntimeConfig, action string, manifest *manifest.Man
 	}
 }
 
-// this is a temporary function to help write debug logs until we have PORTER_VERBOSITY passed into the bundle properly
-func (m *RuntimeManifest) debugf(log tracing.TraceLogger, msg string, args ...interface{}) {
-	if m.config.DebugMode {
-		log.Infof(msg, args...)
-	}
-}
-
 func (m *RuntimeManifest) Validate() error {
 	err := m.loadBundle()
 	if err != nil {
@@ -569,17 +562,12 @@ func (m *RuntimeManifest) ResolveStep(ctx context.Context, stepIndex int, step *
 		return log.Error(fmt.Errorf("unable to retrieve original yaml for step %s: %w", stepPath, err))
 	}
 
-	// TODO: add back logging step data after we have a solid way to censor it in https://github.com/getporter/porter/issues/2256
-	//fmt.Fprintf(m.Err, "=== Step Data ===\n%v\n", sourceData)
-	m.debugf(log, "=== Step Template ===\n%v\n", stepTemplate)
+	log.Debugf("=== Step Template ===\n%v\n", stepTemplate)
 
 	rendered, err := mustache.RenderRaw(stepTemplate, true, sourceData)
 	if err != nil {
 		return log.Errorf("unable to render step template %s: %w", stepTemplate, err)
 	}
-
-	// TODO: add back logging step data after we have a solid way to censor it in https://github.com/getporter/porter/issues/2256
-	//fmt.Fprintf(m.Err, "=== Rendered Step ===\n%s\n", rendered)
 
 	// Update the step parameter with the result of rendering the template
 	err = yaml.Unmarshal([]byte(rendered), step)
@@ -663,12 +651,12 @@ func (m *RuntimeManifest) unpackStateBag(ctx context.Context) error {
 	log := tracing.LoggerFromContext(ctx)
 	_, err := m.config.FileSystem.Open(statePath)
 	if os.IsNotExist(err) || len(m.StateBag) == 0 {
-		m.debugf(log, "No existing bundle state to unpack")
+		log.Debugf("No existing bundle state to unpack")
 		return nil
 	}
 	bytes, err := m.config.FileSystem.ReadFile(statePath)
 	if err != nil {
-		m.debugf(log, "Unable to read bundle state file")
+		log.Debugf("Unable to read bundle state file")
 		return err
 	}
 	// TODO(sgettys): hack around state.tgz ALWAYS being injected even when empty files mess things up
@@ -677,7 +665,7 @@ func (m *RuntimeManifest) unpackStateBag(ctx context.Context) error {
 	// that's a cnab change somewhere probably
 	// the problem is in injectParameters in cnab-go
 	if string(bytes) == "null" {
-		m.debugf(log, "Bundle state file has null content")
+		log.Debugf("Bundle state file has null content")
 		err = m.config.FileSystem.Remove(statePath)
 		if err != nil {
 			_ = log.Error(err)
@@ -695,7 +683,7 @@ func (m *RuntimeManifest) unpackStateBag(ctx context.Context) error {
 	unpackStateFile := func(tr *tar.Reader, header *tar.Header) error {
 		name := strings.TrimPrefix(header.Name, "porter-state/")
 		dest := stateFiles[name]
-		m.debugf(log, "  - %s -> %s", name, dest)
+		log.Debugf("  - %s -> %s", name, dest)
 
 		// Ensure parent directory exists before creating the file
 		parentDir := filepath.Dir(dest)
@@ -772,14 +760,14 @@ func (m *RuntimeManifest) Finalize(ctx context.Context) error {
 func (m *RuntimeManifest) packStateBag(ctx context.Context) error {
 	log := tracing.LoggerFromContext(ctx)
 
-	m.debugf(log, "Packing bundle state...")
+	log.Debugf("Packing bundle state...")
 	packStateFile := func(tw *tar.Writer, s manifest.StateVariable) error {
 		fi, err := m.config.FileSystem.Stat(s.Path)
 		if os.IsNotExist(err) {
 			return nil
 		}
 
-		m.debugf(log, "  - %s", s.Path)
+		log.Debugf("  - %s", s.Path)
 		header, err := tar.FileInfoHeader(fi, fi.Name())
 		if err != nil {
 			return log.Error(fmt.Errorf("error creating tar header for state variable %s from path %s: %w", s.Name, s.Path, err))
@@ -854,7 +842,7 @@ func (m *RuntimeManifest) applyUnboundBundleOutputs(ctx context.Context) error {
 		}
 
 		// Print the output that we've collected
-		m.debugf(log, "  - %s", name)
+		log.Debugf("  - %s", name)
 		if _, hasOutput := outputs[name]; !hasOutput {
 			// Use the path as originally defined in the manifest
 			// TODO(carolynvs): When we switch to driving everything completely

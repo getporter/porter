@@ -20,6 +20,7 @@ import (
 	"github.com/mattn/go-isatty"
 	"github.com/spf13/afero"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 	"go.uber.org/zap/buffer"
 	"go.uber.org/zap/zapcore"
@@ -118,9 +119,20 @@ func New() *Context {
 	return c
 }
 
+// CorrelationID is the identifier shared by porter and the processes that it
+// starts, such as plugins and bundles, used to tie their logs and traces together.
+func (c *Context) CorrelationID() string {
+	return c.correlationId
+}
+
 // StartRootSpan creates the root tracing span for the porter application.
 // This should only be done once.
 func (c *Context) StartRootSpan(ctx context.Context, op string, attrs ...attribute.KeyValue) (context.Context, tracing.RootTraceLogger) {
+	// Continue the trace of the process that called us, e.g. when porter runs a bundle or a mixin
+	if !trace.SpanContextFromContext(ctx).IsValid() {
+		ctx = c.extractTraceParent(ctx)
+	}
+
 	childCtx, span := c.tracer.Start(ctx, op)
 	attrs = append(attrs, attribute.String("correlation-id", c.correlationId))
 	span.SetAttributes(attrs...)
@@ -338,6 +350,12 @@ func (c *Context) CommandContext(ctx context.Context, name string, arg ...string
 	cmd := exec.CommandContext(ctx, name, arg...)
 	cmd.Dir = c.Getwd()
 	cmd.Env = c.Environ()
+
+	// Let the command continue the trace of the current span.
+	// Appended last so that it takes precedence over values that we inherited from our own parent.
+	for k, v := range TraceEnviron(ctx) {
+		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", k, v))
+	}
 	return cmd
 }
 

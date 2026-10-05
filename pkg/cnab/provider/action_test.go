@@ -7,10 +7,12 @@ import (
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/experimental"
+	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/test"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/cnabio/cnab-go/bundle"
@@ -18,6 +20,7 @@ import (
 	"github.com/cnabio/cnab-go/driver"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 )
 
 // failingSecretsStore wraps a real secrets.Store, forcing Create to fail, to
@@ -339,4 +342,253 @@ func TestExecute_InstallationLocked(t *testing.T) {
 		err := d.Execute(ctx, args)
 		require.NoError(t, err)
 	})
+}
+
+func TestAddEnvironment(t *testing.T) {
+	t.Parallel()
+
+	args := ActionArguments{
+		Installation: storage.Installation{
+			ID: "myid",
+			InstallationSpec: storage.InstallationSpec{
+				Namespace: "myns",
+				Name:      "mybuns",
+			},
+		},
+	}
+
+	// Make a context with a span that can be passed into the bundle
+	provider := sdktrace.NewTracerProvider()
+	spanCtx, span := provider.Tracer("").Start(context.Background(), t.Name())
+	t.Cleanup(func() {
+		span.End()
+		require.NoError(t, provider.Shutdown(context.Background()))
+	})
+
+	t.Run("telemetry disabled", func(t *testing.T) {
+		t.Parallel()
+
+		d := NewTestRuntime(t)
+		defer d.Close()
+		d.Data.Verbosity = "warn"
+
+		op := &driver.Operation{}
+		err := d.AddEnvironment(spanCtx, args)(op)
+		require.NoError(t, err, "AddEnvironment failed")
+
+		want := map[string]string{
+			config.EnvPorterInstallationNamespace: "myns",
+			config.EnvPorterInstallationName:      "mybuns",
+			config.EnvPorterInstallationID:        "myid",
+			config.EnvPorterVerbosity:             "warn",
+			portercontext.EnvCorrelationID:        d.CorrelationID(),
+		}
+		assert.Equal(t, want, op.Environment)
+		assert.NotEmpty(t, d.CorrelationID())
+	})
+
+	t.Run("telemetry enabled", func(t *testing.T) {
+		t.Parallel()
+
+		d := NewTestRuntime(t)
+		defer d.Close()
+		d.Data.Telemetry = config.TelemetryConfig{
+			Enabled:        true,
+			Endpoint:       "collector:4317",
+			Protocol:       "grpc",
+			Insecure:       true,
+			Certificate:    "/home/me/cert.pem",
+			Headers:        map[string]string{"token": "secret"},
+			Timeout:        "3s",
+			RedirectToFile: true,
+		}
+
+		op := &driver.Operation{Environment: map[string]string{}}
+		err := d.AddEnvironment(spanCtx, args)(op)
+		require.NoError(t, err, "AddEnvironment failed")
+
+		want := map[string]string{
+			config.EnvPorterInstallationNamespace: "myns",
+			config.EnvPorterInstallationName:      "mybuns",
+			config.EnvPorterInstallationID:        "myid",
+			config.EnvPorterVerbosity:             "debug",
+			portercontext.EnvCorrelationID:        d.CorrelationID(),
+			"PORTER_TELEMETRY_ENABLED":            "true",
+			"PORTER_TELEMETRY_ENDPOINT":           "collector:4317",
+			"PORTER_TELEMETRY_PROTOCOL":           "grpc",
+			"PORTER_TELEMETRY_INSECURE":           "true",
+			"PORTER_TELEMETRY_TIMEOUT":            "3s",
+			// Settings that aren't set on the host are passed empty, so that
+			// values from the bundle image aren't used
+			"PORTER_TELEMETRY_COMPRESSION":   "",
+			"PORTER_TELEMETRY_START_TIMEOUT": "",
+			// Never redirected to a file inside the bundle, even though it is on the host
+			"PORTER_TELEMETRY_REDIRECT_TO_FILE": "false",
+			// The same settings in the standard OpenTelemetry format
+			"OTEL_EXPORTER_OTLP_INSECURE":           "true",
+			"OTEL_EXPORTER_OTLP_ENDPOINT":           "http://collector:4317",
+			"OTEL_EXPORTER_OTLP_PROTOCOL":           "grpc",
+			"OTEL_EXPORTER_OTLP_COMPRESSION":        "",
+			"OTEL_EXPORTER_OTLP_TIMEOUT":            "3000",
+			"OTEL_EXPORTER_OTLP_TRACES_INSECURE":    "",
+			"OTEL_EXPORTER_OTLP_TRACES_ENDPOINT":    "",
+			"OTEL_EXPORTER_OTLP_TRACES_PROTOCOL":    "",
+			"OTEL_EXPORTER_OTLP_TRACES_COMPRESSION": "",
+			"OTEL_EXPORTER_OTLP_TRACES_TIMEOUT":     "",
+			"TRACEPARENT":                           portercontext.TraceEnviron(spanCtx)["TRACEPARENT"],
+			"TRACESTATE":                            "",
+			"BAGGAGE":                               "",
+		}
+		assert.Equal(t, want, op.Environment, "only the safe subset of the telemetry settings should be passed into the bundle")
+		assert.Contains(t, op.Environment["TRACEPARENT"], span.SpanContext().TraceID().String())
+	})
+
+	t.Run("telemetry enabled, no span", func(t *testing.T) {
+		t.Parallel()
+
+		d := NewTestRuntime(t)
+		defer d.Close()
+		d.Data.Telemetry.Enabled = true
+
+		op := &driver.Operation{}
+		err := d.AddEnvironment(context.Background(), args)(op)
+		require.NoError(t, err, "AddEnvironment failed")
+
+		assert.Equal(t, "true", op.Environment["PORTER_TELEMETRY_ENABLED"])
+		assert.Equal(t, "false", op.Environment["PORTER_TELEMETRY_INSECURE"], "insecure should be explicitly disabled so the bundle image can't override it")
+		// Cleared so that values from the bundle image aren't used
+		for _, name := range []string{"TRACEPARENT", "TRACESTATE", "BAGGAGE"} {
+			require.Contains(t, op.Environment, name)
+			assert.Empty(t, op.Environment[name], "%s should be cleared when there is no span", name)
+		}
+	})
+}
+
+// A bundle image can define its own telemetry settings. Validate that the
+// host's settings are used inside the bundle, even when the image says
+// otherwise, so that for example the image can't turn off TLS.
+func TestAddEnvironment_OverridesBundleImage(t *testing.T) {
+	// Do not run in parallel since we use t.Setenv
+
+	// What the bundle image defines
+	imageEnv := map[string]string{
+		"PORTER_TELEMETRY_INSECURE":             "true",
+		"PORTER_TELEMETRY_ENDPOINT":             "image-collector:4317",
+		"PORTER_TELEMETRY_PROTOCOL":             "http/protobuf",
+		"PORTER_TELEMETRY_COMPRESSION":          "gzip",
+		"PORTER_TELEMETRY_TIMEOUT":              "1s",
+		"PORTER_TELEMETRY_START_TIMEOUT":        "1s",
+		"PORTER_TELEMETRY_REDIRECT_TO_FILE":     "true",
+		"OTEL_EXPORTER_OTLP_INSECURE":           "true",
+		"OTEL_EXPORTER_OTLP_ENDPOINT":           "http://image-collector:4317",
+		"OTEL_EXPORTER_OTLP_PROTOCOL":           "http/protobuf",
+		"OTEL_EXPORTER_OTLP_COMPRESSION":        "gzip",
+		"OTEL_EXPORTER_OTLP_TIMEOUT":            "1000",
+		"OTEL_EXPORTER_OTLP_TRACES_INSECURE":    "true",
+		"OTEL_EXPORTER_OTLP_TRACES_ENDPOINT":    "http://image-collector:4317",
+		"OTEL_EXPORTER_OTLP_TRACES_PROTOCOL":    "http/protobuf",
+		"OTEL_EXPORTER_OTLP_TRACES_COMPRESSION": "gzip",
+		"OTEL_EXPORTER_OTLP_TRACES_TIMEOUT":     "1000",
+	}
+
+	testcases := []struct {
+		name string
+		host config.TelemetryConfig
+		// the standard OpenTelemetry variables that should have a value inside the bundle, the rest should be empty
+		wantOtel map[string]string
+	}{
+		{
+			// TLS is required and everything else uses the defaults
+			name: "host only enables telemetry",
+			host: config.TelemetryConfig{Enabled: true},
+			wantOtel: map[string]string{
+				"OTEL_EXPORTER_OTLP_INSECURE": "false",
+			},
+		},
+		{
+			name: "host sets everything",
+			host: config.TelemetryConfig{
+				Enabled:      true,
+				Endpoint:     "collector:4317",
+				Protocol:     "grpc",
+				Insecure:     false,
+				Compression:  "gzip",
+				Timeout:      "3s",
+				StartTimeout: "5s",
+			},
+			wantOtel: map[string]string{
+				"OTEL_EXPORTER_OTLP_INSECURE":    "false",
+				"OTEL_EXPORTER_OTLP_ENDPOINT":    "https://collector:4317",
+				"OTEL_EXPORTER_OTLP_PROTOCOL":    "grpc",
+				"OTEL_EXPORTER_OTLP_COMPRESSION": "gzip",
+				"OTEL_EXPORTER_OTLP_TIMEOUT":     "3000",
+			},
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			d := NewTestRuntime(t)
+			defer d.Close()
+			d.Data.Telemetry = tc.host
+
+			op := &driver.Operation{}
+			err := d.AddEnvironment(context.Background(), ActionArguments{})(op)
+			require.NoError(t, err, "AddEnvironment failed")
+
+			// The environment inside the bundle is what was defined in the image,
+			// overridden by what porter passes in when it runs the bundle
+			for k, v := range imageEnv {
+				t.Setenv(k, v)
+			}
+			for k, v := range op.Environment {
+				t.Setenv(k, v)
+			}
+
+			// Load the configuration like the porter runtime and mixins do inside the bundle
+			bundleCfg := config.NewTestConfig(t)
+			bundleCfg.DataLoader = config.LoadFromEnvironment()
+			_, err = bundleCfg.Load(context.Background(), nil)
+			require.NoError(t, err, "Load failed")
+			assert.Equal(t, tc.host, bundleCfg.Data.Telemetry, "the bundle should use the host's telemetry settings, not the image's")
+
+			// The trace exporter, and other tools in the bundle, read the standard
+			// OpenTelemetry variables directly, so they must match the host as well
+			for k := range imageEnv {
+				if strings.HasPrefix(k, "OTEL_") {
+					assert.Equal(t, tc.wantOtel[k], os.Getenv(k), "%s should match the host's settings, not the image's", k)
+				}
+			}
+		})
+	}
+}
+
+func TestOtlpEndpointURL(t *testing.T) {
+	t.Parallel()
+
+	testcases := []struct {
+		name     string
+		endpoint string
+		insecure bool
+		want     string
+	}{
+		{name: "not set", endpoint: "", insecure: true, want: ""},
+		{name: "secure", endpoint: "collector:4317", insecure: false, want: "https://collector:4317"},
+		{name: "insecure", endpoint: "collector:4317", insecure: true, want: "http://collector:4317"},
+		{name: "already a url", endpoint: "https://collector:4317", insecure: true, want: "https://collector:4317"},
+	}
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.want, otlpEndpointURL(tc.endpoint, tc.insecure))
+		})
+	}
+}
+
+func TestOtlpTimeout(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, "3000", otlpTimeout("3s"))
+	assert.Equal(t, "100", otlpTimeout("100ms"))
+	assert.Empty(t, otlpTimeout(""), "an unset timeout should not be passed")
+	assert.Empty(t, otlpTimeout("300"), "an invalid timeout should not be passed")
 }
