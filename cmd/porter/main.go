@@ -192,8 +192,11 @@ func getCalledCommand(cmd *cobra.Command, args []string) (*cobra.Command, string
 
 // markFlagSensitive indicates that the value of the flag may contain sensitive
 // data, so that it is masked when the command is traced.
+// Panics when the flag isn't defined, since its value would be traced unmasked.
 func markFlagSensitive(f *pflag.FlagSet, name string) {
-	_ = f.SetAnnotation(name, sensitiveFlag, []string{"true"})
+	if err := f.SetAnnotation(name, sensitiveFlag, []string{"true"}); err != nil {
+		panic(fmt.Errorf("could not mark the flag %s as sensitive: %w", name, err))
+	}
 }
 
 // getSensitiveFlags finds the flags marked as sensitive on any command, keyed

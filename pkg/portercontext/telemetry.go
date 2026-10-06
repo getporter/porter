@@ -95,6 +95,9 @@ func (c *Context) extractTraceParent(ctx context.Context) context.Context {
 // EnvSensitiveValues by the porter process that called us.
 // The variable is removed, also from the environment of our process, so that
 // it isn't passed on to the commands that we run.
+//
+// When the sensitive values can't be read, telemetry is turned off for us and
+// the commands that we run instead, so that the values are not exported.
 func (c *Context) loadSensitiveValues() {
 	encoded, ok := c.LookupEnv(EnvSensitiveValues)
 	if !ok {
@@ -106,6 +109,8 @@ func (c *Context) loadSensitiveValues() {
 	// Each value is base64 encoded, json decodes that into the original bytes
 	var vals [][]byte
 	if err := json.Unmarshal([]byte(encoded), &vals); err != nil {
+		c.telemetryDisabled = true
+		c.Setenv(envTelemetryEnabled, "false")
 		return
 	}
 
@@ -154,7 +159,7 @@ type censoredExporter struct {
 }
 
 func (e censoredExporter) ExportSpans(ctx context.Context, spans []sdktrace.ReadOnlySpan) error {
-	if len(e.censoredWriter.GetSensitiveValues()) == 0 {
+	if len(e.censoredWriter.values()) == 0 {
 		return e.SpanExporter.ExportSpans(ctx, spans)
 	}
 

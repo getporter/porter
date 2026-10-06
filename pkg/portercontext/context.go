@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -73,6 +74,10 @@ type Context struct {
 
 	// indicates if we have created a real tracer yet (instead of noop)
 	tracerInitalized bool
+
+	// indicates that trace data must not be exported, regardless of the
+	// configuration, because we can't mask the sensitive values in it
+	telemetryDisabled bool
 
 	// handles send log data to the console/logfile
 	logger *zap.Logger
@@ -215,7 +220,7 @@ func (c *Context) configureLoggingWith(ctx context.Context, baseLogger zapcore.C
 	}
 	tmpLog = zap.New(zapcore.NewTee(baseLogger, fileLogger))
 
-	if c.logCfg.TelemetryEnabled {
+	if c.logCfg.TelemetryEnabled && !c.telemetryDisabled {
 		// Only initialize the tracer once per command
 		if !c.tracerInitalized {
 			err = c.configureTelemetry(ctx, c.logCfg, tmpLog)
@@ -472,13 +477,22 @@ func NewCensoredWriter(writer io.Writer) *CensoredWriter {
 
 // SetSensitiveValues sets values needing masking for an CensoredWriter
 func (cw *CensoredWriter) SetSensitiveValues(vals []string) {
+	// Copy so that the caller can't modify the values while they are being read
+	vals = slices.Clone(vals)
+
 	cw.mu.Lock()
 	defer cw.mu.Unlock()
 	cw.sensitiveValues = vals
 }
 
-// GetSensitiveValues returns the values that are masked by the CensoredWriter.
+// GetSensitiveValues returns a copy of the values that are masked by the CensoredWriter.
 func (cw *CensoredWriter) GetSensitiveValues() []string {
+	return slices.Clone(cw.values())
+}
+
+// values returns the sensitive values without copying them.
+// The slice is never modified after it is set, so it is safe to read, but it must not be modified.
+func (cw *CensoredWriter) values() []string {
 	cw.mu.RLock()
 	defer cw.mu.RUnlock()
 	return cw.sensitiveValues
@@ -491,7 +505,7 @@ func (cw *CensoredWriter) Write(b []byte) (int, error) {
 }
 
 func (cw *CensoredWriter) Censor(b []byte) []byte {
-	for _, val := range cw.GetSensitiveValues() {
+	for _, val := range cw.values() {
 		if strings.TrimSpace(val) != "" {
 			b = bytes.ReplaceAll(b, []byte(val), []byte("*******"))
 		}
@@ -502,7 +516,7 @@ func (cw *CensoredWriter) Censor(b []byte) []byte {
 
 // CensorString masks the sensitive values in the specified string.
 func (cw *CensoredWriter) CensorString(s string) string {
-	for _, val := range cw.GetSensitiveValues() {
+	for _, val := range cw.values() {
 		if strings.TrimSpace(val) != "" {
 			s = strings.ReplaceAll(s, val, "*******")
 		}

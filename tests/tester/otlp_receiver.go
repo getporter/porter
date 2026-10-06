@@ -82,6 +82,7 @@ func (t Tester) StartTestOTLPReceiver(protocol string) *TestOTLPReceiver {
 func (t Tester) StartBundleTestOTLPReceiver(protocol string) *TestOTLPReceiver {
 	gateway, err := shx.OutputE("docker", "network", "inspect", "bridge", "--format", "{{(index .IPAM.Config 0).Gateway}}")
 	require.NoError(t.T, err, "Could not determine the gateway of the default docker network")
+	gateway = strings.TrimSpace(gateway)
 
 	lis, err := net.Listen("tcp", net.JoinHostPort(gateway, "0"))
 	if err != nil {

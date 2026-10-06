@@ -10,6 +10,7 @@ import (
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/experimental"
 	"get.porter.sh/porter/pkg/porter"
+	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -488,4 +489,14 @@ func TestExplainOutput(t *testing.T) {
 
 		assertYamlOutput(t, p.TestConfig.TestContext.GetOutput())
 	})
+}
+
+func TestMarkFlagSensitive(t *testing.T) {
+	f := pflag.NewFlagSet("test", pflag.ContinueOnError)
+	f.String("param", "", "")
+
+	markFlagSensitive(f, "param")
+	assert.Contains(t, f.Lookup("param").Annotations, sensitiveFlag)
+
+	assert.Panics(t, func() { markFlagSensitive(f, "missing") }, "expected a flag that isn't defined to fail fast")
 }

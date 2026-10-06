@@ -2,6 +2,7 @@ package portercontext
 
 import (
 	"context"
+	"io"
 	"os"
 	"strings"
 	"testing"
@@ -387,7 +388,28 @@ func TestContext_loadSensitiveValues(t *testing.T) {
 		assert.Empty(t, c.censoredWriter.GetSensitiveValues())
 		_, ok := c.LookupEnv(EnvSensitiveValues)
 		assert.False(t, ok, "expected the sensitive values to not be passed on to the commands that we run")
+
+		// Fail closed, we can't mask what we couldn't read
+		assert.Equal(t, "false", c.Getenv(envTelemetryEnabled), "expected telemetry to be turned off for the commands that we run")
+		c.ConfigureLogging(context.Background(), LogConfiguration{
+			TelemetryEnabled:        true,
+			TelemetryRedirectToFile: true,
+			TelemetryDirectory:      "/.porter/traces",
+		})
+		assert.False(t, c.tracerInitalized, "expected telemetry to be turned off")
 	})
+}
+
+func TestCensoredWriter_SensitiveValuesAreCopied(t *testing.T) {
+	vals := []string{"topsecret"}
+	cw := NewCensoredWriter(io.Discard)
+	cw.SetSensitiveValues(vals)
+
+	vals[0] = "changed"
+	assert.Equal(t, []string{"topsecret"}, cw.GetSensitiveValues(), "expected the values to be copied when set")
+
+	cw.GetSensitiveValues()[0] = "changed"
+	assert.Equal(t, []string{"topsecret"}, cw.GetSensitiveValues(), "expected a copy of the values to be returned")
 }
 
 func TestContext_SensitiveValuesEnviron(t *testing.T) {
