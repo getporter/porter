@@ -124,18 +124,25 @@ func (c *Context) loadSensitiveValues() {
 // SensitiveValuesEnviron returns the environment variables, in the form
 // KEY=VALUE, that should be set on a child porter process that is given
 // sensitive values, e.g. a mixin, so that it masks them in its trace data.
-// Returns nothing when trace data isn't exported or there are no sensitive values.
+// Returns nothing when there are no sensitive values.
 //
-// When the sensitive values are too large to pass to the child, telemetry is
-// turned off for the child instead, so that the values are not exported.
+// When we don't export trace data, or the sensitive values are too large to
+// pass to the child, telemetry is turned off for the child instead, so that
+// the values are not exported. The child may otherwise still export trace
+// data, e.g. when it inherits PORTER_TELEMETRY_ENABLED and we failed to
+// initialize our tracer.
 func (c *Context) SensitiveValuesEnviron() []string {
-	if !c.tracerInitalized || c.censoredWriter == nil {
+	if c.censoredWriter == nil {
 		return nil
 	}
 
 	sensitiveValues := c.censoredWriter.GetSensitiveValues()
 	if len(sensitiveValues) == 0 {
 		return nil
+	}
+
+	if !c.tracerInitalized {
+		return []string{envTelemetryEnabled + "=false"}
 	}
 
 	// Base64 encode each value, which is how json encodes bytes, because a

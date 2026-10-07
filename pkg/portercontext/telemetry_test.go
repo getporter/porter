@@ -417,6 +417,13 @@ func TestContext_SensitiveValuesEnviron(t *testing.T) {
 		c := NewTestContext(t)
 		c.SetSensitiveValues([]string{"topsecret"})
 
+		// Fail closed, the child may inherit telemetry settings that we aren't using
+		assert.Equal(t, []string{"PORTER_TELEMETRY_ENABLED=false"}, c.SensitiveValuesEnviron())
+	})
+
+	t.Run("telemetry disabled, no sensitive values", func(t *testing.T) {
+		c := NewTestContext(t)
+
 		assert.Empty(t, c.SensitiveValuesEnviron())
 	})
 
