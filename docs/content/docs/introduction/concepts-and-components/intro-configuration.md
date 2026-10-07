@@ -289,6 +289,7 @@ Porter masks sensitive values, such as sensitive parameters, credentials and sen
 There are some limitations to be aware of:
 
 * A mixin must be built with a version of Porter that supports PORTER_SENSITIVE_VALUES to mask the values in its trace data. A mixin built with an older version does not mask them, and also passes the environment variable on to the commands that it runs.
+* The Porter runtime resolves the sensitive values one step at a time, just before the step is run. Trace data that is exported before a value is resolved is not masked for that value.
 * Other OpenTelemetry enabled tools in the bundle are responsible for what they include in their own trace data.
 
 [otel]: https://github.com/open-telemetry/opentelemetry-specification/blob/v1.8.0/specification/protocol/exporter.md
