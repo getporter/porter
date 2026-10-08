@@ -391,7 +391,10 @@ func (r *Registry) getRemoteDescriptor(ctx context.Context, refStr string, opts 
 	if err != nil {
 		return nil, fmt.Errorf("invalid reference %s: %w", refStr, err)
 	}
-	return remote.Get(ref, opts.ToRemoteOptions()...)
+	// The context is also used when the descriptor's content is retrieved later
+	remoteOpts := opts.ToRemoteOptions()
+	remoteOpts = append(remoteOpts, remote.WithContext(ctx))
+	return remote.Get(ref, remoteOpts...)
 }
 
 // headRemote wraps remote.Head with reference parsing
