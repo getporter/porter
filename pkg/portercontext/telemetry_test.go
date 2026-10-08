@@ -351,6 +351,42 @@ func TestCensoredExporter(t *testing.T) {
 		assert.Equal(t, "run topsecret", stubs[0].Name)
 		assert.Equal(t, "arguments: [open_door, topsecret]", stubs[0].Attributes[0].Value.AsString())
 	})
+
+	t.Run("sensitive values that are not strings", func(t *testing.T) {
+		stubs := tracetest.SpanStubs{
+			{
+				Name: "run",
+				Attributes: []attribute.KeyValue{
+					attribute.Int("pin", 8675309),
+					attribute.Float64("ratio", 0.125),
+					attribute.Bool("enabled", true),
+					attribute.IntSlice("pins", []int{42, 8675309}),
+					attribute.Int("count", 3),
+				},
+				Events: []sdktrace.Event{
+					{Name: "fail", Attributes: []attribute.KeyValue{attribute.Int64("pin", 8675309)}},
+				},
+			},
+		}
+		inner := tracetest.NewInMemoryExporter()
+		censoredWriter := NewCensoredWriter(nil)
+		censoredWriter.SetSensitiveValues([]string{"8675309", "0.125"})
+		exporter := censoredExporter{SpanExporter: inner, censoredWriter: censoredWriter}
+
+		require.NoError(t, exporter.ExportSpans(context.Background(), stubs.Snapshots()))
+
+		got := inner.GetSpans()
+		require.Len(t, got, 1)
+		assert.Equal(t, []attribute.KeyValue{
+			attribute.String("pin", "*******"),
+			attribute.String("ratio", "*******"),
+			attribute.Bool("enabled", true),
+			attribute.String("pins", "[42,*******]"),
+			attribute.Int("count", 3),
+		}, got[0].Attributes, "expected only the attributes with a sensitive value to be replaced")
+		require.Len(t, got[0].Events, 1)
+		assert.Equal(t, []attribute.KeyValue{attribute.String("pin", "*******")}, got[0].Events[0].Attributes)
+	})
 }
 
 func TestContext_loadSensitiveValues(t *testing.T) {

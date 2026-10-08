@@ -222,6 +222,12 @@ func (s censoredSpan) censorAttributes(attrs []attribute.KeyValue) []attribute.K
 				censoredVals[j] = s.censoredWriter.CensorString(val)
 			}
 			attr.Value = attribute.StringSliceValue(censoredVals)
+		default:
+			// Other types, e.g. numbers, keep their type unless they contain a sensitive value
+			val := attr.Value.Emit()
+			if censoredVal := s.censoredWriter.CensorString(val); censoredVal != val {
+				attr.Value = attribute.StringValue(censoredVal)
+			}
 		}
 		censored[i] = attr
 	}
