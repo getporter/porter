@@ -224,7 +224,7 @@ func (s censoredSpan) censorAttributes(attrs []attribute.KeyValue) []attribute.K
 			attr.Value = attribute.StringSliceValue(censoredVals)
 		default:
 			// Other types, e.g. numbers, keep their type unless they contain a sensitive value
-			val := attr.Value.Emit()
+			val := attr.Value.String()
 			if censoredVal := s.censoredWriter.CensorString(val); censoredVal != val {
 				attr.Value = attribute.StringValue(censoredVal)
 			}
