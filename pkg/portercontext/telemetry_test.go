@@ -1,6 +1,7 @@
 package portercontext
 
 import (
+	"bytes"
 	"context"
 	"io"
 	"os"
@@ -446,6 +447,21 @@ func TestCensoredWriter_SensitiveValuesAreCopied(t *testing.T) {
 
 	cw.GetSensitiveValues()[0] = "changed"
 	assert.Equal(t, []string{"topsecret"}, cw.GetSensitiveValues(), "expected a copy of the values to be returned")
+}
+
+func TestCensoredWriter_OverlappingSensitiveValues(t *testing.T) {
+	// A value that contains another value must be masked completely, regardless of the order they are set
+	out := &bytes.Buffer{}
+	cw := NewCensoredWriter(out)
+	cw.SetSensitiveValues([]string{"abc", "abcdef", "host;pwd=abc"})
+
+	assert.Equal(t, "******* ******* *******", cw.CensorString("abcdef abc host;pwd=abc"))
+
+	_, err := cw.Write([]byte("abcdef abc host;pwd=abc"))
+	require.NoError(t, err)
+	assert.Equal(t, "******* ******* *******", out.String())
+
+	assert.Equal(t, []string{"abc", "abcdef", "host;pwd=abc"}, cw.GetSensitiveValues(), "expected the order of the values to be kept")
 }
 
 func TestContext_SensitiveValuesEnviron(t *testing.T) {

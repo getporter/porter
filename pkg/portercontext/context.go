@@ -468,6 +468,10 @@ type CensoredWriter struct {
 	// Guards sensitiveValues, which is read when trace data is exported in the background.
 	mu              sync.RWMutex
 	sensitiveValues []string
+
+	// The sensitive values in the order that they are masked, longest first,
+	// so that a value that contains another value is masked completely.
+	censorValues []string
 }
 
 // NewCensoredWriter returns a new CensoredWriter
@@ -480,9 +484,15 @@ func (cw *CensoredWriter) SetSensitiveValues(vals []string) {
 	// Copy so that the caller can't modify the values while they are being read
 	vals = slices.Clone(vals)
 
+	censorVals := slices.Clone(vals)
+	slices.SortStableFunc(censorVals, func(a, b string) int {
+		return len(b) - len(a)
+	})
+
 	cw.mu.Lock()
 	defer cw.mu.Unlock()
 	cw.sensitiveValues = vals
+	cw.censorValues = censorVals
 }
 
 // GetSensitiveValues returns a copy of the values that are masked by the CensoredWriter.
@@ -498,6 +508,14 @@ func (cw *CensoredWriter) values() []string {
 	return cw.sensitiveValues
 }
 
+// valuesToCensor returns the sensitive values in the order that they should be masked.
+// The slice must not be modified.
+func (cw *CensoredWriter) valuesToCensor() []string {
+	cw.mu.RLock()
+	defer cw.mu.RUnlock()
+	return cw.censorValues
+}
+
 // Write implements io.Writer's Write method, performing necessary auditing while doing so
 func (cw *CensoredWriter) Write(b []byte) (int, error) {
 	_, err := cw.writer.Write(cw.Censor(b))
@@ -505,7 +523,7 @@ func (cw *CensoredWriter) Write(b []byte) (int, error) {
 }
 
 func (cw *CensoredWriter) Censor(b []byte) []byte {
-	for _, val := range cw.values() {
+	for _, val := range cw.valuesToCensor() {
 		if strings.TrimSpace(val) != "" {
 			b = bytes.ReplaceAll(b, []byte(val), []byte("*******"))
 		}
@@ -516,7 +534,7 @@ func (cw *CensoredWriter) Censor(b []byte) []byte {
 
 // CensorString masks the sensitive values in the specified string.
 func (cw *CensoredWriter) CensorString(s string) string {
-	for _, val := range cw.values() {
+	for _, val := range cw.valuesToCensor() {
 		if strings.TrimSpace(val) != "" {
 			s = strings.ReplaceAll(s, val, "*******")
 		}
