@@ -38,6 +38,13 @@ const (
 	// sub-commands. This is used for commands like plugin and mixin management
 	// which must work even when the secrets plugin is broken.
 	skipSecrets string = "skipSecrets"
+
+	// Flag annotation indicating that the value of the flag may contain
+	// sensitive data and must be masked when the command is traced.
+	sensitiveFlag string = "sensitive"
+
+	// Replaces the value of a sensitive flag when the command is traced.
+	sensitiveValueMask string = "*******"
 )
 
 func main() {
@@ -49,7 +56,7 @@ func main() {
 		rootCmd := buildRootCommandFrom(p)
 
 		// Trace the command that called porter, e.g. porter installation show
-		cmd, commandName, formattedCommand := getCalledCommand(rootCmd)
+		cmd, commandName, formattedCommand := getCalledCommand(rootCmd, os.Args[1:])
 
 		// When running an internal plugin, switch how we log to be compatible
 		// with the hashicorp go-plugin framework
@@ -90,7 +97,8 @@ func main() {
 
 		if err := rootCmd.ExecuteContext(ctx); err != nil {
 			_ = log.Error(err)
-			fmt.Fprintln(os.Stderr, err)
+			// The error may include sensitive values, e.g. from the output of a command run by the bundle
+			fmt.Fprintln(os.Stderr, p.Censor(err.Error()))
 			return cli.ExitCodeErr
 		}
 		return cli.ExitCodeSuccess
@@ -153,11 +161,12 @@ func connect(ctx context.Context, p *porter.Porter, cmd *cobra.Command) (context
 }
 
 // Returns the porter command called, e.g. porter installation list
-// and also the fully formatted command as passed with arguments/flags.
-func getCalledCommand(cmd *cobra.Command) (*cobra.Command, string, string) {
+// and also the fully formatted command as passed with arguments/flags, with
+// the values of sensitive flags masked.
+func getCalledCommand(cmd *cobra.Command, args []string) (*cobra.Command, string, string) {
 	// Ask cobra what sub-command was called, and walk up the tree to get the full command called.
 	var cmdChain []string
-	calledCommand, _, err := cmd.Find(os.Args[1:])
+	calledCommand, _, err := cmd.Find(args)
 	if err != nil {
 		cmdChain = append(cmdChain, "porter")
 	} else {
@@ -176,9 +185,95 @@ func getCalledCommand(cmd *cobra.Command) (*cobra.Command, string, string) {
 	calledCommandStr := calledCommandBuilder.String()[0 : calledCommandBuilder.Len()-1]
 
 	// Also figure out the full command called, with args/flags.
-	formattedCommand := fmt.Sprintf("porter %s", strings.Join(os.Args[1:], " "))
+	formattedCommand := formatCommand(cmd, args, nil)
 
 	return calledCommand, calledCommandStr, formattedCommand
+}
+
+// markFlagSensitive indicates that the value of the flag may contain sensitive
+// data, so that it is masked when the command is traced.
+// Panics when the flag isn't defined, since its value would be traced unmasked.
+func markFlagSensitive(f *pflag.FlagSet, name string) {
+	if err := f.SetAnnotation(name, sensitiveFlag, []string{"true"}); err != nil {
+		panic(fmt.Errorf("could not mark the flag %s as sensitive: %w", name, err))
+	}
+}
+
+// getSensitiveFlags finds the flags marked as sensitive on any command, keyed
+// by how the flag is specified on the command line, e.g. --param.
+// Flags are matched by name regardless of the command called, so that values
+// are still masked when the command could not be resolved, e.g. a typo.
+func getSensitiveFlags(cmd *cobra.Command, flags map[string]string) map[string]string {
+	if flags == nil {
+		flags = make(map[string]string)
+	}
+
+	collect := func(f *pflag.Flag) {
+		if _, ok := f.Annotations[sensitiveFlag]; !ok {
+			return
+		}
+		flags["--"+f.Name] = f.Name
+		if f.Shorthand != "" {
+			flags["-"+f.Shorthand] = f.Name
+		}
+	}
+	cmd.Flags().VisitAll(collect)
+	cmd.PersistentFlags().VisitAll(collect)
+
+	for _, child := range cmd.Commands() {
+		getSensitiveFlags(child, flags)
+	}
+	return flags
+}
+
+// formatCommand returns the full command called, with args/flags, masking the
+// values of flags marked as sensitive. A value in the form NAME=VALUE keeps its
+// name. Use reveal to keep the value of a flag when it is known to be safe.
+func formatCommand(rootCmd *cobra.Command, args []string, reveal func(flag string, name string) bool) string {
+	sensitiveFlags := getSensitiveFlags(rootCmd, nil)
+
+	maskValue := func(flag string, value string) string {
+		name, _, hasName := strings.Cut(value, "=")
+		if !hasName {
+			return sensitiveValueMask
+		}
+		if reveal != nil && reveal(flag, name) {
+			return value
+		}
+		return name + "=" + sensitiveValueMask
+	}
+
+	formatted := make([]string, 0, len(args)+1)
+	formatted = append(formatted, "porter")
+
+	// The sensitive flag that the next argument is the value of, e.g. --param NAME=VALUE
+	var valueOf string
+	for i, arg := range args {
+		if valueOf != "" {
+			formatted = append(formatted, maskValue(valueOf, arg))
+			valueOf = ""
+			continue
+		}
+
+		// Everything after -- is a positional argument
+		if arg == "--" {
+			formatted = append(formatted, args[i:]...)
+			break
+		}
+
+		// Handle both --param NAME=VALUE and --param=NAME=VALUE
+		flagArg, value, hasValue := strings.Cut(arg, "=")
+		if flag, ok := sensitiveFlags[flagArg]; ok {
+			if hasValue {
+				arg = flagArg + "=" + maskValue(flag, value)
+			} else {
+				valueOf = flag
+			}
+		}
+		formatted = append(formatted, arg)
+	}
+
+	return strings.Join(formatted, " ")
 }
 
 func buildRootCommand() *cobra.Command {

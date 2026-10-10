@@ -67,6 +67,10 @@ type BundleExecutionOptions struct {
 	// to pass inline YAML params without round-tripping through string serialization.
 	CurrentParamOverrides secrets.StrategyList
 
+	// OnBundleResolved is called with the bundle definition once the bundle
+	// has been resolved, before the parameters are applied.
+	OnBundleResolved func(bun cnab.ExtendedBundle)
+
 	// ParameterSets is a list of parameter sets containing parameter sources
 	ParameterSets []string
 

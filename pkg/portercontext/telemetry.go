@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -13,6 +14,7 @@ import (
 	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/tracing"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
@@ -25,6 +27,20 @@ import (
 	"go.opentelemetry.io/otel/trace/noop"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/credentials"
+)
+
+const (
+	// EnvSensitiveValues is the name of the environment variable used to pass
+	// the sensitive values to a child porter process, e.g. a mixin, as a json
+	// list of base64 encoded values, so that the child masks them in its trace data.
+	EnvSensitiveValues = "PORTER_SENSITIVE_VALUES"
+
+	// envTelemetryEnabled is the name of the environment variable that controls if trace data is exported.
+	envTelemetryEnabled = "PORTER_TELEMETRY_ENABLED"
+
+	// maxSensitiveValuesEnvSize is the largest value, in bytes, that we set
+	// EnvSensitiveValues to. Linux limits a single environment variable to 128KiB.
+	maxSensitiveValuesEnvSize = 100_000
 )
 
 // tracePropagator defines how the current span and baggage are passed between
@@ -73,6 +89,149 @@ func (c *Context) extractTraceParent(ctx context.Context) context.Context {
 		}
 	}
 	return tracePropagator.Extract(ctx, carrier)
+}
+
+// loadSensitiveValues masks the sensitive values passed to us with
+// EnvSensitiveValues by the porter process that called us.
+// The variable is removed, also from the environment of our process, so that
+// it isn't passed on to the commands that we run.
+//
+// When the sensitive values can't be read, telemetry is turned off for us and
+// the commands that we run instead, so that the values are not exported.
+func (c *Context) loadSensitiveValues() {
+	encoded, ok := c.LookupEnv(EnvSensitiveValues)
+	if !ok {
+		return
+	}
+	c.Unsetenv(EnvSensitiveValues)
+	os.Unsetenv(EnvSensitiveValues)
+
+	// Each value is base64 encoded, json decodes that into the original bytes
+	var vals [][]byte
+	if err := json.Unmarshal([]byte(encoded), &vals); err != nil {
+		c.telemetryDisabled = true
+		c.Setenv(envTelemetryEnabled, "false")
+		return
+	}
+
+	sensitiveValues := make([]string, len(vals))
+	for i, val := range vals {
+		sensitiveValues[i] = string(val)
+	}
+	c.SetSensitiveValues(sensitiveValues)
+}
+
+// SensitiveValuesEnviron returns the environment variables, in the form
+// KEY=VALUE, that should be set on a child porter process that is given
+// sensitive values, e.g. a mixin, so that it masks them in its trace data.
+// Returns nothing when there are no sensitive values.
+//
+// When we don't export trace data, or the sensitive values are too large to
+// pass to the child, telemetry is turned off for the child instead, so that
+// the values are not exported. The child may otherwise still export trace
+// data, e.g. when it inherits PORTER_TELEMETRY_ENABLED and we failed to
+// initialize our tracer.
+func (c *Context) SensitiveValuesEnviron() []string {
+	if c.censoredWriter == nil {
+		return nil
+	}
+
+	sensitiveValues := c.censoredWriter.GetSensitiveValues()
+	if len(sensitiveValues) == 0 {
+		return nil
+	}
+
+	if !c.tracerInitalized {
+		return []string{envTelemetryEnabled + "=false"}
+	}
+
+	// Base64 encode each value, which is how json encodes bytes, because a
+	// value isn't always valid UTF-8, e.g. the contents of a binary file.
+	vals := make([][]byte, len(sensitiveValues))
+	for i, val := range sensitiveValues {
+		vals[i] = []byte(val)
+	}
+
+	encoded, err := json.Marshal(vals)
+	if err != nil || len(encoded) > maxSensitiveValuesEnvSize {
+		return []string{envTelemetryEnabled + "=false"}
+	}
+	return []string{EnvSensitiveValues + "=" + string(encoded)}
+}
+
+// censoredExporter masks sensitive values in the trace data before it is exported.
+type censoredExporter struct {
+	sdktrace.SpanExporter
+	censoredWriter *CensoredWriter
+}
+
+func (e censoredExporter) ExportSpans(ctx context.Context, spans []sdktrace.ReadOnlySpan) error {
+	if len(e.censoredWriter.values()) == 0 {
+		return e.SpanExporter.ExportSpans(ctx, spans)
+	}
+
+	censored := make([]sdktrace.ReadOnlySpan, len(spans))
+	for i, span := range spans {
+		censored[i] = censoredSpan{ReadOnlySpan: span, censoredWriter: e.censoredWriter}
+	}
+	return e.SpanExporter.ExportSpans(ctx, censored)
+}
+
+// censoredSpan is a span with the sensitive values masked in its name,
+// status, attributes and events.
+type censoredSpan struct {
+	sdktrace.ReadOnlySpan
+	censoredWriter *CensoredWriter
+}
+
+func (s censoredSpan) Name() string {
+	return s.censoredWriter.CensorString(s.ReadOnlySpan.Name())
+}
+
+func (s censoredSpan) Status() sdktrace.Status {
+	status := s.ReadOnlySpan.Status()
+	status.Description = s.censoredWriter.CensorString(status.Description)
+	return status
+}
+
+func (s censoredSpan) Attributes() []attribute.KeyValue {
+	return s.censorAttributes(s.ReadOnlySpan.Attributes())
+}
+
+func (s censoredSpan) Events() []sdktrace.Event {
+	events := s.ReadOnlySpan.Events()
+	censored := make([]sdktrace.Event, len(events))
+	for i, event := range events {
+		event.Name = s.censoredWriter.CensorString(event.Name)
+		event.Attributes = s.censorAttributes(event.Attributes)
+		censored[i] = event
+	}
+	return censored
+}
+
+func (s censoredSpan) censorAttributes(attrs []attribute.KeyValue) []attribute.KeyValue {
+	censored := make([]attribute.KeyValue, len(attrs))
+	for i, attr := range attrs {
+		switch attr.Value.Type() {
+		case attribute.STRING:
+			attr.Value = attribute.StringValue(s.censoredWriter.CensorString(attr.Value.AsString()))
+		case attribute.STRINGSLICE:
+			vals := attr.Value.AsStringSlice()
+			censoredVals := make([]string, len(vals))
+			for j, val := range vals {
+				censoredVals[j] = s.censoredWriter.CensorString(val)
+			}
+			attr.Value = attribute.StringSliceValue(censoredVals)
+		default:
+			// Other types, e.g. numbers, keep their type unless they contain a sensitive value
+			val := attr.Value.String()
+			if censoredVal := s.censoredWriter.CensorString(val); censoredVal != val {
+				attr.Value = attribute.StringValue(censoredVal)
+			}
+		}
+		censored[i] = attr
+	}
+	return censored
 }
 
 func (c *Context) configureTelemetry(ctx context.Context, cfg LogConfiguration, logger *zap.Logger) error {
@@ -141,6 +300,10 @@ func (c *Context) createTracer(ctx context.Context, cfg LogConfiguration, logger
 		if err != nil {
 			return tracing.Tracer{}, fmt.Errorf("error creating an open telemetry trace exporter: %w", err)
 		}
+	}
+
+	if c.censoredWriter != nil {
+		exporter = censoredExporter{SpanExporter: exporter, censoredWriter: c.censoredWriter}
 	}
 
 	serviceVersion := pkg.Version

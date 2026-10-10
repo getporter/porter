@@ -8,7 +8,9 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
+	"sync"
 	"time"
 
 	"get.porter.sh/porter/pkg"
@@ -73,6 +75,10 @@ type Context struct {
 	// indicates if we have created a real tracer yet (instead of noop)
 	tracerInitalized bool
 
+	// indicates that trace data must not be exported, regardless of the
+	// configuration, because we can't mask the sensitive values in it
+	telemetryDisabled bool
+
 	// handles send log data to the console/logfile
 	logger *zap.Logger
 
@@ -111,6 +117,9 @@ func New() *Context {
 
 	// Make the correlation id available for the plugins to use
 	c.Setenv(EnvCorrelationID, correlationId)
+
+	// Mask the sensitive values that the porter process that called us knows about
+	c.loadSensitiveValues()
 
 	c.ConfigureLogging(context.Background(), LogConfiguration{})
 	c.defaultNewCommand()
@@ -211,7 +220,7 @@ func (c *Context) configureLoggingWith(ctx context.Context, baseLogger zapcore.C
 	}
 	tmpLog = zap.New(zapcore.NewTee(baseLogger, fileLogger))
 
-	if c.logCfg.TelemetryEnabled {
+	if c.logCfg.TelemetryEnabled && !c.telemetryDisabled {
 		// Only initialize the tracer once per command
 		if !c.tracerInitalized {
 			err = c.configureTelemetry(ctx, c.logCfg, tmpLog)
@@ -454,8 +463,15 @@ func (c *Context) Chdir(dir string) {
 
 // CensoredWriter is a writer wrapping the provided io.Writer with logic to censor certain values
 type CensoredWriter struct {
-	writer          io.Writer
+	writer io.Writer
+
+	// Guards sensitiveValues, which is read when trace data is exported in the background.
+	mu              sync.RWMutex
 	sensitiveValues []string
+
+	// The sensitive values in the order that they are masked, longest first,
+	// so that a value that contains another value is masked completely.
+	censorValues []string
 }
 
 // NewCensoredWriter returns a new CensoredWriter
@@ -465,30 +481,66 @@ func NewCensoredWriter(writer io.Writer) *CensoredWriter {
 
 // SetSensitiveValues sets values needing masking for an CensoredWriter
 func (cw *CensoredWriter) SetSensitiveValues(vals []string) {
+	// Copy so that the caller can't modify the values while they are being read
+	vals = slices.Clone(vals)
+
+	censorVals := slices.Clone(vals)
+	slices.SortStableFunc(censorVals, func(a, b string) int {
+		return len(b) - len(a)
+	})
+
+	cw.mu.Lock()
+	defer cw.mu.Unlock()
 	cw.sensitiveValues = vals
+	cw.censorValues = censorVals
+}
+
+// GetSensitiveValues returns a copy of the values that are masked by the CensoredWriter.
+func (cw *CensoredWriter) GetSensitiveValues() []string {
+	return slices.Clone(cw.values())
+}
+
+// values returns the sensitive values without copying them.
+// The slice is never modified after it is set, so it is safe to read, but it must not be modified.
+func (cw *CensoredWriter) values() []string {
+	cw.mu.RLock()
+	defer cw.mu.RUnlock()
+	return cw.sensitiveValues
+}
+
+// valuesToCensor returns the sensitive values in the order that they should be masked.
+// The slice must not be modified.
+func (cw *CensoredWriter) valuesToCensor() []string {
+	cw.mu.RLock()
+	defer cw.mu.RUnlock()
+	return cw.censorValues
 }
 
 // Write implements io.Writer's Write method, performing necessary auditing while doing so
 func (cw *CensoredWriter) Write(b []byte) (int, error) {
-	auditedBytes := b
-	for _, val := range cw.sensitiveValues {
-		if strings.TrimSpace(val) != "" {
-			auditedBytes = bytes.ReplaceAll(auditedBytes, []byte(val), []byte("*******"))
-		}
-	}
-
-	_, err := cw.writer.Write(auditedBytes)
+	_, err := cw.writer.Write(cw.Censor(b))
 	return len(b), err
 }
 
 func (cw *CensoredWriter) Censor(b []byte) []byte {
-	for _, val := range cw.sensitiveValues {
+	for _, val := range cw.valuesToCensor() {
 		if strings.TrimSpace(val) != "" {
 			b = bytes.ReplaceAll(b, []byte(val), []byte("*******"))
 		}
 	}
 
 	return b
+}
+
+// CensorString masks the sensitive values in the specified string.
+func (cw *CensoredWriter) CensorString(s string) string {
+	for _, val := range cw.valuesToCensor() {
+		if strings.TrimSpace(val) != "" {
+			s = strings.ReplaceAll(s, val, "*******")
+		}
+	}
+
+	return s
 }
 
 func (c *Context) CopyDirectory(srcDir, destDir string, includeBaseDir bool) error {
@@ -558,10 +610,8 @@ func (c *Context) WriteMixinOutputToFile(filename string, bytes []byte) error {
 	return c.FileSystem.WriteFile(filepath.Join(MixinOutputsDir, filename), bytes, pkg.FileModeWritable)
 }
 
-// SetSensitiveValues sets the sensitive values needing masking on output/err streams
-// WARNING: This does not work if you are writing to the TraceLogger.
-// See https://github.com/getporter/porter/issues/2256
-// Only use this when you are calling fmt.Fprintln, not log.Debug, etc.
+// SetSensitiveValues sets the sensitive values needing masking on output/err streams,
+// and in the trace data that is exported after this is called.
 func (c *Context) SetSensitiveValues(vals []string) {
 	if len(vals) > 0 {
 		out := NewCensoredWriter(c.Out)
@@ -573,6 +623,16 @@ func (c *Context) SetSensitiveValues(vals []string) {
 		err.SetSensitiveValues(vals)
 		c.Err = err
 	}
+}
+
+// Censor masks the sensitive values in the specified string.
+// Use this for text that isn't written to the output/err streams of the
+// context, e.g. an error that includes the output of a command.
+func (c *Context) Censor(s string) string {
+	if c.censoredWriter == nil {
+		return s
+	}
+	return c.censoredWriter.CensorString(s)
 }
 
 type CensoredEncoder struct {

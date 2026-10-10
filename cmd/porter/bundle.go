@@ -101,6 +101,7 @@ The docker driver builds the bundle image using the local Docker host. To use a 
 		"SSH agent socket or keys to expose to the build (format: default|<id>[=<socket>|<key>[,<key>]]). May be specified multiple times.")
 	f.StringArrayVar(&opts.Secrets, "secret", nil,
 		"Secret file to expose to the build (format: id=mysecret,src=/local/secret). Custom values are accessible as build arguments in the template Dockerfile and in the manifest using template variables. May be specified multiple times.")
+	markFlagSensitive(f, "secret")
 	f.BoolVar(&opts.NoCache, "no-cache", false,
 		"Do not use the Docker cache when building the bundle image.")
 	f.BoolVar(&opts.Force, "force", false,

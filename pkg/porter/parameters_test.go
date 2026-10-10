@@ -1371,6 +1371,30 @@ func TestParameterRemovedFromBundle(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestApplyActionOptionsToInstallation_OnBundleResolved(t *testing.T) {
+	ctx := context.Background()
+	p := NewTestPorter(t)
+	defer p.Close()
+	p.TestConfig.TestContext.AddTestFile("testdata/porter.yaml", "porter.yaml")
+
+	opts := NewInstallOptions()
+	opts.Driver = "docker"
+	opts.File = config.Name
+	opts.Name = "MyInstallation"
+
+	var resolved []cnab.ExtendedBundle
+	opts.OnBundleResolved = func(bun cnab.ExtendedBundle) {
+		resolved = append(resolved, bun)
+	}
+
+	installation := storage.NewInstallation(opts.Namespace, opts.Name)
+	err := p.applyActionOptionsToInstallation(ctx, opts, &installation)
+	require.NoError(t, err)
+
+	require.Len(t, resolved, 1, "expected OnBundleResolved to be called once")
+	assert.NotEmpty(t, resolved[0].Parameters, "expected the resolved bundle definition to be passed to OnBundleResolved")
+}
+
 func Test_DependencyParameterOverride(t *testing.T) {
 	ctx := context.Background()
 	p := NewTestPorter(t)

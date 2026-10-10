@@ -331,6 +331,17 @@ The certificate and headers settings are not passed into the bundle.
 The endpoint is passed as-is and must be reachable from inside the bundle's container.
 For example, with the Docker driver and a collector running on the host, instead of `127.0.0.1:4317` use `host.docker.internal:4317` with Docker Desktop, or the address of the Docker bridge gateway, usually `172.17.0.1:4317`, with Docker Engine on Linux.
 
+Porter masks sensitive values, such as sensitive parameters, credentials and sensitive outputs, in the trace data that it exports:
+
+* The values of the \--param and \--secret flags are masked in the command recorded on the trace. Once the bundle is resolved, the values of parameters that the bundle does not define as sensitive are shown.
+* The Porter runtime and the mixins inside the bundle mask the sensitive values in their trace data. The runtime passes the values to each mixin using the PORTER_SENSITIVE_VALUES environment variable.
+
+There are some limitations to be aware of:
+
+* A mixin must be built with a version of Porter that supports PORTER_SENSITIVE_VALUES to mask the values in its trace data. A mixin built with an older version does not mask them, and also passes the environment variable on to the commands that it runs.
+* The Porter runtime resolves the sensitive values one step at a time, just before the step is run. Trace data that is exported before a value is resolved is not masked for that value.
+* Other OpenTelemetry enabled tools in the bundle are responsible for what they include in their own trace data.
+
 [otel]: https://github.com/open-telemetry/opentelemetry-specification/blob/v1.8.0/specification/protocol/exporter.md
 
 ### Dependencies v2

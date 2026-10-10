@@ -10,6 +10,7 @@ import (
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/experimental"
 	"get.porter.sh/porter/pkg/porter"
+	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -66,6 +67,57 @@ func TestShouldSkipSecrets(t *testing.T) {
 			assert.False(t, shouldSkipConfig(cmd), "config should still be loaded")
 		})
 	}
+}
+
+func TestGetCalledCommand_MasksSensitiveFlags(t *testing.T) {
+	testcases := []struct {
+		name          string
+		args          string
+		wantName      string
+		wantFormatted string
+	}{
+		{name: "no args", args: "", wantName: "porter", wantFormatted: "porter"},
+		{name: "no sensitive flags", args: "install --verbosity debug -p myset", wantName: "porter install",
+			wantFormatted: "porter install --verbosity debug -p myset"},
+		{name: "param", args: "install --param password=topsecret", wantName: "porter install",
+			wantFormatted: "porter install --param password=*******"},
+		{name: "param with equals", args: "install --param=password=topsecret", wantName: "porter install",
+			wantFormatted: "porter install --param=password=*******"},
+		{name: "value contains equals", args: "install --param password=top=secret", wantName: "porter install",
+			wantFormatted: "porter install --param password=*******"},
+		{name: "param without name", args: "install --param topsecret", wantName: "porter install",
+			wantFormatted: "porter install --param *******"},
+		{name: "multiple params", args: "install mybuns --param name=me -p myset --param password=topsecret --force", wantName: "porter install",
+			wantFormatted: "porter install mybuns --param name=******* -p myset --param password=******* --force"},
+		{name: "subcommand", args: "installation upgrade --param password=topsecret", wantName: "porter installations upgrade",
+			wantFormatted: "porter installation upgrade --param password=*******"},
+		{name: "build secret", args: "build --secret id=mysecret,src=/tmp/secret --build-arg A=b --custom c=d", wantName: "porter build",
+			wantFormatted: "porter build --secret id=******* --build-arg A=b --custom c=d"},
+		{name: "unknown command", args: "instal --param password=topsecret", wantName: "porter",
+			wantFormatted: "porter instal --param password=*******"},
+		{name: "unknown subcommand", args: "installation instal --param password=topsecret", wantName: "porter installations",
+			wantFormatted: "porter installation instal --param password=*******"},
+		{name: "positional args", args: "install --param password=topsecret -- --param name=me", wantName: "porter install",
+			wantFormatted: "porter install --param password=******* -- --param name=me"},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			_, gotName, gotFormatted := getCalledCommand(buildRootCommand(), strings.Fields(tc.args))
+			assert.Equal(t, tc.wantName, gotName)
+			assert.Equal(t, tc.wantFormatted, gotFormatted)
+		})
+	}
+}
+
+func TestFormatCommand_Reveal(t *testing.T) {
+	reveal := func(flag string, name string) bool {
+		return flag == "param" && name == "name"
+	}
+
+	args := []string{"install", "--param", "name=me", "--param=name=you", "--param", "password=topsecret", "--param", "name"}
+	got := formatCommand(buildRootCommand(), args, reveal)
+	assert.Equal(t, "porter install --param name=me --param=name=you --param password=******* --param *******", got)
 }
 
 func TestHelp(t *testing.T) {
@@ -437,4 +489,14 @@ func TestExplainOutput(t *testing.T) {
 
 		assertYamlOutput(t, p.TestConfig.TestContext.GetOutput())
 	})
+}
+
+func TestMarkFlagSensitive(t *testing.T) {
+	f := pflag.NewFlagSet("test", pflag.ContinueOnError)
+	f.String("param", "", "")
+
+	markFlagSensitive(f, "param")
+	assert.Contains(t, f.Lookup("param").Annotations, sensitiveFlag)
+
+	assert.Panics(t, func() { markFlagSensitive(f, "missing") }, "expected a flag that isn't defined to fail fast")
 }

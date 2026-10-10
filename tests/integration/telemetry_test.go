@@ -56,16 +56,15 @@ func TestTelemetry_TracesExported(t *testing.T) {
 	}
 }
 
-// Test that sensitive values are not included in the trace data sent to the telemetry endpoint
+// Test that sensitive values are not included in the trace data sent to the telemetry endpoint,
+// while the values of parameters that are not sensitive are.
 func TestTelemetry_SensitiveValuesAreNotTraced(t *testing.T) {
-	// Remove the skip once https://github.com/getporter/porter/issues/3701 is fixed
-	t.Skip("sensitive parameters set with --param are leaked in the command attribute of the root span, see https://github.com/getporter/porter/issues/3701")
-
 	test, err := tester.NewTest(t)
 	defer test.Close()
 	require.NoError(t, err, "test setup failed")
 
-	receiver := test.StartTestOTLPReceiver(tester.OTLPProtocolGRPC)
+	// The sensitive value is used inside the bundle, so we need the traces exported from there as well
+	receiver := test.StartBundleTestOTLPReceiver(tester.OTLPProtocolGRPC)
 
 	bundleDir := filepath.Join(test.RepoRoot, "tests/integration/testdata/bundles/failing-bundle-with-sensitive-data")
 	require.NoError(t, shx.Copy(filepath.Join(bundleDir, "*"), test.TestDir), "error copying the bundle into the test directory")
@@ -73,8 +72,11 @@ func TestTelemetry_SensitiveValuesAreNotTraced(t *testing.T) {
 
 	// The bundle fails while running a command that has the sensitive parameter as an argument
 	const sensitiveValue = "topsecret"
-	_, _, err = test.RunPorter("install", "--param", "password="+sensitiveValue)
+	_, output, err := test.RunPorter("install", "--param", "name=mybuns-author", "--param", "password="+sensitiveValue)
 	require.Error(t, err, "expected the install to fail")
+
+	// The output of the bundle is saved as the logs of the run, which is included in the trace data when it is stored
+	require.NotContains(t, output, sensitiveValue, "expected the sensitive value to be masked in the output")
 
 	// Validate that the failed install was traced, so that we know we are checking relevant trace data
 	var failedSpans int
@@ -85,7 +87,30 @@ func TestTelemetry_SensitiveValuesAreNotTraced(t *testing.T) {
 	}
 	require.NotZero(t, failedSpans, "expected the failed install to be recorded in the trace data")
 
+	// Validate that we received trace data from the mixin that was given the sensitive value
+	var mixinSpans int
+	for _, span := range receiver.RequireSpans("porter") {
+		if span.GetName() == "exec" {
+			mixinSpans++
+		}
+	}
+	require.NotZero(t, mixinSpans, "expected the exec mixin inside the bundle to have exported trace data")
+
 	receiver.RequireNoSpanContains(sensitiveValue)
+
+	// Validate that only the sensitive parameter was masked in the command recorded on the root span
+	var commands []string
+	for _, span := range receiver.RequireSpans("porter") {
+		if span.GetName() != "porter install" {
+			continue
+		}
+		for _, attr := range span.GetAttributes() {
+			if attr.GetKey() == "command" {
+				commands = append(commands, attr.GetValue().GetStringValue())
+			}
+		}
+	}
+	require.Equal(t, []string{"porter install --param name=mybuns-author --param password=*******"}, commands, "expected the root span to record the command with only the sensitive parameter masked")
 }
 
 // Test that telemetry data is being exported both from porter and the plugins
