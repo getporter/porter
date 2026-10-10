@@ -146,6 +146,55 @@ func TestRegistry_GetRemoteImageDigest(t *testing.T) {
 	})
 }
 
+func TestRegistry_GetImageDescriptor(t *testing.T) {
+	regSrv := httptest.NewServer(registry.New())
+	defer regSrv.Close()
+	regHost := strings.TrimPrefix(regSrv.URL, "http://")
+
+	regOpts := RegistryOptions{InsecureRegistry: true}
+	r := NewRegistry(portercontext.New())
+
+	pushRef, err := name.ParseReference(regHost+"/myorg/myapp:v1.0", regOpts.ToNameOptions()...)
+	require.NoError(t, err)
+	img, err := random.Image(1024, 1)
+	require.NoError(t, err)
+	require.NoError(t, remote.Write(pushRef, img, regOpts.ToRemoteOptions()...))
+	ref := cnab.MustParseOCIReference(regHost + "/myorg/myapp:v1.0")
+
+	t.Run("image exists", func(t *testing.T) {
+		wantDigest, err := img.Digest()
+		require.NoError(t, err)
+
+		desc, err := r.GetImageDescriptor(context.Background(), ref, regOpts)
+		require.NoError(t, err)
+		assert.Equal(t, wantDigest, desc.Digest)
+	})
+
+	t.Run("image does not exist", func(t *testing.T) {
+		missingRef := cnab.MustParseOCIReference(regHost + "/myorg/missing:v1.0")
+		_, err := r.GetImageDescriptor(context.Background(), missingRef, regOpts)
+		require.ErrorIs(t, err, ErrNotFound{})
+	})
+
+	t.Run("canceled before retrieving content", func(t *testing.T) {
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		desc, err := r.GetImageDescriptor(ctx, ref, regOpts)
+		require.NoError(t, err)
+		remoteImg, err := desc.Image()
+		require.NoError(t, err)
+		layers, err := remoteImg.Layers()
+		require.NoError(t, err)
+		require.Len(t, layers, 1)
+
+		// The image's content is retrieved lazily, and should stop when the context is canceled
+		cancel()
+		_, err = layers[0].Compressed()
+		require.ErrorIs(t, err, context.Canceled)
+	})
+}
+
 // rejectTagDeleteHandler wraps a registry handler and rejects DELETE
 // requests targeting a tag (as opposed to a digest), mimicking the behavior
 // of the reference distribution/distribution registry implementation, which

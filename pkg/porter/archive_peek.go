@@ -90,6 +90,53 @@ func peekArchiveMetadata(source, dest string) (found bool, err error) {
 	return len(remaining) == 0, nil
 }
 
+// extractArchive extracts source, a gzip-compressed tar archive, into dest.
+// Only directories and regular files are extracted, which is all that an
+// archive built by exporter.CustomTar contains.
+func extractArchive(source, dest string) error {
+	f, err := os.Open(source)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	gz, err := gzip.NewReader(f)
+	if err != nil {
+		return err
+	}
+	defer gz.Close()
+
+	tr := tar.NewReader(gz)
+	for {
+		hdr, err := tr.Next()
+		if errors.Is(err, io.EOF) {
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+
+		path, err := safeJoin(dest, hdr.Name)
+		if err != nil {
+			return err
+		}
+
+		switch hdr.Typeflag {
+		case tar.TypeDir:
+			if err := os.MkdirAll(path, 0755); err != nil {
+				return err
+			}
+		case tar.TypeReg:
+			if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+				return err
+			}
+			if err := writeTarEntry(path, tr); err != nil {
+				return err
+			}
+		}
+	}
+}
+
 // safeJoin joins dest with name, an archive entry path, and errors if the
 // resulting path would escape dest (e.g. via ".." components), guarding
 // against zip-slip style path traversal.

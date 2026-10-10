@@ -94,8 +94,8 @@ func buildBenchArchiveFile(b *testing.B, srcDir string) string {
 }
 
 // BenchmarkExtractBundleFull measures today's cost of getting a bundle's
-// metadata out of an archive via extractBundle: cnab-go's Importer fully
-// extracts every entry, including artifacts/layout/blobs/, regardless of
+// metadata out of an archive via extractBundle: it fully extracts every
+// entry, including artifacts/layout/blobs/, regardless of
 // whether any of it is actually needed.
 func BenchmarkExtractBundleFull(b *testing.B) {
 	srcDir := buildBenchArchiveDir(b, 8*1024*1024)

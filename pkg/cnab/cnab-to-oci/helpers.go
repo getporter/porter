@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"get.porter.sh/porter/pkg/cnab"
+	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/moby/moby/api/types/image"
 	"github.com/moby/moby/client"
 	"github.com/opencontainers/go-digest"
@@ -18,7 +19,7 @@ type TestRegistry struct {
 	MockPushImage            func(ctx context.Context, ref cnab.OCIReference, opts RegistryOptions) (imageDigest digest.Digest, err error)
 	MockGetCachedImage       func(ctx context.Context, ref cnab.OCIReference) (ImageMetadata, error)
 	MockListTags             func(ctx context.Context, ref cnab.OCIReference, opts RegistryOptions) ([]string, error)
-	MockPullImage            func(ctx context.Context, ref cnab.OCIReference, opts RegistryOptions) error
+	MockGetImageDescriptor   func(ctx context.Context, ref cnab.OCIReference, opts RegistryOptions) (*remote.Descriptor, error)
 	MockGetBundleMetadata    func(ctx context.Context, ref cnab.OCIReference, opts RegistryOptions) (BundleMetadata, error)
 	MockGetImageMetadata     func(ctx context.Context, ref cnab.OCIReference, opts RegistryOptions) (ImageMetadata, error)
 	MockGetRemoteImageDigest func(ctx context.Context, ref cnab.OCIReference, opts RegistryOptions) (digest.Digest, error)
@@ -94,22 +95,12 @@ func (t *TestRegistry) ListTags(ctx context.Context, ref cnab.OCIReference, opts
 	return nil, nil
 }
 
-func (t *TestRegistry) PullImage(ctx context.Context, ref cnab.OCIReference, opts RegistryOptions) error {
-	if t.MockPullImage != nil {
-		return t.MockPullImage(ctx, ref, opts)
+func (t TestRegistry) GetImageDescriptor(ctx context.Context, ref cnab.OCIReference, opts RegistryOptions) (*remote.Descriptor, error) {
+	if t.MockGetImageDescriptor != nil {
+		return t.MockGetImageDescriptor(ctx, ref, opts)
 	}
 
-	image_hash := ref.String()
-	sum, err := NewImageSummaryFromInspect(ref, client.ImageInspectResult{
-		InspectResponse: image.InspectResponse{
-			ID:          cnab.NewULID(),
-			RepoDigests: []string{fmt.Sprintf("%s@sha256:75c495e5ce9c428d482973d72e3ce9925e1db304a97946c9aa0b540d7537e041", image_hash)},
-		}})
-	if err != nil {
-		return err
-	}
-	t.cache[image_hash] = sum
-	return nil
+	return nil, ErrNotFound{Reference: ref}
 }
 
 func (t TestRegistry) GetBundleMetadata(ctx context.Context, ref cnab.OCIReference, opts RegistryOptions) (BundleMetadata, error) {

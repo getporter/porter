@@ -17,7 +17,6 @@ require (
 	github.com/cbroglie/mustache v1.4.2
 	github.com/cnabio/cnab-go v0.26.4
 	github.com/cnabio/cnab-to-oci v0.6.1
-	github.com/cnabio/image-relocation v0.9.2
 	github.com/containerd/containerd/v2 v2.3.6
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
 	github.com/distribution/reference v0.6.1-0.20240718132515-8c942b0459df
@@ -208,8 +207,6 @@ require (
 	github.com/moby/sys/mountinfo v0.7.2 // indirect
 	github.com/moby/sys/sequential v0.7.0 // indirect
 	github.com/moby/sys/signal v0.7.1 // indirect
-	github.com/moby/sys/user v0.4.1 // indirect
-	github.com/moby/sys/userns v0.2.0 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.3-0.20250322232337-35a7c28c31ee // indirect
 	github.com/montanaflynn/stats v0.8.2 // indirect

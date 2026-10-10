@@ -30,9 +30,6 @@ type RegistryProvider interface {
 	// ListTags returns all tags defined on the specified repository.
 	ListTags(ctx context.Context, repo cnab.OCIReference, opts RegistryOptions) ([]string, error)
 
-	// PullImage pulls an image from an OCI registry and returns the image's digest
-	PullImage(ctx context.Context, image cnab.OCIReference, opts RegistryOptions) error
-
 	// GetImageMetadata returns information about an image in a registry
 	// Use ErrNotFound to detect if the error is because the image is not in the registry.
 	GetImageMetadata(ctx context.Context, ref cnab.OCIReference, opts RegistryOptions) (ImageMetadata, error)
@@ -41,6 +38,11 @@ type RegistryProvider interface {
 	// at ref, without pulling it.
 	// Use ErrNotFound to detect if the error is because the image is not in the registry.
 	GetRemoteImageDigest(ctx context.Context, ref cnab.OCIReference, opts RegistryOptions) (digest.Digest, error)
+
+	// GetImageDescriptor returns the descriptor of an image, or image index,
+	// in a registry. The descriptor can be used to retrieve the image's content.
+	// Use ErrNotFound to detect if the error is because the image is not in the registry.
+	GetImageDescriptor(ctx context.Context, ref cnab.OCIReference, opts RegistryOptions) (*remote.Descriptor, error)
 
 	// GetBundleMetadata returns information about a bundle in a registry
 	// Use ErrNotFound to detect if the error is because the bundle is not in the registry.

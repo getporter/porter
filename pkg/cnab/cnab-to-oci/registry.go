@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"strings"
 	"sync"
@@ -290,48 +289,6 @@ func (r *Registry) PushImage(ctx context.Context, ref cnab.OCIReference, opts Re
 	return dist.Descriptor.Digest, nil
 }
 
-// PullImage pulls an image from an OCI registry.
-func (r *Registry) PullImage(ctx context.Context, ref cnab.OCIReference, opts RegistryOptions) error {
-	ctx, log := tracing.StartSpan(ctx)
-	defer log.EndSpan()
-
-	cli, err := docker.GetDockerClient()
-	if err != nil {
-		return log.Error(err)
-	}
-
-	// Resolve auth for the image reference and encode it for the Docker client
-	authConfig := r.resolveAuthConfig(ref)
-	encodedAuth, err := authconfig.Encode(registrytypes.AuthConfig{
-		Username:      authConfig.Username,
-		Password:      authConfig.Password,
-		ServerAddress: authConfig.ServerAddress,
-		Auth:          authConfig.Auth,
-		IdentityToken: authConfig.IdentityToken,
-		RegistryToken: authConfig.RegistryToken,
-	})
-	if err != nil {
-		return log.Error(fmt.Errorf("failed to serialize docker auth config: %w", err))
-	}
-
-	imgRef := ref.String()
-	rd, err := cli.Client().ImagePull(ctx, imgRef, client.ImagePullOptions{
-		RegistryAuth: encodedAuth,
-	})
-	if err != nil {
-		return log.Error(fmt.Errorf("docker pull for image %s failed: %w", imgRef, err))
-	}
-	defer rd.Close()
-
-	// save the image to docker cache
-	_, err = io.ReadAll(rd)
-	if err != nil {
-		return fmt.Errorf("failed to save image %s into local cache: %w", imgRef, err)
-	}
-
-	return nil
-}
-
 func (r *Registry) createResolver(insecureRegistries []string) containerdRemotes.Resolver {
 	return remotes.CreateResolver(config.LoadDefaultConfigFile(r.Out), insecureRegistries...)
 }
@@ -434,7 +391,10 @@ func (r *Registry) getRemoteDescriptor(ctx context.Context, refStr string, opts 
 	if err != nil {
 		return nil, fmt.Errorf("invalid reference %s: %w", refStr, err)
 	}
-	return remote.Get(ref, opts.ToRemoteOptions()...)
+	// The context is also used when the descriptor's content is retrieved later
+	remoteOpts := opts.ToRemoteOptions()
+	remoteOpts = append(remoteOpts, remote.WithContext(ctx))
+	return remote.Get(ref, remoteOpts...)
 }
 
 // headRemote wraps remote.Head with reference parsing
@@ -574,6 +534,23 @@ func (r *Registry) GetBundleMetadata(ctx context.Context, ref cnab.OCIReference,
 			Digest:    digest.Digest(bundleDigest),
 		},
 	}, nil
+}
+
+// GetImageDescriptor returns the descriptor of an image, or image index, in a registry.
+// Use ErrNotFound to detect if the error is because the image is not in the registry.
+func (r *Registry) GetImageDescriptor(ctx context.Context, ref cnab.OCIReference, opts RegistryOptions) (*remote.Descriptor, error) {
+	ctx, span := tracing.StartSpan(ctx, attribute.String("reference", ref.String()))
+	defer span.EndSpan()
+
+	desc, err := r.getRemoteDescriptor(ctx, ref.String(), opts)
+	if err != nil {
+		if notFoundErr := asNotFoundError(err, ref); notFoundErr != nil {
+			return nil, span.Error(notFoundErr)
+		}
+		return nil, span.Errorf("error retrieving image descriptor for %s: %w", ref.String(), err)
+	}
+
+	return desc, nil
 }
 
 // GetImageMetadata returns information about an image in a registry

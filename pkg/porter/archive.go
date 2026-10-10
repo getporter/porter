@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"net/http"
 	"os"
 	"path/filepath"
 	"sort"
@@ -21,9 +20,9 @@ import (
 	"get.porter.sh/porter/pkg/tracing"
 	"github.com/carolynvs/aferox"
 	"github.com/cnabio/cnab-go/bundle"
-	"github.com/cnabio/cnab-go/imagestore"
-	"github.com/cnabio/cnab-go/imagestore/construction"
 	"github.com/cnabio/cnab-to-oci/relocation"
+	"github.com/google/go-containerregistry/pkg/v1/empty"
+	"github.com/google/go-containerregistry/pkg/v1/layout"
 	"github.com/spf13/afero"
 	"go.opentelemetry.io/otel/attribute"
 )
@@ -100,27 +99,20 @@ func (p *Porter) Archive(ctx context.Context, opts ArchiveOptions) error {
 		return log.Error(err)
 	}
 
-	// This allows you to export thin or thick bundles, we only support generating "thick" archives
-	ctor, err := construction.NewConstructor(false)
-	if err != nil {
-		return log.Error(err)
-	}
-
 	dest, err := p.FileSystem.OpenFile(opts.ArchiveFile, os.O_RDWR|os.O_CREATE|os.O_TRUNC, pkg.FileModeWritable)
 	if err != nil {
 		return log.Error(err)
 	}
 
 	exp := &exporter{
-		fs:                    p.FileSystem,
-		out:                   p.Out,
-		logs:                  p.Out,
-		bundle:                bundleRef.Definition,
-		relocationMap:         bundleRef.RelocationMap,
-		destination:           dest,
-		imageStoreConstructor: ctor,
-		insecureRegistry:      opts.InsecureRegistry,
-		compressionLevel:      opts.compressionLevelInt,
+		fs:               p.FileSystem,
+		out:              p.Out,
+		bundle:           bundleRef.Definition,
+		relocationMap:    bundleRef.RelocationMap,
+		destination:      dest,
+		registry:         p.Registry,
+		insecureRegistry: opts.InsecureRegistry,
+		compressionLevel: opts.compressionLevelInt,
 	}
 	if err := exp.export(ctx); err != nil {
 		return log.Error(err)
@@ -130,16 +122,86 @@ func (p *Porter) Archive(ctx context.Context, opts ArchiveOptions) error {
 }
 
 type exporter struct {
-	fs                    aferox.Aferox
-	out                   io.Writer
-	logs                  io.Writer
-	bundle                cnab.ExtendedBundle
-	relocationMap         relocation.ImageRelocationMap
-	destination           io.Writer
-	imageStoreConstructor imagestore.Constructor
-	imageStore            imagestore.Store
-	insecureRegistry      bool
-	compressionLevel      int
+	fs               aferox.Aferox
+	out              io.Writer
+	bundle           cnab.ExtendedBundle
+	relocationMap    relocation.ImageRelocationMap
+	destination      io.Writer
+	registry         cnabtooci.RegistryProvider
+	imageStore       imageStore
+	insecureRegistry bool
+	compressionLevel int
+}
+
+// ociRefNameAnnotation is the annotation that records the name of an image in
+// an OCI image layout.
+const ociRefNameAnnotation = "org.opencontainers.image.ref.name"
+
+// imageStore stores the images referenced by a bundle in the archive.
+type imageStore interface {
+	// Add copies the image with the given name to the image store.
+	Add(ctx context.Context, img string) (contentDigest string, err error)
+}
+
+// ociLayoutStore is an image store which stores images as an OCI image layout
+// in the artifacts/layout directory of the archive.
+type ociLayoutStore struct {
+	layoutPath layout.Path
+	registry   cnabtooci.RegistryProvider
+	regOpts    cnabtooci.RegistryOptions
+}
+
+func newOCILayoutStore(archiveDir string, registry cnabtooci.RegistryProvider, regOpts cnabtooci.RegistryOptions) (*ociLayoutStore, error) {
+	layoutDir := filepath.Join(archiveDir, "artifacts", "layout")
+	if err := os.MkdirAll(layoutDir, pkg.FileModeDirectory); err != nil {
+		return nil, err
+	}
+
+	layoutPath, err := layout.Write(layoutDir, empty.Index)
+	if err != nil {
+		return nil, err
+	}
+
+	return &ociLayoutStore{layoutPath: layoutPath, registry: registry, regOpts: regOpts}, nil
+}
+
+// Add pulls the image (or image index) from its registry and appends it to
+// the layout, annotated with its fully-qualified name so that it can be found
+// again when the archive is published.
+func (s *ociLayoutStore) Add(ctx context.Context, img string) (string, error) {
+	ref, err := cnab.ParseOCIReference(img)
+	if err != nil {
+		return "", err
+	}
+
+	desc, err := s.registry.GetImageDescriptor(ctx, ref, s.regOpts)
+	if err != nil {
+		return "", err
+	}
+
+	annotations := layout.WithAnnotations(map[string]string{ociRefNameAnnotation: ref.Named.String()})
+	if desc.MediaType.IsIndex() {
+		idx, err := desc.ImageIndex()
+		if err != nil {
+			return "", err
+		}
+		err = s.layoutPath.AppendIndex(idx, annotations)
+		if err != nil {
+			return "", err
+		}
+	} else {
+		// assume all other media types are images since some images don't set the media type
+		img, err := desc.Image()
+		if err != nil {
+			return "", err
+		}
+		err = s.layoutPath.AppendImage(img, annotations)
+		if err != nil {
+			return "", err
+		}
+	}
+
+	return desc.Digest.String(), nil
 }
 
 func (ex *exporter) export(ctx context.Context) error {
@@ -174,22 +236,12 @@ func (ex *exporter) export(ctx context.Context) error {
 		return fmt.Errorf("unable to write relocation-mapping.json in archive: %w", err)
 	}
 
-	var transport *http.Transport
-	if ex.insecureRegistry {
-		transport = cnabtooci.GetInsecureRegistryTransport()
-	} else {
-		transport = http.DefaultTransport.(*http.Transport)
-	}
-
-	ex.imageStore, err = ex.imageStoreConstructor(
-		imagestore.WithArchiveDir(archiveDir),
-		imagestore.WithLogs(ex.logs),
-		imagestore.WithTransport(transport))
+	ex.imageStore, err = newOCILayoutStore(archiveDir, ex.registry, cnabtooci.RegistryOptions{InsecureRegistry: ex.insecureRegistry})
 	if err != nil {
 		return fmt.Errorf("error creating artifacts: %s", err)
 	}
 
-	if err := ex.prepareArtifacts(ex.bundle); err != nil {
+	if err := ex.prepareArtifacts(ctx, ex.bundle); err != nil {
 		return fmt.Errorf("error preparing bundle artifact: %s", err)
 	}
 
@@ -363,8 +415,8 @@ func (ex *exporter) CustomTar(ctx context.Context, srcPath string, compressionLe
 			}
 
 			// Same reasoning one level deeper: artifacts/layout/{oci-layout,
-			// index.json} are small, fixed-content files written by
-			// ocilayout.Create up front, and index.json alone is enough to
+			// index.json} are small files written by newOCILayoutStore up
+			// front, and index.json alone is enough to
 			// resolve every image's digest (layout.Path.ImageIndex reads
 			// only index.json) — so write them before artifacts/layout/blobs/,
 			// the large tree that holds the actual image content.
@@ -406,20 +458,20 @@ func (ex *exporter) CustomTar(ctx context.Context, srcPath string, compressionLe
 
 // prepareArtifacts pulls all images, verifies their digests and
 // saves them to a directory called artifacts/ in the bundle directory
-func (ex *exporter) prepareArtifacts(bun cnab.ExtendedBundle) error {
+func (ex *exporter) prepareArtifacts(ctx context.Context, bun cnab.ExtendedBundle) error {
 	var imageKeys []string
 	for imageKey := range bun.Images {
 		imageKeys = append(imageKeys, imageKey)
 	}
 	sort.Strings(imageKeys)
 	for _, k := range imageKeys {
-		if err := ex.addImage(bun.Images[k].BaseImage); err != nil {
+		if err := ex.addImage(ctx, bun.Images[k].BaseImage); err != nil {
 			return err
 		}
 	}
 
 	for _, in := range bun.InvocationImages {
-		if err := ex.addImage(in.BaseImage); err != nil {
+		if err := ex.addImage(ctx, in.BaseImage); err != nil {
 			return err
 		}
 	}
@@ -428,7 +480,7 @@ func (ex *exporter) prepareArtifacts(bun cnab.ExtendedBundle) error {
 }
 
 // addImage pulls an image using relocation map, adds it to the artifacts/ directory, and verifies its digest
-func (ex *exporter) addImage(base bundle.BaseImage) error {
+func (ex *exporter) addImage(ctx context.Context, base bundle.BaseImage) error {
 	if ex.relocationMap == nil {
 		return errors.New("relocation map is not provided")
 	}
@@ -436,7 +488,7 @@ func (ex *exporter) addImage(base bundle.BaseImage) error {
 	if !ok {
 		return fmt.Errorf("can not locate the referenced image: %s", base.Image)
 	}
-	dig, err := ex.imageStore.Add(location)
+	dig, err := ex.imageStore.Add(ctx, location)
 	if err != nil {
 		return err
 	}
