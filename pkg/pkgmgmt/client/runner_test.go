@@ -3,9 +3,12 @@ package client
 import (
 	"context"
 	"os"
+	"os/exec"
+	"runtime"
 	"testing"
 
 	"get.porter.sh/porter/pkg/pkgmgmt"
+	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/test"
 	"get.porter.sh/porter/pkg/tracing"
 	"github.com/stretchr/testify/assert"
@@ -64,7 +67,8 @@ func TestRunner_Run_ErrorIncludesRunnableCommand(t *testing.T) {
 	err := r.Run(context.Background(), pkgmgmt.CommandOptions{Command: "install", Runtime: true})
 	require.Error(t, err)
 	// The test command is executed with the test binary
-	assert.Contains(t, err.Error(), "package command failed "+os.Args[0]+" ", "expected the error to include a runnable command")
+	testBin := portercontext.FormatCommand(&exec.Cmd{Args: []string{os.Args[0]}})
+	assert.Contains(t, err.Error(), "package command failed "+testBin+" ", "expected the error to include a runnable command")
 	assert.NotContains(t, err.Error(), r.Getwd()+os.Args[0], "expected the command to not be prefixed with the working directory")
 }
 
@@ -74,7 +78,11 @@ func TestRunner_Run_ErrorQuotesCommandArguments(t *testing.T) {
 
 	err := r.Run(context.Background(), pkgmgmt.CommandOptions{Command: "install", File: "my file.yaml", Runtime: true})
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "install -f 'my file.yaml'", "expected arguments with spaces to be quoted so that the command is runnable")
+	wantArgs := "install -f 'my file.yaml'"
+	if runtime.GOOS == "windows" {
+		wantArgs = `install -f "my file.yaml"`
+	}
+	assert.Contains(t, err.Error(), wantArgs, "expected arguments with spaces to be quoted so that the command is runnable")
 }
 
 func TestRunner_Run_TracesRunnableCommand(t *testing.T) {
@@ -99,7 +107,9 @@ func TestRunner_Run_TracesRunnableCommand(t *testing.T) {
 		}
 	}
 	// The test command is executed with the test binary
-	wantCmd := os.Args[0] + " /home/myuser/.porter/mixins/mypackage/runtimes/mypackage-runtime install -f 'my file.yaml'"
+	wantCmd := portercontext.FormatCommand(&exec.Cmd{
+		Args: []string{os.Args[0], r.getExecutablePath(), "install", "-f", "my file.yaml"},
+	})
 	assert.Equal(t, wantCmd, attrs["command"], "expected the command attribute to be a runnable command")
 	assert.Equal(t, r.Getwd(), attrs["dir"], "expected the working directory to be recorded separately from the command")
 }

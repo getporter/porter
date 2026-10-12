@@ -9,7 +9,8 @@ import (
 )
 
 // FormatCommand returns the command and its arguments as a single string that
-// can be copied and run as-is, quoted for the current operating system.
+// can be copied and run as-is, quoted for the current operating system:
+// for /bin/sh, or for cmd.exe on Windows.
 func FormatCommand(cmd *exec.Cmd) string {
 	return formatCommand(runtime.GOOS, cmd.Args)
 }
@@ -26,14 +27,23 @@ func formatCommand(goos string, args []string) string {
 	return strings.Join(quoted, " ")
 }
 
+// windowsSpecialChars are the characters that require an argument to be quoted
+// on Windows: those that separate or quote arguments, and those that cmd.exe
+// treats as operators when they are not quoted.
+const windowsSpecialChars = " \t\"&|<>^()"
+
 // quoteWindowsArg quotes an argument following the rules that Windows programs
 // use to parse their command line, which are the same as syscall.EscapeArg.
 // Backslashes are only special when they are followed by a double quote.
+//
+// Arguments with cmd.exe operators are quoted as well, so that cmd.exe passes
+// them on as-is. Environment variable references, such as %PATH%, cannot be
+// escaped on the cmd.exe command line and are still expanded.
 func quoteWindowsArg(arg string) string {
 	if arg == "" {
 		return `""`
 	}
-	if !strings.ContainsAny(arg, " \t\"") {
+	if !strings.ContainsAny(arg, windowsSpecialChars) {
 		return arg
 	}
 

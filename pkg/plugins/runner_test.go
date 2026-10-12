@@ -3,6 +3,7 @@ package plugins
 import (
 	"context"
 	"os"
+	"os/exec"
 	"testing"
 
 	"get.porter.sh/porter/pkg/config"
@@ -41,8 +42,12 @@ func TestPluginRunner_Run_TracesRunnableCommand(t *testing.T) {
 			attrs[attr.Key] = attr.Value.AsString()
 		}
 	}
+	pluginPath, err := config.New().GetPluginPath("myplugin")
+	require.NoError(t, err)
 	// The test command is executed with the test binary
-	wantCmd := os.Args[0] + " /home/myuser/.porter/plugins/myplugin/myplugin version --output json"
+	wantCmd := portercontext.FormatCommand(&exec.Cmd{
+		Args: []string{os.Args[0], pluginPath, "version", "--output", "json"},
+	})
 	assert.Equal(t, wantCmd, attrs["full-command"], "expected the full-command attribute to be a runnable command")
 	assert.Equal(t, r.Getwd(), attrs["dir"], "expected the working directory to be recorded separately from the command")
 }
