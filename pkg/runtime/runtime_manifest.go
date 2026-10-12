@@ -605,7 +605,7 @@ func (m *RuntimeManifest) Initialize(ctx context.Context) error {
 			}
 
 			// Porter by default places parameter value into file determined by Destination.Path
-			bytes, err := m.config.FileSystem.ReadFile(param.Destination.Path)
+			contents, err := m.config.FileSystem.ReadFile(param.Destination.Path)
 			if err != nil {
 				if os.IsNotExist(err) {
 					continue
@@ -618,14 +618,14 @@ func (m *RuntimeManifest) Initialize(ctx context.Context) error {
 			// We want to get the null -> "" fixed, and also not write files into the bundle when unset.
 			// that's a cnab change somewhere probably
 			// the problem is in injectParameters in cnab-go
-			if string(bytes) == "null" {
+			if string(contents) == "null" {
 				err := m.config.FileSystem.Remove(param.Destination.Path)
 				if err != nil {
 					return fmt.Errorf("unable to remove destination path: %w", err)
 				}
 				continue
 			}
-			decoded, err := base64.StdEncoding.DecodeString(string(bytes))
+			decoded, err := base64.StdEncoding.DecodeString(string(contents))
 			if err != nil {
 				return fmt.Errorf("unable to decode parameter %s: %w", paramName, err)
 			}
@@ -635,7 +635,7 @@ func (m *RuntimeManifest) Initialize(ctx context.Context) error {
 				if err := m.config.FileSystem.Remove(param.Destination.Path); err != nil {
 					return log.Error(fmt.Errorf("unable to remove destination path: %w", err))
 				}
-				if err := tgz.UnpackDir(m.config.FileSystem, strings.NewReader(string(decoded)), param.Destination.Path); err != nil {
+				if err := tgz.UnpackDir(m.config.FileSystem, bytes.NewReader(decoded), param.Destination.Path); err != nil {
 					return log.Error(fmt.Errorf("unable to unpack directory parameter %s: %w", paramName, err))
 				}
 				continue
@@ -830,6 +830,15 @@ func (m *RuntimeManifest) packStateBag(ctx context.Context) error {
 	return log.Error(bigErr.ErrorOrNil())
 }
 
+// packDirectoryOutput archives a directory output as a tar.gz at the output's destination.
+func (m *RuntimeManifest) packDirectoryOutput(srcPath string, dstPath string) error {
+	data, err := tgz.PackDir(m.config.FileSystem, srcPath)
+	if err != nil {
+		return err
+	}
+	return m.config.FileSystem.WriteFile(dstPath, data, pkg.FileModeWritable)
+}
+
 // applyUnboundBundleOutputs finds outputs that haven't been bound yet by a step,
 // and if they can be bound, i.e. they grab a file from the bundle's filesystem,
 // apply the output.
@@ -873,11 +882,7 @@ func (m *RuntimeManifest) applyUnboundBundleOutputs(ctx context.Context) error {
 			}
 
 			if m.bundle.IsDirectoryOutput(name) {
-				data, err := tgz.PackDir(m.config.FileSystem, srcPath)
-				if err == nil {
-					err = m.config.FileSystem.WriteFile(dstPath, data, pkg.FileModeWritable)
-				}
-				if err != nil {
+				if err := m.packDirectoryOutput(srcPath, dstPath); err != nil {
 					bigErr = multierror.Append(bigErr, fmt.Errorf("unable to pack output directory %s to %s: %w", srcPath, dstPath, err))
 				}
 				continue
