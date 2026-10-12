@@ -20,6 +20,7 @@ import (
 	"get.porter.sh/porter/tests"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
+	"github.com/cnabio/cnab-go/secrets/host"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -1459,4 +1460,46 @@ func Test_loadParameters_directoryParameter(t *testing.T) {
 
 	_, err = r.finalizeParameters(context.Background(), storage.Installation{}, b, "action", map[string]string{"foo": "/path/to/dir/a.txt"})
 	require.ErrorContains(t, err, "must be a directory")
+}
+
+func Test_loadParameterSets_directoryParameter(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	r := NewTestPorter(t)
+	defer r.Close()
+
+	require.NoError(t, r.FileSystem.WriteFile("/path/to/dir/sub/b.txt", []byte("world"), 0o644))
+
+	b := cnab.NewBundle(bundle.Bundle{
+		RequiredExtensions: []string{cnab.FileParameterExtensionKey, cnab.DirectoryParameterExtensionKey},
+		Custom: map[string]interface{}{
+			cnab.DirectoryParameterExtensionKey: map[string]interface{}{"parameters": []string{"foo"}},
+		},
+		Definitions: definition.Definitions{
+			"foo": &definition.Schema{Type: "string", ContentEncoding: "base64"},
+		},
+		Parameters: map[string]bundle.Parameter{
+			"foo": {Definition: "foo", Required: true, Destination: &bundle.Location{Path: "/tmp/foo"}},
+		},
+	})
+
+	pset := storage.NewParameterSet("", "myparam", secrets.SourceMap{
+		Name:   "foo",
+		Source: secrets.Source{Strategy: host.SourcePath, Hint: "/path/to/dir"},
+	})
+	require.NoError(t, r.TestParameters.InsertParameterSet(ctx, pset))
+
+	resolved, err := r.loadParameterSets(ctx, b, "", []string{"myparam"}, nil)
+	require.NoError(t, err)
+
+	params, err := r.finalizeParameters(ctx, storage.Installation{}, b, "action", resolved)
+	require.NoError(t, err)
+
+	decoded, err := base64.StdEncoding.DecodeString(params["foo"].(string))
+	require.NoError(t, err, "expected a base64 encoded archive and not the raw path")
+	require.NoError(t, tgz.UnpackDir(r.FileSystem, bytes.NewReader(decoded), "/unpacked"))
+	got, err := r.FileSystem.ReadFile("/unpacked/sub/b.txt")
+	require.NoError(t, err)
+	assert.Equal(t, "world", string(got))
 }

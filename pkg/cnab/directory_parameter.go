@@ -62,26 +62,25 @@ func (b ExtendedBundle) SupportsDirectoryParameters() bool {
 	return b.SupportsExtension(DirectoryParameterExtensionKey)
 }
 
-// IsDirectoryParameter determines if the named parameter is of type "directory".
-func (b ExtendedBundle) IsDirectoryParameter(name string) bool {
+// directoryParameters returns the directory parameters declared by the bundle,
+// or an empty set when the bundle doesn't use the extension.
+func (b ExtendedBundle) directoryParameters() DirectoryParameters {
 	if !b.SupportsDirectoryParameters() {
-		return false
+		return DirectoryParameters{}
 	}
 	dirs, err := b.DirectoryParameterReader()
 	if err != nil {
-		return false
+		return DirectoryParameters{}
 	}
-	return slices.Contains(dirs.(DirectoryParameters).Parameters, name)
+	return dirs.(DirectoryParameters)
+}
+
+// IsDirectoryParameter determines if the named parameter is of type "directory".
+func (b ExtendedBundle) IsDirectoryParameter(name string) bool {
+	return slices.Contains(b.directoryParameters().Parameters, name)
 }
 
 // IsDirectoryOutput determines if the named output is of type "directory".
 func (b ExtendedBundle) IsDirectoryOutput(name string) bool {
-	if !b.SupportsDirectoryParameters() {
-		return false
-	}
-	dirs, err := b.DirectoryParameterReader()
-	if err != nil {
-		return false
-	}
-	return slices.Contains(dirs.(DirectoryParameters).Outputs, name)
+	return slices.Contains(b.directoryParameters().Outputs, name)
 }
