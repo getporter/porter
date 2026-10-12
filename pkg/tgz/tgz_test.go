@@ -52,3 +52,21 @@ func TestUnpackDir_RejectsTraversal(t *testing.T) {
 	exists, _ := afero.Exists(fsys, "/evil")
 	assert.False(t, exists)
 }
+
+func TestSummarize(t *testing.T) {
+	fsys := afero.NewMemMapFs()
+	require.NoError(t, afero.WriteFile(fsys, "/src/a.txt", []byte("12345"), 0o644))
+	require.NoError(t, afero.WriteFile(fsys, "/src/sub/b.txt", make([]byte, 2048), 0o644))
+	data, err := PackDir(fsys, "/src")
+	require.NoError(t, err)
+
+	s, err := Summarize(bytes.NewReader(data))
+	require.NoError(t, err)
+	assert.Equal(t, 2, s.Files)
+	assert.Equal(t, "2 files, 2.0 KB", s.String())
+
+	_, err = Summarize(bytes.NewReader([]byte("not an archive")))
+	require.Error(t, err)
+
+	assert.Equal(t, "1 file, 5 B", Summary{Files: 1, Size: 5}.String())
+}

@@ -1,15 +1,19 @@
 package porter
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"sort"
 
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/printer"
 	"get.porter.sh/porter/pkg/storage"
+	"get.porter.sh/porter/pkg/tgz"
+	"github.com/mattn/go-isatty"
 )
 
 // OutputShowOptions represent options for a bundle output show command
@@ -17,6 +21,9 @@ type OutputShowOptions struct {
 	installationOptions
 	Output string
 	RunID  string
+
+	// isTerminal reports if stdout is a terminal. Defaults to checking os.Stdout, tests can override it.
+	isTerminal func() bool
 }
 
 // OutputListOptions represent options for a bundle output list command
@@ -103,8 +110,42 @@ func (p *Porter) ShowBundleOutput(ctx context.Context, opts *OutputShowOptions) 
 		}
 	}
 
+	// A directory is stored as a binary archive, don't print that to a terminal
+	isTerminal := opts.isTerminal
+	if isTerminal == nil {
+		isTerminal = stdoutIsTerminal
+	}
+	if isTerminal() {
+		isDir, err := p.isDirectoryOutput(ctx, opts)
+		if err != nil {
+			return err
+		}
+		if isDir {
+			return fmt.Errorf("output '%s' is a directory, stored as a tar.gz archive. Redirect stdout to a file or pipe it to tar, for example: porter installation output show %s | tar xz", opts.Output, opts.Output)
+		}
+	}
+
 	fmt.Fprint(p.Out, output)
 	return nil
+}
+
+func stdoutIsTerminal() bool {
+	return isatty.IsTerminal(os.Stdout.Fd())
+}
+
+// isDirectoryOutput checks if the output being shown is of type directory.
+func (p *Porter) isDirectoryOutput(ctx context.Context, opts *OutputShowOptions) (bool, error) {
+	var run storage.Run
+	var err error
+	if opts.RunID != "" {
+		run, err = p.Installations.GetRun(ctx, opts.RunID)
+	} else {
+		run, err = p.Installations.GetLastRun(ctx, opts.Namespace, opts.Name)
+	}
+	if err != nil {
+		return false, fmt.Errorf("unable to determine the type of output '%s': %w", opts.Output, err)
+	}
+	return cnab.NewBundle(run.Bundle).IsDirectoryOutput(opts.Output), nil
 }
 
 func NewDisplayValuesFromOutputs(bun cnab.ExtendedBundle, outputs storage.Outputs) DisplayValues {
@@ -120,6 +161,15 @@ func NewDisplayValuesFromOutputs(bun cnab.ExtendedBundle, outputs storage.Output
 
 		do := &DisplayValue{Name: output.Name}
 		do.SetValue(output.Value)
+		if bun.IsDirectoryOutput(output.Name) && output.PersistError == "" {
+			// Don't dump the archive, summarize what is in it instead
+			if summary, err := tgz.Summarize(bytes.NewReader(output.Value)); err == nil {
+				do.Value = summary.String()
+			} else {
+				do.Value = ""
+				do.Warning = fmt.Sprintf("unable to read directory output: %s", err)
+			}
+		}
 		if output.PersistError != "" {
 			do.Warning = fmt.Sprintf("value unavailable: %s", output.PersistError)
 		}

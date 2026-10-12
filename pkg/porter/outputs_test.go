@@ -1,6 +1,7 @@
 package porter
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"os"
@@ -10,6 +11,7 @@ import (
 	"get.porter.sh/porter/pkg/printer"
 	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/test"
+	"get.porter.sh/porter/pkg/tgz"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/stretchr/testify/assert"
@@ -417,5 +419,64 @@ func TestPorter_ShowBundleOutput_WithRunID(t *testing.T) {
 
 		output := p.TestConfig.TestContext.GetOutput()
 		assert.Equal(t, "test-value", output)
+	})
+}
+
+func TestPorter_DirectoryOutput(t *testing.T) {
+	t.Parallel()
+
+	p := NewTestPorter(t)
+	defer p.Close()
+
+	require.NoError(t, p.FileSystem.WriteFile("/src/a.txt", []byte("12345"), 0o644))
+	require.NoError(t, p.FileSystem.WriteFile("/src/sub/b.txt", []byte("678"), 0o644))
+	archive, err := tgz.PackDir(p.FileSystem, "/src")
+	require.NoError(t, err)
+
+	b := bundle.Bundle{
+		RequiredExtensions: []string{cnab.FileParameterExtensionKey, cnab.DirectoryParameterExtensionKey},
+		Custom: map[string]interface{}{
+			cnab.DirectoryParameterExtensionKey: map[string]interface{}{"outputs": []string{"mydir"}},
+		},
+		Definitions: definition.Definitions{
+			"mydir": &definition.Schema{Type: "string", ContentEncoding: "base64"},
+		},
+		Outputs: map[string]bundle.Output{
+			"mydir": {Definition: "mydir", Path: "/cnab/app/outputs/mydir"},
+		},
+	}
+	extB := cnab.NewBundle(b)
+	i := p.TestInstallations.CreateInstallation(storage.NewInstallation("", "test"))
+	c := p.TestInstallations.CreateRun(i.NewRun(cnab.ActionInstall, extB), func(r *storage.Run) {
+		r.Bundle = b
+	})
+	r := p.TestInstallations.CreateResult(c.NewResult(cnab.StatusSucceeded))
+	p.CreateOutput(r.NewOutput("mydir", archive), extB)
+
+	t.Run("list shows a summary", func(t *testing.T) {
+		outputs, err := p.ListBundleOutputs(context.Background(), &OutputListOptions{RunID: c.ID})
+		require.NoError(t, err)
+		require.Len(t, outputs, 1)
+		assert.Equal(t, "directory", outputs[0].Type)
+		assert.Equal(t, "2 files, 8 B", outputs[0].Value)
+	})
+
+	t.Run("show refuses a terminal", func(t *testing.T) {
+		err := p.ShowBundleOutput(context.Background(), &OutputShowOptions{
+			Output: "mydir", RunID: c.ID, isTerminal: func() bool { return true },
+		})
+		require.ErrorContains(t, err, "is a directory")
+		assert.Empty(t, p.TestConfig.TestContext.GetOutput())
+	})
+
+	t.Run("show writes the archive when piped", func(t *testing.T) {
+		err := p.ShowBundleOutput(context.Background(), &OutputShowOptions{
+			Output: "mydir", RunID: c.ID, isTerminal: func() bool { return false },
+		})
+		require.NoError(t, err)
+		require.NoError(t, tgz.UnpackDir(p.FileSystem, bytes.NewReader([]byte(p.TestConfig.TestContext.GetOutput())), "/unpacked"))
+		got, err := p.FileSystem.ReadFile("/unpacked/sub/b.txt")
+		require.NoError(t, err)
+		assert.Equal(t, "678", string(got))
 	})
 }

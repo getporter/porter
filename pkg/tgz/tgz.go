@@ -140,3 +140,59 @@ func UnpackDir(fsys afero.Fs, archive io.Reader, destDir string) error {
 		}
 	}
 }
+
+// Summary describes the contents of an archive created by PackDir.
+type Summary struct {
+	// Files is the number of regular files in the archive.
+	Files int
+
+	// Size is the total size in bytes of the regular files, when extracted.
+	Size int64
+}
+
+// Summarize reads a tar.gz archive and counts the files it contains.
+func Summarize(archive io.Reader) (Summary, error) {
+	var s Summary
+	gr, err := gzip.NewReader(archive)
+	if err != nil {
+		return s, fmt.Errorf("could not read gzip archive: %w", err)
+	}
+	defer gr.Close()
+
+	tr := tar.NewReader(gr)
+	for {
+		header, err := tr.Next()
+		if err == io.EOF {
+			return s, nil
+		}
+		if err != nil {
+			return s, fmt.Errorf("could not read tar archive: %w", err)
+		}
+		if header.Typeflag == tar.TypeReg {
+			s.Files++
+			s.Size += header.Size
+		}
+	}
+}
+
+// String formats the summary for display, e.g. "3 files, 1.2 KB".
+func (s Summary) String() string {
+	noun := "files"
+	if s.Files == 1 {
+		noun = "file"
+	}
+	return fmt.Sprintf("%d %s, %s", s.Files, noun, humanSize(s.Size))
+}
+
+func humanSize(n int64) string {
+	const unit = 1024
+	if n < unit {
+		return fmt.Sprintf("%d B", n)
+	}
+	div, exp := int64(unit), 0
+	for m := n / unit; m >= unit; m /= unit {
+		div *= unit
+		exp++
+	}
+	return fmt.Sprintf("%.1f %cB", float64(n)/float64(div), "KMGT"[exp])
+}
