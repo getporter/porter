@@ -1616,3 +1616,22 @@ func TestRuntimeManifest_applyUnboundBundleOutputs_Directory(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "y", string(got))
 }
+
+func TestRuntimeManifest_Initialize_DirectoryParameterAppliesTo(t *testing.T) {
+	cfg := NewConfigFor(config.NewTestConfig(t).Config)
+	require.NoError(t, cfg.FileSystem.WriteFile("/cnab/app/mydir", []byte("not-touched"), pkg.FileModeWritable))
+
+	b := directoryTestBundle()
+	param := b.Parameters["mydir"]
+	param.ApplyTo = []string{cnab.ActionInstall}
+	b.Parameters["mydir"] = param
+
+	// The parameter only applies to install, so it is ignored on upgrade
+	rm := NewRuntimeManifest(cfg, cnab.ActionUpgrade, &manifest.Manifest{Name: "mybun"})
+	rm.bundle = b
+
+	require.NoError(t, rm.Initialize(context.Background()))
+	got, err := cfg.FileSystem.ReadFile("/cnab/app/mydir")
+	require.NoError(t, err, "the injected file should be left alone")
+	assert.Equal(t, "not-touched", string(got))
+}

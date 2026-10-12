@@ -70,3 +70,20 @@ func TestSummarize(t *testing.T) {
 
 	assert.Equal(t, "1 file, 5 B", Summary{Files: 1, Size: 5}.String())
 }
+
+func TestPackUnpackDir_Empty(t *testing.T) {
+	fsys := afero.NewMemMapFs()
+	require.NoError(t, fsys.MkdirAll("/src", 0o755))
+
+	data, err := PackDir(fsys, "/src")
+	require.NoError(t, err)
+
+	require.NoError(t, UnpackDir(fsys, bytes.NewReader(data), "/dest"))
+	ok, err := afero.IsDir(fsys, "/dest")
+	require.NoError(t, err)
+	assert.True(t, ok, "an empty directory should round trip to an empty directory")
+
+	s, err := Summarize(bytes.NewReader(data))
+	require.NoError(t, err)
+	assert.Equal(t, "0 files, 0 B", s.String())
+}

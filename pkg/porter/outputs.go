@@ -175,7 +175,7 @@ func NewDisplayValuesFromOutputs(bun cnab.ExtendedBundle, outputs storage.Output
 		}
 		schema, ok := output.GetSchema(bun)
 		if ok {
-			do.Type = bun.GetParameterTypeByName(output.Name, &schema)
+			do.Type = bun.GetOutputTypeByName(output.Name, &schema)
 			if schema.WriteOnly != nil && *schema.WriteOnly {
 				do.Sensitive = true
 			}
