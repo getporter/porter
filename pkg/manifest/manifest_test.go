@@ -235,6 +235,60 @@ func TestManifest_Validate_Name(t *testing.T) {
 	assert.EqualError(t, err, "bundle name must be set")
 }
 
+func TestManifest_Validate_DockerfileMode(t *testing.T) {
+	testcases := []struct {
+		name       string
+		mode       DockerfileMode
+		dockerfile string
+		wantErr    string
+	}{
+		{name: "unset"},
+		{name: "template", mode: DockerfileModeTemplate},
+		{name: "raw", mode: DockerfileModeRaw, dockerfile: "Dockerfile.tmpl"},
+		{name: "raw without dockerfile", mode: DockerfileModeRaw, wantErr: `dockerfile must be set when dockerfileMode is "raw"`},
+		{name: "invalid", mode: "bogus", wantErr: `invalid dockerfileMode "bogus", must be "template" or "raw"`},
+	}
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			c := config.NewTestConfig(t)
+			c.TestContext.AddTestFile("testdata/porter.yaml", config.Name)
+			m, err := LoadManifestFrom(context.Background(), c.Config, config.Name)
+			require.NoError(t, err)
+
+			m.DockerfileMode = tc.mode
+			m.Dockerfile = tc.dockerfile
+			err = m.Validate(context.Background(), c.Config)
+			if tc.wantErr == "" {
+				require.NoError(t, err)
+			} else {
+				require.EqualError(t, err, tc.wantErr)
+			}
+		})
+	}
+}
+
+func TestManifest_UseRawDockerfile(t *testing.T) {
+	testcases := []struct {
+		name string
+		mode DockerfileMode
+		flag bool
+		want bool
+	}{
+		{name: "unset, no flag", want: false},
+		{name: "unset, flag", flag: true, want: true},
+		{name: "template", mode: DockerfileModeTemplate, want: false},
+		{name: "template overrides flag", mode: DockerfileModeTemplate, flag: true, want: false},
+		{name: "raw", mode: DockerfileModeRaw, want: true},
+		{name: "raw, flag", mode: DockerfileModeRaw, flag: true, want: true},
+	}
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			m := &Manifest{DockerfileMode: tc.mode}
+			assert.Equal(t, tc.want, m.UseRawDockerfile(tc.flag))
+		})
+	}
+}
+
 func TestManifest_Validate_Description(t *testing.T) {
 	c := config.NewTestConfig(t)
 

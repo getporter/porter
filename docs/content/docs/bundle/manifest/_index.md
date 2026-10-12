@@ -66,6 +66,10 @@ maintainers:
    When the version is used to default the tag, and it contains a plus sign (+), the plus sign is replaced with an underscore because while + is a valid semver delimiter for the build metadata, it is not an allowed character in a tag.
 * `dockerfile`: OPTIONAL. The relative path to a Dockerfile to use as a template during `porter build`. 
     See [Custom Dockerfile](/docs/bundle/custom-dockerfile/) for details on how to use a custom Dockerfile.
+* `dockerfileMode`: OPTIONAL. How Porter uses the file referenced by `dockerfile`. Either `template` (default) or `raw`.
+    With `raw`, Porter uses the Dockerfile *without modifying* it: no `# PORTER_x` placeholder processing and no injected user configuration or `CMD`.
+    It is up to the bundle author to ensure the Dockerfile contains the tools any mixins need and a layout that can be executed as a Porter bundle.
+    `dockerfile` is required with `raw`, and cannot be named `Dockerfile`.
 * `custom`: OPTIONAL. A map of [custom bundle metadata](https://github.com/cnabio/cnab-spec/blob/master/101-bundle-json.md#custom-extensions).
   These values are stored in the bundle definition and can be queried without pulling the bundle image.
   We recommend not storing large values in the custom field and to save large values as files in the bundle directory instead.

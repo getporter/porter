@@ -51,6 +51,22 @@ Mixins assume that apt is available to install packages.
 Porter only supports targeting a single os/architecture when the bundle is built. By default, Porter targets linux/amd64.
 You can change the platform used in the Dockerfile.
 
+# Full Control Over the Dockerfile
+
+By default, Porter processes the Dockerfile as a template. To use your Dockerfile without any changes by Porter, set `dockerfileMode` to `raw`:
+
+```yaml
+dockerfile: custom.Dockerfile
+dockerfileMode: raw
+```
+
+In `raw` mode Porter does not process `# PORTER_*` tokens, and does not add mixin lines, user configuration or the `CMD`.
+This is useful for multistage builds, minimizing CVEs or flattening the image.
+It is up to you to include the tools the mixins need and a layout that can be executed as a Porter bundle.
+`dockerfile` is required when `dockerfileMode` is `raw`.
+
+The `full-control-dockerfile` experimental flag is deprecated, use `dockerfileMode: raw` instead.
+
 # Build Context
 
 Porter supports two build modes that affect how bundle images are built. The mode is controlled by the experimental `optimized-bundle-build` feature flag.
