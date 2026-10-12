@@ -70,12 +70,12 @@ func TestRegistry(t *testing.T) {
 		// Note that listing tags on a nonexistent repo will always yield an authentication error, instead of a not found, to avoid leaking information about private repositories
 		regOpts := cnabtooci.RegistryOptions{}
 		_, err := r.ListTags(ctx, ref, regOpts)
-		require.ErrorIs(t, cnabtooci.ErrNotFound{}, err)
+		require.ErrorIs(t, err, cnabtooci.ErrNotFound{})
 
 		// GetBundleMetadata
 		// Validates that we are passing auth when querying the registry
 		_, err = r.GetBundleMetadata(ctx, ref, regOpts)
-		require.ErrorIs(t, cnabtooci.ErrNotFound{}, err)
+		require.ErrorIs(t, err, cnabtooci.ErrNotFound{})
 	})
 
 	t.Run("pull docker image as bundle", func(t *testing.T) {

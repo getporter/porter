@@ -66,6 +66,8 @@ type TraceLogger interface {
 
 	// Error records the error to the current span and marks it as failed.
 	// It does NOT print to the console; the final error is printed once by main.
+	// The returned error wraps err with the stack trace of where it was first
+	// recorded, which can be retrieved with StackTrace.
 	// Example: return log.Error(err)
 	Error(err error, attrs ...attribute.KeyValue) error
 
@@ -226,27 +228,37 @@ func (l traceLogger) Errorf(format string, args ...interface{}) error {
 
 // Error records the error to the current span and marks it as failed.
 // It does NOT write to the console; errors are printed once by main.go.
+// The returned error wraps err with the stack trace of where it was first
+// recorded, which can be retrieved with StackTrace.
 func (l traceLogger) Error(err error, attrs ...attribute.KeyValue) error {
 	if err == nil {
 		return err
+	}
+
+	// Remember where the error was first recorded, so that the stack trace
+	// points to the origin of the error and not to where it is finally handled.
+	err = withStack(err)
+
+	// Record the original error on the span, so that the exception type isn't
+	// our stack trace wrapper. Only the outermost error determines the type,
+	// so there is no need to look for the wrapper deeper in the chain.
+	cause := err
+	if stackErr, ok := err.(*stackError); ok {
+		cause = stackErr.err
 	}
 
 	l.logger.Error(err.Error(), convertAttributesToFields(attrs)...)
 
 	attrs = append(attrs, attribute.String("level", "error"))
 
-	// Try to include the stack trace
 	// I'm not using trace.WithStackTrace because it records the stack trace from _here_
-	// and not the one attached to the error...
+	// and not from where the error was first recorded.
 	errOpts := []trace.EventOption{
 		trace.WithAttributes(attrs...),
+		trace.WithAttributes(semconv.ExceptionStacktraceKey.String(telemetryStackTrace(err))),
 	}
 
-	errOpts = append(errOpts, trace.WithAttributes(
-		semconv.ExceptionStacktraceKey.String(fmt.Sprintf("%+v", err)),
-	))
-
-	l.span.RecordError(err, errOpts...)
+	l.span.RecordError(cause, errOpts...)
 	l.span.SetStatus(codes.Error, err.Error())
 
 	return err

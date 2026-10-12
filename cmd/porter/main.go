@@ -4,6 +4,7 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
+	"io"
 	"os"
 	"os/signal"
 	"runtime/debug"
@@ -14,6 +15,7 @@ import (
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/porter"
 	signalpkg "get.porter.sh/porter/pkg/signals"
+	"get.porter.sh/porter/pkg/tracing"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"go.opentelemetry.io/otel/attribute"
@@ -74,7 +76,10 @@ func main() {
 			var err error
 			ctx, err = connect(ctx, p, cmd)
 			if err != nil {
-				fmt.Fprintln(os.Stderr, err.Error())
+				// The flags haven't been parsed by the command yet, and
+				// the config may not have been loaded
+				applyEarlyVerbosity(p, os.Args[1:])
+				printError(p.Err, p, err)
 				os.Exit(cli.ExitCodeErr)
 			}
 		}
@@ -96,9 +101,10 @@ func main() {
 		}()
 
 		if err := rootCmd.ExecuteContext(ctx); err != nil {
+			// Print the error as it was returned, a stack trace captured here
+			// would only point to main and not to the origin of the error.
+			printError(p.Err, p, err)
 			_ = log.Error(err)
-			// The error may include sensitive values, e.g. from the output of a command run by the bundle
-			fmt.Fprintln(os.Stderr, p.Censor(err.Error()))
 			return cli.ExitCodeErr
 		}
 		return cli.ExitCodeSuccess
@@ -107,6 +113,44 @@ func main() {
 	// Wrapping the main run logic in a function because os.Exit will not
 	// execute defer statements
 	os.Exit(run())
+}
+
+// printError prints the error that caused porter to fail. In debug mode, the
+// stack trace of where the error originated is printed as well.
+func printError(w io.Writer, p *porter.Porter, err error) {
+	// The error may include sensitive values, e.g. from the output of a command run by the bundle
+	fmt.Fprintln(w, p.Censor(err.Error()))
+
+	if p.GetVerbosity() != config.LogLevelDebug {
+		return
+	}
+	if stack := tracing.StackTrace(err); stack != "" {
+		fmt.Fprintln(w, p.Censor(stack))
+	}
+}
+
+// applyEarlyVerbosity sets the verbosity from the --verbosity flag in the
+// specified arguments, or else from the PORTER_VERBOSITY environment variable.
+// Use it when porter fails before the command has parsed its flags, where the
+// flag isn't applied yet and the environment variable is ignored when the
+// config could not be loaded.
+func applyEarlyVerbosity(p *porter.Porter, args []string) {
+	var verbosity string
+	flags := pflag.NewFlagSet("verbosity", pflag.ContinueOnError)
+	flags.ParseErrorsAllowlist.UnknownFlags = true
+	flags.SetOutput(io.Discard)
+	flags.StringVar(&verbosity, "verbosity", "", "")
+
+	// Ignore errors, the command reports invalid flags when it parses them
+	_ = flags.Parse(args)
+	if flags.Changed("verbosity") {
+		p.Data.Verbosity = verbosity
+		return
+	}
+
+	if verbosity, ok := p.LookupEnv(config.EnvPorterVerbosity); ok {
+		p.Data.Verbosity = verbosity
+	}
 }
 
 // Try to exit gracefully when the interrupt signal is sent (CTRL+C)

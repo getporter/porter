@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"os"
 	"strings"
 	"testing"
@@ -10,6 +11,7 @@ import (
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/experimental"
 	"get.porter.sh/porter/pkg/porter"
+	"get.porter.sh/porter/pkg/tracing"
 	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -371,6 +373,84 @@ func TestVerbosity(t *testing.T) {
 
 		assert.Equal(t, config.LogLevelWarn, p.GetVerbosity())
 	})
+}
+
+func TestPrintError(t *testing.T) {
+	testcases := []struct {
+		name      string
+		verbosity string
+		wantStack bool
+	}{
+		{name: "debug", verbosity: string(config.LogLevelDebug), wantStack: true},
+		{name: "info", verbosity: string(config.LogLevelInfo), wantStack: false},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			p := porter.NewTestPorter(t)
+			defer p.Close()
+			p.Data.Verbosity = tc.verbosity
+
+			_, span := tracing.StartSpan(p.RootContext)
+			err := span.Error(errors.New("something failed"))
+			span.EndSpan()
+
+			var out bytes.Buffer
+			printError(&out, p.Porter, err)
+
+			if !tc.wantStack {
+				assert.Equal(t, "something failed\n", out.String())
+				return
+			}
+			gotLines := strings.Split(out.String(), "\n")
+			require.Greater(t, len(gotLines), 2)
+			assert.Equal(t, "something failed", gotLines[0])
+			assert.Equal(t, "Stack trace:", gotLines[1])
+			assert.Regexp(t, `^  at cmd/porter\.TestPrintError\.func1 \(cmd/porter/main_test\.go:\d+\)$`, gotLines[2])
+		})
+	}
+
+	t.Run("error without a stack trace", func(t *testing.T) {
+		p := porter.NewTestPorter(t)
+		defer p.Close()
+		p.Data.Verbosity = string(config.LogLevelDebug)
+
+		var out bytes.Buffer
+		printError(&out, p.Porter, errors.New("invalid flag"))
+		assert.Equal(t, "invalid flag\n", out.String())
+	})
+}
+
+func TestApplyEarlyVerbosity(t *testing.T) {
+	testcases := []struct {
+		name string
+		args []string
+		env  string
+		want config.LogLevel
+	}{
+		{name: "flag with equals", args: []string{"install", "--verbosity=debug"}, want: config.LogLevelDebug},
+		{name: "flag with space", args: []string{"install", "--verbosity", "debug", "mybun"}, want: config.LogLevelDebug},
+		{name: "other flags", args: []string{"install", "-r", "example/bun:v1", "--param", "a=b", "--force", "--verbosity=debug"}, want: config.LogLevelDebug},
+		{name: "env set", args: []string{"install"}, env: "debug", want: config.LogLevelDebug},
+		{name: "flag set, env set", args: []string{"install", "--verbosity=debug"}, env: "error", want: config.LogLevelDebug},
+		{name: "nothing set", args: []string{"install", "-r", "example/bun:v1"}, want: config.LogLevelWarn},
+		{name: "no args", args: nil, want: config.LogLevelWarn},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			p := porter.NewTestPorter(t)
+			defer p.Close()
+			// simulate verbosity loaded from the config file
+			p.Data.Verbosity = string(config.LogLevelWarn)
+			if tc.env != "" {
+				p.Setenv(config.EnvPorterVerbosity, tc.env)
+			}
+
+			applyEarlyVerbosity(p.Porter, tc.args)
+			assert.Equal(t, tc.want, p.GetVerbosity())
+		})
+	}
 }
 
 // Validate that porter is correctly binding porter explain --output which is a flag that is NOT bound to config.Data

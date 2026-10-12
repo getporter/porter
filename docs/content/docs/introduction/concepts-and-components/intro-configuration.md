@@ -65,6 +65,7 @@ namespace: "dev"
 # Threshold for printing messages to the console
 # Allowed values are: debug, info, warn, error.
 # Does not affect what is written to the log file or traces.
+# When set to debug, a failed command also prints the stack trace of the error.
 verbosity: "debug"
 
 # Default command output to JSON
