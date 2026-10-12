@@ -3,6 +3,7 @@
 package integration
 
 import (
+	"bytes"
 	"os"
 	"path/filepath"
 	"testing"
@@ -11,6 +12,7 @@ import (
 	"get.porter.sh/porter/pkg/porter"
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
+	"get.porter.sh/porter/pkg/tgz"
 	"github.com/cnabio/cnab-go/secrets/host"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -94,6 +96,39 @@ func TestInstall_fileParam(t *testing.T) {
 	yetanotherfile, ok := outputs.GetByName("yetanotherfile")
 	require.True(t, ok, "expected yetanotherfile output to be persisted")
 	assert.Equal(t, "Hello World!", string(yetanotherfile.Value), "expected output 'yetanotherfile' to match the decoded file contents")
+}
+
+func TestInstall_directoryParam(t *testing.T) {
+	t.Parallel()
+
+	p := porter.NewTestPorter(t)
+	defer p.Close()
+	ctx := p.SetupIntegrationTest()
+
+	bundleName := p.AddTestBundleDir("testdata/bundles/bundle-with-directory-params", false)
+
+	installOpts := porter.NewInstallOptions()
+	installOpts.Params = []string{"mydir=./hostdir"}
+	err := installOpts.Validate(ctx, []string{}, p.Porter)
+	require.NoError(t, err)
+
+	err = p.InstallBundle(ctx, installOpts)
+	require.NoError(t, err)
+
+	output := p.TestConfig.TestContext.GetOutput()
+	require.Contains(t, output, "Hello Dir!", "expected action output to contain the directory contents")
+	require.Contains(t, output, "Hello Sub!", "expected action output to contain the subdirectory contents")
+
+	outputs, err := p.Installations.GetLastOutputs(ctx, "", bundleName)
+	require.NoError(t, err, "GetLastOutput failed")
+	outdir, ok := outputs.GetByName("outdir")
+	require.True(t, ok, "expected outdir output to be persisted")
+
+	// The output is the tar.gz of the directory, check that it round trips
+	require.NoError(t, tgz.UnpackDir(p.FileSystem, bytes.NewReader(outdir.Value), "unpacked"))
+	got, err := p.FileSystem.ReadFile("unpacked/sub/b.txt")
+	require.NoError(t, err)
+	assert.Equal(t, "Hello Sub!", string(got))
 }
 
 func TestInstall_withDockerignore(t *testing.T) {
