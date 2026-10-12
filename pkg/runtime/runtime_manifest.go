@@ -581,6 +581,8 @@ func (m *RuntimeManifest) ResolveStep(ctx context.Context, stepIndex int, step *
 
 // Initialize prepares the runtime environment prior to step execution
 func (m *RuntimeManifest) Initialize(ctx context.Context) error {
+	log := tracing.LoggerFromContext(ctx)
+
 	if err := m.createOutputsDir(); err != nil {
 		return err
 	}
@@ -631,10 +633,10 @@ func (m *RuntimeManifest) Initialize(ctx context.Context) error {
 			// Directories are passed as a tar.gz archive, replace the injected file with the directory
 			if m.bundle.IsDirectoryParameter(paramName) {
 				if err := m.config.FileSystem.Remove(param.Destination.Path); err != nil {
-					return fmt.Errorf("unable to remove destination path: %w", err)
+					return log.Error(fmt.Errorf("unable to remove destination path: %w", err))
 				}
 				if err := tgz.UnpackDir(m.config.FileSystem, strings.NewReader(string(decoded)), param.Destination.Path); err != nil {
-					return fmt.Errorf("unable to unpack directory parameter %s: %w", paramName, err)
+					return log.Error(fmt.Errorf("unable to unpack directory parameter %s: %w", paramName, err))
 				}
 				continue
 			}
