@@ -188,7 +188,7 @@ func (b *Builder) BuildBundleImage(ctx context.Context, manifest *manifest.Manif
 		return span.Error(err)
 	}
 
-	_, buildErr := buildx.Build(ctx, nodes, buildxOpts, dockerutil.NewClient(cli), confutil.NewConfig(cli), printer)
+	_, buildErr := buildx.Build(ctx, nodes, buildxOpts, dockerutil.NewClient(cli), confutil.NewConfig(cli), printer, nil)
 	printErr := printer.Wait()
 
 	if buildErr == nil && printErr != nil {
