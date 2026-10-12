@@ -94,8 +94,11 @@ func (r *Runner) Run(ctx context.Context, commandOpts pkgmgmt.CommandOptions) er
 		}()
 	}
 
-	prettyCmd := fmt.Sprintf("%s%s", cmd.Dir, strings.Join(cmd.Args, " "))
-	span.SetAttributes(attribute.String("command", prettyCmd))
+	prettyCmd := portercontext.FormatCommand(cmd)
+	span.SetAttributes(
+		attribute.String("command", prettyCmd),
+		attribute.String("dir", cmd.Dir),
+	)
 
 	err := cmd.Start()
 	if err != nil {

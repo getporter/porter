@@ -105,7 +105,7 @@ func (fs *FileSystem) installFromURLFor(ctx context.Context, opts pkgmgmt.Instal
 	err := fs.downloadPackage(ctx, opts.Name, clientUrl, runtimeUrl)
 	if err != nil && os == "darwin" && arch == "arm64" {
 		// Until we have full support for M1 chipsets, rely on rossetta functionality in macos and use the amd64 binary
-		log.Debugf("%s @ %s did not publish a download for darwin/amd64, falling back to darwin/amd64", opts.Name, opts.Version)
+		log.Debugf("%s @ %s did not publish a download for darwin/arm64, falling back to darwin/amd64", opts.Name, opts.Version)
 		return fs.installFromURLFor(ctx, opts, "darwin", "amd64")
 	}
 

@@ -69,8 +69,11 @@ func (r *PluginRunner) Run(ctx context.Context, commandOpts CommandOptions) erro
 	cmd.Stdout = r.Out
 	cmd.Stderr = r.Err
 
-	prettyCmd := fmt.Sprintf("%s%s", cmd.Dir, strings.Join(cmd.Args, " "))
-	span.SetAttributes(attribute.String("full-command", prettyCmd))
+	prettyCmd := portercontext.FormatCommand(cmd)
+	span.SetAttributes(
+		attribute.String("full-command", prettyCmd),
+		attribute.String("dir", cmd.Dir),
+	)
 
 	err = cmd.Start()
 	if err != nil {

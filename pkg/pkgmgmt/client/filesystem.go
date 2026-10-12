@@ -82,7 +82,7 @@ func (fs *FileSystem) GetMetadata(ctx context.Context, name string) (pkgmgmt.Pac
 	jsonB := &bytes.Buffer{}
 	pkgContext := *fs.Context
 	pkgContext.Out = jsonB
-	if span.ShouldLog(zapcore.DebugLevel) {
+	if !span.ShouldLog(zapcore.DebugLevel) {
 		pkgContext.Err = io.Discard
 	}
 	r.Context = &pkgContext
