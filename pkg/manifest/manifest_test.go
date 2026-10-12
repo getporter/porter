@@ -1670,3 +1670,11 @@ func TestManifest_GetTemplateVariables(t *testing.T) {
 	require.NoError(t, err)
 	require.Contains(t, vars, "bundle.parameters.stuff")
 }
+
+func TestManifest_Validate_TemplatedDirectoryOutput(t *testing.T) {
+	c := config.NewTestConfig(t)
+	c.TestContext.AddTestFile("testdata/porter-with-templated-directory-output.yaml", config.Name)
+
+	_, err := LoadManifestFrom(context.Background(), c.Config, config.Name)
+	require.ErrorContains(t, err, `output "outdir" is of type directory and cannot be used in a template`)
+}

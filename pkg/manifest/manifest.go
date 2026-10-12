@@ -202,6 +202,13 @@ func (m *Manifest) Validate(ctx context.Context, cfg *config.Config) error {
 		}
 	}
 
+	// A directory is an archive, it can't be rendered into a template
+	for name, output := range m.GetTemplatedOutputs() {
+		if output.Type == "directory" {
+			result = multierror.Append(result, fmt.Errorf("output %q is of type directory and cannot be used in a template with bundle.outputs.%s", name, name))
+		}
+	}
+
 	for _, parameter := range m.Parameters {
 		err = parameter.Validate()
 		if err != nil {
