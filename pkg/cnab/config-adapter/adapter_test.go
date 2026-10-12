@@ -1112,3 +1112,28 @@ func getMaintainerByName(source []bundle.Maintainer, name string) (bundle.Mainta
 	}
 	return bundle.Maintainer{}, fmt.Errorf("Could not find maintainer with name '%s'", name)
 }
+
+func TestManifestConverter_directoryParameters(t *testing.T) {
+	t.Parallel()
+
+	c := config.NewTestConfig(t)
+	c.TestContext.AddTestFileFromRoot("pkg/cnab/config-adapter/testdata/porter-with-directory.yaml", config.Name)
+
+	ctx := context.Background()
+	m, err := manifest.LoadManifestFrom(ctx, c.Config, config.Name)
+	require.NoError(t, err, "could not load manifest")
+
+	bun, err := NewManifestConverter(c.Config, m, nil, nil, false).ToBundle(ctx)
+	require.NoError(t, err, "ToBundle failed")
+
+	assert.Contains(t, bun.RequiredExtensions, cnab.DirectoryParameterExtensionKey)
+	assert.True(t, bun.IsDirectoryParameter("mydir"))
+	assert.False(t, bun.IsDirectoryParameter("myfile"))
+	assert.True(t, bun.IsDirectoryOutput("outdir"))
+
+	def := bun.Definitions[bun.Parameters["mydir"].Definition]
+	assert.Equal(t, "string", def.Type)
+	assert.Equal(t, "base64", def.ContentEncoding)
+	assert.Equal(t, "directory", bun.GetParameterTypeByName("mydir", def))
+	assert.Equal(t, "file", bun.GetParameterTypeByName("myfile", bun.Definitions[bun.Parameters["myfile"].Definition]))
+}

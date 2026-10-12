@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	"encoding/base64"
 	"fmt"
 	"io"
 	"sort"
@@ -16,6 +17,7 @@ import (
 	"get.porter.sh/porter/pkg/experimental"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/portercontext"
+	"get.porter.sh/porter/pkg/tgz"
 	"get.porter.sh/porter/tests"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
@@ -1509,4 +1511,108 @@ func TestResolveInvocationImage(t *testing.T) {
 		})
 	}
 
+}
+
+func directoryTestBundle() cnab.ExtendedBundle {
+	b64 := &definition.Schema{Type: "string", ContentEncoding: "base64"}
+	return cnab.NewBundle(bundle.Bundle{
+		RequiredExtensions: []string{cnab.FileParameterExtensionKey, cnab.DirectoryParameterExtensionKey},
+		Custom: map[string]interface{}{
+			cnab.DirectoryParameterExtensionKey: map[string]interface{}{
+				"parameters": []string{"mydir"},
+				"outputs":    []string{"outdir"},
+			},
+		},
+		Definitions: definition.Definitions{"mydir": b64, "outdir": b64},
+		Parameters: map[string]bundle.Parameter{
+			"mydir": {Definition: "mydir", Destination: &bundle.Location{Path: "/cnab/app/mydir"}},
+		},
+		Outputs: map[string]bundle.Output{
+			"outdir": {Definition: "outdir", Path: "/cnab/app/outputs/outdir"},
+		},
+	})
+}
+
+func TestRuntimeManifest_Initialize_DirectoryParameter(t *testing.T) {
+	ctx := context.Background()
+	cfg := NewConfigFor(config.NewTestConfig(t).Config)
+	fs := cfg.FileSystem
+
+	// Build the archive the host would send
+	require.NoError(t, fs.WriteFile("/host/dir/a.txt", []byte("a"), pkg.FileModeWritable))
+	require.NoError(t, fs.WriteFile("/host/dir/sub/b.txt", []byte("b"), pkg.FileModeWritable))
+	archive, err := tgz.PackDir(fs, "/host/dir")
+	require.NoError(t, err)
+
+	// cnab injects the base64 value into a file at the destination
+	require.NoError(t, fs.WriteFile("/cnab/app/mydir", []byte(base64.StdEncoding.EncodeToString(archive)), pkg.FileModeWritable))
+
+	rm := NewRuntimeManifest(cfg, cnab.ActionInstall, &manifest.Manifest{Name: "mybun"})
+	rm.bundle = directoryTestBundle()
+
+	require.NoError(t, rm.Initialize(ctx))
+
+	isDir, err := fs.DirExists("/cnab/app/mydir")
+	require.NoError(t, err)
+	assert.True(t, isDir, "the injected file should be replaced by a directory")
+	got, err := fs.ReadFile("/cnab/app/mydir/sub/b.txt")
+	require.NoError(t, err)
+	assert.Equal(t, "b", string(got))
+}
+
+func TestRuntimeManifest_Initialize_DirectoryParameterUnset(t *testing.T) {
+	cfg := NewConfigFor(config.NewTestConfig(t).Config)
+	require.NoError(t, cfg.FileSystem.WriteFile("/cnab/app/mydir", []byte("null"), pkg.FileModeWritable))
+
+	rm := NewRuntimeManifest(cfg, cnab.ActionInstall, &manifest.Manifest{Name: "mybun"})
+	rm.bundle = directoryTestBundle()
+
+	require.NoError(t, rm.Initialize(context.Background()))
+	exists, err := cfg.FileSystem.Exists("/cnab/app/mydir")
+	require.NoError(t, err)
+	assert.False(t, exists)
+}
+
+func TestRuntimeManifest_Initialize_DirectoryParameterRejectsTraversal(t *testing.T) {
+	cfg := NewConfigFor(config.NewTestConfig(t).Config)
+
+	var buf bytes.Buffer
+	gw := gzip.NewWriter(&buf)
+	tw := tar.NewWriter(gw)
+	require.NoError(t, tw.WriteHeader(&tar.Header{Name: "../evil", Mode: 0o644, Size: 1, Typeflag: tar.TypeReg}))
+	_, err := tw.Write([]byte("x"))
+	require.NoError(t, err)
+	require.NoError(t, tw.Close())
+	require.NoError(t, gw.Close())
+	require.NoError(t, cfg.FileSystem.WriteFile("/cnab/app/mydir", []byte(base64.StdEncoding.EncodeToString(buf.Bytes())), pkg.FileModeWritable))
+
+	rm := NewRuntimeManifest(cfg, cnab.ActionInstall, &manifest.Manifest{Name: "mybun"})
+	rm.bundle = directoryTestBundle()
+
+	require.ErrorContains(t, rm.Initialize(context.Background()), "outside of")
+}
+
+func TestRuntimeManifest_applyUnboundBundleOutputs_Directory(t *testing.T) {
+	ctx := context.Background()
+	cfg := NewConfigFor(config.NewTestConfig(t).Config)
+	fs := cfg.FileSystem
+	require.NoError(t, fs.WriteFile("/cnab/app/outdir/x.txt", []byte("x"), pkg.FileModeWritable))
+	require.NoError(t, fs.WriteFile("/cnab/app/outdir/sub/y.txt", []byte("y"), pkg.FileModeWritable))
+
+	rm := NewRuntimeManifest(cfg, cnab.ActionInstall, &manifest.Manifest{
+		Name: "mybun",
+		Outputs: manifest.OutputDefinitions{
+			"outdir": {Name: "outdir", Path: "/cnab/app/outdir", Schema: definition.Schema{Type: "directory"}},
+		},
+	})
+	rm.bundle = directoryTestBundle()
+
+	require.NoError(t, rm.applyUnboundBundleOutputs(ctx))
+
+	archive, err := fs.ReadFile("/cnab/app/outputs/outdir")
+	require.NoError(t, err)
+	require.NoError(t, tgz.UnpackDir(fs, bytes.NewReader(archive), "/unpacked"))
+	got, err := fs.ReadFile("/unpacked/sub/y.txt")
+	require.NoError(t, err)
+	assert.Equal(t, "y", string(got))
 }

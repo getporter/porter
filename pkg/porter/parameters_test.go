@@ -1,7 +1,9 @@
 package porter
 
 import (
+	"bytes"
 	"context"
+	"encoding/base64"
 	"fmt"
 	"sort"
 	"testing"
@@ -13,6 +15,7 @@ import (
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/test"
+	"get.porter.sh/porter/pkg/tgz"
 	"get.porter.sh/porter/pkg/yaml"
 	"get.porter.sh/porter/tests"
 	"github.com/cnabio/cnab-go/bundle"
@@ -1420,4 +1423,40 @@ func Test_DependencyParameterOverride(t *testing.T) {
 	err := p.applyActionOptionsToInstallation(ctx, opts, &installation)
 	require.NoError(t, err)
 	assert.Equal(t, opts.depParams["dep#first-param"], "1")
+}
+
+func Test_loadParameters_directoryParameter(t *testing.T) {
+	t.Parallel()
+
+	r := NewTestPorter(t)
+	defer r.Close()
+
+	require.NoError(t, r.FileSystem.WriteFile("/path/to/dir/a.txt", []byte("hello"), 0o644))
+	require.NoError(t, r.FileSystem.WriteFile("/path/to/dir/sub/b.txt", []byte("world"), 0o644))
+
+	b := cnab.NewBundle(bundle.Bundle{
+		RequiredExtensions: []string{cnab.FileParameterExtensionKey, cnab.DirectoryParameterExtensionKey},
+		Custom: map[string]interface{}{
+			cnab.DirectoryParameterExtensionKey: map[string]interface{}{"parameters": []string{"foo"}},
+		},
+		Definitions: definition.Definitions{
+			"foo": &definition.Schema{Type: "string", ContentEncoding: "base64"},
+		},
+		Parameters: map[string]bundle.Parameter{
+			"foo": {Definition: "foo", Required: true, Destination: &bundle.Location{Path: "/tmp/foo"}},
+		},
+	})
+
+	params, err := r.finalizeParameters(context.Background(), storage.Installation{}, b, "action", map[string]string{"foo": "/path/to/dir"})
+	require.NoError(t, err)
+
+	decoded, err := base64.StdEncoding.DecodeString(params["foo"].(string))
+	require.NoError(t, err)
+	require.NoError(t, tgz.UnpackDir(r.FileSystem, bytes.NewReader(decoded), "/unpacked"))
+	got, err := r.FileSystem.ReadFile("/unpacked/sub/b.txt")
+	require.NoError(t, err)
+	assert.Equal(t, "world", string(got))
+
+	_, err = r.finalizeParameters(context.Background(), storage.Installation{}, b, "action", map[string]string{"foo": "/path/to/dir/a.txt"})
+	require.ErrorContains(t, err, "must be a directory")
 }

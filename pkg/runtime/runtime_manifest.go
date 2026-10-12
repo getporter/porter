@@ -8,6 +8,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"get.porter.sh/porter/pkg/tgz"
 	"io"
 	"os"
 	"path/filepath"
@@ -627,6 +628,17 @@ func (m *RuntimeManifest) Initialize(ctx context.Context) error {
 				return fmt.Errorf("unable to decode parameter %s: %w", paramName, err)
 			}
 
+			// Directories are passed as a tar.gz archive, replace the injected file with the directory
+			if m.bundle.IsDirectoryParameter(paramName) {
+				if err := m.config.FileSystem.Remove(param.Destination.Path); err != nil {
+					return fmt.Errorf("unable to remove destination path: %w", err)
+				}
+				if err := tgz.UnpackDir(m.config.FileSystem, strings.NewReader(string(decoded)), param.Destination.Path); err != nil {
+					return fmt.Errorf("unable to unpack directory parameter %s: %w", paramName, err)
+				}
+				continue
+			}
+
 			err = m.config.FileSystem.WriteFile(param.Destination.Path, decoded, pkg.FileModeWritable)
 			if err != nil {
 				return fmt.Errorf("unable to write decoded parameter %s: %w", paramName, err)
@@ -855,6 +867,17 @@ func (m *RuntimeManifest) applyUnboundBundleOutputs(ctx context.Context) error {
 			}
 			dstPath := filepath.Join(config.BundleOutputsDir, name)
 			if dstExists, _ := m.config.FileSystem.Exists(dstPath); dstExists {
+				continue
+			}
+
+			if m.bundle.IsDirectoryOutput(name) {
+				data, err := tgz.PackDir(m.config.FileSystem, srcPath)
+				if err == nil {
+					err = m.config.FileSystem.WriteFile(dstPath, data, pkg.FileModeWritable)
+				}
+				if err != nil {
+					bigErr = multierror.Append(bigErr, fmt.Errorf("unable to pack output directory %s to %s: %w", srcPath, dstPath, err))
+				}
 				continue
 			}
 
