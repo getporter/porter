@@ -1503,3 +1503,50 @@ func Test_loadParameterSets_directoryParameter(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "world", string(got))
 }
+
+func Test_loadParameters_directoryParameterSource(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	r := NewTestPorter(t)
+	defer r.Close()
+
+	require.NoError(t, r.FileSystem.WriteFile("/src/sub/b.txt", []byte("world"), 0o644))
+	archive, err := tgz.PackDir(r.FileSystem, "/src")
+	require.NoError(t, err)
+
+	var ps cnab.ParameterSources
+	ps.SetParameterFromOutput("foo", "foo")
+	bun := bundle.Bundle{
+		RequiredExtensions: []string{cnab.FileParameterExtensionKey, cnab.DirectoryParameterExtensionKey, cnab.ParameterSourcesExtensionKey},
+		Custom: map[string]interface{}{
+			cnab.DirectoryParameterExtensionKey: map[string]interface{}{"parameters": []string{"foo"}, "outputs": []string{"foo"}},
+			cnab.ParameterSourcesExtensionKey:   ps,
+		},
+		Definitions: definition.Definitions{
+			"foo": &definition.Schema{Type: "string", ContentEncoding: "base64"},
+		},
+		Parameters: map[string]bundle.Parameter{
+			"foo": {Definition: "foo", Destination: &bundle.Location{Path: "/cnab/app/foo"}},
+		},
+		Outputs: map[string]bundle.Output{
+			"foo": {Definition: "foo", Path: "/cnab/app/outputs/foo"},
+		},
+	}
+	b := cnab.NewBundle(bun)
+
+	i := r.TestInstallations.CreateInstallation(storage.NewInstallation("", "mybun"))
+	c := r.TestInstallations.CreateRun(i.NewRun(cnab.ActionInstall, b), func(r *storage.Run) { r.Bundle = bun })
+	cr := r.TestInstallations.CreateResult(c.NewResult(cnab.StatusSucceeded))
+	r.TestInstallations.CreateOutput(cr.NewOutput("foo", archive))
+
+	params, err := r.finalizeParameters(ctx, i, b, cnab.ActionUpgrade, nil)
+	require.NoError(t, err)
+
+	decoded, err := base64.StdEncoding.DecodeString(params["foo"].(string))
+	require.NoError(t, err)
+	require.NoError(t, tgz.UnpackDir(r.FileSystem, bytes.NewReader(decoded), "/unpacked"))
+	got, err := r.FileSystem.ReadFile("/unpacked/sub/b.txt")
+	require.NoError(t, err)
+	assert.Equal(t, "world", string(got), "the directory output should be passed back in as the directory parameter")
+}

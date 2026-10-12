@@ -1137,3 +1137,22 @@ func TestManifestConverter_directoryParameters(t *testing.T) {
 	assert.Equal(t, "directory", bun.GetParameterTypeByName("mydir", def))
 	assert.Equal(t, "file", bun.GetParameterTypeByName("myfile", bun.Definitions[bun.Parameters["myfile"].Definition]))
 }
+
+func TestManifestConverter_directoryParameterSource(t *testing.T) {
+	t.Parallel()
+
+	c := config.NewTestConfig(t)
+	c.TestContext.AddTestFileFromRoot("pkg/cnab/config-adapter/testdata/porter-with-directory-source.yaml", config.Name)
+
+	ctx := context.Background()
+	m, err := manifest.LoadManifestFrom(ctx, c.Config, config.Name)
+	require.NoError(t, err, "could not load manifest")
+
+	bun, err := NewManifestConverter(c.Config, m, nil, nil, false).ToBundle(ctx)
+	require.NoError(t, err, "ToBundle failed")
+
+	// A directory parameter fed from a directory output must be declared as a directory on both sides
+	assert.True(t, bun.IsDirectoryParameter("state-dir"))
+	assert.True(t, bun.IsDirectoryOutput("state-dir"))
+	assert.True(t, bun.HasParameterSources())
+}
