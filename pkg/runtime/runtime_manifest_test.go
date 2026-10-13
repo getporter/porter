@@ -1635,3 +1635,40 @@ func TestRuntimeManifest_Initialize_DirectoryParameterAppliesTo(t *testing.T) {
 	require.NoError(t, err, "the injected file should be left alone")
 	assert.Equal(t, "not-touched", string(got))
 }
+
+func TestRuntimeManifest_Initialize_DirectoryParameterWithoutFileExtension(t *testing.T) {
+	cfg := NewConfigFor(config.NewTestConfig(t).Config)
+	fs := cfg.FileSystem
+
+	require.NoError(t, fs.WriteFile("/host/dir/a.txt", []byte("a"), pkg.FileModeWritable))
+	archive, err := tgz.PackDir(fs, "/host/dir")
+	require.NoError(t, err)
+	require.NoError(t, fs.WriteFile("/cnab/app/mydir", []byte(base64.StdEncoding.EncodeToString(archive)), pkg.FileModeWritable))
+
+	rm := NewRuntimeManifest(cfg, cnab.ActionInstall, &manifest.Manifest{Name: "mybun"})
+	rm.bundle = directoryTestBundle()
+	rm.bundle.RequiredExtensions = []string{cnab.DirectoryParameterExtensionKey}
+
+	require.NoError(t, rm.Initialize(context.Background()))
+	got, err := fs.ReadFile("/cnab/app/mydir/a.txt")
+	require.NoError(t, err)
+	assert.Equal(t, "a", string(got))
+}
+
+func TestRuntimeManifest_applyUnboundBundleOutputs_DirectoryOutputIsFile(t *testing.T) {
+	cfg := NewConfigFor(config.NewTestConfig(t).Config)
+	require.NoError(t, cfg.FileSystem.WriteFile("/cnab/app/outdir", []byte("oops"), pkg.FileModeWritable))
+
+	rm := NewRuntimeManifest(cfg, cnab.ActionInstall, &manifest.Manifest{
+		Name: "mybun",
+		Outputs: manifest.OutputDefinitions{
+			"outdir": {Name: "outdir", Path: "/cnab/app/outdir", Schema: definition.Schema{Type: "directory"}},
+		},
+	})
+	rm.bundle = directoryTestBundle()
+
+	err := rm.applyUnboundBundleOutputs(context.Background())
+	require.ErrorContains(t, err, "not a directory")
+	exists, _ := cfg.FileSystem.Exists("/cnab/app/outputs/outdir")
+	assert.False(t, exists, "no output should be persisted when the path is not a directory")
+}

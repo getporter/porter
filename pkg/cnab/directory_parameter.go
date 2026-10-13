@@ -2,6 +2,7 @@ package cnab
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"slices"
 )
@@ -42,7 +43,7 @@ func DirectoryParameterReader(b ExtendedBundle) (interface{}, error) {
 func (b ExtendedBundle) DirectoryParameterReader() (interface{}, error) {
 	raw, ok := b.Custom[DirectoryParameterExtensionKey]
 	if !ok {
-		return DirectoryParameters{}, nil
+		return nil, errors.New("no custom extension configuration found")
 	}
 
 	data, err := json.Marshal(raw)

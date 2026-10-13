@@ -22,11 +22,19 @@ const dirMode = 0o755
 // relative to srcDir. Only regular files and directories are supported,
 // symlinks and other file types result in an error.
 func PackDir(fsys afero.Fs, srcDir string) ([]byte, error) {
+	info, err := fsys.Stat(srcDir)
+	if err != nil {
+		return nil, fmt.Errorf("could not pack directory %s: %w", srcDir, err)
+	}
+	if !info.IsDir() {
+		return nil, fmt.Errorf("could not pack directory %s: it is not a directory", srcDir)
+	}
+
 	var buf bytes.Buffer
 	gw := gzip.NewWriter(&buf)
 	tw := tar.NewWriter(gw)
 
-	err := afero.Walk(fsys, srcDir, func(p string, info fs.FileInfo, err error) error {
+	err = afero.Walk(fsys, srcDir, func(p string, info fs.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}

@@ -87,3 +87,14 @@ func TestPackUnpackDir_Empty(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "0 files, 0 B", s.String())
 }
+
+func TestPackDir_RejectsNonDirectory(t *testing.T) {
+	fsys := afero.NewMemMapFs()
+	require.NoError(t, afero.WriteFile(fsys, "/file.txt", []byte("x"), 0o644))
+
+	_, err := PackDir(fsys, "/file.txt")
+	require.ErrorContains(t, err, "not a directory")
+
+	_, err = PackDir(fsys, "/missing")
+	require.Error(t, err)
+}

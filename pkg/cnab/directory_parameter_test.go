@@ -28,3 +28,21 @@ func TestDirectoryParameters_NotDeclared(t *testing.T) {
 	assert.False(t, b.IsDirectoryParameter("data"))
 	assert.False(t, b.IsDirectoryOutput("data"))
 }
+
+func TestDirectoryParameterReader_MissingConfiguration(t *testing.T) {
+	b := NewBundle(bundle.Bundle{RequiredExtensions: []string{DirectoryParameterExtensionKey}})
+	_, err := b.DirectoryParameterReader()
+	assert.ErrorContains(t, err, "no custom extension configuration found")
+}
+
+func TestDirectoryParameters_ImplyFileParameters(t *testing.T) {
+	// A bundle that only requires the directory extension still gets file handling
+	b := NewBundle(bundle.Bundle{
+		RequiredExtensions: []string{DirectoryParameterExtensionKey},
+		Custom: map[string]interface{}{
+			DirectoryParameterExtensionKey: map[string]interface{}{"parameters": []string{"data"}},
+		},
+	})
+	assert.True(t, b.SupportsFileParameters())
+	assert.True(t, b.IsFileType(&definition.Schema{Type: "string", ContentEncoding: "base64"}))
+}
