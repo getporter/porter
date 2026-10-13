@@ -98,3 +98,11 @@ func TestPackDir_RejectsNonDirectory(t *testing.T) {
 	_, err = PackDir(fsys, "/missing")
 	require.Error(t, err)
 }
+
+func TestIsWithin(t *testing.T) {
+	assert.True(t, isWithin("/dest", "/dest"))
+	assert.True(t, isWithin("/dest", "/dest/a/b"))
+	assert.False(t, isWithin("/dest", "/dest/../evil"))
+	assert.False(t, isWithin("/dest", "/evil"))
+	assert.False(t, isWithin("/dest", "/destination"))
+}

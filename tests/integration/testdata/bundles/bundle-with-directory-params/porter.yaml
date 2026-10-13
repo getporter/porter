@@ -17,7 +17,7 @@ parameters:
 outputs:
   - name: outdir
     type: directory
-    path: /cnab/app/outdir
+    path: /cnab/app/outputs/outdir
     applyTo:
       - install
 

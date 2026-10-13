@@ -836,6 +836,13 @@ func (m *RuntimeManifest) packDirectoryOutput(srcPath string, dstPath string) er
 	if err != nil {
 		return err
 	}
+
+	// The archive replaces the directory when it was declared at the destination
+	if filepath.Clean(srcPath) == dstPath {
+		if err := m.config.FileSystem.RemoveAll(dstPath); err != nil {
+			return err
+		}
+	}
 	return m.config.FileSystem.WriteFile(dstPath, data, pkg.FileModeWritable)
 }
 
@@ -877,11 +884,15 @@ func (m *RuntimeManifest) applyUnboundBundleOutputs(ctx context.Context) error {
 				continue
 			}
 			dstPath := filepath.Join(config.BundleOutputsDir, name)
-			if dstExists, _ := m.config.FileSystem.Exists(dstPath); dstExists {
+			isDirectory := m.bundle.IsDirectoryOutput(name)
+
+			// When a directory is declared inside of the outputs directory, it already exists at the destination
+			// and must be replaced by its archive. Otherwise an existing destination was bound by a step.
+			if dstExists, _ := m.config.FileSystem.Exists(dstPath); dstExists && !(isDirectory && filepath.Clean(srcPath) == dstPath) {
 				continue
 			}
 
-			if m.bundle.IsDirectoryOutput(name) {
+			if isDirectory {
 				if err := m.packDirectoryOutput(srcPath, dstPath); err != nil {
 					bigErr = multierror.Append(bigErr, fmt.Errorf("unable to pack output directory %s to %s: %w", srcPath, dstPath, err))
 				}

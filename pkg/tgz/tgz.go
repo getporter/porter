@@ -122,6 +122,10 @@ func UnpackDir(fsys afero.Fs, archive io.Reader, destDir string) error {
 			continue
 		}
 		dest := filepath.Join(destDir, filepath.FromSlash(name))
+		// Check again with native separators, which may treat names differently than the slash-only check above
+		if !isWithin(destDir, dest) {
+			return fmt.Errorf("invalid path %q in archive: it would be extracted outside of %s", header.Name, destDir)
+		}
 
 		switch header.Typeflag {
 		case tar.TypeDir:
@@ -203,4 +207,13 @@ func humanSize(n int64) string {
 		exp++
 	}
 	return fmt.Sprintf("%.1f %cB", float64(n)/float64(div), "KMGT"[exp])
+}
+
+// isWithin checks that path is dir or located underneath it.
+func isWithin(dir string, path string) bool {
+	rel, err := filepath.Rel(dir, path)
+	if err != nil {
+		return false
+	}
+	return rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator))
 }

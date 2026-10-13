@@ -1672,3 +1672,31 @@ func TestRuntimeManifest_applyUnboundBundleOutputs_DirectoryOutputIsFile(t *test
 	exists, _ := cfg.FileSystem.Exists("/cnab/app/outputs/outdir")
 	assert.False(t, exists, "no output should be persisted when the path is not a directory")
 }
+
+func TestRuntimeManifest_applyUnboundBundleOutputs_DirectoryInOutputsDir(t *testing.T) {
+	cfg := NewConfigFor(config.NewTestConfig(t).Config)
+	fs := cfg.FileSystem
+	// The directory is declared at the same path that the output is collected from
+	require.NoError(t, fs.WriteFile("/cnab/app/outputs/outdir/x.txt", []byte("x"), pkg.FileModeWritable))
+	require.NoError(t, fs.WriteFile("/cnab/app/outputs/outdir/sub/y.txt", []byte("y"), pkg.FileModeWritable))
+
+	rm := NewRuntimeManifest(cfg, cnab.ActionInstall, &manifest.Manifest{
+		Name: "mybun",
+		Outputs: manifest.OutputDefinitions{
+			"outdir": {Name: "outdir", Path: "/cnab/app/outputs/outdir", Schema: definition.Schema{Type: "directory"}},
+		},
+	})
+	rm.bundle = directoryTestBundle()
+
+	require.NoError(t, rm.applyUnboundBundleOutputs(context.Background()))
+
+	isDir, err := fs.DirExists("/cnab/app/outputs/outdir")
+	require.NoError(t, err)
+	assert.False(t, isDir, "the directory should be replaced by its archive")
+	archive, err := fs.ReadFile("/cnab/app/outputs/outdir")
+	require.NoError(t, err)
+	require.NoError(t, tgz.UnpackDir(fs, bytes.NewReader(archive), "/unpacked"))
+	got, err := fs.ReadFile("/unpacked/sub/y.txt")
+	require.NoError(t, err)
+	assert.Equal(t, "y", string(got))
+}

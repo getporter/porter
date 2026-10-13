@@ -4,7 +4,8 @@ set -euo pipefail
 # Print the directory parameter and copy it to the directory output
 copy-dir() {
   cat /cnab/app/mydir/a.txt /cnab/app/mydir/sub/b.txt
-  cp -r /cnab/app/mydir /cnab/app/outdir
+  mkdir -p /cnab/app/outputs
+  cp -r /cnab/app/mydir /cnab/app/outputs/outdir
 }
 
 noop() {
