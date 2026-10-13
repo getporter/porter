@@ -52,7 +52,7 @@ func (g *DockerfileGenerator) GenerateDockerFile(ctx context.Context) error {
 	var err error
 	flagEnabled := g.IsFeatureEnabled(experimental.FlagFullControlDockerfile)
 	if flagEnabled {
-		span.Warnf("WARNING: Experimental feature \"%s\" is deprecated and will be removed. Set dockerfileMode: raw in the manifest instead",
+		span.Warnf("WARNING: Experimental feature \"%s\" is deprecated and will be removed. Remove it from the experimental configuration and set dockerfileMode in the manifest instead",
 			experimental.FullControlDockerfile)
 	}
 	if g.UseRawDockerfile(flagEnabled) {
