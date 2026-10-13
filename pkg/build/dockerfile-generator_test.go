@@ -402,7 +402,7 @@ func TestPorter_GenerateDockerfile_DockerfileModeRaw(t *testing.T) {
 	t.Parallel()
 
 	ctx, c, g := newDockerfileModeTestGenerator(t, manifest.DockerfileModeRaw)
-	g.Manifest.Dockerfile = "Dockerfile.template"
+	g.Dockerfile = "Dockerfile.template"
 	customFrom := `FROM ubuntu:latest
 # PORTER_INIT
 COPY mybin /cnab/app/`
@@ -435,7 +435,7 @@ func TestPorter_GenerateDockerfile_DeprecatedFlagWarning(t *testing.T) {
 			t.Parallel()
 
 			ctx, c, g := newDockerfileModeTestGenerator(t, tc.mode, experimental.FlagFullControlDockerfile)
-			g.Manifest.Dockerfile = "Dockerfile.template"
+			g.Dockerfile = "Dockerfile.template"
 			require.NoError(t, c.TestContext.AddTestFileContents([]byte(customFrom), "Dockerfile.template"))
 
 			require.NoError(t, g.GenerateDockerFile(ctx))

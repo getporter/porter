@@ -55,7 +55,7 @@ func (g *DockerfileGenerator) GenerateDockerFile(ctx context.Context) error {
 		span.Warnf("WARNING: Experimental feature \"%s\" is deprecated and will be removed. Set dockerfileMode: raw in the manifest instead",
 			experimental.FullControlDockerfile)
 	}
-	if g.Manifest.UseRawDockerfile(flagEnabled) {
+	if g.UseRawDockerfile(flagEnabled) {
 		lines, err = g.readRawDockerfile(ctx)
 		if err != nil {
 			return span.Error(fmt.Errorf("error reading the Dockerfile: %w", err))
