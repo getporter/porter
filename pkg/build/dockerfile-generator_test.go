@@ -373,6 +373,85 @@ func TestPorter_GenerateDockerfile_WithExperimentalFlagFullControlDockerfile_Doc
 	require.EqualError(t, err, "error reading the Dockerfile: the Dockerfile specified in the manifest doesn't exist: \"this-file-does-not-exist.dockerfile\"")
 }
 
+func newDockerfileModeTestGenerator(t *testing.T, mode manifest.DockerfileMode, flags ...experimental.FeatureFlags) (context.Context, *config.TestConfig, *DockerfileGenerator) {
+	c := config.NewTestConfig(t)
+	t.Cleanup(c.Close)
+	for _, f := range flags {
+		c.SetExperimentalFlags(f)
+	}
+
+	// Start a span so we can capture the output
+	ctx, log := c.StartRootSpan(context.Background(), t.Name())
+	t.Cleanup(func() { log.Close() })
+
+	tmpl := templates.NewTemplates(c.Config)
+	configTpl, err := tmpl.GetManifest()
+	require.NoError(t, err)
+	require.NoError(t, c.TestContext.AddTestFileContents(configTpl, config.Name))
+
+	m, err := manifest.LoadManifestFrom(ctx, c.Config, config.Name)
+	require.NoError(t, err, "could not load manifest")
+	m.DockerfileMode = mode
+
+	return ctx, c, NewDockerfileGenerator(c.Config, m, tmpl, mixin.NewTestMixinProvider())
+}
+
+const deprecatedFlagWarning = `Experimental feature "full-control-dockerfile" is deprecated`
+
+func TestPorter_GenerateDockerfile_DockerfileModeRaw(t *testing.T) {
+	t.Parallel()
+
+	ctx, c, g := newDockerfileModeTestGenerator(t, manifest.DockerfileModeRaw)
+	g.Dockerfile = "Dockerfile.template"
+	customFrom := `FROM ubuntu:latest
+# PORTER_INIT
+COPY mybin /cnab/app/`
+	require.NoError(t, c.TestContext.AddTestFileContents([]byte(customFrom), "Dockerfile.template"))
+
+	require.NoError(t, g.GenerateDockerFile(ctx))
+
+	gotDockerfile, err := c.FileSystem.ReadFile(".cnab/Dockerfile")
+	require.NoError(t, err)
+	assert.Equal(t, customFrom, string(gotDockerfile))
+	assert.NotContains(t, c.TestContext.GetOutput(), deprecatedFlagWarning)
+}
+
+func TestPorter_GenerateDockerfile_DeprecatedFlagWarning(t *testing.T) {
+	t.Parallel()
+
+	customFrom := "FROM ubuntu:latest\n# PORTER_INIT"
+
+	testcases := []struct {
+		name    string
+		mode    manifest.DockerfileMode
+		wantRaw bool
+	}{
+		{name: "mode unset uses raw", mode: "", wantRaw: true},
+		{name: "explicit raw", mode: manifest.DockerfileModeRaw, wantRaw: true},
+		{name: "explicit template overrides flag", mode: manifest.DockerfileModeTemplate, wantRaw: false},
+	}
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			ctx, c, g := newDockerfileModeTestGenerator(t, tc.mode, experimental.FlagFullControlDockerfile)
+			g.Dockerfile = "Dockerfile.template"
+			require.NoError(t, c.TestContext.AddTestFileContents([]byte(customFrom), "Dockerfile.template"))
+
+			require.NoError(t, g.GenerateDockerFile(ctx))
+
+			gotDockerfile, err := c.FileSystem.ReadFile(".cnab/Dockerfile")
+			require.NoError(t, err)
+			if tc.wantRaw {
+				assert.Equal(t, customFrom, string(gotDockerfile))
+			} else {
+				assert.NotContains(t, string(gotDockerfile), "# PORTER_INIT", "template mode should process the Dockerfile")
+			}
+			tests.RequireOutputContains(t, c.TestContext.GetOutput(), deprecatedFlagWarning)
+		})
+	}
+}
+
 func TestPorter_buildDockerfile_WithOptimizedBuild(t *testing.T) {
 	t.Parallel()
 

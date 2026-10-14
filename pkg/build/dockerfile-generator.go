@@ -50,9 +50,12 @@ func (g *DockerfileGenerator) GenerateDockerFile(ctx context.Context) error {
 
 	var lines []string
 	var err error
-	if g.IsFeatureEnabled(experimental.FlagFullControlDockerfile) {
-		span.Warnf("WARNING: Experimental feature \"%s\" enabled: Dockerfile will be used without changes by Porter",
+	flagEnabled := g.IsFeatureEnabled(experimental.FlagFullControlDockerfile)
+	if flagEnabled {
+		span.Warnf("WARNING: Experimental feature \"%s\" is deprecated and will be removed. Remove it from the experimental configuration and set dockerfileMode in the manifest instead",
 			experimental.FullControlDockerfile)
+	}
+	if g.UseRawDockerfile(flagEnabled) {
 		lines, err = g.readRawDockerfile(ctx)
 		if err != nil {
 			return span.Error(fmt.Errorf("error reading the Dockerfile: %w", err))

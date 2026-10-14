@@ -679,6 +679,15 @@
       "description": "The relative path to a Dockerfile to use as a template during porter build",
       "type": "string"
     },
+    "dockerfileMode": {
+      "default": "template",
+      "description": "How Porter uses the Dockerfile. template processes it as a template, raw uses it without any changes",
+      "enum": [
+        "template",
+        "raw"
+      ],
+      "type": "string"
+    },
     "images": {
       "additionalProperties": {
         "$ref": "#/definitions/image"

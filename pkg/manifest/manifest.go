@@ -58,6 +58,17 @@ var (
 	DefaultSchemaVersion = semver.MustParse("1.0.1")
 )
 
+// DockerfileMode controls how Porter uses the Dockerfile referenced by the manifest.
+type DockerfileMode string
+
+const (
+	// DockerfileModeTemplate processes the Dockerfile as a template. This is the default.
+	DockerfileModeTemplate DockerfileMode = "template"
+
+	// DockerfileModeRaw uses the Dockerfile without any changes by Porter.
+	DockerfileModeRaw DockerfileMode = "raw"
+)
+
 type Manifest struct {
 	// ManifestPath is location to the original, user-supplied manifest, such as the path on the filesystem or a url
 	ManifestPath string `yaml:"-"`
@@ -95,6 +106,10 @@ type Manifest struct {
 	// Dockerfile is the relative path to the Dockerfile template for the bundle image
 	Dockerfile string `yaml:"dockerfile,omitempty"`
 
+	// DockerfileMode controls how Porter uses the Dockerfile. When "template" (the default),
+	// Porter processes the Dockerfile as a template. When "raw", Porter uses it without any changes.
+	DockerfileMode DockerfileMode `yaml:"dockerfileMode,omitempty"`
+
 	Mixins []MixinDeclaration `yaml:"mixins,omitempty"`
 
 	Install   Steps `yaml:"install"`
@@ -130,6 +145,16 @@ type FileSource struct {
 	Destination string `yaml:"destination"`
 }
 
+// UseRawDockerfile determines if the Dockerfile should be used without changes by Porter.
+// An explicit dockerfileMode takes precedence over the deprecated full-control-dockerfile
+// experimental flag, which is only consulted when dockerfileMode is not set.
+func (m *Manifest) UseRawDockerfile(deprecatedFlagEnabled bool) bool {
+	if m.DockerfileMode == "" {
+		return deprecatedFlagEnabled
+	}
+	return m.DockerfileMode == DockerfileModeRaw
+}
+
 func (m *Manifest) Validate(ctx context.Context, cfg *config.Config) error {
 	ctx, span := tracing.StartSpan(ctx)
 	defer span.EndSpan()
@@ -148,6 +173,16 @@ func (m *Manifest) Validate(ctx context.Context, cfg *config.Config) error {
 
 	if err = m.expandPersistentParameters(cfg); err != nil {
 		return span.Error(err)
+	}
+
+	switch m.DockerfileMode {
+	case "", DockerfileModeTemplate, DockerfileModeRaw:
+	default:
+		return span.Error(fmt.Errorf("invalid dockerfileMode %q, must be %q or %q", m.DockerfileMode, DockerfileModeTemplate, DockerfileModeRaw))
+	}
+
+	if m.DockerfileMode == DockerfileModeRaw && m.Dockerfile == "" {
+		return span.Error(fmt.Errorf("dockerfile must be set when dockerfileMode is %q", DockerfileModeRaw))
 	}
 
 	if strings.ToLower(m.Dockerfile) == "dockerfile" {

@@ -302,6 +302,15 @@ When it is completed, it is used to activate the features from [PEP003 - Advance
 
 ### Full control Dockerfile
 
+**Deprecated:** use `dockerfileMode: raw` in the Porter manifest instead. The flag will be removed in a future release. If the manifest sets `dockerfileMode`, it takes precedence over this flag.
+
+To migrate, remove `full-control-dockerfile` from your `experimental` configuration and add the following to porter.yaml:
+
+```yaml
+dockerfile: custom.Dockerfile
+dockerfileMode: raw
+```
+
 The `full-control-dockerfile` experimental flag disables all Dockerfile generation when building bundles.
 When enabled Porter will use the file referenced by `dockerfile` in the Porter manifest when building the bundle image *without modifying* it in any way.
 Ie. Porter will not process `# PORTER_x` placeholders, nor inject any user configuration and `CMD` statements.
