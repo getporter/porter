@@ -888,7 +888,8 @@ func (m *RuntimeManifest) applyUnboundBundleOutputs(ctx context.Context) error {
 
 			// When a directory is declared inside of the outputs directory, it already exists at the destination
 			// and must be replaced by its archive. Otherwise an existing destination was bound by a step.
-			if dstExists, _ := m.config.FileSystem.Exists(dstPath); dstExists && !(isDirectory && filepath.Clean(srcPath) == dstPath) {
+			dirAtDestination := isDirectory && filepath.Clean(srcPath) == dstPath
+			if dstExists, _ := m.config.FileSystem.Exists(dstPath); dstExists && !dirAtDestination {
 				continue
 			}
 
