@@ -1,0 +1,43 @@
+schemaVersion: 1.0.0
+name: mybun-dir
+version: 0.1.0
+description: "A bundle that passes directories as a parameter and an output"
+registry: "localhost:5000"
+
+mixins:
+  - exec
+
+parameters:
+  - name: mydir
+    type: directory
+    path: /cnab/app/mydir
+    applyTo:
+      - install
+
+outputs:
+  - name: outdir
+    type: directory
+    path: /cnab/app/outputs/outdir
+    applyTo:
+      - install
+
+install:
+  - exec:
+      description: "Copy the directory parameter to the directory output"
+      command: ./helpers.sh
+      arguments:
+        - copy-dir
+
+upgrade:
+  - exec:
+      description: "World 2.0"
+      command: ./helpers.sh
+      arguments:
+        - noop
+
+uninstall:
+  - exec:
+      description: "Uninstall"
+      command: ./helpers.sh
+      arguments:
+        - noop

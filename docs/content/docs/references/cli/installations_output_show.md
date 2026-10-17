@@ -13,6 +13,8 @@ Show the output of an installation.
 
 Either display the output from a specific run of a bundle with --run, or use --installation to display the output from its most recent run.
 
+Outputs of type directory are written as a tar.gz archive. Pipe the output to tar to extract it, it is not printed to a terminal.
+
 ```
 porter installations output show NAME [--installation|-i INSTALLATION] [flags]
 ```
@@ -23,6 +25,7 @@ porter installations output show NAME [--installation|-i INSTALLATION] [flags]
   porter installation output show kubeconfig
     porter installation output show subscription-id --installation azure-mysql
     porter installation output show kubeconfig --run 01EZSWJXFATDE24XDHS5D5PWK6
+    porter installation output show results | tar xz
 ```
 
 ### Options

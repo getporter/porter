@@ -1,0 +1,30 @@
+schemaVersion: 1.0.0
+name: dirsource
+version: 0.1.0
+description: "directory output fed back in as a directory parameter"
+registry: "localhost:5000"
+
+mixins:
+  - exec
+
+parameters:
+  - name: state-dir
+    type: directory
+    path: /cnab/app/state-dir
+    source:
+      output: state-dir
+
+outputs:
+  - name: state-dir
+    type: directory
+    path: /cnab/app/state-dir
+
+install:
+  - exec:
+      description: "install"
+      command: ls
+
+uninstall:
+  - exec:
+      description: "uninstall"
+      command: ls

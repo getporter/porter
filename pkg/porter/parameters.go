@@ -19,6 +19,7 @@ import (
 	"get.porter.sh/porter/pkg/printer"
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
+	"get.porter.sh/porter/pkg/tgz"
 	"get.porter.sh/porter/pkg/tracing"
 	dtprinter "github.com/carolynvs/datetime-printer"
 	"github.com/cnabio/cnab-go/bundle"
@@ -563,7 +564,7 @@ func NewDisplayValuesFromParameters(bun cnab.ExtendedBundle, params map[string]i
 
 		schema, ok := bun.Definitions[def.Definition]
 		if ok {
-			dp.Type = bun.GetParameterType(schema)
+			dp.Type = bun.GetParameterTypeByName(name, schema)
 			if schema.WriteOnly != nil && *schema.WriteOnly {
 				dp.Sensitive = true
 			}
@@ -707,6 +708,11 @@ func (p *Porter) finalizeParameters(ctx context.Context, installation storage.In
 }
 
 func (p *Porter) getUnconvertedValueFromRaw(b cnab.ExtendedBundle, def *definition.Schema, key, rawValue string) (string, error) {
+	// the parameter value (via rawValue) may represent a directory on the local filesystem
+	if b.IsDirectoryParameter(key) {
+		return p.packDirectoryParameter(key, rawValue)
+	}
+
 	// the parameter value (via rawValue) may represent a file on the local filesystem
 	if b.IsFileType(def) {
 		if _, err := p.FileSystem.Stat(rawValue); err == nil {
@@ -1086,4 +1092,21 @@ func (p *Porter) applyActionOptionsToInstallation(ctx context.Context, ba Bundle
 
 	// re-validate the installation since we modified it here
 	return inst.Validate(ctx, p.GetSchemaCheckStrategy(ctx))
+}
+
+// packDirectoryParameter compresses a directory into the base64 encoded tar.gz
+// representation that is passed to the bundle.
+func (p *Porter) packDirectoryParameter(key string, dir string) (string, error) {
+	info, err := p.FileSystem.Stat(dir)
+	if err != nil {
+		return "", fmt.Errorf("unable to read directory parameter %s at %s: %w", key, dir, err)
+	}
+	if !info.IsDir() {
+		return "", fmt.Errorf("directory parameter %s must be a directory but %s is not", key, dir)
+	}
+	data, err := tgz.PackDir(p.FileSystem, dir)
+	if err != nil {
+		return "", fmt.Errorf("unable to pack directory parameter %s: %w", key, err)
+	}
+	return base64.StdEncoding.EncodeToString(data), nil
 }
