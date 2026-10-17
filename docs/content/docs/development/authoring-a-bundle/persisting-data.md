@@ -448,3 +448,28 @@ variables. If you need template/variable access, use parameter sources instead.
 - [Working with Dependencies](/docs/development/authoring-a-bundle/working-with-dependencies/) - Sourcing outputs from dependencies
 
 [experimental feature flag]: /docs/configuration/configuration/#experimental
+
+## Directories
+
+Parameters and outputs can also be of `type: directory`. Porter compresses the directory into a
+tar.gz archive, passes it to the bundle, and extracts it at `path` when the bundle runs. Outputs
+are archived the same way.
+
+```yaml
+parameters:
+  - name: config
+    type: directory
+    path: /cnab/app/config
+
+outputs:
+  - name: results
+    type: directory
+    path: /cnab/app/results
+```
+
+```console
+porter install --param config=./local-config-dir
+```
+
+Only regular files and directories are supported, symlinks are an error. There is no size limit, but
+the archive is stored base64 encoded so avoid large directories.

@@ -1,0 +1,31 @@
+schemaVersion: 1.0.0
+name: dirbun
+version: 0.1.0
+description: "bundle with directory param and output"
+registry: "localhost:5000"
+
+mixins:
+  - exec
+
+parameters:
+  - name: mydir
+    type: directory
+    path: /cnab/app/mydir
+  - name: myfile
+    type: file
+    path: /cnab/app/myfile
+
+outputs:
+  - name: outdir
+    type: directory
+    path: /cnab/app/outdir
+
+install:
+  - exec:
+      description: "install"
+      command: ls
+
+uninstall:
+  - exec:
+      description: "uninstall"
+      command: ls

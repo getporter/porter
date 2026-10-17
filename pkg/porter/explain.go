@@ -274,7 +274,7 @@ func generatePrintable(ctx context.Context, bun cnab.ExtendedBundle, action stri
 		}
 		pp := PrintableParameter{param: &v}
 		pp.Name = p
-		pp.Type = bun.GetParameterType(def)
+		pp.Type = bun.GetParameterTypeByName(p, def)
 		pp.Default = def.Default
 		pp.ApplyTo = generateApplyToString(v.ApplyTo)
 		pp.Required = v.Required

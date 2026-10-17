@@ -19,6 +19,7 @@ import (
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/experimental"
 	"get.porter.sh/porter/pkg/manifest"
+	"get.porter.sh/porter/pkg/tgz"
 	"get.porter.sh/porter/pkg/tracing"
 	"get.porter.sh/porter/pkg/yaml"
 	"github.com/cbroglie/mustache"
@@ -580,6 +581,8 @@ func (m *RuntimeManifest) ResolveStep(ctx context.Context, stepIndex int, step *
 
 // Initialize prepares the runtime environment prior to step execution
 func (m *RuntimeManifest) Initialize(ctx context.Context) error {
+	log := tracing.LoggerFromContext(ctx)
+
 	if err := m.createOutputsDir(); err != nil {
 		return err
 	}
@@ -602,7 +605,7 @@ func (m *RuntimeManifest) Initialize(ctx context.Context) error {
 			}
 
 			// Porter by default places parameter value into file determined by Destination.Path
-			bytes, err := m.config.FileSystem.ReadFile(param.Destination.Path)
+			contents, err := m.config.FileSystem.ReadFile(param.Destination.Path)
 			if err != nil {
 				if os.IsNotExist(err) {
 					continue
@@ -615,16 +618,27 @@ func (m *RuntimeManifest) Initialize(ctx context.Context) error {
 			// We want to get the null -> "" fixed, and also not write files into the bundle when unset.
 			// that's a cnab change somewhere probably
 			// the problem is in injectParameters in cnab-go
-			if string(bytes) == "null" {
+			if string(contents) == "null" {
 				err := m.config.FileSystem.Remove(param.Destination.Path)
 				if err != nil {
 					return fmt.Errorf("unable to remove destination path: %w", err)
 				}
 				continue
 			}
-			decoded, err := base64.StdEncoding.DecodeString(string(bytes))
+			decoded, err := base64.StdEncoding.DecodeString(string(contents))
 			if err != nil {
 				return fmt.Errorf("unable to decode parameter %s: %w", paramName, err)
+			}
+
+			// Directories are passed as a tar.gz archive, replace the injected file with the directory
+			if m.bundle.IsDirectoryParameter(paramName) {
+				if err := m.config.FileSystem.Remove(param.Destination.Path); err != nil {
+					return log.Error(fmt.Errorf("unable to remove destination path: %w", err))
+				}
+				if err := tgz.UnpackDir(m.config.FileSystem, bytes.NewReader(decoded), param.Destination.Path); err != nil {
+					return log.Error(fmt.Errorf("unable to unpack directory parameter %s: %w", paramName, err))
+				}
+				continue
 			}
 
 			err = m.config.FileSystem.WriteFile(param.Destination.Path, decoded, pkg.FileModeWritable)
@@ -816,6 +830,22 @@ func (m *RuntimeManifest) packStateBag(ctx context.Context) error {
 	return log.Error(bigErr.ErrorOrNil())
 }
 
+// packDirectoryOutput archives a directory output as a tar.gz at the output's destination.
+func (m *RuntimeManifest) packDirectoryOutput(srcPath string, dstPath string) error {
+	data, err := tgz.PackDir(m.config.FileSystem, srcPath)
+	if err != nil {
+		return err
+	}
+
+	// The archive replaces the directory when it was declared at the destination
+	if filepath.Clean(srcPath) == dstPath {
+		if err := m.config.FileSystem.RemoveAll(dstPath); err != nil {
+			return err
+		}
+	}
+	return m.config.FileSystem.WriteFile(dstPath, data, pkg.FileModeWritable)
+}
+
 // applyUnboundBundleOutputs finds outputs that haven't been bound yet by a step,
 // and if they can be bound, i.e. they grab a file from the bundle's filesystem,
 // apply the output.
@@ -843,26 +873,39 @@ func (m *RuntimeManifest) applyUnboundBundleOutputs(ctx context.Context) error {
 
 		// Print the output that we've collected
 		log.Debugf("  - %s", name)
-		if _, hasOutput := outputs[name]; !hasOutput {
-			// Use the path as originally defined in the manifest
-			// TODO(carolynvs): When we switch to driving everything completely
-			// from the bundle.json, we need to find a better way to get the original path value that the user specified.
-			// We don't force people to output files immediately to /cnab/app/outputs and so that original location should
-			// be persisted somewhere in the bundle.json (probably in custom)
-			srcPath := manifest.ResolvePath(outputSrcPath)
-			if _, err := m.config.FileSystem.Stat(srcPath); err != nil {
-				continue
-			}
-			dstPath := filepath.Join(config.BundleOutputsDir, name)
-			if dstExists, _ := m.config.FileSystem.Exists(dstPath); dstExists {
-				continue
-			}
+		// A directory is always collected from its path, even when a step bound a value to the output
+		_, hasOutput := outputs[name]
+		isDirectory := m.bundle.IsDirectoryOutput(name)
+		if hasOutput && !isDirectory {
+			continue
+		}
 
-			err := m.config.CopyFile(srcPath, dstPath)
-			if err != nil {
-				bigErr = multierror.Append(bigErr, fmt.Errorf("unable to copy output file from %s to %s: %w", srcPath, dstPath, err))
-				continue
+		// Use the path as originally defined in the manifest
+		// TODO(carolynvs): When we switch to driving everything completely
+		// from the bundle.json, we need to find a better way to get the original path value that the user specified.
+		// We don't force people to output files immediately to /cnab/app/outputs and so that original location should
+		// be persisted somewhere in the bundle.json (probably in custom)
+		srcPath := manifest.ResolvePath(outputSrcPath)
+		if _, err := m.config.FileSystem.Stat(srcPath); err != nil {
+			continue
+		}
+		dstPath := filepath.Join(config.BundleOutputsDir, name)
+
+		if isDirectory {
+			if err := m.packDirectoryOutput(srcPath, dstPath); err != nil {
+				bigErr = multierror.Append(bigErr, fmt.Errorf("unable to pack output directory %s to %s: %w", srcPath, dstPath, err))
 			}
+			continue
+		}
+
+		if dstExists, _ := m.config.FileSystem.Exists(dstPath); dstExists {
+			continue
+		}
+
+		err := m.config.CopyFile(srcPath, dstPath)
+		if err != nil {
+			bigErr = multierror.Append(bigErr, fmt.Errorf("unable to copy output file from %s to %s: %w", srcPath, dstPath, err))
+			continue
 		}
 	}
 

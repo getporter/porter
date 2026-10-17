@@ -29,6 +29,7 @@ var SupportedExtensions = []RequiredExtension{
 	DependenciesV1Extension,
 	DependenciesV2Extension,
 	DockerExtension,
+	DirectoryParameterExtension,
 	FileParameterExtension,
 	ParameterSourcesExtension,
 }

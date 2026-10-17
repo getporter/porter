@@ -1,15 +1,19 @@
 package porter
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"sort"
 
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/printer"
 	"get.porter.sh/porter/pkg/storage"
+	"get.porter.sh/porter/pkg/tgz"
+	"github.com/mattn/go-isatty"
 )
 
 // OutputShowOptions represent options for a bundle output show command
@@ -17,6 +21,9 @@ type OutputShowOptions struct {
 	installationOptions
 	Output string
 	RunID  string
+
+	// isTerminal reports if stdout is a terminal. Defaults to checking os.Stdout, tests can override it.
+	isTerminal func() bool
 }
 
 // OutputListOptions represent options for a bundle output list command
@@ -83,11 +90,11 @@ func (o *OutputListOptions) Validate(args []string, cxt *portercontext.Context) 
 
 // ShowBundleOutput shows a bundle output value, according to the provided options
 func (p *Porter) ShowBundleOutput(ctx context.Context, opts *OutputShowOptions) error {
-	var output string
+	var output storage.Output
 	var err error
 
 	if opts.RunID != "" {
-		output, err = p.ReadBundleOutputFromRun(ctx, opts.Output, opts.RunID)
+		output, err = p.getRunOutput(ctx, opts.Output, opts.RunID)
 		if err != nil {
 			return fmt.Errorf("unable to read output '%s' for run '%s': %w", opts.Output, opts.RunID, err)
 		}
@@ -97,14 +104,42 @@ func (p *Porter) ShowBundleOutput(ctx context.Context, opts *OutputShowOptions) 
 			return err
 		}
 
-		output, err = p.ReadBundleOutput(ctx, opts.Output, opts.Name, opts.Namespace)
+		output, err = p.getLastOutput(ctx, opts.Output, opts.Name, opts.Namespace)
 		if err != nil {
 			return fmt.Errorf("unable to read output '%s' for installation '%s/%s': %w", opts.Output, opts.Namespace, opts.Name, err)
 		}
 	}
 
-	fmt.Fprint(p.Out, output)
+	// A directory is stored as a binary archive, don't print that to a terminal
+	isTerminal := opts.isTerminal
+	if isTerminal == nil {
+		isTerminal = stdoutIsTerminal
+	}
+	if isTerminal() {
+		isDir, err := p.isDirectoryOutput(ctx, output)
+		if err != nil {
+			return err
+		}
+		if isDir {
+			return fmt.Errorf("output '%s' is a directory, stored as a tar.gz archive. Redirect stdout to a file or pipe it to tar, for example: porter installation output show %s | tar xz", opts.Output, opts.Output)
+		}
+	}
+
+	fmt.Fprint(p.Out, string(output.Value))
 	return nil
+}
+
+func stdoutIsTerminal() bool {
+	return isatty.IsTerminal(os.Stdout.Fd())
+}
+
+// isDirectoryOutput checks if the output is of type directory in the bundle of the run that produced it.
+func (p *Porter) isDirectoryOutput(ctx context.Context, output storage.Output) (bool, error) {
+	run, err := p.Installations.GetRun(ctx, output.RunID)
+	if err != nil {
+		return false, fmt.Errorf("unable to determine the type of output '%s': %w", output.Name, err)
+	}
+	return cnab.NewBundle(run.Bundle).IsDirectoryOutput(output.Name), nil
 }
 
 func NewDisplayValuesFromOutputs(bun cnab.ExtendedBundle, outputs storage.Outputs) DisplayValues {
@@ -120,12 +155,21 @@ func NewDisplayValuesFromOutputs(bun cnab.ExtendedBundle, outputs storage.Output
 
 		do := &DisplayValue{Name: output.Name}
 		do.SetValue(output.Value)
+		if bun.IsDirectoryOutput(output.Name) && output.PersistError == "" {
+			// Don't dump the archive, summarize what is in it instead
+			if summary, err := tgz.Summarize(bytes.NewReader(output.Value)); err == nil {
+				do.Value = summary.String()
+			} else {
+				do.Value = ""
+				do.Warning = fmt.Sprintf("unable to read directory output: %s", err)
+			}
+		}
 		if output.PersistError != "" {
 			do.Warning = fmt.Sprintf("value unavailable: %s", output.PersistError)
 		}
 		schema, ok := output.GetSchema(bun)
 		if ok {
-			do.Type = bun.GetParameterType(&schema)
+			do.Type = bun.GetOutputTypeByName(output.Name, &schema)
 			if schema.WriteOnly != nil && *schema.WriteOnly {
 				do.Sensitive = true
 			}
@@ -207,38 +251,49 @@ func (p *Porter) PrintBundleOutputs(ctx context.Context, opts OutputListOptions)
 
 // ReadBundleOutput reads a bundle output from an installation
 func (p *Porter) ReadBundleOutput(ctx context.Context, outputName, installation, namespace string) (string, error) {
-	o, err := p.Installations.GetLastOutput(ctx, namespace, installation, outputName)
+	o, err := p.getLastOutput(ctx, outputName, installation, namespace)
 	if err != nil {
 		return "", err
 	}
-
-	o, err = p.Sanitizer.RestoreOutput(ctx, o)
-	if err != nil {
-		return "", err
-	}
-	if o.PersistError != "" {
-		return "", fmt.Errorf("output %q failed to persist to the secret store and its value is unavailable: %s", o.Name, o.PersistError)
-	}
-
-	return fmt.Sprintf("%v", string(o.Value)), nil
+	return string(o.Value), nil
 }
 
 // ReadBundleOutputFromRun reads a bundle output from a specific run
 func (p *Porter) ReadBundleOutputFromRun(ctx context.Context, outputName, runID string) (string, error) {
+	o, err := p.getRunOutput(ctx, outputName, runID)
+	if err != nil {
+		return "", err
+	}
+	return string(o.Value), nil
+}
+
+// getLastOutput retrieves the most recent output of an installation, with its value restored.
+func (p *Porter) getLastOutput(ctx context.Context, outputName, installation, namespace string) (storage.Output, error) {
+	o, err := p.Installations.GetLastOutput(ctx, namespace, installation, outputName)
+	if err != nil {
+		return storage.Output{}, err
+	}
+	return p.restoreOutputValue(ctx, o)
+}
+
+// getRunOutput retrieves an output of a specific run, with its value restored.
+func (p *Porter) getRunOutput(ctx context.Context, outputName, runID string) (storage.Output, error) {
 	o, err := p.Installations.GetOutput(ctx, runID, outputName)
 	if err != nil {
-		return "", err
+		return storage.Output{}, err
 	}
+	return p.restoreOutputValue(ctx, o)
+}
 
-	o, err = p.Sanitizer.RestoreOutput(ctx, o)
+func (p *Porter) restoreOutputValue(ctx context.Context, o storage.Output) (storage.Output, error) {
+	o, err := p.Sanitizer.RestoreOutput(ctx, o)
 	if err != nil {
-		return "", err
+		return storage.Output{}, err
 	}
 	if o.PersistError != "" {
-		return "", fmt.Errorf("output %q failed to persist to the secret store and its value is unavailable: %s", o.Name, o.PersistError)
+		return storage.Output{}, fmt.Errorf("output %q failed to persist to the secret store and its value is unavailable: %s", o.Name, o.PersistError)
 	}
-
-	return fmt.Sprintf("%v", string(o.Value)), nil
+	return o, nil
 }
 
 func truncateString(str string, num int) string {

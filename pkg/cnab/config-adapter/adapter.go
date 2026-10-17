@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"path"
+	"slices"
 	"strings"
 
 	"get.porter.sh/porter/pkg/cnab"
@@ -318,7 +319,7 @@ func (c *ManifestConverter) addDefinition(name string, kind string, def definiti
 	}
 
 	// file is a porter specific type, swap it out for something CNAB understands
-	if def.Type == "file" {
+	if def.Type == "file" || def.Type == "directory" {
 		def.Type = "string"
 		def.ContentEncoding = "base64"
 	}
@@ -701,6 +702,12 @@ func (c *ManifestConverter) generateCustomExtensions(ctx context.Context, b *cna
 		cnab.FileParameterExtensionKey: struct{}{},
 	}
 
+	// Add the directory parameters extension when the bundle uses directories
+	dirs := c.generateDirectoryParameters()
+	if len(dirs.Parameters) > 0 || len(dirs.Outputs) > 0 {
+		customExtensions[cnab.DirectoryParameterExtensionKey] = dirs
+	}
+
 	// Add custom metadata defined in the manifest
 	for key, value := range c.Manifest.Custom {
 		customExtensions[key] = value
@@ -729,8 +736,30 @@ func (c *ManifestConverter) generateCustomExtensions(ctx context.Context, b *cna
 	return customExtensions, nil
 }
 
+// generateDirectoryParameters lists the parameters and outputs declared with type directory.
+func (c *ManifestConverter) generateDirectoryParameters() cnab.DirectoryParameters {
+	var dirs cnab.DirectoryParameters
+	for name, p := range c.Manifest.Parameters {
+		if p.Type == "directory" {
+			dirs.Parameters = append(dirs.Parameters, name)
+		}
+	}
+	for name, o := range c.Manifest.Outputs {
+		if o.Type == "directory" {
+			dirs.Outputs = append(dirs.Outputs, name)
+		}
+	}
+	slices.Sort(dirs.Parameters)
+	slices.Sort(dirs.Outputs)
+	return dirs
+}
+
 func (c *ManifestConverter) generateRequiredExtensions(b cnab.ExtendedBundle) []string {
 	requiredExtensions := []string{cnab.FileParameterExtensionKey}
+
+	if _, ok := b.Custom[cnab.DirectoryParameterExtensionKey]; ok {
+		requiredExtensions = append(requiredExtensions, cnab.DirectoryParameterExtensionKey)
+	}
 
 	// Add the appropriate dependencies key if applicable
 	if b.HasDependenciesV1() {

@@ -155,6 +155,24 @@ func (b ExtendedBundle) GetParameterType(def *definition.Schema) string {
 	return fmt.Sprintf("%v", def.Type)
 }
 
+// GetParameterTypeByName is like GetParameterType but can also detect
+// the directory type, which is declared by name and not by the definition.
+func (b ExtendedBundle) GetParameterTypeByName(name string, def *definition.Schema) string {
+	if b.IsDirectoryParameter(name) {
+		return "directory"
+	}
+	return b.GetParameterType(def)
+}
+
+// GetOutputTypeByName is like GetParameterType but can also detect
+// the directory type, which is declared by name and not by the definition.
+func (b ExtendedBundle) GetOutputTypeByName(name string, def *definition.Schema) string {
+	if b.IsDirectoryOutput(name) {
+		return "directory"
+	}
+	return b.GetParameterType(def)
+}
+
 // IsFileType determines if the parameter/credential is of type "file".
 func (b ExtendedBundle) IsFileType(def *definition.Schema) bool {
 	return b.SupportsFileParameters() &&

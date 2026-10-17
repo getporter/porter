@@ -1,0 +1,25 @@
+schemaVersion: 1.0.0
+name: tmpl-dir
+version: 0.1.0
+description: "templates a directory output"
+registry: "localhost:5000"
+
+mixins:
+  - exec
+
+outputs:
+  - name: outdir
+    type: directory
+    path: /cnab/app/outdir
+
+install:
+  - exec:
+      description: "install"
+      command: echo
+      arguments:
+        - "${ bundle.outputs.outdir }"
+
+uninstall:
+  - exec:
+      description: "uninstall"
+      command: ls

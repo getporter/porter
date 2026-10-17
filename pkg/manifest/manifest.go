@@ -237,6 +237,13 @@ func (m *Manifest) Validate(ctx context.Context, cfg *config.Config) error {
 		}
 	}
 
+	// A directory is an archive, it can't be rendered into a template
+	for name, output := range m.GetTemplatedOutputs() {
+		if output.Type == "directory" {
+			result = multierror.Append(result, fmt.Errorf("output %q is of type directory and cannot be used in a template with bundle.outputs.%s", name, name))
+		}
+	}
+
 	for _, parameter := range m.Parameters {
 		err = parameter.Validate()
 		if err != nil {
@@ -600,6 +607,20 @@ func (pd *ParameterDefinition) Validate() error {
 				}
 			}
 		}
+	}
+
+	// Porter also supports a parameter of type: "directory", which is
+	// stored in the bundle as a base64 encoded tar.gz archive.
+	if pdCopy.Type == "directory" {
+		if pd.Destination.Path == "" {
+			result = multierror.Append(result, fmt.Errorf("no destination path supplied for parameter %s", pd.Name))
+		}
+		if pd.Default != nil {
+			result = multierror.Append(result, fmt.Errorf("parameter %q of type 'directory' cannot have a default value", pd.Name))
+			pdCopy.Default = nil
+		}
+		pdCopy.Type = "string"
+		pdCopy.ContentEncoding = "base64"
 	}
 
 	// Validate the Parameter Definition schema itself
@@ -1245,6 +1266,14 @@ func (od *OutputDefinition) Validate() error {
 	// Here, we copy the definition and make the same modification before validation
 	odCopy := od.DeepCopy()
 	if odCopy.Type == "file" {
+		if od.Path == "" {
+			result = multierror.Append(result, fmt.Errorf("no path supplied for output %s", od.Name))
+		}
+		odCopy.Type = "string"
+		odCopy.ContentEncoding = "base64"
+	}
+
+	if odCopy.Type == "directory" {
 		if od.Path == "" {
 			result = multierror.Append(result, fmt.Errorf("no path supplied for output %s", od.Name))
 		}

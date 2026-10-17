@@ -38,6 +38,12 @@ func (b ExtendedBundle) SupportsFileParameters() bool {
 		return true
 	}
 
+	// A directory is a file parameter whose content is an archive,
+	// so bundles that use directories don't need to also declare file parameters.
+	if b.SupportsDirectoryParameters() {
+		return true
+	}
+
 	// Porter has always supported this but didn't have the extension declared.
 	return b.IsPorterBundle()
 }
