@@ -873,38 +873,39 @@ func (m *RuntimeManifest) applyUnboundBundleOutputs(ctx context.Context) error {
 
 		// Print the output that we've collected
 		log.Debugf("  - %s", name)
-		if _, hasOutput := outputs[name]; !hasOutput {
-			// Use the path as originally defined in the manifest
-			// TODO(carolynvs): When we switch to driving everything completely
-			// from the bundle.json, we need to find a better way to get the original path value that the user specified.
-			// We don't force people to output files immediately to /cnab/app/outputs and so that original location should
-			// be persisted somewhere in the bundle.json (probably in custom)
-			srcPath := manifest.ResolvePath(outputSrcPath)
-			if _, err := m.config.FileSystem.Stat(srcPath); err != nil {
-				continue
-			}
-			dstPath := filepath.Join(config.BundleOutputsDir, name)
-			isDirectory := m.bundle.IsDirectoryOutput(name)
+		// A directory is always collected from its path, even when a step bound a value to the output
+		_, hasOutput := outputs[name]
+		isDirectory := m.bundle.IsDirectoryOutput(name)
+		if hasOutput && !isDirectory {
+			continue
+		}
 
-			// When a directory is declared inside of the outputs directory, it already exists at the destination
-			// and must be replaced by its archive. Otherwise an existing destination was bound by a step.
-			dirAtDestination := isDirectory && filepath.Clean(srcPath) == dstPath
-			if dstExists, _ := m.config.FileSystem.Exists(dstPath); dstExists && !dirAtDestination {
-				continue
-			}
+		// Use the path as originally defined in the manifest
+		// TODO(carolynvs): When we switch to driving everything completely
+		// from the bundle.json, we need to find a better way to get the original path value that the user specified.
+		// We don't force people to output files immediately to /cnab/app/outputs and so that original location should
+		// be persisted somewhere in the bundle.json (probably in custom)
+		srcPath := manifest.ResolvePath(outputSrcPath)
+		if _, err := m.config.FileSystem.Stat(srcPath); err != nil {
+			continue
+		}
+		dstPath := filepath.Join(config.BundleOutputsDir, name)
 
-			if isDirectory {
-				if err := m.packDirectoryOutput(srcPath, dstPath); err != nil {
-					bigErr = multierror.Append(bigErr, fmt.Errorf("unable to pack output directory %s to %s: %w", srcPath, dstPath, err))
-				}
-				continue
+		if isDirectory {
+			if err := m.packDirectoryOutput(srcPath, dstPath); err != nil {
+				bigErr = multierror.Append(bigErr, fmt.Errorf("unable to pack output directory %s to %s: %w", srcPath, dstPath, err))
 			}
+			continue
+		}
 
-			err := m.config.CopyFile(srcPath, dstPath)
-			if err != nil {
-				bigErr = multierror.Append(bigErr, fmt.Errorf("unable to copy output file from %s to %s: %w", srcPath, dstPath, err))
-				continue
-			}
+		if dstExists, _ := m.config.FileSystem.Exists(dstPath); dstExists {
+			continue
+		}
+
+		err := m.config.CopyFile(srcPath, dstPath)
+		if err != nil {
+			bigErr = multierror.Append(bigErr, fmt.Errorf("unable to copy output file from %s to %s: %w", srcPath, dstPath, err))
+			continue
 		}
 	}
 

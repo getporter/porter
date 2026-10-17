@@ -480,3 +480,37 @@ func TestPorter_DirectoryOutput(t *testing.T) {
 		assert.Equal(t, "678", string(got))
 	})
 }
+
+func TestPorter_ShowBundleOutput_DirectoryFromOlderRun(t *testing.T) {
+	t.Parallel()
+
+	p := NewTestPorter(t)
+	defer p.Close()
+
+	dirDef := &definition.Schema{Type: "string", ContentEncoding: "base64"}
+	oldBundle := bundle.Bundle{
+		RequiredExtensions: []string{cnab.FileParameterExtensionKey, cnab.DirectoryParameterExtensionKey},
+		Custom: map[string]interface{}{
+			cnab.DirectoryParameterExtensionKey: map[string]interface{}{"outputs": []string{"mydir"}},
+		},
+		Definitions: definition.Definitions{"mydir": dirDef},
+		Outputs:     map[string]bundle.Output{"mydir": {Definition: "mydir", Path: "/cnab/app/outputs/mydir"}},
+	}
+	// The latest run's bundle no longer declares the output
+	newBundle := bundle.Bundle{}
+
+	oldB, newB := cnab.NewBundle(oldBundle), cnab.NewBundle(newBundle)
+	i := p.TestInstallations.CreateInstallation(storage.NewInstallation("", "test"))
+	oldRun := p.TestInstallations.CreateRun(i.NewRun(cnab.ActionInstall, oldB), func(r *storage.Run) { r.Bundle = oldBundle })
+	oldResult := p.TestInstallations.CreateResult(oldRun.NewResult(cnab.StatusSucceeded))
+	p.CreateOutput(oldResult.NewOutput("mydir", []byte("archive-bytes")), oldB)
+	newRun := p.TestInstallations.CreateRun(i.NewRun(cnab.ActionUpgrade, newB), func(r *storage.Run) { r.Bundle = newBundle })
+	p.TestInstallations.CreateResult(newRun.NewResult(cnab.StatusSucceeded))
+
+	err := p.ShowBundleOutput(context.Background(), &OutputShowOptions{
+		installationOptions: installationOptions{Name: "test"},
+		Output:              "mydir",
+		isTerminal:          func() bool { return true },
+	})
+	require.ErrorContains(t, err, "is a directory", "the type should come from the run that produced the output")
+}

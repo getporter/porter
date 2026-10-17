@@ -1700,3 +1700,29 @@ func TestRuntimeManifest_applyUnboundBundleOutputs_DirectoryInOutputsDir(t *test
 	require.NoError(t, err)
 	assert.Equal(t, "y", string(got))
 }
+
+func TestRuntimeManifest_applyUnboundBundleOutputs_DirectoryOverridesStepOutput(t *testing.T) {
+	cfg := NewConfigFor(config.NewTestConfig(t).Config)
+	fs := cfg.FileSystem
+	require.NoError(t, fs.WriteFile("/cnab/app/outdir/x.txt", []byte("x"), pkg.FileModeWritable))
+	// A step bound text to the output
+	require.NoError(t, fs.WriteFile("/cnab/app/outputs/outdir", []byte("from a step"), pkg.FileModeWritable))
+
+	rm := NewRuntimeManifest(cfg, cnab.ActionInstall, &manifest.Manifest{
+		Name: "mybun",
+		Outputs: manifest.OutputDefinitions{
+			"outdir": {Name: "outdir", Path: "/cnab/app/outdir", Schema: definition.Schema{Type: "directory"}},
+		},
+	})
+	rm.bundle = directoryTestBundle()
+	rm.outputs = map[string]string{"outdir": "from a step"}
+
+	require.NoError(t, rm.applyUnboundBundleOutputs(context.Background()))
+
+	archive, err := fs.ReadFile("/cnab/app/outputs/outdir")
+	require.NoError(t, err)
+	require.NoError(t, tgz.UnpackDir(fs, bytes.NewReader(archive), "/unpacked"))
+	got, err := fs.ReadFile("/unpacked/x.txt")
+	require.NoError(t, err)
+	assert.Equal(t, "x", string(got))
+}
