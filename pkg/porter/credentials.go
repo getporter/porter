@@ -2,12 +2,16 @@ package porter
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 
+	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/editor"
 	"get.porter.sh/porter/pkg/encoding"
 	"get.porter.sh/porter/pkg/generator"
@@ -16,6 +20,7 @@ import (
 	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/tracing"
 	dtprinter "github.com/carolynvs/datetime-printer"
+	"github.com/cnabio/cnab-go/secrets/host"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.opentelemetry.io/otel/attribute"
 )
@@ -469,8 +474,12 @@ func (p *Porter) getNamespaceFromFile(o ApplyOptions) (string, error) {
 	return o.Namespace, nil
 }
 
+// credentialPlaceholder is the value written to generated json files, matching the yaml template.
+const credentialPlaceholder = "credentialvalue"
+
 // CredentialCreateOptions represent options for Porter's credential create command
 type CredentialCreateOptions struct {
+	BundlePullOptions
 	FileName   string
 	OutputType string
 }
@@ -497,6 +506,10 @@ func (p *Porter) CreateCredential(ctx context.Context, opts CredentialCreateOpti
 
 	if opts.OutputType == "" {
 		opts.OutputType = strings.Trim(filepath.Ext(opts.FileName), ".")
+	}
+
+	if opts.Reference != "" {
+		return span.Error(p.createSetFromReference(ctx, "credential", opts.BundlePullOptions, opts.FileName, opts.OutputType, p.renderCredentialSet(opts.Reference)))
 	}
 
 	if opts.FileName == "" {
@@ -542,6 +555,35 @@ func (p *Porter) CreateCredential(ctx context.Context, opts CredentialCreateOpti
 		return span.Error(err)
 	default:
 		return span.Error(newUnsupportedFormatError(opts.OutputType))
+	}
+}
+
+// renderCredentialSet returns a function that builds a credential set file with
+// an entry for each credential defined by the bundle.
+func (p *Porter) renderCredentialSet(reference string) func(bun cnab.ExtendedBundle, outputType string) ([]byte, error) {
+	return func(bun cnab.ExtendedBundle, outputType string) ([]byte, error) {
+		names := slices.Sorted(maps.Keys(bun.Credentials))
+
+		if outputType == "json" {
+			cs := storage.NewCredentialSet("", bun.Name)
+			for _, name := range names {
+				cs.Credentials = append(cs.Credentials, secrets.SourceMap{
+					Name:   name,
+					Source: secrets.Source{Strategy: host.SourceValue, Hint: credentialPlaceholder},
+				})
+			}
+			return json.MarshalIndent(cs.CredentialSetSpec, "", "  ")
+		}
+
+		data := setTemplateData{Reference: reference, Name: bun.Name}
+		for _, name := range names {
+			data.Items = append(data.Items, newSetEntry(name, bun.Credentials[name].Description))
+		}
+		tmplSrc, err := p.Templates.GetCredentialSetFromBundleTemplate()
+		if err != nil {
+			return nil, err
+		}
+		return renderSetTemplate(tmplSrc, data)
 	}
 }
 

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"sort"
 	"testing"
@@ -1120,7 +1121,7 @@ func TestParametersCreate(t *testing.T) {
 			defer p.Close()
 
 			opts := ParameterCreateOptions{FileName: tc.fileName, OutputType: tc.outputType}
-			err := p.CreateParameter(opts)
+			err := p.CreateParameter(context.Background(), opts)
 			if tc.wantErr == "" {
 				require.NoError(t, err, "no error should have existed")
 				return
@@ -1215,6 +1216,93 @@ func TestParametersDelete(t *testing.T) {
 
 		_, err = p.Parameters.GetParameterSet(ctx, "", "shared-params")
 		assert.ErrorIs(t, err, storage.ErrNotFound{})
+	})
+}
+
+func TestParametersCreate_Reference(t *testing.T) {
+	const ref = "example.com/mybuns:v0.1.0"
+	bun := cnab.NewBundle(bundle.Bundle{
+		Name:    "mybuns",
+		Version: "0.1.0",
+		Definitions: definition.Definitions{
+			"string": &definition.Schema{Type: "string"},
+			"debug":  &definition.Schema{Type: "string", Comment: cnab.PorterInternal},
+		},
+		Parameters: map[string]bundle.Parameter{
+			"log-level":    {Definition: "string", Description: "Verbosity of logs"},
+			"porter-debug": {Definition: "debug"},
+			"region":       {Definition: "string"},
+		},
+	})
+
+	newPorter := func(t *testing.T) *TestPorter {
+		p := NewTestPorter(t)
+		t.Cleanup(func() { p.Close() })
+		p.TestRegistry.MockPullBundle = newMockPullBundle(map[string]cnab.ExtendedBundle{ref: bun})
+		return p
+	}
+
+	t.Run("yaml to stdout", func(t *testing.T) {
+		p := newPorter(t)
+
+		opts := ParameterCreateOptions{}
+		opts.Reference = ref
+		require.NoError(t, p.CreateParameter(context.Background(), opts))
+
+		got := p.TestConfig.TestContext.GetOutput()
+		assert.Contains(t, got, "# Created from "+ref)
+		assert.Contains(t, got, "name: mybuns")
+		assert.Contains(t, got, "# Verbosity of logs\n  - name: log-level")
+		assert.Contains(t, got, "  - name: region")
+		assert.NotContains(t, got, "porter-debug", "internal parameters should be skipped")
+	})
+
+	t.Run("yaml to file", func(t *testing.T) {
+		p := newPorter(t)
+
+		opts := ParameterCreateOptions{FileName: "myparams.yaml"}
+		opts.Reference = ref
+		require.NoError(t, p.CreateParameter(context.Background(), opts))
+
+		contents, err := p.FileSystem.ReadFile("myparams.yaml")
+		require.NoError(t, err)
+		assert.Contains(t, string(contents), "# Created from "+ref)
+		assert.Contains(t, string(contents), "  - name: region")
+	})
+
+	t.Run("json to stdout", func(t *testing.T) {
+		p := newPorter(t)
+
+		opts := ParameterCreateOptions{OutputType: "json"}
+		opts.Reference = ref
+		require.NoError(t, p.CreateParameter(context.Background(), opts))
+
+		var ps storage.ParameterSet
+		require.NoError(t, json.Unmarshal([]byte(p.TestConfig.TestContext.GetOutput()), &ps))
+		assert.Equal(t, "mybuns", ps.Name)
+		require.Len(t, ps.Parameters, 2)
+		assert.Equal(t, "log-level", ps.Parameters[0].Name)
+		assert.Equal(t, "region", ps.Parameters[1].Name)
+	})
+
+	t.Run("unsupported format", func(t *testing.T) {
+		p := newPorter(t)
+
+		opts := ParameterCreateOptions{OutputType: "txt"}
+		opts.Reference = ref
+		err := p.CreateParameter(context.Background(), opts)
+		require.ErrorContains(t, err, "unsupported format txt")
+	})
+
+	t.Run("pull fails", func(t *testing.T) {
+		p := NewTestPorter(t)
+		defer p.Close()
+		p.TestRegistry.MockPullBundle = newMockPullBundle(nil)
+
+		opts := ParameterCreateOptions{}
+		opts.Reference = ref
+		err := p.CreateParameter(context.Background(), opts)
+		require.ErrorContains(t, err, "no mock bundle registered")
 	})
 }
 

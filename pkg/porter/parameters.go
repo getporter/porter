@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"path/filepath"
 	"slices"
 	"sort"
@@ -828,8 +829,12 @@ func (p *Porter) resolveParameterSources(ctx context.Context, bun cnab.ExtendedB
 	return values, nil
 }
 
+// parameterPlaceholder is the value written to generated json files, matching the yaml template.
+const parameterPlaceholder = "parametervalue"
+
 // ParameterCreateOptions represent options for Porter's parameter create command
 type ParameterCreateOptions struct {
+	BundlePullOptions
 	FileName   string
 	OutputType string
 }
@@ -850,9 +855,13 @@ func (o *ParameterCreateOptions) Validate(args []string) error {
 	return nil
 }
 
-func (p *Porter) CreateParameter(opts ParameterCreateOptions) error {
+func (p *Porter) CreateParameter(ctx context.Context, opts ParameterCreateOptions) error {
 	if opts.OutputType == "" {
 		opts.OutputType = strings.Trim(filepath.Ext(opts.FileName), ".")
+	}
+
+	if opts.Reference != "" {
+		return p.createSetFromReference(ctx, "parameter", opts.BundlePullOptions, opts.FileName, opts.OutputType, p.renderParameterSet(opts.Reference))
 	}
 
 	if opts.FileName == "" {
@@ -892,6 +901,40 @@ func (p *Porter) CreateParameter(opts ParameterCreateOptions) error {
 		return p.CopyTemplate(p.Templates.GetParameterSetYAML, opts.FileName)
 	default:
 		return newUnsupportedFormatError(opts.OutputType)
+	}
+}
+
+// renderParameterSet returns a function that builds a parameter set file with
+// an entry for each non-internal parameter defined by the bundle.
+func (p *Porter) renderParameterSet(reference string) func(bun cnab.ExtendedBundle, outputType string) ([]byte, error) {
+	return func(bun cnab.ExtendedBundle, outputType string) ([]byte, error) {
+		var names []string
+		for _, name := range slices.Sorted(maps.Keys(bun.Parameters)) {
+			if !bun.IsInternalParameter(name) {
+				names = append(names, name)
+			}
+		}
+
+		if outputType == "json" {
+			ps := storage.NewParameterSet("", bun.Name)
+			for _, name := range names {
+				ps.Parameters = append(ps.Parameters, secrets.SourceMap{
+					Name:   name,
+					Source: secrets.Source{Strategy: host.SourceValue, Hint: parameterPlaceholder},
+				})
+			}
+			return json.MarshalIndent(ps.ParameterSetSpec, "", "  ")
+		}
+
+		data := setTemplateData{Reference: reference, Name: bun.Name}
+		for _, name := range names {
+			data.Items = append(data.Items, newSetEntry(name, bun.Parameters[name].Description))
+		}
+		tmplSrc, err := p.Templates.GetParameterSetFromBundleTemplate()
+		if err != nil {
+			return nil, err
+		}
+		return renderSetTemplate(tmplSrc, data)
 	}
 }
 
