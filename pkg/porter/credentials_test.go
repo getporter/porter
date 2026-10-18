@@ -2,6 +2,7 @@ package porter
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -9,12 +10,14 @@ import (
 	"testing"
 	"time"
 
+	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/printer"
 	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/test"
 	"get.porter.sh/porter/pkg/yaml"
 	"get.porter.sh/porter/tests"
+	"github.com/cnabio/cnab-go/bundle"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -605,6 +608,88 @@ func TestCredentialsCreate(t *testing.T) {
 			assert.Contains(t, err.Error(), tc.wantErr)
 		})
 	}
+}
+
+func TestCredentialsCreate_Reference(t *testing.T) {
+	const ref = "example.com/mybuns:v0.1.0"
+	bun := cnab.NewBundle(bundle.Bundle{
+		Name:    "mybuns",
+		Version: "0.1.0",
+		Credentials: map[string]bundle.Credential{
+			"github-token": {Required: true, Description: "A GitHub token"},
+			"kubeconfig":   {},
+		},
+	})
+
+	newPorter := func(t *testing.T) *TestPorter {
+		p := NewTestPorter(t)
+		t.Cleanup(func() { p.Close() })
+		p.TestRegistry.MockPullBundle = newMockPullBundle(map[string]cnab.ExtendedBundle{ref: bun})
+		return p
+	}
+
+	t.Run("yaml to stdout", func(t *testing.T) {
+		p := newPorter(t)
+
+		opts := CredentialCreateOptions{}
+		opts.Reference = ref
+		err := p.CreateCredential(context.Background(), opts)
+		require.NoError(t, err)
+
+		got := p.TestConfig.TestContext.GetOutput()
+		assert.Contains(t, got, "# Created from "+ref)
+		assert.Contains(t, got, "name: mybuns")
+		assert.Contains(t, got, "# A GitHub token\n  - name: github-token")
+		assert.Contains(t, got, "  - name: kubeconfig")
+	})
+
+	t.Run("yaml to file", func(t *testing.T) {
+		p := newPorter(t)
+
+		opts := CredentialCreateOptions{FileName: "mycreds.yaml"}
+		opts.Reference = ref
+		require.NoError(t, p.CreateCredential(context.Background(), opts))
+
+		contents, err := p.FileSystem.ReadFile("mycreds.yaml")
+		require.NoError(t, err)
+		assert.Contains(t, string(contents), "# Created from "+ref)
+		assert.Contains(t, string(contents), "  - name: github-token")
+	})
+
+	t.Run("json to stdout", func(t *testing.T) {
+		p := newPorter(t)
+
+		opts := CredentialCreateOptions{OutputType: "json"}
+		opts.Reference = ref
+		require.NoError(t, p.CreateCredential(context.Background(), opts))
+
+		var cs storage.CredentialSet
+		require.NoError(t, json.Unmarshal([]byte(p.TestConfig.TestContext.GetOutput()), &cs))
+		assert.Equal(t, "mybuns", cs.Name)
+		require.Len(t, cs.Credentials, 2)
+		assert.Equal(t, "github-token", cs.Credentials[0].Name)
+		assert.Equal(t, "kubeconfig", cs.Credentials[1].Name)
+	})
+
+	t.Run("unsupported format", func(t *testing.T) {
+		p := newPorter(t)
+
+		opts := CredentialCreateOptions{OutputType: "txt"}
+		opts.Reference = ref
+		err := p.CreateCredential(context.Background(), opts)
+		require.ErrorContains(t, err, "unsupported format txt")
+	})
+
+	t.Run("pull fails", func(t *testing.T) {
+		p := NewTestPorter(t)
+		defer p.Close()
+		p.TestRegistry.MockPullBundle = newMockPullBundle(nil)
+
+		opts := CredentialCreateOptions{}
+		opts.Reference = ref
+		err := p.CreateCredential(context.Background(), opts)
+		require.ErrorContains(t, err, "no mock bundle registered")
+	})
 }
 
 func TestPorter_CredentialsApply(t *testing.T) {
