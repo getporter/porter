@@ -638,3 +638,23 @@ func TestDownloadFiles(t *testing.T) {
 		assert.ErrorIs(t, err, context.Canceled)
 	})
 }
+
+func TestBuildInitSectionForVersion(t *testing.T) {
+	t.Parallel()
+
+	t.Run("unknown version", func(t *testing.T) {
+		t.Parallel()
+
+		lines := buildInitSectionForVersion("")
+		assert.Len(t, lines, 5)
+		assert.NotContains(t, strings.Join(lines, "\n"), "PORTER_VERSION")
+	})
+
+	t.Run("known version", func(t *testing.T) {
+		t.Parallel()
+
+		lines := buildInitSectionForVersion("v1.2.3")
+		assert.Len(t, lines, 6)
+		assert.Equal(t, `ENV PORTER_VERSION="v1.2.3"`, lines[len(lines)-1])
+	})
+}
