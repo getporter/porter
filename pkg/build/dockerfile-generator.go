@@ -268,7 +268,14 @@ func (g *DockerfileGenerator) buildMixinsSection(ctx context.Context) ([]string,
 }
 
 func (g *DockerfileGenerator) buildInitSection() []string {
-	return []string{
+	return buildInitSectionForVersion(pkg.Version)
+}
+
+// buildInitSectionForVersion builds the init section of the Dockerfile. When the
+// Porter version is known, which is only the case for official builds, it is exposed
+// to the bundle as PORTER_VERSION so that mixins can include it in their user agent.
+func buildInitSectionForVersion(porterVersion string) []string {
+	lines := []string{
 		"ARG BUNDLE_DIR",
 		"ARG BUNDLE_UID=65532",
 		"ARG BUNDLE_USER=nonroot",
@@ -276,6 +283,12 @@ func (g *DockerfileGenerator) buildInitSection() []string {
 		// Create a non-root user that is in the root group with the specified id and a home directory
 		"RUN useradd ${BUNDLE_USER} -m -u ${BUNDLE_UID} -g ${BUNDLE_GID} -o",
 	}
+
+	if porterVersion != "" {
+		lines = append(lines, fmt.Sprintf("ENV PORTER_VERSION=%q", porterVersion))
+	}
+
+	return lines
 }
 
 func (g *DockerfileGenerator) PrepareFilesystem() error {
