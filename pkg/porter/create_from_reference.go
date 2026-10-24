@@ -3,6 +3,7 @@ package porter
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"text/template"
@@ -46,6 +47,10 @@ func (p *Porter) createSetFromReference(ctx context.Context, kind string, pullOp
 		return newUnsupportedFormatError(outputType)
 	}
 
+	if err := pullOpts.Validate(); err != nil {
+		return err
+	}
+
 	bundleOpts := BundleReferenceOptions{BundlePullOptions: pullOpts}
 	bundleRef, err := bundleOpts.GetBundleReference(ctx, p)
 	if err != nil {
@@ -68,7 +73,14 @@ func (p *Porter) createSetFromReference(ctx context.Context, kind string, pullOp
 
 // renderSetTemplate executes a *-from-bundle template.
 func renderSetTemplate(tmplSrc []byte, data setTemplateData) ([]byte, error) {
-	tmpl, err := template.New("set").Parse(string(tmplSrc))
+	funcs := template.FuncMap{
+		// quote renders a string as a yaml double-quoted scalar so that names such as "null" or "a: b" are preserved.
+		"quote": func(v string) (string, error) {
+			quoted, err := json.Marshal(v)
+			return string(quoted), err
+		},
+	}
+	tmpl, err := template.New("set").Funcs(funcs).Parse(string(tmplSrc))
 	if err != nil {
 		return nil, fmt.Errorf("invalid template: %w", err)
 	}

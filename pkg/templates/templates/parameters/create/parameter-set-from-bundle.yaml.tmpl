@@ -3,7 +3,7 @@
 schemaType: ParameterSet
 schemaVersion: 1.1.0
 # Name of the parameter set.
-name: {{ .Name }}
+name: {{ quote .Name }}
 # The namespace in which the parameter set is defined.
 # Omit the namespace to define the parameter set in the current current namespace.
 namespace: NAMESPACE
@@ -12,12 +12,12 @@ labels:
   LABEL: LABEL_VALUE
 # Parameters specify how Porter can resolve parameters when executing a bundle.
 # Allowed sources are: value, path, env, secret, and command.
-parameters:
+parameters:{{ if not .Items }} []{{ end }}
 {{- range .Items }}
 {{- range .Description }}
   # {{ . }}
 {{- end }}
-  - name: {{ .Name }}
+  - name: {{ quote .Name }}
     source:
       # TODO: Uncomment one source from below and remove the rest.
       # Use the specified value for the parameter. Do not use "value" for sensitive data.

@@ -917,6 +917,7 @@ func (p *Porter) renderParameterSet(reference string) func(bun cnab.ExtendedBund
 
 		if outputType == "json" {
 			ps := storage.NewParameterSet("", bun.Name)
+			ps.Parameters = secrets.StrategyList{}
 			for _, name := range names {
 				ps.Parameters = append(ps.Parameters, secrets.SourceMap{
 					Name:   name,

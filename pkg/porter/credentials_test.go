@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"get.porter.sh/porter/pkg/cnab"
+	"get.porter.sh/porter/pkg/encoding"
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/printer"
 	"get.porter.sh/porter/pkg/storage"
@@ -638,9 +639,9 @@ func TestCredentialsCreate_Reference(t *testing.T) {
 
 		got := p.TestConfig.TestContext.GetOutput()
 		assert.Contains(t, got, "# Created from "+ref)
-		assert.Contains(t, got, "name: mybuns")
-		assert.Contains(t, got, "# A GitHub token\n  - name: github-token")
-		assert.Contains(t, got, "  - name: kubeconfig")
+		assert.Contains(t, got, `name: "mybuns"`)
+		assert.Contains(t, got, "# A GitHub token\n  - name: \"github-token\"")
+		assert.Contains(t, got, `  - name: "kubeconfig"`)
 	})
 
 	t.Run("yaml to file", func(t *testing.T) {
@@ -653,7 +654,7 @@ func TestCredentialsCreate_Reference(t *testing.T) {
 		contents, err := p.FileSystem.ReadFile("mycreds.yaml")
 		require.NoError(t, err)
 		assert.Contains(t, string(contents), "# Created from "+ref)
-		assert.Contains(t, string(contents), "  - name: github-token")
+		assert.Contains(t, string(contents), `  - name: "github-token"`)
 	})
 
 	t.Run("json to stdout", func(t *testing.T) {
@@ -678,6 +679,69 @@ func TestCredentialsCreate_Reference(t *testing.T) {
 		opts.Reference = ref
 		err := p.CreateCredential(context.Background(), opts)
 		require.ErrorContains(t, err, "unsupported format txt")
+	})
+
+	t.Run("malformed reference", func(t *testing.T) {
+		p := newPorter(t)
+
+		opts := CredentialCreateOptions{}
+		opts.Reference = "not a reference"
+		err := p.CreateCredential(context.Background(), opts)
+		require.ErrorContains(t, err, "invalid value for --reference")
+	})
+
+	t.Run("yaml preserves names that look like yaml values", func(t *testing.T) {
+		p := NewTestPorter(t)
+		defer p.Close()
+		tricky := cnab.NewBundle(bundle.Bundle{
+			Name:        "null",
+			Credentials: map[string]bundle.Credential{"a: b": {}, "true": {}},
+		})
+		p.TestRegistry.MockPullBundle = newMockPullBundle(map[string]cnab.ExtendedBundle{ref: tricky})
+
+		opts := CredentialCreateOptions{}
+		opts.Reference = ref
+		require.NoError(t, p.CreateCredential(context.Background(), opts))
+
+		var cs storage.CredentialSet
+		require.NoError(t, encoding.UnmarshalYaml([]byte(p.TestConfig.TestContext.GetOutput()), &cs))
+		assert.Equal(t, "null", cs.Name)
+		require.Len(t, cs.Credentials, 2)
+		assert.Equal(t, "a: b", cs.Credentials[0].Name)
+		assert.Equal(t, "true", cs.Credentials[1].Name)
+	})
+
+	t.Run("bundle without credentials", func(t *testing.T) {
+		empty := cnab.NewBundle(bundle.Bundle{Name: "nocreds"})
+
+		t.Run("yaml", func(t *testing.T) {
+			p := NewTestPorter(t)
+			defer p.Close()
+			p.TestRegistry.MockPullBundle = newMockPullBundle(map[string]cnab.ExtendedBundle{ref: empty})
+
+			opts := CredentialCreateOptions{}
+			opts.Reference = ref
+			require.NoError(t, p.CreateCredential(context.Background(), opts))
+
+			var cs storage.CredentialSet
+			require.NoError(t, encoding.UnmarshalYaml([]byte(p.TestConfig.TestContext.GetOutput()), &cs))
+			assert.NotNil(t, cs.Credentials, "credentials must be an empty list, not null")
+			assert.Empty(t, cs.Credentials)
+		})
+
+		t.Run("json", func(t *testing.T) {
+			p := NewTestPorter(t)
+			defer p.Close()
+			p.TestRegistry.MockPullBundle = newMockPullBundle(map[string]cnab.ExtendedBundle{ref: empty})
+
+			opts := CredentialCreateOptions{OutputType: "json"}
+			opts.Reference = ref
+			require.NoError(t, p.CreateCredential(context.Background(), opts))
+
+			var raw map[string]any
+			require.NoError(t, json.Unmarshal([]byte(p.TestConfig.TestContext.GetOutput()), &raw))
+			assert.Equal(t, []any{}, raw["credentials"])
+		})
 	})
 
 	t.Run("pull fails", func(t *testing.T) {

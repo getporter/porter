@@ -566,13 +566,18 @@ func (p *Porter) renderCredentialSet(reference string) func(bun cnab.ExtendedBun
 
 		if outputType == "json" {
 			cs := storage.NewCredentialSet("", bun.Name)
+			creds := secrets.StrategyList{}
 			for _, name := range names {
-				cs.Credentials = append(cs.Credentials, secrets.SourceMap{
+				creds = append(creds, secrets.SourceMap{
 					Name:   name,
 					Source: secrets.Source{Strategy: host.SourceValue, Hint: credentialPlaceholder},
 				})
 			}
-			return json.MarshalIndent(cs.CredentialSetSpec, "", "  ")
+			// Shadows the omitempty credentials field so that an empty list is still written
+			return json.MarshalIndent(struct {
+				storage.CredentialSetSpec
+				Credentials secrets.StrategyList `json:"credentials"`
+			}{cs.CredentialSetSpec, creds}, "", "  ")
 		}
 
 		data := setTemplateData{Reference: reference, Name: bun.Name}
