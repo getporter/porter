@@ -21,13 +21,17 @@ porter credentials create [flags]
   porter credentials create FILE [--output yaml|json]
   porter credentials create credential-set.json
   porter credentials create credential-set --output yaml
+  porter credentials create mycreds.yaml --reference ghcr.io/getporter/examples/credentials-tutorial:v0.3.0
 ```
 
 ### Options
 
 ```
-  -h, --help            help for create
-      --output string   Credential set resource file format
+      --force               Force a fresh pull of the bundle
+  -h, --help                help for create
+      --insecure-registry   Don't require TLS for the registry
+      --output string       Credential set resource file format
+  -r, --reference string    Create the credential set from the credentials defined by the bundle at the specified OCI reference, e.g. ghcr.io/getporter/examples/porter-hello:v0.2.0
 ```
 
 ### Options inherited from parent commands

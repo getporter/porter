@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"sort"
 	"testing"
@@ -11,6 +12,7 @@ import (
 
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/encoding"
 	"get.porter.sh/porter/pkg/printer"
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
@@ -1120,7 +1122,7 @@ func TestParametersCreate(t *testing.T) {
 			defer p.Close()
 
 			opts := ParameterCreateOptions{FileName: tc.fileName, OutputType: tc.outputType}
-			err := p.CreateParameter(opts)
+			err := p.CreateParameter(context.Background(), opts)
 			if tc.wantErr == "" {
 				require.NoError(t, err, "no error should have existed")
 				return
@@ -1215,6 +1217,194 @@ func TestParametersDelete(t *testing.T) {
 
 		_, err = p.Parameters.GetParameterSet(ctx, "", "shared-params")
 		assert.ErrorIs(t, err, storage.ErrNotFound{})
+	})
+}
+
+func TestParametersCreate_Reference(t *testing.T) {
+	const ref = "example.com/mybuns:v0.1.0"
+	bun := cnab.NewBundle(bundle.Bundle{
+		Name:    "mybuns",
+		Version: "0.1.0",
+		Definitions: definition.Definitions{
+			"string": &definition.Schema{Type: "string"},
+			"debug":  &definition.Schema{Type: "string", Comment: cnab.PorterInternal},
+		},
+		Parameters: map[string]bundle.Parameter{
+			"log-level":    {Definition: "string", Description: "Verbosity of logs"},
+			"porter-debug": {Definition: "debug"},
+			"region":       {Definition: "string"},
+		},
+	})
+
+	newPorter := func(t *testing.T) *TestPorter {
+		p := NewTestPorter(t)
+		t.Cleanup(func() { p.Close() })
+		p.TestRegistry.MockPullBundle = newMockPullBundle(map[string]cnab.ExtendedBundle{ref: bun})
+		return p
+	}
+
+	t.Run("yaml to stdout", func(t *testing.T) {
+		p := newPorter(t)
+
+		opts := ParameterCreateOptions{}
+		opts.Reference = ref
+		require.NoError(t, p.CreateParameter(context.Background(), opts))
+
+		got := p.TestConfig.TestContext.GetOutput()
+		assert.Contains(t, got, "# Created from "+ref)
+		assert.Contains(t, got, `name: "mybuns"`)
+		assert.Contains(t, got, "# Verbosity of logs\n  - name: \"log-level\"")
+		assert.Contains(t, got, `  - name: "region"`)
+		assert.NotContains(t, got, "porter-debug", "internal parameters should be skipped")
+	})
+
+	t.Run("yaml to file", func(t *testing.T) {
+		p := newPorter(t)
+
+		opts := ParameterCreateOptions{FileName: "myparams.yaml"}
+		opts.Reference = ref
+		require.NoError(t, p.CreateParameter(context.Background(), opts))
+
+		contents, err := p.FileSystem.ReadFile("myparams.yaml")
+		require.NoError(t, err)
+		assert.Contains(t, string(contents), "# Created from "+ref)
+		assert.Contains(t, string(contents), `  - name: "region"`)
+	})
+
+	t.Run("json to stdout", func(t *testing.T) {
+		p := newPorter(t)
+
+		opts := ParameterCreateOptions{OutputType: "json"}
+		opts.Reference = ref
+		require.NoError(t, p.CreateParameter(context.Background(), opts))
+
+		var ps storage.ParameterSet
+		require.NoError(t, json.Unmarshal([]byte(p.TestConfig.TestContext.GetOutput()), &ps))
+		assert.Equal(t, "mybuns", ps.Name)
+		assert.Equal(t, "NAMESPACE", ps.Namespace, "an empty namespace would override the --namespace flag of apply")
+		assert.Equal(t, map[string]string{"LABEL": "LABEL_VALUE"}, ps.Labels)
+		require.Len(t, ps.Parameters, 2)
+		assert.Equal(t, "log-level", ps.Parameters[0].Name)
+		assert.Equal(t, "region", ps.Parameters[1].Name)
+	})
+
+	t.Run("unsupported format", func(t *testing.T) {
+		p := newPorter(t)
+
+		opts := ParameterCreateOptions{OutputType: "txt"}
+		opts.Reference = ref
+		err := p.CreateParameter(context.Background(), opts)
+		require.ErrorContains(t, err, "unsupported format txt")
+	})
+
+	t.Run("malformed reference", func(t *testing.T) {
+		p := newPorter(t)
+
+		opts := ParameterCreateOptions{}
+		opts.Reference = "not a reference"
+		err := p.CreateParameter(context.Background(), opts)
+		require.ErrorContains(t, err, "invalid value for --reference")
+	})
+
+	t.Run("yaml preserves names that look like yaml values", func(t *testing.T) {
+		p := NewTestPorter(t)
+		defer p.Close()
+		tricky := cnab.NewBundle(bundle.Bundle{
+			Name:        "null",
+			Definitions: definition.Definitions{"string": &definition.Schema{Type: "string"}},
+			Parameters: map[string]bundle.Parameter{
+				"a: b": {Definition: "string"},
+				"true": {Definition: "string"},
+			},
+		})
+		p.TestRegistry.MockPullBundle = newMockPullBundle(map[string]cnab.ExtendedBundle{ref: tricky})
+
+		opts := ParameterCreateOptions{}
+		opts.Reference = ref
+		require.NoError(t, p.CreateParameter(context.Background(), opts))
+
+		var ps storage.ParameterSet
+		require.NoError(t, encoding.UnmarshalYaml([]byte(p.TestConfig.TestContext.GetOutput()), &ps))
+		assert.Equal(t, "null", ps.Name)
+		require.Len(t, ps.Parameters, 2)
+		assert.Equal(t, "a: b", ps.Parameters[0].Name)
+		assert.Equal(t, "true", ps.Parameters[1].Name)
+	})
+
+	t.Run("description line breaks stay in comments", func(t *testing.T) {
+		p := NewTestPorter(t)
+		defer p.Close()
+		evil := cnab.NewBundle(bundle.Bundle{
+			Name:        "evil",
+			Definitions: definition.Definitions{"string": &definition.Schema{Type: "string"}},
+			Parameters: map[string]bundle.Parameter{
+				"cr":  {Definition: "string", Description: "x\r  - name: injected-cr\r    source:\r      command: touch /tmp/pwned"},
+				"nel": {Definition: "string", Description: "x\u0085  - name: injected-nel"},
+				"ls":  {Definition: "string", Description: "x\u2028  - name: injected-ls"},
+				"ps":  {Definition: "string", Description: "x\u2029  - name: injected-ps"},
+			},
+		})
+		p.TestRegistry.MockPullBundle = newMockPullBundle(map[string]cnab.ExtendedBundle{ref: evil})
+
+		opts := ParameterCreateOptions{}
+		opts.Reference = ref
+		require.NoError(t, p.CreateParameter(context.Background(), opts))
+
+		var ps storage.ParameterSet
+		require.NoError(t, encoding.UnmarshalYaml([]byte(p.TestConfig.TestContext.GetOutput()), &ps))
+		var names []string
+		for _, param := range ps.Parameters {
+			names = append(names, param.Name)
+		}
+		assert.Equal(t, []string{"cr", "ls", "nel", "ps"}, names)
+	})
+
+	t.Run("bundle with only internal parameters", func(t *testing.T) {
+		onlyInternal := cnab.NewBundle(bundle.Bundle{
+			Name:        "internal",
+			Definitions: definition.Definitions{"debug": &definition.Schema{Type: "string", Comment: cnab.PorterInternal}},
+			Parameters:  map[string]bundle.Parameter{"porter-debug": {Definition: "debug"}},
+		})
+
+		t.Run("yaml", func(t *testing.T) {
+			p := NewTestPorter(t)
+			defer p.Close()
+			p.TestRegistry.MockPullBundle = newMockPullBundle(map[string]cnab.ExtendedBundle{ref: onlyInternal})
+
+			opts := ParameterCreateOptions{}
+			opts.Reference = ref
+			require.NoError(t, p.CreateParameter(context.Background(), opts))
+
+			var ps storage.ParameterSet
+			require.NoError(t, encoding.UnmarshalYaml([]byte(p.TestConfig.TestContext.GetOutput()), &ps))
+			assert.NotNil(t, ps.Parameters, "parameters must be an empty list, not null")
+			assert.Empty(t, ps.Parameters)
+		})
+
+		t.Run("json", func(t *testing.T) {
+			p := NewTestPorter(t)
+			defer p.Close()
+			p.TestRegistry.MockPullBundle = newMockPullBundle(map[string]cnab.ExtendedBundle{ref: onlyInternal})
+
+			opts := ParameterCreateOptions{OutputType: "json"}
+			opts.Reference = ref
+			require.NoError(t, p.CreateParameter(context.Background(), opts))
+
+			var raw map[string]any
+			require.NoError(t, json.Unmarshal([]byte(p.TestConfig.TestContext.GetOutput()), &raw))
+			assert.Equal(t, []any{}, raw["parameters"])
+		})
+	})
+
+	t.Run("pull fails", func(t *testing.T) {
+		p := NewTestPorter(t)
+		defer p.Close()
+		p.TestRegistry.MockPullBundle = newMockPullBundle(nil)
+
+		opts := ParameterCreateOptions{}
+		opts.Reference = ref
+		err := p.CreateParameter(context.Background(), opts)
+		require.ErrorContains(t, err, "no mock bundle registered")
 	})
 }
 

@@ -229,7 +229,8 @@ func buildCredentialsCreateCommand(p *porter.Porter) *cobra.Command {
 		Long:  "Create a new blank resource for the definition of a Credential Set.",
 		Example: `  porter credentials create FILE [--output yaml|json]
   porter credentials create credential-set.json
-  porter credentials create credential-set --output yaml`,
+  porter credentials create credential-set --output yaml
+  porter credentials create mycreds.yaml --reference ghcr.io/getporter/examples/credentials-tutorial:v0.3.0`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate(args)
 		},
@@ -240,6 +241,10 @@ func buildCredentialsCreateCommand(p *porter.Porter) *cobra.Command {
 
 	f := cmd.Flags()
 	f.StringVar(&opts.OutputType, "output", "", "Credential set resource file format")
+	f.StringVarP(&opts.Reference, "reference", "r", "",
+		"Create the credential set from the credentials defined by the bundle at the specified OCI reference, e.g. ghcr.io/getporter/examples/porter-hello:v0.2.0")
+	addInsecureRegistryFlag(f, &opts.BundlePullOptions)
+	addForcePullFlag(f, &opts.BundlePullOptions)
 
 	return cmd
 }

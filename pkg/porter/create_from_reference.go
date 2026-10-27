@@ -1,0 +1,105 @@
+package porter
+
+import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"fmt"
+	"strings"
+	"text/template"
+
+	"get.porter.sh/porter/pkg/cnab"
+)
+
+// setEntry is a credential or parameter listed in a generated set file.
+type setEntry struct {
+	Name string
+
+	// Description is split into lines so that each one can be a yaml comment.
+	Description []string
+}
+
+// yamlLineBreaks normalizes every character that yaml treats as a line break to \n.
+// Descriptions come from the bundle, so a break left unnormalized would end the
+// yaml comment and let the rest of the description become active configuration.
+var yamlLineBreaks = strings.NewReplacer("\r\n", "\n", "\r", "\n", "\u0085", "\n", "\u2028", "\n", "\u2029", "\n")
+
+func newSetEntry(name string, description string) setEntry {
+	entry := setEntry{Name: name}
+	if description != "" {
+		entry.Description = strings.Split(yamlLineBreaks.Replace(description), "\n")
+	}
+	return entry
+}
+
+// Placeholders for the metadata of generated json files, matching the yaml templates.
+// The namespace must be present because an empty one overrides the --namespace flag of apply.
+const namespacePlaceholder = "NAMESPACE"
+
+func labelsPlaceholder() map[string]string {
+	return map[string]string{"LABEL": "LABEL_VALUE"}
+}
+
+// setTemplateData is the data passed to the *-from-bundle templates.
+type setTemplateData struct {
+	Reference string
+	Name      string
+	Items     []setEntry
+}
+
+// createSetFromReference writes a credential or parameter set file, populated
+// from the bundle at the specified reference, to stdout or fileName.
+// render builds the file contents in the requested output type.
+func (p *Porter) createSetFromReference(ctx context.Context, kind string, pullOpts BundlePullOptions, fileName string, outputType string, render func(bun cnab.ExtendedBundle, outputType string) ([]byte, error)) error {
+	if outputType == "" {
+		outputType = "yaml"
+	}
+	switch outputType {
+	case "json", "yaml", "yml":
+	default:
+		return newUnsupportedFormatError(outputType)
+	}
+
+	if err := pullOpts.Validate(); err != nil {
+		return err
+	}
+
+	bundleOpts := BundleReferenceOptions{BundlePullOptions: pullOpts}
+	bundleRef, err := bundleOpts.GetBundleReference(ctx, p)
+	if err != nil {
+		return err
+	}
+
+	contents, err := render(bundleRef.Definition, outputType)
+	if err != nil {
+		return err
+	}
+
+	if fileName == "" {
+		fmt.Fprintln(p.Out, string(contents))
+		return nil
+	}
+
+	fmt.Fprintf(p.Err, "creating porter %s set in the current directory\n", kind)
+	return p.CopyTemplate(func() ([]byte, error) { return contents, nil }, fileName)
+}
+
+// renderSetTemplate executes a *-from-bundle template.
+func renderSetTemplate(tmplSrc []byte, data setTemplateData) ([]byte, error) {
+	funcs := template.FuncMap{
+		// quote renders a string as a yaml double-quoted scalar so that names such as "null" or "a: b" are preserved.
+		"quote": func(v string) (string, error) {
+			quoted, err := json.Marshal(v)
+			return string(quoted), err
+		},
+	}
+	tmpl, err := template.New("set").Funcs(funcs).Parse(string(tmplSrc))
+	if err != nil {
+		return nil, fmt.Errorf("invalid template: %w", err)
+	}
+	var buf bytes.Buffer
+	if err := tmpl.Execute(&buf, data); err != nil {
+		return nil, fmt.Errorf("could not render template: %w", err)
+	}
+	return buf.Bytes(), nil
+}
