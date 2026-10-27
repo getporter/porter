@@ -565,7 +565,8 @@ func (p *Porter) renderCredentialSet(reference string) func(bun cnab.ExtendedBun
 		names := slices.Sorted(maps.Keys(bun.Credentials))
 
 		if outputType == "json" {
-			cs := storage.NewCredentialSet("", bun.Name)
+			cs := storage.NewCredentialSet(namespacePlaceholder, bun.Name)
+			cs.Labels = labelsPlaceholder()
 			creds := secrets.StrategyList{}
 			for _, name := range names {
 				creds = append(creds, secrets.SourceMap{

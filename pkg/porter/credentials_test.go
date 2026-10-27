@@ -667,6 +667,8 @@ func TestCredentialsCreate_Reference(t *testing.T) {
 		var cs storage.CredentialSet
 		require.NoError(t, json.Unmarshal([]byte(p.TestConfig.TestContext.GetOutput()), &cs))
 		assert.Equal(t, "mybuns", cs.Name)
+		assert.Equal(t, "NAMESPACE", cs.Namespace, "an empty namespace would override the --namespace flag of apply")
+		assert.Equal(t, map[string]string{"LABEL": "LABEL_VALUE"}, cs.Labels)
 		require.Len(t, cs.Credentials, 2)
 		assert.Equal(t, "github-token", cs.Credentials[0].Name)
 		assert.Equal(t, "kubeconfig", cs.Credentials[1].Name)
@@ -709,6 +711,33 @@ func TestCredentialsCreate_Reference(t *testing.T) {
 		require.Len(t, cs.Credentials, 2)
 		assert.Equal(t, "a: b", cs.Credentials[0].Name)
 		assert.Equal(t, "true", cs.Credentials[1].Name)
+	})
+
+	t.Run("description line breaks stay in comments", func(t *testing.T) {
+		p := NewTestPorter(t)
+		defer p.Close()
+		evil := cnab.NewBundle(bundle.Bundle{
+			Name: "evil",
+			Credentials: map[string]bundle.Credential{
+				"cr":  {Description: "x\r  - name: injected-cr\r    source:\r      command: touch /tmp/pwned"},
+				"nel": {Description: "x\u0085  - name: injected-nel"},
+				"ls":  {Description: "x\u2028  - name: injected-ls"},
+				"ps":  {Description: "x\u2029  - name: injected-ps"},
+			},
+		})
+		p.TestRegistry.MockPullBundle = newMockPullBundle(map[string]cnab.ExtendedBundle{ref: evil})
+
+		opts := CredentialCreateOptions{}
+		opts.Reference = ref
+		require.NoError(t, p.CreateCredential(context.Background(), opts))
+
+		var cs storage.CredentialSet
+		require.NoError(t, encoding.UnmarshalYaml([]byte(p.TestConfig.TestContext.GetOutput()), &cs))
+		var names []string
+		for _, c := range cs.Credentials {
+			names = append(names, c.Name)
+		}
+		assert.Equal(t, []string{"cr", "ls", "nel", "ps"}, names)
 	})
 
 	t.Run("bundle without credentials", func(t *testing.T) {

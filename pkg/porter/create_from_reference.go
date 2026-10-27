@@ -19,12 +19,25 @@ type setEntry struct {
 	Description []string
 }
 
+// yamlLineBreaks normalizes every character that yaml treats as a line break to \n.
+// Descriptions come from the bundle, so a break left unnormalized would end the
+// yaml comment and let the rest of the description become active configuration.
+var yamlLineBreaks = strings.NewReplacer("\r\n", "\n", "\r", "\n", "\u0085", "\n", "\u2028", "\n", "\u2029", "\n")
+
 func newSetEntry(name string, description string) setEntry {
 	entry := setEntry{Name: name}
 	if description != "" {
-		entry.Description = strings.Split(description, "\n")
+		entry.Description = strings.Split(yamlLineBreaks.Replace(description), "\n")
 	}
 	return entry
+}
+
+// Placeholders for the metadata of generated json files, matching the yaml templates.
+// The namespace must be present because an empty one overrides the --namespace flag of apply.
+const namespacePlaceholder = "NAMESPACE"
+
+func labelsPlaceholder() map[string]string {
+	return map[string]string{"LABEL": "LABEL_VALUE"}
 }
 
 // setTemplateData is the data passed to the *-from-bundle templates.

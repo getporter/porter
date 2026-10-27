@@ -1281,6 +1281,8 @@ func TestParametersCreate_Reference(t *testing.T) {
 		var ps storage.ParameterSet
 		require.NoError(t, json.Unmarshal([]byte(p.TestConfig.TestContext.GetOutput()), &ps))
 		assert.Equal(t, "mybuns", ps.Name)
+		assert.Equal(t, "NAMESPACE", ps.Namespace, "an empty namespace would override the --namespace flag of apply")
+		assert.Equal(t, map[string]string{"LABEL": "LABEL_VALUE"}, ps.Labels)
 		require.Len(t, ps.Parameters, 2)
 		assert.Equal(t, "log-level", ps.Parameters[0].Name)
 		assert.Equal(t, "region", ps.Parameters[1].Name)
@@ -1327,6 +1329,34 @@ func TestParametersCreate_Reference(t *testing.T) {
 		require.Len(t, ps.Parameters, 2)
 		assert.Equal(t, "a: b", ps.Parameters[0].Name)
 		assert.Equal(t, "true", ps.Parameters[1].Name)
+	})
+
+	t.Run("description line breaks stay in comments", func(t *testing.T) {
+		p := NewTestPorter(t)
+		defer p.Close()
+		evil := cnab.NewBundle(bundle.Bundle{
+			Name:        "evil",
+			Definitions: definition.Definitions{"string": &definition.Schema{Type: "string"}},
+			Parameters: map[string]bundle.Parameter{
+				"cr":  {Definition: "string", Description: "x\r  - name: injected-cr\r    source:\r      command: touch /tmp/pwned"},
+				"nel": {Definition: "string", Description: "x\u0085  - name: injected-nel"},
+				"ls":  {Definition: "string", Description: "x\u2028  - name: injected-ls"},
+				"ps":  {Definition: "string", Description: "x\u2029  - name: injected-ps"},
+			},
+		})
+		p.TestRegistry.MockPullBundle = newMockPullBundle(map[string]cnab.ExtendedBundle{ref: evil})
+
+		opts := ParameterCreateOptions{}
+		opts.Reference = ref
+		require.NoError(t, p.CreateParameter(context.Background(), opts))
+
+		var ps storage.ParameterSet
+		require.NoError(t, encoding.UnmarshalYaml([]byte(p.TestConfig.TestContext.GetOutput()), &ps))
+		var names []string
+		for _, param := range ps.Parameters {
+			names = append(names, param.Name)
+		}
+		assert.Equal(t, []string{"cr", "ls", "nel", "ps"}, names)
 	})
 
 	t.Run("bundle with only internal parameters", func(t *testing.T) {
