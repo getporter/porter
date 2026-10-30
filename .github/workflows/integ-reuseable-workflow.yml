@@ -70,3 +70,21 @@ jobs:
       - name: Integration Test
         run: go run mage.go -v TestIntegration
         shell: bash
+      - name: Runner kernel version
+        if: always()
+        shell: bash
+        run: uname -r
+      - name: Diagnose mongodb test container
+        if: failure()
+        shell: bash
+        run: |
+          docker version --format '{{.Server.Version}}' || true
+          docker ps -a --no-trunc || true
+          for c in $(docker ps -aq); do
+            echo "=== container $c"
+            docker inspect --format 'name={{.Name}} image={{.Config.Image}} status={{.State.Status}} exit={{.State.ExitCode}} oom={{.State.OOMKilled}} err={{.State.Error}} health={{json .State.Health}}' $c || true
+            docker logs --tail 40 $c 2>&1 || true
+          done
+          docker network ls || true
+          ss -ltnp || true
+          free -m || true
