@@ -85,6 +85,10 @@ jobs:
       - name: Unit Test
         run: go run mage.go -v TestUnit
         shell: bash
+      - name: Runner kernel version
+        if: always()
+        shell: bash
+        run: uname -r
       - name: Diagnose mongodb test container
         if: failure()
         shell: bash
