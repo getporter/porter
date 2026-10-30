@@ -190,5 +190,12 @@ jobs:
           # Remove PowerShell
           sudo rm -rf /usr/local/share/powershell
           df -h
+      - name: Trust loopback registries in docker
+        run: |
+          # Newer runner images no longer treat the porter-test-registry
+          # alias (127.0.0.1) as insecure, so docker push falls back to https
+          echo '{"insecure-registries":["127.0.0.0/8"]}' | sudo tee /etc/docker/daemon.json
+          sudo systemctl restart docker
+          docker info --format '{{.RegistryConfig.InsecureRegistryCIDRs}}'
       - name: Run Smoke Tests
         run: go run mage.go -v TestSmoke
