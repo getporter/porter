@@ -179,6 +179,10 @@ func EnsureMongoIsRunning(ctx context.Context, c *portercontext.Context, contain
 		span.Debugf("running a mongo server in a container on port %s", port)
 
 		args := []string{"run", "--name", container, "-p=" + port + ":27017", "-d",
+			// Workaround for mongod refusing to start on Linux 6.19 up to 7.0.13, https://jira.mongodb.org/browse/SERVER-121912
+			// The image sets rseq=0, which makes tcmalloc conflict with the kernel, 1 lets glibc own rseq.
+			// Remove once mongod no longer blocks on the kernel, https://jira.mongodb.org/browse/SERVER-125742 and SERVER-136848
+			"-e", "GLIBC_TUNABLES=glibc.pthread.rseq=1",
 			"--health-cmd", "echo 'db.runCommand(\"ping\").ok' | mongosh localhost:27017/admin --quiet",
 			"--health-interval", "30s",
 			"--health-retries", "3",

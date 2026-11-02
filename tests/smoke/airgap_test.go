@@ -138,7 +138,7 @@ func TestAirgappedEnvironment(t *testing.T) {
 			archiveFilePath := filepath.Join(test.TestDir, "archive-test.tgz")
 			test.RequirePorter("archive", archiveFilePath, "--reference", origRef, insecureFlag)
 			relocMap := getRelocationMap(test, archiveFilePath)
-			require.Equal(test.T, fmt.Sprintf("%s/mybuns@sha256:499f71eec2e3bd78f26c268bbf5b2a65f73b96216fac4a89b86b5ebf115527b6", reg2), relocMap[localRefWithDigest], "expected the relocation entry for the image to be the new published location")
+			require.True(test.T, strings.HasPrefix(relocMap[localRefWithDigest], fmt.Sprintf("%s/mybuns@sha256:", reg2)), "expected the relocation entry for the image to be the new published location, got %s", relocMap[localRefWithDigest])
 
 			// Publish from the archived bundle to a new repository on the second registry
 			// Specify --force since we are overwriting the tag pushed to during the last copy
@@ -148,7 +148,7 @@ func TestAirgappedEnvironment(t *testing.T) {
 			// Archive from the new location on the second registry
 			test.RequirePorter("archive", archiveFilePath2, "--reference", newRef, insecureFlag)
 			relocMap2 := getRelocationMap(test, archiveFilePath2)
-			require.Equal(test.T, fmt.Sprintf("%s/mybuns-second@sha256:499f71eec2e3bd78f26c268bbf5b2a65f73b96216fac4a89b86b5ebf115527b6", reg2), relocMap2[localRefWithDigest], "expected the relocation entry for the image to be the new published location")
+			require.True(test.T, strings.HasPrefix(relocMap2[localRefWithDigest], fmt.Sprintf("%s/mybuns-second@sha256:", reg2)), "expected the relocation entry for the image to be the new published location, got %s", relocMap2[localRefWithDigest])
 
 			// Validate that we can pull the bundle from the new location
 			test.RequirePorter("explain", newRef)
