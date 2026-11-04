@@ -93,6 +93,16 @@ func (t *Templates) GetCredentialSetYAML() ([]byte, error) {
 	return t.fs.ReadFile("templates/credentials/create/credential-set.yaml")
 }
 
+// GetCredentialSetFromBundleTemplate returns a Go template used to define a new credential set for a bundle.
+func (t *Templates) GetCredentialSetFromBundleTemplate() ([]byte, error) {
+	return t.fs.ReadFile("templates/credentials/create/credential-set-from-bundle.yaml.tmpl")
+}
+
+// GetParameterSetFromBundleTemplate returns a Go template used to define a new parameter set for a bundle.
+func (t *Templates) GetParameterSetFromBundleTemplate() ([]byte, error) {
+	return t.fs.ReadFile("templates/parameters/create/parameter-set-from-bundle.yaml.tmpl")
+}
+
 // GetParameterSetJSON returns a parameter-set.schema.json template file to define new parameter set.
 func (t *Templates) GetParameterSetJSON() ([]byte, error) {
 	return t.fs.ReadFile("templates/parameters/create/parameter-set.json")

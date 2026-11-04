@@ -228,17 +228,22 @@ func buildParametersCreateCommand(p *porter.Porter) *cobra.Command {
 		Example: `
 		porter parameters create FILE [--output yaml|json]
 		porter parameters create parameter-set.json
-		porter parameters create parameter-set --output yaml`,
+		porter parameters create parameter-set --output yaml
+		porter parameters create myparams.yaml --reference ghcr.io/getporter/examples/porter-hello:v0.2.0`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate(args)
 		},
 		RunE: func(cmd *cobra.Command, argrs []string) error {
-			return p.CreateParameter(opts)
+			return p.CreateParameter(cmd.Context(), opts)
 		},
 	}
 
 	f := cmd.Flags()
 	f.StringVar(&opts.OutputType, "output", "", "Parameter set resource file format")
+	f.StringVarP(&opts.Reference, "reference", "r", "",
+		"Create the parameter set from the parameters defined by the bundle at the specified OCI reference, e.g. ghcr.io/getporter/examples/porter-hello:v0.2.0")
+	addInsecureRegistryFlag(f, &opts.BundlePullOptions)
+	addForcePullFlag(f, &opts.BundlePullOptions)
 
 	return cmd
 }
