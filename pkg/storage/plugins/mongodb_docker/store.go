@@ -18,6 +18,15 @@ import (
 
 var _ plugins.StorageProtocol = &Store{}
 
+const (
+	// startupTimeout is how long to wait for the mongodb container to become ready.
+	// Shared CI runners can be slow to start mongod.
+	startupTimeout = 60 * time.Second
+
+	// logTailLines is the number of container log lines included in startup errors.
+	logTailLines = "20"
+)
+
 // Store is a storage plugin for porter suitable for running on machines
 // that have not configured proper storage, i.e. a mongo database.
 // It runs mongodb in a docker container and stores its data in a docker volume.
@@ -239,21 +248,30 @@ func EnsureMongoIsRunning(ctx context.Context, c *portercontext.Context, contain
 		URL:     fmt.Sprintf("mongodb://localhost:%s/%s?connect=direct", port, dbName),
 		Timeout: timeoutSeconds,
 	}
-	timeout, cancel := context.WithTimeout(ctx, 10*time.Second)
+	timeout, cancel := context.WithTimeout(ctx, startupTimeout)
 	tick := time.NewTicker(50 * time.Millisecond)
 	defer tick.Stop()
 	defer cancel()
+	lastHealth := "unknown"
 	for {
 		select {
 		case <-timeout.Done():
-			return nil, span.Error(errors.New("timeout waiting for local mongodb daemon to be ready"))
+			return nil, span.Error(fmt.Errorf("timeout waiting for local mongodb daemon to be ready after %s, last health status: %s\n%s", startupTimeout, lastHealth, containerLogTail(container)))
 		case <-tick.C:
-			containerStatus, err := exec.Command("docker", "inspect", "--format", "{{lower .State.Health.Status }}", container).Output()
+			containerStatus, err := exec.Command("docker", "inspect", "--format", "{{lower .State.Health.Status}} {{.State.Running}}", container).Output()
 			if err != nil {
 				continue
 			}
-			containerHealth := strings.TrimSpace(string(containerStatus))
+			inspectFields := strings.Fields(string(containerStatus))
+			if len(inspectFields) != 2 {
+				continue
+			}
+			containerHealth, running := inspectFields[0], inspectFields[1]
+			lastHealth = containerHealth
 			span.Debugf("MongoDB container status: [%s]", containerHealth)
+			if running == "false" {
+				return nil, span.Error(fmt.Errorf("the local mongodb container exited before it was ready\n%s", containerLogTail(container)))
+			}
 			if strings.EqualFold(containerHealth, "healthy") {
 				conn := mongodb.NewStore(c, mongoPluginCfg)
 				err = conn.Connect(ctx)
@@ -270,6 +288,15 @@ func EnsureMongoIsRunning(ctx context.Context, c *portercontext.Context, contain
 		}
 	}
 
+}
+
+// containerLogTail returns the last lines of the container logs for use in error messages.
+func containerLogTail(container string) string {
+	out, err := exec.Command("docker", "logs", "--tail", logTailLines, container).CombinedOutput()
+	if err != nil {
+		return fmt.Sprintf("unable to retrieve container logs: %s", err)
+	}
+	return "container logs:\n" + strings.TrimSpace(string(out))
 }
 
 func checkMongoVersionError(container string) bool {
