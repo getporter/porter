@@ -141,6 +141,14 @@ jobs:
           # Remove PowerShell
           sudo rm -rf /usr/local/share/powershell
           df -h
+      - name: Trust loopback registries in docker
+        run: |
+          # On ubuntu-26.04 pushes to the porter-test-registry alias fall back
+          # to https unless the daemon is configured and restarted. Found
+          # empirically, the exact cause is unknown.
+          echo '{"insecure-registries":["127.0.0.0/8"]}' | sudo tee /etc/docker/daemon.json
+          sudo systemctl restart docker
+          docker info --format '{{.RegistryConfig.InsecureRegistryCIDRs}}'
       - name: Run Smoke Tests
         run: mage -v TestSmoke
   publish_binaries:
