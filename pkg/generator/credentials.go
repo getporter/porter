@@ -6,6 +6,7 @@ import (
 	"sort"
 	"strings"
 
+	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
 	"github.com/cnabio/cnab-go/bundle"
@@ -17,6 +18,9 @@ type GenerateCredentialsOptions struct {
 
 	// Credentials from the bundle
 	Credentials map[string]bundle.Credential
+
+	// DefaultSources suggested by the bundle for its credentials
+	DefaultSources cnab.CredentialDefaultSources
 }
 
 // GenerateCredentials will generate a credential set based on the given options
@@ -28,7 +32,7 @@ func GenerateCredentials(opts GenerateCredentialsOptions) (storage.CredentialSet
 	if opts.Silent {
 		generator = genEmptySet
 	}
-	credSet, err := genCredentialSet(opts.Namespace, opts.Name, opts.Credentials, generator)
+	credSet, err := genCredentialSet(opts.Namespace, opts.Name, opts.Credentials, opts.DefaultSources, generator)
 	if err != nil {
 		return storage.CredentialSet{}, err
 	}
@@ -37,7 +41,7 @@ func GenerateCredentials(opts GenerateCredentialsOptions) (storage.CredentialSet
 	return credSet, nil
 }
 
-func genCredentialSet(namespace string, name string, creds map[string]bundle.Credential, fn generator) (storage.CredentialSet, error) {
+func genCredentialSet(namespace string, name string, creds map[string]bundle.Credential, defaultSources cnab.CredentialDefaultSources, fn generator) (storage.CredentialSet, error) {
 	cs := storage.NewCredentialSet(namespace, name)
 	cs.Credentials = []secrets.SourceMap{}
 
@@ -53,7 +57,7 @@ func genCredentialSet(namespace string, name string, creds map[string]bundle.Cre
 	sort.Strings(credentialNames)
 
 	for _, name := range credentialNames {
-		c, err := fn(name, surveyCredentials, withRequired(creds[name].Required), withDescription(creds[name].Description))
+		c, err := fn(name, surveyCredentials, withRequired(creds[name].Required), withDescription(creds[name].Description), withDefaultSource(defaultSources[name]))
 		if err != nil {
 			return cs, err
 		}

@@ -708,6 +708,12 @@ func (c *ManifestConverter) generateCustomExtensions(ctx context.Context, b *cna
 		customExtensions[cnab.DirectoryParameterExtensionKey] = dirs
 	}
 
+	// Add the credential default sources when the bundle suggests any
+	credentialDefaultSources := c.generateCredentialDefaultSources()
+	if len(credentialDefaultSources) > 0 {
+		customExtensions[cnab.CredentialDefaultSourcesExtensionKey] = credentialDefaultSources
+	}
+
 	// Add custom metadata defined in the manifest
 	for key, value := range c.Manifest.Custom {
 		customExtensions[key] = value
@@ -734,6 +740,17 @@ func (c *ManifestConverter) generateCustomExtensions(ctx context.Context, b *cna
 	}
 
 	return customExtensions, nil
+}
+
+// generateCredentialDefaultSources lists the credentials that suggest a default source.
+func (c *ManifestConverter) generateCredentialDefaultSources() cnab.CredentialDefaultSources {
+	sources := cnab.CredentialDefaultSources{}
+	for name, cred := range c.Manifest.Credentials {
+		if cred.DefaultSource != nil {
+			sources[name] = *cred.DefaultSource
+		}
+	}
+	return sources
 }
 
 // generateDirectoryParameters lists the parameters and outputs declared with type directory.
