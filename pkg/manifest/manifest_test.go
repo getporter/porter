@@ -2,6 +2,7 @@ package manifest
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"strings"
 	"testing"
@@ -285,6 +286,55 @@ func TestManifest_UseRawDockerfile(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			m := &Manifest{DockerfileMode: tc.mode}
 			assert.Equal(t, tc.want, m.UseRawDockerfile(tc.flag))
+		})
+	}
+}
+
+func TestManifest_Validate_CredentialDefaultSource(t *testing.T) {
+	testcases := []struct {
+		name          string
+		defaultSource string
+		want          *cnab.CredentialDefaultSource
+		wantErr       string
+	}{
+		{name: "unset"},
+		{name: "env", defaultSource: "{env: GITHUB_TOKEN}", want: &cnab.CredentialDefaultSource{EnvironmentVariable: "GITHUB_TOKEN"}},
+		{name: "path", defaultSource: "{path: ~/.kube/config}", want: &cnab.CredentialDefaultSource{Path: "~/.kube/config"}},
+		{name: "both", defaultSource: "{env: GITHUB_TOKEN, path: ~/.kube/config}", wantErr: `invalid defaultSource for credential "token": exactly one of env or path must be set`},
+		{name: "unsupported source", defaultSource: "{command: cat token.txt}", wantErr: `invalid defaultSource for credential "token": exactly one of env or path must be set`},
+	}
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			credential := "- name: token\n  env: TOKEN\n"
+			if tc.defaultSource != "" {
+				credential += "  defaultSource: " + tc.defaultSource + "\n"
+			}
+			manifest := fmt.Sprintf(`schemaVersion: 1.0.1
+name: mybun
+version: 0.1.0
+registry: localhost:5000
+mixins:
+- exec
+credentials:
+%s
+install:
+- exec:
+    command: echo
+uninstall:
+- exec:
+    command: echo
+`, credential)
+
+			c := config.NewTestConfig(t)
+			require.NoError(t, c.TestContext.AddTestFileContents([]byte(manifest), config.Name))
+
+			m, err := LoadManifestFrom(context.Background(), c.Config, config.Name)
+			if tc.wantErr != "" {
+				require.ErrorContains(t, err, tc.wantErr)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, tc.want, m.Credentials["token"].DefaultSource)
 		})
 	}
 }

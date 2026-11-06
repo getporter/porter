@@ -109,3 +109,4 @@ and we will add you. **All** contributors belong here. 💯
 - [Erik Cederberg](https://github.com/erikced)
 - [Arunesh Dwivedi](https://github.com/AruneshDwivedi)
 - [Michael Holland](https://github.com/mstephenholl)
+- [Asish Kumar](https://github.com/officialasishkumar)

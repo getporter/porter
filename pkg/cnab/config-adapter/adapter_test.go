@@ -932,6 +932,51 @@ func TestManifestConverter_generateCustomExtensions_withRequired(t *testing.T) {
 	assert.Equal(t, map[string]interface{}{"config": true}, bun.Custom["requiredExtension2"])
 }
 
+func TestManifestConverter_generateCredentialDefaultSources(t *testing.T) {
+	t.Parallel()
+
+	c := config.NewTestConfig(t)
+	c.TestContext.AddTestFile("testdata/porter-with-credential-default-sources.yaml", config.Name)
+
+	ctx := context.Background()
+	m, err := manifest.LoadManifestFrom(ctx, c.Config, config.Name)
+	require.NoError(t, err, "could not load manifest")
+
+	bun, err := NewManifestConverter(c.Config, m, nil, nil, false).ToBundle(ctx)
+	require.NoError(t, err, "ToBundle failed")
+
+	// Older versions of porter must still be able to run the bundle
+	assert.NotContains(t, bun.RequiredExtensions, cnab.CredentialDefaultSourcesExtensionKey)
+
+	// Check the values that other tools see in bundle.json
+	data, err := json.Marshal(bun.Custom[cnab.CredentialDefaultSourcesExtensionKey])
+	require.NoError(t, err)
+	assert.JSONEq(t, `{"kubeconfig":{"path":"~/.kube/config"},"token":{"env":"GITHUB_TOKEN"}}`, string(data))
+
+	sources, err := bun.ReadCredentialDefaultSources()
+	require.NoError(t, err)
+	assert.Equal(t, cnab.CredentialDefaultSources{
+		"kubeconfig": {Path: "~/.kube/config"},
+		"token":      {EnvironmentVariable: "GITHUB_TOKEN"},
+	}, sources)
+}
+
+func TestManifestConverter_noCredentialDefaultSources(t *testing.T) {
+	t.Parallel()
+
+	c := config.NewTestConfig(t)
+	c.TestContext.AddTestFile("testdata/porter.yaml", config.Name)
+
+	ctx := context.Background()
+	m, err := manifest.LoadManifestFrom(ctx, c.Config, config.Name)
+	require.NoError(t, err, "could not load manifest")
+
+	bun, err := NewManifestConverter(c.Config, m, nil, nil, false).ToBundle(ctx)
+	require.NoError(t, err, "ToBundle failed")
+
+	assert.NotContains(t, bun.Custom, cnab.CredentialDefaultSourcesExtensionKey)
+}
+
 func TestManifestConverter_GenerateCustomActionDefinitions(t *testing.T) {
 	t.Parallel()
 

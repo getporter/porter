@@ -373,6 +373,8 @@ credentials:
   required: false
 - name: kubeconfig
   path: /home/nonroot/.kube/config
+  defaultSource:
+    path: ~/.kube/config
   applyTo:
     - upgrade
     - uninstall
@@ -384,6 +386,9 @@ credentials:
 * `path`: The file path to create with the file from the credential.
 * `required`: (OPTIONAL) Specifies if the credential must be provided for applicable actions. Defaults to true.
 * `applyTo`: (Optional) Designate to which actions this credential applies. When not supplied, it is assumed the credential applies to all actions.
+* `defaultSource`: (OPTIONAL) Where the value of the credential is usually found on the user's machine. [porter credentials generate](/cli/porter_credentials_generate/) selects it as the default answer, and the user must still confirm it. It is included in the output of [porter explain](/cli/porter_explain/). Define exactly one of the following:
+  * `env`: The name of the environment variable that usually holds the credential.
+  * `path`: The path of the file that usually holds the credential. A leading `~/` is replaced with the user's home directory.
 
 ### See Also
 * [porter credentials generate](/cli/porter_credentials_generate/)

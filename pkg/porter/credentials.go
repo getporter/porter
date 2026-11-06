@@ -144,6 +144,10 @@ func (p *Porter) GenerateCredentials(ctx context.Context, opts CredentialOptions
 	if name == "" {
 		name = bundleRef.Definition.Name
 	}
+	defaultSources, err := bundleRef.Definition.ReadCredentialDefaultSources()
+	if err != nil {
+		return span.Error(err)
+	}
 	genOpts := generator.GenerateCredentialsOptions{
 		GenerateOptions: generator.GenerateOptions{
 			Name:      name,
@@ -151,7 +155,8 @@ func (p *Porter) GenerateCredentials(ctx context.Context, opts CredentialOptions
 			Labels:    opts.ParseLabels(),
 			Silent:    opts.Silent,
 		},
-		Credentials: bundleRef.Definition.Credentials,
+		Credentials:    bundleRef.Definition.Credentials,
+		DefaultSources: defaultSources,
 	}
 	span.Infof("Generating new credential %s from bundle %s\n", genOpts.Name, bundleRef.Definition.Name)
 	span.Infof("==> %d credentials required for bundle %s\n", len(genOpts.Credentials), bundleRef.Definition.Name)
