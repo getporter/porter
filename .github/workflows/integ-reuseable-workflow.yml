@@ -34,7 +34,7 @@ jobs:
           path: /tmp/.buildx-cache
           key: ${{ runner.os }}-buildx-${{ github.sha }}
       - name: Docker Login
-        uses: docker/login-action@v4.7.0
+        uses: docker/login-action@v4.8.0
         with:
           registry: ${{inputs.registry}}
           username: ${{ github.actor }}
