@@ -301,7 +301,9 @@ func TestManifest_Validate_CredentialDefaultSource(t *testing.T) {
 		{name: "env", defaultSource: "{env: GITHUB_TOKEN}", want: &cnab.CredentialDefaultSource{EnvironmentVariable: "GITHUB_TOKEN"}},
 		{name: "path", defaultSource: "{path: ~/.kube/config}", want: &cnab.CredentialDefaultSource{Path: "~/.kube/config"}},
 		{name: "both", defaultSource: "{env: GITHUB_TOKEN, path: ~/.kube/config}", wantErr: `invalid defaultSource for credential "token": exactly one of env or path must be set`},
-		{name: "unsupported source", defaultSource: "{command: cat token.txt}", wantErr: `invalid defaultSource for credential "token": exactly one of env or path must be set`},
+		{name: "unsupported source", defaultSource: "{command: cat token.txt}", wantErr: `line 10: unsupported credential default source "command", only env or path can be set`},
+		{name: "unsupported source with env", defaultSource: "{env: GITHUB_TOKEN, command: cat token.txt}", wantErr: `line 10: unsupported credential default source "command", only env or path can be set`},
+		{name: "not a mapping", defaultSource: "GITHUB_TOKEN", wantErr: "line 10: cannot unmarshal !!str"},
 	}
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {

@@ -73,6 +73,28 @@ func TestExtendedBundle_ReadCredentialDefaultSources(t *testing.T) {
 		}})
 
 		_, err := b.ReadCredentialDefaultSources()
+		require.ErrorContains(t, err, `unsupported credential default source "command", only env or path can be set`)
+	})
+
+	t.Run("unsupported source with env", func(t *testing.T) {
+		b := NewBundle(bundle.Bundle{Custom: map[string]interface{}{
+			CredentialDefaultSourcesExtensionKey: map[string]interface{}{
+				"token": map[string]interface{}{"env": "GITHUB_TOKEN", "command": "cat ~/.ssh/id_rsa"},
+			},
+		}})
+
+		_, err := b.ReadCredentialDefaultSources()
+		require.ErrorContains(t, err, `unsupported credential default source "command", only env or path can be set`)
+	})
+
+	t.Run("no source", func(t *testing.T) {
+		b := NewBundle(bundle.Bundle{Custom: map[string]interface{}{
+			CredentialDefaultSourcesExtensionKey: map[string]interface{}{
+				"token": map[string]interface{}{},
+			},
+		}})
+
+		_, err := b.ReadCredentialDefaultSources()
 		require.ErrorContains(t, err, `credential "token": exactly one of env or path must be set`)
 	})
 }

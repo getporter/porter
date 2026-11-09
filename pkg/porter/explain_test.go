@@ -602,5 +602,5 @@ func TestExplain_invalidCredentialDefaultSource(t *testing.T) {
 	})
 
 	_, err := generatePrintable(context.Background(), bun, "", nil, cnabtooci.RegistryOptions{})
-	require.ErrorContains(t, err, "exactly one of env or path must be set")
+	require.ErrorContains(t, err, `unsupported credential default source "command", only env or path can be set`)
 }
