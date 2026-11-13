@@ -37,18 +37,14 @@
       "exec_local_script_test",
       "migration_test",
       "object_param_test",
-      "reconcile_test",
       "sensitive_data_test"
     ]
   },
   {
     "name": "shard-5",
     "files": [
-      "inspect_bundle_interface_test",
       "inspect_dependencies_test",
-      "inspect_existing_installation_test",
       "lifecycle_integration_test",
-      "lock_installations_test",
       "outputs_test",
       "uninstall_test"
     ]
@@ -68,6 +64,15 @@
       "publish_test",
       "runner_integration_test",
       "schema_test"
+    ]
+  },
+  {
+    "name": "shard-7",
+    "files": [
+      "inspect_bundle_interface_test",
+      "inspect_existing_installation_test",
+      "lock_installations_test",
+      "reconcile_test"
     ]
   }
 ]
