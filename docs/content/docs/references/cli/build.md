@@ -37,26 +37,26 @@ porter build [flags]
 ### Options
 
 ```
-      --allow-file-downloads        Allow Porter to download files declared in the manifest's files section during build. See https://porter.sh/configuration/#allow-file-downloads for more information.
-      --build-arg stringArray       Set build arguments in the template Dockerfile (format: NAME=VALUE). May be specified multiple times. Max length is 5,000 characters.
-      --build-context stringArray   Define additional build context with specified contents (format: NAME=PATH). May be specified multiple times. Porter automatically provides a 'porter-internal-userfiles' named context pointing to your bundle directory.
-      --builder string              Set the name of the buildkit builder to use.
-      --cache-from stringArray      Add cache source images to the build cache. May be specified multiple times.
-      --cache-to stringArray        Add cache target images to the build cache.
-      --custom stringArray          Define an individual key-value pair for the custom section in the form of NAME=VALUE. Use dot notation to specify a nested custom field. May be specified multiple times. Max length is 5,000 characters when used as a build argument.
-  -d, --dir string                  Path to the build context directory where all bundle assets are located. Defaults to the current directory.
-  -f, --file string                 Path to the Porter manifest. The path is relative to the build context directory. Defaults to porter.yaml in the current directory.
-      --force                       Force a full rebuild from scratch, ignoring any cached data.
-  -h, --help                        help for build
-      --insecure-registry           Don't require TLS when pulling referenced images
-      --name string                 Override the bundle name
-      --no-cache                    Do not use the Docker cache when building the bundle image.
-      --no-lint                     Do not run the linter
-      --output string               Set docker output options (excluding type and name).
-      --preserve-tags               Preserve the original tag name on referenced images
-      --secret stringArray          Secret file to expose to the build (format: id=mysecret,src=/local/secret). Custom values are accessible as build arguments in the template Dockerfile and in the manifest using template variables. May be specified multiple times.
-      --ssh stringArray             SSH agent socket or keys to expose to the build (format: default|<id>[=<socket>|<key>[,<key>]]). May be specified multiple times.
-      --version string              Override the bundle version
+      --allow-file-downloads[=true|false]   Allow Porter to download files declared in the manifest's files section during build. See https://porter.sh/configuration/#allow-file-downloads for more information.
+      --build-arg stringArray               Set build arguments in the template Dockerfile (format: NAME=VALUE). May be specified multiple times. Max length is 5,000 characters.
+      --build-context stringArray           Define additional build context with specified contents (format: NAME=PATH). May be specified multiple times. Porter automatically provides a 'porter-internal-userfiles' named context pointing to your bundle directory.
+      --builder string                      Set the name of the buildkit builder to use.
+      --cache-from stringArray              Add cache source images to the build cache. May be specified multiple times.
+      --cache-to stringArray                Add cache target images to the build cache.
+      --custom stringArray                  Define an individual key-value pair for the custom section in the form of NAME=VALUE. Use dot notation to specify a nested custom field. May be specified multiple times. Max length is 5,000 characters when used as a build argument.
+  -d, --dir string                          Path to the build context directory where all bundle assets are located. Defaults to the current directory.
+  -f, --file string                         Path to the Porter manifest. The path is relative to the build context directory. Defaults to porter.yaml in the current directory.
+      --force[=true|false]                  Force a full rebuild from scratch, ignoring any cached data.
+  -h, --help[=true|false]                   help for build
+      --insecure-registry[=true|false]      Don't require TLS when pulling referenced images
+      --name string                         Override the bundle name
+      --no-cache[=true|false]               Do not use the Docker cache when building the bundle image.
+      --no-lint[=true|false]                Do not run the linter
+      --output string                       Set docker output options (excluding type and name).
+      --preserve-tags[=true|false]          Preserve the original tag name on referenced images
+      --secret stringArray                  Secret file to expose to the build (format: id=mysecret,src=/local/secret). Custom values are accessible as build arguments in the template Dockerfile and in the manifest using template variables. May be specified multiple times.
+      --ssh stringArray                     SSH agent socket or keys to expose to the build (format: default|<id>[=<socket>|<key>[,<key>]]). May be specified multiple times.
+      --version string                      Override the bundle version
 ```
 
 ### Options inherited from parent commands

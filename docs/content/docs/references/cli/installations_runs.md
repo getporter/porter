@@ -14,7 +14,7 @@ Commands for working with runs of an Installation
 ### Options
 
 ```
-  -h, --help   help for runs
+  -h, --help[=true|false]   help for runs
 ```
 
 ### Options inherited from parent commands

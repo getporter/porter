@@ -25,7 +25,7 @@ porter completion bash > /usr/local/etc/bash_completions.d/porter
 ### Options
 
 ```
-  -h, --help   help for completion
+  -h, --help[=true|false]   help for completion
 ```
 
 ### Options inherited from parent commands

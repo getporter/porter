@@ -14,8 +14,8 @@ porter mixins list [flags]
 ### Options
 
 ```
-  -h, --help            help for list
-  -o, --output string   Output format, allowed values are: plaintext, json, yaml (default "plaintext")
+  -h, --help[=true|false]   help for list
+  -o, --output string       Output format, allowed values are: plaintext, json, yaml (default "plaintext")
 ```
 
 ### Options inherited from parent commands

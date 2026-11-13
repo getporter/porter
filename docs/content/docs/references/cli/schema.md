@@ -14,7 +14,7 @@ porter schema [flags]
 ### Options
 
 ```
-  -h, --help   help for schema
+  -h, --help[=true|false]   help for schema
 ```
 
 ### Options inherited from parent commands

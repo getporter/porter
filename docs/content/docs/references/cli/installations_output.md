@@ -10,7 +10,7 @@ Output commands
 ### Options
 
 ```
-  -h, --help   help for output
+  -h, --help[=true|false]   help for output
 ```
 
 ### Options inherited from parent commands

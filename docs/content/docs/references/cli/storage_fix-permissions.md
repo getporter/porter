@@ -18,7 +18,7 @@ porter storage fix-permissions [flags]
 ### Options
 
 ```
-  -h, --help   help for fix-permissions
+  -h, --help[=true|false]   help for fix-permissions
 ```
 
 ### Options inherited from parent commands

@@ -15,7 +15,7 @@ Manage the data stored by Porter, such as credentials and installation data.
 ### Options
 
 ```
-  -h, --help   help for storage
+  -h, --help[=true|false]   help for storage
 ```
 
 ### Options inherited from parent commands

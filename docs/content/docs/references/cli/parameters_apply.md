@@ -31,8 +31,8 @@ porter parameters apply FILE [flags]
 ### Options
 
 ```
-  -h, --help               help for apply
-  -n, --namespace string   Namespace in which the parameter set is defined. The namespace in the file, if set, takes precedence.
+  -h, --help[=true|false]   help for apply
+  -n, --namespace string    Namespace in which the parameter set is defined. The namespace in the file, if set, takes precedence.
 ```
 
 ### Options inherited from parent commands

@@ -14,7 +14,7 @@ Commands for working with installation logs
 ### Options
 
 ```
-  -h, --help   help for logs
+  -h, --help[=true|false]   help for logs
 ```
 
 ### Options inherited from parent commands
