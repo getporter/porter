@@ -14,7 +14,7 @@ Commands for working with bundles. These all have shortcuts so that you can call
 ### Options
 
 ```
-  -h, --help   help for bundles
+  -h, --help[=true|false]   help for bundles
 ```
 
 ### Options inherited from parent commands

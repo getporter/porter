@@ -42,7 +42,7 @@ porter storage migrate --old-home OLD_PORTER_HOME [--old-account STORAGE_NAME] [
 ### Options
 
 ```
-  -h, --help                 help for migrate
+  -h, --help[=true|false]    help for migrate
   -n, --namespace string     Destination namespace where the migrated data should be saved. By default, Porter migrates your data into the current namespace as configured by environment variables and your config file, otherwise the global namespace is used.
       --old-account string   Name of the storage account in the old Porter configuration file containing the data that should be migrated. If unspecified, the default storage account is used.
       --old-home string      Path to the old PORTER_HOME directory where the previous version of Porter is installed

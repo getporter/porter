@@ -30,7 +30,7 @@ porter config migrate [flags]
 ### Options
 
 ```
-  -h, --help   help for migrate
+  -h, --help[=true|false]   help for migrate
 ```
 
 ### Options inherited from parent commands

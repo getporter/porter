@@ -18,9 +18,9 @@ porter parameters delete NAME [flags]
 ### Options
 
 ```
-      --force              Force the delete even if the parameter set is in use by an installation
-  -h, --help               help for delete
-  -n, --namespace string   Namespace in which the parameter set is defined. Defaults to the global namespace.
+      --force[=true|false]   Force the delete even if the parameter set is in use by an installation
+  -h, --help[=true|false]    help for delete
+  -n, --namespace string     Namespace in which the parameter set is defined. Defaults to the global namespace.
 ```
 
 ### Options inherited from parent commands

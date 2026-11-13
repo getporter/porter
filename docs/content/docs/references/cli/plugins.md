@@ -10,7 +10,7 @@ Plugin commands. Plugins enable Porter to work on different cloud providers and 
 ### Options
 
 ```
-  -h, --help   help for plugins
+  -h, --help[=true|false]   help for plugins
 ```
 
 ### Options inherited from parent commands

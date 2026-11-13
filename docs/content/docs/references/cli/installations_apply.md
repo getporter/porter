@@ -33,10 +33,10 @@ porter installations apply FILE [flags]
 ### Options
 
 ```
-      --dry-run            Evaluate if the bundle would be executed based on the changes in the file.
-      --force              Force the bundle to be executed when no changes are detected.
-  -h, --help               help for apply
-  -n, --namespace string   Namespace in which the installation is defined. Defaults to the namespace defined in the file.
+      --dry-run[=true|false]   Evaluate if the bundle would be executed based on the changes in the file.
+      --force[=true|false]     Force the bundle to be executed when no changes are detected.
+  -h, --help[=true|false]      help for apply
+  -n, --namespace string       Namespace in which the installation is defined. Defaults to the namespace defined in the file.
 ```
 
 ### Options inherited from parent commands

@@ -28,11 +28,11 @@ porter mixins install NAME [flags]
 ### Options
 
 ```
-      --feed-url string   URL of an atom feed where the mixin can be downloaded. Defaults to the official Porter mixin feed.
-  -h, --help              help for install
-      --mirror string     Mirror of official Porter assets (default "https://cdn.porter.sh")
-      --url string        URL from where the mixin can be downloaded, for example https://github.com/org/proj/releases/downloads
-  -v, --version string    The mixin version. This can either be a version number, or a tagged release like 'latest' or 'canary' (default "latest")
+      --feed-url string     URL of an atom feed where the mixin can be downloaded. Defaults to the official Porter mixin feed.
+  -h, --help[=true|false]   help for install
+      --mirror string       Mirror of official Porter assets (default "https://cdn.porter.sh")
+      --url string          URL from where the mixin can be downloaded, for example https://github.com/org/proj/releases/downloads
+  -v, --version string      The mixin version. This can either be a version number, or a tagged release like 'latest' or 'canary' (default "latest")
 ```
 
 ### Options inherited from parent commands

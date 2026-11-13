@@ -14,7 +14,7 @@ Commands for working with installations of a bundle
 ### Options
 
 ```
-  -h, --help   help for installations
+  -h, --help[=true|false]   help for installations
 ```
 
 ### Options inherited from parent commands

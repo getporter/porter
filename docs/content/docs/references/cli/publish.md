@@ -33,18 +33,18 @@ porter publish [flags]
 ### Options
 
 ```
-  -a, --archive string       Path to the bundle archive in .tgz format
-      --autobuild-disabled   Do not automatically build the bundle from source when the last build is out-of-date.
-  -d, --dir string           Path to the build context directory where all bundle assets are located.
-  -f, --file porter.yaml     Path to the Porter manifest. Defaults to porter.yaml in the current directory.
-      --force                Force push the bundle to overwrite the previously published bundle
-  -h, --help                 help for publish
-      --insecure-registry    Don't require TLS for the registry
-      --preserve-tags        Preserve the original tag name on referenced images
-  -r, --reference string     Use a bundle in an OCI registry specified by the given reference.
-      --registry string      Override the registry portion of the bundle reference, e.g. docker.io, myregistry.com/myorg
-      --sign-bundle          Sign the bundle using the configured signing plugin
-      --tag string           Override the Docker tag portion of the bundle reference, e.g. latest, v0.1.1
+  -a, --archive string                    Path to the bundle archive in .tgz format
+      --autobuild-disabled[=true|false]   Do not automatically build the bundle from source when the last build is out-of-date.
+  -d, --dir string                        Path to the build context directory where all bundle assets are located.
+  -f, --file porter.yaml                  Path to the Porter manifest. Defaults to porter.yaml in the current directory.
+      --force[=true|false]                Force push the bundle to overwrite the previously published bundle
+  -h, --help[=true|false]                 help for publish
+      --insecure-registry[=true|false]    Don't require TLS for the registry
+      --preserve-tags[=true|false]        Preserve the original tag name on referenced images
+  -r, --reference string                  Use a bundle in an OCI registry specified by the given reference.
+      --registry string                   Override the registry portion of the bundle reference, e.g. docker.io, myregistry.com/myorg
+      --sign-bundle[=true|false]          Sign the bundle using the configured signing plugin
+      --tag string                        Override the Docker tag portion of the bundle reference, e.g. latest, v0.1.1
 ```
 
 ### Options inherited from parent commands

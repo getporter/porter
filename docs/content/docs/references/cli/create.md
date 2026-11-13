@@ -18,7 +18,7 @@ porter create [bundle-name] [flags]
 ### Options
 
 ```
-  -h, --help   help for create
+  -h, --help[=true|false]   help for create
 ```
 
 ### Options inherited from parent commands

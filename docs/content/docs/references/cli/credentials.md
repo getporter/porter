@@ -10,7 +10,7 @@ Credentials commands
 ### Options
 
 ```
-  -h, --help   help for credentials
+  -h, --help[=true|false]   help for credentials
 ```
 
 ### Options inherited from parent commands

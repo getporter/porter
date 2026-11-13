@@ -18,7 +18,7 @@ porter mixins feed template [flags]
 ### Options
 
 ```
-  -h, --help   help for template
+  -h, --help[=true|false]   help for template
 ```
 
 ### Options inherited from parent commands

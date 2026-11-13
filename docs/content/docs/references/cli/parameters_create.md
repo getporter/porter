@@ -28,11 +28,11 @@ porter parameters create [flags]
 ### Options
 
 ```
-      --force               Force a fresh pull of the bundle
-  -h, --help                help for create
-      --insecure-registry   Don't require TLS for the registry
-      --output string       Parameter set resource file format
-  -r, --reference string    Create the parameter set from the parameters defined by the bundle at the specified OCI reference, e.g. ghcr.io/getporter/examples/porter-hello:v0.2.0
+      --force[=true|false]               Force a fresh pull of the bundle
+  -h, --help[=true|false]                help for create
+      --insecure-registry[=true|false]   Don't require TLS for the registry
+      --output string                    Parameter set resource file format
+  -r, --reference string                 Create the parameter set from the parameters defined by the bundle at the specified OCI reference, e.g. ghcr.io/getporter/examples/porter-hello:v0.2.0
 ```
 
 ### Options inherited from parent commands
