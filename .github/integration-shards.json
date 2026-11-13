@@ -1,0 +1,73 @@
+[
+  {
+    "name": "shard-1",
+    "files": [
+      "build_test"
+    ]
+  },
+  {
+    "name": "shard-2",
+    "files": [
+      "dependencies_version_strategy_test",
+      "invoke_test",
+      "lint_test",
+      "registry_integration_test",
+      "signing_test",
+      "state_test",
+      "upgrade_test"
+    ]
+  },
+  {
+    "name": "shard-3",
+    "files": [
+      "cli_test",
+      "dependenciesv1_test",
+      "driver_test",
+      "install_test",
+      "pull_test",
+      "suppress_output_test",
+      "telemetry_test"
+    ]
+  },
+  {
+    "name": "shard-4",
+    "files": [
+      "config_test",
+      "dependenciesv2_test",
+      "exec_local_script_test",
+      "migration_test",
+      "object_param_test",
+      "reconcile_test",
+      "sensitive_data_test"
+    ]
+  },
+  {
+    "name": "shard-5",
+    "files": [
+      "inspect_bundle_interface_test",
+      "inspect_dependencies_test",
+      "inspect_existing_installation_test",
+      "lifecycle_integration_test",
+      "lock_installations_test",
+      "outputs_test",
+      "uninstall_test"
+    ]
+  },
+  {
+    "name": "shard-6",
+    "files": [
+      "agent_integration_test",
+      "archive_test",
+      "build_integration_test",
+      "connection_nix_test",
+      "copy_test",
+      "file_sources_test",
+      "persistent_params_test",
+      "pkgmgmt_integration_test",
+      "plugin_log_level_test",
+      "publish_test",
+      "runner_integration_test",
+      "schema_test"
+    ]
+  }
+]
