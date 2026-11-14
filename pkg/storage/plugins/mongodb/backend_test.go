@@ -21,6 +21,7 @@ func TestCollectionFor(t *testing.T) {
 		protov4.Kind_KIND_CREDENTIAL_SET: "credentials",
 		protov4.Kind_KIND_PARAMETER_SET:  "parameters",
 		protov4.Kind_KIND_WORKFLOW:       "workflows",
+		protov4.Kind_KIND_SCHEMA:         "config",
 	}
 	for kind, want := range tests {
 		got, err := collectionFor(kind)
@@ -48,6 +49,7 @@ func TestKeyFilter(t *testing.T) {
 		{protov4.Kind_KIND_RESULT, bson.M{"_id": "id1"}},
 		{protov4.Kind_KIND_WORKFLOW, bson.M{"namespace": "ns", "_id": "id1"}},
 		{protov4.Kind_KIND_OUTPUT, bson.M{"resultId": "res1", "name": "n"}},
+		{protov4.Kind_KIND_SCHEMA, bson.M{"_id": "id1"}},
 	}
 	for _, tt := range tests {
 		d.Kind = tt.kind

@@ -25,9 +25,9 @@ type StorageClient interface {
 	// --- lifecycle ---
 	// Info is the handshake. Porter refuses plugins whose protocol_version != 4.
 	Info(ctx context.Context, in *InfoRequest, opts ...grpc.CallOption) (*InfoResponse, error)
-	// SchemaVersion reports the backend's current schema version (0 = uninitialized).
-	SchemaVersion(ctx context.Context, in *SchemaVersionRequest, opts ...grpc.CallOption) (*SchemaVersionResponse, error)
-	// Migrate brings the backend schema (tables, indexes) to the latest version.
+	// Migrate brings the backend's physical schema (tables, indexes) to the
+	// latest version. The logical version of Porter's documents is tracked by
+	// Porter itself in a KIND_SCHEMA document.
 	// Must be idempotent and safe to call concurrently (backend takes a lock).
 	Migrate(ctx context.Context, in *MigrateRequest, opts ...grpc.CallOption) (*MigrateResponse, error)
 	// --- generic document ops (installation, credential set, parameter set, workflow, run, result) ---
@@ -68,15 +68,6 @@ func NewStorageClient(cc grpc.ClientConnInterface) StorageClient {
 func (c *storageClient) Info(ctx context.Context, in *InfoRequest, opts ...grpc.CallOption) (*InfoResponse, error) {
 	out := new(InfoResponse)
 	err := c.cc.Invoke(ctx, "/porter.storage.v4.Storage/Info", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *storageClient) SchemaVersion(ctx context.Context, in *SchemaVersionRequest, opts ...grpc.CallOption) (*SchemaVersionResponse, error) {
-	out := new(SchemaVersionResponse)
-	err := c.cc.Invoke(ctx, "/porter.storage.v4.Storage/SchemaVersion", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -234,9 +225,9 @@ type StorageServer interface {
 	// --- lifecycle ---
 	// Info is the handshake. Porter refuses plugins whose protocol_version != 4.
 	Info(context.Context, *InfoRequest) (*InfoResponse, error)
-	// SchemaVersion reports the backend's current schema version (0 = uninitialized).
-	SchemaVersion(context.Context, *SchemaVersionRequest) (*SchemaVersionResponse, error)
-	// Migrate brings the backend schema (tables, indexes) to the latest version.
+	// Migrate brings the backend's physical schema (tables, indexes) to the
+	// latest version. The logical version of Porter's documents is tracked by
+	// Porter itself in a KIND_SCHEMA document.
 	// Must be idempotent and safe to call concurrently (backend takes a lock).
 	Migrate(context.Context, *MigrateRequest) (*MigrateResponse, error)
 	// --- generic document ops (installation, credential set, parameter set, workflow, run, result) ---
@@ -272,9 +263,6 @@ type UnimplementedStorageServer struct {
 
 func (UnimplementedStorageServer) Info(context.Context, *InfoRequest) (*InfoResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Info not implemented")
-}
-func (UnimplementedStorageServer) SchemaVersion(context.Context, *SchemaVersionRequest) (*SchemaVersionResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SchemaVersion not implemented")
 }
 func (UnimplementedStorageServer) Migrate(context.Context, *MigrateRequest) (*MigrateResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Migrate not implemented")
@@ -350,24 +338,6 @@ func _Storage_Info_Handler(srv interface{}, ctx context.Context, dec func(interf
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(StorageServer).Info(ctx, req.(*InfoRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Storage_SchemaVersion_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SchemaVersionRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(StorageServer).SchemaVersion(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/porter.storage.v4.Storage/SchemaVersion",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(StorageServer).SchemaVersion(ctx, req.(*SchemaVersionRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -670,10 +640,6 @@ var Storage_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Info",
 			Handler:    _Storage_Info_Handler,
-		},
-		{
-			MethodName: "SchemaVersion",
-			Handler:    _Storage_SchemaVersion_Handler,
 		},
 		{
 			MethodName: "Migrate",

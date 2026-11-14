@@ -43,10 +43,6 @@ func (c *ClientV4) Info(ctx context.Context, req *protov4.InfoRequest) (*protov4
 	return c.client.Info(ctx, req)
 }
 
-func (c *ClientV4) SchemaVersion(ctx context.Context, req *protov4.SchemaVersionRequest) (*protov4.SchemaVersionResponse, error) {
-	return c.client.SchemaVersion(ctx, req)
-}
-
 func (c *ClientV4) Migrate(ctx context.Context, req *protov4.MigrateRequest) (*protov4.MigrateResponse, error) {
 	return c.client.Migrate(ctx, req)
 }

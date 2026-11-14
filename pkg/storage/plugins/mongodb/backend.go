@@ -26,6 +26,7 @@ const (
 	collCredentials   = "credentials"
 	collParameters    = "parameters"
 	collWorkflows     = "workflows"
+	collConfig        = "config"
 )
 
 const logsOutputName = "io.cnab.outputs.invocationImageLogs"
@@ -47,12 +48,6 @@ func (b *Backend) Info(ctx context.Context, req *protov4.InfoRequest) (*protov4.
 		ProtocolVersion: plugins.PluginProtocolVersionV4,
 		Backend:         "mongodb",
 	}, nil
-}
-
-// SchemaVersion is not implemented yet. Porter's schema document tracks
-// per-document-type versions and its fate in v4 is an open question.
-func (b *Backend) SchemaVersion(ctx context.Context, req *protov4.SchemaVersionRequest) (*protov4.SchemaVersionResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "SchemaVersion is not implemented by the mongodb backend")
 }
 
 // Migrate ensures that the collections have the indexes that Porter queries
@@ -511,6 +506,8 @@ func collectionFor(kind protov4.Kind) (string, error) {
 		return collParameters, nil
 	case protov4.Kind_KIND_WORKFLOW:
 		return collWorkflows, nil
+	case protov4.Kind_KIND_SCHEMA:
+		return collConfig, nil
 	default:
 		return "", status.Errorf(codes.InvalidArgument, "unsupported document kind %s", kind)
 	}
@@ -519,7 +516,7 @@ func collectionFor(kind protov4.Kind) (string, error) {
 // keyFilter identifies the stored document that a document replaces.
 func keyFilter(d *protov4.Document) bson.M {
 	switch d.Kind {
-	case protov4.Kind_KIND_RUN, protov4.Kind_KIND_RESULT:
+	case protov4.Kind_KIND_RUN, protov4.Kind_KIND_RESULT, protov4.Kind_KIND_SCHEMA:
 		return bson.M{"_id": d.Id}
 	case protov4.Kind_KIND_WORKFLOW:
 		return bson.M{"namespace": d.Namespace, "_id": d.Id}

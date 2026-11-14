@@ -9,9 +9,9 @@ service Storage {
   // --- lifecycle ---
   // Info is the handshake. Porter refuses plugins whose protocol_version != 4.
   rpc Info(InfoRequest) returns (InfoResponse);
-  // SchemaVersion reports the backend's current schema version (0 = uninitialized).
-  rpc SchemaVersion(SchemaVersionRequest) returns (SchemaVersionResponse);
-  // Migrate brings the backend schema (tables, indexes) to the latest version.
+  // Migrate brings the backend's physical schema (tables, indexes) to the
+  // latest version. The logical version of Porter's documents is tracked by
+  // Porter itself in a KIND_SCHEMA document.
   // Must be idempotent and safe to call concurrently (backend takes a lock).
   rpc Migrate(MigrateRequest) returns (MigrateResponse);
 
@@ -55,6 +55,9 @@ enum Kind {
   KIND_CREDENTIAL_SET = 5;
   KIND_PARAMETER_SET = 6;
   KIND_WORKFLOW = 7;
+  // KIND_SCHEMA is Porter's storage schema document (id "schema"), which records
+  // the version of each document type.
+  KIND_SCHEMA = 8;
 }
 
 // Document carries the entity as JSON (Porter's existing struct tags), plus the
@@ -84,8 +87,6 @@ message InfoResponse {
   string backend = 2;          // e.g. "mongodb", "postgres"
   string backend_version = 3;
 }
-message SchemaVersionRequest {}
-message SchemaVersionResponse { string version = 1; }
 message MigrateRequest {}
 message MigrateResponse { string from_version = 1; string to_version = 2; }
 

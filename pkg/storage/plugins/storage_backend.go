@@ -26,7 +26,6 @@ const PluginProtocolVersionV4 = 4
 type StorageBackend interface {
 	// Info is the handshake.
 	Info(ctx context.Context, req *protov4.InfoRequest) (*protov4.InfoResponse, error)
-	SchemaVersion(ctx context.Context, req *protov4.SchemaVersionRequest) (*protov4.SchemaVersionResponse, error)
 	Migrate(ctx context.Context, req *protov4.MigrateRequest) (*protov4.MigrateResponse, error)
 
 	Put(ctx context.Context, req *protov4.PutRequest) (*protov4.PutResponse, error)
