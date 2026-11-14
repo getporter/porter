@@ -6,18 +6,16 @@ import (
 	"github.com/cnabio/cnab-go/secrets/host"
 )
 
-var _ Store = TestStore{}
-
 type TestStore struct {
 	testPlugin *testplugin.TestStoragePlugin
-	PluginAdapter
+	BackendClient
 }
 
 func NewTestStore(tc *config.TestConfig) TestStore {
 	testPlugin := testplugin.NewTestStoragePlugin(tc.TestContext)
 	return TestStore{
 		testPlugin:    testPlugin,
-		PluginAdapter: NewPluginAdapter(testPlugin),
+		BackendClient: NewBackendClient(testPlugin),
 	}
 }
 

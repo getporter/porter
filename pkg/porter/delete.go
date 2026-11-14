@@ -7,8 +7,6 @@ import (
 
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/portercontext"
-	"get.porter.sh/porter/pkg/storage"
-	"go.mongodb.org/mongo-driver/bson"
 )
 
 const installationDeleteTmpl = "deleting installation records for %s...\n"
@@ -80,9 +78,7 @@ func (p *Porter) DeleteInstallation(ctx context.Context, opts DeleteOptions) err
 	// referencing it. Best-effort: the installation record is already gone,
 	// there's nothing to roll back to, so failures here are reported as
 	// warnings rather than failing the delete.
-	referenced, err := p.Installations.FindInstallations(ctx, storage.FindOptions{
-		Filter: bson.M{"status.references.installation": installation.String()},
-	})
+	referenced, err := p.Installations.FindInstallationsReferencing(ctx, installation.String())
 	if err != nil {
 		fmt.Fprintf(p.Err, "warning: unable to check for stale references to the deleted installation %s: %s\n", installation, err)
 		return nil

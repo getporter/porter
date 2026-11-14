@@ -8,7 +8,9 @@ import (
 
 // ParameterSetProvider interface for managing sets of parameters.
 type ParameterSetProvider interface {
-	GetDataStore() Store
+	// GetParameterSetWithFallback retrieves a parameter set from the specified
+	// namespace, falling back to the global namespace when it isn't found there.
+	GetParameterSetWithFallback(ctx context.Context, namespace string, name string) (ParameterSet, error)
 
 	// ResolveAll parameter values in the parameter set.
 	ResolveAll(ctx context.Context, params ParameterSet, keys []string) (secrets.Set, error)

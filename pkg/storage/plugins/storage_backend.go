@@ -7,14 +7,12 @@ import (
 )
 
 // PluginProtocolVersionV4 is the version of the domain-level storage protocol
-// defined by protov4. PluginProtocolVersion is switched to this value once core
-// has moved off the bson-based StorageProtocol.
+// defined by protov4.
 const PluginProtocolVersionV4 = 4
 
-// StorageBackend is the interface that storage plugins implement for protocol
-// v4. Unlike StorageProtocol, it has no query language: each method is a
-// domain operation that a backend implements natively (a pipeline in MongoDB,
-// a join in PostgreSQL).
+// StorageBackend is the interface that storage plugins implement. It has no
+// query language: each method is a domain operation that a backend implements
+// natively (a pipeline in MongoDB, a join in PostgreSQL).
 //
 // The request and response types are the protov4 messages, so the Go contract
 // and the wire contract cannot drift. Methods return a gRPC status error with

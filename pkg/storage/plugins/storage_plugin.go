@@ -7,5 +7,5 @@ const (
 	PluginInterface = "storage"
 
 	// PluginProtocolVersion is the currently supported plugin protocol version for storage.
-	PluginProtocolVersion = 3
+	PluginProtocolVersion = PluginProtocolVersionV4
 )

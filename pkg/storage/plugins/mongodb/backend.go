@@ -50,33 +50,56 @@ func (b *Backend) Info(ctx context.Context, req *protov4.InfoRequest) (*protov4.
 	}, nil
 }
 
+// index on a collection.
+type index struct {
+	collection string
+	keys       bson.D
+	unique     bool
+}
+
 // Migrate ensures that the collections have the indexes that Porter queries
 // rely on.
 func (b *Backend) Migrate(ctx context.Context, req *protov4.MigrateRequest) (*protov4.MigrateResponse, error) {
-	err := b.EnsureIndex(ctx, plugins.EnsureIndexOptions{Indices: []plugins.Index{
+	indices := []index{
 		// query installations by a namespace (list) or namespace + name (get)
-		{Collection: collInstallations, Keys: bson.D{{Key: "namespace", Value: 1}, {Key: "name", Value: 1}}, Unique: true},
+		{collInstallations, bson.D{{Key: "namespace", Value: 1}, {Key: "name", Value: 1}}, true},
 		// query runs by installation (list)
-		{Collection: collRuns, Keys: bson.D{{Key: "namespace", Value: 1}, {Key: "installation", Value: 1}}},
+		{collRuns, bson.D{{Key: "namespace", Value: 1}, {Key: "installation", Value: 1}}, false},
 		// query results by installation (delete or batch get)
-		{Collection: collResults, Keys: bson.D{{Key: "namespace", Value: 1}, {Key: "installation", Value: 1}}},
+		{collResults, bson.D{{Key: "namespace", Value: 1}, {Key: "installation", Value: 1}}, false},
 		// query results by run (list)
-		{Collection: collResults, Keys: bson.D{{Key: "runId", Value: 1}}},
+		{collResults, bson.D{{Key: "runId", Value: 1}}, false},
 		// query most recent outputs by run
-		{Collection: collOutputs, Keys: bson.D{{Key: "namespace", Value: 1}, {Key: "installation", Value: 1}, {Key: "resultId", Value: -1}}},
+		{collOutputs, bson.D{{Key: "namespace", Value: 1}, {Key: "installation", Value: 1}, {Key: "resultId", Value: -1}}, false},
 		// query outputs by result (list)
-		{Collection: collOutputs, Keys: bson.D{{Key: "resultId", Value: 1}, {Key: "name", Value: 1}}, Unique: true},
+		{collOutputs, bson.D{{Key: "resultId", Value: 1}, {Key: "name", Value: 1}}, true},
 		// query most recent outputs by name for an installation
-		{Collection: collOutputs, Keys: bson.D{{Key: "namespace", Value: 1}, {Key: "installation", Value: 1}, {Key: "name", Value: 1}, {Key: "resultId", Value: -1}}},
+		{collOutputs, bson.D{{Key: "namespace", Value: 1}, {Key: "installation", Value: 1}, {Key: "name", Value: 1}, {Key: "resultId", Value: -1}}, false},
 		// query credentials by namespace + name
-		{Collection: collCredentials, Keys: bson.D{{Key: "namespace", Value: 1}, {Key: "name", Value: 1}}, Unique: true},
+		{collCredentials, bson.D{{Key: "namespace", Value: 1}, {Key: "name", Value: 1}}, true},
 		// query parameters by namespace + name
-		{Collection: collParameters, Keys: bson.D{{Key: "namespace", Value: 1}, {Key: "name", Value: 1}}, Unique: true},
+		{collParameters, bson.D{{Key: "namespace", Value: 1}, {Key: "name", Value: 1}}, true},
 		// query workflows by namespace (list) or namespace + id (get)
-		{Collection: collWorkflows, Keys: bson.D{{Key: "namespace", Value: 1}, {Key: "_id", Value: 1}}, Unique: true},
-	}})
-	if err != nil {
+		{collWorkflows, bson.D{{Key: "namespace", Value: 1}, {Key: "_id", Value: 1}}, true},
+	}
+
+	if err := b.Connect(ctx); err != nil {
 		return nil, err
+	}
+	ctx, cancel := context.WithTimeout(ctx, b.timeout)
+	defer cancel()
+
+	models := map[string][]mongo.IndexModel{}
+	for _, idx := range indices {
+		models[idx.collection] = append(models[idx.collection], mongo.IndexModel{
+			Keys:    idx.keys,
+			Options: options.Index().SetUnique(idx.unique),
+		})
+	}
+	for collection, m := range models {
+		if _, err := b.getCollection(collection).Indexes().CreateMany(ctx, m); err != nil {
+			return nil, mapError(fmt.Errorf("could not create the indexes on %s: %w", collection, err))
+		}
 	}
 	return &protov4.MigrateResponse{}, nil
 }
@@ -379,6 +402,9 @@ func (b *Backend) FindInstallationsReferencing(ctx context.Context, req *protov4
 		filter = bson.M{"status.references.installation": target.Installation}
 	default:
 		return nil, status.Error(codes.InvalidArgument, "FindInstallationsReferencing requires a target")
+	}
+	if req.Namespace != "" {
+		filter["namespace"] = req.Namespace
 	}
 	return b.find(ctx, protov4.Kind_KIND_INSTALLATION, query{collection: collInstallations, filter: filter})
 }

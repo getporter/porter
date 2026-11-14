@@ -65,13 +65,13 @@ func NewTestPorter(t *testing.T) *TestPorter {
 	testStore := storage.NewTestStore(tc)
 	testSecrets := secrets.NewTestSecretsProvider()
 	testSigner := signing.NewTestSigningProvider()
-	testCredentials := storage.NewTestCredentialProviderFor(t, testStore, testSecrets)
-	testParameters := storage.NewTestParameterProviderFor(t, testStore, testSecrets)
+	testCredentials := storage.NewTestCredentialProviderFor(t, testStore.BackendClient, testSecrets)
+	testParameters := storage.NewTestParameterProviderFor(t, testStore.BackendClient, testSecrets)
 	testCache := cache.NewTestCache(cache.New(tc.Config))
 	testInstallations := storage.NewTestInstallationProviderFor(t, testStore)
 	testRegistry := cnabtooci.NewTestRegistry()
 
-	p := NewFor(tc.Config, testStore, testSecrets, testSigner)
+	p := NewFor(tc.Config, testStore.Backend(), testSecrets, testSigner)
 	p.Config = tc.Config
 	p.Mixins = mixin.NewTestMixinProvider()
 	p.Plugins = plugins.NewTestPluginProvider()
@@ -115,7 +115,7 @@ func (p *TestPorter) SetupIntegrationTest() context.Context {
 	t := p.TestConfig.TestContext.T
 
 	// Undo changes above to make a unit test friendly Porter, so we hit the host
-	p.Porter = NewFor(p.Config, p.TestStore, p.TestSecrets, p.Signer)
+	p.Porter = NewFor(p.Config, p.TestStore.Backend(), p.TestSecrets, p.Signer)
 
 	// Run the test in a temp directory
 	ctx, testDir, _ := p.TestConfig.SetupIntegrationTest()

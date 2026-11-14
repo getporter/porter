@@ -172,3 +172,37 @@ func mapBackendError(err error, kind protov4.Kind, item string) error {
 	}
 	return err
 }
+
+// toListRequest converts the options for listing documents into a protocol request.
+func (o ListOptions) toListRequest(kind protov4.Kind) *protov4.ListRequest {
+	return &protov4.ListRequest{
+		Kind:         kind,
+		Namespace:    o.Namespace,
+		NameContains: o.Name,
+		Labels:       o.Labels,
+		Skip:         o.Skip,
+		Limit:        o.Limit,
+	}
+}
+
+// Upsert saves a Porter document, creating it if it doesn't already exist.
+func (c BackendClient) Upsert(ctx context.Context, doc interface{}) error {
+	return c.put(ctx, protov4.PutRequest_UPSERT, doc)
+}
+
+// GetSchema retrieves the storage schema document, which records the version of
+// each type of document. Returns ErrNotFound when the storage has no schema yet.
+func (c BackendClient) GetSchema(ctx context.Context) (Schema, error) {
+	return getDocument[Schema](ctx, c, &protov4.GetRequest{Kind: protov4.Kind_KIND_SCHEMA, Id: "schema"})
+}
+
+// PutSchema saves the storage schema document.
+func (c BackendClient) PutSchema(ctx context.Context, schema Schema) error {
+	return c.Upsert(ctx, schema)
+}
+
+// HasDocuments determines if any documents of the specified type exist.
+func (c BackendClient) HasDocuments(ctx context.Context, kind protov4.Kind) (bool, error) {
+	docs, err := listDocuments[json.RawMessage](ctx, c, &protov4.ListRequest{Kind: kind, Namespace: "*", Limit: 1})
+	return len(docs) > 0, err
+}

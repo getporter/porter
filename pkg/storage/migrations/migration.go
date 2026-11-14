@@ -28,12 +28,12 @@ type Migration struct {
 	config      *config.Config
 	opts        storage.MigrateOptions
 	sourceStore crudstore.Store
-	destStore   storage.Store
+	destStore   storage.BackendClient
 	sanitizer   *storage.Sanitizer
 	pluginConn  *pluggable.PluginConnection
 }
 
-func NewMigration(c *config.Config, opts storage.MigrateOptions, destStore storage.Store, sanitizer *storage.Sanitizer) *Migration {
+func NewMigration(c *config.Config, opts storage.MigrateOptions, destStore storage.BackendClient, sanitizer *storage.Sanitizer) *Migration {
 	return &Migration{
 		config:    c,
 		opts:      opts,
@@ -230,8 +230,7 @@ func (m *Migration) migrateInstallation(ctx context.Context, installationName st
 	sort.Strings(claimIDs)
 	inst.ID = claimIDs[0]
 
-	updateOpts := storage.UpdateOptions{Document: inst, Upsert: true}
-	err = m.destStore.Update(ctx, storage.CollectionInstallations, updateOpts)
+	err = m.destStore.Upsert(ctx, inst)
 	if err != nil {
 		return fmt.Errorf("error upserting migrated installation %s: %w", inst.Name, err)
 	}
@@ -300,8 +299,7 @@ func (m *Migration) migrateClaim(ctx context.Context, inst *storage.Installation
 		}
 	}
 
-	updateOpts := storage.UpdateOptions{Document: run, Upsert: true}
-	err = m.destStore.Update(ctx, storage.CollectionRuns, updateOpts)
+	err = m.destStore.Upsert(ctx, run)
 	if err != nil {
 		return span.Error(err)
 	}
@@ -359,8 +357,7 @@ func (m *Migration) migrateResult(ctx context.Context, inst *storage.Installatio
 		return span.Error(err)
 	}
 
-	updateOpts := storage.UpdateOptions{Document: result, Upsert: true}
-	err = m.destStore.Update(ctx, storage.CollectionResults, updateOpts)
+	err = m.destStore.Upsert(ctx, result)
 	if err != nil {
 		return span.Error(err)
 	}
@@ -426,8 +423,7 @@ func (m *Migration) migrateOutput(ctx context.Context, run storage.Run, result s
 		return span.Error(err)
 	}
 
-	updateOpts := storage.UpdateOptions{Document: output, Upsert: true}
-	err = m.destStore.Update(ctx, storage.CollectionOutputs, updateOpts)
+	err = m.destStore.Upsert(ctx, output)
 	if err != nil {
 		return span.Error(fmt.Errorf("error upserting migrated output %s: %w", outputKey, err))
 	}
@@ -491,8 +487,7 @@ func (m *Migration) migrateCredentialSet(ctx context.Context, name string) error
 		return span.Error(err)
 	}
 
-	updateOpts := storage.UpdateOptions{Document: dest, Upsert: true}
-	err = m.destStore.Update(ctx, storage.CollectionCredentials, updateOpts)
+	err = m.destStore.Upsert(ctx, dest)
 	if err != nil {
 		return span.Error(fmt.Errorf("error upserting migrated credential set %s: %w", name, err))
 	}
@@ -569,8 +564,7 @@ func (m *Migration) migrateParameterSet(ctx context.Context, name string) error 
 		return span.Error(err)
 	}
 
-	updateOpts := storage.UpdateOptions{Document: dest, Upsert: true}
-	err = m.destStore.Update(ctx, storage.CollectionParameters, updateOpts)
+	err = m.destStore.Upsert(ctx, dest)
 	if err != nil {
 		return span.Error(fmt.Errorf("error upserting migrated credential set %s: %w", name, err))
 	}

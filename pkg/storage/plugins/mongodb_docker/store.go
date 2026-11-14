@@ -12,11 +12,11 @@ import (
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/storage/plugins"
 	"get.porter.sh/porter/pkg/storage/plugins/mongodb"
+	"get.porter.sh/porter/pkg/storage/plugins/protov4"
 	"get.porter.sh/porter/pkg/tracing"
-	"go.mongodb.org/mongo-driver/bson"
 )
 
-var _ plugins.StorageProtocol = &Store{}
+var _ plugins.StorageBackend = &Store{}
 
 const (
 	// startupTimeout is how long to wait for the mongodb container to become ready.
@@ -82,70 +82,127 @@ func (s *Store) Close() error {
 	return err
 }
 
-// EnsureIndex makes sure that the specified index exists as specified.
-// If it does exist with a different definition, the index is recreated.
-func (s *Store) EnsureIndex(ctx context.Context, opts plugins.EnsureIndexOptions) error {
-	if err := s.Connect(ctx); err != nil {
-		return err
-	}
+// The methods below implement plugins.StorageBackend. They connect to the
+// mongodb container, starting it when necessary, and then use the mongodb
+// backend.
 
-	return s.Store.EnsureIndex(ctx, opts)
-}
-
-func (s *Store) Aggregate(ctx context.Context, opts plugins.AggregateOptions) ([]bson.Raw, error) {
+func (s *Store) Info(ctx context.Context, req *protov4.InfoRequest) (*protov4.InfoResponse, error) {
 	if err := s.Connect(ctx); err != nil {
 		return nil, err
 	}
-
-	return s.Store.Aggregate(ctx, opts)
+	return mongodb.NewBackend(s.Store).Info(ctx, req)
 }
 
-func (s *Store) Count(ctx context.Context, opts plugins.CountOptions) (int64, error) {
-	if err := s.Connect(ctx); err != nil {
-		return 0, err
-	}
-
-	return s.Store.Count(ctx, opts)
-}
-
-func (s *Store) Find(ctx context.Context, opts plugins.FindOptions) ([]bson.Raw, error) {
+func (s *Store) Migrate(ctx context.Context, req *protov4.MigrateRequest) (*protov4.MigrateResponse, error) {
 	if err := s.Connect(ctx); err != nil {
 		return nil, err
 	}
-
-	return s.Store.Find(ctx, opts)
+	return mongodb.NewBackend(s.Store).Migrate(ctx, req)
 }
 
-func (s *Store) Insert(ctx context.Context, opts plugins.InsertOptions) error {
+func (s *Store) Put(ctx context.Context, req *protov4.PutRequest) (*protov4.PutResponse, error) {
 	if err := s.Connect(ctx); err != nil {
-		return err
+		return nil, err
 	}
-
-	return s.Store.Insert(ctx, opts)
+	return mongodb.NewBackend(s.Store).Put(ctx, req)
 }
 
-func (s *Store) Patch(ctx context.Context, opts plugins.PatchOptions) error {
+func (s *Store) Get(ctx context.Context, req *protov4.GetRequest) (*protov4.GetResponse, error) {
 	if err := s.Connect(ctx); err != nil {
-		return err
+		return nil, err
 	}
-
-	return s.Store.Patch(ctx, opts)
+	return mongodb.NewBackend(s.Store).Get(ctx, req)
 }
 
-func (s *Store) Remove(ctx context.Context, opts plugins.RemoveOptions) error {
+func (s *Store) List(ctx context.Context, req *protov4.ListRequest) (*protov4.ListResponse, error) {
 	if err := s.Connect(ctx); err != nil {
-		return err
+		return nil, err
 	}
-
-	return s.Store.Remove(ctx, opts)
+	return mongodb.NewBackend(s.Store).List(ctx, req)
 }
 
-func (s *Store) Update(ctx context.Context, opts plugins.UpdateOptions) error {
+func (s *Store) Remove(ctx context.Context, req *protov4.RemoveRequest) (*protov4.RemoveResponse, error) {
 	if err := s.Connect(ctx); err != nil {
-		return err
+		return nil, err
 	}
+	return mongodb.NewBackend(s.Store).Remove(ctx, req)
+}
 
-	return s.Store.Update(ctx, opts)
+func (s *Store) RemoveInstallation(ctx context.Context, req *protov4.RemoveInstallationRequest) (*protov4.RemoveInstallationResponse, error) {
+	if err := s.Connect(ctx); err != nil {
+		return nil, err
+	}
+	return mongodb.NewBackend(s.Store).RemoveInstallation(ctx, req)
+}
+
+func (s *Store) ListRuns(ctx context.Context, req *protov4.ListRunsRequest) (*protov4.ListRunsResponse, error) {
+	if err := s.Connect(ctx); err != nil {
+		return nil, err
+	}
+	return mongodb.NewBackend(s.Store).ListRuns(ctx, req)
+}
+
+func (s *Store) GetLastRun(ctx context.Context, req *protov4.InstallationRef) (*protov4.GetResponse, error) {
+	if err := s.Connect(ctx); err != nil {
+		return nil, err
+	}
+	return mongodb.NewBackend(s.Store).GetLastRun(ctx, req)
+}
+
+func (s *Store) GetActiveRuns(ctx context.Context, req *protov4.InstallationRef) (*protov4.ListResponse, error) {
+	if err := s.Connect(ctx); err != nil {
+		return nil, err
+	}
+	return mongodb.NewBackend(s.Store).GetActiveRuns(ctx, req)
+}
+
+func (s *Store) ListResults(ctx context.Context, req *protov4.ListResultsRequest) (*protov4.ListResponse, error) {
+	if err := s.Connect(ctx); err != nil {
+		return nil, err
+	}
+	return mongodb.NewBackend(s.Store).ListResults(ctx, req)
+}
+
+func (s *Store) InsertOutputs(ctx context.Context, req *protov4.InsertOutputsRequest) (*protov4.InsertOutputsResponse, error) {
+	if err := s.Connect(ctx); err != nil {
+		return nil, err
+	}
+	return mongodb.NewBackend(s.Store).InsertOutputs(ctx, req)
+}
+
+func (s *Store) ListOutputs(ctx context.Context, req *protov4.ListOutputsRequest) (*protov4.ListResponse, error) {
+	if err := s.Connect(ctx); err != nil {
+		return nil, err
+	}
+	return mongodb.NewBackend(s.Store).ListOutputs(ctx, req)
+}
+
+func (s *Store) GetOutput(ctx context.Context, req *protov4.GetOutputRequest) (*protov4.GetResponse, error) {
+	if err := s.Connect(ctx); err != nil {
+		return nil, err
+	}
+	return mongodb.NewBackend(s.Store).GetOutput(ctx, req)
+}
+
+func (s *Store) GetLastOutputs(ctx context.Context, req *protov4.InstallationRef) (*protov4.ListResponse, error) {
+	if err := s.Connect(ctx); err != nil {
+		return nil, err
+	}
+	return mongodb.NewBackend(s.Store).GetLastOutputs(ctx, req)
+}
+
+func (s *Store) FindInstallationsReferencing(ctx context.Context, req *protov4.FindReferencingRequest) (*protov4.ListResponse, error) {
+	if err := s.Connect(ctx); err != nil {
+		return nil, err
+	}
+	return mongodb.NewBackend(s.Store).FindInstallationsReferencing(ctx, req)
+}
+
+func (s *Store) FindDependencyCandidates(ctx context.Context, req *protov4.FindDependencyCandidatesRequest) (*protov4.ListResponse, error) {
+	if err := s.Connect(ctx); err != nil {
+		return nil, err
+	}
+	return mongodb.NewBackend(s.Store).FindDependencyCandidates(ctx, req)
 }
 
 func EnsureMongoIsRunning(ctx context.Context, c *portercontext.Context, container string, port string, dataVol string, dbName string, timeoutSeconds int) (*mongodb.Store, error) {
