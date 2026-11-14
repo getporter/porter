@@ -18,6 +18,33 @@
         "applyTo": {
           "$ref": "#/definitions/applyTo"
         },
+        "defaultSource": {
+          "additionalProperties": false,
+          "description": "Where the value of this credential is usually found on the user's machine. It is suggested to the user by porter credentials generate.",
+          "oneOf": [
+            {
+              "required": [
+                "env"
+              ]
+            },
+            {
+              "required": [
+                "path"
+              ]
+            }
+          ],
+          "properties": {
+            "env": {
+              "description": "The name of the environment variable that usually holds the credential, such as GITHUB_TOKEN",
+              "type": "string"
+            },
+            "path": {
+              "description": "The path of the file that usually holds the credential, such as ~/.kube/config",
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
         "description": {
           "description": "A user-friendly description of this credential",
           "type": "string"
