@@ -228,7 +228,7 @@ func (c *storageClient) FindDependencyCandidates(ctx context.Context, in *FindDe
 }
 
 // StorageServer is the server API for Storage service.
-// All implementations must embed UnimplementedStorageServer
+// All implementations should embed UnimplementedStorageServer
 // for forward compatibility
 type StorageServer interface {
 	// --- lifecycle ---
@@ -264,10 +264,9 @@ type StorageServer interface {
 	// Candidates for dependency sharing: not uninstalled, bundle repository match,
 	// optional digest match, namespace in {"", namespace}. Local namespace first.
 	FindDependencyCandidates(context.Context, *FindDependencyCandidatesRequest) (*ListResponse, error)
-	mustEmbedUnimplementedStorageServer()
 }
 
-// UnimplementedStorageServer must be embedded to have forward compatible implementations.
+// UnimplementedStorageServer should be embedded to have forward compatible implementations.
 type UnimplementedStorageServer struct {
 }
 
@@ -325,7 +324,6 @@ func (UnimplementedStorageServer) FindInstallationsReferencing(context.Context, 
 func (UnimplementedStorageServer) FindDependencyCandidates(context.Context, *FindDependencyCandidatesRequest) (*ListResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method FindDependencyCandidates not implemented")
 }
-func (UnimplementedStorageServer) mustEmbedUnimplementedStorageServer() {}
 
 // UnsafeStorageServer may be embedded to opt out of forward compatibility for this service.
 // Use of this interface is not recommended, as added methods to StorageServer will
