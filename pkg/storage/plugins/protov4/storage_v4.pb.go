@@ -729,7 +729,7 @@ type ListRequest struct {
 
 	Kind         Kind              `protobuf:"varint,1,opt,name=kind,proto3,enum=porter.storage.v4.Kind" json:"kind,omitempty"`
 	Namespace    string            `protobuf:"bytes,2,opt,name=namespace,proto3" json:"namespace,omitempty"`                                                                                   // "*" = all namespaces
-	NameContains string            `protobuf:"bytes,3,opt,name=name_contains,json=nameContains,proto3" json:"name_contains,omitempty"`                                                         // substring (was $regex)
+	NameContains string            `protobuf:"bytes,3,opt,name=name_contains,json=nameContains,proto3" json:"name_contains,omitempty"`                                                         // literal substring, not a pattern
 	Labels       map[string]string `protobuf:"bytes,4,rep,name=labels,proto3" json:"labels,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"` // all must match; keys may contain dots
 	Skip         int64             `protobuf:"varint,5,opt,name=skip,proto3" json:"skip,omitempty"`
 	Limit        int64             `protobuf:"varint,6,opt,name=limit,proto3" json:"limit,omitempty"` // 0 = no limit

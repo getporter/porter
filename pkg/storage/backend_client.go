@@ -12,7 +12,15 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-const collectionConfig = "config"
+const (
+	collectionConfig = "config"
+
+	// schemaID is the id of the storage schema document.
+	schemaID = "schema"
+
+	// allNamespaces matches documents in every namespace when listing.
+	allNamespaces = "*"
+)
 
 // BackendClient adapts the domain-level protocol v4 (plugins.StorageBackend),
 // which exchanges protobuf documents, to the typed documents used by Porter.
@@ -56,8 +64,13 @@ func (c BackendClient) put(ctx context.Context, mode protov4.PutRequest_Mode, va
 	}
 
 	_, err := c.backend.Put(ctx, &protov4.PutRequest{Mode: mode, Documents: docs})
-	if len(docs) > 0 {
-		err = mapBackendError(err, docs[0].Kind, docs[0].Name)
+	if err != nil && len(docs) > 0 {
+		// Only name the document in the error when the put is for a single document
+		var item string
+		if len(docs) == 1 {
+			item = docs[0].Name
+		}
+		return mapBackendError(err, docs[0].Kind, item)
 	}
 	return err
 }
@@ -88,7 +101,7 @@ func unmarshalDocument(doc *protov4.Document, out interface{}) error {
 		return fmt.Errorf("the storage backend returned an empty document")
 	}
 	if err := json.Unmarshal(doc.Json, out); err != nil {
-		return fmt.Errorf("could not unmarshal document of type %T: %w", out, err)
+		return fmt.Errorf("could not unmarshal %s document into %T: %w", doc.Kind, out, err)
 	}
 	return nil
 }
@@ -193,7 +206,7 @@ func (c BackendClient) Upsert(ctx context.Context, doc interface{}) error {
 // GetSchema retrieves the storage schema document, which records the version of
 // each type of document. Returns ErrNotFound when the storage has no schema yet.
 func (c BackendClient) GetSchema(ctx context.Context) (Schema, error) {
-	return getDocument[Schema](ctx, c, &protov4.GetRequest{Kind: protov4.Kind_KIND_SCHEMA, Id: "schema"})
+	return getDocument[Schema](ctx, c, &protov4.GetRequest{Kind: protov4.Kind_KIND_SCHEMA, Id: schemaID})
 }
 
 // PutSchema saves the storage schema document.
@@ -203,6 +216,9 @@ func (c BackendClient) PutSchema(ctx context.Context, schema Schema) error {
 
 // HasDocuments determines if any documents of the specified type exist.
 func (c BackendClient) HasDocuments(ctx context.Context, kind protov4.Kind) (bool, error) {
-	docs, err := listDocuments[json.RawMessage](ctx, c, &protov4.ListRequest{Kind: kind, Namespace: "*", Limit: 1})
-	return len(docs) > 0, err
+	docs, err := listDocuments[json.RawMessage](ctx, c, &protov4.ListRequest{Kind: kind, Namespace: allNamespaces, Limit: 1})
+	if err != nil {
+		return false, err
+	}
+	return len(docs) > 0, nil
 }

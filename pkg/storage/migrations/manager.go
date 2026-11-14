@@ -85,6 +85,14 @@ func (m *Manager) Connect(ctx context.Context) error {
 			}
 		}
 
+		// Make sure that the backend has the tables, indexes, etc. that Porter relies on
+		// before reading anything from it. A new database has none of them yet.
+		// A verified connection is cached (see above), same as the schema check, so
+		// the backend isn't asked to migrate on every command.
+		if _, err := m.store.Backend().Migrate(ctx, &protov4.MigrateRequest{}); err != nil {
+			return span.Error(fmt.Errorf("could not prepare the storage backend: %w", err))
+		}
+
 		span.Debug("Checking database schema")
 
 		if err := m.loadSchema(ctx); err != nil {
@@ -109,12 +117,10 @@ Once your data has been backed up, run the following command to perform the migr
     porter storage migrate
 `, pkg.Version, storage.NewSchema(), m.schema))
 		}
-		m.initialized = true
 
-		// Make sure that the backend has the tables, indexes, etc. that Porter relies on.
-		if _, err := m.store.Backend().Migrate(ctx, &protov4.MigrateRequest{}); err != nil {
-			return span.Error(fmt.Errorf("could not prepare the storage backend: %w", err))
-		}
+		// Only mark the manager as initialized once everything succeeded,
+		// so that a failure is retried on the next call.
+		m.initialized = true
 
 		if useCache {
 			m.saveInitCacheEntry(ctx, hash, m.schema)

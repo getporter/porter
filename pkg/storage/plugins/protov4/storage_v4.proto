@@ -7,7 +7,8 @@ option go_package = "get.porter.sh/porter/pkg/storage/plugins/protov4";
 
 service Storage {
   // --- lifecycle ---
-  // Info is the handshake. Porter refuses plugins whose protocol_version != 4.
+  // Info describes the backend. Porter only loads plugins that speak protocol
+  // version 4: the plugin handshake rejects any other version.
   rpc Info(InfoRequest) returns (InfoResponse);
   // Migrate brings the backend's physical schema (tables, indexes) to the
   // latest version. The logical version of Porter's documents is tracked by
@@ -120,7 +121,7 @@ message GetResponse { Document document = 1; }
 message ListRequest {
   Kind kind = 1;
   string namespace = 2;       // "*" = all namespaces
-  string name_contains = 3;   // substring (was $regex)
+  string name_contains = 3;   // literal substring, not a pattern
   map<string, string> labels = 4; // all must match; keys may contain dots
   int64 skip = 5;
   int64 limit = 6;            // 0 = no limit

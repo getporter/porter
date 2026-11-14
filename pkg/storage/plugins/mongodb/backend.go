@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"regexp"
 
 	"get.porter.sh/porter/pkg/storage/plugins"
 	"get.porter.sh/porter/pkg/storage/plugins/protov4"
@@ -184,8 +185,7 @@ func (b *Backend) List(ctx context.Context, req *protov4.ListRequest) (*protov4.
 		filter["namespace"] = req.Namespace
 	}
 	if req.NameContains != "" {
-		// Same behavior as the v3 protocol: the value is used as a regular expression.
-		filter["name"] = bson.M{"$regex": req.NameContains}
+		filter["name"] = bson.M{"$regex": regexp.QuoteMeta(req.NameContains)}
 	}
 	for k, v := range req.Labels {
 		filter["labels."+k] = v
@@ -351,6 +351,7 @@ func (b *Backend) GetOutput(ctx context.Context, req *protov4.GetOutputRequest) 
 		return b.findOne(ctx, protov4.Kind_KIND_OUTPUT, query{
 			collection: collOutputs,
 			filter:     bson.M{"runId": scope.RunId, "name": req.Name},
+			sort:       bson.D{{Key: "resultId", Value: -1}}, // the output from the newest result
 			limit:      1,
 		})
 	case *protov4.GetOutputRequest_Installation:

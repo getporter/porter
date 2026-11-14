@@ -23,7 +23,8 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type StorageClient interface {
 	// --- lifecycle ---
-	// Info is the handshake. Porter refuses plugins whose protocol_version != 4.
+	// Info describes the backend. Porter only loads plugins that speak protocol
+	// version 4: the plugin handshake rejects any other version.
 	Info(ctx context.Context, in *InfoRequest, opts ...grpc.CallOption) (*InfoResponse, error)
 	// Migrate brings the backend's physical schema (tables, indexes) to the
 	// latest version. The logical version of Porter's documents is tracked by
@@ -223,7 +224,8 @@ func (c *storageClient) FindDependencyCandidates(ctx context.Context, in *FindDe
 // for forward compatibility
 type StorageServer interface {
 	// --- lifecycle ---
-	// Info is the handshake. Porter refuses plugins whose protocol_version != 4.
+	// Info describes the backend. Porter only loads plugins that speak protocol
+	// version 4: the plugin handshake rejects any other version.
 	Info(context.Context, *InfoRequest) (*InfoResponse, error)
 	// Migrate brings the backend's physical schema (tables, indexes) to the
 	// latest version. The logical version of Porter's documents is tracked by
