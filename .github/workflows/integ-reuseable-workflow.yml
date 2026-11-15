@@ -90,7 +90,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Download bin
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: porter-bin
       - name: Extract bin
