@@ -58,7 +58,7 @@ jobs:
         run: tar -czf bin.tgz bin
         shell: bash
       - name: Upload bin
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: porter-bin
           path: bin.tgz
