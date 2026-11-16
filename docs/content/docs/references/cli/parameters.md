@@ -10,7 +10,7 @@ Parameter set commands
 ### Options
 
 ```
-  -h, --help   help for parameters
+  -h, --help[=true|false]   help for parameters
 ```
 
 ### Options inherited from parent commands

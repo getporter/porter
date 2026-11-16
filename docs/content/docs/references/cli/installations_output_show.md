@@ -31,7 +31,7 @@ porter installations output show NAME [--installation|-i INSTALLATION] [flags]
 ### Options
 
 ```
-  -h, --help                  help for show
+  -h, --help[=true|false]     help for show
   -i, --installation string   Specify the installation to which the output belongs.
   -n, --namespace string      Namespace in which the installation is defined. Defaults to the global namespace.
   -r, --run string            The bundle run that generated the output.

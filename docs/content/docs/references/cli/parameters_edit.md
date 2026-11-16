@@ -24,8 +24,8 @@ porter parameters edit [flags]
 ### Options
 
 ```
-  -h, --help               help for edit
-  -n, --namespace string   Namespace in which the parameter set is defined. Defaults to the global namespace.
+  -h, --help[=true|false]   help for edit
+  -n, --namespace string    Namespace in which the parameter set is defined. Defaults to the global namespace.
 ```
 
 ### Options inherited from parent commands

@@ -42,10 +42,10 @@ porter mixins feed generate [flags]
 ### Options
 
 ```
-  -d, --dir string        The directory to search for mixin versions to publish in the feed. Defaults to the current directory.
-  -f, --file string       The path of the atom feed output by this command. (default "atom.xml")
-  -h, --help              help for generate
-  -t, --template string   The template atom file used to populate the text fields in the generated feed. (default "atom-template.xml")
+  -d, --dir string          The directory to search for mixin versions to publish in the feed. Defaults to the current directory.
+  -f, --file string         The path of the atom feed output by this command. (default "atom.xml")
+  -h, --help[=true|false]   help for generate
+  -t, --template string     The template atom file used to populate the text fields in the generated feed. (default "atom-template.xml")
 ```
 
 ### Options inherited from parent commands

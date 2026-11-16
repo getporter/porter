@@ -32,14 +32,14 @@ porter credentials list [flags]
 ### Options
 
 ```
-      --all-namespaces     Include all namespaces in the results.
-  -h, --help               help for list
-  -l, --label strings      Filter the credential sets by a label formatted as: KEY=VALUE. May be specified multiple times.
-      --limit int          Limit the number of credential sets by a certain amount. Defaults to 0.
-      --name string        Filter the credential sets where the name contains the specified substring.
-  -n, --namespace string   Namespace in which the credential set is defined. Defaults to the global namespace. Use * to list across all namespaces.
-  -o, --output string      Specify an output format.  Allowed values: plaintext, json, yaml (default "plaintext")
-      --skip int           Skip the number of credential sets by a certain amount. Defaults to 0.
+      --all-namespaces[=true|false]   Include all namespaces in the results.
+  -h, --help[=true|false]             help for list
+  -l, --label strings                 Filter the credential sets by a label formatted as: KEY=VALUE. May be specified multiple times.
+      --limit int                     Limit the number of credential sets by a certain amount. Defaults to 0.
+      --name string                   Filter the credential sets where the name contains the specified substring.
+  -n, --namespace string              Namespace in which the credential set is defined. Defaults to the global namespace. Use * to list across all namespaces.
+  -o, --output string                 Specify an output format.  Allowed values: plaintext, json, yaml (default "plaintext")
+      --skip int                      Skip the number of credential sets by a certain amount. Defaults to 0.
 ```
 
 ### Options inherited from parent commands

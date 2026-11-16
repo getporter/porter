@@ -31,12 +31,12 @@ porter copy [flags]
 ### Options
 
 ```
-      --destination string   The registry to copy the bundle to. Can be registry name, registry plus a repo prefix, or a new tagged reference. All images and the bundle will be prefixed with registry.
-      --force                Force push the bundle to overwrite the previously published bundle
-  -h, --help                 help for copy
-      --insecure-registry    Don't require TLS for registries
-      --sign-bundle          Sign the bundle using the configured signing plugin
-      --source string         The fully qualified source bundle, including tag or digest.
+      --destination string               The registry to copy the bundle to. Can be registry name, registry plus a repo prefix, or a new tagged reference. All images and the bundle will be prefixed with registry.
+      --force[=true|false]               Force push the bundle to overwrite the previously published bundle
+  -h, --help[=true|false]                help for copy
+      --insecure-registry[=true|false]   Don't require TLS for registries
+      --sign-bundle[=true|false]         Sign the bundle using the configured signing plugin
+      --source string                     The fully qualified source bundle, including tag or digest.
 ```
 
 ### Options inherited from parent commands

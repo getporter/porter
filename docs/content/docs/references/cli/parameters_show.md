@@ -24,9 +24,9 @@ porter parameters show [flags]
 ### Options
 
 ```
-  -h, --help               help for show
-  -n, --namespace string   Namespace in which the parameter set is defined. Defaults to the global namespace.
-  -o, --output string      Specify an output format.  Allowed values: plaintext, json, yaml (default "plaintext")
+  -h, --help[=true|false]   help for show
+  -n, --namespace string    Namespace in which the parameter set is defined. Defaults to the global namespace.
+  -o, --output string       Specify an output format.  Allowed values: plaintext, json, yaml (default "plaintext")
 ```
 
 ### Options inherited from parent commands

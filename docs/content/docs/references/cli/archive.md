@@ -27,11 +27,11 @@ porter archive FILENAME --reference PUBLISHED_BUNDLE [flags]
 ### Options
 
 ```
-  -c, --compression string   Compression level to use when creating the gzipped tar archive. Allowed values are: BestCompression, BestSpeed, DefaultCompression, HuffmanOnly, NoCompression (default "DefaultCompression")
-      --force                Force a fresh pull of the bundle
-  -h, --help                 help for archive
-      --insecure-registry    Don't require TLS for the registry
-  -r, --reference string     Use a bundle in an OCI registry specified by the given reference.
+  -c, --compression string               Compression level to use when creating the gzipped tar archive. Allowed values are: BestCompression, BestSpeed, DefaultCompression, HuffmanOnly, NoCompression (default "DefaultCompression")
+      --force[=true|false]               Force a fresh pull of the bundle
+  -h, --help[=true|false]                help for archive
+      --insecure-registry[=true|false]   Don't require TLS for the registry
+  -r, --reference string                 Use a bundle in an OCI registry specified by the given reference.
 ```
 
 ### Options inherited from parent commands

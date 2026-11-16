@@ -27,8 +27,8 @@ porter mcp [flags]
 ### Options
 
 ```
-      --allow-write   Enable mutating tools: install, upgrade, uninstall, invoke
-  -h, --help          help for mcp
+      --allow-write[=true|false]   Enable mutating tools: install, upgrade, uninstall, invoke
+  -h, --help[=true|false]          help for mcp
 ```
 
 ### Options inherited from parent commands

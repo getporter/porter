@@ -33,10 +33,10 @@ porter mixins create NAME --author "My Name" --username mygithubusername [--dir 
 ### Options
 
 ```
-      --author string     Your full name.
-      --dir string        Path to the designated location of the mixin's directory.
-  -h, --help              help for create
-      --username string   Your GitHub username.
+      --author string       Your full name.
+      --dir string          Path to the designated location of the mixin's directory.
+  -h, --help[=true|false]   help for create
+      --username string     Your GitHub username.
 ```
 
 ### Options inherited from parent commands

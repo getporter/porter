@@ -10,7 +10,7 @@ Feed commands
 ### Options
 
 ```
-  -h, --help   help for feed
+  -h, --help[=true|false]   help for feed
 ```
 
 ### Options inherited from parent commands

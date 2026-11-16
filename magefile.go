@@ -583,15 +583,18 @@ func TestIntegration() {
 		verbose = "-v"
 	}
 
-	var path string
-	filename := os.Getenv("PORTER_INTEG_FILE")
-	if filename == "" {
-		path = "./..."
-	} else {
-		path = "./tests/integration/" + filename
+	// PORTER_INTEG_FILE is a space separated list of test files in tests/integration.
+	paths := []string{"./..."}
+	if files := strings.Fields(os.Getenv("PORTER_INTEG_FILE")); len(files) > 0 {
+		paths = paths[:0]
+		for _, f := range files {
+			paths = append(paths, "./tests/integration/"+f)
+		}
 	}
 
-	must.Command("go", "test", verbose, "-timeout=30m", run, "-tags=integration", path, "-coverprofile", "coverage-integration.out").CollapseArgs().RunV()
+	args := append([]string{"test", verbose, "-timeout=30m", run, "-tags=integration"}, paths...)
+	args = append(args, "-coverprofile", "coverage-integration.out")
+	must.Command("go", args...).CollapseArgs().RunV()
 }
 
 func TestInitWarnings() {

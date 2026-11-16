@@ -43,12 +43,12 @@ porter plugins install NAME [flags]
 ### Options
 
 ```
-      --feed-url string   URL of an atom feed where the plugin can be downloaded. Defaults to the official Porter plugin feed.
-  -f, --file string       Path to porter plugins config file.
-  -h, --help              help for install
-      --mirror string     Mirror of official Porter assets (default "https://cdn.porter.sh")
-      --url string        URL from where the plugin can be downloaded, for example https://github.com/org/proj/releases/downloads
-  -v, --version string    The plugin version. This can either be a version number, or a tagged release like 'latest' or 'canary' (default "latest")
+      --feed-url string     URL of an atom feed where the plugin can be downloaded. Defaults to the official Porter plugin feed.
+  -f, --file string         Path to porter plugins config file.
+  -h, --help[=true|false]   help for install
+      --mirror string       Mirror of official Porter assets (default "https://cdn.porter.sh")
+      --url string          URL from where the plugin can be downloaded, for example https://github.com/org/proj/releases/downloads
+  -v, --version string      The plugin version. This can either be a version number, or a tagged release like 'latest' or 'canary' (default "latest")
 ```
 
 ### Options inherited from parent commands

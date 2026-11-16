@@ -28,9 +28,9 @@ porter installations runs list [flags]
 ### Options
 
 ```
-  -h, --help               help for list
-  -n, --namespace string   Namespace in which the installation is defined. Defaults to the global namespace.
-  -o, --output string      Specify an output format.  Allowed values: plaintext, json, yaml (default "plaintext")
+  -h, --help[=true|false]   help for list
+  -n, --namespace string    Namespace in which the installation is defined. Defaults to the global namespace.
+  -o, --output string       Specify an output format.  Allowed values: plaintext, json, yaml (default "plaintext")
 ```
 
 ### Options inherited from parent commands

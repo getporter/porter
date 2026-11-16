@@ -43,27 +43,27 @@ porter upgrade [INSTALLATION] [flags]
 ### Options
 
 ```
-      --allow-docker-host-access               Controls if the bundle should have access to the host's Docker daemon with elevated privileges. See https://porter.sh/configuration/#allow-docker-host-access for the full implications of this flag.
-      --autobuild-disabled                     Do not automatically build the bundle from source when the last build is out-of-date.
-      --cnab-file string                       Path to the CNAB bundle.json file.
-  -c, --credential-set stringArray             Credential sets to use when running the bundle. It should be a named set of credentials and may be specified multiple times.
-      --debug                                  Run the bundle in debug mode.
-      --dependencies-version-strategy string   Strategy for resolving dependency version ranges. Allowed values: exact, max-patch, max-minor, min.
-  -d, --driver string                          Specify a driver to use. Allowed values: docker, debug (default "docker")
-      --fail-on-output-warnings                Fail the command if a sensitive output could not be persisted to the secret store, even though the bundle itself ran successfully.
-  -f, --file porter.yaml                       Path to the Porter manifest. Defaults to porter.yaml in the current directory.
-      --force                                  Force a fresh pull of the bundle
-      --force-run                              Run the bundle even if the installation has another incomplete run in progress.
-      --force-upgrade                          Force the upgrade to run even if the current installation is marked as failed.
-  -h, --help                                   help for upgrade
-      --insecure-registry                      Don't require TLS for the registry
-      --mount-host-volume stringArray          Mount a host volume into the bundle. Format is <host path>:<container path>[:<option>]. May be specified multiple times. Option can be ro (read-only), rw (read-write), default is ro.
-  -n, --namespace string                       Namespace of the specified installation. Defaults to the global namespace.
-      --no-logs                                Do not persist the bundle execution logs
-      --param stringArray                      Define an individual parameter in the form NAME=VALUE. Overrides parameters otherwise set via --parameter-set. May be specified multiple times. For object parameters, use @FILEPATH to load JSON from a file (e.g., --param config=@config.json).
-  -p, --parameter-set stringArray              Parameter sets to use when running the bundle. It should be a named set of parameters and may be specified multiple times.
-  -r, --reference string                       Use a bundle in an OCI registry specified by the given reference.
-      --version string                         Version to which the installation should be upgraded. This represents the version of the bundle, which assumes the convention of setting the bundle tag to its version.
+      --allow-docker-host-access[=true|false]   Controls if the bundle should have access to the host's Docker daemon with elevated privileges. See https://porter.sh/configuration/#allow-docker-host-access for the full implications of this flag.
+      --autobuild-disabled[=true|false]         Do not automatically build the bundle from source when the last build is out-of-date.
+      --cnab-file string                        Path to the CNAB bundle.json file.
+  -c, --credential-set stringArray              Credential sets to use when running the bundle. It should be a named set of credentials and may be specified multiple times.
+      --debug[=true|false]                      Run the bundle in debug mode.
+      --dependencies-version-strategy string    Strategy for resolving dependency version ranges. Allowed values: exact, max-patch, max-minor, min.
+  -d, --driver string                           Specify a driver to use. Allowed values: docker, debug (default "docker")
+      --fail-on-output-warnings[=true|false]    Fail the command if a sensitive output could not be persisted to the secret store, even though the bundle itself ran successfully.
+  -f, --file porter.yaml                        Path to the Porter manifest. Defaults to porter.yaml in the current directory.
+      --force[=true|false]                      Force a fresh pull of the bundle
+      --force-run[=true|false]                  Run the bundle even if the installation has another incomplete run in progress.
+      --force-upgrade[=true|false]              Force the upgrade to run even if the current installation is marked as failed.
+  -h, --help[=true|false]                       help for upgrade
+      --insecure-registry[=true|false]          Don't require TLS for the registry
+      --mount-host-volume stringArray           Mount a host volume into the bundle. Format is <host path>:<container path>[:<option>]. May be specified multiple times. Option can be ro (read-only), rw (read-write), default is ro.
+  -n, --namespace string                        Namespace of the specified installation. Defaults to the global namespace.
+      --no-logs[=true|false]                    Do not persist the bundle execution logs
+      --param stringArray                       Define an individual parameter in the form NAME=VALUE. Overrides parameters otherwise set via --parameter-set. May be specified multiple times. For object parameters, use @FILEPATH to load JSON from a file (e.g., --param config=@config.json).
+  -p, --parameter-set stringArray               Parameter sets to use when running the bundle. It should be a named set of parameters and may be specified multiple times.
+  -r, --reference string                        Use a bundle in an OCI registry specified by the given reference.
+      --version string                          Version to which the installation should be upgraded. This represents the version of the bundle, which assumes the convention of setting the bundle tag to its version.
 ```
 
 ### Options inherited from parent commands

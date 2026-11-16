@@ -30,9 +30,9 @@ porter [flags]
 ```
       --context string         Name of the configuration context to use. When unset, Porter uses the current-context from the config file, falling back to the context named "default".
       --experimental strings   Comma separated list of experimental features to enable. See https://porter.sh/configuration/#experimental-feature-flags for available feature flags.
-  -h, --help                   help for porter
+  -h, --help[=true|false]      help for porter
       --verbosity string       Threshold for printing messages to the console. Available values are: debug, info, warning, error. (default "info")
-  -v, --version                Print the application version
+  -v, --version[=true|false]   Print the application version
 ```
 
 ### SEE ALSO

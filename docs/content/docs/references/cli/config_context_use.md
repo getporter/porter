@@ -24,7 +24,7 @@ porter config context use <name> [flags]
 ### Options
 
 ```
-  -h, --help   help for use
+  -h, --help[=true|false]   help for use
 ```
 
 ### Options inherited from parent commands

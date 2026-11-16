@@ -10,7 +10,7 @@ Mixin commands. Mixins assist with authoring bundles.
 ### Options
 
 ```
-  -h, --help   help for mixins
+  -h, --help[=true|false]   help for mixins
 ```
 
 ### Options inherited from parent commands

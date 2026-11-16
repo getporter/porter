@@ -27,7 +27,7 @@ porter logs [flags]
 ### Options
 
 ```
-  -h, --help                  help for logs
+  -h, --help[=true|false]     help for logs
   -i, --installation string   The installation that generated the logs.
   -n, --namespace string      Namespace in which the installation is defined. Defaults to the global namespace.
   -r, --run string            The bundle run that generated the logs.
