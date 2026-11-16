@@ -30,8 +30,6 @@ const (
 	collConfig        = "config"
 )
 
-const logsOutputName = "io.cnab.outputs.invocationImageLogs"
-
 // Backend implements the v4 domain-level storage protocol on top of the
 // connection managed by Store. Documents are persisted in the same shape as
 // the v3 protocol: the entity's JSON representation, stored as a bson document.

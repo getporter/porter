@@ -38,7 +38,7 @@ func TestClientV4_RoundTrip(t *testing.T) {
 	lis := bufconn.Listen(1024 * 1024)
 	srv := grpc.NewServer()
 	require.NoError(t, PluginV4{impl: fakeBackend{}}.GRPCServer(nil, srv))
-	go srv.Serve(lis)
+	go func() { _ = srv.Serve(lis) }()
 	t.Cleanup(srv.Stop)
 
 	conn, err := grpc.NewClient("passthrough:///bufnet",
