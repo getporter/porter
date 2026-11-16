@@ -1,0 +1,188 @@
+// DRAFT storage plugin protocol v4. Not in repo yet.
+// Domain-level: no query language. Backends implement each RPC natively.
+syntax = "proto3";
+package porter.storage.v4;
+
+option go_package = "get.porter.sh/porter/pkg/storage/plugins/protov4";
+
+service Storage {
+  // --- lifecycle ---
+  // Info describes the backend. Porter only loads plugins that speak protocol
+  // version 4: the plugin handshake rejects any other version.
+  rpc Info(InfoRequest) returns (InfoResponse);
+  // Migrate brings the backend's physical schema (tables, indexes) to the
+  // latest version. The logical version of Porter's documents is tracked by
+  // Porter itself in a KIND_SCHEMA document.
+  // Must be idempotent and safe to call concurrently (backend takes a lock).
+  rpc Migrate(MigrateRequest) returns (MigrateResponse);
+
+  // --- generic document ops (installation, credential set, parameter set, workflow, run, result) ---
+  rpc Put(PutRequest) returns (PutResponse);
+  // Get returns NOT_FOUND when missing.
+  rpc Get(GetRequest) returns (GetResponse);
+  // List: namespace/name/labels filter, sorted by namespace, name. Used by
+  // installations, credential sets, parameter sets, workflows.
+  rpc List(ListRequest) returns (ListResponse);
+  rpc Remove(RemoveRequest) returns (RemoveResponse);
+
+  // --- installation domain ---
+  // Removes installation plus runs, results and outputs. Backends SHOULD be atomic.
+  rpc RemoveInstallation(RemoveInstallationRequest) returns (RemoveInstallationResponse);
+  rpc ListRuns(ListRunsRequest) returns (ListRunsResponse);          // runs of an installation, sorted by id
+  rpc GetLastRun(InstallationRef) returns (GetResponse);             // NOT_FOUND when none
+  rpc GetActiveRuns(InstallationRef) returns (ListResponse);         // runs with no terminal result
+  rpc ListResults(ListResultsRequest) returns (ListResponse);        // by run_id, or by installation
+  rpc InsertOutputs(InsertOutputsRequest) returns (InsertOutputsResponse);
+  rpc ListOutputs(ListOutputsRequest) returns (ListResponse);        // by run_id or result_id, sorted by name
+  rpc GetOutput(GetOutputRequest) returns (GetResponse);             // by run_id+name; or latest by installation+name
+  rpc GetLastOutputs(InstallationRef) returns (ListResponse);        // newest output per name
+
+  // --- cross-entity lookups that used to leak bson into pkg/porter ---
+  // Installations that use the named credential/parameter set or depend on an installation.
+  rpc FindInstallationsReferencing(FindReferencingRequest) returns (ListResponse);
+  // Candidates for dependency sharing: not uninstalled, bundle repository match,
+  // optional digest match, namespace in {"", namespace}. Local namespace first.
+  rpc FindDependencyCandidates(FindDependencyCandidatesRequest) returns (ListResponse);
+}
+
+// ---------- shared ----------
+
+enum Kind {
+  KIND_UNSPECIFIED = 0;
+  KIND_INSTALLATION = 1;
+  KIND_RUN = 2;
+  KIND_RESULT = 3;
+  KIND_OUTPUT = 4;
+  KIND_CREDENTIAL_SET = 5;
+  KIND_PARAMETER_SET = 6;
+  KIND_WORKFLOW = 7;
+  // KIND_SCHEMA is Porter's storage schema document (id "schema"), which records
+  // the version of each document type.
+  KIND_SCHEMA = 8;
+}
+
+// Document carries the entity as JSON (Porter's existing struct tags), plus the
+// key fields a backend needs for indexing/filtering without parsing the JSON.
+// Porter fills keys; backends MUST NOT alter json. Unused keys are empty.
+message Document {
+  Kind kind = 1;
+  string id = 2;            // _id: run/result/workflow id, ULID-sortable
+  string namespace = 3;
+  string name = 4;          // installation/credential/parameter set name, output name
+  string installation = 5;  // runs, results, outputs
+  string run_id = 6;        // results, outputs
+  string result_id = 7;     // outputs
+  bytes json = 15;
+}
+
+message InstallationRef {
+  string namespace = 1;
+  string installation = 2;
+}
+
+// ---------- lifecycle ----------
+
+message InfoRequest {}
+message InfoResponse {
+  uint32 protocol_version = 1; // 4
+  string backend = 2;          // e.g. "mongodb", "postgres"
+  string backend_version = 3;
+}
+message MigrateRequest {}
+message MigrateResponse { string from_version = 1; string to_version = 2; }
+
+// ---------- generic ----------
+
+message PutRequest {
+  enum Mode {
+    MODE_UNSPECIFIED = 0;
+    INSERT = 1;  // ALREADY_EXISTS on key conflict
+    UPDATE = 2;  // NOT_FOUND when missing
+    UPSERT = 3;
+  }
+  Mode mode = 1;
+  repeated Document documents = 2; // one request = one unit; atomic where supported
+}
+message PutResponse {}
+
+message GetRequest {
+  Kind kind = 1;
+  // Identify by id (run, result, workflow), or namespace+name (installation,
+  // credential set, parameter set). Workflows use namespace+id.
+  string id = 2;
+  string namespace = 3;
+  string name = 4;
+  // Replaces the FindOne({name, $or:[ns "", ns]}, sort -namespace) pattern
+  // in lifecycle.go and parameters.go: prefer namespace, fall back to "".
+  bool fallback_to_global = 5;
+}
+message GetResponse { Document document = 1; }
+
+message ListRequest {
+  Kind kind = 1;
+  string namespace = 2;       // "*" = all namespaces
+  string name_contains = 3;   // literal substring, not a pattern
+  map<string, string> labels = 4; // all must match; keys may contain dots
+  int64 skip = 5;
+  int64 limit = 6;            // 0 = no limit
+}
+message ListResponse { repeated Document documents = 1; }
+
+message RemoveRequest {
+  Kind kind = 1;
+  string id = 2;
+  string namespace = 3;
+  string name = 4;
+}
+message RemoveResponse {}
+
+// ---------- installation domain ----------
+
+message RemoveInstallationRequest { InstallationRef installation = 1; }
+message RemoveInstallationResponse {}
+
+message ListRunsRequest { InstallationRef installation = 1; }
+message ListRunsResponse { repeated Document runs = 1; }
+
+message ListResultsRequest {
+  oneof scope {
+    string run_id = 1;
+    InstallationRef installation = 2; // all results of an installation (ListRuns result map)
+  }
+}
+
+message InsertOutputsRequest { repeated Document outputs = 1; }
+message InsertOutputsResponse {}
+
+message ListOutputsRequest {
+  oneof scope {
+    string run_id = 1;
+    string result_id = 2;
+  }
+}
+
+message GetOutputRequest {
+  oneof scope {
+    string run_id = 1;                // newest result of that run
+    InstallationRef installation = 2; // newest across installation
+  }
+  string name = 3;
+}
+
+message FindReferencingRequest {
+  oneof target {
+    string credential_set = 1;  // installation.credentialSets contains name
+    string parameter_set = 2;   // installation.parameterSets contains name
+    string installation = 3;    // status.references.installation == "ns/name"
+  }
+  // Only match installations in this namespace. Empty matches any namespace.
+  // Applies to credential_set and parameter_set.
+  string namespace = 4;
+}
+
+message FindDependencyCandidatesRequest {
+  string namespace = 1;
+  string repository = 2;  // bundle.repository
+  string digest = 3;      // status.bundleDigest, optional
+  // Label matching (sh.porter.SharingGroup) stays in Porter core.
+}

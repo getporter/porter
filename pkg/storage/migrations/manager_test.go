@@ -23,7 +23,7 @@ func TestManager_LoadSchema(t *testing.T) {
 		m := NewTestManager(c)
 		defer m.Close()
 
-		err := m.store.Update(context.Background(), CollectionConfig, storage.UpdateOptions{Document: schema, Upsert: true})
+		err := m.store.PutSchema(context.Background(), schema)
 		require.NoError(t, err, "Save schema failed")
 
 		err = m.loadSchema(context.Background())
@@ -49,7 +49,7 @@ func TestManager_LoadSchema(t *testing.T) {
 		i := storage.Installation{InstallationSpec: storage.InstallationSpec{
 			Name: "abc123",
 		}}
-		err := m.store.Insert(context.Background(), storage.CollectionInstallations, storage.InsertOptions{Documents: []interface{}{i}})
+		err := m.store.Upsert(context.Background(), i)
 		require.NoError(t, err)
 
 		err = m.loadSchema(context.Background())
@@ -66,16 +66,16 @@ func TestManager_NoMigrationEmptyHome(t *testing.T) {
 
 	mgr := NewTestManager(config)
 	defer mgr.Close()
-	claimStore := storage.NewInstallationStore(mgr)
+	claimStore := storage.NewInstallationStore(storage.NewBackendClient(mgr))
 
 	_, err := claimStore.ListInstallations(context.Background(), storage.ListOptions{})
 	require.NoError(t, err, "ListInstallations failed")
 
-	credStore := storage.NewCredentialStore(mgr, nil)
+	credStore := storage.NewCredentialStore(storage.NewBackendClient(mgr), nil)
 	_, err = credStore.ListCredentialSets(context.Background(), storage.ListOptions{})
 	require.NoError(t, err, "List credentials failed")
 
-	paramStore := storage.NewParameterStore(mgr, nil)
+	paramStore := storage.NewParameterStore(storage.NewBackendClient(mgr), nil)
 	_, err = paramStore.ListParameterSets(context.Background(), storage.ListOptions{})
 	require.NoError(t, err, "List credentials failed")
 }
@@ -86,11 +86,11 @@ func TestInstallationStorage_HaltOnMigrationRequired(t *testing.T) {
 	tc := config.NewTestConfig(t)
 	mgr := NewTestManager(tc)
 	defer mgr.Close()
-	claimStore := storage.NewInstallationStore(mgr)
+	claimStore := storage.NewInstallationStore(storage.NewBackendClient(mgr))
 
 	schema := storage.NewSchema()
 	schema.Installations = "needs-migration"
-	err := mgr.store.Update(context.Background(), CollectionConfig, storage.UpdateOptions{Document: schema, Upsert: true})
+	err := mgr.store.PutSchema(context.Background(), schema)
 	require.NoError(t, err, "Save schema failed")
 
 	checkMigrationError := func(t *testing.T, err error) {
@@ -129,7 +129,7 @@ func TestClaimStorage_NoMigrationRequiredForEmptyHome(t *testing.T) {
 
 	mgr := NewTestManager(config)
 	defer mgr.Close()
-	claimStore := storage.NewInstallationStore(mgr)
+	claimStore := storage.NewInstallationStore(storage.NewBackendClient(mgr))
 
 	names, err := claimStore.ListInstallations(context.Background(), storage.ListOptions{})
 	require.NoError(t, err, "ListInstallations failed")
@@ -141,11 +141,11 @@ func TestCredentialStorage_HaltOnMigrationRequired(t *testing.T) {
 	mgr := NewTestManager(tc)
 	testSecrets := secrets.NewTestSecretsProvider()
 	defer mgr.Close()
-	credStore := storage.NewTestCredentialProviderFor(t, mgr, testSecrets)
+	credStore := storage.NewTestCredentialProviderFor(t, storage.NewBackendClient(mgr), testSecrets)
 
 	schema := storage.NewSchema()
 	schema.Credentials = "needs-migration"
-	err := mgr.store.Update(context.Background(), CollectionConfig, storage.UpdateOptions{Document: schema, Upsert: true})
+	err := mgr.store.PutSchema(context.Background(), schema)
 	require.NoError(t, err, "Save schema failed")
 
 	checkMigrationError := func(t *testing.T, err error) {
@@ -182,7 +182,7 @@ func TestCredentialStorage_NoMigrationRequiredForEmptyHome(t *testing.T) {
 	mgr := NewTestManager(config)
 	defer mgr.Close()
 	testSecrets := secrets.NewTestSecretsProvider()
-	credStore := storage.NewTestCredentialProviderFor(t, mgr, testSecrets)
+	credStore := storage.NewTestCredentialProviderFor(t, storage.NewBackendClient(mgr), testSecrets)
 
 	names, err := credStore.ListCredentialSets(context.Background(), storage.ListOptions{
 		Namespace: "",
@@ -200,11 +200,11 @@ func TestParameterStorage_HaltOnMigrationRequired(t *testing.T) {
 	mgr := NewTestManager(tc)
 	defer mgr.Close()
 	testSecrets := secrets.NewTestSecretsProvider()
-	paramStore := storage.NewTestParameterProviderFor(t, mgr, testSecrets)
+	paramStore := storage.NewTestParameterProviderFor(t, storage.NewBackendClient(mgr), testSecrets)
 
 	schema := storage.NewSchema()
 	schema.Parameters = "needs-migration"
-	err := mgr.store.Update(context.Background(), CollectionConfig, storage.UpdateOptions{Document: schema, Upsert: true})
+	err := mgr.store.PutSchema(context.Background(), schema)
 	require.NoError(t, err, "Save schema failed")
 
 	checkMigrationError := func(t *testing.T, err error) {
@@ -241,7 +241,7 @@ func TestParameterStorage_NoMigrationRequiredForEmptyHome(t *testing.T) {
 	mgr := NewTestManager(config)
 	defer mgr.Close()
 	testSecrets := secrets.NewTestSecretsProvider()
-	paramStore := storage.NewTestParameterProviderFor(t, mgr, testSecrets)
+	paramStore := storage.NewTestParameterProviderFor(t, storage.NewBackendClient(mgr), testSecrets)
 
 	names, err := paramStore.ListParameterSets(context.Background(), storage.ListOptions{})
 	require.NoError(t, err, "List failed")
@@ -303,7 +303,7 @@ func TestManager_Connect_UsesInitCache(t *testing.T) {
 	// this will cause it to fail.
 	badSchema := storage.NewSchema()
 	badSchema.Installations = "needs-migration"
-	require.NoError(t, m.store.Update(ctx, CollectionConfig, storage.UpdateOptions{Document: badSchema, Upsert: true}))
+	require.NoError(t, m.store.PutSchema(ctx, badSchema))
 
 	// Simulate a subsequent CLI invocation against the same PORTER_HOME and db.
 	m.initialized = false
@@ -374,7 +374,7 @@ func TestManager_Connect_InitCacheMissOnConfigChange(t *testing.T) {
 	// still matched the cached entry, Connect would wrongly trust it.
 	badSchema := storage.NewSchema()
 	badSchema.Installations = "needs-migration"
-	require.NoError(t, m.store.Update(ctx, CollectionConfig, storage.UpdateOptions{Document: badSchema, Upsert: true}))
+	require.NoError(t, m.store.PutSchema(ctx, badSchema))
 
 	m.initialized = false
 
@@ -406,7 +406,7 @@ func TestManager_Connect_InitCacheExpires(t *testing.T) {
 
 	badSchema := storage.NewSchema()
 	badSchema.Installations = "needs-migration"
-	require.NoError(t, m.store.Update(ctx, CollectionConfig, storage.UpdateOptions{Document: badSchema, Upsert: true}))
+	require.NoError(t, m.store.PutSchema(ctx, badSchema))
 
 	m.initialized = false
 
@@ -438,7 +438,7 @@ func TestManager_Connect_InitCacheIgnoredOnVersionMismatch(t *testing.T) {
 
 	badSchema := storage.NewSchema()
 	badSchema.Installations = "needs-migration"
-	require.NoError(t, m.store.Update(ctx, CollectionConfig, storage.UpdateOptions{Document: badSchema, Upsert: true}))
+	require.NoError(t, m.store.PutSchema(ctx, badSchema))
 
 	m.initialized = false
 
@@ -463,7 +463,7 @@ func TestManager_Migrate_WritesInitCache(t *testing.T) {
 		NewNamespace:      "myns",
 	}
 
-	require.NoError(t, m.Migrate(ctx, opts), "Migrate failed")
+	require.NoError(t, m.MigrateData(ctx, opts), "MigrateData failed")
 
 	hash, err := connectionHash(m.Config)
 	require.NoError(t, err, "connectionHash failed")

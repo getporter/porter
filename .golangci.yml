@@ -1,6 +1,21 @@
 version: "2"
 
 linters:
+  enable:
+    - depguard
+  settings:
+    depguard:
+      rules:
+        # Storage backends are plugins that implement plugins.StorageBackend. Only the
+        # mongodb plugin may know about MongoDB, so that core stays backend-neutral.
+        mongodb-driver:
+          list-mode: lax
+          files:
+            - $all
+            - "!**/pkg/storage/plugins/mongodb/**"
+          deny:
+            - pkg: go.mongodb.org/mongo-driver
+              desc: only the mongodb storage plugin (pkg/storage/plugins/mongodb) may use the MongoDB driver
   exclusions:
     rules:
       # Restore errcheck exclusions for patterns that are industry-standard to ignore:

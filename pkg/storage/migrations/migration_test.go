@@ -112,7 +112,7 @@ func TestMigration_Migrate(t *testing.T) {
 
 	destStore := storage.NewTestStore(c)
 	testSecrets := secrets.NewTestSecretsProvider()
-	testParams := storage.NewTestParameterProviderFor(t, destStore, testSecrets)
+	testParams := storage.NewTestParameterProviderFor(t, destStore.BackendClient, testSecrets)
 	testSanitizer := storage.NewSanitizer(testParams, testSecrets)
 
 	opts := storage.MigrateOptions{
@@ -120,7 +120,7 @@ func TestMigration_Migrate(t *testing.T) {
 		OldStorageAccount: "src",
 		NewNamespace:      "myns",
 	}
-	m := NewMigration(c.Config, opts, destStore, testSanitizer)
+	m := NewMigration(c.Config, opts, destStore.BackendClient, testSanitizer)
 	defer m.Close()
 
 	err = m.Connect(ctx)
@@ -145,7 +145,7 @@ func TestMigration_Migrate(t *testing.T) {
 }
 
 func validateMigratedInstallations(ctx context.Context, t *testing.T, c *config.TestConfig, destStore storage.TestStore, opts storage.MigrateOptions) {
-	is := storage.NewInstallationStore(destStore)
+	is := storage.NewInstallationStore(destStore.BackendClient)
 	installations, err := is.ListInstallations(ctx, storage.ListOptions{Namespace: opts.NewNamespace})
 	require.NoError(t, err, "could not list installations in the destination database")
 	assert.Len(t, installations, 4, "expected 3 installation to be migrated")
@@ -230,7 +230,7 @@ func validateMigratedInstallations(ctx context.Context, t *testing.T, c *config.
 }
 
 func validateMigratedCredentialSets(ctx context.Context, t *testing.T, destStore storage.TestStore, opts storage.MigrateOptions) {
-	store := storage.NewCredentialStore(destStore, nil)
+	store := storage.NewCredentialStore(destStore.BackendClient, nil)
 	credentialSets, err := store.ListCredentialSets(ctx, storage.ListOptions{Namespace: opts.NewNamespace})
 	require.NoError(t, err, "could not list credentialSets in the destination database")
 	assert.Len(t, credentialSets, 1, "expected 1 credential set to be migrated")
@@ -254,7 +254,7 @@ func validateMigratedCredentialSets(ctx context.Context, t *testing.T, destStore
 }
 
 func validateMigratedParameterSets(ctx context.Context, t *testing.T, destStore storage.TestStore, opts storage.MigrateOptions) {
-	store := storage.NewParameterStore(destStore, nil)
+	store := storage.NewParameterStore(destStore.BackendClient, nil)
 	parameterSets, err := store.ListParameterSets(ctx, storage.ListOptions{Namespace: opts.NewNamespace})
 	require.NoError(t, err, "could not list parameterSets in the destination database")
 	assert.Len(t, parameterSets, 1, "expected 1 parameter set to be migrated")

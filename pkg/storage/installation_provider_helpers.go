@@ -36,7 +36,7 @@ func NewTestInstallationProviderFor(t *testing.T, testStore TestStore) *TestInst
 	return &TestInstallationProvider{
 		t:                 t,
 		TestStore:         testStore,
-		InstallationStore: NewInstallationStore(testStore),
+		InstallationStore: NewInstallationStore(testStore.BackendClient),
 	}
 }
 

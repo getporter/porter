@@ -38,7 +38,7 @@ func (p *Porter) MigrateStorage(ctx context.Context, opts MigrateStorageOptions)
 		OldStorageAccount: opts.OldStorageAccount,
 		NewNamespace:      opts.Namespace,
 	}
-	return p.Storage.Migrate(ctx, migrateOpts)
+	return p.Storage.MigrateData(ctx, migrateOpts)
 }
 
 func (p *Porter) FixPermissions(ctx context.Context) error {

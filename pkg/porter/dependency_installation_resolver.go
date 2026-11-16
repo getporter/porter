@@ -7,7 +7,6 @@ import (
 	"get.porter.sh/porter/pkg/cnab"
 	v2 "get.porter.sh/porter/pkg/cnab/extensions/dependencies/v2"
 	"get.porter.sh/porter/pkg/storage"
-	"go.mongodb.org/mongo-driver/bson"
 )
 
 // selfOutputReference matches a dependency's Outputs map value that promotes
@@ -73,33 +72,20 @@ func findExistingInstallation(ctx context.Context, p *Porter, namespace string, 
 		return nil, err
 	}
 
-	// The sharing group label's own name contains dots ("sh.porter.SharingGroup"),
-	// which collide with the storage layer's dot-path notation for querying
-	// into a nested field (it would be read as labels.sh.porter.SharingGroup,
-	// a 3-level-deep path, not the flat key "sh.porter.SharingGroup") -- so
-	// the label match happens in Go below instead of in the query filter.
-	filter := bson.M{
-		"uninstalled":       bson.M{"$ne": true},
-		"bundle.repository": ref.Repository(),
-		"$or": []bson.M{
-			{"namespace": ""},
-			{"namespace": namespace},
-		},
-	}
+	// The sharing group label is matched in Go below, rather than by the storage
+	// backend, because the label's name contains dots ("sh.porter.SharingGroup")
+	// which not every backend can address as a single key in a nested field.
+	//
 	// lock.Reference is normally digest-pinned (see candidateMatchesBundle),
 	// so filtering on the recorded digest narrows candidates at the query
 	// level in the common case instead of loading every installation of the
 	// bundle to compare in Go.
+	var digest string
 	if ref.HasDigest() {
-		filter["status.bundleDigest"] = ref.Digest().String()
+		digest = ref.Digest().String()
 	}
 
-	query := storage.FindOptions{
-		Sort:   []string{"-namespace"}, // prefer the local namespace match over the global ("") one
-		Filter: filter,
-	}
-
-	candidates, err := p.Installations.FindInstallations(ctx, query)
+	candidates, err := p.Installations.FindDependencyCandidates(ctx, namespace, ref.Repository(), digest)
 	if err != nil {
 		return nil, err
 	}

@@ -8,7 +8,10 @@ import (
 
 // CredentialSetProvider is Porter's interface for managing and resolving credentials.
 type CredentialSetProvider interface {
-	GetDataStore() Store
+	// GetCredentialSetWithFallback retrieves a credential set from the specified
+	// namespace, falling back to the global namespace when it isn't found there.
+	GetCredentialSetWithFallback(ctx context.Context, namespace string, name string) (CredentialSet, error)
+
 	ResolveAll(ctx context.Context, creds CredentialSet, keys []string) (secrets.Set, error)
 	Validate(ctx context.Context, creds CredentialSet) error
 	InsertCredentialSet(ctx context.Context, creds CredentialSet) error

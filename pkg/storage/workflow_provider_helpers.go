@@ -27,7 +27,7 @@ func NewTestWorkflowProviderFor(t *testing.T, testStore TestStore) *TestWorkflow
 	return &TestWorkflowProvider{
 		t:             t,
 		TestStore:     testStore,
-		WorkflowStore: NewWorkflowStore(testStore),
+		WorkflowStore: NewWorkflowStore(testStore.BackendClient),
 	}
 }
 

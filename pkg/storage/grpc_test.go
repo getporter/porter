@@ -4,32 +4,28 @@ import (
 	"context"
 	"net"
 	"testing"
-	"time"
 
 	"get.porter.sh/porter/pkg/portercontext"
-	"get.porter.sh/porter/pkg/storage/plugins"
-	"get.porter.sh/porter/pkg/storage/plugins/proto"
+	"get.porter.sh/porter/pkg/storage/plugins/protov4"
 	"get.porter.sh/porter/pkg/storage/plugins/testplugin"
 	"get.porter.sh/porter/pkg/storage/pluginstore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.mongodb.org/mongo-driver/bson"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
 func TestRoundTripDataOverGRPC(t *testing.T) {
-	// Just check that we can round trip data through our storage grpc service
+	// Check that we can round trip typed documents through the storage grpc service
 	c := portercontext.NewTestContext(t)
-	store := testplugin.NewTestStoragePlugin(c)
+	backend := testplugin.NewTestStoragePlugin(c)
 	ctx := context.Background()
+	defer backend.Close()
 
-	server := pluginstore.NewServer(c.Context, store)
-	addr := "localhost:"
-	lis, err := net.Listen("tcp", addr)
+	lis, err := net.Listen("tcp", "localhost:")
 	require.NoError(t, err)
 	grpcServer := grpc.NewServer()
-	proto.RegisterStorageProtocolServer(grpcServer, server)
+	require.NoError(t, pluginstore.NewPluginV4(backend).GRPCServer(nil, grpcServer))
 	errs := make(chan error, 1)
 	go func() {
 		errs <- grpcServer.Serve(lis)
@@ -44,92 +40,50 @@ func TestRoundTripDataOverGRPC(t *testing.T) {
 	conn, err := grpc.NewClient(lis.Addr().String(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	require.NoError(t, err)
 	defer conn.Close()
-	client := pluginstore.NewClient(proto.NewStorageProtocolClient(conn))
+	remote, err := pluginstore.PluginV4{}.GRPCClient(ctx, nil, conn)
+	require.NoError(t, err)
+	client := NewBackendClient(remote.(*pluginstore.ClientV4))
 
-	// Add an index to support filtering
-	const collection = "things"
-	err = client.EnsureIndex(ctx, plugins.EnsureIndexOptions{Indices: []plugins.Index{
-		{Collection: collection, Keys: bson.D{{Key: "namespace", Value: 1}, {Key: "name", Value: 1}}},
-	}})
+	// Create the indexes that the queries rely on
+	_, err = client.Backend().Migrate(ctx, &protov4.MigrateRequest{})
 	require.NoError(t, err)
 
-	thing1 := bson.M{"name": "Thing1", "namespace": "dev"}
-	err = client.Insert(ctx, plugins.InsertOptions{
-		Collection: collection,
-		Documents: []bson.M{
-			thing1,
-			{"name": "Thing2", "namespace": "staging"},
-		},
+	inst1 := NewInstallation("dev", "thing1")
+	inst2 := NewInstallation("dev", "thing2")
+	inst3 := NewInstallation("prod", "thing3")
+	require.NoError(t, client.put(ctx, protov4.PutRequest_INSERT, inst1, inst2, inst3))
+
+	t.Run("get", func(t *testing.T) {
+		got, err := getDocument[Installation](ctx, client, &protov4.GetRequest{
+			Kind: protov4.Kind_KIND_INSTALLATION, Namespace: "dev", Name: "thing1",
+		})
+		require.NoError(t, err)
+		assert.Equal(t, inst1.ID, got.ID)
 	})
-	require.NoError(t, err)
 
-	results, err := client.Find(ctx, plugins.FindOptions{
-		Collection: collection,
-		Filter:     bson.M{"namespace": "dev"},
-		Select:     bson.D{{Key: "name", Value: 1}, {Key: "namespace", Value: 1}, {Key: "_id", Value: 0}},
+	t.Run("get missing", func(t *testing.T) {
+		_, err := getDocument[Installation](ctx, client, &protov4.GetRequest{
+			Kind: protov4.Kind_KIND_INSTALLATION, Namespace: "dev", Name: "missing",
+		})
+		assert.ErrorIs(t, err, ErrNotFound{})
 	})
-	require.NoError(t, err)
-	require.Len(t, results, 1)
 
-	var gotThing1 bson.M
-	require.NoError(t, bson.Unmarshal(results[0], &gotThing1))
-	assert.Equal(t, thing1, gotThing1)
-
-	opts := plugins.EnsureIndexOptions{
-		Indices: []plugins.Index{
-			// query most recent outputs by run (porter installation run show, when we list outputs)
-			{Collection: CollectionOutputs, Keys: bson.D{{Key: "namespace", Value: 1}, {Key: "installation", Value: 1}, {Key: "-resultId", Value: 1}}},
-			// query outputs by result (list)
-			{Collection: CollectionOutputs, Keys: bson.D{{Key: "resultId", Value: 1}, {Key: "name", Value: 1}}, Unique: true},
-			// query most recent outputs by name for an installation
-			{Collection: CollectionOutputs, Keys: bson.D{{Key: "namespace", Value: 1}, {Key: "installation", Value: 1}, {Key: "name", Value: 1}, {Key: "-resultId", Value: 1}}},
-		},
-	}
-
-	err = client.EnsureIndex(ctx, opts)
-	require.NoError(t, err)
-
-	err = client.Insert(ctx, plugins.InsertOptions{
-		Collection: CollectionOutputs,
-		Documents: []bson.M{{"namespace": "dev", "installation": "test", "name": "thing1", "resultId": "111"},
-			{"namespace": "dev", "installation": "test", "name": "thing2", "resultId": "111"},
-			{"namespace": "dev", "installation": "test", "name": "thing2", "resultId": "222"},
-		},
+	t.Run("list by namespace", func(t *testing.T) {
+		got, err := listDocuments[Installation](ctx, client, ListOptions{Namespace: "dev"}.toListRequest(protov4.Kind_KIND_INSTALLATION))
+		require.NoError(t, err)
+		require.Len(t, got, 2)
+		assert.Equal(t, "thing1", got[0].Name)
+		assert.Equal(t, "thing2", got[1].Name)
 	})
-	require.NoError(t, err)
 
-	// Add a small delay to ensure all documents are properly indexed
-	time.Sleep(200 * time.Millisecond)
-
-	aggregateResults, err := client.Aggregate(ctx, plugins.AggregateOptions{
-		Collection: CollectionOutputs,
-		Pipeline: []bson.D{
-			// List outputs by installation
-			{{Key: "$match", Value: bson.M{
-				"namespace":    "dev",
-				"installation": "test",
-			}}},
-			// Reverse sort them (newest on top)
-			{{Key: "$sort", Value: bson.D{
-				{Key: "namespace", Value: 1},
-				{Key: "installation", Value: 1},
-				{Key: "name", Value: 1},
-				{Key: "resultId", Value: -1},
-			}}},
-			// Group them by output name and select the last value for each output
-			{{Key: "$group", Value: bson.D{
-				{Key: "_id", Value: "$name"},
-				{Key: "lastOutput", Value: bson.M{"$first": "$$ROOT"}},
-			}}},
-		},
+	t.Run("list all namespaces", func(t *testing.T) {
+		got, err := listDocuments[Installation](ctx, client, ListOptions{Namespace: "*"}.toListRequest(protov4.Kind_KIND_INSTALLATION))
+		require.NoError(t, err)
+		assert.Len(t, got, 3)
 	})
-	require.NoError(t, err)
-	require.Len(t, aggregateResults, 2)
-	// Find the thing2 output and verify it has the most recent resultId
-	for _, result := range aggregateResults {
-		if result.Lookup("_id").String() == "thing2" {
-			require.Contains(t, result.Lookup("lastOutput").String(), "222")
-			break
-		}
-	}
+
+	t.Run("duplicate insert", func(t *testing.T) {
+		err := client.put(ctx, protov4.PutRequest_INSERT, inst1)
+		require.Error(t, err, "the unique index on namespace and name should reject a duplicate")
+	})
 }

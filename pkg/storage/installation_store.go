@@ -4,9 +4,8 @@ import (
 	"context"
 	"errors"
 
-	"get.porter.sh/porter/pkg/cnab"
+	"get.porter.sh/porter/pkg/storage/plugins/protov4"
 	"get.porter.sh/porter/pkg/tracing"
-	"go.mongodb.org/mongo-driver/bson"
 )
 
 const (
@@ -16,302 +15,233 @@ const (
 	CollectionOutputs       = "outputs"
 )
 
+// logsOutputName is the name of the output that holds the logs of a run.
+const logsOutputName = "io.cnab.outputs.invocationImageLogs"
+
 var _ InstallationProvider = InstallationStore{}
 
 // InstallationStore is a persistent store for installation documents.
 type InstallationStore struct {
-	store   Store
+	client  BackendClient
 	encrypt EncryptionHandler
 	decrypt EncryptionHandler
 }
 
 // NewInstallationStore creates a persistent store for installations using the specified
 // backing datastore.
-func NewInstallationStore(datastore Store) InstallationStore {
+func NewInstallationStore(client BackendClient) InstallationStore {
 	return InstallationStore{
-		store:   datastore,
+		client:  client,
 		encrypt: noOpEncryptionHandler,
 		decrypt: noOpEncryptionHandler,
 	}
-}
-
-// EnsureInstallationIndices created indices on the installations collection.
-func EnsureInstallationIndices(ctx context.Context, store Store) error {
-	ctx, span := tracing.StartSpan(ctx)
-	defer span.EndSpan()
-
-	span.Debug("Initializing installation collection indices")
-
-	opts := EnsureIndexOptions{
-		Indices: []Index{
-			// query installations by a namespace (list) or namespace + name (get)
-			{Collection: CollectionInstallations, Keys: []string{"namespace", "name"}, Unique: true},
-			// query runs by installation (list)
-			{Collection: CollectionRuns, Keys: []string{"namespace", "installation"}},
-			// query results by installation (delete or batch get)
-			{Collection: CollectionResults, Keys: []string{"namespace", "installation"}},
-			// query results by run (list)
-			{Collection: CollectionResults, Keys: []string{"runId"}},
-			// query most recent outputs by run (porter installation run show, when we list outputs)
-			{Collection: CollectionOutputs, Keys: []string{"namespace", "installation", "-resultId"}},
-			// query outputs by result (list)
-			{Collection: CollectionOutputs, Keys: []string{"resultId", "name"}, Unique: true},
-			// query most recent outputs by name for an installation
-			{Collection: CollectionOutputs, Keys: []string{"namespace", "installation", "name", "-resultId"}},
-		},
-	}
-
-	err := store.EnsureIndex(ctx, opts)
-	return span.Error(err)
 }
 
 func (s InstallationStore) ListInstallations(ctx context.Context, listOptions ListOptions) ([]Installation, error) {
 	_, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
 
-	var out []Installation
-	err := s.store.Find(ctx, CollectionInstallations, listOptions.ToFindOptions(), &out)
-	return out, err
+	return listDocuments[Installation](ctx, s.client, listOptions.toListRequest(protov4.Kind_KIND_INSTALLATION))
 }
 
 func (s InstallationStore) ListRuns(ctx context.Context, namespace string, installation string) ([]Run, map[string][]Result, error) {
-	var runs []Run
-	var err error
-	var results []Result
+	ref := &protov4.InstallationRef{Namespace: namespace, Installation: installation}
 
-	opts := FindOptions{
-		Sort: []string{"_id"},
-		Filter: bson.M{
-			"namespace":    namespace,
-			"installation": installation,
-		},
+	runsResp, err := s.client.backend.ListRuns(ctx, &protov4.ListRunsRequest{Installation: ref})
+	if err != nil {
+		return nil, nil, mapBackendError(err, protov4.Kind_KIND_RUN, "")
 	}
-	err = s.store.Find(ctx, CollectionRuns, opts, &runs)
+	runs, err := unmarshalDocuments[Run](runsResp.Runs)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	err = s.store.Find(ctx, CollectionResults, opts, &results)
+	resultsResp, err := s.client.backend.ListResults(ctx, &protov4.ListResultsRequest{
+		Scope: &protov4.ListResultsRequest_Installation{Installation: ref},
+	})
+	if err != nil {
+		return runs, nil, mapBackendError(err, protov4.Kind_KIND_RESULT, "")
+	}
+	results, err := unmarshalDocuments[Result](resultsResp.Documents)
 	if err != nil {
 		return runs, nil, err
 	}
 
 	resultsMap := make(map[string][]Result, len(runs))
-
 	for _, run := range runs {
 		resultsMap[run.ID] = []Result{}
 	}
-
 	for _, res := range results {
 		if _, ok := resultsMap[res.RunID]; ok {
 			resultsMap[res.RunID] = append(resultsMap[res.RunID], res)
 		}
 	}
 
-	return runs, resultsMap, err
+	return runs, resultsMap, nil
 }
 
 // GetActiveRuns returns runs for the installation that have not yet reached
 // a terminal status (succeeded, failed, canceled), for example a run with no
 // result yet, or whose last result is pending/running/unknown.
 func (s InstallationStore) GetActiveRuns(ctx context.Context, namespace string, installation string) ([]Run, error) {
-	var runs []Run
-	opts := AggregateOptions{
-		Pipeline: []bson.D{
-			{{Key: "$match", Value: bson.M{
-				"namespace":    namespace,
-				"installation": installation,
-			}}},
-			{{Key: "$lookup", Value: bson.M{
-				"from":         CollectionResults,
-				"localField":   "_id",
-				"foreignField": "runId",
-				"as":           "results",
-			}}},
-			// A run is still active if none of its results (including zero
-			// results, i.e. not yet started) has reached a terminal status.
-			// Once a terminal result is recorded, no further results follow,
-			// so "has a terminal result" and "is complete" are equivalent.
-			{{Key: "$match", Value: bson.M{
-				"results.status": bson.M{"$nin": []string{
-					cnab.StatusSucceeded, cnab.StatusFailed, cnab.StatusCanceled,
-				}},
-			}}},
-			{{Key: "$project", Value: bson.M{"results": 0}}},
-		},
+	resp, err := s.client.backend.GetActiveRuns(ctx, &protov4.InstallationRef{Namespace: namespace, Installation: installation})
+	if err != nil {
+		return nil, mapBackendError(err, protov4.Kind_KIND_RUN, "")
 	}
-	err := s.store.Aggregate(ctx, CollectionRuns, opts, &runs)
-	return runs, err
+	return unmarshalDocuments[Run](resp.Documents)
 }
 
 func (s InstallationStore) ListResults(ctx context.Context, runID string) ([]Result, error) {
-	var out []Result
-	opts := FindOptions{
-		Sort: []string{"_id"},
-		Filter: bson.M{
-			"runId": runID,
-		},
+	resp, err := s.client.backend.ListResults(ctx, &protov4.ListResultsRequest{
+		Scope: &protov4.ListResultsRequest_RunId{RunId: runID},
+	})
+	if err != nil {
+		return nil, mapBackendError(err, protov4.Kind_KIND_RESULT, "")
 	}
-	err := s.store.Find(ctx, CollectionResults, opts, &out)
-	return out, err
+	return unmarshalDocuments[Result](resp.Documents)
 }
 
 func (s InstallationStore) ListOutputs(ctx context.Context, resultID string) ([]Output, error) {
-	var out []Output
-	opts := FindOptions{
-		Sort: []string{"resultId", "name"},
-		Filter: bson.M{
-			"resultId": resultID,
-		},
+	resp, err := s.client.backend.ListOutputs(ctx, &protov4.ListOutputsRequest{
+		Scope: &protov4.ListOutputsRequest_ResultId{ResultId: resultID},
+	})
+	if err != nil {
+		return nil, mapBackendError(err, protov4.Kind_KIND_OUTPUT, "")
 	}
-	err := s.store.Find(ctx, CollectionOutputs, opts, &out)
-	return out, err
+	return unmarshalDocuments[Output](resp.Documents)
 }
 
-func (s InstallationStore) FindInstallations(ctx context.Context, findOpts FindOptions) ([]Installation, error) {
+// FindInstallationsUsingCredentialSet finds the installations that use the
+// credential set with the specified name, optionally limited to a namespace.
+func (s InstallationStore) FindInstallationsUsingCredentialSet(ctx context.Context, namespace string, name string) ([]Installation, error) {
+	return s.findReferencing(ctx, &protov4.FindReferencingRequest{
+		Target:    &protov4.FindReferencingRequest_CredentialSet{CredentialSet: name},
+		Namespace: namespace,
+	})
+}
+
+// FindInstallationsUsingParameterSet finds the installations that use the
+// parameter set with the specified name, optionally limited to a namespace.
+func (s InstallationStore) FindInstallationsUsingParameterSet(ctx context.Context, namespace string, name string) ([]Installation, error) {
+	return s.findReferencing(ctx, &protov4.FindReferencingRequest{
+		Target:    &protov4.FindReferencingRequest_ParameterSet{ParameterSet: name},
+		Namespace: namespace,
+	})
+}
+
+// FindInstallationsReferencing finds the installations that depend on the
+// specified installation, identified by its "namespace/name".
+func (s InstallationStore) FindInstallationsReferencing(ctx context.Context, installation string) ([]Installation, error) {
+	return s.findReferencing(ctx, &protov4.FindReferencingRequest{
+		Target: &protov4.FindReferencingRequest_Installation{Installation: installation},
+	})
+}
+
+func (s InstallationStore) findReferencing(ctx context.Context, req *protov4.FindReferencingRequest) ([]Installation, error) {
 	_, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
 
-	var out []Installation
-	err := s.store.Find(ctx, CollectionInstallations, findOpts, &out)
-	return out, err
+	resp, err := s.client.backend.FindInstallationsReferencing(ctx, req)
+	if err != nil {
+		return nil, mapBackendError(err, protov4.Kind_KIND_INSTALLATION, "")
+	}
+	return unmarshalDocuments[Installation](resp.Documents)
+}
+
+// FindDependencyCandidates finds the installations that may be shared with a
+// dependent bundle. Installations in the specified namespace sort before
+// installations in the global namespace.
+func (s InstallationStore) FindDependencyCandidates(ctx context.Context, namespace string, repository string, digest string) ([]Installation, error) {
+	_, log := tracing.StartSpan(ctx)
+	defer log.EndSpan()
+
+	resp, err := s.client.backend.FindDependencyCandidates(ctx, &protov4.FindDependencyCandidatesRequest{
+		Namespace:  namespace,
+		Repository: repository,
+		Digest:     digest,
+	})
+	if err != nil {
+		return nil, mapBackendError(err, protov4.Kind_KIND_INSTALLATION, "")
+	}
+	return unmarshalDocuments[Installation](resp.Documents)
 }
 
 func (s InstallationStore) GetInstallation(ctx context.Context, namespace string, name string) (Installation, error) {
-	var out Installation
-
-	opts := FindOptions{
-		Filter: bson.M{
-			"namespace": namespace,
-			"name":      name,
-		},
-	}
-
-	err := s.store.FindOne(ctx, CollectionInstallations, opts, &out)
-
-	return out, err
+	return getDocument[Installation](ctx, s.client, &protov4.GetRequest{
+		Kind:      protov4.Kind_KIND_INSTALLATION,
+		Namespace: namespace,
+		Name:      name,
+	})
 }
 
 func (s InstallationStore) GetRun(ctx context.Context, id string) (Run, error) {
-	var out Run
-	opts := GetOptions{ID: id}
-	err := s.store.Get(ctx, CollectionRuns, opts, &out)
-	return out, err
+	return getDocument[Run](ctx, s.client, &protov4.GetRequest{Kind: protov4.Kind_KIND_RUN, Id: id})
 }
 
 func (s InstallationStore) GetResult(ctx context.Context, id string) (Result, error) {
-	var out Result
-	opts := GetOptions{ID: id}
-	err := s.store.Get(ctx, CollectionResults, opts, &out)
-	return out, err
+	return getDocument[Result](ctx, s.client, &protov4.GetRequest{Kind: protov4.Kind_KIND_RESULT, Id: id})
 }
 
 func (s InstallationStore) GetLastRun(ctx context.Context, namespace string, installation string) (Run, error) {
-	var out []Run
-	opts := FindOptions{
-		Sort:  []string{"-_id"},
-		Limit: 1,
-		Filter: bson.M{
-			"namespace":    namespace,
-			"installation": installation,
-		},
-	}
-	err := s.store.Find(ctx, CollectionRuns, opts, &out)
+	resp, err := s.client.backend.GetLastRun(ctx, &protov4.InstallationRef{Namespace: namespace, Installation: installation})
 	if err != nil {
-		return Run{}, err
+		return Run{}, mapBackendError(err, protov4.Kind_KIND_RUN, "")
 	}
-	if len(out) == 0 {
-		return Run{}, ErrNotFound{Collection: CollectionRuns}
-	}
-	return out[0], err
-}
 
-func (s InstallationStore) GetLastOutput(ctx context.Context, namespace string, installation string, name string) (Output, error) {
-	var out Output
-	opts := FindOptions{
-		Sort:  []string{"-_id"},
-		Limit: 1,
-		Filter: bson.M{
-			"namespace":    namespace,
-			"installation": installation,
-			"name":         name,
-		},
-	}
-	err := s.store.FindOne(ctx, CollectionOutputs, opts, &out)
+	var out Run
+	err = unmarshalDocument(resp.Document, &out)
 	return out, err
 }
 
+func (s InstallationStore) GetLastOutput(ctx context.Context, namespace string, installation string, name string) (Output, error) {
+	return s.getOutput(ctx, &protov4.GetOutputRequest{
+		Scope: &protov4.GetOutputRequest_Installation{Installation: &protov4.InstallationRef{Namespace: namespace, Installation: installation}},
+		Name:  name,
+	})
+}
+
 func (s InstallationStore) GetLastOutputs(ctx context.Context, namespace string, installation string) (Outputs, error) {
-	var groupedOutputs []struct {
-		ID         string `json:"_id"`
-		LastOutput Output `json:"lastOutput"`
-	}
-	opts := AggregateOptions{
-		Pipeline: []bson.D{
-			// List outputs by installation
-			{{Key: "$match", Value: bson.M{
-				"namespace":    namespace,
-				"installation": installation,
-			}}},
-			// Reverse sort them (newest on top)
-			{{Key: "$sort", Value: bson.D{
-				{Key: "namespace", Value: 1},
-				{Key: "installation", Value: 1},
-				{Key: "name", Value: 1},
-				{Key: "resultId", Value: -1},
-			}}},
-			// Group them by output name and select the last value for each output
-			{{Key: "$group", Value: bson.D{
-				{Key: "_id", Value: "$name"},
-				{Key: "lastOutput", Value: bson.M{"$first": "$$ROOT"}},
-			}}},
-		},
-	}
-	err := s.store.Aggregate(ctx, CollectionOutputs, opts, &groupedOutputs)
-
-	lastOutputs := make([]Output, len(groupedOutputs))
-	for i, groupedOutput := range groupedOutputs {
-		lastOutputs[i] = groupedOutput.LastOutput
+	resp, err := s.client.backend.GetLastOutputs(ctx, &protov4.InstallationRef{Namespace: namespace, Installation: installation})
+	if err != nil {
+		return Outputs{}, mapBackendError(err, protov4.Kind_KIND_OUTPUT, "")
 	}
 
-	return NewOutputs(lastOutputs), err
+	outputs, err := unmarshalDocuments[Output](resp.Documents)
+	return NewOutputs(outputs), err
 }
 
 func (s InstallationStore) GetOutputs(ctx context.Context, runID string) (Outputs, error) {
-	var outputs []Output
-	opts := FindOptions{
-		Sort: []string{"name"},
-		Filter: bson.M{
-			"runId": runID,
-		},
+	resp, err := s.client.backend.ListOutputs(ctx, &protov4.ListOutputsRequest{
+		Scope: &protov4.ListOutputsRequest_RunId{RunId: runID},
+	})
+	if err != nil {
+		return Outputs{}, mapBackendError(err, protov4.Kind_KIND_OUTPUT, "")
 	}
-	err := s.store.Find(ctx, CollectionOutputs, opts, &outputs)
+
+	outputs, err := unmarshalDocuments[Output](resp.Documents)
 	return NewOutputs(outputs), err
 }
 
 func (s InstallationStore) GetOutput(ctx context.Context, runID string, name string) (Output, error) {
-	var out Output
-	opts := FindOptions{
-		Filter: bson.M{
-			"runId": runID,
-			"name":  name,
-		},
+	return s.getOutput(ctx, &protov4.GetOutputRequest{
+		Scope: &protov4.GetOutputRequest_RunId{RunId: runID},
+		Name:  name,
+	})
+}
+
+func (s InstallationStore) getOutput(ctx context.Context, req *protov4.GetOutputRequest) (Output, error) {
+	resp, err := s.client.backend.GetOutput(ctx, req)
+	if err != nil {
+		return Output{}, mapBackendError(err, protov4.Kind_KIND_OUTPUT, req.Name)
 	}
-	err := s.store.FindOne(ctx, CollectionOutputs, opts, &out)
+
+	var out Output
+	err = unmarshalDocument(resp.Document, &out)
 	return out, err
 }
 
 func (s InstallationStore) GetLogs(ctx context.Context, runID string) (string, bool, error) {
-	var out Output
-	opts := FindOptions{
-		Sort: []string{"resultId"}, // get logs from the last result for a run
-		Filter: bson.M{
-			"runId": runID,
-			"name":  "io.cnab.outputs.invocationImageLogs",
-		},
-		Limit: 1,
-	}
-	err := s.store.FindOne(ctx, CollectionOutputs, opts, &out)
+	out, err := s.GetOutput(ctx, runID, logsOutputName)
 	if errors.Is(err, ErrNotFound{}) {
 		return "", false, nil
 	}
@@ -319,17 +249,7 @@ func (s InstallationStore) GetLogs(ctx context.Context, runID string) (string, b
 }
 
 func (s InstallationStore) GetLastLogs(ctx context.Context, namespace string, installation string) (string, bool, error) {
-	var out Output
-	opts := FindOptions{
-		Sort: []string{"-resultId"}, // get logs from the last result for a run
-		Filter: bson.M{
-			"namespace":    namespace,
-			"installation": installation,
-			"name":         "io.cnab.outputs.invocationImageLogs",
-		},
-		Limit: 1,
-	}
-	err := s.store.FindOne(ctx, CollectionOutputs, opts, &out)
+	out, err := s.GetLastOutput(ctx, namespace, installation, logsOutputName)
 	if errors.Is(err, ErrNotFound{}) {
 		return "", false, nil
 	}
@@ -338,99 +258,41 @@ func (s InstallationStore) GetLastLogs(ctx context.Context, namespace string, in
 
 func (s InstallationStore) InsertInstallation(ctx context.Context, installation Installation) error {
 	installation.SchemaVersion = DefaultInstallationSchemaVersion
-	opts := InsertOptions{
-		Documents: []interface{}{installation},
-	}
-	return s.store.Insert(ctx, CollectionInstallations, opts)
+	return s.client.put(ctx, protov4.PutRequest_INSERT, installation)
 }
 
 func (s InstallationStore) InsertRun(ctx context.Context, run Run) error {
-	opts := InsertOptions{
-		Documents: []interface{}{run},
-	}
-	return s.store.Insert(ctx, CollectionRuns, opts)
+	return s.client.put(ctx, protov4.PutRequest_INSERT, run)
 }
 
 func (s InstallationStore) InsertResult(ctx context.Context, result Result) error {
-	opts := InsertOptions{
-		Documents: []interface{}{result},
-	}
-	return s.store.Insert(ctx, CollectionResults, opts)
+	return s.client.put(ctx, protov4.PutRequest_INSERT, result)
 }
 
 func (s InstallationStore) InsertOutput(ctx context.Context, output Output) error {
-	opts := InsertOptions{
-		Documents: []interface{}{output},
-	}
-	return s.store.Insert(ctx, CollectionOutputs, opts)
+	return s.client.put(ctx, protov4.PutRequest_INSERT, output)
 }
 
 func (s InstallationStore) UpdateInstallation(ctx context.Context, installation Installation) error {
 	installation.SchemaVersion = DefaultInstallationSchemaVersion
-	opts := UpdateOptions{
-		Document: installation,
-	}
-	return s.store.Update(ctx, CollectionInstallations, opts)
+	return s.client.put(ctx, protov4.PutRequest_UPDATE, installation)
 }
 
 func (s InstallationStore) UpsertRun(ctx context.Context, run Run) error {
-	opts := UpdateOptions{
-		Upsert:   true,
-		Document: run,
-	}
-	return s.store.Update(ctx, CollectionRuns, opts)
+	return s.client.put(ctx, protov4.PutRequest_UPSERT, run)
 }
 
 func (s InstallationStore) UpsertInstallation(ctx context.Context, installation Installation) error {
 	installation.SchemaVersion = DefaultInstallationSchemaVersion
-	opts := UpdateOptions{
-		Upsert:   true,
-		Document: installation,
-	}
-	return s.store.Update(ctx, CollectionInstallations, opts)
+	return s.client.put(ctx, protov4.PutRequest_UPSERT, installation)
 }
 
 // RemoveInstallation and all associated data.
 func (s InstallationStore) RemoveInstallation(ctx context.Context, namespace string, name string) error {
-	removeInstallation := RemoveOptions{
-		Filter: bson.M{
-			"namespace": namespace,
-			"name":      name,
-		},
-	}
-	err := s.store.Remove(ctx, CollectionInstallations, removeInstallation)
-	if err != nil {
-		return err
-	}
-
-	// Find associated documents
-	removeChildDocs := RemoveOptions{
-		Filter: bson.M{
-			"namespace":    namespace,
-			"installation": name,
-		},
-		All: true,
-	}
-
-	// Delete runs
-	err = s.store.Remove(ctx, CollectionRuns, removeChildDocs)
-	if err != nil {
-		return err
-	}
-
-	// Delete results
-	err = s.store.Remove(ctx, CollectionResults, removeChildDocs)
-	if err != nil {
-		return err
-	}
-
-	// Delete outputs
-	err = s.store.Remove(ctx, CollectionOutputs, removeChildDocs)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	_, err := s.client.backend.RemoveInstallation(ctx, &protov4.RemoveInstallationRequest{
+		Installation: &protov4.InstallationRef{Namespace: namespace, Installation: name},
+	})
+	return err
 }
 
 // EncryptionHandler is a function that transforms data by encrypting or decrypting it.

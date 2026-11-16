@@ -27,9 +27,22 @@ type InstallationProvider interface {
 	// UpsertInstallation saves an Installation document, creating it if it doesn't already exist.
 	UpsertInstallation(ctx context.Context, installation Installation) error
 
-	// FindInstallations applies the find operation against installations collection
-	// using the specified options.
-	FindInstallations(ctx context.Context, opts FindOptions) ([]Installation, error)
+	// FindInstallationsUsingCredentialSet finds the installations that use the named credential set.
+	// When a namespace is specified, only installations in that namespace are returned.
+	FindInstallationsUsingCredentialSet(ctx context.Context, namespace string, name string) ([]Installation, error)
+
+	// FindInstallationsUsingParameterSet finds the installations that use the named parameter set.
+	// When a namespace is specified, only installations in that namespace are returned.
+	FindInstallationsUsingParameterSet(ctx context.Context, namespace string, name string) ([]Installation, error)
+
+	// FindInstallationsReferencing finds the installations that depend on the specified
+	// installation, identified by its "namespace/name".
+	FindInstallationsReferencing(ctx context.Context, installation string) ([]Installation, error)
+
+	// FindDependencyCandidates finds the installations of a bundle repository that may be
+	// shared with a dependent bundle, preferring those in the specified namespace over global ones.
+	// The digest is optional.
+	FindDependencyCandidates(ctx context.Context, namespace string, repository string, digest string) ([]Installation, error)
 
 	// GetInstallation retrieves an Installation document by name.
 	GetInstallation(ctx context.Context, namespace string, name string) (Installation, error)
