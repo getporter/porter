@@ -159,4 +159,4 @@ of Porter. When you are asked to cut a new release, here is the process:
 [maintainers]: https://github.com/orgs/getporter/teams/maintainers
 [admins]: https://github.com/orgs/getporter/teams/admins
 [commits]: https://github.com/getporter/porter/commits/main
-[version strategy]: https://porter.sh/project/version-strategy/
+[version strategy]: https://porter.sh/docs/references/version-strategy/
