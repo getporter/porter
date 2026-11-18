@@ -97,4 +97,4 @@ maintainer who will be working on them.
 <p align="center">Check out our <a href="https://porter.sh/roadmap">roadmap</a></p>
 
 [board]: https://porter.sh/board
-[version strategy]: https://porter.sh/project/version-strategy/
+[version strategy]: https://porter.sh/docs/references/version-strategy/
