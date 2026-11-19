@@ -334,6 +334,9 @@ func TestExplain_generatePrintableBundleCreds(t *testing.T) {
 				"version":  "v0.30.0",
 				"commit":   "3b7c85ba",
 			},
+			cnab.CredentialDefaultSourcesExtensionKey: map[string]interface{}{
+				"kubeconfig": map[string]interface{}{"path": "~/.kube/config"},
+			},
 		},
 	})
 
@@ -346,10 +349,14 @@ func TestExplain_generatePrintableBundleCreds(t *testing.T) {
 		d := pb.Credentials[0]
 		require.Equal(t, "kubeconfig", d.Name)
 		assert.Equal(t, "install", d.ApplyTo)
+		assert.Equal(t, &cnab.CredentialDefaultSource{Path: "~/.kube/config"}, d.DefaultSource)
 
 		f := pb.Credentials[1]
 		require.Equal(t, "password", f.Name)
 		assert.Equal(t, "All Actions", f.ApplyTo)
+		assert.Nil(t, f.DefaultSource)
+
+		assert.Empty(t, pb.Custom, "porter's extensions should not be listed as user-defined custom data")
 	})
 
 	t.Run("action does not apply", func(t *testing.T) {
@@ -582,4 +589,18 @@ func TestExplain_sourcedParamPreservesEmptyStringDefault(t *testing.T) {
 
 	output := p.TestConfig.TestContext.GetOutput()
 	assert.NotContains(t, output, "(injected)", "empty string default should not be replaced with (injected)")
+}
+
+func TestExplain_invalidCredentialDefaultSource(t *testing.T) {
+	bun := cnab.NewBundle(bundle.Bundle{
+		Credentials: map[string]bundle.Credential{"kubeconfig": {}},
+		Custom: map[string]interface{}{
+			cnab.CredentialDefaultSourcesExtensionKey: map[string]interface{}{
+				"kubeconfig": map[string]interface{}{"command": "cat ~/.kube/config"},
+			},
+		},
+	})
+
+	_, err := generatePrintable(context.Background(), bun, "", nil, cnabtooci.RegistryOptions{})
+	require.ErrorContains(t, err, `unsupported credential default source "command", only env or path can be set`)
 }

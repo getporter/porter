@@ -251,6 +251,13 @@ func (m *Manifest) Validate(ctx context.Context, cfg *config.Config) error {
 		}
 	}
 
+	for _, credential := range m.Credentials {
+		err = credential.Validate()
+		if err != nil {
+			result = multierror.Append(result, err)
+		}
+	}
+
 	for _, image := range m.ImageMap {
 		err = image.Validate()
 		if err != nil {
@@ -832,7 +839,21 @@ type CredentialDefinition struct {
 	// ApplyTo lists the actions to which the credential applies. When unset, defaults to all actions.
 	ApplyTo []string `yaml:"applyTo,omitempty"`
 
+	// DefaultSource suggests where the value of the credential is usually found on the user's machine.
+	DefaultSource *cnab.CredentialDefaultSource `yaml:"defaultSource,omitempty"`
+
 	Location `yaml:",inline"`
+}
+
+// Validate checks that the credential definition is valid.
+func (cd *CredentialDefinition) Validate() error {
+	if cd.DefaultSource == nil {
+		return nil
+	}
+	if err := cd.DefaultSource.Validate(); err != nil {
+		return fmt.Errorf("invalid defaultSource for credential %q: %w", cd.Name, err)
+	}
+	return nil
 }
 
 func (cd *CredentialDefinition) UnmarshalYAML(unmarshal func(interface{}) error) error {

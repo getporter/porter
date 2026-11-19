@@ -50,6 +50,9 @@ type PrintableCredential struct {
 	Description string `json:"description" yaml:"description"`
 	Required    bool   `json:"required" yaml:"required"`
 	ApplyTo     string `json:"applyTo" yaml:"applyTo"`
+
+	// DefaultSource suggests where the value of the credential is usually found on the user's machine.
+	DefaultSource *cnab.CredentialDefaultSource `json:"defaultSource,omitempty" yaml:"defaultSource,omitempty"`
 }
 
 type SortPrintableCredential []PrintableCredential
@@ -245,12 +248,19 @@ func generatePrintable(ctx context.Context, bun cnab.ExtendedBundle, action stri
 	}
 	sort.Sort(SortPrintableAction(pb.Actions))
 
+	credDefaultSources, err := bun.ReadCredentialDefaultSources()
+	if err != nil {
+		return nil, err
+	}
 	for c, v := range bun.Credentials {
 		pc := PrintableCredential{}
 		pc.Name = c
 		pc.Description = v.Description
 		pc.Required = v.Required
 		pc.ApplyTo = generateApplyToString(v.ApplyTo)
+		if source, ok := credDefaultSources[c]; ok {
+			pc.DefaultSource = &source
+		}
 
 		if shouldIncludeInExplainOutput(&v, action) {
 			pb.Credentials = append(pb.Credentials, pc)
@@ -352,6 +362,7 @@ func shouldIncludeInExplainOutput(scoped bundle.Scoped, action string) bool {
 func isUserDefinedCustomSectionKey(key string) bool {
 	porterKeyPrefixes := []string{
 		"io.cnab",
+		"org.getporter",
 		"sh.porter",
 	}
 

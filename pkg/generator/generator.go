@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 
+	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/secrets"
 	"github.com/cnabio/cnab-go/secrets/host"
 	survey "gopkg.in/AlecAivazis/survey.v1"
@@ -41,6 +42,11 @@ const (
 type surveyOptions struct {
 	required    bool
 	description string
+
+	// defaultQuestion is the source suggested by the bundle, one of the question constants.
+	defaultQuestion string
+	// defaultValue is the value suggested by the bundle for defaultQuestion.
+	defaultValue string
 }
 
 type surveyOption func(*surveyOptions)
@@ -54,6 +60,18 @@ func withDescription(description string) surveyOption {
 func withRequired(required bool) surveyOption {
 	return func(s *surveyOptions) {
 		s.required = required
+	}
+}
+
+// withDefaultSource suggests a source for the value, and has no effect when the source is empty.
+func withDefaultSource(source cnab.CredentialDefaultSource) surveyOption {
+	return func(s *surveyOptions) {
+		switch {
+		case source.EnvironmentVariable != "":
+			s.defaultQuestion, s.defaultValue = questionEnvVar, source.EnvironmentVariable
+		case source.Path != "":
+			s.defaultQuestion, s.defaultValue = questionPath, source.Path
+		}
 	}
 }
 
@@ -84,13 +102,35 @@ func buildSurveySelect(name string, surveyType SurveyType, opts ...surveyOption)
 		selectOptions = append(selectOptions, questionSkip)
 	}
 
-	// extra space-suffix to align question and answer. Unfortunately misaligns help text
-	return &survey.Select{
-		Message: fmt.Sprintf(surveryFormatString, surveyPrefix, surveyType, name, surveyOptions.description),
-		Options: selectOptions,
-		Default: "environment variable",
+	defaultOption := questionEnvVar
+	details := surveyOptions.description
+	if surveyOptions.defaultQuestion != "" {
+		defaultOption = surveyOptions.defaultQuestion
+		details += fmt.Sprintf("Suggested source: %s %s\n", surveyOptions.defaultQuestion, surveyOptions.defaultValue)
 	}
 
+	// extra space-suffix to align question and answer. Unfortunately misaligns help text
+	return &survey.Select{
+		Message: fmt.Sprintf(surveryFormatString, surveyPrefix, surveyType, name, details),
+		Options: selectOptions,
+		Default: defaultOption,
+	}
+
+}
+
+// buildSurveyInput builds the prompt for the value of the selected source.
+// When the user selected the suggested source, pressing enter accepts the suggested value.
+func buildSurveyInput(message string, source string, opts ...surveyOption) *survey.Input {
+	surveyOptions := &surveyOptions{}
+	for _, opt := range opts {
+		opt(surveyOptions)
+	}
+
+	input := &survey.Input{Message: message}
+	if source == surveyOptions.defaultQuestion {
+		input.Default = surveyOptions.defaultValue
+	}
+	return input
 }
 
 func genSurvey(name string, surveyType SurveyType, opts ...surveyOption) (secrets.SourceMap, error) {
@@ -131,9 +171,7 @@ func genSurvey(name string, surveyType SurveyType, opts ...surveyOption) (secret
 		return secrets.SourceMap{}, nil
 	}
 
-	sourceValuePrompt := &survey.Input{
-		Message: promptMsg,
-	}
+	sourceValuePrompt := buildSurveyInput(promptMsg, source, opts...)
 
 	value := ""
 	if err := survey.AskOne(sourceValuePrompt, &value, nil); err != nil {
