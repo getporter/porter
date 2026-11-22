@@ -2,18 +2,23 @@ package storage
 
 import (
 	"context"
+
+	"get.porter.sh/porter/pkg/storage/plugins"
 )
 
 // Provider handles high level functions over Porter's storage systems such as
 // migrating data formats.
 type Provider interface {
-	Store
+	plugins.StorageBackend
+
+	// Close the connection to the underlying storage.
+	Close() error
 
 	// WriteSchema persists an up-to-date schema to the underlying storage.
 	WriteSchema(ctx context.Context) error
 
-	// Migrate executes a migration on any/all of Porter's storage sub-systems.
-	Migrate(ctx context.Context, opts MigrateOptions) error
+	// MigrateData migrates data from an older version of Porter into the current version.
+	MigrateData(ctx context.Context, opts MigrateOptions) error
 }
 
 // MigrateOptions are the set of available options to configure a storage data migration

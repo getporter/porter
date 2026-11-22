@@ -47,7 +47,7 @@ type PluginConnection struct {
 	pluginCmd *exec.Cmd
 
 	// pluginProtocol is a connection that supports the plugin protocol, such as
-	// plugins.SecretsProtocol or plugins.StorageProtocol
+	// plugins.SecretsProtocol or plugins.StorageBackend
 	pluginProtocol interface{}
 
 	// debugger is the optionally attached go debugger command.
@@ -193,7 +193,7 @@ func (c *PluginConnection) Start(ctx context.Context, pluginCfg io.Reader) error
 
 // GetClient returns the raw connection to the pluginProtocol.
 // This value should be cast to the plugin protocol interface,
-// such as plugins.StorageProtocol or plugins.SecretsProtocol.
+// such as plugins.StorageBackend or plugins.SecretsProtocol.
 func (c *PluginConnection) GetClient() interface{} {
 	return c.pluginProtocol
 }

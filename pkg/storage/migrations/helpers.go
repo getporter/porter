@@ -16,7 +16,7 @@ func NewTestManager(c *config.TestConfig) *TestManager {
 	testStore := storage.NewTestStore(c)
 	m := &TestManager{
 		testStore: testStore,
-		Manager:   NewManager(c.Config, testStore),
+		Manager:   NewManager(c.Config, testStore.Backend()),
 	}
 	ps := storage.NewTestParameterProvider(c.TestContext.T)
 	ss := secrets.NewTestSecretsProvider()

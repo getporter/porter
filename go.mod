@@ -18,7 +18,7 @@ require (
 	github.com/cnabio/cnab-go v0.26.5
 	github.com/cnabio/cnab-to-oci v0.6.3
 	github.com/containerd/containerd/v2 v2.4.2
-	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
+	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/distribution/reference v0.6.1-0.20240718132515-8c942b0459df
 	github.com/docker/buildx v0.39.0
 	github.com/docker/cli v29.9.3+incompatible

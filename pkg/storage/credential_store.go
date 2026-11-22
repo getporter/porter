@@ -7,6 +7,7 @@ import (
 
 	"get.porter.sh/porter/pkg/secrets"
 	hostSecrets "get.porter.sh/porter/pkg/secrets/plugins/host"
+	"get.porter.sh/porter/pkg/storage/plugins/protov4"
 	"get.porter.sh/porter/pkg/tracing"
 	"github.com/cnabio/cnab-go/secrets/host"
 	"github.com/hashicorp/go-multierror"
@@ -22,38 +23,17 @@ const (
 // providing typed access and additional business logic around
 // credential sets, usually referred to as "credentials" as a shorthand.
 type CredentialStore struct {
-	Documents   Store
+	Documents   BackendClient
 	Secrets     secrets.Store
 	HostSecrets hostSecrets.Store
 }
 
-func NewCredentialStore(storage Store, secrets secrets.Store) *CredentialStore {
+func NewCredentialStore(storage BackendClient, secrets secrets.Store) *CredentialStore {
 	return &CredentialStore{
 		Documents:   storage,
 		Secrets:     secrets,
 		HostSecrets: hostSecrets.NewStore(),
 	}
-}
-
-// EnsureCredentialIndices creates indices on the credentials collection.
-func EnsureCredentialIndices(ctx context.Context, store Store) error {
-	ctx, span := tracing.StartSpan(ctx)
-	defer span.EndSpan()
-
-	span.Debug("Initializing credentials collection indices")
-
-	indices := EnsureIndexOptions{
-		Indices: []Index{
-			// query credentials by namespace + name
-			{Collection: CollectionCredentials, Keys: []string{"namespace", "name"}, Unique: true},
-		},
-	}
-	err := store.EnsureIndex(ctx, indices)
-	return span.Error(err)
-}
-
-func (s CredentialStore) GetDataStore() Store {
-	return s.Documents
 }
 
 /*
@@ -121,51 +101,47 @@ func (s CredentialStore) Validate(ctx context.Context, creds CredentialSet) erro
 
 func (s CredentialStore) InsertCredentialSet(ctx context.Context, creds CredentialSet) error {
 	creds.SchemaVersion = DefaultCredentialSetSchemaVersion
-	opts := InsertOptions{
-		Documents: []interface{}{creds},
-	}
-	return s.Documents.Insert(ctx, CollectionCredentials, opts)
+	return s.Documents.put(ctx, protov4.PutRequest_INSERT, creds)
 }
 
 func (s CredentialStore) ListCredentialSets(ctx context.Context, listOptions ListOptions) ([]CredentialSet, error) {
-	var out []CredentialSet
-	err := s.Documents.Find(ctx, CollectionCredentials, listOptions.ToFindOptions(), &out)
-	return out, err
+	return listDocuments[CredentialSet](ctx, s.Documents, listOptions.toListRequest(protov4.Kind_KIND_CREDENTIAL_SET))
 }
 
 func (s CredentialStore) GetCredentialSet(ctx context.Context, namespace string, name string) (CredentialSet, error) {
-	var out CredentialSet
-	opts := FindOptions{
-		Filter: map[string]interface{}{
-			"namespace": namespace,
-			"name":      name,
-		},
-	}
-	err := s.Documents.FindOne(ctx, CollectionCredentials, opts, &out)
-	return out, err
+	return getDocument[CredentialSet](ctx, s.Documents, &protov4.GetRequest{
+		Kind:      protov4.Kind_KIND_CREDENTIAL_SET,
+		Namespace: namespace,
+		Name:      name,
+	})
+}
+
+// GetCredentialSetWithFallback retrieves the credential set from the specified
+// namespace, falling back to the global namespace when it isn't found there.
+func (s CredentialStore) GetCredentialSetWithFallback(ctx context.Context, namespace string, name string) (CredentialSet, error) {
+	return getDocument[CredentialSet](ctx, s.Documents, &protov4.GetRequest{
+		Kind:             protov4.Kind_KIND_CREDENTIAL_SET,
+		Namespace:        namespace,
+		Name:             name,
+		FallbackToGlobal: true,
+	})
 }
 
 func (s CredentialStore) UpdateCredentialSet(ctx context.Context, creds CredentialSet) error {
 	creds.SchemaVersion = DefaultCredentialSetSchemaVersion
-	opts := UpdateOptions{
-		Document: creds,
-	}
-	return s.Documents.Update(ctx, CollectionCredentials, opts)
+	return s.Documents.put(ctx, protov4.PutRequest_UPDATE, creds)
 }
 
 func (s CredentialStore) UpsertCredentialSet(ctx context.Context, creds CredentialSet) error {
 	creds.SchemaVersion = DefaultCredentialSetSchemaVersion
-	opts := UpdateOptions{
-		Document: creds,
-		Upsert:   true,
-	}
-	return s.Documents.Update(ctx, CollectionCredentials, opts)
+	return s.Documents.put(ctx, protov4.PutRequest_UPSERT, creds)
 }
 
 func (s CredentialStore) RemoveCredentialSet(ctx context.Context, namespace string, name string) error {
-	opts := RemoveOptions{
+	_, err := s.Documents.backend.Remove(ctx, &protov4.RemoveRequest{
+		Kind:      protov4.Kind_KIND_CREDENTIAL_SET,
 		Namespace: namespace,
 		Name:      name,
-	}
-	return s.Documents.Remove(ctx, CollectionCredentials, opts)
+	})
+	return err
 }

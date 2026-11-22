@@ -21,7 +21,6 @@ import (
 	"get.porter.sh/porter/pkg/tracing"
 	dtprinter "github.com/carolynvs/datetime-printer"
 	"github.com/cnabio/cnab-go/secrets/host"
-	"go.mongodb.org/mongo-driver/bson"
 	"go.opentelemetry.io/otel/attribute"
 )
 
@@ -362,12 +361,7 @@ func (p *Porter) DeleteCredential(ctx context.Context, opts CredentialDeleteOpti
 // visible to installations in any namespace, unless that namespace defines
 // its own set with the same name, which shadows the global one.
 func (p *Porter) findInstallationsUsingCredentialSet(ctx context.Context, namespace string, name string) ([]storage.Installation, error) {
-	filter := bson.M{"credentialSets": name}
-	if namespace != "" {
-		filter["namespace"] = namespace
-	}
-
-	candidates, err := p.Installations.FindInstallations(ctx, storage.FindOptions{Filter: filter})
+	candidates, err := p.Installations.FindInstallationsUsingCredentialSet(ctx, namespace, name)
 	if err != nil || namespace != "" {
 		return candidates, err
 	}

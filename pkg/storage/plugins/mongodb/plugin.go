@@ -12,12 +12,6 @@ import (
 
 const PluginKey = plugins.PluginInterface + ".porter.mongodb"
 
-var _ plugins.StorageProtocol = Plugin{}
-
-type Plugin struct {
-	*Store
-}
-
 // PluginConfig are the configuration settings that can be defined for the
 // mongodb plugin in porter.yaml
 type PluginConfig struct {
@@ -33,6 +27,6 @@ func NewPlugin(c *portercontext.Context, rawCfg interface{}) (plugin.Plugin, err
 		return nil, fmt.Errorf("error reading plugin configuration: %w", err)
 	}
 
-	impl := NewStore(c, cfg)
-	return pluginstore.NewPlugin(c, impl), nil
+	impl := NewBackend(NewStore(c, cfg))
+	return pluginstore.NewPluginV4(impl), nil
 }

@@ -193,8 +193,8 @@ func TestSaveOperationResult_SensitiveOutputPersistFails(t *testing.T) {
 	testStorage := storage.NewTestStore(tc)
 	testSecrets := secrets.NewTestSecretsProvider()
 	testInstallations := storage.NewTestInstallationProviderFor(tc.TestContext.T, testStorage)
-	testCredentials := storage.NewTestCredentialProviderFor(tc.TestContext.T, testStorage, testSecrets)
-	testParameters := storage.NewTestParameterProviderFor(tc.TestContext.T, testStorage, testSecrets)
+	testCredentials := storage.NewTestCredentialProviderFor(tc.TestContext.T, testStorage.BackendClient, testSecrets)
+	testParameters := storage.NewTestParameterProviderFor(tc.TestContext.T, testStorage.BackendClient, testSecrets)
 
 	createErr := errors.New("secret store unreachable")
 	failingSecrets := failingSecretsStore{Store: testSecrets, createErr: createErr}

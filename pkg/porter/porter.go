@@ -21,6 +21,7 @@ import (
 	signingplugin "get.porter.sh/porter/pkg/signing/pluginstore"
 	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/storage/migrations"
+	storageplugins "get.porter.sh/porter/pkg/storage/plugins"
 	storageplugin "get.porter.sh/porter/pkg/storage/pluginstore"
 	"get.porter.sh/porter/pkg/templates"
 	"get.porter.sh/porter/pkg/tracing"
@@ -55,20 +56,21 @@ type Porter struct {
 // New porter client, initialized with useful defaults.
 func New() *Porter {
 	c := config.New()
-	storage := storage.NewPluginAdapter(storageplugin.NewStore(c))
+	storage := storageplugin.NewStore(c)
 	secretStorage := secrets.NewPluginAdapter(secretsplugin.NewStore(c))
 	signer := signing.NewPluginAdapter(signingplugin.NewSigner(c))
 	return NewFor(c, storage, secretStorage, signer)
 }
 
-func NewFor(c *config.Config, store storage.Store, secretStorage secrets.Store, signer signing.Signer) *Porter {
+func NewFor(c *config.Config, store storageplugins.StorageBackend, secretStorage secrets.Store, signer signing.Signer) *Porter {
 	cache := cache.New(c)
 
 	storageManager := migrations.NewManager(c, store)
-	installationStorage := storage.NewInstallationStore(storageManager)
-	workflowStorage := storage.NewWorkflowStore(storageManager)
-	credStorage := storage.NewCredentialStore(storageManager, secretStorage)
-	paramStorage := storage.NewParameterStore(storageManager, secretStorage)
+	storageClient := storage.NewBackendClient(storageManager)
+	installationStorage := storage.NewInstallationStore(storageClient)
+	workflowStorage := storage.NewWorkflowStore(storageClient)
+	credStorage := storage.NewCredentialStore(storageClient, secretStorage)
+	paramStorage := storage.NewParameterStore(storageClient, secretStorage)
 	sanitizerService := storage.NewSanitizer(paramStorage, secretStorage)
 
 	storageManager.Initialize(sanitizerService) // we have a bit of a dependency problem here that it would be great to figure out eventually

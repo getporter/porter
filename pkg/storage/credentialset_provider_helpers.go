@@ -3,7 +3,6 @@ package storage
 import (
 	"context"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"testing"
@@ -25,17 +24,17 @@ type TestCredentialSetProvider struct {
 	TestContext *portercontext.TestContext
 	// TestSecrets allows you to set up secrets for unit testing
 	TestSecrets secrets.TestSecretsProvider
-	TestStorage Store
+	TestStorage BackendClient
 }
 
 func NewTestCredentialProvider(t *testing.T) *TestCredentialSetProvider {
 	tc := config.NewTestConfig(t)
 	testStore := NewTestStore(tc)
 	testSecrets := secrets.NewTestSecretsProvider()
-	return NewTestCredentialProviderFor(t, testStore, testSecrets)
+	return NewTestCredentialProviderFor(t, testStore.BackendClient, testSecrets)
 }
 
-func NewTestCredentialProviderFor(t *testing.T, testStore Store, testSecrets secrets.TestSecretsProvider) *TestCredentialSetProvider {
+func NewTestCredentialProviderFor(t *testing.T, testStore BackendClient, testSecrets secrets.TestSecretsProvider) *TestCredentialSetProvider {
 	return &TestCredentialSetProvider{
 		T:           t,
 		TestContext: portercontext.NewTestContext(t),
@@ -50,10 +49,7 @@ func NewTestCredentialProviderFor(t *testing.T, testStore Store, testSecrets sec
 
 func (p TestCredentialSetProvider) Close() error {
 	// sometimes we are testing with a mock that needs to be released at the end of the test
-	if closer, ok := p.TestStorage.(io.Closer); ok {
-		return closer.Close()
-	}
-	return nil
+	return p.TestStorage.Close()
 }
 
 // Load a CredentialSet from a test file at a given path.

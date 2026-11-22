@@ -8,19 +8,20 @@ import (
 	"get.porter.sh/porter/pkg/storage/plugins"
 	"get.porter.sh/porter/pkg/storage/plugins/mongodb"
 	"get.porter.sh/porter/pkg/storage/plugins/mongodb_docker"
+	"get.porter.sh/porter/pkg/storage/plugins/protov4"
 	"get.porter.sh/porter/tests"
 	"github.com/hashicorp/go-multierror"
-	"go.mongodb.org/mongo-driver/bson"
 )
 
 var (
-	_ plugins.StorageProtocol = &TestStoragePlugin{}
+	_ plugins.StorageBackend = &TestStoragePlugin{}
 )
 
 // TestStoragePlugin is a test helper that implements a storage plugin backed by a
 // mongodb instance that saves data to a temporary directory.
 type TestStoragePlugin struct {
 	store    *mongodb.Store
+	backend  *mongodb.Backend
 	tc       *portercontext.TestContext
 	database string
 }
@@ -36,6 +37,11 @@ func (s *TestStoragePlugin) Connect(ctx context.Context) error {
 	if s.store != nil {
 		return nil
 	}
+	defer func() {
+		if s.store != nil {
+			s.backend = mongodb.NewBackend(s.store)
+		}
+	}()
 
 	s.database = tests.GenerateDatabaseName(s.tc.T.Name())
 
@@ -85,63 +91,127 @@ func (s *TestStoragePlugin) Close() error {
 		bigErr = multierror.Append(bigErr, s.store.RemoveDatabase(context.Background()))
 		bigErr = multierror.Append(bigErr, s.store.Close())
 		s.store = nil
+		s.backend = nil
 		return bigErr.ErrorOrNil()
 	}
 	return nil
 }
 
-func (s *TestStoragePlugin) EnsureIndex(ctx context.Context, opts plugins.EnsureIndexOptions) error {
-	if err := s.Connect(ctx); err != nil {
-		return err
-	}
-	return s.store.EnsureIndex(ctx, opts)
-}
-
-func (s *TestStoragePlugin) Aggregate(ctx context.Context, opts plugins.AggregateOptions) ([]bson.Raw, error) {
+func (s *TestStoragePlugin) Info(ctx context.Context, req *protov4.InfoRequest) (*protov4.InfoResponse, error) {
 	if err := s.Connect(ctx); err != nil {
 		return nil, err
 	}
-	return s.store.Aggregate(ctx, opts)
+	return s.backend.Info(ctx, req)
 }
 
-func (s *TestStoragePlugin) Count(ctx context.Context, opts plugins.CountOptions) (int64, error) {
-	if err := s.Connect(ctx); err != nil {
-		return 0, err
-	}
-	return s.store.Count(ctx, opts)
-}
-
-func (s *TestStoragePlugin) Find(ctx context.Context, opts plugins.FindOptions) ([]bson.Raw, error) {
+func (s *TestStoragePlugin) Migrate(ctx context.Context, req *protov4.MigrateRequest) (*protov4.MigrateResponse, error) {
 	if err := s.Connect(ctx); err != nil {
 		return nil, err
 	}
-	return s.store.Find(ctx, opts)
+	return s.backend.Migrate(ctx, req)
 }
 
-func (s *TestStoragePlugin) Insert(ctx context.Context, opts plugins.InsertOptions) error {
+func (s *TestStoragePlugin) Put(ctx context.Context, req *protov4.PutRequest) (*protov4.PutResponse, error) {
 	if err := s.Connect(ctx); err != nil {
-		return err
+		return nil, err
 	}
-	return s.store.Insert(ctx, opts)
+	return s.backend.Put(ctx, req)
 }
 
-func (s *TestStoragePlugin) Patch(ctx context.Context, opts plugins.PatchOptions) error {
+func (s *TestStoragePlugin) Get(ctx context.Context, req *protov4.GetRequest) (*protov4.GetResponse, error) {
 	if err := s.Connect(ctx); err != nil {
-		return err
+		return nil, err
 	}
-	return s.store.Patch(ctx, opts)
+	return s.backend.Get(ctx, req)
 }
 
-func (s *TestStoragePlugin) Remove(ctx context.Context, opts plugins.RemoveOptions) error {
+func (s *TestStoragePlugin) List(ctx context.Context, req *protov4.ListRequest) (*protov4.ListResponse, error) {
 	if err := s.Connect(ctx); err != nil {
-		return err
+		return nil, err
 	}
-	return s.store.Remove(ctx, opts)
+	return s.backend.List(ctx, req)
 }
 
-func (s *TestStoragePlugin) Update(ctx context.Context, opts plugins.UpdateOptions) error {
+func (s *TestStoragePlugin) Remove(ctx context.Context, req *protov4.RemoveRequest) (*protov4.RemoveResponse, error) {
 	if err := s.Connect(ctx); err != nil {
-		return err
+		return nil, err
 	}
-	return s.store.Update(ctx, opts)
+	return s.backend.Remove(ctx, req)
+}
+
+func (s *TestStoragePlugin) RemoveInstallation(ctx context.Context, req *protov4.RemoveInstallationRequest) (*protov4.RemoveInstallationResponse, error) {
+	if err := s.Connect(ctx); err != nil {
+		return nil, err
+	}
+	return s.backend.RemoveInstallation(ctx, req)
+}
+
+func (s *TestStoragePlugin) ListRuns(ctx context.Context, req *protov4.ListRunsRequest) (*protov4.ListRunsResponse, error) {
+	if err := s.Connect(ctx); err != nil {
+		return nil, err
+	}
+	return s.backend.ListRuns(ctx, req)
+}
+
+func (s *TestStoragePlugin) GetLastRun(ctx context.Context, req *protov4.InstallationRef) (*protov4.GetResponse, error) {
+	if err := s.Connect(ctx); err != nil {
+		return nil, err
+	}
+	return s.backend.GetLastRun(ctx, req)
+}
+
+func (s *TestStoragePlugin) GetActiveRuns(ctx context.Context, req *protov4.InstallationRef) (*protov4.ListResponse, error) {
+	if err := s.Connect(ctx); err != nil {
+		return nil, err
+	}
+	return s.backend.GetActiveRuns(ctx, req)
+}
+
+func (s *TestStoragePlugin) ListResults(ctx context.Context, req *protov4.ListResultsRequest) (*protov4.ListResponse, error) {
+	if err := s.Connect(ctx); err != nil {
+		return nil, err
+	}
+	return s.backend.ListResults(ctx, req)
+}
+
+func (s *TestStoragePlugin) InsertOutputs(ctx context.Context, req *protov4.InsertOutputsRequest) (*protov4.InsertOutputsResponse, error) {
+	if err := s.Connect(ctx); err != nil {
+		return nil, err
+	}
+	return s.backend.InsertOutputs(ctx, req)
+}
+
+func (s *TestStoragePlugin) ListOutputs(ctx context.Context, req *protov4.ListOutputsRequest) (*protov4.ListResponse, error) {
+	if err := s.Connect(ctx); err != nil {
+		return nil, err
+	}
+	return s.backend.ListOutputs(ctx, req)
+}
+
+func (s *TestStoragePlugin) GetOutput(ctx context.Context, req *protov4.GetOutputRequest) (*protov4.GetResponse, error) {
+	if err := s.Connect(ctx); err != nil {
+		return nil, err
+	}
+	return s.backend.GetOutput(ctx, req)
+}
+
+func (s *TestStoragePlugin) GetLastOutputs(ctx context.Context, req *protov4.InstallationRef) (*protov4.ListResponse, error) {
+	if err := s.Connect(ctx); err != nil {
+		return nil, err
+	}
+	return s.backend.GetLastOutputs(ctx, req)
+}
+
+func (s *TestStoragePlugin) FindInstallationsReferencing(ctx context.Context, req *protov4.FindReferencingRequest) (*protov4.ListResponse, error) {
+	if err := s.Connect(ctx); err != nil {
+		return nil, err
+	}
+	return s.backend.FindInstallationsReferencing(ctx, req)
+}
+
+func (s *TestStoragePlugin) FindDependencyCandidates(ctx context.Context, req *protov4.FindDependencyCandidatesRequest) (*protov4.ListResponse, error) {
+	if err := s.Connect(ctx); err != nil {
+		return nil, err
+	}
+	return s.backend.FindDependencyCandidates(ctx, req)
 }

@@ -26,7 +26,6 @@ import (
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/cnabio/cnab-go/secrets/host"
-	"go.mongodb.org/mongo-driver/bson"
 )
 
 // ParameterShowOptions represent options for Porter's parameter show command
@@ -352,12 +351,7 @@ func (p *Porter) DeleteParameter(ctx context.Context, opts ParameterDeleteOption
 // installations in any namespace, unless that namespace defines its own set
 // with the same name, which shadows the global one.
 func (p *Porter) findInstallationsUsingParameterSet(ctx context.Context, namespace string, name string) ([]storage.Installation, error) {
-	filter := bson.M{"parameterSets": name}
-	if namespace != "" {
-		filter["namespace"] = namespace
-	}
-
-	candidates, err := p.Installations.FindInstallations(ctx, storage.FindOptions{Filter: filter})
+	candidates, err := p.Installations.FindInstallationsUsingParameterSet(ctx, namespace, name)
 	if err != nil || namespace != "" {
 		return candidates, err
 	}
@@ -414,20 +408,7 @@ func (p *Porter) loadParameterSets(ctx context.Context, bun cnab.ExtendedBundle,
 
 	for _, name := range params {
 		// Try to get the params in the local namespace first, fallback to the global creds
-		query := storage.FindOptions{
-			Sort: []string{"-namespace"},
-			Filter: bson.M{
-				"name": name,
-				"$or": []bson.M{
-					{"namespace": ""},
-					{"namespace": namespace},
-				},
-			},
-		}
-		store := p.Parameters.GetDataStore()
-
-		var pset storage.ParameterSet
-		err := store.FindOne(ctx, storage.CollectionParameters, query, &pset)
+		pset, err := p.Parameters.GetParameterSetWithFallback(ctx, namespace, name)
 		if err != nil {
 			return nil, err
 		}

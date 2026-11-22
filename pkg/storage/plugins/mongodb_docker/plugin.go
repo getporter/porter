@@ -34,5 +34,5 @@ func NewPlugin(c *portercontext.Context, rawCfg interface{}) (plugin.Plugin, err
 	}
 
 	store := NewStore(c, cfg)
-	return pluginstore.NewPlugin(c, store), nil
+	return pluginstore.NewPluginV4(store), nil
 }

@@ -8,6 +8,8 @@ import (
 	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/storage"
+	"get.porter.sh/porter/pkg/storage/plugins"
+	"get.porter.sh/porter/pkg/storage/plugins/protov4"
 	"get.porter.sh/porter/pkg/tracing"
 )
 
@@ -17,8 +19,7 @@ const (
 	CollectionConfig = "config"
 )
 
-var _ storage.Store = &storage.PluginAdapter{}
-var _ storage.Store = &Manager{}
+var _ plugins.StorageBackend = &Manager{}
 
 // Manager handles high level functions over Porter's storage systems such as
 // migrating data formats.
@@ -28,7 +29,7 @@ type Manager struct {
 	// The underlying storage managed by this instance. It
 	// shouldn't be used for typed read/access the data, for that storage.InstallationStorageProvider
 	// or storage.CredentialSetProvider which works with the Manager.
-	store storage.Store
+	store storage.BackendClient
 
 	// initialized specifies if we have loaded the schema document.
 	initialized bool
@@ -48,10 +49,10 @@ type Manager struct {
 }
 
 // NewManager creates a storage manager for a backing datastore.
-func NewManager(c *config.Config, storage storage.Store) *Manager {
+func NewManager(c *config.Config, backend plugins.StorageBackend) *Manager {
 	mgr := &Manager{
 		Config: c,
-		store:  storage,
+		store:  storage.NewBackendClient(backend),
 		// We can't set sanitizer here yet, it is set in Initialize
 	}
 
@@ -84,6 +85,14 @@ func (m *Manager) Connect(ctx context.Context) error {
 			}
 		}
 
+		// Make sure that the backend has the tables, indexes, etc. that Porter relies on
+		// before reading anything from it. A new database has none of them yet.
+		// A verified connection is cached (see above), same as the schema check, so
+		// the backend isn't asked to migrate on every command.
+		if _, err := m.store.Backend().Migrate(ctx, &protov4.MigrateRequest{}); err != nil {
+			return span.Error(fmt.Errorf("could not prepare the storage backend: %w", err))
+		}
+
 		span.Debug("Checking database schema")
 
 		if err := m.loadSchema(ctx); err != nil {
@@ -108,27 +117,10 @@ Once your data has been backed up, run the following command to perform the migr
     porter storage migrate
 `, pkg.Version, storage.NewSchema(), m.schema))
 		}
+
+		// Only mark the manager as initialized once everything succeeded,
+		// so that a failure is retried on the next call.
 		m.initialized = true
-
-		err := storage.EnsureInstallationIndices(ctx, m.store)
-		if err != nil {
-			return err
-		}
-
-		err = storage.EnsureParameterIndices(ctx, m.store)
-		if err != nil {
-			return err
-		}
-
-		err = storage.EnsureCredentialIndices(ctx, m.store)
-		if err != nil {
-			return err
-		}
-
-		err = storage.EnsureWorkflowIndices(ctx, m.store)
-		if err != nil {
-			return err
-		}
 
 		if useCache {
 			m.saveInitCacheEntry(ctx, hash, m.schema)
@@ -144,81 +136,132 @@ func (m *Manager) Close() error {
 	return nil
 }
 
-func (m *Manager) Aggregate(ctx context.Context, collection string, opts storage.AggregateOptions, out interface{}) error {
+// The methods below implement plugins.StorageBackend. They connect the manager,
+// which verifies the schema of the data, before calling the underlying backend.
+
+func (m *Manager) Info(ctx context.Context, req *protov4.InfoRequest) (*protov4.InfoResponse, error) {
 	if err := m.Connect(ctx); err != nil {
-		return err
+		return nil, err
 	}
-	return m.store.Aggregate(ctx, collection, opts, out)
+	return m.store.Backend().Info(ctx, req)
 }
 
-func (m *Manager) Count(ctx context.Context, collection string, opts storage.CountOptions) (int64, error) {
+func (m *Manager) Migrate(ctx context.Context, req *protov4.MigrateRequest) (*protov4.MigrateResponse, error) {
 	if err := m.Connect(ctx); err != nil {
-		return 0, err
+		return nil, err
 	}
-	return m.store.Count(ctx, collection, opts)
+	return m.store.Backend().Migrate(ctx, req)
 }
 
-func (m *Manager) EnsureIndex(ctx context.Context, opts storage.EnsureIndexOptions) error {
+func (m *Manager) Put(ctx context.Context, req *protov4.PutRequest) (*protov4.PutResponse, error) {
 	if err := m.Connect(ctx); err != nil {
-		return err
+		return nil, err
 	}
-	return m.store.EnsureIndex(ctx, opts)
+	return m.store.Backend().Put(ctx, req)
 }
 
-func (m *Manager) Find(ctx context.Context, collection string, opts storage.FindOptions, out interface{}) error {
+func (m *Manager) Get(ctx context.Context, req *protov4.GetRequest) (*protov4.GetResponse, error) {
 	if err := m.Connect(ctx); err != nil {
-		return err
+		return nil, err
 	}
-	return m.store.Find(ctx, collection, opts, out)
+	return m.store.Backend().Get(ctx, req)
 }
 
-func (m *Manager) FindOne(ctx context.Context, collection string, opts storage.FindOptions, out interface{}) error {
+func (m *Manager) List(ctx context.Context, req *protov4.ListRequest) (*protov4.ListResponse, error) {
 	if err := m.Connect(ctx); err != nil {
-		return err
+		return nil, err
 	}
-	return m.store.FindOne(ctx, collection, opts, out)
+	return m.store.Backend().List(ctx, req)
 }
 
-func (m *Manager) Get(ctx context.Context, collection string, opts storage.GetOptions, out interface{}) error {
+func (m *Manager) Remove(ctx context.Context, req *protov4.RemoveRequest) (*protov4.RemoveResponse, error) {
 	if err := m.Connect(ctx); err != nil {
-		return err
+		return nil, err
 	}
-	return m.store.Get(ctx, collection, opts, out)
+	return m.store.Backend().Remove(ctx, req)
 }
 
-func (m *Manager) Insert(ctx context.Context, collection string, opts storage.InsertOptions) error {
+func (m *Manager) RemoveInstallation(ctx context.Context, req *protov4.RemoveInstallationRequest) (*protov4.RemoveInstallationResponse, error) {
 	if err := m.Connect(ctx); err != nil {
-		return err
+		return nil, err
 	}
-	return m.store.Insert(ctx, collection, opts)
+	return m.store.Backend().RemoveInstallation(ctx, req)
 }
 
-func (m *Manager) Patch(ctx context.Context, collection string, opts storage.PatchOptions) error {
+func (m *Manager) ListRuns(ctx context.Context, req *protov4.ListRunsRequest) (*protov4.ListRunsResponse, error) {
 	if err := m.Connect(ctx); err != nil {
-		return err
+		return nil, err
 	}
-	return m.store.Patch(ctx, collection, opts)
+	return m.store.Backend().ListRuns(ctx, req)
 }
 
-func (m *Manager) Remove(ctx context.Context, collection string, opts storage.RemoveOptions) error {
+func (m *Manager) GetLastRun(ctx context.Context, req *protov4.InstallationRef) (*protov4.GetResponse, error) {
 	if err := m.Connect(ctx); err != nil {
-		return err
+		return nil, err
 	}
-	return m.store.Remove(ctx, collection, opts)
+	return m.store.Backend().GetLastRun(ctx, req)
 }
 
-func (m *Manager) Update(ctx context.Context, collection string, opts storage.UpdateOptions) error {
+func (m *Manager) GetActiveRuns(ctx context.Context, req *protov4.InstallationRef) (*protov4.ListResponse, error) {
 	if err := m.Connect(ctx); err != nil {
-		return err
+		return nil, err
 	}
-	return m.store.Update(ctx, collection, opts)
+	return m.store.Backend().GetActiveRuns(ctx, req)
+}
+
+func (m *Manager) ListResults(ctx context.Context, req *protov4.ListResultsRequest) (*protov4.ListResponse, error) {
+	if err := m.Connect(ctx); err != nil {
+		return nil, err
+	}
+	return m.store.Backend().ListResults(ctx, req)
+}
+
+func (m *Manager) InsertOutputs(ctx context.Context, req *protov4.InsertOutputsRequest) (*protov4.InsertOutputsResponse, error) {
+	if err := m.Connect(ctx); err != nil {
+		return nil, err
+	}
+	return m.store.Backend().InsertOutputs(ctx, req)
+}
+
+func (m *Manager) ListOutputs(ctx context.Context, req *protov4.ListOutputsRequest) (*protov4.ListResponse, error) {
+	if err := m.Connect(ctx); err != nil {
+		return nil, err
+	}
+	return m.store.Backend().ListOutputs(ctx, req)
+}
+
+func (m *Manager) GetOutput(ctx context.Context, req *protov4.GetOutputRequest) (*protov4.GetResponse, error) {
+	if err := m.Connect(ctx); err != nil {
+		return nil, err
+	}
+	return m.store.Backend().GetOutput(ctx, req)
+}
+
+func (m *Manager) GetLastOutputs(ctx context.Context, req *protov4.InstallationRef) (*protov4.ListResponse, error) {
+	if err := m.Connect(ctx); err != nil {
+		return nil, err
+	}
+	return m.store.Backend().GetLastOutputs(ctx, req)
+}
+
+func (m *Manager) FindInstallationsReferencing(ctx context.Context, req *protov4.FindReferencingRequest) (*protov4.ListResponse, error) {
+	if err := m.Connect(ctx); err != nil {
+		return nil, err
+	}
+	return m.store.Backend().FindInstallationsReferencing(ctx, req)
+}
+
+func (m *Manager) FindDependencyCandidates(ctx context.Context, req *protov4.FindDependencyCandidatesRequest) (*protov4.ListResponse, error) {
+	if err := m.Connect(ctx); err != nil {
+		return nil, err
+	}
+	return m.store.Backend().FindDependencyCandidates(ctx, req)
 }
 
 // loadSchema parses the schema file at the root of PORTER_HOME. This file (when present) contains
 // a list of the current version of each of Porter's storage systems.
 func (m *Manager) loadSchema(ctx context.Context) error {
-	var schema storage.Schema
-	err := m.store.Get(ctx, CollectionConfig, storage.GetOptions{ID: "schema"}, &schema)
+	schema, err := m.store.GetSchema(ctx)
 	if err != nil {
 		if errors.Is(err, storage.ErrNotFound{}) {
 			emptyHome, err := m.initEmptyPorterHome(ctx)
@@ -243,9 +286,9 @@ func (m *Manager) loadSchema(ctx context.Context) error {
 	return nil
 }
 
-// Migrate executes a migration on any/all of Porter's storage sub-systems.
-// You must call Initialize before calling Migrate.
-func (m *Manager) Migrate(ctx context.Context, opts storage.MigrateOptions) error {
+// MigrateData executes a migration on any/all of Porter's storage sub-systems.
+// You must call Initialize before calling MigrateData.
+func (m *Manager) MigrateData(ctx context.Context, opts storage.MigrateOptions) error {
 	if m.sanitizer == nil {
 		return fmt.Errorf("cannot call storage.Manager.Migrate before calling Initialize and passing a storage.Sanitizer")
 	}
@@ -290,26 +333,26 @@ func (m *Manager) initEmptyPorterHome(ctx context.Context) (bool, error) {
 		return false, nil
 	}
 
-	itemCheck := func(itemType string) (bool, error) {
-		itemCount, err := m.store.Count(ctx, itemType, storage.CountOptions{})
+	itemCheck := func(kind protov4.Kind) (bool, error) {
+		found, err := m.store.HasDocuments(ctx, kind)
 		if err != nil {
-			return false, fmt.Errorf("error checking for existing %s when checking if PORTER_HOME is new: %w", itemType, err)
+			return false, fmt.Errorf("error checking for existing %s when checking if PORTER_HOME is new: %w", kind, err)
 		}
 
-		return itemCount > 0, nil
+		return found, nil
 	}
 
-	hasInstallations, err := itemCheck(storage.CollectionInstallations)
+	hasInstallations, err := itemCheck(protov4.Kind_KIND_INSTALLATION)
 	if hasInstallations || err != nil {
 		return false, err
 	}
 
-	hasCredentials, err := itemCheck(storage.CollectionCredentials)
+	hasCredentials, err := itemCheck(protov4.Kind_KIND_CREDENTIAL_SET)
 	if hasCredentials || err != nil {
 		return false, err
 	}
 
-	hasParameters, err := itemCheck(storage.CollectionParameters)
+	hasParameters, err := itemCheck(protov4.Kind_KIND_PARAMETER_SET)
 	if hasParameters || err != nil {
 		return false, err
 	}
@@ -331,10 +374,10 @@ func (m *Manager) WriteSchema(ctx context.Context) error {
 }
 
 // WriteSchema updates the database to indicate that it conforms with the current database schema.
-func WriteSchema(ctx context.Context, store storage.Store) (storage.Schema, error) {
+func WriteSchema(ctx context.Context, store storage.BackendClient) (storage.Schema, error) {
 	schema := storage.NewSchema()
 
-	err := store.Update(ctx, CollectionConfig, storage.UpdateOptions{Document: schema, Upsert: true})
+	err := store.PutSchema(ctx, schema)
 	if err != nil {
 		return storage.Schema{}, fmt.Errorf("Unable to save storage schema file to the database: %w", err)
 	}

@@ -32,8 +32,8 @@ func NewTestRuntime(t *testing.T) *TestRuntime {
 	testStorage := storage.NewTestStore(tc)
 	testSecrets := secrets.NewTestSecretsProvider()
 	testInstallations := storage.NewTestInstallationProviderFor(tc.TestContext.T, testStorage)
-	testCredentials := storage.NewTestCredentialProviderFor(tc.TestContext.T, testStorage, testSecrets)
-	testParameters := storage.NewTestParameterProviderFor(tc.TestContext.T, testStorage, testSecrets)
+	testCredentials := storage.NewTestCredentialProviderFor(tc.TestContext.T, testStorage.BackendClient, testSecrets)
+	testParameters := storage.NewTestParameterProviderFor(tc.TestContext.T, testStorage.BackendClient, testSecrets)
 
 	return NewTestRuntimeFor(tc, testInstallations, testCredentials, testParameters, testSecrets)
 }

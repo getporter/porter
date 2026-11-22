@@ -22,17 +22,17 @@ type TestParameterSetProvider struct {
 	T *testing.T
 	// TestSecrets allows you to set up secrets for unit testing
 	TestSecrets   secrets.TestSecretsProvider
-	TestDocuments Store
+	TestDocuments BackendClient
 }
 
 func NewTestParameterProvider(t *testing.T) *TestParameterSetProvider {
 	tc := config.NewTestConfig(t)
 	testStore := NewTestStore(tc)
 	testSecrets := secrets.NewTestSecretsProvider()
-	return NewTestParameterProviderFor(t, testStore, testSecrets)
+	return NewTestParameterProviderFor(t, testStore.BackendClient, testSecrets)
 }
 
-func NewTestParameterProviderFor(t *testing.T, testStore Store, testSecrets secrets.TestSecretsProvider) *TestParameterSetProvider {
+func NewTestParameterProviderFor(t *testing.T, testStore BackendClient, testSecrets secrets.TestSecretsProvider) *TestParameterSetProvider {
 	return &TestParameterSetProvider{
 		T:             t,
 		TestDocuments: testStore,

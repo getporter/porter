@@ -8,7 +8,7 @@ import (
 
 	"get.porter.sh/porter/pkg/secrets"
 	hostSecrets "get.porter.sh/porter/pkg/secrets/plugins/host"
-	"get.porter.sh/porter/pkg/tracing"
+	"get.porter.sh/porter/pkg/storage/plugins/protov4"
 	"github.com/cnabio/cnab-go/secrets/host"
 	"github.com/hashicorp/go-multierror"
 )
@@ -22,37 +22,17 @@ const (
 // ParameterStore provides access to parameter sets by instantiating plugins that
 // implement CRUD storage.
 type ParameterStore struct {
-	Documents   Store
+	Documents   BackendClient
 	Secrets     secrets.Store
 	HostSecrets hostSecrets.Store
 }
 
-func NewParameterStore(storage Store, secrets secrets.Store) *ParameterStore {
+func NewParameterStore(storage BackendClient, secrets secrets.Store) *ParameterStore {
 	return &ParameterStore{
 		Documents:   storage,
 		Secrets:     secrets,
 		HostSecrets: hostSecrets.NewStore(),
 	}
-}
-
-// EnsureParameterIndices creates indices on the parameters collection.
-func EnsureParameterIndices(ctx context.Context, store Store) error {
-	ctx, span := tracing.StartSpan(ctx)
-	defer span.EndSpan()
-
-	span.Debug("Initializing parameter collection indices")
-	indices := EnsureIndexOptions{
-		Indices: []Index{
-			// query parameters by namespace + name
-			{Collection: CollectionParameters, Keys: []string{"namespace", "name"}, Unique: true},
-		},
-	}
-	err := store.EnsureIndex(ctx, indices)
-	return span.Error(err)
-}
-
-func (s ParameterStore) GetDataStore() Store {
-	return s.Documents
 }
 
 func (s ParameterStore) ResolveAll(ctx context.Context, params ParameterSet, keys []string) (secrets.Set, error) {
@@ -107,51 +87,47 @@ func (s ParameterStore) Validate(ctx context.Context, params ParameterSet) error
 
 func (s ParameterStore) InsertParameterSet(ctx context.Context, params ParameterSet) error {
 	params.SchemaVersion = DefaultParameterSetSchemaVersion
-	opts := InsertOptions{
-		Documents: []interface{}{params},
-	}
-	return s.Documents.Insert(ctx, CollectionParameters, opts)
+	return s.Documents.put(ctx, protov4.PutRequest_INSERT, params)
 }
 
 func (s ParameterStore) ListParameterSets(ctx context.Context, listOptions ListOptions) ([]ParameterSet, error) {
-	var out []ParameterSet
-	err := s.Documents.Find(ctx, CollectionParameters, listOptions.ToFindOptions(), &out)
-	return out, err
+	return listDocuments[ParameterSet](ctx, s.Documents, listOptions.toListRequest(protov4.Kind_KIND_PARAMETER_SET))
 }
 
 func (s ParameterStore) GetParameterSet(ctx context.Context, namespace string, name string) (ParameterSet, error) {
-	var out ParameterSet
-	opts := FindOptions{
-		Filter: map[string]interface{}{
-			"namespace": namespace,
-			"name":      name,
-		},
-	}
-	err := s.Documents.FindOne(ctx, CollectionParameters, opts, &out)
-	return out, err
+	return getDocument[ParameterSet](ctx, s.Documents, &protov4.GetRequest{
+		Kind:      protov4.Kind_KIND_PARAMETER_SET,
+		Namespace: namespace,
+		Name:      name,
+	})
+}
+
+// GetParameterSetWithFallback retrieves the parameter set from the specified
+// namespace, falling back to the global namespace when it isn't found there.
+func (s ParameterStore) GetParameterSetWithFallback(ctx context.Context, namespace string, name string) (ParameterSet, error) {
+	return getDocument[ParameterSet](ctx, s.Documents, &protov4.GetRequest{
+		Kind:             protov4.Kind_KIND_PARAMETER_SET,
+		Namespace:        namespace,
+		Name:             name,
+		FallbackToGlobal: true,
+	})
 }
 
 func (s ParameterStore) UpdateParameterSet(ctx context.Context, params ParameterSet) error {
 	params.SchemaVersion = DefaultParameterSetSchemaVersion
-	opts := UpdateOptions{
-		Document: params,
-	}
-	return s.Documents.Update(ctx, CollectionParameters, opts)
+	return s.Documents.put(ctx, protov4.PutRequest_UPDATE, params)
 }
 
 func (s ParameterStore) UpsertParameterSet(ctx context.Context, params ParameterSet) error {
 	params.SchemaVersion = DefaultParameterSetSchemaVersion
-	opts := UpdateOptions{
-		Document: params,
-		Upsert:   true,
-	}
-	return s.Documents.Update(ctx, CollectionParameters, opts)
+	return s.Documents.put(ctx, protov4.PutRequest_UPSERT, params)
 }
 
 func (s ParameterStore) RemoveParameterSet(ctx context.Context, namespace string, name string) error {
-	opts := RemoveOptions{
+	_, err := s.Documents.backend.Remove(ctx, &protov4.RemoveRequest{
+		Kind:      protov4.Kind_KIND_PARAMETER_SET,
 		Namespace: namespace,
 		Name:      name,
-	}
-	return s.Documents.Remove(ctx, CollectionParameters, opts)
+	})
+	return err
 }
